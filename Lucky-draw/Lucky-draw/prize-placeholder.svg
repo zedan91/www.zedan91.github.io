@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="55%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" fill="url(#g)"/>
+  <circle cx="980" cy="140" r="170" fill="#22c55e" opacity=".08"/>
+  <circle cx="180" cy="600" r="210" fill="#3b82f6" opacity=".08"/>
+  <text x="600" y="310" fill="#22c55e" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="900" text-anchor="middle" filter="url(#glow)">LUCKY DRAW</text>
+  <text x="600" y="390" fill="#e5e7eb" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" text-anchor="middle">Hadiah Giveaway AZOBSS</text>
+  <text x="600" y="445" fill="#94a3b8" font-family="Arial, Helvetica, sans-serif" font-size="22" text-anchor="middle">Upload gambar hadiah ke folder Lucky-draw</text>
+</svg>
