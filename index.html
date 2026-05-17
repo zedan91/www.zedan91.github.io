@@ -6012,6 +6012,191 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FINAL LUCKY DRAW LAYOUT EXACT MATCH
+========================================================= */
+@media (min-width:900px){
+
+  .lucky-draw-card{
+    max-width:950px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    min-height:auto !important;
+  }
+
+  .lucky-draw-top{
+    display:grid !important;
+    grid-template-columns:390px 230px 230px !important;
+    column-gap:28px !important;
+    row-gap:18px !important;
+    align-items:start !important;
+    justify-content:start !important;
+  }
+
+  .lucky-draw-left-info{
+    grid-column:1 !important;
+    grid-row:1 / span 2 !important;
+    min-height:390px !important;
+    padding-right:0 !important;
+  }
+
+  .lucky-draw-left-info .lucky-draw-action-area,
+  .lucky-draw-left-info .invite-actions-group,
+  .lucky-draw-left-info .luckydraw-action-buttons,
+  .lucky-draw-left-info .join-lucky-actions{
+    position:static !important;
+    width:390px !important;
+    max-width:390px !important;
+    margin-top:18px !important;
+  }
+
+  .lucky-draw-left-info #luckyDrawInviteLinkBox{
+    width:390px !important;
+    max-width:390px !important;
+    min-height:42px !important;
+    margin-bottom:16px !important;
+    box-sizing:border-box !important;
+  }
+
+  .lucky-draw-left-info #copyInviteButton,
+  .lucky-draw-left-info #copyInviteLinkButton,
+  .lucky-draw-left-info #shareWebsiteButton{
+    display:inline-flex !important;
+    width:162px !important;
+    min-width:162px !important;
+    max-width:162px !important;
+    height:48px !important;
+    align-items:center !important;
+    justify-content:center !important;
+    margin:0 24px 22px 8px !important;
+    vertical-align:top !important;
+  }
+
+  .lucky-draw-left-info #shareWebsiteButton{
+    margin-right:0 !important;
+  }
+
+  .lucky-draw-left-info #joinLuckyDrawButton{
+    display:flex !important;
+    width:290px !important;
+    min-width:290px !important;
+    max-width:290px !important;
+    height:48px !important;
+    align-items:center !important;
+    justify-content:center !important;
+    margin:4px 0 0 0 !important;
+  }
+
+  .lucky-draw-left-info #luckyDrawStatus{
+    display:block !important;
+    width:300px !important;
+    max-width:300px !important;
+    margin-top:22px !important;
+    font-size:16px !important;
+    line-height:1.15 !important;
+  }
+
+  .lucky-draw-right-stack{
+    display:contents !important;
+  }
+
+  .lucky-draw-side{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    width:230px !important;
+    max-width:230px !important;
+  }
+
+  .lucky-draw-top-countdown{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    width:230px !important;
+    max-width:230px !important;
+    min-height:180px !important;
+    margin-top:18px !important;
+    box-sizing:border-box !important;
+  }
+
+  .lucky-draw-recent-joins{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    position:static !important;
+    width:230px !important;
+    max-width:230px !important;
+    height:205px !important;
+    margin-top:210px !important;
+    box-sizing:border-box !important;
+  }
+
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    width:230px !important;
+    max-width:230px !important;
+    height:390px !important;
+    min-height:390px !important;
+    margin-top:200px !important;
+    padding:18px !important;
+    box-sizing:border-box !important;
+  }
+
+  #luckyDrawSpinStage .lucky-draw-rolling-window,
+  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+    width:100% !important;
+    height:292px !important;
+    min-height:292px !important;
+    max-height:292px !important;
+    border-radius:18px !important;
+    margin:12px 0 0 !important;
+  }
+
+  /* prize section starts immediately below top layout */
+  .lucky-draw-participants-panel{
+    grid-column:1 / -1 !important;
+    width:100% !important;
+    margin-top:18px !important;
+    clear:both !important;
+  }
+
+  .lucky-draw-summary-grid{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:14px !important;
+  }
+
+  .lucky-draw-prize-panel{
+    margin-top:18px !important;
+  }
+}
+
+@media (max-width:899px){
+  .lucky-draw-top{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:16px !important;
+  }
+
+  .lucky-draw-right-stack{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:14px !important;
+  }
+
+  .lucky-draw-left-info #copyInviteButton,
+  .lucky-draw-left-info #copyInviteLinkButton,
+  .lucky-draw-left-info #shareWebsiteButton,
+  .lucky-draw-left-info #joinLuckyDrawButton,
+  .lucky-draw-left-info #luckyDrawInviteLinkBox,
+  .lucky-draw-left-info #luckyDrawStatus{
+    width:100% !important;
+    max-width:100% !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
