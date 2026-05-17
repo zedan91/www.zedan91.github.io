@@ -5622,6 +5622,35 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   MOVE BUTTONS TO MIDDLE EMPTY SPACE
+========================================================= */
+@media (min-width: 900px){
+
+  .invite-actions-group,
+  .luckydraw-action-buttons,
+  .join-lucky-actions{
+    position:absolute !important;
+    left:340px !important;
+    top:380px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:18px !important;
+    width:240px !important;
+    z-index:5 !important;
+  }
+
+  .invite-actions-group button,
+  .luckydraw-action-buttons button,
+  .join-lucky-actions button{
+    width:100% !important;
+  }
+
+}
+</style>
+
 </head>
 
 <body>
