@@ -5543,7 +5543,7 @@ body.is-admin .lucky-draw-admin-pagination{
 
 
 <style>
-/* Bigger HADIAH GIVEAWAY badge */
+/* Bigger LUCKY DRAW badge */
 .hadiah-giveaway-badge,
 .prize-giveaway-badge,
 .section-badge{
@@ -6845,15 +6845,15 @@ body:not(.is-admin) #purchaseRecordsPagination{
     <div class="lucky-draw-card">
       <div class="lucky-draw-top">
         <div class="lucky-draw-left-info">
-          <span class="lucky-draw-kicker">Cabutan Bertuah</span>
+          <span class="lucky-draw-kicker">Lucky Draw</span>
           <h2><div id="monthly-giveaway-section"></div>
-Peraduan Cabutan Bertuah User</h2>
+Peraduan Lucky Draw User</h2>
           <p>
-            User yang login boleh join cabutan bertuah selepas share website AZOBSS menggunakan invite link masing-masing.
+            User yang login boleh join lucky draw selepas share website AZOBSS menggunakan invite link masing-masing.
             Invite code akan menjadi bukti jika user baru masuk melalui link/code tersebut.
           </p>
           <ul class="lucky-draw-rules">
-            <li>Login dahulu sebelum join cabutan bertuah.</li>
+            <li>Login dahulu sebelum join lucky draw.</li>
             <li>Share website menggunakan invite link khas anda.</li>
             <li>User baru yang signup melalui invite code akan direkod sebagai bukti invite.</li>
           </ul>
@@ -6863,12 +6863,12 @@ Peraduan Cabutan Bertuah User</h2>
             <button class="btn orange" id="shareLuckyDrawButton" type="button">Share Website</button>
           </div>
           <div class="lucky-draw-actions">
-            <button class="btn" id="joinLuckyDrawButton" type="button">Join Cabutan Bertuah</button>
+            <button class="btn" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
           </div>
-          <div class="lucky-draw-status" id="luckyDrawStatus">Login dahulu untuk aktifkan cabutan bertuah.</div>
+          <div class="lucky-draw-status" id="luckyDrawStatus">Login dahulu untuk aktifkan lucky draw.</div>
 
           <div class="lucky-draw-recent-joins" id="luckyDrawRecentJoinsBox">
-            <div class="recent-joins-title">User Join Contest</div>
+            <div class="recent-joins-title">Lucky Draw Participants</div>
             <div class="recent-joins-list" id="luckyDrawRecentJoinList">
               <div class="recent-join-empty">Belum ada peserta.</div>
             </div>
@@ -6913,7 +6913,7 @@ Peraduan Cabutan Bertuah User</h2>
       <div class="lucky-draw-participants-panel" id="luckyDrawParticipantsPanel">
         <div class="lucky-draw-participants-head">
           <div>
-            <span class="lucky-draw-kicker">Hadiah Giveaway</span>
+            <span class="lucky-draw-kicker">Lucky Draw Prize</span>
             
             
           </div>
@@ -6944,7 +6944,7 @@ Peraduan Cabutan Bertuah User</h2>
           <div class="lucky-draw-prize-preview">
             <img id="luckyDrawPrizeImage" src="https://placehold.co/600x400/0f172a/22c55e?text=Lucky+Draw+Prize" alt="Lucky Draw Prize">
             <div class="lucky-draw-prize-content">
-              <span class="lucky-draw-kicker">Hadiah Giveaway</span>
+              <span class="lucky-draw-kicker">Lucky Draw Prize</span>
               <h3 id="luckyDrawPrizeTitle">Hadiah belum diumumkan</h3>
               <p id="luckyDrawPrizeDescription">Admin boleh attach gambar dan description hadiah giveaway.</p>
             </div>
@@ -7395,7 +7395,7 @@ Peraduan Cabutan Bertuah User</h2>
         luckyDrawInviteCode.textContent = '-';
         luckyDrawShareStatus.textContent = 'Belum share';
         luckyDrawJoinStatus.textContent = 'Belum join';
-        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan cabutan bertuah.';
+        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan lucky draw.';
         if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = false;
         return;
       }
@@ -7410,10 +7410,10 @@ Peraduan Cabutan Bertuah User</h2>
       luckyDrawShareStatus.textContent = hasShared ? 'Sudah share' : 'Belum share';
       luckyDrawJoinStatus.textContent = hasJoined ? 'Sudah join' : 'Belum join';
       luckyDrawStatus.textContent = hasJoined
-        ? 'Anda sudah join cabutan bertuah bulan ini.'
+        ? 'Anda sudah join lucky draw bulan ini.'
         : hasShared
-        ? 'Share sudah direkod. Anda boleh join cabutan bertuah.'
-        : 'Share website dahulu sebelum join cabutan bertuah.';
+        ? 'Share sudah direkod. Anda boleh join lucky draw.'
+        : 'Share website dahulu sebelum join lucky draw.';
       if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = hasJoined;
     }
 
@@ -8495,7 +8495,7 @@ Peraduan Cabutan Bertuah User</h2>
         }
       }
 
-      if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = payload.title || 'Hadiah Giveaway';
+      if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = payload.title || 'Lucky Draw Prize';
       if (luckyDrawPrizeDescription) luckyDrawPrizeDescription.innerText = payload.description || '';
 
       const pretty = JSON.stringify(payload, null, 2);
@@ -11478,7 +11478,7 @@ Peraduan Cabutan Bertuah User</h2>
       }
 
       if (localStorage.getItem(getLuckyDrawShareKey(currentUser.usernameKey)) !== '1') {
-        luckyDrawStatus.textContent = 'Sila share website dahulu sebelum join cabutan bertuah.';
+        luckyDrawStatus.textContent = 'Sila share website dahulu sebelum join lucky draw.';
         return;
       }
 
@@ -11508,7 +11508,7 @@ Peraduan Cabutan Bertuah User</h2>
 
       localStorage.setItem(getLuckyDrawJoinKey(currentUser.usernameKey), '1');
       updateLuckyDrawPanel();
-      luckyDrawStatus.textContent = 'Anda berjaya join cabutan bertuah bulan ini. Semoga berjaya!';
+      luckyDrawStatus.textContent = 'Anda berjaya join lucky draw bulan ini. Semoga berjaya!';
     }
 
     copyLuckyDrawInviteButton.addEventListener('click', copyLuckyDrawInviteLink);
@@ -13931,7 +13931,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
   async function hideEntryBackend(row){
     const id = row && row.dataset.backendEntryId;
     if(!id) return;
-    if(!confirm('Buang peserta ini dari cabutan bertuah bulan ini? User ini boleh join semula selepas dibuang.')) return;
+    if(!confirm('Buang peserta ini dari lucky draw bulan ini? User ini boleh join semula selepas dibuang.')) return;
 
     const res = await apiFetch('/api/lucky-draw/entries/' + encodeURIComponent(id) + '?monthKey=' + encodeURIComponent(getMonthKey()), {
       method:'DELETE',
