@@ -7058,6 +7058,58 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* ALIGN SPIN CARD FOOTER SAME AS PARTICIPANTS */
+
+@media (min-width:900px){
+
+  .lucky-draw-top{
+      display:grid !important;
+      grid-template-columns:390px 310px 340px !important;
+      grid-template-rows:auto auto !important;
+      align-items:start !important;
+      column-gap:28px !important;
+      row-gap:24px !important;
+  }
+
+  .lucky-draw-recent-joins{
+      grid-column:2 !important;
+      grid-row:2 !important;
+      width:310px !important;
+      height:270px !important;
+      min-height:270px !important;
+      max-height:270px !important;
+      margin:0 !important;
+      align-self:start !important;
+  }
+
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+      grid-column:3 !important;
+      grid-row:2 !important;
+      width:340px !important;
+      height:270px !important;
+      min-height:270px !important;
+      max-height:270px !important;
+      margin:0 !important;
+      align-self:start !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  #luckyDrawSpinStage .lucky-draw-rolling-window,
+  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+      height:165px !important;
+      min-height:165px !important;
+      max-height:165px !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+}
+</style>
+
 </head>
 
 <body>
