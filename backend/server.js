@@ -128,7 +128,7 @@ app.get("/api/lucky-draw/prize", (req, res) => {
   const prize = readJson(getPrizeFile(key), {
     monthKey: key,
     title: "Hadiah belum diumumkan",
-    description: "Admin belum upload hadiah Giveaway bulan ini.",
+    description: "Admin belum upload hadiah Lucky Draw bulan ini.",
     imageUrl: "",
     updatedAt: ""
   });
@@ -144,7 +144,7 @@ app.post("/api/lucky-draw/prize", requireAdmin, upload.single("image"), (req, re
 
   const prize = {
     monthKey: key,
-    title: req.body.title || previous.title || "Lucky Draw Prize",
+    title: req.body.title || previous.title || "Hadiah Lucky Draw",
     description: req.body.description || previous.description || "",
     imageUrl,
     image: imageUrl,
@@ -174,7 +174,7 @@ app.get("/api/prize", (req, res) => {
       prize = {
         monthKey: key,
         title: "Hadiah belum diumumkan",
-        description: "Admin belum upload hadiah Giveaway bulan ini.",
+        description: "Admin belum upload hadiah Lucky Draw bulan ini.",
         imageUrl: "",
         image: "",
         updatedAt: ""
