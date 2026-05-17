@@ -7058,6 +7058,16 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* LOGIN LUCKY DRAW STATUS ONE LINE */
+#luckyDrawStatus{
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -8272,7 +8282,7 @@ Peraduan Lucky Draw User</h2>
           <div class="lucky-draw-actions">
             <button class="btn" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
           </div>
-          <div class="lucky-draw-status" id="luckyDrawStatus">Login dahulu untuk aktifkan lucky draw.</div>
+          <div class="lucky-draw-status" id="luckyDrawStatus">Login untuk aktifkan Lucky Draw.</div>
 
           <div class="lucky-draw-recent-joins" id="luckyDrawRecentJoinsBox">
             <div class="recent-joins-title">Lucky Draw Participants</div>
@@ -8802,7 +8812,7 @@ Peraduan Lucky Draw User</h2>
         luckyDrawInviteCode.textContent = '-';
         luckyDrawShareStatus.textContent = 'Belum share';
         luckyDrawJoinStatus.textContent = 'Belum join';
-        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan lucky draw.';
+        luckyDrawStatus.textContent = 'Login untuk aktifkan Lucky Draw.';
         if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = false;
         return;
       }
