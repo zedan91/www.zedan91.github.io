@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMI Calculator - AZOBSS Tools</title>
+<style>
+:root{--bg:#07111f;--card:#101c2d;--card2:#13243a;--text:#eef5ff;--muted:#9fb2c8;--accent:#25d366;--blue:#3b82f6;--warn:#facc15;--danger:#ef4444;--line:rgba(255,255,255,.1)}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#102544,#07111f 55%);color:var(--text);line-height:1.55}
+.header{padding:26px 16px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
+.header a{color:#9bd1ff;text-decoration:none}.wrap{max-width:1120px;margin:auto;padding:24px 16px}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+label{display:block;margin:10px 0 6px;color:var(--muted);font-weight:bold}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.13);background:#07111f;color:var(--text);outline:none}
+button,.btn{display:inline-block;padding:12px 16px;border:0;border-radius:12px;background:var(--blue);color:white;font-weight:bold;cursor:pointer;text-decoration:none;margin-top:12px}
+button:hover,.btn:hover{filter:brightness(1.1)}.result{margin-top:14px;padding:15px;border-radius:14px;background:#07111f;border:1px solid rgba(255,255,255,.1);white-space:pre-wrap}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(37,211,102,.15);color:#68ff9e;font-size:13px;margin:4px 4px 4px 0}
+.muted{color:var(--muted)}.footer{text-align:center;color:var(--muted);padding:30px 10px}
+.table{width:100%;border-collapse:collapse;margin-top:12px}.table th,.table td{border:1px solid rgba(255,255,255,.1);padding:10px;text-align:left}.table th{background:#0b1728}
+.copy{background:#22c55e}.small{font-size:13px}.good{color:#86efac}.warn{color:#fde047}.bad{color:#fca5a5}
+.kpi{display:grid;gap:8px;background:#07111f;border:1px solid var(--line);border-radius:14px;padding:14px}.kpi strong{font-size:22px;color:#68ff9e}
+ul{padding-left:20px}.pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.pill{padding:8px 10px;border-radius:999px;background:rgba(37,211,102,.12);color:#86efac;font-size:13px}
+</style>
+</head>
+<body>
+<div class="header"><h1>BMI Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">← Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
+<div class="wrap">
+<div class="card"><p>Calculate BMI, category, healthy weight range and estimated daily calorie needs.</p><div class="grid">
+<div><label>Unit</label><select id="unit"><option value="metric">Metric - kg/cm</option><option value="imperial">Imperial - lb/inch</option></select></div>
+<div><label>Weight</label><input id="weight" type="number" value="45" step="any"></div>
+<div><label>Height</label><input id="height" type="number" value="154" step="any"></div>
+<div><label>Age</label><input id="age" type="number" value="35"></div>
+<div><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+<div><label>Activity</label><select id="activity"><option value="1.2">Low / little exercise</option><option value="1.375">Light exercise</option><option value="1.55">Moderate exercise</option><option value="1.725">Heavy exercise</option></select></div>
+</div><div id="result" class="result"></div></div>
+<div class="card"><h2>BMI Category Guide</h2><table class="table"><tr><th>BMI</th><th>Category</th></tr><tr><td>Below 18.5</td><td>Underweight</td></tr><tr><td>18.5 - 24.9</td><td>Normal</td></tr><tr><td>25.0 - 29.9</td><td>Overweight</td></tr><tr><td>30.0 and above</td><td>Obese</td></tr></table><p class="muted small">BMI is a general guide only. Muscle mass, body frame and health condition can affect interpretation.</p></div>
+</div>
+<div class="footer">© 2026 AZOBSS.COM - PC Tools & Utilities</div>
+<script>
+function cat(b){return b<18.5?"Underweight":b<25?"Normal":b<30?"Overweight":"Obese"}
+function calc(){let u=unit.value,w=parseFloat(weight.value)||0,h=parseFloat(height.value)||0,a=parseFloat(age.value)||0;if(!w||!h){result.innerHTML="Please enter weight and height.";return}
+let kg=u==="metric"?w:w*0.453592;let cm=u==="metric"?h:h*2.54;let m=cm/100;let bmi=kg/(m*m);let min=18.5*m*m,max=24.9*m*m;
+let bmr=gender.value==="male"?(10*kg+6.25*cm-5*a+5):(10*kg+6.25*cm-5*a-161);let tdee=bmr*parseFloat(activity.value);
+result.innerHTML=`BMI: <b>${bmi.toFixed(1)}</b>\nCategory: <b>${cat(bmi)}</b>\n\nHealthy weight range for your height:\n<b>${min.toFixed(1)} kg - ${max.toFixed(1)} kg</b>\n\nEstimated BMR: <b>${Math.round(bmr)} kcal/day</b>\nEstimated maintenance calories: <b>${Math.round(tdee)} kcal/day</b>\n\nSimple note:\n- If underweight: add calories slowly and focus on protein.\n- If normal: maintain balanced food and movement.\n- If overweight: small calorie deficit is usually better than extreme diet.`
+}
+document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
+</script>
+</body></html>
