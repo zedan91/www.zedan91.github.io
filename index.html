@@ -7058,6 +7058,278 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* ===== CLEAN & BEAUTIFUL LUCKY DRAW LAYOUT ===== */
+
+@media (min-width:900px){
+
+  .lucky-draw-top{
+      display:grid !important;
+      grid-template-columns: 230px 290px !important;
+      grid-template-rows:auto auto !important;
+
+      grid-template-areas:
+      "invite countdown"
+      "participants spin";
+
+      gap:32px !important;
+      align-items:start !important;
+      justify-content:start !important;
+  }
+
+  /* INVITE */
+  .lucky-draw-side{
+      grid-area:invite !important;
+
+      width:230px !important;
+      min-height:220px !important;
+
+      border-radius:18px !important;
+      padding:18px !important;
+
+      margin:0 !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  /* COUNTDOWN */
+  .lucky-draw-top-countdown{
+      grid-area:countdown !important;
+
+      width:290px !important;
+      min-height:220px !important;
+
+      border-radius:22px !important;
+      padding:18px !important;
+
+      margin:0 !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  .lucky-draw-top-countdown strong{
+      font-size:56px !important;
+      line-height:1.02 !important;
+      display:block !important;
+      margin-top:8px !important;
+  }
+
+  .lucky-draw-top-countdown small{
+      display:block !important;
+      margin-top:10px !important;
+      line-height:1.45 !important;
+      font-size:13px !important;
+  }
+
+  /* PARTICIPANTS */
+  .lucky-draw-recent-joins{
+      grid-area:participants !important;
+
+      width:260px !important;
+      height:390px !important;
+
+      border-radius:18px !important;
+      padding:14px !important;
+
+      margin:0 !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  .lucky-draw-recent-joins .recent-joins-list{
+      max-height:305px !important;
+      overflow-y:auto !important;
+      padding-right:4px !important;
+  }
+
+  /* SPIN */
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+      grid-area:spin !important;
+
+      width:290px !important;
+      height:390px !important;
+
+      border-radius:22px !important;
+      padding:18px !important;
+
+      margin:0 !important;
+
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  #luckyDrawSpinStage .lucky-draw-rolling-window,
+  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+
+      width:100% !important;
+      height:250px !important;
+
+      margin-top:14px !important;
+
+      border-radius:22px !important;
+
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+}
+
+/* MOBILE */
+@media (max-width:899px){
+
+  .lucky-draw-top{
+      display:flex !important;
+      flex-direction:column !important;
+      gap:18px !important;
+  }
+
+  .lucky-draw-side,
+  .lucky-draw-top-countdown,
+  .lucky-draw-recent-joins,
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+
+      width:100% !important;
+      max-width:100% !important;
+
+      height:auto !important;
+
+      margin:0 !important;
+      box-sizing:border-box !important;
+  }
+
+  #luckyDrawSpinStage .lucky-draw-rolling-window,
+  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+      height:220px !important;
+  }
+
+}
+</style>
+
+
+<style>
+/* ===== DESKTOP LUCKY DRAW OVERFLOW FIX ===== */
+
+@media (min-width:900px){
+
+  .lucky-draw-card{
+      max-width:920px !important;
+      margin-left:auto !important;
+      margin-right:auto !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  .lucky-draw-top{
+      display:grid !important;
+
+      /* kecilkan supaya muat container */
+      grid-template-columns:230px 250px !important;
+
+      grid-template-areas:
+      "invite countdown"
+      "participants spin";
+
+      gap:24px !important;
+
+      justify-content:center !important;
+      align-items:start !important;
+
+      width:100% !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  .lucky-draw-side{
+      grid-area:invite !important;
+
+      width:230px !important;
+      max-width:230px !important;
+      min-width:230px !important;
+
+      min-height:210px !important;
+
+      margin:0 !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  .lucky-draw-top-countdown{
+      grid-area:countdown !important;
+
+      width:250px !important;
+      max-width:250px !important;
+      min-width:250px !important;
+
+      min-height:210px !important;
+
+      margin:0 !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  .lucky-draw-top-countdown strong{
+      font-size:48px !important;
+      line-height:1 !important;
+  }
+
+  .lucky-draw-recent-joins{
+      grid-area:participants !important;
+
+      width:230px !important;
+      max-width:230px !important;
+      min-width:230px !important;
+
+      height:340px !important;
+      min-height:340px !important;
+      max-height:340px !important;
+
+      margin:0 !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  .lucky-draw-recent-joins .recent-joins-list{
+      max-height:250px !important;
+      overflow-y:auto !important;
+  }
+
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+      grid-area:spin !important;
+
+      width:250px !important;
+      max-width:250px !important;
+      min-width:250px !important;
+
+      height:340px !important;
+      min-height:340px !important;
+      max-height:340px !important;
+
+      margin:0 !important;
+
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+  #luckyDrawSpinStage .lucky-draw-rolling-window,
+  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+
+      width:100% !important;
+
+      height:210px !important;
+      min-height:210px !important;
+      max-height:210px !important;
+
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+  }
+
+}
+</style>
+
 </head>
 
 <body>
