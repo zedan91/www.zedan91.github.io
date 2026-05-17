@@ -4091,7 +4091,7 @@ body.is-admin .lucky-draw-prize-admin{
 }
 
 #downloadLuckyDrawPrizeJsonButton{
-  display:none !important;
+  display:inline-flex !important;
 }
 
 .lucky-draw-prize-actions{
@@ -5274,7 +5274,7 @@ body.is-admin .lucky-draw-pagination{
 .lucky-draw-left-info{
   position:relative !important;
   min-height:620px !important;
-  padding-right:190px !important;
+  padding-right:260px !important;
 }
 
 .lucky-draw-recent-joins{
@@ -5282,7 +5282,7 @@ body.is-admin .lucky-draw-pagination{
   right:0;
   top:355px;
 
-  width:160px;
+  width:230px;
   height:205px;
 
   border:2px solid rgba(239,68,68,.85);
@@ -5433,6 +5433,180 @@ body.is-admin .lucky-draw-admin-pagination{
 }
 
 .lucky-draw-admin-pagination button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   PRIZE JSON IMPORT / EXPORT
+========================================================= */
+.lucky-draw-json-import-label{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:46px !important;
+  padding:12px 22px !important;
+  border-radius:14px !important;
+  font-weight:1000 !important;
+  cursor:pointer !important;
+  user-select:none !important;
+  text-decoration:none !important;
+}
+
+#downloadLuckyDrawPrizeJsonButton{
+  display:inline-flex !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   USER JOIN CONTEST BOX WIDTH + NEWEST TOP
+========================================================= */
+.lucky-draw-recent-joins{
+  width:230px !important;
+}
+
+.recent-join-item{
+  align-items:center !important;
+}
+
+.recent-join-item strong{
+  font-size:13px !important;
+}
+
+.recent-join-item small{
+  font-size:10.5px !important;
+  white-space:nowrap !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   MOBILE WIDTH FIX
+========================================================= */
+@media (max-width: 768px){
+
+  .lucky-draw-layout,
+  .lucky-draw-grid,
+  .lucky-draw-main-grid,
+  .lucky-draw-wrapper,
+  .participants-wrapper,
+  .participants-grid{
+    display:flex !important;
+    flex-direction:column !important;
+    grid-template-columns:1fr !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  .lucky-draw-layout > *,
+  .lucky-draw-grid > *,
+  .lucky-draw-main-grid > *,
+  .participants-wrapper > *,
+  .participants-grid > *{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+
+  .lucky-draw-recent-joins{
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  .lucky-draw-panel,
+  .countdown-card,
+  .winner-card,
+  .invite-card,
+  .spin-card,
+  .participants-card{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+
+  img{
+    max-width:100% !important;
+    height:auto !important;
+  }
+
+  body{
+    overflow-x:hidden !important;
+  }
+}
+</style>
+
+
+<style>
+/* Bigger HADIAH GIVEAWAY badge */
+.hadiah-giveaway-badge,
+.prize-giveaway-badge,
+.section-badge{
+  font-size:20px !important;
+  font-weight:1000 !important;
+  padding:12px 22px !important;
+}
+</style>
+
+<!-- JOIN NUMBER FIX -->
+
+<style>
+/* =========================================================
+   SPIN ROLL ALL PARTICIPANTS FIX
+========================================================= */
+.lucky-draw-rolling-window{
+  min-height:94px !important;
+}
+
+.lucky-draw-rolling-list span{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   PURCHASE RECORDS USERS PAGINATION - MAX 5
+========================================================= */
+#purchaseRecordsPagination{
+  display:flex !important;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  margin-top:14px;
+}
+
+body:not(.is-admin) #purchaseRecordsPagination{
+  display:none !important;
+}
+
+#purchaseRecordsPagination button{
+  min-width:44px;
+  min-height:38px;
+  padding:8px 13px;
+  border:1px solid rgba(59,130,246,.65);
+  border-radius:10px;
+  background:rgba(2,6,23,.45);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+#purchaseRecordsPagination button.is-active,
+#purchaseRecordsPagination button.active{
+  background:#22c55e !important;
+  border-color:#22c55e !important;
+  color:#fff !important;
+}
+
+#purchaseRecordsPagination button:disabled{
   opacity:.45;
   cursor:not-allowed;
 }
@@ -6700,9 +6874,9 @@ Peraduan Cabutan Bertuah User</h2>
       <div class="lucky-draw-participants-panel" id="luckyDrawParticipantsPanel">
         <div class="lucky-draw-participants-head">
           <div>
-            <span class="lucky-draw-kicker">Peserta Giveaway</span>
+            <span class="lucky-draw-kicker">Hadiah Giveaway</span>
             
-            <p></p>
+            
           </div>
           <div class="lucky-draw-admin-tools" id="luckyDrawAdminTools">
             <input id="luckyDrawParticipantSearch" type="search" placeholder="Search nama / username / phone / email">
@@ -6748,7 +6922,9 @@ Peraduan Cabutan Bertuah User</h2>
 
             <div class="lucky-draw-prize-actions">
               <button class="btn blue save-prize-main-btn" id="saveLuckyDrawPrizeButton" type="button">💾 Save Prize</button>
-              <button class="btn orange" id="downloadLuckyDrawPrizeJsonButton" type="button">Download JSON</button>
+              <button class="btn orange" id="downloadLuckyDrawPrizeJsonButton" type="button">Export JSON</button>
+              <label class="btn blue lucky-draw-json-import-label" for="importLuckyDrawPrizeJsonInput">Import JSON</label>
+              <input id="importLuckyDrawPrizeJsonInput" type="file" accept="application/json,.json" hidden>
               <button class="btn orange" id="refreshLuckyDrawPrizeButton" type="button">Refresh Prize</button>
               <button class="btn blue" id="setLuckyDrawBackendUrlButton" type="button">Set Backend URL</button>
               <button class="btn orange" id="testLuckyDrawBackendButton" type="button">Test Backend</button>
@@ -6999,7 +7175,7 @@ Peraduan Cabutan Bertuah User</h2>
     let allGuestHistory = [];
     let guestHistoryPage = 1;
     const HISTORY_PAGE_SIZE = 3;
-    const PURCHASE_RECORDS_PAGE_SIZE = 10;
+    const PURCHASE_RECORDS_PAGE_SIZE = 5;
     const USER_PA_PURCHASE_PAGE_SIZE = 5;
     const HISTORY_PAGINATION_MAX_BUTTONS = 10;
     let presenceHeartbeatTimer = null;
@@ -7309,35 +7485,56 @@ Peraduan Cabutan Bertuah User</h2>
       if (luckyDrawParticipantsStatus) luckyDrawParticipantsStatus.textContent = 'Loading peserta Giveaway...';
 
       try {
-        if (!firebaseReady || !db) throw new Error('Firebase not ready');
+        // Prefer Render backend entries, because this is the same source used by the website join flow.
+        const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(getMonthKey()));
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Backend entries error');
 
-        const snapshot = await getDocs(collection(db, 'luckyDrawEntries'));
-        const rows = [];
-        snapshot.forEach(function (item) {
-          const data = item.data();
-          if (!data.deleted) rows.push({ id: item.id, ...data });
-        });
-
-        rows.sort(function (a, b) {
-          return (b.joinedAtMs || b.createdAtMs || 0) - (a.joinedAtMs || a.createdAtMs || 0);
-        });
-
-        allLuckyDrawParticipants = rows;
-      } catch (error) {
+        allLuckyDrawParticipants = (data.entries || [])
+          .filter(function(entry){ return !entry.deleted; })
+          .map(function(entry, index){
+            return {
+              id: entry.id || `${entry.monthKey || getMonthKey()}_${entry.usernameKey || entry.name || index}`,
+              ...entry
+            };
+          })
+          .sort(function(a,b){
+            return new Date(b.joinedAt || b.createdAt || b.updatedAt || b.joinedAtMs || b.createdAtMs || 0) -
+                   new Date(a.joinedAt || a.createdAt || a.updatedAt || a.joinedAtMs || a.createdAtMs || 0);
+          });
+      } catch (backendError) {
         try {
-          allLuckyDrawParticipants = JSON.parse(localStorage.getItem('azobssLuckyDrawEntries') || '[]')
-            .map(function (entry, index) {
-              return { id: entry.id || `${entry.monthKey || 'local'}_${entry.usernameKey || index}`, ...entry };
-            })
-            .filter(function (entry) {
-              return !entry.deleted;
-            });
-        } catch (storageError) {
-          allLuckyDrawParticipants = [];
+          if (!firebaseReady || !db) throw new Error('Firebase not ready');
+
+          const snapshot = await getDocs(collection(db, 'luckyDrawEntries'));
+          const rows = [];
+          snapshot.forEach(function (item) {
+            const data = item.data();
+            if (!data.deleted) rows.push({ id: item.id, ...data });
+          });
+
+          rows.sort(function (a, b) {
+            return (b.joinedAtMs || b.createdAtMs || 0) - (a.joinedAtMs || a.createdAtMs || 0);
+          });
+
+          allLuckyDrawParticipants = rows;
+        } catch (error) {
+          try {
+            allLuckyDrawParticipants = JSON.parse(localStorage.getItem('azobssLuckyDrawEntries') || '[]')
+              .map(function (entry, index) {
+                return { id: entry.id || `${entry.monthKey || 'local'}_${entry.usernameKey || entry.name || index}`, ...entry };
+              })
+              .filter(function (entry) {
+                return !entry.deleted;
+              });
+          } catch (storageError) {
+            allLuckyDrawParticipants = [];
+          }
         }
       }
 
       renderLuckyDrawParticipants();
+      previewLuckyDrawAllNames();
     }
 
     async function saveLuckyDrawParticipant(row) {
@@ -7481,6 +7678,37 @@ Peraduan Cabutan Bertuah User</h2>
       if (luckyDrawTotalParticipants) luckyDrawTotalParticipants.textContent = String(activeRows.length);
     }
 
+
+    function getLuckyDrawActiveParticipantsForSpin(participants) {
+      return (Array.isArray(participants) ? participants : [])
+        .filter(function(entry){
+          return entry && !entry.deleted && (entry.usernameKey || entry.name || entry.contactEmail || entry.phone);
+        });
+    }
+
+    function getLuckyDrawSpinNames(participants) {
+      const seen = new Set();
+      const names = getLuckyDrawActiveParticipantsForSpin(participants).map(function(entry){
+        return getWinnerDisplayName(entry);
+      }).filter(function(name){
+        const clean = String(name || '').trim();
+        if(!clean || seen.has(clean.toLowerCase())) return false;
+        seen.add(clean.toLowerCase());
+        return true;
+      });
+
+      return names;
+    }
+
+    function previewLuckyDrawAllNames() {
+      const names = getLuckyDrawSpinNames(allLuckyDrawParticipants);
+      if(names.length){
+        renderLuckyDrawRollingItems(names, 0);
+      }else{
+        renderLuckyDrawRollingItems(['Belum ada peserta'], 0);
+      }
+    }
+
     function getWinnerDisplayName(entry) {
       return entry ? (entry.name || entry.usernameKey || 'User') : 'Belum dipilih';
     }
@@ -7530,16 +7758,14 @@ Peraduan Cabutan Bertuah User</h2>
     }
 
     function chooseLuckyDrawWinner(participants, monthKey) {
-      const active = participants.filter(function (entry) {
-        return !entry.deleted && entry.usernameKey;
-      }).sort(function (a, b) {
-        return String(a.usernameKey).localeCompare(String(b.usernameKey));
+      const active = getLuckyDrawActiveParticipantsForSpin(participants).sort(function (a, b) {
+        return String(a.usernameKey || a.name || '').localeCompare(String(b.usernameKey || b.name || ''));
       });
 
       if (!active.length) return null;
 
       let seed = 0;
-      const seedText = monthKey + '|' + active.map(function (entry) { return entry.usernameKey; }).join('|');
+      const seedText = monthKey + '|' + active.map(function (entry) { return entry.usernameKey || entry.name || entry.contactEmail || entry.phone || ''; }).join('|');
       for (let i = 0; i < seedText.length; i += 1) {
         seed = (seed * 31 + seedText.charCodeAt(i)) >>> 0;
       }
@@ -7647,8 +7873,9 @@ Peraduan Cabutan Bertuah User</h2>
 
       const safeNames = names.length ? names : ['Menunggu peserta...'];
       const items = [];
+      const visibleCount = Math.max(9, safeNames.length);
 
-      for (let i = 0; i < 9; i += 1) {
+      for (let i = 0; i < visibleCount; i += 1) {
         items.push(safeNames[(selectedIndex + i) % safeNames.length]);
       }
 
@@ -7697,9 +7924,7 @@ Peraduan Cabutan Bertuah User</h2>
     function spinLuckyDrawNames(participants, finalWinner, monthKey) {
       if (!luckyDrawSpinnerName || !luckyDrawSpinStage || luckyDrawSpinRunning) return;
 
-      const names = participants
-        .filter(function (entry) { return !entry.deleted; })
-        .map(getWinnerDisplayName);
+      const names = getLuckyDrawSpinNames(participants);
 
       if (!names.length || !finalWinner) return;
 
@@ -7814,9 +8039,7 @@ Peraduan Cabutan Bertuah User</h2>
 
       await loadLuckyDrawParticipants();
 
-      const active = allLuckyDrawParticipants.filter(function (entry) {
-        return !entry.deleted && entry.usernameKey;
-      });
+      const active = getLuckyDrawActiveParticipantsForSpin(allLuckyDrawParticipants);
 
       if (!active.length) {
         if (luckyDrawParticipantsStatus) luckyDrawParticipantsStatus.textContent = 'Tiada peserta untuk test spin.';
@@ -7825,7 +8048,7 @@ Peraduan Cabutan Bertuah User</h2>
       }
 
       const randomWinner = active[Math.floor(Math.random() * active.length)];
-      const names = active.map(getWinnerDisplayName);
+      const names = getLuckyDrawSpinNames(active);
       const itemHeight = window.matchMedia('(max-width: 760px)').matches ? 76 : 94;
 
       if (luckyDrawParticipantsStatus) {
@@ -13569,7 +13792,9 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     const box = document.getElementById('luckyDrawRecentJoinList');
     if(!box) return;
 
-    const list = Array.isArray(rows) ? rows.slice(0, 10) : [];
+    const list = Array.isArray(rows)
+      ? rows.slice().sort((a,b) => new Date(b.joinedAt || b.createdAt || b.updatedAt || 0) - new Date(a.joinedAt || a.createdAt || a.updatedAt || 0)).slice(0, 10)
+      : [];
     if(!list.length){
       box.innerHTML = '<div class="recent-join-empty">Belum ada peserta.</div>';
       return;
@@ -13596,7 +13821,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
       const data = await res.json();
       if(!data.ok) throw new Error(data.error || 'Entries error');
 
-      const rows = data.entries || [];
+      const rows = (data.entries || []).slice().sort((a,b) => new Date(b.joinedAt || b.createdAt || b.updatedAt || 0) - new Date(a.joinedAt || a.createdAt || a.updatedAt || 0));
       renderLuckyDrawRecentJoins(rows);
 
       const total = document.getElementById('luckyDrawTotalParticipants');
