@@ -5612,6 +5612,16 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* Countdown target text line break fix */
+#luckyDrawTargetText{
+  display:block !important;
+  line-height:1.35 !important;
+  white-space:normal !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -8000,7 +8010,7 @@ Peraduan Cabutan Bertuah User</h2>
       const diff = target - now;
 
       if (luckyDrawTargetText) {
-        luckyDrawTargetText.textContent = `CABUTAN AKAN BERMULA ke Lucky Draw ${target.toLocaleDateString('ms-MY')} pukul 10:00 PM`;
+        luckyDrawTargetText.innerHTML = `Rolling Lucky Draw akan bermula pada<br>${target.toLocaleDateString('ms-MY')} • 10:00 PM (UTC+08:00) Kuala Lumpur, Singapore`;
       }
 
       if (diff <= 0) {
