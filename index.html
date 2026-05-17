@@ -7060,44 +7060,25 @@ body:not(.is-admin) #purchaseRecordsPagination{
 
 
 <style>
-/* CLEAN LUCKY DRAW GIFT PLACEHOLDER */
-.lucky-draw-empty-prize,
-.prize-empty-state,
-#luckyDrawEmptyState{
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:center !important;
-    justify-content:center !important;
-    text-align:center !important;
-    min-height:260px !important;
-    gap:14px !important;
+/* REAL FIX: Lucky Draw prize placeholder */
+#luckyDrawPrizeImage{
+  display:block !important;
+  object-fit:contain !important;
+  object-position:center !important;
+  background:#020617 !important;
+  padding:18px !important;
 }
 
-.lucky-draw-empty-prize::before,
-.prize-empty-state::before,
-#luckyDrawEmptyState::before{
-    content:"🎁";
-    font-size:92px;
-    line-height:1;
-    display:block;
-    filter:drop-shadow(0 0 20px rgba(255,215,0,.55));
+#luckyDrawPrizeTitle{
+  text-align:center !important;
 }
 
-.lucky-draw-empty-prize::after,
-.prize-empty-state::after,
-#luckyDrawEmptyState::after{
-    content:"?";
-    font-size:38px;
-    font-weight:900;
-    color:#ffd84f;
-    margin-top:-82px;
-    text-shadow:0 0 12px rgba(255,216,79,.7);
+#luckyDrawPrizeDescription:empty{
+  display:none !important;
 }
 
-.lucky-draw-empty-prize p,
-.prize-empty-state p,
-#luckyDrawEmptyState p{
-    display:none !important;
+.lucky-draw-folder-note{
+  display:none !important;
 }
 </style>
 
@@ -8392,17 +8373,17 @@ Peraduan Lucky Draw User</h2>
         
         <div class="lucky-draw-prize-panel" id="luckyDrawPrizePanel">
           <div class="lucky-draw-prize-preview">
-            <img id="luckyDrawPrizeImage" src="https://placehold.co/600x400/0f172a/22c55e?text=Lucky+Draw+Prize" alt="Lucky Draw Prize">
+            <img id="luckyDrawPrizeImage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 520'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='42%25' r='65%25'%3E%3Cstop offset='0%25' stop-color='%231f9d55' stop-opacity='.35'/%3E%3Cstop offset='55%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3Cfilter id='s' x='-30%25' y='-30%25' width='160%25' height='160%25'%3E%3CfeDropShadow dx='0' dy='18' stdDeviation='18' flood-color='%23000000' flood-opacity='.45'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='900' height='520' fill='url(%23g)'/%3E%3Cellipse cx='450' cy='425' rx='190' ry='34' fill='%23000000' opacity='.28'/%3E%3Cg filter='url(%23s)'%3E%3Crect x='305' y='235' width='290' height='190' rx='28' fill='%237c3aed'/%3E%3Crect x='285' y='200' width='330' height='70' rx='24' fill='%238b5cf6'/%3E%3Crect x='430' y='200' width='42' height='225' fill='%23facc15'/%3E%3Crect x='285' y='225' width='330' height='32' fill='%23fde047' opacity='.92'/%3E%3Cpath d='M448 198 C390 140 330 145 328 188 C326 226 392 228 448 198Z' fill='%23fbbf24'/%3E%3Cpath d='M454 198 C512 140 572 145 574 188 C576 226 510 228 454 198Z' fill='%23facc15'/%3E%3Ccircle cx='545' cy='320' r='52' fill='%230f172a' opacity='.8'/%3E%3Ctext x='545' y='342' text-anchor='middle' font-size='72' font-family='Arial' font-weight='900' fill='%23fde047'%3E?%3C/text%3E%3C/g%3E%3Ctext x='450' y='92' text-anchor='middle' font-size='58' font-family='Arial' font-weight='900' fill='%2322c55e'%3ELUCKY DRAW%3C/text%3E%3Ctext x='450' y='145' text-anchor='middle' font-size='25' font-family='Arial' font-weight='700' fill='%23cbd5e1'%3EHadiah masih misteri%3C/text%3E%3C/svg%3E" alt="Lucky Draw Prize">
             <div class="lucky-draw-prize-content">
               <span class="lucky-draw-kicker">Lucky Draw Prize</span>
               <h3 id="luckyDrawPrizeTitle">Hadiah Lucky Draw bulan ini masih belum diumumkan.</h3>
-              <p id="luckyDrawPrizeDescription">Admin boleh attach gambar dan description hadiah giveaway.</p>
+              <p id="luckyDrawPrizeDescription"></p>
             </div>
           </div>
 
           <div class="lucky-draw-prize-admin" id="luckyDrawPrizeAdmin">
             <label class="lucky-draw-prize-file-label" for="luckyDrawPrizeImageFile">
-              <span>Browse gambar hadiah dari folder</span>
+              <span>Pilih gambar hadiah</span>
               <input id="luckyDrawPrizeImageFile" type="file" accept="image/*">
             </label>
             <input id="luckyDrawPrizeImageDataInput" type="hidden">
@@ -8419,7 +8400,6 @@ Peraduan Lucky Draw User</h2>
               <button class="btn orange" id="testLuckyDrawBackendButton" type="button">Test Backend</button>
             </div>
             <div class="lucky-draw-prize-save-status" id="luckyDrawPrizeSaveStatus"></div>
-            <small class="lucky-draw-folder-note">Lucky-draw folder note: upload gambar hadiah ke <b>/Lucky-draw/</b> dan upload file <b>giveaway-prize.json</b> ke folder yang sama.</small>
           </div>
         </div></div>
           <div class="lucky-draw-spinner-name" id="luckyDrawSpinnerName"></div>
@@ -9653,7 +9633,7 @@ Peraduan Lucky Draw User</h2>
 
     function applyLuckyDrawPrize(data = {}) {
       const image = data.imageData || data.imageUrl || getLuckyDrawPrizePlaceholder();
-      const title = data.title || 'Hadiah Lucky Draw bulan ini masih belum diumumkan.';
+      const title = data.title || 'Hadiah belum diumumkan';
       const desc = data.description || 'Admin boleh browse gambar dan isi description hadiah giveaway.';
 
       if (luckyDrawPrizeImage) luckyDrawPrizeImage.src = image;
@@ -9877,7 +9857,7 @@ Peraduan Lucky Draw User</h2>
 
         const imagePath = data.image || data.imageUrl || getLuckyDrawPrizePlaceholderPath();
         if (luckyDrawPrizeImage) luckyDrawPrizeImage.src = imagePath;
-        if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = data.title || 'Hadiah Lucky Draw bulan ini masih belum diumumkan.';
+        if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = data.title || 'Hadiah belum diumumkan';
         if (luckyDrawPrizeDescription) luckyDrawPrizeDescription.innerText = data.description || '';
 
         if (luckyDrawPrizeTitleInput) luckyDrawPrizeTitleInput.value = data.title || '';
@@ -9888,7 +9868,7 @@ Peraduan Lucky Draw User</h2>
         return data;
       } catch (error) {
         const fallback = {
-          title: 'Hadiah Lucky Draw bulan ini masih belum diumumkan.',
+          title: 'Hadiah belum diumumkan',
           description: 'File Lucky-draw/giveaway-prize.json belum dijumpai atau belum upload ke GitHub.',
           image: getLuckyDrawPrizePlaceholderPath()
         };
@@ -15014,7 +14994,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
       const descInput = document.getElementById('luckyDrawPrizeDescriptionInput');
 
       if(img) img.src = prize.imageUrl || 'Lucky-draw/prize-placeholder.svg';
-      if(title) title.textContent = prize.title || 'Hadiah Lucky Draw bulan ini masih belum diumumkan.';
+      if(title) title.textContent = prize.title || 'Hadiah belum diumumkan';
       if(desc) desc.innerText = prize.description || '';
       if(titleInput) titleInput.value = prize.title || '';
       if(descInput) descInput.value = prize.description || '';
