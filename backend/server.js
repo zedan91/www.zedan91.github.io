@@ -127,8 +127,8 @@ app.get("/api/lucky-draw/prize", (req, res) => {
   const key = req.query.monthKey || monthKey();
   const prize = readJson(getPrizeFile(key), {
     monthKey: key,
-    title: "Hadiah Lucky Draw bulan ini masih belum diumumkan.",
-    description: "Hadiah Lucky Draw bulan ini masih belum diumumkan.",
+    title: "Hadiah belum diumumkan",
+    description: "Admin belum upload hadiah Giveaway bulan ini.",
     imageUrl: "",
     updatedAt: ""
   });
@@ -173,8 +173,8 @@ app.get("/api/prize", (req, res) => {
     if (!prize) {
       prize = {
         monthKey: key,
-        title: "Hadiah Lucky Draw bulan ini masih belum diumumkan.",
-        description: "Hadiah Lucky Draw bulan ini masih belum diumumkan.",
+        title: "Hadiah belum diumumkan",
+        description: "Admin belum upload hadiah Giveaway bulan ini.",
         imageUrl: "",
         image: "",
         updatedAt: ""
