@@ -366,7 +366,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
         luckyDrawInviteCode.textContent = '-';
         luckyDrawShareStatus.textContent = 'Belum share';
         luckyDrawJoinStatus.textContent = 'Belum join';
-        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan lucky draw.';
+        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan cabutan bertuah.';
         if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = false;
         return;
       }
@@ -381,10 +381,10 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
       luckyDrawShareStatus.textContent = hasShared ? 'Sudah share' : 'Belum share';
       luckyDrawJoinStatus.textContent = hasJoined ? 'Sudah join' : 'Belum join';
       luckyDrawStatus.textContent = hasJoined
-        ? 'Anda sudah join lucky draw bulan ini.'
+        ? 'Anda sudah join cabutan bertuah bulan ini.'
         : hasShared
-        ? 'Share sudah direkod. Anda boleh join lucky draw.'
-        : 'Share website dahulu sebelum join lucky draw.';
+        ? 'Share sudah direkod. Anda boleh join cabutan bertuah.'
+        : 'Share website dahulu sebelum join cabutan bertuah.';
       if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = hasJoined;
     }
 
@@ -3301,7 +3301,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
       }
 
       if (localStorage.getItem(getLuckyDrawShareKey(currentUser.usernameKey)) !== '1') {
-        luckyDrawStatus.textContent = 'Sila share website dahulu sebelum join lucky draw.';
+        luckyDrawStatus.textContent = 'Sila share website dahulu sebelum join cabutan bertuah.';
         return;
       }
 
@@ -3331,7 +3331,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
 
       localStorage.setItem(getLuckyDrawJoinKey(currentUser.usernameKey), '1');
       updateLuckyDrawPanel();
-      luckyDrawStatus.textContent = 'Anda berjaya join lucky draw bulan ini. Semoga berjaya!';
+      luckyDrawStatus.textContent = 'Anda berjaya join cabutan bertuah bulan ini. Semoga berjaya!';
     }
 
     copyLuckyDrawInviteButton.addEventListener('click', copyLuckyDrawInviteLink);

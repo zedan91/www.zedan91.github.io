@@ -4091,7 +4091,7 @@ body.is-admin .lucky-draw-prize-admin{
 }
 
 #downloadLuckyDrawPrizeJsonButton{
-  display:inline-flex !important;
+  display:none !important;
 }
 
 .lucky-draw-prize-actions{
@@ -5274,7 +5274,7 @@ body.is-admin .lucky-draw-pagination{
 .lucky-draw-left-info{
   position:relative !important;
   min-height:620px !important;
-  padding-right:260px !important;
+  padding-right:190px !important;
 }
 
 .lucky-draw-recent-joins{
@@ -5282,7 +5282,7 @@ body.is-admin .lucky-draw-pagination{
   right:0;
   top:355px;
 
-  width:230px;
+  width:160px;
   height:205px;
 
   border:2px solid rgba(239,68,68,.85);
@@ -5435,1862 +5435,6 @@ body.is-admin .lucky-draw-admin-pagination{
 .lucky-draw-admin-pagination button:disabled{
   opacity:.45;
   cursor:not-allowed;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   PRIZE JSON IMPORT / EXPORT
-========================================================= */
-.lucky-draw-json-import-label{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  min-height:46px !important;
-  padding:12px 22px !important;
-  border-radius:14px !important;
-  font-weight:1000 !important;
-  cursor:pointer !important;
-  user-select:none !important;
-  text-decoration:none !important;
-}
-
-#downloadLuckyDrawPrizeJsonButton{
-  display:inline-flex !important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   USER JOIN CONTEST BOX WIDTH + NEWEST TOP
-========================================================= */
-.lucky-draw-recent-joins{
-  width:230px !important;
-}
-
-.recent-join-item{
-  align-items:center !important;
-}
-
-.recent-join-item strong{
-  font-size:13px !important;
-}
-
-.recent-join-item small{
-  font-size:10.5px !important;
-  white-space:nowrap !important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   MOBILE WIDTH FIX
-========================================================= */
-@media (max-width: 768px){
-
-  .lucky-draw-layout,
-  .lucky-draw-grid,
-  .lucky-draw-main-grid,
-  .lucky-draw-wrapper,
-  .participants-wrapper,
-  .participants-grid{
-    display:flex !important;
-    flex-direction:column !important;
-    grid-template-columns:1fr !important;
-    width:100% !important;
-    max-width:100% !important;
-  }
-
-  .lucky-draw-layout > *,
-  .lucky-draw-grid > *,
-  .lucky-draw-main-grid > *,
-  .participants-wrapper > *,
-  .participants-grid > *{
-    width:100% !important;
-    max-width:100% !important;
-    min-width:0 !important;
-  }
-
-  .lucky-draw-recent-joins{
-    width:100% !important;
-    max-width:100% !important;
-  }
-
-  .lucky-draw-panel,
-  .countdown-card,
-  .winner-card,
-  .invite-card,
-  .spin-card,
-  .participants-card{
-    width:100% !important;
-    max-width:100% !important;
-    box-sizing:border-box !important;
-  }
-
-  img{
-    max-width:100% !important;
-    height:auto !important;
-  }
-
-  body{
-    overflow-x:hidden !important;
-  }
-}
-</style>
-
-
-<style>
-/* Bigger LUCKY DRAW badge */
-.hadiah-giveaway-badge,
-.prize-giveaway-badge,
-.section-badge{
-  font-size:20px !important;
-  font-weight:1000 !important;
-  padding:12px 22px !important;
-}
-</style>
-
-<!-- JOIN NUMBER FIX -->
-
-<style>
-/* =========================================================
-   SPIN ROLL ALL PARTICIPANTS FIX
-========================================================= */
-.lucky-draw-rolling-window{
-  min-height:94px !important;
-}
-
-.lucky-draw-rolling-list span{
-  width:100% !important;
-  box-sizing:border-box !important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   PURCHASE RECORDS USERS PAGINATION - MAX 5
-========================================================= */
-#purchaseRecordsPagination{
-  display:flex !important;
-  flex-wrap:wrap;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
-  margin-top:14px;
-}
-
-body:not(.is-admin) #purchaseRecordsPagination{
-  display:none !important;
-}
-
-#purchaseRecordsPagination button{
-  min-width:44px;
-  min-height:38px;
-  padding:8px 13px;
-  border:1px solid rgba(59,130,246,.65);
-  border-radius:10px;
-  background:rgba(2,6,23,.45);
-  color:#fff;
-  font-weight:900;
-  cursor:pointer;
-}
-
-#purchaseRecordsPagination button.is-active,
-#purchaseRecordsPagination button.active{
-  background:#22c55e !important;
-  border-color:#22c55e !important;
-  color:#fff !important;
-}
-
-#purchaseRecordsPagination button:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-}
-</style>
-
-
-<style>
-/* Countdown target text line break fix */
-#luckyDrawTargetText{
-  display:block !important;
-  line-height:1.35 !important;
-  white-space:normal !important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   MOVE BUTTONS TO MIDDLE EMPTY SPACE
-========================================================= */
-@media (min-width: 900px){
-
-  .invite-actions-group,
-  .luckydraw-action-buttons,
-  .join-lucky-actions{
-    position:absolute !important;
-    left:340px !important;
-    top:380px !important;
-    display:flex !important;
-    flex-direction:column !important;
-    gap:18px !important;
-    width:240px !important;
-    z-index:5 !important;
-  }
-
-  .invite-actions-group button,
-  .luckydraw-action-buttons button,
-  .join-lucky-actions button{
-    width:100% !important;
-  }
-
-}
-</style>
-
-
-<style>
-/* =========================================================
-   MOVE LUCKY DRAW ACTION BUTTONS TO CENTER EMPTY AREA
-========================================================= */
-@media (min-width: 900px){
-
-  .lucky-draw-left-info{
-    position:relative !important;
-    min-height:560px !important;
-  }
-
-  /* common real button/status area in this baseline */
-  .lucky-draw-left-info .lucky-draw-invite-box,
-  .lucky-draw-left-info .lucky-draw-actions,
-  .lucky-draw-left-info .lucky-draw-status,
-  .lucky-draw-left-info #luckyDrawInviteLinkBox,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #shareWebsiteButton,
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    position:relative !important;
-    z-index:6 !important;
-  }
-
-  /* move the whole action column */
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:absolute !important;
-    left:255px !important;
-    top:210px !important;
-    width:260px !important;
-    z-index:7 !important;
-  }
-
-  /* fallback when buttons are not wrapped in a group */
-  .lucky-draw-left-info #luckyDrawInviteLinkBox,
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton,
-  .lucky-draw-left-info #joinLuckyDrawButton,
-  .lucky-draw-left-info #luckyDrawStatus{
-    left:255px !important;
-    top:-20px !important;
-    width:260px !important;
-    max-width:260px !important;
-    margin-left:0 !important;
-    margin-right:0 !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton,
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    margin-top:14px !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawStatus{
-    display:block !important;
-    margin-top:14px !important;
-  }
-}
-
-@media (max-width: 899px){
-  .lucky-draw-left-info #luckyDrawInviteLinkBox,
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton,
-  .lucky-draw-left-info #joinLuckyDrawButton,
-  .lucky-draw-left-info #luckyDrawStatus{
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   LUCKY DRAW ACTION LAYOUT LIKE SCREENSHOT
-========================================================= */
-@media (min-width: 900px){
-
-  .lucky-draw-top{
-    display:grid !important;
-    grid-template-columns:390px minmax(230px,260px) minmax(330px,1fr) !important;
-    gap:22px !important;
-    align-items:start !important;
-  }
-
-  .lucky-draw-left-info{
-    position:relative !important;
-    min-height:720px !important;
-    padding-right:0 !important;
-  }
-
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    width:290px !important;
-    max-width:290px !important;
-    margin-top:18px !important;
-    z-index:auto !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawInviteLinkBox,
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton,
-  .lucky-draw-left-info #joinLuckyDrawButton,
-  .lucky-draw-left-info #luckyDrawStatus{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    margin-left:0 !important;
-    margin-right:0 !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawInviteLinkBox{
-    width:290px !important;
-    max-width:290px !important;
-    margin-bottom:12px !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton{
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:142px !important;
-    min-width:142px !important;
-    max-width:142px !important;
-    margin:0 0 10px 0 !important;
-    vertical-align:top !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton{
-    margin-right:6px !important;
-  }
-
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:290px !important;
-    min-width:290px !important;
-    max-width:290px !important;
-    margin-top:0 !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawStatus{
-    display:block !important;
-    width:290px !important;
-    max-width:290px !important;
-    margin-top:14px !important;
-    line-height:1.18 !important;
-  }
-
-  .lucky-draw-recent-joins{
-    position:static !important;
-    width:230px !important;
-    height:205px !important;
-    margin-top:320px !important;
-  }
-
-  .lucky-draw-right-stack{
-    width:100% !important;
-    max-width:360px !important;
-  }
-}
-
-@media (max-width: 899px){
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:static !important;
-    width:100% !important;
-    max-width:100% !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton,
-  .lucky-draw-left-info #joinLuckyDrawButton,
-  .lucky-draw-left-info #luckyDrawInviteLinkBox,
-  .lucky-draw-left-info #luckyDrawStatus{
-    width:100% !important;
-    max-width:100% !important;
-    position:static !important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FINAL LUCKY DRAW TOP LAYOUT - MATCH USER SCREENSHOT
-========================================================= */
-@media (min-width: 900px){
-
-  .lucky-draw-top{
-    display:grid !important;
-    grid-template-columns:390px 230px 230px !important;
-    gap:28px !important;
-    align-items:start !important;
-    justify-content:start !important;
-  }
-
-  .lucky-draw-left-info{
-    min-height:520px !important;
-    padding-right:0 !important;
-  }
-
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin-top:18px !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawInviteLinkBox{
-    width:390px !important;
-    max-width:390px !important;
-    height:auto !important;
-    min-height:42px !important;
-    margin-bottom:16px !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton{
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-
-    width:162px !important;
-    min-width:162px !important;
-    max-width:162px !important;
-
-    height:48px !important;
-    margin:0 24px 22px 8px !important;
-    vertical-align:top !important;
-  }
-
-  .lucky-draw-left-info #shareWebsiteButton{
-    margin-right:0 !important;
-  }
-
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-
-    width:290px !important;
-    min-width:290px !important;
-    max-width:290px !important;
-
-    height:48px !important;
-    margin:4px 0 0 0 !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawStatus{
-    display:block !important;
-    width:300px !important;
-    max-width:300px !important;
-    margin-top:22px !important;
-    font-size:16px !important;
-    line-height:1.16 !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:contents !important;
-  }
-
-  .lucky-draw-side{
-    grid-column:3 !important;
-    width:230px !important;
-    max-width:230px !important;
-  }
-
-  .lucky-draw-top-countdown{
-    grid-column:2 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    min-height:180px !important;
-    margin-top:18px !important;
-  }
-
-  .lucky-draw-recent-joins{
-    grid-column:2 !important;
-    grid-row:1 !important;
-    position:static !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:205px !important;
-    margin-top:210px !important;
-  }
-
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    min-height:390px !important;
-    height:390px !important;
-    margin-top:200px !important;
-    padding:18px !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window,
-  #luckyDrawSpinStage .lucky-draw-rolling-window{
-    width:100% !important;
-    height:292px !important;
-    min-height:292px !important;
-    max-height:292px !important;
-    margin-top:12px !important;
-    border-radius:18px !important;
-  }
-
-  .lucky-draw-spin-stage::before{
-    font-size:36px !important;
-    margin-bottom:4px !important;
-  }
-
-  .lucky-draw-card{
-    min-height:780px !important;
-  }
-}
-
-@media (max-width: 899px){
-  .lucky-draw-right-stack{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:14px !important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FINAL LUCKY DRAW LAYOUT EXACT MATCH
-========================================================= */
-@media (min-width:900px){
-
-  .lucky-draw-card{
-    max-width:950px !important;
-    margin-left:auto !important;
-    margin-right:auto !important;
-    min-height:auto !important;
-  }
-
-  .lucky-draw-top{
-    display:grid !important;
-    grid-template-columns:390px 230px 230px !important;
-    column-gap:28px !important;
-    row-gap:18px !important;
-    align-items:start !important;
-    justify-content:start !important;
-  }
-
-  .lucky-draw-left-info{
-    grid-column:1 !important;
-    grid-row:1 / span 2 !important;
-    min-height:390px !important;
-    padding-right:0 !important;
-  }
-
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:static !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin-top:18px !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawInviteLinkBox{
-    width:390px !important;
-    max-width:390px !important;
-    min-height:42px !important;
-    margin-bottom:16px !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton{
-    display:inline-flex !important;
-    width:162px !important;
-    min-width:162px !important;
-    max-width:162px !important;
-    height:48px !important;
-    align-items:center !important;
-    justify-content:center !important;
-    margin:0 24px 22px 8px !important;
-    vertical-align:top !important;
-  }
-
-  .lucky-draw-left-info #shareWebsiteButton{
-    margin-right:0 !important;
-  }
-
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    display:flex !important;
-    width:290px !important;
-    min-width:290px !important;
-    max-width:290px !important;
-    height:48px !important;
-    align-items:center !important;
-    justify-content:center !important;
-    margin:4px 0 0 0 !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawStatus{
-    display:block !important;
-    width:300px !important;
-    max-width:300px !important;
-    margin-top:22px !important;
-    font-size:16px !important;
-    line-height:1.15 !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:contents !important;
-  }
-
-  .lucky-draw-side{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-  }
-
-  .lucky-draw-top-countdown{
-    grid-column:2 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    min-height:180px !important;
-    margin-top:18px !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-recent-joins{
-    grid-column:2 !important;
-    grid-row:1 !important;
-    position:static !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:205px !important;
-    margin-top:210px !important;
-    box-sizing:border-box !important;
-  }
-
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:390px !important;
-    min-height:390px !important;
-    margin-top:200px !important;
-    padding:18px !important;
-    box-sizing:border-box !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    width:100% !important;
-    height:292px !important;
-    min-height:292px !important;
-    max-height:292px !important;
-    border-radius:18px !important;
-    margin:12px 0 0 !important;
-  }
-
-  /* prize section starts immediately below top layout */
-  .lucky-draw-participants-panel{
-    grid-column:1 / -1 !important;
-    width:100% !important;
-    margin-top:18px !important;
-    clear:both !important;
-  }
-
-  .lucky-draw-summary-grid{
-    display:grid !important;
-    grid-template-columns:1fr 1fr !important;
-    gap:14px !important;
-  }
-
-  .lucky-draw-prize-panel{
-    margin-top:18px !important;
-  }
-}
-
-@media (max-width:899px){
-  .lucky-draw-top{
-    display:grid !important;
-    grid-template-columns:1fr !important;
-    gap:16px !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:14px !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton,
-  .lucky-draw-left-info #joinLuckyDrawButton,
-  .lucky-draw-left-info #luckyDrawInviteLinkBox,
-  .lucky-draw-left-info #luckyDrawStatus{
-    width:100% !important;
-    max-width:100% !important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FIX LUCKY DRAW PARTICIPANTS POSITION BESIDE SPIN
-========================================================= */
-@media (min-width:900px){
-
-  .lucky-draw-top{
-    display:grid !important;
-    grid-template-columns:390px 230px 230px !important;
-    gap:28px !important;
-    align-items:start !important;
-    justify-content:start !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:contents !important;
-  }
-
-  .lucky-draw-top-countdown{
-    grid-column:2 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    margin-top:18px !important;
-  }
-
-  .lucky-draw-recent-joins{
-    grid-column:2 !important;
-    grid-row:1 !important;
-    position:static !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:205px !important;
-    margin-top:210px !important;
-    box-sizing:border-box !important;
-    align-self:start !important;
-  }
-
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:390px !important;
-    min-height:390px !important;
-    margin-top:18px !important;
-    box-sizing:border-box !important;
-    align-self:start !important;
-  }
-
-  .lucky-draw-side{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    margin-top:0 !important;
-    display:none !important;
-  }
-
-  .lucky-draw-participants-panel{
-    grid-column:1 / -1 !important;
-    margin-top:18px !important;
-    width:100% !important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FORCE FIX: LUCKY DRAW PARTICIPANTS BESIDE SPIN
-   Use absolute positioning to avoid conflict with older grid CSS.
-========================================================= */
-@media (min-width:900px){
-
-  .lucky-draw-top{
-    position:relative !important;
-    display:block !important;
-    min-height:650px !important;
-  }
-
-  .lucky-draw-left-info{
-    position:absolute !important;
-    left:0 !important;
-    top:0 !important;
-    width:390px !important;
-    max-width:390px !important;
-    min-height:auto !important;
-    padding-right:0 !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:block !important;
-    position:static !important;
-  }
-
-  .lucky-draw-side{
-    position:absolute !important;
-    left:590px !important;
-    top:0 !important;
-    width:340px !important;
-    max-width:340px !important;
-    display:block !important;
-  }
-
-  .lucky-draw-top-countdown{
-    position:absolute !important;
-    left:440px !important;
-    top:0 !important;
-    width:230px !important;
-    max-width:230px !important;
-    min-height:180px !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-recent-joins{
-    position:absolute !important;
-    left:440px !important;
-    top:210px !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:205px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    z-index:10 !important;
-    display:block !important;
-  }
-
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:absolute !important;
-    left:690px !important;
-    top:210px !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:390px !important;
-    min-height:390px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    z-index:9 !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    width:100% !important;
-    height:292px !important;
-    min-height:292px !important;
-    max-height:292px !important;
-    margin:12px 0 0 !important;
-  }
-
-  .lucky-draw-participants-panel{
-    position:relative !important;
-    width:100% !important;
-    margin-top:18px !important;
-    clear:both !important;
-  }
-}
-
-@media (max-width:899px){
-  .lucky-draw-top{
-    position:static !important;
-    display:grid !important;
-    grid-template-columns:1fr !important;
-    gap:16px !important;
-    min-height:auto !important;
-  }
-
-  .lucky-draw-left-info,
-  .lucky-draw-side,
-  .lucky-draw-top-countdown,
-  .lucky-draw-recent-joins,
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-    margin-top:0 !important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   SWAP INVITE CODE AND COUNTDOWN CARD POSITION
-   Baseline: force-participants-beside-spin
-========================================================= */
-@media (min-width:900px){
-
-  .lucky-draw-top{
-    position:relative !important;
-    display:block !important;
-    min-height:650px !important;
-  }
-
-  .lucky-draw-left-info{
-    position:absolute !important;
-    left:0 !important;
-    top:0 !important;
-    width:390px !important;
-    max-width:390px !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:block !important;
-    position:static !important;
-  }
-
-  /* Invite Code Anda = kiri atas sebelah countdown */
-  .lucky-draw-side{
-    position:absolute !important;
-    left:420px !important;
-    top:0 !important;
-    width:205px !important;
-    max-width:205px !important;
-    min-height:220px !important;
-    display:block !important;
-    box-sizing:border-box !important;
-  }
-
-  /* Cabutan Bermula Dalam = kanan invite card */
-  .lucky-draw-top-countdown{
-    position:absolute !important;
-    left:645px !important;
-    top:0 !important;
-    width:250px !important;
-    max-width:250px !important;
-    min-height:220px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-top-countdown strong{
-    font-size:42px !important;
-    line-height:1.1 !important;
-  }
-
-  .lucky-draw-top-countdown small{
-    line-height:1.45 !important;
-  }
-
-  /* Lucky Draw Participants under both small cards */
-  .lucky-draw-recent-joins{
-    position:absolute !important;
-    left:420px !important;
-    top:250px !important;
-    width:475px !important;
-    max-width:475px !important;
-    height:250px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    display:block !important;
-    z-index:10 !important;
-  }
-
-  .recent-joins-list{
-    max-height:180px !important;
-  }
-
-  /* Rolling Spin beside participants */
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:absolute !important;
-    left:925px !important;
-    top:0 !important;
-    width:260px !important;
-    max-width:260px !important;
-    height:500px !important;
-    min-height:500px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    z-index:9 !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    width:100% !important;
-    height:385px !important;
-    min-height:385px !important;
-    max-height:385px !important;
-    margin:12px 0 0 !important;
-  }
-
-  .lucky-draw-participants-panel{
-    position:relative !important;
-    width:100% !important;
-    margin-top:18px !important;
-    clear:both !important;
-  }
-}
-
-@media (max-width:899px){
-  .lucky-draw-top{
-    position:static !important;
-    display:grid !important;
-    grid-template-columns:1fr !important;
-    gap:16px !important;
-    min-height:auto !important;
-  }
-
-  .lucky-draw-left-info,
-  .lucky-draw-side,
-  .lucky-draw-top-countdown,
-  .lucky-draw-recent-joins,
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-    height:auto !important;
-    margin-top:0 !important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   LUCKY DRAW FINAL LAYOUT - SCREENSHOT STYLE
-========================================================= */
-@media (min-width:900px){
-
-  .lucky-draw-top{
-    position:static !important;
-    display:grid !important;
-    grid-template-columns:390px 230px 290px !important;
-    column-gap:26px !important;
-    row-gap:22px !important;
-    align-items:start !important;
-    justify-content:start !important;
-    min-height:560px !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:contents !important;
-    position:static !important;
-  }
-
-  .lucky-draw-left-info{
-    position:static !important;
-    grid-column:1 !important;
-    grid-row:1 / span 2 !important;
-    width:390px !important;
-    max-width:390px !important;
-    min-height:auto !important;
-    padding-right:0 !important;
-  }
-
-  .lucky-draw-recent-joins{
-    position:static !important;
-    grid-column:2 !important;
-    grid-row:1 !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:250px !important;
-    min-height:250px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-top-countdown{
-    position:static !important;
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:290px !important;
-    max-width:290px !important;
-    min-height:220px !important;
-    margin-top:20px !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-side{
-    position:static !important;
-    grid-column:2 !important;
-    grid-row:2 !important;
-    width:230px !important;
-    max-width:230px !important;
-    min-height:220px !important;
-    margin-top:-35px !important;
-    display:block !important;
-    box-sizing:border-box !important;
-  }
-
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:static !important;
-    grid-column:3 !important;
-    grid-row:2 !important;
-    width:290px !important;
-    max-width:290px !important;
-    height:360px !important;
-    min-height:360px !important;
-    margin-top:-55px !important;
-    box-sizing:border-box !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    width:100% !important;
-    height:250px !important;
-    min-height:250px !important;
-    max-height:250px !important;
-    margin-top:12px !important;
-  }
-
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:static !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin-top:18px !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton{
-    position:static !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:145px !important;
-    max-width:145px !important;
-    min-width:145px !important;
-    height:46px !important;
-    margin:0 22px 18px 8px !important;
-    vertical-align:top !important;
-  }
-
-  .lucky-draw-left-info #shareWebsiteButton{
-    margin-right:0 !important;
-  }
-
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    position:static !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:290px !important;
-    max-width:290px !important;
-    min-width:290px !important;
-    height:48px !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawInviteLinkBox{
-    position:static !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin-bottom:16px !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawStatus{
-    position:static !important;
-    width:300px !important;
-    max-width:300px !important;
-    margin-top:22px !important;
-    line-height:1.15 !important;
-  }
-
-  .lucky-draw-participants-panel{
-    position:relative !important;
-    width:100% !important;
-    margin-top:18px !important;
-    clear:both !important;
-  }
-}
-
-@media (max-width:899px){
-  .lucky-draw-top{
-    position:static !important;
-    display:grid !important;
-    grid-template-columns:1fr !important;
-    gap:16px !important;
-    min-height:auto !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:14px !important;
-  }
-
-  .lucky-draw-left-info,
-  .lucky-draw-side,
-  .lucky-draw-top-countdown,
-  .lucky-draw-recent-joins,
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:static !important;
-    width:100% !important;
-    max-width:100% !important;
-    height:auto !important;
-    min-height:auto !important;
-    margin:0 !important;
-  }
-}
-</style>
-
-
-<style>
-/* ===== FIX OVERLAP / TERABUR ===== */
-
-@media (min-width:900px){
-
-  .lucky-draw-top{
-    display:grid !important;
-    grid-template-columns: 390px 230px 290px !important;
-    grid-template-rows:auto auto !important;
-    gap:26px !important;
-    align-items:start !important;
-  }
-
-  .lucky-draw-left-info{
-    grid-column:1 !important;
-    grid-row:1 / span 2 !important;
-    width:390px !important;
-    max-width:390px !important;
-  }
-
-  /* countdown kanan atas */
-  .lucky-draw-top-countdown{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:290px !important;
-    margin:0 !important;
-    align-self:start !important;
-  }
-
-  /* invite tengah */
-  .lucky-draw-side{
-    grid-column:2 !important;
-    grid-row:2 !important;
-    width:230px !important;
-    margin:0 !important;
-    align-self:start !important;
-  }
-
-  /* participants bawah kiri */
-  .lucky-draw-recent-joins{
-    grid-column:1 !important;
-    grid-row:3 !important;
-    width:230px !important;
-    height:250px !important;
-    margin-top:0 !important;
-  }
-
-  /* spin kanan */
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    grid-column:3 !important;
-    grid-row:2 / span 2 !important;
-    width:290px !important;
-    height:360px !important;
-    margin:0 !important;
-    align-self:start !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    height:250px !important;
-  }
-
-}
-
-/* MOBILE FIX */
-@media (max-width:899px){
-
-  .lucky-draw-top{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:18px !important;
-  }
-
-  .lucky-draw-left-info,
-  .lucky-draw-side,
-  .lucky-draw-recent-joins,
-  .lucky-draw-top-countdown,
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    width:100% !important;
-    max-width:100% !important;
-    margin:0 !important;
-    position:static !important;
-  }
-
-}
-</style>
-
-
-<style>
-/* =========================================================
-   HARD RESET LUCKY DRAW TOP LAYOUT - FINAL FIX
-   Susun semula semua card supaya tak terabur.
-========================================================= */
-@media (min-width:900px){
-
-  .lucky-draw-card{
-    max-width:1000px !important;
-    margin-left:auto !important;
-    margin-right:auto !important;
-    overflow:visible !important;
-  }
-
-  .lucky-draw-top{
-    position:relative !important;
-    display:block !important;
-    width:100% !important;
-    min-height:620px !important;
-    padding:0 !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-left-info{
-    position:absolute !important;
-    left:0 !important;
-    top:0 !important;
-    width:390px !important;
-    max-width:390px !important;
-    min-height:0 !important;
-    padding:0 !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:static !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin-top:18px !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawInviteLinkBox{
-    width:390px !important;
-    max-width:390px !important;
-    min-height:42px !important;
-    margin:18px 0 16px 0 !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton{
-    position:static !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:160px !important;
-    min-width:160px !important;
-    max-width:160px !important;
-    height:46px !important;
-    margin:0 22px 20px 8px !important;
-    vertical-align:top !important;
-  }
-
-  .lucky-draw-left-info #shareWebsiteButton{
-    margin-right:0 !important;
-  }
-
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    position:static !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:290px !important;
-    max-width:290px !important;
-    min-width:290px !important;
-    height:48px !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawStatus{
-    position:static !important;
-    display:block !important;
-    width:300px !important;
-    max-width:300px !important;
-    margin:20px 0 0 0 !important;
-    line-height:1.15 !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:block !important;
-    position:static !important;
-  }
-
-  /* Invite card: top middle */
-  .lucky-draw-side{
-    position:absolute !important;
-    left:420px !important;
-    top:0 !important;
-    width:230px !important;
-    max-width:230px !important;
-    height:220px !important;
-    min-height:220px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    display:block !important;
-    z-index:5 !important;
-  }
-
-  /* Countdown card: top right */
-  .lucky-draw-top-countdown{
-    position:absolute !important;
-    left:675px !important;
-    top:0 !important;
-    width:290px !important;
-    max-width:290px !important;
-    height:220px !important;
-    min-height:220px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    z-index:5 !important;
-  }
-
-  .lucky-draw-top-countdown strong{
-    font-size:44px !important;
-    line-height:1.06 !important;
-  }
-
-  .lucky-draw-top-countdown small{
-    font-size:12px !important;
-    line-height:1.35 !important;
-  }
-
-  /* Participants: bawah invite, sebelah kiri spin */
-  .lucky-draw-recent-joins{
-    position:absolute !important;
-    left:420px !important;
-    top:250px !important;
-    width:390px !important;
-    max-width:390px !important;
-    height:245px !important;
-    min-height:245px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    display:block !important;
-    z-index:6 !important;
-  }
-
-  .lucky-draw-recent-joins .recent-joins-list{
-    max-height:178px !important;
-  }
-
-  /* Spin: kanan participants */
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:absolute !important;
-    left:835px !important;
-    top:250px !important;
-    width:290px !important;
-    max-width:290px !important;
-    height:390px !important;
-    min-height:390px !important;
-    margin:0 !important;
-    padding:18px !important;
-    box-sizing:border-box !important;
-    z-index:5 !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    width:100% !important;
-    height:280px !important;
-    min-height:280px !important;
-    max-height:280px !important;
-    margin:12px 0 0 0 !important;
-  }
-
-  .lucky-draw-participants-panel{
-    position:relative !important;
-    display:block !important;
-    width:100% !important;
-    margin-top:22px !important;
-    clear:both !important;
-  }
-}
-
-@media (max-width:899px){
-  .lucky-draw-top{
-    position:static !important;
-    display:flex !important;
-    flex-direction:column !important;
-    gap:16px !important;
-    min-height:auto !important;
-  }
-
-  .lucky-draw-left-info,
-  .lucky-draw-side,
-  .lucky-draw-top-countdown,
-  .lucky-draw-recent-joins,
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-    height:auto !important;
-    min-height:auto !important;
-    margin:0 !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    height:220px !important;
-    min-height:220px !important;
-  }
-}
-</style>
-
-
-<style>
-/* REDUCE PARTICIPANTS CARD WIDTH */
-@media (min-width:900px){
-
-  .lucky-draw-recent-joins{
-      width:260px !important;
-      max-width:260px !important;
-      min-width:260px !important;
-  }
-
-}
-</style>
-
-
-<style>
-/* FIX SPIN CARD TERKELUAR */
-
-@media (min-width:900px){
-
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-      left:760px !important;
-      width:250px !important;
-      max-width:250px !important;
-      min-width:250px !important;
-      overflow:hidden !important;
-      box-sizing:border-box !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-      width:100% !important;
-      max-width:100% !important;
-      overflow:hidden !important;
-      box-sizing:border-box !important;
-  }
-
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FINAL CLEAN LUCKY DRAW LAYOUT
-   - Roll spin card lebar sikit
-   - Tak keluar container
-   - Selari dengan Lucky Draw Participants
-========================================================= */
-@media (min-width:900px){
-
-  .lucky-draw-card{
-    max-width:1180px !important;
-    margin-left:auto !important;
-    margin-right:auto !important;
-    overflow:visible !important;
-  }
-
-  .lucky-draw-top{
-    position:relative !important;
-    display:grid !important;
-    grid-template-columns: 390px 310px 370px !important;
-    grid-template-rows:auto auto !important;
-    column-gap:28px !important;
-    row-gap:26px !important;
-    align-items:start !important;
-    justify-content:start !important;
-    min-height:585px !important;
-    padding:0 !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:contents !important;
-    position:static !important;
-  }
-
-  .lucky-draw-left-info{
-    position:static !important;
-    grid-column:1 !important;
-    grid-row:1 / span 2 !important;
-    width:390px !important;
-    max-width:390px !important;
-    min-height:auto !important;
-    padding-right:0 !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-side{
-    position:static !important;
-    grid-column:2 !important;
-    grid-row:1 !important;
-    width:310px !important;
-    max-width:310px !important;
-    min-height:220px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    display:block !important;
-  }
-
-  .lucky-draw-top-countdown{
-    position:static !important;
-    grid-column:3 !important;
-    grid-row:1 !important;
-    width:370px !important;
-    max-width:370px !important;
-    min-height:220px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-top-countdown strong{
-    font-size:52px !important;
-    line-height:1.05 !important;
-  }
-
-  .lucky-draw-top-countdown small{
-    font-size:13px !important;
-    line-height:1.35 !important;
-  }
-
-  .lucky-draw-recent-joins{
-    position:static !important;
-    grid-column:2 !important;
-    grid-row:2 !important;
-    width:310px !important;
-    max-width:310px !important;
-    min-width:310px !important;
-    height:270px !important;
-    min-height:270px !important;
-    margin:0 !important;
-    box-sizing:border-box !important;
-    display:block !important;
-  }
-
-  .lucky-draw-recent-joins .recent-joins-list{
-    max-height:195px !important;
-  }
-
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:static !important;
-    grid-column:3 !important;
-    grid-row:2 !important;
-    width:370px !important;
-    max-width:370px !important;
-    min-width:370px !important;
-    height:270px !important;
-    min-height:270px !important;
-    margin:0 !important;
-    padding:18px !important;
-    box-sizing:border-box !important;
-    overflow:hidden !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    width:100% !important;
-    max-width:100% !important;
-    height:165px !important;
-    min-height:165px !important;
-    max-height:165px !important;
-    margin:12px 0 0 0 !important;
-    box-sizing:border-box !important;
-    overflow:hidden !important;
-    border-radius:18px !important;
-  }
-
-  .lucky-draw-left-info .lucky-draw-action-area,
-  .lucky-draw-left-info .invite-actions-group,
-  .lucky-draw-left-info .luckydraw-action-buttons,
-  .lucky-draw-left-info .join-lucky-actions{
-    position:static !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin-top:18px !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawInviteLinkBox{
-    position:static !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin:18px 0 16px 0 !important;
-    box-sizing:border-box !important;
-  }
-
-  .lucky-draw-left-info #copyInviteButton,
-  .lucky-draw-left-info #copyInviteLinkButton,
-  .lucky-draw-left-info #shareWebsiteButton{
-    position:static !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:180px !important;
-    min-width:180px !important;
-    max-width:180px !important;
-    height:48px !important;
-    margin:0 22px 20px 0 !important;
-    vertical-align:top !important;
-  }
-
-  .lucky-draw-left-info #shareWebsiteButton{
-    margin-right:0 !important;
-  }
-
-  .lucky-draw-left-info #joinLuckyDrawButton{
-    position:static !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:390px !important;
-    max-width:390px !important;
-    min-width:390px !important;
-    height:52px !important;
-    margin:0 !important;
-  }
-
-  .lucky-draw-left-info #luckyDrawStatus{
-    position:static !important;
-    display:block !important;
-    width:390px !important;
-    max-width:390px !important;
-    margin:22px 0 0 0 !important;
-    line-height:1.15 !important;
-  }
-
-  .lucky-draw-participants-panel{
-    position:relative !important;
-    width:100% !important;
-    margin-top:24px !important;
-    clear:both !important;
-  }
-}
-
-@media (max-width:899px){
-
-  .lucky-draw-top{
-    position:static !important;
-    display:flex !important;
-    flex-direction:column !important;
-    gap:16px !important;
-    min-height:auto !important;
-    padding:0 !important;
-  }
-
-  .lucky-draw-right-stack{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:16px !important;
-  }
-
-  .lucky-draw-left-info,
-  .lucky-draw-side,
-  .lucky-draw-top-countdown,
-  .lucky-draw-recent-joins,
-  #luckyDrawSpinStage,
-  .lucky-draw-top-spin-panel{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-    min-width:0 !important;
-    height:auto !important;
-    min-height:auto !important;
-    margin:0 !important;
-  }
-
-  #luckyDrawSpinStage .lucky-draw-rolling-window,
-  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    height:220px !important;
-    min-height:220px !important;
-    max-height:220px !important;
-  }
 }
 </style>
 
@@ -8488,15 +6632,15 @@ body:not(.is-admin) #purchaseRecordsPagination{
     <div class="lucky-draw-card">
       <div class="lucky-draw-top">
         <div class="lucky-draw-left-info">
-          <span class="lucky-draw-kicker">Lucky Draw</span>
+          <span class="lucky-draw-kicker">Cabutan Bertuah</span>
           <h2><div id="monthly-giveaway-section"></div>
-Peraduan Lucky Draw User</h2>
+Peraduan Cabutan Bertuah User</h2>
           <p>
-            User yang login boleh join lucky draw selepas share website AZOBSS menggunakan invite link masing-masing.
+            User yang login boleh join cabutan bertuah selepas share website AZOBSS menggunakan invite link masing-masing.
             Invite code akan menjadi bukti jika user baru masuk melalui link/code tersebut.
           </p>
           <ul class="lucky-draw-rules">
-            <li>Login dahulu sebelum join lucky draw.</li>
+            <li>Login dahulu sebelum join cabutan bertuah.</li>
             <li>Share website menggunakan invite link khas anda.</li>
             <li>User baru yang signup melalui invite code akan direkod sebagai bukti invite.</li>
           </ul>
@@ -8506,12 +6650,12 @@ Peraduan Lucky Draw User</h2>
             <button class="btn orange" id="shareLuckyDrawButton" type="button">Share Website</button>
           </div>
           <div class="lucky-draw-actions">
-            <button class="btn" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
+            <button class="btn" id="joinLuckyDrawButton" type="button">Join Cabutan Bertuah</button>
           </div>
-          <div class="lucky-draw-status" id="luckyDrawStatus">Login dahulu untuk aktifkan lucky draw.</div>
+          <div class="lucky-draw-status" id="luckyDrawStatus">Login dahulu untuk aktifkan cabutan bertuah.</div>
 
           <div class="lucky-draw-recent-joins" id="luckyDrawRecentJoinsBox">
-            <div class="recent-joins-title">Lucky Draw Participants</div>
+            <div class="recent-joins-title">User Join Contest</div>
             <div class="recent-joins-list" id="luckyDrawRecentJoinList">
               <div class="recent-join-empty">Belum ada peserta.</div>
             </div>
@@ -8556,9 +6700,9 @@ Peraduan Lucky Draw User</h2>
       <div class="lucky-draw-participants-panel" id="luckyDrawParticipantsPanel">
         <div class="lucky-draw-participants-head">
           <div>
-            <span class="lucky-draw-kicker">Lucky Draw Prize</span>
+            <span class="lucky-draw-kicker">Peserta Giveaway</span>
             
-            
+            <p></p>
           </div>
           <div class="lucky-draw-admin-tools" id="luckyDrawAdminTools">
             <input id="luckyDrawParticipantSearch" type="search" placeholder="Search nama / username / phone / email">
@@ -8587,7 +6731,7 @@ Peraduan Lucky Draw User</h2>
           <div class="lucky-draw-prize-preview">
             <img id="luckyDrawPrizeImage" src="https://placehold.co/600x400/0f172a/22c55e?text=Lucky+Draw+Prize" alt="Lucky Draw Prize">
             <div class="lucky-draw-prize-content">
-              <span class="lucky-draw-kicker">Lucky Draw Prize</span>
+              <span class="lucky-draw-kicker">Hadiah Giveaway</span>
               <h3 id="luckyDrawPrizeTitle">Hadiah belum diumumkan</h3>
               <p id="luckyDrawPrizeDescription">Admin boleh attach gambar dan description hadiah giveaway.</p>
             </div>
@@ -8604,9 +6748,7 @@ Peraduan Lucky Draw User</h2>
 
             <div class="lucky-draw-prize-actions">
               <button class="btn blue save-prize-main-btn" id="saveLuckyDrawPrizeButton" type="button">💾 Save Prize</button>
-              <button class="btn orange" id="downloadLuckyDrawPrizeJsonButton" type="button">Export JSON</button>
-              <label class="btn blue lucky-draw-json-import-label" for="importLuckyDrawPrizeJsonInput">Import JSON</label>
-              <input id="importLuckyDrawPrizeJsonInput" type="file" accept="application/json,.json" hidden>
+              <button class="btn orange" id="downloadLuckyDrawPrizeJsonButton" type="button">Download JSON</button>
               <button class="btn orange" id="refreshLuckyDrawPrizeButton" type="button">Refresh Prize</button>
               <button class="btn blue" id="setLuckyDrawBackendUrlButton" type="button">Set Backend URL</button>
               <button class="btn orange" id="testLuckyDrawBackendButton" type="button">Test Backend</button>
@@ -8857,7 +6999,7 @@ Peraduan Lucky Draw User</h2>
     let allGuestHistory = [];
     let guestHistoryPage = 1;
     const HISTORY_PAGE_SIZE = 3;
-    const PURCHASE_RECORDS_PAGE_SIZE = 5;
+    const PURCHASE_RECORDS_PAGE_SIZE = 10;
     const USER_PA_PURCHASE_PAGE_SIZE = 5;
     const HISTORY_PAGINATION_MAX_BUTTONS = 10;
     let presenceHeartbeatTimer = null;
@@ -9038,7 +7180,7 @@ Peraduan Lucky Draw User</h2>
         luckyDrawInviteCode.textContent = '-';
         luckyDrawShareStatus.textContent = 'Belum share';
         luckyDrawJoinStatus.textContent = 'Belum join';
-        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan lucky draw.';
+        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan cabutan bertuah.';
         if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = false;
         return;
       }
@@ -9053,10 +7195,10 @@ Peraduan Lucky Draw User</h2>
       luckyDrawShareStatus.textContent = hasShared ? 'Sudah share' : 'Belum share';
       luckyDrawJoinStatus.textContent = hasJoined ? 'Sudah join' : 'Belum join';
       luckyDrawStatus.textContent = hasJoined
-        ? 'Anda sudah join lucky draw bulan ini.'
+        ? 'Anda sudah join cabutan bertuah bulan ini.'
         : hasShared
-        ? 'Share sudah direkod. Anda boleh join lucky draw.'
-        : 'Share website dahulu sebelum join lucky draw.';
+        ? 'Share sudah direkod. Anda boleh join cabutan bertuah.'
+        : 'Share website dahulu sebelum join cabutan bertuah.';
       if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = hasJoined;
     }
 
@@ -9167,56 +7309,35 @@ Peraduan Lucky Draw User</h2>
       if (luckyDrawParticipantsStatus) luckyDrawParticipantsStatus.textContent = 'Loading peserta Giveaway...';
 
       try {
-        // Prefer Render backend entries, because this is the same source used by the website join flow.
-        const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(getMonthKey()));
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Backend entries error');
+        if (!firebaseReady || !db) throw new Error('Firebase not ready');
 
-        allLuckyDrawParticipants = (data.entries || [])
-          .filter(function(entry){ return !entry.deleted; })
-          .map(function(entry, index){
-            return {
-              id: entry.id || `${entry.monthKey || getMonthKey()}_${entry.usernameKey || entry.name || index}`,
-              ...entry
-            };
-          })
-          .sort(function(a,b){
-            return new Date(b.joinedAt || b.createdAt || b.updatedAt || b.joinedAtMs || b.createdAtMs || 0) -
-                   new Date(a.joinedAt || a.createdAt || a.updatedAt || a.joinedAtMs || a.createdAtMs || 0);
-          });
-      } catch (backendError) {
+        const snapshot = await getDocs(collection(db, 'luckyDrawEntries'));
+        const rows = [];
+        snapshot.forEach(function (item) {
+          const data = item.data();
+          if (!data.deleted) rows.push({ id: item.id, ...data });
+        });
+
+        rows.sort(function (a, b) {
+          return (b.joinedAtMs || b.createdAtMs || 0) - (a.joinedAtMs || a.createdAtMs || 0);
+        });
+
+        allLuckyDrawParticipants = rows;
+      } catch (error) {
         try {
-          if (!firebaseReady || !db) throw new Error('Firebase not ready');
-
-          const snapshot = await getDocs(collection(db, 'luckyDrawEntries'));
-          const rows = [];
-          snapshot.forEach(function (item) {
-            const data = item.data();
-            if (!data.deleted) rows.push({ id: item.id, ...data });
-          });
-
-          rows.sort(function (a, b) {
-            return (b.joinedAtMs || b.createdAtMs || 0) - (a.joinedAtMs || a.createdAtMs || 0);
-          });
-
-          allLuckyDrawParticipants = rows;
-        } catch (error) {
-          try {
-            allLuckyDrawParticipants = JSON.parse(localStorage.getItem('azobssLuckyDrawEntries') || '[]')
-              .map(function (entry, index) {
-                return { id: entry.id || `${entry.monthKey || 'local'}_${entry.usernameKey || entry.name || index}`, ...entry };
-              })
-              .filter(function (entry) {
-                return !entry.deleted;
-              });
-          } catch (storageError) {
-            allLuckyDrawParticipants = [];
-          }
+          allLuckyDrawParticipants = JSON.parse(localStorage.getItem('azobssLuckyDrawEntries') || '[]')
+            .map(function (entry, index) {
+              return { id: entry.id || `${entry.monthKey || 'local'}_${entry.usernameKey || index}`, ...entry };
+            })
+            .filter(function (entry) {
+              return !entry.deleted;
+            });
+        } catch (storageError) {
+          allLuckyDrawParticipants = [];
         }
       }
 
       renderLuckyDrawParticipants();
-      previewLuckyDrawAllNames();
     }
 
     async function saveLuckyDrawParticipant(row) {
@@ -9360,37 +7481,6 @@ Peraduan Lucky Draw User</h2>
       if (luckyDrawTotalParticipants) luckyDrawTotalParticipants.textContent = String(activeRows.length);
     }
 
-
-    function getLuckyDrawActiveParticipantsForSpin(participants) {
-      return (Array.isArray(participants) ? participants : [])
-        .filter(function(entry){
-          return entry && !entry.deleted && (entry.usernameKey || entry.name || entry.contactEmail || entry.phone);
-        });
-    }
-
-    function getLuckyDrawSpinNames(participants) {
-      const seen = new Set();
-      const names = getLuckyDrawActiveParticipantsForSpin(participants).map(function(entry){
-        return getWinnerDisplayName(entry);
-      }).filter(function(name){
-        const clean = String(name || '').trim();
-        if(!clean || seen.has(clean.toLowerCase())) return false;
-        seen.add(clean.toLowerCase());
-        return true;
-      });
-
-      return names;
-    }
-
-    function previewLuckyDrawAllNames() {
-      const names = getLuckyDrawSpinNames(allLuckyDrawParticipants);
-      if(names.length){
-        renderLuckyDrawRollingItems(names, 0);
-      }else{
-        renderLuckyDrawRollingItems(['Belum ada peserta'], 0);
-      }
-    }
-
     function getWinnerDisplayName(entry) {
       return entry ? (entry.name || entry.usernameKey || 'User') : 'Belum dipilih';
     }
@@ -9440,14 +7530,16 @@ Peraduan Lucky Draw User</h2>
     }
 
     function chooseLuckyDrawWinner(participants, monthKey) {
-      const active = getLuckyDrawActiveParticipantsForSpin(participants).sort(function (a, b) {
-        return String(a.usernameKey || a.name || '').localeCompare(String(b.usernameKey || b.name || ''));
+      const active = participants.filter(function (entry) {
+        return !entry.deleted && entry.usernameKey;
+      }).sort(function (a, b) {
+        return String(a.usernameKey).localeCompare(String(b.usernameKey));
       });
 
       if (!active.length) return null;
 
       let seed = 0;
-      const seedText = monthKey + '|' + active.map(function (entry) { return entry.usernameKey || entry.name || entry.contactEmail || entry.phone || ''; }).join('|');
+      const seedText = monthKey + '|' + active.map(function (entry) { return entry.usernameKey; }).join('|');
       for (let i = 0; i < seedText.length; i += 1) {
         seed = (seed * 31 + seedText.charCodeAt(i)) >>> 0;
       }
@@ -9555,9 +7647,8 @@ Peraduan Lucky Draw User</h2>
 
       const safeNames = names.length ? names : ['Menunggu peserta...'];
       const items = [];
-      const visibleCount = Math.max(9, safeNames.length);
 
-      for (let i = 0; i < visibleCount; i += 1) {
+      for (let i = 0; i < 9; i += 1) {
         items.push(safeNames[(selectedIndex + i) % safeNames.length]);
       }
 
@@ -9606,7 +7697,9 @@ Peraduan Lucky Draw User</h2>
     function spinLuckyDrawNames(participants, finalWinner, monthKey) {
       if (!luckyDrawSpinnerName || !luckyDrawSpinStage || luckyDrawSpinRunning) return;
 
-      const names = getLuckyDrawSpinNames(participants);
+      const names = participants
+        .filter(function (entry) { return !entry.deleted; })
+        .map(getWinnerDisplayName);
 
       if (!names.length || !finalWinner) return;
 
@@ -9682,7 +7775,7 @@ Peraduan Lucky Draw User</h2>
       const diff = target - now;
 
       if (luckyDrawTargetText) {
-        luckyDrawTargetText.innerHTML = `Rolling Lucky Draw akan bermula pada<br>${target.toLocaleDateString('ms-MY')} • 10:00 PM (UTC+08:00)`;
+        luckyDrawTargetText.textContent = `CABUTAN AKAN BERMULA ke Lucky Draw ${target.toLocaleDateString('ms-MY')} pukul 10:00 PM`;
       }
 
       if (diff <= 0) {
@@ -9721,7 +7814,9 @@ Peraduan Lucky Draw User</h2>
 
       await loadLuckyDrawParticipants();
 
-      const active = getLuckyDrawActiveParticipantsForSpin(allLuckyDrawParticipants);
+      const active = allLuckyDrawParticipants.filter(function (entry) {
+        return !entry.deleted && entry.usernameKey;
+      });
 
       if (!active.length) {
         if (luckyDrawParticipantsStatus) luckyDrawParticipantsStatus.textContent = 'Tiada peserta untuk test spin.';
@@ -9730,7 +7825,7 @@ Peraduan Lucky Draw User</h2>
       }
 
       const randomWinner = active[Math.floor(Math.random() * active.length)];
-      const names = getLuckyDrawSpinNames(active);
+      const names = active.map(getWinnerDisplayName);
       const itemHeight = window.matchMedia('(max-width: 760px)').matches ? 76 : 94;
 
       if (luckyDrawParticipantsStatus) {
@@ -10138,7 +8233,7 @@ Peraduan Lucky Draw User</h2>
         }
       }
 
-      if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = payload.title || 'Lucky Draw Prize';
+      if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = payload.title || 'Hadiah Giveaway';
       if (luckyDrawPrizeDescription) luckyDrawPrizeDescription.innerText = payload.description || '';
 
       const pretty = JSON.stringify(payload, null, 2);
@@ -13121,7 +11216,7 @@ Peraduan Lucky Draw User</h2>
       }
 
       if (localStorage.getItem(getLuckyDrawShareKey(currentUser.usernameKey)) !== '1') {
-        luckyDrawStatus.textContent = 'Sila share website dahulu sebelum join lucky draw.';
+        luckyDrawStatus.textContent = 'Sila share website dahulu sebelum join cabutan bertuah.';
         return;
       }
 
@@ -13151,7 +11246,7 @@ Peraduan Lucky Draw User</h2>
 
       localStorage.setItem(getLuckyDrawJoinKey(currentUser.usernameKey), '1');
       updateLuckyDrawPanel();
-      luckyDrawStatus.textContent = 'Anda berjaya join lucky draw bulan ini. Semoga berjaya!';
+      luckyDrawStatus.textContent = 'Anda berjaya join cabutan bertuah bulan ini. Semoga berjaya!';
     }
 
     copyLuckyDrawInviteButton.addEventListener('click', copyLuckyDrawInviteLink);
@@ -15474,9 +13569,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     const box = document.getElementById('luckyDrawRecentJoinList');
     if(!box) return;
 
-    const list = Array.isArray(rows)
-      ? rows.slice().sort((a,b) => new Date(b.joinedAt || b.createdAt || b.updatedAt || 0) - new Date(a.joinedAt || a.createdAt || a.updatedAt || 0)).slice(0, 10)
-      : [];
+    const list = Array.isArray(rows) ? rows.slice(0, 10) : [];
     if(!list.length){
       box.innerHTML = '<div class="recent-join-empty">Belum ada peserta.</div>';
       return;
@@ -15503,7 +13596,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
       const data = await res.json();
       if(!data.ok) throw new Error(data.error || 'Entries error');
 
-      const rows = (data.entries || []).slice().sort((a,b) => new Date(b.joinedAt || b.createdAt || b.updatedAt || 0) - new Date(a.joinedAt || a.createdAt || a.updatedAt || 0));
+      const rows = data.entries || [];
       renderLuckyDrawRecentJoins(rows);
 
       const total = document.getElementById('luckyDrawTotalParticipants');
@@ -15574,7 +13667,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
   async function hideEntryBackend(row){
     const id = row && row.dataset.backendEntryId;
     if(!id) return;
-    if(!confirm('Buang peserta ini dari lucky draw bulan ini? User ini boleh join semula selepas dibuang.')) return;
+    if(!confirm('Buang peserta ini dari cabutan bertuah bulan ini? User ini boleh join semula selepas dibuang.')) return;
 
     const res = await apiFetch('/api/lucky-draw/entries/' + encodeURIComponent(id) + '?monthKey=' + encodeURIComponent(getMonthKey()), {
       method:'DELETE',
