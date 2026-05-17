@@ -144,7 +144,7 @@ app.post("/api/lucky-draw/prize", requireAdmin, upload.single("image"), (req, re
 
   const prize = {
     monthKey: key,
-    title: req.body.title || previous.title || "Hadiah Giveaway",
+    title: req.body.title || previous.title || "Lucky Draw Prize",
     description: req.body.description || previous.description || "",
     imageUrl,
     image: imageUrl,
