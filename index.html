@@ -5569,6 +5569,49 @@ body.is-admin .lucky-draw-admin-pagination{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   PURCHASE RECORDS USERS PAGINATION - MAX 5
+========================================================= */
+#purchaseRecordsPagination{
+  display:flex !important;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  margin-top:14px;
+}
+
+body:not(.is-admin) #purchaseRecordsPagination{
+  display:none !important;
+}
+
+#purchaseRecordsPagination button{
+  min-width:44px;
+  min-height:38px;
+  padding:8px 13px;
+  border:1px solid rgba(59,130,246,.65);
+  border-radius:10px;
+  background:rgba(2,6,23,.45);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+#purchaseRecordsPagination button.is-active,
+#purchaseRecordsPagination button.active{
+  background:#22c55e !important;
+  border-color:#22c55e !important;
+  color:#fff !important;
+}
+
+#purchaseRecordsPagination button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+</style>
+
 </head>
 
 <body>
@@ -7132,7 +7175,7 @@ Peraduan Cabutan Bertuah User</h2>
     let allGuestHistory = [];
     let guestHistoryPage = 1;
     const HISTORY_PAGE_SIZE = 3;
-    const PURCHASE_RECORDS_PAGE_SIZE = 10;
+    const PURCHASE_RECORDS_PAGE_SIZE = 5;
     const USER_PA_PURCHASE_PAGE_SIZE = 5;
     const HISTORY_PAGINATION_MAX_BUTTONS = 10;
     let presenceHeartbeatTimer = null;
