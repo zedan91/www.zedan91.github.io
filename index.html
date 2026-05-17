@@ -7060,53 +7060,118 @@ body:not(.is-admin) #purchaseRecordsPagination{
 
 
 <style>
-/* ALIGN SPIN CARD FOOTER SAME AS PARTICIPANTS */
+/* ===== FINAL PROPER ALIGNMENT FIX ===== */
 
 @media (min-width:900px){
 
   .lucky-draw-top{
       display:grid !important;
-      grid-template-columns:390px 310px 340px !important;
-      grid-template-rows:auto auto !important;
-      align-items:start !important;
+
+      /* kiri | tengah | kanan */
+      grid-template-columns: 390px 260px 260px !important;
+
+      grid-template-areas:
+      "left invite countdown"
+      "left participants spin";
+
       column-gap:28px !important;
-      row-gap:24px !important;
+      row-gap:28px !important;
+
+      align-items:start !important;
+  }
+
+  .lucky-draw-left-info{
+      grid-area:left !important;
+      width:390px !important;
+      max-width:390px !important;
+  }
+
+  .lucky-draw-side{
+      grid-area:invite !important;
+      width:260px !important;
+      height:220px !important;
+      min-height:220px !important;
+      margin:0 !important;
+  }
+
+  .lucky-draw-top-countdown{
+      grid-area:countdown !important;
+      width:260px !important;
+      height:220px !important;
+      min-height:220px !important;
+      margin:0 !important;
   }
 
   .lucky-draw-recent-joins{
-      grid-column:2 !important;
-      grid-row:2 !important;
-      width:310px !important;
+      grid-area:participants !important;
+
+      width:260px !important;
+      max-width:260px !important;
+
       height:270px !important;
       min-height:270px !important;
       max-height:270px !important;
+
       margin:0 !important;
-      align-self:start !important;
+      overflow:hidden !important;
   }
 
   #luckyDrawSpinStage,
   .lucky-draw-top-spin-panel{
-      grid-column:3 !important;
-      grid-row:2 !important;
-      width:340px !important;
+      grid-area:spin !important;
+
+      width:260px !important;
+      max-width:260px !important;
+
       height:270px !important;
       min-height:270px !important;
       max-height:270px !important;
+
       margin:0 !important;
-      align-self:start !important;
+
       overflow:hidden !important;
       box-sizing:border-box !important;
   }
 
   #luckyDrawSpinStage .lucky-draw-rolling-window,
   .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+
+      width:100% !important;
+
       height:165px !important;
       min-height:165px !important;
       max-height:165px !important;
+
       overflow:hidden !important;
       box-sizing:border-box !important;
   }
 
+}
+
+/* MOBILE */
+@media (max-width:899px){
+
+  .lucky-draw-top{
+      display:flex !important;
+      flex-direction:column !important;
+      gap:16px !important;
+  }
+
+  .lucky-draw-left-info,
+  .lucky-draw-side,
+  .lucky-draw-top-countdown,
+  .lucky-draw-recent-joins,
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+
+      width:100% !important;
+      max-width:100% !important;
+
+      height:auto !important;
+      min-height:auto !important;
+
+      margin:0 !important;
+  }
 }
 </style>
 
