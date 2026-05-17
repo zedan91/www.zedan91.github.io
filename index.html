@@ -5734,6 +5734,130 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   LUCKY DRAW ACTION LAYOUT LIKE SCREENSHOT
+========================================================= */
+@media (min-width: 900px){
+
+  .lucky-draw-top{
+    display:grid !important;
+    grid-template-columns:390px minmax(230px,260px) minmax(330px,1fr) !important;
+    gap:22px !important;
+    align-items:start !important;
+  }
+
+  .lucky-draw-left-info{
+    position:relative !important;
+    min-height:720px !important;
+    padding-right:0 !important;
+  }
+
+  .lucky-draw-left-info .lucky-draw-action-area,
+  .lucky-draw-left-info .invite-actions-group,
+  .lucky-draw-left-info .luckydraw-action-buttons,
+  .lucky-draw-left-info .join-lucky-actions{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:290px !important;
+    max-width:290px !important;
+    margin-top:18px !important;
+    z-index:auto !important;
+  }
+
+  .lucky-draw-left-info #luckyDrawInviteLinkBox,
+  .lucky-draw-left-info #copyInviteButton,
+  .lucky-draw-left-info #copyInviteLinkButton,
+  .lucky-draw-left-info #shareWebsiteButton,
+  .lucky-draw-left-info #joinLuckyDrawButton,
+  .lucky-draw-left-info #luckyDrawStatus{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+  }
+
+  .lucky-draw-left-info #luckyDrawInviteLinkBox{
+    width:290px !important;
+    max-width:290px !important;
+    margin-bottom:12px !important;
+  }
+
+  .lucky-draw-left-info #copyInviteButton,
+  .lucky-draw-left-info #copyInviteLinkButton,
+  .lucky-draw-left-info #shareWebsiteButton{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:142px !important;
+    min-width:142px !important;
+    max-width:142px !important;
+    margin:0 0 10px 0 !important;
+    vertical-align:top !important;
+  }
+
+  .lucky-draw-left-info #copyInviteButton,
+  .lucky-draw-left-info #copyInviteLinkButton{
+    margin-right:6px !important;
+  }
+
+  .lucky-draw-left-info #joinLuckyDrawButton{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:290px !important;
+    min-width:290px !important;
+    max-width:290px !important;
+    margin-top:0 !important;
+  }
+
+  .lucky-draw-left-info #luckyDrawStatus{
+    display:block !important;
+    width:290px !important;
+    max-width:290px !important;
+    margin-top:14px !important;
+    line-height:1.18 !important;
+  }
+
+  .lucky-draw-recent-joins{
+    position:static !important;
+    width:230px !important;
+    height:205px !important;
+    margin-top:320px !important;
+  }
+
+  .lucky-draw-right-stack{
+    width:100% !important;
+    max-width:360px !important;
+  }
+}
+
+@media (max-width: 899px){
+  .lucky-draw-left-info .lucky-draw-action-area,
+  .lucky-draw-left-info .invite-actions-group,
+  .lucky-draw-left-info .luckydraw-action-buttons,
+  .lucky-draw-left-info .join-lucky-actions{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  .lucky-draw-left-info #copyInviteButton,
+  .lucky-draw-left-info #copyInviteLinkButton,
+  .lucky-draw-left-info #shareWebsiteButton,
+  .lucky-draw-left-info #joinLuckyDrawButton,
+  .lucky-draw-left-info #luckyDrawInviteLinkBox,
+  .lucky-draw-left-info #luckyDrawStatus{
+    width:100% !important;
+    max-width:100% !important;
+    position:static !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
