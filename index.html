@@ -6704,6 +6704,96 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* ===== FIX OVERLAP / TERABUR ===== */
+
+@media (min-width:900px){
+
+  .lucky-draw-top{
+    display:grid !important;
+    grid-template-columns: 390px 230px 290px !important;
+    grid-template-rows:auto auto !important;
+    gap:26px !important;
+    align-items:start !important;
+  }
+
+  .lucky-draw-left-info{
+    grid-column:1 !important;
+    grid-row:1 / span 2 !important;
+    width:390px !important;
+    max-width:390px !important;
+  }
+
+  /* countdown kanan atas */
+  .lucky-draw-top-countdown{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    width:290px !important;
+    margin:0 !important;
+    align-self:start !important;
+  }
+
+  /* invite tengah */
+  .lucky-draw-side{
+    grid-column:2 !important;
+    grid-row:2 !important;
+    width:230px !important;
+    margin:0 !important;
+    align-self:start !important;
+  }
+
+  /* participants bawah kiri */
+  .lucky-draw-recent-joins{
+    grid-column:1 !important;
+    grid-row:3 !important;
+    width:230px !important;
+    height:250px !important;
+    margin-top:0 !important;
+  }
+
+  /* spin kanan */
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+    grid-column:3 !important;
+    grid-row:2 / span 2 !important;
+    width:290px !important;
+    height:360px !important;
+    margin:0 !important;
+    align-self:start !important;
+  }
+
+  #luckyDrawSpinStage .lucky-draw-rolling-window,
+  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+    height:250px !important;
+  }
+
+}
+
+/* MOBILE FIX */
+@media (max-width:899px){
+
+  .lucky-draw-top{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:18px !important;
+  }
+
+  .lucky-draw-left-info,
+  .lucky-draw-side,
+  .lucky-draw-recent-joins,
+  .lucky-draw-top-countdown,
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    position:static !important;
+  }
+
+}
+</style>
+
 </head>
 
 <body>
