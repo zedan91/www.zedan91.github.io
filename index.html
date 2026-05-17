@@ -6383,6 +6383,142 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   SWAP INVITE CODE AND COUNTDOWN CARD POSITION
+   Baseline: force-participants-beside-spin
+========================================================= */
+@media (min-width:900px){
+
+  .lucky-draw-top{
+    position:relative !important;
+    display:block !important;
+    min-height:650px !important;
+  }
+
+  .lucky-draw-left-info{
+    position:absolute !important;
+    left:0 !important;
+    top:0 !important;
+    width:390px !important;
+    max-width:390px !important;
+  }
+
+  .lucky-draw-right-stack{
+    display:block !important;
+    position:static !important;
+  }
+
+  /* Invite Code Anda = kiri atas sebelah countdown */
+  .lucky-draw-side{
+    position:absolute !important;
+    left:420px !important;
+    top:0 !important;
+    width:205px !important;
+    max-width:205px !important;
+    min-height:220px !important;
+    display:block !important;
+    box-sizing:border-box !important;
+  }
+
+  /* Cabutan Bermula Dalam = kanan invite card */
+  .lucky-draw-top-countdown{
+    position:absolute !important;
+    left:645px !important;
+    top:0 !important;
+    width:250px !important;
+    max-width:250px !important;
+    min-height:220px !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  .lucky-draw-top-countdown strong{
+    font-size:42px !important;
+    line-height:1.1 !important;
+  }
+
+  .lucky-draw-top-countdown small{
+    line-height:1.45 !important;
+  }
+
+  /* Lucky Draw Participants under both small cards */
+  .lucky-draw-recent-joins{
+    position:absolute !important;
+    left:420px !important;
+    top:250px !important;
+    width:475px !important;
+    max-width:475px !important;
+    height:250px !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+    display:block !important;
+    z-index:10 !important;
+  }
+
+  .recent-joins-list{
+    max-height:180px !important;
+  }
+
+  /* Rolling Spin beside participants */
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+    position:absolute !important;
+    left:925px !important;
+    top:0 !important;
+    width:260px !important;
+    max-width:260px !important;
+    height:500px !important;
+    min-height:500px !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+    z-index:9 !important;
+  }
+
+  #luckyDrawSpinStage .lucky-draw-rolling-window,
+  .lucky-draw-top-spin-panel .lucky-draw-rolling-window{
+    width:100% !important;
+    height:385px !important;
+    min-height:385px !important;
+    max-height:385px !important;
+    margin:12px 0 0 !important;
+  }
+
+  .lucky-draw-participants-panel{
+    position:relative !important;
+    width:100% !important;
+    margin-top:18px !important;
+    clear:both !important;
+  }
+}
+
+@media (max-width:899px){
+  .lucky-draw-top{
+    position:static !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:16px !important;
+    min-height:auto !important;
+  }
+
+  .lucky-draw-left-info,
+  .lucky-draw-side,
+  .lucky-draw-top-countdown,
+  .lucky-draw-recent-joins,
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    height:auto !important;
+    margin-top:0 !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
