@@ -6197,6 +6197,75 @@ body:not(.is-admin) #purchaseRecordsPagination{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FIX LUCKY DRAW PARTICIPANTS POSITION BESIDE SPIN
+========================================================= */
+@media (min-width:900px){
+
+  .lucky-draw-top{
+    display:grid !important;
+    grid-template-columns:390px 230px 230px !important;
+    gap:28px !important;
+    align-items:start !important;
+    justify-content:start !important;
+  }
+
+  .lucky-draw-right-stack{
+    display:contents !important;
+  }
+
+  .lucky-draw-top-countdown{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    width:230px !important;
+    max-width:230px !important;
+    margin-top:18px !important;
+  }
+
+  .lucky-draw-recent-joins{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    position:static !important;
+    width:230px !important;
+    max-width:230px !important;
+    height:205px !important;
+    margin-top:210px !important;
+    box-sizing:border-box !important;
+    align-self:start !important;
+  }
+
+  #luckyDrawSpinStage,
+  .lucky-draw-top-spin-panel{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    width:230px !important;
+    max-width:230px !important;
+    height:390px !important;
+    min-height:390px !important;
+    margin-top:18px !important;
+    box-sizing:border-box !important;
+    align-self:start !important;
+  }
+
+  .lucky-draw-side{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    width:230px !important;
+    max-width:230px !important;
+    margin-top:0 !important;
+    display:none !important;
+  }
+
+  .lucky-draw-participants-panel{
+    grid-column:1 / -1 !important;
+    margin-top:18px !important;
+    width:100% !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
