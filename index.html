@@ -7060,30 +7060,40 @@ body:not(.is-admin) #purchaseRecordsPagination{
 
 
 <style>
-/* LOGIN LUCKY DRAW STATUS ONE LINE */
-#luckyDrawStatus{
-  white-space:nowrap !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-}
-</style>
-
-
-<style>
-/* SHORTER ROLL SPIN CARD */
-#luckyDrawSpinStage,
-.lucky-draw-top-spin-panel{
-    height:300px !important;
-    min-height:300px !important;
-    max-height:300px !important;
+/* CENTER 3D GIFT STYLE */
+.lucky-draw-prize-empty,
+.lucky-draw-empty-prize,
+.prize-empty-state{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+    min-height:220px !important;
+    gap:18px !important;
 }
 
-#luckyDrawSpinStage .lucky-draw-rolling-window,
-.lucky-draw-top-spin-panel .lucky-draw-rolling-window{
-    height:180px !important;
-    min-height:180px !important;
-    max-height:180px !important;
-    margin-top:10px !important;
+.lucky-draw-prize-empty::before,
+.lucky-draw-empty-prize::before,
+.prize-empty-state::before{
+    content:"🎁";
+    font-size:88px !important;
+    line-height:1 !important;
+    display:block !important;
+    filter:drop-shadow(0 0 18px rgba(255,215,0,.45));
+}
+
+.lucky-draw-prize-empty::after,
+.lucky-draw-empty-prize::after,
+.prize-empty-state::after{
+    content:"?";
+    position:relative;
+    margin-top:-82px;
+    margin-bottom:30px;
+    font-size:38px;
+    font-weight:900;
+    color:#ffd54a;
+    text-shadow:0 0 10px rgba(255,215,0,.6);
 }
 </style>
 
@@ -8301,7 +8311,7 @@ Peraduan Lucky Draw User</h2>
           <div class="lucky-draw-actions">
             <button class="btn" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
           </div>
-          <div class="lucky-draw-status" id="luckyDrawStatus">Login untuk aktifkan Lucky Draw.</div>
+          <div class="lucky-draw-status" id="luckyDrawStatus">Login dahulu untuk aktifkan lucky draw.</div>
 
           <div class="lucky-draw-recent-joins" id="luckyDrawRecentJoinsBox">
             <div class="recent-joins-title">Lucky Draw Participants</div>
@@ -8831,7 +8841,7 @@ Peraduan Lucky Draw User</h2>
         luckyDrawInviteCode.textContent = '-';
         luckyDrawShareStatus.textContent = 'Belum share';
         luckyDrawJoinStatus.textContent = 'Belum join';
-        luckyDrawStatus.textContent = 'Login untuk aktifkan Lucky Draw.';
+        luckyDrawStatus.textContent = 'Login dahulu untuk aktifkan lucky draw.';
         if (joinLuckyDrawButton) joinLuckyDrawButton.disabled = false;
         return;
       }
