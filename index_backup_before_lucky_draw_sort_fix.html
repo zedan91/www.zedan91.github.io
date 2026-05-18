@@ -13578,7 +13578,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
           ? luckyDrawPublicRows.map((entry, i) => `
               <div class="lucky-draw-participant-card" data-backend-entry-id="${escapeLuckyDrawText(entry.id || '')}">
                 <div>
-                  <strong>${i + 1}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
+                  <strong>${i+1}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
                   <span>${escapeLuckyDrawText(formatLuckyDrawJoinDate(entry.joinedAt || entry.createdAt || entry.updatedAt))}</span>
                 </div>
                 <button class="lucky-draw-remove-participant-btn" type="button" data-backend-action="remove-public">Buang</button>
@@ -13598,29 +13598,6 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     renderLuckyDrawPublicList(luckyDrawPublicRows);
   });
 
-
-
-
-  function getLuckyDrawSortTime(entry){
-    if(!entry) return 0;
-    const values = [
-      entry.joinedAtMs,
-      entry.createdAtMs,
-      entry.updatedAtMs,
-      entry.joinedAt,
-      entry.createdAt,
-      entry.updatedAt
-    ];
-
-    for(const value of values){
-      if(!value) continue;
-      if(typeof value === 'number') return value;
-      if(value && typeof value.seconds === 'number') return value.seconds * 1000;
-      const parsed = new Date(value).getTime();
-      if(!Number.isNaN(parsed)) return parsed;
-    }
-    return 0;
-  }
 
   function formatLuckyDrawJoinDate(value){
     if(!value) return '-';
