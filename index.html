@@ -5456,6 +5456,16 @@ body.is-admin .lucky-draw-admin-pagination{
 }
 </style>
 
+
+<style>
+/* COUNTDOWN WORDING FIX V18 */
+#luckyDrawTargetText{
+  display:block !important;
+  line-height:1.35 !important;
+  white-space:normal !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -6696,9 +6706,9 @@ Peraduan Lucky Draw User</h2>
           </div>
 
           <div class="lucky-draw-summary-box lucky-draw-top-countdown">
-            <span>CABUTAN BERMULA DALAM</span>
+            <span>LUCKY DRAW BERMULA DALAM</span>
             <strong id="luckyDrawCountdown">-- hari --:--:--</strong>
-            <small id="luckyDrawTargetText">Auto spin hujung bulan, pukul 10:00 PM</small>
+            <small id="luckyDrawTargetText">Lucky Draw akan diadakan pada 31/5/2026<br>jam 10:00 PM (UTC+08:00)</small>
           </div>
 
 
@@ -7792,7 +7802,7 @@ Peraduan Lucky Draw User</h2>
       const diff = target - now;
 
       if (luckyDrawTargetText) {
-        luckyDrawTargetText.textContent = `CABUTAN AKAN BERMULA ke Lucky Draw ${target.toLocaleDateString('ms-MY')} pukul 10:00 PM`;
+        luckyDrawTargetText.innerHTML = `Lucky Draw akan diadakan pada ${target.toLocaleDateString('ms-MY')}<br>jam 10:00 PM (UTC+08:00)`;
       }
 
       if (diff <= 0) {
