@@ -7312,6 +7312,7 @@ Peraduan Lucky Draw User</h2>
       if (luckyDrawPublicList) {
         luckyDrawPublicList.innerHTML = rows.length
           ? rows.map(function (entry, index) {
+              const joinNumber = rows.length - index;
               return `
                 <div class="lucky-draw-participant-card">
                   <strong>${joinNumber}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
@@ -7327,6 +7328,7 @@ Peraduan Lucky Draw User</h2>
       if (luckyDrawAdminTableBody) {
         luckyDrawAdminTableBody.innerHTML = rows.length
           ? rows.map(function (entry, index) {
+              const joinNumber = rows.length - index;
               const rowId = escapeLuckyDrawText(entry.id || '');
               return `
                 <tr data-entry-id="${rowId}">
