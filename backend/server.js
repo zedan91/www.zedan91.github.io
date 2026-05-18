@@ -203,9 +203,7 @@ app.get("/api/prize", (req, res) => {
 app.get("/api/lucky-draw/entries", (req, res) => {
   const key = req.query.monthKey || monthKey();
   const entries = readJson(getEntriesFile(key), []);
-  const active = entries
-    .filter((e) => !e.deleted)
-    .sort((a, b) => (b.joinedAtMs || b.createdAtMs || b.updatedAtMs || 0) - (a.joinedAtMs || a.createdAtMs || a.updatedAtMs || 0));
+  const active = entries.filter((e) => !e.deleted);
   res.json({ ok: true, monthKey: key, total: active.length, entries: active });
 });
 
