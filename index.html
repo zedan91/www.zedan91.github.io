@@ -7346,7 +7346,7 @@ Peraduan Lucky Draw User</h2>
         });
 
         rows.sort(function (a, b) {
-          return (b.joinedAtMs || b.createdAtMs || 0) - (a.joinedAtMs || a.createdAtMs || 0);
+          return (a.joinedAtMs || a.createdAtMs || 0) - (b.joinedAtMs || b.createdAtMs || 0);
         });
 
         allLuckyDrawParticipants = rows;
@@ -7359,6 +7359,10 @@ Peraduan Lucky Draw User</h2>
             .filter(function (entry) {
               return !entry.deleted;
             });
+
+          allLuckyDrawParticipants.sort(function (a, b) {
+            return (a.joinedAtMs || a.createdAtMs || a.joinedAt || 0) - (b.joinedAtMs || b.createdAtMs || b.joinedAt || 0);
+          });
         } catch (storageError) {
           allLuckyDrawParticipants = [];
         }
