@@ -5438,6 +5438,24 @@ body.is-admin .lucky-draw-admin-pagination{
 }
 </style>
 
+
+<style>
+.lucky-draw-folder-note{
+  display:none !important;
+}
+
+#luckyDrawPrizeDescription:empty{
+  display:none !important;
+}
+
+#luckyDrawPrizeImage{
+  object-fit:contain !important;
+  object-position:center !important;
+  background:#0b1120 !important;
+  padding:16px !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -6729,10 +6747,10 @@ Peraduan Lucky Draw User</h2>
         
         <div class="lucky-draw-prize-panel" id="luckyDrawPrizePanel">
           <div class="lucky-draw-prize-preview">
-            <img id="luckyDrawPrizeImage" src="https://placehold.co/600x400/0f172a/22c55e?text=Lucky+Draw+Prize" alt="Lucky Draw Prize">
+            <img id="luckyDrawPrizeImage" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%221200%22%20height%3D%22720%22%20viewBox%3D%220%200%201200%20720%22%3E%20%3Cdefs%3E%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23020617%22/%3E%20%3Cstop%20offset%3D%2255%25%22%20stop-color%3D%22%230f172a%22/%3E%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23064e3b%22/%3E%20%3C/linearGradient%3E%20%3Cfilter%20id%3D%22glow%22%3E%20%3CfeGaussianBlur%20stdDeviation%3D%227%22%20result%3D%22b%22/%3E%20%3CfeMerge%3E%3CfeMergeNode%20in%3D%22b%22/%3E%3CfeMergeNode%20in%3D%22SourceGraphic%22/%3E%3C/feMerge%3E%20%3C/filter%3E%20%3C/defs%3E%20%3Crect%20width%3D%221200%22%20height%3D%22720%22%20fill%3D%22url%28%23g%29%22/%3E%20%3Ccircle%20cx%3D%22980%22%20cy%3D%22140%22%20r%3D%22170%22%20fill%3D%22%2322c55e%22%20opacity%3D%22.08%22/%3E%20%3Ccircle%20cx%3D%22180%22%20cy%3D%22600%22%20r%3D%22210%22%20fill%3D%22%233b82f6%22%20opacity%3D%22.08%22/%3E%20%3Ctext%20x%3D%22600%22%20y%3D%22310%22%20fill%3D%22%2322c55e%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2276%22%20font-weight%3D%22900%22%20text-anchor%3D%22middle%22%20filter%3D%22url%28%23glow%29%22%3ELUCKY%20DRAW%3C/text%3E%20%3Ctext%20x%3D%22600%22%20y%3D%22390%22%20fill%3D%22%23e5e7eb%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2234%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%3EHadiah%20Giveaway%20AZOBSS%3C/text%3E%20%3Ctext%20x%3D%22600%22%20y%3D%22445%22%20fill%3D%22%2394a3b8%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%3EUpload%20gambar%20hadiah%20ke%20folder%20Lucky-draw%3C/text%3E%20%3C/svg%3E" alt="Lucky Draw Prize">
             <div class="lucky-draw-prize-content">
               <span class="lucky-draw-kicker">Hadiah Lucky Draw</span>
-              <h3 id="luckyDrawPrizeTitle">Hadiah belum diumumkan</h3>
+              <h3 id="luckyDrawPrizeTitle">Hadiah Lucky Draw bulan ini masih belum diumumkan.</h3>
               <p id="luckyDrawPrizeDescription">Admin boleh attach gambar dan description hadiah Lucky Draw.</p>
             </div>
           </div>
@@ -6754,7 +6772,6 @@ Peraduan Lucky Draw User</h2>
               <button class="btn orange" id="testLuckyDrawBackendButton" type="button">Test Backend</button>
             </div>
             <div class="lucky-draw-prize-save-status" id="luckyDrawPrizeSaveStatus"></div>
-            <small class="lucky-draw-folder-note">Lucky-draw folder note: upload gambar hadiah ke <b>/Lucky-draw/</b> dan upload file <b>Lucky Draw-prize.json</b> ke folder yang sama.</small>
           </div>
         </div></div>
           <div class="lucky-draw-spinner-name" id="luckyDrawSpinnerName"></div>
@@ -7941,7 +7958,7 @@ Peraduan Lucky Draw User</h2>
 
     function applyLuckyDrawPrize(data = {}) {
       const image = data.imageData || data.imageUrl || getLuckyDrawPrizePlaceholder();
-      const title = data.title || 'Hadiah belum diumumkan';
+      const title = data.title || 'Hadiah Lucky Draw bulan ini masih belum diumumkan.';
       const desc = data.description || 'Admin boleh browse gambar dan isi description hadiah Lucky Draw.';
 
       if (luckyDrawPrizeImage) luckyDrawPrizeImage.src = image;
@@ -8165,7 +8182,7 @@ Peraduan Lucky Draw User</h2>
 
         const imagePath = data.image || data.imageUrl || getLuckyDrawPrizePlaceholderPath();
         if (luckyDrawPrizeImage) luckyDrawPrizeImage.src = imagePath;
-        if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = data.title || 'Hadiah belum diumumkan';
+        if (luckyDrawPrizeTitle) luckyDrawPrizeTitle.textContent = data.title || 'Hadiah Lucky Draw bulan ini masih belum diumumkan.';
         if (luckyDrawPrizeDescription) luckyDrawPrizeDescription.innerText = data.description || '';
 
         if (luckyDrawPrizeTitleInput) luckyDrawPrizeTitleInput.value = data.title || '';
@@ -8176,7 +8193,7 @@ Peraduan Lucky Draw User</h2>
         return data;
       } catch (error) {
         const fallback = {
-          title: 'Hadiah belum diumumkan',
+          title: 'Hadiah Lucky Draw bulan ini masih belum diumumkan.',
           description: 'File Lucky-draw/Lucky Draw-prize.json belum dijumpai atau belum upload ke GitHub.',
           image: getLuckyDrawPrizePlaceholderPath()
         };
@@ -13302,7 +13319,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
       const descInput = document.getElementById('luckyDrawPrizeDescriptionInput');
 
       if(img) img.src = prize.imageUrl || 'Lucky-draw/prize-placeholder.svg';
-      if(title) title.textContent = prize.title || 'Hadiah belum diumumkan';
+      if(title) title.textContent = prize.title || 'Hadiah Lucky Draw bulan ini masih belum diumumkan.';
       if(desc) desc.innerText = prize.description || '';
       if(titleInput) titleInput.value = prize.title || '';
       if(descInput) descInput.value = prize.description || '';
