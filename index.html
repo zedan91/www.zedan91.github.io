@@ -7328,8 +7328,8 @@ Peraduan Lucky Draw User</h2>
       if (luckyDrawAdminTableBody) {
         luckyDrawAdminTableBody.innerHTML = rows.length
           ? rows.map(function (entry, index) {
-              const joinNumber = rows.length - index;
               const rowId = escapeLuckyDrawText(entry.id || '');
+              const joinNumber = rows.length - index;
               return `
                 <tr data-entry-id="${rowId}">
                   <td>${joinNumber}</td>
@@ -13417,7 +13417,9 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     const pagination = document.getElementById('luckyDrawAdminPagination');
     if(!adminBody) return;
 
-    const list = Array.isArray(rows) ? rows : [];
+    const list = Array.isArray(rows)
+      ? rows.slice().sort((a, b) => getLuckyDrawSortTime(b) - getLuckyDrawSortTime(a))
+      : [];
     const totalPages = Math.max(1, Math.ceil(list.length / LUCKY_DRAW_ADMIN_LIMIT));
 
     if(luckyDrawAdminPage > totalPages) luckyDrawAdminPage = totalPages;
@@ -13433,7 +13435,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     const pageRows = list.slice(start, start + LUCKY_DRAW_ADMIN_LIMIT);
 
     adminBody.innerHTML = pageRows.map((entry, idx) => {
-      const no = start + idx + 1;
+      const no = list.length - (start + idx);
       return `
         <tr data-backend-entry-id="${escapeLuckyDrawText(entry.id || '')}">
           <td>${no}</td>
@@ -13511,7 +13513,9 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     const pagination = document.getElementById('luckyDrawPagination');
     if(!publicList) return;
 
-    const list = Array.isArray(rows) ? rows : [];
+    const list = Array.isArray(rows)
+      ? rows.slice().sort((a, b) => getLuckyDrawSortTime(b) - getLuckyDrawSortTime(a))
+      : [];
     const totalPages = Math.max(1, Math.ceil(list.length / LUCKY_DRAW_PUBLIC_LIMIT));
 
     if(luckyDrawPublicPage > totalPages) luckyDrawPublicPage = totalPages;
@@ -13527,10 +13531,9 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     const pageRows = list.slice(start, start + LUCKY_DRAW_PUBLIC_LIMIT);
 
     publicList.innerHTML = pageRows.map((entry, idx) => {
-      const number = start + idx + 1;
+      const number = list.length - (start + idx);
       const name = escapeLuckyDrawText(entry.name || entry.usernameKey || 'User');
       const joinedDate = escapeLuckyDrawText(formatLuckyDrawJoinDate(entry.joinedAt || entry.createdAt || entry.updatedAt));
-      const username = escapeLuckyDrawText(entry.usernameKey || '-');
       const id = escapeLuckyDrawText(entry.id || '');
 
       return `
@@ -13577,10 +13580,10 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
       const pagination = document.getElementById('luckyDrawPagination');
       if(publicList){
         publicList.innerHTML = luckyDrawPublicRows.length
-          ? luckyDrawPublicRows.map((entry, i) => `
+          ? luckyDrawPublicRows.slice().sort((a, b) => getLuckyDrawSortTime(b) - getLuckyDrawSortTime(a)).map((entry, i, arr) => `
               <div class="lucky-draw-participant-card" data-backend-entry-id="${escapeLuckyDrawText(entry.id || '')}">
                 <div>
-                  <strong>${i + 1}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
+                  <strong>${arr.length - i}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
                   <span>${escapeLuckyDrawText(formatLuckyDrawJoinDate(entry.joinedAt || entry.createdAt || entry.updatedAt))}</span>
                 </div>
                 <button class="lucky-draw-remove-participant-btn" type="button" data-backend-action="remove-public">Buang</button>
@@ -13646,7 +13649,10 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     const box = document.getElementById('luckyDrawRecentJoinList');
     if(!box) return;
 
-    const list = Array.isArray(rows) ? rows.slice(0, 10) : [];
+    const sorted = Array.isArray(rows)
+      ? rows.slice().sort((a, b) => getLuckyDrawSortTime(b) - getLuckyDrawSortTime(a))
+      : [];
+    const list = sorted.slice(0, 10);
     if(!list.length){
       box.innerHTML = '<div class="recent-join-empty">Belum ada peserta.</div>';
       return;
@@ -13655,9 +13661,10 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     box.innerHTML = list.map((entry, i) => {
       const name = escapeLuckyDrawText(entry.name || entry.usernameKey || 'User');
       const joined = formatLuckyDrawJoinDate(entry.joinedAt || entry.createdAt || entry.updatedAt);
+      const number = sorted.length - i;
       return `
         <div class="recent-join-item">
-          <span class="recent-join-no">${i + 1}</span>
+          <span class="recent-join-no">${number}</span>
           <div>
             <strong>${name}</strong>
             <small>${joined}</small>
@@ -13673,7 +13680,7 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
       const data = await res.json();
       if(!data.ok) throw new Error(data.error || 'Entries error');
 
-      const rows = data.entries || [];
+      const rows = (data.entries || []).slice().sort((a, b) => getLuckyDrawSortTime(b) - getLuckyDrawSortTime(a));
       renderLuckyDrawRecentJoins(rows);
 
       const total = document.getElementById('luckyDrawTotalParticipants');
