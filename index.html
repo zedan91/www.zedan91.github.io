@@ -7314,7 +7314,7 @@ Peraduan Lucky Draw User</h2>
           ? rows.map(function (entry, index) {
               return `
                 <div class="lucky-draw-participant-card">
-                  <strong>${index + 1}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
+                  <strong>${joinNumber}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
                   <span>${escapeLuckyDrawText(entry.monthKey || 'Lucky Draw')} • ${escapeLuckyDrawText(entry.usernameKey || '-')}</span>
                 </div>
               `;
@@ -7330,7 +7330,7 @@ Peraduan Lucky Draw User</h2>
               const rowId = escapeLuckyDrawText(entry.id || '');
               return `
                 <tr data-entry-id="${rowId}">
-                  <td>${index + 1}</td>
+                  <td>${joinNumber}</td>
                   <td>${escapeLuckyDrawText(entry.monthKey || '-')}</td>
                   <td>${escapeLuckyDrawText(entry.usernameKey || '-')}</td>
                   <td><input data-field="name" value="${escapeLuckyDrawText(entry.name || '')}"></td>
