@@ -7278,7 +7278,17 @@ Peraduan Lucky Draw User</h2>
       });
     }
 
+    
+    function sortLuckyDrawNewestFirst(rows) {
+      return (Array.isArray(rows) ? rows : []).slice().sort(function (a, b) {
+        const bTime = Number(b.joinedAtMs || b.createdAtMs || b.updatedAtMs || b.joinedAt || b.createdAt || 0);
+        const aTime = Number(a.joinedAtMs || a.createdAtMs || a.updatedAtMs || a.joinedAt || a.createdAt || 0);
+        return bTime - aTime;
+      });
+    }
+
     function renderLuckyDrawParticipants() {
+      allLuckyDrawParticipants = sortLuckyDrawNewestFirst(allLuckyDrawParticipants);
       const rows = getFilteredLuckyDrawParticipants();
       const admin = isAdminUser(currentUser);
 
