@@ -7254,6 +7254,26 @@ Peraduan Lucky Draw User</h2>
       return String(value);
     }
 
+    
+    function getLuckyDrawTimeValue(entry) {
+      if (!entry) return 0;
+      if (typeof entry.joinedAtMs === 'number') return entry.joinedAtMs;
+      if (typeof entry.createdAtMs === 'number') return entry.createdAtMs;
+      if (typeof entry.updatedAtMs === 'number') return entry.updatedAtMs;
+      if (typeof entry.joinedAt === 'number') return entry.joinedAt;
+      if (entry.joinedAt && typeof entry.joinedAt.toMillis === 'function') return entry.joinedAt.toMillis();
+      if (entry.joinedAt && typeof entry.joinedAt.toDate === 'function') return entry.joinedAt.toDate().getTime();
+      if (entry.createdAt && typeof entry.createdAt.toMillis === 'function') return entry.createdAt.toMillis();
+      if (entry.createdAt && typeof entry.createdAt.toDate === 'function') return entry.createdAt.toDate().getTime();
+      return 0;
+    }
+
+    function getLuckyDrawNewestRows(rows) {
+      return (Array.isArray(rows) ? rows : []).slice().sort(function (a, b) {
+        return getLuckyDrawTimeValue(b) - getLuckyDrawTimeValue(a);
+      });
+    }
+
     function getLuckyDrawSearchText(entry) {
       return [
         entry.monthKey,
@@ -7267,7 +7287,7 @@ Peraduan Lucky Draw User</h2>
 
     function getFilteredLuckyDrawParticipants() {
       const keyword = (luckyDrawParticipantSearch && luckyDrawParticipantSearch.value || '').trim().toLowerCase();
-      const rows = allLuckyDrawParticipants.filter(function (entry) {
+      const rows = getLuckyDrawNewestRows(allLuckyDrawParticipants).filter(function (entry) {
         return !entry.deleted;
       });
 
@@ -7278,17 +7298,8 @@ Peraduan Lucky Draw User</h2>
       });
     }
 
-    
-    function sortLuckyDrawNewestFirst(rows) {
-      return (Array.isArray(rows) ? rows : []).slice().sort(function (a, b) {
-        const bTime = Number(b.joinedAtMs || b.createdAtMs || b.updatedAtMs || b.joinedAt || b.createdAt || 0);
-        const aTime = Number(a.joinedAtMs || a.createdAtMs || a.updatedAtMs || a.joinedAt || a.createdAt || 0);
-        return bTime - aTime;
-      });
-    }
-
     function renderLuckyDrawParticipants() {
-      allLuckyDrawParticipants = sortLuckyDrawNewestFirst(allLuckyDrawParticipants);
+      allLuckyDrawParticipants = getLuckyDrawNewestRows(allLuckyDrawParticipants);
       const rows = getFilteredLuckyDrawParticipants();
       const admin = isAdminUser(currentUser);
 
@@ -7356,7 +7367,7 @@ Peraduan Lucky Draw User</h2>
         });
 
         rows.sort(function (a, b) {
-          return (b.joinedAtMs || b.createdAtMs || 0) - (a.joinedAtMs || a.createdAtMs || 0);
+          return getLuckyDrawTimeValue(b) - getLuckyDrawTimeValue(a);
         });
 
         allLuckyDrawParticipants = rows;
@@ -7371,7 +7382,7 @@ Peraduan Lucky Draw User</h2>
             });
 
           allLuckyDrawParticipants.sort(function (a, b) {
-            return (b.joinedAtMs || b.createdAtMs || b.joinedAt || 0) - (a.joinedAtMs || a.createdAtMs || a.joinedAt || 0);
+            return getLuckyDrawTimeValue(b) - getLuckyDrawTimeValue(a);
           });
         } catch (storageError) {
           allLuckyDrawParticipants = [];
