@@ -508,11 +508,20 @@
     }
 
     .lisp-table td{
-      padding:9px 12px;
+      padding:8px 12px;
       border:1px solid rgba(214,185,132,.28);
       vertical-align:top;
       background:#253149;
-      line-height:1.45;
+      line-height:1.35;
+    }
+
+    .lisp-table td:nth-child(1){
+      width:210px;
+      white-space:normal;
+    }
+
+    .lisp-table td:nth-child(3){
+      width:170px;
     }
 
     .lisp-table tr:nth-child(even) td{
@@ -529,15 +538,81 @@
       text-decoration:underline;
     }
 
-    .lisp-demo-thumb{
-      width:160px;
-      max-width:100%;
+    .desc-cell{
+      min-width:260px;
+      max-width:680px;
+    }
+
+    .desc-text{
+      margin:0;
+      max-height:38px;
+      overflow:hidden;
+    }
+
+    .desc-cell.expanded .desc-text{
+      max-height:none;
+    }
+
+    .show-more-btn{
+      display:none;
+      margin-top:6px;
+      padding:0;
+      border:0;
+      background:transparent;
+      color:#fb923c;
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+    }
+
+    .desc-cell.needs-more .show-more-btn{
+      display:inline-flex;
+    }
+
+    .lisp-demo-cell{
+      position:relative;
+    }
+
+    .gif-demo-trigger{
+      width:86px;
+      min-height:34px;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:10px;
+      background:#07101e;
+      color:#fb923c;
+      cursor:zoom-in;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      font-size:13px;
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .lisp-demo-preview{
+      position:absolute;
+      right:0;
+      top:42px;
+      width:min(420px, 82vw);
       aspect-ratio:16/9;
       object-fit:cover;
       display:block;
-      border-radius:10px;
+      border-radius:16px;
       background:#020617;
-      border:1px solid rgba(148,163,184,.24);
+      border:1px solid rgba(148,163,184,.40);
+      box-shadow:0 22px 60px rgba(0,0,0,.58);
+      opacity:0;
+      transform:scale(.92) translateY(-4px);
+      transform-origin:top right;
+      pointer-events:none;
+      transition:opacity .15s ease, transform .15s ease;
+      z-index:40;
+    }
+
+    .gif-demo-trigger:hover + .lisp-demo-preview,
+    .gif-demo-trigger:focus + .lisp-demo-preview{
+      opacity:1;
+      transform:scale(1) translateY(0);
     }
 
     .lisp-table-actions{
@@ -836,8 +911,14 @@
           return `
             <tr data-id="${escapeHtml(item.id)}">
               <td><a class="program-link" href="#" onclick="return false;">${escapeHtml(item.name)}</a></td>
-              <td>${escapeHtml(item.description)}</td>
-              <td><img class="lisp-demo-thumb" src="${gif}" alt="${escapeHtml(item.name)} demonstration"></td>
+              <td class="desc-cell">
+                <p class="desc-text">${escapeHtml(item.description)}</p>
+                <button class="show-more-btn" type="button" data-show-more>Show more</button>
+              </td>
+              <td class="lisp-demo-cell">
+                <button class="gif-demo-trigger" type="button" aria-label="Preview ${escapeHtml(item.name)} demonstration GIF">GIF Demo</button>
+                <img class="lisp-demo-preview" src="${gif}" alt="${escapeHtml(item.name)} demonstration">
+              </td>
               ${adminMode ? `<td class="lisp-admin-column">
                 <div class="lisp-table-actions">
                   <button class="btn danger" type="button" data-delete="${escapeHtml(item.id)}">Delete</button>
@@ -847,7 +928,19 @@
           `;
         }).join('');
 
+        updateDescriptionButtons();
         renderPagination(items.length);
+      }
+
+      function updateDescriptionButtons(){
+        list.querySelectorAll('.desc-cell').forEach(function(cell){
+          const text = cell.querySelector('.desc-text');
+          if(!text) return;
+          cell.classList.remove('expanded', 'needs-more');
+          if(text.scrollHeight > text.clientHeight + 2){
+            cell.classList.add('needs-more');
+          }
+        });
       }
 
       function fileToDataUrl(file){
@@ -896,6 +989,16 @@
       });
 
       list.addEventListener('click', function(event){
+        const showMoreBtn = event.target.closest('[data-show-more]');
+        if(showMoreBtn){
+          const cell = showMoreBtn.closest('.desc-cell');
+          if(cell){
+            cell.classList.toggle('expanded');
+            showMoreBtn.textContent = cell.classList.contains('expanded') ? 'Show less' : 'Show more';
+          }
+          return;
+        }
+
         if(!isLispAdmin()) return;
         const id = event.target.getAttribute('data-delete');
         if(!id) return;
