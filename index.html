@@ -73,33 +73,62 @@
       display: inline-flex;
       align-items: center;
       flex: 0 0 auto;
-      width: 164px;
-      height: 40px;
+      width: 154px;
+      height: 38px;
+      overflow: hidden;
+      border-radius: 999px;
     }
 
     .market-brand img {
       display: block;
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
     }
 
     .market-nav {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 10px;
       flex: 1 1 auto;
       min-width: 0;
-      overflow: hidden;
+      overflow-x: auto;
       white-space: nowrap;
+      scrollbar-width: none;
+    }
+
+    .market-nav::-webkit-scrollbar {
+      display: none;
     }
 
     .market-nav a,
     .market-category-link,
     .market-icon-btn {
-      color: #fff;
+      color: #e5e7eb;
       text-decoration: none;
       font-size: 14px;
       line-height: 1;
+    }
+
+    .market-nav a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0 17px;
+      border: 1px solid rgba(148,163,184,0.28);
+      border-radius: 999px;
+      background: #0e1729;
+      font-weight: 800;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.45);
+    }
+
+    .market-nav a.market-nav-primary {
+      border-color: #22c55e;
+      background: #22c55e;
+      color: #052e16;
+      text-shadow: none;
     }
 
     .market-nav a:hover,
@@ -6508,21 +6537,22 @@ body.is-admin .lucky-draw-admin-pagination{
   <header class="market-sticky-bar" aria-label="Carousell style navigation">
     <div class="market-bar-inner">
       <div class="market-main-row">
-        <a class="market-brand" href="#top" aria-label="Carousell">
-          <img src="images/carousell.svg" alt="carousell">
+        <a class="market-brand" href="#top" aria-label="AZOBSS">
+          <img src="images/logo-azobss.jpg" alt="AZOBSS">
         </a>
 
-        <nav class="market-nav" aria-label="Marketplace categories">
-          <a href="#affiliate">Fashion</a>
-          <a href="#affiliate">Hobbies &amp; Toys</a>
-          <a href="#software">Electronics</a>
-          <a href="#Software">Living</a>
-          <a href="#request">Cars &amp; Property</a>
+        <nav class="market-nav" aria-label="AZOBSS quick actions">
+          <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Contact Us Now</a>
+          <a href="#request">PA / BM / Lot Kadaster Berdigit</a>
+          <a class="market-nav-primary" href="#software">Software / CAD Tools / E-book</a>
+          <a href="#AffiliateShop">My Affiliate Shop</a>
+          <a href="#luckyDraw">Monthly Lucky Draw</a>
+          <a class="market-nav-primary" href="tools/index.html">Mini Web Tools</a>
         </nav>
 
-        <a class="market-category-link" href="#affiliateCategoryPanel">
+        <a class="market-category-link" href="#affiliateCategoryPanel" aria-label="All AZOBSS categories">
           <span class="market-icon-grid" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-          <span>All Categories</span>
+          <span>All</span>
         </a>
 
         <div class="site-auth-actions" id="siteAuthActions">
