@@ -14633,8 +14633,7 @@ document.addEventListener('DOMContentLoaded', function(){
     links.forEach(a => a.classList.remove('is-active'));
     if(current && current.a){
       current.a.classList.add('is-active');
-      current.a.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
-    }
+}
   }
 
   window.addEventListener('scroll', setActive, {passive:true});
@@ -14673,6 +14672,23 @@ document.addEventListener('DOMContentLoaded', function(){
   window.addEventListener('resize', updateArrows);
   window.addEventListener('load', updateArrows);
   updateArrows();
+})();
+</script>
+
+
+<script>
+/* AZOBSS carousel: center clicked chip only, no pullback while scrolling */
+(function(){
+  const scroll = document.getElementById('azobssNavScroll');
+  if(!scroll) return;
+
+  document.querySelectorAll('.azobss-nav-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      setTimeout(function(){
+        chip.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+      }, 80);
+    });
+  });
 })();
 </script>
 
