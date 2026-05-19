@@ -502,8 +502,10 @@
 
     .lisp-table{
       width:100%;
+      max-width:100%;
       border-collapse:collapse;
-      min-width:760px;
+      table-layout:fixed;
+      min-width:0;
       color:#dbe7f8;
       font-size:14px;
     }
@@ -515,6 +517,9 @@
       text-align:left;
       font-weight:900;
       border:1px solid rgba(214,185,132,.35);
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
     }
 
     .lisp-table td{
@@ -523,15 +528,30 @@
       vertical-align:top;
       background:#253149;
       line-height:1.35;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
     }
 
+    .lisp-table th:nth-child(1),
     .lisp-table td:nth-child(1){
-      width:210px;
+      width:28%;
       white-space:normal;
     }
 
+    .lisp-table th:nth-child(2),
+    .lisp-table td:nth-child(2){
+      width:45%;
+    }
+
+    .lisp-table th:nth-child(3),
     .lisp-table td:nth-child(3){
-      width:170px;
+      width:16%;
+    }
+
+    .lisp-table th:nth-child(4),
+    .lisp-table td:nth-child(4){
+      width:11%;
     }
 
     .lisp-table tr:nth-child(even) td{
@@ -542,6 +562,10 @@
       color:#65a3ff;
       font-weight:800;
       text-decoration:none;
+      display:inline;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
     }
 
     .program-link:hover{
@@ -549,14 +573,20 @@
     }
 
     .desc-cell{
-      min-width:260px;
-      max-width:680px;
+      min-width:0;
+      max-width:none;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
     }
 
     .desc-text{
       margin:0;
       max-height:38px;
       overflow:hidden;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
     }
 
     .desc-cell.expanded .desc-text{
@@ -679,6 +709,19 @@
       .lisp-form,
       .lisp-list{
         grid-template-columns:1fr;
+      }
+
+      .lisp-table th,
+      .lisp-table td{
+        padding:8px 9px;
+        font-size:13px;
+      }
+
+      .gif-demo-trigger{
+        width:auto;
+        min-width:72px;
+        padding:7px 8px;
+        font-size:12px;
       }
 
       .hero-copy,
