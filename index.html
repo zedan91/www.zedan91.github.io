@@ -4298,6 +4298,146 @@ body.is-admin .lucky-draw-prize-admin{
   }
 }
 
+
+/* =========================================================
+   FACEBOOK / YOUTUBE STYLE STICKY CAROUSEL TOPBAR
+========================================================= */
+.azobss-topbar-carousel{
+  position:sticky !important;
+  top:58px !important;
+  z-index:5000 !important;
+  padding:8px 12px !important;
+  background:rgba(2,6,23,.92) !important;
+  border-bottom:1px solid rgba(148,163,184,.16) !important;
+  box-shadow:0 10px 28px rgba(0,0,0,.24) !important;
+  backdrop-filter:blur(14px) !important;
+}
+
+.azobss-topbar-inner{
+  width:min(1180px,100%) !important;
+  margin:0 auto !important;
+  display:grid !important;
+  grid-template-columns:auto 38px minmax(0,1fr) 38px !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+
+.azobss-topbar-brand{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:9px !important;
+  padding:6px 10px !important;
+  border-radius:999px !important;
+  color:#e5e7eb !important;
+  text-decoration:none !important;
+  font-weight:1000 !important;
+  white-space:nowrap !important;
+}
+
+.azobss-brand-dot{
+  width:30px !important;
+  height:30px !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:50% !important;
+  background:#22c55e !important;
+  color:#052e16 !important;
+  font-size:11px !important;
+  font-weight:1000 !important;
+}
+
+.azobss-nav-scroll{
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  overflow-x:auto !important;
+  scroll-behavior:smooth !important;
+  scrollbar-width:none !important;
+  -webkit-overflow-scrolling:touch !important;
+  padding:4px 2px !important;
+}
+
+.azobss-nav-scroll::-webkit-scrollbar{
+  display:none !important;
+}
+
+.azobss-nav-chip{
+  flex:0 0 auto !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:36px !important;
+  padding:8px 15px !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  border-radius:999px !important;
+  background:rgba(15,23,42,.96) !important;
+  color:#e5e7eb !important;
+  text-decoration:none !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+  transition:.18s ease !important;
+}
+
+.azobss-nav-chip:hover,
+.azobss-nav-chip.is-active{
+  background:#ffffff !important;
+  border-color:#ffffff !important;
+  color:#020617 !important;
+  transform:translateY(-1px) !important;
+}
+
+.azobss-nav-arrow{
+  width:36px !important;
+  height:36px !important;
+  display:grid !important;
+  place-items:center !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  border-radius:50% !important;
+  background:rgba(15,23,42,.96) !important;
+  color:#e5e7eb !important;
+  font-size:24px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  cursor:pointer !important;
+  box-shadow:0 8px 18px rgba(0,0,0,.22) !important;
+}
+
+.azobss-nav-arrow:hover{
+  background:#22c55e !important;
+  border-color:#22c55e !important;
+  color:#052e16 !important;
+}
+
+@media(max-width:760px){
+  .azobss-topbar-carousel{
+    top:56px !important;
+    padding:7px 8px !important;
+  }
+
+  .azobss-topbar-inner{
+    grid-template-columns:auto minmax(0,1fr) !important;
+  }
+
+  .azobss-topbar-brand strong{
+    display:none !important;
+  }
+
+  .azobss-nav-arrow{
+    display:none !important;
+  }
+
+  .azobss-nav-scroll{
+    gap:8px !important;
+  }
+
+  .azobss-nav-chip{
+    min-height:34px !important;
+    padding:7px 13px !important;
+    font-size:12px !important;
+  }
+}
+
 </style>
 
 
@@ -5665,15 +5805,32 @@ body.is-admin .lucky-draw-admin-pagination{
 
 </head>
 
-<body>
+<body id="top">
 
-<nav class="azobss-topbar" id="azobssTopbar">
-  <a href="#Software">Software</a>
-  <a href="#CADTools">CAD Tools &amp; Resources</a>
-  <a href="tools/index.html">Mini Web Tools</a>
-  <a href="#AffiliateShop">Affiliate Shop</a>
-  <a href="#LuckyDraw">Lucky Draw</a>
+
+<nav class="azobss-topbar azobss-topbar-carousel" id="azobssTopbar">
+  <div class="azobss-topbar-inner">
+    <a class="azobss-topbar-brand" href="#top" aria-label="AZOBSS Home">
+      <span class="azobss-brand-dot">AZ</span>
+      <strong>AZOBSS</strong>
+    </a>
+
+    <button class="azobss-nav-arrow azobss-nav-left" type="button" aria-label="Scroll menu left">‹</button>
+
+    <div class="azobss-nav-scroll" id="azobssNavScroll">
+      <a class="azobss-nav-chip" href="#Software">Software</a>
+      <a class="azobss-nav-chip" href="#CADTools">CAD Tools</a>
+      <a class="azobss-nav-chip" href="tools/index.html">Mini Web Tools</a>
+      <a class="azobss-nav-chip" href="#AffiliateShop">Affiliate Shop</a>
+      <a class="azobss-nav-chip" href="#LuckyDraw">Lucky Draw</a>
+      <a class="azobss-nav-chip" href="#request">Request PA / Info Lot</a>
+      <a class="azobss-nav-chip" href="#contact">Contact</a>
+    </div>
+
+    <button class="azobss-nav-arrow azobss-nav-right" type="button" aria-label="Scroll menu right">›</button>
+  </div>
 </nav>
+
 
 
   <div class="top-login-toast" id="loginToast"></div>
@@ -14268,28 +14425,44 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 
-<script>
-/* AZOBSS sticky topbar active state */
-(function(){
-  const links = Array.from(document.querySelectorAll('.azobss-topbar a[href^="#"]'));
-  if(!links.length) return;
 
+
+
+<script>
+/* AZOBSS topbar carousel scroll buttons */
+(function(){
+  const scroll = document.getElementById('azobssNavScroll');
+  if(!scroll) return;
+
+  const left = document.querySelector('.azobss-nav-left');
+  const right = document.querySelector('.azobss-nav-right');
+
+  function move(dir){
+    scroll.scrollBy({ left: dir * Math.max(220, scroll.clientWidth * 0.7), behavior: 'smooth' });
+  }
+
+  if(left) left.addEventListener('click', () => move(-1));
+  if(right) right.addEventListener('click', () => move(1));
+
+  const links = Array.from(document.querySelectorAll('.azobss-nav-chip[href^="#"]'));
   const sections = links
     .map(a => ({ a, section: document.querySelector(a.getAttribute('href')) }))
     .filter(x => x.section);
 
   function setActive(){
+    if(!sections.length) return;
     let current = sections[0];
-    const y = window.scrollY + 120;
+    const y = window.scrollY + 150;
 
     sections.forEach(item => {
-      if(item.section.offsetTop <= y){
-        current = item;
-      }
+      if(item.section.offsetTop <= y) current = item;
     });
 
     links.forEach(a => a.classList.remove('is-active'));
-    if(current && current.a) current.a.classList.add('is-active');
+    if(current && current.a){
+      current.a.classList.add('is-active');
+      current.a.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    }
   }
 
   window.addEventListener('scroll', setActive, {passive:true});
