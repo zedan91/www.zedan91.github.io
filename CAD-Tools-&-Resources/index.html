@@ -328,10 +328,152 @@
       font-size:14px;
     }
 
+
+
+    .lisp-catalog{
+      margin-top:26px;
+      padding:24px;
+      border-radius:22px;
+      border:1px solid var(--line);
+      background:linear-gradient(145deg,rgba(15,23,42,.96),rgba(8,13,27,.96));
+      box-shadow:0 22px 54px rgba(0,0,0,.26);
+    }
+
+    .lisp-catalog-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .lisp-catalog-head p{
+      margin:8px 0 0;
+      color:#cbd5e1;
+      line-height:1.55;
+      max-width:760px;
+    }
+
+    .lisp-form{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+      padding:16px;
+      border:1px solid rgba(148,163,184,.20);
+      border-radius:18px;
+      background:rgba(2,6,23,.45);
+      margin-bottom:18px;
+    }
+
+    .lisp-form label{
+      display:grid;
+      gap:7px;
+      color:#dbe7f8;
+      font-weight:800;
+      font-size:14px;
+    }
+
+    .lisp-form input,
+    .lisp-form textarea{
+      width:100%;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:12px;
+      background:#07101e;
+      color:#f8fafc;
+      padding:12px 13px;
+      font:inherit;
+      outline:none;
+    }
+
+    .lisp-form textarea{
+      min-height:94px;
+      resize:vertical;
+    }
+
+    .lisp-form input:focus,
+    .lisp-form textarea:focus{
+      border-color:rgba(249,115,22,.72);
+      box-shadow:0 0 0 3px rgba(249,115,22,.14);
+    }
+
+    .lisp-form .full{
+      grid-column:1/-1;
+    }
+
+    .lisp-actions{
+      grid-column:1/-1;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .lisp-note{
+      margin:0;
+      color:#91a0b5;
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .lisp-list{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+    }
+
+    .lisp-item{
+      overflow:hidden;
+      border:1px solid rgba(148,163,184,.22);
+      border-radius:18px;
+      background:rgba(2,6,23,.58);
+      box-shadow:0 16px 34px rgba(0,0,0,.18);
+    }
+
+    .lisp-demo{
+      width:100%;
+      aspect-ratio:16/10;
+      object-fit:cover;
+      display:block;
+      background:#020617;
+      border-bottom:1px solid rgba(148,163,184,.18);
+    }
+
+    .lisp-item-body{
+      padding:16px;
+    }
+
+    .lisp-item h3{
+      margin:0 0 8px;
+      font-size:19px;
+    }
+
+    .lisp-item p{
+      margin:0;
+      color:#cbd5e1;
+      line-height:1.55;
+      white-space:pre-wrap;
+    }
+
+    .lisp-card-actions{
+      margin-top:14px;
+      display:flex;
+      gap:9px;
+      flex-wrap:wrap;
+    }
+
+    .btn.danger{
+      border-color:rgba(248,113,113,.35);
+      background:rgba(127,29,29,.32);
+      color:#fecaca;
+    }
+
     @media(max-width:860px){
       .hero,
       .resources-grid,
-      .workflow-grid{
+      .workflow-grid,
+      .lisp-form,
+      .lisp-list{
         grid-template-columns:1fr;
       }
 
@@ -465,6 +607,44 @@
       </div>
     </section>
 
+
+
+    <section class="lisp-catalog" aria-labelledby="lisp-catalog-title">
+      <div class="lisp-catalog-head">
+        <div>
+          <h2 class="section-title" id="lisp-catalog-title">LISP Program Showcase</h2>
+          <p>Add LISP name, program description and demonstration GIF. Items are saved in this browser using local storage.</p>
+        </div>
+        <button class="btn" type="button" id="exportLispData">Export Data</button>
+      </div>
+
+      <form class="lisp-form" id="lispForm">
+        <label>
+          LISP Name
+          <input id="lispName" type="text" maxlength="60" placeholder="Example: AZ Text Calculator" required>
+        </label>
+        <label>
+          Demonstration GIF
+          <input id="lispGif" type="file" accept="image/gif">
+        </label>
+        <label class="full">
+          Program Description
+          <textarea id="lispDescription" maxlength="600" placeholder="Explain what this LISP does, command name, and suitable workflow." required></textarea>
+        </label>
+        <label class="full">
+          GIF URL / Path (optional)
+          <input id="lispGifUrl" type="text" placeholder="Example: demos/text-calc.gif">
+        </label>
+        <div class="lisp-actions">
+          <button class="btn primary" type="submit">Add LISP</button>
+          <button class="btn" type="button" id="clearLispForm">Clear Form</button>
+          <p class="lisp-note">Tip: for GitHub Pages long term, put GIF files inside <b>CAD-Tools-&amp;-Resources/demos/</b> and use path like <b>demos/sample.gif</b>.</p>
+        </div>
+      </form>
+
+      <div class="lisp-list" id="lispList" aria-live="polite"></div>
+    </section>
+
     <section class="workflow" aria-labelledby="workflow-title">
       <h2 class="section-title" id="workflow-title">CAD Workflow Checklist</h2>
       <div class="workflow-grid">
@@ -499,5 +679,129 @@
   <footer>
     &copy; 2026 AZOBSS. All rights reserved.
   </footer>
+
+  <script>
+    (function(){
+      const STORAGE_KEY = 'azobss_lisp_showcase_items';
+      const form = document.getElementById('lispForm');
+      const nameInput = document.getElementById('lispName');
+      const descInput = document.getElementById('lispDescription');
+      const gifInput = document.getElementById('lispGif');
+      const gifUrlInput = document.getElementById('lispGifUrl');
+      const list = document.getElementById('lispList');
+      const clearBtn = document.getElementById('clearLispForm');
+      const exportBtn = document.getElementById('exportLispData');
+
+      const defaultItems = [
+        {
+          id: 'sample-text-calc',
+          name: 'Sample LISP Program',
+          description: 'Add your own AutoCAD LISP item here. Include command name, function and workflow notes.',
+          gif: ''
+        }
+      ];
+
+      function escapeHtml(value){
+        return String(value || '').replace(/[&<>'"]/g, function(char){
+          return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char];
+        });
+      }
+
+      function getItems(){
+        try{
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          return Array.isArray(saved) && saved.length ? saved : defaultItems;
+        }catch(error){
+          return defaultItems;
+        }
+      }
+
+      function saveItems(items){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      }
+
+      function renderItems(){
+        const items = getItems();
+        list.innerHTML = items.map(function(item){
+          const gif = item.gif ? escapeHtml(item.gif) : 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><rect width="800" height="500" fill="#07101e"/><text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#fb923c" font-family="Arial" font-size="42" font-weight="700">GIF Demo</text><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Arial" font-size="24">Upload or add demo path</text></svg>');
+          return `
+            <article class="lisp-item" data-id="${escapeHtml(item.id)}">
+              <img class="lisp-demo" src="${gif}" alt="${escapeHtml(item.name)} demonstration">
+              <div class="lisp-item-body">
+                <h3>${escapeHtml(item.name)}</h3>
+                <p>${escapeHtml(item.description)}</p>
+                <div class="lisp-card-actions">
+                  <button class="btn danger" type="button" data-delete="${escapeHtml(item.id)}">Delete</button>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('');
+      }
+
+      function fileToDataUrl(file){
+        return new Promise(function(resolve, reject){
+          const reader = new FileReader();
+          reader.onload = function(){ resolve(reader.result); };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      form.addEventListener('submit', async function(event){
+        event.preventDefault();
+        const name = nameInput.value.trim();
+        const description = descInput.value.trim();
+        if(!name || !description) return;
+
+        let gif = gifUrlInput.value.trim();
+        if(gifInput.files && gifInput.files[0]){
+          if(gifInput.files[0].type !== 'image/gif'){
+            alert('Please choose GIF file only.');
+            return;
+          }
+          gif = await fileToDataUrl(gifInput.files[0]);
+        }
+
+        const items = getItems().filter(function(item){ return item.id !== 'sample-text-calc'; });
+        items.unshift({
+          id: String(Date.now()),
+          name: name,
+          description: description,
+          gif: gif
+        });
+        saveItems(items);
+        form.reset();
+        renderItems();
+      });
+
+      clearBtn.addEventListener('click', function(){
+        form.reset();
+      });
+
+      list.addEventListener('click', function(event){
+        const id = event.target.getAttribute('data-delete');
+        if(!id) return;
+        const items = getItems().filter(function(item){ return String(item.id) !== String(id); });
+        saveItems(items);
+        renderItems();
+      });
+
+      exportBtn.addEventListener('click', function(){
+        const blob = new Blob([JSON.stringify(getItems(), null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'azobss-lisp-showcase.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      renderItems();
+    })();
+  </script>
+
 </body>
 </html>
