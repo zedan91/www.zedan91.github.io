@@ -580,7 +580,7 @@
       word-break:break-word;
     }
 
-    .desc-text{
+     .desc-text{overflow-wrap:anywhere;word-break:break-word;} .program-link{overflow-wrap:anywhere;word-break:break-word;display:block} .lisp-demo-preview{width:420px!important;max-width:none!important} .desc-text{
       margin:0;
       max-height:38px;
       overflow:hidden;
@@ -657,8 +657,24 @@
 
     .lisp-table-actions{
       display:flex;
-      gap:8px;
+      gap:6px;
       flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .lisp-table-actions .btn{
+      padding:6px 9px;
+      min-height:28px;
+      border-radius:8px;
+      font-size:12px;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    .lisp-table-actions .btn.edit{
+      background:rgba(37,99,235,.92);
+      color:#fff;
+      border-color:rgba(147,197,253,.45);
     }
 
     .lisp-pagination{
@@ -888,7 +904,7 @@
         <div>
           <h2 class="section-title" id="lisp-catalog-title">LISP Program Showcase</h2>
           <p>View LISP name, program description and demonstration GIF. Display style is table-based with 30 programs per page.</p>
-          <p class="lisp-view-note" id="lispAdminStatus">Public view: add, delete and export tools are available for admin only.</p>
+          <p class="lisp-view-note" id="lispAdminStatus">Public view: add, edit, delete and export tools are available for admin only.</p>
         </div>
         <button class="btn admin-only inline-admin" type="button" id="exportLispData">Export Data</button>
       </div>
@@ -1029,6 +1045,8 @@
       const adminStatus = document.getElementById('lispAdminStatus');
       const searchInput = document.getElementById('lispSearch');
       const searchCount = document.getElementById('lispSearchCount');
+      const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+      let editingLispId = null;
 
       const defaultItems = [
         {
@@ -1120,17 +1138,18 @@
           const gif = item.gif ? escapeHtml(item.gif) : getPlaceholderGif();
           return `
             <tr data-id="${escapeHtml(item.id)}">
-              <td><a class="program-link" href="#" onclick="return false;">${escapeHtml(item.name)}</a></td>
+              <td style="overflow-wrap:anywhere;word-break:break-word"><a class="program-link" href="#" onclick="return false;">${escapeHtml(item.name)}</a></td>
               <td class="desc-cell">
                 <p class="desc-text">${escapeHtml(item.description)}</p>
                 <button class="show-more-btn" type="button" data-show-more>Show more</button>
               </td>
               <td class="lisp-demo-cell">
-                <button class="gif-demo-trigger" type="button" aria-label="Preview ${escapeHtml(item.name)} demonstration GIF">GIF Demo</button>
+                <button class="gif-demo-trigger" type="button" aria-label="Preview ${escapeHtml(item.name)} demonstration GIF">D1</button>
                 <img class="lisp-demo-preview" src="${gif}" alt="${escapeHtml(item.name)} demonstration">
               </td>
               ${adminMode ? `<td class="lisp-admin-column">
                 <div class="lisp-table-actions">
+                  <button class="btn edit" type="button" data-edit="${escapeHtml(item.id)}">Edit</button>
                   <button class="btn danger" type="button" data-delete="${escapeHtml(item.id)}">Delete</button>
                 </div>
               </td>` : ''}
@@ -1165,37 +1184,58 @@
       form.addEventListener('submit', async function(event){
         event.preventDefault();
         if(!isLispAdmin()){
-          alert('Admin only. Please sign in as admin to add LISP.');
+          alert('Admin only. Please sign in as admin to add or edit LISP.');
           return;
         }
         const name = nameInput.value.trim();
         const description = descInput.value.trim();
         if(!name || !description) return;
 
+        let items = getItems().filter(function(item){ return item.id !== 'sample-text-calc'; });
+        const existingItem = editingLispId ? items.find(function(item){ return String(item.id) === String(editingLispId); }) : null;
         let gif = gifUrlInput.value.trim();
+
         if(gifInput.files && gifInput.files[0]){
           if(gifInput.files[0].type !== 'image/gif'){
             alert('Please choose GIF file only.');
             return;
           }
           gif = await fileToDataUrl(gifInput.files[0]);
+        }else if(editingLispId && !gif){
+          gif = existingItem ? (existingItem.gif || '') : '';
         }
 
-        const items = getItems().filter(function(item){ return item.id !== 'sample-text-calc'; });
-        items.unshift({
-          id: String(Date.now()),
-          name: name,
-          description: description,
-          gif: gif
-        });
+        if(editingLispId){
+          items = items.map(function(item){
+            if(String(item.id) !== String(editingLispId)) return item;
+            return {
+              id: item.id,
+              name: name,
+              description: description,
+              gif: gif
+            };
+          });
+          editingLispId = null;
+          if(submitBtn) submitBtn.textContent = 'Add LISP';
+        }else{
+          items.unshift({
+            id: String(Date.now()),
+            name: name,
+            description: description,
+            gif: gif
+          });
+          currentPage = 1;
+        }
+
         saveItems(items);
-        currentPage = 1;
         form.reset();
         renderItems();
       });
 
       clearBtn.addEventListener('click', function(){
         form.reset();
+        editingLispId = null;
+        if(submitBtn) submitBtn.textContent = 'Add LISP';
       });
 
       list.addEventListener('click', function(event){
@@ -1210,9 +1250,30 @@
         }
 
         if(!isLispAdmin()) return;
+
+        const editId = event.target.getAttribute('data-edit');
+        if(editId){
+          const item = getItems().find(function(entry){ return String(entry.id) === String(editId); });
+          if(!item) return;
+          editingLispId = editId;
+          nameInput.value = item.name || '';
+          descInput.value = item.description || '';
+          gifUrlInput.value = (item.gif && !String(item.gif).startsWith('data:')) ? item.gif : '';
+          gifInput.value = '';
+          if(submitBtn) submitBtn.textContent = 'Update LISP';
+          form.scrollIntoView({behavior:'smooth', block:'start'});
+          nameInput.focus();
+          return;
+        }
+
         const id = event.target.getAttribute('data-delete');
         if(!id) return;
         const items = getItems().filter(function(item){ return String(item.id) !== String(id); });
+        if(String(editingLispId) === String(id)){
+          editingLispId = null;
+          form.reset();
+          if(submitBtn) submitBtn.textContent = 'Add LISP';
+        }
         saveItems(items);
         renderItems();
       });
@@ -1252,8 +1313,8 @@
         document.body.classList.toggle('is-lisp-admin', adminMode);
         if(adminStatus){
           adminStatus.textContent = adminMode
-            ? 'Admin mode: you can add, delete and export LISP items.'
-            : 'Public view: add, delete and export tools are hidden. Only admin can manage this list.';
+            ? 'Admin mode: you can add, edit, delete and export LISP items.'
+            : 'Public view: add, edit, delete and export tools are hidden. Only admin can manage this list.';
         }
       }
 
