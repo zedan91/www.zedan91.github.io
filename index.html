@@ -4438,6 +4438,178 @@ body.is-admin .lucky-draw-prize-admin{
   }
 }
 
+
+/* =========================================================
+   FINAL TOPBAR TRUE CAROUSEL STYLE
+   Horizontal scroll cards like YouTube topic carousel
+========================================================= */
+
+.azobss-topbar,
+.azobss-topbar-carousel{
+  position:sticky !important;
+  top:58px !important;
+  z-index:5000 !important;
+  width:100% !important;
+  padding:8px 0 !important;
+  background:rgba(2,6,23,.94) !important;
+  border-bottom:1px solid rgba(148,163,184,.16) !important;
+  backdrop-filter:blur(16px) !important;
+  box-shadow:0 10px 30px rgba(0,0,0,.28) !important;
+}
+
+.azobss-topbar-inner{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+  display:grid !important;
+  grid-template-columns:auto 42px minmax(0,1fr) 42px !important;
+  align-items:center !important;
+  gap:8px !important;
+  padding:0 14px !important;
+  box-sizing:border-box !important;
+}
+
+.azobss-topbar-brand{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:9px !important;
+  padding:6px 11px !important;
+  border-radius:999px !important;
+  background:rgba(15,23,42,.92) !important;
+  color:#e5e7eb !important;
+  text-decoration:none !important;
+  font-weight:1000 !important;
+  white-space:nowrap !important;
+  border:1px solid rgba(148,163,184,.16) !important;
+}
+
+.azobss-brand-dot{
+  width:30px !important;
+  height:30px !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:50% !important;
+  background:#22c55e !important;
+  color:#052e16 !important;
+  font-size:11px !important;
+  font-weight:1000 !important;
+}
+
+.azobss-nav-scroll{
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scroll-behavior:smooth !important;
+  scroll-snap-type:x mandatory !important;
+  scrollbar-width:none !important;
+  -webkit-overflow-scrolling:touch !important;
+  padding:5px 4px !important;
+  mask-image:linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%) !important;
+  -webkit-mask-image:linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%) !important;
+}
+
+.azobss-nav-scroll::-webkit-scrollbar{
+  display:none !important;
+}
+
+.azobss-nav-chip{
+  scroll-snap-align:center !important;
+  flex:0 0 auto !important;
+  min-width:max-content !important;
+  min-height:38px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:9px 17px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  background:rgba(30,41,59,.95) !important;
+  color:#f8fafc !important;
+  text-decoration:none !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+  box-shadow:0 8px 20px rgba(0,0,0,.18) !important;
+  transition:transform .18s ease, background .18s ease, color .18s ease, border-color .18s ease !important;
+}
+
+.azobss-nav-chip:hover{
+  transform:translateY(-2px) scale(1.02) !important;
+  background:#ffffff !important;
+  border-color:#ffffff !important;
+  color:#020617 !important;
+}
+
+.azobss-nav-chip.is-active{
+  background:#22c55e !important;
+  border-color:#22c55e !important;
+  color:#052e16 !important;
+  box-shadow:0 10px 24px rgba(34,197,94,.25) !important;
+}
+
+.azobss-nav-arrow{
+  width:38px !important;
+  height:38px !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:50% !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  background:rgba(15,23,42,.98) !important;
+  color:#e5e7eb !important;
+  font-size:26px !important;
+  font-weight:1000 !important;
+  cursor:pointer !important;
+  line-height:1 !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.25) !important;
+}
+
+.azobss-nav-arrow:hover{
+  background:#22c55e !important;
+  border-color:#22c55e !important;
+  color:#052e16 !important;
+}
+
+.azobss-nav-arrow.is-disabled{
+  opacity:.35 !important;
+  pointer-events:none !important;
+}
+
+@media(max-width:760px){
+  .azobss-topbar,
+  .azobss-topbar-carousel{
+    top:56px !important;
+    padding:7px 0 !important;
+  }
+
+  .azobss-topbar-inner{
+    grid-template-columns:auto minmax(0,1fr) !important;
+    padding:0 8px !important;
+  }
+
+  .azobss-topbar-brand strong{
+    display:none !important;
+  }
+
+  .azobss-nav-arrow{
+    display:none !important;
+  }
+
+  .azobss-nav-scroll{
+    gap:9px !important;
+    padding:5px 2px !important;
+    mask-image:none !important;
+    -webkit-mask-image:none !important;
+  }
+
+  .azobss-nav-chip{
+    min-height:36px !important;
+    padding:8px 14px !important;
+    font-size:12px !important;
+  }
+}
+
 </style>
 
 
@@ -14468,6 +14640,39 @@ document.addEventListener('DOMContentLoaded', function(){
   window.addEventListener('scroll', setActive, {passive:true});
   window.addEventListener('load', setActive);
   setActive();
+})();
+</script>
+
+
+<script>
+/* AZOBSS true carousel nav controls */
+(function(){
+  const scroll = document.getElementById('azobssNavScroll');
+  if(!scroll) return;
+
+  const left = document.querySelector('.azobss-nav-left');
+  const right = document.querySelector('.azobss-nav-right');
+
+  function updateArrows(){
+    if(!left || !right) return;
+    left.classList.toggle('is-disabled', scroll.scrollLeft <= 4);
+    right.classList.toggle('is-disabled', scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 4);
+  }
+
+  function move(dir){
+    scroll.scrollBy({
+      left: dir * Math.max(260, Math.floor(scroll.clientWidth * 0.75)),
+      behavior:'smooth'
+    });
+  }
+
+  if(left) left.addEventListener('click', () => move(-1));
+  if(right) right.addEventListener('click', () => move(1));
+
+  scroll.addEventListener('scroll', updateArrows, {passive:true});
+  window.addEventListener('resize', updateArrows);
+  window.addEventListener('load', updateArrows);
+  updateArrows();
 })();
 </script>
 
