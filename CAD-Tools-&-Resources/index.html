@@ -1318,6 +1318,10 @@ white-space:nowrap !important;
 
         const id = event.target.getAttribute('data-delete');
         if(!id) return;
+        const ok=confirm('Delete this LISP permanently?
+
+This action cannot be undone.');
+        if(!ok) return;
         const items = getItems().filter(function(item){ return String(item.id) !== String(id); });
         if(String(editingLispId) === String(id)){
           editingLispId = null;
