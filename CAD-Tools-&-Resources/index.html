@@ -580,7 +580,7 @@
       word-break:break-word;
     }
 
-     .desc-text{overflow-wrap:anywhere;word-break:break-word;} .program-link{overflow-wrap:anywhere;word-break:break-word;display:block} .lisp-demo-preview{width:420px!important;max-width:none!important} .desc-text{
+     .desc-text{overflow-wrap:anywhere;word-break:break-word;} .program-link{overflow-wrap:anywhere;word-break:break-word;display:block} .desc-text{
       margin:0;
       max-height:38px;
       overflow:hidden;
@@ -630,29 +630,30 @@
     }
 
     .lisp-demo-preview{
-      position:absolute;
-      right:0;
-      top:42px;
-      width:min(420px, 82vw);
+      position:fixed;
+      left:50%;
+      top:50%;
+      width:min(820px, 92vw);
+      max-height:78vh;
       aspect-ratio:16/9;
-      object-fit:cover;
+      object-fit:contain;
       display:block;
-      border-radius:16px;
+      border-radius:18px;
       background:#020617;
-      border:1px solid rgba(148,163,184,.40);
-      box-shadow:0 22px 60px rgba(0,0,0,.58);
+      border:1px solid rgba(148,163,184,.45);
+      box-shadow:0 28px 90px rgba(0,0,0,.72);
       opacity:0;
-      transform:scale(.92) translateY(-4px);
-      transform-origin:top right;
+      transform:translate(-50%, -50%) scale(.90);
+      transform-origin:center;
       pointer-events:none;
       transition:opacity .15s ease, transform .15s ease;
-      z-index:40;
+      z-index:9999;
     }
 
     .gif-demo-trigger:hover + .lisp-demo-preview,
     .gif-demo-trigger:focus + .lisp-demo-preview{
       opacity:1;
-      transform:scale(1) translateY(0);
+      transform:translate(-50%, -50%) scale(1);
     }
 
     .lisp-table-actions{
