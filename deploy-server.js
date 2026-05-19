@@ -9,6 +9,51 @@ const url = require("url");
 const sharp = require("sharp");
 const PDFDocument = require("pdfkit");
 
+let firebaseAdmin = null;
+try {
+  firebaseAdmin = require("firebase-admin");
+} catch (error) {
+  firebaseAdmin = null;
+}
+
+let firebaseAdminReady = false;
+function initFirebaseAdmin() {
+  if (!firebaseAdmin || firebaseAdminReady) return firebaseAdminReady;
+
+  try {
+    if (firebaseAdmin.apps && firebaseAdmin.apps.length) {
+      firebaseAdminReady = true;
+      return true;
+    }
+
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "";
+    if (serviceAccountJson) {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.cert(serviceAccount)
+      });
+      firebaseAdminReady = true;
+      return true;
+    }
+
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.applicationDefault()
+      });
+      firebaseAdminReady = true;
+      return true;
+    }
+  } catch (error) {
+    console.error("Firebase Admin init failed:", error.message);
+  }
+
+  return false;
+}
+
+function buildUserEmail(usernameKey) {
+  return `${usernameKey}@azobss.local`;
+}
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const PORT = process.env.PORT || 3000;
@@ -29,7 +74,7 @@ function send(res, status, body, type = "text/plain; charset=utf-8") {
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type, x-admin-key"
   });
 
   res.end(body);
@@ -791,6 +836,89 @@ async function handler(req, res) {
     // =========================
     // AFFILIATE PRODUCT AUTO DETECT
     // =========================
+
+    // =========================
+    // ADMIN RESET FIREBASE USER PASSWORD
+    // =========================
+
+    if (
+      pathname === "/api/admin-reset-user-password" &&
+      req.method === "POST"
+    ) {
+
+      const body = await readBody(req);
+      let data;
+
+      try {
+        data = JSON.parse(body || "{}");
+      } catch (err) {
+        return send(
+          res,
+          400,
+          JSON.stringify({ ok: false, error: "Invalid JSON" }),
+          "application/json"
+        );
+      }
+
+      const usernameKey = String(data.usernameKey || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "");
+
+      const newPassword = String(data.newPassword || "");
+
+      if (!usernameKey || usernameKey === "zedan91") {
+        return send(
+          res,
+          400,
+          JSON.stringify({ ok: false, error: "Invalid username" }),
+          "application/json"
+        );
+      }
+
+      if (newPassword.length < 6) {
+        return send(
+          res,
+          400,
+          JSON.stringify({ ok: false, error: "Password must be at least 6 characters" }),
+          "application/json"
+        );
+      }
+
+      if (!initFirebaseAdmin()) {
+        return send(
+          res,
+          500,
+          JSON.stringify({
+            ok: false,
+            error: "Firebase Admin not configured. Add FIREBASE_SERVICE_ACCOUNT_JSON in Render environment variables."
+          }),
+          "application/json"
+        );
+      }
+
+      try {
+        const email = buildUserEmail(usernameKey);
+        const userRecord = await firebaseAdmin.auth().getUserByEmail(email);
+        await firebaseAdmin.auth().updateUser(userRecord.uid, {
+          password: newPassword
+        });
+
+        return send(
+          res,
+          200,
+          JSON.stringify({ ok: true, usernameKey }),
+          "application/json"
+        );
+      } catch (error) {
+        return send(
+          res,
+          500,
+          JSON.stringify({ ok: false, error: error.message || "Reset password failed" }),
+          "application/json"
+        );
+      }
+    }
 
     if (
       pathname === "/api/detect-product" &&

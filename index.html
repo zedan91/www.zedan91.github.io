@@ -5020,51 +5020,7 @@ flex:0 0 auto;
 }
 }
 
-
-    /* ===== MOBILE TOP NAV BUTTON SCROLL FIX ===== */
-    @media (max-width: 760px) {
-      .market-sticky-bar,
-      .market-bar-inner,
-      .market-main-row {
-        overflow: visible !important;
-      }
-
-      .market-nav {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        flex: 0 0 100% !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: none !important;
-        gap: 8px !important;
-        padding: 8px 8px 10px !important;
-        box-sizing: border-box !important;
-        scroll-snap-type: x proximity;
-      }
-
-      .market-nav::-webkit-scrollbar {
-        display: none !important;
-      }
-
-      .market-nav a {
-        flex: 0 0 auto !important;
-        white-space: nowrap !important;
-        min-width: max-content !important;
-        scroll-snap-align: start;
-      }
-
-      .market-nav::after {
-        content: "";
-        flex: 0 0 10px;
-      }
-    }
-
-  </style>
+</style>
 
 
 
@@ -7010,7 +6966,19 @@ body{
         </label>
         <p class="request-error" id="siteLoginError"></p>
         <button class="btn blue" id="siteSignInSubmitButton" type="submit">Sign in</button>
+        <p class="auth-switch-note">Forgot password? <button id="switchToForgotPassword" type="button">Reset password</button></p>
         <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
+      </form>
+
+      <form class="auth-modal-form" id="siteForgotPasswordForm" hidden>
+        <p class="request-note">Enter your username. If your account has a real email configured in Firebase Auth, a reset link will be sent.</p>
+        <label for="siteResetName">
+          Username
+          <input id="siteResetName" type="text" placeholder="Username" required>
+        </label>
+        <p class="request-error" id="siteResetError"></p>
+        <button class="btn blue" id="siteResetSubmitButton" type="submit">Send reset link</button>
+        <p class="auth-switch-note">Remember password? <button id="switchForgotToSignin" type="button">Sign in</button></p>
       </form>
 
       <form class="auth-modal-form" id="siteSignUpForm" hidden>
@@ -8101,6 +8069,7 @@ Peraduan Lucky Draw User</h2>
       signInWithEmailAndPassword,
       deleteUser,
       signOut,
+      sendPasswordResetEmail,
       onAuthStateChanged,
       setPersistence,
       browserSessionPersistence
@@ -8179,12 +8148,18 @@ Peraduan Lucky Draw User</h2>
     const siteAuthClose = document.getElementById('siteAuthClose');
     const siteSignInForm = document.getElementById('siteSignInForm');
     const siteSignUpForm = document.getElementById('siteSignUpForm');
+    const siteForgotPasswordForm = document.getElementById('siteForgotPasswordForm');
     const switchToSiteSignup = document.getElementById('switchToSiteSignup');
     const switchToSiteSignin = document.getElementById('switchToSiteSignin');
+    const switchToForgotPassword = document.getElementById('switchToForgotPassword');
+    const switchForgotToSignin = document.getElementById('switchForgotToSignin');
     const siteLoginName = document.getElementById('siteLoginName');
     const siteLoginPassword = document.getElementById('siteLoginPassword');
     const siteLoginError = document.getElementById('siteLoginError');
     const siteSignInSubmitButton = document.getElementById('siteSignInSubmitButton');
+    const siteResetName = document.getElementById('siteResetName');
+    const siteResetError = document.getElementById('siteResetError');
+    const siteResetSubmitButton = document.getElementById('siteResetSubmitButton');
     const siteSignupName = document.getElementById('siteSignupName');
     const siteSignupPassword = document.getElementById('siteSignupPassword');
     const siteSignupPhone = document.getElementById('siteSignupPhone');
@@ -10441,6 +10416,7 @@ Peraduan Lucky Draw User</h2>
               </div>
               <div class="user-edit-actions">
                 <button class="small-action-btn blue" type="button" data-save-user="${escapeHtml(usernameKey)}">Save Details</button>
+                ${isAdminRecord ? '' : `<button class="small-action-btn" type="button" data-reset-password="${escapeHtml(usernameKey)}">Reset Password</button>`}
               </div>
             </div>
           </div>
@@ -10498,6 +10474,57 @@ Peraduan Lucky Draw User</h2>
       } catch (error) {
         registeredUsersError.style.color = '#fecaca';
         registeredUsersError.textContent = `Failed to save user details: ${error.code || error.message}`;
+      }
+    }
+
+    function generateTemporaryPassword(length = 10) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#';
+      let password = '';
+      if (window.crypto && window.crypto.getRandomValues) {
+        const values = new Uint32Array(length);
+        window.crypto.getRandomValues(values);
+        for (let i = 0; i < length; i += 1) password += chars[values[i] % chars.length];
+      } else {
+        for (let i = 0; i < length; i += 1) password += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return password;
+    }
+
+    async function adminResetUserPassword(usernameKey) {
+      if (!isAdminUser(currentUser) || !usernameKey || usernameKey === ADMIN_USERNAME) {
+        return;
+      }
+
+      const newPassword = generateTemporaryPassword();
+      if (!confirm(`Reset password for ${usernameKey}? A temporary password will be generated.`)) {
+        return;
+      }
+
+      try {
+        registeredUsersError.textContent = 'Resetting password...';
+        registeredUsersError.style.color = '#bfdbfe';
+
+        const res = await fetch('/api/admin-reset-user-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usernameKey,
+            newPassword,
+            requestedBy: currentUser.usernameKey
+          })
+        });
+
+        const data = await res.json().catch(function () { return {}; });
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || 'Reset password failed.');
+        }
+
+        registeredUsersError.style.color = '#bbf7d0';
+        registeredUsersError.textContent = `Password reset for ${usernameKey}. Temporary password: ${newPassword}`;
+      } catch (error) {
+        registeredUsersError.style.color = '#fecaca';
+        registeredUsersError.textContent = `${error.message || 'Reset password failed.'} Backend requires Firebase Admin service account.`;
       }
     }
 
@@ -11477,8 +11504,11 @@ Peraduan Lucky Draw User</h2>
     function clearSiteAuthInputs() {
       siteSignInForm.reset();
       siteSignUpForm.reset();
+      siteForgotPasswordForm.reset();
       siteLoginError.textContent = '';
       siteSignupError.textContent = '';
+      siteResetError.textContent = '';
+      siteResetError.style.color = '#fecaca';
       memberUpgradeStatus.textContent = '';
       memberUpgradeCode.value = '';
       if (siteSignupInviteCode) siteSignupInviteCode.value = getInitialInviteCode();
@@ -11500,11 +11530,15 @@ Peraduan Lucky Draw User</h2>
 
     function openSiteAuth(mode = 'signin') {
       const isSignup = mode === 'signup' || mode === 'upgrade';
-      siteAuthTitle.textContent = isSignup ? 'Sign up' : 'Sign in';
-      siteSignInForm.hidden = isSignup;
+      const isForgot = mode === 'forgot';
+      siteAuthTitle.textContent = isForgot ? 'Reset password' : (isSignup ? 'Sign up' : 'Sign in');
+      siteSignInForm.hidden = isSignup || isForgot;
       siteSignUpForm.hidden = !isSignup;
+      siteForgotPasswordForm.hidden = !isForgot;
       siteLoginError.textContent = '';
       siteSignupError.textContent = '';
+      siteResetError.textContent = '';
+      siteResetError.style.color = '#fecaca';
       memberUpgradeStatus.textContent = '';
       memberUpgradeCode.value = '';
       memberUpgradeWrap.hidden = mode !== 'upgrade' || !isLoggedIn;
@@ -11513,7 +11547,7 @@ Peraduan Lucky Draw User</h2>
       siteAuthModal.setAttribute('aria-hidden', 'false');
 
       setTimeout(function () {
-        (mode === 'upgrade' && isLoggedIn ? memberUpgradeCode : (isSignup ? siteSignupName : siteLoginName)).focus();
+        (mode === 'upgrade' && isLoggedIn ? memberUpgradeCode : (isForgot ? siteResetName : (isSignup ? siteSignupName : siteLoginName))).focus();
       }, 50);
     }
 
@@ -11593,6 +11627,38 @@ Peraduan Lucky Draw User</h2>
         }
 
         errorElement.textContent = 'Username or password is incorrect. Please try again.';
+      }
+    }
+
+    async function requestSitePasswordReset() {
+      const usernameKey = normalizeUsername(siteResetName.value || '');
+
+      if (!usernameKey) {
+        siteResetError.style.color = '#fecaca';
+        siteResetError.textContent = 'Please enter your username.';
+        return;
+      }
+
+      if (!firebaseReady || !auth) {
+        siteResetError.style.color = '#fecaca';
+        siteResetError.textContent = 'Firebase belum disambungkan.';
+        return;
+      }
+
+      try {
+        setButtonLoading(siteResetSubmitButton, true, 'Sending...', 'Send reset link');
+        await sendPasswordResetEmail(auth, buildUserEmail(usernameKey));
+        siteResetError.style.color = '#bbf7d0';
+        siteResetError.textContent = 'Reset link sent. Check your email inbox/spam. If you do not receive it, ask admin to reset your password.';
+      } catch (error) {
+        siteResetError.style.color = '#fecaca';
+        if (error.code === 'auth/user-not-found') {
+          siteResetError.textContent = 'Username not found.';
+        } else {
+          siteResetError.textContent = 'Cannot send reset email. Ask admin to reset password for this username.';
+        }
+      } finally {
+        setButtonLoading(siteResetSubmitButton, false, 'Sending...', 'Send reset link');
       }
     }
 
@@ -12007,6 +12073,14 @@ Peraduan Lucky Draw User</h2>
       openSiteAuth('signin');
     });
 
+    switchToForgotPassword.addEventListener('click', function () {
+      openSiteAuth('forgot');
+    });
+
+    switchForgotToSignin.addEventListener('click', function () {
+      openSiteAuth('signin');
+    });
+
     siteSignInForm.addEventListener('submit', async function (event) {
       event.preventDefault();
       setButtonLoading(siteSignInSubmitButton, true, 'Signing in...', 'Sign in');
@@ -12021,6 +12095,11 @@ Peraduan Lucky Draw User</h2>
     siteSignUpForm.addEventListener('submit', async function (event) {
       event.preventDefault();
       await signUpSiteUser();
+    });
+
+    siteForgotPasswordForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      await requestSitePasswordReset();
     });
     unlockSignupButton.addEventListener('click', async function () {
       if (!firebaseReady) {
@@ -12519,6 +12598,7 @@ Peraduan Lucky Draw User</h2>
       const toggleButton = event.target.closest('[data-toggle-user-edit]');
       const saveButton = event.target.closest('[data-save-user]');
       const deleteButton = event.target.closest('[data-delete-user]');
+      const resetPasswordButton = event.target.closest('[data-reset-password]');
 
       if (toggleButton) {
         const item = toggleButton.closest('.user-edit-item');
@@ -12539,6 +12619,11 @@ Peraduan Lucky Draw User</h2>
 
       if (deleteButton) {
         deleteRegisteredUser(deleteButton.dataset.deleteUser);
+        return;
+      }
+
+      if (resetPasswordButton) {
+        adminResetUserPassword(resetPasswordButton.dataset.resetPassword);
       }
     });
 
