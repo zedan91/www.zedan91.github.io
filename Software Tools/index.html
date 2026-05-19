@@ -183,15 +183,20 @@
 
 
 <style>
-/* Hide top search section */
-input[placeholder*="Search for an item"]{
-  display:none !important;
-}
-
+/* SAFE HIDE: top marketplace/search strip only */
+form:has(input[placeholder*="Search for an item"]),
+div:has(> input[placeholder*="Search for an item"]),
+section:has(input[placeholder*="Search for an item"]),
+.marketplace-search,
+.search-strip,
 .search-bar,
-.search-container,
-.marketplace-search{
+.top-search{
   display:none !important;
+  height:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
 }
 </style>
 
