@@ -5020,7 +5020,51 @@ flex:0 0 auto;
 }
 }
 
-</style>
+
+    /* ===== MOBILE TOP NAV BUTTON SCROLL FIX ===== */
+    @media (max-width: 760px) {
+      .market-sticky-bar,
+      .market-bar-inner,
+      .market-main-row {
+        overflow: visible !important;
+      }
+
+      .market-nav {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        gap: 8px !important;
+        padding: 8px 8px 10px !important;
+        box-sizing: border-box !important;
+        scroll-snap-type: x proximity;
+      }
+
+      .market-nav::-webkit-scrollbar {
+        display: none !important;
+      }
+
+      .market-nav a {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        min-width: max-content !important;
+        scroll-snap-align: start;
+      }
+
+      .market-nav::after {
+        content: "";
+        flex: 0 0 10px;
+      }
+    }
+
+  </style>
 
 
 
