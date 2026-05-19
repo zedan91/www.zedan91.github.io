@@ -557,6 +557,25 @@
       font-size: 15px;
     }
 
+
+
+    .profile-settings-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .profile-settings-actions .btn {
+      flex: 1 1 160px;
+    }
+
+    .profile-settings-note {
+      margin: -2px 0 2px;
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
     .auth-switch-note {
       margin: 4px 0 0;
       color: #cbd5e1;
@@ -6899,10 +6918,10 @@ body{
               </a>
               
               <div class="user-dropdown-section">Account</div>
-              <a class="user-dropdown-item" href="#top" role="menuitem">
+              <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V22a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.1 5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.9 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
                 <span>Settings</span>
-              </a>
+              </button>
               <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
                 <span>Log out</span>
@@ -7017,6 +7036,41 @@ body{
             <button class="member-upgrade-btn" id="memberUpgradeButton" type="button" aria-label="Upgrade member">&gt;</button>
           </div>
           <p class="member-upgrade-status" id="memberUpgradeStatus"></p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <div class="auth-modal" id="profileSettingsModal" aria-hidden="true">
+    <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileSettingsTitle">
+      <div class="auth-modal-top">
+        <h3 id="profileSettingsTitle">Edit Profile</h3>
+        <button class="auth-close-btn" id="profileSettingsClose" type="button" aria-label="Close">&times;</button>
+      </div>
+
+      <form class="auth-modal-form" id="profileSettingsForm">
+        <label for="profileEditName">
+          Username / Name
+          <input id="profileEditName" type="text" placeholder="Username" required>
+        </label>
+        <label for="profileEditPhone">
+          Phone Number
+          <input id="profileEditPhone" type="tel" inputmode="tel" placeholder="Example: 01135600723">
+        </label>
+        <label for="profileEditEmail">
+          Contact Email
+          <input id="profileEditEmail" type="email" inputmode="email" placeholder="Example: name@email.com">
+        </label>
+        <label for="profileEditPassword">
+          New Password
+          <input id="profileEditPassword" type="password" placeholder="Leave blank if unchanged" autocomplete="new-password">
+        </label>
+        <p class="profile-settings-note">Password change only works while user is signed in. Admin cannot view original user password.</p>
+        <p class="request-error" id="profileSettingsError"></p>
+        <div class="profile-settings-actions">
+          <button class="btn blue" id="profileSettingsSaveButton" type="submit">Save Changes</button>
+          <button class="btn" id="profileSettingsCancelButton" type="button">Cancel</button>
         </div>
       </form>
     </div>
@@ -8063,6 +8117,7 @@ Peraduan Lucky Draw User</h2>
       deleteUser,
       signOut,
       sendPasswordResetEmail,
+      updatePassword,
       onAuthStateChanged,
       setPersistence,
       browserSessionPersistence
@@ -8132,6 +8187,17 @@ Peraduan Lucky Draw User</h2>
     const signedInName = document.getElementById('signedInName');
     const logoutButton = document.getElementById('logoutButton');
     const userUpgradeButton = document.getElementById('userUpgradeButton');
+    const profileSettingsButton = document.getElementById('profileSettingsButton');
+    const profileSettingsModal = document.getElementById('profileSettingsModal');
+    const profileSettingsClose = document.getElementById('profileSettingsClose');
+    const profileSettingsCancelButton = document.getElementById('profileSettingsCancelButton');
+    const profileSettingsForm = document.getElementById('profileSettingsForm');
+    const profileEditName = document.getElementById('profileEditName');
+    const profileEditPhone = document.getElementById('profileEditPhone');
+    const profileEditEmail = document.getElementById('profileEditEmail');
+    const profileEditPassword = document.getElementById('profileEditPassword');
+    const profileSettingsError = document.getElementById('profileSettingsError');
+    const profileSettingsSaveButton = document.getElementById('profileSettingsSaveButton');
     const marketUserTools = document.getElementById('marketUserTools');
     const siteAuthActions = document.getElementById('siteAuthActions');
     const siteSignInButton = document.getElementById('siteSignInButton');
@@ -11861,6 +11927,104 @@ Peraduan Lucky Draw User</h2>
         }
       }
     }
+
+    function openProfileSettings() {
+      if (!currentUser) {
+        openSiteAuth('signin');
+        return;
+      }
+
+      profileEditName.value = currentUser.name || currentUser.usernameKey || '';
+      profileEditPhone.value = currentUser.phone || '';
+      profileEditEmail.value = currentUser.contactEmail || '';
+      profileEditPassword.value = '';
+      profileSettingsError.textContent = '';
+      profileSettingsError.style.color = '#fecaca';
+      profileSettingsModal.classList.add('is-open');
+      profileSettingsModal.setAttribute('aria-hidden', 'false');
+
+      setTimeout(function () {
+        profileEditName.focus();
+      }, 50);
+    }
+
+    function closeProfileSettings() {
+      profileSettingsModal.classList.remove('is-open');
+      profileSettingsModal.setAttribute('aria-hidden', 'true');
+      profileSettingsForm.reset();
+      profileSettingsError.textContent = '';
+    }
+
+    async function saveProfileSettings() {
+      if (!currentUser || !currentUser.usernameKey) {
+        profileSettingsError.textContent = 'Please sign in first.';
+        return;
+      }
+
+      const name = profileEditName.value.trim();
+      const phone = profileEditPhone.value.trim();
+      const contactEmail = profileEditEmail.value.trim();
+      const newPassword = profileEditPassword.value.trim();
+
+      if (!name) {
+        profileSettingsError.textContent = 'Name cannot be empty.';
+        return;
+      }
+
+      if (contactEmail && !isValidEmail(contactEmail)) {
+        profileSettingsError.textContent = 'Please enter a valid email address.';
+        return;
+      }
+
+      if (newPassword && newPassword.length < 6) {
+        profileSettingsError.textContent = 'New password must be at least 6 characters.';
+        return;
+      }
+
+      try {
+        setButtonLoading(profileSettingsSaveButton, true, 'Saving...', 'Save Changes');
+        profileSettingsError.textContent = '';
+
+        if (newPassword) {
+          if (!auth || !auth.currentUser) {
+            throw new Error('Please sign in again before changing password.');
+          }
+          await updatePassword(auth.currentUser, newPassword);
+        }
+
+        await setDoc(doc(db, 'users', currentUser.usernameKey), {
+          name,
+          phone,
+          contactEmail,
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.usernameKey
+        }, { merge: true });
+
+        const updatedUser = {
+          ...currentUser,
+          name,
+          phone,
+          contactEmail
+        };
+
+        saveCurrentUser(updatedUser);
+        setLoggedIn(updatedUser);
+        profileSettingsError.style.color = '#bbf7d0';
+        profileSettingsError.textContent = newPassword ? 'Profile and password updated successfully.' : 'Profile updated successfully.';
+
+        setTimeout(closeProfileSettings, 800);
+      } catch (error) {
+        profileSettingsError.style.color = '#fecaca';
+        if (error.code === 'auth/requires-recent-login') {
+          profileSettingsError.textContent = 'Please log out and log in again before changing password.';
+        } else {
+          profileSettingsError.textContent = `Failed to update profile: ${error.code || error.message}`;
+        }
+      } finally {
+        setButtonLoading(profileSettingsSaveButton, false, 'Saving...', 'Save Changes');
+      }
+    }
+
     function setLoggedIn(user, toastMessage = '') {
       isLoggedIn = true;
       currentUser = user;
@@ -11981,6 +12145,7 @@ Peraduan Lucky Draw User</h2>
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
         closeUserDropdown();
+        closeProfileSettings();
       }
     });
 
@@ -11989,6 +12154,23 @@ Peraduan Lucky Draw User</h2>
     });
 
     memberUpgradeButton.addEventListener('click', upgradeCurrentUserWithMemberCode);
+
+    profileSettingsButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      closeUserDropdown();
+      openProfileSettings();
+    });
+
+    profileSettingsClose.addEventListener('click', closeProfileSettings);
+    profileSettingsCancelButton.addEventListener('click', closeProfileSettings);
+    profileSettingsModal.addEventListener('click', function (event) {
+      if (event.target === profileSettingsModal) closeProfileSettings();
+    });
+
+    profileSettingsForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      await saveProfileSettings();
+    });
 
     function handleHistoryPaginationClick(event) {
       const pageButton = event.target.closest('[data-history-page], [data-history-action]');
