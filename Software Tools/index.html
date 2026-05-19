@@ -259,6 +259,87 @@ button:has(.nav-whatsapp-circle){
 }
 </style>
 
+
+<style>
+/* REMOVE BIG AZOBSS HERO TITLE AND MOVE CONTENT UP */
+.hero h1,
+.hero-title,
+.main-title,
+.site-title,
+.landing-title,
+.brand-title{
+  display:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  height:0 !important;
+  line-height:0 !important;
+  overflow:hidden !important;
+}
+
+/* Rapatkan content utama ke sticky topbar */
+.hero,
+.landing-hero,
+.home-hero,
+.main-hero,
+#home,
+.home-section,
+.section:first-of-type{
+  padding-top:18px !important;
+  margin-top:0 !important;
+}
+
+/* Rapatkan subtitle/social/card area selepas buang title */
+.hero-subtitle,
+.hero .tagline,
+.landing-subtitle,
+.social-links,
+.social-strip,
+.category-grid,
+.main-cards,
+.dashboard-cards{
+  margin-top:10px !important;
+}
+
+/* Cards naik lebih atas */
+.category-grid,
+.main-cards,
+.dashboard-cards,
+.home-cards,
+.card-grid{
+  transform:translateY(-28px);
+}
+
+/* Stats ikut naik supaya gap tak besar */
+.status-grid,
+.stats-grid,
+.home-stats{
+  transform:translateY(-24px);
+}
+
+@media(max-width:768px){
+  .hero,
+  .landing-hero,
+  .home-hero,
+  .main-hero,
+  #home,
+  .home-section,
+  .section:first-of-type{
+    padding-top:10px !important;
+  }
+
+  .category-grid,
+  .main-cards,
+  .dashboard-cards,
+  .home-cards,
+  .card-grid,
+  .status-grid,
+  .stats-grid,
+  .home-stats{
+    transform:none !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
