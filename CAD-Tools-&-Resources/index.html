@@ -837,75 +837,50 @@ white-space:nowrap !important;
 }
 
 </style>
+<style>
+/* Shared AZOBSS sticky navigation */
+body{padding-top:54px !important;}
+.market-sticky-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;background:#000 !important;border-bottom:1px solid rgba(214,185,132,.45) !important;box-shadow:0 10px 28px rgba(0,0,0,.35) !important;}
+.market-bar-inner{width:100% !important;margin:0 !important;padding:4px 8px !important;box-sizing:border-box !important;}
+.market-main-row{min-height:44px !important;display:flex !important;align-items:center !important;gap:8px !important;flex-wrap:nowrap !important;}
+.market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;border:1px solid rgba(148,163,184,.32) !important;background:#0f172a !important;text-decoration:none !important;}
+.market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
+.market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;white-space:nowrap !important;scrollbar-width:none !important;}
+.market-nav::-webkit-scrollbar{display:none !important;}
+.market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 12px !important;border:1px solid #243044 !important;border-radius:999px !important;background:#111827 !important;color:#f8fafc !important;text-decoration:none !important;font-size:13px !important;font-weight:900 !important;line-height:1 !important;white-space:nowrap !important;text-shadow:none !important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03) !important;}
+.market-nav a:hover{border-color:#22c55e !important;color:#22c55e !important;}
+.market-nav a.is-active{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;}
+.nav-whatsapp-link{width:44px !important;min-width:44px !important;max-width:44px !important;height:44px !important;min-height:44px !important;padding:0 !important;border:0 !important;background:transparent !important;box-shadow:none !important;}
+.nav-whatsapp-circle{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:38px !important;height:38px !important;min-width:38px !important;min-height:38px !important;border-radius:999px !important;background:#22c55e !important;color:#fff !important;font-size:0 !important;font-weight:900 !important;box-shadow:0 8px 20px rgba(34,197,94,.25) !important;}
+.nav-whatsapp-circle::before{content:"" !important;width:18px !important;height:18px !important;border-radius:999px !important;background:radial-gradient(circle at 48% 42%, #fff 0 0, #fff 40%, transparent 41%) !important;box-shadow:inset -4px -5px 0 -3px #16a34a !important;}
+.site-auth-actions{position:static !important;display:flex !important;align-items:center !important;gap:20px !important;flex:0 0 auto !important;margin-left:auto !important;margin-right:18px !important;}
+.site-auth-btn{display:inline-flex !important;align-items:center !important;border:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:900 !important;line-height:1 !important;text-decoration:none !important;cursor:pointer !important;}
+.site-auth-btn:hover{color:#22c55e !important;}
+@media(max-width:760px){body{padding-top:92px !important;}.market-main-row{flex-wrap:wrap !important;gap:8px !important;}.market-brand{width:126px !important;height:31px !important;}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;padding-bottom:8px !important;}.market-nav a{min-height:30px !important;padding:0 9px !important;font-size:12px !important;}.site-auth-actions{margin-left:auto !important;margin-right:6px !important;gap:12px !important;}}
+</style>
 </head>
 <body>
-<header class="market-sticky-bar" aria-label="Carousell style navigation">
-    <div class="market-bar-inner">
-      <div class="market-main-row">
-        <a class="market-brand" href="../index.html" aria-label="AZOBSS">
-          <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-        </a>
-
-        <nav class="market-nav" aria-label="AZOBSS quick actions">
-          <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp">☎</span></a>
-          <a id="paBmNavButton" class="nav-pa-bm-link" href="../index.html#request">PA / BM</a>
-          <a href="../Software-Tools/index.html">Software</a>
-          <a class="is-active" href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
-          <a href="../index.html#AffiliateShop">My Affiliate Shop</a>
-          <a href="../index.html#luckyDraw">Lucky Draw</a>
-          <a href="../tools/index.html">Mini Web Tools</a>
-        </nav>
-
-        <div class="site-auth-actions" id="siteAuthActions">
-          <button class="site-auth-btn primary" id="siteSignUpButton" type="button">Register</button>
-          <button class="site-auth-btn" id="siteSignInButton" type="button">Login</button>
-        </div>
-
-        <div class="market-user-tools" id="marketUserTools">
-          <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-            <div class="user-avatar" id="userAvatar">AZ</div>
-            <div class="user-name">Hello, <span id="signedInName"></span></div>
-            <button class="user-upgrade-btn" id="userUpgradeButton" type="button" hidden>Upgrade</button>
-            <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
-              
-              <div class="user-dropdown-section">Buying</div>
-              <a class="user-dropdown-item" href="../index.html#affiliate" role="menuitem">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
-                <span>My purchases</span>
-              </a>
-              <a class="user-dropdown-item" href="../index.html#luckyDraw" role="menuitem">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"/></svg>
-                <span>Likes</span>
-              </a>
-              
-              <div class="user-dropdown-section">Account</div>
-              <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V22a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.1 5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.9 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
-                <span>Settings</span>
-              </button>
-              <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-                <span>Log out</span>
-              </button>
-            </div>
-          </div>
-          <a class="market-icon-btn" href="../index.html#luckyDraw" aria-label="Saved">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"/></svg>
-          </a>
-          <a class="market-icon-btn" href="../index.html#affiliate" aria-label="Cart">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.5 11h10.8l2-8H7"/><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
-          </a>
-          <a class="market-icon-btn" href="../index.html#request" aria-label="Notifications">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/></svg>
-          </a>
-          <a class="market-icon-btn" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener" aria-label="Chat">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"/></svg>
-          </a>
-        </div>
+<header class="market-sticky-bar" aria-label="AZOBSS navigation">
+  <div class="market-bar-inner">
+    <div class="market-main-row">
+      <a class="market-brand" href="../index.html" aria-label="AZOBSS Home">
+        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
+      </a>
+      <nav class="market-nav" aria-label="AZOBSS quick links">
+        <a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
+        <a href="../Software-Tools/index.html">Software</a>
+        <a class="is-active" href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+        <a href="../index.html#AffiliateShop">My Affiliate Shop</a>
+        <a href="../index.html#luckyDraw">Lucky Draw</a>
+        <a href="../tools/index.html">Mini Web Tools</a>
+      </nav>
+      <div class="site-auth-actions">
+        <a class="site-auth-btn primary" href="../index.html#signup">Register</a>
+        <a class="site-auth-btn" href="../index.html#login">Login</a>
       </div>
-
     </div>
-  </header>
+  </div>
+</header>
 
   <main class="page">
     <section class="lisp-catalog" aria-labelledby="lisp-catalog-title">

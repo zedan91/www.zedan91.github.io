@@ -191,7 +191,48 @@ body{
 }
 </style>
 
-</head><body><header class="market-sticky-bar" aria-label="AZOBSS navigation"><div class="market-bar-inner"><div class="market-main-row"><a class="market-brand" href="../index.html" aria-label="AZOBSS Home"><img src="../images/logo-azobss.jpg" alt="AZOBSS"></a><nav class="market-nav" aria-label="AZOBSS quick links"><a href="../index.html">Home</a><a href="../Software-Tools/index.html">Software</a><a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a><a class="is-active" href="../tools/index.html">Mini Web Tools</a></nav></div></div></header><div class="container"><div class="topbar"><div><div class="title">🛠 Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet & Utility Tools by AZOBSS</div></div><div class="search-box"><input type="text" id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps"></div></div><div class="tools-grid" id="toolsGrid">
+<style>
+/* Shared AZOBSS sticky navigation */
+body{padding-top:54px !important;}
+.market-sticky-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;background:#000 !important;border-bottom:1px solid rgba(214,185,132,.45) !important;box-shadow:0 10px 28px rgba(0,0,0,.35) !important;}
+.market-bar-inner{width:100% !important;margin:0 !important;padding:4px 8px !important;box-sizing:border-box !important;}
+.market-main-row{min-height:44px !important;display:flex !important;align-items:center !important;gap:8px !important;flex-wrap:nowrap !important;}
+.market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;border:1px solid rgba(148,163,184,.32) !important;background:#0f172a !important;text-decoration:none !important;}
+.market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
+.market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;white-space:nowrap !important;scrollbar-width:none !important;}
+.market-nav::-webkit-scrollbar{display:none !important;}
+.market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 12px !important;border:1px solid #243044 !important;border-radius:999px !important;background:#111827 !important;color:#f8fafc !important;text-decoration:none !important;font-size:13px !important;font-weight:900 !important;line-height:1 !important;white-space:nowrap !important;text-shadow:none !important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03) !important;}
+.market-nav a:hover{border-color:#22c55e !important;color:#22c55e !important;}
+.market-nav a.is-active{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;}
+.nav-whatsapp-link{width:44px !important;min-width:44px !important;max-width:44px !important;height:44px !important;min-height:44px !important;padding:0 !important;border:0 !important;background:transparent !important;box-shadow:none !important;}
+.nav-whatsapp-circle{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:38px !important;height:38px !important;min-width:38px !important;min-height:38px !important;border-radius:999px !important;background:#22c55e !important;color:#fff !important;font-size:0 !important;font-weight:900 !important;box-shadow:0 8px 20px rgba(34,197,94,.25) !important;}
+.nav-whatsapp-circle::before{content:"" !important;width:18px !important;height:18px !important;border-radius:999px !important;background:radial-gradient(circle at 48% 42%, #fff 0 0, #fff 40%, transparent 41%) !important;box-shadow:inset -4px -5px 0 -3px #16a34a !important;}
+.site-auth-actions{position:static !important;display:flex !important;align-items:center !important;gap:20px !important;flex:0 0 auto !important;margin-left:auto !important;margin-right:18px !important;}
+.site-auth-btn{display:inline-flex !important;align-items:center !important;border:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:900 !important;line-height:1 !important;text-decoration:none !important;cursor:pointer !important;}
+.site-auth-btn:hover{color:#22c55e !important;}
+@media(max-width:760px){body{padding-top:92px !important;}.market-main-row{flex-wrap:wrap !important;gap:8px !important;}.market-brand{width:126px !important;height:31px !important;}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;padding-bottom:8px !important;}.market-nav a{min-height:30px !important;padding:0 9px !important;font-size:12px !important;}.site-auth-actions{margin-left:auto !important;margin-right:6px !important;gap:12px !important;}}
+</style>
+</head><body><header class="market-sticky-bar" aria-label="AZOBSS navigation">
+  <div class="market-bar-inner">
+    <div class="market-main-row">
+      <a class="market-brand" href="../index.html" aria-label="AZOBSS Home">
+        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
+      </a>
+      <nav class="market-nav" aria-label="AZOBSS quick links">
+        <a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
+        <a href="../Software-Tools/index.html">Software</a>
+        <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+        <a href="../index.html#AffiliateShop">My Affiliate Shop</a>
+        <a href="../index.html#luckyDraw">Lucky Draw</a>
+        <a class="is-active" href="../tools/index.html">Mini Web Tools</a>
+      </nav>
+      <div class="site-auth-actions">
+        <a class="site-auth-btn primary" href="../index.html#signup">Register</a>
+        <a class="site-auth-btn" href="../index.html#login">Login</a>
+      </div>
+    </div>
+  </div>
+</header><div class="container"><div class="topbar"><div><div class="title">🛠 Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet & Utility Tools by AZOBSS</div></div><div class="search-box"><input type="text" id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps"></div></div><div class="tools-grid" id="toolsGrid">
 <a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div class="tool-icon">🌐</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
 <a class="tool-card" href="SSD-Speed-Checker-guide.html"><div class="tool-icon">⚡</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
 <a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div class="tool-icon">🏃</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric & imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
