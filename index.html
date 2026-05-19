@@ -2364,6 +2364,44 @@ body:not(.is-admin) #registeredUsersPanel {
       object-fit: contain;
     }
 
+/* ===== MOBILE FIX SOCIAL BAR ===== */
+@media (max-width:768px){
+
+  .social-strip{
+      display:flex !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      width:calc(100% - 20px) !important;
+      max-width:100% !important;
+      margin:12px auto !important;
+      padding:10px 14px !important;
+      justify-content:center !important;
+      align-items:center !important;
+      flex-wrap:nowrap !important;
+      overflow-x:auto !important;
+      overflow-y:hidden !important;
+      gap:14px !important;
+      -ms-overflow-style:none;
+      scrollbar-width:none;
+  }
+
+  .social-strip::-webkit-scrollbar{
+      display:none;
+  }
+
+  .social-strip a{
+      flex:0 0 auto !important;
+      width:34px !important;
+      height:34px !important;
+  }
+
+  .social-strip img{
+      width:22px !important;
+      height:22px !important;
+  }
+}
+
+
 
 
     footer {
