@@ -11750,6 +11750,8 @@ Peraduan Lucky Draw User</h2>
         return;
       }
 
+      let prepareResetError = '';
+
       try {
         setButtonLoading(siteResetSubmitButton, true, 'Sending...', 'Send reset link');
         const userSnap = await getDoc(doc(db, 'users', usernameKey));
