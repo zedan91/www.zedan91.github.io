@@ -22,11 +22,12 @@
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: white;
+      padding-top: 112px;
     }
 
     .top-login-toast {
       position: fixed;
-      top: 72px;
+      top: 126px;
       right: 16px;
       display: none;
       max-width: min(360px, calc(100% - 32px));
@@ -41,45 +42,251 @@
     }
 
 
-    .site-auth-actions {
+    .market-sticky-bar {
       position: fixed;
-      top: 16px;
-      right: 16px;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 3200;
+      background: #000;
+      border-bottom: 1px solid rgba(218,165,32,0.45);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+    }
+
+    .market-bar-inner {
+      width: min(1150px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .market-main-row,
+    .market-search-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      z-index: 998;
+      gap: 18px;
+    }
+
+    .market-main-row {
+      min-height: 54px;
+    }
+
+    .market-brand {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      width: 164px;
+      height: 40px;
+    }
+
+    .market-brand img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .market-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .market-nav a,
+    .market-category-link,
+    .market-icon-btn {
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .market-nav a:hover,
+    .market-category-link:hover,
+    .market-icon-btn:hover {
+      color: #14b8a6;
+    }
+
+    .market-category-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .market-icon-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 5px);
+      gap: 3px;
+    }
+
+    .market-icon-grid span {
+      width: 5px;
+      height: 5px;
+      border: 1px solid currentColor;
+      border-radius: 2px;
+    }
+
+    .site-auth-actions {
+      position: static;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex: 0 0 auto;
+      z-index: auto;
     }
 
     .site-auth-btn {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      border: 1px solid rgba(148,163,184,0.45);
-      border-radius: 8px;
-      background: rgba(15,23,42,0.86);
-      color: #e2e8f0;
-      padding: 9px 13px;
+      gap: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: #fff;
+      padding: 0;
+      font-size: 14px;
       font-weight: bold;
       cursor: pointer;
       transition: 0.2s;
     }
 
     .site-auth-btn.primary {
-      border-color: rgba(34,197,94,0.5);
-      background: #22c55e;
-      color: #052e16;
+      color: #fff;
     }
 
     .site-auth-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+      color: #14b8a6;
     }
 
     .site-auth-btn svg {
-      width: 17px;
-      height: 17px;
-      fill: currentColor;
+      display: none;
+    }
+
+    .market-sell-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      height: 34px;
+      border-radius: 5px;
+      background: #c41f32;
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .market-sell-btn:hover {
+      background: #d52b3e;
+    }
+
+    .market-user-tools {
+      display: none;
+      align-items: center;
+      gap: 20px;
+      margin-left: auto;
+    }
+
+    .market-icon-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 34px;
+    }
+
+    .market-icon-btn svg {
+      width: 23px;
+      height: 23px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .market-search-row {
+      min-height: 56px;
+      padding-bottom: 10px;
+      gap: 2px;
+    }
+
+    .market-search-field,
+    .market-location-field {
+      display: flex;
+      align-items: center;
+      min-height: 47px;
+      background: #2c3031;
+      color: #e5e7eb;
+    }
+
+    .market-search-field {
+      flex: 1 1 auto;
+      min-width: 260px;
+      padding: 0 14px;
+    }
+
+    .market-location-field {
+      flex: 0 0 350px;
+      justify-content: space-between;
+      padding: 0 14px;
+    }
+
+    .market-search-field svg,
+    .market-location-field svg {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+    }
+
+    .market-search-field input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #fff;
+      padding: 0 10px;
+      font-size: 15px;
+    }
+
+    .market-search-field input::placeholder {
+      color: #8f9396;
+    }
+
+    .market-location-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .market-distance {
+      display: inline-flex;
+      align-items: center;
+      gap: 22px;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .market-search-btn {
+      align-self: stretch;
+      min-width: 82px;
+      border: 0;
+      border-radius: 5px;
+      background: #008f86;
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .market-search-btn:hover {
+      background: #00a399;
     }
 
     .button-loading-spinner {
@@ -145,33 +352,85 @@
     }
 
     @media (max-width: 760px) {
-      .site-auth-actions {
-        top: calc(env(safe-area-inset-top, 0px) + 10px);
-        left: 12px;
-        right: 12px;
-        justify-content: flex-end;
+      body {
+        padding-top: 168px;
+      }
+
+      .market-bar-inner {
+        width: calc(100% - 20px);
+      }
+
+      .market-main-row {
+        min-height: auto;
+        padding-top: 9px;
+        gap: 10px;
         flex-wrap: wrap;
-        gap: 8px;
-        width: auto;
-        max-width: calc(100vw - 24px);
-        z-index: 3500;
+      }
+
+      .market-brand {
+        width: 145px;
+      }
+
+      .market-nav {
+        order: 3;
+        width: 100%;
+        flex-basis: 100%;
+        gap: 16px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+
+      .market-category-link {
+        margin-left: auto;
+      }
+
+      .site-auth-actions {
+        margin-left: auto;
+        gap: 12px;
       }
 
       .site-auth-btn {
-        min-height: 40px;
-        padding: 8px 10px;
         font-size: 13px;
-        line-height: 1;
         white-space: nowrap;
       }
 
-      .site-auth-btn svg {
-        width: 15px;
-        height: 15px;
+      .market-user-tools {
+        gap: 12px;
+        margin-left: auto;
+      }
+
+      .market-user-tools .market-icon-btn:nth-of-type(3),
+      .market-user-tools .market-icon-btn:nth-of-type(4) {
+        display: none;
+      }
+
+      .market-sell-btn {
+        min-width: 52px;
+        height: 32px;
+      }
+
+      .market-search-row {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-bottom: 9px;
+      }
+
+      .market-search-field,
+      .market-location-field {
+        min-height: 42px;
+      }
+
+      .market-search-field {
+        flex-basis: 100%;
+        min-width: 0;
+      }
+
+      .market-location-field {
+        flex: 1 1 calc(100% - 86px);
       }
 
       .top-login-toast {
-        top: calc(env(safe-area-inset-top, 0px) + 62px);
+        top: calc(env(safe-area-inset-top, 0px) + 174px);
         left: 12px;
         right: 12px;
         max-width: none;
@@ -512,51 +771,73 @@
     }
 
     .user-menu {
-      position: absolute !important;
-      top: 14px !important;
-      right: 16px !important;
+      position: relative !important;
+      top: auto !important;
+      right: auto !important;
       display: none;
       align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border: 1px solid rgba(148,163,184,0.25);
-      border-radius: 999px;
-      background: rgba(15,23,42,0.94);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.28);
-      z-index: 3000;
-      transform: translateZ(0);
+      gap: 8px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      z-index: auto;
+      transform: none;
     }
 
     .user-avatar {
       display: grid;
       place-items: center;
-      width: 34px;
-      height: 34px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       background: #020617;
-      border: 2px solid #22c55e;
-      color: #22c55e;
-      font-size: 12px;
+      border: 1px solid rgba(20,184,166,0.38);
+      color: #d1d5db;
+      font-size: 7px;
       font-weight: bold;
     }
 
     .user-name {
-      color: #e2e8f0;
+      color: #fff;
       font-weight: bold;
-      max-width: 160px;
+      max-width: 180px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-size: 14px;
+    }
+
+    .user-menu::after {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      color: #9ca3af;
+      transform: rotate(45deg) translateY(-2px);
     }
 
     .logout-btn {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      display: none;
       border: 0;
-      border-radius: 999px;
-      background: #334155;
+      border-radius: 6px;
+      background: #202426;
       color: white;
-      padding: 7px 10px;
+      padding: 9px 12px;
       cursor: pointer;
       font-weight: bold;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.36);
+      white-space: nowrap;
+    }
+
+    .user-menu:hover .logout-btn,
+    .user-menu:focus-within .logout-btn {
+      display: inline-flex;
     }
 
     .hero {
@@ -4246,26 +4527,12 @@ body.is-admin .lucky-draw-prize-admin{
 ========================================================= */
 
 .azobss-topbar{
-  top:58px !important;
-}
-
-.site-auth-actions{
-  position:fixed !important;
-  top:8px !important;
-  right:14px !important;
-  z-index:99999 !important;
-}
-
-.user-menu{
-  position:fixed !important;
-  top:8px !important;
-  right:14px !important;
-  z-index:99999 !important;
+  top:112px !important;
 }
 
 .admin-online-summary{
   position:fixed !important;
-  top:58px !important;
+  top:126px !important;
   right:14px !important;
   z-index:99998 !important;
 }
@@ -4277,23 +4544,11 @@ body.is-admin .lucky-draw-prize-admin{
 @media(max-width:760px){
 
   .azobss-topbar{
-    top:56px !important;
-  }
-
-  .site-auth-actions{
-    top:6px !important;
-    left:10px !important;
-    right:10px !important;
-    justify-content:flex-end !important;
-  }
-
-  .user-menu{
-    top:6px !important;
-    right:10px !important;
+    top:168px !important;
   }
 
   .admin-online-summary{
-    top:54px !important;
+    top:180px !important;
     right:10px !important;
   }
 }
@@ -4304,7 +4559,7 @@ body.is-admin .lucky-draw-prize-admin{
 ========================================================= */
 .azobss-topbar-carousel{
   position:sticky !important;
-  top:58px !important;
+  top:112px !important;
   z-index:5000 !important;
   padding:8px 12px !important;
   background:rgba(2,6,23,.92) !important;
@@ -4411,7 +4666,7 @@ body.is-admin .lucky-draw-prize-admin{
 
 @media(max-width:760px){
   .azobss-topbar-carousel{
-    top:56px !important;
+    top:168px !important;
     padding:7px 8px !important;
   }
 
@@ -4447,7 +4702,7 @@ body.is-admin .lucky-draw-prize-admin{
 .azobss-topbar,
 .azobss-topbar-carousel{
   position:sticky !important;
-  top:58px !important;
+  top:112px !important;
   z-index:5000 !important;
   width:100% !important;
   padding:8px 0 !important;
@@ -4579,7 +4834,7 @@ body.is-admin .lucky-draw-prize-admin{
 @media(max-width:760px){
   .azobss-topbar,
   .azobss-topbar-carousel{
-    top:56px !important;
+    top:168px !important;
     padding:7px 0 !important;
   }
 
@@ -6250,16 +6505,71 @@ body.is-admin .lucky-draw-admin-pagination{
   </datalist>
 
 
-  <div class="site-auth-actions" id="siteAuthActions">
-    <button class="site-auth-btn" id="siteSignInButton" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17v-3H3v-4h7V7l5 5-5 5Zm2 4v-2h7V5h-7V3h9v18h-9Z"/></svg>
-      Sign in
-    </button>
-    <button class="site-auth-btn primary" id="siteSignUpButton" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4Zm-8-2V7H4V5h3V2h2v3h3v2H9v3H7Zm8 4c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4Z"/></svg>
-      Sign up
-    </button>
-  </div>
+  <header class="market-sticky-bar" aria-label="Carousell style navigation">
+    <div class="market-bar-inner">
+      <div class="market-main-row">
+        <a class="market-brand" href="#top" aria-label="Carousell">
+          <img src="images/carousell.svg" alt="carousell">
+        </a>
+
+        <nav class="market-nav" aria-label="Marketplace categories">
+          <a href="#affiliate">Fashion</a>
+          <a href="#affiliate">Hobbies &amp; Toys</a>
+          <a href="#software">Electronics</a>
+          <a href="#Software">Living</a>
+          <a href="#request">Cars &amp; Property</a>
+        </nav>
+
+        <a class="market-category-link" href="#affiliateCategoryPanel">
+          <span class="market-icon-grid" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+          <span>All Categories</span>
+        </a>
+
+        <div class="site-auth-actions" id="siteAuthActions">
+          <button class="site-auth-btn primary" id="siteSignUpButton" type="button">Register</button>
+          <button class="site-auth-btn" id="siteSignInButton" type="button">Login</button>
+        </div>
+
+        <div class="market-user-tools" id="marketUserTools">
+          <div class="user-menu" id="userMenu">
+            <div class="user-avatar" id="userAvatar">AZ</div>
+            <div class="user-name">Hello, <span id="signedInName"></span></div>
+            <button class="user-upgrade-btn" id="userUpgradeButton" type="button" hidden>Upgrade</button>
+            <button class="logout-btn" id="logoutButton" type="button">Logout</button>
+          </div>
+          <a class="market-icon-btn" href="#luckyDraw" aria-label="Saved">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"/></svg>
+          </a>
+          <a class="market-icon-btn" href="#affiliate" aria-label="Cart">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.5 11h10.8l2-8H7"/><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
+          </a>
+          <a class="market-icon-btn" href="#request" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/></svg>
+          </a>
+          <a class="market-icon-btn" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener" aria-label="Chat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"/></svg>
+          </a>
+        </div>
+
+        <a class="market-sell-btn" href="#affiliate">Sell</a>
+      </div>
+
+      <form class="market-search-row" action="#affiliate">
+        <label class="market-search-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+          <input type="search" placeholder="Search for an item" aria-label="Search for an item">
+        </label>
+        <div class="market-location-field" aria-label="Location Malaysia">
+          <span class="market-location-main">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.1 7-12a7 7 0 0 0-14 0c0 6.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2"></circle></svg>
+            <span>Malaysia</span>
+          </span>
+          <span class="market-distance">+km <span aria-hidden="true">v</span></span>
+        </div>
+        <button class="market-search-btn" type="submit">Search</button>
+      </form>
+    </div>
+  </header>
 
   <div class="auth-modal" id="siteAuthModal" aria-hidden="true">
     <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteAuthTitle">
@@ -6329,14 +6639,6 @@ body.is-admin .lucky-draw-admin-pagination{
       </form>
     </div>
   </div>
-
-  <div class="user-menu" id="userMenu">
-    <div class="user-avatar" id="userAvatar">AZ</div>
-    <div class="user-name" id="signedInName"></div>
-    <button class="user-upgrade-btn" id="userUpgradeButton" type="button" hidden>Upgrade</button>
-    <button class="logout-btn" id="logoutButton" type="button">Logout</button>
-  </div>
-
 
   <div class="admin-online-summary" id="adminOnlineSummary" hidden>
     <div class="admin-online-chip">
@@ -7452,6 +7754,7 @@ Peraduan Lucky Draw User</h2>
     const signedInName = document.getElementById('signedInName');
     const logoutButton = document.getElementById('logoutButton');
     const userUpgradeButton = document.getElementById('userUpgradeButton');
+    const marketUserTools = document.getElementById('marketUserTools');
     const siteAuthActions = document.getElementById('siteAuthActions');
     const siteSignInButton = document.getElementById('siteSignInButton');
     const siteSignUpButton = document.getElementById('siteSignUpButton');
@@ -7723,6 +8026,7 @@ Peraduan Lucky Draw User</h2>
       signedInName.textContent = user.name;
       userAvatar.textContent = getInitials(user.name);
       userMenu.style.display = 'flex';
+      marketUserTools.style.display = 'flex';
       siteAuthActions.style.display = 'none';
       if (userUpgradeButton) {
         userUpgradeButton.hidden = isAdminUser(user) || user.paAccess !== false;
@@ -11451,6 +11755,7 @@ Peraduan Lucky Draw User</h2>
       }
 
       userMenu.style.display = 'none';
+      marketUserTools.style.display = 'none';
       userUpgradeButton.hidden = true;
       siteAuthActions.style.display = 'flex';
       updateReceiptWhatsappLink(null);
