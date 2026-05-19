@@ -764,31 +764,121 @@
 .market-nav a{padding:10px 14px;background:#091225;border:1px solid #1d2b4d;border-radius:999px;color:#fff;text-decoration:none;font-weight:700}
 .nav-whatsapp-circle{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#22c55e;align-items:center;justify-content:center}
 .topbar,.nav-links{display:none!important}
-</style>
+
+
+    /* Exact AZOBSS main sticky navbar copied for CAD page */
+    body{ padding-top:50px !important; }
+    .topbar{ display:none !important; }
+    .market-sticky-bar{
+      position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;
+      background:#000 !important;border-bottom:1px solid rgba(218,165,32,.45) !important;box-shadow:0 10px 24px rgba(0,0,0,.28) !important;
+    }
+    .market-bar-inner{width:100% !important;margin:0 !important;padding:0 8px !important;box-sizing:border-box !important;}
+    .market-main-row{min-height:48px !important;display:flex !important;align-items:center !important;gap:7px !important;flex-wrap:nowrap !important;}
+    .market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:126px !important;height:32px !important;overflow:hidden !important;border-radius:999px !important;text-decoration:none !important;}
+    .market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
+    .market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow:hidden !important;white-space:nowrap !important;scrollbar-width:none !important;}
+    .market-nav::-webkit-scrollbar{display:none !important;}
+    .market-nav a,.market-icon-btn{color:#e5e7eb !important;text-decoration:none !important;font-size:clamp(11px,1vw,13px) !important;line-height:1 !important;}
+    .market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;min-height:32px !important;padding:0 10px !important;border:1px solid rgba(148,163,184,.28) !important;border-radius:999px !important;background:#0e1729 !important;font-weight:800 !important;text-shadow:0 1px 8px rgba(0,0,0,.45) !important;}
+    .market-nav a:hover,.market-icon-btn:hover{color:#14b8a6 !important;}
+    .site-auth-actions{position:static !important;display:flex;align-items:center !important;gap:20px !important;flex:0 0 auto !important;margin-right:10px !important;}
+    .site-auth-btn{display:inline-flex !important;align-items:center !important;border:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;}
+    .market-user-tools{display:none;align-items:center !important;gap:20px !important;margin-left:auto !important;}
+    .market-icon-btn{display:inline-grid !important;place-items:center !important;width:24px !important;height:34px !important;}
+    .market-icon-btn svg{width:23px !important;height:23px !important;stroke:currentColor !important;fill:none !important;stroke-width:1.9 !important;stroke-linecap:round !important;stroke-linejoin:round !important;}
+    .user-menu{position:relative !important;display:flex !important;align-items:center !important;gap:8px !important;color:#fff !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;min-height:34px !important;}
+    .user-avatar{display:inline-grid !important;place-items:center !important;width:26px !important;height:26px !important;border-radius:999px !important;border:1px solid rgba(20,184,166,.75) !important;background:#03121f !important;color:#fff !important;font-size:11px !important;font-weight:bold !important;text-transform:uppercase !important;}
+    .user-name{white-space:nowrap !important;color:#fff !important;}
+    .user-menu::after{content:"⌄" !important;color:#cbd5e1 !important;font-size:18px !important;line-height:1 !important;margin-left:0 !important;}
+    .user-dropdown{position:absolute !important;top:calc(100% + 10px) !important;right:0 !important;min-width:220px !important;padding:8px !important;border:1px solid rgba(148,163,184,.22) !important;border-radius:14px !important;background:#08111f !important;box-shadow:0 18px 50px rgba(0,0,0,.45) !important;display:none !important;z-index:3300 !important;}
+    .user-menu.is-open .user-dropdown{display:block !important;}
+    .user-dropdown-section{padding:8px 10px 5px !important;color:#94a3b8 !important;font-size:11px !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:.08em !important;}
+    .user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
+    .user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
+    .user-dropdown-item svg{width:18px !important;height:18px !important;stroke:currentColor !important;fill:none !important;stroke-width:1.8 !important;}
+    .nav-whatsapp-circle{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:34px !important;height:34px !important;border-radius:999px !important;background:#22c55e !important;color:#fff !important;box-shadow:0 0 0 5px rgba(34,197,94,.18) !important;font-size:0 !important;position:relative !important;}
+    .nav-whatsapp-circle::before{content:"" !important;width:18px !important;height:18px !important;border-radius:999px !important;background:radial-gradient(circle at 48% 42%, #ffffff 0 0, #ffffff 40%, transparent 41%) !important;box-shadow:inset -4px -5px 0 -3px #16a34a !important;}
+    a:has(.nav-whatsapp-circle){padding:0 !important;min-width:42px !important;background:transparent !important;border:0 !important;}
+    @media(max-width:760px){
+      body{padding-top:88px !important;}
+      .market-main-row{flex-wrap:wrap !important;padding-top:8px !important;gap:6px !important;}
+      .market-brand{width:116px !important;height:30px !important;}
+      .market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;padding-bottom:8px !important;}
+      .market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important;}
+      .site-auth-actions{margin-left:auto !important;gap:12px !important;}
+      .market-user-tools{gap:12px !important;margin-left:auto !important;}
+      .user-name{max-width:115px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
+    }
+
+  </style>
 </head>
 <body>
-<header class="market-sticky-bar"><div class="market-bar-inner"><div class="market-main-row">
-<a class="market-brand" href="../index.html"><img src="../images/logo-azobss.jpg"></a>
-<nav class="market-nav">
-<a href="https://alvo.chat/6nZ2"><span class="nav-whatsapp-circle">☎</span></a>
-<a href="../index.html#request">PA / BM</a>
-<a href="../Software-Tools/index.html">Software</a>
-<a href="../CAD-Tools-&-Resources/index.html">CAD Tools</a>
-<a href="../index.html#AffiliateShop">My Affiliate Shop</a>
-<a href="../index.html#luckyDraw">Lucky Draw</a>
-<a href="../tools/index.html">Mini Web Tools</a>
-</nav></div></div></header>
+<header class="market-sticky-bar" aria-label="Carousell style navigation">
+    <div class="market-bar-inner">
+      <div class="market-main-row">
+        <a class="market-brand" href="../index.html" aria-label="AZOBSS">
+          <img src="../images/logo-azobss.jpg" alt="AZOBSS">
+        </a>
 
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="../index.html" aria-label="AZOBSS Home">
-        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-      </a>
-      <nav class="nav-links" aria-label="CAD page links">
-        <a href="../index.html">Home</a>
-        <a href="../Software-Tools/index.html">Software Tools</a>
-        <a href="../tools/index.html">Mini Web Tools</a>
-      </nav>
+        <nav class="market-nav" aria-label="AZOBSS quick actions">
+          <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp">☎</span></a>
+          <a id="paBmNavButton" class="nav-pa-bm-link" href="../index.html#request">PA / BM</a>
+          <a href="../Software-Tools/index.html">Software</a>
+          <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+          <a href="../index.html#AffiliateShop">My Affiliate Shop</a>
+          <a href="../index.html#luckyDraw">Lucky Draw</a>
+          <a href="../tools/index.html">Mini Web Tools</a>
+        </nav>
+
+        <div class="site-auth-actions" id="siteAuthActions">
+          <button class="site-auth-btn primary" id="siteSignUpButton" type="button">Register</button>
+          <button class="site-auth-btn" id="siteSignInButton" type="button">Login</button>
+        </div>
+
+        <div class="market-user-tools" id="marketUserTools">
+          <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+            <div class="user-avatar" id="userAvatar">AZ</div>
+            <div class="user-name">Hello, <span id="signedInName"></span></div>
+            <button class="user-upgrade-btn" id="userUpgradeButton" type="button" hidden>Upgrade</button>
+            <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
+              
+              <div class="user-dropdown-section">Buying</div>
+              <a class="user-dropdown-item" href="../index.html#affiliate" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+                <span>My purchases</span>
+              </a>
+              <a class="user-dropdown-item" href="../index.html#luckyDraw" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"/></svg>
+                <span>Likes</span>
+              </a>
+              
+              <div class="user-dropdown-section">Account</div>
+              <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V22a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.1 5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.9 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+                <span>Settings</span>
+              </button>
+              <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
+          <a class="market-icon-btn" href="../index.html#luckyDraw" aria-label="Saved">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"/></svg>
+          </a>
+          <a class="market-icon-btn" href="../index.html#affiliate" aria-label="Cart">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.5 11h10.8l2-8H7"/><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
+          </a>
+          <a class="market-icon-btn" href="../index.html#request" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/></svg>
+          </a>
+          <a class="market-icon-btn" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener" aria-label="Chat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"/></svg>
+          </a>
+        </div>
+      </div>
+
     </div>
   </header>
 
@@ -859,6 +949,52 @@
   <footer>
     &copy; 2026 AZOBSS. All rights reserved.
   </footer>
+
+
+  <script>
+    (function(){
+      function readUser(){
+        try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || localStorage.getItem('azobssCurrentUser') || 'null');}catch(e){return null;}
+      }
+      function showUser(){
+        var user=readUser();
+        var tools=document.getElementById('marketUserTools');
+        var auth=document.getElementById('siteAuthActions');
+        var name=document.getElementById('signedInName');
+        var avatar=document.getElementById('userAvatar');
+        if(user && (user.usernameKey || user.name || user.email)){
+          var display=user.usernameKey || user.name || (user.email||'User').split('@')[0];
+          if(name) name.textContent=display;
+          if(avatar) avatar.textContent=String(display).slice(0,1).toUpperCase();
+          if(tools) tools.style.display='flex';
+          if(auth) auth.style.display='none';
+        }else{
+          if(tools) tools.style.display='none';
+          if(auth) auth.style.display='flex';
+        }
+      }
+      var menu=document.getElementById('userMenu');
+      if(menu){
+        menu.addEventListener('click',function(e){
+          if(e.target.closest('.user-dropdown-item')) return;
+          var open=!menu.classList.contains('is-open');
+          menu.classList.toggle('is-open',open);
+          menu.setAttribute('aria-expanded',String(open));
+        });
+        document.addEventListener('click',function(e){
+          if(!menu.contains(e.target)){menu.classList.remove('is-open');menu.setAttribute('aria-expanded','false');}
+        });
+      }
+      var logout=document.getElementById('logoutButton');
+      if(logout){logout.addEventListener('click',function(){sessionStorage.removeItem('azobssCurrentUser');localStorage.removeItem('azobssCurrentUser');showUser();});}
+      var signIn=document.getElementById('siteSignInButton');
+      var signUp=document.getElementById('siteSignUpButton');
+      if(signIn){signIn.addEventListener('click',function(){location.href='../index.html#signin';});}
+      if(signUp){signUp.addEventListener('click',function(){location.href='../index.html#signup';});}
+      showUser();
+      window.addEventListener('storage',showUser);
+    })();
+  </script>
 
   <script>
     (function(){
