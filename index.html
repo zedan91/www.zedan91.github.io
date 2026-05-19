@@ -6985,7 +6985,7 @@ body{
       </form>
 
       <form class="auth-modal-form" id="siteForgotPasswordForm" hidden>
-        <p class="request-note">Enter your username. If your account has a real email configured in Firebase Auth, a reset link will be sent.</p>
+        <p class="request-note">Enter your username. A reset link will be sent to the real email saved for this account.</p>
         <label for="siteResetName">
           Username
           <input id="siteResetName" type="text" placeholder="Username" required>
@@ -8388,6 +8388,47 @@ Peraduan Lucky Draw User</h2>
 
     function buildUserEmail(usernameKey) {
       return `${usernameKey}@azobss.local`;
+    }
+
+    function normalizeAuthEmail(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function isSyntheticAuthEmail(email) {
+      return normalizeAuthEmail(email).endsWith('@azobss.local');
+    }
+
+    function getProfileAuthEmail(profile, usernameKey) {
+      const storedEmail = normalizeAuthEmail(profile && profile.email);
+      const contactEmail = normalizeAuthEmail(profile && profile.contactEmail);
+
+      if (isValidEmail(storedEmail) && !isSyntheticAuthEmail(storedEmail)) {
+        return storedEmail;
+      }
+
+      if (isValidEmail(contactEmail)) {
+        return contactEmail;
+      }
+
+      if (isValidEmail(storedEmail)) {
+        return storedEmail;
+      }
+
+      return buildUserEmail(usernameKey);
+    }
+
+    async function resolveAuthEmailForUsername(usernameKey) {
+      try {
+        const userSnap = await getDoc(doc(db, 'users', usernameKey));
+
+        if (userSnap.exists()) {
+          return getProfileAuthEmail(userSnap.data(), usernameKey);
+        }
+      } catch (error) {
+        // Fall back to the original username-based auth email for older accounts or locked-down rules.
+      }
+
+      return buildUserEmail(usernameKey);
     }
 
     function cleanInviteCode(value) {
@@ -11640,7 +11681,8 @@ Peraduan Lucky Draw User</h2>
       try {
         stopAuthRestoreListener();
         await ensureAuthSessionPersistence();
-        const credential = await signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password);
+        const authEmail = await resolveAuthEmailForUsername(usernameKey);
+        const credential = await signInWithEmailAndPassword(auth, authEmail, password);
         authSignInStarted = true;
         const userRef = doc(db, 'users', usernameKey);
         const userSnap = await getDoc(userRef);
@@ -11708,13 +11750,37 @@ Peraduan Lucky Draw User</h2>
 
       try {
         setButtonLoading(siteResetSubmitButton, true, 'Sending...', 'Send reset link');
-        await sendPasswordResetEmail(auth, buildUserEmail(usernameKey));
+        const userSnap = await getDoc(doc(db, 'users', usernameKey));
+
+        if (!userSnap.exists()) {
+          siteResetError.style.color = '#fecaca';
+          siteResetError.textContent = 'Username not found.';
+          return;
+        }
+
+        const profile = userSnap.data();
+
+        if (profile.deleted) {
+          siteResetError.style.color = '#fecaca';
+          siteResetError.textContent = 'This account has been removed by admin.';
+          return;
+        }
+
+        const resetEmail = getProfileAuthEmail(profile, usernameKey);
+
+        if (!isValidEmail(resetEmail) || isSyntheticAuthEmail(resetEmail)) {
+          siteResetError.style.color = '#fecaca';
+          siteResetError.textContent = 'This account does not have a real Firebase Auth email yet. Ask admin to update the account email.';
+          return;
+        }
+
+        await sendPasswordResetEmail(auth, resetEmail);
         siteResetError.style.color = '#bbf7d0';
-        siteResetError.textContent = 'Reset link sent. Check your email inbox/spam. If you do not receive it, ask admin to reset your password.';
+        siteResetError.textContent = 'Reset link sent. Check your email inbox/spam. If you do not receive it, ask admin to confirm your Firebase Auth email.';
       } catch (error) {
         siteResetError.style.color = '#fecaca';
         if (error.code === 'auth/user-not-found') {
-          siteResetError.textContent = 'Username not found.';
+          siteResetError.textContent = 'Firebase Auth email not found for this username. Ask admin to update the account email.';
         } else {
           siteResetError.textContent = 'Cannot send reset email. Ask admin to reset password for this username.';
         }
@@ -11772,7 +11838,7 @@ Peraduan Lucky Draw User</h2>
 
     async function createOrReactivateUserProfile(options) {
       const userRef = doc(db, 'users', options.usernameKey);
-      const email = buildUserEmail(options.usernameKey);
+      const email = normalizeAuthEmail(options.contactEmail) || buildUserEmail(options.usernameKey);
       let credential;
       let existingData = null;
       let isReactivation = false;
@@ -11780,6 +11846,14 @@ Peraduan Lucky Draw User</h2>
 
       stopAuthRestoreListener();
       await ensureAuthSessionPersistence();
+      const existingSnapshot = await getDoc(userRef);
+      existingData = existingSnapshot.exists() ? existingSnapshot.data() : null;
+
+      if (existingData && !existingData.deleted) {
+        const activeError = new Error('username-active');
+        activeError.code = 'username-active';
+        throw activeError;
+      }
 
       try {
         credential = await createUserWithEmailAndPassword(auth, email, options.password);
@@ -11789,18 +11863,13 @@ Peraduan Lucky Draw User</h2>
           throw error;
         }
 
-        credential = await signInWithEmailAndPassword(auth, email, options.password);
-
-        const existingSnapshot = await getDoc(userRef);
-        existingData = existingSnapshot.exists() ? existingSnapshot.data() : null;
-
-        if (existingData && !existingData.deleted) {
-          await signOut(auth);
-          const activeError = new Error('username-active');
-          activeError.code = 'username-active';
-          throw activeError;
+        if (!existingData || getProfileAuthEmail(existingData, options.usernameKey) !== email) {
+          const emailError = new Error('email-already-in-use');
+          emailError.code = 'auth/email-already-in-use';
+          throw emailError;
         }
 
+        credential = await signInWithEmailAndPassword(auth, email, options.password);
         isReactivation = true;
       }
 
@@ -11917,7 +11986,7 @@ Peraduan Lucky Draw User</h2>
         if (error.code === 'username-active') {
           siteSignupError.textContent = 'This username is already registered. Please sign in.';
         } else if (error.code === 'auth/email-already-in-use') {
-          siteSignupError.textContent = 'This username was deleted before, but Firebase Auth still exists. Use the previous password or choose another username.';
+          siteSignupError.textContent = 'This email is already used by another Firebase Auth account. Use another email or ask admin to check it.';
         } else if (error.code === 'auth/weak-password') {
           siteSignupError.textContent = 'Password is too short. Use at least 6 characters.';
         } else if (error.code === 'auth/operation-not-allowed') {
@@ -12374,7 +12443,7 @@ Peraduan Lucky Draw User</h2>
         } else if (error.code === 'username-active') {
           signupError.textContent = 'This username is already registered. Please sign in.';
         } else if (error.code === 'auth/email-already-in-use') {
-          signupError.textContent = 'This username was deleted before, but Firebase Auth still exists. Use the previous password or ask admin to open a new username.';
+          signupError.textContent = 'This email is already used by another Firebase Auth account. Use another email or ask admin to check it.';
         } else if (error.code === 'auth/weak-password') {
           signupError.textContent = 'Password is too short. Use at least 6 characters.';
         } else if (error.code === 'auth/operation-not-allowed') {
@@ -12410,7 +12479,8 @@ Peraduan Lucky Draw User</h2>
       try {
         stopAuthRestoreListener();
         await ensureAuthSessionPersistence();
-        const credential = await signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password);
+        const authEmail = await resolveAuthEmailForUsername(usernameKey);
+        const credential = await signInWithEmailAndPassword(auth, authEmail, password);
         authSignInStarted = true;
         const userRef = doc(db, 'users', usernameKey);
         const userSnap = await getDoc(userRef);
@@ -12582,14 +12652,6 @@ Peraduan Lucky Draw User</h2>
           return;
         }
 
-        const expectedEmail = buildUserEmail(savedUser.usernameKey).toLowerCase();
-        const activeEmail = (firebaseUser.email || '').toLowerCase();
-
-        if (activeEmail !== expectedEmail) {
-          await rejectRestoredSession();
-          return;
-        }
-
         try {
           const userSnap = await getDoc(doc(db, 'users', savedUser.usernameKey));
 
@@ -12599,6 +12661,13 @@ Peraduan Lucky Draw User</h2>
           }
 
           const profile = userSnap.data();
+          const expectedEmail = getProfileAuthEmail(profile, savedUser.usernameKey).toLowerCase();
+          const activeEmail = (firebaseUser.email || '').toLowerCase();
+
+          if (activeEmail !== expectedEmail) {
+            await rejectRestoredSession();
+            return;
+          }
 
           if (profile.deleted) {
             await rejectRestoredSession();
