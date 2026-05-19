@@ -4955,6 +4955,33 @@ body.is-admin .lucky-draw-prize-admin{
   }
 }
 
+
+/* MOBILE SOCIAL BUTTON FIX */
+@media (max-width:768px){
+.social-bar,.social-links,.footer-social,.social-icons{
+display:flex !important;
+visibility:visible !important;
+opacity:1 !important;
+justify-content:center;
+align-items:center;
+gap:12px;
+width:100%;
+max-width:100%;
+margin:15px auto;
+overflow-x:auto;
+overflow-y:hidden;
+flex-wrap:nowrap;
+-ms-overflow-style:none;
+scrollbar-width:none;
+}
+.social-bar::-webkit-scrollbar,.social-links::-webkit-scrollbar,.footer-social::-webkit-scrollbar,.social-icons::-webkit-scrollbar{
+display:none;
+}
+.social-bar a,.social-links a,.footer-social a,.social-icons a{
+flex:0 0 auto;
+}
+}
+
 </style>
 
 
@@ -6520,21 +6547,6 @@ body{
 }
 </style>
 
-
-<style>
-.services-grid{
-display:flex !important;
-flex-wrap:wrap !important;
-justify-content:center !important;
-gap:20px !important;
-max-width:980px !important;
-margin:0 auto !important;
-}
-.services-grid .service-card{
-flex:0 0 290px !important;
-max-width:290px !important;
-}
-</style>
 </head>
 
 <body id="top">
