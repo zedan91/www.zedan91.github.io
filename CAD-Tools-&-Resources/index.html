@@ -416,50 +416,126 @@
       line-height:1.45;
     }
 
-    .lisp-list{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:16px;
+
+    .admin-only{
+      display:none;
     }
 
-    .lisp-item{
-      overflow:hidden;
-      border:1px solid rgba(148,163,184,.22);
-      border-radius:18px;
-      background:rgba(2,6,23,.58);
-      box-shadow:0 16px 34px rgba(0,0,0,.18);
+    body.is-lisp-admin .admin-only{
+      display:block;
     }
 
-    .lisp-demo{
+    body.is-lisp-admin .admin-only.inline-admin{
+      display:inline-flex;
+    }
+
+    body:not(.is-lisp-admin) .lisp-admin-column{
+      display:none;
+    }
+
+    .lisp-view-note{
+      margin:.4rem 0 0;
+      color:#8fb0ff;
+      font-size:.9rem;
+      line-height:1.45;
+    }
+
+    .lisp-table-wrap{
+      overflow-x:auto;
+      border:1px solid rgba(148,163,184,.24);
+      border-radius:14px;
+      background:rgba(2,6,23,.45);
+    }
+
+    .lisp-table{
       width:100%;
-      aspect-ratio:16/10;
+      border-collapse:collapse;
+      min-width:760px;
+      color:#dbe7f8;
+      font-size:14px;
+    }
+
+    .lisp-table th{
+      background:#285a9c;
+      color:#fff;
+      padding:9px 12px;
+      text-align:left;
+      font-weight:900;
+      border:1px solid rgba(214,185,132,.35);
+    }
+
+    .lisp-table td{
+      padding:9px 12px;
+      border:1px solid rgba(214,185,132,.28);
+      vertical-align:top;
+      background:#253149;
+      line-height:1.45;
+    }
+
+    .lisp-table tr:nth-child(even) td{
+      background:#202c42;
+    }
+
+    .program-link{
+      color:#65a3ff;
+      font-weight:800;
+      text-decoration:none;
+    }
+
+    .program-link:hover{
+      text-decoration:underline;
+    }
+
+    .lisp-demo-thumb{
+      width:160px;
+      max-width:100%;
+      aspect-ratio:16/9;
       object-fit:cover;
       display:block;
+      border-radius:10px;
       background:#020617;
-      border-bottom:1px solid rgba(148,163,184,.18);
+      border:1px solid rgba(148,163,184,.24);
     }
 
-    .lisp-item-body{
-      padding:16px;
-    }
-
-    .lisp-item h3{
-      margin:0 0 8px;
-      font-size:19px;
-    }
-
-    .lisp-item p{
-      margin:0;
-      color:#cbd5e1;
-      line-height:1.55;
-      white-space:pre-wrap;
-    }
-
-    .lisp-card-actions{
-      margin-top:14px;
+    .lisp-table-actions{
       display:flex;
-      gap:9px;
+      gap:8px;
       flex-wrap:wrap;
+    }
+
+    .lisp-pagination{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:14px;
+      color:#aab6c8;
+      font-size:14px;
+    }
+
+    .page-buttons{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+
+    .page-btn{
+      min-width:36px;
+      min-height:34px;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:8px;
+      background:rgba(15,23,42,.86);
+      color:#eef5ff;
+      cursor:pointer;
+      font-weight:800;
+    }
+
+    .page-btn.active,
+    .page-btn:hover{
+      border-color:rgba(249,115,22,.62);
+      background:rgba(249,115,22,.18);
+      color:#fff;
     }
 
     .btn.danger{
@@ -613,12 +689,13 @@
       <div class="lisp-catalog-head">
         <div>
           <h2 class="section-title" id="lisp-catalog-title">LISP Program Showcase</h2>
-          <p>Add LISP name, program description and demonstration GIF. Items are saved in this browser using local storage.</p>
+          <p>View LISP name, program description and demonstration GIF. Display style is table-based with 30 programs per page.</p>
+          <p class="lisp-view-note" id="lispAdminStatus">Public view: add, delete and export tools are available for admin only.</p>
         </div>
-        <button class="btn" type="button" id="exportLispData">Export Data</button>
+        <button class="btn admin-only inline-admin" type="button" id="exportLispData">Export Data</button>
       </div>
 
-      <form class="lisp-form" id="lispForm">
+      <form class="lisp-form admin-only" id="lispForm">
         <label>
           LISP Name
           <input id="lispName" type="text" maxlength="60" placeholder="Example: AZ Text Calculator" required>
@@ -642,7 +719,23 @@
         </div>
       </form>
 
-      <div class="lisp-list" id="lispList" aria-live="polite"></div>
+      <div class="lisp-table-wrap">
+        <table class="lisp-table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Program Description</th>
+              <th>Demonstration GIF</th>
+              <th class="lisp-admin-column">Action</th>
+            </tr>
+          </thead>
+          <tbody id="lispList" aria-live="polite"></tbody>
+        </table>
+      </div>
+      <div class="lisp-pagination">
+        <span id="lispPageInfo">Showing 0 to 0 of 0 programs</span>
+        <div class="page-buttons" id="lispPagination"></div>
+      </div>
     </section>
 
     <section class="workflow" aria-labelledby="workflow-title">
@@ -683,6 +776,23 @@
   <script>
     (function(){
       const STORAGE_KEY = 'azobss_lisp_showcase_items';
+      const PAGE_SIZE = 30;
+      let currentPage = 1;
+      const ADMIN_USERNAME = 'zedan91';
+
+      function getSavedAzobssUser(){
+        try{
+          return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null');
+        }catch(error){
+          return null;
+        }
+      }
+
+      function isLispAdmin(){
+        const user = getSavedAzobssUser();
+        return !!(user && String(user.usernameKey || '').toLowerCase() === ADMIN_USERNAME);
+      }
+
       const form = document.getElementById('lispForm');
       const nameInput = document.getElementById('lispName');
       const descInput = document.getElementById('lispDescription');
@@ -691,6 +801,9 @@
       const list = document.getElementById('lispList');
       const clearBtn = document.getElementById('clearLispForm');
       const exportBtn = document.getElementById('exportLispData');
+      const pageInfo = document.getElementById('lispPageInfo');
+      const pagination = document.getElementById('lispPagination');
+      const adminStatus = document.getElementById('lispAdminStatus');
 
       const defaultItems = [
         {
@@ -720,23 +833,53 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
       }
 
+      function getPlaceholderGif(){
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450"><rect width="800" height="450" fill="#07101e"/><text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#fb923c" font-family="Arial" font-size="42" font-weight="700">GIF Demo</text><text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Arial" font-size="24">Upload or add demo path</text></svg>');
+      }
+
+      function renderPagination(totalItems){
+        const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+        if(currentPage > totalPages) currentPage = totalPages;
+        if(currentPage < 1) currentPage = 1;
+
+        const start = totalItems ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0;
+        const end = Math.min(currentPage * PAGE_SIZE, totalItems);
+        pageInfo.textContent = `Showing ${start} to ${end} of ${totalItems} programs`;
+
+        let buttons = '';
+        buttons += `<button class="page-btn" type="button" data-page="${Math.max(1, currentPage - 1)}">‹</button>`;
+        for(let i = 1; i <= totalPages; i++){
+          buttons += `<button class="page-btn ${i === currentPage ? 'active' : ''}" type="button" data-page="${i}">${i}</button>`;
+        }
+        buttons += `<button class="page-btn" type="button" data-page="${Math.min(totalPages, currentPage + 1)}">›</button>`;
+        pagination.innerHTML = buttons;
+      }
+
       function renderItems(){
         const items = getItems();
-        list.innerHTML = items.map(function(item){
-          const gif = item.gif ? escapeHtml(item.gif) : 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><rect width="800" height="500" fill="#07101e"/><text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#fb923c" font-family="Arial" font-size="42" font-weight="700">GIF Demo</text><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Arial" font-size="24">Upload or add demo path</text></svg>');
+        const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+        if(currentPage > totalPages) currentPage = totalPages;
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const visibleItems = items.slice(startIndex, startIndex + PAGE_SIZE);
+
+        const adminMode = isLispAdmin();
+        list.innerHTML = visibleItems.map(function(item){
+          const gif = item.gif ? escapeHtml(item.gif) : getPlaceholderGif();
           return `
-            <article class="lisp-item" data-id="${escapeHtml(item.id)}">
-              <img class="lisp-demo" src="${gif}" alt="${escapeHtml(item.name)} demonstration">
-              <div class="lisp-item-body">
-                <h3>${escapeHtml(item.name)}</h3>
-                <p>${escapeHtml(item.description)}</p>
-                <div class="lisp-card-actions">
+            <tr data-id="${escapeHtml(item.id)}">
+              <td><a class="program-link" href="#" onclick="return false;">${escapeHtml(item.name)}</a></td>
+              <td>${escapeHtml(item.description)}</td>
+              <td><img class="lisp-demo-thumb" src="${gif}" alt="${escapeHtml(item.name)} demonstration"></td>
+              ${adminMode ? `<td class="lisp-admin-column">
+                <div class="lisp-table-actions">
                   <button class="btn danger" type="button" data-delete="${escapeHtml(item.id)}">Delete</button>
                 </div>
-              </div>
-            </article>
+              </td>` : ''}
+            </tr>
           `;
         }).join('');
+
+        renderPagination(items.length);
       }
 
       function fileToDataUrl(file){
@@ -750,6 +893,10 @@
 
       form.addEventListener('submit', async function(event){
         event.preventDefault();
+        if(!isLispAdmin()){
+          alert('Admin only. Please sign in as admin to add LISP.');
+          return;
+        }
         const name = nameInput.value.trim();
         const description = descInput.value.trim();
         if(!name || !description) return;
@@ -771,6 +918,7 @@
           gif: gif
         });
         saveItems(items);
+        currentPage = 1;
         form.reset();
         renderItems();
       });
@@ -780,6 +928,7 @@
       });
 
       list.addEventListener('click', function(event){
+        if(!isLispAdmin()) return;
         const id = event.target.getAttribute('data-delete');
         if(!id) return;
         const items = getItems().filter(function(item){ return String(item.id) !== String(id); });
@@ -787,7 +936,18 @@
         renderItems();
       });
 
+      pagination.addEventListener('click', function(event){
+        const page = Number(event.target.getAttribute('data-page'));
+        if(!page) return;
+        currentPage = page;
+        renderItems();
+      });
+
       exportBtn.addEventListener('click', function(){
+        if(!isLispAdmin()){
+          alert('Admin only. Please sign in as admin to export data.');
+          return;
+        }
         const blob = new Blob([JSON.stringify(getItems(), null, 2)], {type:'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -799,6 +959,18 @@
         URL.revokeObjectURL(url);
       });
 
+      function applyAdminMode(){
+        const adminMode = isLispAdmin();
+        document.body.classList.toggle('is-lisp-admin', adminMode);
+        if(adminStatus){
+          adminStatus.textContent = adminMode
+            ? 'Admin mode: you can add, delete and export LISP items.'
+            : 'Public view: add, delete and export tools are hidden. Only admin can manage this list.';
+        }
+      }
+
+      window.addEventListener('storage', applyAdminMode);
+      applyAdminMode();
       renderItems();
     })();
   </script>
