@@ -200,6 +200,48 @@ section:has(input[placeholder*="Search for an item"]),
 }
 </style>
 
+
+<style>
+/* NAV WHATSAPP CIRCLE BUTTON FIX */
+.nav-whatsapp-circle{
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  border-radius:999px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#22c55e !important;
+  color:#fff !important;
+  font-size:0 !important;
+  font-weight:900 !important;
+  box-shadow:0 8px 20px rgba(34,197,94,.25) !important;
+  vertical-align:middle !important;
+}
+
+.nav-whatsapp-circle::before{
+  content:"💬";
+  font-size:19px !important;
+  line-height:1 !important;
+}
+
+/* Make parent Contact button become circle only */
+a:has(.nav-whatsapp-circle),
+button:has(.nav-whatsapp-circle){
+  width:44px !important;
+  min-width:44px !important;
+  max-width:44px !important;
+  height:44px !important;
+  padding:0 !important;
+  border-radius:999px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+}
+</style>
+
 </head>
 
 <body>

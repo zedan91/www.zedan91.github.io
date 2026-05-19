@@ -31,6 +31,48 @@ section:has(input[placeholder*="Search for an item"]),
 }
 </style>
 
+
+<style>
+/* NAV WHATSAPP CIRCLE BUTTON FIX */
+.nav-whatsapp-circle{
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  border-radius:999px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#22c55e !important;
+  color:#fff !important;
+  font-size:0 !important;
+  font-weight:900 !important;
+  box-shadow:0 8px 20px rgba(34,197,94,.25) !important;
+  vertical-align:middle !important;
+}
+
+.nav-whatsapp-circle::before{
+  content:"💬";
+  font-size:19px !important;
+  line-height:1 !important;
+}
+
+/* Make parent Contact button become circle only */
+a:has(.nav-whatsapp-circle),
+button:has(.nav-whatsapp-circle){
+  width:44px !important;
+  min-width:44px !important;
+  max-width:44px !important;
+  height:44px !important;
+  padding:0 !important;
+  border-radius:999px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+}
+</style>
+
 </head><body><div class="container"><div class="topbar"><div><div class="title">🛠 Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet & Utility Tools by AZOBSS</div></div><div class="search-box"><input type="text" id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps"></div></div><div class="tools-grid" id="toolsGrid">
 <a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div class="tool-icon">🌐</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
 <a class="tool-card" href="SSD-Speed-Checker-guide.html"><div class="tool-icon">⚡</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
