@@ -773,32 +773,26 @@
       }
     }
   
-.market-sticky-bar{position:sticky;top:0;z-index:999;background:#050914;border-bottom:1px solid rgba(249,115,22,.24)}
-.market-bar-inner{max-width:1400px;margin:auto;padding:0 12px}
-.market-main-row{display:flex;align-items:center;gap:10px;padding:8px 0;flex-wrap:wrap}
-.market-brand img{height:40px;border-radius:999px}
-.market-nav{display:flex;gap:8px;flex-wrap:wrap}
-.market-nav a{padding:10px 14px;background:#091225;border:1px solid #1d2b4d;border-radius:999px;color:#fff;text-decoration:none;font-weight:700}
 .nav-whatsapp-circle{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#22c55e;align-items:center;justify-content:center}
 .topbar,.nav-links{display:none!important}
 
 
-    /* Exact AZOBSS main sticky navbar copied for CAD page */
-    body{ padding-top:50px !important; }
+    /* Shared AZOBSS sticky navbar */
+    body{ padding-top:54px !important; }
     .topbar{ display:none !important; }
     .market-sticky-bar{
       position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;
-      background:#000 !important;border-bottom:1px solid rgba(218,165,32,.45) !important;box-shadow:0 10px 24px rgba(0,0,0,.28) !important;
+      background:#000 !important;border-bottom:1px solid rgba(214,185,132,.45) !important;box-shadow:0 10px 28px rgba(0,0,0,.35) !important;
     }
-    .market-bar-inner{width:100% !important;margin:0 !important;padding:0 8px !important;box-sizing:border-box !important;}
-    .market-main-row{min-height:48px !important;display:flex !important;align-items:center !important;gap:7px !important;flex-wrap:nowrap !important;}
-    .market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:126px !important;height:32px !important;overflow:hidden !important;border-radius:999px !important;text-decoration:none !important;}
+    .market-bar-inner{width:100% !important;margin:0 !important;padding:4px 8px !important;box-sizing:border-box !important;}
+    .market-main-row{min-height:44px !important;display:flex !important;align-items:center !important;gap:8px !important;flex-wrap:nowrap !important;}
+    .market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;border:1px solid rgba(148,163,184,.32) !important;background:#0f172a !important;text-decoration:none !important;}
     .market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
-    .market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow:hidden !important;white-space:nowrap !important;scrollbar-width:none !important;}
+    .market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;white-space:nowrap !important;scrollbar-width:none !important;}
     .market-nav::-webkit-scrollbar{display:none !important;}
-    .market-nav a,.market-icon-btn{color:#e5e7eb !important;text-decoration:none !important;font-size:clamp(11px,1vw,13px) !important;line-height:1 !important;}
-    .market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;min-height:32px !important;padding:0 10px !important;border:1px solid rgba(148,163,184,.28) !important;border-radius:999px !important;background:#0e1729 !important;font-weight:800 !important;text-shadow:0 1px 8px rgba(0,0,0,.45) !important;}
-    .market-nav a:hover,.market-icon-btn:hover{color:#14b8a6 !important;}
+    .market-nav a,.market-icon-btn{color:#f8fafc !important;text-decoration:none !important;font-size:13px !important;line-height:1 !important;}
+    .market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 12px !important;border:1px solid #243044 !important;border-radius:999px !important;background:#111827 !important;font-weight:900 !important;text-shadow:none !important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03) !important;}
+    .market-nav a:hover,.market-icon-btn:hover{border-color:#22c55e !important;color:#22c55e !important;}
     .market-nav a.is-active{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;text-shadow:none !important;}
     .site-auth-actions{position:static !important;display:flex;align-items:center !important;gap:20px !important;flex:0 0 auto !important;margin-right:10px !important;}
     .site-auth-btn{display:inline-flex !important;align-items:center !important;border:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;}
@@ -819,11 +813,11 @@
     .nav-whatsapp-circle::before{content:"" !important;width:18px !important;height:18px !important;border-radius:999px !important;background:radial-gradient(circle at 48% 42%, #ffffff 0 0, #ffffff 40%, transparent 41%) !important;box-shadow:inset -4px -5px 0 -3px #16a34a !important;}
     a:has(.nav-whatsapp-circle){padding:0 !important;min-width:42px !important;background:transparent !important;border:0 !important;}
     @media(max-width:760px){
-      body{padding-top:88px !important;}
-      .market-main-row{flex-wrap:wrap !important;padding-top:8px !important;gap:6px !important;}
-      .market-brand{width:116px !important;height:30px !important;}
+      body{padding-top:92px !important;}
+      .market-main-row{flex-wrap:wrap !important;gap:8px !important;}
+      .market-brand{width:126px !important;height:31px !important;}
       .market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;padding-bottom:8px !important;}
-      .market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important;}
+      .market-nav a{min-height:30px !important;padding:0 9px !important;font-size:12px !important;}
       .site-auth-actions{margin-left:auto !important;gap:12px !important;}
       .market-user-tools{gap:12px !important;margin-left:auto !important;}
       .user-name{max-width:115px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
