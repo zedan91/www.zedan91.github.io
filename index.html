@@ -812,8 +812,9 @@
       border-radius: 0;
       background: transparent;
       box-shadow: none;
-      z-index: auto;
+      z-index: 80;
       transform: none;
+      cursor: pointer;
     }
 
     .user-avatar {
@@ -847,27 +848,78 @@
       border-bottom: 2px solid currentColor;
       color: #9ca3af;
       transform: rotate(45deg) translateY(-2px);
+      transition: transform 0.18s ease;
     }
 
-    .logout-btn {
+    .user-menu.is-open::after {
+      transform: rotate(225deg) translate(-1px, -1px);
+    }
+
+    .user-dropdown {
       position: absolute;
-      top: calc(100% + 10px);
+      top: calc(100% + 13px);
       right: 0;
       display: none;
-      border: 0;
-      border-radius: 6px;
-      background: #202426;
-      color: white;
-      padding: 9px 12px;
-      cursor: pointer;
-      font-weight: bold;
-      box-shadow: 0 12px 26px rgba(0,0,0,0.36);
-      white-space: nowrap;
+      width: 280px;
+      padding: 10px 0;
+      border: 1px solid rgba(148,163,184,0.22);
+      background: #232526;
+      color: #d4d4d4;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.45);
+      cursor: default;
+      z-index: 120;
     }
 
-    .user-menu:hover .logout-btn,
-    .user-menu:focus-within .logout-btn {
-      display: inline-flex;
+    .user-menu.is-open .user-dropdown {
+      display: block;
+    }
+
+    .user-dropdown-section {
+      padding: 10px 16px 6px;
+      color: #a3a3a3;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .user-dropdown-item {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 41px;
+      padding: 8px 16px;
+      border: 0;
+      background: transparent;
+      color: #d4d4d4;
+      text-align: left;
+      text-decoration: none;
+      font: inherit;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .user-dropdown-item:hover,
+    .user-dropdown-item:focus-visible {
+      background: rgba(255,255,255,0.07);
+      color: #ffffff;
+      outline: none;
+    }
+
+    .user-dropdown-item svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: #c7c7c7;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .user-dropdown-badge {
+      color: #d7d7d7;
+      font-size: 12px;
+      font-weight: 600;
     }
 
     .hero {
@@ -6726,11 +6778,58 @@ body{
         </div>
 
         <div class="market-user-tools" id="marketUserTools">
-          <div class="user-menu" id="userMenu">
+          <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
             <div class="user-avatar" id="userAvatar">AZ</div>
             <div class="user-name">Hello, <span id="signedInName"></span></div>
             <button class="user-upgrade-btn" id="userUpgradeButton" type="button" hidden>Upgrade</button>
-            <button class="logout-btn" id="logoutButton" type="button">Logout</button>
+            <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
+              <a class="user-dropdown-item" href="#request" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Profile</span>
+              </a>
+              <div class="user-dropdown-section">Buying</div>
+              <a class="user-dropdown-item" href="#affiliate" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+                <span>My purchases</span>
+              </a>
+              <a class="user-dropdown-item" href="#luckyDraw" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"/></svg>
+                <span>Likes</span>
+              </a>
+              <div class="user-dropdown-section">Selling</div>
+              <a class="user-dropdown-item" href="#software" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                <span>Manage listings</span>
+              </a>
+              <a class="user-dropdown-item" href="#AffiliateShop" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h12"/><path d="M20 18h.01"/></svg>
+                <span>My sales</span>
+              </a>
+              <a class="user-dropdown-item" href="#software" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z"/><path d="m9 12 2 2 4-5"/></svg>
+                <span>Discounts and promos</span>
+                <span class="user-dropdown-badge">New</span>
+              </a>
+              <a class="user-dropdown-item" href="#request" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v11H4z"/><path d="M7 7V5h10v2"/><path d="M8 12h8"/></svg>
+                <span>Selling preferences</span>
+                <span class="user-dropdown-badge">New</span>
+              </a>
+              <a class="user-dropdown-item" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-7-8-3Z"/><path d="m11 14 4-4"/></svg>
+                <span>Shoutout</span>
+                <span class="user-dropdown-badge">New</span>
+              </a>
+              <div class="user-dropdown-section">Account</div>
+              <a class="user-dropdown-item" href="#top" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V22a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.1 5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.9 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+                <span>Settings</span>
+              </a>
+              <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+                <span>Log out</span>
+              </button>
+            </div>
           </div>
           <a class="market-icon-btn" href="#luckyDraw" aria-label="Saved">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"/></svg>
@@ -8218,6 +8317,8 @@ Peraduan Lucky Draw User</h2>
       signedInName.textContent = user.name;
       userAvatar.textContent = getInitials(user.name);
       userMenu.style.display = 'flex';
+      userMenu.classList.remove('is-open');
+      userMenu.setAttribute('aria-expanded', 'false');
       marketUserTools.style.display = 'flex';
       siteAuthActions.style.display = 'none';
       if (userUpgradeButton) {
@@ -11648,6 +11749,47 @@ Peraduan Lucky Draw User</h2>
       openSiteAuth('signup');
     });
 
+    function closeUserDropdown() {
+      userMenu.classList.remove('is-open');
+      userMenu.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleUserDropdown() {
+      const willOpen = !userMenu.classList.contains('is-open');
+      userMenu.classList.toggle('is-open', willOpen);
+      userMenu.setAttribute('aria-expanded', String(willOpen));
+    }
+
+    userMenu.addEventListener('click', function (event) {
+      if (event.target.closest('#userUpgradeButton')) return;
+      if (event.target.closest('.user-dropdown-item')) {
+        closeUserDropdown();
+        return;
+      }
+      event.stopPropagation();
+      toggleUserDropdown();
+    });
+
+    userMenu.addEventListener('keydown', function (event) {
+      if (event.target.closest('.user-dropdown')) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleUserDropdown();
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!userMenu.contains(event.target)) {
+        closeUserDropdown();
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        closeUserDropdown();
+      }
+    });
+
     userUpgradeButton.addEventListener('click', function () {
       openSiteAuth('upgrade');
     });
@@ -11941,6 +12083,7 @@ Peraduan Lucky Draw User</h2>
       updateVisitorPresence(true);
       sessionStorage.removeItem('azobssLoggedIn');
       clearCurrentUser();
+      closeUserDropdown();
 
       if (auth) {
         await signOut(auth);
