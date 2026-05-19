@@ -43,7 +43,7 @@
 
     .site-auth-actions {
       position: fixed;
-      top: 62px;
+      top: 16px;
       right: 16px;
       display: flex;
       align-items: center;
@@ -146,7 +146,7 @@
 
     @media (max-width: 760px) {
       .site-auth-actions {
-        top: calc(env(safe-area-inset-top, 0px) + 58px);
+        top: calc(env(safe-area-inset-top, 0px) + 10px);
         left: 12px;
         right: 12px;
         justify-content: flex-end;
@@ -4237,6 +4237,64 @@ body.is-admin .lucky-draw-prize-admin{
   }
   .azobss-topbar::-webkit-scrollbar{
     display:none !important;
+  }
+}
+
+
+/* =========================================================
+   MOVE AUTH / FLOATING BUTTONS ABOVE STICKY TOPBAR
+========================================================= */
+
+.azobss-topbar{
+  top:58px !important;
+}
+
+.site-auth-actions{
+  position:fixed !important;
+  top:8px !important;
+  right:14px !important;
+  z-index:99999 !important;
+}
+
+.user-menu{
+  position:fixed !important;
+  top:8px !important;
+  right:14px !important;
+  z-index:99999 !important;
+}
+
+.admin-online-summary{
+  position:fixed !important;
+  top:58px !important;
+  right:14px !important;
+  z-index:99998 !important;
+}
+
+.top-login-toast{
+  z-index:99999 !important;
+}
+
+@media(max-width:760px){
+
+  .azobss-topbar{
+    top:56px !important;
+  }
+
+  .site-auth-actions{
+    top:6px !important;
+    left:10px !important;
+    right:10px !important;
+    justify-content:flex-end !important;
+  }
+
+  .user-menu{
+    top:6px !important;
+    right:10px !important;
+  }
+
+  .admin-online-summary{
+    top:54px !important;
+    right:10px !important;
   }
 }
 
