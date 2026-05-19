@@ -355,6 +355,49 @@
       max-width:760px;
     }
 
+
+
+    .lisp-search-bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin:0 0 18px;
+      flex-wrap:wrap;
+    }
+
+    .lisp-search-box{
+      flex:1 1 280px;
+      max-width:460px;
+      display:grid;
+      gap:7px;
+      color:#dbe7f8;
+      font-weight:800;
+      font-size:14px;
+    }
+
+    .lisp-search-box input{
+      width:100%;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:12px;
+      background:#07101e;
+      color:#f8fafc;
+      padding:12px 13px;
+      font:inherit;
+      outline:none;
+    }
+
+    .lisp-search-box input:focus{
+      border-color:rgba(249,115,22,.72);
+      box-shadow:0 0 0 3px rgba(249,115,22,.14);
+    }
+
+    .lisp-search-count{
+      color:#91a0b5;
+      font-size:13px;
+      line-height:1.45;
+    }
+
     .lisp-form{
       display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));
@@ -611,6 +654,14 @@
         <button class="btn admin-only inline-admin" type="button" id="exportLispData">Export Data</button>
       </div>
 
+      <div class="lisp-search-bar">
+        <label class="lisp-search-box">
+          Search Program Name
+          <input id="lispSearch" type="search" placeholder="Type program name..." autocomplete="off">
+        </label>
+        <span class="lisp-search-count" id="lispSearchCount">Showing all programs</span>
+      </div>
+
       <form class="lisp-form admin-only" id="lispForm">
         <label>
           LISP Name
@@ -691,6 +742,8 @@
       const pageInfo = document.getElementById('lispPageInfo');
       const pagination = document.getElementById('lispPagination');
       const adminStatus = document.getElementById('lispAdminStatus');
+      const searchInput = document.getElementById('lispSearch');
+      const searchCount = document.getElementById('lispSearchCount');
 
       const defaultItems = [
         {
@@ -724,6 +777,21 @@
         return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450"><rect width="800" height="450" fill="#07101e"/><text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#fb923c" font-family="Arial" font-size="42" font-weight="700">GIF Demo</text><text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Arial" font-size="24">Upload or add demo path</text></svg>');
       }
 
+
+
+      function getSearchTerm(){
+        return String(searchInput ? searchInput.value : '').trim().toLowerCase();
+      }
+
+      function getFilteredItems(){
+        const items = getItems();
+        const term = getSearchTerm();
+        if(!term) return items;
+        return items.filter(function(item){
+          return String(item.name || '').toLowerCase().includes(term);
+        });
+      }
+
       function renderPagination(totalItems){
         const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
         if(currentPage > totalPages) currentPage = totalPages;
@@ -743,13 +811,26 @@
       }
 
       function renderItems(){
-        const items = getItems();
+        const allItems = getItems();
+        const items = getFilteredItems();
         const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
         if(currentPage > totalPages) currentPage = totalPages;
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         const visibleItems = items.slice(startIndex, startIndex + PAGE_SIZE);
+        if(searchCount){
+          const term = getSearchTerm();
+          searchCount.textContent = term
+            ? `Found ${items.length} of ${allItems.length} programs`
+            : `Showing all ${allItems.length} programs`;
+        }
 
         const adminMode = isLispAdmin();
+        if(!visibleItems.length){
+          list.innerHTML = `<tr><td colspan="${adminMode ? 4 : 3}">No program found.</td></tr>`;
+          renderPagination(items.length);
+          return;
+        }
+
         list.innerHTML = visibleItems.map(function(item){
           const gif = item.gif ? escapeHtml(item.gif) : getPlaceholderGif();
           return `
@@ -822,6 +903,13 @@
         saveItems(items);
         renderItems();
       });
+
+      if(searchInput){
+        searchInput.addEventListener('input', function(){
+          currentPage = 1;
+          renderItems();
+        });
+      }
 
       pagination.addEventListener('click', function(event){
         const page = Number(event.target.getAttribute('data-page'));
