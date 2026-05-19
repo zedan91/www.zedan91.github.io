@@ -92,13 +92,24 @@ button:has(.nav-whatsapp-circle){
 
 
 <style>
-/* REMOVE BIG AZOBSS HERO TITLE AND MOVE CONTENT UP */
-.hero h1,
-.hero-title,
-.main-title,
-.site-title,
-.landing-title,
-.brand-title{
+/* FINAL HOME MOVE UP WITHOUT BIG AZOBSS TITLE */
+
+/* Navbar logo: keep uploaded AZOBSS logo */
+.market-brand{
+  width:154px !important;
+  height:38px !important;
+  margin-left:0 !important;
+}
+.market-brand img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+}
+
+/* Remove only the big AZOBSS hero text, not the navbar logo */
+.hero > h1,
+.hero-azobss-title-hidden{
   display:none !important;
   margin:0 !important;
   padding:0 !important;
@@ -107,65 +118,64 @@ button:has(.nav-whatsapp-circle){
   overflow:hidden !important;
 }
 
-/* Rapatkan content utama ke sticky topbar */
-.hero,
-.landing-hero,
-.home-hero,
-.main-hero,
-#home,
-.home-section,
-.section:first-of-type{
-  padding-top:18px !important;
+/* Reduce empty gap under sticky bar */
+body{
+  padding-top:54px !important;
+}
+
+.hero{
+  min-height:auto !important;
+  padding-top:34px !important;
+  padding-bottom:54px !important;
   margin-top:0 !important;
 }
 
-/* Rapatkan subtitle/social/card area selepas buang title */
-.hero-subtitle,
-.hero .tagline,
-.landing-subtitle,
-.social-links,
-.social-strip,
-.category-grid,
-.main-cards,
-.dashboard-cards{
+/* Tagline and social icons nearer to sticky bar */
+.hero > p{
+  margin-top:0 !important;
+  margin-bottom:28px !important;
+}
+
+.social-strip{
+  margin-top:0 !important;
+  margin-bottom:36px !important;
+}
+
+/* Raise main cards upward */
+.hero .buttons,
+.hero .button-grid,
+.hero .hero-buttons,
+.hero .category-buttons{
+  margin-top:0 !important;
+}
+
+/* If cards use .buttons in this file */
+.hero .buttons{
+  transform:translateY(-10px);
+}
+
+/* Raise traffic widgets too */
+.traffic-widget{
   margin-top:10px !important;
+  transform:translateY(-8px);
 }
 
-/* Cards naik lebih atas */
-.category-grid,
-.main-cards,
-.dashboard-cards,
-.home-cards,
-.card-grid{
-  transform:translateY(-28px);
-}
-
-/* Stats ikut naik supaya gap tak besar */
-.status-grid,
-.stats-grid,
-.home-stats{
-  transform:translateY(-24px);
+/* Keep next section closer but not overlapping */
+.services-section,
+#Software{
+  margin-top:0 !important;
+  padding-top:36px !important;
 }
 
 @media(max-width:768px){
-  .hero,
-  .landing-hero,
-  .home-hero,
-  .main-hero,
-  #home,
-  .home-section,
-  .section:first-of-type{
-    padding-top:10px !important;
+  body{
+    padding-top:54px !important;
   }
-
-  .category-grid,
-  .main-cards,
-  .dashboard-cards,
-  .home-cards,
-  .card-grid,
-  .status-grid,
-  .stats-grid,
-  .home-stats{
+  .hero{
+    padding-top:22px !important;
+  }
+  .hero .buttons,
+  .traffic-widget{
     transform:none !important;
   }
 }
