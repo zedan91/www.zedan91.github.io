@@ -117,11 +117,6 @@
       line-height: 1;
     }
 
-    .market-nav a[hidden],
-    .pa-bm-nav-button[hidden] {
-      display: none !important;
-    }
-
     .market-nav a {
       display: inline-flex;
       align-items: center;
@@ -140,6 +135,10 @@
       background: #22c55e;
       color: #052e16;
       text-shadow: none;
+    }
+
+    .nav-pa-bm-link.is-hidden {
+      display: none !important;
     }
 
     .market-nav a:hover,
@@ -6803,7 +6802,7 @@ body{
 
         <nav class="market-nav" aria-label="AZOBSS quick actions">
           <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp">☎</span></a>
-          <a id="paBmNavButton" class="pa-bm-nav-button" href="#request" hidden>PA / BM</a>
+          <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="#request" hidden>PA / BM</a>
           <a href="#software">Software / CAD / E-book</a>
           <a href="#AffiliateShop">My Affiliate Shop</a>
           <a href="#luckyDraw">Lucky Draw</a>
@@ -8059,6 +8058,7 @@ Peraduan Lucky Draw User</h2>
     const requestCard = document.getElementById('requestCard');
     const requestSection = document.getElementById('request');
     const heroRequestButton = document.getElementById('heroRequestButton');
+    const paBmNavButton = document.getElementById('paBmNavButton');
     const userMenu = document.getElementById('userMenu');
     const userAvatar = document.getElementById('userAvatar');
     const signedInName = document.getElementById('signedInName');
@@ -8066,7 +8066,6 @@ Peraduan Lucky Draw User</h2>
     const userUpgradeButton = document.getElementById('userUpgradeButton');
     const marketUserTools = document.getElementById('marketUserTools');
     const siteAuthActions = document.getElementById('siteAuthActions');
-    const paBmNavButton = document.getElementById('paBmNavButton');
     const siteSignInButton = document.getElementById('siteSignInButton');
     const siteSignUpButton = document.getElementById('siteSignUpButton');
     const siteAuthModal = document.getElementById('siteAuthModal');
@@ -8333,11 +8332,12 @@ Peraduan Lucky Draw User</h2>
         .join('') || 'AZ';
     }
 
-    function updatePaBmNavButtonVisibility(user = currentUser) {
-      if (!paBmNavButton) return;
-      const passwordUnlocked = sessionStorage.getItem('azobssPaBmPasswordUnlocked') === '1';
-      const hasPaAccess = !!user && (isAdminUser(user) || user.paAccess !== false);
-      paBmNavButton.hidden = !(isLoggedIn && hasPaAccess && passwordUnlocked);
+    function updatePaBmNavAccess(user = currentUser) {
+      const hasPaAccess = !!(user && (isAdminUser(user) || user.paAccess !== false));
+      if (paBmNavButton) {
+        paBmNavButton.hidden = !hasPaAccess;
+        paBmNavButton.classList.toggle('is-hidden', !hasPaAccess);
+      }
     }
 
     function showSignedInUser(user) {
@@ -8348,10 +8348,10 @@ Peraduan Lucky Draw User</h2>
       userMenu.setAttribute('aria-expanded', 'false');
       marketUserTools.style.display = 'flex';
       siteAuthActions.style.display = 'none';
+      updatePaBmNavAccess(user);
       if (userUpgradeButton) {
         userUpgradeButton.hidden = isAdminUser(user) || user.paAccess !== false;
       }
-      updatePaBmNavButtonVisibility(user);
     }
 
     function updateReceiptWhatsappLink(user = currentUser) {
@@ -11363,7 +11363,6 @@ Peraduan Lucky Draw User</h2>
     if (siteSignupInviteCode) siteSignupInviteCode.value = getInitialInviteCode();
     if (signupInviteCode) signupInviteCode.value = getInitialInviteCode();
     updateLuckyDrawPanel();
-    updatePaBmNavButtonVisibility(null);
 
     function isValidEmail(value) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -11477,11 +11476,6 @@ Peraduan Lucky Draw User</h2>
         };
 
         saveCurrentUser(user);
-        if (password === 'zx6186') {
-          sessionStorage.setItem('azobssPaBmPasswordUnlocked', '1');
-        } else {
-          sessionStorage.removeItem('azobssPaBmPasswordUnlocked');
-        }
         sessionStorage.setItem('azobssLoggedIn', '1');
         await recordLoginHistory(user);
         errorElement.textContent = '';
@@ -11681,7 +11675,6 @@ Peraduan Lucky Draw User</h2>
         });
 
         saveCurrentUser(user);
-        sessionStorage.removeItem('azobssPaBmPasswordUnlocked');
         sessionStorage.setItem('azobssLoggedIn', '1');
         await recordLoginHistory(user);
         siteSignupError.textContent = '';
@@ -11726,6 +11719,7 @@ Peraduan Lucky Draw User</h2>
       requestCard.classList.toggle('has-pa-access', hasPaAccess);
       requestSection.classList.toggle('is-visible', hasPaAccess);
       heroRequestButton.classList.toggle('is-visible', hasPaAccess);
+      updatePaBmNavAccess(user);
       paForm.hidden = !hasPaAccess;
 
       loginInfo.style.display = 'none';
@@ -12008,7 +12002,6 @@ Peraduan Lucky Draw User</h2>
         });
 
         saveCurrentUser(user);
-        sessionStorage.removeItem('azobssPaBmPasswordUnlocked');
         sessionStorage.setItem('azobssLoggedIn', '1');
         await recordLoginHistory(user);
         signupError.textContent = '';
@@ -12092,11 +12085,6 @@ Peraduan Lucky Draw User</h2>
         };
 
         saveCurrentUser(user);
-        if (password === 'zx6186') {
-          sessionStorage.setItem('azobssPaBmPasswordUnlocked', '1');
-        } else {
-          sessionStorage.removeItem('azobssPaBmPasswordUnlocked');
-        }
         loginError.textContent = '';
         sessionStorage.setItem('azobssLoggedIn', '1');
         await recordLoginHistory(user);
@@ -12123,9 +12111,7 @@ Peraduan Lucky Draw User</h2>
       currentUser = null;
       updateVisitorPresence(true);
       sessionStorage.removeItem('azobssLoggedIn');
-      sessionStorage.removeItem('azobssPaBmPasswordUnlocked');
       clearCurrentUser();
-      updatePaBmNavButtonVisibility(null);
       closeUserDropdown();
 
       if (auth) {
@@ -12139,6 +12125,7 @@ Peraduan Lucky Draw User</h2>
       updateReceiptWhatsappLink(null);
       updateLuckyDrawPanel();
       heroRequestButton.classList.remove('is-visible');
+      updatePaBmNavAccess(null);
       signupForm.hidden = false;
       loginForm.hidden = false;
       paForm.hidden = true;
@@ -12190,6 +12177,7 @@ Peraduan Lucky Draw User</h2>
       authStateReady = true;
       clearCurrentUser();
       sessionStorage.removeItem('azobssLoggedIn');
+      updatePaBmNavAccess(null);
       restoreSignupAccess();
       startVisitorPresenceHeartbeat();
     }
