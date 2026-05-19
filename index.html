@@ -58,27 +58,29 @@
     }
 
     .market-bar-inner {
-      width: min(1150px, calc(100% - 32px));
-      margin: 0 auto;
+      width: 100%;
+      margin: 0;
+      padding: 0 8px;
+      box-sizing: border-box;
     }
 
     .market-main-row,
     .market-search-row {
       display: flex;
       align-items: center;
-      gap: 18px;
+      gap: 7px;
     }
 
     .market-main-row {
-      min-height: 54px;
+      min-height: 48px;
     }
 
     .market-brand {
       display: inline-flex;
       align-items: center;
       flex: 0 0 auto;
-      width: 154px;
-      height: 38px;
+      width: 126px;
+      height: 32px;
       overflow: hidden;
       border-radius: 999px;
     }
@@ -94,10 +96,10 @@
     .market-nav {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 7px;
       flex: 1 1 auto;
       min-width: 0;
-      overflow-x: auto;
+      overflow: hidden;
       white-space: nowrap;
       scrollbar-width: none;
     }
@@ -111,7 +113,7 @@
     .market-icon-btn {
       color: #e5e7eb;
       text-decoration: none;
-      font-size: 14px;
+      font-size: clamp(11px, 1vw, 13px);
       line-height: 1;
     }
 
@@ -119,8 +121,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 40px;
-      padding: 0 17px;
+      min-height: 32px;
+      padding: 0 10px;
       border: 1px solid rgba(148,163,184,0.28);
       border-radius: 999px;
       background: #0e1729;
@@ -377,27 +379,35 @@
       }
 
       .market-bar-inner {
-        width: calc(100% - 20px);
+        width: 100%;
+        padding: 0 6px;
       }
 
       .market-main-row {
         min-height: auto;
         padding-top: 9px;
-        gap: 10px;
+        gap: 6px;
         flex-wrap: wrap;
       }
 
       .market-brand {
-        width: 145px;
+        width: 116px;
+        height: 30px;
       }
 
       .market-nav {
         order: 3;
         width: 100%;
         flex-basis: 100%;
-        gap: 16px;
-        overflow-x: auto;
+        gap: 6px;
+        overflow: hidden;
         padding-bottom: 8px;
+      }
+
+      .market-nav a {
+        min-height: 30px;
+        padding: 0 8px;
+        font-size: 11px;
       }
 
       .market-category-link {
@@ -6703,10 +6713,10 @@ body{
 
         <nav class="market-nav" aria-label="AZOBSS quick actions">
           <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp">☎</span></a>
-          <a href="#request">PA / BM / Lot Kadaster Berdigit</a>
-          <a class="market-nav-primary" href="#software">Software / CAD Tools / E-book</a>
+          <a href="#request">PA / BM / Lot</a>
+          <a class="market-nav-primary" href="#software">Software / CAD / E-book</a>
           <a href="#AffiliateShop">My Affiliate Shop</a>
-          <a href="#luckyDraw">Monthly Lucky Draw</a>
+          <a href="#luckyDraw">Lucky Draw</a>
           <a class="market-nav-primary" href="tools/index.html">Mini Web Tools</a>
         </nav>
 
