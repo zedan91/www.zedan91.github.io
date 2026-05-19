@@ -54,6 +54,44 @@ function buildUserEmail(usernameKey) {
   return `${usernameKey}@azobss.local`;
 }
 
+function normalizeUsername(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+function normalizeAuthEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function isSyntheticAuthEmail(email) {
+  return normalizeAuthEmail(email).endsWith("@azobss.local");
+}
+
+function getProfileAuthEmail(profile, usernameKey) {
+  const storedEmail = normalizeAuthEmail(profile && profile.email);
+  const contactEmail = normalizeAuthEmail(profile && profile.contactEmail);
+
+  if (isValidEmail(storedEmail) && !isSyntheticAuthEmail(storedEmail)) {
+    return storedEmail;
+  }
+
+  if (isValidEmail(contactEmail)) {
+    return contactEmail;
+  }
+
+  if (isValidEmail(storedEmail)) {
+    return storedEmail;
+  }
+
+  return buildUserEmail(usernameKey);
+}
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const PORT = process.env.PORT || 3000;
@@ -915,6 +953,161 @@ async function handler(req, res) {
           res,
           500,
           JSON.stringify({ ok: false, error: error.message || "Reset password failed" }),
+          "application/json"
+        );
+      }
+    }
+
+    if (
+      pathname === "/api/prepare-password-reset" &&
+      req.method === "POST"
+    ) {
+
+      const body = await readBody(req);
+      let data;
+
+      try {
+        data = JSON.parse(body || "{}");
+      } catch (err) {
+        return send(
+          res,
+          400,
+          JSON.stringify({ ok: false, error: "Invalid JSON" }),
+          "application/json"
+        );
+      }
+
+      const usernameKey = normalizeUsername(data.usernameKey);
+
+      if (!usernameKey) {
+        return send(
+          res,
+          400,
+          JSON.stringify({ ok: false, error: "Invalid username" }),
+          "application/json"
+        );
+      }
+
+      if (!initFirebaseAdmin()) {
+        return send(
+          res,
+          500,
+          JSON.stringify({
+            ok: false,
+            error: "Firebase Admin not configured. Add FIREBASE_SERVICE_ACCOUNT_JSON in Render environment variables."
+          }),
+          "application/json"
+        );
+      }
+
+      try {
+        const userSnapshot = await firebaseAdmin
+          .firestore()
+          .collection("users")
+          .doc(usernameKey)
+          .get();
+
+        if (!userSnapshot.exists) {
+          return send(
+            res,
+            404,
+            JSON.stringify({ ok: false, error: "Username not found" }),
+            "application/json"
+          );
+        }
+
+        const profile = userSnapshot.data() || {};
+
+        if (profile.deleted) {
+          return send(
+            res,
+            403,
+            JSON.stringify({ ok: false, error: "This account has been removed by admin" }),
+            "application/json"
+          );
+        }
+
+        const resetEmail = getProfileAuthEmail(profile, usernameKey);
+
+        if (!isValidEmail(resetEmail) || isSyntheticAuthEmail(resetEmail)) {
+          return send(
+            res,
+            400,
+            JSON.stringify({ ok: false, error: "This account does not have a real email saved" }),
+            "application/json"
+          );
+        }
+
+        let userRecord = null;
+
+        if (profile.uid) {
+          try {
+            userRecord = await firebaseAdmin.auth().getUser(String(profile.uid));
+          } catch (error) {
+            userRecord = null;
+          }
+        }
+
+        if (!userRecord && profile.email) {
+          try {
+            userRecord = await firebaseAdmin.auth().getUserByEmail(normalizeAuthEmail(profile.email));
+          } catch (error) {
+            userRecord = null;
+          }
+        }
+
+        if (!userRecord) {
+          try {
+            userRecord = await firebaseAdmin.auth().getUserByEmail(buildUserEmail(usernameKey));
+          } catch (error) {
+            userRecord = null;
+          }
+        }
+
+        if (!userRecord) {
+          try {
+            userRecord = await firebaseAdmin.auth().getUserByEmail(resetEmail);
+          } catch (error) {
+            userRecord = null;
+          }
+        }
+
+        if (!userRecord) {
+          return send(
+            res,
+            404,
+            JSON.stringify({ ok: false, error: "Firebase Auth user not found for this username" }),
+            "application/json"
+          );
+        }
+
+        const currentAuthEmail = normalizeAuthEmail(userRecord.email);
+
+        if (currentAuthEmail !== resetEmail) {
+          await firebaseAdmin.auth().updateUser(userRecord.uid, {
+            email: resetEmail,
+            emailVerified: false
+          });
+
+          await userSnapshot.ref.set({
+            uid: userRecord.uid,
+            email: resetEmail,
+            contactEmail: resetEmail,
+            authEmailMigratedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+
+        return send(
+          res,
+          200,
+          JSON.stringify({ ok: true, usernameKey, resetEmail }),
+          "application/json"
+        );
+      } catch (error) {
+        return send(
+          res,
+          500,
+          JSON.stringify({ ok: false, error: error.message || "Prepare password reset failed" }),
           "application/json"
         );
       }
