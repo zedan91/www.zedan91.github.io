@@ -28,8 +28,17 @@
     .site-auth-btn:hover{color:#14b8a6 !important}
     main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:34px 0 52px}
     .hero{display:grid;gap:14px;margin:18px 0 24px}
-    .hero h1{font-size:clamp(34px,5vw,64px);line-height:1;margin:0;color:#fff}
-    .hero p{max-width:760px;margin:0;color:#cbd5e1;font-size:17px;line-height:1.55}
+    .category-panel{border:1px solid rgba(34,197,94,.25);border-radius:14px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,17,31,.96));overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.22)}
+    .category-panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 14px;border-bottom:1px solid var(--line)}
+    .category-title{margin:0;color:#e5e7eb;font-size:16px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
+    .category-search{width:min(320px,100%);min-height:40px;border:1px solid var(--line);border-radius:999px;background:#050b18;color:#fff;padding:0 16px;font-weight:700}
+    .category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));border-top:0}
+    .category-tile{display:grid;place-items:center;gap:8px;min-height:112px;padding:12px 8px;border:0;border-right:1px solid rgba(148,163,184,.12);border-bottom:1px solid rgba(148,163,184,.12);background:rgba(8,17,31,.62);color:#f8fafc;cursor:pointer;text-align:center;font-weight:800}
+    .category-tile:hover,.category-tile.is-active{outline:2px solid var(--green);outline-offset:-2px;background:rgba(34,197,94,.08);color:#22c55e}
+    .category-icon{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:#f8fafc;overflow:hidden;border:1px solid rgba(255,255,255,.7)}
+    .category-icon img{width:100%;height:100%;object-fit:cover;display:block}
+    .category-all-icon{background:#07111f;color:#22c55e;font-size:23px}
+    .category-name{font-size:12px;line-height:1.2}
     .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
     .search{flex:1 1 280px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
     .chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 14px;min-height:42px;font-weight:800;cursor:pointer}
@@ -107,8 +116,114 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 
   <main>
     <section class="hero">
-      <h1>Affiliate Shop</h1>
-      <p>Recommended items, useful gadgets and selected affiliate products by AZOBSS.</p>
+      <div class="category-panel" aria-label="Affiliate categories">
+        <div class="category-panel-head">
+          <h1 class="category-title">Categories</h1>
+          <input class="category-search" id="categorySearch" type="search" placeholder="Search affiliate items...">
+        </div>
+        <div class="category-grid" id="categoryGrid">
+          <button class="category-tile is-active" type="button" data-filter="all" data-name="all categories">
+            <span class="category-icon category-all-icon" aria-hidden="true">▦</span>
+            <span class="category-name">All Categories</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="mobile" data-name="mobile & accessories">
+            <span class="category-icon"><img src="../images/category/mobile.png" alt="Mobile & Accessories"></span>
+            <span class="category-name">Mobile & Accessories</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="computer" data-name="computer & accessories">
+            <span class="category-icon"><img src="../images/category/computer.png" alt="Computer & Accessories"></span>
+            <span class="category-name">Computer & Accessories</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="gaming" data-name="gaming & consoles">
+            <span class="category-icon"><img src="../images/category/gaming.png" alt="Gaming & Consoles"></span>
+            <span class="category-name">Gaming & Consoles</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="camera" data-name="cameras & drones">
+            <span class="category-icon"><img src="../images/category/camera.png" alt="Cameras & Drones"></span>
+            <span class="category-name">Cameras & Drones</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="watches" data-name="watches">
+            <span class="category-icon"><img src="../images/category/watch.png" alt="Watches"></span>
+            <span class="category-name">Watches</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="women-bags" data-name="women's bags">
+            <span class="category-icon"><img src="../images/category/bags.png" alt="Women's Bags"></span>
+            <span class="category-name">Women's Bags</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="wallet" data-name="men's bags & wallets">
+            <span class="category-icon"><img src="../images/category/wallet.png" alt="Men's Bags & Wallets"></span>
+            <span class="category-name">Men's Bags & Wallets</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="women-clothes" data-name="women clothes">
+            <span class="category-icon"><img src="../images/category/women-clothes.png" alt="Women Clothes"></span>
+            <span class="category-name">Women Clothes</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="men-clothes" data-name="men clothes">
+            <span class="category-icon"><img src="../images/category/men-clothes.png" alt="Men Clothes"></span>
+            <span class="category-name">Men Clothes</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="women-shoes" data-name="women shoes">
+            <span class="category-icon"><img src="../images/category/women-shoes.png" alt="Women Shoes"></span>
+            <span class="category-name">Women Shoes</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="men-shoes" data-name="men shoes">
+            <span class="category-icon"><img src="../images/category/men-shoes.png" alt="Men Shoes"></span>
+            <span class="category-name">Men Shoes</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="fashion" data-name="fashion accessories">
+            <span class="category-icon"><img src="../images/category/fashion.png" alt="Fashion Accessories"></span>
+            <span class="category-name">Fashion Accessories</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="muslim" data-name="muslim fashion">
+            <span class="category-icon"><img src="../images/category/muslim.png" alt="Muslim Fashion"></span>
+            <span class="category-name">Muslim Fashion</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="home-living" data-name="home & living">
+            <span class="category-icon"><img src="../images/category/home-living.png" alt="Home & Living"></span>
+            <span class="category-name">Home & Living</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="home-appliances" data-name="home appliances">
+            <span class="category-icon"><img src="../images/category/home-appliances.png" alt="Home Appliances"></span>
+            <span class="category-name">Home Appliances</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="groceries" data-name="groceries & pets">
+            <span class="category-icon"><img src="../images/category/groceries.png" alt="Groceries & Pets"></span>
+            <span class="category-name">Groceries & Pets</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="beauty" data-name="health & beauty">
+            <span class="category-icon"><img src="../images/category/beauty.png" alt="Health & Beauty"></span>
+            <span class="category-name">Health & Beauty</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="baby" data-name="baby & toys">
+            <span class="category-icon"><img src="../images/category/baby.png" alt="Baby & Toys"></span>
+            <span class="category-name">Baby & Toys</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="sports" data-name="sports & outdoor">
+            <span class="category-icon"><img src="../images/category/sports.png" alt="Sports & Outdoor"></span>
+            <span class="category-name">Sports & Outdoor</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="automotive" data-name="automotive">
+            <span class="category-icon"><img src="../images/category/auto.png" alt="Automotive"></span>
+            <span class="category-name">Automotive</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="travel" data-name="travel & luggage">
+            <span class="category-icon"><img src="../images/category/travel.png" alt="Travel & Luggage"></span>
+            <span class="category-name">Travel & Luggage</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="books" data-name="games, books & hobbies">
+            <span class="category-icon"><img src="../images/category/books.png" alt="Games, Books & Hobbies"></span>
+            <span class="category-name">Games, Books & Hobbies</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="tickets" data-name="tickets & vouchers">
+            <span class="category-icon"><img src="../images/category/tickets.png" alt="Tickets & Vouchers"></span>
+            <span class="category-name">Tickets & Vouchers</span>
+          </button>
+          <button class="category-tile" type="button" data-filter="others" data-name="others">
+            <span class="category-icon"><img src="../images/category/others.png" alt="Others"></span>
+            <span class="category-name">Others</span>
+          </button>
+        </div>
+      </div>
       <div class="tools">
         <input class="search" id="searchInput" type="search" placeholder="Search products...">
         <button class="chip is-active" type="button" data-filter="all">All</button>
@@ -126,6 +241,8 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     const grid = document.getElementById('productGrid');
     const searchInput = document.getElementById('searchInput');
     const emptyState = document.getElementById('emptyState');
+    const categorySearch = document.getElementById('categorySearch');
+    const categoryTiles = Array.from(document.querySelectorAll('.category-tile'));
     const chips = Array.from(document.querySelectorAll('[data-filter]'));
     let products = [];
     let activeFilter = 'all';
@@ -161,6 +278,15 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
       render();
     }));
     searchInput.addEventListener('input', render);
+    if(categorySearch){
+      categorySearch.addEventListener('input', () => {
+        const query = categorySearch.value.trim().toLowerCase();
+        categoryTiles.forEach(tile => {
+          const name = tile.dataset.name || tile.textContent.toLowerCase();
+          tile.style.display = !query || name.includes(query) ? '' : 'none';
+        });
+      });
+    }
 
     fetch('../affiliate-products.json', {cache:'no-store'})
       .then(res => res.ok ? res.json() : [])
