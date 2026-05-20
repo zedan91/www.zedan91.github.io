@@ -15254,7 +15254,7 @@ document.addEventListener('DOMContentLoaded', function(){
     return 'https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA' + number + '.TIF&negeri=' + encodeURIComponent(negeri);
   }
 
-  window.azobssDirectPaDownload = function (event) {
+  window.azobssDirectPaDownload = async function (event) {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -15263,9 +15263,15 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     }
 
+    if (typeof window.azobssHandlePaDownload === 'function') {
+      return window.azobssHandlePaDownload(event);
+    }
+
     var paError = document.getElementById('paError');
     var paStatus = document.getElementById('paStatus');
     var url = buildJupemPaUrl();
+    var paInput = document.getElementById('paNumber');
+    var number = cleanPaValue(paInput ? paInput.value : '');
 
     if (!url) {
       if (paError) {
@@ -15283,7 +15289,25 @@ document.addEventListener('DOMContentLoaded', function(){
       paStatus.textContent = 'Converting PA to PDF... please wait.';
     }
 
-    window.open(url, '_blank', 'noopener');
+    try {
+      var response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error('PA not found / PA tiada dalam sistem');
+      var blob = await response.blob();
+      if (!blob || !blob.size) throw new Error('PDF kosong / failed convert.');
+      var objectUrl = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = 'PA' + number + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
+      if (paStatus) paStatus.textContent = 'PA downloaded successfully!';
+    } catch (error) {
+      if (paError) paError.textContent = error.message || 'Download PA failed.';
+      if (paStatus) paStatus.style.display = 'none';
+    }
+
     return false;
   };
 
