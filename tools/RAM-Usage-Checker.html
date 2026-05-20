@@ -78,7 +78,15 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
 .user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
 @media(max-width:760px){.market-user-tools{gap:12px !important;margin-left:auto !important;}.user-name{max-width:120px !important;overflow:hidden !important;text-overflow:ellipsis !important;}}</style>
-</head>
+<style>
+/* Stable CSS chat icon: avoids emoji/encoding corruption */
+.nav-whatsapp-circle{position:relative !important;font-size:0 !important;overflow:visible !important;}
+.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+.nav-whatsapp-circle::after{content:"" !important;position:absolute !important;left:13px !important;top:23px !important;width:7px !important;height:7px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+.whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
+.whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
+.whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+</style></head>
 <body>
 <header class="market-sticky-bar" aria-label="Carousell style navigation">
   <div class="market-bar-inner">
@@ -171,4 +179,5 @@ document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",
 })();
 </script>
 </body></html>
+
 
