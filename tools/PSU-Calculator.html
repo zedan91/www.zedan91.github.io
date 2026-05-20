@@ -121,7 +121,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     </div>
   </div>
 </header>
-<div class="header"><h1>PSU Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">â† Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
+<div class="header"><h1>PSU Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">&lt; Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
 <div class="wrap">
 <div class="card"><p>Estimate PSU wattage with headroom. This is a quick guide for PC builds.</p><div class="grid">
 <div><label>CPU Wattage</label><input id="cpu" type="number" value="125"></div>
@@ -132,7 +132,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 </div><div id="result" class="result"></div></div>
 <div class="card"><h2>PSU Guide</h2><table class="table"><tr><th>Build Type</th><th>Common PSU</th></tr><tr><td>Office PC / iGPU</td><td>350W - 500W</td></tr><tr><td>Mid gaming PC</td><td>550W - 750W</td></tr><tr><td>High-end GPU</td><td>850W - 1000W+</td></tr><tr><td>RTX 4090 / 5090 class</td><td>1000W - 1200W+ quality PSU</td></tr></table></div>
 </div>
-<div class="footer">Â© 2026 AZOBSS.COM - PC Tools & Utilities</div>
+<div class="footer">(c) 2026 AZOBSS.COM - PC Tools & Utilities</div>
 <script>
 function roundPSU(w){let sizes=[450,500,550,650,750,850,1000,1200,1300,1500,1600];return sizes.find(x=>x>=w)||Math.ceil(w/100)*100}
 function calc(){let total=(+cpu.value||0)+(+gpu.value||0)+(+other.value||0)+((+storage.value||0)*8);let rec=roundPSU(total*(+head.value));result.innerHTML=`Estimated system load: <b>${total}W</b>\nRecommended PSU: <b>${rec}W</b>\n\nSuggestion:\n- Choose good brand PSU.\n- For gaming PC, avoid using PSU too close to maximum load.\n- For high-end GPU, check official GPU recommended PSU and connector requirement.`}

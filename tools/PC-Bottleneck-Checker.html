@@ -121,7 +121,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     </div>
   </div>
 </header>
-<div class="header"><h1>PC Bottleneck Checker</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">â† Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
+<div class="header"><h1>PC Bottleneck Checker</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">&lt; Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
 <div class="wrap">
 <div class="card"><p>This simple checker gives a rough balance guide. It does not replace real benchmark testing.</p><div class="grid">
 <div><label>CPU Tier</label><select id="cpu"><option value="1">Low-end / old i3 / Ryzen 3</option><option value="2">Mid-range i5 / Ryzen 5</option><option value="3">High-end i7 / Ryzen 7</option><option value="4">Enthusiast i9 / Ryzen 9</option></select></div>
@@ -131,9 +131,9 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 </div><div id="result" class="result"></div></div>
 <div class="card"><h2>Bottleneck Signs</h2><ul><li>CPU 95-100% while GPU usage low = possible CPU bottleneck.</li><li>GPU 95-100% while CPU lower = normal for gaming, GPU is fully used.</li><li>RAM almost full = stutter and slow app switching.</li><li>HDD 100% usage = storage bottleneck.</li></ul></div>
 </div>
-<div class="footer">Â© 2026 AZOBSS.COM - PC Tools & Utilities</div>
+<div class="footer">(c) 2026 AZOBSS.COM - PC Tools & Utilities</div>
 <script>
-function calc(){let c=+cpu.value,g=+gpu.value,r=+ram.value,u=use.value,msg=[];if(g-c>=2)msg.push("GPU is much stronger than CPU. Possible CPU bottleneck, especially at 1080p.");else if(c-g>=2)msg.push("CPU is stronger than GPU. Gaming performance may be GPU limited.");else msg.push("CPU and GPU look fairly balanced.");if(r<16 && u!=="Office")msg.push("8GB RAM may cause stutter. 16GB is minimum recommended for gaming.");if(r>=32)msg.push("RAM capacity is comfortable for heavy multitasking.");if(u==="Gaming 1440p/4K")msg.push("At higher resolution, GPU matters more than CPU.");if(u==="Editing / rendering")msg.push("For editing/rendering, CPU cores, RAM and SSD speed also matter.");result.innerHTML=msg.map(x=>"â€¢ "+x).join("\n")}
+function calc(){let c=+cpu.value,g=+gpu.value,r=+ram.value,u=use.value,msg=[];if(g-c>=2)msg.push("GPU is much stronger than CPU. Possible CPU bottleneck, especially at 1080p.");else if(c-g>=2)msg.push("CPU is stronger than GPU. Gaming performance may be GPU limited.");else msg.push("CPU and GPU look fairly balanced.");if(r<16 && u!=="Office")msg.push("8GB RAM may cause stutter. 16GB is minimum recommended for gaming.");if(r>=32)msg.push("RAM capacity is comfortable for heavy multitasking.");if(u==="Gaming 1440p/4K")msg.push("At higher resolution, GPU matters more than CPU.");if(u==="Editing / rendering")msg.push("For editing/rendering, CPU cores, RAM and SSD speed also matter.");result.innerHTML=msg.map(x=>"- "+x).join("\n")}
 document.querySelectorAll("select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
 <script>

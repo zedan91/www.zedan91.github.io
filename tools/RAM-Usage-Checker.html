@@ -121,7 +121,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     </div>
   </div>
 </header>
-<div class="header"><h1>RAM Usage Checker</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">â† Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
+<div class="header"><h1>RAM Usage Checker</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">&lt; Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
 <div class="wrap">
 <div class="card"><p>Check RAM pressure and get upgrade suggestion.</p><div class="grid">
 <div><label>Total RAM (GB)</label><input id="total" type="number" value="8"></div>
@@ -130,7 +130,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 </div><div id="result" class="result"></div></div>
 <div class="card"><h2>RAM Capacity Guide</h2><table class="table"><tr><th>RAM</th><th>Suitable For</th></tr><tr><td>4GB</td><td>Very basic use only</td></tr><tr><td>8GB</td><td>Office, browsing, light work</td></tr><tr><td>16GB</td><td>Gaming and smooth daily use</td></tr><tr><td>32GB</td><td>Editing, AutoCAD, heavy multitasking</td></tr><tr><td>64GB+</td><td>Professional rendering, VM, large project</td></tr></table></div>
 </div>
-<div class="footer">Â© 2026 AZOBSS.COM - PC Tools & Utilities</div>
+<div class="footer">(c) 2026 AZOBSS.COM - PC Tools & Utilities</div>
 <script>
 function calc(){let t=+total.value||0,u=+used.value||0,p=t?u/t*100:0;let need=p>85?"High RAM pressure. Upgrade recommended.":p>70?"Moderate usage. Upgrade if PC feels slow.":"RAM usage looks okay.";let rec=usage.value==="Office / browsing"?"8GB - 16GB":usage.value==="Gaming"?"16GB - 32GB":usage.value==="Editing / design"?"32GB recommended":"32GB - 64GB";result.innerHTML=`RAM usage: <b>${p.toFixed(1)}%</b>\nAvailable RAM: <b>${Math.max(t-u,0).toFixed(1)} GB</b>\nStatus: <b>${need}</b>\nRecommended for ${usage.value}: <b>${rec}</b>\n\nTip: Check Task Manager > Processes to see which app uses the most memory.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();

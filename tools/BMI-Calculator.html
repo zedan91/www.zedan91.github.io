@@ -121,7 +121,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     </div>
   </div>
 </header>
-<div class="header"><h1>BMI Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">â† Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
+<div class="header"><h1>BMI Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">&lt; Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
 <div class="wrap">
 <div class="card"><p>Calculate BMI, category, healthy weight range and estimated daily calorie needs.</p><div class="grid">
 <div><label>Unit</label><select id="unit"><option value="metric">Metric - kg/cm</option><option value="imperial">Imperial - lb/inch</option></select></div>
@@ -133,7 +133,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 </div><div id="result" class="result"></div></div>
 <div class="card"><h2>BMI Category Guide</h2><table class="table"><tr><th>BMI</th><th>Category</th></tr><tr><td>Below 18.5</td><td>Underweight</td></tr><tr><td>18.5 - 24.9</td><td>Normal</td></tr><tr><td>25.0 - 29.9</td><td>Overweight</td></tr><tr><td>30.0 and above</td><td>Obese</td></tr></table><p class="muted small">BMI is a general guide only. Muscle mass, body frame and health condition can affect interpretation.</p></div>
 </div>
-<div class="footer">Â© 2026 AZOBSS.COM - PC Tools & Utilities</div>
+<div class="footer">(c) 2026 AZOBSS.COM - PC Tools & Utilities</div>
 <script>
 function cat(b){return b<18.5?"Underweight":b<25?"Normal":b<30?"Overweight":"Obese"}
 function calc(){let u=unit.value,w=parseFloat(weight.value)||0,h=parseFloat(height.value)||0,a=parseFloat(age.value)||0;if(!w||!h){result.innerHTML="Please enter weight and height.";return}

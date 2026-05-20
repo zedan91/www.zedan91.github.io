@@ -121,7 +121,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     </div>
   </div>
 </header>
-<div class="header"><h1>SSD / HDD Speed Checker Guide</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">â† Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
+<div class="header"><h1>SSD / HDD Speed Checker Guide</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">&lt; Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
 <div class="wrap">
 <div class="card"><p>Enter your CrystalDiskMark sequential read/write result to compare with common drive ranges.</p><div class="grid">
 <div><label>Disk Type</label><select id="type"><option>HDD</option><option>SATA SSD</option><option>NVMe Gen3</option><option>NVMe Gen4</option><option>NVMe Gen5</option></select></div>
@@ -131,7 +131,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 <div class="card"><h2>Common Speed Range</h2><table class="table"><tr><th>Storage</th><th>Read / Write Range</th><th>Note</th></tr><tr><td>HDD</td><td>80 - 160 MB/s</td><td>Slow but okay for backup</td></tr><tr><td>SATA SSD</td><td>400 - 550 MB/s</td><td>Good for normal Windows</td></tr><tr><td>NVMe Gen3</td><td>1500 - 3500 MB/s</td><td>Fast for gaming and work</td></tr><tr><td>NVMe Gen4</td><td>3500 - 7500 MB/s</td><td>Very fast</td></tr><tr><td>NVMe Gen5</td><td>8000 - 14000 MB/s</td><td>High-end, needs good cooling</td></tr></table></div>
 <div class="card"><h2>Slow Disk Warning Signs</h2><ul><li>Windows boot takes too long.</li><li>Apps open slowly even with enough RAM.</li><li>Disk usage always 100% in Task Manager.</li><li>CrystalDiskInfo health is caution/bad.</li><li>SSD temperature too high can cause speed drop.</li></ul></div>
 </div>
-<div class="footer">Â© 2026 AZOBSS.COM - PC Tools & Utilities</div>
+<div class="footer">(c) 2026 AZOBSS.COM - PC Tools & Utilities</div>
 <script>
 const ranges={"HDD":[80,160],"SATA SSD":[400,550],"NVMe Gen3":[1500,3500],"NVMe Gen4":[3500,7500],"NVMe Gen5":[8000,14000]};
 function calc(){let r=parseFloat(read.value)||0,w=parseFloat(write.value)||0,rg=ranges[type.value];let avg=(r+w)/2;let status=avg<rg[0]*0.75?"Slow / check cable, slot, health or thermal issue":avg<=rg[1]*1.25?"Normal range":"Higher than normal range / good result";result.innerHTML=`Selected: <b>${type.value}</b>\nYour average speed: <b>${avg.toFixed(0)} MB/s</b>\nExpected range: <b>${rg[0]} - ${rg[1]} MB/s</b>\nStatus: <b>${status}</b>\n\nTip: For accurate result, close heavy apps and test using CrystalDiskMark default profile.`}

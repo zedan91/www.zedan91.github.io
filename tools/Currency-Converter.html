@@ -372,14 +372,14 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 
     <div class="header">
         <div>
-            <div class="title">ðŸ’± Currency Converter</div>
+            <div class="title">Currency Converter</div>
             <div class="subtitle">
                 Live exchange rates for shopping, travel &amp; online payments.
             </div>
         </div>
 
         <a class="back-btn" href="index.html">
-            â† Back To Tools
+            &lt; Back To Tools
         </a>
     </div>
 
@@ -397,7 +397,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
             </div>
         </div>
 
-        <!-- From [â‡„] To row -->
+        <!-- From / To row -->
         <div class="currency-row">
             <div>
                 <label>From</label>
@@ -405,7 +405,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
             </div>
 
             <div class="swap-center-box">
-                <button class="swap-middle-btn" onclick="swapCurrencies()" title="Swap currencies">â‡„</button>
+                <button class="swap-middle-btn" onclick="swapCurrencies()" title="Swap currencies">Swap</button>
             </div>
 
             <div>
@@ -432,24 +432,24 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 
             <!-- Right: mini calculator -->
             <div class="calc-box">
-                <div class="calc-title">ðŸ§® Mini Calculator</div>
+                <div class="calc-title">Mini Calculator</div>
                 <input class="calc-display" id="calcDisplay" type="text" value="0" readonly>
 
                 <div class="calc-grid">
                     <button class="clear" onclick="calcClear()">C</button>
-                    <button onclick="calcBack()">âŒ«</button>
+                    <button onclick="calcBack()">Back</button>
                     <button onclick="calcPress('%')">%</button>
-                    <button class="op" onclick="calcPress('/')">Ã·</button>
+                    <button class="op" onclick="calcPress('/')">/</button>
 
                     <button onclick="calcPress('7')">7</button>
                     <button onclick="calcPress('8')">8</button>
                     <button onclick="calcPress('9')">9</button>
-                    <button class="op" onclick="calcPress('*')">Ã—</button>
+                    <button class="op" onclick="calcPress('*')">x</button>
 
                     <button onclick="calcPress('4')">4</button>
                     <button onclick="calcPress('5')">5</button>
                     <button onclick="calcPress('6')">6</button>
-                    <button class="op" onclick="calcPress('-')">âˆ’</button>
+                    <button class="op" onclick="calcPress('-')">-</button>
 
                     <button onclick="calcPress('1')">1</button>
                     <button onclick="calcPress('2')">2</button>
@@ -553,12 +553,12 @@ async function fetchLiveRates(){
         const data     = await response.json();
         if(data && data.rates){
             rates = data.rates;
-            statusBox.innerHTML = `<span class="live">â— LIVE Exchange Rates Connected</span><br>Source: open.er-api.com`;
+            statusBox.innerHTML = `<span class="live">* LIVE Exchange Rates Connected</span><br>Source: open.er-api.com`;
             calculate();
         }else{ throw new Error("API error"); }
     }catch(error){
         rates = {...fallbackRates};
-        statusBox.innerHTML = `<span class="offline">â— Offline fallback rates loaded</span><br>Internet/API unavailable.`;
+        statusBox.innerHTML = `<span class="offline">* Offline fallback rates loaded</span><br>Internet/API unavailable.`;
         calculate();
     }
 }
