@@ -15346,35 +15346,169 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 <script>
-window.azobssDirectPaDownload = function(e){
-  if(e){
-    e.preventDefault();
-    e.stopPropagation();
-    if(typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+/* AZOBSS PA download final fix: no new tab, show status above Download PA */
+(function(){
+  function cleanPaValue(value){
+    return String(value || '')
+      .trim()
+      .toUpperCase()
+      .replace(/^PA/i, '')
+      .replace(/\.TIF$/i, '')
+      .replace(/[^0-9]/g, '');
   }
-  if(typeof window.azobssHandlePaDownload === 'function'){
-    return window.azobssHandlePaDownload(e);
+
+  function getPaElements(){
+    return {
+      form: document.getElementById('paForm'),
+      button: document.getElementById('downloadTifButton'),
+      paInput: document.getElementById('paNumber') || document.getElementById('paInput'),
+      negeriInput: document.getElementById('negeri') || document.getElementById('stateSelect'),
+      paError: document.getElementById('paError'),
+      paStatus: document.getElementById('paStatus')
+    };
   }
-  var paInput = document.getElementById('paNumber');
-  var negeriInput = document.getElementById('negeri');
-  var paError = document.getElementById('paError');
-  var number = String(paInput && paInput.value || '').trim().toUpperCase().replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'');
-  var negeri = negeriInput ? negeriInput.value : '';
-  if(!number || !negeri){
-    if(paError) paError.textContent = 'Please enter the PA number and select a state first.';
+
+  function setMessage(type, text){
+    var el = getPaElements().paError;
+    if(!el) return;
+    el.textContent = text;
+    el.style.display = 'block';
+    el.style.marginBottom = '10px';
+    el.style.padding = '10px 12px';
+    el.style.borderRadius = '10px';
+    el.style.fontWeight = '700';
+    el.style.textAlign = 'center';
+
+    if(type === 'success'){
+      el.style.background = '#18331d';
+      el.style.color = '#2bdc73';
+      el.style.border = '1px solid rgba(43,220,115,.45)';
+    }else if(type === 'loading'){
+      el.style.background = '#17233a';
+      el.style.color = '#ffd700';
+      el.style.border = '1px solid rgba(255,215,0,.35)';
+    }else{
+      el.style.background = '#3b1515';
+      el.style.color = '#ff6b6b';
+      el.style.border = '1px solid rgba(255,107,107,.45)';
+    }
+  }
+
+  function clearOldStatus(){
+    var els = getPaElements();
+    if(els.paStatus){
+      els.paStatus.style.display = 'none';
+      els.paStatus.textContent = '';
+    }
+  }
+
+  function buildBackendPaUrl(){
+    var els = getPaElements();
+    var number = cleanPaValue(els.paInput ? els.paInput.value : '');
+    var negeri = els.negeriInput ? els.negeriInput.value : '';
+
+    if(!number || !negeri){
+      return { url: '', number: number, negeri: negeri };
+    }
+
+    return {
+      url: 'https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA' + number + '.TIF&negeri=' + encodeURIComponent(negeri),
+      number: number,
+      negeri: negeri
+    };
+  }
+
+  async function downloadPaOnly(event){
+    if(event){
+      event.preventDefault();
+      event.stopPropagation();
+      if(typeof event.stopImmediatePropagation === 'function'){
+        event.stopImmediatePropagation();
+      }
+    }
+
+    clearOldStatus();
+
+    var els = getPaElements();
+    var built = buildBackendPaUrl();
+
+    if(!built.url){
+      setMessage('error', 'Sila masukkan nombor PA dan pilih negeri dahulu.');
+      return false;
+    }
+
+    if(els.button){
+      els.button.disabled = true;
+    }
+
+    setMessage('loading', 'Sedang semak PA...');
+
+    try{
+      var response = await fetch(built.url, { cache: 'no-store' });
+      var contentType = (response.headers.get('content-type') || '').toLowerCase();
+
+      if(!response.ok){
+        throw new Error('PA_NOT_FOUND');
+      }
+
+      if(contentType.indexOf('application/json') !== -1 || contentType.indexOf('text/json') !== -1){
+        var data = await response.json().catch(function(){ return null; });
+        if(!data || data.ok === false){
+          throw new Error('PA_NOT_FOUND');
+        }
+      }
+
+      var blob = await response.blob();
+      if(!blob || !blob.size){
+        throw new Error('PA_NOT_FOUND');
+      }
+
+      var objectUrl = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = 'PA' + built.number + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
+
+      setMessage('success', '✔ Download berjaya');
+    }catch(error){
+      setMessage('error', 'Maaf, PA tiada dalam simpanan');
+    }finally{
+      if(els.button){
+        els.button.disabled = false;
+      }
+    }
+
     return false;
   }
-  var url = 'https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA' + number + '.TIF&negeri=' + encodeURIComponent(negeri);
-  var a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  a.download = 'PA' + number + '.pdf';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  return false;
-};
+
+  window.azobssDirectPaDownload = downloadPaOnly;
+  window.azobssHandlePaDownload = downloadPaOnly;
+
+  function bindPaOnly(){
+    var els = getPaElements();
+
+    if(els.form){
+      els.form.setAttribute('action', '');
+      els.form.setAttribute('onsubmit', 'return azobssDirectPaDownload(event);');
+      els.form.addEventListener('submit', downloadPaOnly, true);
+    }
+
+    if(els.button){
+      els.button.setAttribute('type', 'button');
+      els.button.setAttribute('onclick', 'return azobssDirectPaDownload(event);');
+      els.button.addEventListener('click', downloadPaOnly, true);
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bindPaOnly);
+  }else{
+    bindPaOnly();
+  }
+})();
 </script></body>
 </html>
 <script>
