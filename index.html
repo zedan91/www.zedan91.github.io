@@ -508,39 +508,27 @@
     }
 
     .auth-modal-top {
-      position:relative;
-      display:flex;
-      align-items:center;
-      margin-bottom:18px;
-      padding-right:42px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
     .auth-modal-top h3 {
-      margin:0;
+      margin: 0;
     }
 
     .auth-close-btn {
-      position:absolute;
-      top:-4px;
-      right:-2px;
-      border:0;
-      border-radius:10px;
-      background:#334155;
-      color:white;
-      width:28px;
-      height:28px;
-      cursor:pointer;
-      font-size:18px;
-      font-weight:700;
-      line-height:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transition:all .2s ease;
-    }
-    .auth-close-btn:hover{
-      transform:scale(1.05);
-      background:#475569;
+      border: 0;
+      border-radius: 8px;
+      background: #334155;
+      color: white;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
     }
 
     .auth-modal-form {
@@ -1986,6 +1974,21 @@ body:not(.is-admin) #registeredUsersPanel {
       color: #e2e8f0;
       font-size: 16px;
     }
+
+/* Force admin live/history panels visible for admin */
+.is-admin #liveUsersPanel,
+.is-admin #loginHistoryPanel,
+.is-admin #guestHistoryPanel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body:not(.is-admin) #liveUsersPanel,
+body:not(.is-admin) #loginHistoryPanel,
+body:not(.is-admin) #guestHistoryPanel {
+  display: none !important;
+}
 
     .live-user-list {
       display: grid;
@@ -6907,7 +6910,7 @@ body{
 <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
 <div class="auth-modal-top">
 <h3 id="siteAuthTitle">Sign in</h3>
-<button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
+<button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">Ã—</button>
 </div>
 <form class="auth-modal-form" id="siteSignInForm">
 <label for="siteLoginName">
@@ -6984,7 +6987,7 @@ body{
 <div aria-labelledby="profileSettingsTitle" aria-modal="true" class="auth-modal-card" role="dialog">
 <div class="auth-modal-top">
 <h3 id="profileSettingsTitle">Edit Profile</h3>
-<button aria-label="Close" class="auth-close-btn" id="profileSettingsClose" type="button">×</button>
+<button aria-label="Close" class="auth-close-btn" id="profileSettingsClose" type="button">Ã—</button>
 </div>
 <form class="auth-modal-form" id="profileSettingsForm">
 <label for="profileEditName">
@@ -7705,6 +7708,9 @@ body{
     const registeredUsersPagination = document.getElementById('registeredUsersPagination');
     const registeredUsersToday = document.getElementById('registeredUsersToday');
     const registeredUsersMonth = document.getElementById('registeredUsersMonth');
+    const liveUsersPanel = document.getElementById('liveUsersPanel');
+    const loginHistoryPanel = document.getElementById('loginHistoryPanel');
+    const guestHistoryPanel = document.getElementById('guestHistoryPanel');
     const liveUsersList = document.getElementById('liveUsersList');
     const liveUsersPagination = document.getElementById('liveUsersPagination');
     const loginHistoryList = document.getElementById('loginHistoryList');
@@ -10116,6 +10122,17 @@ body{
       return date.getTime();
     }
 
+
+    function syncAdminLivePanelsVisibility() {
+      const shouldShow = !!(currentUser && currentUser.isAdmin);
+      [liveUsersPanel, loginHistoryPanel, guestHistoryPanel].forEach(function (panel) {
+        if (panel) {
+          panel.hidden = !shouldShow;
+          panel.style.display = shouldShow ? 'block' : 'none';
+        }
+      });
+    }
+
     function updateHistoryTotals(items, todayElement, monthElement, timestampGetter) {
       if (!todayElement || !monthElement) {
         return;
@@ -11944,6 +11961,7 @@ body{
       paForm.hidden = true;
       adminPurchasePanel.style.display = 'none';
       registeredUsersPanel.style.display = 'none';
+      syncAdminLivePanelsVisibility();
       setPurchaseRecordsVisible(true);
       purchaseRecordSearch.value = '';
       purchaseRecordSort.value = 'amountDesc';
