@@ -3307,5 +3307,3 @@ body:not(.is-admin) .affiliate-card-admin-actions{
     grid-template-columns:repeat(2,minmax(0,1fr)) !important;
   }
 }
-
-.nav-pa-bm-link.is-hidden { display: none !important; }

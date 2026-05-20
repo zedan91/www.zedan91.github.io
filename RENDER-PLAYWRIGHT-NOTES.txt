@@ -1,0 +1,27 @@
+AZOBSS Affiliate Auto Detect - Render Playwright Ready
+
+Apa yang ditambah:
+1. /api/detect-product cuba Shopee item API dahulu.
+2. Jika Shopee API/meta gagal, backend cuba buka page Shopee guna Playwright Chromium.
+3. Jika Shopee masih block, sistem tidak guna ID sebagai tajuk palsu.
+4. Backup Product Title / Auto Fill masih kekal sebagai fallback paling stabil.
+
+Render setup:
+- Build Command:
+  ./render-build.sh
+
+- Start Command:
+  npm start
+
+Jika Render tidak benarkan shell script, guna Build Command ini:
+  npm install && npx playwright install chromium
+
+Selepas deploy:
+1. Tunggu Render build selesai.
+2. Buka endpoint:
+   https://azobss-backend.onrender.com/health
+3. Hard refresh website: Ctrl + Shift + R.
+4. Cuba Auto Detect semula.
+
+Nota:
+Shopee masih boleh block sesetengah produk. Kalau gagal, paste tajuk produk ke Product Title Backup dan tekan Auto Fill.

@@ -68,7 +68,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
     const requestCard = document.getElementById('requestCard');
     const requestSection = document.getElementById('request');
     const heroRequestButton = document.getElementById('heroRequestButton');
-    const paBmNavButton = document.getElementById('paBmNavButton');
     const userMenu = document.getElementById('userMenu');
     const userAvatar = document.getElementById('userAvatar');
     const signedInName = document.getElementById('signedInName');
@@ -341,20 +340,11 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
         .join('') || 'AZ';
     }
 
-    function updatePaBmNavAccess(user = currentUser) {
-      const hasPaAccess = !!(user && (isAdminUser(user) || user.paAccess !== false));
-      if (paBmNavButton) {
-        paBmNavButton.hidden = !hasPaAccess;
-        paBmNavButton.classList.toggle('is-hidden', !hasPaAccess);
-      }
-    }
-
     function showSignedInUser(user) {
       signedInName.textContent = user.name;
       userAvatar.textContent = getInitials(user.name);
       userMenu.style.display = 'flex';
       siteAuthActions.style.display = 'none';
-      updatePaBmNavAccess(user);
       if (userUpgradeButton) {
         userUpgradeButton.hidden = isAdminUser(user) || user.paAccess !== false;
       }
@@ -2599,7 +2589,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
       requestCard.classList.toggle('has-pa-access', hasPaAccess);
       requestSection.classList.toggle('is-visible', hasPaAccess);
       heroRequestButton.classList.toggle('is-visible', hasPaAccess);
-      updatePaBmNavAccess(user);
       paForm.hidden = !hasPaAccess;
 
       loginInfo.style.display = 'none';
@@ -2962,7 +2951,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
       updateReceiptWhatsappLink(null);
       updateLuckyDrawPanel();
       heroRequestButton.classList.remove('is-visible');
-      updatePaBmNavAccess(null);
       signupForm.hidden = false;
       loginForm.hidden = false;
       paForm.hidden = true;
@@ -3014,7 +3002,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
       authStateReady = true;
       clearCurrentUser();
       sessionStorage.removeItem('azobssLoggedIn');
-      updatePaBmNavAccess(null);
       restoreSignupAccess();
       startVisitorPresenceHeartbeat();
     }
@@ -3460,6 +3447,24 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
         `;
       }
     });
+
+
+    // AZOBSS PA FIX: prevent #request redirect and keep using backend PA PDF endpoint.
+    if (downloadTifButton) {
+      downloadTifButton.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (paForm && typeof paForm.requestSubmit === 'function') {
+          paForm.requestSubmit();
+          return;
+        }
+
+        if (paForm) {
+          paForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+      });
+    }
 
     confirmDownloadButton.addEventListener('click', async function () {
       if (!pendingDownload) {
