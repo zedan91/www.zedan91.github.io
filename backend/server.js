@@ -21,6 +21,8 @@ const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || "*").split(",").map((v) => v.trim()).filter(Boolean);
 
+app.set("trust proxy", true);
+
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 fs.mkdirSync(path.join(UPLOAD_DIR, "lucky-draw"), { recursive: true });
@@ -34,6 +36,15 @@ app.use(cors({
 
 app.use(express.json({ limit: "2mb" }));
 app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "7d", etag: true }));
+
+function cleanText(value, max = 200) {
+  return String(value || "").trim().slice(0, max);
+}
+
+function getClientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || req.ip || req.socket?.remoteAddress || "";
+}
 
 function readJson(file, fallback) {
   try {
@@ -140,7 +151,7 @@ app.post("/api/lucky-draw/prize", requireAdmin, upload.single("image"), (req, re
   const previous = readJson(getPrizeFile(key), {});
   const imageUrl = req.file
     ? `${PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`}/uploads/lucky-draw/${req.file.filename}`
-    : (previous.imageUrl || "");
+    : (cleanText(req.body.imageUrl, 600) || previous.imageUrl || previous.image || "");
 
   const prize = {
     monthKey: key,
@@ -211,27 +222,59 @@ app.post("/api/lucky-draw/entries", (req, res) => {
   const key = req.body.monthKey || monthKey();
   const file = getEntriesFile(key);
   const entries = readJson(file, []);
-  const usernameKey = String(req.body.usernameKey || "").trim();
+  const usernameKey = cleanText(req.body.usernameKey, 80).toLowerCase();
   if (!usernameKey) return res.status(400).json({ ok: false, error: "usernameKey required" });
+  const inviteCode = cleanText(req.body.inviteCode, 40).toUpperCase();
+  const inviteUrl = cleanText(req.body.inviteUrl, 500);
+  const shareConfirmed = req.body.shareConfirmed === true || req.body.shareConfirmed === "true" || req.body.shareConfirmed === "1";
+  const deviceFingerprint = cleanText(req.body.deviceFingerprint, 160);
+  const ipAddress = getClientIp(req);
 
-  const existingIndex = entries.findIndex((e) => e.usernameKey === usernameKey && e.monthKey === key);
+  if (!inviteCode || !inviteUrl || !shareConfirmed) {
+    return res.status(400).json({ ok: false, error: "Share invite link dahulu sebelum join Lucky Draw." });
+  }
+
+  if (!deviceFingerprint) {
+    return res.status(400).json({ ok: false, error: "Device fingerprint required" });
+  }
+
+  const activeEntries = entries.filter((e) => e.monthKey === key && !e.deleted);
+  const sameUser = activeEntries.find((e) => e.usernameKey === usernameKey);
+  if (sameUser) {
+    return res.status(409).json({ ok: false, error: "Username ini sudah join Lucky Draw bulan ini.", entry: sameUser });
+  }
+
+  const sameDevice = activeEntries.find((e) => e.deviceFingerprint && e.deviceFingerprint === deviceFingerprint);
+  if (sameDevice) {
+    return res.status(409).json({ ok: false, error: "Device ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameDevice });
+  }
+
+  const sameIp = activeEntries.find((e) => e.ipAddress && ipAddress && e.ipAddress === ipAddress);
+  if (sameIp) {
+    return res.status(409).json({ ok: false, error: "IP address ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameIp });
+  }
+
   const entry = {
     id: `${key}_${usernameKey}`,
     monthKey: key,
     usernameKey,
-    uid: req.body.uid || "",
-    name: req.body.name || usernameKey,
-    phone: req.body.phone || "",
-    contactEmail: req.body.contactEmail || "",
-    inviteCode: req.body.inviteCode || "",
-    inviteUrl: req.body.inviteUrl || "",
+    uid: cleanText(req.body.uid, 120),
+    name: cleanText(req.body.name, 160) || usernameKey,
+    phone: cleanText(req.body.phone, 60),
+    contactEmail: cleanText(req.body.contactEmail, 180),
+    inviteCode,
+    inviteUrl,
+    invitedByCode: cleanText(req.body.invitedByCode, 40).toUpperCase(),
+    deviceFingerprint,
+    ipAddress,
+    userAgent: cleanText(req.get("user-agent"), 300),
+    shareConfirmed: true,
     joinedAtMs: Date.now(),
     joinedAt: new Date().toISOString(),
     deleted: false
   };
 
-  if (existingIndex >= 0) entries[existingIndex] = { ...entries[existingIndex], ...entry };
-  else entries.push(entry);
+  entries.push(entry);
 
   writeJson(file, entries);
   res.json({ ok: true, entry, total: entries.filter((e) => !e.deleted).length });
