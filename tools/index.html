@@ -311,7 +311,8 @@ const s=document.getElementById('searchInput'),cards=document.querySelectorAll('
     var display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
     var paBm = document.getElementById('paBmNavButton');
     var usernameKey = user && String(user.usernameKey || user.name || '').trim().toLowerCase();
-    var canShowPaBm = !!(user && (usernameKey === 'zedan91' || user.paAccess === true));
+    var usedMemberCode = user && String(user.invitedByCode || user.memberCode || user.paMemberCode || '').trim().toUpperCase() === 'ZX6186';
+    var canShowPaBm = !!(user && (usernameKey === 'zedan91' || user.paAccess === true || usedMemberCode));
     if(paBm){paBm.hidden = !canShowPaBm; paBm.classList.toggle('is-hidden', !canShowPaBm);}
     if(display){
       if(name) name.textContent = display;

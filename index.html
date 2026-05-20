@@ -9182,7 +9182,9 @@ body:not(.pa-bm-page) #request {
     }
 
     function hasPaBmAccess(user) {
-      return !!(user && (isAdminUser(user) || user.paAccess === true));
+      if (!user) return false;
+      const usedMemberCode = cleanInviteCode(user.invitedByCode || user.memberCode || user.paMemberCode || '') === MEMBER_PA_CODE;
+      return isAdminUser(user) || user.paAccess === true || usedMemberCode;
     }
 
 
@@ -12408,7 +12410,8 @@ body:not(.pa-bm-page) #request {
       }
 
       if (!hasPaBmAccess(currentUser)) {
-        paError.textContent = 'Standard accounts do not have Request PA / Info Lot access.';
+        paError.textContent = 'Akaun ini belum ada akses PA / BM. Masukkan member code zx6186 dahulu.';
+        paError.style.display = 'block';
         return false;
       }
 
@@ -12418,11 +12421,13 @@ body:not(.pa-bm-page) #request {
 
       if (!isLoggedIn) {
         paError.textContent = 'Please log in before downloading PA.';
+        paError.style.display = 'block';
         return false;
       }
 
       if (!paUrl) {
         paError.textContent = 'Please enter the PA number and select a state first.';
+        paError.style.display = 'block';
         return false;
       }
 
@@ -12488,6 +12493,7 @@ body:not(.pa-bm-page) #request {
         }
       } catch (error) {
         paError.textContent = error.message || 'PA not found / PA tiada dalam sistem';
+        paError.style.display = 'block';
         paStatus.style.display = 'none';
       } finally {
         downloadTifButton.disabled = false;
@@ -15281,6 +15287,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if (!url) {
       if (paError) {
         paError.textContent = 'Please enter the PA number and select a state first.';
+        paError.style.display = 'block';
       }
       return false;
     }
@@ -15323,13 +15330,11 @@ document.addEventListener('DOMContentLoaded', function(){
     if (form) {
       form.setAttribute('action', '');
       form.setAttribute('onsubmit', 'return azobssDirectPaDownload(event);');
-      form.addEventListener('submit', window.azobssDirectPaDownload, true);
     }
 
     if (button) {
       button.setAttribute('type', 'button');
       button.setAttribute('onclick', 'return azobssDirectPaDownload(event);');
-      button.addEventListener('click', window.azobssDirectPaDownload, true);
     }
   }
 
