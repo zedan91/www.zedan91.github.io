@@ -900,7 +900,7 @@
     }
 
     .user-dropdown-section {
-      padding: 8px 16px 3px;
+      padding: 10px 16px 6px;
       color: #a3a3a3;
       font-size: 14px;
       font-weight: 800;
@@ -912,9 +912,8 @@
       align-items: center;
       gap: 12px;
       width: 100%;
-      min-height: 34px;
-      padding: 5px 16px;
-      margin: 0;
+      min-height: 41px;
+      padding: 8px 16px;
       border: 0;
       background: transparent;
       color: #d4d4d4;
@@ -11612,6 +11611,20 @@ body:not(.pa-bm-page) #request {
     siteSignUpButton.addEventListener('click', function () {
       openSiteAuth('signup');
     });
+
+    function openSiteAuthFromHash(){
+      const hash = String(window.location.hash || '').toLowerCase();
+      if(hash === '#login' || hash === '#signin'){
+        openSiteAuth('signin');
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }else if(hash === '#register' || hash === '#signup'){
+        openSiteAuth('signup');
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+
+    window.addEventListener('hashchange', openSiteAuthFromHash);
+    openSiteAuthFromHash();
 
     function closeUserDropdown() {
       userMenu.classList.remove('is-open');
