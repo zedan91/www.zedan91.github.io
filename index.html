@@ -537,7 +537,7 @@
     }
 
     .auth-modal-form[hidden] {
-      display: none !important;
+      display: none;
     }
 
     .auth-modal-form label {
@@ -11611,20 +11611,6 @@ body:not(.pa-bm-page) #request {
     siteSignUpButton.addEventListener('click', function () {
       openSiteAuth('signup');
     });
-
-    function openSiteAuthFromHash(){
-      const hash = String(window.location.hash || '').toLowerCase();
-      if(hash === '#login' || hash === '#signin'){
-        openSiteAuth('signin');
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-      }else if(hash === '#register' || hash === '#signup'){
-        openSiteAuth('signup');
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-      }
-    }
-
-    window.addEventListener('hashchange', openSiteAuthFromHash);
-    openSiteAuthFromHash();
 
     function closeUserDropdown() {
       userMenu.classList.remove('is-open');
