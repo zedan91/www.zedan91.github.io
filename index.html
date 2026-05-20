@@ -7248,7 +7248,7 @@ body{
         </button>
 </form>
 <p class="login-info" id="loginInfo"></p>
-<form class="request-form" hidden="" id="paForm">
+<form action="javascript:void(0)" class="request-form" hidden="" id="paForm">
 <label for="paNumber">
           No PA
           <input id="paNumber" inputmode="numeric" placeholder="Contoh: 123456" required="" type="text"/>
@@ -12392,12 +12392,15 @@ body{
       }, 2500);
     });
 
-    paForm.addEventListener('submit', async function (event) {
-      event.preventDefault();
+    async function handlePaDownloadSubmit(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
 
       if (!isAdminUser(currentUser) && currentUser && currentUser.paAccess === false) {
         paError.textContent = 'Standard accounts do not have Request PA / Info Lot access.';
-        return;
+        return false;
       }
 
       const pdfUrl = buildPdfUrl();
@@ -12406,12 +12409,12 @@ body{
 
       if (!isLoggedIn) {
         paError.textContent = 'Please log in before downloading PA.';
-        return;
+        return false;
       }
 
       if (!pdfUrl) {
         paError.textContent = 'Please enter the PA number and select a state first.';
-        return;
+        return false;
       }
 
       paError.textContent = '';
@@ -12474,7 +12477,6 @@ body{
         if (failedDownloadButton) {
           failedDownloadButton.style.display = 'none';
         }
-
       } catch (error) {
         paError.textContent = error.message || 'PA not found / PA tiada dalam sistem';
         paStatus.style.display = 'none';
@@ -12485,6 +12487,18 @@ body{
           <span class="pdf-price-tag">RM5 per unit</span>
         `;
       }
+
+      return false;
+    }
+
+    window.azobssHandlePaDownload = handlePaDownloadSubmit;
+
+    paForm.addEventListener('submit', handlePaDownloadSubmit);
+    downloadTifButton.addEventListener('click', function (event) {
+      if (paForm.requestSubmit) {
+        return;
+      }
+      handlePaDownloadSubmit(event);
     });
 
     confirmDownloadButton.addEventListener('click', async function () {
