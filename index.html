@@ -7276,7 +7276,7 @@ body{
 </select>
 </label>
 <p class="request-error" id="paError"></p>
-<button class="btn blue download-pdf-btn" id="downloadTifButton" type="submit">
+<button class="btn blue download-pdf-btn" id="downloadTifButton" type="button">
 <span class="download-pa-main">Download PA</span>
 <span class="pdf-price-tag">RM5 per unit</span>
 </button>
@@ -7813,7 +7813,7 @@ body{
         return '';
       }
 
-      return `https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA${number}.TIF&negeri=${encodeURIComponent(selectedNegeri)}`;
+      return `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=PA${number}.TIF&negeri=${encodeURIComponent(selectedNegeri)}`;
     }
 
     function updatePreview() {
@@ -7825,7 +7825,7 @@ body{
       downloadResultActions.hidden = true;
       downloadResultActions.style.display = 'none';
       pendingDownload = null;
-      paLinkPreview.textContent = url || 'Link PDF akan dijana selepas nombor PA dan negeri dipilih.';
+      paLinkPreview.textContent = url || 'Link JUPEM akan dijana selepas nombor PA dan negeri dipilih.';
     }
 
     function normalizeUsername(name) {
@@ -12403,7 +12403,7 @@ body{
         return false;
       }
 
-      const pdfUrl = buildPdfUrl();
+      const paUrl = buildPdfUrl();
       const paValue = cleanPaNumber(paNumber.value);
       const selectedNegeri = negeri.value;
 
@@ -12412,64 +12412,33 @@ body{
         return false;
       }
 
-      if (!pdfUrl) {
+      if (!paUrl) {
         paError.textContent = 'Please enter the PA number and select a state first.';
         return false;
       }
 
       paError.textContent = '';
       paStatus.style.display = 'block';
-      paStatus.textContent = 'Converting PA to PDF... please wait.';
+      paStatus.textContent = 'Opening JUPEM PA download...';
       downloadTifButton.disabled = true;
       downloadTifButton.innerHTML = `
-        <span class="download-pa-main">Converting PDF...</span>
+        <span class="download-pa-main">Opening PA...</span>
         <span class="pdf-price-tag">RM5 per unit</span>
       `;
 
       try {
-        const res = await fetch(pdfUrl, { cache: 'no-store' });
-
-        if (!res.ok) {
-          let message = 'PA not found / PA tiada dalam sistem';
-
-          try {
-            const errorData = await res.json();
-            message = errorData.error || message;
-          } catch (jsonError) {
-            // PDF endpoint may return non-JSON errors. Keep the friendly message.
-          }
-
-          throw new Error(message);
-        }
-
-        const pdfBlob = await res.blob();
-
-        if (!pdfBlob || !pdfBlob.size) {
-          throw new Error('PDF kosong / failed convert.');
-        }
-
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `PA${paValue}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        setTimeout(function () {
-          URL.revokeObjectURL(blobUrl);
-        }, 5000);
+        window.open(paUrl, '_blank', 'noopener');
 
         pendingDownload = {
           paValue,
           selectedNegeri,
-          url: pdfUrl
+          url: paUrl
         };
 
-        await recordPurchase(paValue, selectedNegeri, pdfUrl);
+        await recordPurchase(paValue, selectedNegeri, paUrl);
 
         paStatus.style.display = 'block';
-        paStatus.textContent = 'PA downloaded successfully!';
+        paStatus.textContent = 'JUPEM PA download opened.';
 
         downloadResultActions.hidden = true;
         downloadResultActions.style.display = 'none';
@@ -12494,12 +12463,7 @@ body{
     window.azobssHandlePaDownload = handlePaDownloadSubmit;
 
     paForm.addEventListener('submit', handlePaDownloadSubmit);
-    downloadTifButton.addEventListener('click', function (event) {
-      if (paForm.requestSubmit) {
-        return;
-      }
-      handlePaDownloadSubmit(event);
-    });
+    downloadTifButton.addEventListener('click', handlePaDownloadSubmit);
 
     confirmDownloadButton.addEventListener('click', async function () {
       if (!pendingDownload) {
