@@ -10718,7 +10718,6 @@ body:not(.pa-bm-page) #request {
       }
 
       await loadPurchaseRecords();
-      await loadUserPaPurchaseLogs();
     }
 
     async function recordPurchase(paValue, selectedNegeri, url) {
@@ -10726,10 +10725,6 @@ body:not(.pa-bm-page) #request {
     }
 
     window.azobssRecordPurchase = recordPurchaseItem;
-    window.azobssRefreshPurchaseRecords = async function () {
-      await loadPurchaseRecords();
-      await loadUserPaPurchaseLogs();
-    };
 
     function closeSignupAccess() {
       showSignupButton.hidden = true;
@@ -15463,13 +15458,9 @@ document.addEventListener('DOMContentLoaded', function(){
           itemCode: built.number,
           paNumber: built.number,
           negeri: built.negeri,
-          url: built.url,
-          amount: 5
+          amount: 5,
+          url: built.url
         });
-      }
-
-      if(typeof window.azobssRefreshPurchaseRecords === 'function'){
-        await window.azobssRefreshPurchaseRecords();
       }
 
       setMessage('success', '✔ Download berjaya');
