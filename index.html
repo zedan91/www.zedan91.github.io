@@ -9173,7 +9173,12 @@ body{
     }
 
     function isAdminUser(user) {
-      return user && user.usernameKey === ADMIN_USERNAME;
+      if (!user) return false;
+      const adminName = String(ADMIN_USERNAME || '').trim().toLowerCase();
+      return [user.usernameKey, user.name, user.username, user.displayName, user.email]
+        .some(function (value) {
+          return String(value || '').trim().toLowerCase() === adminName;
+        });
     }
 
 
@@ -12584,14 +12589,10 @@ body{
 
   function adminDetected(){
     // Must be signed in first
-    if(!hasSavedLogin()){
-      return false;
-    }
-
     const currentUser = getCurrentUserObject();
 
     // Your existing login system uses usernameKey
-    if(currentUser && clean(currentUser.usernameKey) === ADMIN_USERNAME){
+    if(currentUser && [currentUser.usernameKey, currentUser.name, currentUser.username, currentUser.displayName, currentUser.email].some(function(value){ return clean(value) === ADMIN_USERNAME; })){
       return true;
     }
 
@@ -14053,17 +14054,18 @@ body{
   }
 
   function adminDetected(){
-    if(!hasSavedLogin()){
-      return false;
-    }
-
     var currentUser = getCurrentUserObject();
-    if(currentUser && clean(currentUser.usernameKey) === ADMIN_USERNAME){
+    if(currentUser && [currentUser.usernameKey, currentUser.name, currentUser.username, currentUser.displayName, currentUser.email].some(function(value){ return clean(value) === ADMIN_USERNAME; })){
       return true;
     }
 
     var signedInNameEl = document.getElementById('signedInName') || document.querySelector('.user-name');
     if(clean(signedInNameEl && signedInNameEl.textContent) === ADMIN_USERNAME){
+      return true;
+    }
+
+    var helloText = document.body ? clean(document.body.textContent) : '';
+    if(helloText.indexOf('hello, ' + ADMIN_USERNAME) !== -1 || helloText.indexOf('hello,' + ADMIN_USERNAME) !== -1){
       return true;
     }
 
