@@ -26,7 +26,7 @@
     const currentUser = getCurrentUserObject();
 
     // Your existing login system uses usernameKey
-    if(currentUser && [currentUser.usernameKey, currentUser.name, currentUser.username, currentUser.displayName, currentUser.email].some(function(value){ return clean(value) === ADMIN_USERNAME; })){
+    if(currentUser && clean(currentUser.usernameKey) === ADMIN_USERNAME){
       return true;
     }
 

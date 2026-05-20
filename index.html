@@ -6582,7 +6582,7 @@ body{
 .whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
-</style></head>
+</style><style>#liveUsersPanel,#loginHistoryPanel,#guestHistoryPanel{display:block!important;visibility:visible!important;opacity:1!important}</style></head>
 <body id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
 <div class="azobss-topbar-inner">
@@ -9173,12 +9173,7 @@ body{
     }
 
     function isAdminUser(user) {
-      if (!user) return false;
-      const adminName = String(ADMIN_USERNAME || '').trim().toLowerCase();
-      return [user.usernameKey, user.name, user.username, user.displayName, user.email]
-        .some(function (value) {
-          return String(value || '').trim().toLowerCase() === adminName;
-        });
+      return user && user.usernameKey === ADMIN_USERNAME;
     }
 
 
@@ -12589,10 +12584,14 @@ body{
 
   function adminDetected(){
     // Must be signed in first
+    if(!hasSavedLogin()){
+      return false;
+    }
+
     const currentUser = getCurrentUserObject();
 
     // Your existing login system uses usernameKey
-    if(currentUser && [currentUser.usernameKey, currentUser.name, currentUser.username, currentUser.displayName, currentUser.email].some(function(value){ return clean(value) === ADMIN_USERNAME; })){
+    if(currentUser && clean(currentUser.usernameKey) === ADMIN_USERNAME){
       return true;
     }
 
@@ -14054,18 +14053,17 @@ body{
   }
 
   function adminDetected(){
+    if(!hasSavedLogin()){
+      return false;
+    }
+
     var currentUser = getCurrentUserObject();
-    if(currentUser && [currentUser.usernameKey, currentUser.name, currentUser.username, currentUser.displayName, currentUser.email].some(function(value){ return clean(value) === ADMIN_USERNAME; })){
+    if(currentUser && clean(currentUser.usernameKey) === ADMIN_USERNAME){
       return true;
     }
 
     var signedInNameEl = document.getElementById('signedInName') || document.querySelector('.user-name');
     if(clean(signedInNameEl && signedInNameEl.textContent) === ADMIN_USERNAME){
-      return true;
-    }
-
-    var helloText = document.body ? clean(document.body.textContent) : '';
-    if(helloText.indexOf('hello, ' + ADMIN_USERNAME) !== -1 || helloText.indexOf('hello,' + ADMIN_USERNAME) !== -1){
       return true;
     }
 

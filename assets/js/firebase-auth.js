@@ -441,12 +441,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
     }
 
     function isAdminUser(user) {
-      if (!user) return false;
-      const adminName = String(ADMIN_USERNAME || '').trim().toLowerCase();
-      return [user.usernameKey, user.name, user.username, user.displayName, user.email]
-        .some(function (value) {
-          return String(value || '').trim().toLowerCase() === adminName;
-        });
+      return user && user.usernameKey === ADMIN_USERNAME;
     }
 
 
