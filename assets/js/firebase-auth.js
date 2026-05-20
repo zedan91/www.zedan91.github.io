@@ -3655,6 +3655,22 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
       a.remove();
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
 
+      if(typeof window.azobssRecordPurchase === 'function'){
+        try{
+          await window.azobssRecordPurchase({
+            productType: 'PA',
+            itemCode: built.number,
+            negeri: built.negeri,
+            amount: 5,
+            url: built.url
+          });
+        }catch(recordError){
+          console.error('Failed to save PA purchase record:', recordError);
+          setMessage('error', 'Download berjaya, tapi rekod pembelian gagal disimpan. Sila refresh/login semula.');
+          return false;
+        }
+      }
+
       setMessage('success', '✔ Download berjaya');
     }catch(error){
       setMessage('error', 'Maaf, PA tiada dalam simpanan');
