@@ -213,6 +213,19 @@ a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !importa
 .site-auth-btn:hover{color:#14b8a6 !important;}
 @media(max-width:760px){body{padding-top:92px !important;}.market-bar-inner{width:100% !important;padding:0 6px !important;}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important;}.market-brand{width:116px !important;height:30px !important;}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important;}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important;}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important;}.site-auth-btn{font-size:13px !important;white-space:nowrap !important;}}
 </style>
+<style>
+/* Secondary page auth state bridge */
+.market-user-tools{display:none;align-items:center !important;gap:20px !important;margin-left:auto !important;}
+.user-menu{position:relative !important;display:flex !important;align-items:center !important;gap:8px !important;color:#fff !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;min-height:34px !important;}
+.user-avatar{display:inline-grid !important;place-items:center !important;width:26px !important;height:26px !important;border-radius:999px !important;border:1px solid rgba(20,184,166,.75) !important;background:#03121f !important;color:#fff !important;font-size:11px !important;font-weight:bold !important;text-transform:uppercase !important;}
+.user-name{white-space:nowrap !important;color:#fff !important;}
+.user-menu::after{content:"⌄" !important;color:#cbd5e1 !important;font-size:18px !important;line-height:1 !important;margin-left:0 !important;}
+.user-dropdown{position:absolute !important;top:calc(100% + 10px) !important;right:0 !important;min-width:190px !important;padding:8px !important;border:1px solid rgba(148,163,184,.22) !important;border-radius:14px !important;background:#08111f !important;box-shadow:0 18px 50px rgba(0,0,0,.45) !important;display:none !important;z-index:3300 !important;}
+.user-menu.is-open .user-dropdown{display:block !important;}
+.user-dropdown-section{padding:8px 10px 5px !important;color:#94a3b8 !important;font-size:11px !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:.08em !important;}
+.user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
+.user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
+@media(max-width:760px){.market-user-tools{gap:12px !important;margin-left:auto !important;}.user-name{max-width:120px !important;overflow:hidden !important;text-overflow:ellipsis !important;}}</style>
 </head><body><header class="market-sticky-bar" aria-label="Carousell style navigation">
   <div class="market-bar-inner">
     <div class="market-main-row">
@@ -228,9 +241,20 @@ a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !importa
         <a href="../lucky-draw/index.html">Lucky Draw</a>
         <a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
       </nav>
-      <div class="site-auth-actions">
-        <a class="site-auth-btn primary" href="../index.html#signup">Register</a>
-        <a class="site-auth-btn" href="../index.html#login">Login</a>
+      <div class="site-auth-actions" id="siteAuthActions">
+        <a class="site-auth-btn primary" id="siteSignUpButton" href="../index.html#signup">Register</a>
+        <a class="site-auth-btn" id="siteSignInButton" href="../index.html#login">Login</a>
+      </div>
+      <div class="market-user-tools" id="marketUserTools">
+        <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+          <div class="user-avatar" id="userAvatar">AZ</div>
+          <div class="user-name">Hello, <span id="signedInName"></span></div>
+          <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
+            <div class="user-dropdown-section">Account</div>
+            <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -265,4 +289,45 @@ a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !importa
 
 </div><a class="back-home" href="../index.html">⬅ Back To Homepage</a><div class="footer">© 2026 AZOBSS.COM — Mini Utility Tools</div></div><script>
 const s=document.getElementById('searchInput'),cards=document.querySelectorAll('.tool-card');s.addEventListener('keyup',()=>{const v=s.value.toLowerCase();cards.forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')});
-</script></body></html>
+</script><script>
+/* AZOBSS secondary auth bridge */
+(function(){
+  function parseUser(raw){try{return raw ? JSON.parse(raw) : null;}catch(e){return null;}}
+  function readUser(){return parseUser(sessionStorage.getItem('azobssCurrentUser')) || parseUser(localStorage.getItem('azobssCurrentUser')) || parseUser(sessionStorage.getItem('azobssUser')) || parseUser(localStorage.getItem('azobssUser'));}
+  function initials(name){return String(name || 'AZ').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('') || 'AZ';}
+  function showUser(){
+    var user = readUser();
+    var auth = document.getElementById('siteAuthActions');
+    var tools = document.getElementById('marketUserTools');
+    var name = document.getElementById('signedInName');
+    var avatar = document.getElementById('userAvatar');
+    var display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
+    if(display){
+      if(name) name.textContent = display;
+      if(avatar) avatar.textContent = initials(display);
+      if(auth) auth.style.display = 'none';
+      if(tools) tools.style.display = 'flex';
+    }else{
+      if(auth) auth.style.display = 'flex';
+      if(tools) tools.style.display = 'none';
+    }
+  }
+  var menu = document.getElementById('userMenu');
+  if(menu){
+    menu.addEventListener('click', function(event){
+      if(event.target.closest('.user-dropdown-item')) return;
+      var open = !menu.classList.contains('is-open');
+      menu.classList.toggle('is-open', open);
+      menu.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', function(event){
+      if(!menu.contains(event.target)){menu.classList.remove('is-open');menu.setAttribute('aria-expanded','false');}
+    });
+  }
+  var logout = document.getElementById('logoutButton');
+  if(logout){logout.addEventListener('click', function(){sessionStorage.removeItem('azobssCurrentUser');localStorage.removeItem('azobssCurrentUser');sessionStorage.removeItem('azobssUser');localStorage.removeItem('azobssUser');showUser();});}
+  showUser();
+  window.addEventListener('storage', showUser);
+})();
+</script>
+</body></html>
