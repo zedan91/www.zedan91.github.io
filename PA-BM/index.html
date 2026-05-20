@@ -2,6 +2,7 @@
 
 <html>
 <head>
+<base href="../">
 <meta charset="utf-8"/>
 <title>AZOBSS | PC Service, Info Lot &amp; Digital Tools</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -6587,8 +6588,27 @@ body{
 body:not(.pa-bm-page) #request {
   display: none !important;
 }
+</style><style>
+/* Dedicated PA/BM page: keep the shared sticky bar and show only the PA/BM workspace. */
+body.pa-bm-page .azobss-topbar,
+body.pa-bm-page .hero,
+body.pa-bm-page #Software,
+body.pa-bm-page #software,
+body.pa-bm-page #affiliate,
+body.pa-bm-page #luckyDraw,
+body.pa-bm-page #memberLogin,
+body.pa-bm-page footer {
+  display: none !important;
+}
+body.pa-bm-page #request {
+  display: block !important;
+  padding-top: 72px !important;
+}
+body.pa-bm-page #request .card {
+  margin-top: 0 !important;
+}
 </style></head>
-<body id="top">
+<body id="top" class="pa-bm-page">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
 <div class="azobss-topbar-inner">
 <a aria-label="AZOBSS Home" class="azobss-topbar-brand" href="#top">
@@ -6602,7 +6622,7 @@ body:not(.pa-bm-page) #request {
 <a class="azobss-nav-chip" href="tools/index.html">Mini Web Tools</a>
 <a class="azobss-nav-chip" href="affiliate-shop/index.html">Affiliate Shop</a>
 <a class="azobss-nav-chip" href="lucky-draw/index.html">Lucky Draw</a>
-<a class="azobss-nav-chip" href="PA-BM/">Request PA / Info Lot</a>
+<a class="azobss-nav-chip" href="PA-BM/#request">Request PA / Info Lot</a>
 <a class="azobss-nav-chip" href="#contact">Contact</a>
 </div>
 <button aria-label="Scroll menu right" class="azobss-nav-arrow azobss-nav-right" type="button">â€º</button>
@@ -6859,7 +6879,7 @@ body:not(.pa-bm-page) #request {
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
 <a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
-<a class="nav-pa-bm-link" href="PA-BM/" id="paBmNavButton">PA / BM</a>
+<a class="nav-pa-bm-link market-nav-primary" href="PA-BM/" id="paBmNavButton">PA / BM</a>
 <a href="Software-Tools/index.html">Software</a>
 <a href="CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
 <a href="affiliate-shop/index.html">Affiliate Shop</a>
@@ -6877,11 +6897,11 @@ body:not(.pa-bm-page) #request {
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
 <div class="user-dropdown-section">Buying</div>
-<a class="user-dropdown-item" href="#affiliate" role="menuitem">
+<a class="user-dropdown-item" href="affiliate-shop/index.html" role="menuitem">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M6 8h12l-1 13H7L6 8Z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg>
 <span>My purchases</span>
 </a>
-<a class="user-dropdown-item" href="#luckyDraw" role="menuitem">
+<a class="user-dropdown-item" href="lucky-draw/index.html" role="menuitem">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 <span>Likes</span>
 </a>
@@ -6896,13 +6916,13 @@ body:not(.pa-bm-page) #request {
 </button>
 </div>
 </div>
-<a aria-label="Saved" class="market-icon-btn" href="#luckyDraw">
+<a aria-label="Saved" class="market-icon-btn" href="lucky-draw/index.html">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" href="#affiliate">
+<a aria-label="Cart" class="market-icon-btn" href="affiliate-shop/index.html">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
-<a aria-label="Notifications" class="market-icon-btn" href="PA-BM/">
+<a aria-label="Notifications" class="market-icon-btn" href="PA-BM/#request">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
