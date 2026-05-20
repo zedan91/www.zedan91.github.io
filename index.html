@@ -7813,7 +7813,7 @@ body{
         return '';
       }
 
-      return `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=PA${number}.TIF&negeri=${encodeURIComponent(selectedNegeri)}`;
+      return `https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA${number}.TIF&negeri=${encodeURIComponent(selectedNegeri)}`;
     }
 
     function updatePreview() {
@@ -7825,7 +7825,7 @@ body{
       downloadResultActions.hidden = true;
       downloadResultActions.style.display = 'none';
       pendingDownload = null;
-      paLinkPreview.textContent = url || 'Link JUPEM akan dijana selepas nombor PA dan negeri dipilih.';
+      paLinkPreview.textContent = url || 'Link PDF akan dijana selepas nombor PA dan negeri dipilih.';
     }
 
     function normalizeUsername(name) {
@@ -12419,15 +12419,46 @@ body{
 
       paError.textContent = '';
       paStatus.style.display = 'block';
-      paStatus.textContent = 'Opening JUPEM PA download...';
+      paStatus.textContent = 'Converting PA to PDF... please wait.';
       downloadTifButton.disabled = true;
       downloadTifButton.innerHTML = `
-        <span class="download-pa-main">Opening PA...</span>
+        <span class="download-pa-main">Converting PDF...</span>
         <span class="pdf-price-tag">RM5 per unit</span>
       `;
 
       try {
-        window.open(paUrl, '_blank', 'noopener');
+        const res = await fetch(paUrl, { cache: 'no-store' });
+
+        if (!res.ok) {
+          let message = 'PA not found / PA tiada dalam sistem';
+
+          try {
+            const errorData = await res.json();
+            message = errorData.error || message;
+          } catch (jsonError) {
+            // PDF endpoint may return non-JSON errors. Keep the friendly message.
+          }
+
+          throw new Error(message);
+        }
+
+        const pdfBlob = await res.blob();
+
+        if (!pdfBlob || !pdfBlob.size) {
+          throw new Error('PDF kosong / failed convert.');
+        }
+
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `PA${paValue}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(function () {
+          URL.revokeObjectURL(blobUrl);
+        }, 5000);
 
         pendingDownload = {
           paValue,
@@ -12438,7 +12469,7 @@ body{
         await recordPurchase(paValue, selectedNegeri, paUrl);
 
         paStatus.style.display = 'block';
-        paStatus.textContent = 'JUPEM PA download opened.';
+        paStatus.textContent = 'PA downloaded successfully!';
 
         downloadResultActions.hidden = true;
         downloadResultActions.style.display = 'none';
@@ -15216,7 +15247,7 @@ document.addEventListener('DOMContentLoaded', function(){
       return '';
     }
 
-    return 'https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=PA' + number + '.TIF&negeri=' + encodeURIComponent(negeri);
+    return 'https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA' + number + '.TIF&negeri=' + encodeURIComponent(negeri);
   }
 
   window.azobssDirectPaDownload = function (event) {
@@ -15245,7 +15276,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     if (paStatus) {
       paStatus.style.display = 'block';
-      paStatus.textContent = 'Opening JUPEM PA download...';
+      paStatus.textContent = 'Converting PA to PDF... please wait.';
     }
 
     window.open(url, '_blank', 'noopener');
