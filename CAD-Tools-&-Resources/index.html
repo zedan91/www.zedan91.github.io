@@ -1,0 +1,1391 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAD Tools &amp; Resources | AZOBSS</title>
+  <meta name="description" content="CAD tools, AutoCAD LISP resources, drafting checklist and survey workflow references by AZOBSS.">
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#050914;
+      --panel:#0c1424;
+      --panel-soft:#101a2c;
+      --text:#f8fafc;
+      --muted:#aab6c8;
+      --line:rgba(148,163,184,.22);
+      --accent:#f97316;
+      --accent-soft:rgba(249,115,22,.16);
+      --green:#22c55e;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Arial,Helvetica,sans-serif;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(249,115,22,.14), transparent 30%),
+        linear-gradient(180deg,#07101e 0%,var(--bg) 46%,#030611 100%);
+      color:var(--text);
+    }
+
+    a{
+      color:inherit;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:10;
+      background:rgba(3,6,17,.88);
+      border-bottom:1px solid rgba(249,115,22,.24);
+      backdrop-filter:blur(14px);
+    }
+
+    .topbar-inner{
+      max-width:1160px;
+      margin:0 auto;
+      padding:10px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+
+    .brand{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      text-decoration:none;
+      font-weight:900;
+      letter-spacing:.3px;
+    }
+
+    .brand img{
+      width:134px;
+      height:34px;
+      object-fit:cover;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.28);
+      background:#0f172a;
+    }
+
+    .nav-links{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:10px;
+    }
+
+    .nav-links a,
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:38px;
+      padding:10px 15px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(15,23,42,.86);
+      color:#eef5ff;
+      text-decoration:none;
+      font-size:14px;
+      font-weight:800;
+      transition:transform .2s ease,border-color .2s ease,background .2s ease;
+    }
+
+    .nav-links a:hover,
+    .btn:hover{
+      transform:translateY(-2px);
+      border-color:rgba(249,115,22,.62);
+      background:rgba(249,115,22,.14);
+    }
+
+    .page{
+      max-width:1160px;
+      margin:0 auto;
+      padding:28px 18px 34px;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr);
+      align-items:stretch;
+      gap:22px;
+      margin-bottom:28px;
+    }
+
+    .hero-copy,
+    .quick-panel,
+    .resource-card,
+    .workflow,
+    .request-panel{
+      border:1px solid var(--line);
+      background:linear-gradient(145deg,rgba(15,23,42,.96),rgba(8,13,27,.96));
+      box-shadow:0 22px 54px rgba(0,0,0,.26);
+    }
+
+    .hero-copy{
+      padding:30px;
+      border-radius:22px;
+    }
+
+    .eyebrow{
+      margin:0 0 12px;
+      color:#fb923c;
+      font-size:13px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.6px;
+    }
+
+    h1{
+      margin:0;
+      max-width:740px;
+      font-size:clamp(34px,5vw,64px);
+      line-height:1.02;
+    }
+
+    .intro{
+      margin:18px 0 0;
+      max-width:720px;
+      color:#cbd5e1;
+      font-size:18px;
+      line-height:1.6;
+    }
+
+    .hero-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:24px;
+    }
+
+    .btn.primary{
+      border-color:rgba(249,115,22,.5);
+      background:linear-gradient(135deg,#f97316,#c2410c);
+      color:#fff;
+      box-shadow:0 14px 32px rgba(249,115,22,.24);
+    }
+
+    .quick-panel{
+      padding:24px;
+      border-radius:22px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:18px;
+    }
+
+    .quick-panel h2,
+    .section-title{
+      margin:0;
+      font-size:24px;
+    }
+
+    .quick-list{
+      display:grid;
+      gap:10px;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .quick-list li{
+      display:flex;
+      gap:10px;
+      color:#dbe7f8;
+      line-height:1.5;
+    }
+
+    .quick-list span{
+      display:grid;
+      place-items:center;
+      flex:0 0 26px;
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      background:var(--accent-soft);
+      color:#fb923c;
+      font-weight:900;
+      font-size:13px;
+    }
+
+    .resources-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+      margin-top:18px;
+    }
+
+    .resource-card{
+      min-height:228px;
+      padding:20px;
+      border-radius:18px;
+      text-decoration:none;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+    }
+
+    .resource-card:hover{
+      transform:translateY(-5px);
+      border-color:rgba(249,115,22,.62);
+      box-shadow:0 24px 52px rgba(249,115,22,.14);
+    }
+
+    .resource-icon{
+      width:48px;
+      height:48px;
+      display:grid;
+      place-items:center;
+      border-radius:15px;
+      background:var(--accent-soft);
+      color:#fb923c;
+      font-weight:900;
+      font-size:18px;
+    }
+
+    .resource-card h3{
+      margin:18px 0 8px;
+      font-size:20px;
+    }
+
+    .resource-card p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.55;
+    }
+
+    .resource-card strong{
+      margin-top:18px;
+      color:#fb923c;
+      font-size:14px;
+    }
+
+    .workflow{
+      margin-top:26px;
+      padding:24px;
+      border-radius:22px;
+    }
+
+    .workflow-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+      margin-top:18px;
+    }
+
+    .workflow-step{
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(2,6,23,.48);
+    }
+
+    .workflow-step b{
+      display:block;
+      margin-bottom:8px;
+      color:#fb923c;
+    }
+
+    .workflow-step p{
+      margin:0;
+      color:#cbd5e1;
+      line-height:1.5;
+    }
+
+    .request-panel{
+      margin-top:26px;
+      padding:24px;
+      border-radius:22px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }
+
+    .request-panel h2{
+      margin:0 0 8px;
+      font-size:24px;
+    }
+
+    .request-panel p{
+      margin:0;
+      color:#cbd5e1;
+      line-height:1.55;
+    }
+
+    footer{
+      padding:28px 18px 34px;
+      color:#8b98ad;
+      text-align:center;
+      font-size:14px;
+    }
+
+
+
+    .lisp-catalog{
+      margin-top:0;
+      padding:24px;
+      border-radius:22px;
+      border:1px solid var(--line);
+      background:linear-gradient(145deg,rgba(15,23,42,.96),rgba(8,13,27,.96));
+      box-shadow:0 22px 54px rgba(0,0,0,.26);
+    }
+
+    .lisp-catalog-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .lisp-catalog-head p{
+      margin:8px 0 0;
+      color:#cbd5e1;
+      line-height:1.55;
+      max-width:760px;
+    }
+
+
+
+    .lisp-search-bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin:0 0 18px;
+      flex-wrap:wrap;
+    }
+
+    .lisp-search-box{
+      flex:1 1 280px;
+      max-width:460px;
+      display:grid;
+      gap:7px;
+      color:#dbe7f8;
+      font-weight:800;
+      font-size:14px;
+    }
+
+    .lisp-search-box input{
+      width:100%;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:12px;
+      background:#07101e;
+      color:#f8fafc;
+      padding:12px 13px;
+      font:inherit;
+      outline:none;
+    }
+
+    .lisp-search-box input:focus{
+      border-color:rgba(249,115,22,.72);
+      box-shadow:0 0 0 3px rgba(249,115,22,.14);
+    }
+
+    .lisp-search-count{
+      color:#91a0b5;
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .lisp-form{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+      padding:16px;
+      border:1px solid rgba(148,163,184,.20);
+      border-radius:18px;
+      background:rgba(2,6,23,.45);
+      margin-bottom:18px;
+    }
+
+    .lisp-form label{
+      display:grid;
+      gap:7px;
+      color:#dbe7f8;
+      font-weight:800;
+      font-size:14px;
+    }
+
+    .lisp-form input,
+    .lisp-form textarea{
+      width:100%;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:12px;
+      background:#07101e;
+      color:#f8fafc;
+      padding:12px 13px;
+      font:inherit;
+      outline:none;
+    }
+
+    .lisp-form textarea{
+      min-height:94px;
+      resize:vertical;
+    }
+
+    .lisp-form input:focus,
+    .lisp-form textarea:focus{
+      border-color:rgba(249,115,22,.72);
+      box-shadow:0 0 0 3px rgba(249,115,22,.14);
+    }
+
+    .lisp-form .full{
+      grid-column:1/-1;
+    }
+
+    .lisp-actions{
+      grid-column:1/-1;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .lisp-note{
+      margin:0;
+      color:#91a0b5;
+      font-size:13px;
+      line-height:1.45;
+    }
+
+
+    .admin-only{
+      display:none;
+    }
+
+    body.is-lisp-admin .admin-only{
+      display:block;
+    }
+
+    body.is-lisp-admin .admin-only.inline-admin{
+      display:inline-flex;
+    }
+
+    body:not(.is-lisp-admin) .lisp-admin-column{
+      display:none;
+    }
+
+    .lisp-view-note{
+      margin:.4rem 0 0;
+      color:#8fb0ff;
+      font-size:.9rem;
+      line-height:1.45;
+    }
+
+    .lisp-table-wrap{
+      overflow:visible !important;
+      overflow-x:visible !important;
+      overflow-y:visible !important;
+      max-height:none !important;
+      height:auto !important;
+      border:1px solid rgba(148,163,184,.24);
+      border-radius:14px;
+      background:rgba(2,6,23,.45);
+    }
+
+    .lisp-table-wrap::-webkit-scrollbar{
+      display:none !important;
+      width:0 !important;
+      height:0 !important;
+    }
+
+    .lisp-table{
+      width:100%;
+      max-width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      min-width:0;
+      color:#dbe7f8;
+      font-size:14px;
+    }
+
+    .lisp-table th{
+      background:#285a9c;
+      color:#fff;
+      padding:9px 12px;
+      text-align:left;
+      font-weight:900;
+      border:1px solid rgba(214,185,132,.35);
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+    .lisp-table td{
+      padding:8px 12px;
+      border:1px solid rgba(214,185,132,.28);
+      vertical-align:top;
+      background:#253149;
+      line-height:1.35;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+    .lisp-table th:nth-child(1),
+    .lisp-table td:nth-child(1){
+      width:28%;
+      white-space:normal;
+    }
+
+    .lisp-table th:nth-child(2),
+    .lisp-table td:nth-child(2){
+      width:45%;
+    }
+
+    .lisp-table th:nth-child(3),
+    .lisp-table td:nth-child(3){
+      width:16%;
+    }
+
+    .lisp-table th:nth-child(4),
+    .lisp-table td:nth-child(4){
+      width:11%;
+    }
+
+    .lisp-table tr:nth-child(even) td{
+      background:#202c42;
+    }
+
+    .program-link{
+      color:#65a3ff;
+      font-weight:800;
+      text-decoration:none;
+      display:inline;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+    .program-link:hover{
+      text-decoration:underline;
+    }
+
+    .desc-cell{
+      min-width:0;
+      max-width:none;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+     .desc-text{overflow-wrap:anywhere;word-break:break-word;} .program-link{overflow-wrap:anywhere;word-break:break-word;display:block} .desc-text{
+      margin:0;
+      max-height:38px;
+      overflow:hidden;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+    .desc-cell.expanded .desc-text{
+      max-height:none;
+    }
+
+    .show-more-btn{
+      display:none;
+      margin-top:6px;
+      padding:0;
+      border:0;
+      background:transparent;
+      color:#fb923c;
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+    }
+
+    .desc-cell.needs-more .show-more-btn{
+      display:inline-flex;
+    }
+
+    .lisp-demo-cell{
+      position:relative;
+    }
+
+    .gif-demo-trigger{
+      width:86px;
+      min-height:34px;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:10px;
+      background:#07101e;
+      color:#fb923c;
+      cursor:zoom-in;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      font-size:13px;
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .lisp-demo-preview{
+      position:fixed;
+      left:var(--gif-preview-x, 50vw);
+      top:var(--gif-preview-y, 50vh);
+      width:min(880px, 72vw);
+      max-height:78vh;
+      aspect-ratio:16/9;
+      object-fit:contain;
+      display:block;
+      border-radius:16px;
+      background:#020617;
+      border:1px solid rgba(148,163,184,.40);
+      box-shadow:0 22px 60px rgba(0,0,0,.58);
+      opacity:0;
+      transform:translateY(10px) scale(.96);
+      transform-origin:top left;
+      pointer-events:none;
+      transition:opacity .12s ease, transform .12s ease;
+      z-index:99999;
+    }
+
+    .gif-demo-trigger:hover + .lisp-demo-preview,
+    .gif-demo-trigger:focus + .lisp-demo-preview{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+
+    .lisp-table-actions{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .lisp-table-actions .btn{
+      padding:6px 9px;
+      min-height:28px;
+      border-radius:8px;
+      font-size:12px;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    .lisp-table-actions .btn.edit{
+      background:rgba(37,99,235,.92);
+      color:#fff;
+      border-color:rgba(147,197,253,.45);
+    }
+
+    .lisp-pagination{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:14px;
+      color:#aab6c8;
+      font-size:14px;
+    }
+
+    .page-buttons{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+
+    .page-btn{
+      min-width:36px;
+      min-height:34px;
+      border:1px solid rgba(148,163,184,.30);
+      border-radius:8px;
+      background:rgba(15,23,42,.86);
+      color:#eef5ff;
+      cursor:pointer;
+      font-weight:800;
+    }
+
+    .page-btn.active,
+    .page-btn:hover{
+      border-color:rgba(249,115,22,.62);
+      background:rgba(249,115,22,.18);
+      color:#fff;
+    }
+
+    .btn.danger{
+      border-color:rgba(248,113,113,.35);
+      background:rgba(127,29,29,.32);
+      color:#fecaca;
+    }
+
+    @media(max-width:860px){
+      .hero,
+      .resources-grid,
+      .workflow-grid,
+      .lisp-form,
+      .lisp-list{
+        grid-template-columns:1fr;
+      }
+
+      .lisp-table th,
+      .lisp-table td{
+        padding:8px 9px;
+        font-size:13px;
+      }
+
+      .gif-demo-trigger{
+        width:auto;
+        min-width:72px;
+        padding:7px 8px;
+        font-size:12px;
+      }
+
+      .hero-copy,
+      .quick-panel,
+      .workflow,
+      .request-panel{
+        border-radius:18px;
+      }
+
+      .request-panel{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+    }
+
+    @media(max-width:560px){
+      .topbar-inner{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .nav-links{
+        justify-content:flex-start;
+      }
+
+      .hero-copy{
+        padding:22px;
+      }
+
+      .page{
+        padding-top:28px;
+      }
+    }
+  
+.nav-whatsapp-circle{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#22c55e;align-items:center;justify-content:center}
+.topbar,.nav-links{display:none!important}
+
+
+    /* Shared AZOBSS sticky navbar */
+    body{ padding-top:54px !important; }
+    .topbar{ display:none !important; }
+    .market-sticky-bar{
+      position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;
+      background:#000 !important;border-bottom:1px solid rgba(214,185,132,.45) !important;box-shadow:0 10px 28px rgba(0,0,0,.35) !important;
+    }
+    .market-bar-inner{width:100% !important;margin:0 !important;padding:4px 8px !important;box-sizing:border-box !important;}
+    .market-main-row{min-height:44px !important;display:flex !important;align-items:center !important;gap:8px !important;flex-wrap:nowrap !important;}
+    .market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;border:1px solid rgba(148,163,184,.32) !important;background:#0f172a !important;text-decoration:none !important;}
+    .market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
+    .market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;white-space:nowrap !important;scrollbar-width:none !important;}
+    .market-nav::-webkit-scrollbar{display:none !important;}
+    .market-nav a,.market-icon-btn{color:#f8fafc !important;text-decoration:none !important;font-size:13px !important;line-height:1 !important;}
+    .market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 12px !important;border:1px solid #243044 !important;border-radius:999px !important;background:#111827 !important;font-weight:900 !important;text-shadow:none !important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03) !important;}
+    .market-nav a:hover,.market-icon-btn:hover{border-color:#22c55e !important;color:#22c55e !important;}
+    .market-nav a.is-active{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;text-shadow:none !important;}
+    .site-auth-actions{position:static !important;display:flex;align-items:center !important;gap:20px !important;flex:0 0 auto !important;margin-right:10px !important;}
+    .site-auth-btn{display:inline-flex !important;align-items:center !important;border:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;}
+    .market-user-tools{display:none;align-items:center !important;gap:20px !important;margin-left:auto !important;}
+body.is-authenticated .site-auth-actions{display:none !important;}
+body.is-authenticated .market-user-tools{display:flex !important;}
+body:not(.is-authenticated) .market-user-tools{display:none !important;}
+    .market-icon-btn{display:inline-grid !important;place-items:center !important;width:24px !important;height:34px !important;}
+    .market-icon-btn svg{width:23px !important;height:23px !important;stroke:currentColor !important;fill:none !important;stroke-width:1.9 !important;stroke-linecap:round !important;stroke-linejoin:round !important;}
+    .user-menu{position:relative !important;display:flex !important;align-items:center !important;gap:8px !important;color:#fff !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;min-height:34px !important;}
+    .user-avatar{display:inline-grid !important;place-items:center !important;width:26px !important;height:26px !important;border-radius:999px !important;border:1px solid rgba(20,184,166,.75) !important;background:#03121f !important;color:#fff !important;font-size:11px !important;font-weight:bold !important;text-transform:uppercase !important;}
+    .user-name{white-space:nowrap !important;color:#fff !important;}
+    .user-menu::after{content:"" !important;width:7px !important;height:7px !important;border-right:2px solid #cbd5e1 !important;border-bottom:2px solid #cbd5e1 !important;transform:rotate(45deg) translateY(-2px) !important;margin-left:2px !important;flex:0 0 auto !important;}
+    .user-dropdown{position:absolute !important;top:calc(100% + 10px) !important;right:0 !important;min-width:220px !important;padding:8px !important;border:1px solid rgba(148,163,184,.22) !important;border-radius:14px !important;background:#08111f !important;box-shadow:0 18px 50px rgba(0,0,0,.45) !important;display:none !important;z-index:3300 !important;}
+    .user-menu.is-open .user-dropdown{display:block !important;}
+    .user-dropdown-section{padding:8px 10px 5px !important;color:#94a3b8 !important;font-size:11px !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:.08em !important;}
+    .user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
+    .user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
+    .user-dropdown-item svg{width:18px !important;height:18px !important;stroke:currentColor !important;fill:none !important;stroke-width:1.8 !important;}
+    .nav-whatsapp-circle{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:34px !important;height:34px !important;border-radius:999px !important;background:#22c55e !important;color:#fff !important;box-shadow:0 0 0 5px rgba(34,197,94,.18) !important;font-size:0 !important;position:relative !important;}
+    .nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+    a:has(.nav-whatsapp-circle){padding:0 !important;min-width:42px !important;background:transparent !important;border:0 !important;}
+    @media(max-width:760px){
+      body{padding-top:92px !important;}
+      .market-main-row{flex-wrap:wrap !important;gap:8px !important;}
+      .market-brand{width:126px !important;height:31px !important;}
+      .market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;padding-bottom:8px !important;}
+      .market-nav a{min-height:30px !important;padding:0 9px !important;font-size:12px !important;}
+      .site-auth-actions{margin-left:auto !important;gap:12px !important;}
+      .market-user-tools{gap:12px !important;margin-left:auto !important;}
+      .user-name{max-width:115px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
+    }
+
+  
+.demo-btn{
+display:inline-block !important;
+width:auto !important;
+min-width:unset !important;
+padding:4px 10px !important;
+font-size:12px !important;
+line-height:1 !important;
+border-radius:8px !important;
+margin:2px !important;
+white-space:nowrap !important;
+}
+</style>
+<style>
+/* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
+body{padding-top:54px !important;}
+.market-sticky-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;background:#000 !important;border-bottom:1px solid rgba(218,165,32,.45) !important;box-shadow:0 10px 24px rgba(0,0,0,.28) !important;}
+.market-bar-inner{width:100% !important;margin:0 !important;padding:0 26px 0 8px !important;box-sizing:border-box !important;}
+.market-main-row{min-height:48px !important;display:flex !important;align-items:center !important;gap:7px !important;flex-wrap:nowrap !important;}
+.market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;text-decoration:none !important;margin-left:0 !important;}
+.market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
+.market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow:hidden !important;white-space:nowrap !important;scrollbar-width:none !important;}
+.market-nav::-webkit-scrollbar{display:none !important;}
+.market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 10px !important;border:1px solid rgba(148,163,184,.28) !important;border-radius:999px !important;background:#0e1729 !important;color:#e5e7eb !important;text-decoration:none !important;font-size:clamp(11px,1vw,13px) !important;font-weight:800 !important;line-height:1 !important;white-space:nowrap !important;text-shadow:0 1px 8px rgba(0,0,0,.45) !important;box-shadow:none !important;}
+.market-nav a:hover{color:#14b8a6 !important;}
+.market-nav a.market-nav-primary{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;text-shadow:none !important;box-shadow:0 0 15px rgba(34,197,94,.34), inset 0 0 0 1px rgba(255,255,255,.12) !important;}
+.nav-pa-bm-link.is-hidden{display:none !important;}
+.nav-whatsapp-circle{width:38px !important;height:38px !important;min-width:38px !important;min-height:38px !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;background:#22c55e !important;color:#fff !important;font-size:0 !important;font-weight:900 !important;box-shadow:0 8px 20px rgba(34,197,94,.25) !important;vertical-align:middle !important;}
+.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !important;min-width:44px !important;max-width:44px !important;height:44px !important;padding:0 !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important;}
+.site-auth-actions{position:static !important;display:flex !important;align-items:center !important;gap:20px !important;flex:0 0 auto !important;z-index:auto !important;margin-left:auto !important;margin-right:10px !important;}
+.site-auth-btn{display:inline-flex !important;align-items:center !important;gap:0 !important;border:0 !important;border-radius:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;line-height:1 !important;text-decoration:none !important;cursor:pointer !important;transition:.2s !important;}
+.site-auth-btn:hover{color:#14b8a6 !important;}
+@media(max-width:760px){body{padding-top:92px !important;}.market-bar-inner{width:100% !important;padding:0 6px !important;}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important;}.market-brand{width:116px !important;height:30px !important;}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important;}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important;}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important;}.site-auth-btn{font-size:13px !important;white-space:nowrap !important;}}
+</style>
+<style>
+/* Secondary page auth state bridge */
+.market-user-tools{display:none;align-items:center !important;gap:20px !important;margin-left:auto !important;}
+body.is-authenticated .site-auth-actions{display:none !important;}
+body.is-authenticated .market-user-tools{display:flex !important;}
+body:not(.is-authenticated) .market-user-tools{display:none !important;}
+.user-menu{position:relative !important;display:flex !important;align-items:center !important;gap:8px !important;color:#fff !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;min-height:34px !important;}
+.user-avatar{display:inline-grid !important;place-items:center !important;width:26px !important;height:26px !important;border-radius:999px !important;border:1px solid rgba(20,184,166,.75) !important;background:#03121f !important;color:#fff !important;font-size:11px !important;font-weight:bold !important;text-transform:uppercase !important;}
+.user-name{white-space:nowrap !important;color:#fff !important;}
+.user-menu::after{content:"" !important;width:7px !important;height:7px !important;border-right:2px solid #cbd5e1 !important;border-bottom:2px solid #cbd5e1 !important;transform:rotate(45deg) translateY(-2px) !important;margin-left:2px !important;flex:0 0 auto !important;}
+.user-dropdown{position:absolute !important;top:calc(100% + 10px) !important;right:0 !important;min-width:190px !important;padding:8px !important;border:1px solid rgba(148,163,184,.22) !important;border-radius:14px !important;background:#08111f !important;box-shadow:0 18px 50px rgba(0,0,0,.45) !important;display:none !important;z-index:3300 !important;}
+.user-menu.is-open .user-dropdown{display:block !important;}
+.user-dropdown-section{padding:8px 10px 5px !important;color:#94a3b8 !important;font-size:11px !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:.08em !important;}
+.user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
+.user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
+@media(max-width:760px){.market-user-tools{gap:12px !important;margin-left:auto !important;}.user-name{max-width:120px !important;overflow:hidden !important;text-overflow:ellipsis !important;}}</style>
+<style>
+/* Stable CSS chat icon: avoids emoji/encoding corruption */
+.nav-whatsapp-circle{position:relative !important;font-size:0 !important;overflow:visible !important;}
+.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+.nav-whatsapp-circle::after{content:"" !important;position:absolute !important;left:13px !important;top:23px !important;width:7px !important;height:7px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+.whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
+.whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
+.whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+</style></head>
+<body>
+<header class="market-sticky-bar" aria-label="Carousell style navigation">
+  <div class="market-bar-inner">
+    <div class="market-main-row">
+      <a class="market-brand" href="../index.html" aria-label="AZOBSS">
+        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
+      </a>
+      <nav class="market-nav" aria-label="AZOBSS quick actions">
+        <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
+        <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../index.html#request" hidden>PA / BM</a>
+        <a href="../Software-Tools/index.html">Software</a>
+        <a class="market-nav-primary" href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+        <a href="../affiliate-shop/index.html">Affiliate Shop</a>
+        <a href="../lucky-draw/index.html">Lucky Draw</a>
+        <a href="../tools/index.html">Mini Web Tools</a>
+      </nav>
+      <div class="site-auth-actions" id="siteAuthActions">
+        <a class="site-auth-btn primary" id="siteSignUpButton" href="../index.html#signup">Register</a>
+        <a class="site-auth-btn" id="siteSignInButton" href="../index.html#login">Login</a>
+      </div>
+      <div class="market-user-tools" id="marketUserTools">
+        <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+          <div class="user-avatar" id="userAvatar">AZ</div>
+          <div class="user-name">Hello, <span id="signedInName"></span></div>
+          <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
+            <div class="user-dropdown-section">Account</div>
+            <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+  <main class="page">
+    <section class="lisp-catalog" aria-labelledby="lisp-catalog-title">
+      <div class="lisp-catalog-head">
+        <div>
+          <h2 class="section-title" id="lisp-catalog-title">LISP Program Showcase</h2>
+          <p>View LISP name, program description and demonstration GIF. Display style is table-based with 30 programs per page.</p>
+          <p class="lisp-view-note" id="lispAdminStatus">Public view: add, edit, delete and export tools are available for admin only.</p>
+        </div>
+        <button class="btn admin-only inline-admin" type="button" id="exportLispData">Export Data</button>
+      </div>
+
+      <div class="lisp-search-bar">
+        <label class="lisp-search-box">
+          Search Program Name
+          <input id="lispSearch" type="search" placeholder="Type program name..." autocomplete="off">
+        </label>
+        <span class="lisp-search-count" id="lispSearchCount">Showing all programs</span>
+      </div>
+
+      <form class="lisp-form admin-only" id="lispForm">
+        <label>
+          LISP Name
+          <input id="lispName" type="text" maxlength="60" placeholder="Example: AZ Text Calculator" required>
+        </label>
+        <label>
+          Demonstration GIF
+          <input id="lispGif" type="file" accept="image/gif">
+        </label>
+        <label class="full">
+          Program Description
+          <textarea id="lispDescription" maxlength="600" placeholder="Explain what this LISP does, command name, and suitable workflow." required></textarea>
+        </label>
+        <label class="full">
+          GIF URL / Path (optional)
+          <input id="lispGifUrl" type="text" placeholder="Example: demos/text-calc.gif">
+        </label>
+        <div class="lisp-actions">
+          <button class="btn primary" type="submit">Add LISP</button>
+          <button class="btn" type="button" id="clearLispForm">Clear Form</button>
+          <p class="lisp-note">Tip: for GitHub Pages long term, put GIF files inside <b>CAD-Tools-&amp;-Resources/demos/</b> and use path like <b>demos/sample.gif</b>.</p>
+        </div>
+      </form>
+
+      <div class="lisp-table-wrap">
+        <table class="lisp-table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Program Description</th>
+              <th>Demonstration GIF</th>
+              <th class="lisp-admin-column">Action</th>
+            </tr>
+          </thead>
+          <tbody id="lispList" aria-live="polite"></tbody>
+        </table>
+      </div>
+      <div class="lisp-pagination">
+        <span id="lispPageInfo">Showing 0 to 0 of 0 programs</span>
+        <div class="page-buttons" id="lispPagination"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    &copy; 2026 AZOBSS. All rights reserved.
+  </footer>
+
+
+
+  <script>
+    (function(){
+      const STORAGE_KEY = 'azobss_lisp_showcase_items';
+      const PAGE_SIZE = 30;
+      let currentPage = 1;
+      const ADMIN_USERNAME = 'zedan91';
+
+      function getSavedAzobssUser(){
+        try{
+          return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null');
+        }catch(error){
+          return null;
+        }
+      }
+
+      function isLispAdmin(){
+        const user = getSavedAzobssUser();
+        return !!(user && String(user.usernameKey || '').toLowerCase() === ADMIN_USERNAME);
+      }
+
+      const form = document.getElementById('lispForm');
+      const nameInput = document.getElementById('lispName');
+      const descInput = document.getElementById('lispDescription');
+      const gifInput = document.getElementById('lispGif');
+      const gifUrlInput = document.getElementById('lispGifUrl');
+      const list = document.getElementById('lispList');
+      const clearBtn = document.getElementById('clearLispForm');
+      const exportBtn = document.getElementById('exportLispData');
+      const pageInfo = document.getElementById('lispPageInfo');
+      const pagination = document.getElementById('lispPagination');
+      const adminStatus = document.getElementById('lispAdminStatus');
+      const searchInput = document.getElementById('lispSearch');
+      const searchCount = document.getElementById('lispSearchCount');
+      const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+      let editingLispId = null;
+
+      const defaultItems = [
+        {
+          id: 'sample-text-calc',
+          name: 'Sample LISP Program',
+          description: 'Add your own AutoCAD LISP item here. Include command name, function and workflow notes.',
+          gif: ''
+        }
+      ];
+
+      function escapeHtml(value){
+        return String(value || '').replace(/[&<>'"]/g, function(char){
+          return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char];
+        });
+      }
+
+      function getItems(){
+        try{
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          return Array.isArray(saved) && saved.length ? saved : defaultItems;
+        }catch(error){
+          return defaultItems;
+        }
+      }
+
+      function saveItems(items){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      }
+
+      function getPlaceholderGif(){
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450"><rect width="800" height="450" fill="#07101e"/><text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#fb923c" font-family="Arial" font-size="42" font-weight="700">GIF Demo</text><text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Arial" font-size="24">Upload or add demo path</text></svg>');
+      }
+
+
+
+      function getSearchTerm(){
+        return String(searchInput ? searchInput.value : '').trim().toLowerCase();
+      }
+
+      function getFilteredItems(){
+        const items = getItems();
+        const term = getSearchTerm();
+        if(!term) return items;
+        return items.filter(function(item){
+          return String(item.name || '').toLowerCase().includes(term);
+        });
+      }
+
+      function renderPagination(totalItems){
+        const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+        if(currentPage > totalPages) currentPage = totalPages;
+        if(currentPage < 1) currentPage = 1;
+
+        const start = totalItems ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0;
+        const end = Math.min(currentPage * PAGE_SIZE, totalItems);
+        pageInfo.textContent = `Showing ${start} to ${end} of ${totalItems} programs`;
+
+        let buttons = '';
+        buttons += `<button class="page-btn" type="button" data-page="${Math.max(1, currentPage - 1)}">â€¹</button>`;
+        for(let i = 1; i <= totalPages; i++){
+          buttons += `<button class="page-btn ${i === currentPage ? 'active' : ''}" type="button" data-page="${i}">${i}</button>`;
+        }
+        buttons += `<button class="page-btn" type="button" data-page="${Math.min(totalPages, currentPage + 1)}">â€º</button>`;
+        pagination.innerHTML = buttons;
+      }
+
+      function renderItems(){
+        const allItems = getItems();
+        const items = getFilteredItems();
+        const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+        if(currentPage > totalPages) currentPage = totalPages;
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const visibleItems = items.slice(startIndex, startIndex + PAGE_SIZE);
+        if(searchCount){
+          const term = getSearchTerm();
+          searchCount.textContent = term
+            ? `Found ${items.length} of ${allItems.length} programs`
+            : `Showing all ${allItems.length} programs`;
+        }
+
+        const adminMode = isLispAdmin();
+        if(!visibleItems.length){
+          list.innerHTML = `<tr><td colspan="${adminMode ? 4 : 3}">No program found.</td></tr>`;
+          renderPagination(items.length);
+          return;
+        }
+
+        list.innerHTML = visibleItems.map(function(item){
+          const gif = item.gif ? escapeHtml(item.gif) : getPlaceholderGif();
+          return `
+            <tr data-id="${escapeHtml(item.id)}">
+              <td style="overflow-wrap:anywhere;word-break:break-word"><a class="program-link" href="#" onclick="return false;">${escapeHtml(item.name)}</a></td>
+              <td class="desc-cell">
+                <p class="desc-text">${escapeHtml(item.description)}</p>
+                <button class="show-more-btn" type="button" data-show-more>Show more</button>
+              </td>
+              <td class="lisp-demo-cell">
+                <button class="gif-demo-trigger" type="button" aria-label="Preview ${escapeHtml(item.name)} demonstration GIF">D1</button>
+                <img class="lisp-demo-preview" src="${gif}" alt="${escapeHtml(item.name)} demonstration">
+              </td>
+              ${adminMode ? `<td class="lisp-admin-column">
+                <div class="lisp-table-actions">
+                  <button class="btn edit" type="button" data-edit="${escapeHtml(item.id)}">Edit</button>
+                  <button class="btn danger" type="button" data-delete="${escapeHtml(item.id)}">Delete</button>
+                </div>
+              </td>` : ''}
+            </tr>
+          `;
+        }).join('');
+
+        updateDescriptionButtons();
+        positionDemoPreviews();
+        renderPagination(items.length);
+      }
+
+      function positionDemoPreviews(){
+        list.querySelectorAll('.gif-demo-trigger').forEach(function(btn){
+          const preview = btn.nextElementSibling;
+          if(!preview || !preview.classList.contains('lisp-demo-preview')) return;
+
+          function movePreview(event){
+            const gap = 22;
+            const previewWidth = Math.min(880, Math.floor(window.innerWidth * 0.72));
+            const previewHeight = Math.min(Math.floor(previewWidth * 9 / 16), Math.floor(window.innerHeight * 0.78));
+
+            let x = event.clientX + gap;
+            let y = event.clientY + gap;
+
+            if(x + previewWidth > window.innerWidth - 12){
+              x = event.clientX - previewWidth - gap;
+            }
+            if(y + previewHeight > window.innerHeight - 12){
+              y = window.innerHeight - previewHeight - 12;
+            }
+            if(x < 12) x = 12;
+            if(y < 12) y = 12;
+
+            preview.style.setProperty('--gif-preview-x', x + 'px');
+            preview.style.setProperty('--gif-preview-y', y + 'px');
+          }
+
+          btn.addEventListener('mousemove', movePreview);
+          btn.addEventListener('mouseenter', movePreview);
+          btn.addEventListener('focus', function(){
+            const rect = btn.getBoundingClientRect();
+            movePreview({clientX: rect.right, clientY: rect.top});
+          });
+        });
+      }
+
+      function updateDescriptionButtons(){
+        list.querySelectorAll('.desc-cell').forEach(function(cell){
+          const text = cell.querySelector('.desc-text');
+          if(!text) return;
+          cell.classList.remove('expanded', 'needs-more');
+          if(text.scrollHeight > text.clientHeight + 2){
+            cell.classList.add('needs-more');
+          }
+        });
+      }
+
+      function fileToDataUrl(file){
+        return new Promise(function(resolve, reject){
+          const reader = new FileReader();
+          reader.onload = function(){ resolve(reader.result); };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      form.addEventListener('submit', async function(event){
+        event.preventDefault();
+        if(!isLispAdmin()){
+          alert('Admin only. Please sign in as admin to add or edit LISP.');
+          return;
+        }
+        const name = nameInput.value.trim();
+        const description = descInput.value.trim();
+        if(!name || !description) return;
+
+        let items = getItems().filter(function(item){ return item.id !== 'sample-text-calc'; });
+        const existingItem = editingLispId ? items.find(function(item){ return String(item.id) === String(editingLispId); }) : null;
+        let gif = gifUrlInput.value.trim();
+
+        if(gifInput.files && gifInput.files[0]){
+          if(gifInput.files[0].type !== 'image/gif'){
+            alert('Please choose GIF file only.');
+            return;
+          }
+          gif = await fileToDataUrl(gifInput.files[0]);
+        }else if(editingLispId && !gif){
+          gif = existingItem ? (existingItem.gif || '') : '';
+        }
+
+        if(editingLispId){
+          items = items.map(function(item){
+            if(String(item.id) !== String(editingLispId)) return item;
+            return {
+              id: item.id,
+              name: name,
+              description: description,
+              gif: gif
+            };
+          });
+          editingLispId = null;
+          if(submitBtn) submitBtn.textContent = 'Add LISP';
+        }else{
+          items.unshift({
+            id: String(Date.now()),
+            name: name,
+            description: description,
+            gif: gif
+          });
+          currentPage = 1;
+        }
+
+        saveItems(items);
+        form.reset();
+        renderItems();
+      });
+
+      clearBtn.addEventListener('click', function(){
+        form.reset();
+        editingLispId = null;
+        if(submitBtn) submitBtn.textContent = 'Add LISP';
+      });
+
+      list.addEventListener('click', function(event){
+        const showMoreBtn = event.target.closest('[data-show-more]');
+        if(showMoreBtn){
+          const cell = showMoreBtn.closest('.desc-cell');
+          if(cell){
+            cell.classList.toggle('expanded');
+            showMoreBtn.textContent = cell.classList.contains('expanded') ? 'Show less' : 'Show more';
+          }
+          return;
+        }
+
+        if(!isLispAdmin()) return;
+
+        const editId = event.target.getAttribute('data-edit');
+        if(editId){
+          const item = getItems().find(function(entry){ return String(entry.id) === String(editId); });
+          if(!item) return;
+          editingLispId = editId;
+          nameInput.value = item.name || '';
+          descInput.value = item.description || '';
+          gifUrlInput.value = (item.gif && !String(item.gif).startsWith('data:')) ? item.gif : '';
+          gifInput.value = '';
+          if(submitBtn) submitBtn.textContent = 'Update LISP';
+          form.scrollIntoView({behavior:'smooth', block:'start'});
+          nameInput.focus();
+          return;
+        }
+
+        const id = event.target.getAttribute('data-delete');
+        if(!id) return;
+        const items = getItems().filter(function(item){ return String(item.id) !== String(id); });
+        if(String(editingLispId) === String(id)){
+          editingLispId = null;
+          form.reset();
+          if(submitBtn) submitBtn.textContent = 'Add LISP';
+        }
+        saveItems(items);
+        renderItems();
+      });
+
+      if(searchInput){
+        searchInput.addEventListener('input', function(){
+          currentPage = 1;
+          renderItems();
+        });
+      }
+
+      pagination.addEventListener('click', function(event){
+        const page = Number(event.target.getAttribute('data-page'));
+        if(!page) return;
+        currentPage = page;
+        renderItems();
+      });
+
+      exportBtn.addEventListener('click', function(){
+        if(!isLispAdmin()){
+          alert('Admin only. Please sign in as admin to export data.');
+          return;
+        }
+        const blob = new Blob([JSON.stringify(getItems(), null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'azobss-lisp-showcase.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      function applyAdminMode(){
+        const adminMode = isLispAdmin();
+        document.body.classList.toggle('is-lisp-admin', adminMode);
+        if(adminStatus){
+          adminStatus.textContent = adminMode
+            ? 'Admin mode: you can add, edit, delete and export LISP items.'
+            : 'Public view: add, edit, delete and export tools are hidden. Only admin can manage this list.';
+        }
+      }
+
+      window.addEventListener('storage', applyAdminMode);
+      applyAdminMode();
+      renderItems();
+    })();
+  </script>
+
+<script>
+/* AZOBSS secondary auth bridge */
+(function(){
+  function parseUser(raw){try{return raw ? JSON.parse(raw) : null;}catch(e){return null;}}
+  function readUser(){return parseUser(sessionStorage.getItem('azobssCurrentUser')) || parseUser(localStorage.getItem('azobssCurrentUser')) || parseUser(sessionStorage.getItem('azobssUser')) || parseUser(localStorage.getItem('azobssUser'));}
+  function initials(name){return String(name || 'AZ').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('') || 'AZ';}
+  function showUser(){
+    var user = readUser();
+    var auth = document.getElementById('siteAuthActions');
+    var tools = document.getElementById('marketUserTools');
+    var name = document.getElementById('signedInName');
+    var avatar = document.getElementById('userAvatar');
+    var display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
+    if(display){
+      if(name) name.textContent = display;
+      if(avatar) avatar.textContent = initials(display);
+      document.body.classList.add('is-authenticated');
+      if(auth) auth.style.setProperty('display', 'none', 'important');
+      if(tools) tools.style.setProperty('display', 'flex', 'important');
+    }else{
+      document.body.classList.remove('is-authenticated');
+      if(auth) auth.style.setProperty('display', 'flex', 'important');
+      if(tools) tools.style.setProperty('display', 'none', 'important');
+    }
+  }
+  var menu = document.getElementById('userMenu');
+  if(menu){
+    menu.addEventListener('click', function(event){
+      if(event.target.closest('.user-dropdown-item')) return;
+      var open = !menu.classList.contains('is-open');
+      menu.classList.toggle('is-open', open);
+      menu.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', function(event){
+      if(!menu.contains(event.target)){menu.classList.remove('is-open');menu.setAttribute('aria-expanded','false');}
+    });
+  }
+  var logout = document.getElementById('logoutButton');
+  if(logout){logout.addEventListener('click', function(){sessionStorage.removeItem('azobssCurrentUser');localStorage.removeItem('azobssCurrentUser');sessionStorage.removeItem('azobssUser');localStorage.removeItem('azobssUser');showUser();});}
+  showUser();
+  window.addEventListener('storage', showUser);
+})();
+</script>
+</body>
+</html>
+
+
+
+
+
