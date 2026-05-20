@@ -1990,6 +1990,21 @@ body:not(.is-admin) #guestHistoryPanel {
   display: none !important;
 }
 
+
+/* AZOBSS FIX: admin registered/live/history panels must show when admin is restored from saved login */
+body.is-admin #registeredUsersPanel,
+body.is-admin #liveUsersPanel,
+body.is-admin #loginHistoryPanel,
+body.is-admin #guestHistoryPanel,
+.is-admin #registeredUsersPanel,
+.is-admin #liveUsersPanel,
+.is-admin #loginHistoryPanel,
+.is-admin #guestHistoryPanel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
     .live-user-list {
       display: grid;
       gap: 8px;
@@ -10124,11 +10139,19 @@ body{
 
 
     function syncAdminLivePanelsVisibility() {
-      const shouldShow = !!(currentUser && currentUser.isAdmin);
+      const shouldShow = isAdminUser(currentUser);
+      if (registeredUsersPanel) {
+        registeredUsersPanel.hidden = !shouldShow;
+        registeredUsersPanel.style.display = shouldShow ? 'block' : 'none';
+        registeredUsersPanel.style.visibility = shouldShow ? 'visible' : '';
+        registeredUsersPanel.style.opacity = shouldShow ? '1' : '';
+      }
       [liveUsersPanel, loginHistoryPanel, guestHistoryPanel].forEach(function (panel) {
         if (panel) {
           panel.hidden = !shouldShow;
           panel.style.display = shouldShow ? 'block' : 'none';
+          panel.style.visibility = shouldShow ? 'visible' : '';
+          panel.style.opacity = shouldShow ? '1' : '';
         }
       });
     }
@@ -11545,6 +11568,7 @@ body{
         loadRegisteredUsers();
         startLiveUsersListener();
         startGuestOnlineListener();
+        syncAdminLivePanelsVisibility();
       } else {
         requestCard.classList.remove('is-admin');
         signupForm.hidden = false;
@@ -14119,12 +14143,45 @@ body{
     }
   }
 
-  document.addEventListener('DOMContentLoaded', restorePurchaseRecordsPanel);
-  window.addEventListener('load', restorePurchaseRecordsPanel);
-  window.addEventListener('storage', restorePurchaseRecordsPanel);
-  setTimeout(restorePurchaseRecordsPanel, 300);
-  setTimeout(restorePurchaseRecordsPanel, 1200);
-  setTimeout(restorePurchaseRecordsPanel, 2500);
+  function restoreAdminHistoryPanels(){
+    var isAdmin = adminDetected();
+    var requestCard = document.querySelector('.request-card') || document.getElementById('requestCard');
+    if(isAdmin){
+      document.body.classList.add('is-admin');
+      if(requestCard) requestCard.classList.add('is-admin');
+    }
+
+    var panelIds = isAdmin
+      ? ['registeredUsersPanel','liveUsersPanel','loginHistoryPanel','guestHistoryPanel']
+      : ['liveUsersPanel','loginHistoryPanel','guestHistoryPanel'];
+
+    panelIds.forEach(function(id){
+      var panel = document.getElementById(id);
+      if(!panel) return;
+      if(isAdmin){
+        panel.hidden = false;
+        panel.removeAttribute('hidden');
+        panel.style.display = 'block';
+        panel.style.visibility = 'visible';
+        panel.style.opacity = '1';
+      }else{
+        panel.hidden = true;
+        panel.style.display = 'none';
+      }
+    });
+  }
+
+  function restoreAllAdminPanels(){
+    restorePurchaseRecordsPanel();
+    restoreAdminHistoryPanels();
+  }
+
+  document.addEventListener('DOMContentLoaded', restoreAllAdminPanels);
+  window.addEventListener('load', restoreAllAdminPanels);
+  window.addEventListener('storage', restoreAllAdminPanels);
+  setTimeout(restoreAllAdminPanels, 300);
+  setTimeout(restoreAllAdminPanels, 1200);
+  setTimeout(restoreAllAdminPanels, 2500);
 })();
 </script>
 <script>
