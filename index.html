@@ -10140,6 +10140,7 @@ body{
 
     function syncAdminLivePanelsVisibility() {
       const shouldShow = isAdminUser(currentUser);
+      document.body.classList.toggle('is-admin', shouldShow);
       if (registeredUsersPanel) {
         registeredUsersPanel.hidden = !shouldShow;
         registeredUsersPanel.style.display = shouldShow ? 'block' : 'none';
