@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affiliate Shop | AZOBSS</title>
+  <meta name="description" content="Affiliate Shop AZOBSS with recommended products and useful gadgets.">
+  <style>
+    :root{--bg:#050914;--panel:#0e1729;--line:rgba(148,163,184,.22);--text:#f8fafc;--muted:#9ca3af;--green:#22c55e;--blue:#2563eb}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#102544,#050914 58%);color:var(--text);padding-top:54px}
+    .market-sticky-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;background:#000 !important;border-bottom:1px solid rgba(218,165,32,.45) !important;box-shadow:0 10px 24px rgba(0,0,0,.28) !important}
+    .market-bar-inner{width:100% !important;margin:0 !important;padding:0 26px 0 8px !important;box-sizing:border-box !important}
+    .market-main-row{min-height:48px !important;display:flex !important;align-items:center !important;gap:7px !important;flex-wrap:nowrap !important}
+    .market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;text-decoration:none !important;margin-left:0 !important}
+    .market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important}
+    .market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow:hidden !important;white-space:nowrap !important;scrollbar-width:none !important}
+    .market-nav::-webkit-scrollbar{display:none !important}
+    .market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 10px !important;border:1px solid rgba(148,163,184,.28) !important;border-radius:999px !important;background:#0e1729 !important;color:#e5e7eb !important;text-decoration:none !important;font-size:clamp(11px,1vw,13px) !important;font-weight:800 !important;line-height:1 !important;white-space:nowrap !important;text-shadow:0 1px 8px rgba(0,0,0,.45) !important;box-shadow:none !important}
+    .market-nav a:hover{color:#14b8a6 !important}
+    .market-nav a.market-nav-primary{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;text-shadow:none !important;box-shadow:0 0 15px rgba(34,197,94,.34), inset 0 0 0 1px rgba(255,255,255,.12) !important}
+    .nav-pa-bm-link.is-hidden{display:none !important}
+    .nav-whatsapp-circle{width:38px !important;height:38px !important;min-width:38px !important;min-height:38px !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;background:#22c55e !important;color:#fff !important;font-size:0 !important;font-weight:900 !important;box-shadow:0 8px 20px rgba(34,197,94,.25) !important;vertical-align:middle !important}
+    .nav-whatsapp-circle::before{content:"\1F4AC" !important;font-size:19px !important;line-height:1 !important}
+    a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !important;min-width:44px !important;max-width:44px !important;height:44px !important;padding:0 !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important}
+    .site-auth-actions{position:static !important;display:flex !important;align-items:center !important;gap:20px !important;flex:0 0 auto !important;z-index:auto !important;margin-left:auto !important;margin-right:10px !important}
+    .site-auth-btn{display:inline-flex !important;align-items:center !important;gap:0 !important;border:0 !important;border-radius:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;line-height:1 !important;text-decoration:none !important;cursor:pointer !important;transition:.2s !important}
+    .site-auth-btn:hover{color:#14b8a6 !important}
+    main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:34px 0 52px}
+    .hero{display:grid;gap:14px;margin:18px 0 24px}
+    .hero h1{font-size:clamp(34px,5vw,64px);line-height:1;margin:0;color:#fff}
+    .hero p{max-width:760px;margin:0;color:#cbd5e1;font-size:17px;line-height:1.55}
+    .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .search{flex:1 1 280px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
+    .chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 14px;min-height:42px;font-weight:800;cursor:pointer}
+    .chip.is-active{background:var(--green);border-color:var(--green);color:#052e16}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px}
+    .card{display:grid;gap:10px;align-content:start;min-height:235px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#13243a,#0b1220);padding:18px;color:#fff;text-decoration:none;box-shadow:0 16px 34px rgba(0,0,0,.22)}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:rgba(34,197,94,.14);color:#86efac;font-weight:900}
+    .badge{border:1px solid rgba(34,197,94,.35);border-radius:999px;padding:6px 9px;color:#86efac;font-size:12px;font-weight:900}
+    .card h2{font-size:18px;line-height:1.25;margin:0}
+    .card p{margin:0;color:#cbd5e1;font-size:14px;line-height:1.45}
+    .meta{margin-top:auto;color:#94a3b8;font-size:12px;font-weight:800}
+    .empty{display:none;border:1px solid var(--line);border-radius:16px;background:#0e1729;padding:24px;color:#cbd5e1;text-align:center}
+    @media(max-width:760px){body{padding-top:92px !important}.market-bar-inner{width:100% !important;padding:0 6px !important}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important}.market-brand{width:116px !important;height:30px !important}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important}.site-auth-btn{font-size:13px !important;white-space:nowrap !important}}
+  </style>
+</head>
+<body>
+  <header class="market-sticky-bar" aria-label="Carousell style navigation">
+    <div class="market-bar-inner">
+      <div class="market-main-row">
+        <a class="market-brand" href="../index.html" aria-label="AZOBSS">
+          <img src="../images/logo-azobss.jpg" alt="AZOBSS">
+        </a>
+        <nav class="market-nav" aria-label="AZOBSS quick actions">
+          <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp">&#9742;</span></a>
+          <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../index.html#request" hidden>PA / BM</a>
+          <a href="../Software-Tools/index.html">Software</a>
+          <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+          <a class="market-nav-primary" href="../affiliate-shop/index.html">Affiliate Shop</a>
+          <a href="../lucky-draw/index.html">Lucky Draw</a>
+          <a href="../tools/index.html">Mini Web Tools</a>
+        </nav>
+        <div class="site-auth-actions">
+          <a class="site-auth-btn primary" href="../index.html#signup">Register</a>
+          <a class="site-auth-btn" href="../index.html#login">Login</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Affiliate Shop</h1>
+      <p>Recommended items, useful gadgets and selected affiliate products by AZOBSS.</p>
+      <div class="tools">
+        <input class="search" id="searchInput" type="search" placeholder="Search products...">
+        <button class="chip is-active" type="button" data-filter="all">All</button>
+        <button class="chip" type="button" data-filter="computer">Computer</button>
+        <button class="chip" type="button" data-filter="mobile">Mobile</button>
+        <button class="chip" type="button" data-filter="camera">Camera</button>
+        <button class="chip" type="button" data-filter="groceries">Groceries</button>
+      </div>
+    </section>
+    <section class="grid" id="productGrid"></section>
+    <div class="empty" id="emptyState">No affiliate products found.</div>
+  </main>
+
+  <script>
+    const grid = document.getElementById('productGrid');
+    const searchInput = document.getElementById('searchInput');
+    const emptyState = document.getElementById('emptyState');
+    const chips = Array.from(document.querySelectorAll('[data-filter]'));
+    let products = [];
+    let activeFilter = 'all';
+
+    function esc(value){
+      return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+
+    function render(){
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = products.filter(item => {
+        const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon].join(' ').toLowerCase();
+        const categoryOk = activeFilter === 'all' || item.category === activeFilter;
+        return categoryOk && (!query || haystack.includes(query));
+      });
+      grid.innerHTML = filtered.map(item => `
+        <a class="card" href="${esc(item.link)}" target="_blank" rel="noopener">
+          <div class="top">
+            <div class="icon">${esc(item.icon || 'AZ')}</div>
+            <span class="badge">${esc(item.badge || 'Affiliate')}</span>
+          </div>
+          <h2>${esc(item.title)}</h2>
+          <p>${esc(item.desc)}</p>
+          <div class="meta">${esc(item.meta || item.category || 'Affiliate item')}</div>
+        </a>
+      `).join('');
+      emptyState.style.display = filtered.length ? 'none' : 'block';
+    }
+
+    chips.forEach(chip => chip.addEventListener('click', () => {
+      activeFilter = chip.dataset.filter || 'all';
+      chips.forEach(item => item.classList.toggle('is-active', item === chip));
+      render();
+    }));
+    searchInput.addEventListener('input', render);
+
+    fetch('../affiliate-products.json', {cache:'no-store'})
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        products = Array.isArray(data) ? data : [];
+        render();
+      })
+      .catch(() => {
+        products = [];
+        render();
+      });
+  </script>
+</body>
+</html>
