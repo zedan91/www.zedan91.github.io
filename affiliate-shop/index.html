@@ -53,6 +53,32 @@
     .meta{margin-top:auto;color:#94a3b8;font-size:12px;font-weight:800}
     .empty{display:none;border:1px solid var(--line);border-radius:16px;background:#0e1729;padding:24px;color:#cbd5e1;text-align:center}
     @media(max-width:760px){body{padding-top:92px !important}.market-bar-inner{width:100% !important;padding:0 6px !important}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important}.market-brand{width:116px !important;height:30px !important}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important}.site-auth-btn{font-size:13px !important;white-space:nowrap !important}}
+
+
+/* Same-page auth modal on Affiliate Shop */
+.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
+.auth-modal.is-open{display:flex;}
+.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
+.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.auth-modal-top h3{margin:0;font-size:20px;font-weight:800;}
+.auth-close-btn{display:inline-grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:rgba(148,163,184,.22);color:#fff;font-size:24px;font-weight:900;line-height:1;cursor:pointer;}
+.auth-close-btn:hover{background:rgba(148,163,184,.34);}
+.auth-modal-form{display:grid;gap:14px;}
+.auth-modal-form[hidden]{display:none!important;}
+.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff;}
+.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none;}
+.auth-modal-form input:focus{border-color:#fff;}
+.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6);}
+.auth-modal-form .btn.signup{background:#22c55e;color:#fff;}
+.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
+.auth-switch-note{margin:0;text-align:center;color:#dbe4f0;}
+.auth-switch-note button{border:0;background:transparent;color:#00e676;font-weight:900;cursor:pointer;}
+.phone-input-row{display:grid;grid-template-columns:120px 1fr;gap:10px;}
+.country-code-button{height:46px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;font-weight:900;}
+.phone-number-wrap{position:relative;display:flex;align-items:center;}
+.phone-prefix{position:absolute;left:14px;color:#00e676;font-weight:900;}
+.phone-number-wrap input{padding-left:58px!important;}
+
 </style>
 <style>
 /* Secondary page auth state bridge */
@@ -78,34 +104,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
-</style>
-<style>
-/* Home-style auth modal for secondary pages */
-.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
-.auth-modal.is-open{display:flex;}
-.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
-.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
-.auth-modal-top h3{margin:0;font-size:20px;font-weight:800;}
-.auth-close-btn{display:inline-grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:rgba(148,163,184,.22);color:#fff;font-size:24px;font-weight:900;line-height:1;cursor:pointer;}
-.auth-close-btn:hover{background:rgba(148,163,184,.34);}
-.auth-modal-form{display:grid;gap:14px;}
-.auth-modal-form[hidden]{display:none!important;}
-.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff;}
-.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none;}
-.auth-modal-form input:focus{border-color:#fff;}
-.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6);}
-.auth-modal-form .btn.signup{background:#22c55e;color:#fff;}
-.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
-.auth-switch-note{margin:0;text-align:center;color:#dbe4f0;}
-.auth-switch-note button{border:0;background:transparent;color:#00e676;font-weight:900;cursor:pointer;}
-.phone-input-row{display:grid;grid-template-columns:120px 1fr;gap:10px;}
-.country-code-button{width:100%;height:52px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;font-weight:900;}
-.phone-number-wrap{position:relative;display:flex;align-items:center;}
-.phone-prefix{position:absolute;left:14px;color:#00e676;font-weight:900;pointer-events:none;}
-.phone-number-wrap input{padding-left:58px!important;}
-@media(max-width:520px){.phone-input-row{grid-template-columns:1fr}.phone-prefix{top:50%;transform:translateY(-50%)}}
-</style>
-</head>
+</style></head>
 <body>
   <header class="market-sticky-bar" aria-label="Carousell style navigation">
     <div class="market-bar-inner">
@@ -264,6 +263,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     <div class="empty" id="emptyState">No affiliate products found.</div>
   </main>
 
+
 <div aria-hidden="true" class="auth-modal" id="siteAuthModal">
   <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
     <div class="auth-modal-top">
@@ -290,9 +290,9 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
       </label>
       <label for="siteSignupPhone">Phone Number
         <div class="phone-input-row">
-          <button class="country-code-button" id="siteSignupCountryButton" type="button"><span>MY</span> <span>+60</span></button>
+          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
           <div class="phone-number-wrap">
-            <span class="phone-prefix" id="siteSignupPhonePrefix">+60</span>
+            <span class="phone-prefix">+60</span>
             <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
           </div>
         </div>
@@ -309,7 +309,6 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
     </form>
   </div>
 </div>
-
 
   <script>
     const grid = document.getElementById('productGrid');
@@ -375,7 +374,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
   </script>
 
 <script type="module">
-/* Home-style same-page Firebase auth for secondary pages */
+/* Same-page Affiliate Shop auth. Prevents Register/Login from going back to Home. */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -429,6 +428,7 @@ function openSiteAuth(mode='signin'){
   signupError.textContent='';
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden','false');
+  history.replaceState(null,'',location.pathname+location.search);
   setTimeout(()=>document.getElementById(isSignup?'siteSignupName':'siteLoginName')?.focus(),50);
 }
 function closeSiteAuth(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
@@ -436,8 +436,8 @@ window.openSiteAuth=openSiteAuth;
 window.openLoginModal=()=>openSiteAuth('signin');
 window.openSignupModal=()=>openSiteAuth('signup');
 
-loginBtn?.addEventListener('click',event=>{event.preventDefault();openSiteAuth('signin');});
-signupBtn?.addEventListener('click',event=>{event.preventDefault();openSiteAuth('signup');});
+loginBtn?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSiteAuth('signin');});
+signupBtn?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSiteAuth('signup');});
 closeBtn?.addEventListener('click',closeSiteAuth);
 modal?.addEventListener('click',event=>{if(event.target===modal) closeSiteAuth();});
 document.getElementById('switchToSiteSignup')?.addEventListener('click',()=>openSiteAuth('signup'));
