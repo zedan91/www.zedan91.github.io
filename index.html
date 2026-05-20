@@ -15452,6 +15452,17 @@ document.addEventListener('DOMContentLoaded', function(){
       a.remove();
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
 
+      if(typeof window.azobssRecordPurchase === 'function'){
+        await window.azobssRecordPurchase({
+          productType: 'PA',
+          itemCode: built.number,
+          paNumber: built.number,
+          negeri: built.negeri,
+          url: built.url,
+          amount: 5
+        });
+      }
+
       setMessage('success', '✔ Download berjaya');
     }catch(error){
       setMessage('error', 'Maaf, PA tiada dalam simpanan');
