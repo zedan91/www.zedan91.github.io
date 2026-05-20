@@ -12407,6 +12407,9 @@ body:not(.pa-bm-page) #request {
       if (event) {
         event.preventDefault();
         event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') {
+          event.stopImmediatePropagation();
+        }
       }
 
       if (!hasPaBmAccess(currentUser)) {
@@ -12433,46 +12436,22 @@ body:not(.pa-bm-page) #request {
 
       paError.textContent = '';
       paStatus.style.display = 'block';
-      paStatus.textContent = 'Converting PA to PDF... please wait.';
+      paStatus.textContent = 'Opening PA PDF download...';
       downloadTifButton.disabled = true;
       downloadTifButton.innerHTML = `
-        <span class="download-pa-main">Converting PDF...</span>
+        <span class="download-pa-main">Opening PDF...</span>
         <span class="pdf-price-tag">RM5 per unit</span>
       `;
 
       try {
-        const res = await fetch(paUrl, { cache: 'no-store' });
-
-        if (!res.ok) {
-          let message = 'PA not found / PA tiada dalam sistem';
-
-          try {
-            const errorData = await res.json();
-            message = errorData.error || message;
-          } catch (jsonError) {
-            // PDF endpoint may return non-JSON errors. Keep the friendly message.
-          }
-
-          throw new Error(message);
-        }
-
-        const pdfBlob = await res.blob();
-
-        if (!pdfBlob || !pdfBlob.size) {
-          throw new Error('PDF kosong / failed convert.');
-        }
-
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `PA${paValue}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        setTimeout(function () {
-          URL.revokeObjectURL(blobUrl);
-        }, 5000);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = paUrl;
+        downloadLink.target = '_blank';
+        downloadLink.rel = 'noopener';
+        downloadLink.download = `PA${paValue}.pdf`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
 
         pendingDownload = {
           paValue,
@@ -12483,7 +12462,7 @@ body:not(.pa-bm-page) #request {
         await recordPurchase(paValue, selectedNegeri, paUrl);
 
         paStatus.style.display = 'block';
-        paStatus.textContent = 'PA downloaded successfully!';
+        paStatus.textContent = 'PA download opened. If it does not start, allow popup/download and click Download PA again.';
 
         downloadResultActions.hidden = true;
         downloadResultActions.style.display = 'none';
@@ -12492,7 +12471,7 @@ body:not(.pa-bm-page) #request {
           failedDownloadButton.style.display = 'none';
         }
       } catch (error) {
-        paError.textContent = error.message || 'PA not found / PA tiada dalam sistem';
+        paError.textContent = error.message || 'Download PA failed.';
         paError.style.display = 'block';
         paStatus.style.display = 'none';
       } finally {
@@ -15346,7 +15325,37 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
-<script>function azobssDirectPaDownload(e){if(e){e.preventDefault();e.stopPropagation();} if(window.azobssHandlePaDownload){return window.azobssHandlePaDownload(e);} return false;}</script></body>
+<script>
+window.azobssDirectPaDownload = function(e){
+  if(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+  }
+  if(typeof window.azobssHandlePaDownload === 'function'){
+    return window.azobssHandlePaDownload(e);
+  }
+  var paInput = document.getElementById('paNumber');
+  var negeriInput = document.getElementById('negeri');
+  var paError = document.getElementById('paError');
+  var number = String(paInput && paInput.value || '').trim().toUpperCase().replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'');
+  var negeri = negeriInput ? negeriInput.value : '';
+  if(!number || !negeri){
+    if(paError) paError.textContent = 'Please enter the PA number and select a state first.';
+    return false;
+  }
+  var url = 'https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA' + number + '.TIF&negeri=' + encodeURIComponent(negeri);
+  var a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.download = 'PA' + number + '.pdf';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  return false;
+};
+</script></body>
 </html>
 <script>
 function confirmDeleteProgram(id){

@@ -3368,6 +3368,9 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
 
     paForm.addEventListener('submit', async function (event) {
       event.preventDefault();
+      if (typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+      }
 
       if (!isAdminUser(currentUser) && currentUser && currentUser.paAccess === false) {
         paError.textContent = 'Standard accounts do not have Request PA / Info Lot access.';
@@ -3390,46 +3393,22 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
 
       paError.textContent = '';
       paStatus.style.display = 'block';
-      paStatus.textContent = 'Converting PA to PDF... please wait.';
+      paStatus.textContent = 'Opening PA PDF download...';
       downloadTifButton.disabled = true;
       downloadTifButton.innerHTML = `
-        <span class="download-pa-main">Converting PDF...</span>
+        <span class="download-pa-main">Opening PDF...</span>
         <span class="pdf-price-tag">RM5 per unit</span>
       `;
 
       try {
-        const res = await fetch(pdfUrl, { cache: 'no-store' });
-
-        if (!res.ok) {
-          let message = 'PA not found / PA tiada dalam sistem';
-
-          try {
-            const errorData = await res.json();
-            message = errorData.error || message;
-          } catch (jsonError) {
-            // PDF endpoint may return non-JSON errors. Keep the friendly message.
-          }
-
-          throw new Error(message);
-        }
-
-        const pdfBlob = await res.blob();
-
-        if (!pdfBlob || !pdfBlob.size) {
-          throw new Error('PDF kosong / failed convert.');
-        }
-
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `PA${paValue}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        setTimeout(function () {
-          URL.revokeObjectURL(blobUrl);
-        }, 5000);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pdfUrl;
+        downloadLink.target = '_blank';
+        downloadLink.rel = 'noopener';
+        downloadLink.download = `PA${paValue}.pdf`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
 
         pendingDownload = {
           paValue,
@@ -3440,7 +3419,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
         await recordPurchase(paValue, selectedNegeri, pdfUrl);
 
         paStatus.style.display = 'block';
-        paStatus.textContent = 'PA downloaded successfully!';
+        paStatus.textContent = 'PA download opened. If it does not start, allow popup/download and click Download PA again.';
 
         downloadResultActions.hidden = true;
         downloadResultActions.style.display = 'none';
@@ -3450,7 +3429,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
         }
 
       } catch (error) {
-        paError.textContent = error.message || 'PA not found / PA tiada dalam sistem';
+        paError.textContent = error.message || 'Download PA failed.';
         paStatus.style.display = 'none';
       } finally {
         downloadTifButton.disabled = false;
@@ -3459,6 +3438,11 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebas
           <span class="pdf-price-tag">RM5 per unit</span>
         `;
       }
+    });
+
+    downloadTifButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      paForm.requestSubmit();
     });
 
     confirmDownloadButton.addEventListener('click', async function () {
