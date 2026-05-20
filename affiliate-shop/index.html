@@ -122,8 +122,8 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
           <a href="../tools/index.html">Mini Web Tools</a>
         </nav>
         <div class="site-auth-actions" id="siteAuthActions">
-          <a class="site-auth-btn primary" id="siteSignUpButton" href="#" onclick="openSiteAuth('signup');return false;" data-auth="signup">Register</a>
-          <a class="site-auth-btn" id="siteSignInButton" href="#" onclick="openSiteAuth('signin');return false;" data-auth="login">Login</a>
+          <a class="site-auth-btn primary" id="siteSignUpButton" href="javascript:void(0)" onclick="openSiteAuth('signup');return false;" data-auth="signup">Register</a>
+          <a class="site-auth-btn" id="siteSignInButton" href="javascript:void(0)" onclick="openSiteAuth('signin');return false;" data-auth="login">Login</a>
         </div>
       <div class="market-user-tools" id="marketUserTools">
         <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
@@ -270,7 +270,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
       <h3 id="siteAuthTitle">Sign in</h3>
       <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
     </div>
-    <form class="auth-modal-form" id="siteSignInForm">
+    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
       <label for="siteLoginName">Name
         <input id="siteLoginName" placeholder="Username" required type="text">
       </label>
@@ -281,7 +281,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
       <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
       <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
     </form>
-    <form class="auth-modal-form" hidden id="siteSignUpForm">
+    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
       <label for="siteSignupName">Name
         <input id="siteSignupName" placeholder="Username" required type="text">
       </label>
@@ -394,6 +394,16 @@ const loginBtn=document.getElementById('siteSignInButton');
 const signupBtn=document.getElementById('siteSignUpButton');
 const closeBtn=document.getElementById('siteAuthClose');
 
+// Prevent auth forms/links from falling back to browser navigation.
+// This keeps Affiliate Shop on the same page after Login/Register.
+document.addEventListener('submit', event => {
+  if (event.target === signInForm || event.target === signUpForm) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}, true);
+
+
 function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
 function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
 function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
@@ -431,7 +441,13 @@ function openSiteAuth(mode='signin'){
   history.replaceState(null,'',location.pathname+location.search);
   setTimeout(()=>document.getElementById(isSignup?'siteSignupName':'siteLoginName')?.focus(),50);
 }
-function closeSiteAuth(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
+function stayOnAffiliatePage(){
+  const affiliatePath = location.pathname.endsWith('/affiliate-shop/') || location.pathname.endsWith('/affiliate-shop/index.html')
+    ? location.pathname
+    : '../affiliate-shop/index.html';
+  try{history.replaceState(null,'',location.pathname + location.search);}catch(e){}
+}
+function closeSiteAuth(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');stayOnAffiliatePage();}
 window.openSiteAuth=openSiteAuth;
 window.openLoginModal=()=>openSiteAuth('signin');
 window.openSignupModal=()=>openSiteAuth('signup');

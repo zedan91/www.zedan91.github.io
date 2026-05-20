@@ -165,8 +165,8 @@
           <a href="../tools/index.html">Mini Web Tools</a>
         </nav>
         <div class="site-auth-actions" id="siteAuthActions">
-          <a class="site-auth-btn primary" id="siteSignUpButton" href="../index.html#signup">Register</a>
-          <a class="site-auth-btn" id="siteSignInButton" href="../index.html#login">Login</a>
+          <a class="site-auth-btn primary" id="siteSignUpButton" href="#" onclick="openSiteAuth('signup');return false;">Register</a>
+          <a class="site-auth-btn" id="siteSignInButton" href="#" onclick="openSiteAuth('signin');return false;">Login</a>
         </div>
         <div class="market-user-tools" id="marketUserTools">
           <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
@@ -208,7 +208,7 @@
             <div class="actions">
               <button class="btn orange" id="shareInviteButton" type="button">Share Website</button>
               <button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
-              <a class="btn dark" href="../index.html#login">Login / Register</a>
+              <a class="btn dark" href="#" onclick="openSiteAuth('signin');return false;">Login / Register</a>
             </div>
             <div class="mini-status-grid">
               <div class="mini-status"><span>Invite code anda</span><strong id="inviteCodeText">-</strong></div>
