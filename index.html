@@ -6859,7 +6859,7 @@ body:not(.pa-bm-page) #request {
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
 <a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
-<a class="nav-pa-bm-link" href="PA-BM/" id="paBmNavButton">PA / BM</a>
+<a class="nav-pa-bm-link is-hidden" hidden href="PA-BM/" id="paBmNavButton">PA / BM</a>
 <a href="Software-Tools/index.html">Software</a>
 <a href="CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
 <a href="affiliate-shop/index.html">Affiliate Shop</a>
@@ -7603,6 +7603,7 @@ body:not(.pa-bm-page) #request {
     const signupGateRef = firebaseReady ? doc(db, 'settings', 'signupGate') : null;
 
     const ADMIN_USERNAME = 'zedan91';
+    const MEMBER_PA_CODE = 'ZX6186';
     const PURCHASE_PRICE = 5;
     const BM_SBM_PURCHASE_PRICE = 3;
     const SIGNUP_GATE_DURATION_MS = 5 * 60 * 1000;
@@ -7950,10 +7951,10 @@ body:not(.pa-bm-page) #request {
     }
 
     function updatePaBmNavAccess(user = currentUser) {
-      if (paBmNavButton) {
-        paBmNavButton.hidden = false;
-        paBmNavButton.classList.remove('is-hidden');
-      }
+      if (!paBmNavButton) return;
+      const canShowPaBm = hasPaBmAccess(user);
+      paBmNavButton.hidden = !canShowPaBm;
+      paBmNavButton.classList.toggle('is-hidden', !canShowPaBm);
     }
 
     function showSignedInUser(user) {
@@ -7966,7 +7967,7 @@ body:not(.pa-bm-page) #request {
       siteAuthActions.style.display = 'none';
       updatePaBmNavAccess(user);
       if (userUpgradeButton) {
-        userUpgradeButton.hidden = isAdminUser(user) || user.paAccess !== false;
+        userUpgradeButton.hidden = hasPaBmAccess(user);
       }
     }
 
@@ -9180,6 +9181,10 @@ body:not(.pa-bm-page) #request {
       return user && user.usernameKey === ADMIN_USERNAME;
     }
 
+    function hasPaBmAccess(user) {
+      return !!(user && (isAdminUser(user) || user.paAccess === true));
+    }
+
 
     function renderAdminPaDetailPagination(usernameKey, totalItems, currentPage) {
       const pageSize = 5;
@@ -9859,7 +9864,7 @@ body:not(.pa-bm-page) #request {
       if (sortMode === 'paAllowed') {
         users = users.filter(function (user) {
           const usernameKey = user.usernameKey || normalizeUsername(user.name || '');
-          return usernameKey === ADMIN_USERNAME || user.paAccess !== false;
+          return usernameKey === ADMIN_USERNAME || user.paAccess === true;
         });
       }
 
@@ -9904,7 +9909,7 @@ body:not(.pa-bm-page) #request {
       registeredUsersList.innerHTML = pageData.pageItems.map(function (user) {
         const usernameKey = user.usernameKey || normalizeUsername(user.name || '');
         const isAdminRecord = usernameKey === ADMIN_USERNAME;
-        const paAccess = isAdminRecord || user.paAccess !== false;
+        const paAccess = isAdminRecord || user.paAccess === true;
         const isOnline = isRegisteredUserOnline(user);
         const deleteButton = isAdminRecord
           ? ''
@@ -11145,7 +11150,7 @@ body:not(.pa-bm-page) #request {
           phone: '',
           email: credential.user.email,
           contactEmail: '',
-          paAccess: true,
+          paAccess: usernameKey === ADMIN_USERNAME,
           inviteCode: buildInviteCode(usernameKey),
           invitedByCode: '',
           invitedByUsernameKey: ''
@@ -11164,7 +11169,7 @@ body:not(.pa-bm-page) #request {
           phone: profile.phone || '',
           email: profile.email || credential.user.email,
           contactEmail: profile.contactEmail || '',
-          paAccess: profile.paAccess !== false,
+          paAccess: profile.paAccess === true,
           inviteCode: profile.inviteCode || buildInviteCode(profile.usernameKey || usernameKey),
           invitedByCode: profile.invitedByCode || '',
           invitedByUsernameKey: profile.invitedByUsernameKey || ''
@@ -11218,19 +11223,19 @@ body:not(.pa-bm-page) #request {
     }
 
     async function upgradeCurrentUserWithMemberCode() {
-      const code = memberUpgradeCode.value.trim();
+      const code = cleanInviteCode(memberUpgradeCode.value);
 
       if (!isLoggedIn || !currentUser) {
         memberUpgradeStatus.textContent = 'Please sign in before upgrading.';
         return;
       }
 
-      if (isAdminUser(currentUser) || currentUser.paAccess !== false) {
+      if (hasPaBmAccess(currentUser)) {
         memberUpgradeStatus.textContent = 'This account already has Request PA access.';
         return;
       }
 
-      if (code !== 'zx6186') {
+      if (code !== MEMBER_PA_CODE) {
         memberUpgradeStatus.textContent = 'Incorrect Member Code.';
         return;
       }
@@ -11398,7 +11403,7 @@ body:not(.pa-bm-page) #request {
           contactEmail,
           inviteCode,
           password,
-          paAccess: false
+          paAccess: inviteCode === MEMBER_PA_CODE
         });
 
         saveCurrentUser(user);
@@ -11542,7 +11547,7 @@ body:not(.pa-bm-page) #request {
       loginPassword.value = '';
       signupError.textContent = '';
       loginError.textContent = '';
-      const hasPaAccess = isAdminUser(user) || user.paAccess !== false;
+      const hasPaAccess = hasPaBmAccess(user);
       requestCard.classList.toggle('has-pa-access', hasPaAccess);
       requestSection.classList.toggle('is-visible', hasPaAccess);
       heroRequestButton.classList.toggle('is-visible', hasPaAccess);
@@ -11857,7 +11862,7 @@ body:not(.pa-bm-page) #request {
           contactEmail,
           inviteCode,
           password,
-          paAccess: true
+          paAccess: inviteCode === MEMBER_PA_CODE
         });
 
         saveCurrentUser(user);
@@ -11918,7 +11923,7 @@ body:not(.pa-bm-page) #request {
           phone: '',
           email: credential.user.email,
           contactEmail: '',
-          paAccess: true,
+          paAccess: usernameKey === ADMIN_USERNAME,
           inviteCode: buildInviteCode(usernameKey),
           invitedByCode: '',
           invitedByUsernameKey: ''
@@ -11937,7 +11942,7 @@ body:not(.pa-bm-page) #request {
           phone: profile.phone || '',
           email: profile.email || credential.user.email,
           contactEmail: profile.contactEmail || '',
-          paAccess: profile.paAccess !== false,
+          paAccess: profile.paAccess === true,
           inviteCode: profile.inviteCode || buildInviteCode(profile.usernameKey || usernameKey),
           invitedByCode: profile.invitedByCode || '',
           invitedByUsernameKey: profile.invitedByUsernameKey || ''
@@ -12110,7 +12115,7 @@ body:not(.pa-bm-page) #request {
             phone: profile.phone || '',
             email: profile.email || firebaseUser.email || '',
             contactEmail: profile.contactEmail || '',
-            paAccess: profile.paAccess !== false,
+            paAccess: profile.paAccess === true,
             inviteCode: profile.inviteCode || buildInviteCode(profile.usernameKey || savedUser.usernameKey),
             invitedByCode: profile.invitedByCode || '',
             invitedByUsernameKey: profile.invitedByUsernameKey || ''
@@ -12402,7 +12407,7 @@ body:not(.pa-bm-page) #request {
         event.stopPropagation();
       }
 
-      if (!isAdminUser(currentUser) && currentUser && currentUser.paAccess === false) {
+      if (!hasPaBmAccess(currentUser)) {
         paError.textContent = 'Standard accounts do not have Request PA / Info Lot access.';
         return false;
       }

@@ -96,7 +96,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
       </a>
       <nav class="market-nav" aria-label="AZOBSS quick actions">
         <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
-        <a id="paBmNavButton" class="nav-pa-bm-link" href="../PA-BM/">PA / BM</a>
+        <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../PA-BM/" hidden>PA / BM</a>
         <a href="../Software-Tools/index.html">Software</a>
         <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
         <a href="../affiliate-shop/index.html">Affiliate Shop</a>
@@ -150,6 +150,10 @@ document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",
     var name = document.getElementById('signedInName');
     var avatar = document.getElementById('userAvatar');
     var display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
+    var paBm = document.getElementById('paBmNavButton');
+    var usernameKey = user && String(user.usernameKey || user.name || '').trim().toLowerCase();
+    var canShowPaBm = !!(user && (usernameKey === 'zedan91' || user.paAccess === true));
+    if(paBm){paBm.hidden = !canShowPaBm; paBm.classList.toggle('is-hidden', !canShowPaBm);}
     if(display){
       if(name) name.textContent = display;
       if(avatar) avatar.textContent = initials(display);
