@@ -46,6 +46,7 @@ function addStyle() {
 .phone-number-wrap input{padding-left:54px!important;}
 body.is-authenticated .site-auth-actions{display:none!important;}
 body.is-authenticated .market-user-tools{display:flex!important;}
+body.is-authenticated .user-menu{display:flex!important;}
 body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .market-user-tools{align-items:center!important;}
 .user-menu{position:relative!important;}
