@@ -470,8 +470,8 @@ function userProfileHtml(user){
   const registeredText = createdDate && !isNaN(createdDate) ? createdDate.toLocaleDateString() + " • " + createdDate.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Unknown";
   return `<div class="purchase-summary-item admin-purchase-user-card az-admin-user-compact-card">
     <div class="az-admin-user-compact-name"><strong>${recordDisplayName(user)}</strong></div>
-    <span class="az-admin-register-date">${registeredText}</span>
     <span class="az-admin-user-access-badge ${hasAccess ? 'is-allowed' : 'is-blocked'}">${hasAccess ? 'PA/BM allowed' : 'PA/BM off'}</span>
+    <span class="az-admin-register-date">${registeredText}</span>
     <div class="az-admin-user-row-actions">
       <button class="az-admin-small-btn az-admin-edit-small" type="button" data-admin-edit-user="${id}">Edit</button>
       <button class="az-admin-small-btn az-admin-delete-small" type="button" data-admin-delete-user="${id}" ${isSelf ? 'disabled title="Cannot delete current admin"' : ''}>Delete</button>
