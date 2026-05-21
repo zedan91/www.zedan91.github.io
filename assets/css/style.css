@@ -2052,7 +2052,7 @@ body:not(.is-admin) #registeredUsersPanel {
   background: linear-gradient(135deg,#2563eb,#3b82f6) !important;
 }
 
-.hero-actions .btn[href="tools/index.html"]{
+.hero-actions .btn[href="tools/"]{
   background: linear-gradient(135deg,#22c55e,#16a34a) !important;
 }
 
