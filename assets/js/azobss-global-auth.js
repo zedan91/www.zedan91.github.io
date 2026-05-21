@@ -20,7 +20,7 @@
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -725,11 +725,11 @@ async function loadAzobssPurchaseRecords(){
     if(!record) return;
     const normalized = { ...record };
     normalized.createdAtMs = Number(normalized.createdAtMs || (normalized.createdAtClient ? Date.parse(normalized.createdAtClient) : 0) || 0);
+    normalized.usernameKey = String(normalized.usernameKey || '').trim().toLowerCase();
+    normalized.uid = String(normalized.uid || '');
     if(!merged.some(item => isSamePurchase(item, normalized))) merged.push(normalized);
   }
-  readLocalPurchaseRecords().forEach(push);
-  try{
-    const snap = await getDocs(collection(db, AZOBSS_PURCHASE_COLLECTION));
+  function pushSnap(snap){
     snap.forEach(docSnap => {
       const data = docSnap.data() || {};
       let ms = Number(data.createdAtMs || 0);
@@ -737,13 +737,43 @@ async function loadAzobssPurchaseRecords(){
       if(!ms && data.createdAt && typeof data.createdAt.toMillis === 'function') ms = data.createdAt.toMillis();
       push({ id: docSnap.id, firestoreId: docSnap.id, ...data, createdAtMs: ms });
     });
+  }
+
+  // Local cache remains as fast fallback only. The main source is Firestore.
+  readLocalPurchaseRecords().forEach(push);
+
+  try{
+    const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+    if(isAdminUser){
+      // Admin can read all purchase records if Firestore rules allow it.
+      pushSnap(await getDocs(purchaseCol));
+    }else if(current?.uid){
+      // Normal users should only query their own records. This works with stricter Firestore rules
+      // and fixes Latest Purchase List disappearing after browser restart.
+      pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
+    }
+
+    const key = getUserKey(current);
+    if(!isAdminUser && key){
+      // Compatibility for older records saved before uid was available.
+      try{
+        pushSnap(await getDocs(query(purchaseCol, where('usernameKey', '==', key))));
+      }catch(usernameQueryError){
+        console.warn('Firestore purchase usernameKey compatibility query failed:', usernameQueryError);
+      }
+    }
   }catch(error){
     console.warn('Firestore purchase records read fallback to localStorage:', error);
   }
+
   const key = getUserKey(current);
-  return merged
+  const rows = merged
     .filter(item => isAdminUser || String(item.usernameKey || '').toLowerCase() === key || (current?.uid && String(item.uid||'') === String(current.uid)))
     .sort((a,b) => Number(b.createdAtMs||0) - Number(a.createdAtMs||0));
+
+  // Keep latest Firestore result cached so refresh is fast, but never rely on cache as source of truth.
+  if(rows.length) writeLocalPurchaseRecords(rows.slice(0, 500));
+  return rows;
 }
 function escHtml(value){
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -1084,8 +1114,8 @@ function bindAuth() {
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{
-    if(!firebaseUser){ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); return; }
-    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); await upsertOnlineUser(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); }
+    if(!firebaseUser){ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); return; }
+    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); await upsertOnlineUser(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); }
     catch{ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
