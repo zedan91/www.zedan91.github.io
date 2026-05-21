@@ -71,6 +71,10 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .user-menu.is-open .user-dropdown{display:block!important;}
 .user-dropdown{z-index:3300!important;}
 .market-nav a.market-nav-active{background:#22c55e!important;border-color:#22c55e!important;color:#052e16!important;text-shadow:none!important;box-shadow:0 0 15px rgba(34,197,94,.34),inset 0 0 0 1px rgba(255,255,255,.12)!important;}
+.az-admin-user-edit-btn{border:0;border-radius:9px;background:#2f6bed;color:#fff;padding:9px 14px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.55);}
+.az-admin-user-edit-btn:hover{filter:brightness(1.08);}
+.az-admin-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.az-admin-modal-actions .btn.secondary{background:#64748b;}
 `;
   document.head.appendChild(style);
 }
@@ -118,6 +122,45 @@ function injectModal() {
       <p class="request-error" id="siteSignupError"></p>
       <button class="btn signup" type="submit">Sign up</button>
       <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+}
+
+function injectAdminUserEditModal() {
+  if (document.getElementById('adminUserEditModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div class="auth-modal" id="adminUserEditModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminUserEditTitle">
+    <div class="auth-modal-top">
+      <h3 id="adminUserEditTitle">Edit Registered User</h3>
+      <button class="auth-close-btn" id="adminUserEditClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="auth-modal-form" id="adminUserEditForm">
+      <input id="adminUserEditDocId" type="hidden">
+      <label for="adminUserEditUsername">Username / Name
+        <input id="adminUserEditUsername" placeholder="Username" required type="text">
+      </label>
+      <label for="adminUserEditPhone">Phone Number
+        <input id="adminUserEditPhone" inputmode="tel" placeholder="Example: 01135600723" type="tel">
+      </label>
+      <label for="adminUserEditEmail">Contact Email
+        <input id="adminUserEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email">
+      </label>
+      <label for="adminUserEditRole">Role
+        <input id="adminUserEditRole" placeholder="member / admin" type="text">
+      </label>
+      <label for="adminUserEditMemberCode">Member / Invite Code
+        <input id="adminUserEditMemberCode" placeholder="Example: ZX6186" type="text">
+      </label>
+      <p class="request-error" id="adminUserEditError"></p>
+      <div class="az-admin-modal-actions">
+        <button class="btn signup" type="submit">Save User</button>
+        <button class="btn secondary" id="adminUserEditCancel" type="button">Cancel</button>
+      </div>
+      <p class="auth-switch-note" style="text-align:left">Admin can edit profile records here. Password reset should be done using the reset-password flow.</p>
     </form>
   </div>
 </div>`;
@@ -377,13 +420,18 @@ function firestoreMs(value){
   const parsed = Date.parse(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
 }
+let azobssLastRegisteredUsers = [];
 function recordDisplayName(record){
   return escHtml(record.displayName || record.usernameKey || record.name || (record.email ? String(record.email).split('@')[0] : 'User'));
+}
+function userDocId(user){
+  return String(user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
 }
 function userProfileHtml(user){
   const code = escHtml(user.invitedByCode || user.memberCode || user.paMemberCode || '-');
   const role = escHtml(user.role || 'member');
   const dateMs = firestoreMs(user.createdAt) || firestoreMs(user.lastLoginAt) || firestoreMs(user.updatedAt);
+  const id = escHtml(userDocId(user));
   return `<div class="purchase-summary-item admin-purchase-user-card">
     <div class="admin-purchase-user-top"><strong>${recordDisplayName(user)}</strong><span>${role}</span></div>
     <div class="admin-purchase-user-details">
@@ -392,7 +440,69 @@ function userProfileHtml(user){
       <span>Member code: ${code}</span>
       <span>Created: ${dateMs ? new Date(dateMs).toLocaleString('en-MY',{hour12:false}) : '-'}</span>
     </div>
+    <button class="az-admin-user-edit-btn" type="button" data-admin-edit-user="${id}">Edit User</button>
   </div>`;
+}
+function openAdminUserEdit(userId){
+  if(!isAzobssAdmin(getSavedUser())) return;
+  const id = String(userId || '').toLowerCase();
+  const user = azobssLastRegisteredUsers.find(u => userDocId(u) === id);
+  if(!user) return;
+  const modal = $('adminUserEditModal');
+  if(!modal) return;
+  $('adminUserEditDocId').value = userDocId(user);
+  $('adminUserEditUsername').value = user.usernameKey || user.name || '';
+  $('adminUserEditPhone').value = user.phone || '';
+  $('adminUserEditEmail').value = user.email || '';
+  $('adminUserEditRole').value = user.role || 'member';
+  $('adminUserEditMemberCode').value = user.invitedByCode || user.memberCode || user.paMemberCode || '';
+  const err = $('adminUserEditError');
+  if(err){ err.textContent=''; err.style.color=''; }
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+}
+function closeAdminUserEdit(){
+  const modal = $('adminUserEditModal');
+  if(modal){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+}
+async function saveAdminUserEdit(){
+  const err = $('adminUserEditError');
+  if(err){ err.textContent=''; err.style.color=''; }
+  if(!isAzobssAdmin(getSavedUser())){ if(err) err.textContent='Admin only.'; return; }
+  const docId = String($('adminUserEditDocId')?.value || '').trim().toLowerCase();
+  const usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
+  if(!docId || !usernameKey){ if(err) err.textContent='Username is required.'; return; }
+  const code = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
+  const payload = {
+    usernameKey,
+    name: usernameKey,
+    displayName: usernameKey,
+    phone: cleanPhone($('adminUserEditPhone')?.value),
+    email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
+    role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
+    invitedByCode: code,
+    memberCode: code,
+    paMemberCode: code,
+    updatedAt: serverTimestamp(),
+    updatedAtClient: new Date().toISOString(),
+    updatedByAdmin: getSavedUser()?.usernameKey || 'admin'
+  };
+  try{
+    await setDoc(doc(db, 'users', docId), payload, { merge:true });
+    const current = getSavedUser();
+    if(current && String(current.usernameKey || '').toLowerCase() === docId){
+      const updated = { ...current, ...payload };
+      delete updated.updatedAt;
+      saveUser(updated);
+      syncHeader(updated);
+    }
+    if(err){ err.style.color='#62e6a5'; err.textContent='User updated successfully.'; }
+    await renderFirebaseAdminRecords();
+    setTimeout(closeAdminUserEdit, 650);
+  }catch(error){
+    console.warn('Admin user edit failed:', error);
+    if(err) err.textContent='Failed to save user. Check Firebase rules / internet connection.';
+  }
 }
 function liveUserHtml(user){
   const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastLoginAt);
@@ -482,10 +592,12 @@ async function renderFirebaseAdminRecords(){
     const userSnap = await getDocs(collection(db, 'users'));
     userSnap.forEach(d=>users.push({ id:d.id, ...d.data() }));
     users.sort((a,b)=>(firestoreMs(b.createdAt)||firestoreMs(b.updatedAt))-(firestoreMs(a.createdAt)||firestoreMs(a.updatedAt)));
+    azobssLastRegisteredUsers = users;
     const regList = document.getElementById('registeredUsersList');
     if(regList){
       const rows = users.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
       regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users yet.</div>';
+      regList.querySelectorAll('[data-admin-edit-user]').forEach(btn=>btn.addEventListener('click',()=>openAdminUserEdit(btn.dataset.adminEditUser)));
       adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, users.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderFirebaseAdminRecords();});
     }
     const registeredCount = document.getElementById('registeredUserCount');
@@ -896,6 +1008,11 @@ function bindAuth() {
       if(err){ err.style.color=''; err.textContent = error?.code==='auth/wrong-password' || error?.code==='auth/invalid-credential' ? 'Current password is wrong.' : 'Password reset failed. Please login again and try.'; }
     }
   });
+
+  $('adminUserEditClose')?.addEventListener('click', closeAdminUserEdit);
+  $('adminUserEditCancel')?.addEventListener('click', closeAdminUserEdit);
+  $('adminUserEditModal')?.addEventListener('click', (event)=>{ if(event.target?.id==='adminUserEditModal') closeAdminUserEdit(); });
+  $('adminUserEditForm')?.addEventListener('submit', async (event)=>{ event.preventDefault(); await saveAdminUserEdit(); });
 
   $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
