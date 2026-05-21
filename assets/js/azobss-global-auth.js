@@ -767,22 +767,28 @@ function renderAzobssPager(container, currentPage, totalItems, pageSize, onPage)
     container.hidden = true;
     return;
   }
+  currentPage = clampPage(currentPage, totalPages);
   container.hidden = false;
-  const button = (label, page, disabled, active) => `<button type="button" class="${active ? 'is-active' : ''}" data-page="${page}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+  container.classList.add('azobss-record-pagination');
+
+  const button = (label, page, disabled, active, title) =>
+    `<button type="button" class="guest-history-page-btn${active ? ' is-active' : ''}" data-page="${page}" title="${title || label}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+
   const pages = [];
-  const start = Math.max(1, currentPage - 2);
-  const end = Math.min(totalPages, currentPage + 2);
-  pages.push(button('← Previous', Math.max(1, currentPage - 1), currentPage === 1, false));
-  if(start > 1){
-    pages.push(button('1', 1, false, currentPage === 1));
-    if(start > 2) pages.push('<span class="pager-dots">...</span>');
+  pages.push(button('<<', 1, currentPage === 1, false, 'First page'));
+  pages.push(button('P', Math.max(1, currentPage - 1), currentPage === 1, false, 'Previous page'));
+
+  let start = Math.max(1, currentPage - 1);
+  let end = Math.min(totalPages, start + 2);
+  start = Math.max(1, end - 2);
+
+  for(let i=start; i<=end; i++){
+    pages.push(button(String(i), i, false, currentPage === i, 'Page ' + i));
   }
-  for(let i=start; i<=end; i++) pages.push(button(String(i), i, false, currentPage === i));
-  if(end < totalPages){
-    if(end < totalPages - 1) pages.push('<span class="pager-dots">...</span>');
-    pages.push(button(String(totalPages), totalPages, false, currentPage === totalPages));
-  }
-  pages.push(button('Next →', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false));
+
+  pages.push(button('N', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false, 'Next page'));
+  pages.push(button('>>', totalPages, currentPage === totalPages, false, 'Last page'));
+
   container.innerHTML = pages.join('');
   container.querySelectorAll('button[data-page]').forEach(btn => {
     btn.addEventListener('click', () => onPage(Number(btn.dataset.page)));

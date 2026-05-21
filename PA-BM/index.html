@@ -6821,6 +6821,54 @@ body{padding-top:58px!important;}
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+
+<style>
+/* AZOBSS FIX: Purchase Records pagination style like reference screenshot */
+#purchaseRecordsPagination,
+#userPaPurchasePagination{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  flex-wrap:wrap !important;
+  gap:7px !important;
+  margin-top:10px !important;
+}
+#purchaseRecordsPagination[hidden],
+#userPaPurchasePagination[hidden]{
+  display:none !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn,
+#userPaPurchasePagination .guest-history-page-btn{
+  min-width:34px !important;
+  height:34px !important;
+  padding:0 10px !important;
+  border:1px solid rgba(37,99,235,.65) !important;
+  border-radius:8px !important;
+  background:#0f172a !important;
+  color:#cbd5e1 !important;
+  font-weight:800 !important;
+  font-size:13px !important;
+  line-height:1 !important;
+  box-shadow:none !important;
+  cursor:pointer !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn:hover:not(:disabled),
+#userPaPurchasePagination .guest-history-page-btn:hover:not(:disabled){
+  border-color:#22c55e !important;
+  color:#fff !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn.is-active,
+#userPaPurchasePagination .guest-history-page-btn.is-active{
+  background:#22c55e !important;
+  border-color:#22c55e !important;
+  color:#052e16 !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn:disabled,
+#userPaPurchasePagination .guest-history-page-btn:disabled{
+  opacity:.55 !important;
+  cursor:not-allowed !important;
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
