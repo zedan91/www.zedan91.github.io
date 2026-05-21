@@ -267,25 +267,50 @@ function normalizeLikeRow(value, index=0){
   const itemId = btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80);
   return { itemId, title, category, pageUrl:'#', createdAtClient:new Date(Date.now()-index).toISOString(), createdAtMs:Date.now()-index };
 }
-function likeItemFromButton(btn){
-  const card = btn.closest('.product-card,.card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.purchase-summary-item') || btn.parentElement;
-  const path = location.pathname.replace(/^\//,'').split('/')[0] || 'home';
-  let title = String(btn.dataset.title || '').trim();
-  let category = String(btn.dataset.category || path || 'local').trim();
-  const titleEl = card?.querySelector('h1,h2,h3,h4,.product-title,.tool-title,.program-title,.download-title,[data-title],strong,b');
-  if(!title && titleEl) title = titleEl.getAttribute('data-title') || titleEl.textContent;
-  if(!title){
-    title = (card?.innerText || '')
+function makeLikeId(raw){
+  return btoa(unescape(encodeURIComponent(String(raw || 'azobss-item'))))
+    .replace(/[=+/]/g,'')
+    .slice(0,110);
+}
+function cleanLikeTitle(text){
+  return String(text || '')
+    .replace(/[♡❤️🤍]/g,'')
+    .replace(/\b(like|unlike|open|download now|buyer protection|sold)\b/ig,'')
+    .replace(/\s+/g,' ')
+    .trim()
+    .slice(0,120);
+}
+function pageLikeCategory(){
+  const path = location.pathname.toLowerCase();
+  if(path.includes('/affiliate-shop/')) return 'affiliate';
+  if(path.includes('/software-tools/')) return 'software';
+  if(path.includes('/cad-tools-&-resources/')) return 'cad';
+  return location.pathname.replace(/^\//,'').split('/')[0] || 'local';
+}
+function likeTitleFromCard(card){
+  if(!card) return 'AZOBSS Item';
+  const titleEl = card.querySelector?.('h1,h2,h3,h4,.product-title,.tool-title,.program-title,.download-title,[data-title],strong,b,a');
+  let title = titleEl ? (titleEl.getAttribute('data-title') || titleEl.textContent) : '';
+  if(!cleanLikeTitle(title)){
+    title = (card.innerText || '')
       .split('\n')
-      .map(s=>s.trim())
+      .map(cleanLikeTitle)
       .filter(Boolean)
-      .find(s=>!/[♡❤️🤍]/.test(s) && !/^sold|buyer protection|download now|open$/i.test(s)) || 'AZOBSS Item';
+      .find(s => !/^rm\s*\d+/i.test(s) && !/^search$/i.test(s)) || 'AZOBSS Item';
   }
-  title = title.replace(/[♡❤️🤍]/g,'').trim().slice(0,120) || 'AZOBSS Item';
-  if(!category || category === 'home') category = path || 'local';
-  const cardIndex=[...document.querySelectorAll('.product-card,.card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.purchase-summary-item')].indexOf(card);
-  const uniqueKey=(category+'|'+title+'|'+location.pathname+'|'+cardIndex);
-  const itemId = String(btn.dataset.likeId || btoa(unescape(encodeURIComponent(uniqueKey))).replace(/[=+/]/g,'').slice(0,80));
+  return cleanLikeTitle(title) || 'AZOBSS Item';
+}
+function likeItemFromButton(btn){
+  const selector = '.product-card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.card';
+  const card = btn.closest(selector) || btn.parentElement;
+  const category = pageLikeCategory();
+  const title = likeTitleFromCard(card);
+  const allCards = [...document.querySelectorAll(selector)].filter(el => el.querySelector?.('.azlike.card-like-btn') || el.classList.contains('az-like-host'));
+  const cardIndex = Math.max(0, allCards.indexOf(card));
+  const explicit = String(card?.dataset?.likeId || card?.getAttribute?.('data-like-id') || '').trim();
+  const sourceHref = card?.querySelector?.('a[href]')?.getAttribute('href') || '';
+  const uniqueKey = explicit || [category, location.pathname, cardIndex, title, sourceHref].join('|');
+  const itemId = makeLikeId(uniqueKey);
   return { itemId, title, category, pageUrl: location.pathname, createdAtClient: new Date().toISOString(), createdAtMs: Date.now() };
 }
 async function getFirebaseLikeIds(){
@@ -360,10 +385,9 @@ async function refreshLikeButtons(){
   await migrateLocalLikesToFirebase();
   const firebaseIds = await getFirebaseLikeIds();
   const localIds = new Set(localLikes().map(x => (normalizeLikeRow(x)||{}).itemId).filter(Boolean));
-  const localTitles = new Set(localLikes().map(x => (normalizeLikeRow(x)||{}).title).filter(Boolean));
   document.querySelectorAll('.azlike').forEach(btn => {
     const item = likeItemFromButton(btn);
-    const liked = firebaseIds.has(item.itemId) || localIds.has(item.itemId) || localTitles.has(item.title);
+    const liked = firebaseIds.has(item.itemId) || localIds.has(item.itemId);
     paintLikeButton(btn, liked);
     btn.style.cursor = 'pointer';
   });
@@ -550,11 +574,11 @@ document.addEventListener('click', function(event){
       b.className='azlike card-like-btn';
       b.textContent='♡';
       b.setAttribute('aria-label','Like item');
+      card.appendChild(b);
       const itemPreview = likeItemFromButton(b);
       b.dataset.likeId = itemPreview.itemId;
       b.dataset.title = itemPreview.title;
       b.dataset.category = itemPreview.category;
-      card.appendChild(b);
     });
     if(typeof refreshLikeButtons === 'function') refreshLikeButtons();
   }
