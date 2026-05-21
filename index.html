@@ -6886,6 +6886,119 @@ body{padding-top:58px!important;}
 .market-nav .nav-pa-bm-link.is-hidden,
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+
+
+/* AZOBSS REGISTERED USERS - TRUE ONE LINE COMPACT FINAL */
+#registeredUsersList{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:6px !important;
+}
+#registeredUsersList .az-admin-user-row-card,
+#registeredUsersList .az-admin-user-row-card.az-admin-user-compact-card{
+  display:grid !important;
+  grid-template-columns:minmax(115px,1fr) 112px 170px 116px !important;
+  align-items:center !important;
+  column-gap:10px !important;
+  row-gap:0 !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  padding:7px 10px !important;
+  min-height:36px !important;
+  border:1px solid rgba(148,163,184,.22) !important;
+  border-radius:10px !important;
+  background:rgba(15,23,42,.72) !important;
+  overflow:hidden !important;
+}
+#registeredUsersList .az-admin-user-row-card > *{
+  min-width:0 !important;
+  margin:0 !important;
+}
+#registeredUsersList .az-admin-user-compact-name,
+#registeredUsersList .az-admin-user-row-card .az-admin-user-compact-name{
+  display:block !important;
+  min-width:0 !important;
+  flex:initial !important;
+}
+#registeredUsersList .az-admin-user-compact-name strong{
+  display:block !important;
+  color:#ffb347 !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+#registeredUsersList .az-admin-user-access-badge,
+#registeredUsersList .az-admin-user-row-card .az-admin-user-access-badge{
+  display:block !important;
+  flex:initial !important;
+  width:auto !important;
+  min-width:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  padding:0 !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+#registeredUsersList .az-admin-user-access-badge.is-allowed{color:#22c55e !important;}
+#registeredUsersList .az-admin-user-access-badge.is-blocked{color:#f87171 !important;}
+#registeredUsersList .az-admin-register-date,
+#registeredUsersList .az-admin-user-row-card .az-admin-register-date{
+  display:block !important;
+  flex:initial !important;
+  min-width:0 !important;
+  font-size:12px !important;
+  line-height:1 !important;
+  color:#cbd5e1 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+#registeredUsersList .az-admin-user-row-actions,
+#registeredUsersList .az-admin-user-row-card .az-admin-user-row-actions{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:6px !important;
+  flex:initial !important;
+  margin-left:0 !important;
+  min-width:0 !important;
+}
+#registeredUsersList .az-admin-small-btn,
+#registeredUsersList .az-admin-user-row-card .az-admin-small-btn{
+  width:52px !important;
+  min-width:52px !important;
+  max-width:52px !important;
+  height:24px !important;
+  min-height:24px !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:6px !important;
+  font-size:10px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+#registeredUsersList .az-admin-edit-small{background:#2563eb !important;color:#fff !important;}
+#registeredUsersList .az-admin-delete-small{background:#ef4444 !important;color:#fff !important;}
+@media(max-width:700px){
+  #registeredUsersList .az-admin-user-row-card,
+  #registeredUsersList .az-admin-user-row-card.az-admin-user-compact-card{
+    grid-template-columns:minmax(90px,1fr) 98px 148px 108px !important;
+    overflow-x:auto !important;
+  }
+}
 </style>
 </head>
 <body id="top">

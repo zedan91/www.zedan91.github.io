@@ -467,7 +467,7 @@ function userProfileHtml(user){
   const id = escHtml(userDocId(user));
   const isSelf = String(getSavedUser()?.usernameKey || '').toLowerCase() === String(id).toLowerCase();
   const createdDate = user.createdAt?.toDate ? user.createdAt.toDate() : (user.createdAt ? new Date(user.createdAt) : null);
-  const registeredText = createdDate && !isNaN(createdDate) ? createdDate.toLocaleDateString() + " • " + createdDate.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Unknown";
+  const registeredText = createdDate && !isNaN(createdDate) ? createdDate.toLocaleDateString() + " • " + createdDate.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",hour12:true}) : "Unknown";
   return `<div class="az-admin-user-row-card az-admin-user-compact-card">
     <div class="az-admin-user-compact-name"><strong>${recordDisplayName(user)}</strong></div>
     <span class="az-admin-user-access-badge ${hasAccess ? 'is-allowed' : 'is-blocked'}">${hasAccess ? 'PA/BM allowed' : 'PA/BM off'}</span>
