@@ -586,7 +586,8 @@ document.addEventListener('click', function(event){
       #lispList tr.az-like-host .azlike.card-like-btn{top:50%!important;right:8px!important;transform:translateY(-50%)!important;}
       #lispList tr.az-like-host .azlike.card-like-btn:hover{transform:translateY(-50%) scale(1.08)!important;}
       #lispList tr.az-like-host td:last-child{padding-right:48px!important;}
-      @media(max-width:640px){.azlike.card-like-btn{width:32px!important;height:32px!important;font-size:16px!important;top:8px!important;right:8px!important;}}
+       .az-like-host .tag,.az-like-host .category-badge,.az-like-host [class*="tag"],.az-like-host [class*="badge"]{margin-right:48px!important;}
+@media(max-width:640px){.azlike.card-like-btn{width:32px!important;height:32px!important;font-size:16px!important;top:8px!important;right:8px!important;}.az-like-host .tag,.az-like-host .category-badge,.az-like-host [class*="tag"],.az-like-host [class*="badge"]{margin-right:40px!important;}}
     `;
     document.head.appendChild(style);
   }
