@@ -52,6 +52,7 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .user-menu{position:relative!important;}
 .user-menu.is-open .user-dropdown{display:block!important;}
 .user-dropdown{z-index:3300!important;}
+.market-nav a.market-nav-active{background:#22c55e!important;border-color:#22c55e!important;color:#052e16!important;text-shadow:none!important;box-shadow:0 0 15px rgba(34,197,94,.34),inset 0 0 0 1px rgba(255,255,255,.12)!important;}
 `;
   document.head.appendChild(style);
 }
@@ -153,6 +154,44 @@ function normalizeUserMenu() {
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
 }
 
+function normalizePath(pathname) {
+  return String(pathname || '/')
+    .toLowerCase()
+    .replace(/\/index\.html$/, '/')
+    .replace(/\/+$/, '/');
+}
+
+function getActiveNavPath() {
+  const path = normalizePath(location.pathname);
+  if (path === '/') return '';
+  if (path.includes('/pa-bm/')) return '/pa-bm/';
+  if (path.includes('/software-tools/')) return '/software-tools/';
+  if (path.includes('/cad-tools-&-resources/') || path.includes('/cad-tools-%26-resources/')) return '/cad-tools-&-resources/';
+  if (path.includes('/affiliate-shop/')) return '/affiliate-shop/';
+  if (path.includes('/lucky-draw/')) return '/lucky-draw/';
+  if (path.includes('/tools/')) return '/tools/';
+  return '';
+}
+
+function syncActiveNav() {
+  const activePath = getActiveNavPath();
+  document.querySelectorAll('.market-nav a').forEach((link) => {
+    link.classList.remove('market-nav-primary', 'is-active', 'market-nav-active');
+    if (!activePath) return;
+
+    let linkPath = '';
+    try {
+      linkPath = normalizePath(new URL(link.getAttribute('href') || '', location.href).pathname);
+    } catch {
+      linkPath = '';
+    }
+
+    if (linkPath.includes(activePath)) {
+      link.classList.add('market-nav-active');
+    }
+  });
+}
+
 function injectProfileSettingsModal() {
   if (document.getElementById('profileSettingsModal')) return;
   const wrap = document.createElement('div');
@@ -243,7 +282,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
 }
 
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncHeader(getSavedUser());
+  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser());
 
   document.addEventListener('click', async (event) => {
     if (event.target.closest('#logoutButton')) {
