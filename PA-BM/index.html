@@ -6869,6 +6869,13 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   cursor:not-allowed !important;
 }
 </style>
+
+<style id="azobss-pa-bm-page-access-guard">
+body:not(.has-pa-access) main,
+body:not(.has-pa-access) .pa-section,
+body:not(.has-pa-access) #paForm,
+body:not(.has-pa-access) #adminPurchasePanel{display:none!important;}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -9164,7 +9171,12 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     }else{
       document.body.classList.remove('is-admin');
     }
-    document.body.classList.add('has-pa-access');
+    var currentUserForAccess = getCurrentUserObject();
+    var paAccessAllowed = false;
+    try{
+      paAccessAllowed = !!(typeof window.azobssHasPaBmAccess === 'function' && window.azobssHasPaBmAccess(currentUserForAccess));
+    }catch(e){ paAccessAllowed = false; }
+    document.body.classList.toggle('has-pa-access', paAccessAllowed);
 
     var panel = document.getElementById('adminPurchasePanel');
     if(panel){

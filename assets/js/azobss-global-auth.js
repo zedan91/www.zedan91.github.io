@@ -336,6 +336,31 @@ function hasPaBmTabAccess(user){
   return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
 
+function isPaBmProtectedPage(){
+  return /\/PA-BM\/?(?:index\.html)?$/i.test(location.pathname) || /\/PA-BM\//i.test(location.pathname);
+}
+function showPaBmDeniedAndRedirect(){
+  try{ sessionStorage.setItem('azobssAccessDeniedMessage', 'PA / BM hanya untuk admin atau member yang dibenarkan.'); }catch(e){}
+  const target = '/';
+  if(location.pathname !== target) location.replace(target);
+}
+function enforcePaBmPageAccess(user, settled){
+  if(!isPaBmProtectedPage()) return;
+  if(hasPaBmTabAccess(user)) return;
+  if(settled) showPaBmDeniedAndRedirect();
+}
+function showAccessDeniedMessage(){
+  let msg = '';
+  try{ msg = sessionStorage.getItem('azobssAccessDeniedMessage') || ''; sessionStorage.removeItem('azobssAccessDeniedMessage'); }catch(e){}
+  if(!msg) return;
+  const box = document.createElement('div');
+  box.className = 'azobss-access-denied-toast';
+  box.textContent = msg;
+  document.body.appendChild(box);
+  setTimeout(()=>box.classList.add('is-visible'), 30);
+  setTimeout(()=>{ box.classList.remove('is-visible'); setTimeout(()=>box.remove(), 350); }, 4200);
+}
+
 function syncHeader(user){
   const authActions = $('siteAuthActions');
   const tools = $('marketUserTools');
@@ -1088,7 +1113,14 @@ window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
 window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
+  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser());
+  if(!document.getElementById('azobss-access-denied-style')){
+    const st=document.createElement('style'); st.id='azobss-access-denied-style';
+    st.textContent='.azobss-access-denied-toast{position:fixed;left:50%;top:74px;transform:translateX(-50%) translateY(-8px);background:#1f2937;color:#fff;border:1px solid #22c55e;border-radius:14px;padding:12px 16px;z-index:999999;box-shadow:0 18px 50px rgba(0,0,0,.45);opacity:0;transition:.25s ease;font-weight:800}.azobss-access-denied-toast.is-visible{opacity:1;transform:translateX(-50%) translateY(0)}';
+    document.head.appendChild(st);
+  }
+  showAccessDeniedMessage();
+  bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
     if (event.target.closest('#logoutButton')) {
@@ -1226,9 +1258,9 @@ function bindAuth() {
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{
-    if(!firebaseUser){ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); return; }
-    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); await upsertOnlineUser(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); }
-    catch{ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
+    if(!firebaseUser){ clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); return; }
+    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); await upsertOnlineUser(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); }
+    catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
   const hash = String(location.hash || '').toLowerCase();
