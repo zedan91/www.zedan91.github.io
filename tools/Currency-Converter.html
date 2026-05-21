@@ -483,6 +483,14 @@ body{padding-top:58px!important;}
 }
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+
+<style id="azobss-pa-bm-access-lock-final">
+/* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
+.market-nav .nav-pa-bm-link[hidden],
+.market-nav .nav-pa-bm-link.is-hidden,
+a#paBmNavButton[hidden],
+a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">

@@ -265,7 +265,13 @@ function syncHeader(user){
   const paBm = $('paBmNavButton');
   const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
   const canShowPaBm = hasPaBmTabAccess(user);
-  if (paBm) { paBm.hidden = !canShowPaBm; paBm.classList.toggle('is-hidden', !canShowPaBm); }
+  if (paBm) {
+    paBm.hidden = !canShowPaBm;
+    paBm.classList.toggle('is-hidden', !canShowPaBm);
+    paBm.style.setProperty('display', canShowPaBm ? 'inline-flex' : 'none', 'important');
+    paBm.style.setProperty('visibility', canShowPaBm ? 'visible' : 'hidden', 'important');
+    paBm.style.setProperty('pointer-events', canShowPaBm ? 'auto' : 'none', 'important');
+  }
   if (display) {
     document.body.classList.add('is-authenticated');
     if (name) name.textContent = display;

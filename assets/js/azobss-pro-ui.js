@@ -1,6 +1,19 @@
 
 (function(){
   'use strict';
+  function lockPaBmTab(){
+    if(document.getElementById('azobss-pa-bm-js-lock')) return;
+    var style=document.createElement('style');
+    style.id='azobss-pa-bm-js-lock';
+    style.textContent='.market-nav .nav-pa-bm-link[hidden],.market-nav .nav-pa-bm-link.is-hidden,a#paBmNavButton[hidden],a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}';
+    document.head.appendChild(style);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', lockPaBmTab); else lockPaBmTab();
+})();
+
+
+(function(){
+  'use strict';
   var folderMap = {
     '/PA-BM/':'/PA-BM/',
     '/Software-Tools/':'/Software-Tools/',
