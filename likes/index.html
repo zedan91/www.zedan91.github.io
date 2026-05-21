@@ -139,5 +139,5 @@
   </main>
   <script type="module" src="/assets/js/azobss-global-auth.js"></script>
   <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script>
-</body>
+<script>document.addEventListener("click",e=>{const c=e.target.closest(".liked-item,.like-card,.product-card"); if(!c)return; const url=c.dataset.url||c.getAttribute("data-link")||''; const cat=(c.dataset.type||'').toLowerCase(); if(url){window.location=url;return;} if(cat.includes('cad')) window.location='/CAD-Tools-&-Resources/';});</script></body>
 </html>
