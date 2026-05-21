@@ -19,7 +19,7 @@
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -230,7 +230,7 @@ function injectProfileSettingsModal() {
       <label for="profileEditName">Username / Name<input id="profileEditName" placeholder="Username" required type="text"></label>
       <label for="profileEditPhone">Phone Number<input id="profileEditPhone" inputmode="tel" placeholder="Example: 01135600723" type="tel"></label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
-      <p class="profile-settings-note">This updates the local profile display on this website.</p>
+      <p class="profile-settings-note">This updates your profile in Firebase and keeps it saved after reopening the browser.</p>
       <div class="profile-password-box" aria-label="Reset Password">
         <p class="profile-password-title">Reset Password</p>
         <p class="profile-password-help">For security, enter your current password first, then set a new password.</p>
@@ -356,6 +356,178 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   return profile;
 }
 
+
+
+
+
+// Firebase persistent admin/user records.
+const AZOBSS_LOGIN_HISTORY_COLLECTION = 'loginHistory';
+const AZOBSS_ONLINE_USERS_COLLECTION = 'onlineUsers';
+const AZOBSS_GUEST_HISTORY_COLLECTION = 'guestHistory';
+const AZOBSS_ADMIN_PAGE_SIZE = 4;
+let azobssRegisteredUsersPage = 1;
+let azobssLiveUsersPage = 1;
+let azobssLoginHistoryPage = 1;
+let azobssGuestHistoryPage = 1;
+
+function firestoreMs(value){
+  if(!value) return 0;
+  if(typeof value.toMillis === 'function') return value.toMillis();
+  if(typeof value === 'number') return value;
+  const parsed = Date.parse(String(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+function recordDisplayName(record){
+  return escHtml(record.displayName || record.usernameKey || record.name || (record.email ? String(record.email).split('@')[0] : 'User'));
+}
+function userProfileHtml(user){
+  const code = escHtml(user.invitedByCode || user.memberCode || user.paMemberCode || '-');
+  const role = escHtml(user.role || 'member');
+  const dateMs = firestoreMs(user.createdAt) || firestoreMs(user.lastLoginAt) || firestoreMs(user.updatedAt);
+  return `<div class="purchase-summary-item admin-purchase-user-card">
+    <div class="admin-purchase-user-top"><strong>${recordDisplayName(user)}</strong><span>${role}</span></div>
+    <div class="admin-purchase-user-details">
+      <span>Email: ${escHtml(user.email || '-')}</span>
+      <span>Phone: ${escHtml(user.phone || '-')}</span>
+      <span>Member code: ${code}</span>
+      <span>Created: ${dateMs ? new Date(dateMs).toLocaleString('en-MY',{hour12:false}) : '-'}</span>
+    </div>
+  </div>`;
+}
+function liveUserHtml(user){
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastLoginAt);
+  return `<div class="purchase-summary-item admin-purchase-user-card">
+    <div class="admin-purchase-user-top"><strong>${recordDisplayName(user)}</strong><span>${ms ? new Date(ms).toLocaleString('en-MY',{hour12:false}) : '-'}</span></div>
+    <div class="admin-purchase-user-details">
+      <span>Email: ${escHtml(user.email || '-')}</span>
+      <span>Phone: ${escHtml(user.phone || '-')}</span>
+      <span>Status: online / recently active</span>
+    </div>
+  </div>`;
+}
+function loginHistoryHtml(row){
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  return `<div class="purchase-summary-item admin-purchase-user-card">
+    <div class="admin-purchase-user-top"><strong>${recordDisplayName(row)}</strong><span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span></div>
+    <div class="admin-purchase-user-details">
+      <span>Email: ${escHtml(row.email || '-')}</span>
+      <span>Phone: ${escHtml(row.phone || '-')}</span>
+      <span>Time: ${ms ? new Date(ms).toLocaleString('en-MY',{hour12:false}) : '-'}</span>
+    </div>
+  </div>`;
+}
+function adminPager(el, page, total, size, onPage){
+  if(!el) return;
+  const totalPages = Math.max(1, Math.ceil(total / size));
+  if(total <= size){ el.innerHTML = ''; return; }
+  let html = `<button class="guest-history-page-btn" type="button" data-page="prev" ${page<=1?'disabled':''}>Previous</button>`;
+  for(let i=1;i<=totalPages;i++) html += `<button class="guest-history-page-btn ${i===page?'is-active':''}" type="button" data-page="${i}">${i}</button>`;
+  html += `<button class="guest-history-page-btn" type="button" data-page="next" ${page>=totalPages?'disabled':''}>Next</button>`;
+  el.innerHTML = html;
+  el.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const v = btn.dataset.page;
+      let next = page;
+      if(v === 'prev') next = Math.max(1, page-1);
+      else if(v === 'next') next = Math.min(totalPages, page+1);
+      else next = Number(v) || page;
+      onPage(next);
+    });
+  });
+}
+async function upsertOnlineUser(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{
+    await setDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase()), {
+      uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
+      email: u.email || '', phone: u.phone || '', role: u.role || 'member',
+      invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
+      lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString()
+    }, { merge:true });
+  }catch(error){ console.warn('Firebase online user save failed:', error); }
+}
+async function recordLoginHistory(user, action='login'){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  const sessionKey = `azobssLoginHistorySaved:${action}:${u.usernameKey}`;
+  if(sessionStorage.getItem(sessionKey)) return;
+  sessionStorage.setItem(sessionKey, '1');
+  try{
+    await addDoc(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION), {
+      uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
+      email: u.email || '', phone: u.phone || '', role: u.role || 'member', action,
+      invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
+      createdAt: serverTimestamp(), createdAtClient: new Date().toISOString(), createdAtMs: Date.now()
+    });
+  }catch(error){ console.warn('Firebase login history save failed:', error); }
+}
+async function saveProfileToFirebase(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{
+    await setDoc(doc(db, 'users', String(u.usernameKey).toLowerCase()), {
+      ...u,
+      usernameKey: String(u.usernameKey).toLowerCase(),
+      updatedAt: serverTimestamp(),
+      updatedAtClient: new Date().toISOString()
+    }, { merge:true });
+  }catch(error){ console.warn('Firebase profile save failed:', error); }
+}
+async function renderFirebaseAdminRecords(){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  try{
+    const users = [];
+    const userSnap = await getDocs(collection(db, 'users'));
+    userSnap.forEach(d=>users.push({ id:d.id, ...d.data() }));
+    users.sort((a,b)=>(firestoreMs(b.createdAt)||firestoreMs(b.updatedAt))-(firestoreMs(a.createdAt)||firestoreMs(a.updatedAt)));
+    const regList = document.getElementById('registeredUsersList');
+    if(regList){
+      const rows = users.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users yet.</div>';
+      adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, users.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderFirebaseAdminRecords();});
+    }
+    const registeredCount = document.getElementById('registeredUserCount');
+    if(registeredCount) registeredCount.textContent = String(users.length);
+  }catch(error){ console.warn('Firebase registered users read failed:', error); }
+
+  try{
+    const live = [];
+    const liveSnap = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
+    liveSnap.forEach(d=>live.push({ id:d.id, ...d.data() }));
+    live.sort((a,b)=>firestoreMs(b.lastSeenAt)-firestoreMs(a.lastSeenAt));
+    const liveList = document.getElementById('liveUsersList');
+    if(liveList){
+      const rows = live.slice((azobssLiveUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssLiveUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      liveList.innerHTML = rows.map(liveUserHtml).join('') || '<div class="purchase-summary-item">No online users yet.</div>';
+      adminPager(document.getElementById('liveUsersPagination'), azobssLiveUsersPage, live.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssLiveUsersPage=page; renderFirebaseAdminRecords();});
+    }
+    const onlineUserCount = document.getElementById('onlineUserCount');
+    if(onlineUserCount) onlineUserCount.textContent = String(live.length);
+  }catch(error){ console.warn('Firebase live users read failed:', error); }
+
+  try{
+    const rows = [];
+    const historySnap = await getDocs(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION));
+    historySnap.forEach(d=>rows.push({ id:d.id, ...d.data() }));
+    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
+    const list = document.getElementById('loginHistoryList');
+    if(list){
+      const visible = rows.slice((azobssLoginHistoryPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssLoginHistoryPage*AZOBSS_ADMIN_PAGE_SIZE);
+      list.innerHTML = visible.map(loginHistoryHtml).join('') || '<div class="purchase-summary-item">No login history yet.</div>';
+      adminPager(document.getElementById('loginHistoryPagination'), azobssLoginHistoryPage, rows.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssLoginHistoryPage=page; renderFirebaseAdminRecords();});
+    }
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0,10);
+    const monthKey = now.toISOString().slice(0,7);
+    const today = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,10)===todayKey).length;
+    const month = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,7)===monthKey).length;
+    const todayEl = document.getElementById('loginHistoryToday'); if(todayEl) todayEl.textContent = String(today);
+    const monthEl = document.getElementById('loginHistoryMonth'); if(monthEl) monthEl.textContent = String(month);
+  }catch(error){ console.warn('Firebase login history read failed:', error); }
+}
+window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
 
 
 // PA/BM purchase records: one shared source for PA + BM/SBM downloads.
@@ -604,7 +776,7 @@ window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
 window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI();
+  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
     if (event.target.closest('#logoutButton')) {
@@ -671,10 +843,10 @@ function bindAuth() {
     const password=fieldValue('siteLoginPassword');
     if(!usernameKey || !password){ if(err) err.textContent='Please enter username and password.'; return; }
     try{
-      await setPersistence(auth,browserSessionPersistence);
+      await setPersistence(auth,browserLocalPersistence);
       const credential=await signInWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
       const profile=await ensureUserProfile(credential.user,{usernameKey});
-      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); closeSiteAuth();
+      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); await upsertOnlineUser({uid:credential.user.uid,...profile,usernameKey}); await recordLoginHistory({uid:credential.user.uid,...profile,usernameKey}, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
   });
 
@@ -688,7 +860,7 @@ function bindAuth() {
     const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
     if(!usernameKey || password.length<6 || !phone || !email){ if(err) err.textContent='Please complete all required fields.'; return; }
     try{
-      await setPersistence(auth,browserSessionPersistence);
+      await setPersistence(auth,browserLocalPersistence);
       const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
       const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
       await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
@@ -696,8 +868,9 @@ function bindAuth() {
         localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
         sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
       }
-      saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member'});
-      syncHeader({usernameKey,email,phone,invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); closeSiteAuth();
+      const savedSignupUser={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member'};
+      saveUser(savedSignupUser);
+      syncHeader(savedSignupUser); await upsertOnlineUser(savedSignupUser); await recordLoginHistory(savedSignupUser, 'signup'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
   });
 
@@ -732,12 +905,12 @@ function bindAuth() {
       phone: cleanPhone($('profileEditPhone')?.value),
       email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
     };
-    saveUser(updated); syncHeader(updated); closeProfileSettings();
+    saveUser(updated); await saveProfileToFirebase(updated); await upsertOnlineUser(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{
-    if(!firebaseUser){ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); return; }
-    try{ const profile=await ensureUserProfile(firebaseUser); saveUser({uid:firebaseUser.uid,...profile}); syncHeader({uid:firebaseUser.uid,...profile}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
+    if(!firebaseUser){ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); return; }
+    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); await upsertOnlineUser(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); }
     catch{ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
