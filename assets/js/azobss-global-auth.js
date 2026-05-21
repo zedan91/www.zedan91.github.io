@@ -1344,6 +1344,8 @@ function bindAuth() {
       await signOut(auth).catch(()=>{});
       clearUser();
       syncHeader(null);
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>el.classList.remove('is-open'));
+      window.location.replace('/');
       return;
     }
 
