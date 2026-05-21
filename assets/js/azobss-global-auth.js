@@ -648,31 +648,133 @@ async function saveProfileToFirebase(user){
     }, { merge:true });
   }catch(error){ console.warn('Firebase profile save failed:', error); }
 }
+
+let azobssOnlineUserIds = new Set();
+function getRegisteredUserControls(){
+  return {
+    search: document.getElementById('registeredUserSearch'),
+    sort: document.getElementById('registeredUserSort'),
+    refresh: document.getElementById('refreshUsersButton')
+  };
+}
+function registeredUserSearchText(user){
+  return [
+    user.usernameKey, user.displayName, user.name, user.email, user.phone,
+    user.memberCode, user.invitedByCode, user.paMemberCode, user.accessCode, user.signupCode,
+    user.role
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+function registeredUserHasPaAccess(user){
+  const role = String(user.role || 'member').toLowerCase();
+  const code = normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '');
+  return role === 'admin' || code === 'ZX6186' || user.allowPABM === true || user.paBmAllowed === true || String(user.paAccess || '').toLowerCase() === 'yes';
+}
+function registeredUserCreatedMs(user){
+  return firestoreMs(user.createdAt) || firestoreMs(user.createdAtClient) || Number(user.createdAtMs || 0) || firestoreMs(user.updatedAt) || firestoreMs(user.updatedAtClient);
+}
+function getFilteredRegisteredUsers(users){
+  const controls = getRegisteredUserControls();
+  const q = String(controls.search?.value || '').trim().toLowerCase();
+  const sort = String(controls.sort?.value || 'username');
+  let rows = Array.isArray(users) ? users.slice() : [];
+
+  if(q){
+    rows = rows.filter(user => registeredUserSearchText(user).includes(q));
+  }
+
+  if(sort === 'onlineOnly'){
+    rows = rows.filter(user => azobssOnlineUserIds.has(userDocId(user)));
+  }else if(sort === 'paAllowed'){
+    rows = rows.filter(registeredUserHasPaAccess);
+  }
+
+  if(sort === 'dateNewest'){
+    rows.sort((a,b)=>registeredUserCreatedMs(b)-registeredUserCreatedMs(a));
+  }else if(sort === 'dateOldest'){
+    rows.sort((a,b)=>registeredUserCreatedMs(a)-registeredUserCreatedMs(b));
+  }else{
+    rows.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
+  }
+  return rows;
+}
+function updateRegisteredUserStats(users){
+  const todayEl = document.getElementById('registeredUsersToday');
+  const monthEl = document.getElementById('registeredUsersMonth');
+  if(!todayEl && !monthEl) return;
+  const now = new Date();
+  let today = 0, month = 0;
+  (users || []).forEach(user => {
+    const ms = registeredUserCreatedMs(user);
+    if(!ms) return;
+    const d = new Date(ms);
+    if(d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()){
+      month++;
+      if(d.getDate() === now.getDate()) today++;
+    }
+  });
+  if(todayEl) todayEl.textContent = String(today);
+  if(monthEl) monthEl.textContent = String(month);
+}
+function bindRegisteredUsersControls(){
+  const controls = getRegisteredUserControls();
+  [controls.search, controls.sort, controls.refresh].forEach(el => {
+    if(!el || el.dataset.azobssRegisteredUsersBind) return;
+    el.dataset.azobssRegisteredUsersBind = '1';
+    const handler = () => {
+      azobssRegisteredUsersPage = 1;
+      renderFirebaseAdminRecords();
+    };
+    if(el.tagName === 'BUTTON') el.addEventListener('click', handler);
+    else {
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+    }
+  });
+}
+
 async function renderFirebaseAdminRecords(){
   const current = getSavedUser();
   if(!isAzobssAdmin(current)) return;
+  bindRegisteredUsersControls();
+
+  let live = [];
+  try{
+    const liveSnapPre = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
+    liveSnapPre.forEach(d=>live.push({ id:d.id, ...d.data() }));
+    azobssOnlineUserIds = new Set(live.map(userDocId).filter(Boolean));
+  }catch(error){
+    console.warn('Firebase online users pre-read failed:', error);
+    azobssOnlineUserIds = new Set();
+  }
+
   try{
     const users = [];
     const userSnap = await getDocs(collection(db, 'users'));
     userSnap.forEach(d=>users.push({ id:d.id, ...d.data() }));
-    users.sort((a,b)=>(firestoreMs(b.createdAt)||firestoreMs(b.updatedAt))-(firestoreMs(a.createdAt)||firestoreMs(a.updatedAt)));
+    users.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
     azobssLastRegisteredUsers = users;
+    updateRegisteredUserStats(users);
+    const filteredUsers = getFilteredRegisteredUsers(users);
+    const maxPage = Math.max(1, Math.ceil(filteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(Math.max(1, azobssRegisteredUsersPage), maxPage);
     const regList = document.getElementById('registeredUsersList');
     if(regList){
-      const rows = users.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
-      regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users yet.</div>';
+      const rows = filteredUsers.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users found.</div>';
       regList.querySelectorAll('[data-admin-edit-user]').forEach(btn=>btn.addEventListener('click',()=>openAdminUserEdit(btn.dataset.adminEditUser)));
       regList.querySelectorAll('[data-admin-delete-user]').forEach(btn=>btn.addEventListener('click',()=>deleteAdminRegisteredUser(btn.dataset.adminDeleteUser)));
-      adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, users.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderFirebaseAdminRecords();});
+      adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, filteredUsers.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderFirebaseAdminRecords();});
     }
     const registeredCount = document.getElementById('registeredUserCount');
     if(registeredCount) registeredCount.textContent = String(users.length);
   }catch(error){ console.warn('Firebase registered users read failed:', error); }
 
   try{
-    const live = [];
-    const liveSnap = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
-    liveSnap.forEach(d=>live.push({ id:d.id, ...d.data() }));
+    if(!live.length){
+      const liveSnap = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
+      liveSnap.forEach(d=>live.push({ id:d.id, ...d.data() }));
+      azobssOnlineUserIds = new Set(live.map(userDocId).filter(Boolean));
+    }
     live.sort((a,b)=>firestoreMs(b.lastSeenAt)-firestoreMs(a.lastSeenAt));
     const liveList = document.getElementById('liveUsersList');
     if(liveList){
