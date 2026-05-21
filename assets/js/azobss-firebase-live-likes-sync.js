@@ -1,7 +1,8 @@
 // AZOBSS Firebase Sync: online users, login history, guest visits, and likes.
 // This file is intentionally standalone so it can run on every page without depending on internal module scope.
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getFirestore, doc, setDoc, collection, addDoc, getDocs, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, collection, addDoc, getDocs, getDoc, updateDoc, serverTimestamp, deleteDoc, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -14,6 +15,8 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const authReady = new Promise(resolve => { try{ onAuthStateChanged(auth, user => resolve(user || null)); }catch{ resolve(null); } });
 
 const ONLINE_COLLECTION = 'onlineUsers';
 const LOGIN_HISTORY_COLLECTION = 'loginHistory';
@@ -31,7 +34,34 @@ function getSavedUser(){
 }
 function userKey(user){
   const u = user || getSavedUser() || {};
-  return String(u.uid || u.usernameKey || u.name || u.displayName || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase().replace(/[^a-z0-9_\-]/g,'');
+  // IMPORTANT: AZOBSS user profiles are stored using usernameKey as the document id.
+  // Use uid only as a fallback; otherwise likes can be saved under a uid doc and look empty later.
+  return String(u.usernameKey || u.name || u.displayName || (u.email ? String(u.email).split('@')[0] : '') || u.uid || '').trim().toLowerCase().replace(/[^a-z0-9_\-]/g,'');
+}
+function likeKeyCandidates(user){
+  const u = user || getSavedUser() || {};
+  const savedKey = userKey(u);
+  const uid = String(auth.currentUser?.uid || u.uid || '').trim().toLowerCase().replace(/[^a-z0-9_\-]/g,'');
+  const out = [];
+  [savedKey, uid].forEach(k => { if(k && !out.includes(k)) out.push(k); });
+  return out;
+}
+function likeGlobalId(key, itemId){
+  return String(key + '_' + itemId).replace(/[^a-zA-Z0-9_\-]/g,'').slice(0,180);
+}
+function compactLikePayload(item, user, key){
+  return {
+    ...item,
+    uid:String(auth.currentUser?.uid || user.uid || ''),
+    usernameKey:key,
+    displayName:String(user.usernameKey||user.name||user.displayName||key),
+    email:String(user.email||auth.currentUser?.email||''),
+    phone:String(user.phone||''),
+    createdAtMs:Number(item.createdAtMs || Date.now()),
+    updatedAtMs:Date.now(),
+    createdAtClient:item.createdAtClient || new Date().toISOString(),
+    updatedAtClient:new Date().toISOString()
+  };
 }
 function escapeHtml(value){
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -225,23 +255,13 @@ async function renderFirebaseLivePanels(){
 
 function localLikes(){ return safeJson(localStorage.getItem('azLikes')) || []; }
 function saveLocalLikes(arr){ try{ localStorage.setItem('azLikes', JSON.stringify(arr || [])); }catch{} }
-
-function upsertLocalLike(item){
-  const row = normalizeLikeRow(item);
-  if(!row) return;
-  const arr = localLikes().map(x => normalizeLikeRow(x)).filter(Boolean);
-  const idx = arr.findIndex(x => x.itemId === row.itemId || (x.title === row.title && x.category === row.category));
-  const next = { ...row, updatedAtClient:new Date().toISOString(), updatedAtMs:Date.now() };
-  if(idx >= 0) arr[idx] = { ...arr[idx], ...next };
-  else arr.unshift(next);
-  saveLocalLikes(arr);
+function setUserLikeCache(key, rows){
+  if(!key) return;
+  try{ localStorage.setItem('azLikes:' + key, JSON.stringify(rows || [])); }catch{}
 }
-function removeLocalLike(item){
-  const row = normalizeLikeRow(item);
-  if(!row) return;
-  const arr = localLikes().map(x => normalizeLikeRow(x)).filter(Boolean)
-    .filter(x => x.itemId !== row.itemId && !(x.title === row.title && x.category === row.category));
-  saveLocalLikes(arr);
+function getUserLikeCache(key){
+  if(!key) return [];
+  return safeJson(localStorage.getItem('azLikes:' + key)) || [];
 }
 function paintLikeButton(btn, liked){
   if(!btn) return;
@@ -251,21 +271,6 @@ function paintLikeButton(btn, liked){
   btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
   btn.title = liked ? 'Unlike' : 'Like';
   btn.style.color = liked ? '#ff3b5c' : '#ffffff';
-}
-function normalizeLikeRow(value, index=0){
-  if(value && typeof value === 'object'){
-    const title = String(value.title || value.name || 'AZOBSS Item').replace(/[♡❤️]/g,'').trim() || 'AZOBSS Item';
-    const category = String(value.category || value.type || 'local');
-    const pageUrl = String(value.pageUrl || value.url || '#');
-    const createdAtMs = Number(value.createdAtMs || value.updatedAtMs || (Date.parse(value.createdAtClient || '') || (Date.now()-index)));
-    const itemId = String(value.itemId || value.id || btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80));
-    return { itemId, title, category, pageUrl, createdAtClient:value.createdAtClient || new Date(createdAtMs).toISOString(), createdAtMs };
-  }
-  const title = String(value || '').replace(/[♡❤️]/g,'').trim();
-  if(!title) return null;
-  const category = 'local';
-  const itemId = btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80);
-  return { itemId, title, category, pageUrl:'#', createdAtClient:new Date(Date.now()-index).toISOString(), createdAtMs:Date.now()-index };
 }
 function makeLikeId(raw){
   return btoa(unescape(encodeURIComponent(String(raw || 'azobss-item'))))
@@ -300,59 +305,97 @@ function likeTitleFromCard(card){
   }
   return cleanLikeTitle(title) || 'AZOBSS Item';
 }
+function getLikeSourceUrl(card, category){
+  if(category === 'cad') return '/CAD-Tools-&-Resources/';
+  const a = card?.querySelector?.('a[href]');
+  const href = a ? String(a.getAttribute('href') || '').trim() : '';
+  if(!href || href === '#' || href.toLowerCase().startsWith('javascript:')) return location.pathname;
+  try{ return new URL(href, location.origin).href; }catch{ return href; }
+}
+function normalizeLikeRow(value, index=0){
+  if(value && typeof value === 'object'){
+    const title = cleanLikeTitle(value.title || value.name || 'AZOBSS Item') || 'AZOBSS Item';
+    const category = String(value.category || value.type || 'local');
+    const pageUrl = String(value.pageUrl || value.url || '#');
+    const createdAtMs = Number(value.createdAtMs || value.updatedAtMs || (Date.parse(value.createdAtClient || '') || (Date.now()-index)));
+    const itemId = String(value.itemId || value.id || makeLikeId(category + '|' + title + '|' + pageUrl));
+    return { itemId, title, category, pageUrl, createdAtClient:value.createdAtClient || new Date(createdAtMs).toISOString(), createdAtMs, updatedAtMs:Number(value.updatedAtMs || createdAtMs) };
+  }
+  const title = cleanLikeTitle(value);
+  if(!title) return null;
+  const category = 'local';
+  const itemId = makeLikeId(category + '|' + title);
+  return { itemId, title, category, pageUrl:'#', createdAtClient:new Date(Date.now()-index).toISOString(), createdAtMs:Date.now()-index, updatedAtMs:Date.now()-index };
+}
 function likeItemFromButton(btn){
   const selector = '.product-card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.card';
   const card = btn.closest(selector) || btn.parentElement;
   const category = pageLikeCategory();
-  const title = likeTitleFromCard(card);
-  const allCards = [...document.querySelectorAll(selector)].filter(el => el.querySelector?.('.azlike.card-like-btn') || el.classList.contains('az-like-host'));
-  const cardIndex = Math.max(0, allCards.indexOf(card));
-  const explicit = String(card?.dataset?.likeId || card?.getAttribute?.('data-like-id') || '').trim();
-  const sourceHref = card?.querySelector?.('a[href]')?.getAttribute('href') || '';
-  const uniqueKey = explicit || [category, location.pathname, cardIndex, title, sourceHref].join('|');
-  const itemId = makeLikeId(uniqueKey);
-  return { itemId, title, category, pageUrl: location.pathname, createdAtClient: new Date().toISOString(), createdAtMs: Date.now() };
+  const title = cleanLikeTitle(btn.dataset.title) || likeTitleFromCard(card);
+  const sourceUrl = getLikeSourceUrl(card, category);
+  let itemId = String(btn.dataset.likeId || card?.dataset?.likeId || card?.getAttribute?.('data-like-id') || '').trim();
+  if(!itemId){
+    const allCards = [...document.querySelectorAll(selector)].filter(el => el.classList.contains('az-like-host') || el.querySelector?.(':scope > .azlike.card-like-btn'));
+    const cardIndex = Math.max(0, allCards.indexOf(card));
+    itemId = makeLikeId([category, location.pathname, cardIndex, title, sourceUrl].join('|'));
+    if(btn) btn.dataset.likeId = itemId;
+    if(card?.dataset) card.dataset.likeId = itemId;
+  }
+  return { itemId, title, category, pageUrl:sourceUrl || location.pathname, createdAtClient:new Date().toISOString(), createdAtMs:Date.now(), updatedAtMs:Date.now() };
 }
-async function getFirebaseLikeIds(){
+async function readLikesFromFirebase(){
+  await authReady.catch(()=>null);
   const user = getSavedUser();
   const key = userKey(user);
-  if(!user || !key) return new Set();
-  const ids = new Set();
+  if(!user || !key) return [];
+  const rows = [];
   try{
     const snap = await getDocs(collection(db, 'users', key, 'likes'));
-    snap.forEach(d => ids.add(d.id));
-  }catch(error){ console.warn('AZOBSS read likes failed:', error); }
-  return ids;
+    snap.forEach(d => rows.push(normalizeLikeRow({ id:d.id, itemId:d.id, ...d.data() })));
+    setUserLikeCache(key, rows);
+    return rows;
+  }catch(error){
+    console.warn('AZOBSS read likes failed:', error);
+    return getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean);
+  }
 }
-async function writeLikeToFirebase(item, user, key){
-  const ref = doc(db, 'users', key, 'likes', item.itemId);
-  const globalRef = doc(db, USER_LIKES_COLLECTION, key + '_' + item.itemId);
-  const payload = {
-    ...item,
-    uid:String(user.uid||''),
-    usernameKey:key,
-    displayName:String(user.usernameKey||user.name||user.displayName||key),
-    email:String(user.email||''),
-    phone:String(user.phone||''),
-    createdAtMs:Number(item.createdAtMs || Date.now()),
-    updatedAtMs:Date.now(),
-    createdAt:serverTimestamp(),
-    updatedAt:serverTimestamp()
-  };
-  await setDoc(ref, payload, { merge:true });
-  await setDoc(globalRef, payload, { merge:true });
-}
-async function migrateLocalLikesToFirebase(){
+async function writeLikeToFirebase(item){
+  await authReady.catch(()=>null);
   const user = getSavedUser();
   const key = userKey(user);
-  if(!user || !key) return;
-  const local = localLikes().map(normalizeLikeRow).filter(Boolean);
-  if(!local.length) return;
-  try{
-    for(const item of local) await writeLikeToFirebase(item, user, key);
-    saveLocalLikes([]);
-    localStorage.setItem('azLikesSynced:' + key, String(Date.now()));
-  }catch(error){ console.warn('AZOBSS local likes migration failed:', error); }
+  if(!user || !key) throw new Error('Please login first to save likes.');
+  const row = normalizeLikeRow(item);
+  const payload = compactLikePayload(row, user, key);
+  await setDoc(doc(db, 'users', key, 'likes', row.itemId), {
+    ...payload,
+    itemId:row.itemId,
+    title:row.title,
+    category:row.category,
+    pageUrl:row.pageUrl,
+    createdAt:serverTimestamp(),
+    updatedAt:serverTimestamp(),
+    createdAtMs:row.createdAtMs || Date.now(),
+    updatedAtMs:Date.now()
+  }, { merge:true });
+  const cached = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean).filter(x => x.itemId !== row.itemId);
+  cached.unshift({ ...row, updatedAtMs:Date.now() });
+  setUserLikeCache(key, cached);
+  return true;
+}
+async function deleteLikeFromFirebase(item){
+  await authReady.catch(()=>null);
+  const user = getSavedUser();
+  const key = userKey(user);
+  if(!user || !key) throw new Error('Please login first.');
+  const row = normalizeLikeRow(item);
+  await deleteDoc(doc(db, 'users', key, 'likes', row.itemId));
+  const cached = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean).filter(x => x.itemId !== row.itemId);
+  setUserLikeCache(key, cached);
+  return true;
+}
+async function getFirebaseLikeIds(){
+  const rows = await readLikesFromFirebase();
+  return new Set(rows.map(x => x.itemId).filter(Boolean));
 }
 async function setLike(item, liked){
   const user = getSavedUser();
@@ -362,37 +405,28 @@ async function setLike(item, liked){
     else alert('Please login first to save likes.');
     return false;
   }
-
-  // Optimistic local cache first, so the heart immediately stays red/white.
-  if(liked) upsertLocalLike(item);
-  else removeLocalLike(item);
-
   try{
-    if(liked){
-      await writeLikeToFirebase(item, user, key);
-    }else{
-      await deleteDoc(doc(db, 'users', key, 'likes', item.itemId)).catch(()=>{});
-      await deleteDoc(doc(db, USER_LIKES_COLLECTION, key + '_' + item.itemId)).catch(()=>{});
-    }
+    if(liked) await writeLikeToFirebase(item);
+    else await deleteLikeFromFirebase(item);
     return true;
   }catch(error){
-    console.warn('AZOBSS save like failed; kept local cache fallback:', error);
-    return true;
+    console.warn('AZOBSS online like save failed:', error);
+    alert('Like tidak berjaya disimpan ke Firebase. Sila cuba semula.');
+    return false;
   }
 }
-
 async function refreshLikeButtons(){
-  await migrateLocalLikesToFirebase();
   const firebaseIds = await getFirebaseLikeIds();
-  const localIds = new Set(localLikes().map(x => (normalizeLikeRow(x)||{}).itemId).filter(Boolean));
   document.querySelectorAll('.azlike').forEach(btn => {
     const item = likeItemFromButton(btn);
-    const liked = firebaseIds.has(item.itemId) || localIds.has(item.itemId);
+    const liked = firebaseIds.has(item.itemId);
     paintLikeButton(btn, liked);
     btn.style.cursor = 'pointer';
   });
 }
 function bindLikeClick(){
+  if(document.documentElement.dataset.azobssLikeClickBound === '1') return;
+  document.documentElement.dataset.azobssLikeClickBound = '1';
   document.addEventListener('click', async (event) => {
     const btn = event.target.closest?.('.azlike');
     if(!btn) return;
@@ -400,7 +434,7 @@ function bindLikeClick(){
     event.stopPropagation();
     if(typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
     const item = likeItemFromButton(btn);
-    const wasLiked = String(btn.textContent || '').includes('❤️');
+    const wasLiked = btn.classList.contains('is-liked') || String(btn.textContent || '').includes('❤️');
     const willLike = !wasLiked;
     paintLikeButton(btn, willLike);
     const ok = await setLike(item, willLike);
@@ -412,6 +446,19 @@ function bindLikeClick(){
   }, true);
 }
 let azobssLikesCache = [];
+async function refreshLikesPage(){
+  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
+  if(!list || !/\/likes\/?$/i.test(location.pathname)) return;
+  const user = getSavedUser();
+  const key = userKey(user);
+  if(!user || !key){
+    azobssLikesCache = [];
+    renderLikesRows();
+    return;
+  }
+  azobssLikesCache = await readLikesFromFirebase();
+  renderLikesRows();
+}
 function getLikeSortMs(item){
   return firestoreMs(item.updatedAt) || Number(item.updatedAtMs || 0) || firestoreMs(item.createdAt) || Number(item.createdAtMs || 0) || 0;
 }
@@ -446,27 +493,6 @@ function renderLikesRows(){
       </div>
     </div>`;
   }).join('') || '<div class="az-like-empty">No liked items found.</div>';
-}
-async function refreshLikesPage(){
-  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
-  if(!list || !/\/likes\/?$/i.test(location.pathname)) return;
-  await migrateLocalLikesToFirebase();
-  const user = getSavedUser();
-  const key = userKey(user);
-  let rows = [];
-  const localRows = localLikes().map(normalizeLikeRow).filter(Boolean);
-  if(user && key){
-    try{
-      const snap = await getDocs(collection(db, 'users', key, 'likes'));
-      snap.forEach(d => rows.push({id:d.id, ...d.data()}));
-    }catch(error){ console.warn('AZOBSS likes page Firebase read failed:', error); }
-    const seen = new Set(rows.map(x => x.itemId || x.id || x.title));
-    localRows.forEach(x => { const id = x.itemId || x.id || x.title; if(!seen.has(id)) rows.push(x); });
-  }else{
-    rows = localRows;
-  }
-  azobssLikesCache = rows;
-  renderLikesRows();
 }
 function bindLikesControls(){
   const search = document.getElementById('likesSearchInput');
