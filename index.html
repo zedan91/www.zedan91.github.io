@@ -5123,6 +5123,91 @@ body:not(.is-admin) #purchaseSummaryList .small-action-btn{
     grid-template-columns:1fr !important;
   }
 }
+
+
+/* AZOBSS TRUE SINGLE ROW REGISTERED USERS - FINAL OVERRIDE */
+#registeredUsersList .az-admin-user-row-card{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:14px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  padding:8px 12px !important;
+  min-height:42px !important;
+  border:1px solid rgba(148,163,184,0.24) !important;
+  border-radius:10px !important;
+  background:rgba(30,41,59,0.75) !important;
+  color:#e2e8f0 !important;
+}
+#registeredUsersList .az-admin-user-row-card .az-admin-user-compact-name{
+  flex:0 0 150px !important;
+  min-width:0 !important;
+}
+#registeredUsersList .az-admin-user-row-card .az-admin-user-compact-name strong{
+  color:#00e676 !important;
+  font-weight:900 !important;
+  font-size:13px !important;
+  white-space:nowrap !important;
+}
+#registeredUsersList .az-admin-user-row-card .az-admin-user-access-badge{
+  flex:0 0 120px !important;
+  white-space:nowrap !important;
+  border:0 !important;
+  background:transparent !important;
+  padding:0 !important;
+  font-size:13px !important;
+  line-height:1 !important;
+  color:#e2e8f0 !important;
+}
+#registeredUsersList .az-admin-user-row-card .az-admin-user-access-badge.is-allowed{color:#22c55e !important;}
+#registeredUsersList .az-admin-user-row-card .az-admin-user-access-badge.is-blocked{color:#f87171 !important;}
+#registeredUsersList .az-admin-user-row-card .az-admin-register-date{
+  flex:1 1 auto !important;
+  min-width:160px !important;
+  font-size:13px !important;
+  color:#cbd5e1 !important;
+  white-space:nowrap !important;
+}
+#registeredUsersList .az-admin-user-row-card .az-admin-user-row-actions{
+  flex:0 0 auto !important;
+  margin-left:auto !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:6px !important;
+}
+#registeredUsersList .az-admin-user-row-card .az-admin-small-btn{
+  width:auto !important;
+  min-width:54px !important;
+  height:28px !important;
+  min-height:28px !important;
+  padding:0 10px !important;
+  border:0 !important;
+  border-radius:7px !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  cursor:pointer !important;
+}
+#registeredUsersList .az-admin-user-row-card .az-admin-edit-small{background:#2f6df6 !important;color:#fff !important;}
+#registeredUsersList .az-admin-user-row-card .az-admin-delete-small{background:#ef4444 !important;color:#fff !important;}
+@media(max-width:720px){
+  #registeredUsersList .az-admin-user-row-card{
+    flex-wrap:wrap !important;
+    align-items:flex-start !important;
+  }
+  #registeredUsersList .az-admin-user-row-card .az-admin-user-compact-name,
+  #registeredUsersList .az-admin-user-row-card .az-admin-user-access-badge,
+  #registeredUsersList .az-admin-user-row-card .az-admin-register-date{
+    flex:1 1 100% !important;
+  }
+  #registeredUsersList .az-admin-user-row-card .az-admin-user-row-actions{
+    margin-left:0 !important;
+  }
+}
+
 </style>
 <style>
 /* FORCE RESTORE PURCHASE RECORDS USERS PANEL */
