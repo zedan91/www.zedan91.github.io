@@ -1,0 +1,95 @@
+
+/* AZOBSS global auth for every page/subfolder */
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
+const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const $=(id)=>document.getElementById(id);
+const normalize=(v)=>String(v||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'');
+const userEmail=(username)=>`${normalize(username)}@azobss.local`;
+const inviteCode=(username)=>`AZ${normalize(username).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)||'USER'}`;
+
+function injectStyle(){
+ if($('azobssGlobalAuthStyle')) return;
+ const s=document.createElement('style');
+ s.id='azobssGlobalAuthStyle';
+ s.textContent=`
+ body.is-authenticated .site-auth-actions{display:none!important}body.is-authenticated .market-user-tools{display:flex!important}body:not(.is-authenticated) .market-user-tools{display:none!important}
+ .auth-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto}.auth-modal.is-open{display:flex!important}.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45)}.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.auth-modal-top h3{margin:0;font-size:20px;font-weight:800}.auth-close-btn{width:28px;height:28px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}.auth-modal-form{display:grid;gap:14px}.auth-modal-form[hidden]{display:none!important}.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff}.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none}.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6)}.auth-modal-form .btn.signup{background:#22c55e}.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700}.auth-switch-note{margin:0;color:#c7d2e5;text-align:center}.auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer}.profile-settings-modal{position:fixed;inset:0;z-index:99998;display:none;align-items:flex-start;justify-content:center;padding:18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto}.profile-settings-modal.is-open{display:flex}.profile-settings-card{width:min(520px,calc(100vw - 28px));background:#1d2a3d;color:#fff;border:1px solid rgba(35,211,114,.32);border-radius:12px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.45)}.profile-settings-card input{width:100%;box-sizing:border-box;margin:7px 0 12px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:13px}.profile-settings-actions{display:flex;gap:10px;justify-content:flex-end}.profile-settings-actions button{border:0;border-radius:10px;padding:12px 16px;font-weight:800;cursor:pointer}.profile-settings-actions .save{background:#22c55e;color:#fff}`;
+ document.head.appendChild(s);
+}
+function injectModal(){
+ if(!$('siteAuthModal')) document.body.insertAdjacentHTML('beforeend',`<div aria-hidden="true" class="auth-modal" id="siteAuthModal"><div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog"><div class="auth-modal-top"><h3 id="siteAuthTitle">Login</h3><button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button></div><form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;"><label>Username<input autocomplete="username" id="loginName" required type="text"></label><label>Password<input autocomplete="current-password" id="loginPassword" required type="password"></label><p class="request-error" id="siteLoginError"></p><button class="btn" type="submit">Login</button><p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p></form><form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;"><label>Username<input autocomplete="username" id="signupName" required type="text"></label><label>Phone Number<input autocomplete="tel" id="signupPhone" required type="tel"></label><label>Email<input autocomplete="email" id="signupEmail" required type="email"></label><label>Password<input autocomplete="new-password" id="signupPassword" required type="password"></label><p class="request-error" id="siteSignupError"></p><button class="btn signup" type="submit">Sign up</button><p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p></form></div></div>`);
+ if(!$('profileSettingsModal')) document.body.insertAdjacentHTML('beforeend',`<div aria-hidden="true" class="profile-settings-modal" id="profileSettingsModal"><div class="profile-settings-card"><h3>Settings</h3><label>Name / Username<input id="profileNameInput" type="text"></label><label>Phone<input id="profilePhoneInput" type="tel"></label><label>Email<input id="profileEmailInput" type="email"></label><p class="request-error" id="profileSettingsError"></p><div class="profile-settings-actions"><button type="button" id="profileSettingsClose">Cancel</button><button class="save" type="button" id="profileSettingsSave">Save</button></div></div></div>`);
+}
+function fixAccountMenu(){
+ document.querySelectorAll('#userDropdown,.user-dropdown').forEach(drop=>{
+   drop.innerHTML=`<div class="user-dropdown-section">Buying</div><a class="user-dropdown-item" href="/index.html#affiliate" role="menuitem"><span>My purchases</span></a><a class="user-dropdown-item" href="/index.html#luckyDraw" role="menuitem"><span>Likes</span></a><div class="user-dropdown-section">Account</div><button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem"><span>Settings</span></button><button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem"><span>Log out</span></button>`;
+ });
+}
+function openSiteAuth(mode='signin'){
+ injectStyle(); injectModal();
+ const isSignup=['signup','register'].includes(mode);
+ $('siteAuthTitle').textContent=isSignup?'Create Account':'Login';
+ $('siteSignInForm').hidden=isSignup; $('siteSignUpForm').hidden=!isSignup;
+ $('siteLoginError') && ($('siteLoginError').textContent=''); $('siteSignupError') && ($('siteSignupError').textContent='');
+ $('siteAuthModal').classList.add('is-open'); $('siteAuthModal').setAttribute('aria-hidden','false');
+ setTimeout(()=>($(isSignup?'signupName':'loginName')||{}).focus?.(),40);
+}
+function closeSiteAuth(){ $('siteAuthModal')?.classList.remove('is-open'); $('siteAuthModal')?.setAttribute('aria-hidden','true'); }
+window.openSiteAuth=openSiteAuth; window.openLoginModal=()=>openSiteAuth('signin'); window.openSignupModal=()=>openSiteAuth('signup');
+async function readUser(usernameKey, fbUser){
+ let data={usernameKey,uid:fbUser?.uid||'',name:usernameKey};
+ try{ const snap=await getDoc(doc(db,'users',usernameKey)); if(snap.exists()) data={...data,...snap.data()}; }catch(e){}
+ return data;
+}
+function setUi(user){
+ if(user){
+   document.body.classList.add('is-authenticated');
+   const name=user.name||user.usernameKey||'User';
+   $('signedInName') && ($('signedInName').textContent=name);
+   $('userAvatar') && ($('userAvatar').textContent=String(name).slice(0,2).toUpperCase());
+   localStorage.setItem('azobssCurrentUser',JSON.stringify(user));
+ }else{
+   document.body.classList.remove('is-authenticated');
+   localStorage.removeItem('azobssCurrentUser');
+ }
+}
+async function login(){
+ const usernameKey=normalize($('loginName')?.value); const password=$('loginPassword')?.value||'';
+ if(!usernameKey||!password){$('siteLoginError').textContent='Please enter username and password.';return;}
+ try{ await setPersistence(auth,browserSessionPersistence); const cred=await signInWithEmailAndPassword(auth,userEmail(usernameKey),password); setUi(await readUser(usernameKey,cred.user)); closeSiteAuth(); }
+ catch(e){$('siteLoginError').textContent='Login failed. Please check username or password.';}
+}
+async function signup(){
+ const usernameKey=normalize($('signupName')?.value); const password=$('signupPassword')?.value||''; const phone=($('signupPhone')?.value||'').trim(); const contactEmail=($('signupEmail')?.value||'').trim();
+ if(!usernameKey||!password||!phone||!contactEmail){$('siteSignupError').textContent='Please complete all required fields.';return;}
+ try{ await setPersistence(auth,browserSessionPersistence); const cred=await createUserWithEmailAndPassword(auth,userEmail(usernameKey),password); const data={uid:cred.user.uid,usernameKey,name:usernameKey,phone,contactEmail,inviteCode:inviteCode(usernameKey),role:'member',createdAt:serverTimestamp(),createdAtMs:Date.now()}; await setDoc(doc(db,'users',usernameKey),data,{merge:true}); setUi(data); closeSiteAuth(); }
+ catch(e){$('siteSignupError').textContent=e?.code==='auth/email-already-in-use'?'Username already exists.':'Sign up failed. Please try again.';}
+}
+function openSettings(){
+ const user=JSON.parse(localStorage.getItem('azobssCurrentUser')||'null')||{};
+ $('profileNameInput').value=user.name||user.usernameKey||''; $('profilePhoneInput').value=user.phone||''; $('profileEmailInput').value=user.contactEmail||'';
+ $('profileSettingsModal').classList.add('is-open'); $('profileSettingsModal').setAttribute('aria-hidden','false');
+}
+async function saveSettings(){
+ const user=JSON.parse(localStorage.getItem('azobssCurrentUser')||'null'); if(!user?.usernameKey) return;
+ const upd={name:$('profileNameInput').value.trim()||user.usernameKey,phone:$('profilePhoneInput').value.trim(),contactEmail:$('profileEmailInput').value.trim(),updatedAtMs:Date.now()};
+ try{ await setDoc(doc(db,'users',user.usernameKey),upd,{merge:true}); setUi({...user,...upd}); $('profileSettingsModal').classList.remove('is-open'); }catch(e){$('profileSettingsError').textContent='Failed to save settings.';}
+}
+async function logout(){ try{await signOut(auth);}catch(e){} setUi(null); }
+function bind(){
+ injectStyle(); injectModal(); fixAccountMenu();
+ document.querySelectorAll('a[href$="#login"],a[href$="#signin"]').forEach(a=>{a.href='javascript:void(0)';a.dataset.auth='login';});
+ document.querySelectorAll('a[href$="#signup"],a[href$="#register"]').forEach(a=>{a.href='javascript:void(0)';a.dataset.auth='signup';});
+ document.addEventListener('click',(ev)=>{ const login=ev.target.closest('[data-auth="login"],[data-auth="signin"]'); const signup=ev.target.closest('[data-auth="signup"],[data-auth="register"]'); if(login||signup){ev.preventDefault();ev.stopPropagation();openSiteAuth(signup?'signup':'signin');return;} const set=ev.target.closest('#profileSettingsButton'); if(set){ev.preventDefault();openSettings();return;} const lo=ev.target.closest('#logoutButton'); if(lo){ev.preventDefault();logout();return;} },true);
+ $('siteAuthClose')?.addEventListener('click',closeSiteAuth); $('siteAuthModal')?.addEventListener('click',e=>{if(e.target===$('siteAuthModal'))closeSiteAuth();}); $('switchToSiteSignup')?.addEventListener('click',()=>openSiteAuth('signup')); $('switchToSiteSignin')?.addEventListener('click',()=>openSiteAuth('signin')); $('siteSignInForm')?.addEventListener('submit',e=>{e.preventDefault();login();}); $('siteSignUpForm')?.addEventListener('submit',e=>{e.preventDefault();signup();}); $('profileSettingsClose')?.addEventListener('click',()=>$('profileSettingsModal').classList.remove('is-open')); $('profileSettingsSave')?.addEventListener('click',saveSettings);
+ const cached=JSON.parse(localStorage.getItem('azobssCurrentUser')||'null'); if(cached) setUi(cached);
+ onAuthStateChanged(auth,async fbUser=>{ if(!fbUser){ if(!sessionStorage.getItem('azobssKeepUi')) setUi(null); return; } const usernameKey=(fbUser.email||'').replace('@azobss.local',''); if(usernameKey) setUi(await readUser(usernameKey,fbUser)); });
+ if(location.hash==='#login'||location.hash==='#signin') openSiteAuth('signin'); if(location.hash==='#signup'||location.hash==='#register') openSiteAuth('signup');
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();

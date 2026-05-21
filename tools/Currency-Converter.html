@@ -375,8 +375,8 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
         <a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
       </nav>
       <div class="site-auth-actions" id="siteAuthActions">
-        <a class="site-auth-btn primary" id="siteSignUpButton" href="javascript:void(0)" onclick="openSiteAuth(\'signup\');return false;" data-auth="signup">Register</a>
-        <a class="site-auth-btn" id="siteSignInButton" href="javascript:void(0)" onclick="openSiteAuth(\'signin\');return false;" data-auth="login">Login</a>
+        <a class="site-auth-btn primary" id="siteSignUpButton" href="javascript:void(0)" onclick="openSiteAuth('signup');return false;" data-auth="signup">Register</a>
+        <a class="site-auth-btn" id="siteSignInButton" href="javascript:void(0)" onclick="openSiteAuth('signin');return false;" data-auth="login">Login</a>
       </div>
       <div class="market-user-tools" id="marketUserTools">
         <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
@@ -830,6 +830,8 @@ signUpForm?.addEventListener('submit',async event=>{
 if(location.hash==='#login'||location.hash==='#signin') openSiteAuth('signin');
 if(location.hash==='#signup'||location.hash==='#register') openSiteAuth('signup');
 </script>
+
+<script type="module" src="/assets/js/azobss-global-auth.js"></script>
 </body>
 </html>
 
