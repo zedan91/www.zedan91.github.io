@@ -113,7 +113,7 @@ function injectModal() {
         <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
       </label>
       <label for="siteSignupInviteCode">Member / Invite Code
-        <input id="siteSignupInviteCode" placeholder="Example: ZX6186 (optional)" type="text">
+        <input id="siteSignupInviteCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
       <p class="request-error" id="siteSignupError"></p>
       <button class="btn signup" type="submit">Sign up</button>
