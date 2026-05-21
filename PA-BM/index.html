@@ -6895,27 +6895,26 @@ body.pa-bm-page #request .card {
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name">Hello, <span id="signedInName"></span></div>
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
-<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
-<div class="user-dropdown-section">Buying</div>
-<a class="user-dropdown-item" href="affiliate-shop/index.html" role="menuitem">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M6 8h12l-1 13H7L6 8Z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg>
-<span>My purchases</span>
-</a>
-<a class="user-dropdown-item" href="lucky-draw/index.html" role="menuitem">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
-<span>Likes</span>
-</a>
-<div class="user-dropdown-section">Account</div>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V22a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.1 5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.9 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"></path></svg>
-<span>Settings</span>
-</button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
-<span>Log out</span>
-</button>
-</div>
-</div>
+<div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
+            <div class="user-dropdown-section">Buying</div>
+            <a class="user-dropdown-item" href="../index.html#affiliate" role="menuitem">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7L6 8Z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg>
+              <span>My purchases</span>
+            </a>
+            <a class="user-dropdown-item" href="../index.html#luckyDraw" role="menuitem">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+              <span>Likes</span>
+            </a>
+            <div class="user-dropdown-section">Account</div>
+            <a class="user-dropdown-item" href="../index.html#profile-settings" role="menuitem">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V22a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.1 5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.9 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"></path></svg>
+              <span>Settings</span>
+            </a>
+            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+              <span>Log out</span>
+            </button>
+          </div></div>
 <a aria-label="Saved" class="market-icon-btn" href="lucky-draw/index.html">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 </a>
