@@ -1,0 +1,7 @@
+AZOBSS clean/pro auth update
+
+- Single global auth file: /assets/js/azobss-global-auth.js
+- All subpages should use the same script.
+- Login/Register buttons use data-auth-open="signin" or data-auth-open="signup".
+- Old same-page duplicated auth modal blocks were removed from subpages and replaced by JS injection.
+- Avoid linking to ../index.html#login or ../index.html#signup for auth actions.

@@ -1,18 +1,247 @@
-/* AZOBSS global auth for every page/subfolder */
+// AZOBSS Global Auth (single source of truth for all pages)
+// Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
-const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app); const $=(id)=>document.getElementById(id);
-const normalize=(v)=>String(v||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,''); const userEmail=(u)=>`${normalize(u)}@azobss.local`; const inviteCode=(u)=>`AZ${normalize(u).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)||'USER'}`;
-function injectStyle(){if($('azobssGlobalAuthStyle'))return;const s=document.createElement('style');s.id='azobssGlobalAuthStyle';s.textContent=`body.is-authenticated .site-auth-actions{display:none!important}body.is-authenticated .market-user-tools{display:flex!important}body:not(.is-authenticated) .market-user-tools{display:none!important}.auth-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto}.auth-modal.is-open{display:flex!important}.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45)}.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.auth-modal-top h3{margin:0;font-size:20px;font-weight:800}.auth-close-btn{width:28px;height:28px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}.auth-modal-form{display:grid;gap:14px}.auth-modal-form[hidden]{display:none!important}.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff}.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none}.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6)}.auth-modal-form .btn.signup{background:#22c55e}.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700}.auth-switch-note{margin:0;color:#c7d2e5;text-align:center}.auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer}.profile-settings-modal{position:fixed;inset:0;z-index:99998;display:none;align-items:flex-start;justify-content:center;padding:18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto}.profile-settings-modal.is-open{display:flex}.profile-settings-card{width:min(520px,calc(100vw - 28px));background:#1d2a3d;color:#fff;border:1px solid rgba(35,211,114,.32);border-radius:12px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.45)}.profile-settings-card input{width:100%;box-sizing:border-box;margin:7px 0 12px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:13px}.profile-settings-actions{display:flex;gap:10px;justify-content:flex-end}.profile-settings-actions button{border:0;border-radius:10px;padding:12px 16px;font-weight:800;cursor:pointer}.profile-settings-actions .save{background:#22c55e;color:#fff}`;document.head.appendChild(s)}
-function injectModal(){if(!$('siteAuthModal'))document.body.insertAdjacentHTML('beforeend',`<div aria-hidden="true" class="auth-modal" id="siteAuthModal"><div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog"><div class="auth-modal-top"><h3 id="siteAuthTitle">Login</h3><button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button></div><form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;"><label>Username<input autocomplete="username" id="loginName" required type="text"></label><label>Password<input autocomplete="current-password" id="loginPassword" required type="password"></label><p class="request-error" id="siteLoginError"></p><button class="btn" type="submit">Login</button><p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p></form><form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;"><label>Username<input autocomplete="username" id="signupName" required type="text"></label><label>Phone Number<input autocomplete="tel" id="signupPhone" required type="tel"></label><label>Email<input autocomplete="email" id="signupEmail" required type="email"></label><label>Password<input autocomplete="new-password" id="signupPassword" required type="password"></label><p class="request-error" id="siteSignupError"></p><button class="btn signup" type="submit">Sign up</button><p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p></form></div></div>`);if(!$('profileSettingsModal'))document.body.insertAdjacentHTML('beforeend',`<div aria-hidden="true" class="profile-settings-modal" id="profileSettingsModal"><div class="profile-settings-card"><h3>Settings</h3><label>Name / Username<input id="profileNameInput" type="text"></label><label>Phone<input id="profilePhoneInput" type="tel"></label><label>Email<input id="profileEmailInput" type="email"></label><p class="request-error" id="profileSettingsError"></p><div class="profile-settings-actions"><button type="button" id="profileSettingsClose">Cancel</button><button class="save" type="button" id="profileSettingsSave">Save</button></div></div></div>`)}
-function fixAccountMenu(){document.querySelectorAll('#userDropdown,.user-dropdown').forEach(drop=>{drop.innerHTML=`<div class="user-dropdown-section">Buying</div><a class="user-dropdown-item" href="/index.html#affiliate" role="menuitem"><span>My purchases</span></a><a class="user-dropdown-item" href="/index.html#luckyDraw" role="menuitem"><span>Likes</span></a><div class="user-dropdown-section">Account</div><button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem"><span>Settings</span></button><button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem"><span>Log out</span></button>`})}
-function openSiteAuth(mode='signin'){injectStyle();injectModal();const isSignup=['signup','register'].includes(mode);$('siteAuthTitle').textContent=isSignup?'Create Account':'Login';$('siteSignInForm').hidden=isSignup;$('siteSignUpForm').hidden=!isSignup;if($('siteLoginError'))$('siteLoginError').textContent='';if($('siteSignupError'))$('siteSignupError').textContent='';$('siteAuthModal').classList.add('is-open');$('siteAuthModal').setAttribute('aria-hidden','false');setTimeout(()=>($(isSignup?'signupName':'loginName')||{}).focus?.(),40)}
-function closeSiteAuth(){$('siteAuthModal')?.classList.remove('is-open');$('siteAuthModal')?.setAttribute('aria-hidden','true')} window.openSiteAuth=openSiteAuth; window.openLoginModal=()=>openSiteAuth('signin'); window.openSignupModal=()=>openSiteAuth('signup');
-async function readUser(usernameKey,fbUser){let data={usernameKey,uid:fbUser?.uid||'',name:usernameKey};try{const snap=await getDoc(doc(db,'users',usernameKey));if(snap.exists())data={...data,...snap.data()}}catch(e){}return data} function setUi(user){if(user){document.body.classList.add('is-authenticated');const name=user.name||user.usernameKey||'User';if($('signedInName'))$('signedInName').textContent=name;if($('userAvatar'))$('userAvatar').textContent=String(name).slice(0,2).toUpperCase();localStorage.setItem('azobssCurrentUser',JSON.stringify(user))}else{document.body.classList.remove('is-authenticated');localStorage.removeItem('azobssCurrentUser')}}
-async function login(){const usernameKey=normalize($('loginName')?.value);const password=$('loginPassword')?.value||'';if(!usernameKey||!password){$('siteLoginError').textContent='Please enter username and password.';return}try{await setPersistence(auth,browserSessionPersistence);const cred=await signInWithEmailAndPassword(auth,userEmail(usernameKey),password);setUi(await readUser(usernameKey,cred.user));closeSiteAuth()}catch(e){$('siteLoginError').textContent='Login failed. Please check username or password.'}}
-async function signup(){const usernameKey=normalize($('signupName')?.value);const password=$('signupPassword')?.value||'';const phone=($('signupPhone')?.value||'').trim();const contactEmail=($('signupEmail')?.value||'').trim();if(!usernameKey||!password||!phone||!contactEmail){$('siteSignupError').textContent='Please complete all required fields.';return}try{await setPersistence(auth,browserSessionPersistence);const cred=await createUserWithEmailAndPassword(auth,userEmail(usernameKey),password);const data={uid:cred.user.uid,usernameKey,name:usernameKey,phone,contactEmail,inviteCode:inviteCode(usernameKey),role:'member',createdAt:serverTimestamp(),createdAtMs:Date.now()};await setDoc(doc(db,'users',usernameKey),data,{merge:true});setUi(data);closeSiteAuth()}catch(e){$('siteSignupError').textContent=e?.code==='auth/email-already-in-use'?'Username already exists.':'Sign up failed. Please try again.'}}
-function openSettings(){const user=JSON.parse(localStorage.getItem('azobssCurrentUser')||'null')||{};$('profileNameInput').value=user.name||user.usernameKey||'';$('profilePhoneInput').value=user.phone||'';$('profileEmailInput').value=user.contactEmail||'';$('profileSettingsModal').classList.add('is-open');$('profileSettingsModal').setAttribute('aria-hidden','false')} async function saveSettings(){const user=JSON.parse(localStorage.getItem('azobssCurrentUser')||'null');if(!user?.usernameKey)return;const upd={name:$('profileNameInput').value.trim()||user.usernameKey,phone:$('profilePhoneInput').value.trim(),contactEmail:$('profileEmailInput').value.trim(),updatedAtMs:Date.now()};try{await setDoc(doc(db,'users',user.usernameKey),upd,{merge:true});setUi({...user,...upd});$('profileSettingsModal').classList.remove('is-open')}catch(e){$('profileSettingsError').textContent='Failed to save settings.'}} async function logout(){try{await signOut(auth)}catch(e){}setUi(null)}
-function bind(){injectStyle();injectModal();fixAccountMenu();document.querySelectorAll('a[href$="#login"],a[href$="#signin"]').forEach(a=>{a.href='javascript:void(0)';a.dataset.auth='login'});document.querySelectorAll('a[href$="#signup"],a[href$="#register"]').forEach(a=>{a.href='javascript:void(0)';a.dataset.auth='signup'});document.addEventListener('click',(ev)=>{const login=ev.target.closest('[data-auth="login"],[data-auth="signin"]');const signup=ev.target.closest('[data-auth="signup"],[data-auth="register"]');if(login||signup){ev.preventDefault();ev.stopPropagation();openSiteAuth(signup?'signup':'signin');return}const set=ev.target.closest('#profileSettingsButton');if(set){ev.preventDefault();openSettings();return}const lo=ev.target.closest('#logoutButton');if(lo){ev.preventDefault();logout();return}},true);$('siteAuthClose')?.addEventListener('click',closeSiteAuth);$('siteAuthModal')?.addEventListener('click',e=>{if(e.target===$('siteAuthModal'))closeSiteAuth()});$('switchToSiteSignup')?.addEventListener('click',()=>openSiteAuth('signup'));$('switchToSiteSignin')?.addEventListener('click',()=>openSiteAuth('signin'));$('siteSignInForm')?.addEventListener('submit',e=>{e.preventDefault();login()});$('siteSignUpForm')?.addEventListener('submit',e=>{e.preventDefault();signup()});$('profileSettingsClose')?.addEventListener('click',()=>$('profileSettingsModal').classList.remove('is-open'));$('profileSettingsSave')?.addEventListener('click',saveSettings);const cached=JSON.parse(localStorage.getItem('azobssCurrentUser')||'null');if(cached)setUi(cached);onAuthStateChanged(auth,async fbUser=>{if(!fbUser){setUi(null);return}const usernameKey=(fbUser.email||'').replace('@azobss.local','');if(usernameKey)setUi(await readUser(usernameKey,fbUser))});if(location.hash==='#login'||location.hash==='#signin')openSiteAuth('signin');if(location.hash==='#signup'||location.hash==='#register')openSiteAuth('signup')}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+  authDomain: 'azobss.firebaseapp.com',
+  projectId: 'azobss',
+  storageBucket: 'azobss.firebasestorage.app',
+  messagingSenderId: '159277716405',
+  appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+};
+
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+function addStyle() {
+  if (document.getElementById('azobss-global-auth-style')) return;
+  const style = document.createElement('style');
+  style.id = 'azobss-global-auth-style';
+  style.textContent = `
+.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
+.auth-modal.is-open{display:flex;}
+.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
+.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.auth-modal-top h3{margin:0;font-size:20px;font-weight:800;}
+.auth-close-btn{width:28px;height:28px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.auth-close-btn:hover{background:rgba(255,255,255,.2);}
+.auth-modal-form{display:grid;gap:14px;}
+.auth-modal-form[hidden]{display:none!important;}
+.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff;}
+.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none;}
+.auth-modal-form input:focus{border-color:#fff;}
+.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6);}
+.auth-modal-form .btn.signup{background:#22c55e;color:#fff;}
+.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
+.auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
+.auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
+.phone-input-row{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;}
+.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;}
+.phone-number-wrap{position:relative;}
+.phone-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#b9c5d8;font-weight:800;}
+.phone-number-wrap input{padding-left:54px!important;}
+body.is-authenticated .site-auth-actions{display:none!important;}
+body.is-authenticated .market-user-tools{display:flex!important;}
+body:not(.is-authenticated) .market-user-tools{display:none!important;}
+.user-menu.is-open .user-dropdown{display:block!important;}
+`;
+  document.head.appendChild(style);
+}
+
+function injectModal() {
+  if (document.getElementById('siteAuthModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div class="auth-modal" id="siteAuthModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteAuthTitle">
+    <div class="auth-modal-top">
+      <h3 id="siteAuthTitle">Sign in</h3>
+      <button class="auth-close-btn" id="siteAuthClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="auth-modal-form" id="siteSignInForm">
+      <label for="siteLoginUsername">Username
+        <input id="siteLoginUsername" autocomplete="username" placeholder="Example: zedan91" required type="text">
+      </label>
+      <label for="siteLoginPassword">Password
+        <input id="siteLoginPassword" autocomplete="current-password" placeholder="Password" required type="password">
+      </label>
+      <p class="request-error" id="siteLoginError"></p>
+      <button class="btn" type="submit">Login</button>
+      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
+    </form>
+    <form class="auth-modal-form" id="siteSignUpForm" hidden>
+      <label for="siteSignupUsername">Username
+        <input id="siteSignupUsername" autocomplete="username" placeholder="Example: zedan91" required type="text">
+      </label>
+      <label for="siteSignupPassword">Password
+        <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6" required type="password">
+      </label>
+      <label for="siteSignupPhone">WhatsApp Number
+        <div class="phone-input-row">
+          <button class="country-code-button" type="button" tabindex="-1">🇲🇾 +60</button>
+          <div class="phone-number-wrap"><span class="phone-prefix">+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="12 345 6789" required type="tel"></div>
+        </div>
+      </label>
+      <label for="siteSignupEmail">Email
+        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
+      </label>
+      <label for="siteSignupInviteCode">Invite Code
+        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
+      </label>
+      <p class="request-error" id="siteSignupError"></p>
+      <button class="btn signup" type="submit">Sign up</button>
+      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+}
+
+const $ = (id) => document.getElementById(id);
+function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
+function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
+function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
+function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
+function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
+function safeJson(raw){try{return JSON.parse(raw||'null');}catch{return null;}}
+function saveUser(user){sessionStorage.setItem('azobssCurrentUser',JSON.stringify(user));localStorage.setItem('azobssCurrentUser',JSON.stringify(user));}
+function getSavedUser(){return safeJson(sessionStorage.getItem('azobssCurrentUser')) || safeJson(localStorage.getItem('azobssCurrentUser'));}
+
+function normalizeUserMenu() {
+  const dropdown = $('userDropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = `
+    <div class="user-dropdown-section">Account</div>
+    <a class="user-dropdown-item" href="/index.html#purchases" role="menuitem">My purchases</a>
+    <a class="user-dropdown-item" href="/affiliate-shop/index.html#likes" role="menuitem">Likes</a>
+    <a class="user-dropdown-item" href="/index.html#settings" role="menuitem">Settings</a>
+    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
+}
+
+function syncHeader(user){
+  const authActions = $('siteAuthActions');
+  const tools = $('marketUserTools');
+  const name = $('signedInName');
+  const avatar = $('userAvatar');
+  const paBm = $('paBmNavButton');
+  const display = user && (user.usernameKey || user.name || user.email || '');
+  const usernameKey = String(user?.usernameKey || user?.name || '').trim().toLowerCase();
+  const usedMemberCode = String(user?.invitedByCode || user?.memberCode || user?.paMemberCode || '').trim().toUpperCase() === 'ZX6186';
+  const canShowPaBm = !!(user && (usernameKey === 'zedan91' || user.paAccess === true || usedMemberCode));
+  if (paBm) { paBm.hidden = !canShowPaBm; paBm.classList.toggle('is-hidden', !canShowPaBm); }
+  if (display) {
+    document.body.classList.add('is-authenticated');
+    if (name) name.textContent = display;
+    if (avatar) avatar.textContent = initials(display);
+    if (authActions) authActions.style.setProperty('display','none','important');
+    if (tools) tools.style.setProperty('display','flex','important');
+  } else {
+    document.body.classList.remove('is-authenticated');
+    if (authActions) authActions.style.removeProperty('display');
+    if (tools) tools.style.removeProperty('display');
+  }
+}
+
+function openSiteAuth(mode='signin'){
+  const modal=$('siteAuthModal'), title=$('siteAuthTitle'), signInForm=$('siteSignInForm'), signUpForm=$('siteSignUpForm');
+  if(!modal || !signInForm || !signUpForm) return;
+  const isSignup=mode==='signup' || mode==='register';
+  if(title) title.textContent=isSignup?'Sign up':'Sign in';
+  signInForm.hidden=isSignup;
+  signUpForm.hidden=!isSignup;
+  const loginError=$('siteLoginError'), signupError=$('siteSignupError');
+  if(loginError) loginError.textContent='';
+  if(signupError) signupError.textContent='';
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+  setTimeout(()=>{(isSignup?$('siteSignupUsername'):$('siteLoginUsername'))?.focus();},40);
+}
+function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+window.openSiteAuth = openSiteAuth;
+window.closeSiteAuth = closeSiteAuth;
+
+async function ensureUserProfile(firebaseUser, fallback={}){
+  const ref=doc(db,'users',firebaseUser.uid);
+  const snap=await getDoc(ref);
+  if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
+  const usernameKey=fallback.usernameKey || normalizeUsername(firebaseUser.email?.split('@')[0] || 'user');
+  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:fallback.phone||'',inviteCode:buildInviteCode(usernameKey),invitedByCode:fallback.invitedByCode||'',role:'member',createdAt:serverTimestamp()};
+  await setDoc(ref,profile,{merge:true});
+  return profile;
+}
+
+function bindAuth() {
+  addStyle(); injectModal(); normalizeUserMenu(); syncHeader(getSavedUser());
+
+  document.addEventListener('click', async (event) => {
+    const opener = event.target.closest('[data-auth-open], [data-auth], #siteSignInButton, #siteSignUpButton, a[href$="#login"], a[href$="#signin"], a[href$="#signup"], a[href$="#register"]');
+    if (opener) {
+      event.preventDefault(); event.stopPropagation();
+      const value = opener.dataset.authOpen || opener.dataset.auth || opener.getAttribute('href') || opener.id || '';
+      openSiteAuth(/sign.?up|register|signup/i.test(value) ? 'signup' : 'signin');
+      return;
+    }
+    if (event.target.closest('#siteAuthClose') || event.target.id === 'siteAuthModal') closeSiteAuth();
+    if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
+    if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
+    const menu = event.target.closest('#userMenu');
+    if (menu) { menu.classList.toggle('is-open'); menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false'); }
+    else document.querySelectorAll('.user-menu.is-open').forEach(el=>el.classList.remove('is-open'));
+    if (event.target.closest('#logoutButton')) {
+      event.preventDefault();
+      await signOut(auth).catch(()=>{});
+      sessionStorage.removeItem('azobssCurrentUser'); localStorage.removeItem('azobssCurrentUser');
+      syncHeader(null);
+    }
+  }, true);
+
+  $('siteSignInForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const err=$('siteLoginError'); if(err) err.textContent='';
+    const usernameKey=normalizeUsername($('siteLoginUsername')?.value);
+    const password=$('siteLoginPassword')?.value || '';
+    if(!usernameKey || !password){ if(err) err.textContent='Please enter username and password.'; return; }
+    try{
+      await setPersistence(auth,browserSessionPersistence);
+      const credential=await signInWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
+      const profile=await ensureUserProfile(credential.user,{usernameKey});
+      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); closeSiteAuth();
+    }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
+  });
+
+  $('siteSignUpForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const err=$('siteSignupError'); if(err) err.textContent='';
+    const usernameKey=normalizeUsername($('siteSignupUsername')?.value);
+    const password=$('siteSignupPassword')?.value || '';
+    const phone=cleanPhone($('siteSignupPhone')?.value);
+    const email=String($('siteSignupEmail')?.value||'').trim().toLowerCase();
+    const invitedByCode=String($('siteSignupInviteCode')?.value||'').trim().toUpperCase();
+    if(!usernameKey || password.length<6 || !phone || !email){ if(err) err.textContent='Please complete all required fields.'; return; }
+    try{
+      await setPersistence(auth,browserSessionPersistence);
+      const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
+      const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member',createdAt:serverTimestamp()};
+      await setDoc(doc(db,'users',credential.user.uid),profile,{merge:true});
+      saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member'});
+      syncHeader({usernameKey,email,phone,invitedByCode}); closeSiteAuth();
+    }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
+  });
+
+  onAuthStateChanged(auth, async (firebaseUser)=>{
+    if(!firebaseUser){ syncHeader(getSavedUser()); return; }
+    try{ const profile=await ensureUserProfile(firebaseUser); saveUser({uid:firebaseUser.uid,...profile}); syncHeader({uid:firebaseUser.uid,...profile}); }
+    catch{ syncHeader(getSavedUser()); }
+  });
+
+  const hash = String(location.hash || '').toLowerCase();
+  if (['#login','#signin'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signin'); }
+  if (['#signup','#register'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signup'); }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAuth);
+else bindAuth();
