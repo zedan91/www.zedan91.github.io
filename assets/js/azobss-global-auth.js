@@ -20,7 +20,7 @@
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -150,10 +150,19 @@ function injectAdminUserEditModal() {
         <input id="adminUserEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email">
       </label>
       <label for="adminUserEditRole">Role
-        <input id="adminUserEditRole" placeholder="member / admin" type="text">
+        <select id="adminUserEditRole">
+          <option value="member">Member</option>
+          <option value="admin">Admin</option>
+        </select>
+      </label>
+      <label for="adminUserEditPaAccess">Allow PA/BM Access
+        <select id="adminUserEditPaAccess">
+          <option value="yes">Yes - allow PA/BM tab</option>
+          <option value="no">No - hide PA/BM tab</option>
+        </select>
       </label>
       <label for="adminUserEditMemberCode">Member / Invite Code
-        <input id="adminUserEditMemberCode" placeholder="Example: ZX6186" type="text">
+        <input id="adminUserEditMemberCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
       <p class="request-error" id="adminUserEditError"></p>
       <div class="az-admin-modal-actions">
@@ -428,19 +437,17 @@ function userDocId(user){
   return String(user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
 }
 function userProfileHtml(user){
-  const code = escHtml(user.invitedByCode || user.memberCode || user.paMemberCode || '-');
-  const role = escHtml(user.role || 'member');
-  const dateMs = firestoreMs(user.createdAt) || firestoreMs(user.lastLoginAt) || firestoreMs(user.updatedAt);
+  const role = String(user.role || 'member').toLowerCase();
+  const hasAccess = role === 'admin' || normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '') === 'ZX6186';
   const id = escHtml(userDocId(user));
-  return `<div class="purchase-summary-item admin-purchase-user-card">
-    <div class="admin-purchase-user-top"><strong>${recordDisplayName(user)}</strong><span>${role}</span></div>
-    <div class="admin-purchase-user-details">
-      <span>Email: ${escHtml(user.email || '-')}</span>
-      <span>Phone: ${escHtml(user.phone || '-')}</span>
-      <span>Member code: ${code}</span>
-      <span>Created: ${dateMs ? new Date(dateMs).toLocaleString('en-MY',{hour12:false}) : '-'}</span>
+  const isSelf = String(getSavedUser()?.usernameKey || '').toLowerCase() === String(id).toLowerCase();
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-user-compact-card">
+    <div class="az-admin-user-compact-name"><strong>${recordDisplayName(user)}</strong></div>
+    <span class="az-admin-user-access-badge ${hasAccess ? 'is-allowed' : 'is-blocked'}">${hasAccess ? 'PA/BM allowed' : 'PA/BM off'}</span>
+    <div class="az-admin-user-row-actions">
+      <button class="az-admin-small-btn az-admin-edit-small" type="button" data-admin-edit-user="${id}">Edit</button>
+      <button class="az-admin-small-btn az-admin-delete-small" type="button" data-admin-delete-user="${id}" ${isSelf ? 'disabled title="Cannot delete current admin"' : ''}>Delete</button>
     </div>
-    <button class="az-admin-user-edit-btn" type="button" data-admin-edit-user="${id}">Edit User</button>
   </div>`;
 }
 function openAdminUserEdit(userId){
@@ -454,8 +461,10 @@ function openAdminUserEdit(userId){
   $('adminUserEditUsername').value = user.usernameKey || user.name || '';
   $('adminUserEditPhone').value = user.phone || '';
   $('adminUserEditEmail').value = user.email || '';
-  $('adminUserEditRole').value = user.role || 'member';
-  $('adminUserEditMemberCode').value = user.invitedByCode || user.memberCode || user.paMemberCode || '';
+  $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
+  const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
+  $('adminUserEditPaAccess').value = (String(user.role || '').toLowerCase() === 'admin' || normalizePaMemberCode(existingCode) === 'ZX6186') ? 'yes' : 'no';
+  $('adminUserEditMemberCode').value = existingCode;
   const err = $('adminUserEditError');
   if(err){ err.textContent=''; err.style.color=''; }
   modal.classList.add('is-open');
@@ -472,7 +481,9 @@ async function saveAdminUserEdit(){
   const docId = String($('adminUserEditDocId')?.value || '').trim().toLowerCase();
   const usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
   if(!docId || !usernameKey){ if(err) err.textContent='Username is required.'; return; }
-  const code = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
+  const allowPaAccess = String($('adminUserEditPaAccess')?.value || 'no') === 'yes';
+  const typedCode = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
+  const code = allowPaAccess ? (typedCode || 'ZX6186') : '';
   const payload = {
     usernameKey,
     name: usernameKey,
@@ -502,6 +513,31 @@ async function saveAdminUserEdit(){
   }catch(error){
     console.warn('Admin user edit failed:', error);
     if(err) err.textContent='Failed to save user. Check Firebase rules / internet connection.';
+  }
+}
+async function deleteAdminRegisteredUser(userId){
+  if(!isAzobssAdmin(getSavedUser())) return;
+  const docId = String(userId || '').trim().toLowerCase();
+  if(!docId) return;
+  if(String(getSavedUser()?.usernameKey || '').toLowerCase() === docId){
+    alert('Current admin account cannot be deleted here.');
+    return;
+  }
+  const user = azobssLastRegisteredUsers.find(u => userDocId(u) === docId);
+  const name = user ? recordDisplayName(user).replace(/<[^>]+>/g,'') : docId;
+  if(!confirm(`Delete registered user record for ${name}?
+
+This removes the website profile record from Firestore. Firebase Auth login account may still need removal from Firebase Console if required.`)) return;
+  try{
+    await deleteDoc(doc(db, 'users', docId));
+    try{ await deleteDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, docId)); }catch(e){}
+    azobssLastRegisteredUsers = azobssLastRegisteredUsers.filter(u => userDocId(u) !== docId);
+    const maxPage = Math.max(1, Math.ceil(azobssLastRegisteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(azobssRegisteredUsersPage, maxPage);
+    await renderFirebaseAdminRecords();
+  }catch(error){
+    console.warn('Admin delete user failed:', error);
+    alert('Failed to delete user record. Check Firebase rules / internet connection.');
   }
 }
 function liveUserHtml(user){
@@ -598,6 +634,7 @@ async function renderFirebaseAdminRecords(){
       const rows = users.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
       regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users yet.</div>';
       regList.querySelectorAll('[data-admin-edit-user]').forEach(btn=>btn.addEventListener('click',()=>openAdminUserEdit(btn.dataset.adminEditUser)));
+      regList.querySelectorAll('[data-admin-delete-user]').forEach(btn=>btn.addEventListener('click',()=>deleteAdminRegisteredUser(btn.dataset.adminDeleteUser)));
       adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, users.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderFirebaseAdminRecords();});
     }
     const registeredCount = document.getElementById('registeredUserCount');

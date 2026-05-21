@@ -3363,3 +3363,75 @@ body:not(.is-admin) #purchaseSummaryList .small-action-btn{
     grid-template-columns:1fr !important;
   }
 }
+
+/* AZOBSS admin registered user compact rows */
+#registeredUsersList .az-admin-user-compact-card{
+  display:grid !important;
+  grid-template-columns:minmax(120px,1fr) auto auto !important;
+  align-items:center !important;
+  gap:10px !important;
+  padding:9px 10px !important;
+  min-height:44px !important;
+}
+#registeredUsersList .az-admin-user-compact-name strong{
+  color:#ffb347 !important;
+  font-weight:900 !important;
+  font-size:13px !important;
+}
+#registeredUsersList .az-admin-user-access-badge{
+  border:1px solid rgba(255,255,255,.16) !important;
+  border-radius:999px !important;
+  padding:5px 9px !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  background:rgba(15,23,42,.72) !important;
+  color:#cbd5e1 !important;
+}
+#registeredUsersList .az-admin-user-access-badge.is-allowed{
+  border-color:rgba(34,197,94,.55) !important;
+  color:#22c55e !important;
+}
+#registeredUsersList .az-admin-user-access-badge.is-blocked{
+  border-color:rgba(248,113,113,.45) !important;
+  color:#f87171 !important;
+}
+#registeredUsersList .az-admin-user-row-actions{
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap:6px !important;
+}
+#registeredUsersList .az-admin-small-btn{
+  width:auto !important;
+  min-width:54px !important;
+  height:28px !important;
+  border:0 !important;
+  border-radius:8px !important;
+  padding:0 10px !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  cursor:pointer !important;
+  box-shadow:0 2px 0 rgba(0,0,0,.6) !important;
+}
+#registeredUsersList .az-admin-edit-small{
+  background:#2f6df6 !important;
+  color:#fff !important;
+}
+#registeredUsersList .az-admin-delete-small{
+  background:#ef4444 !important;
+  color:#fff !important;
+}
+#registeredUsersList .az-admin-delete-small:disabled{
+  opacity:.45 !important;
+  cursor:not-allowed !important;
+}
+@media (max-width:720px){
+  #registeredUsersList .az-admin-user-compact-card{
+    grid-template-columns:1fr !important;
+    align-items:start !important;
+  }
+  #registeredUsersList .az-admin-user-row-actions{
+    justify-content:flex-start !important;
+  }
+}
