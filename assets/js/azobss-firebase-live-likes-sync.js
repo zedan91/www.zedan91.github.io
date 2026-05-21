@@ -298,6 +298,32 @@ function bindLikeClick(){
     refreshLikesPage();
   }, true);
 }
+let azobssLikesCache = [];
+function getLikeSortMs(item){
+  return firestoreMs(item.updatedAt) || firestoreMs(item.createdAt) || Number(item.createdAtMs || 0) || 0;
+}
+function applyLikesSearchSort(rows){
+  const q = String(document.getElementById('likesSearchInput')?.value || '').trim().toLowerCase();
+  const sort = String(document.getElementById('likesSortSelect')?.value || 'newest');
+  let out = Array.isArray(rows) ? [...rows] : [];
+  if(q){
+    out = out.filter(item => [item.title, item.category, item.pageUrl].some(v => String(v || '').toLowerCase().includes(q)));
+  }
+  out.sort((a,b)=>{
+    if(sort === 'oldest') return getLikeSortMs(a) - getLikeSortMs(b);
+    if(sort === 'az') return String(a.title || '').localeCompare(String(b.title || ''));
+    if(sort === 'za') return String(b.title || '').localeCompare(String(a.title || ''));
+    if(sort === 'category') return String(a.category || '').localeCompare(String(b.category || '')) || String(a.title || '').localeCompare(String(b.title || ''));
+    return getLikeSortMs(b) - getLikeSortMs(a);
+  });
+  return out;
+}
+function renderLikesRows(){
+  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
+  if(!list) return;
+  const rows = applyLikesSearchSort(azobssLikesCache);
+  list.innerHTML = rows.map(item => `<div class="az-like-list-item"><div><strong>❤️ ${escapeHtml(item.title || 'AZOBSS Item')}</strong><br><span>${escapeHtml(item.category || '')}</span></div><a href="${escapeHtml(item.pageUrl || '#')}">Open</a></div>`).join('') || '<div class="az-like-empty">No liked items found.</div>';
+}
 async function refreshLikesPage(){
   const list = document.getElementById('azobssLikesList') || document.getElementById('list');
   if(!list || !/\/likes\/?$/i.test(location.pathname)) return;
@@ -308,13 +334,25 @@ async function refreshLikesPage(){
     try{
       const snap = await getDocs(collection(db, 'users', key, 'likes'));
       snap.forEach(d => rows.push({id:d.id, ...d.data()}));
-      rows.sort((a,b)=>(firestoreMs(b.updatedAt)||Number(b.createdAtMs||0))-(firestoreMs(a.updatedAt)||Number(a.createdAtMs||0)));
     }catch(error){ console.warn('AZOBSS likes page Firebase read failed:', error); }
   }
   if(!rows.length){
     rows = localLikes().map((title, i) => ({ title, category:'local', pageUrl:'#', createdAtMs: Date.now()-i }));
   }
-  list.innerHTML = rows.map(item => `<div class="az-like-list-item"><div><strong>❤️ ${escapeHtml(item.title || 'AZOBSS Item')}</strong><br><span>${escapeHtml(item.category || '')}</span></div><a href="${escapeHtml(item.pageUrl || '#')}">Open</a></div>`).join('') || '<div class="az-like-empty">No likes yet.</div>';
+  azobssLikesCache = rows;
+  renderLikesRows();
+}
+function bindLikesControls(){
+  const search = document.getElementById('likesSearchInput');
+  const sort = document.getElementById('likesSortSelect');
+  if(search && !search.dataset.bound){
+    search.dataset.bound = '1';
+    search.addEventListener('input', renderLikesRows);
+  }
+  if(sort && !sort.dataset.bound){
+    sort.dataset.bound = '1';
+    sort.addEventListener('change', renderLikesRows);
+  }
 }
 function addLikesPageStyle(){
   if(document.getElementById('azobss-live-likes-style')) return;
@@ -326,6 +364,7 @@ function addLikesPageStyle(){
 
 async function boot(){
   addLikesPageStyle();
+  bindLikesControls();
   bindLikeClick();
   await syncGuestVisit();
   await syncOnlineUser();

@@ -35,9 +35,12 @@
     .site-auth-actions{display:flex;align-items:center;gap:16px;margin-left:auto}
     .site-auth-btn{border:0;background:transparent;color:#fff;font-weight:900;font-size:14px;cursor:pointer;padding:6px 2px}
     .wrap{max-width:1100px;margin:0 auto;padding:28px 18px;}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
+    .top{display:block;margin-bottom:18px;}
     h1{margin:0;font-size:34px;}
-    .back{background:#2563eb;color:white;text-decoration:none;padding:10px 16px;border-radius:12px;font-weight:800;}
+    .likes-controls{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:12px;align-items:end;margin:18px 0 18px;}
+    .likes-control label{display:block;margin:0 0 6px;font-size:13px;font-weight:900;color:#dbeafe;}
+    .likes-control input,.likes-control select{width:100%;height:42px;border:1px solid rgba(148,163,184,.35);border-radius:12px;background:#0f172a;color:#fff;padding:0 14px;font-weight:700;outline:none;}
+    .likes-control input:focus,.likes-control select:focus{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.12);}
     .muted{color:#9fb0c9;margin:8px 0 18px;}
     .az-like-empty{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.72);border-radius:14px;padding:16px;color:#cbd5e1}
     @media(max-width:760px){
@@ -54,6 +57,8 @@
       .user-dropdown{position:fixed;top:92px;right:8px;width:210px;min-width:210px;max-height:68vh;overflow-y:auto}
       .wrap{padding:22px 14px}
       h1{font-size:28px}
+      .likes-controls{grid-template-columns:1fr;gap:10px;}
+      .likes-control input,.likes-control select{height:40px;font-size:13px;}
     }
   </style>
 </head>
@@ -113,7 +118,22 @@
         <h1>❤️ Likes</h1>
         <p class="muted">Items you liked from Affiliate Shop, CAD Tools and Software Tools.</p>
       </div>
-      <a class="back" href="/">Back Home</a>
+    </div>
+    <div class="likes-controls">
+      <div class="likes-control">
+        <label for="likesSearchInput">Search likes</label>
+        <input id="likesSearchInput" type="search" placeholder="Search liked items, category or page">
+      </div>
+      <div class="likes-control">
+        <label for="likesSortSelect">Sort by</label>
+        <select id="likesSortSelect">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="az">Name A-Z</option>
+          <option value="za">Name Z-A</option>
+          <option value="category">Category</option>
+        </select>
+      </div>
     </div>
     <div id="azobssLikesList"><div class="az-like-empty">Loading likes...</div></div>
   </main>
