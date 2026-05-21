@@ -466,8 +466,11 @@ function userProfileHtml(user){
   const hasAccess = role === 'admin' || normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '') === 'ZX6186';
   const id = escHtml(userDocId(user));
   const isSelf = String(getSavedUser()?.usernameKey || '').toLowerCase() === String(id).toLowerCase();
+  const createdDate = user.createdAt?.toDate ? user.createdAt.toDate() : (user.createdAt ? new Date(user.createdAt) : null);
+  const registeredText = createdDate && !isNaN(createdDate) ? createdDate.toLocaleDateString() + " • " + createdDate.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Unknown";
   return `<div class="purchase-summary-item admin-purchase-user-card az-admin-user-compact-card">
     <div class="az-admin-user-compact-name"><strong>${recordDisplayName(user)}</strong></div>
+    <span class="az-admin-register-date">${registeredText}</span>
     <span class="az-admin-user-access-badge ${hasAccess ? 'is-allowed' : 'is-blocked'}">${hasAccess ? 'PA/BM allowed' : 'PA/BM off'}</span>
     <div class="az-admin-user-row-actions">
       <button class="az-admin-small-btn az-admin-edit-small" type="button" data-admin-edit-user="${id}">Edit</button>
