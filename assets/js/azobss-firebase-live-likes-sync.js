@@ -31,7 +31,7 @@ function getSavedUser(){
 }
 function userKey(user){
   const u = user || getSavedUser() || {};
-  return String(u.usernameKey || u.name || u.displayName || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase().replace(/[^a-z0-9_\-]/g,'');
+  return String(u.uid || u.usernameKey || u.name || u.displayName || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase().replace(/[^a-z0-9_\-]/g,'');
 }
 function escapeHtml(value){
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
