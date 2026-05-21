@@ -225,6 +225,33 @@ async function renderFirebaseLivePanels(){
 
 function localLikes(){ return safeJson(localStorage.getItem('azLikes')) || []; }
 function saveLocalLikes(arr){ try{ localStorage.setItem('azLikes', JSON.stringify(arr || [])); }catch{} }
+
+function upsertLocalLike(item){
+  const row = normalizeLikeRow(item);
+  if(!row) return;
+  const arr = localLikes().map(x => normalizeLikeRow(x)).filter(Boolean);
+  const idx = arr.findIndex(x => x.itemId === row.itemId || (x.title === row.title && x.category === row.category));
+  const next = { ...row, updatedAtClient:new Date().toISOString(), updatedAtMs:Date.now() };
+  if(idx >= 0) arr[idx] = { ...arr[idx], ...next };
+  else arr.unshift(next);
+  saveLocalLikes(arr);
+}
+function removeLocalLike(item){
+  const row = normalizeLikeRow(item);
+  if(!row) return;
+  const arr = localLikes().map(x => normalizeLikeRow(x)).filter(Boolean)
+    .filter(x => x.itemId !== row.itemId && !(x.title === row.title && x.category === row.category));
+  saveLocalLikes(arr);
+}
+function paintLikeButton(btn, liked){
+  if(!btn) return;
+  btn.innerHTML = liked ? '❤️' : '♡';
+  btn.classList.toggle('is-liked', !!liked);
+  btn.classList.toggle('liked', !!liked);
+  btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
+  btn.title = liked ? 'Unlike' : 'Like';
+  btn.style.color = liked ? '#ff3b5c' : '#ffffff';
+}
 function normalizeLikeRow(value, index=0){
   if(value && typeof value === 'object'){
     const title = String(value.title || value.name || 'AZOBSS Item').replace(/[♡❤️]/g,'').trim() || 'AZOBSS Item';
@@ -241,15 +268,22 @@ function normalizeLikeRow(value, index=0){
   return { itemId, title, category, pageUrl:'#', createdAtClient:new Date(Date.now()-index).toISOString(), createdAtMs:Date.now()-index };
 }
 function likeItemFromButton(btn){
-  const card = btn.closest('.product-card,.card,.tool-card,.software-card,.lisp-row,tr,.purchase-summary-item') || btn.parentElement;
+  const card = btn.closest('.product-card,.card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.purchase-summary-item') || btn.parentElement;
   const path = location.pathname.replace(/^\//,'').split('/')[0] || 'home';
-  let title = '';
-  const titleEl = card?.querySelector('h1,h2,h3,h4,.product-title,.tool-title,.program-title,strong,b');
-  if(titleEl) title = titleEl.textContent;
-  if(!title) title = (card?.innerText || '').split('\n').map(s=>s.trim()).filter(Boolean).find(s=>!/^♡|❤️|sold|buyer protection$/i.test(s)) || 'AZOBSS Item';
-  title = title.replace(/[♡❤️]/g,'').trim().slice(0,120) || 'AZOBSS Item';
-  const category = path || 'home';
-  const itemId = btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80);
+  let title = String(btn.dataset.title || '').trim();
+  let category = String(btn.dataset.category || path || 'local').trim();
+  const titleEl = card?.querySelector('h1,h2,h3,h4,.product-title,.tool-title,.program-title,.download-title,[data-title],strong,b');
+  if(!title && titleEl) title = titleEl.getAttribute('data-title') || titleEl.textContent;
+  if(!title){
+    title = (card?.innerText || '')
+      .split('\n')
+      .map(s=>s.trim())
+      .filter(Boolean)
+      .find(s=>!/[♡❤️🤍]/.test(s) && !/^sold|buyer protection|download now|open$/i.test(s)) || 'AZOBSS Item';
+  }
+  title = title.replace(/[♡❤️🤍]/g,'').trim().slice(0,120) || 'AZOBSS Item';
+  if(!category || category === 'home') category = path || 'local';
+  const itemId = String(btn.dataset.likeId || btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80));
   return { itemId, title, category, pageUrl: location.pathname, createdAtClient: new Date().toISOString(), createdAtMs: Date.now() };
 }
 async function getFirebaseLikeIds(){
@@ -328,10 +362,7 @@ async function refreshLikeButtons(){
   document.querySelectorAll('.azlike').forEach(btn => {
     const item = likeItemFromButton(btn);
     const liked = firebaseIds.has(item.itemId) || localIds.has(item.itemId) || localTitles.has(item.title);
-    btn.innerHTML = liked ? '❤️' : '♡';
-    btn.classList.toggle('is-liked', liked);
-    btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
-    btn.title = liked ? 'Unlike' : 'Like';
+    paintLikeButton(btn, liked);
     btn.style.cursor = 'pointer';
   });
 }
@@ -345,14 +376,10 @@ function bindLikeClick(){
     const item = likeItemFromButton(btn);
     const wasLiked = String(btn.textContent || '').includes('❤️');
     const willLike = !wasLiked;
-    btn.innerHTML = willLike ? '❤️' : '♡';
-    btn.classList.toggle('is-liked', willLike);
-    btn.setAttribute('aria-pressed', willLike ? 'true' : 'false');
+    paintLikeButton(btn, willLike);
     const ok = await setLike(item, willLike);
     if(!ok){
-      btn.innerHTML = wasLiked ? '❤️' : '♡';
-      btn.classList.toggle('is-liked', wasLiked);
-      btn.setAttribute('aria-pressed', wasLiked ? 'true' : 'false');
+      paintLikeButton(btn, wasLiked);
       return;
     }
     await refreshLikesPage();
@@ -450,13 +477,27 @@ else boot();
 
 
 // Robust navbar likes link: always go to /likes/ and never to Lucky Draw.
+function normalizeNavbarLikesLink(){
+  document.querySelectorAll('a[aria-label="Likes"], .market-icon-btn').forEach(a => {
+    const label = String(a.getAttribute('aria-label') || '').toLowerCase();
+    const href = String(a.getAttribute('href') || '');
+    const isHeart = label === 'likes' || a.querySelector('svg path[d*="20.8 4.6"]');
+    if(isHeart){
+      a.setAttribute('href','/likes/');
+      a.classList.add('az-navbar-likes-link');
+    }
+  });
+}
+normalizeNavbarLikesLink();
+setTimeout(normalizeNavbarLikesLink, 300);
+setTimeout(normalizeNavbarLikesLink, 1200);
 document.addEventListener('click', function(event){
-  const a = event.target.closest?.('a[aria-label="Likes"], a.market-icon-btn[href="/likes/"], a.market-icon-btn[href="/likes"]');
+  const a = event.target.closest?.('a[aria-label="Likes"], a.az-navbar-likes-link');
   if(!a || event.target.closest?.('.azlike')) return;
   event.preventDefault();
   event.stopPropagation();
-  a.setAttribute('href','/likes/');
-  window.location.assign('/likes/');
+  if(typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+  window.location.href = '/likes/';
 }, true);
 
 
@@ -505,8 +546,12 @@ document.addEventListener('click', function(event){
       const b=document.createElement('button');
       b.type='button';
       b.className='azlike card-like-btn';
-      b.textContent='🤍';
+      b.textContent='♡';
       b.setAttribute('aria-label','Like item');
+      const itemPreview = likeItemFromButton(b);
+      b.dataset.likeId = itemPreview.itemId;
+      b.dataset.title = itemPreview.title;
+      b.dataset.category = itemPreview.category;
       card.appendChild(b);
     });
     if(typeof refreshLikeButtons === 'function') refreshLikeButtons();
