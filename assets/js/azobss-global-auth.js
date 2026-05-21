@@ -788,13 +788,62 @@ function renderAzobssPager(container, currentPage, totalItems, pageSize, onPage)
     btn.addEventListener('click', () => onPage(Number(btn.dataset.page)));
   });
 }
-function purchaseRowHtml(r){
+function purchaseDetailRowHtml(r){
+  const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
+  const amount = Number(r.amount || 0);
   return `
-    <div class="purchase-summary-item">
-      <strong>${escHtml(r.productType || 'PA')} ${escHtml(r.itemCode || '-')}</strong>
-      <span>${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span>
-      ${r.downloadUrl ? `<a class="small-action-btn blue" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : ''}
+    <div class="user-pa-item purchase-detail-row">
+      <div>Item: <strong>${escHtml(item)}</strong></div>
+      <div>Negeri: <strong>${escHtml(r.negeri || '-')}</strong><br>Amount: <strong>RM${escHtml(amount || '')}</strong></div>
+      <div>Date/Time:<br><strong>${escHtml(formatPurchaseDate(r))}</strong></div>
+      ${r.downloadUrl ? `<a class="user-pa-download" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : ''}
     </div>`;
+}
+function applyPurchaseSort(records, sort){
+  const rows = records.slice();
+  if(sort === 'oldest') rows.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
+  else if(sort === 'paAsc') rows.sort((a,b)=>String(a.itemCode||'').localeCompare(String(b.itemCode||'')));
+  else if(sort === 'paDesc') rows.sort((a,b)=>String(b.itemCode||'').localeCompare(String(a.itemCode||'')));
+  else if(sort === 'state') rows.sort((a,b)=>String(a.negeri||'').localeCompare(String(b.negeri||'')) || Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  else rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  return rows;
+}
+function sortAdminPurchaseGroups(groupedRows, sort){
+  const metric = rows => ({
+    units: rows.length,
+    amount: rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0),
+    updated: Math.max(...rows.map(r=>Number(r.createdAtMs||0)))
+  });
+  return groupedRows.slice().sort((a,b)=>{
+    const am = metric(a[1]), bm = metric(b[1]);
+    if(sort === 'amountAsc') return am.amount - bm.amount;
+    if(sort === 'amountDesc') return bm.amount - am.amount;
+    if(sort === 'unitsAsc') return am.units - bm.units;
+    if(sort === 'unitsDesc') return bm.units - am.units;
+    if(sort === 'username') return String(a[0]).localeCompare(String(b[0]));
+    return bm.updated - am.updated;
+  });
+}
+function renderUserPurchaseSummary(records){
+  const current = getSavedUser() || {};
+  const total = records.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+  const latest = records.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))[0] || {};
+  const username = current.displayName || current.username || current.usernameKey || latest.displayName || latest.usernameKey || 'User';
+  const phone = current.phone || latest.phone || '';
+  const lastItem = latest.itemCode ? `${latest.productType || 'PA'} ${latest.itemCode}` : '-';
+  return `<div class="purchase-summary-item user-purchase-summary-card">
+    <div><strong>${escHtml(username)}</strong>${phone ? `<span>${escHtml(phone)}</span>` : ''}</div>
+    <div class="user-purchase-summary-meta">
+      <span>Unit: <strong>${escHtml(records.length)}</strong></span>
+      <span>Total: <strong>RM${escHtml(total)}</strong></span>
+      <span>Last: <strong>${escHtml(lastItem)}</strong></span>
+    </div>
+  </div>`;
+}
+function filterPurchaseRows(records, keyword){
+  const q = String(keyword || '').trim().toLowerCase();
+  if(!q) return records.slice();
+  return records.filter(r => [r.usernameKey,r.displayName,r.phone,r.email,r.productType,r.itemCode,r.negeri,formatPurchaseDate(r)].join(' ').toLowerCase().includes(q));
 }
 async function renderAzobssPurchaseRecords(){
   const list = document.getElementById('purchaseSummaryList');
@@ -802,34 +851,36 @@ async function renderAzobssPurchaseRecords(){
   if(!list && !userList) return;
   const current = getSavedUser();
   const isAdminUser = isAzobssAdmin(current);
-  const search = String(document.getElementById('purchaseRecordSearch')?.value || document.getElementById('userPaPurchaseSearch')?.value || '').trim().toLowerCase();
-  const sort = String(document.getElementById('purchaseRecordSort')?.value || document.getElementById('userPaPurchaseSort')?.value || 'newest');
+  const adminSearch = String(document.getElementById('purchaseRecordSearch')?.value || '').trim().toLowerCase();
+  const adminSort = String(document.getElementById('purchaseRecordSort')?.value || 'updatedNewest');
+  const userSearch = String(document.getElementById('userPaPurchaseSearch')?.value || '').trim().toLowerCase();
+  const userSort = String(document.getElementById('userPaPurchaseSort')?.value || 'newest');
   let records = await loadAzobssPurchaseRecords();
-  if(search){
-    records = records.filter(r => [r.usernameKey,r.displayName,r.phone,r.email,r.productType,r.itemCode,r.negeri].join(' ').toLowerCase().includes(search));
-  }
-  if(sort === 'oldest') records.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
-  else records.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
 
   if(isAdminUser){
+    records = filterPurchaseRows(records, adminSearch);
     const groups = new Map();
     records.forEach(r => {
       const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
       if(!groups.has(k)) groups.set(k, []);
       groups.get(k).push(r);
     });
-    const groupedRows = Array.from(groups.entries());
+    const groupedRows = sortAdminPurchaseGroups(Array.from(groups.entries()), adminSort);
     const totalPages = Math.max(1, Math.ceil(groupedRows.length / AZOBSS_PURCHASE_PAGE_SIZE));
     azobssAdminPurchasePage = clampPage(azobssAdminPurchasePage, totalPages);
     const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
     if(list){
       list.innerHTML = pageRows.map(([key, rows]) => {
+        rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
         const first = rows[0] || {};
         const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+        const lastItem = first.itemCode ? `${first.productType || 'PA'} ${first.itemCode}` : '-';
         return `<div class="purchase-summary-item admin-purchase-user-card">
           <div class="admin-purchase-user-top">
             <div><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
-            <span>${rows.length} record(s) · RM${total}</span>
+            <span>Unit: <strong>${rows.length}</strong></span>
+            <span>Total: <strong>RM${total}</strong></span>
+            <span>Last: <strong>${escHtml(lastItem)}</strong></span>
           </div>
           <div class="admin-purchase-user-details">
             ${rows.map(r => `<div>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</div>`).join('')}
@@ -844,22 +895,23 @@ async function renderAzobssPurchaseRecords(){
     if(userList) userList.innerHTML = '';
     renderAzobssPager(document.getElementById('userPaPurchasePagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
   }else{
-    const totalPages = Math.max(1, Math.ceil(records.length / AZOBSS_PURCHASE_PAGE_SIZE));
-    azobssUserPurchasePage = clampPage(azobssUserPurchasePage, totalPages);
-    const visibleRecords = records.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
-    const simpleRows = visibleRecords.map(purchaseRowHtml).join('');
-    if(userList){
-      userList.innerHTML = simpleRows || '<div class="purchase-summary-item">No PA purchase list yet.</div>';
-    }
+    const topRecords = filterPurchaseRows(records, adminSearch);
     if(list){
-      list.innerHTML = simpleRows || '<div class="purchase-summary-item">No purchase records yet.</div>';
+      list.innerHTML = topRecords.length ? renderUserPurchaseSummary(topRecords) : '<div class="purchase-summary-item">No purchase records yet.</div>';
+    }
+    const detailRecords = applyPurchaseSort(filterPurchaseRows(records, userSearch), userSort);
+    const totalPages = Math.max(1, Math.ceil(detailRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    azobssUserPurchasePage = clampPage(azobssUserPurchasePage, totalPages);
+    const visibleRecords = detailRecords.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    if(userList){
+      userList.innerHTML = visibleRecords.map(purchaseDetailRowHtml).join('') || '<div class="purchase-summary-item">No PA purchase list yet.</div>';
     }
     const onUserPage = page => {
       azobssUserPurchasePage = page;
       renderAzobssPurchaseRecords();
     };
-    renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, records.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
-    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssUserPurchasePage, records.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, detailRecords.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
   }
 }
 function bindAzobssPurchaseRecordsUI(){

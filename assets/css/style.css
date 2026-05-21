@@ -3309,3 +3309,57 @@ body:not(.is-admin) .affiliate-card-admin-actions{
 }
 
 .nav-pa-bm-link.is-hidden { display: none !important; }
+
+
+/* AZOBSS PRO FIX: Purchase Records Saya layout for normal user */
+body:not(.is-admin) #purchaseRecordTools{
+  display:grid !important;
+  visibility:visible !important;
+}
+body:not(.is-admin) #purchaseSummaryList .small-action-btn{
+  display:none !important;
+}
+.user-purchase-summary-card{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  grid-template-columns:none !important;
+  padding:10px 12px !important;
+}
+.user-purchase-summary-card > div:first-child{
+  display:flex !important;
+  flex-direction:column !important;
+  min-width:0 !important;
+}
+.user-purchase-summary-card span{
+  color:#cbd5e1;
+  font-weight:600;
+}
+.user-purchase-summary-meta{
+  display:flex !important;
+  gap:10px !important;
+  flex-wrap:wrap !important;
+  justify-content:flex-end !important;
+  text-align:right !important;
+}
+.user-purchase-summary-meta strong,
+.purchase-detail-row strong{
+  color:#22c55e !important;
+}
+.purchase-detail-row{
+  grid-template-columns:minmax(120px,0.9fr) minmax(140px,1fr) minmax(150px,1fr) auto !important;
+}
+@media(max-width:760px){
+  .user-purchase-summary-card{
+    align-items:flex-start !important;
+    flex-direction:column !important;
+  }
+  .user-purchase-summary-meta{
+    justify-content:flex-start !important;
+    text-align:left !important;
+  }
+  .purchase-detail-row{
+    grid-template-columns:1fr !important;
+  }
+}
