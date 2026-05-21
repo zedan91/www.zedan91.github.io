@@ -5208,72 +5208,6 @@ body:not(.is-admin) #purchaseSummaryList .small-action-btn{
   }
 }
 
-
-/* PAYMENT CTA CENTER + TOTAL */
-.payment-cta-wrap{
-  width:100% !important;
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:8px !important;
-  margin:14px auto 28px !important;
-  text-align:center !important;
-}
-
-.payment-cta-button{
-  width:min(360px, 90vw) !important;
-  min-height:54px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:10px !important;
-  margin:0 auto !important;
-  border-radius:12px !important;
-  font-size:22px !important;
-  font-weight:800 !important;
-}
-
-.payment-cta-button::before{
-  content:"▣";
-  font-size:24px;
-  line-height:1;
-}
-
-.payment-total-cta{
-  color:#facc15 !important;
-  font-size:22px !important;
-  font-weight:900 !important;
-  line-height:1.15 !important;
-  text-shadow:0 2px 8px rgba(250,204,21,.18) !important;
-}
-
-@media(max-width:640px){
-  .payment-cta-wrap{
-    gap:5px !important;
-    margin:12px auto 22px !important;
-  }
-  .payment-cta-button{
-    width:min(300px, 88vw) !important;
-    min-height:46px !important;
-    font-size:18px !important;
-    border-radius:10px !important;
-  }
-  .payment-cta-button::before{
-    font-size:20px !important;
-  }
-  .payment-total-cta{
-    font-size:15px !important;
-    line-height:1.1 !important;
-  }
-}
-
-@media(max-width:380px){
-  .payment-total-cta{
-    font-size:13px !important;
-  }
-}
-
 </style>
 <style>
 /* FORCE RESTORE PURCHASE RECORDS USERS PANEL */
@@ -7748,12 +7682,9 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 <div class="benchmark-cart-list" id="benchmarkCartList" style="display:none;"></div>
 </div>
 </div>
-<div class="payment-cta-wrap login-only" id="paymentCtaWrap">
-        <button class="btn blue payment-cta-button" id="paymentScrollButton" type="button">
-          Pembayaran
-        </button>
-        <div class="payment-total-cta" id="paymentTotalText">Total : RM0</div>
-      </div>
+<button class="btn blue login-only" id="paymentScrollButton" type="button">
+        Pembayaran
+      </button>
 <div class="admin-purchase-panel" id="adminPurchasePanel">
 <div class="purchase-panel-layout">
 <div>
@@ -10887,64 +10818,15 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
-(function(){
-  function getPaymentTarget(){
-    const copyBtn = document.getElementById('copyAccountButton');
-    if(copyBtn){
-      return copyBtn.closest('.payment-qr-wrap, .payment-qr-card, aside, .purchase-panel-layout') || copyBtn;
-    }
-    const qrImg = document.querySelector('img[src*="payment-qr"], img[src*="qr"], img[alt*="QR" i]');
-    if(qrImg){
-      return qrImg.closest('.payment-qr-wrap, .payment-qr-card, aside, .purchase-panel-layout') || qrImg;
-    }
-    return document.getElementById('adminPurchasePanel');
-  }
-
-  function updatePaymentTotalText(){
-    const totalEl = document.getElementById('paymentTotalText');
-    if(!totalEl) return;
-
-    let total = 'RM0';
-    const meta = document.querySelector('.user-purchase-summary-meta');
-    if(meta){
-      const spans = Array.from(meta.querySelectorAll('span'));
-      const totalSpan = spans.find(function(span){
-        return /^\s*Total\s*:/i.test(span.textContent || '');
-      });
-      if(totalSpan){
-        const strong = totalSpan.querySelector('strong');
-        const raw = (strong ? strong.textContent : totalSpan.textContent.replace(/^\s*Total\s*:/i,'')).trim();
-        if(raw) total = /^RM/i.test(raw) ? raw : ('RM' + raw.replace(/^RM/i,''));
-      }
-    }
-
-    totalEl.textContent = 'Total : ' + total;
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    const btn = document.getElementById('paymentScrollButton');
-    if(btn){
-      btn.addEventListener('click', function(){
-        const target = getPaymentTarget();
-        if(target){
-          target.scrollIntoView({behavior:'smooth', block:'center'});
-        }
-      });
-    }
-
-    updatePaymentTotalText();
-
-    const watchTarget = document.getElementById('purchaseSummaryList') || document.getElementById('adminPurchasePanel') || document.body;
-    if(watchTarget && window.MutationObserver){
-      const obs = new MutationObserver(updatePaymentTotalText);
-      obs.observe(watchTarget, {childList:true, subtree:true, characterData:true});
-    }
-
-    window.addEventListener('azobss:purchases-updated', updatePaymentTotalText);
-    setTimeout(updatePaymentTotalText, 400);
-    setTimeout(updatePaymentTotalText, 1200);
-  });
-})();
+document.addEventListener('DOMContentLoaded',()=>{
+ const b=document.getElementById('paymentScrollButton');
+ if(b){
+ b.addEventListener('click',()=>{
+ const qr=document.querySelector('.purchase-sidebar,.payment-sidebar,.qr-panel,#qrCodePanel,img[src*="maybank"]');
+ if(qr){ qr.scrollIntoView({behavior:'smooth',block:'center'}); }
+ });
+ }
+});
 </script>
 
 </body>
