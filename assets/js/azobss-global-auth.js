@@ -1,3 +1,14 @@
+// Clean production URLs: /folder/index.html -> /folder/
+(function cleanAzobssIndexHtmlUrl(){
+  try {
+    var path = window.location.pathname || '';
+    if (/\/index\.html$/i.test(path)) {
+      var cleanPath = path.replace(/index\.html$/i, '');
+      window.history.replaceState(null, document.title, cleanPath + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
@@ -147,7 +158,7 @@ function normalizeUserMenu() {
   if (!dropdown) return;
   dropdown.innerHTML = `
     <div class="user-dropdown-section">Buying</div>
-    <a class="user-dropdown-item" href="/index.html#purchases" role="menuitem">My purchases</a>
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
     <a class="user-dropdown-item" href="/affiliate-shop/#likes" role="menuitem">Likes</a>
     <div class="user-dropdown-section">Account</div>
     <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
