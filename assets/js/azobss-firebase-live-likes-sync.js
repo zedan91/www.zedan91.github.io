@@ -350,8 +350,8 @@ async function readLikesFromFirebase(){
   if(!user || !key) return [];
   const rows = [];
   try{
-    const snap = await getDocs(collection(db, 'users', key, 'likes'));
-    snap.forEach(d => rows.push(normalizeLikeRow({ id:d.id, itemId:d.id, ...d.data() })));
+    const snap = await getDocs(query(collection(db, USER_LIKES_COLLECTION), where('usernameKey','==',key)));
+    snap.forEach(d => rows.push(normalizeLikeRow({ id:d.id, ...d.data() })));
     setUserLikeCache(key, rows);
     return rows;
   }catch(error){
@@ -366,7 +366,7 @@ async function writeLikeToFirebase(item){
   if(!user || !key) throw new Error('Please login first to save likes.');
   const row = normalizeLikeRow(item);
   const payload = compactLikePayload(row, user, key);
-  await setDoc(doc(db, 'users', key, 'likes', row.itemId), {
+  await setDoc(doc(db, USER_LIKES_COLLECTION, likeGlobalId(key,row.itemId)), {
     ...payload,
     itemId:row.itemId,
     title:row.title,
@@ -388,7 +388,7 @@ async function deleteLikeFromFirebase(item){
   const key = userKey(user);
   if(!user || !key) throw new Error('Please login first.');
   const row = normalizeLikeRow(item);
-  await deleteDoc(doc(db, 'users', key, 'likes', row.itemId));
+  await deleteDoc(doc(db, USER_LIKES_COLLECTION, likeGlobalId(key,row.itemId)));
   const cached = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean).filter(x => x.itemId !== row.itemId);
   setUserLikeCache(key, cached);
   return true;
