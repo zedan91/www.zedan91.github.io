@@ -1,4 +1,30 @@
-<!doctype html><html><body style='background:#081426;color:white;font-family:Arial'><h1>❤️ Likes</h1><div id='list'></div><script>
-let arr=JSON.parse(localStorage.getItem('azLikes')||'[]');
-document.getElementById('list').innerHTML=arr.map(x=>'<div style="padding:10px;border:1px solid #333;margin:10px">'+x+'</div>').join('')||'No likes yet';
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Likes | AZOBSS</title>
+  <style>
+    body{margin:0;background:#081426;color:white;font-family:Arial,Helvetica,sans-serif;}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 18px;}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
+    h1{margin:0;font-size:34px;}
+    .back{background:#2563eb;color:white;text-decoration:none;padding:10px 16px;border-radius:12px;font-weight:800;}
+    .muted{color:#9fb0c9;margin:8px 0 18px;}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div>
+        <h1>❤️ Likes</h1>
+        <p class="muted">Items you liked from Affiliate Shop, CAD Tools and Software Tools.</p>
+      </div>
+      <a class="back" href="/">Back Home</a>
+    </div>
+    <div id="azobssLikesList"><div class="az-like-empty">Loading likes...</div></div>
+  </main>
+  <script type="module" src="/assets/js/azobss-global-auth.js"></script>
+  <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script>
+</body>
+</html>

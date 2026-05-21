@@ -356,7 +356,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
-<a class="user-dropdown-item" href="/affiliate-shop/#likes" role="menuitem">Likes</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
 <div class="user-dropdown-section">Account</div>
 <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
@@ -394,7 +394,7 @@ const ranges={"HDD":[80,160],"SATA SSD":[400,550],"NVMe Gen3":[1500,3500],"NVMe 
 function calc(){let r=parseFloat(read.value)||0,w=parseFloat(write.value)||0,rg=ranges[type.value];let avg=(r+w)/2;let status=avg<rg[0]*0.75?"Slow / check cable, slot, health or thermal issue":avg<=rg[1]*1.25?"Normal range":"Higher than normal range / good result";result.innerHTML=`Selected: <b>${type.value}</b>\nYour average speed: <b>${avg.toFixed(0)} MB/s</b>\nExpected range: <b>${rg[0]} - ${rg[1]} MB/s</b>\nStatus: <b>${status}</b>\n\nTip: For accurate result, close heavy apps and test using CrystalDiskMark default profile.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 <script>
 document.querySelectorAll('.card,.product-card,tr,.lisp-row').forEach((e,i)=>{
 if(e.querySelector('.azlike')) return;

@@ -418,7 +418,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
-<a class="user-dropdown-item" href="/affiliate-shop/#likes" role="menuitem">Likes</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
 <div class="user-dropdown-section">Account</div>
 <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
@@ -957,7 +957,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     loadWinner();
     setInterval(loadEntries, 30000);
   </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 <script>
 document.querySelectorAll('.card,.product-card,tr,.lisp-row').forEach((e,i)=>{
 if(e.querySelector('.azlike')) return;
