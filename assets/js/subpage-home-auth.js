@@ -1,8 +1,8 @@
 (function () {
   'use strict';
 
-  var HOME_SIGNUP = '../index.html#signup';
-  var HOME_LOGIN = '../index.html#login';
+  var HOME_SIGNUP = '#signup';
+  var HOME_LOGIN = '#login';
   var USER_KEYS = ['azobssCurrentUser', 'azobssUser'];
 
   function readJson(storage, key) {
@@ -58,6 +58,17 @@
     var authButton = target && target.closest && target.closest('#siteSignUpButton, #siteSignInButton');
     if (!authButton) return '';
     return authButton.id === 'siteSignUpButton' ? HOME_SIGNUP : HOME_LOGIN;
+  }
+
+  function openLocalAuth(authLink) {
+    var mode = authLink === HOME_SIGNUP ? 'signup' : 'signin';
+
+    if (typeof window.openSiteAuth === 'function') {
+      window.openSiteAuth(mode);
+      return;
+    }
+
+    window.location.hash = mode === 'signup' ? 'signup' : 'login';
   }
 
   function canSeePaBm(user) {
@@ -125,7 +136,7 @@
 
       if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
         event.preventDefault();
-        window.location.assign(authHomeLink);
+        openLocalAuth(authHomeLink);
       }
 
       return;
