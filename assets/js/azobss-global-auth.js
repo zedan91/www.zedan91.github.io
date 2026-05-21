@@ -19,7 +19,7 @@
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -225,6 +225,14 @@ function injectProfileSettingsModal() {
       <label for="profileEditPhone">Phone Number<input id="profileEditPhone" inputmode="tel" placeholder="Example: 01135600723" type="tel"></label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
       <p class="profile-settings-note">This updates the local profile display on this website.</p>
+      <div class="profile-password-box" aria-label="Reset Password">
+        <p class="profile-password-title">Reset Password</p>
+        <p class="profile-password-help">For security, enter your current password first, then set a new password.</p>
+        <label for="profileCurrentPassword">Current Password<input id="profileCurrentPassword" autocomplete="current-password" placeholder="Current password" type="password"></label>
+        <label for="profileNewPassword">New Password<input id="profileNewPassword" autocomplete="new-password" minlength="6" placeholder="Minimum 6 characters" type="password"></label>
+        <label for="profileConfirmPassword">Confirm New Password<input id="profileConfirmPassword" autocomplete="new-password" minlength="6" placeholder="Re-enter new password" type="password"></label>
+        <button class="btn secondary" id="profileResetPasswordButton" type="button">Reset Password</button>
+      </div>
       <p class="request-error" id="profileSettingsError"></p>
       <div class="profile-settings-actions">
         <button class="btn" id="profileSettingsSaveButton" type="submit">Save Changes</button>
@@ -283,6 +291,7 @@ function openProfileSettings(){
   if($('profileEditPhone')) $('profileEditPhone').value=user.phone || '';
   if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
   const err=$('profileSettingsError'); if(err) err.textContent='';
+  ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
   modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
 }
 function closeProfileSettings(){const modal=$('profileSettingsModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
@@ -391,6 +400,29 @@ function bindAuth() {
       saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member'});
       syncHeader({usernameKey,email,phone,invitedByCode}); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
+  });
+
+  $('profileResetPasswordButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('profileSettingsError'); if(err) err.textContent='';
+    const currentPassword=String($('profileCurrentPassword')?.value||'');
+    const newPassword=String($('profileNewPassword')?.value||'');
+    const confirmPassword=String($('profileConfirmPassword')?.value||'');
+    const saved=getSavedUser() || {};
+    const usernameKey=normalizeUsername(saved.usernameKey || saved.name || (auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : ''));
+    if(!auth.currentUser || !usernameKey){ if(err) err.textContent='Please login again before reset password.'; return; }
+    if(!currentPassword || !newPassword || !confirmPassword){ if(err) err.textContent='Please enter current password and new password.'; return; }
+    if(newPassword.length < 6){ if(err) err.textContent='New password must be at least 6 characters.'; return; }
+    if(newPassword !== confirmPassword){ if(err) err.textContent='Confirm password does not match.'; return; }
+    try{
+      const credential=EmailAuthProvider.credential(buildUserEmail(usernameKey), currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, newPassword);
+      ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+      if(err){ err.style.color='#62e6a5'; err.textContent='Password updated successfully.'; setTimeout(()=>{ if(err.textContent==='Password updated successfully.'){ err.textContent=''; err.style.color=''; } }, 3500); }
+    }catch(error){
+      if(err){ err.style.color=''; err.textContent = error?.code==='auth/wrong-password' || error?.code==='auth/invalid-credential' ? 'Current password is wrong.' : 'Password reset failed. Please login again and try.'; }
+    }
   });
 
   $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
