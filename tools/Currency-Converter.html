@@ -339,6 +339,80 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .market-icon-btn:hover{color:#22c55e;}
 @media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:hidden;text-overflow:ellipsis}}
 </style>
+
+<style id="azobss-pro-navbar-consistency-v1">
+/* AZOBSS PRO GLOBAL NAVBAR CONSISTENCY */
+.market-sticky-bar{
+  position:sticky!important;top:0!important;z-index:9999!important;
+  width:100%!important;background:#050607!important;border-bottom:1px solid #b6891d!important;
+  box-sizing:border-box!important;min-height:50px!important;
+}
+.market-bar-inner{
+  width:100%!important;max-width:none!important;margin:0!important;padding:5px 8px!important;box-sizing:border-box!important;
+}
+.market-main-row{
+  display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:38px!important;
+  flex-wrap:nowrap!important;white-space:nowrap!important;
+}
+.market-brand{
+  flex:0 0 154px!important;width:154px!important;height:38px!important;min-width:154px!important;max-width:154px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;
+  border-radius:999px!important;background:#0f172a!important;border:1px solid rgba(148,163,184,.35)!important;
+  margin:0!important;padding:0!important;box-sizing:border-box!important;text-decoration:none!important;
+}
+.market-brand img{
+  display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;margin:0!important;padding:0!important;
+}
+.market-nav{
+  display:flex!important;align-items:center!important;gap:7px!important;flex:1 1 auto!important;min-width:0!important;overflow-x:auto!important;
+  scrollbar-width:none!important;white-space:nowrap!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a,.market-nav button{
+  height:38px!important;min-height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:999px!important;padding:0 14px!important;line-height:1!important;box-sizing:border-box!important;
+  background:#111827!important;border:1px solid rgba(148,163,184,.45)!important;color:#fff!important;text-decoration:none!important;
+  font-size:14px!important;font-weight:800!important;box-shadow:inset 0 -1px 0 rgba(255,255,255,.08)!important;
+}
+.market-nav a.active,.market-nav a[aria-current="page"],.market-nav a.is-active{
+  background:#22c55e!important;color:#06120b!important;border-color:#16a34a!important;
+}
+.market-nav a:has(.nav-whatsapp-circle){
+  flex:0 0 44px!important;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;
+  padding:0!important;border-radius:999px!important;background:#22c55e!important;border:2px solid rgba(255,255,255,.16)!important;
+}
+.nav-whatsapp-circle{
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;
+}
+.nav-whatsapp-circle::before{content:"💬"!important;font-size:20px!important;line-height:1!important;}
+.site-auth-actions,.market-user-tools{
+  display:flex!important;align-items:center!important;gap:10px!important;flex:0 0 auto!important;margin-left:auto!important;white-space:nowrap!important;
+}
+.user-menu{height:38px!important;display:inline-flex!important;align-items:center!important;gap:8px!important;}
+.user-avatar{
+  width:26px!important;height:26px!important;min-width:26px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:11px!important;line-height:1!important;
+}
+.user-name{font-size:14px!important;font-weight:800!important;line-height:1!important;color:#fff!important;}
+.market-icon-btn{
+  width:28px!important;height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  color:#fff!important;background:transparent!important;border:0!important;padding:0!important;margin:0!important;
+}
+.market-icon-btn svg{width:24px!important;height:24px!important;stroke:currentColor!important;fill:none!important;stroke-width:2!important;}
+.market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
+.site-auth-btn{
+  height:34px!important;border-radius:999px!important;padding:0 13px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:14px!important;font-weight:800!important;line-height:1!important;
+}
+@media(max-width:780px){
+  .market-main-row{gap:6px!important;}
+  .market-brand{flex-basis:138px!important;width:138px!important;min-width:138px!important;max-width:138px!important;height:36px!important;}
+  .market-nav a,.market-nav button{height:36px!important;min-height:36px!important;padding:0 11px!important;font-size:13px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;}
+  .market-icon-btn{width:26px!important;}
+}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
