@@ -447,6 +447,49 @@ function formatPurchaseDate(record){
   if(!ms) return '-';
   return new Date(ms).toLocaleString('en-MY', { hour12:false });
 }
+const AZOBSS_PURCHASE_PAGE_SIZE = 4;
+let azobssAdminPurchasePage = 1;
+let azobssUserPurchasePage = 1;
+function clampPage(page, totalPages){
+  return Math.max(1, Math.min(Number(page)||1, Math.max(1, totalPages||1)));
+}
+function renderAzobssPager(container, currentPage, totalItems, pageSize, onPage){
+  if(!container) return;
+  const totalPages = Math.max(1, Math.ceil((Number(totalItems)||0) / pageSize));
+  if(totalItems <= pageSize){
+    container.innerHTML = '';
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  const button = (label, page, disabled, active) => `<button type="button" class="${active ? 'is-active' : ''}" data-page="${page}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+  const pages = [];
+  const start = Math.max(1, currentPage - 2);
+  const end = Math.min(totalPages, currentPage + 2);
+  pages.push(button('← Previous', Math.max(1, currentPage - 1), currentPage === 1, false));
+  if(start > 1){
+    pages.push(button('1', 1, false, currentPage === 1));
+    if(start > 2) pages.push('<span class="pager-dots">...</span>');
+  }
+  for(let i=start; i<=end; i++) pages.push(button(String(i), i, false, currentPage === i));
+  if(end < totalPages){
+    if(end < totalPages - 1) pages.push('<span class="pager-dots">...</span>');
+    pages.push(button(String(totalPages), totalPages, false, currentPage === totalPages));
+  }
+  pages.push(button('Next →', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false));
+  container.innerHTML = pages.join('');
+  container.querySelectorAll('button[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => onPage(Number(btn.dataset.page)));
+  });
+}
+function purchaseRowHtml(r){
+  return `
+    <div class="purchase-summary-item">
+      <strong>${escHtml(r.productType || 'PA')} ${escHtml(r.itemCode || '-')}</strong>
+      <span>${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span>
+      ${r.downloadUrl ? `<a class="small-action-btn blue" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : ''}
+    </div>`;
+}
 async function renderAzobssPurchaseRecords(){
   const list = document.getElementById('purchaseSummaryList');
   const userList = document.getElementById('userPaPurchaseList');
@@ -462,25 +505,19 @@ async function renderAzobssPurchaseRecords(){
   if(sort === 'oldest') records.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
   else records.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
 
-  const simpleRows = records.map(r => `
-    <div class="purchase-summary-item">
-      <strong>${escHtml(r.productType || 'PA')} ${escHtml(r.itemCode || '-')}</strong>
-      <span>${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span>
-      ${r.downloadUrl ? `<a class="small-action-btn blue" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : ''}
-    </div>`).join('');
-
-  if(userList){
-    userList.innerHTML = simpleRows || '<div class="purchase-summary-item">No PA purchase list yet.</div>';
-  }
-  if(list){
-    if(isAdminUser){
-      const groups = new Map();
-      records.forEach(r => {
-        const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
-        if(!groups.has(k)) groups.set(k, []);
-        groups.get(k).push(r);
-      });
-      list.innerHTML = Array.from(groups.entries()).map(([key, rows]) => {
+  if(isAdminUser){
+    const groups = new Map();
+    records.forEach(r => {
+      const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
+      if(!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    });
+    const groupedRows = Array.from(groups.entries());
+    const totalPages = Math.max(1, Math.ceil(groupedRows.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    azobssAdminPurchasePage = clampPage(azobssAdminPurchasePage, totalPages);
+    const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    if(list){
+      list.innerHTML = pageRows.map(([key, rows]) => {
         const first = rows[0] || {};
         const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
         return `<div class="purchase-summary-item admin-purchase-user-card">
@@ -493,9 +530,30 @@ async function renderAzobssPurchaseRecords(){
           </div>
         </div>`;
       }).join('') || '<div class="purchase-summary-item">No purchase records yet.</div>';
-    }else{
+    }
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, groupedRows.length, AZOBSS_PURCHASE_PAGE_SIZE, page => {
+      azobssAdminPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    });
+    if(userList) userList.innerHTML = '';
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
+  }else{
+    const totalPages = Math.max(1, Math.ceil(records.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    azobssUserPurchasePage = clampPage(azobssUserPurchasePage, totalPages);
+    const visibleRecords = records.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    const simpleRows = visibleRecords.map(purchaseRowHtml).join('');
+    if(userList){
+      userList.innerHTML = simpleRows || '<div class="purchase-summary-item">No PA purchase list yet.</div>';
+    }
+    if(list){
       list.innerHTML = simpleRows || '<div class="purchase-summary-item">No purchase records yet.</div>';
     }
+    const onUserPage = page => {
+      azobssUserPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    };
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, records.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssUserPurchasePage, records.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
   }
 }
 function bindAzobssPurchaseRecordsUI(){
@@ -503,8 +561,15 @@ function bindAzobssPurchaseRecordsUI(){
     const el = document.getElementById(id);
     if(!el || el.dataset.azobssPurchaseBind) return;
     el.dataset.azobssPurchaseBind = '1';
-    el.addEventListener(el.tagName === 'BUTTON' ? 'click' : 'input', () => renderAzobssPurchaseRecords());
-    if(el.tagName === 'SELECT') el.addEventListener('change', () => renderAzobssPurchaseRecords());
+    const handler = () => {
+      if(id !== 'refreshPurchaseButton'){
+        azobssAdminPurchasePage = 1;
+        azobssUserPurchasePage = 1;
+      }
+      renderAzobssPurchaseRecords();
+    };
+    el.addEventListener(el.tagName === 'BUTTON' ? 'click' : 'input', handler);
+    if(el.tagName === 'SELECT') el.addEventListener('change', handler);
   });
   if(document.getElementById('purchaseSummaryList') || document.getElementById('userPaPurchaseList')){
     renderAzobssPurchaseRecords();
