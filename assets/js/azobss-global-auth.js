@@ -657,12 +657,24 @@ function getRegisteredUserControls(){
     refresh: document.getElementById('refreshUsersButton')
   };
 }
+function compactSearchValue(value){
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\s\-()+.]/g, '');
+}
 function registeredUserSearchText(user){
-  return [
-    user.usernameKey, user.displayName, user.name, user.email, user.phone,
+  const rawValues = [
+    user.id, user.uid,
+    user.usernameKey, user.username, user.displayName, user.name,
+    user.email, user.contactEmail, user.emailAddress, user.userEmail,
+    user.phone, user.phoneNumber, user.whatsapp, user.whatsApp, user.whatsappNumber, user.mobile, user.mobileNumber,
     user.memberCode, user.invitedByCode, user.paMemberCode, user.accessCode, user.signupCode,
     user.role
-  ].filter(Boolean).join(' ').toLowerCase();
+  ].filter(v => v !== undefined && v !== null);
+  const normalText = rawValues.map(v => String(v).toLowerCase()).join(' ');
+  const compactText = rawValues.map(compactSearchValue).join(' ');
+  const digitsOnly = rawValues.map(v => String(v || '').replace(/\D/g, '')).filter(Boolean).join(' ');
+  return `${normalText} ${compactText} ${digitsOnly}`;
 }
 function registeredUserHasPaAccess(user){
   const role = String(user.role || 'member').toLowerCase();
@@ -679,7 +691,12 @@ function getFilteredRegisteredUsers(users){
   let rows = Array.isArray(users) ? users.slice() : [];
 
   if(q){
-    rows = rows.filter(user => registeredUserSearchText(user).includes(q));
+    const compactQ = compactSearchValue(q);
+    const digitQ = q.replace(/\D/g, '');
+    rows = rows.filter(user => {
+      const haystack = registeredUserSearchText(user);
+      return haystack.includes(q) || (compactQ && haystack.includes(compactQ)) || (digitQ && haystack.includes(digitQ));
+    });
   }
 
   if(sort === 'onlineOnly'){
