@@ -301,6 +301,11 @@ async function setLike(item, liked){
     else alert('Please login first to save likes.');
     return false;
   }
+
+  // Optimistic local cache first, so the heart immediately stays red/white.
+  if(liked) upsertLocalLike(item);
+  else removeLocalLike(item);
+
   try{
     if(liked){
       await writeLikeToFirebase(item, user, key);
@@ -310,20 +315,22 @@ async function setLike(item, liked){
     }
     return true;
   }catch(error){
-    console.warn('AZOBSS save like failed:', error);
-    return false;
+    console.warn('AZOBSS save like failed; kept local cache fallback:', error);
+    return true;
   }
 }
+
 async function refreshLikeButtons(){
   await migrateLocalLikesToFirebase();
   const firebaseIds = await getFirebaseLikeIds();
-  const user = getSavedUser();
-  const local = new Set(localLikes().map(x => (normalizeLikeRow(x)||{}).title).filter(Boolean));
+  const localIds = new Set(localLikes().map(x => (normalizeLikeRow(x)||{}).itemId).filter(Boolean));
+  const localTitles = new Set(localLikes().map(x => (normalizeLikeRow(x)||{}).title).filter(Boolean));
   document.querySelectorAll('.azlike').forEach(btn => {
     const item = likeItemFromButton(btn);
-    const liked = firebaseIds.has(item.itemId) || (!user && local.has(item.title));
-    btn.textContent = liked ? ' ❤️' : ' 🤍';
+    const liked = firebaseIds.has(item.itemId) || localIds.has(item.itemId) || localTitles.has(item.title);
+    btn.innerHTML = liked ? '❤️' : '♡';
     btn.classList.toggle('is-liked', liked);
+    btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
     btn.title = liked ? 'Unlike' : 'Like';
     btn.style.cursor = 'pointer';
   });
@@ -338,12 +345,14 @@ function bindLikeClick(){
     const item = likeItemFromButton(btn);
     const wasLiked = String(btn.textContent || '').includes('❤️');
     const willLike = !wasLiked;
-    btn.textContent = willLike ? ' ❤️' : ' 🤍';
+    btn.innerHTML = willLike ? '❤️' : '♡';
     btn.classList.toggle('is-liked', willLike);
+    btn.setAttribute('aria-pressed', willLike ? 'true' : 'false');
     const ok = await setLike(item, willLike);
     if(!ok){
-      btn.textContent = wasLiked ? ' ❤️' : ' 🤍';
+      btn.innerHTML = wasLiked ? '❤️' : '♡';
       btn.classList.toggle('is-liked', wasLiked);
+      btn.setAttribute('aria-pressed', wasLiked ? 'true' : 'false');
       return;
     }
     await refreshLikesPage();
@@ -382,13 +391,16 @@ async function refreshLikesPage(){
   const user = getSavedUser();
   const key = userKey(user);
   let rows = [];
+  const localRows = localLikes().map(normalizeLikeRow).filter(Boolean);
   if(user && key){
     try{
       const snap = await getDocs(collection(db, 'users', key, 'likes'));
       snap.forEach(d => rows.push({id:d.id, ...d.data()}));
     }catch(error){ console.warn('AZOBSS likes page Firebase read failed:', error); }
+    const seen = new Set(rows.map(x => x.itemId || x.id || x.title));
+    localRows.forEach(x => { const id = x.itemId || x.id || x.title; if(!seen.has(id)) rows.push(x); });
   }else{
-    rows = localLikes().map(normalizeLikeRow).filter(Boolean);
+    rows = localRows;
   }
   azobssLikesCache = rows;
   renderLikesRows();
@@ -436,6 +448,18 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 else boot();
 
 
+
+// Robust navbar likes link: always go to /likes/ and never to Lucky Draw.
+document.addEventListener('click', function(event){
+  const a = event.target.closest?.('a[aria-label="Likes"], a.market-icon-btn[href="/likes/"], a.market-icon-btn[href="/likes"]');
+  if(!a || event.target.closest?.('.azlike')) return;
+  event.preventDefault();
+  event.stopPropagation();
+  a.setAttribute('href','/likes/');
+  window.location.assign('/likes/');
+}, true);
+
+
 // Auto inject like buttons only on allowed pages: Affiliate Shop, Software, and CAD Tools.
 (function(){
   const allowedLikePages = [
@@ -461,7 +485,8 @@ else boot();
         cursor:pointer!important;box-shadow:0 8px 22px rgba(0,0,0,.35)!important;transition:.2s!important;
       }
       .azlike.card-like-btn:hover{transform:scale(1.08)!important;background:rgba(15,23,42,.9)!important;}
-      .azlike.card-like-btn.is-liked{color:#ff4b6e!important;}
+      .azlike.card-like-btn.is-liked{color:#ff3b5c!important;background:rgba(255,59,92,.14)!important;border-color:rgba(255,59,92,.45)!important;}
+      .azlike.card-like-btn.is-liked::after{content:'';position:absolute;inset:-3px;border-radius:999px;box-shadow:0 0 0 2px rgba(255,59,92,.12),0 0 16px rgba(255,59,92,.35);pointer-events:none;}
       #lispList tr.az-like-host .azlike.card-like-btn{top:50%!important;right:8px!important;transform:translateY(-50%)!important;}
       #lispList tr.az-like-host .azlike.card-like-btn:hover{transform:translateY(-50%) scale(1.08)!important;}
       #lispList tr.az-like-host td:last-child{padding-right:48px!important;}
