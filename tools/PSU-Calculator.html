@@ -238,6 +238,7 @@ body{padding-top:58px!important;}
   .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
 }
 </style>
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -305,4 +306,5 @@ function roundPSU(w){let sizes=[450,500,550,650,750,850,1000,1200,1300,1500,1600
 function calc(){let total=(+cpu.value||0)+(+gpu.value||0)+(+other.value||0)+((+storage.value||0)*8);let rec=roundPSU(total*(+head.value));result.innerHTML=`Estimated system load: <b>${total}W</b>\nRecommended PSU: <b>${rec}W</b>\n\nSuggestion:\n- Choose good brand PSU.\n- For gaming PC, avoid using PSU too close to maximum load.\n- For high-end GPU, check official GPU recommended PSU and connector requirement.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script></body></html>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+</body></html>

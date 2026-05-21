@@ -238,6 +238,7 @@ body{padding-top:58px!important;}
   .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
 }
 </style>
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -302,4 +303,5 @@ body{padding-top:58px!important;}
 function calc(){let t=+total.value||0,u=+used.value||0,p=t?u/t*100:0;let need=p>85?"High RAM pressure. Upgrade recommended.":p>70?"Moderate usage. Upgrade if PC feels slow.":"RAM usage looks okay.";let rec=usage.value==="Office / browsing"?"8GB - 16GB":usage.value==="Gaming"?"16GB - 32GB":usage.value==="Editing / design"?"32GB recommended":"32GB - 64GB";result.innerHTML=`RAM usage: <b>${p.toFixed(1)}%</b>\nAvailable RAM: <b>${Math.max(t-u,0).toFixed(1)} GB</b>\nStatus: <b>${need}</b>\nRecommended for ${usage.value}: <b>${rec}</b>\n\nTip: Check Task Manager > Processes to see which app uses the most memory.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script></body></html>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+</body></html>

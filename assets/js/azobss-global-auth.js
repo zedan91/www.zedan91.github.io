@@ -4,14 +4,14 @@
     var path = window.location.pathname || '';
     if (/\/index\.html$/i.test(path)) {
       var cleanPath = path.replace(/index\.html$/i, '');
-      window.history.replaceState(null, document.title, cleanPath + window.location.search + (window.location.hash && window.location.hash !== '#top' ? window.location.hash : ''));
+      window.history.replaceState(null, document.title, cleanPath + window.location.search + (window.location.hash && window.location.hash !== '/' ? window.location.hash : ''));
     }
   } catch (e) {}
 })();
 
-// Remove old #top hash if user opens/clicks an old cached logo link
+// Remove old / hash if user opens/clicks an old cached logo link
 (function(){
-  if (window.location.hash === '#top') {
+  if (window.location.hash === '/') {
     window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
   }
 })();

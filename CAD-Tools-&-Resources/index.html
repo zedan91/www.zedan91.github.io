@@ -1039,6 +1039,7 @@ body{padding-top:58px!important;}
   .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
 }
 </style>
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1244,11 +1245,11 @@ body{padding-top:58px!important;}
         pageInfo.textContent = `Showing ${start} to ${end} of ${totalItems} programs`;
 
         let buttons = '';
-        buttons += `<button class="page-btn" type="button" data-page="${Math.max(1, currentPage - 1)}">â€¹</button>`;
+        buttons += `<button class="page-btn" type="button" data-page="${Math.max(1, currentPage - 1)}">‹</button>`;
         for(let i = 1; i <= totalPages; i++){
           buttons += `<button class="page-btn ${i === currentPage ? 'active' : ''}" type="button" data-page="${i}">${i}</button>`;
         }
-        buttons += `<button class="page-btn" type="button" data-page="${Math.min(totalPages, currentPage + 1)}">â€º</button>`;
+        buttons += `<button class="page-btn" type="button" data-page="${Math.min(totalPages, currentPage + 1)}">›</button>`;
         pagination.innerHTML = buttons;
       }
 
@@ -1498,5 +1499,6 @@ body{padding-top:58px!important;}
       renderItems();
     })();
   </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script></body>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+</body>
 </html>
