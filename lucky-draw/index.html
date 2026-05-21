@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lucky Draw | AZOBSS</title>
-  <meta name="description" content="AZOBSS Lucky Draw page with invite link, participant list, current prize and admin controls.">
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lucky Draw | AZOBSS</title>
+<meta content="AZOBSS Lucky Draw page with invite link, participant list, current prize and admin controls." name="description"/>
+<style>
     :root{
       --bg:#050914;
       --panel:#0e1729;
@@ -147,164 +148,154 @@
       .summary-grid,.mini-status-grid{grid-template-columns:1fr}
     }
   </style>
-
 </head>
 <body>
-  <header class="market-sticky-bar" aria-label="AZOBSS navigation">
-    <div class="market-bar-inner">
-      <div class="market-main-row">
-        <a class="market-brand" href="../index.html" aria-label="AZOBSS">
-          <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-        </a>
-        <nav class="market-nav" aria-label="AZOBSS quick actions">
-          <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
-          <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../PA-BM/" hidden>PA / BM</a>
-          <a href="../Software-Tools/index.html">Software</a>
-          <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
-          <a href="../affiliate-shop/index.html">Affiliate Shop</a>
-          <a class="is-active" href="../lucky-draw/index.html">Lucky Draw</a>
-          <a href="../tools/index.html">Mini Web Tools</a>
-        </nav>
-        <div class="site-auth-actions" id="siteAuthActions">
-          <a class="site-auth-btn primary" id="siteSignUpButton" href="#" data-auth-open="signup">Register</a>
-          <a class="site-auth-btn" id="siteSignInButton" href="#" data-auth-open="signin">Login</a>
-        </div>
-        <div class="market-user-tools" id="marketUserTools">
-          <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-            <div class="user-avatar" id="userAvatar">AZ</div>
-            <div class="user-name">Hello, <span id="signedInName"></span></div>
-            <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
-              <div class="user-dropdown-section">Account</div>
-              <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
-              <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <section class="lucky-shell">
-      <div class="top-grid">
-        <div class="panel">
-          <span class="kicker">Lucky Draw</span>
-          <h1>Peraduan Lucky Draw User</h1>
-          <p>User yang login boleh join Lucky Draw selepas share website AZOBSS menggunakan invite link masing-masing.</p>
-          <ul class="rules">
-            <li>Login dahulu sebelum join Lucky Draw.</li>
-            <li>Share invite link anda kepada orang lain.</li>
-            <li>Satu device dan satu IP address hanya boleh join sekali untuk bulan ini.</li>
-            <li>Admin boleh edit hadiah, gambar, tajuk dan description.</li>
-          </ul>
-
-          <div class="invite-tools">
-            <div>
-              <label class="field-label" for="inviteLink">Login untuk dapatkan invite link</label>
-              <div class="invite-row">
-                <input id="inviteLink" type="text" readonly value="Login dahulu untuk jana invite link">
-                <button class="btn" id="copyInviteButton" type="button">Copy Invite Link</button>
-              </div>
-            </div>
-            <div class="actions">
-              <button class="btn orange" id="shareInviteButton" type="button">Share Website</button>
-              <button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
-              <a class="btn dark" href="#">Login / Register</a>
-            </div>
-            <div class="mini-status-grid">
-              <div class="mini-status"><span>Invite code anda</span><strong id="inviteCodeText">-</strong></div>
-              <div class="mini-status"><span>Status share</span><strong id="shareStatusText">Belum share</strong></div>
-            </div>
-            <div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
-          </div>
-        </div>
-
-        <div class="right-stack">
-          <div class="panel countdown-panel">
-            <span>Lucky Draw akan berjalan dalam</span>
-            <strong id="countdownText">-- hari --:--:--</strong>
-            <small id="targetText">31/05/2026, 10:00 PM Malaysia</small>
-          </div>
-          <div class="panel spin-box">
-            <div>
-              <strong>Prize</strong>
-              <span id="winnerText">Pemenang belum dipilih</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="summary-grid">
-        <div class="summary-box">
-          <span>Jumlah peserta join</span>
-          <strong id="participantTotal">0</strong>
-        </div>
-        <div class="summary-box winner">
-          <span>Pemenang bulan ini</span>
-          <strong id="winnerName">Belum dipilih</strong>
-        </div>
-      </div>
-
-      <div class="panel prize-panel">
-        <div class="prize-image-wrap">
-          <img id="prizeImage" src="../lucky-draw/prize-placeholder.svg" alt="Lucky Draw Prize" onerror="this.onerror=null;this.src='../lucky-draw/Multi cooker Philips.jpg';">
-        </div>
-        <div>
-          <span class="kicker">Hadiah Lucky Draw</span>
-          <h2 id="prizeTitle" style="margin-top:10px">Hadiah belum diumumkan</h2>
-          <p class="description" id="prizeDescription">Admin belum upload hadiah Lucky Draw bulan ini.</p>
-        </div>
-      </div>
-
-      <div class="panel admin-panel" id="adminPrizePanel">
-        <span class="kicker">Admin</span>
-        <h2 style="margin-top:10px">Edit Hadiah Lucky Draw</h2>
-        <div class="admin-grid" style="margin-top:12px">
-          <div>
-            <label class="field-label" for="prizeTitleInput">Tajuk hadiah</label>
-            <input id="prizeTitleInput" type="text" placeholder="Tajuk hadiah">
-          </div>
-          <div>
-            <label class="field-label" for="prizeImageFile">Gambar hadiah</label>
-            <input class="file-input" id="prizeImageFile" type="file" accept="image/*">
-          </div>
-        </div>
-        <div style="margin-top:12px">
-          <label class="field-label" for="prizeDescriptionInput">Description</label>
-          <textarea id="prizeDescriptionInput" placeholder="Description hadiah"></textarea>
-        </div>
-        <div class="admin-json">
-          <label class="field-label" for="prizeJsonInput">Add / edit JSON</label>
-          <textarea id="prizeJsonInput" placeholder='{"title":"Hadiah","description":"Maklumat hadiah","imageUrl":"https://..."}'></textarea>
-        </div>
-        <div class="admin-actions">
-          <button class="btn green" id="savePrizeButton" type="button">Save Prize</button>
-          <button class="btn dark" id="applyJsonButton" type="button">Apply JSON</button>
-          <button class="btn orange" id="downloadJsonButton" type="button">Download JSON</button>
-          <button class="btn dark" id="refreshPrizeButton" type="button">Refresh</button>
-        </div>
-        <div class="status-note" id="adminStatus"></div>
-      </div>
-
-      <div class="panel participants">
-        <div class="participants-head">
-          <div>
-            <span class="kicker">Peserta Lucky Draw</span>
-            <h2 style="margin-top:10px">Senarai peserta bulan ini</h2>
-          </div>
-          <button class="btn dark" id="refreshEntriesButton" type="button">Refresh</button>
-        </div>
-        <div class="participant-list" id="participantList">
-          <div class="empty">Loading peserta...</div>
-        </div>
-      </div>
-    </section>
-    <footer>&copy; 2026 AZOBSS. All rights reserved.</footer>
-  </main>
-
-  <a class="whatsapp" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener" aria-label="WhatsApp"></a>
-
-  <script>
+<header aria-label="AZOBSS navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="../index.html">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="../PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="../Software-Tools/index.html">Software</a>
+<a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+<a href="../affiliate-shop/index.html">Affiliate Shop</a>
+<a class="is-active" href="../lucky-draw/index.html">Lucky Draw</a>
+<a href="../tools/index.html">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<div class="user-dropdown-section">Account</div>
+<a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main>
+<section class="lucky-shell">
+<div class="top-grid">
+<div class="panel">
+<span class="kicker">Lucky Draw</span>
+<h1>Peraduan Lucky Draw User</h1>
+<p>User yang login boleh join Lucky Draw selepas share website AZOBSS menggunakan invite link masing-masing.</p>
+<ul class="rules">
+<li>Login dahulu sebelum join Lucky Draw.</li>
+<li>Share invite link anda kepada orang lain.</li>
+<li>Satu device dan satu IP address hanya boleh join sekali untuk bulan ini.</li>
+<li>Admin boleh edit hadiah, gambar, tajuk dan description.</li>
+</ul>
+<div class="invite-tools">
+<div>
+<label class="field-label" for="inviteLink">Login untuk dapatkan invite link</label>
+<div class="invite-row">
+<input id="inviteLink" readonly="" type="text" value="Login dahulu untuk jana invite link"/>
+<button class="btn" id="copyInviteButton" type="button">Copy Invite Link</button>
+</div>
+</div>
+<div class="actions">
+<button class="btn orange" id="shareInviteButton" type="button">Share Website</button>
+<button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
+<a ="" class="btn dark" href="#">Login / Register</a>
+</div>
+<div class="mini-status-grid">
+<div class="mini-status"><span>Invite code anda</span><strong id="inviteCodeText">-</strong></div>
+<div class="mini-status"><span>Status share</span><strong id="shareStatusText">Belum share</strong></div>
+</div>
+<div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
+</div>
+</div>
+<div class="right-stack">
+<div class="panel countdown-panel">
+<span>Lucky Draw akan berjalan dalam</span>
+<strong id="countdownText">-- hari --:--:--</strong>
+<small id="targetText">31/05/2026, 10:00 PM Malaysia</small>
+</div>
+<div class="panel spin-box">
+<div>
+<strong>Prize</strong>
+<span id="winnerText">Pemenang belum dipilih</span>
+</div>
+</div>
+</div>
+</div>
+<div class="summary-grid">
+<div class="summary-box">
+<span>Jumlah peserta join</span>
+<strong id="participantTotal">0</strong>
+</div>
+<div class="summary-box winner">
+<span>Pemenang bulan ini</span>
+<strong id="winnerName">Belum dipilih</strong>
+</div>
+</div>
+<div class="panel prize-panel">
+<div class="prize-image-wrap">
+<img alt="Lucky Draw Prize" id="prizeImage" onerror="this.onerror=null;this.src='../lucky-draw/Multi cooker Philips.jpg';" src="../lucky-draw/prize-placeholder.svg"/>
+</div>
+<div>
+<span class="kicker">Hadiah Lucky Draw</span>
+<h2 id="prizeTitle" style="margin-top:10px">Hadiah belum diumumkan</h2>
+<p class="description" id="prizeDescription">Admin belum upload hadiah Lucky Draw bulan ini.</p>
+</div>
+</div>
+<div class="panel admin-panel" id="adminPrizePanel">
+<span class="kicker">Admin</span>
+<h2 style="margin-top:10px">Edit Hadiah Lucky Draw</h2>
+<div class="admin-grid" style="margin-top:12px">
+<div>
+<label class="field-label" for="prizeTitleInput">Tajuk hadiah</label>
+<input id="prizeTitleInput" placeholder="Tajuk hadiah" type="text"/>
+</div>
+<div>
+<label class="field-label" for="prizeImageFile">Gambar hadiah</label>
+<input accept="image/*" class="file-input" id="prizeImageFile" type="file"/>
+</div>
+</div>
+<div style="margin-top:12px">
+<label class="field-label" for="prizeDescriptionInput">Description</label>
+<textarea id="prizeDescriptionInput" placeholder="Description hadiah"></textarea>
+</div>
+<div class="admin-json">
+<label class="field-label" for="prizeJsonInput">Add / edit JSON</label>
+<textarea id="prizeJsonInput" placeholder='{"title":"Hadiah","description":"Maklumat hadiah","imageUrl":"https://..."}'></textarea>
+</div>
+<div class="admin-actions">
+<button class="btn green" id="savePrizeButton" type="button">Save Prize</button>
+<button class="btn dark" id="applyJsonButton" type="button">Apply JSON</button>
+<button class="btn orange" id="downloadJsonButton" type="button">Download JSON</button>
+<button class="btn dark" id="refreshPrizeButton" type="button">Refresh</button>
+</div>
+<div class="status-note" id="adminStatus"></div>
+</div>
+<div class="panel participants">
+<div class="participants-head">
+<div>
+<span class="kicker">Peserta Lucky Draw</span>
+<h2 style="margin-top:10px">Senarai peserta bulan ini</h2>
+</div>
+<button class="btn dark" id="refreshEntriesButton" type="button">Refresh</button>
+</div>
+<div class="participant-list" id="participantList">
+<div class="empty">Loading peserta...</div>
+</div>
+</div>
+</section>
+<footer>© 2026 AZOBSS. All rights reserved.</footer>
+</main>
+<a aria-label="WhatsApp" class="whatsapp" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"></a>
+<script>
     const API_BASE = (localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
     const ADMIN_USERNAME = 'zedan91';
     const MEMBER_PA_CODE = 'ZX6186';
@@ -733,52 +724,6 @@
     setInterval(loadEntries, 30000);
   </script>
 
-<div aria-hidden="true" class="auth-modal" id="siteAuthModal">
-  <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
-    <div class="auth-modal-top">
-      <h3 id="siteAuthTitle">Sign in</h3>
-      <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
-    </div>
-    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteLoginName">Name
-        <input id="siteLoginName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteLoginPassword">Password
-        <input id="siteLoginPassword" placeholder="Password" required type="password">
-      </label>
-      <p class="request-error" id="siteLoginError"></p>
-      <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
-      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
-    </form>
-    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteSignupName">Name
-        <input id="siteSignupName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteSignupPassword">Password
-        <input id="siteSignupPassword" placeholder="Create password" required type="password">
-      </label>
-      <label for="siteSignupPhone">Phone Number
-        <div class="phone-input-row">
-          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
-          <div class="phone-number-wrap">
-            <span class="phone-prefix">+60</span>
-            <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
-          </div>
-        </div>
-      </label>
-      <label for="siteSignupEmail">Email
-        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
-      </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
-      </label>
-      <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Sign up</button>
-      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
-    </form>
-  </div>
-</div>
 
-<script type="module" src="/assets/js/azobss-global-auth.js"></script>
-</body>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script></body>
 </html>

@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Affiliate Shop | AZOBSS</title>
-  <meta name="description" content="Affiliate Shop AZOBSS with recommended products and useful gadgets.">
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Affiliate Shop | AZOBSS</title>
+<meta content="Affiliate Shop AZOBSS with recommended products and useful gadgets." name="description"/>
+<style>
     :root{--bg:#050914;--panel:#0e1729;--line:rgba(148,163,184,.22);--text:#f8fafc;--muted:#9ca3af;--green:#22c55e;--blue:#2563eb}
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#102544,#050914 58%);color:var(--text);padding-top:54px}
@@ -106,211 +107,163 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
 </style></head>
 <body>
-  <header class="market-sticky-bar" aria-label="Carousell style navigation">
-    <div class="market-bar-inner">
-      <div class="market-main-row">
-        <a class="market-brand" href="../index.html" aria-label="AZOBSS">
-          <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-        </a>
-        <nav class="market-nav" aria-label="AZOBSS quick actions">
-          <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
-          <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../PA-BM/" hidden>PA / BM</a>
-          <a href="../Software-Tools/index.html">Software</a>
-          <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
-          <a class="market-nav-primary" href="../affiliate-shop/index.html">Affiliate Shop</a>
-          <a href="../lucky-draw/index.html">Lucky Draw</a>
-          <a href="../tools/index.html">Mini Web Tools</a>
-        </nav>
-        <div class="site-auth-actions" id="siteAuthActions">
-          <a class="site-auth-btn primary" id="siteSignUpButton" href="#" data-auth-open="signup">Register</a>
-          <a class="site-auth-btn" id="siteSignInButton" href="#" data-auth-open="signin">Login</a>
-        </div>
-      <div class="market-user-tools" id="marketUserTools">
-        <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-          <div class="user-avatar" id="userAvatar">AZ</div>
-          <div class="user-name">Hello, <span id="signedInName"></span></div>
-          <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
-            <div class="user-dropdown-section">Account</div>
-            <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
-            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
-          </div>
-        </div>
-      </div>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <section class="hero">
-      <div class="category-panel" aria-label="Affiliate categories">
-        <div class="category-panel-head">
-          <h1 class="category-title">Categories</h1>
-          <input class="category-search" id="categorySearch" type="search" placeholder="Search affiliate items...">
-        </div>
-        <div class="category-grid" id="categoryGrid">
-          <button class="category-tile is-active" type="button" data-filter="all" data-name="all categories">
-            <span class="category-icon category-all-icon" aria-hidden="true">▦</span>
-            <span class="category-name">All Categories</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="mobile" data-name="mobile & accessories">
-            <span class="category-icon"><img src="../images/category/mobile.png" alt="Mobile & Accessories"></span>
-            <span class="category-name">Mobile & Accessories</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="computer" data-name="computer & accessories">
-            <span class="category-icon"><img src="../images/category/computer.png" alt="Computer & Accessories"></span>
-            <span class="category-name">Computer & Accessories</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="gaming" data-name="gaming & consoles">
-            <span class="category-icon"><img src="../images/category/gaming.png" alt="Gaming & Consoles"></span>
-            <span class="category-name">Gaming & Consoles</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="camera" data-name="cameras & drones">
-            <span class="category-icon"><img src="../images/category/camera.png" alt="Cameras & Drones"></span>
-            <span class="category-name">Cameras & Drones</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="watches" data-name="watches">
-            <span class="category-icon"><img src="../images/category/watch.png" alt="Watches"></span>
-            <span class="category-name">Watches</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="women-bags" data-name="women's bags">
-            <span class="category-icon"><img src="../images/category/bags.png" alt="Women's Bags"></span>
-            <span class="category-name">Women's Bags</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="wallet" data-name="men's bags & wallets">
-            <span class="category-icon"><img src="../images/category/wallet.png" alt="Men's Bags & Wallets"></span>
-            <span class="category-name">Men's Bags & Wallets</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="women-clothes" data-name="women clothes">
-            <span class="category-icon"><img src="../images/category/women-clothes.png" alt="Women Clothes"></span>
-            <span class="category-name">Women Clothes</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="men-clothes" data-name="men clothes">
-            <span class="category-icon"><img src="../images/category/men-clothes.png" alt="Men Clothes"></span>
-            <span class="category-name">Men Clothes</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="women-shoes" data-name="women shoes">
-            <span class="category-icon"><img src="../images/category/women-shoes.png" alt="Women Shoes"></span>
-            <span class="category-name">Women Shoes</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="men-shoes" data-name="men shoes">
-            <span class="category-icon"><img src="../images/category/men-shoes.png" alt="Men Shoes"></span>
-            <span class="category-name">Men Shoes</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="fashion" data-name="fashion accessories">
-            <span class="category-icon"><img src="../images/category/fashion.png" alt="Fashion Accessories"></span>
-            <span class="category-name">Fashion Accessories</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="muslim" data-name="muslim fashion">
-            <span class="category-icon"><img src="../images/category/muslim.png" alt="Muslim Fashion"></span>
-            <span class="category-name">Muslim Fashion</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="home-living" data-name="home & living">
-            <span class="category-icon"><img src="../images/category/home-living.png" alt="Home & Living"></span>
-            <span class="category-name">Home & Living</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="home-appliances" data-name="home appliances">
-            <span class="category-icon"><img src="../images/category/home-appliances.png" alt="Home Appliances"></span>
-            <span class="category-name">Home Appliances</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="groceries" data-name="groceries & pets">
-            <span class="category-icon"><img src="../images/category/groceries.png" alt="Groceries & Pets"></span>
-            <span class="category-name">Groceries & Pets</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="beauty" data-name="health & beauty">
-            <span class="category-icon"><img src="../images/category/beauty.png" alt="Health & Beauty"></span>
-            <span class="category-name">Health & Beauty</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="baby" data-name="baby & toys">
-            <span class="category-icon"><img src="../images/category/baby.png" alt="Baby & Toys"></span>
-            <span class="category-name">Baby & Toys</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="sports" data-name="sports & outdoor">
-            <span class="category-icon"><img src="../images/category/sports.png" alt="Sports & Outdoor"></span>
-            <span class="category-name">Sports & Outdoor</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="automotive" data-name="automotive">
-            <span class="category-icon"><img src="../images/category/auto.png" alt="Automotive"></span>
-            <span class="category-name">Automotive</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="travel" data-name="travel & luggage">
-            <span class="category-icon"><img src="../images/category/travel.png" alt="Travel & Luggage"></span>
-            <span class="category-name">Travel & Luggage</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="books" data-name="games, books & hobbies">
-            <span class="category-icon"><img src="../images/category/books.png" alt="Games, Books & Hobbies"></span>
-            <span class="category-name">Games, Books & Hobbies</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="tickets" data-name="tickets & vouchers">
-            <span class="category-icon"><img src="../images/category/tickets.png" alt="Tickets & Vouchers"></span>
-            <span class="category-name">Tickets & Vouchers</span>
-          </button>
-          <button class="category-tile" type="button" data-filter="others" data-name="others">
-            <span class="category-icon"><img src="../images/category/others.png" alt="Others"></span>
-            <span class="category-name">Others</span>
-          </button>
-        </div>
-      </div>
-      <div class="tools">
-        <input class="search" id="searchInput" type="search" placeholder="Search products...">
-        <button class="chip is-active" type="button" data-filter="all">All</button>
-        <button class="chip" type="button" data-filter="computer">Computer</button>
-        <button class="chip" type="button" data-filter="mobile">Mobile</button>
-        <button class="chip" type="button" data-filter="camera">Camera</button>
-        <button class="chip" type="button" data-filter="groceries">Groceries</button>
-      </div>
-    </section>
-    <section class="grid" id="productGrid"></section>
-    <div class="empty" id="emptyState">No affiliate products found.</div>
-  </main>
-
-
-<div aria-hidden="true" class="auth-modal" id="siteAuthModal">
-  <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
-    <div class="auth-modal-top">
-      <h3 id="siteAuthTitle">Sign in</h3>
-      <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
-    </div>
-    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteLoginName">Name
-        <input id="siteLoginName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteLoginPassword">Password
-        <input id="siteLoginPassword" placeholder="Password" required type="password">
-      </label>
-      <p class="request-error" id="siteLoginError"></p>
-      <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
-      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
-    </form>
-    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteSignupName">Name
-        <input id="siteSignupName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteSignupPassword">Password
-        <input id="siteSignupPassword" placeholder="Create password" required type="password">
-      </label>
-      <label for="siteSignupPhone">Phone Number
-        <div class="phone-input-row">
-          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
-          <div class="phone-number-wrap">
-            <span class="phone-prefix">+60</span>
-            <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
-          </div>
-        </div>
-      </label>
-      <label for="siteSignupEmail">Email
-        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
-      </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
-      </label>
-      <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Sign up</button>
-      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
-    </form>
-  </div>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="../index.html">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="../PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="../Software-Tools/index.html">Software</a>
+<a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+<a class="market-nav-primary" href="../affiliate-shop/index.html">Affiliate Shop</a>
+<a href="../lucky-draw/index.html">Lucky Draw</a>
+<a href="../tools/index.html">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
 </div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<div class="user-dropdown-section">Account</div>
+<a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main>
+<section class="hero">
+<div aria-label="Affiliate categories" class="category-panel">
+<div class="category-panel-head">
+<h1 class="category-title">Categories</h1>
+<input class="category-search" id="categorySearch" placeholder="Search affiliate items..." type="search"/>
+</div>
+<div class="category-grid" id="categoryGrid">
+<button class="category-tile is-active" data-filter="all" data-name="all categories" type="button">
+<span aria-hidden="true" class="category-icon category-all-icon">▦</span>
+<span class="category-name">All Categories</span>
+</button>
+<button class="category-tile" data-filter="mobile" data-name="mobile &amp; accessories" type="button">
+<span class="category-icon"><img alt="Mobile &amp; Accessories" src="../images/category/mobile.png"/></span>
+<span class="category-name">Mobile &amp; Accessories</span>
+</button>
+<button class="category-tile" data-filter="computer" data-name="computer &amp; accessories" type="button">
+<span class="category-icon"><img alt="Computer &amp; Accessories" src="../images/category/computer.png"/></span>
+<span class="category-name">Computer &amp; Accessories</span>
+</button>
+<button class="category-tile" data-filter="gaming" data-name="gaming &amp; consoles" type="button">
+<span class="category-icon"><img alt="Gaming &amp; Consoles" src="../images/category/gaming.png"/></span>
+<span class="category-name">Gaming &amp; Consoles</span>
+</button>
+<button class="category-tile" data-filter="camera" data-name="cameras &amp; drones" type="button">
+<span class="category-icon"><img alt="Cameras &amp; Drones" src="../images/category/camera.png"/></span>
+<span class="category-name">Cameras &amp; Drones</span>
+</button>
+<button class="category-tile" data-filter="watches" data-name="watches" type="button">
+<span class="category-icon"><img alt="Watches" src="../images/category/watch.png"/></span>
+<span class="category-name">Watches</span>
+</button>
+<button class="category-tile" data-filter="women-bags" data-name="women's bags" type="button">
+<span class="category-icon"><img alt="Women's Bags" src="../images/category/bags.png"/></span>
+<span class="category-name">Women's Bags</span>
+</button>
+<button class="category-tile" data-filter="wallet" data-name="men's bags &amp; wallets" type="button">
+<span class="category-icon"><img alt="Men's Bags &amp; Wallets" src="../images/category/wallet.png"/></span>
+<span class="category-name">Men's Bags &amp; Wallets</span>
+</button>
+<button class="category-tile" data-filter="women-clothes" data-name="women clothes" type="button">
+<span class="category-icon"><img alt="Women Clothes" src="../images/category/women-clothes.png"/></span>
+<span class="category-name">Women Clothes</span>
+</button>
+<button class="category-tile" data-filter="men-clothes" data-name="men clothes" type="button">
+<span class="category-icon"><img alt="Men Clothes" src="../images/category/men-clothes.png"/></span>
+<span class="category-name">Men Clothes</span>
+</button>
+<button class="category-tile" data-filter="women-shoes" data-name="women shoes" type="button">
+<span class="category-icon"><img alt="Women Shoes" src="../images/category/women-shoes.png"/></span>
+<span class="category-name">Women Shoes</span>
+</button>
+<button class="category-tile" data-filter="men-shoes" data-name="men shoes" type="button">
+<span class="category-icon"><img alt="Men Shoes" src="../images/category/men-shoes.png"/></span>
+<span class="category-name">Men Shoes</span>
+</button>
+<button class="category-tile" data-filter="fashion" data-name="fashion accessories" type="button">
+<span class="category-icon"><img alt="Fashion Accessories" src="../images/category/fashion.png"/></span>
+<span class="category-name">Fashion Accessories</span>
+</button>
+<button class="category-tile" data-filter="muslim" data-name="muslim fashion" type="button">
+<span class="category-icon"><img alt="Muslim Fashion" src="../images/category/muslim.png"/></span>
+<span class="category-name">Muslim Fashion</span>
+</button>
+<button class="category-tile" data-filter="home-living" data-name="home &amp; living" type="button">
+<span class="category-icon"><img alt="Home &amp; Living" src="../images/category/home-living.png"/></span>
+<span class="category-name">Home &amp; Living</span>
+</button>
+<button class="category-tile" data-filter="home-appliances" data-name="home appliances" type="button">
+<span class="category-icon"><img alt="Home Appliances" src="../images/category/home-appliances.png"/></span>
+<span class="category-name">Home Appliances</span>
+</button>
+<button class="category-tile" data-filter="groceries" data-name="groceries &amp; pets" type="button">
+<span class="category-icon"><img alt="Groceries &amp; Pets" src="../images/category/groceries.png"/></span>
+<span class="category-name">Groceries &amp; Pets</span>
+</button>
+<button class="category-tile" data-filter="beauty" data-name="health &amp; beauty" type="button">
+<span class="category-icon"><img alt="Health &amp; Beauty" src="../images/category/beauty.png"/></span>
+<span class="category-name">Health &amp; Beauty</span>
+</button>
+<button class="category-tile" data-filter="baby" data-name="baby &amp; toys" type="button">
+<span class="category-icon"><img alt="Baby &amp; Toys" src="../images/category/baby.png"/></span>
+<span class="category-name">Baby &amp; Toys</span>
+</button>
+<button class="category-tile" data-filter="sports" data-name="sports &amp; outdoor" type="button">
+<span class="category-icon"><img alt="Sports &amp; Outdoor" src="../images/category/sports.png"/></span>
+<span class="category-name">Sports &amp; Outdoor</span>
+</button>
+<button class="category-tile" data-filter="automotive" data-name="automotive" type="button">
+<span class="category-icon"><img alt="Automotive" src="../images/category/auto.png"/></span>
+<span class="category-name">Automotive</span>
+</button>
+<button class="category-tile" data-filter="travel" data-name="travel &amp; luggage" type="button">
+<span class="category-icon"><img alt="Travel &amp; Luggage" src="../images/category/travel.png"/></span>
+<span class="category-name">Travel &amp; Luggage</span>
+</button>
+<button class="category-tile" data-filter="books" data-name="games, books &amp; hobbies" type="button">
+<span class="category-icon"><img alt="Games, Books &amp; Hobbies" src="../images/category/books.png"/></span>
+<span class="category-name">Games, Books &amp; Hobbies</span>
+</button>
+<button class="category-tile" data-filter="tickets" data-name="tickets &amp; vouchers" type="button">
+<span class="category-icon"><img alt="Tickets &amp; Vouchers" src="../images/category/tickets.png"/></span>
+<span class="category-name">Tickets &amp; Vouchers</span>
+</button>
+<button class="category-tile" data-filter="others" data-name="others" type="button">
+<span class="category-icon"><img alt="Others" src="../images/category/others.png"/></span>
+<span class="category-name">Others</span>
+</button>
+</div>
+</div>
+<div class="tools">
+<input class="search" id="searchInput" placeholder="Search products..." type="search"/>
+<button class="chip is-active" data-filter="all" type="button">All</button>
+<button class="chip" data-filter="computer" type="button">Computer</button>
+<button class="chip" data-filter="mobile" type="button">Mobile</button>
+<button class="chip" data-filter="camera" type="button">Camera</button>
+<button class="chip" data-filter="groceries" type="button">Groceries</button>
+</div>
+</section>
+<section class="grid" id="productGrid"></section>
+<div class="empty" id="emptyState">No affiliate products found.</div>
+</main>
 
-  <script>
+<script>
     const grid = document.getElementById('productGrid');
     const searchInput = document.getElementById('searchInput');
     const emptyState = document.getElementById('emptyState');
@@ -373,130 +326,6 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
       });
   </script>
 
-<script type="module">
-/* Same-page Affiliate Shop auth. Prevents Register/Login from going back to Home. */
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-
-const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-
-const modal=document.getElementById('siteAuthModal');
-const title=document.getElementById('siteAuthTitle');
-const signInForm=document.getElementById('siteSignInForm');
-const signUpForm=document.getElementById('siteSignUpForm');
-const loginError=document.getElementById('siteLoginError');
-const signupError=document.getElementById('siteSignupError');
-const loginBtn=document.getElementById('siteSignInButton');
-const signupBtn=document.getElementById('siteSignUpButton');
-const closeBtn=document.getElementById('siteAuthClose');
-
-// Prevent auth forms/links from falling back to browser navigation.
-// This keeps Affiliate Shop on the same page after Login/Register.
-document.addEventListener('submit', event => {
-  if (event.target === signInForm || event.target === signUpForm) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-}, true);
-
-
-function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
-function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
-function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
-function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
-function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
-function saveUser(user){sessionStorage.setItem('azobssCurrentUser',JSON.stringify(user));localStorage.setItem('azobssCurrentUser',JSON.stringify(user));}
-function syncHeader(user){
-  const authActions=document.getElementById('siteAuthActions');
-  const tools=document.getElementById('marketUserTools');
-  const name=document.getElementById('signedInName');
-  const avatar=document.getElementById('userAvatar');
-  const paBm=document.getElementById('paBmNavButton');
-  const display=user&&(user.usernameKey||user.name||'');
-  const usernameKey=String(user?.usernameKey||user?.name||'').trim().toLowerCase();
-  const usedMemberCode=String(user?.invitedByCode||user?.memberCode||user?.paMemberCode||'').trim().toUpperCase()==='ZX6186';
-  const canShowPaBm=!!(user&&(usernameKey==='zedan91'||user.paAccess===true||usedMemberCode));
-  if(paBm){paBm.hidden=!canShowPaBm;paBm.classList.toggle('is-hidden',!canShowPaBm);}
-  if(display){
-    document.body.classList.add('is-authenticated');
-    if(name) name.textContent=display;
-    if(avatar) avatar.textContent=initials(display);
-    if(authActions) authActions.style.setProperty('display','none','important');
-    if(tools) tools.style.setProperty('display','flex','important');
-  }
-}
-function openSiteAuth(mode='signin'){
-  const isSignup=mode==='signup';
-  title.textContent=isSignup?'Sign up':'Sign in';
-  signInForm.hidden=isSignup;
-  signUpForm.hidden=!isSignup;
-  loginError.textContent='';
-  signupError.textContent='';
-  modal.classList.add('is-open');
-  modal.setAttribute('aria-hidden','false');
-  history.replaceState(null,'',location.pathname+location.search);
-  setTimeout(()=>document.getElementById(isSignup?'siteSignupName':'siteLoginName')?.focus(),50);
-}
-function stayOnAffiliatePage(){
-  const affiliatePath = location.pathname.endsWith('/affiliate-shop/') || location.pathname.endsWith('/affiliate-shop/index.html')
-    ? location.pathname
-    : '../affiliate-shop/index.html';
-  try{history.replaceState(null,'',location.pathname + location.search);}catch(e){}
-}
-function closeSiteAuth(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');stayOnAffiliatePage();}
-window.openSiteAuth=openSiteAuth;
-window.openLoginModal=()=>openSiteAuth('signin');
-window.openSignupModal=()=>openSiteAuth('signup');
-
-loginBtn?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSiteAuth('signin');});
-signupBtn?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSiteAuth('signup');});
-closeBtn?.addEventListener('click',closeSiteAuth);
-modal?.addEventListener('click',event=>{if(event.target===modal) closeSiteAuth();});
-document.getElementById('switchToSiteSignup')?.addEventListener('click',()=>openSiteAuth('signup'));
-document.getElementById('switchToSiteSignin')?.addEventListener('click',()=>openSiteAuth('signin'));
-
-signInForm?.addEventListener('submit',async event=>{
-  event.preventDefault();
-  loginError.textContent='';
-  const usernameKey=normalizeUsername(document.getElementById('siteLoginName').value);
-  const password=document.getElementById('siteLoginPassword').value;
-  if(!usernameKey||!password){loginError.textContent='Please enter username and password.';return;}
-  try{
-    await setPersistence(auth,browserSessionPersistence);
-    const credential=await signInWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
-    const snap=await getDoc(doc(db,'users',usernameKey));
-    const data=snap.exists()?snap.data():{};
-    const user={...data,uid:credential.user.uid,usernameKey,name:data.name||usernameKey};
-    saveUser(user);syncHeader(user);closeSiteAuth();
-  }catch(error){loginError.textContent='Login failed. Please check username or password.';}
-});
-
-signUpForm?.addEventListener('submit',async event=>{
-  event.preventDefault();
-  signupError.textContent='';
-  const usernameKey=normalizeUsername(document.getElementById('siteSignupName').value);
-  const password=document.getElementById('siteSignupPassword').value;
-  const phone=cleanPhone(document.getElementById('siteSignupPhone').value);
-  const contactEmail=document.getElementById('siteSignupEmail').value.trim();
-  const invitedByCode=document.getElementById('siteSignupInviteCode').value.trim().toUpperCase();
-  if(!usernameKey||!password||!phone||!contactEmail){signupError.textContent='Please complete all required fields.';return;}
-  try{
-    await setPersistence(auth,browserSessionPersistence);
-    const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
-    const user={uid:credential.user.uid,usernameKey,name:usernameKey,phone:'+60'+phone,phoneLocal:phone,countryCode:'+60',contactEmail,invitedByCode,inviteCode:buildInviteCode(usernameKey),createdAtMs:Date.now(),lastLoginMs:Date.now()};
-    await setDoc(doc(db,'users',usernameKey),{...user,createdAt:serverTimestamp(),lastLoginAt:serverTimestamp()},{merge:true});
-    saveUser(user);syncHeader(user);closeSiteAuth();
-  }catch(error){signupError.textContent=error?.code==='auth/email-already-in-use'?'Username already exists.':'Sign up failed. Please try again.';}
-});
-
-if(location.hash==='#login') openSiteAuth('signin');
-if(location.hash==='#signup') openSiteAuth('signup');
-</script>
-
 <script>
 /* AZOBSS secondary auth bridge */
 (function(){
@@ -545,10 +374,6 @@ if(location.hash==='#signup') openSiteAuth('signup');
   window.addEventListener('storage', showUser);
 })();
 </script>
-<script type="module" src="/assets/js/azobss-global-auth.js"></script>
-</body>
+
+<script src="/assets/js/azobss-global-auth.js" type="module"></script></body>
 </html>
-
-
-
-

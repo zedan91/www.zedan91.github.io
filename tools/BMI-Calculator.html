@@ -1,7 +1,8 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>BMI Calculator - AZOBSS Tools</title>
 <style>
 :root{--bg:#07111f;--card:#101c2d;--card2:#13243a;--text:#eef5ff;--muted:#9fb2c8;--accent:#25d366;--blue:#3b82f6;--warn:#facc15;--danger:#ef4444;--line:rgba(255,255,255,.1)}
@@ -21,7 +22,6 @@ button:hover,.btn:hover{filter:brightness(1.1)}.result{margin-top:14px;padding:1
 .kpi{display:grid;gap:8px;background:#07111f;border:1px solid var(--line);border-radius:14px;padding:14px}.kpi strong{font-size:22px;color:#68ff9e}
 ul{padding-left:20px}.pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.pill{padding:8px 10px;border-radius:999px;background:rgba(37,211,102,.12);color:#86efac;font-size:13px}
 </style>
-
 <style>
 /* SAFE HIDE: top marketplace/search strip only */
 form:has(input[placeholder*="Search for an item"]),
@@ -39,7 +39,6 @@ section:has(input[placeholder*="Search for an item"]),
   overflow:hidden !important;
 }
 </style>
-
 <style>
 /* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
 body{padding-top:54px !important;}
@@ -89,52 +88,52 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 </style>
 </head>
 <body>
-<header class="market-sticky-bar" aria-label="Carousell style navigation">
-  <div class="market-bar-inner">
-    <div class="market-main-row">
-      <a class="market-brand" href="../index.html" aria-label="AZOBSS">
-        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-      </a>
-      <nav class="market-nav" aria-label="AZOBSS quick actions">
-        <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
-        <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../PA-BM/" hidden>PA / BM</a>
-        <a href="../Software-Tools/index.html">Software</a>
-        <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
-        <a href="../affiliate-shop/index.html">Affiliate Shop</a>
-        <a href="../lucky-draw/index.html">Lucky Draw</a>
-        <a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
-      </nav>
-      <div class="site-auth-actions" id="siteAuthActions">
-        <a class="site-auth-btn primary" id="siteSignUpButton" href="#" data-auth-open="signup">Register</a>
-        <a class="site-auth-btn" id="siteSignInButton" href="#" data-auth-open="signin">Login</a>
-      </div>
-      <div class="market-user-tools" id="marketUserTools">
-        <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-          <div class="user-avatar" id="userAvatar">AZ</div>
-          <div class="user-name">Hello, <span id="signedInName"></span></div>
-          <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
-            <div class="user-dropdown-section">Account</div>
-            <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
-            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="../index.html">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="../PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="../Software-Tools/index.html">Software</a>
+<a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+<a href="../affiliate-shop/index.html">Affiliate Shop</a>
+<a href="../lucky-draw/index.html">Lucky Draw</a>
+<a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<div class="user-dropdown-section">Account</div>
+<a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button>
+</div>
+</div>
+</div>
+</div>
+</div>
 </header>
-<div class="header"><h1>BMI Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">&lt; Back to Tools</a> &nbsp; | &nbsp; <a href="../index.html">Home</a></div>
+<div class="header"><h1>BMI Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="index.html">&lt; Back to Tools</a>   |   <a href="../index.html">Home</a></div>
 <div class="wrap">
 <div class="card"><p>Calculate BMI, category, healthy weight range and estimated daily calorie needs.</p><div class="grid">
 <div><label>Unit</label><select id="unit"><option value="metric">Metric - kg/cm</option><option value="imperial">Imperial - lb/inch</option></select></div>
-<div><label>Weight</label><input id="weight" type="number" value="45" step="any"></div>
-<div><label>Height</label><input id="height" type="number" value="154" step="any"></div>
-<div><label>Age</label><input id="age" type="number" value="35"></div>
+<div><label>Weight</label><input id="weight" step="any" type="number" value="45"/></div>
+<div><label>Height</label><input id="height" step="any" type="number" value="154"/></div>
+<div><label>Age</label><input id="age" type="number" value="35"/></div>
 <div><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
 <div><label>Activity</label><select id="activity"><option value="1.2">Low / little exercise</option><option value="1.375">Light exercise</option><option value="1.55">Moderate exercise</option><option value="1.725">Heavy exercise</option></select></div>
-</div><div id="result" class="result"></div></div>
+</div><div class="result" id="result"></div></div>
 <div class="card"><h2>BMI Category Guide</h2><table class="table"><tr><th>BMI</th><th>Category</th></tr><tr><td>Below 18.5</td><td>Underweight</td></tr><tr><td>18.5 - 24.9</td><td>Normal</td></tr><tr><td>25.0 - 29.9</td><td>Overweight</td></tr><tr><td>30.0 and above</td><td>Obese</td></tr></table><p class="muted small">BMI is a general guide only. Muscle mass, body frame and health condition can affect interpretation.</p></div>
 </div>
-<div class="footer">(c) 2026 AZOBSS.COM - PC Tools & Utilities</div>
+<div class="footer">(c) 2026 AZOBSS.COM - PC Tools &amp; Utilities</div>
 <script>
 function cat(b){return b<18.5?"Underweight":b<25?"Normal":b<30?"Overweight":"Obese"}
 function calc(){let u=unit.value,w=parseFloat(weight.value)||0,h=parseFloat(height.value)||0,a=parseFloat(age.value)||0;if(!w||!h){result.innerHTML="Please enter weight and height.";return}
@@ -193,54 +192,5 @@ document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",
 })();
 </script>
 
-<div aria-hidden="true" class="auth-modal" id="siteAuthModal">
-  <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
-    <div class="auth-modal-top">
-      <h3 id="siteAuthTitle">Sign in</h3>
-      <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
-    </div>
-    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteLoginName">Name
-        <input id="siteLoginName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteLoginPassword">Password
-        <input id="siteLoginPassword" placeholder="Password" required type="password">
-      </label>
-      <p class="request-error" id="siteLoginError"></p>
-      <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
-      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
-    </form>
-    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteSignupName">Name
-        <input id="siteSignupName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteSignupPassword">Password
-        <input id="siteSignupPassword" placeholder="Create password" required type="password">
-      </label>
-      <label for="siteSignupPhone">Phone Number
-        <div class="phone-input-row">
-          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
-          <div class="phone-number-wrap">
-            <span class="phone-prefix">+60</span>
-            <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
-          </div>
-        </div>
-      </label>
-      <label for="siteSignupEmail">Email
-        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
-      </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
-      </label>
-      <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Sign up</button>
-      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
-    </form>
-  </div>
-</div>
 
-<script type="module" src="/assets/js/azobss-global-auth.js"></script>
-</body></html>
-
-
-
+<script src="/assets/js/azobss-global-auth.js" type="module"></script></body></html>

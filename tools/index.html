@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>AZOBSS Mini Web Tools</title><style>
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:radial-gradient(circle at top,#102544,#020617 55%);color:white;padding:54px 18px 34px}.container{max-width:1200px;margin:auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:32px}.title{font-size:42px;color:#22c55e;font-weight:bold}.subtitle{color:#94a3b8;margin-top:8px}.search-box input{width:330px;max-width:100%;padding:14px 18px;border-radius:14px;border:1px solid #1e293b;background:#0f172a;color:white;outline:none}.search-box input:focus{border-color:#22c55e;box-shadow:0 0 18px rgba(34,197,94,.25)}.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px}.tool-card{background:linear-gradient(180deg,#13243a,#0f172a);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:24px;color:white;text-decoration:none;transition:.25s;position:relative;overflow:hidden}.tool-card:hover{transform:translateY(-7px);border-color:#22c55e;box-shadow:0 0 26px rgba(34,197,94,.18)}.tool-icon{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;margin-bottom:15px;border-radius:16px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:16px;font-weight:900;letter-spacing:0}.tool-title{font-size:20px;font-weight:bold;margin-bottom:10px}.tool-desc{color:#cbd5e1;font-size:14px;line-height:1.55;margin-bottom:14px}.tool-list{color:#94a3b8;font-size:13px;line-height:1.55;padding-left:18px}.badge{position:absolute;top:15px;right:15px;background:#22c55e;color:#03130a;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold}.back-home{display:inline-block;margin-top:36px;padding:14px 22px;background:#22c55e;color:#03130a;border-radius:12px;text-decoration:none;font-weight:bold}.footer{text-align:center;color:#64748b;margin-top:55px}.market-sticky-bar{position:fixed;top:0;left:0;right:0;z-index:3200;background:#000;border-bottom:1px solid rgba(214,185,132,.45);box-shadow:0 10px 28px rgba(0,0,0,.35)}.market-bar-inner{width:100%;padding:4px 8px}.market-main-row{display:flex;align-items:center;gap:8px;min-height:44px}.market-brand{width:154px;height:38px;flex:0 0 auto;display:inline-flex;align-items:center;overflow:hidden;border-radius:999px;border:1px solid rgba(148,163,184,.32);background:#0f172a;text-decoration:none}.market-brand img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}.market-nav{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}.market-nav::-webkit-scrollbar{display:none}.market-nav a{min-height:32px;padding:0 12px;border:1px solid #243044;border-radius:999px;background:#111827;color:#f8fafc;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;text-decoration:none;font-size:13px;font-weight:900;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}.market-nav a.is-active{background:#22c55e;border-color:#22c55e;color:#052e16}.market-nav a:hover{border-color:#22c55e;color:#22c55e}@media(max-width:700px){body{padding-top:92px}.title{font-size:32px}.search-box input{width:100%}.market-main-row{flex-wrap:wrap}.market-brand{width:126px;height:31px}.market-nav{width:100%;flex-basis:100%}.market-nav a{min-height:30px;padding:0 9px;font-size:12px}}
 </style>
@@ -11,8 +12,6 @@
   white-space:normal !important;
 }
 </style>
-
-
 <style>
 /* SAFE HIDE: top marketplace/search strip only */
 form:has(input[placeholder*="Search for an item"]),
@@ -30,8 +29,6 @@ section:has(input[placeholder*="Search for an item"]),
   overflow:hidden !important;
 }
 </style>
-
-
 <style>
 /* NAV WHATSAPP CIRCLE BUTTON FIX */
 .nav-whatsapp-circle{
@@ -68,8 +65,6 @@ button:has(.nav-whatsapp-circle){
   overflow:hidden !important;
 }
 </style>
-
-
 <style>
 /* Rapatkan logo AZOBSS ke kiri */
 .navbar,
@@ -85,8 +80,6 @@ button:has(.nav-whatsapp-circle){
  padding-left:0 !important;
 }
 </style>
-
-
 <style>
 /* FINAL HOME MOVE UP WITHOUT BIG AZOBSS TITLE */
 
@@ -186,7 +179,6 @@ body{
   }
 }
 </style>
-
 <style>
 /* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
 body{padding-top:54px !important;}
@@ -234,67 +226,61 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
 </style>
-</head><body><header class="market-sticky-bar" aria-label="Carousell style navigation">
-  <div class="market-bar-inner">
-    <div class="market-main-row">
-      <a class="market-brand" href="../index.html" aria-label="AZOBSS">
-        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-      </a>
-      <nav class="market-nav" aria-label="AZOBSS quick actions">
-        <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
-        <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../PA-BM/" hidden>PA / BM</a>
-        <a href="../Software-Tools/index.html">Software</a>
-        <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
-        <a href="../affiliate-shop/index.html">Affiliate Shop</a>
-        <a href="../lucky-draw/index.html">Lucky Draw</a>
-        <a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
-      </nav>
-      <div class="site-auth-actions" id="siteAuthActions">
-        <a class="site-auth-btn primary" id="siteSignUpButton" href="#" data-auth-open="signup">Register</a>
-        <a class="site-auth-btn" id="siteSignInButton" href="#" data-auth-open="signin">Login</a>
-      </div>
-      <div class="market-user-tools" id="marketUserTools">
-        <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-          <div class="user-avatar" id="userAvatar">AZ</div>
-          <div class="user-name">Hello, <span id="signedInName"></span></div>
-          <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
-            <div class="user-dropdown-section">Account</div>
-            <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
-            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet & Utility Tools by AZOBSS</div></div><div class="search-box"><input type="text" id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps"></div></div><div class="tools-grid" id="toolsGrid">
+</head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="../index.html">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="../PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="../Software-Tools/index.html">Software</a>
+<a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+<a href="../affiliate-shop/index.html">Affiliate Shop</a>
+<a href="../lucky-draw/index.html">Lucky Draw</a>
+<a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<div class="user-dropdown-section">Account</div>
+<a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div><div class="search-box"><input id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps" type="text"/></div></div><div class="tools-grid" id="toolsGrid">
 <a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div class="tool-icon">NET</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
 <a class="tool-card" href="SSD-Speed-Checker-guide.html"><div class="tool-icon">SSD</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
-<a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div class="tool-icon">BMI</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric & imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
-<a class="tool-card" href="PC-Bottleneck-Checker.html"><div class="tool-icon">PC</div><div class="tool-title">PC Bottleneck Checker</div><div class="tool-desc">Quick PC balance guide for CPU, GPU and RAM.</div><ul class="tool-list"><li>Gaming / editing / office</li><li>RAM & storage warning</li><li>Upgrade suggestion</li></ul></a>
+<a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div class="tool-icon">BMI</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric &amp; imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
+<a class="tool-card" href="PC-Bottleneck-Checker.html"><div class="tool-icon">PC</div><div class="tool-title">PC Bottleneck Checker</div><div class="tool-desc">Quick PC balance guide for CPU, GPU and RAM.</div><ul class="tool-list"><li>Gaming / editing / office</li><li>RAM &amp; storage warning</li><li>Upgrade suggestion</li></ul></a>
 <a class="tool-card" href="PSU-Calculator.html"><div class="badge">Gaming</div><div class="tool-icon">PSU</div><div class="tool-title">PSU Calculator</div><div class="tool-desc">Estimate recommended PSU wattage.</div><ul class="tool-list"><li>CPU + GPU + parts</li><li>Headroom calculation</li><li>80+ efficiency guide</li></ul></a>
 <a class="tool-card" href="RAM-Usage-Checker.html"><div class="tool-icon">RAM</div><div class="tool-title">RAM Usage Checker</div><div class="tool-desc">Check RAM usage and upgrade need.</div><ul class="tool-list"><li>Usage percentage</li><li>Available RAM</li><li>Workload guide</li></ul></a>
-<a class="tool-card" href="Windows-Command-Generator.html"><div class="badge">Windows</div><div class="tool-icon">CMD</div><div class="tool-title">Windows Command Generator</div><div class="tool-desc">Generate common Windows repair commands.</div><ul class="tool-list"><li>SFC, DISM, CHKDSK</li><li>Network reset</li><li>Flush DNS & system info</li></ul></a>
-
+<a class="tool-card" href="Windows-Command-Generator.html"><div class="badge">Windows</div><div class="tool-icon">CMD</div><div class="tool-title">Windows Command Generator</div><div class="tool-desc">Generate common Windows repair commands.</div><ul class="tool-list"><li>SFC, DISM, CHKDSK</li><li>Network reset</li><li>Flush DNS &amp; system info</li></ul></a>
 <a class="tool-card" href="Currency-Converter.html">
-    <div class="badge">Finance</div>
-
-    <div class="tool-icon">FX</div>
-
-    <div class="tool-title">
+<div class="badge">Finance</div>
+<div class="tool-icon">FX</div>
+<div class="tool-title">
         Currency Converter
     </div>
-
-    <div class="tool-desc">
+<div class="tool-desc">
         Convert currencies quickly for shopping, travel and online payments.
     </div>
-
-    <ul class="tool-list">
-        <li>MYR, USD, SGD, IDR & more</li>
-        <li>Shopping & travel budget</li>
-        <li>Quick exchange calculator</li>
-    </ul>
+<ul class="tool-list">
+<li>MYR, USD, SGD, IDR &amp; more</li>
+<li>Shopping &amp; travel budget</li>
+<li>Quick exchange calculator</li>
+</ul>
 </a>
-
 </div><a class="back-home" href="../index.html">&lt; Back To Homepage</a><div class="footer">(c) 2026 AZOBSS.COM - Mini Utility Tools</div></div><script>
 const s=document.getElementById('searchInput'),cards=document.querySelectorAll('.tool-card');s.addEventListener('keyup',()=>{const v=s.value.toLowerCase();cards.forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')});
 </script><script>
@@ -346,56 +332,5 @@ const s=document.getElementById('searchInput'),cards=document.querySelectorAll('
 })();
 </script>
 
-<div aria-hidden="true" class="auth-modal" id="siteAuthModal">
-  <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
-    <div class="auth-modal-top">
-      <h3 id="siteAuthTitle">Sign in</h3>
-      <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
-    </div>
-    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteLoginName">Name
-        <input id="siteLoginName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteLoginPassword">Password
-        <input id="siteLoginPassword" placeholder="Password" required type="password">
-      </label>
-      <p class="request-error" id="siteLoginError"></p>
-      <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
-      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
-    </form>
-    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteSignupName">Name
-        <input id="siteSignupName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteSignupPassword">Password
-        <input id="siteSignupPassword" placeholder="Create password" required type="password">
-      </label>
-      <label for="siteSignupPhone">Phone Number
-        <div class="phone-input-row">
-          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
-          <div class="phone-number-wrap">
-            <span class="phone-prefix">+60</span>
-            <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
-          </div>
-        </div>
-      </label>
-      <label for="siteSignupEmail">Email
-        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
-      </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
-      </label>
-      <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Sign up</button>
-      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
-    </form>
-  </div>
-</div>
 
-<script type="module" src="/assets/js/azobss-global-auth.js"></script>
-</body></html>
-
-
-
-
-
+<script src="/assets/js/azobss-global-auth.js" type="module"></script></body></html>

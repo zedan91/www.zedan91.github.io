@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CAD Tools &amp; Resources | AZOBSS</title>
-  <meta name="description" content="CAD tools, AutoCAD LISP resources, drafting checklist and survey workflow references by AZOBSS.">
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CAD Tools &amp; Resources | AZOBSS</title>
+<meta content="CAD tools, AutoCAD LISP resources, drafting checklist and survey workflow references by AZOBSS." name="description"/>
+<style>
     :root{
       color-scheme:dark;
       --bg:#050914;
@@ -888,111 +889,102 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 </style>
 </head>
 <body>
-<header class="market-sticky-bar" aria-label="Carousell style navigation">
-  <div class="market-bar-inner">
-    <div class="market-main-row">
-      <a class="market-brand" href="../index.html" aria-label="AZOBSS">
-        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-      </a>
-      <nav class="market-nav" aria-label="AZOBSS quick actions">
-        <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
-        <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../PA-BM/" hidden>PA / BM</a>
-        <a href="../Software-Tools/index.html">Software</a>
-        <a class="market-nav-primary" href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
-        <a href="../affiliate-shop/index.html">Affiliate Shop</a>
-        <a href="../lucky-draw/index.html">Lucky Draw</a>
-        <a href="../tools/index.html">Mini Web Tools</a>
-      </nav>
-      <div class="site-auth-actions" id="siteAuthActions">
-        <a class="site-auth-btn primary" id="siteSignUpButton" href="#" data-auth-open="signup">Register</a>
-        <a class="site-auth-btn" id="siteSignInButton" href="#" data-auth-open="signin">Login</a>
-      </div>
-      <div class="market-user-tools" id="marketUserTools">
-        <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-          <div class="user-avatar" id="userAvatar">AZ</div>
-          <div class="user-name">Hello, <span id="signedInName"></span></div>
-          <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
-            <div class="user-dropdown-section">Account</div>
-            <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
-            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="../index.html">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="../PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="../Software-Tools/index.html">Software</a>
+<a class="market-nav-primary" href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+<a href="../affiliate-shop/index.html">Affiliate Shop</a>
+<a href="../lucky-draw/index.html">Lucky Draw</a>
+<a href="../tools/index.html">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<div class="user-dropdown-section">Account</div>
+<a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button>
+</div>
+</div>
+</div>
+</div>
+</div>
 </header>
-
-  <main class="page">
-    <section class="lisp-catalog" aria-labelledby="lisp-catalog-title">
-      <div class="lisp-catalog-head">
-        <div>
-          <h2 class="section-title" id="lisp-catalog-title">LISP Program Showcase</h2>
-          <p>View LISP name, program description and demonstration GIF. Display style is table-based with 30 programs per page.</p>
-          <p class="lisp-view-note" id="lispAdminStatus">Public view: add, edit, delete and export tools are available for admin only.</p>
-        </div>
-        <button class="btn admin-only inline-admin" type="button" id="exportLispData">Export Data</button>
-      </div>
-
-      <div class="lisp-search-bar">
-        <label class="lisp-search-box">
+<main class="page">
+<section aria-labelledby="lisp-catalog-title" class="lisp-catalog">
+<div class="lisp-catalog-head">
+<div>
+<h2 class="section-title" id="lisp-catalog-title">LISP Program Showcase</h2>
+<p>View LISP name, program description and demonstration GIF. Display style is table-based with 30 programs per page.</p>
+<p class="lisp-view-note" id="lispAdminStatus">Public view: add, edit, delete and export tools are available for admin only.</p>
+</div>
+<button class="btn admin-only inline-admin" id="exportLispData" type="button">Export Data</button>
+</div>
+<div class="lisp-search-bar">
+<label class="lisp-search-box">
           Search Program Name
-          <input id="lispSearch" type="search" placeholder="Type program name..." autocomplete="off">
-        </label>
-        <span class="lisp-search-count" id="lispSearchCount">Showing all programs</span>
-      </div>
-
-      <form class="lisp-form admin-only" id="lispForm">
-        <label>
+          <input autocomplete="off" id="lispSearch" placeholder="Type program name..." type="search"/>
+</label>
+<span class="lisp-search-count" id="lispSearchCount">Showing all programs</span>
+</div>
+<form class="lisp-form admin-only" id="lispForm">
+<label>
           LISP Name
-          <input id="lispName" type="text" maxlength="60" placeholder="Example: AZ Text Calculator" required>
-        </label>
-        <label>
+          <input id="lispName" maxlength="60" placeholder="Example: AZ Text Calculator" required="" type="text"/>
+</label>
+<label>
           Demonstration GIF
-          <input id="lispGif" type="file" accept="image/gif">
-        </label>
-        <label class="full">
+          <input accept="image/gif" id="lispGif" type="file"/>
+</label>
+<label class="full">
           Program Description
-          <textarea id="lispDescription" maxlength="600" placeholder="Explain what this LISP does, command name, and suitable workflow." required></textarea>
-        </label>
-        <label class="full">
+          <textarea id="lispDescription" maxlength="600" placeholder="Explain what this LISP does, command name, and suitable workflow." required=""></textarea>
+</label>
+<label class="full">
           GIF URL / Path (optional)
-          <input id="lispGifUrl" type="text" placeholder="Example: demos/text-calc.gif">
-        </label>
-        <div class="lisp-actions">
-          <button class="btn primary" type="submit">Add LISP</button>
-          <button class="btn" type="button" id="clearLispForm">Clear Form</button>
-          <p class="lisp-note">Tip: for GitHub Pages long term, put GIF files inside <b>CAD-Tools-&amp;-Resources/demos/</b> and use path like <b>demos/sample.gif</b>.</p>
-        </div>
-      </form>
-
-      <div class="lisp-table-wrap">
-        <table class="lisp-table">
-          <thead>
-            <tr>
-              <th>Program</th>
-              <th>Program Description</th>
-              <th>Demonstration GIF</th>
-              <th class="lisp-admin-column">Action</th>
-            </tr>
-          </thead>
-          <tbody id="lispList" aria-live="polite"></tbody>
-        </table>
-      </div>
-      <div class="lisp-pagination">
-        <span id="lispPageInfo">Showing 0 to 0 of 0 programs</span>
-        <div class="page-buttons" id="lispPagination"></div>
-      </div>
-    </section>
-
-  </main>
-
-  <footer>
-    &copy; 2026 AZOBSS. All rights reserved.
+          <input id="lispGifUrl" placeholder="Example: demos/text-calc.gif" type="text"/>
+</label>
+<div class="lisp-actions">
+<button class="btn primary" type="submit">Add LISP</button>
+<button class="btn" id="clearLispForm" type="button">Clear Form</button>
+<p class="lisp-note">Tip: for GitHub Pages long term, put GIF files inside <b>CAD-Tools-&amp;-Resources/demos/</b> and use path like <b>demos/sample.gif</b>.</p>
+</div>
+</form>
+<div class="lisp-table-wrap">
+<table class="lisp-table">
+<thead>
+<tr>
+<th>Program</th>
+<th>Program Description</th>
+<th>Demonstration GIF</th>
+<th class="lisp-admin-column">Action</th>
+</tr>
+</thead>
+<tbody aria-live="polite" id="lispList"></tbody>
+</table>
+</div>
+<div class="lisp-pagination">
+<span id="lispPageInfo">Showing 0 to 0 of 0 programs</span>
+<div class="page-buttons" id="lispPagination"></div>
+</div>
+</section>
+</main>
+<footer>
+    © 2026 AZOBSS. All rights reserved.
   </footer>
-
-
-
-  <script>
+<script>
     (function(){
       const STORAGE_KEY = 'azobss_lisp_showcase_items';
       const PAGE_SIZE = 30;
@@ -1339,7 +1331,6 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
       renderItems();
     })();
   </script>
-
 <script>
 /* AZOBSS secondary auth bridge */
 (function(){
@@ -1389,57 +1380,6 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 })();
 </script>
 
-<div aria-hidden="true" class="auth-modal" id="siteAuthModal">
-  <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
-    <div class="auth-modal-top">
-      <h3 id="siteAuthTitle">Sign in</h3>
-      <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
-    </div>
-    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteLoginName">Name
-        <input id="siteLoginName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteLoginPassword">Password
-        <input id="siteLoginPassword" placeholder="Password" required type="password">
-      </label>
-      <p class="request-error" id="siteLoginError"></p>
-      <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
-      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
-    </form>
-    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteSignupName">Name
-        <input id="siteSignupName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteSignupPassword">Password
-        <input id="siteSignupPassword" placeholder="Create password" required type="password">
-      </label>
-      <label for="siteSignupPhone">Phone Number
-        <div class="phone-input-row">
-          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
-          <div class="phone-number-wrap">
-            <span class="phone-prefix">+60</span>
-            <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
-          </div>
-        </div>
-      </label>
-      <label for="siteSignupEmail">Email
-        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
-      </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
-      </label>
-      <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Sign up</button>
-      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
-    </form>
-  </div>
-</div>
 
-<script type="module" src="/assets/js/azobss-global-auth.js"></script>
-</body>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script></body>
 </html>
-
-
-
-
-

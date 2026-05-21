@@ -1,10 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Live Currency Converter | AZOBSS</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 
@@ -266,7 +266,6 @@ button.orange{
     .result{font-size:22px;}
 }
 </style>
-
 <style>
 /* SAFE HIDE: top marketplace/search strip only */
 form:has(input[placeholder*="Search for an item"]),
@@ -284,7 +283,6 @@ section:has(input[placeholder*="Search for an item"]),
   overflow:hidden !important;
 }
 </style>
-
 <style>
 /* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
 body{padding-top:54px !important;}
@@ -333,149 +331,125 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
 </style>
 </head>
-
 <body>
-<header class="market-sticky-bar" aria-label="Carousell style navigation">
-  <div class="market-bar-inner">
-    <div class="market-main-row">
-      <a class="market-brand" href="../index.html" aria-label="AZOBSS">
-        <img src="../images/logo-azobss.jpg" alt="AZOBSS">
-      </a>
-      <nav class="market-nav" aria-label="AZOBSS quick actions">
-        <a href="https://alvo.chat/6nZ2" target="_blank" rel="noopener"><span class="nav-whatsapp-circle" aria-label="WhatsApp"></span></a>
-        <a id="paBmNavButton" class="nav-pa-bm-link is-hidden" href="../PA-BM/" hidden>PA / BM</a>
-        <a href="../Software-Tools/index.html">Software</a>
-        <a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
-        <a href="../affiliate-shop/index.html">Affiliate Shop</a>
-        <a href="../lucky-draw/index.html">Lucky Draw</a>
-        <a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
-      </nav>
-      <div class="site-auth-actions" id="siteAuthActions">
-        <a class="site-auth-btn primary" id="siteSignUpButton" href="#" data-auth-open="signup">Register</a>
-        <a class="site-auth-btn" id="siteSignInButton" href="#" data-auth-open="signin">Login</a>
-      </div>
-      <div class="market-user-tools" id="marketUserTools">
-        <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-          <div class="user-avatar" id="userAvatar">AZ</div>
-          <div class="user-name">Hello, <span id="signedInName"></span></div>
-          <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Account menu">
-            <div class="user-dropdown-section">Account</div>
-            <a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
-            <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="../index.html">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="../PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="../Software-Tools/index.html">Software</a>
+<a href="../CAD-Tools-&amp;-Resources/index.html">CAD Tools</a>
+<a href="../affiliate-shop/index.html">Affiliate Shop</a>
+<a href="../lucky-draw/index.html">Lucky Draw</a>
+<a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<div class="user-dropdown-section">Account</div>
+<a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button>
+</div>
+</div>
+</div>
+</div>
+</div>
 </header>
-
 <div class="container">
-
-    <div class="header">
-        <div>
-            <div class="title">Currency Converter</div>
-            <div class="subtitle">
+<div class="header">
+<div>
+<div class="title">Currency Converter</div>
+<div class="subtitle">
                 Live exchange rates for shopping, travel &amp; online payments.
             </div>
-        </div>
-
-        <a class="back-btn" href="index.html">
+</div>
+<a class="back-btn" href="index.html">
             &lt; Back To Tools
         </a>
-    </div>
-
-    <div class="card">
-
-        <!-- Amount + Fee row -->
-        <div class="grid-top">
-            <div>
-                <label>Amount</label>
-                <input type="number" id="amount" value="1" min="0">
-            </div>
-            <div>
-                <label>Fee / Markup (%)</label>
-                <input type="number" id="fee" value="0" min="0" step="0.1">
-            </div>
-        </div>
-
-        <!-- From / To row -->
-        <div class="currency-row">
-            <div>
-                <label>From</label>
-                <select id="from"></select>
-            </div>
-
-            <div class="swap-center-box">
-                <button class="swap-middle-btn" onclick="swapCurrencies()" title="Swap currencies">Swap</button>
-            </div>
-
-            <div>
-                <label>To</label>
-                <select id="to"></select>
-            </div>
-        </div>
-
-        <!-- Result (left) + Mini Calculator (right) -->
-        <div class="bottom-row">
-
-            <!-- Left: result + action buttons -->
-            <div>
-                <div class="result" id="result">
+</div>
+<div class="card">
+<!-- Amount + Fee row -->
+<div class="grid-top">
+<div>
+<label>Amount</label>
+<input id="amount" min="0" type="number" value="1"/>
+</div>
+<div>
+<label>Fee / Markup (%)</label>
+<input id="fee" min="0" step="0.1" type="number" value="0"/>
+</div>
+</div>
+<!-- From / To row -->
+<div class="currency-row">
+<div>
+<label>From</label>
+<select id="from"></select>
+</div>
+<div class="swap-center-box">
+<button class="swap-middle-btn" onclick="swapCurrencies()" title="Swap currencies">Swap</button>
+</div>
+<div>
+<label>To</label>
+<select id="to"></select>
+</div>
+</div>
+<!-- Result (left) + Mini Calculator (right) -->
+<div class="bottom-row">
+<!-- Left: result + action buttons -->
+<div>
+<div class="result" id="result">
                     Loading live exchange rate...
                 </div>
-
-                <div class="actions">
-                    <button class="green" onclick="swapCurrencies()">Swap Currency</button>
-                    <button onclick="copyResult()">Copy Result</button>
-                    <button class="orange" onclick="resetConverter()">Reset</button>
-                </div>
-            </div>
-
-            <!-- Right: mini calculator -->
-            <div class="calc-box">
-                <div class="calc-title">Mini Calculator</div>
-                <input class="calc-display" id="calcDisplay" type="text" value="0" readonly>
-
-                <div class="calc-grid">
-                    <button class="clear" onclick="calcClear()">C</button>
-                    <button onclick="calcBack()">Back</button>
-                    <button onclick="calcPress('%')">%</button>
-                    <button class="op" onclick="calcPress('/')">/</button>
-
-                    <button onclick="calcPress('7')">7</button>
-                    <button onclick="calcPress('8')">8</button>
-                    <button onclick="calcPress('9')">9</button>
-                    <button class="op" onclick="calcPress('*')">x</button>
-
-                    <button onclick="calcPress('4')">4</button>
-                    <button onclick="calcPress('5')">5</button>
-                    <button onclick="calcPress('6')">6</button>
-                    <button class="op" onclick="calcPress('-')">-</button>
-
-                    <button onclick="calcPress('1')">1</button>
-                    <button onclick="calcPress('2')">2</button>
-                    <button onclick="calcPress('3')">3</button>
-                    <button class="op" onclick="calcPress('+')">+</button>
-
-                    <button onclick="calcPress('0')">0</button>
-                    <button onclick="calcPress('.')">.</button>
-                    <button class="equal" onclick="calcEqual()">=</button>
-                    <button class="op" onclick="calcUseAmount()">Use</button>
-                </div>
-
-                <button class="calc-use-btn" onclick="calcUseAmount()">Use Result As Amount</button>
-            </div>
-
-        </div>
-
-        <div class="status" id="status">
+<div class="actions">
+<button class="green" onclick="swapCurrencies()">Swap Currency</button>
+<button onclick="copyResult()">Copy Result</button>
+<button class="orange" onclick="resetConverter()">Reset</button>
+</div>
+</div>
+<!-- Right: mini calculator -->
+<div class="calc-box">
+<div class="calc-title">Mini Calculator</div>
+<input class="calc-display" id="calcDisplay" readonly="" type="text" value="0"/>
+<div class="calc-grid">
+<button class="clear" onclick="calcClear()">C</button>
+<button onclick="calcBack()">Back</button>
+<button onclick="calcPress('%')">%</button>
+<button class="op" onclick="calcPress('/')">/</button>
+<button onclick="calcPress('7')">7</button>
+<button onclick="calcPress('8')">8</button>
+<button onclick="calcPress('9')">9</button>
+<button class="op" onclick="calcPress('*')">x</button>
+<button onclick="calcPress('4')">4</button>
+<button onclick="calcPress('5')">5</button>
+<button onclick="calcPress('6')">6</button>
+<button class="op" onclick="calcPress('-')">-</button>
+<button onclick="calcPress('1')">1</button>
+<button onclick="calcPress('2')">2</button>
+<button onclick="calcPress('3')">3</button>
+<button class="op" onclick="calcPress('+')">+</button>
+<button onclick="calcPress('0')">0</button>
+<button onclick="calcPress('.')">.</button>
+<button class="equal" onclick="calcEqual()">=</button>
+<button class="op" onclick="calcUseAmount()">Use</button>
+</div>
+<button class="calc-use-btn" onclick="calcUseAmount()">Use Result As Amount</button>
+</div>
+</div>
+<div class="status" id="status">
             Loading live exchange rates...
         </div>
-
-    </div>
-
 </div>
-
+</div>
 <script>
 
 const fallbackRates = {
@@ -650,56 +624,6 @@ fetchLiveRates();
 })();
 </script>
 
-<div aria-hidden="true" class="auth-modal" id="siteAuthModal">
-  <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
-    <div class="auth-modal-top">
-      <h3 id="siteAuthTitle">Sign in</h3>
-      <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
-    </div>
-    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteLoginName">Name
-        <input id="siteLoginName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteLoginPassword">Password
-        <input id="siteLoginPassword" placeholder="Password" required type="password">
-      </label>
-      <p class="request-error" id="siteLoginError"></p>
-      <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
-      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
-    </form>
-    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
-      <label for="siteSignupName">Name
-        <input id="siteSignupName" placeholder="Username" required type="text">
-      </label>
-      <label for="siteSignupPassword">Password
-        <input id="siteSignupPassword" placeholder="Create password" required type="password">
-      </label>
-      <label for="siteSignupPhone">Phone Number
-        <div class="phone-input-row">
-          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
-          <div class="phone-number-wrap">
-            <span class="phone-prefix">+60</span>
-            <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
-          </div>
-        </div>
-      </label>
-      <label for="siteSignupEmail">Email
-        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
-      </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
-      </label>
-      <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Sign up</button>
-      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
-    </form>
-  </div>
-</div>
 
-<script type="module" src="/assets/js/azobss-global-auth.js"></script>
-</body>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script></body>
 </html>
-
-
-
-
