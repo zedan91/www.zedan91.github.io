@@ -691,29 +691,6 @@
     document.getElementById('applyJsonButton').addEventListener('click', applyJson);
     document.getElementById('downloadJsonButton').addEventListener('click', downloadJson);
 
-    if (els.menu) {
-      els.menu.addEventListener('click', function(event){
-        if (event.target.closest('.user-dropdown-item')) return;
-        const open = !els.menu.classList.contains('is-open');
-        els.menu.classList.toggle('is-open', open);
-        els.menu.setAttribute('aria-expanded', String(open));
-      });
-      document.addEventListener('click', function(event){
-        if (!els.menu.contains(event.target)) {
-          els.menu.classList.remove('is-open');
-          els.menu.setAttribute('aria-expanded','false');
-        }
-      });
-    }
-    document.getElementById('logoutButton').addEventListener('click', function(){
-      sessionStorage.removeItem('azobssCurrentUser');
-      localStorage.removeItem('azobssCurrentUser');
-      sessionStorage.removeItem('azobssUser');
-      localStorage.removeItem('azobssUser');
-      sessionStorage.removeItem('azobssLoggedIn');
-      localStorage.removeItem('azobssLoggedIn');
-      showUser();
-    });
     window.addEventListener('storage', showUser);
 
     tickCountdown();

@@ -47,7 +47,10 @@ function addStyle() {
 body.is-authenticated .site-auth-actions{display:none!important;}
 body.is-authenticated .market-user-tools{display:flex!important;}
 body:not(.is-authenticated) .market-user-tools{display:none!important;}
+.market-user-tools{align-items:center!important;}
+.user-menu{position:relative!important;}
 .user-menu.is-open .user-dropdown{display:block!important;}
+.user-dropdown{z-index:3300!important;}
 `;
   document.head.appendChild(style);
 }
@@ -108,8 +111,34 @@ function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replac
 function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
 function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
 function safeJson(raw){try{return JSON.parse(raw||'null');}catch{return null;}}
-function saveUser(user){sessionStorage.setItem('azobssCurrentUser',JSON.stringify(user));localStorage.setItem('azobssCurrentUser',JSON.stringify(user));}
-function getSavedUser(){return safeJson(sessionStorage.getItem('azobssCurrentUser')) || safeJson(localStorage.getItem('azobssCurrentUser'));}
+function saveUser(user){
+  const value = JSON.stringify(user);
+  sessionStorage.setItem('azobssCurrentUser', value);
+  localStorage.setItem('azobssCurrentUser', value);
+  sessionStorage.setItem('azobssLoggedIn', '1');
+  localStorage.setItem('azobssLoggedIn', '1');
+  window.dispatchEvent(new Event('storage'));
+}
+function clearUser(){
+  ['azobssCurrentUser','azobssUser','azobssLoggedIn'].forEach((key)=>{
+    sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
+  });
+  window.dispatchEvent(new Event('storage'));
+}
+function getSavedUser(){
+  return safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
+    safeJson(localStorage.getItem('azobssCurrentUser')) ||
+    safeJson(sessionStorage.getItem('azobssUser')) ||
+    safeJson(localStorage.getItem('azobssUser'));
+}
+function fieldValue(...ids){
+  for (const id of ids) {
+    const el = $(id);
+    if (el) return el.value || '';
+  }
+  return '';
+}
 
 function normalizeUserMenu() {
   const dropdown = $('userDropdown');
@@ -155,7 +184,7 @@ function syncHeader(user){
   const name = $('signedInName');
   const avatar = $('userAvatar');
   const paBm = $('paBmNavButton');
-  const display = user && (user.usernameKey || user.name || user.email || '');
+  const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
   const usernameKey = String(user?.usernameKey || user?.name || '').trim().toLowerCase();
   const usedMemberCode = String(user?.invitedByCode || user?.memberCode || user?.paMemberCode || '').trim().toUpperCase() === 'ZX6186';
   const canShowPaBm = !!(user && (usernameKey === 'zedan91' || user.paAccess === true || usedMemberCode));
@@ -170,6 +199,7 @@ function syncHeader(user){
     document.body.classList.remove('is-authenticated');
     if (authActions) authActions.style.removeProperty('display');
     if (tools) tools.style.removeProperty('display');
+    document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
   }
 }
 
@@ -185,7 +215,7 @@ function openSiteAuth(mode='signin'){
   if(signupError) signupError.textContent='';
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden','false');
-  setTimeout(()=>{(isSignup?$('siteSignupUsername'):$('siteLoginUsername'))?.focus();},40);
+  setTimeout(()=>{(isSignup?($('siteSignupUsername')||$('siteSignupName')):($('siteLoginUsername')||$('siteLoginName')))?.focus();},40);
 }
 function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
 function openProfileSettings(){
@@ -202,10 +232,10 @@ window.openSiteAuth = openSiteAuth;
 window.closeSiteAuth = closeSiteAuth;
 
 async function ensureUserProfile(firebaseUser, fallback={}){
-  const ref=doc(db,'users',firebaseUser.uid);
-  const snap=await getDoc(ref);
+  const usernameKey = fallback.usernameKey || normalizeUsername(firebaseUser.email?.split('@')[0] || 'user');
+  const ref = doc(db, 'users', usernameKey);
+  const snap = await getDoc(ref);
   if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
-  const usernameKey=fallback.usernameKey || normalizeUsername(firebaseUser.email?.split('@')[0] || 'user');
   const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:fallback.phone||'',inviteCode:buildInviteCode(usernameKey),invitedByCode:fallback.invitedByCode||'',role:'member',createdAt:serverTimestamp()};
   await setDoc(ref,profile,{merge:true});
   return profile;
@@ -215,6 +245,23 @@ function bindAuth() {
   addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncHeader(getSavedUser());
 
   document.addEventListener('click', async (event) => {
+    if (event.target.closest('#logoutButton')) {
+      event.preventDefault();
+      event.stopPropagation();
+      await signOut(auth).catch(()=>{});
+      clearUser();
+      syncHeader(null);
+      return;
+    }
+
+    if (event.target.closest('#profileSettingsButton')) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+      openProfileSettings();
+      return;
+    }
+
     const opener = event.target.closest('[data-auth-open], [data-auth], #siteSignInButton, #siteSignUpButton, a[href$="#login"], a[href$="#signin"], a[href$="#signup"], a[href$="#register"]');
     if (opener) {
       event.preventDefault(); event.stopPropagation();
@@ -224,25 +271,42 @@ function bindAuth() {
     }
     if (event.target.closest('#siteAuthClose') || event.target.id === 'siteAuthModal') closeSiteAuth();
     if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton') || event.target.id === 'profileSettingsModal') closeProfileSettings();
-    if (event.target.closest('#profileSettingsButton')) { event.preventDefault(); event.stopPropagation(); openProfileSettings(); return; }
     if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
     if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
     const menu = event.target.closest('#userMenu');
-    if (menu) { menu.classList.toggle('is-open'); menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false'); }
-    else document.querySelectorAll('.user-menu.is-open').forEach(el=>el.classList.remove('is-open'));
-    if (event.target.closest('#logoutButton')) {
-      event.preventDefault();
-      await signOut(auth).catch(()=>{});
-      sessionStorage.removeItem('azobssCurrentUser'); localStorage.removeItem('azobssCurrentUser');
-      syncHeader(null);
+    if (menu) {
+      event.stopPropagation();
+      if (event.target.closest('.user-dropdown')) return;
+      menu.classList.toggle('is-open');
+      menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
     }
+    else document.querySelectorAll('.user-menu.is-open').forEach(el=>el.classList.remove('is-open'));
   }, true);
+
+  document.addEventListener('keydown', (event)=>{
+    if (event.key === 'Escape') {
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+      closeSiteAuth();
+      closeProfileSettings();
+    }
+  });
+
+  document.querySelectorAll('#userMenu').forEach((menu)=>{
+    menu.addEventListener('keydown', (event)=>{
+      if (event.target.closest('.user-dropdown')) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        menu.classList.toggle('is-open');
+        menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
+      }
+    });
+  });
 
   $('siteSignInForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
     const err=$('siteLoginError'); if(err) err.textContent='';
-    const usernameKey=normalizeUsername($('siteLoginUsername')?.value);
-    const password=$('siteLoginPassword')?.value || '';
+    const usernameKey=normalizeUsername(fieldValue('siteLoginUsername','siteLoginName'));
+    const password=fieldValue('siteLoginPassword');
     if(!usernameKey || !password){ if(err) err.textContent='Please enter username and password.'; return; }
     try{
       await setPersistence(auth,browserSessionPersistence);
@@ -255,17 +319,17 @@ function bindAuth() {
   $('siteSignUpForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
     const err=$('siteSignupError'); if(err) err.textContent='';
-    const usernameKey=normalizeUsername($('siteSignupUsername')?.value);
-    const password=$('siteSignupPassword')?.value || '';
-    const phone=cleanPhone($('siteSignupPhone')?.value);
-    const email=String($('siteSignupEmail')?.value||'').trim().toLowerCase();
-    const invitedByCode=String($('siteSignupInviteCode')?.value||'').trim().toUpperCase();
+    const usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
+    const password=fieldValue('siteSignupPassword');
+    const phone=cleanPhone(fieldValue('siteSignupPhone'));
+    const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
+    const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
     if(!usernameKey || password.length<6 || !phone || !email){ if(err) err.textContent='Please complete all required fields.'; return; }
     try{
       await setPersistence(auth,browserSessionPersistence);
       const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
       const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member',createdAt:serverTimestamp()};
-      await setDoc(doc(db,'users',credential.user.uid),profile,{merge:true});
+      await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
       saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member'});
       syncHeader({usernameKey,email,phone,invitedByCode}); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
