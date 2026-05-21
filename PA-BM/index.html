@@ -1731,7 +1731,6 @@
       display: none !important;
     }
 
-    #paForm,
     #adminPurchasePanel,
     #registeredUsersPanel,
     .login-only {
@@ -7083,7 +7082,7 @@ body.pa-bm-page #request .card {
 <div class="card" id="requestCard" style="max-width:700px;margin:auto;">
 <h3>Pelan Akui</h3>
 <p class="login-info" id="loginInfo"></p>
-<form action="" class="request-form" hidden="" id="paForm" onsubmit="return azobssDirectPaDownload(event);">
+<form action="" class="request-form" id="paForm" onsubmit="return azobssDirectPaDownload(event);">
 <label for="paNumber">
           No PA
           <input id="paNumber" inputmode="numeric" placeholder="Contoh: 123456" required="" type="text"/>
