@@ -258,9 +258,30 @@ function isAzobssAdmin(user){
   const role = String(user?.role || '').trim().toLowerCase();
   return !!(user && (role === 'admin' || AZOBSS_ADMIN_USERS.includes(key)));
 }
+function normalizePaMemberCode(value){
+  return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+function getPaMemberCodes(user){
+  const u = user || {};
+  const savedCode = normalizePaMemberCode(localStorage.getItem('azobssPaMemberCode') || sessionStorage.getItem('azobssPaMemberCode') || '');
+  return [
+    u.invitedByCode,
+    u.memberCode,
+    u.paMemberCode,
+    u.accessCode,
+    u.inviteCodeUsed,
+    u.signupCode,
+    u.member_code,
+    u.referralCode,
+    // Some older builds stored the entered member code in inviteCode.
+    u.inviteCode,
+    savedCode
+  ].map(normalizePaMemberCode).filter(Boolean);
+}
 function hasPaBmTabAccess(user){
-  const code = String(user?.invitedByCode || user?.memberCode || user?.paMemberCode || '').trim().toUpperCase();
-  return !!(user && (isAzobssAdmin(user) || code === AZOBSS_PA_MEMBER_CODE));
+  if (!user) return false;
+  if (isAzobssAdmin(user)) return true;
+  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
 
 function syncHeader(user){
@@ -268,19 +289,19 @@ function syncHeader(user){
   const tools = $('marketUserTools');
   const name = $('signedInName');
   const avatar = $('userAvatar');
-  const paBm = $('paBmNavButton');
+  const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link'));
   const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
   const canShowPaBm = hasPaBmTabAccess(user);
   const isAdminUser = isAzobssAdmin(user);
   document.body.classList.toggle('is-admin', !!isAdminUser);
   document.body.classList.toggle('has-pa-access', !!canShowPaBm);
-  if (paBm) {
+  paBmButtons.forEach((paBm) => {
     paBm.hidden = !canShowPaBm;
     paBm.classList.toggle('is-hidden', !canShowPaBm);
     paBm.style.setProperty('display', canShowPaBm ? 'inline-flex' : 'none', 'important');
     paBm.style.setProperty('visibility', canShowPaBm ? 'visible' : 'hidden', 'important');
     paBm.style.setProperty('pointer-events', canShowPaBm ? 'auto' : 'none', 'important');
-  }
+  });
   if (display) {
     document.body.classList.add('is-authenticated');
     if (name) name.textContent = display;
@@ -329,7 +350,8 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const ref = doc(db, 'users', usernameKey);
   const snap = await getDoc(ref);
   if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
-  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:fallback.phone||'',inviteCode:buildInviteCode(usernameKey),invitedByCode:fallback.invitedByCode||'',memberCode:fallback.invitedByCode||'',role:'member',createdAt:serverTimestamp()};
+  const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
+  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:fallback.phone||'',inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',createdAt:serverTimestamp()};
   await setDoc(ref,profile,{merge:true});
   return profile;
 }
@@ -668,10 +690,14 @@ function bindAuth() {
     try{
       await setPersistence(auth,browserSessionPersistence);
       const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
-      const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
+      const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
       await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
-      saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,role:'member'});
-      syncHeader({usernameKey,email,phone,invitedByCode}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); closeSiteAuth();
+      if (invitedByCode === AZOBSS_PA_MEMBER_CODE) {
+        localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
+        sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
+      }
+      saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member'});
+      syncHeader({usernameKey,email,phone,invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
   });
 
