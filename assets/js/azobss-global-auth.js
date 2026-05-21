@@ -20,7 +20,7 @@
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -693,6 +693,55 @@ function isSamePurchase(a,b){
      String(a.itemCode||'') === String(b.itemCode||'') &&
      Math.abs(Number(a.createdAtMs||0)-Number(b.createdAtMs||0)) < 3000);
 }
+function purchasePersistDocId(user){
+  const key = getUserKey(user || getSavedUser());
+  const uid = String((user || getSavedUser() || {}).uid || '').trim();
+  return key || uid || '';
+}
+function purchaseFirestoreSafeRecord(record){
+  const safe = { ...record };
+  delete safe.id;
+  delete safe.firestoreId;
+  Object.keys(safe).forEach(key => {
+    if(safe[key] === undefined) delete safe[key];
+  });
+  return safe;
+}
+async function savePurchaseToFirestoreEverywhere(record){
+  const current = getSavedUser() || {};
+  const docId = purchasePersistDocId(current);
+  const safeRecord = purchaseFirestoreSafeRecord(record);
+  const embeddedRecord = {
+    ...safeRecord,
+    id: record.id || ('purchase-' + Date.now()),
+    createdAtMs: Number(record.createdAtMs || Date.now()),
+    createdAtClient: record.createdAtClient || new Date().toISOString()
+  };
+
+  // 1) Global collection for admin dashboard/reporting.
+  try{
+    const ref = await addDoc(collection(db, AZOBSS_PURCHASE_COLLECTION), { ...safeRecord, createdAt: serverTimestamp() });
+    record.firestoreId = ref.id;
+  }catch(error){
+    console.warn('Firestore global purchase collection save failed:', error);
+  }
+
+  // 2) User profile embedded backup. This fixes records disappearing after browser close
+  // even when Firestore rules block collection queries but allow the user's own profile doc.
+  if(docId){
+    try{
+      await setDoc(doc(db, 'users', docId), {
+        usernameKey: docId,
+        uid: String(current.uid || record.uid || ''),
+        purchaseRecords: arrayUnion(embeddedRecord),
+        purchaseRecordsUpdatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }catch(error){
+      console.warn('Firestore user embedded purchase save failed:', error);
+    }
+  }
+}
 async function recordAzobssPurchase(payload){
   const user = getSavedUser();
   if(!user){
@@ -705,14 +754,7 @@ async function recordAzobssPurchase(payload){
     local.unshift(record);
     writeLocalPurchaseRecords(local.slice(0, 500));
   }
-  try{
-    const firestoreRecord = { ...record, createdAt: serverTimestamp() };
-    delete firestoreRecord.id;
-    const ref = await addDoc(collection(db, AZOBSS_PURCHASE_COLLECTION), firestoreRecord);
-    record.firestoreId = ref.id;
-  }catch(error){
-    console.warn('Firestore purchase record fallback to localStorage:', error);
-  }
+  await savePurchaseToFirestoreEverywhere(record);
   window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: record }));
   try{ window.dispatchEvent(new Event('storage')); }catch{}
   return record;
@@ -748,8 +790,7 @@ async function loadAzobssPurchaseRecords(){
       // Admin can read all purchase records if Firestore rules allow it.
       pushSnap(await getDocs(purchaseCol));
     }else if(current?.uid){
-      // Normal users should only query their own records. This works with stricter Firestore rules
-      // and fixes Latest Purchase List disappearing after browser restart.
+      // Normal users should only query their own records. This works with stricter Firestore rules.
       pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
     }
 
@@ -763,7 +804,41 @@ async function loadAzobssPurchaseRecords(){
       }
     }
   }catch(error){
-    console.warn('Firestore purchase records read fallback to localStorage:', error);
+    console.warn('Firestore purchase collection read fallback:', error);
+  }
+
+  // Robust persistence path: read embedded records from user profile docs too.
+  try{
+    if(isAdminUser){
+      const usersSnap = await getDocs(collection(db, 'users'));
+      usersSnap.forEach(userDoc => {
+        const userData = userDoc.data() || {};
+        const embedded = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+        embedded.forEach(r => push({
+          ...r,
+          usernameKey: r.usernameKey || userData.usernameKey || userDoc.id,
+          displayName: r.displayName || userData.usernameKey || userDoc.id,
+          phone: r.phone || userData.phone || '',
+          email: r.email || userData.email || ''
+        }));
+      });
+    }else{
+      const docId = purchasePersistDocId(current);
+      if(docId){
+        const userSnap = await getDoc(doc(db, 'users', docId));
+        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+        const embedded = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+        embedded.forEach(r => push({
+          ...r,
+          usernameKey: r.usernameKey || userData.usernameKey || docId,
+          displayName: r.displayName || userData.usernameKey || docId,
+          phone: r.phone || userData.phone || '',
+          email: r.email || userData.email || ''
+        }));
+      }
+    }
+  }catch(error){
+    console.warn('Firestore embedded purchase records read fallback:', error);
   }
 
   const key = getUserKey(current);
