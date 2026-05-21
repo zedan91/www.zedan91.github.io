@@ -888,7 +888,7 @@ window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
 window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
+  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
     if (event.target.closest('#logoutButton')) {
