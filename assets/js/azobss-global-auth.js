@@ -191,13 +191,40 @@ function saveUser(user){
   localStorage.setItem('azobssLoggedIn', '1');
   window.dispatchEvent(new Event('storage'));
 }
-function clearUser(){
+function clearUser(silent=false){
   ['azobssCurrentUser','azobssUser','azobssLoggedIn'].forEach((key)=>{
     sessionStorage.removeItem(key);
     localStorage.removeItem(key);
   });
-  window.dispatchEvent(new Event('storage'));
+  if(!silent) window.dispatchEvent(new Event('storage'));
 }
+
+let azobssLogoutInProgress = false;
+async function azobssLogoutOnce(){
+  if(azobssLogoutInProgress) return;
+  azobssLogoutInProgress = true;
+  window.__AZOBSS_LOGGING_OUT__ = true;
+  try{
+    document.querySelectorAll('.user-menu.is-open').forEach(el=>{
+      el.classList.remove('is-open');
+      el.setAttribute('aria-expanded','false');
+    });
+    clearUser(true);
+    syncHeader(null);
+    // Do not let storage/admin render loops run during logout. Redirect once, quickly.
+    const redirectTimer = setTimeout(()=>{ window.location.replace('/'); }, 120);
+    try{
+      await Promise.race([
+        signOut(auth),
+        new Promise(resolve=>setTimeout(resolve, 900))
+      ]);
+    }catch(_e){}
+    clearTimeout(redirectTimer);
+  }finally{
+    window.location.replace('/');
+  }
+}
+window.azobssLogoutUser = azobssLogoutOnce;
 function getSavedUser(){
   return safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
     safeJson(localStorage.getItem('azobssCurrentUser')) ||
@@ -1341,11 +1368,8 @@ function bindAuth() {
     if (event.target.closest('#logoutButton')) {
       event.preventDefault();
       event.stopPropagation();
-      await signOut(auth).catch(()=>{});
-      clearUser();
-      syncHeader(null);
-      document.querySelectorAll('.user-menu.is-open').forEach(el=>el.classList.remove('is-open'));
-      window.location.replace('/');
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      azobssLogoutOnce();
       return;
     }
 
@@ -1475,7 +1499,10 @@ function bindAuth() {
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{
-    if(!firebaseUser){ clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); return; }
+    if(!firebaseUser){
+      if(window.__AZOBSS_LOGGING_OUT__ || azobssLogoutInProgress) return;
+      clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); return;
+    }
     try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); await upsertOnlineUser(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });

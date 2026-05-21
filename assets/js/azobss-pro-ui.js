@@ -1,4 +1,26 @@
 
+
+(function(){
+  'use strict';
+  // Safety fallback: account dropdown UI must not handle logout itself.
+  // Global auth owns logout to avoid duplicate handlers / page-unresponsive loops.
+  document.addEventListener('click', function(event){
+    var logout = event.target && event.target.closest && event.target.closest('#logoutButton');
+    if(!logout) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if(event.stopImmediatePropagation) event.stopImmediatePropagation();
+    if(window.azobssLogoutUser){ window.azobssLogoutUser(); return; }
+    try{
+      ['azobssCurrentUser','azobssUser','azobssLoggedIn'].forEach(function(key){
+        sessionStorage.removeItem(key); localStorage.removeItem(key);
+      });
+      document.querySelectorAll('.user-menu.is-open').forEach(function(el){ el.classList.remove('is-open'); });
+    }catch(e){}
+    window.location.replace('/');
+  }, true);
+})();
+
 (function(){
   'use strict';
   function lockPaBmTab(){
