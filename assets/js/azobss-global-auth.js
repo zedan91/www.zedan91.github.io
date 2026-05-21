@@ -20,7 +20,7 @@
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -334,8 +334,190 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   return profile;
 }
 
+
+
+// PA/BM purchase records: one shared source for PA + BM/SBM downloads.
+const AZOBSS_PURCHASE_LOCAL_KEY = 'azobssPurchaseRecords';
+const AZOBSS_PURCHASE_COLLECTION = 'purchaseRecords';
+function readLocalPurchaseRecords(){
+  try { return JSON.parse(localStorage.getItem(AZOBSS_PURCHASE_LOCAL_KEY) || '[]') || []; }
+  catch { return []; }
+}
+function writeLocalPurchaseRecords(records){
+  try { localStorage.setItem(AZOBSS_PURCHASE_LOCAL_KEY, JSON.stringify(records || [])); } catch {}
+}
+function purchaseRecordUser(user){
+  const u = user || getSavedUser() || {};
+  return {
+    uid: String(u.uid || ''),
+    usernameKey: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase(),
+    displayName: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || 'Guest').trim(),
+    phone: String(u.phone || ''),
+    email: String(u.email || '')
+  };
+}
+function normalizePurchasePayload(payload){
+  const userInfo = purchaseRecordUser();
+  const type = String(payload?.productType || payload?.product || payload?.type || 'PA').trim().toUpperCase();
+  const code = String(payload?.itemCode || payload?.code || payload?.station || payload?.pa || payload?.noPA || '').trim().toUpperCase();
+  const negeri = String(payload?.negeri || payload?.state || payload?.stateName || '').trim();
+  const amount = Number(payload?.amount || payload?.price || (type === 'PA' ? 5 : 3));
+  const now = new Date();
+  return {
+    id: 'local-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8),
+    productType: type,
+    itemCode: code,
+    negeri,
+    amount: Number.isFinite(amount) ? amount : (type === 'PA' ? 5 : 3),
+    downloadUrl: String(payload?.downloadUrl || payload?.url || ''),
+    filename: String(payload?.filename || ''),
+    uid: userInfo.uid,
+    usernameKey: userInfo.usernameKey,
+    displayName: userInfo.displayName,
+    phone: userInfo.phone,
+    email: userInfo.email,
+    createdAtClient: now.toISOString(),
+    createdAtMs: now.getTime()
+  };
+}
+function isSamePurchase(a,b){
+  return String(a.id||'') && String(a.id||'') === String(b.id||'') ||
+    (String(a.usernameKey||'') === String(b.usernameKey||'') &&
+     String(a.productType||'') === String(b.productType||'') &&
+     String(a.itemCode||'') === String(b.itemCode||'') &&
+     Math.abs(Number(a.createdAtMs||0)-Number(b.createdAtMs||0)) < 3000);
+}
+async function recordAzobssPurchase(payload){
+  const user = getSavedUser();
+  if(!user){
+    openSiteAuth('signin');
+    throw new Error('Please login first before download.');
+  }
+  const record = normalizePurchasePayload(payload || {});
+  const local = readLocalPurchaseRecords();
+  if(!local.some(item => isSamePurchase(item, record))){
+    local.unshift(record);
+    writeLocalPurchaseRecords(local.slice(0, 500));
+  }
+  try{
+    const firestoreRecord = { ...record, createdAt: serverTimestamp() };
+    delete firestoreRecord.id;
+    const ref = await addDoc(collection(db, AZOBSS_PURCHASE_COLLECTION), firestoreRecord);
+    record.firestoreId = ref.id;
+  }catch(error){
+    console.warn('Firestore purchase record fallback to localStorage:', error);
+  }
+  window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: record }));
+  try{ window.dispatchEvent(new Event('storage')); }catch{}
+  return record;
+}
+async function loadAzobssPurchaseRecords(){
+  const current = getSavedUser();
+  const isAdminUser = isAzobssAdmin(current);
+  const merged = [];
+  function push(record){
+    if(!record) return;
+    const normalized = { ...record };
+    normalized.createdAtMs = Number(normalized.createdAtMs || (normalized.createdAtClient ? Date.parse(normalized.createdAtClient) : 0) || 0);
+    if(!merged.some(item => isSamePurchase(item, normalized))) merged.push(normalized);
+  }
+  readLocalPurchaseRecords().forEach(push);
+  try{
+    const snap = await getDocs(collection(db, AZOBSS_PURCHASE_COLLECTION));
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      let ms = Number(data.createdAtMs || 0);
+      if(!ms && data.createdAtClient) ms = Date.parse(data.createdAtClient) || 0;
+      if(!ms && data.createdAt && typeof data.createdAt.toMillis === 'function') ms = data.createdAt.toMillis();
+      push({ id: docSnap.id, firestoreId: docSnap.id, ...data, createdAtMs: ms });
+    });
+  }catch(error){
+    console.warn('Firestore purchase records read fallback to localStorage:', error);
+  }
+  const key = getUserKey(current);
+  return merged
+    .filter(item => isAdminUser || String(item.usernameKey || '').toLowerCase() === key || (current?.uid && String(item.uid||'') === String(current.uid)))
+    .sort((a,b) => Number(b.createdAtMs||0) - Number(a.createdAtMs||0));
+}
+function escHtml(value){
+  return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+function formatPurchaseDate(record){
+  const ms = Number(record.createdAtMs || (record.createdAtClient ? Date.parse(record.createdAtClient) : 0));
+  if(!ms) return '-';
+  return new Date(ms).toLocaleString('en-MY', { hour12:false });
+}
+async function renderAzobssPurchaseRecords(){
+  const list = document.getElementById('purchaseSummaryList');
+  const userList = document.getElementById('userPaPurchaseList');
+  if(!list && !userList) return;
+  const current = getSavedUser();
+  const isAdminUser = isAzobssAdmin(current);
+  const search = String(document.getElementById('purchaseRecordSearch')?.value || document.getElementById('userPaPurchaseSearch')?.value || '').trim().toLowerCase();
+  const sort = String(document.getElementById('purchaseRecordSort')?.value || document.getElementById('userPaPurchaseSort')?.value || 'newest');
+  let records = await loadAzobssPurchaseRecords();
+  if(search){
+    records = records.filter(r => [r.usernameKey,r.displayName,r.phone,r.email,r.productType,r.itemCode,r.negeri].join(' ').toLowerCase().includes(search));
+  }
+  if(sort === 'oldest') records.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
+  else records.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+
+  const simpleRows = records.map(r => `
+    <div class="purchase-summary-item">
+      <strong>${escHtml(r.productType || 'PA')} ${escHtml(r.itemCode || '-')}</strong>
+      <span>${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span>
+      ${r.downloadUrl ? `<a class="small-action-btn blue" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : ''}
+    </div>`).join('');
+
+  if(userList){
+    userList.innerHTML = simpleRows || '<div class="purchase-summary-item">No PA purchase list yet.</div>';
+  }
+  if(list){
+    if(isAdminUser){
+      const groups = new Map();
+      records.forEach(r => {
+        const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
+        if(!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(r);
+      });
+      list.innerHTML = Array.from(groups.entries()).map(([key, rows]) => {
+        const first = rows[0] || {};
+        const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+        return `<div class="purchase-summary-item admin-purchase-user-card">
+          <div class="admin-purchase-user-top">
+            <div><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
+            <span>${rows.length} record(s) · RM${total}</span>
+          </div>
+          <div class="admin-purchase-user-details">
+            ${rows.map(r => `<div>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</div>`).join('')}
+          </div>
+        </div>`;
+      }).join('') || '<div class="purchase-summary-item">No purchase records yet.</div>';
+    }else{
+      list.innerHTML = simpleRows || '<div class="purchase-summary-item">No purchase records yet.</div>';
+    }
+  }
+}
+function bindAzobssPurchaseRecordsUI(){
+  ['refreshPurchaseButton','purchaseRecordSearch','purchaseRecordSort','userPaPurchaseSearch','userPaPurchaseSort'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el || el.dataset.azobssPurchaseBind) return;
+    el.dataset.azobssPurchaseBind = '1';
+    el.addEventListener(el.tagName === 'BUTTON' ? 'click' : 'input', () => renderAzobssPurchaseRecords());
+    if(el.tagName === 'SELECT') el.addEventListener('change', () => renderAzobssPurchaseRecords());
+  });
+  if(document.getElementById('purchaseSummaryList') || document.getElementById('userPaPurchaseList')){
+    renderAzobssPurchaseRecords();
+  }
+}
+window.azobssRecordPurchase = recordAzobssPurchase;
+window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;
+window.azobssRenderPurchaseRecords = renderAzobssPurchaseRecords;
+window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
+window.addEventListener('storage', renderAzobssPurchaseRecords);
+
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser());
+  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI();
 
   document.addEventListener('click', async (event) => {
     if (event.target.closest('#logoutButton')) {
@@ -405,7 +587,7 @@ function bindAuth() {
       await setPersistence(auth,browserSessionPersistence);
       const credential=await signInWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
       const profile=await ensureUserProfile(credential.user,{usernameKey});
-      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); closeSiteAuth();
+      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
   });
 
@@ -424,7 +606,7 @@ function bindAuth() {
       const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
       await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
       saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,role:'member'});
-      syncHeader({usernameKey,email,phone,invitedByCode}); closeSiteAuth();
+      syncHeader({usernameKey,email,phone,invitedByCode}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
   });
 
@@ -463,9 +645,9 @@ function bindAuth() {
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{
-    if(!firebaseUser){ syncHeader(getSavedUser()); return; }
-    try{ const profile=await ensureUserProfile(firebaseUser); saveUser({uid:firebaseUser.uid,...profile}); syncHeader({uid:firebaseUser.uid,...profile}); }
-    catch{ syncHeader(getSavedUser()); }
+    if(!firebaseUser){ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); return; }
+    try{ const profile=await ensureUserProfile(firebaseUser); saveUser({uid:firebaseUser.uid,...profile}); syncHeader({uid:firebaseUser.uid,...profile}); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
+    catch{ syncHeader(getSavedUser()); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
   const hash = String(location.hash || '').toLowerCase();
