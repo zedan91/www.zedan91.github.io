@@ -1043,6 +1043,7 @@ function formatPurchaseDate(record){
   return new Date(ms).toLocaleString('en-MY', { hour12:true, hour:'numeric', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
 }
 const AZOBSS_PURCHASE_PAGE_SIZE = 4;
+const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 5;
 let azobssAdminPurchasePage = 1;
 let azobssUserPurchasePage = 1;
 function clampPage(page, totalPages){
@@ -1249,9 +1250,9 @@ async function renderAzobssPurchaseRecords(){
       groups.get(k).push(r);
     });
     const groupedRows = sortAdminPurchaseGroups(Array.from(groups.entries()), adminSort, purchaseResetMap);
-    const totalPages = Math.max(1, Math.ceil(groupedRows.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(groupedRows.length / AZOBSS_ADMIN_PURCHASE_PAGE_SIZE));
     azobssAdminPurchasePage = clampPage(azobssAdminPurchasePage, totalPages);
-    const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE);
     if(list){
       list.innerHTML = pageRows.map(([key, rows]) => {
         rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
@@ -1263,9 +1264,9 @@ async function renderAzobssPurchaseRecords(){
         return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card" data-user-key="${escHtml(key)}">
           <div class="admin-purchase-user-top az-purchase-mini-top">
             <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
+            <span>Last: <strong>${escHtml(lastItem)}</strong></span>
             <span>Unit: <strong>${unitCount}</strong></span>
             <span>Total: <strong>RM${total}</strong></span>
-            <span>Last: <strong>${escHtml(lastItem)}</strong></span>
             <div class="az-purchase-mini-actions">
               <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">Show</button>
               <button type="button" class="az-purchase-reset-btn" onclick="window.azobssResetPurchaseRecordsForUser && window.azobssResetPurchaseRecordsForUser('${escHtml(key)}')">Reset</button>
@@ -1277,7 +1278,7 @@ async function renderAzobssPurchaseRecords(){
         </div>`;
       }).join('') || '<div class="purchase-summary-item">No purchase records yet.</div>';
     }
-    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, groupedRows.length, AZOBSS_PURCHASE_PAGE_SIZE, page => {
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, groupedRows.length, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, page => {
       azobssAdminPurchasePage = page;
       renderAzobssPurchaseRecords();
     });
