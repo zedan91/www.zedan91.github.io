@@ -1103,14 +1103,52 @@ function applyPurchaseSort(records, sort){
   else rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
   return rows;
 }
-function sortAdminPurchaseGroups(groupedRows, sort){
-  const metric = rows => ({
-    units: rows.length,
-    amount: rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0),
-    updated: Math.max(...rows.map(r=>Number(r.createdAtMs||0)))
-  });
+const AZOBSS_PURCHASE_TOTAL_RESET_KEY = 'azobss_purchase_total_reset_map_v1';
+function readAzobssPurchaseTotalResetMap(){
+  try{ return JSON.parse(localStorage.getItem(AZOBSS_PURCHASE_TOTAL_RESET_KEY) || '{}') || {}; }
+  catch(e){ return {}; }
+}
+function writeAzobssPurchaseTotalResetMap(map){
+  try{ localStorage.setItem(AZOBSS_PURCHASE_TOTAL_RESET_KEY, JSON.stringify(map || {})); }
+  catch(e){}
+}
+function purchaseRecordMs(record){
+  return Number(record?.createdAtMs || record?.timestampMs || record?.createdAtClientMs || 0) || (record?.createdAtClient ? Date.parse(record.createdAtClient) : 0) || (record?.createdAt ? Date.parse(record.createdAt) : 0) || 0;
+}
+function countablePurchaseRows(rows, usernameKey, resetMap){
+  const key = String(usernameKey || '').trim().toLowerCase();
+  const resetAt = Number((resetMap || {})[key] || 0);
+  if(!resetAt) return rows.slice();
+  return rows.filter(r => purchaseRecordMs(r) > resetAt);
+}
+async function loadAzobssPurchaseTotalResetMap(){
+  const map = readAzobssPurchaseTotalResetMap();
+  try{
+    const snap = await getDocs(collection(db, 'users'));
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      const key = String(data.usernameKey || data.username || docSnap.id || '').trim().toLowerCase();
+      const ms = Number(data.purchaseTotalResetAtMs || 0) || (data.purchaseTotalResetAtClient ? Date.parse(data.purchaseTotalResetAtClient) : 0);
+      if(key && ms) map[key] = ms;
+    });
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(error){
+    console.warn('Load purchase total reset map failed:', error);
+  }
+  return map;
+}
+
+function sortAdminPurchaseGroups(groupedRows, sort, resetMap){
+  const metric = (key, rows) => {
+    const countable = countablePurchaseRows(rows, key, resetMap);
+    return {
+      units: countable.length,
+      amount: countable.reduce((sum,r)=>sum + (Number(r.amount)||0), 0),
+      updated: Math.max(...rows.map(r=>Number(r.createdAtMs||0)))
+    };
+  };
   return groupedRows.slice().sort((a,b)=>{
-    const am = metric(a[1]), bm = metric(b[1]);
+    const am = metric(a[0], a[1]), bm = metric(b[0], b[1]);
     if(sort === 'amountAsc') return am.amount - bm.amount;
     if(sort === 'amountDesc') return bm.amount - am.amount;
     if(sort === 'unitsAsc') return am.units - bm.units;
@@ -1119,19 +1157,21 @@ function sortAdminPurchaseGroups(groupedRows, sort){
     return bm.updated - am.updated;
   });
 }
-function renderUserPurchaseSummary(records){
+function renderUserPurchaseSummary(records, resetMap){
   const current = getSavedUser() || {};
-  const total = records.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
   const latest = records.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))[0] || {};
+  const currentKey = String(current.usernameKey || current.displayName || latest.usernameKey || latest.displayName || '').trim().toLowerCase();
+  const countableRowsForTotal = countablePurchaseRows(records, currentKey, resetMap);
+  const total = countableRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
   const username = current.displayName || current.username || current.usernameKey || latest.displayName || latest.usernameKey || 'User';
   const phone = current.phone || latest.phone || '';
   const lastItem = latest.itemCode ? `${latest.productType || 'PA'} ${latest.itemCode}` : '-';
   return `<div class="purchase-summary-item user-purchase-summary-card">
     <div><strong>${escHtml(username)}</strong>${phone ? `<span>${escHtml(phone)}</span>` : ''}</div>
     <div class="user-purchase-summary-meta">
-      <span>Unit: <strong>${escHtml(records.length)}</strong></span>
-      <span>Total: <strong>RM${escHtml(total)}</strong></span>
       <span>Last: <strong>${escHtml(lastItem)}</strong></span>
+      <span>Unit: <strong>${escHtml(countableRowsForTotal.length)}</strong></span>
+      <span>Total: <strong>RM${escHtml(total)}</strong></span>
     </div>
   </div>`;
 }
@@ -1146,32 +1186,27 @@ async function resetAzobssPurchaseRecordsForUser(usernameKey){
   if(!isAzobssAdmin(current)) return;
   const key = String(usernameKey || '').trim().toLowerCase();
   if(!key) return;
-  if(!confirm('Reset purchase records for ' + key + '?')) return;
+  if(!confirm('Reset total pembelian untuk ' + key + '?\n\nPurchase history tidak akan dipadam.')) return;
+
+  const resetAtMs = Date.now();
+  const resetAtClient = new Date(resetAtMs).toISOString();
 
   try{
-    // Remove matching local cache records first for instant UI feedback.
-    const localRows = readLocalPurchaseRecords().filter(r => String(r.usernameKey || r.displayName || '').trim().toLowerCase() !== key);
-    writeLocalPurchaseRecords(localRows.slice(0, 500));
-  }catch(e){ console.warn('Local purchase reset failed:', e); }
-
-  try{
-    const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
-    const snap = await getDocs(query(purchaseCol, where('usernameKey', '==', key)));
-    const deletes = [];
-    snap.forEach(docSnap => deletes.push(deleteDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, docSnap.id))));
-    await Promise.all(deletes);
-  }catch(error){
-    console.warn('Firestore purchase collection reset failed:', error);
-  }
+    const map = readAzobssPurchaseTotalResetMap();
+    map[key] = resetAtMs;
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(e){ console.warn('Local purchase total reset failed:', e); }
 
   try{
     await setDoc(doc(db, 'users', key), {
-      purchaseRecords: [],
-      purchaseRecordsUpdatedAt: serverTimestamp(),
+      purchaseTotalResetAtMs: resetAtMs,
+      purchaseTotalResetAtClient: resetAtClient,
+      purchaseTotalResetBy: current.usernameKey || current.displayName || 'admin',
       updatedAt: serverTimestamp()
     }, { merge: true });
   }catch(error){
-    console.warn('Firestore embedded purchase reset failed:', error);
+    console.warn('Firestore purchase total reset failed:', error);
+    alert('Reset saved locally only. Firebase update failed.');
   }
 
   azobssAdminPurchasePage = 1;
@@ -1203,6 +1238,7 @@ async function renderAzobssPurchaseRecords(){
   const userSearch = String(document.getElementById('userPaPurchaseSearch')?.value || '').trim().toLowerCase();
   const userSort = String(document.getElementById('userPaPurchaseSort')?.value || 'newest');
   let records = await loadAzobssPurchaseRecords();
+  const purchaseResetMap = await loadAzobssPurchaseTotalResetMap();
 
   if(isAdminUser){
     records = filterPurchaseRows(records, adminSearch);
@@ -1212,7 +1248,7 @@ async function renderAzobssPurchaseRecords(){
       if(!groups.has(k)) groups.set(k, []);
       groups.get(k).push(r);
     });
-    const groupedRows = sortAdminPurchaseGroups(Array.from(groups.entries()), adminSort);
+    const groupedRows = sortAdminPurchaseGroups(Array.from(groups.entries()), adminSort, purchaseResetMap);
     const totalPages = Math.max(1, Math.ceil(groupedRows.length / AZOBSS_PURCHASE_PAGE_SIZE));
     azobssAdminPurchasePage = clampPage(azobssAdminPurchasePage, totalPages);
     const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
@@ -1220,12 +1256,14 @@ async function renderAzobssPurchaseRecords(){
       list.innerHTML = pageRows.map(([key, rows]) => {
         rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
         const first = rows[0] || {};
-        const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+        const countableRowsForTotal = countablePurchaseRows(rows, key, purchaseResetMap);
+        const total = countableRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+        const unitCount = countableRowsForTotal.length;
         const lastItem = first.itemCode ? `${first.productType || 'PA'} ${first.itemCode}` : '-';
         return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card" data-user-key="${escHtml(key)}">
           <div class="admin-purchase-user-top az-purchase-mini-top">
             <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
-            <span>Unit: <strong>${rows.length}</strong></span>
+            <span>Unit: <strong>${unitCount}</strong></span>
             <span>Total: <strong>RM${total}</strong></span>
             <span>Last: <strong>${escHtml(lastItem)}</strong></span>
             <div class="az-purchase-mini-actions">
@@ -1252,7 +1290,7 @@ async function renderAzobssPurchaseRecords(){
     if(userPanelForUser) userPanelForUser.style.display = '';
     const topRecords = filterPurchaseRows(records, adminSearch);
     if(list){
-      list.innerHTML = topRecords.length ? renderUserPurchaseSummary(topRecords) : '<div class="purchase-summary-item">No purchase records yet.</div>';
+      list.innerHTML = topRecords.length ? renderUserPurchaseSummary(topRecords, purchaseResetMap) : '<div class="purchase-summary-item">No purchase records yet.</div>';
     }
     const detailRecords = applyPurchaseSort(filterPurchaseRows(records, userSearch), userSort);
     const totalPages = Math.max(1, Math.ceil(detailRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
