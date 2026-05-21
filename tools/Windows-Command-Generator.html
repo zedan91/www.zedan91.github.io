@@ -180,55 +180,6 @@ function show(){result.textContent=commands[cmdType.value]}
 function copyCmd(){navigator.clipboard.writeText(commands[cmdType.value]);result.textContent=commands[cmdType.value]+"\n\nCopied!"}
 cmdType.addEventListener("change",show);show();
 </script>
-<script>
-/* AZOBSS secondary auth bridge */
-(function(){
-  function parseUser(raw){try{return raw ? JSON.parse(raw) : null;}catch(e){return null;}}
-  function readUser(){return parseUser(sessionStorage.getItem('azobssCurrentUser')) || parseUser(localStorage.getItem('azobssCurrentUser')) || parseUser(sessionStorage.getItem('azobssUser')) || parseUser(localStorage.getItem('azobssUser'));}
-  function initials(name){return String(name || 'AZ').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('') || 'AZ';}
-  function showUser(){
-    var user = readUser();
-    var auth = document.getElementById('siteAuthActions');
-    var tools = document.getElementById('marketUserTools');
-    var name = document.getElementById('signedInName');
-    var avatar = document.getElementById('userAvatar');
-    var display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
-    var paBm = document.getElementById('paBmNavButton');
-    var usernameKey = user && String(user.usernameKey || user.name || '').trim().toLowerCase();
-    var usedMemberCode = user && String(user.invitedByCode || user.memberCode || user.paMemberCode || '').trim().toUpperCase() === 'ZX6186';
-    var canShowPaBm = !!(user && (usernameKey === 'zedan91' || user.paAccess === true || usedMemberCode));
-    if(paBm){paBm.hidden = !canShowPaBm; paBm.classList.toggle('is-hidden', !canShowPaBm);}
-    if(display){
-      if(name) name.textContent = display;
-      if(avatar) avatar.textContent = initials(display);
-      document.body.classList.add('is-authenticated');
-      if(auth) auth.style.setProperty('display', 'none', 'important');
-      if(tools) tools.style.setProperty('display', 'flex', 'important');
-    }else{
-      document.body.classList.remove('is-authenticated');
-      if(auth) auth.style.setProperty('display', 'flex', 'important');
-      if(tools) tools.style.setProperty('display', 'none', 'important');
-    }
-  }
-  var menu = document.getElementById('userMenu');
-  if(menu){
-    menu.addEventListener('click', function(event){
-      if(event.target.closest('.user-dropdown-item')) return;
-      var open = !menu.classList.contains('is-open');
-      menu.classList.toggle('is-open', open);
-      menu.setAttribute('aria-expanded', String(open));
-    });
-    document.addEventListener('click', function(event){
-      if(!menu.contains(event.target)){menu.classList.remove('is-open');menu.setAttribute('aria-expanded','false');}
-    });
-  }
-  var logout = document.getElementById('logoutButton');
-  if(logout){logout.addEventListener('click', function(){sessionStorage.removeItem('azobssCurrentUser');localStorage.removeItem('azobssCurrentUser');sessionStorage.removeItem('azobssUser');localStorage.removeItem('azobssUser');showUser();});}
-  showUser();
-  window.addEventListener('storage', showUser);
-})();
-</script>
-
 <div aria-hidden="true" class="auth-modal" id="siteAuthModal">
   <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
     <div class="auth-modal-top">
