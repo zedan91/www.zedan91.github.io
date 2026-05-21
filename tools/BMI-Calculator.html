@@ -352,7 +352,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <div class="market-user-tools" id="marketUserTools">
 <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
 <div class="user-avatar" id="userAvatar">AZ</div>
-<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div class="user-name"><a href="/likes/" style="color:white;text-decoration:none;margin-right:10px">♡</a> Hello, <span id="signedInName"></span></div>
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
@@ -401,4 +401,19 @@ result.innerHTML=`BMI: <b>${bmi.toFixed(1)}</b>\nCategory: <b>${cat(bmi)}</b>\n\
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
-</body></html>
+<script>
+document.querySelectorAll('.card,.product-card,tr,.lisp-row').forEach((e,i)=>{
+if(e.querySelector('.azlike')) return;
+let b=document.createElement('span');
+b.className='azlike';
+b.innerHTML=' 🤍';
+b.style.cssText='cursor:pointer;float:right';
+b.onclick=()=>{let t=(e.innerText||('item'+i)).trim().split('\n')[0];
+let a=JSON.parse(localStorage.getItem('azLikes')||'[]');
+if(!a.includes(t)) a.push(t);
+localStorage.setItem('azLikes',JSON.stringify(a));
+b.innerHTML=' ❤️';
+};
+e.prepend(b);
+});
+</script></body></html>
