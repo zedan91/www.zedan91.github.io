@@ -7555,19 +7555,23 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   function clean(v){return String(v || '').trim().toLowerCase();}
 
   function getCurrentUserObject(){
-    return getSavedUser();
+    return (typeof window.getSavedUser === 'function') ? window.getSavedUser() : null;
   }
 
   function adminDetected(){
     // Must be signed in first
-    if(!hasSavedLogin()){
+    if(!(typeof window.hasSavedLogin === 'function' && window.hasSavedLogin())){
       return false;
     }
 
     const currentUser = getCurrentUserObject();
 
     // Your existing login system uses usernameKey
-    if(currentUser && clean(currentUser.usernameKey) === ADMIN_USERNAME){
+    if(currentUser && (clean(currentUser.usernameKey) === ADMIN_USERNAME || clean(currentUser.role) === 'admin')){
+      return true;
+    }
+
+    if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(currentUser)){
       return true;
     }
 
@@ -9022,19 +9026,23 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
   function getCurrentUserObject(){
     try{
-      return getSavedUser();
+      return (typeof window.getSavedUser === 'function') ? window.getSavedUser() : null;
     }catch(e){
       return null;
     }
   }
 
   function adminDetected(){
-    if(!hasSavedLogin()){
+    if(!(typeof window.hasSavedLogin === 'function' && window.hasSavedLogin())){
       return false;
     }
 
     var currentUser = getCurrentUserObject();
-    if(currentUser && clean(currentUser.usernameKey) === ADMIN_USERNAME){
+    if(currentUser && (clean(currentUser.usernameKey) === ADMIN_USERNAME || clean(currentUser.role) === 'admin')){
+      return true;
+    }
+
+    if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(currentUser)){
       return true;
     }
 

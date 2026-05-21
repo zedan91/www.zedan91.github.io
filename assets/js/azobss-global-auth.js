@@ -152,6 +152,12 @@ function getSavedUser(){
     safeJson(sessionStorage.getItem('azobssUser')) ||
     safeJson(localStorage.getItem('azobssUser'));
 }
+
+// Expose auth helpers for legacy admin panels in index.html and PA-BM/index.html.
+window.getSavedUser = getSavedUser;
+window.hasSavedLogin = function(){ return !!getSavedUser(); };
+window.azobssIsAdminUser = isAzobssAdmin;
+window.azobssHasPaBmAccess = hasPaBmTabAccess;
 function fieldValue(...ids){
   for (const id of ids) {
     const el = $(id);
@@ -265,6 +271,9 @@ function syncHeader(user){
   const paBm = $('paBmNavButton');
   const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
   const canShowPaBm = hasPaBmTabAccess(user);
+  const isAdminUser = isAzobssAdmin(user);
+  document.body.classList.toggle('is-admin', !!isAdminUser);
+  document.body.classList.toggle('has-pa-access', !!canShowPaBm);
   if (paBm) {
     paBm.hidden = !canShowPaBm;
     paBm.classList.toggle('is-hidden', !canShowPaBm);
