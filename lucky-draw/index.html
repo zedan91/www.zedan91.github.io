@@ -536,12 +536,12 @@ body{padding-top:58px!important;}
     }
     function isAdmin(user){
       const key = normalizeUsername(user && (user.usernameKey || user.name));
-      return key === ADMIN_USERNAME;
+      const role = String(user && user.role || '').trim().toLowerCase();
+      return !!(user && (role === 'admin' || key === ADMIN_USERNAME));
     }
     function hasPaBmAccess(user){
-      const key = normalizeUsername(user && (user.usernameKey || user.name));
       const code = cleanInviteCode(user && (user.invitedByCode || user.memberCode || user.paMemberCode));
-      return !!(user && (key === ADMIN_USERNAME || user.paAccess === true || code === MEMBER_PA_CODE));
+      return !!(user && (isAdmin(user) || code === MEMBER_PA_CODE));
     }
     function escapeHtml(value){
       return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));

@@ -112,8 +112,8 @@ function injectModal() {
       <label for="siteSignupEmail">Email
         <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
       </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
+      <label for="siteSignupInviteCode">Member / Invite Code
+        <input id="siteSignupInviteCode" placeholder="Example: ZX6186 (optional)" type="text">
       </label>
       <p class="request-error" id="siteSignupError"></p>
       <button class="btn signup" type="submit">Sign up</button>
@@ -244,6 +244,19 @@ function injectProfileSettingsModal() {
   document.body.appendChild(wrap.firstElementChild);
 }
 
+const AZOBSS_ADMIN_USERS = ['zedan91'];
+const AZOBSS_PA_MEMBER_CODE = 'ZX6186';
+function getUserKey(user){ return String(user?.usernameKey || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
+function isAzobssAdmin(user){
+  const key = getUserKey(user);
+  const role = String(user?.role || '').trim().toLowerCase();
+  return !!(user && (role === 'admin' || AZOBSS_ADMIN_USERS.includes(key)));
+}
+function hasPaBmTabAccess(user){
+  const code = String(user?.invitedByCode || user?.memberCode || user?.paMemberCode || '').trim().toUpperCase();
+  return !!(user && (isAzobssAdmin(user) || code === AZOBSS_PA_MEMBER_CODE));
+}
+
 function syncHeader(user){
   const authActions = $('siteAuthActions');
   const tools = $('marketUserTools');
@@ -251,9 +264,7 @@ function syncHeader(user){
   const avatar = $('userAvatar');
   const paBm = $('paBmNavButton');
   const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
-  const usernameKey = String(user?.usernameKey || user?.name || '').trim().toLowerCase();
-  const usedMemberCode = String(user?.invitedByCode || user?.memberCode || user?.paMemberCode || '').trim().toUpperCase() === 'ZX6186';
-  const canShowPaBm = !!(user && (usernameKey === 'zedan91' || user.paAccess === true || usedMemberCode));
+  const canShowPaBm = hasPaBmTabAccess(user);
   if (paBm) { paBm.hidden = !canShowPaBm; paBm.classList.toggle('is-hidden', !canShowPaBm); }
   if (display) {
     document.body.classList.add('is-authenticated');
@@ -303,7 +314,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const ref = doc(db, 'users', usernameKey);
   const snap = await getDoc(ref);
   if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
-  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:fallback.phone||'',inviteCode:buildInviteCode(usernameKey),invitedByCode:fallback.invitedByCode||'',role:'member',createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:fallback.phone||'',inviteCode:buildInviteCode(usernameKey),invitedByCode:fallback.invitedByCode||'',memberCode:fallback.invitedByCode||'',role:'member',createdAt:serverTimestamp()};
   await setDoc(ref,profile,{merge:true});
   return profile;
 }
@@ -395,9 +406,9 @@ function bindAuth() {
     try{
       await setPersistence(auth,browserSessionPersistence);
       const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
-      const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member',createdAt:serverTimestamp()};
+      const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
       await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
-      saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member'});
+      saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,role:'member'});
       syncHeader({usernameKey,email,phone,invitedByCode}); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
   });
