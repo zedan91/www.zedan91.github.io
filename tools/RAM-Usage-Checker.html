@@ -392,20 +392,4 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 function calc(){let t=+total.value||0,u=+used.value||0,p=t?u/t*100:0;let need=p>85?"High RAM pressure. Upgrade recommended.":p>70?"Moderate usage. Upgrade if PC feels slow.":"RAM usage looks okay.";let rec=usage.value==="Office / browsing"?"8GB - 16GB":usage.value==="Gaming"?"16GB - 32GB":usage.value==="Editing / design"?"32GB recommended":"32GB - 64GB";result.innerHTML=`RAM usage: <b>${p.toFixed(1)}%</b>\nAvailable RAM: <b>${Math.max(t-u,0).toFixed(1)} GB</b>\nStatus: <b>${need}</b>\nRecommended for ${usage.value}: <b>${rec}</b>\n\nTip: Check Task Manager > Processes to see which app uses the most memory.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
-<script>
-document.querySelectorAll('.card,.product-card,tr,.lisp-row').forEach((e,i)=>{
-if(e.querySelector('.azlike')) return;
-let b=document.createElement('span');
-b.className='azlike';
-b.innerHTML=' 🤍';
-b.style.cssText='cursor:pointer;float:right';
-b.onclick=()=>{let t=(e.innerText||('item'+i)).trim().split('\n')[0];
-let a=JSON.parse(localStorage.getItem('azLikes')||'[]');
-if(!a.includes(t)) a.push(t);
-localStorage.setItem('azLikes',JSON.stringify(a));
-b.innerHTML=' ❤️';
-};
-e.prepend(b);
-});
-</script></body></html>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body></html>

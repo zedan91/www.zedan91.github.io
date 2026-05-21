@@ -1588,21 +1588,5 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       renderItems();
     })();
   </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
-<script>
-document.querySelectorAll('.card,.product-card,tr,.lisp-row').forEach((e,i)=>{
-if(e.querySelector('.azlike')) return;
-let b=document.createElement('span');
-b.className='azlike';
-b.innerHTML=' 🤍';
-b.style.cssText='cursor:pointer;float:right';
-b.onclick=()=>{let t=(e.innerText||('item'+i)).trim().split('\n')[0];
-let a=JSON.parse(localStorage.getItem('azLikes')||'[]');
-if(!a.includes(t)) a.push(t);
-localStorage.setItem('azLikes',JSON.stringify(a));
-b.innerHTML=' ❤️';
-};
-e.prepend(b);
-});
-</script></body>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body>
 </html>

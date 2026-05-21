@@ -540,20 +540,4 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 </a>
 </div><a class="back-home" href="/">&lt; Back To Homepage</a><div class="footer">(c) 2026 AZOBSS.COM - Mini Utility Tools</div></div><script>
 const s=document.getElementById('searchInput'),cards=document.querySelectorAll('.tool-card');s.addEventListener('keyup',()=>{const v=s.value.toLowerCase();cards.forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')});
-</script><script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
-<script>
-document.querySelectorAll('.card,.product-card,tr,.lisp-row').forEach((e,i)=>{
-if(e.querySelector('.azlike')) return;
-let b=document.createElement('span');
-b.className='azlike';
-b.innerHTML=' 🤍';
-b.style.cssText='cursor:pointer;float:right';
-b.onclick=()=>{let t=(e.innerText||('item'+i)).trim().split('\n')[0];
-let a=JSON.parse(localStorage.getItem('azLikes')||'[]');
-if(!a.includes(t)) a.push(t);
-localStorage.setItem('azLikes',JSON.stringify(a));
-b.innerHTML=' ❤️';
-};
-e.prepend(b);
-});
-</script></body></html>
+</script><script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body></html>

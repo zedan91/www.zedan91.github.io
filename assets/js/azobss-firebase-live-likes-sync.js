@@ -346,17 +346,60 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 else boot();
 
 
-// Auto inject like buttons on cards
-document.addEventListener('DOMContentLoaded',()=>{
- const cards=document.querySelectorAll('.product-card,.affiliate-card,.software-card,.tool-card,.card');
- cards.forEach((c,i)=>{
-   if(c.querySelector('.card-like-btn')) return;
-   c.style.position='relative';
-   const b=document.createElement('button');
-   b.className='card-like-btn';
-   b.innerHTML='♡';
-   b.style.cssText='position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.4);color:#fff;z-index:9;font-size:18px;cursor:pointer;';
-   b.onclick=(e)=>{e.preventDefault();e.stopPropagation(); b.innerHTML=b.innerHTML==='♡'?'❤️':'♡';}
-   c.appendChild(b);
- });
-});
+// Auto inject like buttons only on allowed pages: Affiliate Shop, Software, and CAD Tools.
+(function(){
+  const allowedLikePages = [
+    { test:/\/affiliate-shop\//i, selector:'.card,.product-card,.affiliate-card' },
+    { test:/\/software-tools\//i, selector:'.download-card,.software-card' },
+    { test:/\/cad-tools-&-resources\//i, selector:'#lispList tr,.lisp-row' }
+  ];
+  function currentConfig(){
+    return allowedLikePages.find(x => x.test.test(location.pathname));
+  }
+  function ensureLikeStyle(){
+    if(document.getElementById('azobss-card-like-style')) return;
+    const style=document.createElement('style');
+    style.id='azobss-card-like-style';
+    style.textContent = `
+      .az-like-host{position:relative!important;}
+      .azlike.card-like-btn{
+        position:absolute!important;top:10px!important;right:10px!important;
+        width:36px!important;height:36px!important;border-radius:50%!important;
+        border:1px solid rgba(255,255,255,.18)!important;background:rgba(2,6,23,.72)!important;
+        color:#fff!important;z-index:50!important;font-size:18px!important;line-height:1!important;
+        display:flex!important;align-items:center!important;justify-content:center!important;
+        cursor:pointer!important;box-shadow:0 8px 22px rgba(0,0,0,.35)!important;transition:.2s!important;
+      }
+      .azlike.card-like-btn:hover{transform:scale(1.08)!important;background:rgba(15,23,42,.9)!important;}
+      .azlike.card-like-btn.is-liked{color:#ff4b6e!important;}
+      #lispList tr.az-like-host .azlike.card-like-btn{top:50%!important;right:8px!important;transform:translateY(-50%)!important;}
+      #lispList tr.az-like-host .azlike.card-like-btn:hover{transform:translateY(-50%) scale(1.08)!important;}
+      #lispList tr.az-like-host td:last-child{padding-right:48px!important;}
+      @media(max-width:640px){.azlike.card-like-btn{width:32px!important;height:32px!important;font-size:16px!important;top:8px!important;right:8px!important;}}
+    `;
+    document.head.appendChild(style);
+  }
+  function injectAllowedLikeButtons(){
+    const cfg=currentConfig();
+    if(!cfg) return;
+    ensureLikeStyle();
+    document.querySelectorAll(cfg.selector).forEach((card,i)=>{
+      if(!card || card.querySelector(':scope > .azlike.card-like-btn')) return;
+      if(card.tagName === 'TR' && (!card.dataset.id && !card.querySelector('.program-link'))) return;
+      card.classList.add('az-like-host');
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='azlike card-like-btn';
+      b.textContent='🤍';
+      b.setAttribute('aria-label','Like item');
+      card.appendChild(b);
+    });
+    if(typeof refreshLikeButtons === 'function') refreshLikeButtons();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectAllowedLikeButtons);
+  else injectAllowedLikeButtons();
+  setTimeout(injectAllowedLikeButtons, 350);
+  setTimeout(injectAllowedLikeButtons, 1200);
+  const mo = new MutationObserver(() => injectAllowedLikeButtons());
+  if(document.body) mo.observe(document.body, {childList:true, subtree:true});
+})();

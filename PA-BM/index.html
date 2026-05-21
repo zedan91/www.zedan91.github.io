@@ -11035,23 +11035,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-<script>
-document.querySelectorAll('.card,.product-card,tr,.lisp-row').forEach((e,i)=>{
-if(e.querySelector('.azlike')) return;
-let b=document.createElement('span');
-b.className='azlike';
-b.innerHTML=' 🤍';
-b.style.cssText='cursor:pointer;float:right';
-b.onclick=()=>{let t=(e.innerText||('item'+i)).trim().split('\n')[0];
-let a=JSON.parse(localStorage.getItem('azLikes')||'[]');
-if(!a.includes(t)) a.push(t);
-localStorage.setItem('azLikes',JSON.stringify(a));
-b.innerHTML=' ❤️';
-};
-e.prepend(b);
-});
-</script></body>
+</body>
 </html>
 <script>
 function confirmDeleteProgram(id){
