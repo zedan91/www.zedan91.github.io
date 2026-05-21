@@ -49,3 +49,6 @@ img{max-width:100%;}
   .market-icon-btn{width:22px!important;}
   .market-icon-btn svg{width:20px!important;height:20px!important;}
 }
+
+/* Account dropdown fix */
+.market-sticky-bar,.market-bar-inner,.market-main-row,.market-user-tools,.user-menu{overflow:visible!important}.user-menu{position:relative!important;cursor:pointer!important}.user-menu .user-dropdown{z-index:99999!important}.user-menu.is-open .user-dropdown{display:block!important}
