@@ -69,7 +69,7 @@ function injectModal() {
     </div>
     <form class="auth-modal-form" id="siteSignInForm">
       <label for="siteLoginUsername">Username
-        <input id="siteLoginUsername" autocomplete="username" placeholder="Example: zedan91" required type="text">
+        <input id="siteLoginUsername" autocomplete="username" placeholder="Enter your username" required type="text">
       </label>
       <label for="siteLoginPassword">Password
         <input id="siteLoginPassword" autocomplete="current-password" placeholder="Password" required type="password">
@@ -80,7 +80,7 @@ function injectModal() {
     </form>
     <form class="auth-modal-form" id="siteSignUpForm" hidden>
       <label for="siteSignupUsername">Username
-        <input id="siteSignupUsername" autocomplete="username" placeholder="Example: zedan91" required type="text">
+        <input id="siteSignupUsername" autocomplete="username" placeholder="Choose a username" required type="text">
       </label>
       <label for="siteSignupPassword">Password
         <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6" required type="password">
