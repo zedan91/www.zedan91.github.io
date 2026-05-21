@@ -258,7 +258,7 @@ function normalizeLikeRow(value, index=0){
     const category = String(value.category || value.type || 'local');
     const pageUrl = String(value.pageUrl || value.url || '#');
     const createdAtMs = Number(value.createdAtMs || value.updatedAtMs || (Date.parse(value.createdAtClient || '') || (Date.now()-index)));
-    const itemId = String(value.itemId || btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80));
+    const itemId = String(value.itemId || value.id || btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80));
     return { itemId, title, category, pageUrl, createdAtClient:value.createdAtClient || new Date(createdAtMs).toISOString(), createdAtMs };
   }
   const title = String(value || '').replace(/[♡❤️]/g,'').trim();
@@ -434,8 +434,18 @@ function applyLikesSearchSort(rows){
 function renderLikesRows(){
   const list = document.getElementById('azobssLikesList') || document.getElementById('list');
   if(!list) return;
-  const rows = applyLikesSearchSort(azobssLikesCache);
-  list.innerHTML = rows.map(item => `<div class="az-like-list-item"><div><strong>❤️ ${escapeHtml(item.title || 'AZOBSS Item')}</strong><br><span>${escapeHtml(item.category || '')}</span></div><a href="${escapeHtml(item.pageUrl || '#')}">Open</a></div>`).join('') || '<div class="az-like-empty">No liked items found.</div>';
+  const rows = applyLikesSearchSort(azobssLikesCache).map(normalizeLikeRow).filter(Boolean);
+  list.innerHTML = rows.map(item => {
+    const id = escapeHtml(item.itemId || item.id || '');
+    const url = escapeHtml(item.pageUrl || '#');
+    return `<div class="az-like-list-item" data-like-id="${id}" data-url="${url}">
+      <div class="az-like-info"><strong>❤️ ${escapeHtml(item.title || 'AZOBSS Item')}</strong><br><span>${escapeHtml(item.category || '')}</span></div>
+      <div class="az-like-actions">
+        <a class="az-like-open-btn" href="${url}">Open</a>
+        <button class="az-like-unlike-btn" type="button" data-like-id="${id}">Unlike</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="az-like-empty">No liked items found.</div>';
 }
 async function refreshLikesPage(){
   const list = document.getElementById('azobssLikesList') || document.getElementById('list');
@@ -469,12 +479,31 @@ function bindLikesControls(){
     sort.dataset.bound = '1';
     sort.addEventListener('change', renderLikesRows);
   }
+  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
+  if(list && !list.dataset.unlikeBound){
+    list.dataset.unlikeBound = '1';
+    list.addEventListener('click', async (event) => {
+      const btn = event.target.closest?.('.az-like-unlike-btn');
+      if(!btn) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const id = String(btn.dataset.likeId || btn.closest('.az-like-list-item')?.dataset.likeId || '').trim();
+      const item = azobssLikesCache.map(normalizeLikeRow).filter(Boolean).find(x => x.itemId === id);
+      if(!item) return;
+      btn.disabled = true;
+      btn.textContent = 'Removing...';
+      await setLike(item, false);
+      azobssLikesCache = azobssLikesCache.map(normalizeLikeRow).filter(Boolean).filter(x => x.itemId !== item.itemId);
+      renderLikesRows();
+      await refreshLikeButtons();
+    });
+  }
 }
 function addLikesPageStyle(){
   if(document.getElementById('azobss-live-likes-style')) return;
   const style = document.createElement('style');
   style.id = 'azobss-live-likes-style';
-  style.textContent = `.az-like-list-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin:10px 0;border:1px solid rgba(56,189,248,.25);border-radius:14px;background:#111c2e;color:#fff}.az-like-list-item span{color:#9fb0c9;font-size:13px}.az-like-list-item a{background:#2563eb;color:#fff;text-decoration:none;padding:8px 14px;border-radius:10px;font-weight:800}.az-like-empty{padding:16px;border:1px solid rgba(148,163,184,.3);border-radius:14px;background:#111c2e}`;
+  style.textContent = `.az-like-list-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin:10px 0;border:1px solid rgba(56,189,248,.25);border-radius:14px;background:#111c2e;color:#fff}.az-like-list-item span{color:#9fb0c9;font-size:13px}.az-like-info{min-width:0}.az-like-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}.az-like-list-item a,.az-like-unlike-btn{border:0;text-decoration:none;padding:8px 14px;border-radius:10px;font-weight:800;cursor:pointer}.az-like-list-item a{background:#2563eb;color:#fff}.az-like-unlike-btn{background:#ef4444;color:#fff}.az-like-unlike-btn:disabled{opacity:.65;cursor:wait}.az-like-empty{padding:16px;border:1px solid rgba(148,163,184,.3);border-radius:14px;background:#111c2e}@media(max-width:640px){.az-like-list-item{align-items:flex-start}.az-like-actions{flex-direction:column;align-items:stretch}.az-like-list-item a,.az-like-unlike-btn{padding:7px 11px;font-size:12px;text-align:center}}`;
   document.head.appendChild(style);
 }
 
