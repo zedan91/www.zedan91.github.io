@@ -7682,9 +7682,9 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 <div class="benchmark-cart-list" id="benchmarkCartList" style="display:none;"></div>
 </div>
 </div>
-<a class="btn blue login-only" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
-        WhatsApp For Help
-      </a>
+<button class="btn blue login-only" id="paymentScrollButton" type="button">
+        Pembayaran
+      </button>
 <div class="admin-purchase-panel" id="adminPurchasePanel">
 <div class="purchase-panel-layout">
 <div>
@@ -10816,6 +10816,19 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const b=document.getElementById('paymentScrollButton');
+ if(b){
+ b.addEventListener('click',()=>{
+ const qr=document.querySelector('.purchase-sidebar,.payment-sidebar,.qr-panel,#qrCodePanel,img[src*="maybank"]');
+ if(qr){ qr.scrollIntoView({behavior:'smooth',block:'center'}); }
+ });
+ }
+});
+</script>
+
 </body>
 </html>
 <script>
