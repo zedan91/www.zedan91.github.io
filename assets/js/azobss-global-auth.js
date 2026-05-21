@@ -1040,7 +1040,7 @@ function escHtml(value){
 function formatPurchaseDate(record){
   const ms = Number(record.createdAtMs || (record.createdAtClient ? Date.parse(record.createdAtClient) : 0));
   if(!ms) return '-';
-  return new Date(ms).toLocaleString('en-MY', { hour12:false });
+  return new Date(ms).toLocaleString('en-MY', { hour12:true, hour:'numeric', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
 }
 const AZOBSS_PURCHASE_PAGE_SIZE = 4;
 let azobssAdminPurchasePage = 1;
@@ -1140,6 +1140,58 @@ function filterPurchaseRows(records, keyword){
   if(!q) return records.slice();
   return records.filter(r => [r.usernameKey,r.displayName,r.phone,r.email,r.productType,r.itemCode,r.negeri,formatPurchaseDate(r)].join(' ').toLowerCase().includes(q));
 }
+
+async function resetAzobssPurchaseRecordsForUser(usernameKey){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  const key = String(usernameKey || '').trim().toLowerCase();
+  if(!key) return;
+  if(!confirm('Reset purchase records for ' + key + '?')) return;
+
+  try{
+    // Remove matching local cache records first for instant UI feedback.
+    const localRows = readLocalPurchaseRecords().filter(r => String(r.usernameKey || r.displayName || '').trim().toLowerCase() !== key);
+    writeLocalPurchaseRecords(localRows.slice(0, 500));
+  }catch(e){ console.warn('Local purchase reset failed:', e); }
+
+  try{
+    const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+    const snap = await getDocs(query(purchaseCol, where('usernameKey', '==', key)));
+    const deletes = [];
+    snap.forEach(docSnap => deletes.push(deleteDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, docSnap.id))));
+    await Promise.all(deletes);
+  }catch(error){
+    console.warn('Firestore purchase collection reset failed:', error);
+  }
+
+  try{
+    await setDoc(doc(db, 'users', key), {
+      purchaseRecords: [],
+      purchaseRecordsUpdatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(error){
+    console.warn('Firestore embedded purchase reset failed:', error);
+  }
+
+  azobssAdminPurchasePage = 1;
+  await renderAzobssPurchaseRecords();
+}
+window.azobssResetPurchaseRecordsForUser = resetAzobssPurchaseRecordsForUser;
+window.azobssTogglePurchaseDetails = toggleAzobssPurchaseDetails;
+
+function toggleAzobssPurchaseDetails(button){
+  const card = button && button.closest('.admin-purchase-user-card');
+  if(!card) return;
+  const details = card.querySelector('.admin-purchase-user-details');
+  if(!details) return;
+  const opening = details.hidden || details.style.display === 'none' || !card.classList.contains('is-open');
+  details.hidden = !opening;
+  details.style.display = opening ? 'grid' : 'none';
+  card.classList.toggle('is-open', opening);
+  button.textContent = opening ? 'Hide' : 'Show';
+}
+
 async function renderAzobssPurchaseRecords(){
   const list = document.getElementById('purchaseSummaryList');
   const userList = document.getElementById('userPaPurchaseList');
@@ -1170,14 +1222,18 @@ async function renderAzobssPurchaseRecords(){
         const first = rows[0] || {};
         const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
         const lastItem = first.itemCode ? `${first.productType || 'PA'} ${first.itemCode}` : '-';
-        return `<div class="purchase-summary-item admin-purchase-user-card">
-          <div class="admin-purchase-user-top">
-            <div><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
+        return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card" data-user-key="${escHtml(key)}">
+          <div class="admin-purchase-user-top az-purchase-mini-top">
+            <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
             <span>Unit: <strong>${rows.length}</strong></span>
             <span>Total: <strong>RM${total}</strong></span>
             <span>Last: <strong>${escHtml(lastItem)}</strong></span>
+            <div class="az-purchase-mini-actions">
+              <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">Show</button>
+              <button type="button" class="az-purchase-reset-btn" onclick="window.azobssResetPurchaseRecordsForUser && window.azobssResetPurchaseRecordsForUser('${escHtml(key)}')">Reset</button>
+            </div>
           </div>
-          <div class="admin-purchase-user-details">
+          <div class="admin-purchase-user-details az-purchase-mini-details" hidden style="display:none;">
             ${rows.map(r => `<div>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</div>`).join('')}
           </div>
         </div>`;
@@ -1188,8 +1244,12 @@ async function renderAzobssPurchaseRecords(){
       renderAzobssPurchaseRecords();
     });
     if(userList) userList.innerHTML = '';
+    const userPanelForAdmin = document.getElementById('userPaPurchasePanel');
+    if(userPanelForAdmin) userPanelForAdmin.style.display = 'none';
     renderAzobssPager(document.getElementById('userPaPurchasePagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
   }else{
+    const userPanelForUser = document.getElementById('userPaPurchasePanel');
+    if(userPanelForUser) userPanelForUser.style.display = '';
     const topRecords = filterPurchaseRows(records, adminSearch);
     if(list){
       list.innerHTML = topRecords.length ? renderUserPurchaseSummary(topRecords) : '<div class="purchase-summary-item">No purchase records yet.</div>';
