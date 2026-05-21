@@ -619,3 +619,10 @@ document.addEventListener('click', function(event){
   const mo = new MutationObserver(() => injectAllowedLikeButtons());
   if(document.body) mo.observe(document.body, {childList:true, subtree:true});
 })();
+
+if(document.readyState==='loading'){
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(refreshLikeButtons,500);setTimeout(refreshLikeButtons,1500);setTimeout(refreshLikeButtons,3000);});
+}else{
+ setTimeout(refreshLikeButtons,500);setTimeout(refreshLikeButtons,1500);setTimeout(refreshLikeButtons,3000);
+}
+window.addEventListener('focus',()=>setTimeout(refreshLikeButtons,300));
