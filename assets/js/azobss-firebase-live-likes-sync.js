@@ -283,7 +283,9 @@ function likeItemFromButton(btn){
   }
   title = title.replace(/[♡❤️🤍]/g,'').trim().slice(0,120) || 'AZOBSS Item';
   if(!category || category === 'home') category = path || 'local';
-  const itemId = String(btn.dataset.likeId || btoa(unescape(encodeURIComponent(category + '|' + title))).replace(/[=+/]/g,'').slice(0,80));
+  const cardIndex=[...document.querySelectorAll('.product-card,.card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.purchase-summary-item')].indexOf(card);
+  const uniqueKey=(category+'|'+title+'|'+location.pathname+'|'+cardIndex);
+  const itemId = String(btn.dataset.likeId || btoa(unescape(encodeURIComponent(uniqueKey))).replace(/[=+/]/g,'').slice(0,80));
   return { itemId, title, category, pageUrl: location.pathname, createdAtClient: new Date().toISOString(), createdAtMs: Date.now() };
 }
 async function getFirebaseLikeIds(){
