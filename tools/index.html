@@ -233,7 +233,32 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
-</style></head><body><header class="market-sticky-bar" aria-label="Carousell style navigation">
+</style>
+<style id="azobss-global-auth-modal-style">
+.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
+.auth-modal.is-open{display:flex;}
+.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
+.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.auth-modal-top h3{margin:0;font-size:20px;font-weight:800;}
+.auth-close-btn{width:28px;height:28px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.auth-close-btn:hover{background:rgba(255,255,255,.2);}
+.auth-modal-form{display:grid;gap:14px;}
+.auth-modal-form[hidden]{display:none!important;}
+.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff;}
+.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none;}
+.auth-modal-form input:focus{border-color:#fff;}
+.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6);}
+.auth-modal-form .btn.signup{background:#22c55e;color:#fff;}
+.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
+.auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
+.auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
+.phone-input-row{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;}
+.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;}
+.phone-number-wrap{position:relative;}
+.phone-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#b9c5d8;font-weight:800;}
+.phone-number-wrap input{padding-left:54px!important;}
+</style>
+</head><body><header class="market-sticky-bar" aria-label="Carousell style navigation">
   <div class="market-bar-inner">
     <div class="market-main-row">
       <a class="market-brand" href="../index.html" aria-label="AZOBSS">
@@ -249,8 +274,8 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
         <a class="market-nav-primary" href="../tools/index.html">Mini Web Tools</a>
       </nav>
       <div class="site-auth-actions" id="siteAuthActions">
-        <a class="site-auth-btn primary" id="siteSignUpButton" href="#" onclick="openSiteAuth('signup');return false;">Register</a>
-        <a class="site-auth-btn" id="siteSignInButton" href="#" onclick="openSiteAuth('signin');return false;">Login</a>
+        <a class="site-auth-btn primary" id="siteSignUpButton" href="javascript:void(0)" onclick="openSiteAuth(\'signup\');return false;" data-auth="signup">Register</a>
+        <a class="site-auth-btn" id="siteSignInButton" href="javascript:void(0)" onclick="openSiteAuth(\'signin\');return false;" data-auth="login">Login</a>
       </div>
       <div class="market-user-tools" id="marketUserTools">
         <div class="user-menu" id="userMenu" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
@@ -343,6 +368,163 @@ const s=document.getElementById('searchInput'),cards=document.querySelectorAll('
   showUser();
   window.addEventListener('storage', showUser);
 })();
+</script>
+
+<div aria-hidden="true" class="auth-modal" id="siteAuthModal">
+  <div aria-labelledby="siteAuthTitle" aria-modal="true" class="auth-modal-card" role="dialog">
+    <div class="auth-modal-top">
+      <h3 id="siteAuthTitle">Sign in</h3>
+      <button aria-label="Close" class="auth-close-btn" id="siteAuthClose" type="button">×</button>
+    </div>
+    <form class="auth-modal-form" id="siteSignInForm" action="javascript:void(0)" onsubmit="return false;">
+      <label for="siteLoginName">Name
+        <input id="siteLoginName" placeholder="Username" required type="text">
+      </label>
+      <label for="siteLoginPassword">Password
+        <input id="siteLoginPassword" placeholder="Password" required type="password">
+      </label>
+      <p class="request-error" id="siteLoginError"></p>
+      <button class="btn" id="siteSignInSubmitButton" type="submit">Sign in</button>
+      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Sign up</button></p>
+    </form>
+    <form class="auth-modal-form" hidden id="siteSignUpForm" action="javascript:void(0)" onsubmit="return false;">
+      <label for="siteSignupName">Name
+        <input id="siteSignupName" placeholder="Username" required type="text">
+      </label>
+      <label for="siteSignupPassword">Password
+        <input id="siteSignupPassword" placeholder="Create password" required type="password">
+      </label>
+      <label for="siteSignupPhone">Phone Number
+        <div class="phone-input-row">
+          <button class="country-code-button" type="button"><span>MY</span> <span>+60</span></button>
+          <div class="phone-number-wrap">
+            <span class="phone-prefix">+60</span>
+            <input id="siteSignupPhone" inputmode="tel" placeholder="1135600723" required type="tel">
+          </div>
+        </div>
+      </label>
+      <label for="siteSignupEmail">Email
+        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
+      </label>
+      <label for="siteSignupInviteCode">Invite Code
+        <input id="siteSignupInviteCode" placeholder="Optional invite code" type="text">
+      </label>
+      <p class="request-error" id="siteSignupError"></p>
+      <button class="btn signup" type="submit">Sign up</button>
+      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
+    </form>
+  </div>
+</div>
+
+<script type="module" id="azobss-global-same-page-auth">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
+const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+const modal=document.getElementById('siteAuthModal');
+const title=document.getElementById('siteAuthTitle');
+const signInForm=document.getElementById('siteSignInForm');
+const signUpForm=document.getElementById('siteSignUpForm');
+const loginError=document.getElementById('siteLoginError');
+const signupError=document.getElementById('siteSignupError');
+const closeBtn=document.getElementById('siteAuthClose');
+
+function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
+function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
+function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
+function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
+function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
+function saveUser(user){sessionStorage.setItem('azobssCurrentUser',JSON.stringify(user));localStorage.setItem('azobssCurrentUser',JSON.stringify(user));window.dispatchEvent(new Event('storage'));}
+function syncHeader(user){
+  const authActions=document.getElementById('siteAuthActions');
+  const tools=document.getElementById('marketUserTools');
+  const name=document.getElementById('signedInName');
+  const avatar=document.getElementById('userAvatar');
+  const paBm=document.getElementById('paBmNavButton');
+  const display=user&&(user.usernameKey||user.name||'');
+  const usernameKey=String(user?.usernameKey||user?.name||'').trim().toLowerCase();
+  const usedMemberCode=String(user?.invitedByCode||user?.memberCode||user?.paMemberCode||'').trim().toUpperCase()==='ZX6186';
+  const canShowPaBm=!!(user&&(usernameKey==='zedan91'||user.paAccess===true||usedMemberCode));
+  if(paBm){paBm.hidden=!canShowPaBm;paBm.classList.toggle('is-hidden',!canShowPaBm);}
+  if(display){
+    document.body.classList.add('is-authenticated');
+    if(name) name.textContent=display;
+    if(avatar) avatar.textContent=initials(display);
+    if(authActions) authActions.style.setProperty('display','none','important');
+    if(tools) tools.style.setProperty('display','flex','important');
+  }
+}
+function openSiteAuth(mode='signin'){
+  const isSignup=mode==='signup';
+  if(!modal || !signInForm || !signUpForm) return;
+  title.textContent=isSignup?'Sign up':'Sign in';
+  signInForm.hidden=isSignup;
+  signUpForm.hidden=!isSignup;
+  if(loginError) loginError.textContent='';
+  if(signupError) signupError.textContent='';
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  setTimeout(()=>document.getElementById(isSignup?'siteSignupName':'siteLoginName')?.focus(),50);
+}
+function closeSiteAuth(){if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}}
+window.openSiteAuth=openSiteAuth;
+window.openLoginModal=()=>openSiteAuth('signin');
+window.openSignupModal=()=>openSiteAuth('signup');
+
+document.addEventListener('click',event=>{
+  const loginTrigger=event.target.closest('[data-auth="login"], [data-auth="signin"]');
+  const signupTrigger=event.target.closest('[data-auth="signup"], [data-auth="register"]');
+  if(loginTrigger){event.preventDefault();event.stopPropagation();openSiteAuth('signin');}
+  if(signupTrigger){event.preventDefault();event.stopPropagation();openSiteAuth('signup');}
+},true);
+
+closeBtn?.addEventListener('click',closeSiteAuth);
+modal?.addEventListener('click',event=>{if(event.target===modal) closeSiteAuth();});
+document.getElementById('switchToSiteSignup')?.addEventListener('click',()=>openSiteAuth('signup'));
+document.getElementById('switchToSiteSignin')?.addEventListener('click',()=>openSiteAuth('signin'));
+
+signInForm?.addEventListener('submit',async event=>{
+  event.preventDefault();event.stopPropagation();
+  if(loginError) loginError.textContent='';
+  const usernameKey=normalizeUsername(document.getElementById('siteLoginName')?.value);
+  const password=document.getElementById('siteLoginPassword')?.value||'';
+  if(!usernameKey||!password){if(loginError) loginError.textContent='Please enter username and password.';return;}
+  try{
+    await setPersistence(auth,browserSessionPersistence);
+    const credential=await signInWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
+    const snap=await getDoc(doc(db,'users',usernameKey));
+    const data=snap.exists()?snap.data():{};
+    const user={...data,uid:credential.user.uid,usernameKey,name:data.name||usernameKey};
+    saveUser(user);syncHeader(user);closeSiteAuth();
+  }catch(error){if(loginError) loginError.textContent='Login failed. Please check username or password.';}
+},true);
+
+signUpForm?.addEventListener('submit',async event=>{
+  event.preventDefault();event.stopPropagation();
+  if(signupError) signupError.textContent='';
+  const usernameKey=normalizeUsername(document.getElementById('siteSignupName')?.value);
+  const password=document.getElementById('siteSignupPassword')?.value||'';
+  const phone=cleanPhone(document.getElementById('siteSignupPhone')?.value);
+  const contactEmail=(document.getElementById('siteSignupEmail')?.value||'').trim();
+  const invitedByCode=(document.getElementById('siteSignupInviteCode')?.value||'').trim().toUpperCase();
+  if(!usernameKey||!password||!phone||!contactEmail){if(signupError) signupError.textContent='Please complete all required fields.';return;}
+  try{
+    await setPersistence(auth,browserSessionPersistence);
+    const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
+    const user={uid:credential.user.uid,usernameKey,name:usernameKey,phone:'+60'+phone,phoneLocal:phone,countryCode:'+60',contactEmail,invitedByCode,inviteCode:buildInviteCode(usernameKey),createdAtMs:Date.now(),lastLoginMs:Date.now()};
+    await setDoc(doc(db,'users',usernameKey),{...user,createdAt:serverTimestamp(),lastLoginAt:serverTimestamp()},{merge:true});
+    saveUser(user);syncHeader(user);closeSiteAuth();
+  }catch(error){if(signupError) signupError.textContent=error?.code==='auth/email-already-in-use'?'Username already exists.':'Sign up failed. Please try again.';}
+},true);
+
+if(location.hash==='#login'||location.hash==='#signin') openSiteAuth('signin');
+if(location.hash==='#signup'||location.hash==='#register') openSiteAuth('signup');
 </script>
 </body></html>
 
