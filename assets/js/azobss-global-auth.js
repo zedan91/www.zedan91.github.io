@@ -148,7 +148,7 @@ function normalizeUserMenu() {
   dropdown.innerHTML = `
     <div class="user-dropdown-section">Buying</div>
     <a class="user-dropdown-item" href="/index.html#purchases" role="menuitem">My purchases</a>
-    <a class="user-dropdown-item" href="/affiliate-shop/index.html#likes" role="menuitem">Likes</a>
+    <a class="user-dropdown-item" href="/affiliate-shop/#likes" role="menuitem">Likes</a>
     <div class="user-dropdown-section">Account</div>
     <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
