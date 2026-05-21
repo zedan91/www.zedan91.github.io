@@ -344,3 +344,19 @@ async function boot(){
 
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();
+
+
+// Auto inject like buttons on cards
+document.addEventListener('DOMContentLoaded',()=>{
+ const cards=document.querySelectorAll('.product-card,.affiliate-card,.software-card,.tool-card,.card');
+ cards.forEach((c,i)=>{
+   if(c.querySelector('.card-like-btn')) return;
+   c.style.position='relative';
+   const b=document.createElement('button');
+   b.className='card-like-btn';
+   b.innerHTML='♡';
+   b.style.cssText='position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.4);color:#fff;z-index:9;font-size:18px;cursor:pointer;';
+   b.onclick=(e)=>{e.preventDefault();e.stopPropagation(); b.innerHTML=b.innerHTML==='♡'?'❤️':'♡';}
+   c.appendChild(b);
+ });
+});
