@@ -111,11 +111,12 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name">Hello, <span id="signedInName"></span></div>
-<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
+<a class="user-dropdown-item" href="/index.html#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/affiliate-shop/index.html#likes" role="menuitem">Likes</a>
 <div class="user-dropdown-section">Account</div>
-<a class="user-dropdown-item" href="../index.html#profile" role="menuitem">Profile</a>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button>
-</div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
 </div>
 </div>
 </div>
@@ -203,6 +204,4 @@ cmdType.addEventListener("change",show);show();
   window.addEventListener('storage', showUser);
 })();
 </script>
-
-
 <script src="/assets/js/azobss-global-auth.js" type="module"></script></body></html>

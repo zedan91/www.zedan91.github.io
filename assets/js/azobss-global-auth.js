@@ -115,11 +115,38 @@ function normalizeUserMenu() {
   const dropdown = $('userDropdown');
   if (!dropdown) return;
   dropdown.innerHTML = `
-    <div class="user-dropdown-section">Account</div>
+    <div class="user-dropdown-section">Buying</div>
     <a class="user-dropdown-item" href="/index.html#purchases" role="menuitem">My purchases</a>
     <a class="user-dropdown-item" href="/affiliate-shop/index.html#likes" role="menuitem">Likes</a>
-    <a class="user-dropdown-item" href="/index.html#settings" role="menuitem">Settings</a>
+    <div class="user-dropdown-section">Account</div>
+    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
+}
+
+function injectProfileSettingsModal() {
+  if (document.getElementById('profileSettingsModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div aria-hidden="true" class="auth-modal" id="profileSettingsModal">
+  <div aria-labelledby="profileSettingsTitle" aria-modal="true" class="auth-modal-card" role="dialog">
+    <div class="auth-modal-top">
+      <h3 id="profileSettingsTitle">Edit Profile</h3>
+      <button aria-label="Close" class="auth-close-btn" id="profileSettingsClose" type="button">×</button>
+    </div>
+    <form class="auth-modal-form" id="profileSettingsForm">
+      <label for="profileEditName">Username / Name<input id="profileEditName" placeholder="Username" required type="text"></label>
+      <label for="profileEditPhone">Phone Number<input id="profileEditPhone" inputmode="tel" placeholder="Example: 01135600723" type="tel"></label>
+      <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
+      <p class="profile-settings-note">This updates the local profile display on this website.</p>
+      <p class="request-error" id="profileSettingsError"></p>
+      <div class="profile-settings-actions">
+        <button class="btn" id="profileSettingsSaveButton" type="submit">Save Changes</button>
+        <button class="btn" id="profileSettingsCancelButton" type="button">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
 }
 
 function syncHeader(user){
@@ -161,6 +188,16 @@ function openSiteAuth(mode='signin'){
   setTimeout(()=>{(isSignup?$('siteSignupUsername'):$('siteLoginUsername'))?.focus();},40);
 }
 function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+function openProfileSettings(){
+  const modal=$('profileSettingsModal'); if(!modal) return;
+  const user=getSavedUser() || {};
+  if($('profileEditName')) $('profileEditName').value=user.usernameKey || user.name || '';
+  if($('profileEditPhone')) $('profileEditPhone').value=user.phone || '';
+  if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
+  const err=$('profileSettingsError'); if(err) err.textContent='';
+  modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+}
+function closeProfileSettings(){const modal=$('profileSettingsModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
 window.openSiteAuth = openSiteAuth;
 window.closeSiteAuth = closeSiteAuth;
 
@@ -175,7 +212,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
 }
 
 function bindAuth() {
-  addStyle(); injectModal(); normalizeUserMenu(); syncHeader(getSavedUser());
+  addStyle(); injectModal(); injectProfileSettingsModal(); normalizeUserMenu(); syncHeader(getSavedUser());
 
   document.addEventListener('click', async (event) => {
     const opener = event.target.closest('[data-auth-open], [data-auth], #siteSignInButton, #siteSignUpButton, a[href$="#login"], a[href$="#signin"], a[href$="#signup"], a[href$="#register"]');
@@ -186,6 +223,8 @@ function bindAuth() {
       return;
     }
     if (event.target.closest('#siteAuthClose') || event.target.id === 'siteAuthModal') closeSiteAuth();
+    if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton') || event.target.id === 'profileSettingsModal') closeProfileSettings();
+    if (event.target.closest('#profileSettingsButton')) { event.preventDefault(); event.stopPropagation(); openProfileSettings(); return; }
     if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
     if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
     const menu = event.target.closest('#userMenu');
@@ -230,6 +269,17 @@ function bindAuth() {
       saveUser({uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,role:'member'});
       syncHeader({usernameKey,email,phone,invitedByCode}); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
+  });
+
+  $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const current=getSavedUser() || {};
+    const updated={...current,
+      usernameKey: normalizeUsername($('profileEditName')?.value) || current.usernameKey || current.name || '',
+      phone: cleanPhone($('profileEditPhone')?.value),
+      email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
+    };
+    saveUser(updated); syncHeader(updated); closeProfileSettings();
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{

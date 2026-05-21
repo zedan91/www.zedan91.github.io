@@ -1,7 +1,8 @@
-AZOBSS clean/pro auth update
+AZOBSS clean/pro auth audit
 
-- Single global auth file: /assets/js/azobss-global-auth.js
-- All subpages should use the same script.
-- Login/Register buttons use data-auth-open="signin" or data-auth-open="signup".
-- Old same-page duplicated auth modal blocks were removed from subpages and replaced by JS injection.
-- Avoid linking to ../index.html#login or ../index.html#signup for auth actions.
+- Single active auth entry: /assets/js/azobss-global-auth.js
+- Local legacy assets/js/firebase-auth.js removed.
+- Login/Register buttons use data-auth-open and open popup on current page.
+- Subfolder pages use absolute /assets/js/ path.
+- User menu standardized: My purchases, Likes, Settings, Log out.
+- Profile settings modal is available globally.
