@@ -340,7 +340,7 @@ function isPaBmProtectedPage(){
   return /\/PA-BM\/?(?:index\.html)?$/i.test(location.pathname) || /\/PA-BM\//i.test(location.pathname);
 }
 function showPaBmDeniedAndRedirect(){
-  try{ sessionStorage.setItem('azobssAccessDeniedMessage', 'PA / BM hanya untuk admin atau member yang dibenarkan.'); }catch(e){}
+  // Silent redirect only. Do not show a PA/BM access popup/toast.
   const target = '/';
   if(location.pathname !== target) location.replace(target);
 }
@@ -1219,12 +1219,6 @@ window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
   addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser());
-  if(!document.getElementById('azobss-access-denied-style')){
-    const st=document.createElement('style'); st.id='azobss-access-denied-style';
-    st.textContent='.azobss-access-denied-toast{position:fixed;left:50%;top:74px;transform:translateX(-50%) translateY(-8px);background:#1f2937;color:#fff;border:1px solid #22c55e;border-radius:14px;padding:12px 16px;z-index:999999;box-shadow:0 18px 50px rgba(0,0,0,.45);opacity:0;transition:.25s ease;font-weight:800}.azobss-access-denied-toast.is-visible{opacity:1;transform:translateX(-50%) translateY(0)}';
-    document.head.appendChild(st);
-  }
-  showAccessDeniedMessage();
   bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
