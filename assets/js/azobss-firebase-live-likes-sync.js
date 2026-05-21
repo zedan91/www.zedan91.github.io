@@ -253,8 +253,22 @@ async function renderFirebaseLivePanels(){
   }catch(error){ console.warn('AZOBSS guest history admin render failed:', error); }
 }
 
-function localLikes(){ return safeJson(localStorage.getItem('azLikes')) || []; }
-function saveLocalLikes(arr){ try{ localStorage.setItem('azLikes', JSON.stringify(arr || [])); }catch{} }
+function activeLikeLocalKey(){
+  const key = userKey(getSavedUser());
+  return key ? ('azLikes:' + key) : 'azLikes';
+}
+function localLikes(){
+  const a = safeJson(localStorage.getItem(activeLikeLocalKey())) || [];
+  const b = safeJson(localStorage.getItem('azLikes')) || [];
+  const map = new Map();
+  [...a, ...b].map(normalizeLikeRow).filter(Boolean).forEach(x => map.set(x.itemId, x));
+  return [...map.values()];
+}
+function saveLocalLikes(arr){
+  const clean = (arr || []).map(normalizeLikeRow).filter(Boolean);
+  try{ localStorage.setItem(activeLikeLocalKey(), JSON.stringify(clean)); }catch{}
+  try{ localStorage.setItem('azLikes', JSON.stringify(clean)); }catch{}
+}
 
 function upsertLocalLike(item){
   const row = normalizeLikeRow(item);
@@ -333,40 +347,59 @@ function likeTitleFromCard(card){
 function likeItemFromButton(btn){
   const selector = '.product-card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.card';
   const card = btn.closest(selector) || btn.parentElement;
-  const category = pageLikeCategory();
-  const title = likeTitleFromCard(card);
-  const allCards = [...document.querySelectorAll(selector)].filter(el => el.querySelector?.('.azlike.card-like-btn') || el.classList.contains('az-like-host'));
+  const category = String(btn.dataset.category || card?.dataset?.category || pageLikeCategory() || 'local');
+  const title = cleanLikeTitle(btn.dataset.title || card?.dataset?.likeTitle || card?.getAttribute?.('data-like-title') || likeTitleFromCard(card)) || 'AZOBSS Item';
+  const explicitId = String(btn.dataset.likeId || card?.dataset?.likeId || card?.getAttribute?.('data-like-id') || '').trim();
+  const sourceHref = String(btn.dataset.url || card?.dataset?.url || card?.dataset?.link || card?.querySelector?.('a[href]')?.getAttribute('href') || '').trim();
+  const allCards = [...document.querySelectorAll(selector)].filter(el => el.classList.contains('az-like-host') || el.querySelector?.(':scope > .azlike.card-like-btn'));
   const cardIndex = Math.max(0, allCards.indexOf(card));
-  const explicit = String(card?.dataset?.likeId || card?.getAttribute?.('data-like-id') || '').trim();
-  const sourceHref = card?.querySelector?.('a[href]')?.getAttribute('href') || '';
-  const uniqueKey = explicit || [category, location.pathname, cardIndex, title, sourceHref].join('|');
+  const stablePath = location.pathname.replace(/\/index\.html$/i,'/');
+  const uniqueKey = explicitId || [category, stablePath, cardIndex, title, sourceHref].join('|');
   const itemId = makeLikeId(uniqueKey);
-  return { itemId, title, category, pageUrl: location.pathname, createdAtClient: new Date().toISOString(), createdAtMs: Date.now() };
+  if(btn){
+    btn.dataset.likeId = itemId;
+    btn.dataset.title = title;
+    btn.dataset.category = category;
+    if(sourceHref) btn.dataset.url = sourceHref;
+  }
+  if(card){
+    card.dataset.likeId = itemId;
+    card.dataset.likeTitle = title;
+    if(sourceHref) card.dataset.url = sourceHref;
+  }
+  return { itemId, title, category, pageUrl: sourceHref || stablePath, createdAtClient: new Date().toISOString(), createdAtMs: Date.now() };
 }
+
 async function getFirebaseLikeIds(){
   await authReady.catch(()=>null);
   const user = getSavedUser() || {};
   const keys = likeKeyCandidates(user);
-  if(!keys.length) return new Set();
-  const ids = new Set();
+  const ids = new Set(localLikes().map(x => (normalizeLikeRow(x)||{}).itemId).filter(Boolean));
+  if(!keys.length) return ids;
   for(const key of keys){
     try{
       const snap = await getDocs(collection(db, 'users', key, 'likes'));
-      snap.forEach(d => ids.add(d.id));
+      snap.forEach(d => ids.add(d.data().itemId || d.id));
     }catch(error){ console.warn('AZOBSS read likes subcollection failed:', key, error); }
+    try{
+      const snap = await getDocs(collection(db, 'likesByUser', key, 'items'));
+      snap.forEach(d => ids.add(d.data().itemId || d.id));
+    }catch(error){ console.warn('AZOBSS read likesByUser failed:', key, error); }
     try{
       const us = await getDoc(doc(db, 'users', key));
       const map = us.exists() ? (us.data().likesMap || {}) : {};
       Object.keys(map || {}).forEach(id => ids.add(id));
     }catch(error){ console.warn('AZOBSS read likesMap failed:', key, error); }
+    for(const col of [USER_LIKES_COLLECTION, 'azobssLikes', 'likes']){
+      try{
+        const snap = await getDocs(query(collection(db, col), where('usernameKey', '==', key)));
+        snap.forEach(d => ids.add(d.data().itemId || d.id.replace(key + '_','')));
+      }catch(error){ console.warn('AZOBSS read '+col+' failed:', key, error); }
+    }
   }
-  try{
-    const primary = keys[0];
-    const snap = await getDocs(query(collection(db, USER_LIKES_COLLECTION), where('usernameKey', '==', primary)));
-    snap.forEach(d => ids.add(d.data().itemId || d.id.replace(primary + '_','')));
-  }catch(error){ console.warn('AZOBSS read global userLikes failed:', error); }
   return ids;
 }
+
 async function writeLikeToFirebase(item, user, key){
   await authReady.catch(()=>null);
   const keys = likeKeyCandidates(user);
@@ -376,23 +409,27 @@ async function writeLikeToFirebase(item, user, key){
   let lastError = null;
   for(const k of keys){
     const payload = compactLikePayload(item, user, k);
-    const ref = doc(db, 'users', k, 'likes', item.itemId);
-    const globalRef = doc(db, USER_LIKES_COLLECTION, likeGlobalId(k, item.itemId));
-    const publicRef = doc(db, 'likes', likeGlobalId(k, item.itemId));
-    const mapPayload = {
-      usernameKey:k,
-      uid:String(auth.currentUser?.uid || user.uid || ''),
-      updatedAt:serverTimestamp(),
-      likesMap:{ [item.itemId]: payload }
-    };
-    // Try multiple locations. If Firestore rules block one path, another allowed path can still keep the like online.
-    try{ await setDoc(ref, { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true }); saved = true; }catch(e){ lastError = e; console.warn('AZOBSS save like subcollection failed:', k, e); }
-    try{ await setDoc(doc(db, 'users', k), mapPayload, { merge:true }); saved = true; }catch(e){ lastError = e; console.warn('AZOBSS save like embedded map failed:', k, e); }
-    try{ await setDoc(globalRef, { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true }); saved = true; }catch(e){ lastError = e; console.warn('AZOBSS save like global userLikes failed:', k, e); }
-    try{ await setDoc(publicRef, { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true }); saved = true; }catch(e){ lastError = e; console.warn('AZOBSS save like public likes failed:', k, e); }
+    const writes = [
+      ['users-sub', () => setDoc(doc(db, 'users', k, 'likes', item.itemId), { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true })],
+      ['likesByUser', () => setDoc(doc(db, 'likesByUser', k, 'items', item.itemId), { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true })],
+      ['userLikes', () => setDoc(doc(db, USER_LIKES_COLLECTION, likeGlobalId(k, item.itemId)), { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true })],
+      ['azobssLikes', () => setDoc(doc(db, 'azobssLikes', likeGlobalId(k, item.itemId)), { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true })],
+      ['likes', () => setDoc(doc(db, 'likes', likeGlobalId(k, item.itemId)), { ...payload, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true })],
+      ['users-map', () => setDoc(doc(db, 'users', k), {
+        usernameKey:k,
+        uid:String(auth.currentUser?.uid || user.uid || ''),
+        updatedAt:serverTimestamp(),
+        ['likesMap.' + item.itemId]: payload
+      }, { merge:true })]
+    ];
+    for(const [name, fn] of writes){
+      try{ await fn(); saved = true; }
+      catch(e){ lastError = e; console.warn('AZOBSS save like '+name+' failed:', k, e); }
+    }
   }
   if(!saved) throw lastError || new Error('Firestore like save failed on all paths');
 }
+
 async function migrateLocalLikesToFirebase(){
   const user = getSavedUser();
   const key = userKey(user);
@@ -401,7 +438,8 @@ async function migrateLocalLikesToFirebase(){
   if(!local.length) return;
   try{
     for(const item of local) await writeLikeToFirebase(item, user, key);
-    saveLocalLikes([]);
+    // Keep local cache too. It makes the UI survive slow/offline Firebase and does not replace online sync.
+    saveLocalLikes(local);
     localStorage.setItem('azLikesSynced:' + key, String(Date.now()));
   }catch(error){ console.warn('AZOBSS local likes migration failed:', error); }
 }
@@ -426,7 +464,9 @@ async function setLike(item, liked){
       if(key && !keys.includes(key)) keys.unshift(key);
       for(const k of keys){
         await deleteDoc(doc(db, 'users', k, 'likes', item.itemId)).catch(()=>{});
+        await deleteDoc(doc(db, 'likesByUser', k, 'items', item.itemId)).catch(()=>{});
         await deleteDoc(doc(db, USER_LIKES_COLLECTION, likeGlobalId(k, item.itemId))).catch(()=>{});
+        await deleteDoc(doc(db, 'azobssLikes', likeGlobalId(k, item.itemId))).catch(()=>{});
         await deleteDoc(doc(db, 'likes', likeGlobalId(k, item.itemId))).catch(()=>{});
         await updateDoc(doc(db, 'users', k), { ['likesMap.' + item.itemId]: deleteField(), updatedAt:serverTimestamp() }).catch(()=>{});
       }
@@ -511,32 +551,42 @@ async function refreshLikesPage(){
   const user = getSavedUser();
   const key = userKey(user);
   let rows = [];
-  const localRows = localLikes().map(normalizeLikeRow).filter(Boolean);
+  const seen = new Set();
+  function addRow(row){
+    const n = normalizeLikeRow(row);
+    if(!n || seen.has(n.itemId)) return;
+    seen.add(n.itemId);
+    rows.push(n);
+  }
+  localLikes().forEach(addRow);
   if(user && key){
     const keys = likeKeyCandidates(user);
-    const seen = new Set();
     for(const k of keys){
       try{
         const snap = await getDocs(collection(db, 'users', k, 'likes'));
-        snap.forEach(d => { const row={id:d.id, ...d.data()}; const id=row.itemId||d.id; if(!seen.has(id)){ seen.add(id); rows.push(row); } });
+        snap.forEach(d => addRow({id:d.id, ...d.data()}));
       }catch(error){ console.warn('AZOBSS likes page subcollection read failed:', k, error); }
+      try{
+        const snap = await getDocs(collection(db, 'likesByUser', k, 'items'));
+        snap.forEach(d => addRow({id:d.id, ...d.data()}));
+      }catch(error){ console.warn('AZOBSS likes page likesByUser read failed:', k, error); }
       try{
         const us = await getDoc(doc(db, 'users', k));
         const map = us.exists() ? (us.data().likesMap || {}) : {};
-        Object.keys(map || {}).forEach(id => { if(!seen.has(id)){ seen.add(id); rows.push({id, ...map[id]}); } });
+        Object.keys(map || {}).forEach(id => addRow({id, ...map[id]}));
       }catch(error){ console.warn('AZOBSS likes page likesMap read failed:', k, error); }
+      for(const col of [USER_LIKES_COLLECTION, 'azobssLikes', 'likes']){
+        try{
+          const snap = await getDocs(query(collection(db, col), where('usernameKey', '==', k)));
+          snap.forEach(d => addRow({id:d.id, ...d.data()}));
+        }catch(error){ console.warn('AZOBSS likes page '+col+' read failed:', k, error); }
+      }
     }
-    try{
-      const snap = await getDocs(query(collection(db, USER_LIKES_COLLECTION), where('usernameKey', '==', keys[0])));
-      snap.forEach(d => { const row={id:d.id, ...d.data()}; const id=row.itemId||d.id; if(!seen.has(id)){ seen.add(id); rows.push(row); } });
-    }catch(error){ console.warn('AZOBSS likes page global read failed:', error); }
-    localRows.forEach(x => { const id = x.itemId || x.id || x.title; if(!seen.has(id)){ seen.add(id); rows.push(x); } });
-  }else{
-    rows = localRows;
   }
   azobssLikesCache = rows;
   renderLikesRows();
 }
+
 function bindLikesControls(){
   const search = document.getElementById('likesSearchInput');
   const sort = document.getElementById('likesSortSelect');
