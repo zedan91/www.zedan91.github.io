@@ -18,7 +18,7 @@
       document.querySelectorAll('.user-menu.is-open').forEach(function(el){ el.classList.remove('is-open'); });
     }catch(e){}
     window.location.replace('/');
-  }, true);
+  }, false);
 })();
 
 (function(){
@@ -212,7 +212,7 @@
           btn.textContent = oldText || 'Copy Account Number';
         }, 1600);
       }
-    }, true);
+    }, false);
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindCopyAccountButtons);
