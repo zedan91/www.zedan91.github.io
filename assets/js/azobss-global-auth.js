@@ -1813,11 +1813,11 @@ async function renderAzobssPurchaseRecords(){
         const isDetailOpen = !!azobssPurchaseOpenKeys[key];
         return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card${isDetailOpen ? ' is-open' : ''}" data-user-key="${escHtml(key)}">
           <div class="admin-purchase-user-top az-purchase-mini-top">
-            <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
-            <span style="white-space:nowrap">Last buy: <strong>${escHtml(formatPurchaseDate(first)||'-')}</strong></span>
-            <span style="white-space:nowrap">Last: <strong>${escHtml(lastItem)}</strong></span>
-            <span>Unit: <strong>${unitCount}</strong></span>
-            <span>Total: <strong>RM${total}</strong></span>
+            <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong></div>
+            <span class="az-purchase-mini-date">Last buy: <strong>${escHtml(formatPurchaseDate(first)||'-')}</strong></span>
+            <span class="az-purchase-mini-last">Last: <strong>${escHtml(lastItem)}</strong></span>
+            <span class="az-purchase-mini-unit">Unit: <strong>${unitCount}</strong></span>
+            <span class="az-purchase-mini-total">Total: <strong>RM${total}</strong></span>
             <div class="az-purchase-mini-actions">
               <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">${isDetailOpen ? 'Hide' : 'Show'}</button>
               <button type="button" class="az-purchase-reset-btn" onclick="window.azobssResetPurchaseRecordsForUser && window.azobssResetPurchaseRecordsForUser('${escHtml(key)}')">Reset</button>

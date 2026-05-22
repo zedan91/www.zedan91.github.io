@@ -7321,6 +7321,98 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
   #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
 }
 </style>
+<style>
+
+/* AZOBSS compact purchase record list - username only, no phone/email */
+body.is-admin #purchaseSummaryList .az-purchase-mini-card{
+  display:block!important;
+  padding:7px 10px!important;
+  border-radius:10px!important;
+  min-height:0!important;
+  margin:0 0 6px!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-top{
+  display:flex!important;
+  align-items:center!important;
+  gap:18px!important;
+  flex-wrap:nowrap!important;
+  min-height:24px!important;
+  width:100%!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-user{
+  min-width:150px!important;
+  max-width:190px!important;
+  flex:0 0 160px!important;
+  line-height:1!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  text-overflow:ellipsis!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-user strong{
+  display:inline!important;
+  color:#22c55e!important;
+  font-size:13px!important;
+  line-height:1!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-user span{display:none!important;}
+body.is-admin #purchaseSummaryList .az-purchase-mini-top > span{
+  color:#e2e8f0!important;
+  font-size:12px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  min-width:0!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-top > span strong{
+  color:#22c55e!important;
+  font-weight:900!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-date{flex:0 0 240px!important;}
+body.is-admin #purchaseSummaryList .az-purchase-mini-last{flex:0 0 150px!important;}
+body.is-admin #purchaseSummaryList .az-purchase-mini-unit{flex:0 0 70px!important;}
+body.is-admin #purchaseSummaryList .az-purchase-mini-total{flex:0 0 95px!important;}
+body.is-admin #purchaseSummaryList .az-purchase-mini-actions{
+  margin-left:auto!important;
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:7px!important;
+  flex:0 0 auto!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-show-btn,
+body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
+  min-width:56px!important;
+  height:28px!important;
+  padding:0 12px!important;
+  border-radius:8px!important;
+  font-size:12px!important;
+  line-height:1!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  white-space:nowrap!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-details{
+  margin-top:6px!important;
+  padding-top:6px!important;
+  border-top:1px solid rgba(148,163,184,.22)!important;
+  display:grid;
+  gap:3px!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+  color:#e2e8f0!important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:none!important;}
+@media(max-width:900px){
+  body.is-admin #purchaseSummaryList .az-purchase-mini-top{flex-wrap:wrap!important;gap:8px 14px!important;}
+  body.is-admin #purchaseSummaryList .az-purchase-mini-user{flex:1 1 100%!important;max-width:none!important;}
+  body.is-admin #purchaseSummaryList .az-purchase-mini-date,
+  body.is-admin #purchaseSummaryList .az-purchase-mini-last,
+  body.is-admin #purchaseSummaryList .az-purchase-mini-unit,
+  body.is-admin #purchaseSummaryList .az-purchase-mini-total{flex:0 1 auto!important;}
+  body.is-admin #purchaseSummaryList .az-purchase-mini-actions{margin-left:0!important;}
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -7929,7 +8021,7 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 <div class="admin-user-tools" hidden="" id="purchaseRecordTools">
 <label for="purchaseRecordSearch">
                 Search purchase record
-                <input id="purchaseRecordSearch" placeholder="Search username, phone or PA" type="search"/>
+                <input id="purchaseRecordSearch" placeholder="Search username or PA" type="search"/>
 </label>
 <label for="purchaseRecordSort">
                 Sort by
