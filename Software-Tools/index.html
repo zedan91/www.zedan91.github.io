@@ -815,12 +815,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .software-shop-controls label{display:grid;gap:6px;color:#cbd5e1;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;}
 .software-shop-controls input,.software-shop-controls select{width:100%;box-sizing:border-box;border:1px solid rgba(34,197,94,.28);border-radius:14px;background:#020617;color:#f8fafc;padding:11px 13px;font:inherit;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
 .software-shop-controls input:focus,.software-shop-controls select:focus{border-color:rgba(34,197,94,.72);box-shadow:0 0 0 3px rgba(34,197,94,.12);}
-.software-category-filter{max-width:1180px;margin:0 auto 24px;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;align-items:stretch;overflow:visible;padding:4px 2px 10px;}
+.software-category-card{max-width:1180px;margin:0 auto 24px;border:1px solid rgba(34,197,94,.22);border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,.88),rgba(2,6,23,.72));box-shadow:0 18px 50px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.04);padding:14px;}
+.software-category-title{display:flex;align-items:center;gap:8px;margin:0 0 12px;color:#dbeafe;font-size:13px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;}
+.software-category-filter{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;align-items:stretch;overflow:visible;padding:0;}
 .software-category-filter::-webkit-scrollbar{display:none}.software-category-filter{scrollbar-width:none;}
-.software-category-btn{width:100%;min-height:38px;border:1px solid rgba(148,163,184,.28);background:#0b1222;color:#e5e7eb;border-radius:13px;padding:0 10px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);font-size:13px;}
-.software-category-btn:hover{border-color:rgba(34,197,94,.55);color:#86efac}.software-category-btn.is-active{background:linear-gradient(135deg,#16a34a,#22c55e);border-color:#22c55e;color:#052e16;box-shadow:0 10px 22px rgba(34,197,94,.18);}
+.software-category-btn{width:100%;min-height:40px;border:1px solid rgba(148,163,184,.28);background:rgba(11,18,34,.92);color:#e5e7eb;border-radius:14px;padding:0 10px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);font-size:13px;}
+.software-category-btn:hover{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(15,23,42,.98)}.software-category-btn.is-active{background:linear-gradient(135deg,#16a34a,#22c55e);border-color:#22c55e;color:#052e16;box-shadow:0 10px 22px rgba(34,197,94,.18);}
 @media(max-width:1180px){.software-category-filter{grid-template-columns:repeat(4,minmax(0,1fr));}.software-category-btn{font-size:12px;padding:0 8px;}}
-@media(max-width:720px){.software-category-filter{grid-template-columns:repeat(2,minmax(0,1fr));}.software-category-btn{justify-content:flex-start;padding:0 12px;}}
+@media(max-width:720px){.software-category-card{padding:12px}.software-category-filter{grid-template-columns:repeat(2,minmax(0,1fr));}.software-category-btn{justify-content:flex-start;padding:0 12px;}}
 .software-empty-state{grid-column:1/-1;border:1px dashed rgba(148,163,184,.35);border-radius:18px;padding:18px;text-align:center;color:#94a3b8;background:rgba(15,23,42,.55);font-weight:800;}
 @media(max-width:640px){.software-shop-controls{grid-template-columns:1fr;margin-bottom:14px;}.software-category-filter{margin-bottom:18px}.software-category-btn{min-height:36px;font-size:12px;}}
 
@@ -944,33 +946,36 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     </select>
   </label>
 </div>
+<div class="software-category-card" aria-label="Software categories card">
+  <div class="software-category-title">▦ Browse by Category</div>
 <div class="software-category-filter" id="softwareCategoryFilter" aria-label="Software category filter">
   <button class="software-category-btn is-active" type="button" data-software-category="all">▦ All Categories</button>
   <button class="software-category-btn" type="button" data-software-category="Antivirus">🛡️ Antivirus</button>
   <button class="software-category-btn" type="button" data-software-category="Backup & Recovery">💾 Backup & Recovery</button>
   <button class="software-category-btn" type="button" data-software-category="Burning">🔥 Burning</button>
-  <button class="software-category-btn" type="button" data-software-category="Design Grafis">🎨 Design Grafis</button>
-  <button class="software-category-btn" type="button" data-software-category="Emulator">🎮 Emulator</button>
+  <button class="software-category-btn" type="button" data-software-category="Graphic Design">🎨 Graphic Design</button>
+  <button class="software-category-btn" type="button" data-software-category="Emulators">🎮 Emulators</button>
   <button class="software-category-btn" type="button" data-software-category="Internet">🌐 Internet</button>
-  <button class="software-category-btn" type="button" data-software-category="Multimedia">🎬 Multimedia</button>
+  <button class="software-category-btn" type="button" data-software-category="Media Tools">🎬 Media Tools</button>
   <button class="software-category-btn" type="button" data-software-category="Office Tools">📄 Office Tools</button>
-  <button class="software-category-btn" type="button" data-software-category="Recovery">♻️ Recovery</button>
+  <button class="software-category-btn" type="button" data-software-category="Data Recovery">♻️ Data Recovery</button>
   <button class="software-category-btn" type="button" data-software-category="Security">🔐 Security</button>
-  <button class="software-category-btn" type="button" data-software-category="Sistem Operasi">💻 Sistem Operasi</button>
-  <button class="software-category-btn" type="button" data-software-category="System Stuff">⚙️ System Stuff</button>
-  <button class="software-category-btn" type="button" data-software-category="Tools">🧰 Tools</button>
-  <button class="software-category-btn" type="button" data-software-category="Video Downloader">⬇️ Video Downloader</button>
+  <button class="software-category-btn" type="button" data-software-category="Operating System">💻 Operating System</button>
+  <button class="software-category-btn" type="button" data-software-category="System Utilities">⚙️ System Utilities</button>
+  <button class="software-category-btn" type="button" data-software-category="General Tools">🧰 General Tools</button>
+  <button class="software-category-btn" type="button" data-software-category="Video Downloaders">⬇️ Video Downloaders</button>
   <button class="software-category-btn" type="button" data-software-category="Remote Tools">🖥️ Remote Tools</button>
 </div>
+</div>
 <div class="downloads-grid" id="softwareDownloadsGrid">
-<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="crystaldiskmark" data-category="Tools" data-search="crystaldiskmark benchmark utility for testing ssd and hard disk speed on windows.">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="crystaldiskmark" data-category="General Tools" data-search="crystaldiskmark benchmark utility for testing ssd and hard disk speed on windows.">
 <div class="download-icon">CD</div>
 <div class="software-badge free">Free Software</div>
 <h3>CrystalDiskMark</h3>
 <p>Benchmark utility for testing SSD and hard disk speed on Windows.</p>
 <a class="download-btn" href="https://crystalmark.info/en/software/crystaldiskmark/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="hwinfo" data-category="System Stuff" data-search="hwinfo tool for monitoring temperature, sensors, hardware details and pc system status.">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="hwinfo" data-category="System Utilities" data-search="hwinfo tool for monitoring temperature, sensors, hardware details and pc system status.">
 <div class="download-icon">HW</div>
 <div class="software-badge free">Free Software</div>
 <h3>HWInfo</h3>
@@ -991,14 +996,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <p>Alternative remote desktop tool for support and remote access.</p>
 <a class="download-btn" href="https://rustdesk.com/download" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="file converter" data-category="Tools" data-search="file converter utility for converting files, images, documents and media formats.">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="file converter" data-category="General Tools" data-search="file converter utility for converting files, images, documents and media formats.">
 <div class="download-icon">FC</div>
 <div class="software-badge free">Free Software</div>
 <h3>File Converter</h3>
 <p>Utility for converting files, images, documents and media formats.</p>
 <a class="download-btn" href="https://file-converter.io/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="windows tweaks" data-category="System Stuff" data-search="windows tweaks registry tweaks to speed up windows 11 workflows and adjust important settings.">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="windows tweaks" data-category="System Utilities" data-search="windows tweaks registry tweaks to speed up windows 11 workflows and adjust important settings.">
 <div class="download-icon">WT</div>
 <div class="software-badge free">Free Software</div>
 <h3>Windows Tweaks</h3>
@@ -1039,20 +1044,20 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       </div>
       <label>Software Category
         <select id="softwareAdminCategory">
-          <option value="Tools">Tools</option>
+          <option value="General Tools">General Tools</option>
           <option value="Antivirus">Antivirus</option>
           <option value="Backup & Recovery">Backup & Recovery</option>
           <option value="Burning">Burning</option>
-          <option value="Design Grafis">Design Grafis</option>
-          <option value="Emulator">Emulator</option>
+          <option value="Graphic Design">Graphic Design</option>
+          <option value="Emulators">Emulators</option>
           <option value="Internet">Internet</option>
-          <option value="Multimedia">Multimedia</option>
+          <option value="Media Tools">Media Tools</option>
           <option value="Office Tools">Office Tools</option>
-          <option value="Recovery">Recovery</option>
+          <option value="Data Recovery">Data Recovery</option>
           <option value="Security">Security</option>
-          <option value="Sistem Operasi">Sistem Operasi</option>
-          <option value="System Stuff">System Stuff</option>
-          <option value="Video Downloader">Video Downloader</option>
+          <option value="Operating System">Operating System</option>
+          <option value="System Utilities">System Utilities</option>
+          <option value="Video Downloaders">Video Downloaders</option>
           <option value="Remote Tools">Remote Tools</option>
         </select>
       </label>
@@ -1309,7 +1314,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}">Edit Details</button></div>` : '';
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'Tools')}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}">
       ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
       <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
@@ -1346,16 +1351,16 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
     let dynamic = [...softwareDynamicItems].filter(item => isAdmin() || (item.status || 'active') === 'active');
     if(selectedSoftwareCategory !== 'all'){
-      dynamic = dynamic.filter(item => clean(item.category || 'Tools') === clean(selectedSoftwareCategory));
+      dynamic = dynamic.filter(item => clean(item.category || 'General Tools') === clean(selectedSoftwareCategory));
       staticCards.forEach(card => {
-        card.style.display = clean(card.dataset.category || 'Tools') === clean(selectedSoftwareCategory) ? '' : 'none';
+        card.style.display = clean(card.dataset.category || 'General Tools') === clean(selectedSoftwareCategory) ? '' : 'none';
       });
     }
     if(keyword){
       dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
       staticCards.forEach(card => {
         const text = clean(card.dataset.search || card.textContent || '');
-        const categoryOk = selectedSoftwareCategory === 'all' || clean(card.dataset.category || 'Tools') === clean(selectedSoftwareCategory);
+        const categoryOk = selectedSoftwareCategory === 'all' || clean(card.dataset.category || 'General Tools') === clean(selectedSoftwareCategory);
         card.style.display = (categoryOk && text.includes(keyword)) ? '' : 'none';
       });
     }
@@ -1425,7 +1430,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(downloadLimitInput) downloadLimitInput.value = String(item?.downloadLimit || 3);
     if(expiryInput) expiryInput.value = String(item?.expiryHours ?? 24);
     if(badgeInput) badgeInput.value = item?.badge || '';
-    if(categoryInput) categoryInput.value = item?.category || 'Tools';
+    if(categoryInput) categoryInput.value = item?.category || 'General Tools';
     setSelectedPlatforms(item?.platforms || ['Windows']);
     document.getElementById('softwareAdminName').value = item?.name || '';
     document.getElementById('softwareAdminDesc').value = item?.desc || '';
@@ -1483,7 +1488,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       version: versionInput?.value.trim(),
       fileSize: fileSizeInput?.value.trim(),
       platforms: selectedPlatforms(),
-      category: categoryInput?.value || 'Tools',
+      category: categoryInput?.value || 'General Tools',
       badge: badgeInput?.value || '',
       downloadLimit: Math.max(1, Math.min(20, Number(downloadLimitInput?.value || 3))),
       expiryHours: Number(expiryInput?.value ?? 24),
