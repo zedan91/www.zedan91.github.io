@@ -63,6 +63,99 @@ const AFFILIATE_JSON = path.join(ROOT, "affiliate-products.json");
 const TEMP_DIR = path.join(ROOT, "temp");
 const DOWNLOAD_TOKENS = new Map();
 
+const PREMIUM_ORDERS_FILE = path.join(ROOT, "premium-orders.json");
+const PREMIUM_TOKENS_FILE = path.join(ROOT, "premium-download-tokens.json");
+
+function readPremiumJson(file, fallback) {
+  try {
+    if (!fs.existsSync(file)) return fallback;
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    console.error("Read premium json failed:", file, error.message);
+    return fallback;
+  }
+}
+
+function writePremiumJson(file, data) {
+  try {
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
+  } catch (error) {
+    console.error("Write premium json failed:", file, error.message);
+  }
+}
+
+function makeId(prefix = "az") {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function cleanPremiumText(value, max = 300) {
+  return String(value || "").replace(/[<>]/g, "").trim().slice(0, max);
+}
+
+function cleanPremiumUrl(value) {
+  const v = String(value || "").trim();
+  if (!v) return "";
+  if (/^https?:\/\//i.test(v)) return v;
+  if (v.startsWith("/")) return v;
+  return "";
+}
+
+function getPremiumUser(data) {
+  const user = data.user || {};
+  return {
+    uid: cleanPremiumText(user.uid || data.uid, 120),
+    username: cleanPremiumText(user.username || user.usernameKey || data.username, 80),
+    email: cleanPremiumText(user.email || data.email, 160),
+    phone: cleanPremiumText(user.phone || data.phone, 40)
+  };
+}
+
+function savePremiumOrder(order) {
+  const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []);
+  orders.unshift(order);
+  writePremiumJson(PREMIUM_ORDERS_FILE, orders.slice(0, 200));
+}
+
+function savePremiumToken(tokenData) {
+  const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []);
+  const now = Date.now();
+  const active = tokens.filter(t => Number(t.expiresAt || 0) > now && Number(t.usedCount || 0) < Number(t.maxDownload || 3));
+  active.unshift(tokenData);
+  writePremiumJson(PREMIUM_TOKENS_FILE, active.slice(0, 200));
+}
+
+function findPremiumToken(token) {
+  const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []);
+  return tokens.find(t => t.token === token);
+}
+
+function updatePremiumToken(token, updater) {
+  const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []);
+  const index = tokens.findIndex(t => t.token === token);
+  if (index >= 0) {
+    tokens[index] = updater(tokens[index]);
+    writePremiumJson(PREMIUM_TOKENS_FILE, tokens);
+  }
+  return index >= 0 ? tokens[index] : null;
+}
+
+function buildReceiptHtml(order) {
+  const lines = [
+    ["Receipt No", order.orderId],
+    ["Status", order.status],
+    ["Product", order.productName],
+    ["Amount", order.amount],
+    ["Payment Method", order.paymentMethod],
+    ["Reference", order.paymentReference || "-"],
+    ["Username", order.user?.username || "-"],
+    ["Email", order.user?.email || "-"],
+    ["Date", new Date(order.paidAt || order.createdAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })]
+  ];
+  const rows = lines.map(([k,v]) => `<tr><th>${String(k)}</th><td>${String(v || "-")}</td></tr>`).join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Receipt ${order.orderId}</title><style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111;padding:24px}.receipt{max-width:720px;margin:auto;background:#fff;border:1px solid #ddd;border-radius:14px;padding:24px}h1{margin-top:0}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}th{width:180px;color:#555}.ok{color:#16a34a;font-weight:700}.print{margin-top:20px}</style></head><body><div class="receipt"><h1>AZOBSS Payment Receipt</h1><p class="ok">Pembelian selesai ✅</p><table>${rows}</table><p class="print"><button onclick="window.print()">Print / Save PDF</button></p></div></body></html>`;
+}
+
+
 // AUTO DELETE FILE > 30 DAYS
 const FILE_EXPIRE_MS =
   30 * 24 * 60 * 60 * 1000;
@@ -1521,6 +1614,107 @@ const filePath =
   return;
 }
 
+
+
+    // =========================
+    // AZOBSS PREMIUM SOFTWARE/CAD PURCHASE FLOW
+    // =========================
+
+    if (pathname === "/api/premium/complete-purchase" && req.method === "POST") {
+      let data = {};
+      try { data = JSON.parse(await readBody(req) || "{}"); }
+      catch (error) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid JSON" }), "application/json"); }
+
+      const product = data.product || {};
+      const productName = cleanPremiumText(product.name || data.productName, 160);
+      const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
+      const amount = cleanPremiumText(product.price || data.amount || data.price, 40);
+      const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
+      const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);
+      const paymentReference = cleanPremiumText(data.paymentReference || data.reference || "", 200);
+      const user = getPremiumUser(data);
+
+      if (!productName || !amount) {
+        return send(res, 400, JSON.stringify({ ok:false, error:"Missing product name or amount" }), "application/json");
+      }
+      if (!downloadLink) {
+        return send(res, 400, JSON.stringify({ ok:false, error:"Download link belum diset untuk produk ini. Sila hubungi admin." }), "application/json");
+      }
+
+      const orderId = makeId("ord");
+      const token = makeId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
+      const now = Date.now();
+      const order = {
+        orderId,
+        productId,
+        productName,
+        amount,
+        status: "paid",
+        paymentMethod,
+        paymentReference,
+        user,
+        createdAt: new Date(now).toISOString(),
+        paidAt: new Date(now).toISOString(),
+        downloadToken: token,
+        tokenExpiresAt: new Date(now + 24 * 60 * 60 * 1000).toISOString(),
+        maxDownload: 3
+      };
+      savePremiumOrder(order);
+      savePremiumToken({
+        token,
+        orderId,
+        productId,
+        productName,
+        user,
+        downloadLink,
+        createdAt: now,
+        expiresAt: now + 24 * 60 * 60 * 1000,
+        usedCount: 0,
+        maxDownload: 3
+      });
+
+      return send(res, 200, JSON.stringify({
+        ok: true,
+        orderId,
+        status: "paid",
+        message: "Pembelian selesai. Link download sementara telah dijana.",
+        downloadUrl: `/api/premium/download/${encodeURIComponent(token)}`,
+        receiptUrl: `/api/premium/receipt/${encodeURIComponent(orderId)}`,
+        expiresAt: order.tokenExpiresAt,
+        maxDownload: 3
+      }, null, 2), "application/json");
+    }
+
+    if (pathname.startsWith("/api/premium/download/") && req.method === "GET") {
+      const token = decodeURIComponent(path.basename(pathname));
+      const saved = findPremiumToken(token);
+      if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 3)) {
+        return send(res, 403, "Download link expired or already used too many times.");
+      }
+      updatePremiumToken(token, t => ({ ...t, usedCount: Number(t.usedCount || 0) + 1, lastUsedAt: Date.now() }));
+      const target = saved.downloadLink;
+      if (/^https?:\/\//i.test(target)) {
+        res.writeHead(302, { Location: target, "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" });
+        res.end();
+        return;
+      }
+      if (target.startsWith("/")) {
+        const filePath = safePath(target);
+        if (!filePath || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return send(res, 404, "File not found");
+        res.writeHead(200, { "Content-Type": mimeType(filePath), "Content-Disposition": `attachment; filename="${path.basename(filePath)}"`, "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" });
+        fs.createReadStream(filePath).pipe(res);
+        return;
+      }
+      return send(res, 404, "Invalid download link");
+    }
+
+    if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET") {
+      const orderId = decodeURIComponent(path.basename(pathname));
+      const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []);
+      const order = orders.find(o => o.orderId === orderId);
+      if (!order) return send(res, 404, "Receipt not found");
+      return send(res, 200, buildReceiptHtml(order), "text/html; charset=utf-8");
+    }
 
     // =========================
     // BLOCK DIRECT TEMP ACCESS

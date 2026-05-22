@@ -1253,6 +1253,11 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <style id="azobss-hide-old-lisp-form">
   #lispForm { display: none !important; }
 </style>
+
+<style id="azobss-premium-flow-style">
+.azobss-pay-modal{position:fixed;inset:0;background:rgba(2,6,23,.76);z-index:99999;display:none;align-items:center;justify-content:center;padding:18px}.azobss-pay-modal.is-open{display:flex}.azobss-pay-panel{width:min(560px,96vw);max-height:92vh;overflow:auto;background:#172235;border:1px solid rgba(34,197,94,.45);border-radius:20px;padding:22px;color:#fff;box-shadow:0 24px 70px rgba(0,0,0,.45)}.azobss-pay-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.azobss-pay-head h2{margin:0;font-size:22px}.azobss-pay-close{width:38px;height:38px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:#263449;color:#fff;font-weight:900;font-size:20px;cursor:pointer}.azobss-pay-product{margin:16px 0;padding:14px;border:1px solid rgba(148,163,184,.28);border-radius:14px;background:#0b1222}.azobss-pay-product b,.azobss-pay-success b{color:#22c55e}.azobss-pay-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.azobss-pay-option{border:1px solid rgba(59,130,246,.45);background:#111b2c;color:#fff;border-radius:12px;padding:12px 8px;font-weight:800;cursor:pointer}.azobss-pay-option.is-active{background:#16a34a;border-color:#22c55e}.azobss-pay-field{display:block;margin:12px 0;font-weight:800;color:#dbeafe}.azobss-pay-field input,.azobss-pay-field textarea{display:block;width:100%;margin-top:7px;border-radius:12px;border:1px solid #475569;background:#0b1222;color:#fff;padding:13px;font:inherit;box-sizing:border-box}.azobss-pay-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}.azobss-pay-btn{border:0;border-radius:13px;padding:13px 18px;font-weight:900;cursor:pointer}.azobss-pay-primary{background:#22c55e;color:#03120b}.azobss-pay-blue{background:#2563eb;color:#fff}.azobss-pay-muted{background:#334155;color:#fff}.azobss-pay-success{display:none;margin-top:16px;padding:14px;border:1px solid rgba(34,197,94,.45);border-radius:14px;background:rgba(34,197,94,.08)}.azobss-pay-success.is-open{display:block}.azobss-pay-success a{display:inline-flex;margin:8px 8px 0 0;background:#2563eb;color:#fff;text-decoration:none;border-radius:12px;padding:12px 14px;font-weight:900}.azobss-pay-error{color:#fecaca;margin-top:10px;min-height:20px}.azobss-pay-note{font-size:13px;color:#bfdbfe;line-height:1.45}@media(max-width:560px){.azobss-pay-options{grid-template-columns:1fr}.azobss-pay-actions{justify-content:stretch}.azobss-pay-btn{width:100%}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1377,7 +1382,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
           <input id="cadAdminPaymentLink" type="url" placeholder="Premium: ToyyibPay, QR or bank transaction link">
         </label>
       </div>
-      <p class="cad-admin-note">Free CAD Resource will use <b>Download / Resource Link</b>. Premium CAD Tool will use <b>ToyyibPay / Payment Link</b>.</p>
+      <label>Premium Download File Link
+        <input id="cadAdminSecureDownloadLink" type="url" placeholder="Private CAD file/download link used after payment success">
+      </label>
+      <p class="cad-admin-note">Free CAD Resource will use <b>Download / Resource Link</b>. Premium CAD Tool will use <b>ToyyibPay / Payment Link</b> for payment and <b>Premium Download File Link</b> after payment.</p>
       <div class="cad-admin-actions">
         <button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
         <button class="cad-admin-save" type="submit">Save Item</button>
@@ -1444,6 +1452,29 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 </div>
 </section>
 </main>
+
+<div class="azobss-pay-modal" id="azobssPremiumPayModal" aria-hidden="true">
+  <div class="azobss-pay-panel" role="dialog" aria-modal="true" aria-labelledby="azobssPayTitle">
+    <div class="azobss-pay-head"><h2 id="azobssPayTitle">Complete Purchase</h2><button class="azobss-pay-close" id="azobssPayClose" type="button">×</button></div>
+    <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
+    <div class="azobss-pay-options">
+      <button class="azobss-pay-option is-active" data-method="qr" type="button">QR Payment</button>
+      <button class="azobss-pay-option" data-method="bank" type="button">Bank Transfer</button>
+      <button class="azobss-pay-option" data-method="toyyibpay" type="button">ToyyibPay</button>
+    </div>
+    <p class="azobss-pay-note" id="azobssPayInstruction">Bayar ikut pilihan di atas. Link download hanya muncul selepas anda sahkan bayaran.</p>
+    <label class="azobss-pay-field">Payment Reference / Receipt Note
+      <input id="azobssPayReference" type="text" placeholder="Contoh: nama bank, masa bayaran atau nombor rujukan">
+    </label>
+    <div class="azobss-pay-actions">
+      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment Link</button>
+      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">I Have Paid</button>
+    </div>
+    <div class="azobss-pay-error" id="azobssPayError"></div>
+    <div class="azobss-pay-success" id="azobssPaySuccess"></div>
+  </div>
+</div>
+
 <footer>
     © 2026 AZOBSS. All rights reserved.
   </footer>
@@ -1468,6 +1499,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const buttonInput = document.getElementById('cadAdminButtonText');
   const downloadLinkInput = document.getElementById('cadAdminDownloadLink');
   const paymentLinkInput = document.getElementById('cadAdminPaymentLink');
+  const secureDownloadInput = document.getElementById('cadAdminSecureDownloadLink');
   const downloadLinkLabel = document.getElementById('cadDownloadLinkLabel');
   const paymentLinkLabel = document.getElementById('cadPaymentLinkLabel');
   const imageUrlInput = document.getElementById('cadAdminImageUrl');
@@ -1510,6 +1542,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       icon: String(item.icon || (isPremium ? '🛒' : 'L')).trim().slice(0,3),
       downloadLink: String(item.downloadLink || item.link || '').trim(),
       paymentLink: String(item.paymentLink || '').trim(),
+      secureDownloadLink: String(item.secureDownloadLink || item.privateDownloadLink || '').trim(),
       link: String(item.link || (isPremium ? item.paymentLink : item.downloadLink) || '#').trim(),
       imageUrl: String(item.imageUrl || item.image || '').trim(),
       gifUrl: String(item.gifUrl || item.gif || '').trim(),
@@ -1531,7 +1564,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <h3>${esc(clean.name)}</h3>
       <p>${esc(clean.description)}</p>
       ${gifHtml}
-      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" href="${esc(clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
     </article>`;
   }
   function getStaticCards(){return Array.from(grid.querySelectorAll('[data-cad-static="1"]'));}
@@ -1557,7 +1590,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
   }
   function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = premium;}
-  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; if(downloadLinkInput) downloadLinkInput.value=''; if(paymentLinkInput) paymentLinkInput.value=''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; if(downloadLinkInput) downloadLinkInput.value=''; if(paymentLinkInput) paymentLinkInput.value=''; if(secureDownloadInput) secureDownloadInput.value=''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
   function closeModal(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
   typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
@@ -1570,7 +1603,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
     const finalLink = typeInput.value === 'premium' ? paymentLinkInput?.value : downloadLinkInput?.value;
-    const item = normalizeItem({name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,link:finalLink,createdAt:Date.now()});
+    const item = normalizeItem({name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
     const items = getItems(); items.unshift(item); saveItems(items); closeModal(); applyFilters();
   });
   searchInput?.addEventListener('input',applyFilters); sortSelect?.addEventListener('change',applyFilters);
@@ -1927,5 +1960,55 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       renderItems();
     })();
   </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script id="azobss-premium-flow-script">
+(function(){
+  const API_BASE = (localStorage.getItem('azobssPremiumBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
+  const modal = document.getElementById('azobssPremiumPayModal');
+  if(!modal || window.__azobssPremiumFlowReady) return;
+  window.__azobssPremiumFlowReady = true;
+  const productBox = document.getElementById('azobssPayProduct');
+  const errorBox = document.getElementById('azobssPayError');
+  const successBox = document.getElementById('azobssPaySuccess');
+  const refInput = document.getElementById('azobssPayReference');
+  const openPaymentBtn = document.getElementById('azobssPayOpenPayment');
+  const completeBtn = document.getElementById('azobssPayComplete');
+  let currentProduct = null;
+  let currentMethod = 'qr';
+  function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function getUser(){try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser')||'null') || {};}catch(e){return {};}}
+  function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
+  function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b></div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
+  function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = currentProduct && currentProduct.paymentLink ? '' : 'none';}
+  document.getElementById('azobssPayClose')?.addEventListener('click', close);
+  modal.addEventListener('click', e=>{if(e.target===modal)close();});
+  modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'qr'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
+  openPaymentBtn?.addEventListener('click',()=>{if(currentProduct?.paymentLink) window.open(currentProduct.paymentLink, '_blank', 'noopener');});
+  completeBtn?.addEventListener('click', async()=>{
+    if(!currentProduct)return;
+    errorBox.textContent=''; successBox.classList.remove('is-open');
+    completeBtn.disabled=true; completeBtn.textContent='Processing...';
+    try{
+      const res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:currentProduct,user:getUser(),paymentMethod:currentMethod,paymentReference:refInput.value.trim()})});
+      const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+      if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
+      const downloadUrl = toAbsolute(data.downloadUrl);
+      const receiptUrl = toAbsolute(data.receiptUrl);
+      successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif 24 jam / maksimum 3 kali download.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
+      successBox.classList.add('is-open');
+    }catch(err){errorBox.textContent=err.message || 'Gagal proses pembayaran.';}
+    finally{completeBtn.disabled=false; completeBtn.textContent='I Have Paid';}
+  });
+  document.addEventListener('click', e=>{
+    const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
+    if(!trigger)return;
+    e.preventDefault();
+    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',secureDownloadLink:trigger.dataset.downloadLink||''};
+    open(product);
+  });
+})();
+</script>
+
+</body>
 </html>

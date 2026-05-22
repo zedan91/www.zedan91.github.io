@@ -27,6 +27,21 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 fs.mkdirSync(path.join(UPLOAD_DIR, "lucky-draw"), { recursive: true });
 
+const PREMIUM_ORDERS_FILE = path.join(DATA_DIR, "premium-orders.json");
+const PREMIUM_TOKENS_FILE = path.join(DATA_DIR, "premium-download-tokens.json");
+function readPremiumJson(file, fallback) { try { if (!fs.existsSync(file)) return fallback; return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; } }
+function writePremiumJson(file, data) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8"); }
+function makePremiumId(prefix = "az") { return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`; }
+function cleanPremiumText(value, max = 300) { return String(value || "").replace(/[<>]/g, "").trim().slice(0, max); }
+function cleanPremiumUrl(value) { const v = String(value || "").trim(); if (!v) return ""; if (/^https?:\/\//i.test(v)) return v; if (v.startsWith("/")) return v; return ""; }
+function getPremiumUser(data) { const user = data.user || {}; return { uid: cleanPremiumText(user.uid || data.uid, 120), username: cleanPremiumText(user.username || user.usernameKey || data.username, 80), email: cleanPremiumText(user.email || data.email, 160), phone: cleanPremiumText(user.phone || data.phone, 40) }; }
+function savePremiumOrder(order) { const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []); orders.unshift(order); writePremiumJson(PREMIUM_ORDERS_FILE, orders.slice(0, 200)); }
+function savePremiumToken(tokenData) { const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []); const now = Date.now(); const active = tokens.filter(t => Number(t.expiresAt || 0) > now && Number(t.usedCount || 0) < Number(t.maxDownload || 3)); active.unshift(tokenData); writePremiumJson(PREMIUM_TOKENS_FILE, active.slice(0, 200)); }
+function findPremiumToken(token) { return readPremiumJson(PREMIUM_TOKENS_FILE, []).find(t => t.token === token); }
+function updatePremiumToken(token, updater) { const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []); const index = tokens.findIndex(t => t.token === token); if (index >= 0) { tokens[index] = updater(tokens[index]); writePremiumJson(PREMIUM_TOKENS_FILE, tokens); return tokens[index]; } return null; }
+function buildReceiptHtml(order) { const rows = [["Receipt No", order.orderId], ["Status", order.status], ["Product", order.productName], ["Amount", order.amount], ["Payment Method", order.paymentMethod], ["Reference", order.paymentReference || "-"], ["Username", order.user?.username || "-"], ["Email", order.user?.email || "-"], ["Date", new Date(order.paidAt || order.createdAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })]].map(([k,v]) => `<tr><th>${k}</th><td>${v || "-"}</td></tr>`).join(""); return `<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Receipt</title><style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111;padding:24px}.receipt{max-width:720px;margin:auto;background:#fff;border:1px solid #ddd;border-radius:14px;padding:24px}h1{margin-top:0}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}th{width:180px;color:#555}.ok{color:#16a34a;font-weight:700}.print{margin-top:20px}</style></head><body><div class="receipt"><h1>AZOBSS Payment Receipt</h1><p class="ok">Pembelian selesai ✅</p><table>${rows}</table><p class="print"><button onclick="window.print()">Print / Save PDF</button></p></div></body></html>`; }
+
+
 app.use(cors({
   origin(origin, cb) {
     if (!origin || CORS_ORIGIN.includes("*") || CORS_ORIGIN.includes(origin)) return cb(null, true);
@@ -132,6 +147,46 @@ app.get("/", (req, res) => {
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "AZOBSS Lucky Draw Backend", time: new Date().toISOString() });
+});
+
+
+app.post("/api/premium/complete-purchase", (req, res) => {
+  const data = req.body || {};
+  const product = data.product || {};
+  const productName = cleanPremiumText(product.name || data.productName, 160);
+  const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
+  const amount = cleanPremiumText(product.price || data.amount || data.price, 40);
+  const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
+  const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);
+  const paymentReference = cleanPremiumText(data.paymentReference || data.reference || "", 200);
+  const user = getPremiumUser(data);
+  if (!productName || !amount) return res.status(400).json({ ok:false, error:"Missing product name or amount" });
+  if (!downloadLink) return res.status(400).json({ ok:false, error:"Download link belum diset untuk produk ini. Sila hubungi admin." });
+  const orderId = makePremiumId("ord");
+  const token = makePremiumId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
+  const now = Date.now();
+  const order = { orderId, productId, productName, amount, status:"paid", paymentMethod, paymentReference, user, createdAt:new Date(now).toISOString(), paidAt:new Date(now).toISOString(), downloadToken:token, tokenExpiresAt:new Date(now + 24*60*60*1000).toISOString(), maxDownload:3 };
+  savePremiumOrder(order);
+  savePremiumToken({ token, orderId, productId, productName, user, downloadLink, createdAt:now, expiresAt:now + 24*60*60*1000, usedCount:0, maxDownload:3 });
+  res.json({ ok:true, orderId, status:"paid", message:"Pembelian selesai. Link download sementara telah dijana.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:3 });
+});
+
+app.get("/api/premium/download/:token", (req, res) => {
+  const token = req.params.token;
+  const saved = findPremiumToken(token);
+  if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 3)) return res.status(403).send("Download link expired or already used too many times.");
+  updatePremiumToken(token, t => ({ ...t, usedCount: Number(t.usedCount || 0) + 1, lastUsedAt: Date.now() }));
+  const target = saved.downloadLink;
+  if (/^https?:\/\//i.test(target)) return res.redirect(302, target);
+  if (target.startsWith("/")) { const filePath = path.resolve(path.join(__dirname, "..", target)); if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return res.status(404).send("File not found"); return res.download(filePath); }
+  res.status(404).send("Invalid download link");
+});
+
+app.get("/api/premium/receipt/:orderId", (req, res) => {
+  const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []);
+  const order = orders.find(o => o.orderId === req.params.orderId);
+  if (!order) return res.status(404).send("Receipt not found");
+  res.type("html").send(buildReceiptHtml(order));
 });
 
 app.get("/api/lucky-draw/prize", (req, res) => {
