@@ -1392,14 +1392,16 @@ function bindAuth() {
     if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton') || event.target.id === 'profileSettingsModal') closeProfileSettings();
     if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
     if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
-    const menu = event.target.closest('#userMenu');
+    const menu = event.target.closest('#userMenu, .user-menu');
     if (menu) {
-      event.stopPropagation();
       if (event.target.closest('.user-dropdown')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{ if(el!==menu){ el.classList.remove('is-open'); el.setAttribute('aria-expanded','false'); } });
       menu.classList.toggle('is-open');
       menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
     }
-    else document.querySelectorAll('.user-menu.is-open').forEach(el=>el.classList.remove('is-open'));
+    else document.querySelectorAll('.user-menu.is-open').forEach(el=>{ el.classList.remove('is-open'); el.setAttribute('aria-expanded','false'); });
   }, false);
 
   document.addEventListener('keydown', (event)=>{
@@ -1410,7 +1412,7 @@ function bindAuth() {
     }
   });
 
-  document.querySelectorAll('#userMenu').forEach((menu)=>{
+  document.querySelectorAll('#userMenu, .user-menu').forEach((menu)=>{
     menu.addEventListener('keydown', (event)=>{
       if (event.target.closest('.user-dropdown')) return;
       if (event.key === 'Enter' || event.key === ' ') {
