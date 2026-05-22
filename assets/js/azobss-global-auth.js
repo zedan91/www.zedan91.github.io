@@ -691,11 +691,27 @@ function loginHistoryHtml(row){
 }
 function adminPager(el, page, total, size, onPage){
   if(!el) return;
-  const totalPages = Math.max(1, Math.ceil(total / size));
+  const totalPages = Math.max(1, Math.ceil((total || 0) / size));
   if(total <= size){ el.innerHTML = ''; return; }
-  let html = `<button class="guest-history-page-btn" type="button" data-page="prev" ${page<=1?'disabled':''}>Previous</button>`;
-  for(let i=1;i<=totalPages;i++) html += `<button class="guest-history-page-btn ${i===page?'is-active':''}" type="button" data-page="${i}">${i}</button>`;
-  html += `<button class="guest-history-page-btn" type="button" data-page="next" ${page>=totalPages?'disabled':''}>Next</button>`;
+  page = Math.min(Math.max(1, page), totalPages);
+  const pages = [];
+  const addPage = (value) => {
+    if(value >= 1 && value <= totalPages && !pages.includes(value)) pages.push(value);
+  };
+  addPage(1);
+  addPage(page - 1);
+  addPage(page);
+  addPage(page + 1);
+  addPage(totalPages);
+  pages.sort((a,b)=>a-b);
+  let last = 0;
+  let html = `<button class="guest-history-page-btn is-compact" type="button" data-page="prev" ${page<=1?'disabled':''}>‹</button>`;
+  pages.forEach(i => {
+    if(last && i - last > 1) html += `<span class="guest-history-page-dots">…</span>`;
+    html += `<button class="guest-history-page-btn is-compact ${i===page?'is-active':''}" type="button" data-page="${i}">${i}</button>`;
+    last = i;
+  });
+  html += `<button class="guest-history-page-btn is-compact" type="button" data-page="next" ${page>=totalPages?'disabled':''}>›</button>`;
   el.innerHTML = html;
   el.querySelectorAll('button').forEach(btn=>{
     btn.addEventListener('click',()=>{
@@ -1142,7 +1158,7 @@ function formatPurchaseDate(record){
   return new Date(ms).toLocaleString('en-MY', { hour12:true, hour:'numeric', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
 }
 const AZOBSS_PURCHASE_PAGE_SIZE = 4;
-const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 5;
+const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 4;
 let azobssAdminPurchasePage = 1;
 let azobssUserPurchasePage = 1;
 function clampPage(page, totalPages){

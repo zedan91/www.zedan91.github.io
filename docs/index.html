@@ -242,3 +242,71 @@ Dokumentasi ini menerangkan fungsi utama website AZOBSS.
 }
 
 </style>
+
+<style id="azobss-admin-compact-pagination-fix">
+/* AZOBSS admin compact lists: 4 records per page + smaller row bars */
+#registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
+#registeredUsersList .az-admin-user-row-card,
+#registeredUsersList .az-admin-user-compact-card,
+#liveUsersList .purchase-summary-item,
+#loginHistoryList .purchase-summary-item,
+#guestHistoryList .purchase-summary-item{
+  min-height:0!important;
+  padding:7px 10px!important;
+  border-radius:9px!important;
+  line-height:1.12!important;
+  font-size:12px!important;
+}
+#registeredUsersList .az-admin-user-compact-card{
+  display:grid!important;
+  grid-template-columns:minmax(145px,1fr) 105px 126px 92px!important;
+  gap:8px!important;
+  align-items:center!important;
+}
+#registeredUsersList .az-admin-user-compact-name strong{font-size:12px!important;}
+#registeredUsersList .az-admin-user-access-badge{font-size:10px!important;padding:2px 5px!important;white-space:nowrap!important;}
+#registeredUsersList .az-admin-register-date{font-size:11px!important;white-space:nowrap!important;}
+#registeredUsersList .az-admin-user-row-actions{display:flex!important;gap:6px!important;justify-content:flex-end!important;}
+#registeredUsersList .az-admin-small-btn{height:24px!important;min-width:50px!important;padding:0 8px!important;border-radius:6px!important;font-size:10px!important;}
+.admin-live-panel{margin-top:10px!important;padding-top:10px!important;}
+.admin-live-panel h4{font-size:14px!important;margin:0 0 8px!important;}
+.guest-history-stats{gap:8px!important;margin:0 0 8px!important;}
+.guest-history-stat{padding:6px 10px!important;border-radius:8px!important;font-size:11px!important;}
+.guest-history-stat strong{font-size:18px!important;margin-top:2px!important;}
+#liveUsersList .admin-purchase-user-card,
+#loginHistoryList .admin-purchase-user-card,
+#guestHistoryList .admin-purchase-user-card{gap:4px!important;}
+#liveUsersList .admin-purchase-user-top,
+#loginHistoryList .admin-purchase-user-top,
+#guestHistoryList .admin-purchase-user-top{
+  display:flex!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  align-items:center!important;
+}
+#liveUsersList .admin-purchase-user-top strong,
+#loginHistoryList .admin-purchase-user-top strong,
+#guestHistoryList .admin-purchase-user-top strong{font-size:12px!important;}
+#liveUsersList .admin-purchase-user-top span,
+#loginHistoryList .admin-purchase-user-top span,
+#guestHistoryList .admin-purchase-user-top span{font-size:11px!important;white-space:nowrap!important;}
+#liveUsersList .admin-purchase-user-details,
+#loginHistoryList .admin-purchase-user-details,
+#guestHistoryList .admin-purchase-user-details{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:5px 12px!important;
+  padding-top:4px!important;
+  border-top:0!important;
+  font-size:11px!important;
+  color:#cbd5e1!important;
+}
+.guest-history-pagination{gap:5px!important;margin-top:7px!important;align-items:center!important;}
+.guest-history-page-btn{min-width:28px!important;height:28px!important;padding:0 8px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important;}
+.guest-history-page-btn.is-compact{min-width:26px!important;height:26px!important;padding:0 7px!important;}
+.guest-history-page-dots{display:inline-flex!important;align-items:center!important;height:26px!important;padding:0 2px!important;color:#94a3b8!important;font-weight:bold!important;}
+@media(max-width:700px){
+  #registeredUsersList .az-admin-user-compact-card{grid-template-columns:1fr!important;}
+  #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
+}
+</style>

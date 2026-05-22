@@ -97,9 +97,18 @@ function pager(el, current, total, size, cb){
   const pages = Math.max(1, Math.ceil((total || 0) / size));
   if(total <= size){ el.innerHTML = ''; return; }
   current = Math.min(Math.max(1, current), pages);
-  let html = `<button type="button" class="guest-history-page-btn" data-page="prev" ${current <= 1 ? 'disabled' : ''}>Previous</button>`;
-  for(let i=1;i<=pages;i++) html += `<button type="button" class="guest-history-page-btn ${i===current?'is-active':''}" data-page="${i}">${i}</button>`;
-  html += `<button type="button" class="guest-history-page-btn" data-page="next" ${current >= pages ? 'disabled' : ''}>Next</button>`;
+  const pageList = [];
+  const add = (value) => { if(value >= 1 && value <= pages && !pageList.includes(value)) pageList.push(value); };
+  add(1); add(current - 1); add(current); add(current + 1); add(pages);
+  pageList.sort((a,b)=>a-b);
+  let last = 0;
+  let html = `<button type="button" class="guest-history-page-btn is-compact" data-page="prev" ${current <= 1 ? 'disabled' : ''}>‹</button>`;
+  pageList.forEach(i => {
+    if(last && i - last > 1) html += `<span class="guest-history-page-dots">…</span>`;
+    html += `<button type="button" class="guest-history-page-btn is-compact ${i===current?'is-active':''}" data-page="${i}">${i}</button>`;
+    last = i;
+  });
+  html += `<button type="button" class="guest-history-page-btn is-compact" data-page="next" ${current >= pages ? 'disabled' : ''}>›</button>`;
   el.innerHTML = html;
   el.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
     const v = btn.dataset.page;
