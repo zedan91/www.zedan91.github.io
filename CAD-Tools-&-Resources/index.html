@@ -1249,6 +1249,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
 }
 </style>
+
+<style id="azobss-hide-old-lisp-form">
+  #lispForm { display: none !important; }
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1393,7 +1397,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 </label>
 <span class="lisp-search-count" id="lispSearchCount">Showing all programs</span>
 </div>
-<form class="lisp-form admin-only" id="lispForm">
+<form class="lisp-form admin-only" id="lispForm" hidden style="display:none !important;">
 <label>
           LISP Name
           <input id="lispName" maxlength="60" placeholder="Example: AZ Text Calculator" required="" type="text"/>
