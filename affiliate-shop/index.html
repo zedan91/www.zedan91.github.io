@@ -44,6 +44,29 @@
     .search{flex:1 1 280px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
     .chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 14px;min-height:42px;font-weight:800;cursor:pointer}
     .chip.is-active{background:var(--green);border-color:var(--green);color:#052e16}
+    .sort-control{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 12px;min-height:42px;font-weight:800}
+    .sort-control select{border:0;outline:0;background:transparent;color:#fff;font-weight:900;min-height:34px;cursor:pointer}
+    .sort-control option{background:#0b1220;color:#fff}
+    .admin-add-card-btn{background:linear-gradient(135deg,#22c55e,#84cc16)!important;border-color:#22c55e!important;color:#052e16!important}
+    .admin-product-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(8px)}
+    .admin-product-modal.is-open{display:flex}
+    .admin-product-box{width:min(560px,96vw);max-height:90vh;overflow:auto;border:1px solid rgba(34,197,94,.35);border-radius:18px;background:linear-gradient(180deg,#102033,#07111f);box-shadow:0 28px 80px rgba(0,0,0,.45);padding:18px;color:#fff}
+    .admin-product-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .admin-product-head h2{margin:0;font-size:20px}
+    .admin-product-close{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#fff;min-width:38px;min-height:38px;cursor:pointer;font-size:20px}
+    .admin-product-form{display:grid;gap:12px}
+    .admin-product-form label{display:grid;gap:6px;font-size:13px;font-weight:900;color:#cbd5e1}
+    .admin-product-form input,.admin-product-form textarea,.admin-product-form select{width:100%;border:1px solid var(--line);border-radius:12px;background:#050b18;color:#fff;padding:11px 12px;font-weight:800;outline:none}
+    .admin-product-form textarea{min-height:82px;resize:vertical}
+    .admin-product-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .admin-product-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px}
+    .admin-product-save,.admin-product-cancel{border:0;border-radius:999px;padding:11px 16px;font-weight:950;cursor:pointer}
+    .admin-product-save{background:#22c55e;color:#052e16}
+    .admin-product-cancel{background:#172033;color:#e5e7eb;border:1px solid var(--line)}
+    .card-actions{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:auto}
+    .card-price{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(34,197,94,.35);border-radius:999px;background:rgba(34,197,94,.08);color:#86efac;padding:6px 9px;font-weight:950;font-size:12px}
+    .card-open{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#2563eb;color:#fff;padding:8px 11px;font-weight:950;font-size:12px;text-decoration:none}
+    @media(max-width:560px){.admin-product-grid{grid-template-columns:1fr}.sort-control{width:100%;justify-content:space-between}.sort-control select{flex:1}}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px}
     .card{display:grid;gap:10px;align-content:start;min-height:235px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#13243a,#0b1220);padding:18px;color:#fff;text-decoration:none;box-shadow:0 16px 34px rgba(0,0,0,.22)}
     .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -583,76 +606,277 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <div class="tools">
 <input class="search" id="searchInput" placeholder="Search products..." type="search"/>
 <button class="chip is-active" data-filter="all" type="button">All</button>
-<button class="chip" data-filter="computer" type="button">Computer</button>
-<button class="chip" data-filter="mobile" type="button">Mobile</button>
-<button class="chip" data-filter="camera" type="button">Camera</button>
-<button class="chip" data-filter="groceries" type="button">Groceries</button>
+<button class="chip" id="myFavouriteButton" type="button">❤ My Favourite</button>
+<label class="sort-control" for="categorySortSelect">Sort by:
+  <select id="categorySortSelect" aria-label="Sort by category">
+    <option value="all">All Categories</option>
+    <option value="software">Software</option>
+    <option value="cad-tools">CAD Tools</option>
+    <option value="affiliate-shop">Affiliate Shop</option>
+    <option value="computer">Computer</option>
+    <option value="mobile">Mobile</option>
+    <option value="camera">Camera</option>
+    <option value="groceries">Groceries</option>
+  </select>
+</label>
+<button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
 </div>
 </section>
 <section class="grid" id="productGrid"></section>
 <div class="empty" id="emptyState">No affiliate products found.</div>
+<div class="admin-product-modal" id="adminProductModal" aria-hidden="true">
+  <div class="admin-product-box" role="dialog" aria-modal="true" aria-labelledby="adminProductTitle">
+    <div class="admin-product-head">
+      <h2 id="adminProductTitle">Add Item / Card</h2>
+      <button class="admin-product-close" id="adminProductClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="admin-product-form" id="adminProductForm">
+      <input id="adminProductId" type="hidden"/>
+      <div class="admin-product-grid">
+        <label>Product Name
+          <input id="adminProductName" required placeholder="Example: AutoCAD LISP Pack"/>
+        </label>
+        <label>Category
+          <select id="adminProductCategory">
+            <option value="software">Software</option>
+            <option value="cad-tools">CAD Tools</option>
+            <option value="affiliate-shop">Affiliate Shop</option>
+            <option value="computer">Computer</option>
+            <option value="mobile">Mobile</option>
+            <option value="camera">Camera</option>
+            <option value="groceries">Groceries</option>
+            <option value="home-living">Home & Living</option>
+            <option value="others">Others</option>
+          </select>
+        </label>
+      </div>
+      <label>Description
+        <textarea id="adminProductDesc" placeholder="Short product description"></textarea>
+      </label>
+      <div class="admin-product-grid">
+        <label>Price / Badge
+          <input id="adminProductPrice" placeholder="FREE / RM10 / RM50"/>
+        </label>
+        <label>Icon
+          <input id="adminProductIcon" placeholder="💻 / 🛒 / AZ"/>
+        </label>
+      </div>
+      <div class="admin-product-grid">
+        <label>Button Type
+          <select id="adminProductButtonText">
+            <option value="Download Now">Download Now</option>
+            <option value="Buy Now">Buy Now</option>
+            <option value="Get Access">Get Access</option>
+            <option value="Open">Open</option>
+          </select>
+        </label>
+        <label>Link
+          <input id="adminProductLink" required placeholder="https://..."/>
+        </label>
+      </div>
+      <div class="admin-product-actions">
+        <button class="admin-product-cancel" id="adminProductCancel" type="button">Cancel</button>
+        <button class="admin-product-save" type="submit">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
 </main>
-<script>
+<script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+      authDomain: 'azobss.firebaseapp.com',
+      projectId: 'azobss',
+      storageBucket: 'azobss.firebasestorage.app',
+      messagingSenderId: '159277716405',
+      appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+    };
+
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const ADMIN_PRODUCTS_COLLECTION = 'affiliateProducts';
+    const LOCAL_ADMIN_PRODUCTS_KEY = 'azobss_admin_added_products_v1';
+
     const grid = document.getElementById('productGrid');
     const searchInput = document.getElementById('searchInput');
     const emptyState = document.getElementById('emptyState');
     const categorySearch = document.getElementById('categorySearch');
+    const categorySortSelect = document.getElementById('categorySortSelect');
+    const myFavouriteButton = document.getElementById('myFavouriteButton');
+    const adminAddItemButton = document.getElementById('adminAddItemButton');
     const categoryTiles = Array.from(document.querySelectorAll('.category-tile'));
     const chips = Array.from(document.querySelectorAll('[data-filter]'));
     let products = [];
     let activeFilter = 'all';
+    let favouriteOnly = false;
 
     function esc(value){
       return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     }
 
+    function clean(v){return String(v || '').trim().toLowerCase();}
+    function getCurrentUserObject(){
+      try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null');}catch(e){return null;}
+    }
+    function isAdmin(){
+      const currentUser = getCurrentUserObject();
+      return sessionStorage.getItem('azobssLoggedIn') === '1' && (
+        clean(currentUser?.usernameKey) === 'zedan91' || clean(currentUser?.email) === 'zedan91@azobss.local'
+      );
+    }
+
+    function normalizeProduct(item){
+      const price = String(item.price || item.badge || '').trim();
+      const isFree = /^free$/i.test(price);
+      return {
+        id: item.id || ('item-' + Date.now() + '-' + Math.random().toString(36).slice(2,8)),
+        title: item.title || item.name || 'Untitled Item',
+        desc: item.desc || item.description || '',
+        badge: item.badge || (isFree ? 'FREE' : (price || 'Affiliate')),
+        price: price || item.badge || 'FREE',
+        icon: item.icon || (isFree ? 'FREE' : '🛒'),
+        category: item.category || 'affiliate-shop',
+        meta: item.meta || item.category || 'Affiliate item',
+        link: item.link || item.url || '#',
+        buttonText: item.buttonText || (isFree ? 'Download Now' : 'Buy Now'),
+        source: item.source || 'static'
+      };
+    }
+
+    function getFavouriteIds(){
+      try{return JSON.parse(localStorage.getItem('azobss_liked_products') || '[]');}catch(e){return [];}
+    }
+
     function render(){
-      const query = searchInput.value.trim().toLowerCase();
+      const queryText = searchInput.value.trim().toLowerCase();
+      const sortCategory = categorySortSelect?.value || 'all';
+      const favouriteIds = getFavouriteIds();
       const filtered = products.filter(item => {
-        const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon].join(' ').toLowerCase();
+        const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon,item.price].join(' ').toLowerCase();
         const categoryOk = activeFilter === 'all' || item.category === activeFilter;
-        return categoryOk && (!query || haystack.includes(query));
+        const sortOk = sortCategory === 'all' || item.category === sortCategory;
+        const favOk = !favouriteOnly || favouriteIds.includes(item.id) || localStorage.getItem('azobss_like_' + item.id) === '1';
+        return categoryOk && sortOk && favOk && (!queryText || haystack.includes(queryText));
       });
+
       grid.innerHTML = filtered.map(item => `
-        <a class="card" href="${esc(item.link)}" target="_blank" rel="noopener">
+        <article class="card" data-product-id="${esc(item.id)}" data-category="${esc(item.category)}">
           <div class="top">
             <div class="icon">${esc(item.icon || 'AZ')}</div>
-            <span class="badge">${esc(item.badge || 'Affiliate')}</span>
+            <span class="badge">${esc(item.badge || item.price || 'Affiliate')}</span>
           </div>
           <h2>${esc(item.title)}</h2>
           <p>${esc(item.desc)}</p>
           <div class="meta">${esc(item.meta || item.category || 'Affiliate item')}</div>
-        </a>
+          <div class="card-actions">
+            <span class="card-price">${/^free$/i.test(item.price || item.badge || '') ? 'FREE' : '🛒 ' + esc(item.price || item.badge || '')}</span>
+            <a class="card-open" href="${esc(item.link)}" target="_blank" rel="noopener">${esc(item.buttonText || 'Open')}</a>
+          </div>
+        </article>
       `).join('');
       emptyState.style.display = filtered.length ? 'none' : 'block';
+    }
+
+    function refreshAdminState(){
+      adminAddItemButton.hidden = !isAdmin();
+    }
+
+    function loadLocalAdminProducts(){
+      try{return JSON.parse(localStorage.getItem(LOCAL_ADMIN_PRODUCTS_KEY) || '[]').map(normalizeProduct);}catch(e){return [];}
+    }
+
+    async function loadFirestoreProducts(){
+      try{
+        const snap = await getDocs(query(collection(db, ADMIN_PRODUCTS_COLLECTION), orderBy('createdAt','desc')));
+        return snap.docs.map(d => normalizeProduct({id:d.id, ...d.data(), source:'firestore'}));
+      }catch(err){
+        console.warn('Affiliate admin products Firestore load skipped:', err);
+        return [];
+      }
+    }
+
+    async function loadProducts(){
+      let staticProducts = [];
+      try{
+        const res = await fetch('../affiliate-products.json', {cache:'no-store'});
+        staticProducts = res.ok ? await res.json() : [];
+      }catch(e){ staticProducts = []; }
+      const firestoreProducts = await loadFirestoreProducts();
+      products = [...firestoreProducts, ...loadLocalAdminProducts(), ...(Array.isArray(staticProducts) ? staticProducts.map(normalizeProduct) : [])];
+      render();
     }
 
     chips.forEach(chip => chip.addEventListener('click', () => {
       activeFilter = chip.dataset.filter || 'all';
       chips.forEach(item => item.classList.toggle('is-active', item === chip));
+      favouriteOnly = false;
+      myFavouriteButton?.classList.remove('is-active');
       render();
     }));
+    myFavouriteButton?.addEventListener('click', () => {
+      favouriteOnly = !favouriteOnly;
+      myFavouriteButton.classList.toggle('is-active', favouriteOnly);
+      render();
+    });
+    categorySortSelect?.addEventListener('change', render);
     searchInput.addEventListener('input', render);
     if(categorySearch){
       categorySearch.addEventListener('input', () => {
-        const query = categorySearch.value.trim().toLowerCase();
+        const queryText = categorySearch.value.trim().toLowerCase();
         categoryTiles.forEach(tile => {
           const name = tile.dataset.name || tile.textContent.toLowerCase();
-          tile.style.display = !query || name.includes(query) ? '' : 'none';
+          tile.style.display = !queryText || name.includes(queryText) ? '' : 'none';
         });
       });
     }
+    categoryTiles.forEach(tile => tile.addEventListener('click', () => {
+      activeFilter = tile.dataset.filter || 'all';
+      categoryTiles.forEach(item => item.classList.toggle('is-active', item === tile));
+      chips.forEach(item => item.classList.toggle('is-active', item.dataset.filter === activeFilter));
+      render();
+    }));
 
-    fetch('../affiliate-products.json', {cache:'no-store'})
-      .then(res => res.ok ? res.json() : [])
-      .then(data => {
-        products = Array.isArray(data) ? data : [];
-        render();
-      })
-      .catch(() => {
-        products = [];
-        render();
+    const modal = document.getElementById('adminProductModal');
+    const form = document.getElementById('adminProductForm');
+    const closeModal = () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); };
+    const openModal = () => { form.reset(); document.getElementById('adminProductPrice').value = 'FREE'; document.getElementById('adminProductIcon').value = '🛒'; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); };
+    adminAddItemButton?.addEventListener('click', openModal);
+    document.getElementById('adminProductClose')?.addEventListener('click', closeModal);
+    document.getElementById('adminProductCancel')?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+
+    form?.addEventListener('submit', async e => {
+      e.preventDefault();
+      if(!isAdmin()) return alert('Admin only.');
+      const product = normalizeProduct({
+        title: document.getElementById('adminProductName').value.trim(),
+        desc: document.getElementById('adminProductDesc').value.trim(),
+        category: document.getElementById('adminProductCategory').value,
+        price: document.getElementById('adminProductPrice').value.trim() || 'FREE',
+        badge: document.getElementById('adminProductPrice').value.trim() || 'FREE',
+        icon: document.getElementById('adminProductIcon').value.trim() || '🛒',
+        buttonText: document.getElementById('adminProductButtonText').value,
+        link: document.getElementById('adminProductLink').value.trim(),
+        meta: document.getElementById('adminProductCategory').selectedOptions[0]?.textContent || 'Affiliate item'
       });
+      try{
+        await addDoc(collection(db, ADMIN_PRODUCTS_COLLECTION), {...product, createdAt: serverTimestamp(), createdBy: 'zedan91'});
+      }catch(err){
+        const saved = loadLocalAdminProducts();
+        saved.unshift(product);
+        localStorage.setItem(LOCAL_ADMIN_PRODUCTS_KEY, JSON.stringify(saved));
+        alert('Firestore rules belum allow affiliateProducts. Item disimpan local sementara. Tambah rules affiliateProducts untuk sync semua device.');
+      }
+      closeModal();
+      await loadProducts();
+    });
+
+    setInterval(refreshAdminState, 1500);
+    refreshAdminState();
+    loadProducts();
   </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body>
 </html>
