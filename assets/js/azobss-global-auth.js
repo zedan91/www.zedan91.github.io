@@ -1,13 +1,38 @@
 
-function formatPhoneGuide(value){
-  const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+
+function getAzobssPhoneDialForInput(input){
+  try {
+    const row = input && input.closest ? input.closest('[data-country-phone]') : null;
+    const hidden = row ? row.querySelector('input[type="hidden"][id$="Dial"]') : null;
+    const dial = String(hidden && hidden.value ? hidden.value : '60').replace(/\D/g, '') || '60';
+    return dial;
+  } catch (e) {
+    return '60';
+  }
+}
+
+function getAzobssMaxLocalDigits(input){
+  // ITU E.164: maximum international phone number length is 15 digits including country code.
+  const dial = getAzobssPhoneDialForInput(input);
+  return Math.max(1, 15 - dial.length);
+}
+
+function getPhoneGuideDigits(value, input){
+  const max = getAzobssMaxLocalDigits(input);
+  let digits = String(value || '').replace(/\D/g, '');
+  const dial = getAzobssPhoneDialForInput(input);
+  // If user pastes a full international number into local box, remove the country code.
+  if (digits.startsWith(dial) && digits.length > dial.length + 3) digits = digits.slice(dial.length);
+  // If user pastes a local Malaysia-style 0 prefix after choosing MY +60, remove only that local trunk 0.
+  if (dial === '60' && digits.startsWith('0') && digits.length > 1) digits = digits.slice(1);
+  return digits.slice(0, max);
+}
+
+function formatPhoneGuide(value, input){
+  const digits = getPhoneGuideDigits(value, input);
   if (digits.length <= 2) return digits;
   if (digits.length <= 6) return digits.slice(0, 2) + '-' + digits.slice(2);
   return digits.slice(0, 2) + '-' + digits.slice(2, 6) + ' ' + digits.slice(6);
-}
-
-function getPhoneGuideDigits(value){
-  return String(value || '').replace(/\D/g, '').slice(0, 10);
 }
 
 function countPhoneDigitsBefore(value, pos){
@@ -26,6 +51,15 @@ function caretFromPhoneDigitIndex(formatted, digitIndex){
   return formatted.length;
 }
 
+function setPhoneValueAndCaret(input, digits, caretDigitIndex){
+  const formatted = formatPhoneGuide(digits, input);
+  input.value = formatted;
+  const caret = caretFromPhoneDigitIndex(formatted, Math.max(0, caretDigitIndex));
+  requestAnimationFrame(() => {
+    try { input.setSelectionRange(caret, caret); } catch (e) {}
+  });
+}
+
 function bindAzobssPhoneDisplayFormatter(root){
   const scope = root || document;
   const ids = ['siteSignupPhone', 'adminUserEditPhone', 'profileEditPhone'];
@@ -33,31 +67,41 @@ function bindAzobssPhoneDisplayFormatter(root){
     const input = scope.getElementById ? scope.getElementById(id) : null;
     if (!input || input.dataset.azobssPhoneFormatter === '1') return;
     input.dataset.azobssPhoneFormatter = '1';
+    input.placeholder = '10-3560 0723';
+    input.setAttribute('maxlength', String(15));
 
-    input.addEventListener('keydown', (event) => {
-      if (event.key !== 'Backspace' && event.key !== 'Delete') return;
+    input.addEventListener('beforeinput', (event) => {
+      const type = event.inputType;
+      if (type !== 'deleteContentBackward' && type !== 'deleteContentForward') return;
       const value = input.value || '';
       const start = input.selectionStart ?? value.length;
       const end = input.selectionEnd ?? start;
-      if (start !== end) return;
-
-      const isBackspace = event.key === 'Backspace';
-      const checkIndex = isBackspace ? start - 1 : start;
-      const ch = value.charAt(checkIndex);
-      if (ch !== '-' && ch !== ' ') return;
+      const digits = getPhoneGuideDigits(value, input);
+      let startDigit = countPhoneDigitsBefore(value, start);
+      let endDigit = countPhoneDigitsBefore(value, end);
 
       event.preventDefault();
-      let digits = getPhoneGuideDigits(value);
-      let digitIndex = countPhoneDigitsBefore(value, start);
-      const removeIndex = isBackspace ? digitIndex - 1 : digitIndex;
-      if (removeIndex >= 0 && removeIndex < digits.length) {
-        digits = digits.slice(0, removeIndex) + digits.slice(removeIndex + 1);
-        digitIndex = isBackspace ? removeIndex : removeIndex;
+
+      if (start !== end) {
+        const nextDigits = digits.slice(0, startDigit) + digits.slice(endDigit);
+        setPhoneValueAndCaret(input, nextDigits, startDigit);
+      } else if (type === 'deleteContentBackward') {
+        if (startDigit <= 0) {
+          setPhoneValueAndCaret(input, digits, 0);
+        } else {
+          const removeIndex = startDigit - 1;
+          const nextDigits = digits.slice(0, removeIndex) + digits.slice(removeIndex + 1);
+          setPhoneValueAndCaret(input, nextDigits, removeIndex);
+        }
+      } else {
+        if (startDigit >= digits.length) {
+          setPhoneValueAndCaret(input, digits, digits.length);
+        } else {
+          const nextDigits = digits.slice(0, startDigit) + digits.slice(startDigit + 1);
+          setPhoneValueAndCaret(input, nextDigits, startDigit);
+        }
       }
-      const formatted = formatPhoneGuide(digits);
-      input.value = formatted;
-      const caret = caretFromPhoneDigitIndex(formatted, digitIndex);
-      requestAnimationFrame(() => input.setSelectionRange(caret, caret));
+
       input.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
@@ -65,14 +109,19 @@ function bindAzobssPhoneDisplayFormatter(root){
       const oldValue = input.value || '';
       const oldCaret = input.selectionStart ?? oldValue.length;
       const digitIndex = countPhoneDigitsBefore(oldValue, oldCaret);
-      const formatted = formatPhoneGuide(oldValue);
-      if (input.value !== formatted) input.value = formatted;
-      const caret = caretFromPhoneDigitIndex(formatted, digitIndex);
-      requestAnimationFrame(() => input.setSelectionRange(caret, caret));
+      const digits = getPhoneGuideDigits(oldValue, input);
+      setPhoneValueAndCaret(input, digits, digitIndex);
+    });
+
+    input.addEventListener('paste', () => {
+      setTimeout(() => {
+        const digits = getPhoneGuideDigits(input.value, input);
+        setPhoneValueAndCaret(input, digits, digits.length);
+      }, 0);
     });
 
     input.addEventListener('blur', () => {
-      input.value = formatPhoneGuide(input.value);
+      input.value = formatPhoneGuide(input.value, input);
     });
   });
 }
@@ -2286,64 +2335,11 @@ setTimeout(()=>{azobssCleanupCollection("loginHistory");azobssCleanupCollection(
 
 
 
-/* AZOBSS phone local display helper
-   Display only: 1135600723 -> 11-3560 0723, 148362098 -> 14-836 2098.
-   Firestore save remains clean because getPhoneWithDial()/normalizeAzobssPhone strips dash/space. */
-(function installAzobssLocalPhoneDashFormatter(){
-  if (window.__azobssLocalPhoneDashFormatterV2) return;
-  window.__azobssLocalPhoneDashFormatterV2 = true;
 
-  function formatAzobssLocalPhone(value){
-    let n = String(value || '').replace(/\D/g, '');
-    // If a full Malaysian number is pasted into the local box, remove country code.
-    if (n.startsWith('60') && n.length > 10) n = n.slice(2);
-    if (n.startsWith('0') && n.length > 9) n = n.slice(1);
+/* AZOBSS phone local display helper disabled here.
+   The single active formatter is bindAzobssPhoneDisplayFormatter() near the top of this file.
+   This prevents Backspace from getting stuck on dash/space separators. */
+window.azobssFormatLocalPhoneForDisplay = function(value){
+  return formatPhoneGuide(value);
+};
 
-    if (n.length <= 2) return n;
-    if (n.length <= 6) return n.slice(0, 2) + '-' + n.slice(2);
-    return n.slice(0, 2) + '-' + n.slice(2, 6) + ' ' + n.slice(6, 10);
-  }
-
-  function applyPhoneFormat(input){
-    if (!input) return;
-    input.placeholder = '10-3560 0723';
-    input.value = formatAzobssLocalPhone(input.value);
-  }
-
-  function applyAllPhoneFormats(root){
-    (root || document).querySelectorAll('#siteSignupPhone,#profileEditPhone,#adminUserEditPhone').forEach(applyPhoneFormat);
-  }
-
-  document.addEventListener('input', function(event){
-    const el = event.target;
-    if (!el || !['siteSignupPhone','profileEditPhone','adminUserEditPhone'].includes(el.id)) return;
-    const cursorWasAtEnd = el.selectionStart === el.value.length;
-    el.value = formatAzobssLocalPhone(el.value);
-    if (cursorWasAtEnd) {
-      try { el.setSelectionRange(el.value.length, el.value.length); } catch(e) {}
-    }
-  }, true);
-
-  document.addEventListener('focusin', function(event){
-    const el = event.target;
-    if (el && ['siteSignupPhone','profileEditPhone','adminUserEditPhone'].includes(el.id)) {
-      applyPhoneFormat(el);
-    }
-  }, true);
-
-  document.addEventListener('DOMContentLoaded', function(){ applyAllPhoneFormats(document); });
-  setTimeout(function(){ applyAllPhoneFormats(document); }, 300);
-  setTimeout(function(){ applyAllPhoneFormats(document); }, 1000);
-
-  try {
-    new MutationObserver(function(mutations){
-      mutations.forEach(function(mutation){
-        mutation.addedNodes && mutation.addedNodes.forEach(function(node){
-          if (node && node.nodeType === 1) applyAllPhoneFormats(node);
-        });
-      });
-    }).observe(document.documentElement, { childList:true, subtree:true });
-  } catch(e) {}
-
-  window.azobssFormatLocalPhoneForDisplay = formatAzobssLocalPhone;
-})();
