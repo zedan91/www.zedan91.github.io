@@ -878,7 +878,7 @@ function openAdminUserEdit(userId){
   $('adminUserEditUsername').value = user.usernameKey || user.name || '';
   const adminPhoneParts = splitPhoneToDialLocal(user.phone || '');
   setPhoneDial('adminUserEdit', adminPhoneParts.dial);
-  $('adminUserEditPhone').value = adminPhoneParts.local || '';
+  $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
   const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
