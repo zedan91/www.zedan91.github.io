@@ -7291,6 +7291,64 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 #purchaseSummaryList .az-purchase-show-btn{background:#2563eb!important;color:#fff!important;}
 @media(max-width:900px){#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{grid-template-columns:minmax(95px,1fr) minmax(185px,1.35fr) minmax(105px,.85fr) 50px 68px 128px!important;column-gap:7px!important;overflow-x:auto!important;scrollbar-width:thin!important;}}
 </style>
+<style>
+
+/* AZOBSS FIX 2026-05-23: tiny compact purchase action buttons so Show + Reset fit inside card */
+#purchaseSummaryList .purchase-summary-item.admin-purchase-user-card.az-purchase-mini-card{
+  overflow:hidden !important;
+  padding:7px 8px !important;
+}
+#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{
+  display:grid !important;
+  grid-template-columns:minmax(88px,1fr) minmax(175px,1.45fr) minmax(100px,.9fr) minmax(44px,.42fr) minmax(64px,.55fr) 94px !important;
+  column-gap:8px !important;
+  align-items:center !important;
+  width:100% !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+}
+#purchaseSummaryList .az-purchase-mini-actions{
+  width:94px !important;
+  min-width:94px !important;
+  max-width:94px !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:4px !important;
+  overflow:visible !important;
+  justify-self:end !important;
+}
+#purchaseSummaryList .az-purchase-show-btn,
+#purchaseSummaryList .az-purchase-reset-btn{
+  width:45px !important;
+  min-width:45px !important;
+  max-width:45px !important;
+  flex:0 0 45px !important;
+  height:26px !important;
+  min-height:26px !important;
+  padding:0 !important;
+  margin:0 !important;
+  border-radius:7px !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  box-sizing:border-box !important;
+}
+#purchaseSummaryList .az-purchase-reset-btn{
+  margin-right:0 !important;
+}
+@media(max-width:900px){
+  #purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{
+    grid-template-columns:minmax(78px,1fr) minmax(150px,1.35fr) minmax(88px,.85fr) 40px 58px 94px !important;
+    column-gap:5px !important;
+  }
+}
+</style>
 </head>
 <body id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
