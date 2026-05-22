@@ -807,6 +807,35 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
 }
 </style>
+
+<style>
+/* AZOBSS Software Admin Add Item */
+.software-admin-toolbar{max-width:1180px;margin:0 auto 18px;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
+.software-admin-add-btn{border:1px solid rgba(34,197,94,.55);background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(34,197,94,.20);}
+.software-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);}
+.software-badge{display:inline-flex;align-items:center;justify-content:center;margin:0 auto 12px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(148,163,184,.24);background:#0f172a;color:#e2e8f0;}
+.software-badge.free{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(34,197,94,.10);}
+.software-badge.premium{border-color:rgba(245,158,11,.55);color:#fbbf24;background:rgba(245,158,11,.12);}
+.download-btn.premium{background:#f59e0b;color:#111827;}
+.download-btn.premium:hover{background:#d97706;color:#fff;}
+.software-admin-modal{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.78);backdrop-filter:blur(8px);}
+.software-admin-modal.is-open{display:flex;}
+.software-admin-panel{width:min(560px,96vw);max-height:92vh;overflow:auto;border-radius:22px;border:1px solid rgba(34,197,94,.28);background:#0f172a;box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px;color:#f8fafc;}
+.software-admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.software-admin-head h2{margin:0;font-size:22px;color:#86efac;}
+.software-admin-close{width:34px;height:34px;border-radius:999px;border:1px solid rgba(148,163,184,.28);background:#111827;color:#fff;font-size:20px;cursor:pointer;}
+.software-admin-form{display:grid;gap:12px;}
+.software-admin-form label{display:grid;gap:6px;font-size:13px;font-weight:800;color:#cbd5e1;}
+.software-admin-form input,.software-admin-form textarea,.software-admin-form select{width:100%;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#020617;color:#fff;padding:11px 12px;font:inherit;outline:none;}
+.software-admin-form textarea{min-height:82px;resize:vertical;}
+.software-admin-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.software-admin-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+.software-admin-actions button{border:0;border-radius:12px;padding:11px 16px;font-weight:900;cursor:pointer;}
+.software-admin-cancel{background:#334155;color:#e2e8f0;}
+.software-admin-save{background:#22c55e;color:#052e16;}
+.software-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
+@media(max-width:640px){.software-admin-row{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center}.software-admin-add-btn{width:100%;}}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -863,39 +892,48 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <p class="downloads-intro">
         Essential tools and utilities for repair, troubleshooting and optimizing Windows PCs.
       </p>
-<div class="downloads-grid">
-<div class="download-card">
+<div class="software-admin-toolbar">
+  <button class="software-admin-add-btn" id="softwareAdminAddButton" type="button" hidden>+ Add Software Item</button>
+</div>
+<div class="downloads-grid" id="softwareDownloadsGrid">
+<div class="download-card" data-software-static="1">
 <div class="download-icon">CD</div>
+<div class="software-badge free">Free Software</div>
 <h3>CrystalDiskMark</h3>
 <p>Benchmark utility for testing SSD and hard disk speed on Windows.</p>
 <a class="download-btn" href="https://crystalmark.info/en/software/crystaldiskmark/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card">
+<div class="download-card" data-software-static="1">
 <div class="download-icon">HW</div>
+<div class="software-badge free">Free Software</div>
 <h3>HWInfo</h3>
 <p>Tool for monitoring temperature, sensors, hardware details and PC system status.</p>
 <a class="download-btn" href="https://www.hwinfo.com/download/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card">
+<div class="download-card" data-software-static="1">
 <div class="download-icon">AD</div>
+<div class="software-badge free">Free Software</div>
 <h3>AnyDesk</h3>
 <p>Remote support tool for online PC troubleshooting.</p>
 <a class="download-btn" href="https://anydesk.com/en/downloads/windows?dv=win_exe" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card">
+<div class="download-card" data-software-static="1">
 <div class="download-icon">RD</div>
+<div class="software-badge free">Free Software</div>
 <h3>RustDesk</h3>
 <p>Alternative remote desktop tool for support and remote access.</p>
 <a class="download-btn" href="https://rustdesk.com/download" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card">
+<div class="download-card" data-software-static="1">
 <div class="download-icon">FC</div>
+<div class="software-badge free">Free Software</div>
 <h3>File Converter</h3>
 <p>Utility for converting files, images, documents and media formats.</p>
 <a class="download-btn" href="https://file-converter.io/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card">
+<div class="download-card" data-software-static="1">
 <div class="download-icon">WT</div>
+<div class="software-badge free">Free Software</div>
 <h3>Windows Tweaks</h3>
 <p>Registry tweaks to speed up Windows 11 workflows and adjust important settings.</p>
 <div class="tweak-links">
@@ -907,8 +945,188 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 </div>
 </div>
 </section>
+
+<div class="software-admin-modal" id="softwareAdminModal" aria-hidden="true">
+  <div class="software-admin-panel" role="dialog" aria-modal="true" aria-labelledby="softwareAdminTitle">
+    <div class="software-admin-head">
+      <h2 id="softwareAdminTitle">Add Software Item</h2>
+      <button class="software-admin-close" id="softwareAdminClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="software-admin-form" id="softwareAdminForm">
+      <label>Software Name
+        <input id="softwareAdminName" type="text" placeholder="Example: Windows Tweaks Pro" required>
+      </label>
+      <label>Description
+        <textarea id="softwareAdminDesc" placeholder="Short description for this software/tool" required></textarea>
+      </label>
+      <div class="software-admin-row">
+        <label>Software Type
+          <select id="softwareAdminType">
+            <option value="free">Free Software</option>
+            <option value="premium">Premium Software</option>
+          </select>
+        </label>
+        <label>Price / Badge
+          <input id="softwareAdminPrice" type="text" placeholder="FREE or RM10" value="FREE">
+        </label>
+      </div>
+      <div class="software-admin-row">
+        <label>Icon Text
+          <input id="softwareAdminIcon" type="text" placeholder="WT" maxlength="4">
+        </label>
+        <label>Button Text
+          <input id="softwareAdminButtonText" type="text" placeholder="Download Now">
+        </label>
+      </div>
+      <label>Download / Payment Link
+        <input id="softwareAdminLink" type="url" placeholder="Free: download link / Premium: ToyyibPay, QR or bank transaction link" required>
+      </label>
+      <p class="software-admin-note">Free Software will show <b>Download Now</b>. Premium Software will show <b>Buy Now</b> and can use your ToyyibPay/payment link.</p>
+      <div class="software-admin-actions">
+        <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
+        <button class="software-admin-save" type="submit">Save Item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <footer>
     © 2026 AZOBSS. All rights reserved.
   </footer>
+
+<script type="module">
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain: 'azobss.firebaseapp.com',
+    projectId: 'azobss',
+    storageBucket: 'azobss.firebasestorage.app',
+    messagingSenderId: '159277716405',
+    appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const SOFTWARE_COLLECTION = 'softwareTools';
+  const LOCAL_KEY = 'azobss_admin_software_tools_v1';
+
+  const grid = document.getElementById('softwareDownloadsGrid');
+  const addButton = document.getElementById('softwareAdminAddButton');
+  const modal = document.getElementById('softwareAdminModal');
+  const form = document.getElementById('softwareAdminForm');
+  const typeSelect = document.getElementById('softwareAdminType');
+  const priceInput = document.getElementById('softwareAdminPrice');
+  const buttonInput = document.getElementById('softwareAdminButtonText');
+  const iconInput = document.getElementById('softwareAdminIcon');
+
+  function clean(v){ return String(v || '').trim().toLowerCase(); }
+  function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+  function getCurrentUserObject(){ try { return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null'); } catch(e){ return null; } }
+  function isAdmin(){
+    const currentUser = getCurrentUserObject();
+    return sessionStorage.getItem('azobssLoggedIn') === '1' && (
+      clean(currentUser?.usernameKey) === 'zedan91' || clean(currentUser?.email) === 'zedan91@azobss.local'
+    );
+  }
+  function normalizeItem(item){
+    const type = item.type === 'premium' ? 'premium' : 'free';
+    const price = String(item.price || (type === 'free' ? 'FREE' : '')).trim();
+    return {
+      id: item.id || ('software-' + Date.now() + '-' + Math.random().toString(36).slice(2,8)),
+      name: item.name || item.title || 'Untitled Software',
+      desc: item.desc || item.description || '',
+      type,
+      price: type === 'free' ? 'FREE' : (price || 'RM0'),
+      icon: item.icon || (type === 'free' ? 'FREE' : '🛒'),
+      link: item.link || item.url || '#',
+      buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now')
+    };
+  }
+  function renderItem(item){
+    const isPremium = item.type === 'premium';
+    const badgeText = isPremium ? ('🛒 ' + item.price) : 'Free Software';
+    return `<div class="download-card" data-admin-software="1" data-type="${esc(item.type)}">
+      <div class="download-icon">${esc(item.icon)}</div>
+      <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
+      <h3>${esc(item.name)}</h3>
+      <p>${esc(item.desc)}</p>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" href="${esc(item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
+    </div>`;
+  }
+  function loadLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]').map(normalizeItem); } catch(e){ return []; } }
+  async function loadFirestore(){
+    try{
+      const snap = await getDocs(query(collection(db, SOFTWARE_COLLECTION), orderBy('createdAt','desc')));
+      return snap.docs.map(d => normalizeItem({id:d.id, ...d.data()}));
+    }catch(err){
+      console.warn('Software items Firestore load skipped:', err);
+      return [];
+    }
+  }
+  async function loadItems(){
+    if(!grid) return;
+    const existingAdminCards = grid.querySelectorAll('[data-admin-software="1"]');
+    existingAdminCards.forEach(card => card.remove());
+    const items = [...await loadFirestore(), ...loadLocal()];
+    if(items.length){
+      grid.insertAdjacentHTML('afterbegin', items.map(renderItem).join(''));
+    }
+  }
+  function refreshAdminState(){ if(addButton) addButton.hidden = !isAdmin(); }
+  function syncTypeDefaults(){
+    const premium = typeSelect?.value === 'premium';
+    if(priceInput && (!priceInput.value || /^(free|rm0)$/i.test(priceInput.value.trim()))) priceInput.value = premium ? 'RM10' : 'FREE';
+    if(buttonInput && (!buttonInput.value || /^(download now|buy now|open)$/i.test(buttonInput.value.trim()))) buttonInput.value = premium ? 'Buy Now' : 'Download Now';
+    if(iconInput && !iconInput.value.trim()) iconInput.value = premium ? '🛒' : 'FREE';
+  }
+  function openModal(){
+    form?.reset();
+    if(typeSelect) typeSelect.value = 'free';
+    if(priceInput) priceInput.value = 'FREE';
+    if(buttonInput) buttonInput.value = 'Download Now';
+    if(iconInput) iconInput.value = 'FREE';
+    modal?.classList.add('is-open');
+    modal?.setAttribute('aria-hidden','false');
+  }
+  function closeModal(){ modal?.classList.remove('is-open'); modal?.setAttribute('aria-hidden','true'); }
+
+  addButton?.addEventListener('click', openModal);
+  document.getElementById('softwareAdminClose')?.addEventListener('click', closeModal);
+  document.getElementById('softwareAdminCancel')?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } });
+
+  form?.addEventListener('submit', async e => {
+    e.preventDefault();
+    if(!isAdmin()) return alert('Admin only.');
+    syncTypeDefaults();
+    const item = normalizeItem({
+      name: document.getElementById('softwareAdminName').value.trim(),
+      desc: document.getElementById('softwareAdminDesc').value.trim(),
+      type: typeSelect.value,
+      price: priceInput.value.trim(),
+      icon: iconInput.value.trim(),
+      buttonText: buttonInput.value.trim(),
+      link: document.getElementById('softwareAdminLink').value.trim()
+    });
+    try{
+      await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91'});
+    }catch(err){
+      const saved = loadLocal();
+      saved.unshift(item);
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(saved));
+      alert('Firestore rules belum allow softwareTools. Item disimpan local sementara. Tambah rules softwareTools untuk sync semua device.');
+    }
+    closeModal();
+    await loadItems();
+  });
+
+  setInterval(refreshAdminState, 1500);
+  refreshAdminState();
+  loadItems();
+</script>
+
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body>
 </html>
