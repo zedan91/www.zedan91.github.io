@@ -496,6 +496,9 @@ async function azobssLogoutOnce(){
   azobssLogoutInProgress = true;
   window.__AZOBSS_LOGGING_OUT__ = true;
   try{
+    const logoutUser = getSavedUser();
+    if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
+    await removeOnlineUser(logoutUser);
     document.querySelectorAll('.user-menu.is-open').forEach(el=>{
       el.classList.remove('is-open');
       el.setAttribute('aria-expanded','false');
@@ -516,6 +519,7 @@ async function azobssLogoutOnce(){
   }
 }
 window.azobssLogoutUser = azobssLogoutOnce;
+window.addEventListener('beforeunload', ()=>{ try{ if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer); }catch(_e){} });
 function getSavedUser(){
   return safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
     safeJson(localStorage.getItem('azobssCurrentUser')) ||
@@ -778,6 +782,8 @@ let azobssRegisteredUsersPage = 1;
 let azobssLiveUsersPage = 1;
 let azobssLoginHistoryPage = 1;
 let azobssGuestHistoryPage = 1;
+const AZOBSS_REAL_ONLINE_MS = 120000; // only show users seen within the last 2 minutes
+let azobssPresenceHeartbeatTimer = null;
 
 function firestoreMs(value){
   if(!value) return 0;
@@ -900,25 +906,49 @@ This removes the website profile record from Firestore. Firebase Auth login acco
     alert('Failed to delete user record. Check Firebase rules / internet connection.');
   }
 }
+function azobssIsRealOnline(user){
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
+  return ms > 0 && (Date.now() - ms) <= AZOBSS_REAL_ONLINE_MS;
+}
+function azobssInlineTime(ms){
+  return ms ? new Date(ms).toLocaleString('en-MY',{hour12:false}) : '-';
+}
 function liveUserHtml(user){
-  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastLoginAt);
-  return `<div class="purchase-summary-item admin-purchase-user-card">
-    <div class="admin-purchase-user-top"><strong>${recordDisplayName(user)}</strong><span>${ms ? new Date(ms).toLocaleString('en-MY',{hour12:false}) : '-'}</span></div>
-    <div class="admin-purchase-user-details">
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${recordDisplayName(user)}</strong>
       <span>Email: ${escHtml(user.email || '-')}</span>
       <span>Phone: ${escHtml(user.phone || '-')}</span>
-      <span>Status: online / recently active</span>
+      <span>Status: <b class="az-status-online">online</b></span>
+      <span>Seen: ${azobssInlineTime(ms)}</span>
     </div>
   </div>`;
 }
 function loginHistoryHtml(row){
   const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card">
-    <div class="admin-purchase-user-top"><strong>${recordDisplayName(row)}</strong><span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span></div>
-    <div class="admin-purchase-user-details">
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${recordDisplayName(row)}</strong>
+      <span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span>
       <span>Email: ${escHtml(row.email || '-')}</span>
       <span>Phone: ${escHtml(row.phone || '-')}</span>
-      <span>Time: ${ms ? new Date(ms).toLocaleString('en-MY',{hour12:false}) : '-'}</span>
+      <span>Time: ${azobssInlineTime(ms)}</span>
+    </div>
+  </div>`;
+}
+function guestHistoryHtml(row){
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  const ip = row.ipAddress || row.ip || '-';
+  const device = row.deviceId || row.deviceFingerprint || '-';
+  const page = row.page || row.path || '/';
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>Guest</strong>
+      <span>IP: ${escHtml(ip)}</span>
+      <span>Device ID: ${escHtml(device)}</span>
+      <span>Page: ${escHtml(page)}</span>
+      <span>Time: ${azobssInlineTime(ms)}</span>
     </div>
   </div>`;
 }
@@ -965,9 +995,25 @@ async function upsertOnlineUser(user){
       uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
       email: u.email || '', phone: u.phone || '', role: u.role || 'member',
       invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
-      lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString()
+      status: 'online',
+      lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString(), lastSeenMs: Date.now()
     }, { merge:true });
   }catch(error){ console.warn('Firebase online user save failed:', error); }
+}
+async function removeOnlineUser(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{ await deleteDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase())); }
+  catch(error){ console.warn('Firebase online user remove failed:', error); }
+}
+function startAzobssPresenceHeartbeat(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer);
+  upsertOnlineUser(u);
+  azobssPresenceHeartbeatTimer = setInterval(()=>{
+    if(document.visibilityState !== 'hidden') upsertOnlineUser(getSavedUser() || u);
+  }, 30000);
 }
 async function recordLoginHistory(user, action='login'){
   const u = user || getSavedUser();
@@ -1097,6 +1143,54 @@ function bindRegisteredUsersControls(){
   });
 }
 
+
+function getAzobssDeviceId(){
+  const key = 'azobssDeviceId';
+  let id = localStorage.getItem(key);
+  if(!id){
+    id = 'device-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+async function getAzobssPublicIp(){
+  const cacheKey = 'azobssPublicIpCache';
+  try{
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+    if(cached && cached.ip && Date.now() - Number(cached.time || 0) < 3600000) return cached.ip;
+  }catch(_e){}
+  try{
+    const res = await fetch('https://api.ipify.org?format=json', { cache:'no-store' });
+    const data = await res.json();
+    const ip = String(data.ip || '').trim();
+    if(ip) sessionStorage.setItem(cacheKey, JSON.stringify({ ip, time: Date.now() }));
+    return ip || '-';
+  }catch(error){
+    console.warn('Public IP lookup failed:', error);
+    return '-';
+  }
+}
+async function recordGuestHistory(){
+  try{
+    if(getSavedUser()) return;
+    const page = window.location.pathname || '/';
+    const sessionKey = 'azobssGuestHistorySaved:' + page;
+    if(sessionStorage.getItem(sessionKey)) return;
+    sessionStorage.setItem(sessionKey, '1');
+    const deviceId = getAzobssDeviceId();
+    const ipAddress = await getAzobssPublicIp();
+    await addDoc(collection(db, AZOBSS_GUEST_HISTORY_COLLECTION), {
+      page,
+      ipAddress,
+      deviceId,
+      platform: navigator.platform || '',
+      userAgent: navigator.userAgent || '',
+      createdAt: serverTimestamp(),
+      createdAtClient: new Date().toISOString(),
+      createdAtMs: Date.now()
+    });
+  }catch(error){ console.warn('Firebase guest history save failed:', error); }
+}
 async function renderFirebaseAdminRecords(){
   const current = getSavedUser();
   if(!isAzobssAdmin(current)) return;
@@ -1140,11 +1234,14 @@ async function renderFirebaseAdminRecords(){
       liveSnap.forEach(d=>live.push({ id:d.id, ...d.data() }));
       azobssOnlineUserIds = new Set(live.map(userDocId).filter(Boolean));
     }
-    live.sort((a,b)=>firestoreMs(b.lastSeenAt)-firestoreMs(a.lastSeenAt));
+    live = live.filter(azobssIsRealOnline);
+    live.sort((a,b)=>(firestoreMs(b.lastSeenAt)||firestoreMs(b.lastSeenClient))-(firestoreMs(a.lastSeenAt)||firestoreMs(a.lastSeenClient)));
+    const liveMaxPage = Math.max(1, Math.ceil(live.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssLiveUsersPage = Math.min(Math.max(1, azobssLiveUsersPage), liveMaxPage);
     const liveList = document.getElementById('liveUsersList');
     if(liveList){
       const rows = live.slice((azobssLiveUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssLiveUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
-      liveList.innerHTML = rows.map(liveUserHtml).join('') || '<div class="purchase-summary-item">No online users yet.</div>';
+      liveList.innerHTML = rows.map(liveUserHtml).join('') || '<div class="purchase-summary-item">No users are online right now.</div>';
       adminPager(document.getElementById('liveUsersPagination'), azobssLiveUsersPage, live.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssLiveUsersPage=page; renderFirebaseAdminRecords();});
     }
     const onlineUserCount = document.getElementById('onlineUserCount');
@@ -1170,6 +1267,28 @@ async function renderFirebaseAdminRecords(){
     const todayEl = document.getElementById('loginHistoryToday'); if(todayEl) todayEl.textContent = String(today);
     const monthEl = document.getElementById('loginHistoryMonth'); if(monthEl) monthEl.textContent = String(month);
   }catch(error){ console.warn('Firebase login history read failed:', error); }
+
+  try{
+    const rows = [];
+    const guestSnap = await getDocs(collection(db, AZOBSS_GUEST_HISTORY_COLLECTION));
+    guestSnap.forEach(d=>rows.push({ id:d.id, ...d.data() }));
+    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
+    const list = document.getElementById('guestHistoryList');
+    if(list){
+      const maxPage = Math.max(1, Math.ceil(rows.length / AZOBSS_ADMIN_PAGE_SIZE));
+      azobssGuestHistoryPage = Math.min(Math.max(1, azobssGuestHistoryPage), maxPage);
+      const visible = rows.slice((azobssGuestHistoryPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssGuestHistoryPage*AZOBSS_ADMIN_PAGE_SIZE);
+      list.innerHTML = visible.map(guestHistoryHtml).join('') || '<div class="purchase-summary-item">No guest history yet.</div>';
+      adminPager(document.getElementById('guestHistoryPagination'), azobssGuestHistoryPage, rows.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssGuestHistoryPage=page; renderFirebaseAdminRecords();});
+    }
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0,10);
+    const monthKey = now.toISOString().slice(0,7);
+    const today = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,10)===todayKey).length;
+    const month = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,7)===monthKey).length;
+    const todayEl = document.getElementById('guestVisitsToday'); if(todayEl) todayEl.textContent = String(today);
+    const monthEl = document.getElementById('guestVisitsMonth'); if(monthEl) monthEl.textContent = String(month);
+  }catch(error){ console.warn('Firebase guest history read failed:', error); }
 }
 window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
 
@@ -1754,7 +1873,7 @@ function bindAuth() {
       await setPersistence(auth,browserLocalPersistence);
       const credential=await signInWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
       const profile=await ensureUserProfile(credential.user,{usernameKey});
-      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); await upsertOnlineUser({uid:credential.user.uid,...profile,usernameKey}); await recordLoginHistory({uid:credential.user.uid,...profile,usernameKey}, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
+      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); startAzobssPresenceHeartbeat({uid:credential.user.uid,...profile,usernameKey}); await recordLoginHistory({uid:credential.user.uid,...profile,usernameKey}, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
   });
 
@@ -1778,7 +1897,7 @@ function bindAuth() {
       }
       const savedSignupUser={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member'};
       saveUser(savedSignupUser);
-      syncHeader(savedSignupUser); await upsertOnlineUser(savedSignupUser); await recordLoginHistory(savedSignupUser, 'signup'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
+      syncHeader(savedSignupUser); startAzobssPresenceHeartbeat(savedSignupUser); await recordLoginHistory(savedSignupUser, 'signup'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
   });
 
@@ -1818,15 +1937,16 @@ function bindAuth() {
       phone: getPhoneWithDial('profileEdit'),
       email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
     };
-    saveUser(updated); await saveProfileToFirebase(updated); await upsertOnlineUser(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
+    saveUser(updated); await saveProfileToFirebase(updated); startAzobssPresenceHeartbeat(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{
     if(!firebaseUser){
       if(window.__AZOBSS_LOGGING_OUT__ || azobssLogoutInProgress) return;
-      clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); return;
+      if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
+      clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); recordGuestHistory(); renderFirebaseAdminRecords(); return;
     }
-    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); await upsertOnlineUser(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); }
+    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
@@ -1949,4 +2069,47 @@ body{padding-top:58px!important;}
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
     else apply();
   }catch(e){}
+})();
+
+
+// AZOBSS compact one-line admin live/history rows
+(function injectAzobssCompactAdminHistoryRows(){
+  try{
+    if(document.getElementById('azobss-compact-admin-history-style')) return;
+    const style=document.createElement('style');
+    style.id='azobss-compact-admin-history-style';
+    style.textContent=`
+      #liveUsersList .az-admin-inline-card,
+      #loginHistoryList .az-admin-inline-card,
+      #guestHistoryList .az-admin-inline-card{
+        padding:6px 9px!important;
+        min-height:0!important;
+        border-radius:10px!important;
+      }
+      .az-admin-inline-row{
+        display:flex!important;
+        align-items:center!important;
+        gap:8px!important;
+        flex-wrap:wrap!important;
+        width:100%!important;
+        font-size:11.5px!important;
+        line-height:1.2!important;
+      }
+      .az-admin-inline-row strong{
+        color:#f8fafc!important;
+        font-size:12px!important;
+        margin-right:2px!important;
+      }
+      .az-admin-inline-row span{
+        color:#b9c5d8!important;
+        white-space:nowrap!important;
+      }
+      .az-status-online{color:#4ade80!important;font-weight:900!important;}
+      @media(max-width:640px){
+        .az-admin-inline-row{gap:5px!important;font-size:10.5px!important;}
+        .az-admin-inline-row strong{font-size:11px!important;}
+      }
+    `;
+    document.head.appendChild(style);
+  }catch(_e){}
 })();
