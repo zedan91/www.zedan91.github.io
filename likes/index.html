@@ -16,6 +16,11 @@
     .market-nav::-webkit-scrollbar{display:none}
     .market-nav a{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:32px;padding:0 12px;border:1px solid rgba(148,163,184,.28);border-radius:999px;background:#0e1729;color:#e5e7eb;text-decoration:none;font-size:13px;font-weight:800;line-height:1;white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,.45)}
     .market-nav a:hover{color:#14b8a6}
+
+    .nav-chat-pill{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:52px;min-width:52px;height:34px;border:1px solid rgba(148,163,184,.35);border-radius:999px;background:#0e1729;color:#fff;text-decoration:none;box-shadow:inset 0 -1px 0 rgba(255,255,255,.08)}
+    .nav-chat-pill svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    .nav-chat-pill:hover{color:#22c55e;border-color:rgba(34,197,94,.45)}
+    .user-name:after{content:'';display:inline-block;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:8px;margin-bottom:3px;color:#fff;vertical-align:middle}
     .market-nav a.market-nav-active{background:#22c55e!important;border-color:#22c55e!important;color:#052e16!important;text-shadow:none!important;box-shadow:0 0 15px rgba(34,197,94,.34),inset 0 0 0 1px rgba(255,255,255,.12)!important}
     .nav-whatsapp-circle{display:block;width:31px;height:31px;border-radius:999px;background:linear-gradient(135deg,#22c55e,#15b56d);position:relative;box-shadow:0 0 0 2px rgba(255,255,255,.12) inset}
     .nav-whatsapp-circle:after{content:'';position:absolute;left:9px;top:9px;width:12px;height:12px;border-radius:50%;background:#eafff3}
@@ -23,7 +28,6 @@
     .user-menu{display:flex;align-items:center;gap:8px;position:relative;cursor:pointer;z-index:100000}
     .user-avatar{width:30px;height:30px;border-radius:999px;border:1px solid #22d3ee;display:flex;align-items:center;justify-content:center;background:#081426;color:#dffcff;font-size:12px;font-weight:800}
     .user-name{font-size:14px;font-weight:800;color:#fff}
-    .user-name:after{content:'⌄';font-size:14px;margin-left:6px;color:#fff}
     .user-dropdown{display:none;position:absolute;top:calc(100% + 10px);right:0;width:220px;min-width:220px;max-width:calc(100vw - 16px);padding:8px;border-radius:14px;background:#08111f;border:1px solid rgba(148,163,184,.28);box-shadow:0 18px 50px rgba(0,0,0,.58);z-index:100001;color:#fff}
     .user-menu.is-open .user-dropdown{display:block}
     .user-dropdown-section{padding:7px 10px 4px;font-size:11px;font-weight:900;color:#a7b3c7;text-transform:none}
@@ -50,6 +54,8 @@
       .market-brand{width:128px;min-width:128px;height:34px}
       .market-nav{order:3;width:100%;flex-basis:100%;gap:6px;overflow:hidden;padding-bottom:8px}
       .market-nav a{min-height:30px;padding:0 9px;font-size:11px}
+      .nav-chat-pill{width:44px;min-width:44px;height:32px;padding:0}
+      .nav-chat-pill svg{width:20px;height:20px}
       .site-auth-actions{margin-left:auto;margin-right:8px;gap:12px}
       .site-auth-btn{font-size:13px;white-space:nowrap}
       .market-user-tools{margin-left:auto;gap:8px}
@@ -70,7 +76,7 @@
           <img alt="AZOBSS" src="/images/logo-azobss.jpg">
         </a>
         <nav aria-label="AZOBSS quick actions" class="market-nav">
-          <a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+          <a aria-label="Chat" class="nav-chat-pill" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg></a>
           <a class="nav-pa-bm-link is-hidden" hidden href="/PA-BM/" id="paBmNavButton">PA / BM</a>
           <a href="/Software-Tools/">Software</a>
           <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
@@ -132,6 +138,9 @@
           <option value="az">Name A-Z</option>
           <option value="za">Name Z-A</option>
           <option value="category">Category</option>
+          <option value="software">Software</option>
+          <option value="cad">CAD Tools</option>
+          <option value="affiliate">Affiliate Shop</option>
         </select>
       </div>
     </div>
