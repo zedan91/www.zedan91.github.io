@@ -824,6 +824,12 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .software-badge{display:inline-flex;align-items:center;justify-content:center;margin:0 auto 12px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(148,163,184,.24);background:#0f172a;color:#e2e8f0;}
 .software-badge.free{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(34,197,94,.10);}
 .software-badge.premium{border-color:rgba(245,158,11,.55);color:#fbbf24;background:rgba(245,158,11,.12);}
+.software-card-media{width:100%;height:118px;border-radius:16px;overflow:hidden;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.85);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.software-card-media img{width:100%;height:100%;object-fit:cover;display:block;}
+.software-media-links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:-2px;}
+.software-media-demo{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.10);color:#86efac;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900;text-decoration:none;}
+.software-admin-media-preview{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.software-admin-media-preview span{font-size:12px;color:#94a3b8;font-weight:800;}
 .download-btn.premium{background:#f59e0b;color:#111827;}
 .download-btn.premium:hover{background:#d97706;color:#fff;}
 .software-admin-modal{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.78);backdrop-filter:blur(8px);}
@@ -1003,7 +1009,24 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <label>Download / Payment Link
         <input id="softwareAdminLink" type="url" placeholder="Free: download link / Premium: ToyyibPay, QR or bank transaction link" required>
       </label>
-      <p class="software-admin-note">Free Software will show <b>Download Now</b>. Premium Software will show <b>Buy Now</b> and can use your ToyyibPay/payment link.</p>
+      <div class="software-admin-row">
+        <label>Image URL
+          <input id="softwareAdminImageUrl" type="url" placeholder="Optional product/card image URL">
+        </label>
+        <label>GIF Demo URL
+          <input id="softwareAdminGifUrl" type="url" placeholder="Optional GIF demo URL">
+        </label>
+      </div>
+      <div class="software-admin-row">
+        <label>Upload Image
+          <input id="softwareAdminImageFile" type="file" accept="image/*">
+        </label>
+        <label>Upload GIF
+          <input id="softwareAdminGifFile" type="file" accept="image/gif,image/*">
+        </label>
+      </div>
+      <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
+      <p class="software-admin-note">Free Software will show <b>Download Now</b>. Premium Software will show <b>Buy Now</b> and can use your ToyyibPay/payment link. Image/GIF can be added by URL or small upload.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -1042,12 +1065,34 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const priceInput = document.getElementById('softwareAdminPrice');
   const buttonInput = document.getElementById('softwareAdminButtonText');
   const iconInput = document.getElementById('softwareAdminIcon');
+  const imageUrlInput = document.getElementById('softwareAdminImageUrl');
+  const gifUrlInput = document.getElementById('softwareAdminGifUrl');
+  const imageFileInput = document.getElementById('softwareAdminImageFile');
+  const gifFileInput = document.getElementById('softwareAdminGifFile');
+  const mediaPreview = document.getElementById('softwareAdminMediaPreview');
   const searchInput = document.getElementById('softwareSearchInput');
   const sortSelect = document.getElementById('softwareSortSelect');
   let softwareDynamicItems = [];
 
   function clean(v){ return String(v || '').trim().toLowerCase(); }
   function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+  const MAX_MEDIA_BYTES = 900 * 1024;
+  function readMediaFile(input){
+    return new Promise(resolve => {
+      const file = input?.files?.[0];
+      if(!file) return resolve('');
+      if(file.size > MAX_MEDIA_BYTES){ alert('Image/GIF terlalu besar. Guna URL untuk media besar. Limit upload kecil: 900KB.'); return resolve(''); }
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  }
+  function updateMediaPreview(){
+    if(!mediaPreview) return;
+    const hasMedia = !!(imageUrlInput?.value || gifUrlInput?.value || imageFileInput?.files?.length || gifFileInput?.files?.length);
+    mediaPreview.style.display = hasMedia ? 'flex' : 'none';
+  }
   function getCurrentUserObject(){ try { return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null'); } catch(e){ return null; } }
   function isAdmin(){
     const currentUser = getCurrentUserObject();
@@ -1066,6 +1111,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
       icon: item.icon || (type === 'free' ? 'FREE' : '🛒'),
       link: item.link || item.url || '#',
+      imageUrl: item.imageUrl || item.image || '',
+      gifUrl: item.gifUrl || item.gif || '',
       buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
       createdAtMs: item.createdAtMs || (item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : (Number(item.createdAt) || 0)))
     };
@@ -1073,11 +1120,16 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   function renderItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : 'Free Software';
+    const mediaSrc = item.imageUrl || item.gifUrl;
+    const mediaHtml = mediaSrc ? `<div class="software-card-media"><img src="${esc(mediaSrc)}" alt="${esc(item.name)} preview" loading="lazy"></div>` : '';
+    const gifHtml = item.gifUrl && item.imageUrl ? `<div class="software-media-links"><a class="software-media-demo" href="${esc(item.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
     return `<div class="download-card" data-admin-software="1" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price).toLowerCase())}">
+      ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
       <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
       <h3>${esc(item.name)}</h3>
       <p>${esc(item.desc)}</p>
+      ${gifHtml}
       <a class="download-btn ${isPremium ? 'premium' : ''}" href="${esc(item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
     </div>`;
   }
@@ -1105,7 +1157,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
     let dynamic = [...softwareDynamicItems];
     if(keyword){
-      dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price}`).includes(keyword));
+      dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
       staticCards.forEach(card => {
         const text = clean(card.dataset.search || card.textContent || '');
         card.style.display = text.includes(keyword) ? '' : 'none';
@@ -1159,6 +1211,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(priceInput) priceInput.value = 'FREE';
     if(buttonInput) buttonInput.value = 'Download Now';
     if(iconInput) iconInput.value = 'FREE';
+    updateMediaPreview();
     modal?.classList.add('is-open');
     modal?.setAttribute('aria-hidden','false');
   }
@@ -1172,17 +1225,23 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   document.getElementById('softwareAdminCancel')?.addEventListener('click', closeModal);
   modal?.addEventListener('click', e => { if(e.target === modal) closeModal(); });
   typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } });
+  [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
+  [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
 
   form?.addEventListener('submit', async e => {
     e.preventDefault();
     if(!isAdmin()) return alert('Admin only.');
     syncTypeDefaults();
+    const uploadedImage = await readMediaFile(imageFileInput);
+    const uploadedGif = await readMediaFile(gifFileInput);
     const item = normalizeItem({
       name: document.getElementById('softwareAdminName').value.trim(),
       desc: document.getElementById('softwareAdminDesc').value.trim(),
       type: typeSelect.value,
       price: priceInput.value.trim(),
       icon: iconInput.value.trim(),
+      imageUrl: uploadedImage || imageUrlInput?.value.trim(),
+      gifUrl: uploadedGif || gifUrlInput?.value.trim(),
       buttonText: buttonInput.value.trim(),
       link: document.getElementById('softwareAdminLink').value.trim()
     });
