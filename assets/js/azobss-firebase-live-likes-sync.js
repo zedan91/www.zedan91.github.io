@@ -471,21 +471,6 @@ function applyLikesSearchSort(rows){
   if(q){
     out = out.filter(item => [item.title, item.category, item.pageUrl].some(v => String(v || '').toLowerCase().includes(q)));
   }
-  if(sort === 'filter-software'){
-    out = out.filter(item => String(item.category || '').toLowerCase().includes('software'));
-  } else if(sort === 'filter-cad'){
-    out = out.filter(item => {
-      const category = String(item.category || '').toLowerCase();
-      const pageUrl = String(item.pageUrl || '').toLowerCase();
-      return category.includes('cad') || pageUrl.includes('cad-tools');
-    });
-  } else if(sort === 'filter-affiliate'){
-    out = out.filter(item => {
-      const category = String(item.category || '').toLowerCase();
-      const pageUrl = String(item.pageUrl || '').toLowerCase();
-      return category.includes('affiliate') || pageUrl.includes('affiliate-shop');
-    });
-  }
   out.sort((a,b)=>{
     if(sort === 'oldest') return getLikeSortMs(a) - getLikeSortMs(b);
     if(sort === 'az') return String(a.title || '').localeCompare(String(b.title || ''));
