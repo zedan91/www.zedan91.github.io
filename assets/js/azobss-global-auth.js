@@ -1,33 +1,89 @@
 
-
-function formatPhoneGuide(v){
- let n=(v||'').replace(/\D/g,'');
- if(n.length<=2) return n;
- if(n.length<=5) return n.slice(0,2)+'-'+n.slice(2);
- return n.slice(0,2)+'-'+n.slice(2,6)+' '+n.slice(6,10);
+function formatPhoneGuide(value){
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return digits.slice(0, 2) + '-' + digits.slice(2);
+  return digits.slice(0, 2) + '-' + digits.slice(2, 6) + ' ' + digits.slice(6);
 }
-setTimeout(()=>{
-['siteSignupPhone','adminUserEditPhone','profileEditPhone'].forEach(id=>{
- const el=document.getElementById(id);
- if(!el||el.dataset.guide) return;
- el.dataset.guide='1';
- el.addEventListener('input',e=>{
- const raw=e.target.value.replace(/\D/g,'');
- e.target.value=formatPhoneGuide(raw);
- });
-});
-},1000);
 
+function getPhoneGuideDigits(value){
+  return String(value || '').replace(/\D/g, '').slice(0, 10);
+}
+
+function countPhoneDigitsBefore(value, pos){
+  return String(value || '').slice(0, Math.max(0, pos || 0)).replace(/\D/g, '').length;
+}
+
+function caretFromPhoneDigitIndex(formatted, digitIndex){
+  if (digitIndex <= 0) return 0;
+  let seen = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    if (/\d/.test(formatted[i])) {
+      seen++;
+      if (seen >= digitIndex) return i + 1;
+    }
+  }
+  return formatted.length;
+}
+
+function bindAzobssPhoneDisplayFormatter(root){
+  const scope = root || document;
+  const ids = ['siteSignupPhone', 'adminUserEditPhone', 'profileEditPhone'];
+  ids.forEach((id) => {
+    const input = scope.getElementById ? scope.getElementById(id) : null;
+    if (!input || input.dataset.azobssPhoneFormatter === '1') return;
+    input.dataset.azobssPhoneFormatter = '1';
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key !== 'Backspace' && event.key !== 'Delete') return;
+      const value = input.value || '';
+      const start = input.selectionStart ?? value.length;
+      const end = input.selectionEnd ?? start;
+      if (start !== end) return;
+
+      const isBackspace = event.key === 'Backspace';
+      const checkIndex = isBackspace ? start - 1 : start;
+      const ch = value.charAt(checkIndex);
+      if (ch !== '-' && ch !== ' ') return;
+
+      event.preventDefault();
+      let digits = getPhoneGuideDigits(value);
+      let digitIndex = countPhoneDigitsBefore(value, start);
+      const removeIndex = isBackspace ? digitIndex - 1 : digitIndex;
+      if (removeIndex >= 0 && removeIndex < digits.length) {
+        digits = digits.slice(0, removeIndex) + digits.slice(removeIndex + 1);
+        digitIndex = isBackspace ? removeIndex : removeIndex;
+      }
+      const formatted = formatPhoneGuide(digits);
+      input.value = formatted;
+      const caret = caretFromPhoneDigitIndex(formatted, digitIndex);
+      requestAnimationFrame(() => input.setSelectionRange(caret, caret));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    input.addEventListener('input', () => {
+      const oldValue = input.value || '';
+      const oldCaret = input.selectionStart ?? oldValue.length;
+      const digitIndex = countPhoneDigitsBefore(oldValue, oldCaret);
+      const formatted = formatPhoneGuide(oldValue);
+      if (input.value !== formatted) input.value = formatted;
+      const caret = caretFromPhoneDigitIndex(formatted, digitIndex);
+      requestAnimationFrame(() => input.setSelectionRange(caret, caret));
+    });
+
+    input.addEventListener('blur', () => {
+      input.value = formatPhoneGuide(input.value);
+    });
+  });
+}
 
 (function installAzobssPhoneDisplayFormatter(){
   if (window.__azobssPhoneDisplayFormatterInstalled) return;
   window.__azobssPhoneDisplayFormatterInstalled = true;
-  document.addEventListener('input', function(event){
-    const target = event.target;
-    if (!target || !['siteSignupPhone','adminUserEditPhone','profileEditPhone'].includes(target.id)) return;
-    const raw = String(target.value || '').replace(/\D/g, '');
-    target.value = formatPhoneGuide(raw);
-  });
+  document.addEventListener('DOMContentLoaded', () => bindAzobssPhoneDisplayFormatter(document));
+  setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 300);
+  setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 1200);
+  document.addEventListener('click', () => setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 50), true);
 })();
 
 function normalizePhoneNumber(phone, countryCode="+60"){
