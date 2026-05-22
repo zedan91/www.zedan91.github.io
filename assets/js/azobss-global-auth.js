@@ -2147,3 +2147,8 @@ body{padding-top:58px!important;}
     document.head.appendChild(style);
   }catch(_e){}
 })();
+
+
+// auto-init country selectors for dynamic admin modal
+setupCountryPhoneSelectors(document);
+new MutationObserver(()=>setupCountryPhoneSelectors(document)).observe(document.body,{childList:true,subtree:true});
