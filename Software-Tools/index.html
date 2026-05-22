@@ -851,6 +851,11 @@ width:fit-content !important;
 .software-admin-toolbar{max-width:1180px;margin:0 auto 18px;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
 .software-admin-add-btn{border:1px solid rgba(34,197,94,.55);background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(34,197,94,.20);}
 .software-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);} 
+.software-admin-import-btn,.software-admin-export-btn,.software-admin-apply-btn{border:1px solid rgba(96,165,250,.42);background:rgba(15,23,42,.95);color:#dbeafe;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.software-admin-import-btn:hover,.software-admin-export-btn:hover,.software-admin-apply-btn:hover{border-color:rgba(34,197,94,.55);color:#86efac;transform:translateY(-1px);}
+.software-admin-apply-btn{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:rgba(96,165,250,.65);}
+.software-admin-apply-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.25);}
+.software-admin-json-status{font-size:12px;font-weight:800;color:#93c5fd;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} 
 .software-card-admin-actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
 .software-card-edit-btn{border:1px solid rgba(96,165,250,.55);background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px;box-shadow:0 8px 18px rgba(37,99,235,.20);}
 .software-card-edit-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
@@ -888,7 +893,7 @@ width:fit-content !important;
 .software-admin-cancel{background:#334155;color:#e2e8f0;}
 .software-admin-save{background:#22c55e;color:#052e16;}
 .software-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
-@media(max-width:640px){.software-admin-row,.software-admin-checks{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center}.software-admin-add-btn{width:100%;}}
+@media(max-width:640px){.software-admin-row,.software-admin-checks{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center;flex-wrap:wrap}.software-admin-add-btn,.software-admin-import-btn,.software-admin-export-btn,.software-admin-apply-btn{width:100%;}.software-admin-json-status{max-width:100%;text-align:center;}}
 </style>
 
 <style id="azobss-premium-flow-style">
@@ -953,6 +958,11 @@ width:fit-content !important;
       </p>
 <div class="software-admin-toolbar">
   <button class="software-admin-add-btn" id="softwareAdminAddButton" type="button" hidden>+ Add Software Item</button>
+  <button class="software-admin-import-btn" id="softwareImportJsonButton" type="button" hidden>Import JSON</button>
+  <button class="software-admin-export-btn" id="softwareExportJsonButton" type="button" hidden>Export JSON</button>
+  <button class="software-admin-apply-btn" id="softwareApplyJsonButton" type="button" hidden disabled>Apply Import</button>
+  <input id="softwareImportJsonFile" type="file" accept="application/json,.json" hidden>
+  <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span>
 </div>
 <div class="software-shop-controls" aria-label="Software search and sorting controls">
   <label>Search
@@ -1235,6 +1245,11 @@ width:fit-content !important;
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
+  const importJsonButton = document.getElementById('softwareImportJsonButton');
+  const exportJsonButton = document.getElementById('softwareExportJsonButton');
+  const applyJsonButton = document.getElementById('softwareApplyJsonButton');
+  const importJsonFile = document.getElementById('softwareImportJsonFile');
+  const softwareJsonStatus = document.getElementById('softwareJsonStatus');
   const modal = document.getElementById('softwareAdminModal');
   const form = document.getElementById('softwareAdminForm');
   const typeSelect = document.getElementById('softwareAdminType');
@@ -1269,6 +1284,7 @@ width:fit-content !important;
   let softwareDynamicItems = [];
   let editingSoftwareDocId = null;
   let editingSoftwareProductId = null;
+  let pendingSoftwareImportItems = [];
 
   function clean(v){ return String(v || '').trim().toLowerCase(); }
   function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
@@ -1338,6 +1354,90 @@ width:fit-content !important;
       createdAtMs: item.createdAtMs || (item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : (Number(item.createdAt) || 0)))
     };
   }
+  function sanitizeSoftwareItemForJson(item){
+    const n = normalizeItem(item || {});
+    return {
+      productId: n.productId || n.id || makeProductId('AZSW'),
+      name: n.name,
+      desc: n.desc,
+      type: n.type,
+      price: n.price,
+      category: n.category,
+      status: n.status,
+      version: n.version,
+      fileSize: n.fileSize,
+      platforms: n.platforms || ['Windows'],
+      badge: n.badge,
+      downloadLimit: n.downloadLimit,
+      expiryHours: n.expiryHours,
+      icon: n.icon,
+      buttonText: n.buttonText,
+      downloadLink: n.downloadLink,
+      paymentLink: n.paymentLink,
+      secureDownloadLink: n.secureDownloadLink,
+      imageUrl: n.imageUrl,
+      gifUrl: n.gifUrl,
+      createdAtMs: n.createdAtMs || Date.now()
+    };
+  }
+  function getAllSoftwareItemsForExport(){
+    const dynamic = softwareDynamicItems.map(sanitizeSoftwareItemForJson);
+    const dynamicIds = new Set(dynamic.map(x => String(x.productId || '').toLowerCase()).filter(Boolean));
+    const statics = getStaticCards()
+      .map(getStaticItemFromCard)
+      .map(sanitizeSoftwareItemForJson)
+      .filter(item => !dynamicIds.has(String(item.productId || '').toLowerCase()));
+    return [...dynamic, ...statics];
+  }
+  function setJsonStatus(message){
+    if(!softwareJsonStatus) return;
+    softwareJsonStatus.hidden = !message;
+    softwareJsonStatus.textContent = message || '';
+  }
+  function downloadJsonFile(filename, data){
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 800);
+  }
+  function normalizeImportedSoftwarePayload(payload){
+    const raw = Array.isArray(payload) ? payload : (Array.isArray(payload?.items) ? payload.items : (Array.isArray(payload?.softwareTools) ? payload.softwareTools : []));
+    return raw.map(item => sanitizeSoftwareItemForJson(item)).filter(item => item.name && item.productId);
+  }
+  async function saveImportedSoftwareItems(items){
+    const savedLocal = loadLocal();
+    const byProductId = new Map(softwareDynamicItems.map(item => [String(item.productId || item.id).toLowerCase(), item]));
+    let firestoreSaved = 0;
+    let localSaved = 0;
+    for(const raw of items){
+      const item = normalizeItem(raw);
+      const key = String(item.productId || item.id || '').toLowerCase();
+      const existing = byProductId.get(key);
+      try{
+        if(existing?.docId){
+          await updateDoc(doc(db, SOFTWARE_COLLECTION, existing.docId), {...item, updatedAt: serverTimestamp(), updatedBy: 'json-import'});
+        }else{
+          await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'json-import'});
+        }
+        firestoreSaved++;
+      }catch(err){
+        const idx = savedLocal.findIndex(x => String(x.productId || x.id).toLowerCase() === key);
+        if(idx >= 0) savedLocal[idx] = {...savedLocal[idx], ...item, productId:item.productId || item.id, id:item.productId || item.id};
+        else savedLocal.unshift(item);
+        localSaved++;
+      }
+    }
+    if(localSaved){
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(savedLocal));
+    }
+    return {firestoreSaved, localSaved};
+  }
+
   function renderItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : 'Free Software';
@@ -1493,7 +1593,15 @@ width:fit-content !important;
     softwareDynamicItems = [...await loadFirestore(), ...loadLocal()];
     applySoftwareFilters();
   }
-  function refreshAdminState(){ if(addButton) addButton.hidden = !isAdmin(); syncStaticAdminButtons(); }
+  function refreshAdminState(){
+    const admin = isAdmin();
+    if(addButton) addButton.hidden = !admin;
+    if(importJsonButton) importJsonButton.hidden = !admin;
+    if(exportJsonButton) exportJsonButton.hidden = !admin;
+    if(applyJsonButton) applyJsonButton.hidden = !admin;
+    if(softwareJsonStatus && !admin) softwareJsonStatus.hidden = true;
+    syncStaticAdminButtons();
+  }
   function syncTypeDefaults(){
     const premium = typeSelect?.value === 'premium';
     if(priceInput && (!priceInput.value || /^(free|rm0)$/i.test(priceInput.value.trim()))) priceInput.value = premium ? 'RM10' : 'FREE';
@@ -1571,6 +1679,60 @@ width:fit-content !important;
     }
     if(!item) return alert('Item data not found. Try refresh page first.');
     openModal(item);
+  });
+
+  exportJsonButton?.addEventListener('click', () => {
+    if(!isAdmin()) return alert('Admin only.');
+    const items = getAllSoftwareItemsForExport();
+    downloadJsonFile('azobss-software-tools-export.json', {
+      exportedAt: new Date().toISOString(),
+      source: 'AZOBSS Software Tools',
+      version: 1,
+      count: items.length,
+      items
+    });
+    setJsonStatus(`Exported ${items.length} item(s).`);
+  });
+  importJsonButton?.addEventListener('click', () => {
+    if(!isAdmin()) return alert('Admin only.');
+    importJsonFile?.click();
+  });
+  importJsonFile?.addEventListener('change', async () => {
+    pendingSoftwareImportItems = [];
+    if(applyJsonButton) applyJsonButton.disabled = true;
+    const file = importJsonFile.files?.[0];
+    if(!file) return;
+    try{
+      const payload = JSON.parse(await file.text());
+      pendingSoftwareImportItems = normalizeImportedSoftwarePayload(payload);
+      if(!pendingSoftwareImportItems.length) throw new Error('No valid software item found in JSON.');
+      if(applyJsonButton) applyJsonButton.disabled = false;
+      setJsonStatus(`Ready to apply ${pendingSoftwareImportItems.length} imported item(s).`);
+    }catch(err){
+      setJsonStatus('Import failed. Please choose a valid JSON file.');
+      alert(err.message || 'Invalid JSON file.');
+      importJsonFile.value = '';
+    }
+  });
+  applyJsonButton?.addEventListener('click', async () => {
+    if(!isAdmin()) return alert('Admin only.');
+    if(!pendingSoftwareImportItems.length) return alert('Import JSON first.');
+    if(!confirm(`Apply ${pendingSoftwareImportItems.length} software item(s) to Firestore?`)) return;
+    applyJsonButton.disabled = true;
+    applyJsonButton.textContent = 'Applying...';
+    try{
+      const result = await saveImportedSoftwareItems(pendingSoftwareImportItems);
+      setJsonStatus(`Applied ${result.firestoreSaved} to Firestore${result.localSaved ? `, ${result.localSaved} local fallback` : ''}.`);
+      pendingSoftwareImportItems = [];
+      importJsonFile.value = '';
+      await loadItems();
+    }catch(err){
+      alert(err.message || 'Apply import failed.');
+      setJsonStatus('Apply import failed.');
+    }finally{
+      applyJsonButton.textContent = 'Apply Import';
+      applyJsonButton.disabled = true;
+    }
   });
 
   addButton?.addEventListener('click', () => openModal());
