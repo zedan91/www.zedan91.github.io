@@ -962,6 +962,14 @@ This removes the website profile record from Firestore. Firebase Auth login acco
   try{
     await deleteDoc(doc(db, 'users', docId));
     try{ await deleteDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, docId)); }catch(e){}
+    try{ await deleteDoc(doc(db,'purchaseSummaries',docId)); }catch(e){}
+    try{
+      const cols=['loginHistory','purchaseLogs','userLikes'];
+      for(const c of cols){
+        const qs=await getDocs(query(collection(db,c), where('usernameKey','==',docId)));
+        for(const d of qs.docs){ await deleteDoc(d.ref); }
+      }
+    }catch(e){ console.warn('Cascade delete warning',e);}
     azobssLastRegisteredUsers = azobssLastRegisteredUsers.filter(u => userDocId(u) !== docId);
     const maxPage = Math.max(1, Math.ceil(azobssLastRegisteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
     azobssRegisteredUsersPage = Math.min(azobssRegisteredUsersPage, maxPage);
