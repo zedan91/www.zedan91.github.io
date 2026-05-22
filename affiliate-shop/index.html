@@ -29,7 +29,7 @@
     .site-auth-btn:hover{color:#14b8a6 !important}
     main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:34px 0 52px}
     .hero{display:grid;gap:14px;margin:18px 0 24px}
-    .category-panel{display:none!important;border:1px solid rgba(34,197,94,.25);border-radius:14px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,17,31,.96));overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.22)}
+    .category-panel{border:1px solid rgba(34,197,94,.25);border-radius:14px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,17,31,.96));overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.22)}
     .category-panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 14px;border-bottom:1px solid var(--line)}
     .category-title{margin:0;color:#e5e7eb;font-size:16px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
     .category-search{width:min(320px,100%);min-height:40px;border:1px solid var(--line);border-radius:999px;background:#050b18;color:#fff;padding:0 16px;font-weight:700}
@@ -40,13 +40,10 @@
     .category-icon img{width:100%;height:100%;object-fit:cover;display:block}
     .category-all-icon{background:#07111f;color:#22c55e;font-size:23px}
     .category-name{font-size:12px;line-height:1.2}
-    .tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
-    .search{flex:1 1 420px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
-    .chip,.fav-chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 16px;min-height:42px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
-    .chip.is-active{background:var(--green);border-color:var(--green);color:#052e16;box-shadow:0 0 16px rgba(34,197,94,.28)}
-    .fav-chip:hover{border-color:rgba(34,197,94,.5);color:#86efac}
-    .affiliate-sort-control{display:inline-flex;align-items:center;gap:8px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#dbeafe;padding:0 10px 0 14px;font-weight:800;white-space:nowrap}
-    .affiliate-sort-control select{min-height:38px;border:0;border-left:1px solid rgba(148,163,184,.18);background:#0e1729;color:#fff;padding:0 34px 0 12px;border-radius:10px;font:inherit;font-weight:900;outline:none;cursor:pointer}
+    .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .search{flex:1 1 280px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
+    .chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 14px;min-height:42px;font-weight:800;cursor:pointer}
+    .chip.is-active{background:var(--green);border-color:var(--green);color:#052e16}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px}
     .card{display:grid;gap:10px;align-content:start;min-height:235px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#13243a,#0b1220);padding:18px;color:#fff;text-decoration:none;box-shadow:0 16px 34px rgba(0,0,0,.22)}
     .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -578,25 +575,13 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 </button>
 </div>
 </div>
-<div class="tools affiliate-filter-tools">
+<div class="tools">
 <input class="search" id="searchInput" placeholder="Search products..." type="search"/>
-<button class="chip is-active" id="affiliateAllButton" data-filter="all" type="button">▦ All</button>
-<a class="fav-chip" href="/likes/">♡ My Favourite</a>
-<label class="affiliate-sort-control" for="categorySortSelect">
-<span>Sort by :</span>
-<select id="categorySortSelect" aria-label="Sort by categories">
-<option value="all">Categories</option>
-<option value="chocolate">Chocolate</option>
-<option value="networking">Networking</option>
-<option value="computer">Computer &amp; Accessories</option>
-<option value="fast-storage">Fast Storage</option>
-<option value="groceries">Groceries</option>
-<option value="mobile">Mobile</option>
-<option value="camera">Camera</option>
-<option value="gaming">Gaming</option>
-<option value="others">Others</option>
-</select>
-</label>
+<button class="chip is-active" data-filter="all" type="button">All</button>
+<button class="chip" data-filter="computer" type="button">Computer</button>
+<button class="chip" data-filter="mobile" type="button">Mobile</button>
+<button class="chip" data-filter="camera" type="button">Camera</button>
+<button class="chip" data-filter="groceries" type="button">Groceries</button>
 </div>
 </section>
 <section class="grid" id="productGrid"></section>
@@ -608,8 +593,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const emptyState = document.getElementById('emptyState');
     const categorySearch = document.getElementById('categorySearch');
     const categoryTiles = Array.from(document.querySelectorAll('.category-tile'));
-    const chips = Array.from(document.querySelectorAll('.chip[data-filter]'));
-    const categorySortSelect = document.getElementById('categorySortSelect');
+    const chips = Array.from(document.querySelectorAll('[data-filter]'));
     let products = [];
     let activeFilter = 'all';
 
@@ -617,25 +601,11 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     }
 
-    function affiliateCategoryKey(item){
-      const text = [item.category,item.badge,item.meta,item.title,item.desc].join(' ').toLowerCase();
-      if(/choc|coklat|chocolate/.test(text)) return 'chocolate';
-      if(/network|router|wifi|5g|wan|lan/.test(text)) return 'networking';
-      if(/ssd|nvme|storage|m\.2/.test(text)) return 'fast-storage';
-      if(/computer|pc|desktop|laptop|accessor/.test(text)) return 'computer';
-      if(/grocery|groceries|pet|snack|food/.test(text)) return 'groceries';
-      if(/mobile|phone|tablet|android|iphone/.test(text)) return 'mobile';
-      if(/camera|drone|cctv|dashcam/.test(text)) return 'camera';
-      if(/gaming|console|game/.test(text)) return 'gaming';
-      return item.category || 'others';
-    }
-
     function render(){
       const query = searchInput.value.trim().toLowerCase();
       const filtered = products.filter(item => {
         const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon].join(' ').toLowerCase();
-        const categoryKey = affiliateCategoryKey(item);
-        const categoryOk = activeFilter === 'all' || item.category === activeFilter || categoryKey === activeFilter;
+        const categoryOk = activeFilter === 'all' || item.category === activeFilter;
         return categoryOk && (!query || haystack.includes(query));
       });
       grid.innerHTML = filtered.map(item => `
@@ -655,22 +625,6 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     chips.forEach(chip => chip.addEventListener('click', () => {
       activeFilter = chip.dataset.filter || 'all';
       chips.forEach(item => item.classList.toggle('is-active', item === chip));
-      if(categorySortSelect) categorySortSelect.value = activeFilter === 'all' ? 'all' : activeFilter;
-      render();
-    }));
-    if(categorySortSelect){
-      categorySortSelect.addEventListener('change', () => {
-        activeFilter = categorySortSelect.value || 'all';
-        chips.forEach(item => item.classList.toggle('is-active', activeFilter === 'all' && (item.dataset.filter || 'all') === 'all'));
-        categoryTiles.forEach(tile => tile.classList.toggle('is-active', (tile.dataset.filter || 'all') === activeFilter));
-        render();
-      });
-    }
-    categoryTiles.forEach(tile => tile.addEventListener('click', () => {
-      activeFilter = tile.dataset.filter || 'all';
-      categoryTiles.forEach(item => item.classList.toggle('is-active', item === tile));
-      chips.forEach(item => item.classList.toggle('is-active', activeFilter === 'all' && (item.dataset.filter || 'all') === 'all'));
-      if(categorySortSelect) categorySortSelect.value = activeFilter;
       render();
     }));
     searchInput.addEventListener('input', render);
