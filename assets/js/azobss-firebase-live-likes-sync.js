@@ -22,7 +22,7 @@ const ONLINE_COLLECTION = 'onlineUsers';
 const LOGIN_HISTORY_COLLECTION = 'loginHistory';
 const GUEST_HISTORY_COLLECTION = 'guestHistory';
 const USER_LIKES_COLLECTION = 'userLikes';
-const ONLINE_WINDOW_MS = 20 * 60 * 1000;
+const ONLINE_WINDOW_MS = 120 * 1000; // only truly online users: seen within last 2 minutes
 const PAGE_SIZE = 4;
 
 function safeJson(raw){ try { return JSON.parse(raw || 'null'); } catch { return null; } }
@@ -196,17 +196,51 @@ async function syncGuestVisit(){
 }
 
 let livePage = 1, loginPage = 1, guestPage = 1;
+function inlineDateTime(ms){
+  if(!ms) return '-';
+  return new Date(ms).toLocaleString('en-MY',{hour12:false});
+}
+function displayName(row){
+  return escapeHtml(row.displayName || row.usernameKey || row.name || 'User');
+}
 function liveHtml(user){
-  const ms = firestoreMs(user.lastSeenAt) || Number(user.lastSeenMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>${escapeHtml(user.displayName || user.usernameKey || 'User')}</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Email: ${escapeHtml(user.email || '-')}</span><span>Phone: ${escapeHtml(user.phone || '-')}</span><span>Status: ${Date.now()-ms<30000?'online':'recently active'}</span></div></div>`;
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastSeenClient) || Number(user.lastSeenMs || 0) || firestoreMs(user.lastLoginAt);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${displayName(user)}</strong>
+      <span>Email: ${escapeHtml(user.email || '-')}</span>
+      <span>Phone: ${escapeHtml(user.phone || '-')}</span>
+      <span>Status: <b class="az-status-online">online</b></span>
+      <span>Seen: ${inlineDateTime(ms)}</span>
+    </div>
+  </div>`;
 }
 function loginHtml(row){
-  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>${escapeHtml(row.displayName || row.usernameKey || 'User')}</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Email: ${escapeHtml(row.email || '-')}</span><span>Phone: ${escapeHtml(row.phone || '-')}</span><span>Action: ${escapeHtml(row.action || 'login')}</span></div></div>`;
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${displayName(row)}</strong>
+      <span>${escapeHtml(row.action === 'signup' ? 'Sign up' : 'Login')}</span>
+      <span>Email: ${escapeHtml(row.email || '-')}</span>
+      <span>Phone: ${escapeHtml(row.phone || '-')}</span>
+      <span>Time: ${inlineDateTime(ms)}</span>
+    </div>
+  </div>`;
 }
 function guestHtml(row){
-  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>Guest</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Page: ${escapeHtml(row.page || '-')}</span><span>Session: ${escapeHtml(String(row.sessionId || '').slice(0,22))}</span></div></div>`;
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  const ip = row.ipAddress || row.ip || '-';
+  const device = row.deviceId || row.deviceFingerprint || row.device || '-';
+  const page = row.page || row.path || '/';
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>Guest</strong>
+      <span>IP: ${escapeHtml(ip)}</span>
+      <span>Device ID: ${escapeHtml(device)}</span>
+      <span>Page: ${escapeHtml(page)}</span>
+      <span>Time: ${inlineDateTime(ms)}</span>
+    </div>
+  </div>`;
 }
 async function renderFirebaseLivePanels(){
   if(!document.body.classList.contains('is-admin')) return;
