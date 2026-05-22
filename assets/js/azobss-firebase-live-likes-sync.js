@@ -23,7 +23,7 @@ const LOGIN_HISTORY_COLLECTION = 'loginHistory';
 const GUEST_HISTORY_COLLECTION = 'guestHistory';
 const USER_LIKES_COLLECTION = 'userLikes';
 const ONLINE_WINDOW_MS = 120000; // real online only (seen within 2 minutes)
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 10;
 
 function safeJson(raw){ try { return JSON.parse(raw || 'null'); } catch { return null; } }
 function getSavedUser(){
@@ -97,231 +97,19 @@ function pager(el, current, total, size, cb){
   const pages = Math.max(1, Math.ceil((total || 0) / size));
   if(total <= size){ el.innerHTML = ''; return; }
   current = Math.min(Math.max(1, current), pages);
-  const pageList = [];
-  const add = (value) => { if(value >= 1 && value <= pages && !pageList.includes(value)) pageList.push(value); };
-  add(1); add(current - 1); add(current); add(current + 1); add(pages);
-  pageList.sort((a,b)=>a-b);
-  let last = 0;
-  let html = `<button type="button" class="guest-history-page-btn is-compact" data-page="prev" ${current <= 1 ? 'disabled' : ''}>‹</button>`;
-  pageList.forEach(i => {
-    if(last && i - last > 1) html += `<span class="guest-history-page-dots">…</span>`;
-    html += `<button type="button" class="guest-history-page-btn is-compact ${i===current?'is-active':''}" data-page="${i}">${i}</button>`;
-    last = i;
-  });
-  html += `<button type="button" class="guest-history-page-btn is-compact" data-page="next" ${current >= pages ? 'disabled' : ''}>›</button>`;
+  const button = (label, page, disabled, active, title) =>
+    `<button type="button" class="guest-history-page-btn is-compact${active ? ' is-active' : ''}" data-page="${page}" title="${title || label}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+  let html = '';
+  html += button('&lt;&lt;', 1, current <= 1, false, 'First page');
+  html += button('P', Math.max(1, current - 1), current <= 1, false, 'Previous page');
+  let start = Math.max(1, current - 1);
+  let end = Math.min(pages, start + 2);
+  start = Math.max(1, end - 2);
+  for(let i=start; i<=end; i++) html += button(String(i), i, false, i === current, 'Page ' + i);
+  html += button('N', Math.min(pages, current + 1), current >= pages, false, 'Next page');
+  html += button('&gt;&gt;', pages, current >= pages, false, 'Last page');
   el.innerHTML = html;
-  el.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
-    const v = btn.dataset.page;
-    if(v === 'prev') cb(Math.max(1, current - 1));
-    else if(v === 'next') cb(Math.min(pages, current + 1));
-    else cb(Number(v) || 1);
-  }));
-}
-
-async function syncOnlineUser(){
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key) return;
-  try{
-    await setDoc(doc(db, ONLINE_COLLECTION, key), {
-      uid: String(user.uid || ''),
-      usernameKey: key,
-      displayName: String(user.usernameKey || user.name || user.displayName || key),
-      email: String(user.email || ''),
-      phone: String(user.phone || ''),
-      role: String(user.role || 'member'),
-      page: location.pathname,
-      userAgent: navigator.userAgent,
-      lastSeenAt: serverTimestamp(),
-      lastSeenClient: new Date().toISOString(),
-      lastSeenMs: Date.now(),
-      online: true
-    }, { merge:true });
-  }catch(error){ console.warn('AZOBSS online sync failed:', error); }
-}
-async function markOffline(){
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key) return;
-  try{
-    await setDoc(doc(db, ONLINE_COLLECTION, key), {
-      online:false,
-      lastSeenAt: serverTimestamp(),
-      lastSeenClient: new Date().toISOString(),
-      lastSeenMs: Date.now()
-    }, { merge:true });
-  }catch(error){}
-}
-async function syncLoginHistory(){
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key) return;
-  const sessionKey = 'azobssFirebaseLoginHistorySynced:' + key;
-  if(sessionStorage.getItem(sessionKey)) return;
-  sessionStorage.setItem(sessionKey, '1');
-  try{
-    await addDoc(collection(db, LOGIN_HISTORY_COLLECTION), {
-      uid: String(user.uid || ''),
-      usernameKey: key,
-      displayName: String(user.usernameKey || user.name || user.displayName || key),
-      email: String(user.email || ''),
-      phone: String(user.phone || ''),
-      role: String(user.role || 'member'),
-      action: 'login',
-      page: location.pathname,
-      createdAt: serverTimestamp(),
-      createdAtClient: new Date().toISOString(),
-      createdAtMs: Date.now()
-    });
-  }catch(error){ console.warn('AZOBSS login history sync failed:', error); }
-}
-function getAzobssDeviceId(){
-  const key = 'azobssDeviceId';
-  let id = localStorage.getItem(key);
-  if(!id){
-    id = 'device-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
-    localStorage.setItem(key, id);
-  }
-  return id;
-}
-async function getAzobssPublicIp(){
-  const cacheKey = 'azobssPublicIpCache';
-  try{
-    const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
-    if(cached && cached.ip && Date.now() - Number(cached.time || 0) < 3600000) return cached.ip;
-  }catch(_e){}
-  try{
-    const res = await fetch('https://api.ipify.org?format=json', { cache:'no-store' });
-    const data = await res.json();
-    const ip = String(data.ip || '').trim();
-    if(ip) sessionStorage.setItem(cacheKey, JSON.stringify({ ip, time: Date.now() }));
-    return ip || '-';
-  }catch(error){
-    console.warn('AZOBSS public IP lookup failed:', error);
-    return '-';
-  }
-}
-async function syncGuestVisit(){
-  if(getSavedUser()) return;
-  const page = location.pathname || '/';
-  // Use the same storage key as azobss-global-auth.js so two scripts do not create duplicate guest rows.
-  const key = 'azobssGuestHistorySaved:' + page;
-  if(sessionStorage.getItem(key)) return;
-  sessionStorage.setItem(key, '1');
-  try{
-    const deviceId = getAzobssDeviceId();
-    const ipAddress = await getAzobssPublicIp();
-    await addDoc(collection(db, GUEST_HISTORY_COLLECTION), {
-      page,
-      ipAddress,
-      ip: ipAddress,
-      deviceId,
-      deviceFingerprint: deviceId,
-      referrer: document.referrer || '',
-      userAgent: navigator.userAgent,
-      platform: navigator.platform || '',
-      createdAt: serverTimestamp(),
-      createdAtClient: new Date().toISOString(),
-      createdAtMs: Date.now()
-    });
-  }catch(error){ console.warn('AZOBSS guest visit sync failed:', error); }
-}
-
-let livePage = 1, loginPage = 1, guestPage = 1;
-function inlineTime(ms){
-  return ms ? new Date(ms).toLocaleString('en-MY', { hour12:false }) : '-';
-}
-function liveHtml(user){
-  const ms = firestoreMs(user.lastSeenAt) || Number(user.lastSeenMs || 0) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
-  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
-    <div class="az-admin-inline-row">
-      <strong>${escapeHtml(user.displayName || user.usernameKey || 'User')}</strong>
-      <span>Email: ${escapeHtml(user.email || '-')}</span>
-      <span>Phone: ${escapeHtml(user.phone || '-')}</span>
-      <span>Status: <b class="az-status-online">online</b></span>
-      <span>Seen: ${inlineTime(ms)}</span>
-    </div>
-  </div>`;
-}
-function loginHtml(row){
-  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0) || firestoreMs(row.createdAtClient);
-  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
-    <div class="az-admin-inline-row">
-      <strong>${escapeHtml(row.displayName || row.usernameKey || 'User')}</strong>
-      <span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span>
-      <span>Email: ${escapeHtml(row.email || '-')}</span>
-      <span>Phone: ${escapeHtml(row.phone || '-')}</span>
-      <span>Time: ${inlineTime(ms)}</span>
-    </div>
-  </div>`;
-}
-function guestHtml(row){
-  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0) || firestoreMs(row.createdAtClient);
-  const ip = row.ipAddress || row.ip || '-';
-  const device = row.deviceId || row.deviceFingerprint || '-';
-  const page = row.page || row.path || '/';
-  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
-    <div class="az-admin-inline-row">
-      <strong>Guest</strong>
-      <span>IP: ${escapeHtml(ip)}</span>
-      <span>Device ID: ${escapeHtml(device)}</span>
-      <span>Page: ${escapeHtml(page)}</span>
-      <span>Time: ${inlineTime(ms)}</span>
-    </div>
-  </div>`;
-}
-async function renderFirebaseLivePanels(){
-  if(!document.body.classList.contains('is-admin')) return;
-  try{
-    const liveRows = [];
-    const snap = await getDocs(collection(db, ONLINE_COLLECTION));
-    snap.forEach(d => liveRows.push({id:d.id, ...d.data()}));
-    const now = Date.now();
-    const live = liveRows.filter(u => {
-      const ms = firestoreMs(u.lastSeenAt) || Number(u.lastSeenMs || 0);
-      return ms && (now - ms) <= ONLINE_WINDOW_MS && u.online !== false;
-    }).sort((a,b)=>(firestoreMs(b.lastSeenAt)||Number(b.lastSeenMs||0))-(firestoreMs(a.lastSeenAt)||Number(a.lastSeenMs||0)));
-    const list = document.getElementById('liveUsersList');
-    if(list){
-      const visible = live.slice((livePage-1)*PAGE_SIZE, livePage*PAGE_SIZE);
-      list.innerHTML = visible.map(liveHtml).join('') || '<div class="purchase-summary-item">No users are online right now.</div>';
-      pager(document.getElementById('liveUsersPagination'), livePage, live.length, PAGE_SIZE, p => { livePage = p; renderFirebaseLivePanels(); });
-    }
-    const count = document.getElementById('onlineUserCount');
-    if(count) count.textContent = String(live.length);
-  }catch(error){ console.warn('AZOBSS live admin render failed:', error); }
-
-  try{
-    const rows = [];
-    const snap = await getDocs(collection(db, LOGIN_HISTORY_COLLECTION));
-    snap.forEach(d => rows.push({id:d.id, ...d.data()}));
-    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
-    const list = document.getElementById('loginHistoryList');
-    if(list){
-      const visible = rows.slice((loginPage-1)*PAGE_SIZE, loginPage*PAGE_SIZE);
-      list.innerHTML = visible.map(loginHtml).join('') || '<div class="purchase-summary-item">No login history yet.</div>';
-      pager(document.getElementById('loginHistoryPagination'), loginPage, rows.length, PAGE_SIZE, p => { loginPage = p; renderFirebaseLivePanels(); });
-    }
-    const c = todayMonthCounts(rows);
-    const today = document.getElementById('loginHistoryToday'); if(today) today.textContent = String(c.today);
-    const month = document.getElementById('loginHistoryMonth'); if(month) month.textContent = String(c.month);
-  }catch(error){ console.warn('AZOBSS login history admin render failed:', error); }
-
-  try{
-    const rows = [];
-    const snap = await getDocs(collection(db, GUEST_HISTORY_COLLECTION));
-    snap.forEach(d => rows.push({id:d.id, ...d.data()}));
-    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
-    const list = document.getElementById('guestHistoryList');
-    if(list){
-      const visible = rows.slice((guestPage-1)*PAGE_SIZE, guestPage*PAGE_SIZE);
-      list.innerHTML = visible.map(guestHtml).join('') || '<div class="purchase-summary-item">No guest history yet.</div>';
-      pager(document.getElementById('guestHistoryPagination'), guestPage, rows.length, PAGE_SIZE, p => { guestPage = p; renderFirebaseLivePanels(); });
-    }
-    const c = todayMonthCounts(rows);
-    const today = document.getElementById('guestVisitsToday'); if(today) today.textContent = String(c.today);
-    const month = document.getElementById('guestVisitsMonth'); if(month) month.textContent = String(c.month);
-  }catch(error){ console.warn('AZOBSS guest history admin render failed:', error); }
+  el.querySelectorAll('button[data-page]').forEach(btn => btn.addEventListener('click', () => cb(Number(btn.dataset.page) || current)));
 }
 
 function localLikes(){ return safeJson(localStorage.getItem('azLikes')) || []; }

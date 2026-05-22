@@ -777,7 +777,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
 const AZOBSS_LOGIN_HISTORY_COLLECTION = 'loginHistory';
 const AZOBSS_ONLINE_USERS_COLLECTION = 'onlineUsers';
 const AZOBSS_GUEST_HISTORY_COLLECTION = 'guestHistory';
-const AZOBSS_ADMIN_PAGE_SIZE = 4;
+const AZOBSS_ADMIN_PAGE_SIZE = 10;
 let azobssRegisteredUsersPage = 1;
 let azobssLiveUsersPage = 1;
 let azobssLoginHistoryPage = 1;
@@ -952,38 +952,29 @@ function guestHistoryHtml(row){
     </div>
   </div>`;
 }
+function azobssBuildCompactPagerHtml(current, totalPages){
+  const button = (label, page, disabled, active, title) =>
+    `<button class="guest-history-page-btn is-compact${active ? ' is-active' : ''}" type="button" data-page="${page}" title="${title || label}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+  const pages = [];
+  pages.push(button('&lt;&lt;', 1, current <= 1, false, 'First page'));
+  pages.push(button('P', Math.max(1, current - 1), current <= 1, false, 'Previous page'));
+  let start = Math.max(1, current - 1);
+  let end = Math.min(totalPages, start + 2);
+  start = Math.max(1, end - 2);
+  for(let i=start; i<=end; i++) pages.push(button(String(i), i, false, current === i, 'Page ' + i));
+  pages.push(button('N', Math.min(totalPages, current + 1), current >= totalPages, false, 'Next page'));
+  pages.push(button('&gt;&gt;', totalPages, current >= totalPages, false, 'Last page'));
+  return pages.join('');
+}
 function adminPager(el, page, total, size, onPage){
   if(!el) return;
   const totalPages = Math.max(1, Math.ceil((total || 0) / size));
   if(total <= size){ el.innerHTML = ''; return; }
   page = Math.min(Math.max(1, page), totalPages);
-  const pages = [];
-  const addPage = (value) => {
-    if(value >= 1 && value <= totalPages && !pages.includes(value)) pages.push(value);
-  };
-  addPage(1);
-  addPage(page - 1);
-  addPage(page);
-  addPage(page + 1);
-  addPage(totalPages);
-  pages.sort((a,b)=>a-b);
-  let last = 0;
-  let html = `<button class="guest-history-page-btn is-compact" type="button" data-page="prev" ${page<=1?'disabled':''}>‹</button>`;
-  pages.forEach(i => {
-    if(last && i - last > 1) html += `<span class="guest-history-page-dots">…</span>`;
-    html += `<button class="guest-history-page-btn is-compact ${i===page?'is-active':''}" type="button" data-page="${i}">${i}</button>`;
-    last = i;
-  });
-  html += `<button class="guest-history-page-btn is-compact" type="button" data-page="next" ${page>=totalPages?'disabled':''}>›</button>`;
-  el.innerHTML = html;
-  el.querySelectorAll('button').forEach(btn=>{
+  el.innerHTML = azobssBuildCompactPagerHtml(page, totalPages);
+  el.querySelectorAll('button[data-page]').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const v = btn.dataset.page;
-      let next = page;
-      if(v === 'prev') next = Math.max(1, page-1);
-      else if(v === 'next') next = Math.min(totalPages, page+1);
-      else next = Number(v) || page;
-      onPage(next);
+      onPage(Number(btn.dataset.page) || page);
     });
   });
 }
@@ -1509,8 +1500,11 @@ function formatPurchaseDate(record){
   if(!ms) return '-';
   return new Date(ms).toLocaleString('en-MY', { hour12:true, hour:'numeric', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
 }
-const AZOBSS_PURCHASE_PAGE_SIZE = 4;
-const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 4;
+const AZOBSS_PURCHASE_PAGE_SIZE = 10;
+const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 6;
+const AZOBSS_PURCHASE_DETAIL_PAGE_SIZE = 6;
+const azobssPurchaseDetailPages = {};
+const azobssPurchaseOpenKeys = {};
 let azobssAdminPurchasePage = 1;
 let azobssUserPurchasePage = 1;
 function clampPage(page, totalPages){
@@ -1527,29 +1521,16 @@ function renderAzobssPager(container, currentPage, totalItems, pageSize, onPage)
   currentPage = clampPage(currentPage, totalPages);
   container.hidden = false;
   container.classList.add('azobss-record-pagination');
-
-  const button = (label, page, disabled, active, title) =>
-    `<button type="button" class="guest-history-page-btn${active ? ' is-active' : ''}" data-page="${page}" title="${title || label}" ${disabled ? 'disabled' : ''}>${label}</button>`;
-
-  const pages = [];
-  pages.push(button('<<', 1, currentPage === 1, false, 'First page'));
-  pages.push(button('P', Math.max(1, currentPage - 1), currentPage === 1, false, 'Previous page'));
-
-  let start = Math.max(1, currentPage - 1);
-  let end = Math.min(totalPages, start + 2);
-  start = Math.max(1, end - 2);
-
-  for(let i=start; i<=end; i++){
-    pages.push(button(String(i), i, false, currentPage === i, 'Page ' + i));
-  }
-
-  pages.push(button('N', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false, 'Next page'));
-  pages.push(button('>>', totalPages, currentPage === totalPages, false, 'Last page'));
-
-  container.innerHTML = pages.join('');
+  container.innerHTML = azobssBuildCompactPagerHtml(currentPage, totalPages);
   container.querySelectorAll('button[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => onPage(Number(btn.dataset.page)));
+    btn.addEventListener('click', () => onPage(Number(btn.dataset.page) || currentPage));
   });
+}
+function renderAzobssPurchaseDetailPager(key, currentPage, totalItems){
+  const totalPages = Math.max(1, Math.ceil((Number(totalItems)||0) / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE));
+  if(totalItems <= AZOBSS_PURCHASE_DETAIL_PAGE_SIZE) return '';
+  currentPage = clampPage(currentPage, totalPages);
+  return `<div class="guest-history-pagination az-purchase-detail-pagination" data-purchase-detail-key="${escHtml(key)}">${azobssBuildCompactPagerHtml(currentPage, totalPages)}</div>`;
 }
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
@@ -1686,14 +1667,25 @@ window.azobssTogglePurchaseDetails = toggleAzobssPurchaseDetails;
 function toggleAzobssPurchaseDetails(button){
   const card = button && button.closest('.admin-purchase-user-card');
   if(!card) return;
+  const key = String(card.dataset.userKey || '').toLowerCase();
   const details = card.querySelector('.admin-purchase-user-details');
   if(!details) return;
   const opening = details.hidden || details.style.display === 'none' || !card.classList.contains('is-open');
+  if(key) azobssPurchaseOpenKeys[key] = opening;
   details.hidden = !opening;
   details.style.display = opening ? 'grid' : 'none';
   card.classList.toggle('is-open', opening);
   button.textContent = opening ? 'Hide' : 'Show';
 }
+
+
+window.azobssSetPurchaseDetailPage = function(key, page){
+  const cleanKey = String(key || '').toLowerCase();
+  if(!cleanKey) return;
+  azobssPurchaseDetailPages[cleanKey] = Math.max(1, Number(page) || 1);
+  azobssPurchaseOpenKeys[cleanKey] = true;
+  renderAzobssPurchaseRecords();
+};
 
 async function renderAzobssPurchaseRecords(){
   const list = document.getElementById('purchaseSummaryList');
@@ -1728,23 +1720,37 @@ async function renderAzobssPurchaseRecords(){
         const total = countableRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
         const unitCount = countableRowsForTotal.length;
         const lastItem = first.itemCode ? `${first.productType || 'PA'} ${first.itemCode}` : '-';
-        return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card" data-user-key="${escHtml(key)}">
+        const isDetailOpen = !!azobssPurchaseOpenKeys[key];
+        return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card${isDetailOpen ? ' is-open' : ''}" data-user-key="${escHtml(key)}">
           <div class="admin-purchase-user-top az-purchase-mini-top">
             <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong><span>${escHtml(first.phone || '')} ${first.email ? '· '+escHtml(first.email) : ''}</span></div>
             <span>Last: <strong>${escHtml(lastItem)}</strong></span>
             <span>Unit: <strong>${unitCount}</strong></span>
             <span>Total: <strong>RM${total}</strong></span>
             <div class="az-purchase-mini-actions">
-              <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">Show</button>
+              <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">${isDetailOpen ? 'Hide' : 'Show'}</button>
               <button type="button" class="az-purchase-reset-btn" onclick="window.azobssResetPurchaseRecordsForUser && window.azobssResetPurchaseRecordsForUser('${escHtml(key)}')">Reset</button>
             </div>
           </div>
-          <div class="admin-purchase-user-details az-purchase-mini-details" hidden style="display:none;">
-            ${rows.map(r => `<div>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</div>`).join('')}
+          <div class="admin-purchase-user-details az-purchase-mini-details" ${isDetailOpen ? '' : 'hidden'} style="display:${isDetailOpen ? 'grid' : 'none'};">
+            ${(() => {
+              const detailPage = clampPage(azobssPurchaseDetailPages[key] || 1, Math.max(1, Math.ceil(rows.length / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE)));
+              azobssPurchaseDetailPages[key] = detailPage;
+              const detailRows = rows.slice((detailPage - 1) * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE, detailPage * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE);
+              return detailRows.map(r => `<div>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</div>`).join('') + renderAzobssPurchaseDetailPager(key, detailPage, rows.length);
+            })()}
           </div>
         </div>`;
       }).join('') || '<div class="purchase-summary-item">No purchase records yet.</div>';
     }
+    list?.querySelectorAll('.az-purchase-detail-pagination button[data-page]').forEach(btn => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const holder = btn.closest('.az-purchase-detail-pagination');
+        const key = holder?.dataset.purchaseDetailKey || '';
+        window.azobssSetPurchaseDetailPage && window.azobssSetPurchaseDetailPage(key, Number(btn.dataset.page) || 1);
+      });
+    });
     renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, groupedRows.length, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, page => {
       azobssAdminPurchasePage = page;
       renderAzobssPurchaseRecords();

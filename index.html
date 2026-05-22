@@ -7799,6 +7799,8 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 <option value="unitsDesc">Unit: highest</option>
 <option value="unitsAsc">Unit: lowest</option>
 <option value="updatedNewest">Latest updated</option>
+<option value="dateNewest" selected>Date registered: newest</option>
+<option value="dateOldest">Date registered: oldest</option>
 <option value="username">Username A-Z</option>
 </select>
 </label>
@@ -7881,11 +7883,12 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 <label for="registeredUserSort">
             Sort by
             <select id="registeredUserSort">
+<option value="dateNewest" selected>Date registered: newest</option>
+<option value="dateOldest">Date registered: oldest</option>
 <option value="username">Username A-Z</option>
 <option value="onlineOnly">Online users only</option>
 <option value="paAllowed">PA Access Allowed</option>
-<option value="dateNewest">Date registered: newest</option>
-<option value="dateOldest">Date registered: oldest</option>
+
 </select>
 </label>
 <button class="btn blue" id="refreshUsersButton" type="button">
