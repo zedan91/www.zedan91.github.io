@@ -848,6 +848,15 @@ let azobssGuestHistoryPage = 1;
 const AZOBSS_REAL_ONLINE_MS = 120000; // only show users seen within the last 2 minutes
 let azobssPresenceHeartbeatTimer = null;
 
+
+async function azobssCleanupCollection(collectionName){
+ try{
+ const snap=await getDocs(query(collection(db,collectionName),orderBy("createdAt","desc")));
+ if(snap.size<=25) return;
+ const extra=snap.docs.slice(25);
+ for(const d of extra){ await deleteDoc(d.ref);} 
+ }catch(e){console.warn("cleanup",e)}
+}
 function firestoreMs(value){
   if(!value) return 0;
   if(typeof value.toMillis === 'function') return value.toMillis();
@@ -2216,3 +2225,5 @@ body{padding-top:58px!important;}
 // auto-init country selectors for dynamic admin modal
 setupCountryPhoneSelectors(document);
 new MutationObserver(()=>setupCountryPhoneSelectors(document)).observe(document.body,{childList:true,subtree:true});
+
+setTimeout(()=>{azobssCleanupCollection("loginHistory");azobssCleanupCollection("guestHistory");azobssCleanupCollection("purchaseLogs");},5000);
