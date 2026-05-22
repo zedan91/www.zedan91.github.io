@@ -198,7 +198,7 @@ async function syncGuestVisit(){
 let livePage = 1, loginPage = 1, guestPage = 1;
 function liveHtml(user){
   const ms = firestoreMs(user.lastSeenAt) || Number(user.lastSeenMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>${escapeHtml(user.displayName || user.usernameKey || 'User')}</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Email: ${escapeHtml(user.email || '-')}</span><span>Phone: ${escapeHtml(user.phone || '-')}</span><span>Status: online / recently active</span></div></div>`;
+  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>${escapeHtml(user.displayName || user.usernameKey || 'User')}</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Email: ${escapeHtml(user.email || '-')}</span><span>Phone: ${escapeHtml(user.phone || '-')}</span><span>Status: ${Date.now()-ms<30000?'online':'recently active'}</span></div></div>`;
 }
 function loginHtml(row){
   const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0);
