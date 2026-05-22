@@ -810,6 +810,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
 <style>
 /* AZOBSS Software Admin Add Item */
+
+.software-shop-controls{max-width:1180px;margin:0 auto 18px;display:grid;grid-template-columns:minmax(220px,1fr) 210px;gap:10px;align-items:end;}
+.software-shop-controls label{display:grid;gap:6px;color:#cbd5e1;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;}
+.software-shop-controls input,.software-shop-controls select{width:100%;box-sizing:border-box;border:1px solid rgba(34,197,94,.28);border-radius:14px;background:#020617;color:#f8fafc;padding:11px 13px;font:inherit;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.software-shop-controls input:focus,.software-shop-controls select:focus{border-color:rgba(34,197,94,.72);box-shadow:0 0 0 3px rgba(34,197,94,.12);}
+.software-empty-state{grid-column:1/-1;border:1px dashed rgba(148,163,184,.35);border-radius:18px;padding:18px;text-align:center;color:#94a3b8;background:rgba(15,23,42,.55);font-weight:800;}
+@media(max-width:640px){.software-shop-controls{grid-template-columns:1fr;margin-bottom:14px;}}
+
 .software-admin-toolbar{max-width:1180px;margin:0 auto 18px;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
 .software-admin-add-btn{border:1px solid rgba(34,197,94,.55);background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(34,197,94,.20);}
 .software-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);}
@@ -895,43 +903,57 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <div class="software-admin-toolbar">
   <button class="software-admin-add-btn" id="softwareAdminAddButton" type="button" hidden>+ Add Software Item</button>
 </div>
+<div class="software-shop-controls" aria-label="Software search and sorting controls">
+  <label>Search
+    <input id="softwareSearchInput" type="search" placeholder="Search software name or description...">
+  </label>
+  <label>Sort by
+    <select id="softwareSortSelect">
+      <option value="newest">Newest item</option>
+      <option value="freeFirst">Free Software first</option>
+      <option value="premiumFirst">Premium Software first</option>
+      <option value="nameAZ">Name A-Z</option>
+      <option value="nameZA">Name Z-A</option>
+    </select>
+  </label>
+</div>
 <div class="downloads-grid" id="softwareDownloadsGrid">
-<div class="download-card" data-software-static="1">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="crystaldiskmark" data-search="crystaldiskmark benchmark utility for testing ssd and hard disk speed on windows.">
 <div class="download-icon">CD</div>
 <div class="software-badge free">Free Software</div>
 <h3>CrystalDiskMark</h3>
 <p>Benchmark utility for testing SSD and hard disk speed on Windows.</p>
 <a class="download-btn" href="https://crystalmark.info/en/software/crystaldiskmark/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="hwinfo" data-search="hwinfo tool for monitoring temperature, sensors, hardware details and pc system status.">
 <div class="download-icon">HW</div>
 <div class="software-badge free">Free Software</div>
 <h3>HWInfo</h3>
 <p>Tool for monitoring temperature, sensors, hardware details and PC system status.</p>
 <a class="download-btn" href="https://www.hwinfo.com/download/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="anydesk" data-search="anydesk remote support tool for online pc troubleshooting.">
 <div class="download-icon">AD</div>
 <div class="software-badge free">Free Software</div>
 <h3>AnyDesk</h3>
 <p>Remote support tool for online PC troubleshooting.</p>
 <a class="download-btn" href="https://anydesk.com/en/downloads/windows?dv=win_exe" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="rustdesk" data-search="rustdesk alternative remote desktop tool for support and remote access.">
 <div class="download-icon">RD</div>
 <div class="software-badge free">Free Software</div>
 <h3>RustDesk</h3>
 <p>Alternative remote desktop tool for support and remote access.</p>
 <a class="download-btn" href="https://rustdesk.com/download" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="file converter" data-search="file converter utility for converting files, images, documents and media formats.">
 <div class="download-icon">FC</div>
 <div class="software-badge free">Free Software</div>
 <h3>File Converter</h3>
 <p>Utility for converting files, images, documents and media formats.</p>
 <a class="download-btn" href="https://file-converter.io/" rel="noopener" target="_blank">Download Now</a>
 </div>
-<div class="download-card" data-software-static="1">
+<div class="download-card" data-software-static="1" data-type="free" data-created="0" data-name="windows tweaks" data-search="windows tweaks registry tweaks to speed up windows 11 workflows and adjust important settings.">
 <div class="download-icon">WT</div>
 <div class="software-badge free">Free Software</div>
 <h3>Windows Tweaks</h3>
@@ -1020,6 +1042,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const priceInput = document.getElementById('softwareAdminPrice');
   const buttonInput = document.getElementById('softwareAdminButtonText');
   const iconInput = document.getElementById('softwareAdminIcon');
+  const searchInput = document.getElementById('softwareSearchInput');
+  const sortSelect = document.getElementById('softwareSortSelect');
+  let softwareDynamicItems = [];
 
   function clean(v){ return String(v || '').trim().toLowerCase(); }
   function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
@@ -1041,13 +1066,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
       icon: item.icon || (type === 'free' ? 'FREE' : '🛒'),
       link: item.link || item.url || '#',
-      buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now')
+      buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
+      createdAtMs: item.createdAtMs || (item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : (Number(item.createdAt) || 0)))
     };
   }
   function renderItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : 'Free Software';
-    return `<div class="download-card" data-admin-software="1" data-type="${esc(item.type)}">
+    return `<div class="download-card" data-admin-software="1" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price).toLowerCase())}">
       <div class="download-icon">${esc(item.icon)}</div>
       <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
       <h3>${esc(item.name)}</h3>
@@ -1065,14 +1091,60 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       return [];
     }
   }
+  function getStaticCards(){
+    return Array.from(grid?.querySelectorAll('[data-software-static="1"]') || []);
+  }
+  function applySoftwareFilters(){
+    if(!grid) return;
+    grid.querySelectorAll('[data-admin-software="1"], .software-empty-state').forEach(el => el.remove());
+    const keyword = clean(searchInput?.value || '');
+    const sortMode = sortSelect?.value || 'newest';
+
+    const staticCards = getStaticCards();
+    staticCards.forEach(card => { card.style.display = ''; });
+
+    let dynamic = [...softwareDynamicItems];
+    if(keyword){
+      dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price}`).includes(keyword));
+      staticCards.forEach(card => {
+        const text = clean(card.dataset.search || card.textContent || '');
+        card.style.display = text.includes(keyword) ? '' : 'none';
+      });
+    }
+
+    const typeRank = item => item.type === 'premium' ? 1 : 0;
+    dynamic.sort((a,b) => {
+      if(sortMode === 'freeFirst') return typeRank(a) - typeRank(b) || String(a.name).localeCompare(String(b.name));
+      if(sortMode === 'premiumFirst') return typeRank(b) - typeRank(a) || String(a.name).localeCompare(String(b.name));
+      if(sortMode === 'nameAZ') return String(a.name).localeCompare(String(b.name));
+      if(sortMode === 'nameZA') return String(b.name).localeCompare(String(a.name));
+      return (b.createdAtMs || 0) - (a.createdAtMs || 0);
+    });
+
+    if(dynamic.length){
+      grid.insertAdjacentHTML('afterbegin', dynamic.map(renderItem).join(''));
+    }
+
+    // Sort static cards visually when sorting by name/type. Static free items stay after admin items for newest mode.
+    if(sortMode !== 'newest'){
+      const sortedStatic = staticCards.slice().sort((a,b) => {
+        const an = a.dataset.name || '';
+        const bn = b.dataset.name || '';
+        if(sortMode === 'nameZA') return bn.localeCompare(an);
+        return an.localeCompare(bn);
+      });
+      sortedStatic.forEach(card => grid.appendChild(card));
+    }
+
+    const hasVisibleStatic = staticCards.some(card => card.style.display !== 'none');
+    if(!dynamic.length && !hasVisibleStatic){
+      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found.</div>');
+    }
+  }
   async function loadItems(){
     if(!grid) return;
-    const existingAdminCards = grid.querySelectorAll('[data-admin-software="1"]');
-    existingAdminCards.forEach(card => card.remove());
-    const items = [...await loadFirestore(), ...loadLocal()];
-    if(items.length){
-      grid.insertAdjacentHTML('afterbegin', items.map(renderItem).join(''));
-    }
+    softwareDynamicItems = [...await loadFirestore(), ...loadLocal()];
+    applySoftwareFilters();
   }
   function refreshAdminState(){ if(addButton) addButton.hidden = !isAdmin(); }
   function syncTypeDefaults(){
@@ -1091,6 +1163,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     modal?.setAttribute('aria-hidden','false');
   }
   function closeModal(){ modal?.classList.remove('is-open'); modal?.setAttribute('aria-hidden','true'); }
+
+  searchInput?.addEventListener('input', applySoftwareFilters);
+  sortSelect?.addEventListener('change', applySoftwareFilters);
 
   addButton?.addEventListener('click', openModal);
   document.getElementById('softwareAdminClose')?.addEventListener('click', closeModal);
