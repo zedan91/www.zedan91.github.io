@@ -58,7 +58,16 @@ function addStyle() {
 .auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
 .auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
 .phone-input-row{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;}
-.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;}
+.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.country-code-button::after{content:'⌄';margin-left:7px;font-size:13px;color:#cbd5e1;}
+.country-combo{position:relative;}
+.country-code-menu{position:absolute;left:0;top:calc(100% + 8px);width:260px;max-width:calc(100vw - 44px);padding:8px;border:1px solid rgba(211,223,240,.32);border-radius:12px;background:#081326;box-shadow:0 18px 45px rgba(0,0,0,.45);display:none;z-index:10020;}
+.country-combo.is-open .country-code-menu{display:block;}
+.country-menu-search{width:100%;box-sizing:border-box;margin-bottom:7px;border:1px solid rgba(211,223,240,.35);border-radius:9px;background:#0d1628;color:#fff;padding:10px 11px;font:inherit;outline:none;}
+.country-menu-options{max-height:220px;overflow:auto;display:grid;gap:4px;}
+.country-code-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;border-radius:8px;background:transparent;color:#eaf2ff;padding:9px 10px;text-align:left;font:inherit;font-weight:800;cursor:pointer;}
+.country-code-option:hover,.country-code-option:focus{background:rgba(34,197,94,.16);outline:none;}
+.country-option-dial{color:#62e6a5;font-weight:900;}
 .phone-number-wrap{position:relative;}
 .phone-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#b9c5d8;font-weight:800;}
 .phone-number-wrap input{padding-left:54px!important;}
@@ -108,9 +117,15 @@ function injectModal() {
         <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6" required type="password">
       </label>
       <label for="siteSignupPhone">WhatsApp Number
-        <div class="phone-input-row">
-          <button class="country-code-button" type="button" tabindex="-1">🇲🇾 +60</button>
-          <div class="phone-number-wrap"><span class="phone-prefix">+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="12 345 6789" required type="tel"></div>
+        <div class="phone-input-row" data-country-phone="siteSignup" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="12 345 6789" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
         </div>
       </label>
       <label for="siteSignupEmail">Email
@@ -126,6 +141,7 @@ function injectModal() {
   </div>
 </div>`;
   document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
 }
 
 function injectAdminUserEditModal() {
@@ -180,6 +196,48 @@ const $ = (id) => document.getElementById(id);
 function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
 function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
 function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
+const AZOBSS_COUNTRY_DIAL_CODES = [
+  ['🇲🇾','Malaysia','60'],['🇸🇬','Singapore','65'],['🇮🇩','Indonesia','62'],['🇧🇳','Brunei','673'],['🇹🇭','Thailand','66'],['🇵🇭','Philippines','63'],['🇻🇳','Vietnam','84'],['🇨🇳','China','86'],['🇭🇰','Hong Kong','852'],['🇹🇼','Taiwan','886'],['🇯🇵','Japan','81'],['🇰🇷','South Korea','82'],['🇮🇳','India','91'],['🇵🇰','Pakistan','92'],['🇧🇩','Bangladesh','880'],['🇦🇺','Australia','61'],['🇳🇿','New Zealand','64'],['🇬🇧','United Kingdom','44'],['🇺🇸','United States','1'],['🇨🇦','Canada','1'],['🇸🇦','Saudi Arabia','966'],['🇦🇪','United Arab Emirates','971']
+];
+function getCountryByDial(dial){return AZOBSS_COUNTRY_DIAL_CODES.find(c=>c[2]===String(dial||'').replace(/[^0-9]/g,'')) || AZOBSS_COUNTRY_DIAL_CODES[0];}
+function setPhoneDial(prefix, dial){
+  const row=document.querySelector(`[data-country-phone="${prefix}"]`); if(!row) return;
+  const country=getCountryByDial(dial);
+  const hidden=$(prefix+'Dial'); if(hidden) hidden.value=country[2];
+  const btn=row.querySelector('[data-country-button]'); if(btn) btn.textContent=`${country[0]} +${country[2]}`;
+  const pre=row.querySelector('[data-phone-prefix]'); if(pre) pre.textContent=`+${country[2]}`;
+}
+function getPhoneWithDial(prefix){
+  const dial=String($(prefix+'Dial')?.value||'60').replace(/[^0-9]/g,'') || '60';
+  const local=String($(prefix+'Phone')?.value||'').replace(/[^0-9]/g,'').replace(new RegExp('^'+dial),'').replace(/^0+/,'');
+  return local ? dial + local : '';
+}
+function splitPhoneToDialLocal(value){
+  const digits=String(value||'').replace(/[^0-9]/g,'');
+  const sorted=[...AZOBSS_COUNTRY_DIAL_CODES].sort((a,b)=>b[2].length-a[2].length);
+  const found=sorted.find(c=>digits.startsWith(c[2]) && digits.length>c[2].length+3);
+  if(found) return {dial:found[2], local:digits.slice(found[2].length).replace(/^0+/,'')};
+  return {dial:'60', local:digits.replace(/^60/,'').replace(/^0+/,'')};
+}
+function setupCountryPhoneSelectors(root=document){
+  root.querySelectorAll('[data-country-phone]').forEach(row=>{
+    if(row.dataset.countryReady==='1') return; row.dataset.countryReady='1';
+    const prefix=row.dataset.countryPhone;
+    const btn=row.querySelector('[data-country-button]');
+    const combo=row.querySelector('.country-combo');
+    const search=row.querySelector('[data-country-search]');
+    const options=row.querySelector('[data-country-options]');
+    const render=(q='')=>{
+      if(!options) return; const query=String(q).trim().toLowerCase();
+      options.innerHTML=AZOBSS_COUNTRY_DIAL_CODES.filter(c=>!query || c.join(' ').toLowerCase().includes(query) || ('+'+c[2]).includes(query)).map(c=>`<button class="country-code-option" type="button" data-dial="${c[2]}"><span>${c[0]} ${c[1]}</span><span class="country-option-dial">+${c[2]}</span></button>`).join('');
+    };
+    render(); setPhoneDial(prefix,row.dataset.defaultDial||'60');
+    btn?.addEventListener('click',()=>{ combo?.classList.toggle('is-open'); if(combo?.classList.contains('is-open')){ render(search?.value||''); setTimeout(()=>search?.focus(),0); } });
+    search?.addEventListener('input',()=>render(search.value));
+    options?.addEventListener('click',(event)=>{ const opt=event.target.closest('[data-dial]'); if(!opt) return; setPhoneDial(prefix,opt.dataset.dial); combo?.classList.remove('is-open'); });
+  });
+}
+document.addEventListener('click',(event)=>{ if(!event.target.closest('.country-combo')) document.querySelectorAll('.country-combo.is-open').forEach(el=>el.classList.remove('is-open')); });
 function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
 function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
 function safeJson(raw){try{return JSON.parse(raw||'null');}catch{return null;}}
@@ -307,7 +365,18 @@ function injectProfileSettingsModal() {
     </div>
     <form class="auth-modal-form" id="profileSettingsForm">
       <label for="profileEditName">Username / Name<input id="profileEditName" placeholder="Username" required type="text"></label>
-      <label for="profileEditPhone">Phone Number<input id="profileEditPhone" inputmode="tel" placeholder="Example: 01135600723" type="tel"></label>
+      <label for="profileEditPhone">Phone Number
+        <div class="phone-input-row" data-country-phone="profileEdit" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="profileEditPhone" inputmode="tel" placeholder="12 345 6789" type="tel"><input id="profileEditDial" type="hidden" value="60"></div>
+        </div>
+      </label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
       <p class="profile-settings-note">This updates your profile in Firebase and keeps it saved after reopening the browser.</p>
       <div class="profile-password-box" aria-label="Reset Password">
@@ -327,6 +396,7 @@ function injectProfileSettingsModal() {
   </div>
 </div>`;
   document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
 }
 
 const AZOBSS_ADMIN_USERS = ['zedan91'];
@@ -439,7 +509,9 @@ function openProfileSettings(){
   const modal=$('profileSettingsModal'); if(!modal) return;
   const user=getSavedUser() || {};
   if($('profileEditName')) $('profileEditName').value=user.usernameKey || user.name || '';
-  if($('profileEditPhone')) $('profileEditPhone').value=user.phone || '';
+  const parsedPhone=splitPhoneToDialLocal(user.phone || '');
+  setPhoneDial('profileEdit', parsedPhone.dial);
+  if($('profileEditPhone')) $('profileEditPhone').value=parsedPhone.local || '';
   if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
   const err=$('profileSettingsError'); if(err) err.textContent='';
   ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
@@ -1442,7 +1514,7 @@ function bindAuth() {
     const err=$('siteSignupError'); if(err) err.textContent='';
     const usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
     const password=fieldValue('siteSignupPassword');
-    const phone=cleanPhone(fieldValue('siteSignupPhone'));
+    const phone=getPhoneWithDial('siteSignup');
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
     const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
     if(!usernameKey || password.length<6 || !phone || !email){ if(err) err.textContent='Please complete all required fields.'; return; }
@@ -1494,7 +1566,7 @@ function bindAuth() {
     const current=getSavedUser() || {};
     const updated={...current,
       usernameKey: normalizeUsername($('profileEditName')?.value) || current.usernameKey || current.name || '',
-      phone: cleanPhone($('profileEditPhone')?.value),
+      phone: getPhoneWithDial('profileEdit'),
       email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
     };
     saveUser(updated); await saveProfileToFirebase(updated); await upsertOnlineUser(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
