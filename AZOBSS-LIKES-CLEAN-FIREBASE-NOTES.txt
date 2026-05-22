@@ -1,0 +1,8 @@
+AZOBSS Likes Firebase Clean Flow
+
+- Likes now use one Firestore path only: users/{usernameKey}/likes/{itemId}
+- Like save: setDoc(users/{usernameKey}/likes/{itemId})
+- Like load: getDocs(users/{usernameKey}/likes)
+- Unlike: deleteDoc(users/{usernameKey}/likes/{itemId})
+- Removed duplicate online like locations such as userLikes, public likes, likesMap writes.
+- LocalStorage is only a small per-user cache after Firebase read, not the source of truth.

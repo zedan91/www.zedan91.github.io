@@ -1,0 +1,8 @@
+AZOBSS PRO REFERENCE BASELINE
+
+This version keeps user-requested features but applies a safer production-style rule:
+1. Clean URLs use folder paths, e.g. /Software-Tools/ not /Software-Tools/index.html.
+2. Navbar consistency is controlled by /assets/css/azobss-pro-reference.css.
+3. URL cleanup and active nav state are controlled by /assets/js/azobss-pro-ui.js.
+4. Existing page-specific code is preserved. This file is the reference layer for future edits.
+5. Future edits should avoid copying different navbar CSS into each page. Update the global override instead.
