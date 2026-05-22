@@ -473,6 +473,19 @@
     .cad-tools-head p{margin:8px 0 0;color:#cbd5e1;line-height:1.55;max-width:760px;}
     .cad-admin-add-btn{border:1px solid rgba(249,115,22,.55);background:linear-gradient(135deg,#f97316,#fb923c);color:#fff7ed;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(249,115,22,.20);}
     .cad-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);}
+    .cad-admin-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:12px;}
+    .cad-admin-import-btn,.cad-admin-export-btn,.cad-admin-apply-btn{border:1px solid rgba(96,165,250,.42);background:rgba(15,23,42,.95);color:#dbeafe;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+    .cad-admin-import-btn:hover,.cad-admin-export-btn:hover,.cad-admin-apply-btn:hover{border-color:rgba(249,115,22,.65);color:#fed7aa;transform:translateY(-1px);}
+    .cad-admin-apply-btn{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:rgba(96,165,250,.65);}
+    .cad-admin-apply-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.25);}
+    .cad-admin-json-status{font-size:12px;font-weight:800;color:#fdba74;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .cad-filter-card{margin:0 0 16px;border:1px solid rgba(249,115,22,.20);border-radius:18px;background:linear-gradient(180deg,rgba(15,23,42,.82),rgba(2,6,23,.64));box-shadow:0 14px 36px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.035);padding:12px 14px;}
+    .cad-filter-title{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:#fed7aa;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;}
+    .cad-filter-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+    .cad-filter-btn{border:1px solid rgba(148,163,184,.28);background:rgba(11,18,34,.92);color:#e5e7eb;border-radius:999px;padding:10px 15px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.1;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);font-size:13px;}
+    .cad-filter-btn:hover{border-color:rgba(249,115,22,.65);color:#fed7aa;background:rgba(15,23,42,.98)}
+    .cad-filter-btn.is-active{background:linear-gradient(135deg,#f97316,#fb923c);border-color:#fb923c;color:#fff7ed;box-shadow:0 10px 22px rgba(249,115,22,.18);}
+
     .cad-shop-controls{display:grid;grid-template-columns:minmax(220px,1fr) 210px;gap:10px;align-items:end;margin:0 0 16px;}
     .cad-shop-controls label{display:grid;gap:6px;color:#cbd5e1;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;}
     .cad-shop-controls input,.cad-shop-controls select{width:100%;box-sizing:border-box;border:1px solid rgba(249,115,22,.28);border-radius:14px;background:#020617;color:#f8fafc;padding:11px 13px;font:inherit;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
@@ -517,7 +530,7 @@
     .cad-admin-cancel{background:#334155;color:#e2e8f0;}
     .cad-admin-save{background:#f97316;color:#fff7ed;}
     .cad-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
-    @media(max-width:640px){.cad-shop-controls,.cad-admin-row,.cad-admin-checks{grid-template-columns:1fr}.cad-admin-add-btn{width:100%;}.cad-card-grid{grid-template-columns:1fr;}}
+    @media(max-width:640px){.cad-shop-controls,.cad-admin-row,.cad-admin-checks{grid-template-columns:1fr}.cad-admin-add-btn,.cad-admin-import-btn,.cad-admin-export-btn,.cad-admin-apply-btn{width:100%;}.cad-admin-toolbar{justify-content:center}.cad-admin-json-status{max-width:100%;text-align:center}.cad-card-grid{grid-template-columns:1fr;}.cad-filter-card{padding:12px}.cad-filter-buttons{gap:8px}.cad-filter-btn{font-size:12px;padding:9px 12px;}}
 
 
     .admin-only{
@@ -1324,7 +1337,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <h2 class="section-title" id="cad-tools-shop-title">CAD Tools &amp; Resources</h2>
       <p>Free CAD resources and premium AutoCAD tools. Premium items can use ToyyibPay, QR payment or bank transaction links.</p>
     </div>
-    <button class="cad-admin-add-btn admin-only inline-admin" id="cadAdminAddButton" type="button">+ Add CAD Item</button>
+    <div class="cad-admin-toolbar" aria-label="CAD admin item tools">
+      <button class="cad-admin-add-btn admin-only inline-admin" id="cadAdminAddButton" type="button" hidden>+ Add CAD Item</button>
+      <button class="cad-admin-import-btn admin-only inline-admin" id="cadImportJsonButton" type="button" hidden>Import JSON</button>
+      <button class="cad-admin-export-btn admin-only inline-admin" id="cadExportJsonButton" type="button" hidden>Export JSON</button>
+      <button class="cad-admin-apply-btn admin-only inline-admin" id="cadApplyJsonButton" type="button" hidden disabled>Apply Import</button>
+      <input id="cadImportJsonInput" type="file" accept="application/json,.json" hidden>
+      <span class="cad-admin-json-status" id="cadJsonStatus" hidden></span>
+    </div>
   </div>
   <div class="cad-shop-controls" aria-label="CAD tools search and sorting controls">
     <label>Search
@@ -1340,8 +1360,31 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       </select>
     </label>
   </div>
+  <div class="cad-filter-card" aria-label="CAD platform filter card">
+    <div class="cad-filter-title">🖥️ Browse by Platform</div>
+    <div class="cad-filter-buttons" id="cadPlatformFilter" aria-label="CAD platform filter">
+      <button class="cad-filter-btn is-active" type="button" data-cad-platform="all">▦ All Platforms</button>
+      <button class="cad-filter-btn" type="button" data-cad-platform="AutoCAD">📐 AutoCAD</button>
+      <button class="cad-filter-btn" type="button" data-cad-platform="Windows">💻 Windows</button>
+      <button class="cad-filter-btn" type="button" data-cad-platform="Mac">🍎 Mac</button>
+      <button class="cad-filter-btn" type="button" data-cad-platform="Web">🌐 Web</button>
+    </div>
+  </div>
+  <div class="cad-filter-card" aria-label="CAD category filter card">
+    <div class="cad-filter-title">▦ Browse by Category</div>
+    <div class="cad-filter-buttons" id="cadCategoryFilter" aria-label="CAD category filter">
+      <button class="cad-filter-btn is-active" type="button" data-cad-category="all">▦ All Categories</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="LISP Programs">⚙️ LISP Programs</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Survey Tools">📍 Survey Tools</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Drafting Tools">📐 Drafting Tools</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Templates">📄 Templates</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Blocks & Symbols">🔣 Blocks & Symbols</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="E-books & Guides">📘 E-books & Guides</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Premium Tools">🛒 Premium Tools</button>
+    </div>
+  </div>
   <div class="cad-card-grid" id="cadToolGrid">
-    <article class="cad-card" data-cad-static="1" data-type="free" data-created="0" data-name="autocad lisp showcase" data-search="autocad lisp showcase free cad resource commands demonstrations gif workflow">
+    <article class="cad-card" data-cad-static="1" data-type="free" data-platforms="AutoCAD|Windows" data-category="LISP Programs" data-created="0" data-name="autocad lisp showcase" data-search="autocad lisp showcase free cad resource commands demonstrations gif workflow">
       <div class="cad-card-icon">L</div>
       <div class="cad-badge free">Free CAD Resource</div>
       <h3>AutoCAD LISP Showcase</h3>
@@ -1374,6 +1417,17 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
           <input id="cadAdminPrice" type="text" placeholder="FREE or RM10">
         </label>
       </div>
+      <label>Category
+        <select id="cadAdminCategory">
+          <option value="LISP Programs">LISP Programs</option>
+          <option value="Survey Tools">Survey Tools</option>
+          <option value="Drafting Tools">Drafting Tools</option>
+          <option value="Templates">Templates</option>
+          <option value="Blocks & Symbols">Blocks & Symbols</option>
+          <option value="E-books & Guides">E-books & Guides</option>
+          <option value="Premium Tools">Premium Tools</option>
+        </select>
+      </label>
       <div class="cad-admin-row">
         <label>Product ID / SKU
           <input id="cadAdminProductId" type="text" placeholder="Auto: AZCAD-0001">
@@ -1589,6 +1643,17 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const expiryInput = document.getElementById('cadAdminExpiryHours');
   const badgeInput = document.getElementById('cadAdminBadge');
   const platformBox = document.getElementById('cadAdminPlatforms');
+  const categoryInput = document.getElementById('cadAdminCategory');
+  const platformFilter = document.getElementById('cadPlatformFilter');
+  const categoryFilter = document.getElementById('cadCategoryFilter');
+  const importJsonButton = document.getElementById('cadImportJsonButton');
+  const exportJsonButton = document.getElementById('cadExportJsonButton');
+  const applyJsonButton = document.getElementById('cadApplyJsonButton');
+  const importJsonInput = document.getElementById('cadImportJsonInput');
+  const cadJsonStatus = document.getElementById('cadJsonStatus');
+  let selectedCadPlatform = 'all';
+  let selectedCadCategory = 'all';
+  let pendingCadImportItems = [];
   if(!grid) return;
   let editingCadId = null;
   function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
@@ -1652,11 +1717,11 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const mediaSrc = clean.imageUrl || clean.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="cad-card-media"><img src="${esc(mediaSrc)}" alt="${esc(clean.name)} preview" loading="lazy"></div>` : '';
     const gifHtml = clean.gifUrl && clean.imageUrl ? `<div class="cad-media-links"><a class="cad-media-demo" href="${esc(clean.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
-    const meta = [clean.productId, clean.version, clean.fileSize, ...(clean.platforms || [])].filter(Boolean);
+    const meta = [clean.category, clean.productId, clean.version, clean.fileSize, ...(clean.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="cad-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="cad-card-admin-actions"><button class="cad-card-edit-btn" type="button" data-cad-edit="${esc(clean.id)}">Edit Details</button></div>` : '';
-    return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
+    return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-category="${esc(clean.category || 'LISP Programs')}" data-platforms="${esc((clean.platforms || []).join('|'))}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+(clean.category||'')+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
       ${mediaHtml}
       <div class="cad-card-icon">${esc(clean.icon)}</div>
       <div class="cad-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
@@ -1670,16 +1735,38 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     </article>`;
   }
   function getStaticCards(){return Array.from(grid.querySelectorAll('[data-cad-static="1"]'));}
+  function cleanFilter(value){return String(value || '').trim().toLowerCase();}
+  function setJsonStatus(message){
+    if(!cadJsonStatus) return;
+    cadJsonStatus.hidden = !message;
+    cadJsonStatus.textContent = message || '';
+  }
+  function exportCadJson(){
+    const allItems = getItems().map(normalizeItem);
+    const blob = new Blob([JSON.stringify(allItems, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'azobss-cad-tools.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  }
   function applyFilters(){
     grid.querySelectorAll('[data-admin-cad="1"], .cad-empty-state').forEach(el=>el.remove());
     getItems().map(normalizeItem).forEach(item=>grid.insertAdjacentHTML('beforeend', renderCard(item)));
     const term = String(searchInput?.value || '').trim().toLowerCase();
     const sort = sortSelect?.value || 'newest';
+    const platformWant = cleanFilter(selectedCadPlatform);
+    const categoryWant = cleanFilter(selectedCadCategory);
     const cards = Array.from(grid.querySelectorAll('.cad-card'));
     const visible = cards.filter(card=>{
       const hay = String(card.dataset.search || card.textContent || '').toLowerCase();
       const activeOk = isAdmin() || (card.dataset.status || 'active') === 'active';
-      return activeOk && (!term || hay.includes(term));
+      const cardPlatforms = String(card.dataset.platforms || 'AutoCAD|Windows').split('|').map(cleanFilter);
+      const platformOk = platformWant === 'all' || cardPlatforms.includes(platformWant);
+      const categoryOk = categoryWant === 'all' || cleanFilter(card.dataset.category || '') === categoryWant;
+      return activeOk && platformOk && categoryOk && (!term || hay.includes(term));
     });
     cards.forEach(card=>card.style.display='none');
     visible.sort((a,b)=>{
@@ -1693,7 +1780,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
   }
   function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = premium;}
-  function openModal(editItem){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} const item=editItem?normalizeItem(editItem):null; editingCadId=item?.id||null; form.reset(); const title=document.getElementById('cadAdminTitle'); const saveBtn=form?.querySelector('.cad-admin-save'); if(title) title.textContent=item?'Edit CAD Item':'Add CAD Item'; if(saveBtn) saveBtn.textContent=item?'Save Changes':'Save Item'; typeInput.value=item?.type||'free'; priceInput.value=item?.price||'FREE'; buttonInput.value=item?.buttonText||'Open Resource'; iconInput.value=item?.icon||''; nameInput.value=item?.name||''; descInput.value=item?.description||''; if(productIdInput) productIdInput.value=item?.productId||makeProductId('AZCAD'); if(statusInput) statusInput.value=item?.status||'active'; if(versionInput) versionInput.value=item?.version||'v1.0.0'; if(fileSizeInput) fileSizeInput.value=item?.fileSize||''; if(downloadLimitInput) downloadLimitInput.value=String(item?.downloadLimit||3); if(expiryInput) expiryInput.value=String(item?.expiryHours??24); if(badgeInput) badgeInput.value=item?.badge||''; setSelectedPlatforms(item?.platforms||['AutoCAD','Windows']); if(downloadLinkInput) downloadLinkInput.value=item?.downloadLink||''; if(paymentLinkInput) paymentLinkInput.value=item?.paymentLink||''; if(secureDownloadInput) secureDownloadInput.value=item?.secureDownloadLink||''; if(imageUrlInput) imageUrlInput.value=item?.imageUrl||''; if(gifUrlInput) gifUrlInput.value=item?.gifUrl||''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function openModal(editItem){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} const item=editItem?normalizeItem(editItem):null; editingCadId=item?.id||null; form.reset(); const title=document.getElementById('cadAdminTitle'); const saveBtn=form?.querySelector('.cad-admin-save'); if(title) title.textContent=item?'Edit CAD Item':'Add CAD Item'; if(saveBtn) saveBtn.textContent=item?'Save Changes':'Save Item'; typeInput.value=item?.type||'free'; if(categoryInput) categoryInput.value=item?.category || (item?.type==='premium'?'Premium Tools':'LISP Programs'); priceInput.value=item?.price||'FREE'; buttonInput.value=item?.buttonText||'Open Resource'; iconInput.value=item?.icon||''; nameInput.value=item?.name||''; descInput.value=item?.description||''; if(productIdInput) productIdInput.value=item?.productId||makeProductId('AZCAD'); if(statusInput) statusInput.value=item?.status||'active'; if(versionInput) versionInput.value=item?.version||'v1.0.0'; if(fileSizeInput) fileSizeInput.value=item?.fileSize||''; if(downloadLimitInput) downloadLimitInput.value=String(item?.downloadLimit||3); if(expiryInput) expiryInput.value=String(item?.expiryHours??24); if(badgeInput) badgeInput.value=item?.badge||''; setSelectedPlatforms(item?.platforms||['AutoCAD','Windows']); if(downloadLinkInput) downloadLinkInput.value=item?.downloadLink||''; if(paymentLinkInput) paymentLinkInput.value=item?.paymentLink||''; if(secureDownloadInput) secureDownloadInput.value=item?.secureDownloadLink||''; if(imageUrlInput) imageUrlInput.value=item?.imageUrl||''; if(gifUrlInput) gifUrlInput.value=item?.gifUrl||''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
   function closeModal(){editingCadId=null;modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
   typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
@@ -1707,11 +1794,44 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
     const finalLink = typeInput.value === 'premium' ? paymentLinkInput?.value : downloadLinkInput?.value;
-    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
+    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,category:categoryInput?.value || (typeInput.value==='premium'?'Premium Tools':'LISP Programs'),price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
     const items = getItems(); const idx = items.findIndex(x=>String(x.id)===String(editingCadId)); if(idx>=0){ items[idx] = {...items[idx], ...item, id: editingCadId, createdAt: items[idx].createdAt || item.createdAt}; } else { items.unshift(item); } saveItems(items); closeModal(); applyFilters();
   });
+  platformFilter?.addEventListener('click', e=>{const btn=e.target.closest('[data-cad-platform]'); if(!btn) return; selectedCadPlatform=btn.getAttribute('data-cad-platform')||'all'; platformFilter.querySelectorAll('[data-cad-platform]').forEach(b=>b.classList.toggle('is-active', b===btn)); applyFilters();});
+  categoryFilter?.addEventListener('click', e=>{const btn=e.target.closest('[data-cad-category]'); if(!btn) return; selectedCadCategory=btn.getAttribute('data-cad-category')||'all'; categoryFilter.querySelectorAll('[data-cad-category]').forEach(b=>b.classList.toggle('is-active', b===btn)); applyFilters();});
+  importJsonButton?.addEventListener('click', ()=>importJsonInput?.click());
+  exportJsonButton?.addEventListener('click', exportCadJson);
+  importJsonInput?.addEventListener('change', async ()=>{
+    const file = importJsonInput.files && importJsonInput.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      pendingCadImportItems = (Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : [])).map(normalizeItem);
+      if(!pendingCadImportItems.length) throw new Error('No CAD items found in JSON.');
+      if(applyJsonButton) applyJsonButton.disabled = false;
+      setJsonStatus(`Ready to apply ${pendingCadImportItems.length} CAD item(s).`);
+    }catch(err){
+      pendingCadImportItems = [];
+      if(applyJsonButton) applyJsonButton.disabled = true;
+      setJsonStatus('Import failed. Use a valid CAD JSON file.');
+      alert(err.message || 'Import failed.');
+    }finally{importJsonInput.value='';}
+  });
+  applyJsonButton?.addEventListener('click', ()=>{
+    if(!pendingCadImportItems.length) return alert('Import JSON first.');
+    if(!confirm(`Apply ${pendingCadImportItems.length} CAD item(s)?`)) return;
+    const existing = getItems().map(normalizeItem);
+    const byId = new Map(existing.map(x=>[String(x.id), x]));
+    pendingCadImportItems.forEach(item=>{ byId.set(String(item.id || item.productId || makeProductId('AZCAD')), normalizeItem(item)); });
+    saveItems(Array.from(byId.values()).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)));
+    pendingCadImportItems = [];
+    if(applyJsonButton) applyJsonButton.disabled = true;
+    setJsonStatus('Import applied.');
+    applyFilters();
+  });
   searchInput?.addEventListener('input',applyFilters); sortSelect?.addEventListener('change',applyFilters);
-  function applyAdminButton(){document.body.classList.toggle('is-lisp-admin', isAdmin());}
+  function applyAdminButton(){const admin=isAdmin();document.body.classList.toggle('is-lisp-admin', admin);[addBtn,importJsonButton,exportJsonButton,applyJsonButton].forEach(btn=>{if(btn) btn.hidden=!admin;}); if(cadJsonStatus && !admin) cadJsonStatus.hidden=true;}
   window.addEventListener('storage',()=>{applyAdminButton();applyFilters();});
   applyAdminButton(); applyFilters();
 })();
