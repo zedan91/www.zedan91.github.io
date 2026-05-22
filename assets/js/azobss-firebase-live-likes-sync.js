@@ -22,7 +22,7 @@ const ONLINE_COLLECTION = 'onlineUsers';
 const LOGIN_HISTORY_COLLECTION = 'loginHistory';
 const GUEST_HISTORY_COLLECTION = 'guestHistory';
 const USER_LIKES_COLLECTION = 'userLikes';
-const ONLINE_WINDOW_MS = 20 * 60 * 1000;
+const ONLINE_WINDOW_MS = 120000; // real online only (seen within 2 minutes)
 const PAGE_SIZE = 4;
 
 function safeJson(raw){ try { return JSON.parse(raw || 'null'); } catch { return null; } }
@@ -175,19 +175,51 @@ async function syncLoginHistory(){
     });
   }catch(error){ console.warn('AZOBSS login history sync failed:', error); }
 }
+function getAzobssDeviceId(){
+  const key = 'azobssDeviceId';
+  let id = localStorage.getItem(key);
+  if(!id){
+    id = 'device-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+async function getAzobssPublicIp(){
+  const cacheKey = 'azobssPublicIpCache';
+  try{
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+    if(cached && cached.ip && Date.now() - Number(cached.time || 0) < 3600000) return cached.ip;
+  }catch(_e){}
+  try{
+    const res = await fetch('https://api.ipify.org?format=json', { cache:'no-store' });
+    const data = await res.json();
+    const ip = String(data.ip || '').trim();
+    if(ip) sessionStorage.setItem(cacheKey, JSON.stringify({ ip, time: Date.now() }));
+    return ip || '-';
+  }catch(error){
+    console.warn('AZOBSS public IP lookup failed:', error);
+    return '-';
+  }
+}
 async function syncGuestVisit(){
   if(getSavedUser()) return;
-  const sessionId = sessionStorage.getItem('azobssGuestSessionId') || ('guest-' + Date.now() + '-' + Math.random().toString(36).slice(2,8));
-  sessionStorage.setItem('azobssGuestSessionId', sessionId);
-  const key = 'azobssGuestVisitSaved:' + location.pathname;
+  const page = location.pathname || '/';
+  // Use the same storage key as azobss-global-auth.js so two scripts do not create duplicate guest rows.
+  const key = 'azobssGuestHistorySaved:' + page;
   if(sessionStorage.getItem(key)) return;
   sessionStorage.setItem(key, '1');
   try{
+    const deviceId = getAzobssDeviceId();
+    const ipAddress = await getAzobssPublicIp();
     await addDoc(collection(db, GUEST_HISTORY_COLLECTION), {
-      sessionId,
-      page: location.pathname,
+      page,
+      ipAddress,
+      ip: ipAddress,
+      deviceId,
+      deviceFingerprint: deviceId,
       referrer: document.referrer || '',
       userAgent: navigator.userAgent,
+      platform: navigator.platform || '',
       createdAt: serverTimestamp(),
       createdAtClient: new Date().toISOString(),
       createdAtMs: Date.now()
@@ -196,17 +228,47 @@ async function syncGuestVisit(){
 }
 
 let livePage = 1, loginPage = 1, guestPage = 1;
+function inlineTime(ms){
+  return ms ? new Date(ms).toLocaleString('en-MY', { hour12:false }) : '-';
+}
 function liveHtml(user){
-  const ms = firestoreMs(user.lastSeenAt) || Number(user.lastSeenMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>${escapeHtml(user.displayName || user.usernameKey || 'User')}</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Email: ${escapeHtml(user.email || '-')}</span><span>Phone: ${escapeHtml(user.phone || '-')}</span><span>Status: ${Date.now()-ms<30000?'online':'recently active'}</span></div></div>`;
+  const ms = firestoreMs(user.lastSeenAt) || Number(user.lastSeenMs || 0) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${escapeHtml(user.displayName || user.usernameKey || 'User')}</strong>
+      <span>Email: ${escapeHtml(user.email || '-')}</span>
+      <span>Phone: ${escapeHtml(user.phone || '-')}</span>
+      <span>Status: <b class="az-status-online">online</b></span>
+      <span>Seen: ${inlineTime(ms)}</span>
+    </div>
+  </div>`;
 }
 function loginHtml(row){
-  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>${escapeHtml(row.displayName || row.usernameKey || 'User')}</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Email: ${escapeHtml(row.email || '-')}</span><span>Phone: ${escapeHtml(row.phone || '-')}</span><span>Action: ${escapeHtml(row.action || 'login')}</span></div></div>`;
+  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0) || firestoreMs(row.createdAtClient);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${escapeHtml(row.displayName || row.usernameKey || 'User')}</strong>
+      <span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span>
+      <span>Email: ${escapeHtml(row.email || '-')}</span>
+      <span>Phone: ${escapeHtml(row.phone || '-')}</span>
+      <span>Time: ${inlineTime(ms)}</span>
+    </div>
+  </div>`;
 }
 function guestHtml(row){
-  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0);
-  return `<div class="purchase-summary-item admin-purchase-user-card"><div class="admin-purchase-user-top"><strong>Guest</strong><span>${formatDateTime(ms)}</span></div><div class="admin-purchase-user-details"><span>Page: ${escapeHtml(row.page || '-')}</span><span>Session: ${escapeHtml(String(row.sessionId || '').slice(0,22))}</span></div></div>`;
+  const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0) || firestoreMs(row.createdAtClient);
+  const ip = row.ipAddress || row.ip || '-';
+  const device = row.deviceId || row.deviceFingerprint || '-';
+  const page = row.page || row.path || '/';
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>Guest</strong>
+      <span>IP: ${escapeHtml(ip)}</span>
+      <span>Device ID: ${escapeHtml(device)}</span>
+      <span>Page: ${escapeHtml(page)}</span>
+      <span>Time: ${inlineTime(ms)}</span>
+    </div>
+  </div>`;
 }
 async function renderFirebaseLivePanels(){
   if(!document.body.classList.contains('is-admin')) return;
