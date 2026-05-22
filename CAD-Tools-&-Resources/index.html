@@ -461,6 +461,52 @@
     }
 
 
+    .cad-tools-shop{
+      margin:0 0 24px;
+      padding:24px;
+      border-radius:22px;
+      border:1px solid var(--line);
+      background:linear-gradient(145deg,rgba(15,23,42,.96),rgba(8,13,27,.96));
+      box-shadow:0 22px 54px rgba(0,0,0,.26);
+    }
+    .cad-tools-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+    .cad-tools-head p{margin:8px 0 0;color:#cbd5e1;line-height:1.55;max-width:760px;}
+    .cad-admin-add-btn{border:1px solid rgba(249,115,22,.55);background:linear-gradient(135deg,#f97316,#fb923c);color:#fff7ed;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(249,115,22,.20);}
+    .cad-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);}
+    .cad-shop-controls{display:grid;grid-template-columns:minmax(220px,1fr) 210px;gap:10px;align-items:end;margin:0 0 16px;}
+    .cad-shop-controls label{display:grid;gap:6px;color:#cbd5e1;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;}
+    .cad-shop-controls input,.cad-shop-controls select{width:100%;box-sizing:border-box;border:1px solid rgba(249,115,22,.28);border-radius:14px;background:#020617;color:#f8fafc;padding:11px 13px;font:inherit;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+    .cad-shop-controls input:focus,.cad-shop-controls select:focus{border-color:rgba(249,115,22,.72);box-shadow:0 0 0 3px rgba(249,115,22,.12);}
+    .cad-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+    .cad-card{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:rgba(2,6,23,.58);padding:16px;text-align:center;display:flex;flex-direction:column;gap:10px;min-height:210px;box-shadow:0 14px 28px rgba(0,0,0,.18);}
+    .cad-card-icon{width:58px;height:58px;border-radius:18px;margin:0 auto;display:grid;place-items:center;background:linear-gradient(135deg,rgba(249,115,22,.18),rgba(59,130,246,.12));border:1px solid rgba(249,115,22,.28);font-size:28px;font-weight:900;color:#fdba74;}
+    .cad-card h3{margin:0;color:#fff;font-size:17px;line-height:1.25;}
+    .cad-card p{margin:0;color:#aebdd2;font-size:13px;line-height:1.45;flex:1;}
+    .cad-badge{display:inline-flex;align-items:center;justify-content:center;margin:0 auto;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(148,163,184,.24);background:#0f172a;color:#e2e8f0;}
+    .cad-badge.free{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(34,197,94,.10);}
+    .cad-badge.premium{border-color:rgba(245,158,11,.55);color:#fbbf24;background:rgba(245,158,11,.12);}
+    .cad-action-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:9px 12px;background:#f97316;color:#fff;text-decoration:none;font-weight:900;font-size:13px;border:1px solid rgba(255,255,255,.10);}
+    .cad-action-btn.premium{background:#2563eb;}
+    .cad-empty-state{grid-column:1/-1;border:1px dashed rgba(148,163,184,.35);border-radius:18px;padding:18px;text-align:center;color:#94a3b8;background:rgba(15,23,42,.55);font-weight:800;}
+    .cad-admin-modal{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.78);backdrop-filter:blur(8px);}
+    .cad-admin-modal.is-open{display:flex;}
+    .cad-admin-panel{width:min(560px,96vw);max-height:92vh;overflow:auto;border-radius:22px;border:1px solid rgba(249,115,22,.28);background:#0f172a;box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px;color:#f8fafc;}
+    .cad-admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+    .cad-admin-head h2{margin:0;font-size:22px;color:#fdba74;}
+    .cad-admin-close{width:34px;height:34px;border-radius:999px;border:1px solid rgba(148,163,184,.28);background:#111827;color:#fff;font-size:20px;cursor:pointer;}
+    .cad-admin-form{display:grid;gap:12px;}
+    .cad-admin-form label{display:grid;gap:6px;font-size:13px;font-weight:800;color:#cbd5e1;}
+    .cad-admin-form input,.cad-admin-form textarea,.cad-admin-form select{width:100%;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#020617;color:#fff;padding:11px 12px;font:inherit;outline:none;}
+    .cad-admin-form textarea{min-height:82px;resize:vertical;}
+    .cad-admin-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .cad-admin-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+    .cad-admin-actions button{border:0;border-radius:12px;padding:11px 16px;font-weight:900;cursor:pointer;}
+    .cad-admin-cancel{background:#334155;color:#e2e8f0;}
+    .cad-admin-save{background:#f97316;color:#fff7ed;}
+    .cad-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
+    @media(max-width:640px){.cad-shop-controls,.cad-admin-row{grid-template-columns:1fr}.cad-admin-add-btn{width:100%;}.cad-card-grid{grid-template-columns:1fr;}}
+
+
     .admin-only{
       display:none;
     }
@@ -1248,6 +1294,83 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 </div>
 </header>
 <main class="page">
+
+<section aria-labelledby="cad-tools-shop-title" class="cad-tools-shop">
+  <div class="cad-tools-head">
+    <div>
+      <h2 class="section-title" id="cad-tools-shop-title">CAD Tools &amp; Resources</h2>
+      <p>Free CAD resources and premium AutoCAD tools. Premium items can use ToyyibPay, QR payment or bank transaction links.</p>
+    </div>
+    <button class="cad-admin-add-btn admin-only inline-admin" id="cadAdminAddButton" type="button">+ Add CAD Item</button>
+  </div>
+  <div class="cad-shop-controls" aria-label="CAD tools search and sorting controls">
+    <label>Search
+      <input id="cadToolSearch" type="search" placeholder="Search CAD tool, LISP, ebook or resource...">
+    </label>
+    <label>Sort by
+      <select id="cadToolSort">
+        <option value="newest">Newest first</option>
+        <option value="freeFirst">Free CAD Resource first</option>
+        <option value="premiumFirst">Premium CAD Tool first</option>
+        <option value="nameAZ">Name A-Z</option>
+        <option value="nameZA">Name Z-A</option>
+      </select>
+    </label>
+  </div>
+  <div class="cad-card-grid" id="cadToolGrid">
+    <article class="cad-card" data-cad-static="1" data-type="free" data-created="0" data-name="autocad lisp showcase" data-search="autocad lisp showcase free cad resource commands demonstrations gif workflow">
+      <div class="cad-card-icon">L</div>
+      <div class="cad-badge free">Free CAD Resource</div>
+      <h3>AutoCAD LISP Showcase</h3>
+      <p>Browse LISP command examples, description and demo GIF reference.</p>
+      <a class="cad-action-btn" href="#lisp-catalog-title">Open Resource</a>
+    </article>
+  </div>
+</section>
+<div class="cad-admin-modal" id="cadAdminModal" aria-hidden="true">
+  <div class="cad-admin-panel" role="dialog" aria-modal="true" aria-labelledby="cadAdminTitle">
+    <div class="cad-admin-head">
+      <h2 id="cadAdminTitle">Add CAD Item</h2>
+      <button class="cad-admin-close" id="cadAdminClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="cad-admin-form" id="cadAdminForm">
+      <label>Item Name
+        <input id="cadAdminName" type="text" maxlength="80" placeholder="Example: AZ Text Calculator LISP" required>
+      </label>
+      <label>Description
+        <textarea id="cadAdminDescription" maxlength="500" placeholder="Explain tool function, command name, workflow or access details." required></textarea>
+      </label>
+      <div class="cad-admin-row">
+        <label>CAD Type
+          <select id="cadAdminType">
+            <option value="free">Free CAD Resource</option>
+            <option value="premium">Premium CAD Tool</option>
+          </select>
+        </label>
+        <label>Price / Badge
+          <input id="cadAdminPrice" type="text" placeholder="FREE or RM10">
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label>Icon / Short Text
+          <input id="cadAdminIcon" type="text" maxlength="3" placeholder="L">
+        </label>
+        <label>Button Text
+          <input id="cadAdminButtonText" type="text" placeholder="Auto: Open / Buy Now">
+        </label>
+      </div>
+      <label>Link
+        <input id="cadAdminLink" type="url" placeholder="Free: resource/download link / Premium: ToyyibPay, QR or bank transaction link" required>
+      </label>
+      <p class="cad-admin-note">Free CAD Resource will show <b>Open Resource</b>. Premium CAD Tool will show <b>Buy Now</b> and can use your ToyyibPay/payment link.</p>
+      <div class="cad-admin-actions">
+        <button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
+        <button class="cad-admin-save" type="submit">Save Item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <section aria-labelledby="lisp-catalog-title" class="lisp-catalog">
 <div class="lisp-catalog-head">
 <div>
@@ -1309,6 +1432,99 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <footer>
     © 2026 AZOBSS. All rights reserved.
   </footer>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'azobss_cad_tools_items';
+  const ADMIN_USERNAME = 'zedan91';
+  const grid = document.getElementById('cadToolGrid');
+  const searchInput = document.getElementById('cadToolSearch');
+  const sortSelect = document.getElementById('cadToolSort');
+  const addBtn = document.getElementById('cadAdminAddButton');
+  const modal = document.getElementById('cadAdminModal');
+  const closeBtn = document.getElementById('cadAdminClose');
+  const cancelBtn = document.getElementById('cadAdminCancel');
+  const form = document.getElementById('cadAdminForm');
+  const nameInput = document.getElementById('cadAdminName');
+  const descInput = document.getElementById('cadAdminDescription');
+  const typeInput = document.getElementById('cadAdminType');
+  const priceInput = document.getElementById('cadAdminPrice');
+  const iconInput = document.getElementById('cadAdminIcon');
+  const buttonInput = document.getElementById('cadAdminButtonText');
+  const linkInput = document.getElementById('cadAdminLink');
+  if(!grid) return;
+  function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+  function getSavedUser(){try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser')||'null');}catch(e){return null;}}
+  function isAdmin(){const user=getSavedUser();return !!(user && String(user.usernameKey||'').toLowerCase()===ADMIN_USERNAME);}
+  function getItems(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(data)?data:[];}catch(e){return [];}}
+  function saveItems(items){localStorage.setItem(STORAGE_KEY,JSON.stringify(items));}
+  function normalizeItem(item){
+    const isPremium = item.type === 'premium';
+    const price = String(item.price || '').trim();
+    return {
+      id: item.id || ('cad-' + Date.now() + '-' + Math.random().toString(36).slice(2,8)),
+      name: String(item.name || '').trim(),
+      description: String(item.description || '').trim(),
+      type: isPremium ? 'premium' : 'free',
+      price: isPremium ? (price || 'RM') : 'FREE',
+      icon: String(item.icon || (isPremium ? '🛒' : 'L')).trim().slice(0,3),
+      link: String(item.link || '#').trim(),
+      buttonText: String(item.buttonText || (isPremium ? 'Buy Now' : 'Open Resource')).trim(),
+      createdAt: Number(item.createdAt || Date.now())
+    };
+  }
+  function renderCard(item){
+    const clean = normalizeItem(item);
+    const isPremium = clean.type === 'premium';
+    const badgeText = isPremium ? ('🛒 ' + clean.price) : 'Free CAD Resource';
+    return `<article class="cad-card" data-admin-cad="1" data-type="${esc(clean.type)}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price).toLowerCase())}">
+      <div class="cad-card-icon">${esc(clean.icon)}</div>
+      <div class="cad-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
+      <h3>${esc(clean.name)}</h3>
+      <p>${esc(clean.description)}</p>
+      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" href="${esc(clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+    </article>`;
+  }
+  function getStaticCards(){return Array.from(grid.querySelectorAll('[data-cad-static="1"]'));}
+  function applyFilters(){
+    grid.querySelectorAll('[data-admin-cad="1"], .cad-empty-state').forEach(el=>el.remove());
+    getItems().map(normalizeItem).forEach(item=>grid.insertAdjacentHTML('beforeend', renderCard(item)));
+    const term = String(searchInput?.value || '').trim().toLowerCase();
+    const sort = sortSelect?.value || 'newest';
+    const cards = Array.from(grid.querySelectorAll('.cad-card'));
+    const visible = cards.filter(card=>{
+      const hay = String(card.dataset.search || card.textContent || '').toLowerCase();
+      return !term || hay.includes(term);
+    });
+    cards.forEach(card=>card.style.display='none');
+    visible.sort((a,b)=>{
+      if(sort==='freeFirst') return String(a.dataset.type).localeCompare(String(b.dataset.type));
+      if(sort==='premiumFirst') return String(b.dataset.type).localeCompare(String(a.dataset.type));
+      if(sort==='nameAZ') return String(a.dataset.name).localeCompare(String(b.dataset.name));
+      if(sort==='nameZA') return String(b.dataset.name).localeCompare(String(a.dataset.name));
+      return Number(b.dataset.created||0)-Number(a.dataset.created||0);
+    });
+    visible.forEach(card=>{card.style.display='';grid.appendChild(card);});
+    if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
+  }
+  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function closeModal(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
+  typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource';});
+  addBtn?.addEventListener('click',openModal); closeBtn?.addEventListener('click',closeModal); cancelBtn?.addEventListener('click',closeModal);
+  modal?.addEventListener('click',e=>{if(e.target===modal) closeModal();});
+  form?.addEventListener('submit',e=>{
+    e.preventDefault();
+    if(!isAdmin()){alert('Admin only.');return;}
+    const item = normalizeItem({name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,buttonText:buttonInput.value,link:linkInput.value,createdAt:Date.now()});
+    const items = getItems(); items.unshift(item); saveItems(items); closeModal(); applyFilters();
+  });
+  searchInput?.addEventListener('input',applyFilters); sortSelect?.addEventListener('change',applyFilters);
+  function applyAdminButton(){document.body.classList.toggle('is-lisp-admin', isAdmin());}
+  window.addEventListener('storage',()=>{applyAdminButton();applyFilters();});
+  applyAdminButton(); applyFilters();
+})();
+</script>
+
 <script>
     (function(){
       const STORAGE_KEY = 'azobss_lisp_showcase_items';
