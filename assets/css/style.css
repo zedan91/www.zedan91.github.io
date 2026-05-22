@@ -3825,3 +3825,59 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
   body.is-admin #purchaseSummaryList .az-purchase-mini-total{flex:0 1 auto!important;}
   body.is-admin #purchaseSummaryList .az-purchase-mini-actions{margin-left:0!important;}
 }
+
+
+/* AZOBSS FIX: purchase records compact row with visible Show + Reset */
+body.is-admin #purchaseSummaryList .az-purchase-mini-card{
+  overflow: visible !important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-top{
+  display: grid !important;
+  grid-template-columns:
+    minmax(120px, 1fr)
+    minmax(190px, 1.25fr)
+    minmax(130px, .8fr)
+    minmax(70px, .45fr)
+    minmax(90px, .55fr)
+    minmax(142px, auto) !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-height: 34px !important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-top > *{
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-date,
+body.is-admin #purchaseSummaryList .az-purchase-mini-last,
+body.is-admin #purchaseSummaryList .az-purchase-mini-unit,
+body.is-admin #purchaseSummaryList .az-purchase-mini-total{
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-mini-actions{
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  min-width: 136px !important;
+}
+body.is-admin #purchaseSummaryList .az-purchase-show-btn,
+body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 28px !important;
+  min-width: 62px !important;
+  max-width: 62px !important;
+  padding: 0 8px !important;
+  flex: 0 0 62px !important;
+}
+@media(max-width: 980px){
+  body.is-admin #purchaseSummaryList .az-purchase-mini-top{
+    grid-template-columns: minmax(110px,1fr) minmax(170px,1.25fr) minmax(110px,.8fr) 56px 76px 136px !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+  }
+}
