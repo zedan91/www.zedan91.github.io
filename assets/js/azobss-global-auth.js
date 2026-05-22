@@ -2082,32 +2082,42 @@ body{padding-top:58px!important;}
       #liveUsersList .az-admin-inline-card,
       #loginHistoryList .az-admin-inline-card,
       #guestHistoryList .az-admin-inline-card{
-        padding:6px 9px!important;
+        display:block!important;
+        padding:4px 8px!important;
         min-height:0!important;
-        border-radius:10px!important;
+        border-radius:9px!important;
+        margin:0 0 5px!important;
       }
       .az-admin-inline-row{
         display:flex!important;
         align-items:center!important;
-        gap:8px!important;
+        gap:7px!important;
         flex-wrap:wrap!important;
         width:100%!important;
-        font-size:11.5px!important;
-        line-height:1.2!important;
+        font-size:11px!important;
+        line-height:1.15!important;
       }
       .az-admin-inline-row strong{
         color:#f8fafc!important;
-        font-size:12px!important;
+        font-size:11.5px!important;
         margin-right:2px!important;
+        line-height:1.15!important;
       }
       .az-admin-inline-row span{
         color:#b9c5d8!important;
         white-space:nowrap!important;
+        line-height:1.15!important;
       }
       .az-status-online{color:#4ade80!important;font-weight:900!important;}
+      #liveUsersList .admin-purchase-user-top,
+      #loginHistoryList .admin-purchase-user-top,
+      #guestHistoryList .admin-purchase-user-top,
+      #liveUsersList .admin-purchase-user-details,
+      #loginHistoryList .admin-purchase-user-details,
+      #guestHistoryList .admin-purchase-user-details{display:none!important;}
       @media(max-width:640px){
-        .az-admin-inline-row{gap:5px!important;font-size:10.5px!important;}
-        .az-admin-inline-row strong{font-size:11px!important;}
+        .az-admin-inline-row{gap:5px!important;font-size:10px!important;}
+        .az-admin-inline-row strong{font-size:10.5px!important;}
       }
     `;
     document.head.appendChild(style);

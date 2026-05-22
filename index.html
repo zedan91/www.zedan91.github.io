@@ -7108,17 +7108,17 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
-#registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
+#registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:4px!important;}
 #registeredUsersList .az-admin-user-row-card,
 #registeredUsersList .az-admin-user-compact-card,
 #liveUsersList .purchase-summary-item,
 #loginHistoryList .purchase-summary-item,
 #guestHistoryList .purchase-summary-item{
   min-height:0!important;
-  padding:7px 10px!important;
-  border-radius:9px!important;
+  padding:4px 8px!important;
+  border-radius:8px!important;
   line-height:1.12!important;
-  font-size:12px!important;
+  font-size:11px!important;
 }
 #registeredUsersList .az-admin-user-compact-card{
   display:grid!important;
@@ -7131,11 +7131,11 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 #registeredUsersList .az-admin-register-date{font-size:11px!important;white-space:nowrap!important;}
 #registeredUsersList .az-admin-user-row-actions{display:flex!important;gap:6px!important;justify-content:flex-end!important;}
 #registeredUsersList .az-admin-small-btn{height:24px!important;min-width:50px!important;padding:0 8px!important;border-radius:6px!important;font-size:10px!important;}
-.admin-live-panel{margin-top:10px!important;padding-top:10px!important;}
-.admin-live-panel h4{font-size:14px!important;margin:0 0 8px!important;}
-.guest-history-stats{gap:8px!important;margin:0 0 8px!important;}
-.guest-history-stat{padding:6px 10px!important;border-radius:8px!important;font-size:11px!important;}
-.guest-history-stat strong{font-size:18px!important;margin-top:2px!important;}
+.admin-live-panel{margin-top:8px!important;padding-top:8px!important;}
+.admin-live-panel h4{font-size:13px!important;margin:0 0 7px!important;}
+.guest-history-stats{gap:8px!important;margin:0 0 7px!important;}
+.guest-history-stat{padding:5px 10px!important;border-radius:8px!important;font-size:10.5px!important;}
+.guest-history-stat strong{font-size:17px!important;margin-top:1px!important;}
 #liveUsersList .admin-purchase-user-card,
 #loginHistoryList .admin-purchase-user-card,
 #guestHistoryList .admin-purchase-user-card{gap:4px!important;}
@@ -7164,10 +7164,24 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
   font-size:11px!important;
   color:#cbd5e1!important;
 }
-.guest-history-pagination{gap:5px!important;margin-top:7px!important;align-items:center!important;}
-.guest-history-page-btn{min-width:28px!important;height:28px!important;padding:0 8px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important;}
+.guest-history-pagination{gap:4px!important;margin-top:6px!important;align-items:center!important;}
+.guest-history-page-btn{min-width:26px!important;height:26px!important;padding:0 7px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important;}
 .guest-history-page-btn.is-compact{min-width:26px!important;height:26px!important;padding:0 7px!important;}
 .guest-history-page-dots{display:inline-flex!important;align-items:center!important;height:26px!important;padding:0 2px!important;color:#94a3b8!important;font-weight:bold!important;}
+
+#liveUsersList .az-admin-inline-card,
+#loginHistoryList .az-admin-inline-card,
+#guestHistoryList .az-admin-inline-card{padding:4px 8px!important;margin-bottom:5px!important;min-height:0!important;}
+#liveUsersList .az-admin-inline-row,
+#loginHistoryList .az-admin-inline-row,
+#guestHistoryList .az-admin-inline-row{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important;font-size:11px!important;line-height:1.15!important;}
+#liveUsersList .az-admin-inline-row strong,
+#loginHistoryList .az-admin-inline-row strong,
+#guestHistoryList .az-admin-inline-row strong{font-size:11.5px!important;color:#fff!important;}
+#liveUsersList .az-admin-inline-row span,
+#loginHistoryList .az-admin-inline-row span,
+#guestHistoryList .az-admin-inline-row span{white-space:nowrap!important;}
+
 @media(max-width:700px){
   #registeredUsersList .az-admin-user-compact-card{grid-template-columns:1fr!important;}
   #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
