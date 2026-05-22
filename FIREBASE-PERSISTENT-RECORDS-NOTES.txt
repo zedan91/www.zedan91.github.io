@@ -1,0 +1,18 @@
+AZOBSS Firebase Persistent Records Update
+
+This version changes auth persistence from browser session to browser local persistence, so user login can remain after browser close/open.
+
+Records now try to save/read from Firebase Firestore:
+- users
+- onlineUsers
+- loginHistory
+- purchaseRecords
+
+localStorage remains as fallback only.
+
+Important: If records still do not appear after upload, check Firebase Firestore Security Rules.
+Minimum rule concept:
+- signed-in users can create their own purchaseRecords and loginHistory
+- admin user zedan91 can read all users, onlineUsers, loginHistory, purchaseRecords
+
+If Firestore rules block read/write, the website will fall back to localStorage and records will not sync between browsers/devices.
