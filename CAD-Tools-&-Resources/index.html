@@ -898,6 +898,7 @@ border-radius:8px !important;
 margin:2px !important;
 white-space:nowrap !important;
 }
+.cad-card-admin-actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}.cad-card-edit-btn{border:1px solid rgba(96,165,250,.55);background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px}.cad-card-edit-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 </style>
 <style>
 /* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
@@ -1589,6 +1590,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const badgeInput = document.getElementById('cadAdminBadge');
   const platformBox = document.getElementById('cadAdminPlatforms');
   if(!grid) return;
+  let editingCadId = null;
   function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
   const MAX_MEDIA_BYTES = 900 * 1024;
   function readMediaFile(input){
@@ -1653,7 +1655,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const meta = [clean.productId, clean.version, clean.fileSize, ...(clean.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="cad-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
-    return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
+    const adminEdit = isAdmin() ? `<div class="cad-card-admin-actions"><button class="cad-card-edit-btn" type="button" data-cad-edit="${esc(clean.id)}">Edit Details</button></div>` : '';
+    return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
       ${mediaHtml}
       <div class="cad-card-icon">${esc(clean.icon)}</div>
       <div class="cad-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
@@ -1663,6 +1666,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <p>${esc(clean.description)}</p>
       ${gifHtml}
       <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      ${adminEdit}
     </article>`;
   }
   function getStaticCards(){return Array.from(grid.querySelectorAll('[data-cad-static="1"]'));}
@@ -1689,12 +1693,13 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
   }
   function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = premium;}
-  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; if(productIdInput) productIdInput.value=makeProductId('AZCAD'); if(statusInput) statusInput.value='active'; if(versionInput) versionInput.value='v1.0.0'; if(fileSizeInput) fileSizeInput.value=''; if(downloadLimitInput) downloadLimitInput.value='3'; if(expiryInput) expiryInput.value='24'; if(badgeInput) badgeInput.value=''; setSelectedPlatforms(['AutoCAD','Windows']); if(downloadLinkInput) downloadLinkInput.value=''; if(paymentLinkInput) paymentLinkInput.value=''; if(secureDownloadInput) secureDownloadInput.value=''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
-  function closeModal(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
+  function openModal(editItem){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} const item=editItem?normalizeItem(editItem):null; editingCadId=item?.id||null; form.reset(); const title=document.getElementById('cadAdminTitle'); const saveBtn=form?.querySelector('.cad-admin-save'); if(title) title.textContent=item?'Edit CAD Item':'Add CAD Item'; if(saveBtn) saveBtn.textContent=item?'Save Changes':'Save Item'; typeInput.value=item?.type||'free'; priceInput.value=item?.price||'FREE'; buttonInput.value=item?.buttonText||'Open Resource'; iconInput.value=item?.icon||''; nameInput.value=item?.name||''; descInput.value=item?.description||''; if(productIdInput) productIdInput.value=item?.productId||makeProductId('AZCAD'); if(statusInput) statusInput.value=item?.status||'active'; if(versionInput) versionInput.value=item?.version||'v1.0.0'; if(fileSizeInput) fileSizeInput.value=item?.fileSize||''; if(downloadLimitInput) downloadLimitInput.value=String(item?.downloadLimit||3); if(expiryInput) expiryInput.value=String(item?.expiryHours??24); if(badgeInput) badgeInput.value=item?.badge||''; setSelectedPlatforms(item?.platforms||['AutoCAD','Windows']); if(downloadLinkInput) downloadLinkInput.value=item?.downloadLink||''; if(paymentLinkInput) paymentLinkInput.value=item?.paymentLink||''; if(secureDownloadInput) secureDownloadInput.value=item?.secureDownloadLink||''; if(imageUrlInput) imageUrlInput.value=item?.imageUrl||''; if(gifUrlInput) gifUrlInput.value=item?.gifUrl||''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function closeModal(){editingCadId=null;modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
   typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('change',updateMediaPreview));
-  addBtn?.addEventListener('click',openModal); closeBtn?.addEventListener('click',closeModal); cancelBtn?.addEventListener('click',closeModal);
+  grid?.addEventListener('click',e=>{const btn=e.target.closest('[data-cad-edit]'); if(!btn) return; e.preventDefault(); e.stopPropagation(); const id=btn.getAttribute('data-cad-edit'); const item=getItems().map(normalizeItem).find(x=>String(x.id)===String(id)); if(!item) return alert('Item data not found. Try refresh page first.'); openModal(item);});
+  addBtn?.addEventListener('click',()=>openModal()); closeBtn?.addEventListener('click',closeModal); cancelBtn?.addEventListener('click',closeModal);
   modal?.addEventListener('click',e=>{if(e.target===modal) closeModal();});
   form?.addEventListener('submit',async e=>{
     e.preventDefault();
@@ -1703,7 +1708,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const uploadedGif = await readMediaFile(gifFileInput);
     const finalLink = typeInput.value === 'premium' ? paymentLinkInput?.value : downloadLinkInput?.value;
     const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
-    const items = getItems(); items.unshift(item); saveItems(items); closeModal(); applyFilters();
+    const items = getItems(); const idx = items.findIndex(x=>String(x.id)===String(editingCadId)); if(idx>=0){ items[idx] = {...items[idx], ...item, id: editingCadId, createdAt: items[idx].createdAt || item.createdAt}; } else { items.unshift(item); } saveItems(items); closeModal(); applyFilters();
   });
   searchInput?.addEventListener('input',applyFilters); sortSelect?.addEventListener('change',applyFilters);
   function applyAdminButton(){document.body.classList.toggle('is-lisp-admin', isAdmin());}

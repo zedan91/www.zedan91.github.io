@@ -820,7 +820,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
 .software-admin-toolbar{max-width:1180px;margin:0 auto 18px;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
 .software-admin-add-btn{border:1px solid rgba(34,197,94,.55);background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(34,197,94,.20);}
-.software-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);}
+.software-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);} 
+.software-card-admin-actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+.software-card-edit-btn{border:1px solid rgba(96,165,250,.55);background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px;box-shadow:0 8px 18px rgba(37,99,235,.20);}
+.software-card-edit-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
 .software-badge{display:inline-flex;align-items:center;justify-content:center;margin:0 auto 12px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(148,163,184,.24);background:#0f172a;color:#e2e8f0;}
 .software-badge.free{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(34,197,94,.10);}
 .software-badge.premium{border-color:rgba(245,158,11,.55);color:#fbbf24;background:rgba(245,158,11,.12);}
@@ -1134,7 +1137,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-  import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -1179,6 +1182,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const searchInput = document.getElementById('softwareSearchInput');
   const sortSelect = document.getElementById('softwareSortSelect');
   let softwareDynamicItems = [];
+  let editingSoftwareDocId = null;
+  let editingSoftwareProductId = null;
 
   function clean(v){ return String(v || '').trim().toLowerCase(); }
   function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
@@ -1223,6 +1228,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const price = String(item.price || (type === 'free' ? 'FREE' : '')).trim();
     return {
       id: item.id || ('software-' + Date.now() + '-' + Math.random().toString(36).slice(2,8)),
+      docId: item.__docId || item.docId || '',
       name: item.name || item.title || 'Untitled Software',
       desc: item.desc || item.description || '',
       type,
@@ -1255,7 +1261,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const meta = [item.productId, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}">
+    const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}">Edit Details</button></div>` : '';
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}">
       ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
       <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
@@ -1265,13 +1272,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <p>${esc(item.desc)}</p>
       ${gifHtml}
       <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
+      ${adminEdit}
     </div>`;
   }
   function loadLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]').map(normalizeItem); } catch(e){ return []; } }
   async function loadFirestore(){
     try{
       const snap = await getDocs(query(collection(db, SOFTWARE_COLLECTION), orderBy('createdAt','desc')));
-      return snap.docs.map(d => normalizeItem({id:d.id, ...d.data()}));
+      return snap.docs.map(d => normalizeItem({__docId:d.id, ...d.data()}));
     }catch(err){
       console.warn('Software items Firestore load skipped:', err);
       return [];
@@ -1343,34 +1351,56 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(downloadLinkInput) downloadLinkInput.required = !premium;
     if(paymentLinkInput) paymentLinkInput.required = premium;
   }
-  function openModal(){
+  function openModal(editItem = null){
     form?.reset();
-    if(typeSelect) typeSelect.value = 'free';
-    if(priceInput) priceInput.value = 'FREE';
-    if(buttonInput) buttonInput.value = 'Download Now';
-    if(iconInput) iconInput.value = 'FREE';
-    if(productIdInput) productIdInput.value = makeProductId('AZSW');
-    if(statusInput) statusInput.value = 'active';
-    if(versionInput) versionInput.value = 'v1.0.0';
-    if(fileSizeInput) fileSizeInput.value = '';
-    if(downloadLimitInput) downloadLimitInput.value = '3';
-    if(expiryInput) expiryInput.value = '24';
-    if(badgeInput) badgeInput.value = '';
-    setSelectedPlatforms(['Windows']);
-    if(downloadLinkInput) downloadLinkInput.value = '';
-    if(paymentLinkInput) paymentLinkInput.value = '';
-    if(secureDownloadInput) secureDownloadInput.value = '';
+    const item = editItem ? normalizeItem(editItem) : null;
+    editingSoftwareDocId = item?.docId || null;
+    editingSoftwareProductId = item?.productId || item?.id || null;
+    const title = document.getElementById('softwareAdminTitle');
+    const saveBtn = form?.querySelector('.software-admin-save');
+    if(title) title.textContent = item ? 'Edit Software Item' : 'Add Software Item';
+    if(saveBtn) saveBtn.textContent = item ? 'Save Changes' : 'Save Item';
+    if(typeSelect) typeSelect.value = item?.type || 'free';
+    if(priceInput) priceInput.value = item?.price || 'FREE';
+    if(buttonInput) buttonInput.value = item?.buttonText || 'Download Now';
+    if(iconInput) iconInput.value = item?.icon || 'FREE';
+    if(productIdInput) productIdInput.value = item?.productId || makeProductId('AZSW');
+    if(statusInput) statusInput.value = item?.status || 'active';
+    if(versionInput) versionInput.value = item?.version || 'v1.0.0';
+    if(fileSizeInput) fileSizeInput.value = item?.fileSize || '';
+    if(downloadLimitInput) downloadLimitInput.value = String(item?.downloadLimit || 3);
+    if(expiryInput) expiryInput.value = String(item?.expiryHours ?? 24);
+    if(badgeInput) badgeInput.value = item?.badge || '';
+    setSelectedPlatforms(item?.platforms || ['Windows']);
+    document.getElementById('softwareAdminName').value = item?.name || '';
+    document.getElementById('softwareAdminDesc').value = item?.desc || '';
+    if(downloadLinkInput) downloadLinkInput.value = item?.downloadLink || '';
+    if(paymentLinkInput) paymentLinkInput.value = item?.paymentLink || '';
+    if(secureDownloadInput) secureDownloadInput.value = item?.secureDownloadLink || '';
+    if(imageUrlInput) imageUrlInput.value = item?.imageUrl || '';
+    if(gifUrlInput) gifUrlInput.value = item?.gifUrl || '';
     syncTypeDefaults();
     updateMediaPreview();
     modal?.classList.add('is-open');
     modal?.setAttribute('aria-hidden','false');
   }
-  function closeModal(){ modal?.classList.remove('is-open'); modal?.setAttribute('aria-hidden','true'); }
+  function closeModal(){ editingSoftwareDocId = null; editingSoftwareProductId = null; modal?.classList.remove('is-open'); modal?.setAttribute('aria-hidden','true'); }
 
   searchInput?.addEventListener('input', applySoftwareFilters);
   sortSelect?.addEventListener('change', applySoftwareFilters);
 
-  addButton?.addEventListener('click', openModal);
+  grid?.addEventListener('click', e => {
+    const editBtn = e.target.closest('[data-software-edit]');
+    if(!editBtn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const key = editBtn.getAttribute('data-software-edit');
+    const item = softwareDynamicItems.find(x => String(x.productId || x.id) === String(key));
+    if(!item) return alert('Item data not found. Try refresh page first.');
+    openModal(item);
+  });
+
+  addButton?.addEventListener('click', () => openModal());
   document.getElementById('softwareAdminClose')?.addEventListener('click', closeModal);
   document.getElementById('softwareAdminCancel')?.addEventListener('click', closeModal);
   modal?.addEventListener('click', e => { if(e.target === modal) closeModal(); });
@@ -1408,12 +1438,19 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       link: (typeSelect.value === 'premium' ? paymentLinkInput?.value.trim() : downloadLinkInput?.value.trim())
     });
     try{
-      await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91'});
+      if(editingSoftwareDocId){
+        await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), {...item, updatedAt: serverTimestamp(), updatedBy: 'zedan91'});
+      }else{
+        await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91'});
+      }
     }catch(err){
       const saved = loadLocal();
-      saved.unshift(item);
+      const key = editingSoftwareProductId || item.productId || item.id;
+      const idx = saved.findIndex(x => String(x.productId || x.id) === String(key));
+      if(idx >= 0) saved[idx] = {...saved[idx], ...item, productId:key, id:key};
+      else saved.unshift(item);
       localStorage.setItem(LOCAL_KEY, JSON.stringify(saved));
-      alert('Firestore rules belum allow softwareTools. Item disimpan local sementara. Tambah rules softwareTools untuk sync semua device.');
+      alert(editingSoftwareProductId ? 'Firestore edit failed. Item updated in local fallback only.' : 'Firestore rules belum allow softwareTools. Item disimpan local sementara. Tambah rules softwareTools untuk sync semua device.');
     }
     closeModal();
     await loadItems();
