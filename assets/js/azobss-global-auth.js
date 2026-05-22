@@ -160,7 +160,16 @@ function injectAdminUserEditModal() {
         <input id="adminUserEditUsername" placeholder="Username" required type="text">
       </label>
       <label for="adminUserEditPhone">Phone Number
-        <input id="adminUserEditPhone" inputmode="tel" placeholder="Example: 01135600723" type="tel">
+        <div class="phone-input-row" data-country-phone="adminUserEdit" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="adminUserEditPhone" inputmode="tel" placeholder="12 345 6789" type="tel"><input id="adminUserEditDial" type="hidden" value="60"></div>
+        </div>
       </label>
       <label for="adminUserEditEmail">Contact Email
         <input id="adminUserEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email">
@@ -825,7 +834,9 @@ function openAdminUserEdit(userId){
   if(!modal) return;
   $('adminUserEditDocId').value = userDocId(user);
   $('adminUserEditUsername').value = user.usernameKey || user.name || '';
-  $('adminUserEditPhone').value = user.phone || '';
+  const adminPhoneParts = splitPhoneToDialLocal(user.phone || '');
+  setPhoneDial('adminUserEdit', adminPhoneParts.dial);
+  $('adminUserEditPhone').value = adminPhoneParts.local || '';
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
   const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
@@ -854,7 +865,7 @@ async function saveAdminUserEdit(){
     usernameKey,
     name: usernameKey,
     displayName: usernameKey,
-    phone: cleanPhone($('adminUserEditPhone')?.value),
+    phone: getPhoneWithDial('adminUserEdit'),
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
     role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
     invitedByCode: code,
