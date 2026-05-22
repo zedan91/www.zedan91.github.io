@@ -1,3 +1,12 @@
+
+function normalizePhoneNumber(phone, countryCode="+60"){
+  phone=(phone||"").replace(/\s+/g,"").replace(/-/g,"");
+  if(phone.startsWith("+")) return phone;
+  if(phone.startsWith("0")) return countryCode + phone.substring(1);
+  if(phone.startsWith(countryCode.replace("+",""))) return "+"+phone;
+  return countryCode + phone;
+}
+
 // Clean production URLs: /folder/index.html -> /folder/
 (function cleanAzobssIndexHtmlUrl(){
   try {
