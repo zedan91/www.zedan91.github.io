@@ -786,7 +786,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
 const AZOBSS_LOGIN_HISTORY_COLLECTION = 'loginHistory';
 const AZOBSS_ONLINE_USERS_COLLECTION = 'onlineUsers';
 const AZOBSS_GUEST_HISTORY_COLLECTION = 'guestHistory';
-const AZOBSS_ADMIN_PAGE_SIZE = 10;
+const AZOBSS_ADMIN_PAGE_SIZE = 6;
 let azobssRegisteredUsersPage = 1;
 let azobssLiveUsersPage = 1;
 let azobssLoginHistoryPage = 1;
@@ -969,10 +969,17 @@ function azobssBuildCompactPagerHtml(current, totalPages){
   const pages = [];
   pages.push(button('&lt;&lt;', 1, current <= 1, false, 'First page'));
   pages.push(button('P', Math.max(1, current - 1), current <= 1, false, 'Previous page'));
-  let start = Math.max(1, current - 1);
-  let end = Math.min(totalPages, start + 2);
-  start = Math.max(1, end - 2);
-  for(let i=start; i<=end; i++) pages.push(button(String(i), i, false, current === i, 'Page ' + i));
+
+  // Maximum 10 buttons total: <<, P, 6 page numbers, N, >>
+  const maxNumberButtons = 6;
+  let start = Math.max(1, current - Math.floor(maxNumberButtons / 2));
+  let end = Math.min(totalPages, start + maxNumberButtons - 1);
+  start = Math.max(1, end - maxNumberButtons + 1);
+
+  for(let i = start; i <= end; i++){
+    pages.push(button(String(i), i, false, current === i, 'Page ' + i));
+  }
+
   pages.push(button('N', Math.min(totalPages, current + 1), current >= totalPages, false, 'Next page'));
   pages.push(button('&gt;&gt;', totalPages, current >= totalPages, false, 'Last page'));
   return pages.join('');
@@ -1511,7 +1518,7 @@ function formatPurchaseDate(record){
   if(!ms) return '-';
   return new Date(ms).toLocaleString('en-MY', { hour12:true, hour:'numeric', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
 }
-const AZOBSS_PURCHASE_PAGE_SIZE = 10;
+const AZOBSS_PURCHASE_PAGE_SIZE = 6;
 const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 6;
 const AZOBSS_PURCHASE_DETAIL_PAGE_SIZE = 6;
 const azobssPurchaseDetailPages = {};

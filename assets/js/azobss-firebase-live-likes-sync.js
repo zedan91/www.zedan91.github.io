@@ -23,7 +23,7 @@ const LOGIN_HISTORY_COLLECTION = 'loginHistory';
 const GUEST_HISTORY_COLLECTION = 'guestHistory';
 const USER_LIKES_COLLECTION = 'userLikes';
 const ONLINE_WINDOW_MS = 120000; // real online only (seen within 2 minutes)
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
 
 function safeJson(raw){ try { return JSON.parse(raw || 'null'); } catch { return null; } }
 function getSavedUser(){
@@ -102,10 +102,17 @@ function pager(el, current, total, size, cb){
   let html = '';
   html += button('&lt;&lt;', 1, current <= 1, false, 'First page');
   html += button('P', Math.max(1, current - 1), current <= 1, false, 'Previous page');
-  let start = Math.max(1, current - 1);
-  let end = Math.min(pages, start + 2);
-  start = Math.max(1, end - 2);
-  for(let i=start; i<=end; i++) html += button(String(i), i, false, i === current, 'Page ' + i);
+
+  // Maximum 10 buttons total: <<, P, 6 page numbers, N, >>
+  const maxNumberButtons = 6;
+  let start = Math.max(1, current - Math.floor(maxNumberButtons / 2));
+  let end = Math.min(pages, start + maxNumberButtons - 1);
+  start = Math.max(1, end - maxNumberButtons + 1);
+
+  for(let i = start; i <= end; i++){
+    html += button(String(i), i, false, i === current, 'Page ' + i);
+  }
+
   html += button('N', Math.min(pages, current + 1), current >= pages, false, 'Next page');
   html += button('&gt;&gt;', pages, current >= pages, false, 'Last page');
   el.innerHTML = html;
