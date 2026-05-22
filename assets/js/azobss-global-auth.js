@@ -66,7 +66,7 @@ function addStyle() {
 .auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
 .auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
 .auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
-.phone-input-row{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;}
+.phone-input-row{display:grid;grid-template-columns:minmax(118px,auto) 1fr;gap:8px;align-items:center;}
 .country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:nowrap;}
 .country-code-button::after{content:'⌄';margin-left:7px;font-size:13px;color:#cbd5e1;}
 .country-combo{position:relative;}
@@ -78,8 +78,10 @@ function addStyle() {
 .country-code-option:hover,.country-code-option:focus{background:rgba(34,197,94,.16);outline:none;}
 .country-option-dial{color:#62e6a5;font-weight:900;}
 .phone-number-wrap{position:relative;}
-.phone-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#b9c5d8;font-weight:800;}
-.phone-number-wrap input{padding-left:54px!important;}
+/* Phone layout like Android/Google Contacts: country code stays in the country box,
+   the phone input shows local number only. Firebase still saves full +countrycode number. */
+.phone-prefix{display:none!important;}
+.phone-number-wrap input{padding-left:14px!important;}
 body.is-authenticated .site-auth-actions{display:none!important;}
 body.is-authenticated .market-user-tools{display:flex!important;}
 body.is-authenticated .user-menu{display:flex!important;}
