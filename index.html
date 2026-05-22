@@ -7278,6 +7278,18 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
   body.is-admin #purchaseSummaryList .az-purchase-mini-total{flex:0 1 auto!important;}
   body.is-admin #purchaseSummaryList .az-purchase-mini-actions{margin-left:0!important;}
 }
+
+/* AZOBSS FIX 2026-05-23: purchase admin compact row + fully visible Show/Reset */
+#purchaseSummaryList .purchase-summary-item.admin-purchase-user-card.az-purchase-mini-card{width:100%!important;max-width:100%!important;overflow:visible!important;padding:7px 10px!important;margin:0 0 7px!important;box-sizing:border-box!important;}
+#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{display:grid!important;grid-template-columns:minmax(95px,1fr) minmax(210px,1.55fr) minmax(110px,.9fr) minmax(52px,.45fr) minmax(70px,.55fr) 128px!important;column-gap:10px!important;align-items:center!important;width:100%!important;max-width:100%!important;min-height:32px!important;overflow:visible!important;box-sizing:border-box!important;}
+#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top>*{min-width:0!important;white-space:nowrap!important;box-sizing:border-box!important;}
+#purchaseSummaryList .az-purchase-mini-user,#purchaseSummaryList .az-purchase-mini-date,#purchaseSummaryList .az-purchase-mini-last,#purchaseSummaryList .az-purchase-mini-unit,#purchaseSummaryList .az-purchase-mini-total{overflow:hidden!important;text-overflow:ellipsis!important;font-size:12px!important;line-height:1.05!important;}
+#purchaseSummaryList .az-purchase-mini-user strong,#purchaseSummaryList .az-purchase-mini-date strong,#purchaseSummaryList .az-purchase-mini-last strong,#purchaseSummaryList .az-purchase-mini-unit strong,#purchaseSummaryList .az-purchase-mini-total strong{font-size:12px!important;line-height:1.05!important;}
+#purchaseSummaryList .az-purchase-mini-actions{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;width:128px!important;min-width:128px!important;max-width:128px!important;overflow:visible!important;justify-self:end!important;}
+#purchaseSummaryList .az-purchase-show-btn,#purchaseSummaryList .az-purchase-reset-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:60px!important;min-width:60px!important;max-width:60px!important;flex:0 0 60px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0!important;border-radius:8px!important;font-size:11px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important;box-sizing:border-box!important;}
+#purchaseSummaryList .az-purchase-reset-btn{background:#ef4444!important;color:#fff!important;}
+#purchaseSummaryList .az-purchase-show-btn{background:#2563eb!important;color:#fff!important;}
+@media(max-width:900px){#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{grid-template-columns:minmax(95px,1fr) minmax(185px,1.35fr) minmax(105px,.85fr) 50px 68px 128px!important;column-gap:7px!important;overflow-x:auto!important;scrollbar-width:thin!important;}}
 </style>
 </head>
 <body id="top">
