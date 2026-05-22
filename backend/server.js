@@ -159,16 +159,19 @@ app.post("/api/premium/complete-purchase", (req, res) => {
   const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
   const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);
   const paymentReference = cleanPremiumText(data.paymentReference || data.reference || "", 200);
+  const requestedLimit = Math.max(1, Math.min(20, Number(product.downloadLimit || data.downloadLimit || product.maxDownload || 3)));
+  const requestedExpiryHours = Math.max(0, Math.min(24 * 30, Number(product.expiryHours ?? data.expiryHours ?? 24)));
+  const expiresAtMs = requestedExpiryHours === 0 ? Date.now() + (100 * 365 * 24 * 60 * 60 * 1000) : Date.now() + requestedExpiryHours * 60 * 60 * 1000;
   const user = getPremiumUser(data);
   if (!productName || !amount) return res.status(400).json({ ok:false, error:"Missing product name or amount" });
   if (!downloadLink) return res.status(400).json({ ok:false, error:"Download link belum diset untuk produk ini. Sila hubungi admin." });
   const orderId = makePremiumId("ord");
   const token = makePremiumId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
-  const order = { orderId, productId, productName, amount, status:"paid", paymentMethod, paymentReference, user, createdAt:new Date(now).toISOString(), paidAt:new Date(now).toISOString(), downloadToken:token, tokenExpiresAt:new Date(now + 24*60*60*1000).toISOString(), maxDownload:3 };
+  const order = { orderId, productId, productName, amount, status:"paid", paymentMethod, paymentReference, user, createdAt:new Date(now).toISOString(), paidAt:new Date(now).toISOString(), downloadToken:token, tokenExpiresAt:new Date(expiresAtMs).toISOString(), maxDownload:requestedLimit };
   savePremiumOrder(order);
-  savePremiumToken({ token, orderId, productId, productName, user, downloadLink, createdAt:now, expiresAt:now + 24*60*60*1000, usedCount:0, maxDownload:3 });
-  res.json({ ok:true, orderId, status:"paid", message:"Pembelian selesai. Link download sementara telah dijana.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:3 });
+  savePremiumToken({ token, orderId, productId, productName, user, downloadLink, createdAt:now, expiresAt:expiresAtMs, usedCount:0, maxDownload:requestedLimit });
+  res.json({ ok:true, orderId, status:"paid", message:"Pembelian selesai. Link download sementara telah dijana.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:requestedLimit });
 });
 
 app.get("/api/premium/download/:token", (req, res) => {

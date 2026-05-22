@@ -834,7 +834,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .download-btn.premium:hover{background:#d97706;color:#fff;}
 .software-admin-modal{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.78);backdrop-filter:blur(8px);}
 .software-admin-modal.is-open{display:flex;}
-.software-admin-panel{width:min(560px,96vw);max-height:92vh;overflow:auto;border-radius:22px;border:1px solid rgba(34,197,94,.28);background:#0f172a;box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px;color:#f8fafc;}
+.software-admin-panel{width:min(760px,96vw);max-height:92vh;overflow:auto;border-radius:22px;border:1px solid rgba(34,197,94,.28);background:#0f172a;box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px;color:#f8fafc;}
 .software-admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
 .software-admin-head h2{margin:0;font-size:22px;color:#86efac;}
 .software-admin-close{width:34px;height:34px;border-radius:999px;border:1px solid rgba(148,163,184,.28);background:#111827;color:#fff;font-size:20px;cursor:pointer;}
@@ -842,13 +842,20 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .software-admin-form label{display:grid;gap:6px;font-size:13px;font-weight:800;color:#cbd5e1;}
 .software-admin-form input,.software-admin-form textarea,.software-admin-form select{width:100%;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#020617;color:#fff;padding:11px 12px;font:inherit;outline:none;}
 .software-admin-form textarea{min-height:82px;resize:vertical;}
+.software-admin-checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+.software-admin-checks label{display:flex!important;align-items:center;gap:6px;border:1px solid rgba(148,163,184,.24);border-radius:10px;padding:8px;background:#020617;}
+.software-admin-checks input{width:auto!important;}
+.software-meta{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px;justify-content:center;}
+.software-meta span{font-size:11px;font-weight:900;color:#bfdbfe;border:1px solid rgba(96,165,250,.24);background:rgba(15,23,42,.72);border-radius:999px;padding:4px 8px;}
+.software-status-draft,.software-status-hidden{opacity:.65;}
+.software-badge.extra{background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.4);color:#fed7aa;}
 .software-admin-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .software-admin-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
 .software-admin-actions button{border:0;border-radius:12px;padding:11px 16px;font-weight:900;cursor:pointer;}
 .software-admin-cancel{background:#334155;color:#e2e8f0;}
 .software-admin-save{background:#22c55e;color:#052e16;}
 .software-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
-@media(max-width:640px){.software-admin-row{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center}.software-admin-add-btn{width:100%;}}
+@media(max-width:640px){.software-admin-row,.software-admin-checks{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center}.software-admin-add-btn{width:100%;}}
 </style>
 
 <style id="azobss-premium-flow-style">
@@ -1004,6 +1011,56 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
         </label>
       </div>
       <div class="software-admin-row">
+        <label>Product ID / SKU
+          <input id="softwareAdminProductId" type="text" placeholder="Auto: AZSW-0001">
+        </label>
+        <label>Status
+          <select id="softwareAdminStatus">
+            <option value="active">Active - publish now</option>
+            <option value="draft">Draft - admin only</option>
+            <option value="hidden">Hidden - hide from public</option>
+          </select>
+        </label>
+      </div>
+      <div class="software-admin-row">
+        <label>Version
+          <input id="softwareAdminVersion" type="text" placeholder="v1.0.0">
+        </label>
+        <label>File Size
+          <input id="softwareAdminFileSize" type="text" placeholder="Example: 120 MB">
+        </label>
+      </div>
+      <div class="software-admin-row">
+        <label>Download Limit
+          <input id="softwareAdminDownloadLimit" type="number" min="1" max="20" value="3">
+        </label>
+        <label>Link Expiry
+          <select id="softwareAdminExpiryHours">
+            <option value="24">24 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+            <option value="0">Never expire</option>
+          </select>
+        </label>
+      </div>
+      <label>Platform
+        <div class="software-admin-checks" id="softwareAdminPlatforms">
+          <label><input type="checkbox" value="Windows" checked> Windows</label>
+          <label><input type="checkbox" value="Mac"> Mac</label>
+          <label><input type="checkbox" value="Android"> Android</label>
+          <label><input type="checkbox" value="iOS"> iOS</label>
+        </div>
+      </label>
+      <label>Marketing Badge
+        <select id="softwareAdminBadge">
+          <option value="">None</option>
+          <option value="🔥 Hot">🔥 Hot</option>
+          <option value="⭐ Recommended">⭐ Recommended</option>
+          <option value="🆕 New">🆕 New</option>
+          <option value="🚀 Fast Support">🚀 Fast Support</option>
+        </select>
+      </label>
+      <div class="software-admin-row">
         <label>Icon Text
           <input id="softwareAdminIcon" type="text" placeholder="WT" maxlength="4">
         </label>
@@ -1039,7 +1096,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
         </label>
       </div>
       <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="software-admin-note">Free Software will use <b>Download Link</b>. Premium Software will use <b>ToyyibPay / Payment Link</b> for payment and <b>Premium Download File Link</b> after payment. Image/GIF can be added by URL or small upload.</p>
+      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items use ToyyibPay / Payment Link, then a temporary backend token reveals the private download link and receipt.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -1111,6 +1168,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const imageFileInput = document.getElementById('softwareAdminImageFile');
   const gifFileInput = document.getElementById('softwareAdminGifFile');
   const mediaPreview = document.getElementById('softwareAdminMediaPreview');
+  const productIdInput = document.getElementById('softwareAdminProductId');
+  const statusInput = document.getElementById('softwareAdminStatus');
+  const versionInput = document.getElementById('softwareAdminVersion');
+  const fileSizeInput = document.getElementById('softwareAdminFileSize');
+  const downloadLimitInput = document.getElementById('softwareAdminDownloadLimit');
+  const expiryInput = document.getElementById('softwareAdminExpiryHours');
+  const badgeInput = document.getElementById('softwareAdminBadge');
+  const platformBox = document.getElementById('softwareAdminPlatforms');
   const searchInput = document.getElementById('softwareSearchInput');
   const sortSelect = document.getElementById('softwareSortSelect');
   let softwareDynamicItems = [];
@@ -1141,6 +1206,18 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       clean(currentUser?.usernameKey) === 'zedan91' || clean(currentUser?.email) === 'zedan91@azobss.local'
     );
   }
+
+  function makeProductId(prefix){
+    const n = Date.now().toString().slice(-6);
+    return `${prefix}-${n}`;
+  }
+  function selectedPlatforms(){
+    return Array.from(platformBox?.querySelectorAll('input:checked') || []).map(x => x.value);
+  }
+  function setSelectedPlatforms(values){
+    const set = new Set(Array.isArray(values) && values.length ? values : ['Windows']);
+    platformBox?.querySelectorAll('input').forEach(x => { x.checked = set.has(x.value); });
+  }
   function normalizeItem(item){
     const type = item.type === 'premium' ? 'premium' : 'free';
     const price = String(item.price || (type === 'free' ? 'FREE' : '')).trim();
@@ -1150,6 +1227,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       desc: item.desc || item.description || '',
       type,
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
+      productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
+      status: item.status || 'active',
+      version: item.version || '',
+      fileSize: item.fileSize || '',
+      platforms: Array.isArray(item.platforms) ? item.platforms : (item.platform ? [item.platform] : ['Windows']),
+      badge: item.badge || '',
+      downloadLimit: Number(item.downloadLimit || item.maxDownload || 3),
+      expiryHours: Number(item.expiryHours ?? 24),
       icon: item.icon || (type === 'free' ? 'FREE' : '🛒'),
       downloadLink: item.downloadLink || item.link || item.url || '',
       paymentLink: item.paymentLink || '',
@@ -1167,14 +1252,19 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const mediaSrc = item.imageUrl || item.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="software-card-media"><img src="${esc(mediaSrc)}" alt="${esc(item.name)} preview" loading="lazy"></div>` : '';
     const gifHtml = item.gifUrl && item.imageUrl ? `<div class="software-media-links"><a class="software-media-demo" href="${esc(item.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
-    return `<div class="download-card" data-admin-software="1" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price).toLowerCase())}">
+    const meta = [item.productId, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
+    const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
+    const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}">
       ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
       <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
+      ${badgeExtra}
       <h3>${esc(item.name)}</h3>
+      ${metaHtml}
       <p>${esc(item.desc)}</p>
       ${gifHtml}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
     </div>`;
   }
   function loadLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]').map(normalizeItem); } catch(e){ return []; } }
@@ -1199,7 +1289,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const staticCards = getStaticCards();
     staticCards.forEach(card => { card.style.display = ''; });
 
-    let dynamic = [...softwareDynamicItems];
+    let dynamic = [...softwareDynamicItems].filter(item => isAdmin() || (item.status || 'active') === 'active');
     if(keyword){
       dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
       staticCards.forEach(card => {
@@ -1259,6 +1349,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(priceInput) priceInput.value = 'FREE';
     if(buttonInput) buttonInput.value = 'Download Now';
     if(iconInput) iconInput.value = 'FREE';
+    if(productIdInput) productIdInput.value = makeProductId('AZSW');
+    if(statusInput) statusInput.value = 'active';
+    if(versionInput) versionInput.value = 'v1.0.0';
+    if(fileSizeInput) fileSizeInput.value = '';
+    if(downloadLimitInput) downloadLimitInput.value = '3';
+    if(expiryInput) expiryInput.value = '24';
+    if(badgeInput) badgeInput.value = '';
+    setSelectedPlatforms(['Windows']);
     if(downloadLinkInput) downloadLinkInput.value = '';
     if(paymentLinkInput) paymentLinkInput.value = '';
     if(secureDownloadInput) secureDownloadInput.value = '';
@@ -1287,6 +1385,15 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
     const item = normalizeItem({
+      id: productIdInput?.value.trim() || makeProductId('AZSW'),
+      productId: productIdInput?.value.trim() || makeProductId('AZSW'),
+      status: statusInput?.value || 'active',
+      version: versionInput?.value.trim(),
+      fileSize: fileSizeInput?.value.trim(),
+      platforms: selectedPlatforms(),
+      badge: badgeInput?.value || '',
+      downloadLimit: Math.max(1, Math.min(20, Number(downloadLimitInput?.value || 3))),
+      expiryHours: Number(expiryInput?.value ?? 24),
       name: document.getElementById('softwareAdminName').value.trim(),
       desc: document.getElementById('softwareAdminDesc').value.trim(),
       type: typeSelect.value,
@@ -1352,7 +1459,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
       const downloadUrl = toAbsolute(data.downloadUrl);
       const receiptUrl = toAbsolute(data.receiptUrl);
-      successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif 24 jam / maksimum 3 kali download.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
+      successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif mengikut tetapan produk / had download admin.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
       successBox.classList.add('is-open');
     }catch(err){errorBox.textContent=err.message || 'Gagal proses pembayaran.';}
     finally{completeBtn.disabled=false; completeBtn.textContent='I Have Paid';}
@@ -1361,7 +1468,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
     if(!trigger)return;
     e.preventDefault();
-    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',secureDownloadLink:trigger.dataset.downloadLink||''};
+    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',secureDownloadLink:trigger.dataset.downloadLink||'',downloadLimit:Number(trigger.dataset.downloadLimit||3),expiryHours:Number(trigger.dataset.expiryHours??24)};
     open(product);
   });
 })();

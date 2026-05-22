@@ -496,7 +496,7 @@
     .cad-empty-state{grid-column:1/-1;border:1px dashed rgba(148,163,184,.35);border-radius:18px;padding:18px;text-align:center;color:#94a3b8;background:rgba(15,23,42,.55);font-weight:800;}
     .cad-admin-modal{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.78);backdrop-filter:blur(8px);}
     .cad-admin-modal.is-open{display:flex;}
-    .cad-admin-panel{width:min(560px,96vw);max-height:92vh;overflow:auto;border-radius:22px;border:1px solid rgba(249,115,22,.28);background:#0f172a;box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px;color:#f8fafc;}
+    .cad-admin-panel{width:min(760px,96vw);max-height:92vh;overflow:auto;border-radius:22px;border:1px solid rgba(249,115,22,.28);background:#0f172a;box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px;color:#f8fafc;}
     .cad-admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
     .cad-admin-head h2{margin:0;font-size:22px;color:#fdba74;}
     .cad-admin-close{width:34px;height:34px;border-radius:999px;border:1px solid rgba(148,163,184,.28);background:#111827;color:#fff;font-size:20px;cursor:pointer;}
@@ -504,13 +504,20 @@
     .cad-admin-form label{display:grid;gap:6px;font-size:13px;font-weight:800;color:#cbd5e1;}
     .cad-admin-form input,.cad-admin-form textarea,.cad-admin-form select{width:100%;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#020617;color:#fff;padding:11px 12px;font:inherit;outline:none;}
     .cad-admin-form textarea{min-height:82px;resize:vertical;}
+.cad-admin-checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.cad-admin-checks label{display:flex!important;align-items:center;gap:6px;border:1px solid rgba(148,163,184,.24);border-radius:10px;padding:8px;background:#020617;}
+.cad-admin-checks input{width:auto!important;}
+.cad-meta{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px;justify-content:center;}
+.cad-meta span{font-size:11px;font-weight:900;color:#fed7aa;border:1px solid rgba(251,146,60,.25);background:rgba(15,23,42,.72);border-radius:999px;padding:4px 8px;}
+.cad-status-draft,.cad-status-hidden{opacity:.65;}
+.cad-badge.extra{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);color:#bbf7d0;}
     .cad-admin-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .cad-admin-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
     .cad-admin-actions button{border:0;border-radius:12px;padding:11px 16px;font-weight:900;cursor:pointer;}
     .cad-admin-cancel{background:#334155;color:#e2e8f0;}
     .cad-admin-save{background:#f97316;color:#fff7ed;}
     .cad-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
-    @media(max-width:640px){.cad-shop-controls,.cad-admin-row{grid-template-columns:1fr}.cad-admin-add-btn{width:100%;}.cad-card-grid{grid-template-columns:1fr;}}
+    @media(max-width:640px){.cad-shop-controls,.cad-admin-row,.cad-admin-checks{grid-template-columns:1fr}.cad-admin-add-btn{width:100%;}.cad-card-grid{grid-template-columns:1fr;}}
 
 
     .admin-only{
@@ -1367,6 +1374,55 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
         </label>
       </div>
       <div class="cad-admin-row">
+        <label>Product ID / SKU
+          <input id="cadAdminProductId" type="text" placeholder="Auto: AZCAD-0001">
+        </label>
+        <label>Status
+          <select id="cadAdminStatus">
+            <option value="active">Active - publish now</option>
+            <option value="draft">Draft - admin only</option>
+            <option value="hidden">Hidden - hide from public</option>
+          </select>
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label>Version
+          <input id="cadAdminVersion" type="text" placeholder="v1.0.0">
+        </label>
+        <label>File Size
+          <input id="cadAdminFileSize" type="text" placeholder="Example: 80 KB / 2 MB">
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label>Download Limit
+          <input id="cadAdminDownloadLimit" type="number" min="1" max="20" value="3">
+        </label>
+        <label>Link Expiry
+          <select id="cadAdminExpiryHours">
+            <option value="24">24 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+            <option value="0">Never expire</option>
+          </select>
+        </label>
+      </div>
+      <label>Platform
+        <div class="cad-admin-checks" id="cadAdminPlatforms">
+          <label><input type="checkbox" value="AutoCAD" checked> AutoCAD</label>
+          <label><input type="checkbox" value="BricsCAD"> BricsCAD</label>
+          <label><input type="checkbox" value="Windows" checked> Windows</label>
+        </div>
+      </label>
+      <label>Marketing Badge
+        <select id="cadAdminBadge">
+          <option value="">None</option>
+          <option value="🔥 Hot">🔥 Hot</option>
+          <option value="⭐ Recommended">⭐ Recommended</option>
+          <option value="🆕 New">🆕 New</option>
+          <option value="🧩 LISP">🧩 LISP</option>
+        </select>
+      </label>
+      <div class="cad-admin-row">
         <label>Icon / Short Text
           <input id="cadAdminIcon" type="text" maxlength="3" placeholder="L">
         </label>
@@ -1385,7 +1441,24 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <label>Premium Download File Link
         <input id="cadAdminSecureDownloadLink" type="url" placeholder="Private CAD file/download link used after payment success">
       </label>
-      <p class="cad-admin-note">Free CAD Resource will use <b>Download / Resource Link</b>. Premium CAD Tool will use <b>ToyyibPay / Payment Link</b> for payment and <b>Premium Download File Link</b> after payment.</p>
+      <div class="cad-admin-row">
+        <label>Image URL
+          <input id="cadAdminImageUrl" type="url" placeholder="Optional product/card image URL">
+        </label>
+        <label>GIF Demo URL
+          <input id="cadAdminGifUrl" type="url" placeholder="Optional GIF demo URL">
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label>Upload Image
+          <input id="cadAdminImageFile" type="file" accept="image/*">
+        </label>
+        <label>Upload GIF
+          <input id="cadAdminGifFile" type="file" accept="image/gif,image/*">
+        </label>
+      </div>
+      <div class="cad-admin-media-preview" id="cadAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
+      <p class="cad-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each CAD item. Premium items use ToyyibPay / Payment Link, then a temporary backend token reveals the private download link and receipt.</p>
       <div class="cad-admin-actions">
         <button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
         <button class="cad-admin-save" type="submit">Save Item</button>
@@ -1507,6 +1580,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const imageFileInput = document.getElementById('cadAdminImageFile');
   const gifFileInput = document.getElementById('cadAdminGifFile');
   const mediaPreview = document.getElementById('cadAdminMediaPreview');
+  const productIdInput = document.getElementById('cadAdminProductId');
+  const statusInput = document.getElementById('cadAdminStatus');
+  const versionInput = document.getElementById('cadAdminVersion');
+  const fileSizeInput = document.getElementById('cadAdminFileSize');
+  const downloadLimitInput = document.getElementById('cadAdminDownloadLimit');
+  const expiryInput = document.getElementById('cadAdminExpiryHours');
+  const badgeInput = document.getElementById('cadAdminBadge');
+  const platformBox = document.getElementById('cadAdminPlatforms');
   if(!grid) return;
   function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
   const MAX_MEDIA_BYTES = 900 * 1024;
@@ -1530,6 +1611,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   function isAdmin(){const user=getSavedUser();return !!(user && String(user.usernameKey||'').toLowerCase()===ADMIN_USERNAME);}
   function getItems(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(data)?data:[];}catch(e){return [];}}
   function saveItems(items){localStorage.setItem(STORAGE_KEY,JSON.stringify(items));}
+
+  function makeProductId(prefix){return `${prefix}-${Date.now().toString().slice(-6)}`;}
+  function selectedPlatforms(){return Array.from(platformBox?.querySelectorAll('input:checked')||[]).map(x=>x.value);}
+  function setSelectedPlatforms(values){const set=new Set(Array.isArray(values)&&values.length?values:['AutoCAD','Windows']); platformBox?.querySelectorAll('input').forEach(x=>{x.checked=set.has(x.value);});}
   function normalizeItem(item){
     const isPremium = item.type === 'premium';
     const price = String(item.price || '').trim();
@@ -1539,6 +1624,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       description: String(item.description || '').trim(),
       type: isPremium ? 'premium' : 'free',
       price: isPremium ? (price || 'RM') : 'FREE',
+      productId: item.productId || item.sku || item.id || makeProductId('AZCAD'),
+      status: item.status || 'active',
+      version: item.version || '',
+      fileSize: item.fileSize || '',
+      platforms: Array.isArray(item.platforms) ? item.platforms : (item.platform ? [item.platform] : ['AutoCAD','Windows']),
+      badge: item.badge || '',
+      downloadLimit: Number(item.downloadLimit || item.maxDownload || 3),
+      expiryHours: Number(item.expiryHours ?? 24),
       icon: String(item.icon || (isPremium ? '🛒' : 'L')).trim().slice(0,3),
       downloadLink: String(item.downloadLink || item.link || '').trim(),
       paymentLink: String(item.paymentLink || '').trim(),
@@ -1557,14 +1650,19 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const mediaSrc = clean.imageUrl || clean.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="cad-card-media"><img src="${esc(mediaSrc)}" alt="${esc(clean.name)} preview" loading="lazy"></div>` : '';
     const gifHtml = clean.gifUrl && clean.imageUrl ? `<div class="cad-media-links"><a class="cad-media-demo" href="${esc(clean.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
-    return `<article class="cad-card" data-admin-cad="1" data-type="${esc(clean.type)}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
+    const meta = [clean.productId, clean.version, clean.fileSize, ...(clean.platforms || [])].filter(Boolean);
+    const metaHtml = meta.length ? `<div class="cad-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
+    const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
+    return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
       ${mediaHtml}
       <div class="cad-card-icon">${esc(clean.icon)}</div>
       <div class="cad-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
+      ${badgeExtra}
       <h3>${esc(clean.name)}</h3>
+      ${metaHtml}
       <p>${esc(clean.description)}</p>
       ${gifHtml}
-      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
     </article>`;
   }
   function getStaticCards(){return Array.from(grid.querySelectorAll('[data-cad-static="1"]'));}
@@ -1576,7 +1674,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const cards = Array.from(grid.querySelectorAll('.cad-card'));
     const visible = cards.filter(card=>{
       const hay = String(card.dataset.search || card.textContent || '').toLowerCase();
-      return !term || hay.includes(term);
+      const activeOk = isAdmin() || (card.dataset.status || 'active') === 'active';
+      return activeOk && (!term || hay.includes(term));
     });
     cards.forEach(card=>card.style.display='none');
     visible.sort((a,b)=>{
@@ -1590,7 +1689,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
   }
   function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = premium;}
-  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; if(downloadLinkInput) downloadLinkInput.value=''; if(paymentLinkInput) paymentLinkInput.value=''; if(secureDownloadInput) secureDownloadInput.value=''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; if(productIdInput) productIdInput.value=makeProductId('AZCAD'); if(statusInput) statusInput.value='active'; if(versionInput) versionInput.value='v1.0.0'; if(fileSizeInput) fileSizeInput.value=''; if(downloadLimitInput) downloadLimitInput.value='3'; if(expiryInput) expiryInput.value='24'; if(badgeInput) badgeInput.value=''; setSelectedPlatforms(['AutoCAD','Windows']); if(downloadLinkInput) downloadLinkInput.value=''; if(paymentLinkInput) paymentLinkInput.value=''; if(secureDownloadInput) secureDownloadInput.value=''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
   function closeModal(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
   typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
@@ -1603,7 +1702,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
     const finalLink = typeInput.value === 'premium' ? paymentLinkInput?.value : downloadLinkInput?.value;
-    const item = normalizeItem({name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
+    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
     const items = getItems(); items.unshift(item); saveItems(items); closeModal(); applyFilters();
   });
   searchInput?.addEventListener('input',applyFilters); sortSelect?.addEventListener('change',applyFilters);
@@ -1995,7 +2094,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
       const downloadUrl = toAbsolute(data.downloadUrl);
       const receiptUrl = toAbsolute(data.receiptUrl);
-      successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif 24 jam / maksimum 3 kali download.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
+      successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif mengikut tetapan produk / had download admin.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
       successBox.classList.add('is-open');
     }catch(err){errorBox.textContent=err.message || 'Gagal proses pembayaran.';}
     finally{completeBtn.disabled=false; completeBtn.textContent='I Have Paid';}
