@@ -40,7 +40,7 @@
     .category-icon img{width:100%;height:100%;object-fit:cover;display:block}
     .category-all-icon{background:#07111f;color:#22c55e;font-size:23px}
     .category-name{font-size:12px;line-height:1.2}
-    .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}.sort-select{background:#0d1730;color:#fff;border:1px solid #2b3550;border-radius:999px;padding:10px 16px}.sort-label{color:#bfc7d5}
     .search{flex:1 1 280px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
     .chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 14px;min-height:42px;font-weight:800;cursor:pointer}
     .chip.is-active{background:var(--green);border-color:var(--green);color:#052e16}
@@ -509,11 +509,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 </div>
 <div class="tools">
 <input class="search" id="searchInput" placeholder="Search products..." type="search"/>
-<button class="chip is-active" data-filter="all" type="button">All</button>
-<button class="chip" data-filter="computer" type="button">Computer</button>
-<button class="chip" data-filter="mobile" type="button">Mobile</button>
-<button class="chip" data-filter="camera" type="button">Camera</button>
-<button class="chip" data-filter="groceries" type="button">Groceries</button>
+<button class="chip is-active" data-filter="all" type="button">❤ My Likes</button>
+<span class="sort-label">Sort by:</span>
+<select class="sort-select" id="sortBy">
+<option>Newest First</option>
+<option>Oldest First</option>
+<option>Price Low → High</option>
+<option>Price High → Low</option>
+</select>
 </div>
 </section>
 <section class="grid" id="productGrid"></section>
