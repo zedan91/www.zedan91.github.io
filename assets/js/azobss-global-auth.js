@@ -158,7 +158,7 @@ function injectModal() {
       <label for="siteSignupPassword">Password
         <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6" required type="password">
       </label>
-      <label for="siteSignupPhone">WhatsApp Number
+      <label for="siteSignupPhone">Phone Number
         <div class="phone-input-row" data-country-phone="siteSignup" data-default-dial="60">
           <div class="country-combo">
             <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
@@ -167,7 +167,7 @@ function injectModal() {
               <div class="country-menu-options" data-country-options></div>
             </div>
           </div>
-          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="11-3560 0723" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
         </div>
       </label>
       <label for="siteSignupEmail">Email
@@ -210,7 +210,7 @@ function injectAdminUserEditModal() {
               <div class="country-menu-options" data-country-options></div>
             </div>
           </div>
-          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="adminUserEditPhone" inputmode="tel" placeholder="11-3560 0723" type="tel"><input id="adminUserEditDial" type="hidden" value="60"></div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="adminUserEditPhone" inputmode="tel" placeholder="10-3560 0723" type="tel"><input id="adminUserEditDial" type="hidden" value="60"></div>
         </div>
       </label>
       <label for="adminUserEditEmail">Contact Email
@@ -674,7 +674,7 @@ function injectProfileSettingsModal() {
               <div class="country-menu-options" data-country-options></div>
             </div>
           </div>
-          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="profileEditPhone" inputmode="tel" placeholder="11-3560 0723" type="tel"><input id="profileEditDial" type="hidden" value="60"></div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="profileEditPhone" inputmode="tel" placeholder="10-3560 0723" type="tel"><input id="profileEditDial" type="hidden" value="60"></div>
         </div>
       </label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
@@ -2227,3 +2227,67 @@ setupCountryPhoneSelectors(document);
 new MutationObserver(()=>setupCountryPhoneSelectors(document)).observe(document.body,{childList:true,subtree:true});
 
 setTimeout(()=>{azobssCleanupCollection("loginHistory");azobssCleanupCollection("guestHistory");azobssCleanupCollection("purchaseLogs");},5000);
+
+
+
+/* AZOBSS phone local display helper
+   Display only: 1135600723 -> 11-3560 0723, 148362098 -> 14-836 2098.
+   Firestore save remains clean because getPhoneWithDial()/normalizeAzobssPhone strips dash/space. */
+(function installAzobssLocalPhoneDashFormatter(){
+  if (window.__azobssLocalPhoneDashFormatterV2) return;
+  window.__azobssLocalPhoneDashFormatterV2 = true;
+
+  function formatAzobssLocalPhone(value){
+    let n = String(value || '').replace(/\D/g, '');
+    // If a full Malaysian number is pasted into the local box, remove country code.
+    if (n.startsWith('60') && n.length > 10) n = n.slice(2);
+    if (n.startsWith('0') && n.length > 9) n = n.slice(1);
+
+    if (n.length <= 2) return n;
+    if (n.length <= 6) return n.slice(0, 2) + '-' + n.slice(2);
+    return n.slice(0, 2) + '-' + n.slice(2, 6) + ' ' + n.slice(6, 10);
+  }
+
+  function applyPhoneFormat(input){
+    if (!input) return;
+    input.placeholder = '10-3560 0723';
+    input.value = formatAzobssLocalPhone(input.value);
+  }
+
+  function applyAllPhoneFormats(root){
+    (root || document).querySelectorAll('#siteSignupPhone,#profileEditPhone,#adminUserEditPhone').forEach(applyPhoneFormat);
+  }
+
+  document.addEventListener('input', function(event){
+    const el = event.target;
+    if (!el || !['siteSignupPhone','profileEditPhone','adminUserEditPhone'].includes(el.id)) return;
+    const cursorWasAtEnd = el.selectionStart === el.value.length;
+    el.value = formatAzobssLocalPhone(el.value);
+    if (cursorWasAtEnd) {
+      try { el.setSelectionRange(el.value.length, el.value.length); } catch(e) {}
+    }
+  }, true);
+
+  document.addEventListener('focusin', function(event){
+    const el = event.target;
+    if (el && ['siteSignupPhone','profileEditPhone','adminUserEditPhone'].includes(el.id)) {
+      applyPhoneFormat(el);
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function(){ applyAllPhoneFormats(document); });
+  setTimeout(function(){ applyAllPhoneFormats(document); }, 300);
+  setTimeout(function(){ applyAllPhoneFormats(document); }, 1000);
+
+  try {
+    new MutationObserver(function(mutations){
+      mutations.forEach(function(mutation){
+        mutation.addedNodes && mutation.addedNodes.forEach(function(node){
+          if (node && node.nodeType === 1) applyAllPhoneFormats(node);
+        });
+      });
+    }).observe(document.documentElement, { childList:true, subtree:true });
+  } catch(e) {}
+
+  window.azobssFormatLocalPhoneForDisplay = formatAzobssLocalPhone;
+})();

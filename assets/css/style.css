@@ -4113,3 +4113,8 @@ body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
     column-gap:5px !important;
   }
 }
+
+
+/* AZOBSS phone input: country code stays inside country selector; local phone box displays 10-3560 0723 only. */
+.phone-prefix{display:none!important;}
+.phone-number-wrap input{padding-left:14px!important;}
