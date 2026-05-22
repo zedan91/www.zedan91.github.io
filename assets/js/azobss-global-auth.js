@@ -18,6 +18,18 @@ setTimeout(()=>{
 });
 },1000);
 
+
+(function installAzobssPhoneDisplayFormatter(){
+  if (window.__azobssPhoneDisplayFormatterInstalled) return;
+  window.__azobssPhoneDisplayFormatterInstalled = true;
+  document.addEventListener('input', function(event){
+    const target = event.target;
+    if (!target || !['siteSignupPhone','adminUserEditPhone','profileEditPhone'].includes(target.id)) return;
+    const raw = String(target.value || '').replace(/\D/g, '');
+    target.value = formatPhoneGuide(raw);
+  });
+})();
+
 function normalizePhoneNumber(phone, countryCode="+60"){
   phone=(phone||"").replace(/\s+/g,"").replace(/-/g,"");
   if(phone.startsWith("+")) return phone;
@@ -799,7 +811,7 @@ function openProfileSettings(){
   if($('profileEditName')) $('profileEditName').value=user.usernameKey || user.name || '';
   const parsedPhone=splitPhoneToDialLocal(user.phone || '');
   setPhoneDial('profileEdit', parsedPhone.dial);
-  if($('profileEditPhone')) $('profileEditPhone').value=parsedPhone.local || '';
+  if($('profileEditPhone')) $('profileEditPhone').value=formatPhoneGuide(parsedPhone.local || '');
   if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
   const err=$('profileSettingsError'); if(err) err.textContent='';
   ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
