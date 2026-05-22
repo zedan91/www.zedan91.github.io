@@ -121,6 +121,19 @@ function pager(el, current, total, size, cb){
 
 function localLikes(){ return safeJson(localStorage.getItem('azLikes')) || []; }
 function saveLocalLikes(arr){ try{ localStorage.setItem('azLikes', JSON.stringify(arr || [])); }catch{} }
+
+function withTimeout(promise, ms, label){
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error((label || 'Operation') + ' timeout')), ms || 8000);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+function setLikesMessage(message){
+  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
+  if(list) list.innerHTML = `<div class="az-like-empty">${escapeHtml(message)}</div>`;
+}
+
 function setUserLikeCache(key, rows){
   if(!key) return;
   try{ localStorage.setItem('azLikes:' + key, JSON.stringify(rows || [])); }catch{}
@@ -218,13 +231,30 @@ async function readLikesFromFirebase(){
   if(!user || !key) return [];
   const rows = [];
   try{
-    const snap = await getDocs(query(collection(db, USER_LIKES_COLLECTION), where('usernameKey','==',key)));
+    const q1 = query(collection(db, USER_LIKES_COLLECTION), where('usernameKey','==',key));
+    const snap = await withTimeout(getDocs(q1), 10000, 'Load likes');
     snap.forEach(d => rows.push(normalizeLikeRow({ id:d.id, ...d.data() })));
+
+    // Fallback: some old likes may be saved by Firebase uid instead of usernameKey.
+    const uid = String(auth.currentUser?.uid || user.uid || '').trim();
+    if(uid && uid !== key){
+      try{
+        const q2 = query(collection(db, USER_LIKES_COLLECTION), where('uid','==',uid));
+        const snap2 = await withTimeout(getDocs(q2), 10000, 'Load uid likes');
+        snap2.forEach(d => {
+          const row = normalizeLikeRow({ id:d.id, ...d.data() });
+          if(row && !rows.some(x => x.itemId === row.itemId)) rows.push(row);
+        });
+      }catch(e){ console.warn('AZOBSS uid likes fallback failed:', e); }
+    }
+
     setUserLikeCache(key, rows);
     return rows;
   }catch(error){
     console.warn('AZOBSS read likes failed:', error);
-    return getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean);
+    const cached = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean);
+    if(cached.length) return cached;
+    throw error;
   }
 }
 async function writeLikeToFirebase(item){
@@ -284,7 +314,14 @@ async function setLike(item, liked){
   }
 }
 async function refreshLikeButtons(){
-  const firebaseIds = await getFirebaseLikeIds();
+  let firebaseIds = new Set();
+  try{
+    firebaseIds = await getFirebaseLikeIds();
+  }catch(error){
+    console.warn('AZOBSS refresh like buttons failed:', error);
+    const key = userKey(getSavedUser());
+    firebaseIds = new Set(getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean).map(x => x.itemId));
+  }
   document.querySelectorAll('.azlike').forEach(btn => {
     const item = likeItemFromButton(btn);
     const liked = firebaseIds.has(item.itemId);
@@ -321,11 +358,21 @@ async function refreshLikesPage(){
   const key = userKey(user);
   if(!user || !key){
     azobssLikesCache = [];
-    renderLikesRows();
+    list.innerHTML = '<div class="az-like-empty">Please sign in to view your likes.</div>';
     return;
   }
-  azobssLikesCache = await readLikesFromFirebase();
-  renderLikesRows();
+  try{
+    azobssLikesCache = await readLikesFromFirebase();
+    renderLikesRows();
+  }catch(error){
+    console.warn('AZOBSS likes page failed:', error);
+    azobssLikesCache = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean);
+    if(azobssLikesCache.length){
+      renderLikesRows();
+    }else{
+      list.innerHTML = '<div class="az-like-empty">Failed to load likes. Please refresh or sign in again.</div>';
+    }
+  }
 }
 function getLikeSortMs(item){
   return firestoreMs(item.updatedAt) || Number(item.updatedAtMs || 0) || firestoreMs(item.createdAt) || Number(item.createdAtMs || 0) || 0;
@@ -405,21 +452,27 @@ async function boot(){
   addLikesPageStyle();
   bindLikesControls();
   bindLikeClick();
-  await syncGuestVisit();
-  await syncOnlineUser();
-  await syncLoginHistory();
-  await renderFirebaseLivePanels();
-  await refreshLikeButtons();
-  await refreshLikesPage();
-  setInterval(syncOnlineUser, 30000);
-  setInterval(renderFirebaseLivePanels, 45000);
-  window.addEventListener('storage', () => { syncOnlineUser(); syncLoginHistory(); refreshLikeButtons(); refreshLikesPage(); });
+
+  // Load Likes page immediately and never leave it stuck on "Loading likes...".
+  refreshLikesPage().catch(error => {
+    console.warn('AZOBSS initial likes load failed:', error);
+    setLikesMessage('Failed to load likes. Please refresh or sign in again.');
+  });
+
+  syncGuestVisit().catch(e => console.warn('AZOBSS guest sync failed:', e));
+  syncOnlineUser().catch(e => console.warn('AZOBSS online sync failed:', e));
+  syncLoginHistory().catch(e => console.warn('AZOBSS login history sync failed:', e));
+  renderFirebaseLivePanels().catch(e => console.warn('AZOBSS live panels failed:', e));
+  refreshLikeButtons().catch(e => console.warn('AZOBSS like buttons failed:', e));
+
+  setInterval(() => syncOnlineUser().catch(()=>{}), 30000);
+  setInterval(() => renderFirebaseLivePanels().catch(()=>{}), 45000);
+  window.addEventListener('storage', () => { syncOnlineUser().catch(()=>{}); syncLoginHistory().catch(()=>{}); refreshLikeButtons().catch(()=>{}); refreshLikesPage().catch(()=>{}); });
   document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState === 'visible') { syncOnlineUser(); renderFirebaseLivePanels(); refreshLikeButtons(); refreshLikesPage(); }
+    if(document.visibilityState === 'visible') { syncOnlineUser().catch(()=>{}); renderFirebaseLivePanels().catch(()=>{}); refreshLikeButtons().catch(()=>{}); refreshLikesPage().catch(()=>{}); }
   });
   window.addEventListener('beforeunload', () => { markOffline(); });
 }
-
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();
 
