@@ -1,4 +1,23 @@
 
+
+function formatPhoneGuide(v){
+ let n=(v||'').replace(/\D/g,'');
+ if(n.length<=2) return n;
+ if(n.length<=5) return n.slice(0,2)+'-'+n.slice(2);
+ return n.slice(0,2)+'-'+n.slice(2,6)+' '+n.slice(6,10);
+}
+setTimeout(()=>{
+['siteSignupPhone','adminUserEditPhone','profileEditPhone'].forEach(id=>{
+ const el=document.getElementById(id);
+ if(!el||el.dataset.guide) return;
+ el.dataset.guide='1';
+ el.addEventListener('input',e=>{
+ const raw=e.target.value.replace(/\D/g,'');
+ e.target.value=formatPhoneGuide(raw);
+ });
+});
+},1000);
+
 function normalizePhoneNumber(phone, countryCode="+60"){
   phone=(phone||"").replace(/\s+/g,"").replace(/-/g,"");
   if(phone.startsWith("+")) return phone;
@@ -136,7 +155,7 @@ function injectModal() {
               <div class="country-menu-options" data-country-options></div>
             </div>
           </div>
-          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="12 345 6789" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="11-3560 0723" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
         </div>
       </label>
       <label for="siteSignupEmail">Email
@@ -179,7 +198,7 @@ function injectAdminUserEditModal() {
               <div class="country-menu-options" data-country-options></div>
             </div>
           </div>
-          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="adminUserEditPhone" inputmode="tel" placeholder="12 345 6789" type="tel"><input id="adminUserEditDial" type="hidden" value="60"></div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="adminUserEditPhone" inputmode="tel" placeholder="11-3560 0723" type="tel"><input id="adminUserEditDial" type="hidden" value="60"></div>
         </div>
       </label>
       <label for="adminUserEditEmail">Contact Email
@@ -643,7 +662,7 @@ function injectProfileSettingsModal() {
               <div class="country-menu-options" data-country-options></div>
             </div>
           </div>
-          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="profileEditPhone" inputmode="tel" placeholder="12 345 6789" type="tel"><input id="profileEditDial" type="hidden" value="60"></div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="profileEditPhone" inputmode="tel" placeholder="11-3560 0723" type="tel"><input id="profileEditDial" type="hidden" value="60"></div>
         </div>
       </label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
