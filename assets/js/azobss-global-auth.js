@@ -458,10 +458,22 @@ function setPhoneDial(prefix, dial){
   const btn=row.querySelector('[data-country-button]'); if(btn) btn.textContent=`${country[0]} +${country[2]}`;
   const pre=row.querySelector('[data-phone-prefix]'); if(pre) pre.textContent=`+${country[2]}`;
 }
+function normalizeAzobssPhone(value, fallbackDial='60'){
+  const dial=String(fallbackDial||'60').replace(/[^0-9]/g,'') || '60';
+  let raw=String(value||'').trim();
+  if(!raw) return '';
+  const hadPlus=/^\s*\+/.test(raw);
+  let digits=raw.replace(/[^0-9]/g,'');
+  if(!digits) return '';
+  if(hadPlus) return '+' + digits;
+  if(digits.startsWith('00')) return '+' + digits.slice(2);
+  if(digits.startsWith(dial)) return '+' + digits;
+  if(digits.startsWith('0')) return '+' + dial + digits.replace(/^0+/,'');
+  return '+' + dial + digits;
+}
 function getPhoneWithDial(prefix){
   const dial=String($(prefix+'Dial')?.value||'60').replace(/[^0-9]/g,'') || '60';
-  const local=String($(prefix+'Phone')?.value||'').replace(/[^0-9]/g,'').replace(new RegExp('^'+dial),'').replace(/^0+/,'');
-  return local ? dial + local : '';
+  return normalizeAzobssPhone($(prefix+'Phone')?.value||'', dial);
 }
 function splitPhoneToDialLocal(value){
   const digits=String(value||'').replace(/[^0-9]/g,'');
@@ -782,7 +794,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const snap = await getDoc(ref);
   if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
-  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:fallback.phone||'',inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',createdAt:serverTimestamp()};
   await setDoc(ref,profile,{merge:true});
   return profile;
 }
@@ -939,7 +951,7 @@ function liveUserHtml(user){
     <div class="az-admin-inline-row">
       <strong>${recordDisplayName(user)}</strong>
       <span>Email: ${escHtml(user.email || '-')}</span>
-      <span>Phone: ${escHtml(user.phone || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(user.phone || '') || '-')}</span>
       <span>Status: <b class="az-status-online">online</b></span>
       <span>Seen: ${azobssInlineTime(ms)}</span>
     </div>
@@ -952,7 +964,7 @@ function loginHistoryHtml(row){
       <strong>${recordDisplayName(row)}</strong>
       <span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span>
       <span>Email: ${escHtml(row.email || '-')}</span>
-      <span>Phone: ${escHtml(row.phone || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(row.phone || '') || '-')}</span>
       <span>Time: ${azobssInlineTime(ms)}</span>
     </div>
   </div>`;
@@ -1011,7 +1023,7 @@ async function upsertOnlineUser(user){
   try{
     await setDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase()), {
       uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
-      email: u.email || '', phone: u.phone || '', role: u.role || 'member',
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || ''), role: u.role || 'member',
       invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
       status: 'online',
       lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString(), lastSeenMs: Date.now()
@@ -1042,7 +1054,7 @@ async function recordLoginHistory(user, action='login'){
   try{
     await addDoc(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION), {
       uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
-      email: u.email || '', phone: u.phone || '', role: u.role || 'member', action,
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || ''), role: u.role || 'member', action,
       invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
       createdAt: serverTimestamp(), createdAtClient: new Date().toISOString(), createdAtMs: Date.now()
     });
@@ -1052,8 +1064,9 @@ async function saveProfileToFirebase(user){
   const u = user || getSavedUser();
   if(!u || !u.usernameKey) return;
   try{
+    const normalizedUser = {...u, phone: normalizeAzobssPhone(u.phone || '')};
     await setDoc(doc(db, 'users', String(u.usernameKey).toLowerCase()), {
-      ...u,
+      ...normalizedUser,
       usernameKey: String(u.usernameKey).toLowerCase(),
       updatedAt: serverTimestamp(),
       updatedAtClient: new Date().toISOString()
