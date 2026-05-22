@@ -1369,10 +1369,15 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
           <input id="cadAdminButtonText" type="text" placeholder="Auto: Open / Buy Now">
         </label>
       </div>
-      <label>Link
-        <input id="cadAdminLink" type="url" placeholder="Free: resource/download link / Premium: ToyyibPay, QR or bank transaction link" required>
-      </label>
-      <p class="cad-admin-note">Free CAD Resource will show <b>Open Resource</b>. Premium CAD Tool will show <b>Buy Now</b> and can use your ToyyibPay/payment link.</p>
+      <div class="cad-admin-row">
+        <label id="cadDownloadLinkLabel">Download / Resource Link
+          <input id="cadAdminDownloadLink" type="url" placeholder="Free CAD resource or download link">
+        </label>
+        <label id="cadPaymentLinkLabel">ToyyibPay / Payment Link
+          <input id="cadAdminPaymentLink" type="url" placeholder="Premium: ToyyibPay, QR or bank transaction link">
+        </label>
+      </div>
+      <p class="cad-admin-note">Free CAD Resource will use <b>Download / Resource Link</b>. Premium CAD Tool will use <b>ToyyibPay / Payment Link</b>.</p>
       <div class="cad-admin-actions">
         <button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
         <button class="cad-admin-save" type="submit">Save Item</button>
@@ -1461,7 +1466,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const priceInput = document.getElementById('cadAdminPrice');
   const iconInput = document.getElementById('cadAdminIcon');
   const buttonInput = document.getElementById('cadAdminButtonText');
-  const linkInput = document.getElementById('cadAdminLink');
+  const downloadLinkInput = document.getElementById('cadAdminDownloadLink');
+  const paymentLinkInput = document.getElementById('cadAdminPaymentLink');
+  const downloadLinkLabel = document.getElementById('cadDownloadLinkLabel');
+  const paymentLinkLabel = document.getElementById('cadPaymentLinkLabel');
   const imageUrlInput = document.getElementById('cadAdminImageUrl');
   const gifUrlInput = document.getElementById('cadAdminGifUrl');
   const imageFileInput = document.getElementById('cadAdminImageFile');
@@ -1500,7 +1508,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       type: isPremium ? 'premium' : 'free',
       price: isPremium ? (price || 'RM') : 'FREE',
       icon: String(item.icon || (isPremium ? '🛒' : 'L')).trim().slice(0,3),
-      link: String(item.link || '#').trim(),
+      downloadLink: String(item.downloadLink || item.link || '').trim(),
+      paymentLink: String(item.paymentLink || '').trim(),
+      link: String(item.link || (isPremium ? item.paymentLink : item.downloadLink) || '#').trim(),
       imageUrl: String(item.imageUrl || item.image || '').trim(),
       gifUrl: String(item.gifUrl || item.gif || '').trim(),
       buttonText: String(item.buttonText || (isPremium ? 'Buy Now' : 'Open Resource')).trim(),
@@ -1546,9 +1556,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     visible.forEach(card=>{card.style.display='';grid.appendChild(card);});
     if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
   }
-  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = premium;}
+  function openModal(){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} form.reset(); typeInput.value='free'; priceInput.value='FREE'; buttonInput.value='Open Resource'; if(downloadLinkInput) downloadLinkInput.value=''; if(paymentLinkInput) paymentLinkInput.value=''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
   function closeModal(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
-  typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource';});
+  typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('change',updateMediaPreview));
   addBtn?.addEventListener('click',openModal); closeBtn?.addEventListener('click',closeModal); cancelBtn?.addEventListener('click',closeModal);
@@ -1558,7 +1569,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(!isAdmin()){alert('Admin only.');return;}
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
-    const item = normalizeItem({name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,link:linkInput.value,createdAt:Date.now()});
+    const finalLink = typeInput.value === 'premium' ? paymentLinkInput?.value : downloadLinkInput?.value;
+    const item = normalizeItem({name:nameInput.value,description:descInput.value,type:typeInput.value,price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,link:finalLink,createdAt:Date.now()});
     const items = getItems(); items.unshift(item); saveItems(items); closeModal(); applyFilters();
   });
   searchInput?.addEventListener('input',applyFilters); sortSelect?.addEventListener('change',applyFilters);

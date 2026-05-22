@@ -1006,9 +1006,14 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
           <input id="softwareAdminButtonText" type="text" placeholder="Download Now">
         </label>
       </div>
-      <label>Download / Payment Link
-        <input id="softwareAdminLink" type="url" placeholder="Free: download link / Premium: ToyyibPay, QR or bank transaction link" required>
-      </label>
+      <div class="software-admin-row">
+        <label id="softwareDownloadLinkLabel">Download Link
+          <input id="softwareAdminDownloadLink" type="url" placeholder="Free software download link">
+        </label>
+        <label id="softwarePaymentLinkLabel">ToyyibPay / Payment Link
+          <input id="softwareAdminPaymentLink" type="url" placeholder="Premium: ToyyibPay, QR or bank transaction link">
+        </label>
+      </div>
       <div class="software-admin-row">
         <label>Image URL
           <input id="softwareAdminImageUrl" type="url" placeholder="Optional product/card image URL">
@@ -1026,7 +1031,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
         </label>
       </div>
       <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="software-admin-note">Free Software will show <b>Download Now</b>. Premium Software will show <b>Buy Now</b> and can use your ToyyibPay/payment link. Image/GIF can be added by URL or small upload.</p>
+      <p class="software-admin-note">Free Software will use <b>Download Link</b>. Premium Software will use <b>ToyyibPay / Payment Link</b>. Image/GIF can be added by URL or small upload.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -1065,6 +1070,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const priceInput = document.getElementById('softwareAdminPrice');
   const buttonInput = document.getElementById('softwareAdminButtonText');
   const iconInput = document.getElementById('softwareAdminIcon');
+  const downloadLinkInput = document.getElementById('softwareAdminDownloadLink');
+  const paymentLinkInput = document.getElementById('softwareAdminPaymentLink');
+  const downloadLinkLabel = document.getElementById('softwareDownloadLinkLabel');
+  const paymentLinkLabel = document.getElementById('softwarePaymentLinkLabel');
   const imageUrlInput = document.getElementById('softwareAdminImageUrl');
   const gifUrlInput = document.getElementById('softwareAdminGifUrl');
   const imageFileInput = document.getElementById('softwareAdminImageFile');
@@ -1110,7 +1119,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       type,
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
       icon: item.icon || (type === 'free' ? 'FREE' : '🛒'),
-      link: item.link || item.url || '#',
+      downloadLink: item.downloadLink || item.link || item.url || '',
+      paymentLink: item.paymentLink || '',
+      link: item.link || (type === 'premium' ? item.paymentLink : item.downloadLink) || item.url || '#',
       imageUrl: item.imageUrl || item.image || '',
       gifUrl: item.gifUrl || item.gif || '',
       buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
@@ -1204,6 +1215,10 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(priceInput && (!priceInput.value || /^(free|rm0)$/i.test(priceInput.value.trim()))) priceInput.value = premium ? 'RM10' : 'FREE';
     if(buttonInput && (!buttonInput.value || /^(download now|buy now|open)$/i.test(buttonInput.value.trim()))) buttonInput.value = premium ? 'Buy Now' : 'Download Now';
     if(iconInput && !iconInput.value.trim()) iconInput.value = premium ? '🛒' : 'FREE';
+    if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : '';
+    if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none';
+    if(downloadLinkInput) downloadLinkInput.required = !premium;
+    if(paymentLinkInput) paymentLinkInput.required = premium;
   }
   function openModal(){
     form?.reset();
@@ -1211,6 +1226,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     if(priceInput) priceInput.value = 'FREE';
     if(buttonInput) buttonInput.value = 'Download Now';
     if(iconInput) iconInput.value = 'FREE';
+    if(downloadLinkInput) downloadLinkInput.value = '';
+    if(paymentLinkInput) paymentLinkInput.value = '';
+    syncTypeDefaults();
     updateMediaPreview();
     modal?.classList.add('is-open');
     modal?.setAttribute('aria-hidden','false');
@@ -1224,7 +1242,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   document.getElementById('softwareAdminClose')?.addEventListener('click', closeModal);
   document.getElementById('softwareAdminCancel')?.addEventListener('click', closeModal);
   modal?.addEventListener('click', e => { if(e.target === modal) closeModal(); });
-  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } });
+  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } syncTypeDefaults(); });
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
 
@@ -1243,7 +1261,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       imageUrl: uploadedImage || imageUrlInput?.value.trim(),
       gifUrl: uploadedGif || gifUrlInput?.value.trim(),
       buttonText: buttonInput.value.trim(),
-      link: document.getElementById('softwareAdminLink').value.trim()
+      downloadLink: downloadLinkInput?.value.trim(),
+      paymentLink: paymentLinkInput?.value.trim(),
+      link: (typeSelect.value === 'premium' ? paymentLinkInput?.value.trim() : downloadLinkInput?.value.trim())
     });
     try{
       await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91'});
