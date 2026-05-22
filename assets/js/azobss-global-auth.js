@@ -1400,7 +1400,7 @@ function bindAuth() {
       menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
     }
     else document.querySelectorAll('.user-menu.is-open').forEach(el=>el.classList.remove('is-open'));
-  }, true);
+  }, false);
 
   document.addEventListener('keydown', (event)=>{
     if (event.key === 'Escape') {

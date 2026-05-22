@@ -265,10 +265,12 @@ function getUserLikeCache(key){
 }
 function paintLikeButton(btn, liked){
   if(!btn) return;
-  btn.innerHTML = liked ? '❤️' : '♡';
-  btn.classList.toggle('is-liked', !!liked);
-  btn.classList.toggle('liked', !!liked);
-  btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
+  const nextText = liked ? '❤️' : '♡';
+  if((btn.textContent || '').trim() !== nextText) btn.textContent = nextText;
+  if(btn.classList.contains('is-liked') !== !!liked) btn.classList.toggle('is-liked', !!liked);
+  if(btn.classList.contains('liked') !== !!liked) btn.classList.toggle('liked', !!liked);
+  const pressed = liked ? 'true' : 'false';
+  if(btn.getAttribute('aria-pressed') !== pressed) btn.setAttribute('aria-pressed', pressed);
   btn.title = liked ? 'Unlike' : 'Like';
   btn.style.color = liked ? '#ff3b5c' : '#ffffff';
 }
@@ -638,12 +640,14 @@ document.addEventListener('click', function(event){
     });
     if(typeof refreshLikeButtons === 'function') refreshLikeButtons();
   }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectAllowedLikeButtons);
-  else injectAllowedLikeButtons();
-  setTimeout(injectAllowedLikeButtons, 350);
-  setTimeout(injectAllowedLikeButtons, 1200);
-  const mo = new MutationObserver(() => injectAllowedLikeButtons());
-  if(document.body) mo.observe(document.body, {childList:true, subtree:true});
+  function scheduleLikeInjection(){
+    injectAllowedLikeButtons();
+    [350, 900, 1600, 2800].forEach(ms => setTimeout(injectAllowedLikeButtons, ms));
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scheduleLikeInjection, { once:true });
+  else scheduleLikeInjection();
+  // Do not use a body-wide MutationObserver here. It can loop when like buttons repaint
+  // and causes Software/CAD/Affiliate tabs to freeze on some browsers.
 })();
 
 if(document.readyState==='loading'){
