@@ -915,7 +915,9 @@ border-radius:8px !important;
 margin:2px !important;
 white-space:nowrap !important;
 }
-.cad-card-admin-actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}.cad-card-edit-btn{border:1px solid rgba(96,165,250,.55);background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px}.cad-card-edit-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.cad-card-admin-actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}.cad-card-delete-btn{border:1px solid rgba(248,113,113,.58);background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px;box-shadow:0 8px 18px rgba(220,38,38,.20);}
+.cad-card-delete-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.cad-card-edit-btn{border:1px solid rgba(96,165,250,.55);background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px}.cad-card-edit-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 </style>
 <style>
 /* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
@@ -1681,7 +1683,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const meta = [clean.category, clean.productId, clean.version, clean.fileSize, ...(clean.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="cad-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
-    const adminEdit = isAdmin() ? `<div class="cad-card-admin-actions"><button class="cad-card-edit-btn" type="button" data-cad-edit="${esc(clean.id)}">Edit Details</button></div>` : '';
+    const adminEdit = isAdmin() ? `<div class="cad-card-admin-actions"><button class="cad-card-edit-btn" type="button" data-cad-edit="${esc(clean.id)}">Edit Details</button><button class="cad-card-delete-btn" type="button" data-cad-delete="${esc(clean.id)}">Delete</button></div>` : '';
     return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-category="${esc(clean.category || 'LISP (.lsp)')}" data-platforms="${esc((clean.platforms || []).join('|'))}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+(clean.category||'')+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
       ${mediaHtml}
       <div class="cad-card-icon">${esc(clean.icon)}</div>
@@ -1746,7 +1748,18 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('change',updateMediaPreview));
-  grid?.addEventListener('click',e=>{const btn=e.target.closest('[data-cad-edit]'); if(!btn) return; e.preventDefault(); e.stopPropagation(); const id=btn.getAttribute('data-cad-edit'); const item=getItems().map(normalizeItem).find(x=>String(x.id)===String(id)); if(!item) return alert('Item data not found. Try refresh page first.'); openModal(item);});
+
+  function deleteCadItem(id){
+    if(!isAdmin()) return alert('Admin only.');
+    const items = getItems().map(normalizeItem);
+    const item = items.find(x => String(x.id) === String(id));
+    if(!item) return alert('Item data not found. Try refresh page first.');
+    if(!confirm(`Delete CAD item: ${item.name}?`)) return;
+    saveItems(items.filter(x => String(x.id) !== String(id)));
+    applyFilters();
+  }
+
+  grid?.addEventListener('click',e=>{const del=e.target.closest('[data-cad-delete]'); if(del){ e.preventDefault(); e.stopPropagation(); return deleteCadItem(del.getAttribute('data-cad-delete')); } const btn=e.target.closest('[data-cad-edit]'); if(!btn) return; e.preventDefault(); e.stopPropagation(); const id=btn.getAttribute('data-cad-edit'); const item=getItems().map(normalizeItem).find(x=>String(x.id)===String(id)); if(!item) return alert('Item data not found. Try refresh page first.'); openModal(item);});
   addBtn?.addEventListener('click',()=>openModal()); closeBtn?.addEventListener('click',closeModal); cancelBtn?.addEventListener('click',closeModal);
   modal?.addEventListener('click',e=>{if(e.target===modal) closeModal();});
   form?.addEventListener('submit',async e=>{
