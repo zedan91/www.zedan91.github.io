@@ -612,10 +612,31 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <button class="chip" id="myFavouriteButton" type="button">❤ My Favourite</button>
 <label class="sort-control" for="categorySortSelect">Sort by:
   <select id="categorySortSelect" aria-label="Sort by">
-    <option value="newest">Newest first</option>
-    <option value="oldest">Oldest first</option>
-    <option value="az">Name A-Z</option>
-    <option value="za">Name Z-A</option>
+    <option value="all">All Categories</option>
+    <option value="mobile-accessories">Mobile & Accessories</option>
+    <option value="computer-accessories">Computer & Accessories</option>
+    <option value="gaming-consoles">Gaming & Consoles</option>
+    <option value="cameras-drones">Cameras & Drones</option>
+    <option value="watches">Watches</option>
+    <option value="women-bags">Women's Bags</option>
+    <option value="mens-bags-wallets">Men's Bags & Wallets</option>
+    <option value="women-clothes">Women Clothes</option>
+    <option value="men-clothes">Men Clothes</option>
+    <option value="women-shoes">Women Shoes</option>
+    <option value="men-shoes">Men Shoes</option>
+    <option value="fashion-accessories">Fashion Accessories</option>
+    <option value="muslim-fashion">Muslim Fashion</option>
+    <option value="home-living">Home & Living</option>
+    <option value="home-appliances">Home Appliances</option>
+    <option value="groceries-pets">Groceries & Pets</option>
+    <option value="health-beauty">Health & Beauty</option>
+    <option value="baby-toys">Baby & Toys</option>
+    <option value="sports-outdoor">Sports & Outdoor</option>
+    <option value="automotive">Automotive</option>
+    <option value="travel-luggage">Travel & Luggage</option>
+    <option value="games-books-hobbies">Games, Books & Hobbies</option>
+    <option value="tickets-vouchers">Tickets & Vouchers</option>
+    <option value="others">Others</option>
   </select>
 </label>
 <button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
@@ -792,7 +813,7 @@ function esc(value){
       const filtered = products.filter(item => {
         const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon,item.price].join(' ').toLowerCase();
         const categoryOk = activeFilter === 'all' || item.category === activeFilter;
-        const sortOk = true;
+        const sortOk = sortCategory === 'all' || item.category === sortCategory;
         const favOk = !favouriteOnly || favouriteIds.includes(item.id) || localStorage.getItem('azobss_like_' + item.id) === '1';
       
         return categoryOk && sortOk && favOk && (!queryText || haystack.includes(queryText));
@@ -813,12 +834,6 @@ function esc(value){
           </div>
         </article>
       `).join('');
-      filtered.sort((a,b)=>{
-if(sortCategory==='oldest') return (a.id||'').localeCompare(b.id||'');
-if(sortCategory==='az') return (a.title||'').localeCompare(b.title||'');
-if(sortCategory==='za') return (b.title||'').localeCompare(a.title||'');
-return (b.id||'').localeCompare(a.id||'');
-});
 emptyState.style.display = filtered.length ? 'none' : 'block';
     }
 
