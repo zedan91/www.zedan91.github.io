@@ -1344,7 +1344,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   <div class="cad-tools-head">
     <div>
       <h2 class="section-title" id="cad-tools-shop-title">CAD Tools &amp; Resources</h2>
-      <p>Free CAD resources and premium AutoCAD tools. Premium items can use ToyyibPay, QR payment or bank transaction links.</p>
+      <p>Free CAD resources and premium AutoCAD tools. Premium items can use ToyyibPay, Stripe, QR payment or bank transaction links.</p>
     </div>
     <div class="cad-admin-toolbar" aria-label="CAD admin item tools">
       <button class="cad-admin-add-btn admin-only inline-admin" id="cadAdminAddButton" type="button" hidden>+ Add CAD Item</button>
@@ -1486,6 +1486,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
         <label id="cadPaymentLinkLabel">ToyyibPay / Payment Link
           <input id="cadAdminPaymentLink" type="url" placeholder="Premium: ToyyibPay, QR or bank transaction link">
         </label>
+        <label id="cadStripeLinkLabel">Stripe Link
+          <input id="cadAdminStripeLink" type="url" placeholder="International payment: Stripe Checkout / Payment Link">
+        </label>
       </div>
       <label>Premium Download File Link
         <input id="cadAdminSecureDownloadLink" type="url" placeholder="Private CAD file/download link used after payment success">
@@ -1507,7 +1510,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
         </label>
       </div>
       <div class="cad-admin-media-preview" id="cadAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="cad-admin-note">Best practice: Product ID, file type, version, status, download limit and expiry are saved with each CAD item. Premium items use ToyyibPay / Payment Link, then a temporary backend token reveals the private download link and receipt.</p>
+      <p class="cad-admin-note">Best practice: Product ID, file type, version, status, download limit and expiry are saved with each CAD item. Premium items use ToyyibPay / Payment Link or Stripe Link, then a temporary backend token reveals the private download link and receipt.</p>
       <div class="cad-admin-actions">
         <button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
         <button class="cad-admin-save" type="submit">Save Item</button>
@@ -1529,6 +1532,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <button class="azobss-pay-option is-active" data-method="qr" type="button">QR Payment</button>
       <button class="azobss-pay-option" data-method="bank" type="button">Bank Transfer</button>
       <button class="azobss-pay-option" data-method="toyyibpay" type="button">ToyyibPay</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe</button>
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Bayar ikut pilihan di atas. Link download hanya muncul selepas anda sahkan bayaran.</p>
     <label class="azobss-pay-field">Payment Reference / Receipt Note
@@ -1567,9 +1571,11 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   const buttonInput = document.getElementById('cadAdminButtonText');
   const downloadLinkInput = document.getElementById('cadAdminDownloadLink');
   const paymentLinkInput = document.getElementById('cadAdminPaymentLink');
+  const stripeLinkInput = document.getElementById('cadAdminStripeLink');
   const secureDownloadInput = document.getElementById('cadAdminSecureDownloadLink');
   const downloadLinkLabel = document.getElementById('cadDownloadLinkLabel');
   const paymentLinkLabel = document.getElementById('cadPaymentLinkLabel');
+  const stripeLinkLabel = document.getElementById('cadStripeLinkLabel');
   const imageUrlInput = document.getElementById('cadAdminImageUrl');
   const gifUrlInput = document.getElementById('cadAdminGifUrl');
   const imageFileInput = document.getElementById('cadAdminImageFile');
@@ -1690,9 +1696,10 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       expiryHours: Number(item.expiryHours ?? 24),
       icon: String(item.icon || (isPremium ? '🛒' : 'L')).trim().slice(0,3),
       downloadLink: String(item.downloadLink || item.link || '').trim(),
-      paymentLink: String(item.paymentLink || '').trim(),
+      paymentLink: String(item.paymentLink || item.toyyibpayLink || '').trim(),
+      stripeLink: String(item.stripeLink || item.stripePaymentLink || '').trim(),
       secureDownloadLink: String(item.secureDownloadLink || item.privateDownloadLink || '').trim(),
-      link: String(item.link || (isPremium ? item.paymentLink : item.downloadLink) || '#').trim(),
+      link: String(item.link || (isPremium ? (item.paymentLink || item.stripeLink) : item.downloadLink) || '#').trim(),
       imageUrl: String(item.imageUrl || item.image || '').trim(),
       gifUrl: String(item.gifUrl || item.gif || '').trim(),
       buttonText: String(item.buttonText || (isPremium ? 'Buy Now' : 'Open Resource')).trim(),
@@ -1720,7 +1727,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       ${metaHtml}
       <p>${esc(clean.description)}</p>
       ${gifHtml}
-      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
       ${adminEdit}
     </article>`;
   }
@@ -1769,8 +1776,8 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     visible.forEach(card=>{card.style.display='';grid.appendChild(card);});
     if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
   }
-  function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = premium;}
-  function openModal(editItem){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} const item=editItem?normalizeItem(editItem):null; editingCadId=item?.id||null; form.reset(); const title=document.getElementById('cadAdminTitle'); const saveBtn=form?.querySelector('.cad-admin-save'); if(title) title.textContent=item?'Edit CAD Item':'Add CAD Item'; if(saveBtn) saveBtn.textContent=item?'Save Changes':'Save Item'; typeInput.value=item?.type||'free'; if(categoryInput) categoryInput.value=item?.category || 'LISP (.lsp)'; priceInput.value=item?.price||'FREE'; buttonInput.value=item?.buttonText||'Open Resource'; iconInput.value=item?.icon||''; nameInput.value=item?.name||''; descInput.value=item?.description||''; if(productIdInput) productIdInput.value=item?.productId||makeProductId('AZCAD'); if(statusInput) statusInput.value=item?.status||'active'; if(versionInput) versionInput.value=item?.version||'v1.0.0'; if(fileSizeInput) fileSizeInput.value=item?.fileSize||''; if(downloadLimitInput) downloadLimitInput.value=String(item?.downloadLimit||3); if(expiryInput) expiryInput.value=String(item?.expiryHours??24); if(badgeInput) badgeInput.value=item?.badge||''; setSelectedPlatforms(item?.platforms||['AutoCAD','All CAD']); if(downloadLinkInput) downloadLinkInput.value=item?.downloadLink||''; if(paymentLinkInput) paymentLinkInput.value=item?.paymentLink||''; if(secureDownloadInput) secureDownloadInput.value=item?.secureDownloadLink||''; if(imageUrlInput) imageUrlInput.value=item?.imageUrl||''; if(gifUrlInput) gifUrlInput.value=item?.gifUrl||''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(stripeLinkLabel) stripeLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = false; if(stripeLinkInput) stripeLinkInput.required = false;}
+  function openModal(editItem){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} const item=editItem?normalizeItem(editItem):null; editingCadId=item?.id||null; form.reset(); const title=document.getElementById('cadAdminTitle'); const saveBtn=form?.querySelector('.cad-admin-save'); if(title) title.textContent=item?'Edit CAD Item':'Add CAD Item'; if(saveBtn) saveBtn.textContent=item?'Save Changes':'Save Item'; typeInput.value=item?.type||'free'; if(categoryInput) categoryInput.value=item?.category || 'LISP (.lsp)'; priceInput.value=item?.price||'FREE'; buttonInput.value=item?.buttonText||'Open Resource'; iconInput.value=item?.icon||''; nameInput.value=item?.name||''; descInput.value=item?.description||''; if(productIdInput) productIdInput.value=item?.productId||makeProductId('AZCAD'); if(statusInput) statusInput.value=item?.status||'active'; if(versionInput) versionInput.value=item?.version||'v1.0.0'; if(fileSizeInput) fileSizeInput.value=item?.fileSize||''; if(downloadLimitInput) downloadLimitInput.value=String(item?.downloadLimit||3); if(expiryInput) expiryInput.value=String(item?.expiryHours??24); if(badgeInput) badgeInput.value=item?.badge||''; setSelectedPlatforms(item?.platforms||['AutoCAD','All CAD']); if(downloadLinkInput) downloadLinkInput.value=item?.downloadLink||''; if(paymentLinkInput) paymentLinkInput.value=item?.paymentLink||''; if(stripeLinkInput) stripeLinkInput.value=item?.stripeLink||''; if(secureDownloadInput) secureDownloadInput.value=item?.secureDownloadLink||''; if(imageUrlInput) imageUrlInput.value=item?.imageUrl||''; if(gifUrlInput) gifUrlInput.value=item?.gifUrl||''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
   function closeModal(){editingCadId=null;modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
   typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
@@ -1795,8 +1802,8 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     if(!isAdmin()){alert('Admin only.');return;}
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
-    const finalLink = typeInput.value === 'premium' ? paymentLinkInput?.value : downloadLinkInput?.value;
-    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,category:categoryInput?.value || 'LISP (.lsp)',price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
+    const finalLink = typeInput.value === 'premium' ? (paymentLinkInput?.value || stripeLinkInput?.value) : downloadLinkInput?.value;
+    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,category:categoryInput?.value || 'LISP (.lsp)',price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,stripeLink:stripeLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
     const items = getItems(); const idx = items.findIndex(x=>String(x.id)===String(editingCadId)); if(idx>=0){ items[idx] = {...items[idx], ...item, id: editingCadId, createdAt: items[idx].createdAt || item.createdAt}; } else { items.unshift(item); } saveItems(items); closeModal(); applyFilters();
   });
   platformFilter?.addEventListener('click', e=>{const btn=e.target.closest('[data-cad-platform]'); if(!btn) return; selectedCadPlatform=btn.getAttribute('data-cad-platform')||'all'; platformFilter.querySelectorAll('[data-cad-platform]').forEach(b=>b.classList.toggle('is-active', b===btn)); applyFilters();});
@@ -1862,11 +1869,12 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
   function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = currentProduct && currentProduct.paymentLink ? '' : 'none';}
+  function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; if(currentMethod==='toyyibpay') return currentProduct.paymentLink || ''; return currentProduct.paymentLink || currentProduct.stripeLink || ''; }
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay by Stripe for international card payment, then press I Have Paid after payment is completed.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'qr'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
-  openPaymentBtn?.addEventListener('click',()=>{if(currentProduct?.paymentLink) window.open(currentProduct.paymentLink, '_blank', 'noopener');});
+  openPaymentBtn?.addEventListener('click',()=>{const link = activePaymentLink(); if(link) window.open(link, '_blank', 'noopener');});
   completeBtn?.addEventListener('click', async()=>{
     if(!currentProduct)return;
     errorBox.textContent=''; successBox.classList.remove('is-open');
@@ -1886,7 +1894,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
     if(!trigger)return;
     e.preventDefault();
-    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',secureDownloadLink:trigger.dataset.downloadLink||''};
+    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',stripeLink:trigger.dataset.stripeLink||'',secureDownloadLink:trigger.dataset.downloadLink||''};
     open(product);
   });
 })();
