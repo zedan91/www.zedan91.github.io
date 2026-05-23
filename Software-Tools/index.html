@@ -284,6 +284,9 @@
         font-size: 28px;
       }
     }
+
+.az-usd-price{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;font-size:.82em;font-weight:900;color:#93c5fd;white-space:nowrap;opacity:.95}
+.az-usd-line{font-size:12px;color:#93c5fd;font-weight:800;margin-top:4px;white-space:nowrap}
 </style>
 <style>
 /* COUNTDOWN WORDING FIX V18 */
@@ -1290,7 +1293,28 @@ width:fit-content !important;
   let pendingSoftwareImportItems = [];
 
   function clean(v){ return String(v || '').trim().toLowerCase(); }
-  function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+  
+  const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
+  function azExtractMyrAmount(price){
+    const text = String(price || '').replace(/,/g,'').trim();
+    if(!text || /^free$/i.test(text)) return null;
+    const match = text.match(/(?:RM\s*)?([0-9]+(?:\.[0-9]{1,2})?)/i);
+    return match ? Number(match[1]) : null;
+  }
+  function azUsdText(price){
+    const myr = azExtractMyrAmount(price);
+    if(!Number.isFinite(myr)) return '';
+    return '≈ USD ' + (myr * AZ_USD_PER_MYR).toFixed(2);
+  }
+  function azUsdBadge(price){
+    const text = azUsdText(price);
+    return text ? '<span class="az-usd-price">' + esc(text) + '</span>' : '';
+  }
+  function azUsdLine(price){
+    const text = azUsdText(price);
+    return text ? '<div class="az-usd-line">' + esc(text) + '</div>' : '';
+  }
+function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
   const MAX_MEDIA_BYTES = 900 * 1024;
   function readMediaFile(input){
     return new Promise(resolve => {
@@ -1444,6 +1468,7 @@ width:fit-content !important;
   function renderItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : 'Free Software';
+    const usdBadge = isPremium ? azUsdBadge(item.price) : '';
     const mediaSrc = item.imageUrl || item.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="software-card-media"><img src="${esc(mediaSrc)}" alt="${esc(item.name)} preview" loading="lazy"></div>` : '';
     const gifHtml = item.gifUrl && item.imageUrl ? `<div class="software-media-links"><a class="software-media-demo" href="${esc(item.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
@@ -1857,7 +1882,7 @@ width:fit-content !important;
   function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function getUser(){try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser')||'null') || {};}catch(e){return {};}}
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
-  function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b></div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
+  function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
   function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = currentProduct && currentProduct.paymentLink ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);

@@ -918,6 +918,9 @@ white-space:nowrap !important;
 .cad-card-admin-actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}.cad-card-delete-btn{border:1px solid rgba(248,113,113,.58);background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px;box-shadow:0 8px 18px rgba(220,38,38,.20);}
 .cad-card-delete-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
 .cad-card-edit-btn{border:1px solid rgba(96,165,250,.55);background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer;font-size:12px}.cad-card-edit-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+.az-usd-price{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;font-size:.82em;font-weight:900;color:#93c5fd;white-space:nowrap;opacity:.95}
+.az-usd-line{font-size:12px;color:#93c5fd;font-weight:800;margin-top:4px;white-space:nowrap}
 </style>
 <style>
 /* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
@@ -1593,7 +1596,28 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   let pendingCadImportItems = [];
   if(!grid) return;
   let editingCadId = null;
-  function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+  
+  const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
+  function azExtractMyrAmount(price){
+    const text = String(price || '').replace(/,/g,'').trim();
+    if(!text || /^free$/i.test(text)) return null;
+    const match = text.match(/(?:RM\s*)?([0-9]+(?:\.[0-9]{1,2})?)/i);
+    return match ? Number(match[1]) : null;
+  }
+  function azUsdText(price){
+    const myr = azExtractMyrAmount(price);
+    if(!Number.isFinite(myr)) return '';
+    return '≈ USD ' + (myr * AZ_USD_PER_MYR).toFixed(2);
+  }
+  function azUsdBadge(price){
+    const text = azUsdText(price);
+    return text ? '<span class="az-usd-price">' + esc(text) + '</span>' : '';
+  }
+  function azUsdLine(price){
+    const text = azUsdText(price);
+    return text ? '<div class="az-usd-line">' + esc(text) + '</div>' : '';
+  }
+function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
   const MAX_MEDIA_BYTES = 900 * 1024;
   function readMediaFile(input){
     return new Promise(resolve=>{
@@ -1679,6 +1703,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     const clean = normalizeItem(item);
     const isPremium = clean.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + clean.price) : 'Free CAD Resource';
+    const usdBadge = isPremium ? azUsdBadge(clean.price) : '';
     const mediaSrc = clean.imageUrl || clean.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="cad-card-media"><img src="${esc(mediaSrc)}" alt="${esc(clean.name)} preview" loading="lazy"></div>` : '';
     const gifHtml = clean.gifUrl && clean.imageUrl ? `<div class="cad-media-links"><a class="cad-media-demo" href="${esc(clean.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
@@ -1835,7 +1860,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function getUser(){try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser')||'null') || {};}catch(e){return {};}}
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
-  function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b></div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
+  function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
   function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = currentProduct && currentProduct.paymentLink ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);

@@ -108,6 +108,9 @@
 .phone-prefix{display:none!important;}
 .phone-number-wrap input{padding-left:14px!important;}
 
+
+.az-usd-price{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;font-size:.82em;font-weight:900;color:#93c5fd;white-space:nowrap;opacity:.95}
+.az-usd-line{font-size:12px;color:#93c5fd;font-weight:800;margin-top:4px;white-space:nowrap}
 </style>
 <style>
 /* Secondary page auth state bridge */
@@ -713,7 +716,28 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     let activeFilter = 'all';
     let favouriteOnly = false;
 
-    function esc(value){
+    
+  const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
+  function azExtractMyrAmount(price){
+    const text = String(price || '').replace(/,/g,'').trim();
+    if(!text || /^free$/i.test(text)) return null;
+    const match = text.match(/(?:RM\s*)?([0-9]+(?:\.[0-9]{1,2})?)/i);
+    return match ? Number(match[1]) : null;
+  }
+  function azUsdText(price){
+    const myr = azExtractMyrAmount(price);
+    if(!Number.isFinite(myr)) return '';
+    return '≈ USD ' + (myr * AZ_USD_PER_MYR).toFixed(2);
+  }
+  function azUsdBadge(price){
+    const text = azUsdText(price);
+    return text ? '<span class="az-usd-price">' + esc(text) + '</span>' : '';
+  }
+  function azUsdLine(price){
+    const text = azUsdText(price);
+    return text ? '<div class="az-usd-line">' + esc(text) + '</div>' : '';
+  }
+function esc(value){
       return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     }
 
@@ -772,7 +796,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
           <p>${esc(item.desc)}</p>
           <div class="meta">${esc(item.meta || item.category || 'Affiliate item')}</div>
           <div class="card-actions">
-            <span class="card-price">${/^free$/i.test(item.price || item.badge || '') ? 'FREE' : '🛒 ' + esc(item.price || item.badge || '')}</span>
+            <span class="card-price">${/^free$/i.test(item.price || item.badge || '') ? 'FREE' : '🛒 ' + esc(item.price || item.badge || '')}${azUsdBadge(item.price || item.badge || '')}</span>
             <a class="card-open" href="${esc(item.link)}" target="_blank" rel="noopener">${esc(item.buttonText || 'Open')}</a>
           </div>
         </article>
