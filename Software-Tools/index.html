@@ -1670,7 +1670,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(iconInput) iconInput.value = item?.icon || 'FREE';
     if(productIdInput) productIdInput.value = item?.productId || makeProductId('AZSW');
     if(statusInput) statusInput.value = item?.status || 'active';
-    if(versionInput) versionInput.value = item?.version || 'v1.0.0';
+    if(versionInput) versionInput.value = item?.version || '';
     if(fileSizeInput) fileSizeInput.value = item?.fileSize || '';
     if(downloadLimitInput) downloadLimitInput.value = String(item?.downloadLimit || 3);
     if(expiryInput) expiryInput.value = String(item?.expiryHours ?? 24);
@@ -1817,6 +1817,11 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   document.getElementById('softwareAdminCancel')?.addEventListener('click', closeModal);
   // Keep admin edit modal open even if the mouse is dragged/released outside the panel. Close only with X or Cancel.
   modal?.addEventListener('click', e => { if(e.target === modal) e.preventDefault(); });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && modal && modal.getAttribute('aria-hidden') === 'false'){
+      closeModal();
+    }
+  });
   typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } syncTypeDefaults(); });
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
