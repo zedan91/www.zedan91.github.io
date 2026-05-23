@@ -1174,6 +1174,9 @@ width:fit-content !important;
           <input id="softwareAdminPaymentLink" type="url" placeholder="Premium: ToyyibPay, QR or bank transaction link">
         </label>
       </div>
+      <label id="softwareStripeLinkLabel">Stripe Link
+        <input id="softwareAdminStripeLink" type="url" placeholder="International payment: Stripe Checkout / Payment Link">
+      </label>
       <label>Premium Download File Link
         <input id="softwareAdminSecureDownloadLink" type="url" placeholder="Private file/download link used after payment success">
       </label>
@@ -1194,7 +1197,7 @@ width:fit-content !important;
         </label>
       </div>
       <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items use ToyyibPay / Payment Link, then a temporary backend token reveals the private download link and receipt.</p>
+      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items can use ToyyibPay / QR / Bank and Stripe links. After payment is confirmed, a temporary backend token reveals the private download link and receipt.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -1212,6 +1215,7 @@ width:fit-content !important;
       <button class="azobss-pay-option is-active" data-method="qr" type="button">QR Payment</button>
       <button class="azobss-pay-option" data-method="bank" type="button">Bank Transfer</button>
       <button class="azobss-pay-option" data-method="toyyibpay" type="button">ToyyibPay</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe</button>
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Bayar ikut pilihan di atas. Link download hanya muncul selepas anda sahkan bayaran.</p>
     <label class="azobss-pay-field">Payment Reference / Receipt Note
@@ -1264,9 +1268,11 @@ width:fit-content !important;
   const iconInput = document.getElementById('softwareAdminIcon');
   const downloadLinkInput = document.getElementById('softwareAdminDownloadLink');
   const paymentLinkInput = document.getElementById('softwareAdminPaymentLink');
+  const stripeLinkInput = document.getElementById('softwareAdminStripeLink');
   const secureDownloadInput = document.getElementById('softwareAdminSecureDownloadLink');
   const downloadLinkLabel = document.getElementById('softwareDownloadLinkLabel');
   const paymentLinkLabel = document.getElementById('softwarePaymentLinkLabel');
+  const stripeLinkLabel = document.getElementById('softwareStripeLinkLabel');
   const imageUrlInput = document.getElementById('softwareAdminImageUrl');
   const gifUrlInput = document.getElementById('softwareAdminGifUrl');
   const imageFileInput = document.getElementById('softwareAdminImageFile');
@@ -1372,9 +1378,10 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       expiryHours: Number(item.expiryHours ?? 24),
       icon: item.icon || (type === 'free' ? 'FREE' : '🛒'),
       downloadLink: item.downloadLink || item.link || item.url || '',
-      paymentLink: item.paymentLink || '',
+      paymentLink: item.paymentLink || item.toyyibpayLink || '',
+      stripeLink: item.stripeLink || item.stripePaymentLink || '',
       secureDownloadLink: item.secureDownloadLink || item.privateDownloadLink || '',
-      link: item.link || (type === 'premium' ? item.paymentLink : item.downloadLink) || item.url || '#',
+      link: item.link || (type === 'premium' ? (item.paymentLink || item.stripeLink) : item.downloadLink) || item.url || '#',
       imageUrl: item.imageUrl || item.image || '',
       gifUrl: item.gifUrl || item.gif || '',
       buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
@@ -1401,6 +1408,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       buttonText: n.buttonText,
       downloadLink: n.downloadLink,
       paymentLink: n.paymentLink,
+      stripeLink: n.stripeLink,
       secureDownloadLink: n.secureDownloadLink,
       imageUrl: n.imageUrl,
       gifUrl: n.gifUrl,
@@ -1485,7 +1493,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       ${metaHtml}
       <p>${esc(item.desc)}</p>
       ${gifHtml}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
       ${adminEdit}
     </div>`;
   }
@@ -1642,8 +1650,10 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(iconInput && !iconInput.value.trim()) iconInput.value = premium ? '🛒' : 'FREE';
     if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : '';
     if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none';
+    if(stripeLinkLabel) stripeLinkLabel.style.display = premium ? '' : 'none';
     if(downloadLinkInput) downloadLinkInput.required = !premium;
-    if(paymentLinkInput) paymentLinkInput.required = premium;
+    if(paymentLinkInput) paymentLinkInput.required = false;
+    if(stripeLinkInput) stripeLinkInput.required = false;
   }
   function openModal(editItem = null){
     form?.reset();
@@ -1671,6 +1681,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     document.getElementById('softwareAdminDesc').value = item?.desc || '';
     if(downloadLinkInput) downloadLinkInput.value = item?.downloadLink || '';
     if(paymentLinkInput) paymentLinkInput.value = item?.paymentLink || '';
+    if(stripeLinkInput) stripeLinkInput.value = item?.stripeLink || '';
     if(secureDownloadInput) secureDownloadInput.value = item?.secureDownloadLink || '';
     if(imageUrlInput) imageUrlInput.value = item?.imageUrl || '';
     if(gifUrlInput) gifUrlInput.value = item?.gifUrl || '';
@@ -1837,8 +1848,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       buttonText: buttonInput.value.trim(),
       downloadLink: downloadLinkInput?.value.trim(),
       paymentLink: paymentLinkInput?.value.trim(),
+      stripeLink: stripeLinkInput?.value.trim(),
       secureDownloadLink: secureDownloadInput?.value.trim(),
-      link: (typeSelect.value === 'premium' ? paymentLinkInput?.value.trim() : downloadLinkInput?.value.trim())
+      link: (typeSelect.value === 'premium' ? (paymentLinkInput?.value.trim() || stripeLinkInput?.value.trim()) : downloadLinkInput?.value.trim())
     });
     try{
       if(editingSoftwareDocId){
@@ -1884,11 +1896,17 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
   function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = currentProduct && currentProduct.paymentLink ? '' : 'none';}
+  function activePaymentLink(){
+    if(!currentProduct) return '';
+    if(currentMethod === 'stripe') return currentProduct.stripeLink || '';
+    if(currentMethod === 'toyyibpay') return currentProduct.paymentLink || '';
+    return currentProduct.paymentLink || currentProduct.stripeLink || '';
+  }
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay by Stripe for international card payment, then press I Have Paid after payment is completed.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'qr'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
-  openPaymentBtn?.addEventListener('click',()=>{if(currentProduct?.paymentLink) window.open(currentProduct.paymentLink, '_blank', 'noopener');});
+  openPaymentBtn?.addEventListener('click',()=>{const url=activePaymentLink(); if(url) window.open(url, '_blank', 'noopener');});
   completeBtn?.addEventListener('click', async()=>{
     if(!currentProduct)return;
     errorBox.textContent=''; successBox.classList.remove('is-open');
@@ -1908,7 +1926,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
     if(!trigger)return;
     e.preventDefault();
-    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',secureDownloadLink:trigger.dataset.downloadLink||'',downloadLimit:Number(trigger.dataset.downloadLimit||3),expiryHours:Number(trigger.dataset.expiryHours??24)};
+    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',stripeLink:trigger.dataset.stripeLink||'',secureDownloadLink:trigger.dataset.downloadLink||'',downloadLimit:Number(trigger.dataset.downloadLimit||3),expiryHours:Number(trigger.dataset.expiryHours??24)};
     open(product);
   });
 })();
