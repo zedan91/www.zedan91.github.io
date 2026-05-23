@@ -2104,8 +2104,8 @@ function bindAuth() {
       openSiteAuth(/sign.?up|register|signup/i.test(value) ? 'signup' : 'signin');
       return;
     }
-    if (event.target.closest('#siteAuthClose') || event.target.id === 'siteAuthModal') closeSiteAuth();
-    if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton') || event.target.id === 'profileSettingsModal') closeProfileSettings();
+    if (event.target.closest('#siteAuthClose')) closeSiteAuth();
+    if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton')) closeProfileSettings();
     if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
     if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
     const menu = event.target.closest('#userMenu, .user-menu');
@@ -2125,6 +2125,7 @@ function bindAuth() {
       document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
       closeSiteAuth();
       closeProfileSettings();
+      if (typeof closeAdminUserEdit === 'function') closeAdminUserEdit();
     }
   });
 
@@ -2260,7 +2261,7 @@ function bindAuth() {
 
   $('adminUserEditClose')?.addEventListener('click', closeAdminUserEdit);
   $('adminUserEditCancel')?.addEventListener('click', closeAdminUserEdit);
-  $('adminUserEditModal')?.addEventListener('click', (event)=>{ if(event.target?.id==='adminUserEditModal') closeAdminUserEdit(); });
+  // AZOBSS FIX: keep Edit Registered User modal open when clicking/dragging outside. Close only X/Cancel/ESC.
   $('adminUserEditForm')?.addEventListener('submit', async (event)=>{ event.preventDefault(); await saveAdminUserEdit(); });
 
   $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
