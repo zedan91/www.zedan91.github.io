@@ -7816,10 +7816,26 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 </div>
 </div>
 <div class="section" id="affiliate">
-<div style="max-width:420px;margin:20px auto;background:#111827;border-radius:16px;padding:20px;text-align:center;border:1px solid rgba(255,255,255,.1);">
-<h3>AZOBSS Affiliate Shop</h3>
+<style>
+.azpromo{max-width:900px;margin:20px auto;padding:30px;border-radius:26px;background:linear-gradient(135deg,#081225,#0d1b4d);border:1px solid rgba(0,180,255,.4);box-shadow:0 0 35px rgba(0,120,255,.25);position:relative;overflow:hidden}
+.azpromo:before{content:"";position:absolute;right:-50px;top:-50px;width:220px;height:220px;border-radius:50%;background:radial-gradient(rgba(0,150,255,.35),transparent)}
+.azpromo h3{font-size:38px;margin-bottom:10px}
+.azpromo p{opacity:.9}
+.azfeatures{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:20px 0}
+.azfeatures span{padding:10px 16px;background:rgba(255,255,255,.08);border-radius:30px}
+.azcta{display:block;text-align:center;padding:18px;border-radius:16px;background:linear-gradient(90deg,#2563eb,#3b82f6);font-size:24px;font-weight:bold;color:#fff;text-decoration:none;box-shadow:0 0 20px rgba(59,130,246,.5)}
+.azluck{background:linear-gradient(135deg,#1b1400,#3d2800)!important;border-color:#ffbf00!important}
+.azluck .azcta{background:linear-gradient(90deg,#f59e0b,#facc15);color:#111}
+</style>
+<div class="azpromo">
+<h3>🛒 AZOBSS Affiliate Shop</h3>
 <p>Browse selected products and useful recommendations.</p>
-<a class="btn" href="/affiliate-shop/">Browse Now</a>
+<div class="azfeatures">
+<span>🔥 Best Deals</span>
+<span>🛡 Secure</span>
+<span>✨ Recommended</span>
+</div>
+<a class="azcta" href="/affiliate-shop/">Browse Now →</a>
 </div>
 </div>
 <div class="section" id="request">
@@ -8115,9 +8131,9 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 <div class="section" id="luckyDraw">
 <div class="lucky-draw-card" style="max-width:700px;text-align:center">
 <span class="lucky-draw-kicker">Lucky Draw</span>
-<h2>Monthly Lucky Draw</h2>
-<p>Join our monthly lucky draw and stand a chance to win prizes.</p>
-<a class="btn orange" href="/lucky-draw/">Join Now</a>
+<h2>🎁 Monthly Lucky Draw</h2>
+<p><div class="azpromo azluck"><p>Join our monthly lucky draw and stand a chance to win prizes.</p><div class="azfeatures"><span>🏆 Win Prize</span><span>⚡ Easy Join</span><span>🎉 Monthly Event</span></div></p>
+<a class="btn orange" href="/lucky-draw/">Join Now →</a></div>
 </div>
 </div>
 <div class="section member-login-section">
