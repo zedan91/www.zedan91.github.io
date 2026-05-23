@@ -261,11 +261,11 @@ function injectModal() {
       <button class="btn" type="submit">Login</button>
       <p class="auth-switch-note"><button id="siteForgotPasswordButton" type="button">Forgot password?</button></p>
       <div class="forgot-password-box" id="siteForgotPasswordBox" hidden>
-        <label for="siteForgotPasswordInput">Reset password by username
-          <input id="siteForgotPasswordInput" autocomplete="username" placeholder="Enter your username" type="text">
+        <label for="siteForgotPasswordInput">Reset password by username or email
+          <input id="siteForgotPasswordInput" autocomplete="username email" placeholder="Enter username or email" type="text">
         </label>
         <button class="btn secondary" id="siteSendPasswordResetButton" type="button">Send Reset Link</button>
-        <p class="auth-reset-note">Firebase will send a password reset link to the account email. If your account uses AZOBSS username login, contact admin if the email does not arrive.</p>
+        <p class="auth-reset-note">Enter your AZOBSS username or registered email. Firebase will send a password reset link to the registered account email.</p>
       </div>
       <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
     </form>
@@ -2107,19 +2107,42 @@ function bindAuth() {
     event.preventDefault();
     const err=$('siteLoginError');
     if(err){ err.style.color=''; err.textContent=''; }
+
     const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
-    const usernameKey=normalizeUsername(raw.includes('@') ? raw.split('@')[0] : raw);
-    if(!raw || !usernameKey){ if(err) err.textContent='Please enter your username.'; return; }
-    const authEmail=raw.includes('@') ? raw : buildUserEmail(usernameKey);
+    if(!raw){ if(err) err.textContent='Please enter your username or email.'; return; }
+
+    let resetEmail = '';
+    let usernameKey = '';
+
     try{
-      await sendPasswordResetEmail(auth, authEmail);
+      if(raw.includes('@')){
+        resetEmail = raw;
+      }else{
+        usernameKey = normalizeUsername(raw);
+        if(!usernameKey){ if(err) err.textContent='Please enter a valid username or email.'; return; }
+
+        const userSnap = await getDoc(doc(db, 'users', usernameKey));
+        if(!userSnap.exists()){
+          if(err) err.textContent='Account not found. Please check your username or enter your registered email.';
+          return;
+        }
+
+        const profile = userSnap.data() || {};
+        resetEmail = String(profile.email || profile.authEmail || '').trim().toLowerCase();
+        if(!resetEmail || !resetEmail.includes('@')){
+          if(err) err.textContent='This username has no registered email. Please enter the account email or contact admin.';
+          return;
+        }
+      }
+
+      await sendPasswordResetEmail(auth, resetEmail);
       if(err){ err.style.color='#62e6a5'; err.textContent='Password reset link sent. Please check your email inbox or spam folder.'; }
     }catch(error){
       if(err){
         err.style.color='';
         err.textContent = error?.code==='auth/user-not-found'
-          ? 'Account not found. Please check your username.'
-          : 'Unable to send reset email. Please contact admin if this account uses username-only login.';
+          ? 'Account not found in Firebase Authentication. Please check the email/username.'
+          : 'Unable to send reset email. Please try again or contact admin.';
       }
     }
   });
