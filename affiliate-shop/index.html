@@ -611,7 +611,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <button class="chip is-active" data-filter="all" type="button">All</button>
 <button class="chip" id="myFavouriteButton" type="button">❤ My Favourite</button>
 <label class="sort-control" for="categorySortSelect">Sort by:
-  <select id="categorySortSelect" aria-label="Sort by">
+  <select id="categorySortSelect" onchange="syncCategoryFilter(this.value)" aria-label="Sort by">
     <option value="all">All Categories</option>
     <option value="mobile-accessories">Mobile & Accessories</option>
     <option value="computer-accessories">Computer & Accessories</option>
