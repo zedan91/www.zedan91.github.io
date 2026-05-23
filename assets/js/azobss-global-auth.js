@@ -364,6 +364,67 @@ function injectAdminUserEditModal() {
 const $ = (id) => document.getElementById(id);
 function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
 function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
+
+const AZOBSS_USERNAME_AUTH_COLLECTION = 'usernameAuthEmails';
+async function getAuthEmailForUsername(usernameKey){
+  const key = normalizeUsername(usernameKey);
+  if(!key) return '';
+  try{
+    const lookupSnap = await getDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key));
+    if(lookupSnap.exists()){
+      const data = lookupSnap.data() || {};
+      const email = String(data.email || data.authEmail || '').trim().toLowerCase();
+      if(email && email.includes('@')) return email;
+    }
+  }catch(e){
+    console.warn('AZOBSS username auth lookup failed:', e?.code || e?.message || e);
+  }
+  try{
+    const userSnap = await getDoc(doc(db, 'users', key));
+    if(userSnap.exists()){
+      const data = userSnap.data() || {};
+      const email = String(data.authEmail || data.email || '').trim().toLowerCase();
+      if(email && email.includes('@')) return email;
+    }
+  }catch(e){
+    console.warn('AZOBSS users email lookup failed:', e?.code || e?.message || e);
+  }
+  return '';
+}
+async function saveUsernameAuthEmail(usernameKey, email, uid){
+  const key = normalizeUsername(usernameKey);
+  const authEmail = String(email || '').trim().toLowerCase();
+  if(!key || !authEmail || !authEmail.includes('@')) return;
+  try{
+    await setDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key), {
+      usernameKey: key,
+      email: authEmail,
+      authEmail,
+      uid: uid || null,
+      updatedAt: serverTimestamp()
+    }, {merge:true});
+  }catch(e){
+    console.warn('AZOBSS username auth email save failed:', e?.code || e?.message || e);
+  }
+}
+async function migrateUsernameAuthLookupForAdmin(){
+  try{
+    const saved = getSavedUser && getSavedUser();
+    if(!saved || String(saved.email || '').toLowerCase() !== 'zedan91@azobss.local') return;
+    const snap = await getDocs(collection(db, 'users'));
+    const jobs = [];
+    snap.forEach((d)=>{
+      const data = d.data() || {};
+      const usernameKey = normalizeUsername(data.usernameKey || d.id);
+      const email = String(data.authEmail || data.email || '').trim().toLowerCase();
+      if(usernameKey && email && email.includes('@')) jobs.push(saveUsernameAuthEmail(usernameKey, email, data.uid || null));
+    });
+    await Promise.all(jobs.slice(0, 200));
+  }catch(e){
+    console.warn('AZOBSS username auth lookup migration skipped:', e?.code || e?.message || e);
+  }
+}
+
 function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
 const AZOBSS_COUNTRY_DIAL_CODES = [
   ["🇲🇾", "Malaysia", "60"],
@@ -2086,9 +2147,23 @@ function bindAuth() {
     if(!usernameKey || !password){ if(err) err.textContent='Please enter username and password.'; return; }
     try{
       await setPersistence(auth,browserLocalPersistence);
-      const credential=await signInWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
+      const lookupEmail = await getAuthEmailForUsername(usernameKey);
+      const loginEmail = lookupEmail || buildUserEmail(usernameKey);
+      let credential;
+      try{
+        credential = await signInWithEmailAndPassword(auth, loginEmail, password);
+      }catch(primaryError){
+        if(lookupEmail){
+          credential = await signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password);
+        }else{
+          throw primaryError;
+        }
+      }
       const profile=await ensureUserProfile(credential.user,{usernameKey});
-      saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); startAzobssPresenceHeartbeat({uid:credential.user.uid,...profile,usernameKey}); await recordLoginHistory({uid:credential.user.uid,...profile,usernameKey}, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
+      const realEmail = String(profile.authEmail || profile.email || credential.user.email || '').trim().toLowerCase();
+      if(realEmail && realEmail.includes('@')) await saveUsernameAuthEmail(usernameKey, realEmail, credential.user.uid);
+      const signedInUser={uid:credential.user.uid,...profile,usernameKey,authEmail:realEmail || credential.user.email};
+      saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
   });
 
@@ -2109,40 +2184,28 @@ function bindAuth() {
     if(err){ err.style.color=''; err.textContent=''; }
 
     const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
-    if(!raw){ if(err) err.textContent='Please enter your username or email.'; return; }
-
-    let resetEmail = '';
-    let usernameKey = '';
+    if(!raw){ if(err) err.textContent='Please enter your username or registered email.'; return; }
 
     try{
-      if(raw.includes('@')){
-        resetEmail = raw;
-      }else{
-        usernameKey = normalizeUsername(raw);
-        if(!usernameKey){ if(err) err.textContent='Please enter a valid username or email.'; return; }
-
-        const userSnap = await getDoc(doc(db, 'users', usernameKey));
-        if(!userSnap.exists()){
-          if(err) err.textContent='Account not found. Please check your username or enter your registered email.';
-          return;
-        }
-
-        const profile = userSnap.data() || {};
-        resetEmail = String(profile.email || profile.authEmail || '').trim().toLowerCase();
-        if(!resetEmail || !resetEmail.includes('@')){
-          if(err) err.textContent='This username has no registered email. Please enter the account email or contact admin.';
+      let resetEmail = raw;
+      if(!raw.includes('@')){
+        const usernameKey = normalizeUsername(raw);
+        if(!usernameKey){ if(err) err.textContent='Please enter a valid username or registered email.'; return; }
+        resetEmail = await getAuthEmailForUsername(usernameKey);
+        if(!resetEmail){
+          if(err) err.textContent='No email is linked to this username yet. Please enter your registered email, or login once so the system can sync your email.';
           return;
         }
       }
 
       await sendPasswordResetEmail(auth, resetEmail);
-      if(err){ err.style.color='#62e6a5'; err.textContent='Password reset link sent. Please check your email inbox or spam folder.'; }
+      if(err){ err.style.color='#62e6a5'; err.textContent='Password reset link sent to '+resetEmail+'. Please check inbox/spam folder.'; }
     }catch(error){
       if(err){
         err.style.color='';
         err.textContent = error?.code==='auth/user-not-found'
-          ? 'Account not found in Firebase Authentication. Please check the email/username.'
-          : 'Unable to send reset email. Please try again or contact admin.';
+          ? 'This email is not found in Firebase Authentication. Try your registered email or contact admin.'
+          : 'Unable to send reset email: '+(error?.message || 'Please try again or contact admin.');
       }
     }
   });
@@ -2158,14 +2221,15 @@ function bindAuth() {
     if(!usernameKey || password.length<6 || !phone || !email){ if(err) err.textContent='Please complete all required fields.'; return; }
     try{
       await setPersistence(auth,browserLocalPersistence);
-      const credential=await createUserWithEmailAndPassword(auth,buildUserEmail(usernameKey),password);
-      const profile={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
+      const credential=await createUserWithEmailAndPassword(auth,email,password);
+      const profile={uid:credential.user.uid,usernameKey,email,authEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
       await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
       if (invitedByCode === AZOBSS_PA_MEMBER_CODE) {
         localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
         sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
       }
-      const savedSignupUser={uid:credential.user.uid,usernameKey,email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member'};
+      await saveUsernameAuthEmail(usernameKey, email, credential.user.uid);
+      const savedSignupUser={uid:credential.user.uid,usernameKey,email,authEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member'};
       saveUser(savedSignupUser);
       syncHeader(savedSignupUser); startAzobssPresenceHeartbeat(savedSignupUser); await recordLoginHistory(savedSignupUser, 'signup'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
@@ -2184,7 +2248,7 @@ function bindAuth() {
     if(newPassword.length < 6){ if(err) err.textContent='New password must be at least 6 characters.'; return; }
     if(newPassword !== confirmPassword){ if(err) err.textContent='Confirm password does not match.'; return; }
     try{
-      const credential=EmailAuthProvider.credential(buildUserEmail(usernameKey), currentPassword);
+      const credential=EmailAuthProvider.credential(auth.currentUser.email || buildUserEmail(usernameKey), currentPassword);
       await reauthenticateWithCredential(auth.currentUser, credential);
       await updatePassword(auth.currentUser, newPassword);
       ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
