@@ -1509,63 +1509,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   </div>
 </div>
 
-<section aria-labelledby="lisp-catalog-title" class="lisp-catalog">
-<div class="lisp-catalog-head">
-<div>
-<h2 class="section-title" id="lisp-catalog-title">LISP Program Showcase</h2>
-<p>View LISP name, program description and demonstration GIF. Display style is table-based with 30 programs per page.</p>
-<p class="lisp-view-note" id="lispAdminStatus">Public view: add, edit, delete and export tools are available for admin only.</p>
-</div>
-<button class="btn admin-only inline-admin" id="exportLispData" type="button">Export Data</button>
-</div>
-<div class="lisp-search-bar">
-<label class="lisp-search-box">
-          Search Program Name
-          <input autocomplete="off" id="lispSearch" placeholder="Type program name..." type="search"/>
-</label>
-<span class="lisp-search-count" id="lispSearchCount">Showing all programs</span>
-</div>
-<form class="lisp-form admin-only" id="lispForm" hidden style="display:none !important;">
-<label>
-          LISP Name
-          <input id="lispName" maxlength="60" placeholder="Example: AZ Text Calculator" required="" type="text"/>
-</label>
-<label>
-          Demonstration GIF
-          <input accept="image/gif" id="lispGif" type="file"/>
-</label>
-<label class="full">
-          Program Description
-          <textarea id="lispDescription" maxlength="600" placeholder="Explain what this LISP does, command name, and suitable workflow." required=""></textarea>
-</label>
-<label class="full">
-          GIF URL / Path (optional)
-          <input id="lispGifUrl" placeholder="Example: demos/text-calc.gif" type="text"/>
-</label>
-<div class="lisp-actions">
-<button class="btn primary" type="submit">Add LISP</button>
-<button class="btn" id="clearLispForm" type="button">Clear Form</button>
-<p class="lisp-note">Tip: for GitHub Pages long term, put GIF files inside <b>CAD-Tools-&amp;-Resources/demos/</b> and use path like <b>demos/sample.gif</b>.</p>
-</div>
-</form>
-<div class="lisp-table-wrap">
-<table class="lisp-table">
-<thead>
-<tr>
-<th>Program</th>
-<th>Program Description</th>
-<th>Demonstration GIF</th>
-<th class="lisp-admin-column">Action</th>
-</tr>
-</thead>
-<tbody aria-live="polite" id="lispList"></tbody>
-</table>
-</div>
-<div class="lisp-pagination">
-<span id="lispPageInfo">Showing 0 to 0 of 0 programs</span>
-<div class="page-buttons" id="lispPagination"></div>
-</div>
-</section>
+
+<!-- Old LISP Program Showcase merged into CAD Tools & Resources list. -->
+
 </main>
 
 <div class="azobss-pay-modal" id="azobssPremiumPayModal" aria-hidden="true">
@@ -1663,7 +1609,34 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   }
   function getSavedUser(){try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser')||'null');}catch(e){return null;}}
   function isAdmin(){const user=getSavedUser();return !!(user && String(user.usernameKey||'').toLowerCase()===ADMIN_USERNAME);}
-  function getItems(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(data)?data:[];}catch(e){return [];}}
+  const DEFAULT_CAD_ITEMS = [
+    {
+      id:'sample-lisp-program',
+      productId:'AZCAD-SAMPLE-LISP',
+      status:'active',
+      version:'v1.0.0',
+      fileSize:'',
+      platforms:['AutoCAD','All CAD'],
+      badge:'Sample',
+      downloadLimit:3,
+      expiryHours:24,
+      name:'Sample LISP Program',
+      description:'Add your own AutoCAD LISP item here. Include command name, function and workflow notes.',
+      type:'free',
+      category:'LISP (.lsp)',
+      price:'FREE',
+      icon:'L',
+      imageUrl:'',
+      gifUrl:'',
+      buttonText:'Open Resource',
+      downloadLink:'#',
+      paymentLink:'',
+      secureDownloadLink:'',
+      link:'#',
+      createdAt:Date.now()-1000
+    }
+  ];
+  function getItems(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(data)&&data.length?data:DEFAULT_CAD_ITEMS;}catch(e){return DEFAULT_CAD_ITEMS;}}
   function saveItems(items){localStorage.setItem(STORAGE_KEY,JSON.stringify(items));}
 
   function makeProductId(prefix){return `${prefix}-${Date.now().toString().slice(-6)}`;}
@@ -1825,353 +1798,9 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 })();
 </script>
 
-<script>
-    (function(){
-      const STORAGE_KEY = 'azobss_lisp_showcase_items';
-      const PAGE_SIZE = 30;
-      let currentPage = 1;
-      const ADMIN_USERNAME = 'zedan91';
 
-      function getSavedAzobssUser(){
-        try{
-          return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null');
-        }catch(error){
-          return null;
-        }
-      }
+<!-- Old LISP table script removed. CAD Tools search now controls all CAD/LISP items. -->
 
-      function isLispAdmin(){
-        const user = getSavedAzobssUser();
-        return !!(user && String(user.usernameKey || '').toLowerCase() === ADMIN_USERNAME);
-      }
-
-      const form = document.getElementById('lispForm');
-      const nameInput = document.getElementById('lispName');
-      const descInput = document.getElementById('lispDescription');
-      const gifInput = document.getElementById('lispGif');
-      const gifUrlInput = document.getElementById('lispGifUrl');
-      const list = document.getElementById('lispList');
-      const clearBtn = document.getElementById('clearLispForm');
-      const exportBtn = document.getElementById('exportLispData');
-      const pageInfo = document.getElementById('lispPageInfo');
-      const pagination = document.getElementById('lispPagination');
-      const adminStatus = document.getElementById('lispAdminStatus');
-      const searchInput = document.getElementById('lispSearch');
-      const searchCount = document.getElementById('lispSearchCount');
-      const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
-      let editingLispId = null;
-
-      const defaultItems = [
-        {
-          id: 'sample-text-calc',
-          name: 'Sample LISP Program',
-          description: 'Add your own AutoCAD LISP item here. Include command name, function and workflow notes.',
-          gif: ''
-        }
-      ];
-
-      function escapeHtml(value){
-        return String(value || '').replace(/[&<>'"]/g, function(char){
-          return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char];
-        });
-      }
-
-      function getItems(){
-        try{
-          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-          return Array.isArray(saved) && saved.length ? saved : defaultItems;
-        }catch(error){
-          return defaultItems;
-        }
-      }
-
-      function saveItems(items){
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      }
-
-      function getPlaceholderGif(){
-        return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450"><rect width="800" height="450" fill="#07101e"/><text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#fb923c" font-family="Arial" font-size="42" font-weight="700">GIF Demo</text><text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Arial" font-size="24">Upload or add demo path</text></svg>');
-      }
-
-
-
-      function getSearchTerm(){
-        return String(searchInput ? searchInput.value : '').trim().toLowerCase();
-      }
-
-      function getFilteredItems(){
-        const items = getItems();
-        const term = getSearchTerm();
-        if(!term) return items;
-        return items.filter(function(item){
-          return String(item.name || '').toLowerCase().includes(term);
-        });
-      }
-
-      function renderPagination(totalItems){
-        const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-        if(currentPage > totalPages) currentPage = totalPages;
-        if(currentPage < 1) currentPage = 1;
-
-        const start = totalItems ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0;
-        const end = Math.min(currentPage * PAGE_SIZE, totalItems);
-        pageInfo.textContent = `Showing ${start} to ${end} of ${totalItems} programs`;
-
-        let buttons = '';
-        buttons += `<button class="page-btn" type="button" data-page="${Math.max(1, currentPage - 1)}">‹</button>`;
-        for(let i = 1; i <= totalPages; i++){
-          buttons += `<button class="page-btn ${i === currentPage ? 'active' : ''}" type="button" data-page="${i}">${i}</button>`;
-        }
-        buttons += `<button class="page-btn" type="button" data-page="${Math.min(totalPages, currentPage + 1)}">›</button>`;
-        pagination.innerHTML = buttons;
-      }
-
-      function renderItems(){
-        const allItems = getItems();
-        const items = getFilteredItems();
-        const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-        if(currentPage > totalPages) currentPage = totalPages;
-        const startIndex = (currentPage - 1) * PAGE_SIZE;
-        const visibleItems = items.slice(startIndex, startIndex + PAGE_SIZE);
-        if(searchCount){
-          const term = getSearchTerm();
-          searchCount.textContent = term
-            ? `Found ${items.length} of ${allItems.length} programs`
-            : `Showing all ${allItems.length} programs`;
-        }
-
-        const adminMode = isLispAdmin();
-        if(!visibleItems.length){
-          list.innerHTML = `<tr><td colspan="${adminMode ? 4 : 3}">No program found.</td></tr>`;
-          renderPagination(items.length);
-          return;
-        }
-
-        list.innerHTML = visibleItems.map(function(item){
-          const gif = item.gif ? escapeHtml(item.gif) : getPlaceholderGif();
-          return `
-            <tr data-id="${escapeHtml(item.id)}">
-              <td style="overflow-wrap:anywhere;word-break:break-word"><a class="program-link" href="#" onclick="return false;">${escapeHtml(item.name)}</a></td>
-              <td class="desc-cell">
-                <p class="desc-text">${escapeHtml(item.description)}</p>
-                <button class="show-more-btn" type="button" data-show-more>Show more</button>
-              </td>
-              <td class="lisp-demo-cell">
-                <button class="gif-demo-trigger" type="button" aria-label="Preview ${escapeHtml(item.name)} demonstration GIF">D1</button>
-                <img class="lisp-demo-preview" src="${gif}" alt="${escapeHtml(item.name)} demonstration">
-              </td>
-              ${adminMode ? `<td class="lisp-admin-column">
-                <div class="lisp-table-actions">
-                  <button class="btn edit" type="button" data-edit="${escapeHtml(item.id)}">Edit</button>
-                  <button class="btn danger" type="button" data-delete="${escapeHtml(item.id)}">Delete</button>
-                </div>
-              </td>` : ''}
-            </tr>
-          `;
-        }).join('');
-
-        updateDescriptionButtons();
-        positionDemoPreviews();
-        renderPagination(items.length);
-      }
-
-      function positionDemoPreviews(){
-        list.querySelectorAll('.gif-demo-trigger').forEach(function(btn){
-          const preview = btn.nextElementSibling;
-          if(!preview || !preview.classList.contains('lisp-demo-preview')) return;
-
-          function movePreview(event){
-            const gap = 22;
-            const previewWidth = Math.min(880, Math.floor(window.innerWidth * 0.72));
-            const previewHeight = Math.min(Math.floor(previewWidth * 9 / 16), Math.floor(window.innerHeight * 0.78));
-
-            let x = event.clientX + gap;
-            let y = event.clientY + gap;
-
-            if(x + previewWidth > window.innerWidth - 12){
-              x = event.clientX - previewWidth - gap;
-            }
-            if(y + previewHeight > window.innerHeight - 12){
-              y = window.innerHeight - previewHeight - 12;
-            }
-            if(x < 12) x = 12;
-            if(y < 12) y = 12;
-
-            preview.style.setProperty('--gif-preview-x', x + 'px');
-            preview.style.setProperty('--gif-preview-y', y + 'px');
-          }
-
-          btn.addEventListener('mousemove', movePreview);
-          btn.addEventListener('mouseenter', movePreview);
-          btn.addEventListener('focus', function(){
-            const rect = btn.getBoundingClientRect();
-            movePreview({clientX: rect.right, clientY: rect.top});
-          });
-        });
-      }
-
-      function updateDescriptionButtons(){
-        list.querySelectorAll('.desc-cell').forEach(function(cell){
-          const text = cell.querySelector('.desc-text');
-          if(!text) return;
-          cell.classList.remove('expanded', 'needs-more');
-          if(text.scrollHeight > text.clientHeight + 2){
-            cell.classList.add('needs-more');
-          }
-        });
-      }
-
-      function fileToDataUrl(file){
-        return new Promise(function(resolve, reject){
-          const reader = new FileReader();
-          reader.onload = function(){ resolve(reader.result); };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      }
-
-      form.addEventListener('submit', async function(event){
-        event.preventDefault();
-        if(!isLispAdmin()){
-          alert('Admin only. Please sign in as admin to add or edit LISP.');
-          return;
-        }
-        const name = nameInput.value.trim();
-        const description = descInput.value.trim();
-        if(!name || !description) return;
-
-        let items = getItems().filter(function(item){ return item.id !== 'sample-text-calc'; });
-        const existingItem = editingLispId ? items.find(function(item){ return String(item.id) === String(editingLispId); }) : null;
-        let gif = gifUrlInput.value.trim();
-
-        if(gifInput.files && gifInput.files[0]){
-          if(gifInput.files[0].type !== 'image/gif'){
-            alert('Please choose GIF file only.');
-            return;
-          }
-          gif = await fileToDataUrl(gifInput.files[0]);
-        }else if(editingLispId && !gif){
-          gif = existingItem ? (existingItem.gif || '') : '';
-        }
-
-        if(editingLispId){
-          items = items.map(function(item){
-            if(String(item.id) !== String(editingLispId)) return item;
-            return {
-              id: item.id,
-              name: name,
-              description: description,
-              gif: gif
-            };
-          });
-          editingLispId = null;
-          if(submitBtn) submitBtn.textContent = 'Add LISP';
-        }else{
-          items.unshift({
-            id: String(Date.now()),
-            name: name,
-            description: description,
-            gif: gif
-          });
-          currentPage = 1;
-        }
-
-        saveItems(items);
-        form.reset();
-        renderItems();
-      });
-
-      clearBtn.addEventListener('click', function(){
-        form.reset();
-        editingLispId = null;
-        if(submitBtn) submitBtn.textContent = 'Add LISP';
-      });
-
-      list.addEventListener('click', function(event){
-        const showMoreBtn = event.target.closest('[data-show-more]');
-        if(showMoreBtn){
-          const cell = showMoreBtn.closest('.desc-cell');
-          if(cell){
-            cell.classList.toggle('expanded');
-            showMoreBtn.textContent = cell.classList.contains('expanded') ? 'Show less' : 'Show more';
-          }
-          return;
-        }
-
-        if(!isLispAdmin()) return;
-
-        const editId = event.target.getAttribute('data-edit');
-        if(editId){
-          const item = getItems().find(function(entry){ return String(entry.id) === String(editId); });
-          if(!item) return;
-          editingLispId = editId;
-          nameInput.value = item.name || '';
-          descInput.value = item.description || '';
-          gifUrlInput.value = (item.gif && !String(item.gif).startsWith('data:')) ? item.gif : '';
-          gifInput.value = '';
-          if(submitBtn) submitBtn.textContent = 'Update LISP';
-          form.scrollIntoView({behavior:'smooth', block:'start'});
-          nameInput.focus();
-          return;
-        }
-
-        const id = event.target.getAttribute('data-delete');
-        if(!id) return;
-        const items = getItems().filter(function(item){ return String(item.id) !== String(id); });
-        if(String(editingLispId) === String(id)){
-          editingLispId = null;
-          form.reset();
-          if(submitBtn) submitBtn.textContent = 'Add LISP';
-        }
-        saveItems(items);
-        renderItems();
-      });
-
-      if(searchInput){
-        searchInput.addEventListener('input', function(){
-          currentPage = 1;
-          renderItems();
-        });
-      }
-
-      pagination.addEventListener('click', function(event){
-        const page = Number(event.target.getAttribute('data-page'));
-        if(!page) return;
-        currentPage = page;
-        renderItems();
-      });
-
-      exportBtn.addEventListener('click', function(){
-        if(!isLispAdmin()){
-          alert('Admin only. Please sign in as admin to export data.');
-          return;
-        }
-        const blob = new Blob([JSON.stringify(getItems(), null, 2)], {type:'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'azobss-lisp-showcase.json';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      });
-
-      function applyAdminMode(){
-        const adminMode = isLispAdmin();
-        document.body.classList.toggle('is-lisp-admin', adminMode);
-        if(adminStatus){
-          adminStatus.textContent = adminMode
-            ? 'Admin mode: you can add, edit, delete and export LISP items.'
-            : 'Public view: add, edit, delete and export tools are hidden. Only admin can manage this list.';
-        }
-      }
-
-      window.addEventListener('storage', applyAdminMode);
-      applyAdminMode();
-      renderItems();
-    })();
-  </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 <script id="azobss-premium-flow-script">
 (function(){
