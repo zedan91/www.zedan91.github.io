@@ -1761,7 +1761,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
   grid?.addEventListener('click',e=>{const del=e.target.closest('[data-cad-delete]'); if(del){ e.preventDefault(); e.stopPropagation(); return deleteCadItem(del.getAttribute('data-cad-delete')); } const btn=e.target.closest('[data-cad-edit]'); if(!btn) return; e.preventDefault(); e.stopPropagation(); const id=btn.getAttribute('data-cad-edit'); const item=getItems().map(normalizeItem).find(x=>String(x.id)===String(id)); if(!item) return alert('Item data not found. Try refresh page first.'); openModal(item);});
   addBtn?.addEventListener('click',()=>openModal()); closeBtn?.addEventListener('click',closeModal); cancelBtn?.addEventListener('click',closeModal);
-  modal?.addEventListener('click',e=>{if(e.target===modal) closeModal();});
+  // Keep admin edit modal open even if the mouse is dragged/released outside the panel. Close only with X or Cancel.
+  modal?.addEventListener('click',e=>{if(e.target===modal) e.preventDefault();});
   form?.addEventListener('submit',async e=>{
     e.preventDefault();
     if(!isAdmin()){alert('Admin only.');return;}
