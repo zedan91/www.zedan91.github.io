@@ -164,7 +164,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -231,6 +231,11 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .az-admin-user-edit-btn:hover{filter:brightness(1.08);}
 .az-admin-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
 .az-admin-modal-actions .btn.secondary{background:#64748b;}
+
+.forgot-password-box{margin-top:10px;padding:12px;border:1px solid rgba(88,166,255,.35);border-radius:14px;background:rgba(15,23,42,.35);display:grid;gap:10px;}
+.forgot-password-box[hidden]{display:none!important;}
+.forgot-password-box .btn.secondary{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;}
+.auth-reset-note{font-size:12px;line-height:1.45;color:#a9c7e8;margin:0;}
 `;
   document.head.appendChild(style);
 }
@@ -254,6 +259,14 @@ function injectModal() {
       </label>
       <p class="request-error" id="siteLoginError"></p>
       <button class="btn" type="submit">Login</button>
+      <p class="auth-switch-note"><button id="siteForgotPasswordButton" type="button">Forgot password?</button></p>
+      <div class="forgot-password-box" id="siteForgotPasswordBox" hidden>
+        <label for="siteForgotPasswordInput">Reset password by username
+          <input id="siteForgotPasswordInput" autocomplete="username" placeholder="Enter your username" type="text">
+        </label>
+        <button class="btn secondary" id="siteSendPasswordResetButton" type="button">Send Reset Link</button>
+        <p class="auth-reset-note">Firebase will send a password reset link to the account email. If your account uses AZOBSS username login, contact admin if the email does not arrive.</p>
+      </div>
       <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
     </form>
     <form class="auth-modal-form" id="siteSignUpForm" hidden>
@@ -2077,6 +2090,38 @@ function bindAuth() {
       const profile=await ensureUserProfile(credential.user,{usernameKey});
       saveUser({uid:credential.user.uid,...profile,usernameKey}); syncHeader({uid:credential.user.uid,...profile,usernameKey}); startAzobssPresenceHeartbeat({uid:credential.user.uid,...profile,usernameKey}); await recordLoginHistory({uid:credential.user.uid,...profile,usernameKey}, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
+  });
+
+
+
+  $('siteForgotPasswordButton')?.addEventListener('click', (event)=>{
+    event.preventDefault();
+    const box=$('siteForgotPasswordBox');
+    const err=$('siteLoginError');
+    if(err) err.textContent='';
+    if(box) box.hidden = !box.hidden;
+    setTimeout(()=>{ try{ $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 50);
+  });
+
+  $('siteSendPasswordResetButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('siteLoginError');
+    if(err){ err.style.color=''; err.textContent=''; }
+    const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
+    const usernameKey=normalizeUsername(raw.includes('@') ? raw.split('@')[0] : raw);
+    if(!raw || !usernameKey){ if(err) err.textContent='Please enter your username.'; return; }
+    const authEmail=raw.includes('@') ? raw : buildUserEmail(usernameKey);
+    try{
+      await sendPasswordResetEmail(auth, authEmail);
+      if(err){ err.style.color='#62e6a5'; err.textContent='Password reset link sent. Please check your email inbox or spam folder.'; }
+    }catch(error){
+      if(err){
+        err.style.color='';
+        err.textContent = error?.code==='auth/user-not-found'
+          ? 'Account not found. Please check your username.'
+          : 'Unable to send reset email. Please contact admin if this account uses username-only login.';
+      }
+    }
   });
 
   $('siteSignUpForm')?.addEventListener('submit', async (event)=>{
