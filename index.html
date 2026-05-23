@@ -11071,18 +11071,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body>
-</html>
-<script>
-function confirmDeleteProgram(id){
- const ok=confirm('Delete this LISP permanently?\n\nThis action cannot be undone.');
- if(ok){
-   deleteProgram(id);
- }
-}
-</script>
-
-
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
 /* AZOBSS FINAL FIX: keep purchase rows compact but make Show + Reset fully visible */
 body.is-admin #purchaseSummaryList,
 body.is-admin #purchaseSummaryList *{
@@ -11164,3 +11153,16 @@ body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
     overflow-x:auto!important;
   }
 }
+
+</style></body>
+</html>
+<script>
+function confirmDeleteProgram(id){
+ const ok=confirm('Delete this LISP permanently?\n\nThis action cannot be undone.');
+ if(ok){
+   deleteProgram(id);
+ }
+}
+</script>
+
+
