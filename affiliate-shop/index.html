@@ -613,29 +613,29 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <label class="sort-control" for="categorySortSelect">Sort by:
   <select id="categorySortSelect" onchange="syncCategoryFilter(this.value)" aria-label="Sort by">
     <option value="all">All Categories</option>
-    <option value="mobile-accessories">Mobile & Accessories</option>
-    <option value="computer-accessories">Computer & Accessories</option>
-    <option value="gaming-consoles">Gaming & Consoles</option>
-    <option value="cameras-drones">Cameras & Drones</option>
+    <option value="mobile">Mobile & Accessories</option>
+    <option value="computer">Computer & Accessories</option>
+    <option value="gaming">Gaming & Consoles</option>
+    <option value="camera">Cameras & Drones</option>
     <option value="watches">Watches</option>
     <option value="women-bags">Women's Bags</option>
-    <option value="mens-bags-wallets">Men's Bags & Wallets</option>
+    <option value="wallet">Men's Bags & Wallets</option>
     <option value="women-clothes">Women Clothes</option>
     <option value="men-clothes">Men Clothes</option>
     <option value="women-shoes">Women Shoes</option>
     <option value="men-shoes">Men Shoes</option>
-    <option value="fashion-accessories">Fashion Accessories</option>
-    <option value="muslim-fashion">Muslim Fashion</option>
+    <option value="fashion">Fashion Accessories</option>
+    <option value="muslim">Muslim Fashion</option>
     <option value="home-living">Home & Living</option>
     <option value="home-appliances">Home Appliances</option>
-    <option value="groceries-pets">Groceries & Pets</option>
-    <option value="health-beauty">Health & Beauty</option>
-    <option value="baby-toys">Baby & Toys</option>
-    <option value="sports-outdoor">Sports & Outdoor</option>
+    <option value="groceries">Groceries & Pets</option>
+    <option value="beauty">Health & Beauty</option>
+    <option value="baby">Baby & Toys</option>
+    <option value="sports">Sports & Outdoor</option>
     <option value="automotive">Automotive</option>
-    <option value="travel-luggage">Travel & Luggage</option>
-    <option value="games-books-hobbies">Games, Books & Hobbies</option>
-    <option value="tickets-vouchers">Tickets & Vouchers</option>
+    <option value="travel">Travel & Luggage</option>
+    <option value="books">Games, Books & Hobbies</option>
+    <option value="tickets">Tickets & Vouchers</option>
     <option value="others">Others</option>
   </select>
 </label>
@@ -658,31 +658,31 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
         </label>
         <label>Category
           <select id="adminProductCategory">
-<option value="mobile-accessories">Mobile & Accessories</option>
-<option value="computer-accessories">Computer & Accessories</option>
-<option value="gaming-consoles">Gaming & Consoles</option>
-<option value="cameras-drones">Cameras & Drones</option>
-<option value="watches">Watches</option>
-<option value="women-bags">Women's Bags</option>
-<option value="mens-bags-wallets">Men's Bags & Wallets</option>
-<option value="women-clothes">Women Clothes</option>
-<option value="men-clothes">Men Clothes</option>
-<option value="women-shoes">Women Shoes</option>
-<option value="men-shoes">Men Shoes</option>
-<option value="fashion-accessories">Fashion Accessories</option>
-<option value="muslim-fashion">Muslim Fashion</option>
-<option value="home-living">Home & Living</option>
-<option value="home-appliances">Home Appliances</option>
-<option value="groceries-pets">Groceries & Pets</option>
-<option value="health-beauty">Health & Beauty</option>
-<option value="baby-toys">Baby & Toys</option>
-<option value="sports-outdoor">Sports & Outdoor</option>
-<option value="automotive">Automotive</option>
-<option value="travel-luggage">Travel & Luggage</option>
-<option value="games-books-hobbies">Games, Books & Hobbies</option>
-<option value="tickets-vouchers">Tickets & Vouchers</option>
-<option value="others">Others</option>
-</select>
+    <option value="mobile">Mobile & Accessories</option>
+    <option value="computer">Computer & Accessories</option>
+    <option value="gaming">Gaming & Consoles</option>
+    <option value="camera">Cameras & Drones</option>
+    <option value="watches">Watches</option>
+    <option value="women-bags">Women's Bags</option>
+    <option value="wallet">Men's Bags & Wallets</option>
+    <option value="women-clothes">Women Clothes</option>
+    <option value="men-clothes">Men Clothes</option>
+    <option value="women-shoes">Women Shoes</option>
+    <option value="men-shoes">Men Shoes</option>
+    <option value="fashion">Fashion Accessories</option>
+    <option value="muslim">Muslim Fashion</option>
+    <option value="home-living">Home & Living</option>
+    <option value="home-appliances">Home Appliances</option>
+    <option value="groceries">Groceries & Pets</option>
+    <option value="beauty">Health & Beauty</option>
+    <option value="baby">Baby & Toys</option>
+    <option value="sports">Sports & Outdoor</option>
+    <option value="automotive">Automotive</option>
+    <option value="travel">Travel & Luggage</option>
+    <option value="books">Games, Books & Hobbies</option>
+    <option value="tickets">Tickets & Vouchers</option>
+    <option value="others">Others</option>
+        </select>
         </label>
       </div>
       <label>Description
@@ -813,7 +813,7 @@ function esc(value){
       const filtered = products.filter(item => {
         const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon,item.price].join(' ').toLowerCase();
         const categoryOk = activeFilter === 'all' || item.category === activeFilter;
-        const sortOk = sortCategory === 'all' || item.category === sortCategory;
+        const sortOk = true;
         const favOk = !favouriteOnly || favouriteIds.includes(item.id) || localStorage.getItem('azobss_like_' + item.id) === '1';
       
         return categoryOk && sortOk && favOk && (!queryText || haystack.includes(queryText));
@@ -868,7 +868,9 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
 
     chips.forEach(chip => chip.addEventListener('click', () => {
       activeFilter = chip.dataset.filter || 'all';
+      if(categorySortSelect) categorySortSelect.value = activeFilter;
       chips.forEach(item => item.classList.toggle('is-active', item === chip));
+      categoryTiles.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
       favouriteOnly = false;
       myFavouriteButton?.classList.remove('is-active');
       render();
@@ -878,7 +880,14 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       myFavouriteButton.classList.toggle('is-active', favouriteOnly);
       render();
     });
-    categorySortSelect?.addEventListener('change', render);
+    categorySortSelect?.addEventListener('change', () => {
+      activeFilter = categorySortSelect.value || 'all';
+      categoryTiles.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
+      chips.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
+      favouriteOnly = false;
+      myFavouriteButton?.classList.remove('is-active');
+      render();
+    });
     searchInput.addEventListener('input', render);
     if(categorySearch){
       categorySearch.addEventListener('input', () => {
@@ -891,6 +900,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     }
     categoryTiles.forEach(tile => tile.addEventListener('click', () => {
       activeFilter = tile.dataset.filter || 'all';
+      if(categorySortSelect) categorySortSelect.value = activeFilter;
       categoryTiles.forEach(item => item.classList.toggle('is-active', item === tile));
       chips.forEach(item => item.classList.toggle('is-active', item.dataset.filter === activeFilter));
       render();
