@@ -611,15 +611,11 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <button class="chip is-active" data-filter="all" type="button">All</button>
 <button class="chip" id="myFavouriteButton" type="button">❤ My Favourite</button>
 <label class="sort-control" for="categorySortSelect">Sort by:
-  <select id="categorySortSelect" aria-label="Sort by category">
-    <option value="all">All Categories</option>
-    <option value="software">Software</option>
-    <option value="cad-tools">CAD Tools</option>
-    <option value="affiliate-shop">Affiliate Shop</option>
-    <option value="computer">Computer</option>
-    <option value="mobile">Mobile</option>
-    <option value="camera">Camera</option>
-    <option value="groceries">Groceries</option>
+  <select id="categorySortSelect" aria-label="Sort by">
+    <option value="newest">Newest first</option>
+    <option value="oldest">Oldest first</option>
+    <option value="az">Name A-Z</option>
+    <option value="za">Name Z-A</option>
   </select>
 </label>
 <button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
@@ -781,8 +777,9 @@ function esc(value){
       const filtered = products.filter(item => {
         const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon,item.price].join(' ').toLowerCase();
         const categoryOk = activeFilter === 'all' || item.category === activeFilter;
-        const sortOk = sortCategory === 'all' || item.category === sortCategory;
+        const sortOk = true;
         const favOk = !favouriteOnly || favouriteIds.includes(item.id) || localStorage.getItem('azobss_like_' + item.id) === '1';
+      
         return categoryOk && sortOk && favOk && (!queryText || haystack.includes(queryText));
       });
 
@@ -801,7 +798,13 @@ function esc(value){
           </div>
         </article>
       `).join('');
-      emptyState.style.display = filtered.length ? 'none' : 'block';
+      filtered.sort((a,b)=>{
+if(sortCategory==='oldest') return (a.id||'').localeCompare(b.id||'');
+if(sortCategory==='az') return (a.title||'').localeCompare(b.title||'');
+if(sortCategory==='za') return (b.title||'').localeCompare(a.title||'');
+return (b.id||'').localeCompare(a.id||'');
+});
+emptyState.style.display = filtered.length ? 'none' : 'block';
     }
 
     function refreshAdminState(){
