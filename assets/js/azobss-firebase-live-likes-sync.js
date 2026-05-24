@@ -2168,6 +2168,7 @@ function bindAuth() {
   $('siteSignInForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
     const err=$('siteLoginError'); if(err) err.textContent='';
+    const submitButton = event.submitter || $('siteSignInForm')?.querySelector('button[type="submit"]') || $('siteSignInForm')?.querySelector('button');
     const loginInputRaw=String(fieldValue('siteLoginUsername','siteLoginName')).trim().toLowerCase();
     const inputIsEmail = loginInputRaw.includes('@');
     const usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || loginInputRaw.split('@')[0]) : normalizeUsername(loginInputRaw);
@@ -2179,7 +2180,8 @@ function bindAuth() {
         err.textContent='⏳ Please wait... Setting up your AZOBSS account...';
       }
       if(submitButton){
-        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Create Account';
+        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Login';
+        submitButton.disabled = true;
         submitButton.textContent = '⏳ Please wait...';
       }
       // Give the browser one frame to paint the Please wait message before Firebase starts.
@@ -2229,6 +2231,10 @@ function bindAuth() {
     }catch(error){
       console.warn('AZOBSS login failed:', error?.code || error?.message || error);
       if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username/email or password. If username login fails, try your Gmail email once.' : ((error?.code || 'Login failed') + ': ' + (error?.message || 'Please try again.'));
+      if(submitButton){
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || 'Login';
+      }
     }
   });
 
