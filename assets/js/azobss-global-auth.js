@@ -164,7 +164,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -2263,18 +2263,51 @@ function bindAuth() {
       }
 
       const credential=await createUserWithEmailAndPassword(auth,email,password);
-      await sendEmailVerification(credential.user);
-      const profile={uid:credential.user.uid,usernameKey,email,authEmail:email,contactEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',verified:false,emailVerified:false,createdAt:serverTimestamp()};
-      await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
+      const newUser = credential.user;
+
+      // IMPORTANT FIX:
+      // Firebase Auth may create the account before Firestore accepts the profile write.
+      // Force-refresh the ID token first, then create /users/{username} BEFORE sending
+      // verification email. If Firestore still rejects, delete the half-created Auth user
+      // so the next signup attempt will not show email-already-in-use.
+      try{ await newUser.getIdToken(true); }catch(tokenError){ console.warn('AZOBSS token refresh after signup skipped:', tokenError?.code || tokenError?.message || tokenError); }
+
+      const profile={
+        uid:newUser.uid,
+        username:usernameKey,
+        usernameKey,
+        email,
+        authEmail:email,
+        contactEmail:email,
+        phone,
+        inviteCode:buildInviteCode(usernameKey),
+        invitedByCode,
+        memberCode:invitedByCode,
+        paMemberCode:invitedByCode,
+        role:'member',
+        verified:false,
+        emailVerified:false,
+        createdAt:serverTimestamp()
+      };
+
+      try{
+        await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
+      }catch(profileError){
+        console.error('AZOBSS signup profile create failed:', profileError);
+        try{ await deleteUser(newUser); }catch(deleteError){ console.warn('AZOBSS cleanup failed after profile create error:', deleteError?.code || deleteError?.message || deleteError); }
+        throw profileError;
+      }
+
+      await sendEmailVerification(newUser);
       if (invitedByCode === AZOBSS_PA_MEMBER_CODE) {
         localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
         sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
       }
-      await saveUsernameAuthEmail(usernameKey, email, credential.user.uid);
+      await saveUsernameAuthEmail(usernameKey, email, newUser.uid);
       await signOut(auth);
       clearSavedUser();
       syncHeader(null);
-      if(err){ err.style.color='#62e6a5'; err.textContent='Account created. Please verify your email first, then login.'; }
+      if(err){ err.style.color='#62e6a5'; err.textContent='Account created. Please check your email and verify first, then login.'; }
       setTimeout(()=>openSiteAuth('signin'), 1200);
     }catch(error){
       console.error('AZOBSS signup error:', error);
