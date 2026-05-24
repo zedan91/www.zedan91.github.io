@@ -1,8 +1,0 @@
-AZOBSS clean/pro auth audit
-
-- Single active auth entry: /assets/js/azobss-global-auth.js
-- Local legacy assets/js/firebase-auth.js removed.
-- Login/Register buttons use data-auth-open and open popup on current page.
-- Subfolder pages use absolute /assets/js/ path.
-- User menu standardized: My purchases, Likes, Settings, Log out.
-- Profile settings modal is available globally.
