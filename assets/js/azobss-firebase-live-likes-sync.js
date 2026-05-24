@@ -2174,7 +2174,16 @@ function bindAuth() {
     const password=fieldValue('siteLoginPassword');
     if(!loginInputRaw || !password){ if(err) err.textContent='Please enter username/email and password.'; return; }
     try{
-      if(err){err.style.color='#ffd54a'; err.textContent='⏳ Please wait... Setting up your AZOBSS account...';}
+      if(err){
+        err.style.color='#ffd54a';
+        err.textContent='⏳ Please wait... Setting up your AZOBSS account...';
+      }
+      if(submitButton){
+        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Create Account';
+        submitButton.textContent = '⏳ Please wait...';
+      }
+      // Give the browser one frame to paint the Please wait message before Firebase starts.
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
       await setPersistence(auth,browserLocalPersistence);
       const lookupEmail = inputIsEmail ? loginInputRaw : await getAuthEmailForUsername(usernameKey);
       const loginEmail = lookupEmail || buildUserEmail(usernameKey);
@@ -2282,7 +2291,16 @@ function bindAuth() {
     const submitButton = event.submitter || $('siteSignUpForm')?.querySelector('button[type="submit"]');
     if(submitButton) submitButton.disabled = true;
     try{
-      if(err){err.style.color='#ffd54a'; err.textContent='⏳ Please wait... Setting up your AZOBSS account...';}
+      if(err){
+        err.style.color='#ffd54a';
+        err.textContent='⏳ Please wait... Setting up your AZOBSS account...';
+      }
+      if(submitButton){
+        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Create Account';
+        submitButton.textContent = '⏳ Please wait...';
+      }
+      // Give the browser one frame to paint the Please wait message before Firebase starts.
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
       await setPersistence(auth,browserLocalPersistence);
 
       // IMPORTANT FIX:
@@ -2401,6 +2419,9 @@ function bindAuth() {
         err.style.color='#62e6a5';
         err.textContent = '✅ Account created! Please check your Gmail and verify your account before login.';
       }
+      if(submitButton){
+        submitButton.textContent = submitButton.dataset.originalText || 'Create Account';
+      }
       try{ $('siteSignUpForm')?.reset(); }catch(_){}
       // STOP here after signup success. Do not auto-switch/open the login section.
       return;
@@ -2418,7 +2439,10 @@ function bindAuth() {
       }
     }finally{
       window.__AZOBSS_SIGNUP_BUSY__ = false;
-      if(submitButton) submitButton.disabled = false;
+      if(submitButton){
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || 'Create Account';
+      }
     }
   });
 
