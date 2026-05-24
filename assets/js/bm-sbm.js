@@ -135,7 +135,7 @@
           <div><strong>${esc(item.stationNo || '-')}</strong><br>${esc(item.product || '')}</div>
           <div>${esc(item.negeri || '-')}<br>${esc(item.daerah || '')}</div>
           <div>${esc(item.harga || 'RM3')}</div>
-          <div>${item.downloadUrl ? `<a class="small-action-btn blue bm-record-download" data-benchmark-record="${benchmarkRecordPayload(item)}" data-benchmark-filename="${esc(benchmarkDownloadFilename(item))}" download="${esc(benchmarkDownloadFilename(item))}" style="text-decoration:none;" href="${esc(item.downloadUrl)}">⬇ Download</a>` : ''}</div>
+          <div>${item.downloadUrl ? `<a class="small-action-btn blue bm-record-download" data-benchmark-record="${benchmarkRecordPayload(item)}" data-benchmark-filename="${esc(benchmarkDownloadFilename(item))}" download="${esc(benchmarkDownloadFilename(item))}" style="text-decoration:none;" href="${esc(item.downloadUrl)}">Download</a>` : ''}</div>
           <button class="small-action-btn" type="button" data-remove-benchmark-cart="${index}">Remove</button>
         </div>`;
     }).join('');
@@ -171,7 +171,7 @@
       const bmJenis = row.jenis || (row.product === 'SBM' ? '2' : '1');
       const bmDownloadUrl = bmId ? buildBenchmarkDownloadUrl(bmId, bmJenis) : ''; // always use backend link
       const downloadButton = bmDownloadUrl
-        ? `<a class="small-action-btn blue bm-download-btn bm-record-download" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl: bmDownloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" download="${esc(benchmarkDownloadFilename(row))}" style="text-decoration:none;display:inline-block;padding:6px 10px;font-size:12px;white-space:nowrap;" href="${esc(bmDownloadUrl)}">⬇ Download</a>`
+        ? `<a class="small-action-btn blue bm-download-btn bm-record-download" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl: bmDownloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" download="${esc(benchmarkDownloadFilename(row))}" style="text-decoration:none;display:inline-block;padding:6px 10px;font-size:12px;white-space:nowrap;" href="${esc(bmDownloadUrl)}">Download</a>`
         : '<span style="color:#94a3b8;">-</span>';
       return `
         <tr>
