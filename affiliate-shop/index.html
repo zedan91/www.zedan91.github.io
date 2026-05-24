@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Affiliate Shop | AZOBSS</title>
+<meta content="Affiliate Shop AZOBSS with recommended products and useful gadgets." name="description"/>
+<style>
+    :root{--bg:#050914;--panel:#0e1729;--line:rgba(148,163,184,.22);--text:#f8fafc;--muted:#9ca3af;--green:#22c55e;--blue:#2563eb}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#102544,#050914 58%);color:var(--text);padding-top:54px}
+    .market-sticky-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;background:#000 !important;border-bottom:1px solid rgba(218,165,32,.45) !important;box-shadow:0 10px 24px rgba(0,0,0,.28) !important}
+    .market-bar-inner{width:100% !important;margin:0 !important;padding:0 26px 0 8px !important;box-sizing:border-box !important}
+    .market-main-row{min-height:48px !important;display:flex !important;align-items:center !important;gap:7px !important;flex-wrap:nowrap !important}
+    .market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;text-decoration:none !important;margin-left:0 !important}
+    .market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important}
+    .market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow:hidden !important;white-space:nowrap !important;scrollbar-width:none !important}
+    .market-nav::-webkit-scrollbar{display:none !important}
+    .market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 10px !important;border:1px solid rgba(148,163,184,.28) !important;border-radius:999px !important;background:#0e1729 !important;color:#e5e7eb !important;text-decoration:none !important;font-size:clamp(11px,1vw,13px) !important;font-weight:800 !important;line-height:1 !important;white-space:nowrap !important;text-shadow:0 1px 8px rgba(0,0,0,.45) !important;box-shadow:none !important}
+    .market-nav a:hover{color:#14b8a6 !important}
+    .market-nav a.market-nav-primary{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;text-shadow:none !important;box-shadow:0 0 15px rgba(34,197,94,.34), inset 0 0 0 1px rgba(255,255,255,.12) !important}
+    .nav-pa-bm-link.is-hidden{display:none !important}
+    .nav-whatsapp-circle{width:38px !important;height:38px !important;min-width:38px !important;min-height:38px !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;background:#22c55e !important;color:#fff !important;font-size:0 !important;font-weight:900 !important;box-shadow:0 8px 20px rgba(34,197,94,.25) !important;vertical-align:middle !important}
+    .nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+    a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !important;min-width:44px !important;max-width:44px !important;height:44px !important;padding:0 !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important}
+    .site-auth-actions{position:static !important;display:flex !important;align-items:center !important;gap:20px !important;flex:0 0 auto !important;z-index:auto !important;margin-left:auto !important;margin-right:10px !important}
+    .site-auth-btn{display:inline-flex !important;align-items:center !important;gap:0 !important;border:0 !important;border-radius:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;line-height:1 !important;text-decoration:none !important;cursor:pointer !important;transition:.2s !important}
+    .site-auth-btn:hover{color:#14b8a6 !important}
+    main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:34px 0 52px}
+    .hero{display:grid;gap:14px;margin:18px 0 24px}
+    .category-panel{border:1px solid rgba(34,197,94,.25);border-radius:14px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,17,31,.96));overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.22)}
+    .category-panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 14px;border-bottom:1px solid var(--line)}
+    .category-title{margin:0;color:#e5e7eb;font-size:16px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
+    .category-search{width:min(320px,100%);min-height:40px;border:1px solid var(--line);border-radius:999px;background:#050b18;color:#fff;padding:0 16px;font-weight:700}
+    .category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));border-top:0}
+    .category-tile{display:grid;place-items:center;gap:8px;min-height:112px;padding:12px 8px;border:0;border-right:1px solid rgba(148,163,184,.12);border-bottom:1px solid rgba(148,163,184,.12);background:rgba(8,17,31,.62);color:#f8fafc;cursor:pointer;text-align:center;font-weight:800}
+    .category-tile:hover,.category-tile.is-active{outline:2px solid var(--green);outline-offset:-2px;background:rgba(34,197,94,.08);color:#22c55e}
+    .category-icon{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:#f8fafc;overflow:hidden;border:1px solid rgba(255,255,255,.7)}
+    .category-icon img{width:100%;height:100%;object-fit:cover;display:block}
+    .category-all-icon{background:#07111f;color:#22c55e;font-size:23px}
+    .category-name{font-size:12px;line-height:1.2}
+    .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .search{flex:1 1 280px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
+    .chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 14px;min-height:42px;font-weight:800;cursor:pointer}
+    .chip.is-active{background:var(--green);border-color:var(--green);color:#052e16}
+    .sort-control{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 12px;min-height:42px;font-weight:800}
+    .sort-control select{border:0;outline:0;background:transparent;color:#fff;font-weight:900;min-height:34px;cursor:pointer}
+    .sort-control option{background:#0b1220;color:#fff}
+    .admin-add-card-btn{background:linear-gradient(135deg,#22c55e,#84cc16)!important;border-color:#22c55e!important;color:#052e16!important}
+    .admin-product-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(8px)}
+    .admin-product-modal.is-open{display:flex}
+    .admin-product-box{width:min(560px,96vw);max-height:90vh;overflow:auto;border:1px solid rgba(34,197,94,.35);border-radius:18px;background:linear-gradient(180deg,#102033,#07111f);box-shadow:0 28px 80px rgba(0,0,0,.45);padding:18px;color:#fff}
+    .admin-product-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .admin-product-head h2{margin:0;font-size:20px}
+    .admin-product-close{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#fff;min-width:38px;min-height:38px;cursor:pointer;font-size:20px}
+    .admin-product-form{display:grid;gap:12px}
+    .admin-product-form label{display:grid;gap:6px;font-size:13px;font-weight:900;color:#cbd5e1}
+    .admin-product-form input,.admin-product-form textarea,.admin-product-form select{width:100%;border:1px solid var(--line);border-radius:12px;background:#050b18;color:#fff;padding:11px 12px;font-weight:800;outline:none}
+    .admin-product-form textarea{min-height:82px;resize:vertical}
+    .admin-product-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .admin-product-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px}
+    .admin-product-save,.admin-product-cancel{border:0;border-radius:999px;padding:11px 16px;font-weight:950;cursor:pointer}
+    .admin-product-save{background:#22c55e;color:#052e16}
+    .admin-product-cancel{background:#172033;color:#e5e7eb;border:1px solid var(--line)}
+    .card-actions{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:auto}
+    .card-price{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(34,197,94,.35);border-radius:999px;background:rgba(34,197,94,.08);color:#86efac;padding:6px 9px;font-weight:950;font-size:12px}
+    .card-open{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#2563eb;color:#fff;padding:8px 11px;font-weight:950;font-size:12px;text-decoration:none}
+    @media(max-width:560px){.admin-product-grid{grid-template-columns:1fr}.sort-control{width:100%;justify-content:space-between}.sort-control select{flex:1}}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px}
+    .card{display:grid;gap:10px;align-content:start;min-height:235px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#13243a,#0b1220);padding:18px;color:#fff;text-decoration:none;box-shadow:0 16px 34px rgba(0,0,0,.22)}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:rgba(34,197,94,.14);color:#86efac;font-weight:900}
+    .badge{border:1px solid rgba(34,197,94,.35);border-radius:999px;padding:6px 9px;color:#86efac;font-size:12px;font-weight:900}
+    .card h2{font-size:18px;line-height:1.25;margin:0}
+    .card p{margin:0;color:#cbd5e1;font-size:14px;line-height:1.45}
+    .meta{margin-top:auto;color:#94a3b8;font-size:12px;font-weight:800}
+    .empty{display:none;border:1px solid var(--line);border-radius:16px;background:#0e1729;padding:24px;color:#cbd5e1;text-align:center}
+    @media(max-width:760px){body{padding-top:92px !important}.market-bar-inner{width:100% !important;padding:0 6px !important}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important}.market-brand{width:116px !important;height:30px !important}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important}.site-auth-btn{font-size:13px !important;white-space:nowrap !important}}
+
+
+/* Same-page auth modal on Affiliate Shop */
+.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
+.auth-modal.is-open{display:flex;}
+.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
+.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.auth-modal-top h3{margin:0;font-size:20px;font-weight:800;}
+.auth-close-btn{display:inline-grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:rgba(148,163,184,.22);color:#fff;font-size:24px;font-weight:900;line-height:1;cursor:pointer;}
+.auth-close-btn:hover{background:rgba(148,163,184,.34);}
+.auth-modal-form{display:grid;gap:14px;}
+.auth-modal-form[hidden]{display:none!important;}
+.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff;}
+.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none;}
+.auth-modal-form input:focus{border-color:#fff;}
+.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6);}
+.auth-modal-form .btn.signup{background:#22c55e;color:#fff;}
+.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
+.auth-switch-note{margin:0;text-align:center;color:#dbe4f0;}
+.auth-switch-note button{border:0;background:transparent;color:#00e676;font-weight:900;cursor:pointer;}
+.phone-input-row{display:grid;grid-template-columns:120px 1fr;gap:10px;}
+.country-code-button{height:46px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;font-weight:900;}
+.phone-number-wrap{position:relative;display:flex;align-items:center;}
+.phone-prefix{position:absolute;left:14px;color:#00e676;font-weight:900;}
+.phone-number-wrap input{padding-left:58px!important;}
+
+
+/* AZOBSS phone input: country code stays inside country selector; local phone box displays 10-3560 0723 only. */
+.phone-prefix{display:none!important;}
+.phone-number-wrap input{padding-left:14px!important;}
+
+
+.az-usd-price{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;font-size:.82em;font-weight:900;color:#93c5fd;white-space:nowrap;opacity:.95}
+.az-usd-line{font-size:12px;color:#93c5fd;font-weight:800;margin-top:4px;white-space:nowrap}
+</style>
+<style>
+/* Secondary page auth state bridge */
+.market-user-tools{display:none;align-items:center !important;gap:20px !important;margin-left:auto !important;}
+body.is-authenticated .site-auth-actions{display:none !important;}
+body.is-authenticated .market-user-tools{display:flex !important;}
+body:not(.is-authenticated) .market-user-tools{display:none !important;}
+.user-menu{position:relative !important;display:flex !important;align-items:center !important;gap:8px !important;color:#fff !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;min-height:34px !important;}
+.user-avatar{display:inline-grid !important;place-items:center !important;width:26px !important;height:26px !important;border-radius:999px !important;border:1px solid rgba(20,184,166,.75) !important;background:#03121f !important;color:#fff !important;font-size:11px !important;font-weight:bold !important;text-transform:uppercase !important;}
+.user-name{white-space:nowrap !important;color:#fff !important;}
+.user-menu::after{content:"" !important;width:7px !important;height:7px !important;border-right:2px solid #cbd5e1 !important;border-bottom:2px solid #cbd5e1 !important;transform:rotate(45deg) translateY(-2px) !important;margin-left:2px !important;flex:0 0 auto !important;}
+.user-dropdown{position:absolute !important;top:calc(100% + 10px) !important;right:0 !important;min-width:190px !important;padding:8px !important;border:1px solid rgba(148,163,184,.22) !important;border-radius:14px !important;background:#08111f !important;box-shadow:0 18px 50px rgba(0,0,0,.45) !important;display:none !important;z-index:3300 !important;}
+.user-menu.is-open .user-dropdown{display:block !important;}
+.user-dropdown-section{padding:8px 10px 5px !important;color:#94a3b8 !important;font-size:11px !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:.08em !important;}
+.user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
+.user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
+@media(max-width:760px){.market-user-tools{gap:12px !important;margin-left:auto !important;}.user-name{max-width:120px !important;overflow:hidden !important;text-overflow:ellipsis !important;}}</style>
+<style>
+/* Stable CSS chat icon: avoids emoji/encoding corruption */
+.nav-whatsapp-circle{position:relative !important;font-size:0 !important;overflow:visible !important;}
+.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+.nav-whatsapp-circle::after{content:"" !important;position:absolute !important;left:13px !important;top:23px !important;width:7px !important;height:7px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+.whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
+.whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
+.whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+</style>
+<style id="azobss-pro-navbar-icons-css">
+.market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:nowrap;}
+.user-upgrade-btn{border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.14);color:#22c55e;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;}
+.market-icon-btn{display:inline-grid;place-items:center;width:28px;height:34px;color:#f8fafc;text-decoration:none;border:0;background:transparent;}
+.market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.market-icon-btn:hover{color:#22c55e;}
+@media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:hidden;text-overflow:ellipsis}}
+</style>
+
+<style id="azobss-pro-navbar-consistency-v1">
+/* AZOBSS PRO GLOBAL NAVBAR CONSISTENCY */
+.market-sticky-bar{
+  position:sticky!important;top:0!important;z-index:9999!important;
+  width:100%!important;background:#050607!important;border-bottom:1px solid #b6891d!important;
+  box-sizing:border-box!important;min-height:50px!important;
+}
+.market-bar-inner{
+  width:100%!important;max-width:none!important;margin:0!important;padding:5px 8px!important;box-sizing:border-box!important;
+}
+.market-main-row{
+  display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:38px!important;
+  flex-wrap:nowrap!important;white-space:nowrap!important;
+}
+.market-brand{
+  flex:0 0 154px!important;width:154px!important;height:38px!important;min-width:154px!important;max-width:154px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;
+  border-radius:999px!important;background:#0f172a!important;border:1px solid rgba(148,163,184,.35)!important;
+  margin:0!important;padding:0!important;box-sizing:border-box!important;text-decoration:none!important;
+}
+.market-brand img{
+  display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;margin:0!important;padding:0!important;
+}
+.market-nav{
+  display:flex!important;align-items:center!important;gap:7px!important;flex:1 1 auto!important;min-width:0!important;overflow-x:auto!important;
+  scrollbar-width:none!important;white-space:nowrap!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a,.market-nav button{
+  height:38px!important;min-height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:999px!important;padding:0 14px!important;line-height:1!important;box-sizing:border-box!important;
+  background:#111827!important;border:1px solid rgba(148,163,184,.45)!important;color:#fff!important;text-decoration:none!important;
+  font-size:14px!important;font-weight:800!important;box-shadow:inset 0 -1px 0 rgba(255,255,255,.08)!important;
+}
+.market-nav a.active,.market-nav a[aria-current="page"],.market-nav a.is-active{
+  background:#22c55e!important;color:#06120b!important;border-color:#16a34a!important;
+}
+.market-nav a:has(.nav-whatsapp-circle){
+  flex:0 0 44px!important;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;
+  padding:0!important;border-radius:999px!important;background:#22c55e!important;border:2px solid rgba(255,255,255,.16)!important;
+}
+.nav-whatsapp-circle{
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;
+}
+.nav-whatsapp-circle::before{content:"\1F4AC"!important;font-size:18px!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.site-auth-actions,.market-user-tools{
+  display:flex!important;align-items:center!important;gap:10px!important;flex:0 0 auto!important;margin-left:auto!important;white-space:nowrap!important;
+}
+.user-menu{height:38px!important;display:inline-flex!important;align-items:center!important;gap:8px!important;}
+.user-avatar{
+  width:26px!important;height:26px!important;min-width:26px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:11px!important;line-height:1!important;
+}
+.user-name{font-size:14px!important;font-weight:800!important;line-height:1!important;color:#fff!important;}
+.market-icon-btn{
+  width:28px!important;height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  color:#fff!important;background:transparent!important;border:0!important;padding:0!important;margin:0!important;
+}
+.market-icon-btn svg{width:24px!important;height:24px!important;stroke:currentColor!important;fill:none!important;stroke-width:2!important;}
+.market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
+.site-auth-btn{
+  height:34px!important;border-radius:999px!important;padding:0 13px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:14px!important;font-weight:800!important;line-height:1!important;
+}
+@media(max-width:780px){
+  .market-main-row{gap:6px!important;}
+  .market-brand{flex-basis:138px!important;width:138px!important;min-width:138px!important;max-width:138px!important;height:36px!important;}
+  .market-nav a,.market-nav button{height:36px!important;min-height:36px!important;padding:0 11px!important;font-size:13px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;}
+  .market-icon-btn{width:26px!important;}
+}
+</style>
+
+<style id="azobss-navbar-responsive-final-v2">
+/* AZOBSS final responsive navbar override */
+html,body{overflow-x:hidden!important;}
+body{padding-top:58px!important;}
+.market-sticky-bar{
+  position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;
+  min-height:49px!important;height:auto!important;z-index:5000!important;
+  background:#050807!important;border-bottom:1px solid rgba(234,179,8,.55)!important;
+  overflow:visible!important;box-sizing:border-box!important;
+}
+.market-bar-inner{width:100%!important;max-width:none!important;margin:0!important;padding:0 8px!important;box-sizing:border-box!important;}
+.market-main-row{
+  display:flex!important;align-items:center!important;gap:7px!important;min-height:48px!important;height:48px!important;
+  flex-wrap:nowrap!important;overflow:visible!important;width:100%!important;box-sizing:border-box!important;
+}
+.market-brand{
+  flex:0 0 auto!important;width:154px!important;max-width:154px!important;height:38px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;border-radius:999px!important;overflow:hidden!important;
+}
+.market-brand img{width:100%!important;height:100%!important;object-fit:contain!important;display:block!important;}
+.market-nav{
+  flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:center!important;gap:7px!important;
+  white-space:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;
+  -webkit-overflow-scrolling:touch!important;padding:0 2px!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a,.market-nav button{
+  flex:0 0 auto!important;height:34px!important;min-height:34px!important;max-height:34px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0 12px!important;border-radius:999px!important;box-sizing:border-box!important;
+  font-size:13px!important;font-weight:900!important;line-height:1!important;text-decoration:none!important;white-space:nowrap!important;
+}
+.market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;}
+.nav-whatsapp-circle{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;}
+.market-user-tools{
+  flex:0 0 auto!important;display:flex!important;align-items:center!important;gap:11px!important;margin-left:auto!important;
+  min-width:max-content!important;white-space:nowrap!important;overflow:visible!important;
+}
+.user-menu{height:34px!important;display:inline-flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important;}
+.user-avatar{width:28px!important;height:28px!important;min-width:28px!important;font-size:12px!important;}
+.user-name{font-size:14px!important;line-height:1!important;white-space:nowrap!important;max-width:140px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.market-icon-btn{width:24px!important;height:34px!important;min-width:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;flex:0 0 auto!important;}
+.market-icon-btn svg{width:23px!important;height:23px!important;stroke-width:2.2!important;}
+.site-auth-actions{position:static!important;display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important;flex:0 0 auto!important;z-index:auto!important;}
+.site-auth-btn{height:34px!important;min-height:34px!important;padding:0 12px!important;font-size:13px!important;line-height:1!important;border-radius:999px!important;}
+@media(max-width:980px){
+  body{padding-top:92px!important;}
+  .market-main-row{height:auto!important;min-height:48px!important;flex-wrap:wrap!important;align-content:center!important;padding:5px 0!important;}
+  .market-brand{width:132px!important;max-width:132px!important;height:34px!important;}
+  .market-user-tools{margin-left:auto!important;gap:9px!important;}
+  .user-name{max-width:115px!important;font-size:13px!important;}
+  .market-nav{order:3!important;flex:0 0 100%!important;width:100%!important;padding:4px 0 2px!important;}
+  .market-nav a,.market-nav button{height:32px!important;min-height:32px!important;padding:0 10px!important;font-size:12px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;}
+  .nav-whatsapp-circle{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;}
+}
+@media(max-width:560px){
+  body{padding-top:96px!important;}
+  .market-bar-inner{padding:0 6px!important;}
+  .market-brand{width:120px!important;max-width:120px!important;height:32px!important;}
+  .market-user-tools{gap:7px!important;}
+  .user-name{display:none!important;}
+  .market-icon-btn{width:22px!important;min-width:22px!important;}
+  .market-icon-btn svg{width:21px!important;height:21px!important;}
+  .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
+}
+</style>
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+
+<style id="azobss-pa-bm-access-lock-final">
+/* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
+.market-nav .nav-pa-bm-link[hidden],
+.market-nav .nav-pa-bm-link.is-hidden,
+a#paBmNavButton[hidden],
+a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+
+<style id="azobss-final-mobile-account-dropdown-fix">
+
+/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */
+.market-sticky-bar,
+.market-bar-inner,
+.market-main-row,
+.market-user-tools,
+.user-menu{
+  overflow:visible !important;
+}
+.user-menu{
+  position:relative !important;
+  z-index:100000 !important;
+}
+.user-menu .user-dropdown,
+#userDropdown{
+  position:absolute !important;
+  top:calc(100% + 10px) !important;
+  right:0 !important;
+  left:auto !important;
+  width:220px !important;
+  min-width:220px !important;
+  max-width:calc(100vw - 16px) !important;
+  padding:8px !important;
+  border-radius:14px !important;
+  background:#08111f !important;
+  border:1px solid rgba(148,163,184,.28) !important;
+  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;
+  z-index:100001 !important;
+  transform:none !important;
+}
+.user-menu:not(.is-open) .user-dropdown{display:none !important;}
+.user-menu.is-open .user-dropdown{display:block !important;}
+.user-dropdown-section{
+  padding:7px 10px 4px !important;
+  font-size:11px !important;
+  line-height:1.1 !important;
+}
+.user-dropdown-item{
+  min-height:38px !important;
+  padding:9px 10px !important;
+  font-size:13px !important;
+  line-height:1.15 !important;
+  border-radius:10px !important;
+}
+@media (max-width:768px){
+  .user-menu .user-dropdown,
+  #userDropdown{
+    position:fixed !important;
+    top:92px !important;
+    right:8px !important;
+    left:auto !important;
+    width:210px !important;
+    min-width:210px !important;
+    max-width:calc(100vw - 16px) !important;
+    max-height:68vh !important;
+    overflow-y:auto !important;
+    border-radius:14px !important;
+  }
+  .user-dropdown-section{
+    padding:7px 10px 4px !important;
+    font-size:10.5px !important;
+  }
+  .user-dropdown-item{
+    padding:9px 10px !important;
+    font-size:13px !important;
+    min-height:36px !important;
+  }
+}
+@media (max-width:420px){
+  .user-menu .user-dropdown,
+  #userDropdown{
+    top:88px !important;
+    right:6px !important;
+    width:196px !important;
+    min-width:196px !important;
+  }
+}
+
+</style>
+
+<style id="azobss-admin-compact-pagination-fix">
+/* AZOBSS admin compact lists: 4 records per page + smaller row bars */
+#registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
+#registeredUsersList .az-admin-user-row-card,
+#registeredUsersList .az-admin-user-compact-card,
+#liveUsersList .purchase-summary-item,
+#loginHistoryList .purchase-summary-item,
+#guestHistoryList .purchase-summary-item{
+  min-height:0!important;
+  padding:7px 10px!important;
+  border-radius:9px!important;
+  line-height:1.12!important;
+  font-size:12px!important;
+}
+#registeredUsersList .az-admin-user-compact-card{
+  display:grid!important;
+  grid-template-columns:minmax(145px,1fr) 105px 126px 92px!important;
+  gap:8px!important;
+  align-items:center!important;
+}
+#registeredUsersList .az-admin-user-compact-name strong{font-size:12px!important;}
+#registeredUsersList .az-admin-user-access-badge{font-size:10px!important;padding:2px 5px!important;white-space:nowrap!important;}
+#registeredUsersList .az-admin-register-date{font-size:11px!important;white-space:nowrap!important;}
+#registeredUsersList .az-admin-user-row-actions{display:flex!important;gap:6px!important;justify-content:flex-end!important;}
+#registeredUsersList .az-admin-small-btn{height:24px!important;min-width:50px!important;padding:0 8px!important;border-radius:6px!important;font-size:10px!important;}
+.admin-live-panel{margin-top:10px!important;padding-top:10px!important;}
+.admin-live-panel h4{font-size:14px!important;margin:0 0 8px!important;}
+.guest-history-stats{gap:8px!important;margin:0 0 8px!important;}
+.guest-history-stat{padding:6px 10px!important;border-radius:8px!important;font-size:11px!important;}
+.guest-history-stat strong{font-size:18px!important;margin-top:2px!important;}
+#liveUsersList .admin-purchase-user-card,
+#loginHistoryList .admin-purchase-user-card,
+#guestHistoryList .admin-purchase-user-card{gap:4px!important;}
+#liveUsersList .admin-purchase-user-top,
+#loginHistoryList .admin-purchase-user-top,
+#guestHistoryList .admin-purchase-user-top{
+  display:flex!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  align-items:center!important;
+}
+#liveUsersList .admin-purchase-user-top strong,
+#loginHistoryList .admin-purchase-user-top strong,
+#guestHistoryList .admin-purchase-user-top strong{font-size:12px!important;}
+#liveUsersList .admin-purchase-user-top span,
+#loginHistoryList .admin-purchase-user-top span,
+#guestHistoryList .admin-purchase-user-top span{font-size:11px!important;white-space:nowrap!important;}
+#liveUsersList .admin-purchase-user-details,
+#loginHistoryList .admin-purchase-user-details,
+#guestHistoryList .admin-purchase-user-details{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:5px 12px!important;
+  padding-top:4px!important;
+  border-top:0!important;
+  font-size:11px!important;
+  color:#cbd5e1!important;
+}
+.guest-history-pagination{gap:5px!important;margin-top:7px!important;align-items:center!important;}
+.guest-history-page-btn{min-width:28px!important;height:28px!important;padding:0 8px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important;}
+.guest-history-page-btn.is-compact{min-width:26px!important;height:26px!important;padding:0 7px!important;}
+.guest-history-page-dots{display:inline-flex!important;align-items:center!important;height:26px!important;padding:0 2px!important;color:#94a3b8!important;font-weight:bold!important;}
+@media(max-width:700px){
+  #registeredUsersList .az-admin-user-compact-card{grid-template-columns:1fr!important;}
+  #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
+}
+</style>
+</head>
+<body>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="/">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="/Software-Tools/">Software</a>
+<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a  href="/affiliate-shop/">Affiliate Shop</a>
+<a href="/lucky-draw/">Lucky Draw</a>
+<a href="/tools/">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
+<div class="user-dropdown-section">Account</div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
+</div>
+<a aria-label="Likes" class="market-icon-btn" href="/likes/">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+</a>
+<a aria-label="Cart" class="market-icon-btn" href="/affiliate-shop/">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+</a>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+</a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main>
+<section class="hero">
+<div aria-label="Affiliate categories" class="category-panel">
+<div class="category-panel-head">
+<h1 class="category-title">Categories</h1>
+<input class="category-search" id="categorySearch" placeholder="Search affiliate items..." type="search"/>
+</div>
+<div class="category-grid" id="categoryGrid">
+<button class="category-tile is-active" data-filter="all" data-name="all categories" type="button">
+<span aria-hidden="true" class="category-icon category-all-icon">▦</span>
+<span class="category-name">All Categories</span>
+</button>
+<button class="category-tile" data-filter="mobile" data-name="mobile &amp; accessories" type="button">
+<span class="category-icon"><img alt="Mobile &amp; Accessories" src="../images/category/mobile.png"/></span>
+<span class="category-name">Mobile &amp; Accessories</span>
+</button>
+<button class="category-tile" data-filter="computer" data-name="computer &amp; accessories" type="button">
+<span class="category-icon"><img alt="Computer &amp; Accessories" src="../images/category/computer.png"/></span>
+<span class="category-name">Computer &amp; Accessories</span>
+</button>
+<button class="category-tile" data-filter="gaming" data-name="gaming &amp; consoles" type="button">
+<span class="category-icon"><img alt="Gaming &amp; Consoles" src="../images/category/gaming.png"/></span>
+<span class="category-name">Gaming &amp; Consoles</span>
+</button>
+<button class="category-tile" data-filter="camera" data-name="cameras &amp; drones" type="button">
+<span class="category-icon"><img alt="Cameras &amp; Drones" src="../images/category/camera.png"/></span>
+<span class="category-name">Cameras &amp; Drones</span>
+</button>
+<button class="category-tile" data-filter="watches" data-name="watches" type="button">
+<span class="category-icon"><img alt="Watches" src="../images/category/watch.png"/></span>
+<span class="category-name">Watches</span>
+</button>
+<button class="category-tile" data-filter="women-bags" data-name="women's bags" type="button">
+<span class="category-icon"><img alt="Women's Bags" src="../images/category/bags.png"/></span>
+<span class="category-name">Women's Bags</span>
+</button>
+<button class="category-tile" data-filter="wallet" data-name="men's bags &amp; wallets" type="button">
+<span class="category-icon"><img alt="Men's Bags &amp; Wallets" src="../images/category/wallet.png"/></span>
+<span class="category-name">Men's Bags &amp; Wallets</span>
+</button>
+<button class="category-tile" data-filter="women-clothes" data-name="women clothes" type="button">
+<span class="category-icon"><img alt="Women Clothes" src="../images/category/women-clothes.png"/></span>
+<span class="category-name">Women Clothes</span>
+</button>
+<button class="category-tile" data-filter="men-clothes" data-name="men clothes" type="button">
+<span class="category-icon"><img alt="Men Clothes" src="../images/category/men-clothes.png"/></span>
+<span class="category-name">Men Clothes</span>
+</button>
+<button class="category-tile" data-filter="women-shoes" data-name="women shoes" type="button">
+<span class="category-icon"><img alt="Women Shoes" src="../images/category/women-shoes.png"/></span>
+<span class="category-name">Women Shoes</span>
+</button>
+<button class="category-tile" data-filter="men-shoes" data-name="men shoes" type="button">
+<span class="category-icon"><img alt="Men Shoes" src="../images/category/men-shoes.png"/></span>
+<span class="category-name">Men Shoes</span>
+</button>
+<button class="category-tile" data-filter="fashion" data-name="fashion accessories" type="button">
+<span class="category-icon"><img alt="Fashion Accessories" src="../images/category/fashion.png"/></span>
+<span class="category-name">Fashion Accessories</span>
+</button>
+<button class="category-tile" data-filter="muslim" data-name="muslim fashion" type="button">
+<span class="category-icon"><img alt="Muslim Fashion" src="../images/category/muslim.png"/></span>
+<span class="category-name">Muslim Fashion</span>
+</button>
+<button class="category-tile" data-filter="home-living" data-name="home &amp; living" type="button">
+<span class="category-icon"><img alt="Home &amp; Living" src="../images/category/home-living.png"/></span>
+<span class="category-name">Home &amp; Living</span>
+</button>
+<button class="category-tile" data-filter="home-appliances" data-name="home appliances" type="button">
+<span class="category-icon"><img alt="Home Appliances" src="../images/category/home-appliances.png"/></span>
+<span class="category-name">Home Appliances</span>
+</button>
+<button class="category-tile" data-filter="groceries" data-name="groceries &amp; pets" type="button">
+<span class="category-icon"><img alt="Groceries &amp; Pets" src="../images/category/groceries.png"/></span>
+<span class="category-name">Groceries &amp; Pets</span>
+</button>
+<button class="category-tile" data-filter="beauty" data-name="health &amp; beauty" type="button">
+<span class="category-icon"><img alt="Health &amp; Beauty" src="../images/category/beauty.png"/></span>
+<span class="category-name">Health &amp; Beauty</span>
+</button>
+<button class="category-tile" data-filter="baby" data-name="baby &amp; toys" type="button">
+<span class="category-icon"><img alt="Baby &amp; Toys" src="../images/category/baby.png"/></span>
+<span class="category-name">Baby &amp; Toys</span>
+</button>
+<button class="category-tile" data-filter="sports" data-name="sports &amp; outdoor" type="button">
+<span class="category-icon"><img alt="Sports &amp; Outdoor" src="../images/category/sports.png"/></span>
+<span class="category-name">Sports &amp; Outdoor</span>
+</button>
+<button class="category-tile" data-filter="automotive" data-name="automotive" type="button">
+<span class="category-icon"><img alt="Automotive" src="../images/category/auto.png"/></span>
+<span class="category-name">Automotive</span>
+</button>
+<button class="category-tile" data-filter="travel" data-name="travel &amp; luggage" type="button">
+<span class="category-icon"><img alt="Travel &amp; Luggage" src="../images/category/travel.png"/></span>
+<span class="category-name">Travel &amp; Luggage</span>
+</button>
+<button class="category-tile" data-filter="books" data-name="games, books &amp; hobbies" type="button">
+<span class="category-icon"><img alt="Games, Books &amp; Hobbies" src="../images/category/books.png"/></span>
+<span class="category-name">Games, Books &amp; Hobbies</span>
+</button>
+<button class="category-tile" data-filter="tickets" data-name="tickets &amp; vouchers" type="button">
+<span class="category-icon"><img alt="Tickets &amp; Vouchers" src="../images/category/tickets.png"/></span>
+<span class="category-name">Tickets &amp; Vouchers</span>
+</button>
+<button class="category-tile" data-filter="others" data-name="others" type="button">
+<span class="category-icon"><img alt="Others" src="../images/category/others.png"/></span>
+<span class="category-name">Others</span>
+</button>
+</div>
+</div>
+<div class="tools">
+<input class="search" id="searchInput" placeholder="Search products..." type="search"/>
+<button class="chip is-active" data-filter="all" type="button">All</button>
+
+<label class="sort-control" for="categorySortSelect">Sort by:
+  <select id="categorySortSelect" onchange="syncCategoryFilter(this.value)" aria-label="Sort by">
+    <option value="all">All Categories</option>
+    <option value="mobile">Mobile & Accessories</option>
+    <option value="computer">Computer & Accessories</option>
+    <option value="gaming">Gaming & Consoles</option>
+    <option value="camera">Cameras & Drones</option>
+    <option value="watches">Watches</option>
+    <option value="women-bags">Women's Bags</option>
+    <option value="wallet">Men's Bags & Wallets</option>
+    <option value="women-clothes">Women Clothes</option>
+    <option value="men-clothes">Men Clothes</option>
+    <option value="women-shoes">Women Shoes</option>
+    <option value="men-shoes">Men Shoes</option>
+    <option value="fashion">Fashion Accessories</option>
+    <option value="muslim">Muslim Fashion</option>
+    <option value="home-living">Home & Living</option>
+    <option value="home-appliances">Home Appliances</option>
+    <option value="groceries">Groceries & Pets</option>
+    <option value="beauty">Health & Beauty</option>
+    <option value="baby">Baby & Toys</option>
+    <option value="sports">Sports & Outdoor</option>
+    <option value="automotive">Automotive</option>
+    <option value="travel">Travel & Luggage</option>
+    <option value="books">Games, Books & Hobbies</option>
+    <option value="tickets">Tickets & Vouchers</option>
+    <option value="others">Others</option>
+  </select>
+</label>
+<button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
+</div>
+</section>
+<section class="grid" id="productGrid"></section>
+<div class="empty" id="emptyState">No affiliate products found.</div>
+<div class="admin-product-modal" id="adminProductModal" aria-hidden="true">
+  <div class="admin-product-box" role="dialog" aria-modal="true" aria-labelledby="adminProductTitle">
+    <div class="admin-product-head">
+      <h2 id="adminProductTitle">Add Item / Card</h2>
+      <button class="admin-product-close" id="adminProductClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="admin-product-form" id="adminProductForm">
+      <input id="adminProductId" type="hidden"/>
+      <div class="admin-product-grid">
+        <label>Product Name
+          <input id="adminProductName" required placeholder="Example: AutoCAD LISP Pack"/>
+        </label>
+        <label>Category
+          <select id="adminProductCategory">
+    <option value="mobile">Mobile & Accessories</option>
+    <option value="computer">Computer & Accessories</option>
+    <option value="gaming">Gaming & Consoles</option>
+    <option value="camera">Cameras & Drones</option>
+    <option value="watches">Watches</option>
+    <option value="women-bags">Women's Bags</option>
+    <option value="wallet">Men's Bags & Wallets</option>
+    <option value="women-clothes">Women Clothes</option>
+    <option value="men-clothes">Men Clothes</option>
+    <option value="women-shoes">Women Shoes</option>
+    <option value="men-shoes">Men Shoes</option>
+    <option value="fashion">Fashion Accessories</option>
+    <option value="muslim">Muslim Fashion</option>
+    <option value="home-living">Home & Living</option>
+    <option value="home-appliances">Home Appliances</option>
+    <option value="groceries">Groceries & Pets</option>
+    <option value="beauty">Health & Beauty</option>
+    <option value="baby">Baby & Toys</option>
+    <option value="sports">Sports & Outdoor</option>
+    <option value="automotive">Automotive</option>
+    <option value="travel">Travel & Luggage</option>
+    <option value="books">Games, Books & Hobbies</option>
+    <option value="tickets">Tickets & Vouchers</option>
+    <option value="others">Others</option>
+        </select>
+        </label>
+      </div>
+      <label>Description
+        <textarea id="adminProductDesc" placeholder="Short product description"></textarea>
+      </label>
+      <div class="admin-product-grid">
+        <label>Price / Badge
+          <input id="adminProductPrice" placeholder="FREE / RM10 / RM50"/>
+        </label>
+        <label>Icon
+          <input id="adminProductIcon" placeholder="💻 / 🛒 / AZ"/>
+        </label>
+      </div>
+      <div class="admin-product-grid">
+        <label>Button Type
+          <select id="adminProductButtonText">
+            <option value="Download Now">Download Now</option>
+            <option value="Buy Now">Buy Now</option>
+            <option value="Get Access">Get Access</option>
+            <option value="Open">Open</option>
+          </select>
+        </label>
+        <label>Link
+          <input id="adminProductLink" required placeholder="https://..."/>
+        </label>
+      </div>
+      <div class="admin-product-actions">
+        <button class="admin-product-cancel" id="adminProductCancel" type="button">Cancel</button>
+        <button class="admin-product-save" type="submit">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+</main>
+<script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+      authDomain: 'azobss.firebaseapp.com',
+      projectId: 'azobss',
+      storageBucket: 'azobss.firebasestorage.app',
+      messagingSenderId: '159277716405',
+      appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+    };
+
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const ADMIN_PRODUCTS_COLLECTION = 'affiliateProducts';
+    const LOCAL_ADMIN_PRODUCTS_KEY = 'azobss_admin_added_products_v1';
+
+    const grid = document.getElementById('productGrid');
+    const searchInput = document.getElementById('searchInput');
+    const emptyState = document.getElementById('emptyState');
+    const categorySearch = document.getElementById('categorySearch');
+    const categorySortSelect = document.getElementById('categorySortSelect');
+    const myFavouriteButton = document.getElementById('myFavouriteButton');
+    const adminAddItemButton = document.getElementById('adminAddItemButton');
+    const categoryTiles = Array.from(document.querySelectorAll('.category-tile'));
+    const chips = Array.from(document.querySelectorAll('[data-filter]'));
+    let products = [];
+    let activeFilter = 'all';
+    let favouriteOnly = false;
+
+    
+  const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
+  function azExtractMyrAmount(price){
+    const text = String(price || '').replace(/,/g,'').trim();
+    if(!text || /^free$/i.test(text)) return null;
+    const match = text.match(/(?:RM\s*)?([0-9]+(?:\.[0-9]{1,2})?)/i);
+    return match ? Number(match[1]) : null;
+  }
+  function azUsdText(price){
+    const myr = azExtractMyrAmount(price);
+    if(!Number.isFinite(myr)) return '';
+    return '≈ USD ' + (myr * AZ_USD_PER_MYR).toFixed(2);
+  }
+  function azUsdBadge(price){
+    const text = azUsdText(price);
+    return text ? '<span class="az-usd-price">' + esc(text) + '</span>' : '';
+  }
+  function azUsdLine(price){
+    const text = azUsdText(price);
+    return text ? '<div class="az-usd-line">' + esc(text) + '</div>' : '';
+  }
+function esc(value){
+      return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+
+    function clean(v){return String(v || '').trim().toLowerCase();}
+    function getCurrentUserObject(){
+      try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null');}catch(e){return null;}
+    }
+    function isAdmin(){
+      const currentUser = getCurrentUserObject();
+      return sessionStorage.getItem('azobssLoggedIn') === '1' && (
+        clean(currentUser?.usernameKey) === 'zedan91' || clean(currentUser?.email) === 'zedan91@azobss.local'
+      );
+    }
+
+    function normalizeProduct(item){
+      const price = String(item.price || item.badge || '').trim();
+      const isFree = /^free$/i.test(price);
+      return {
+        id: item.id || ('item-' + Date.now() + '-' + Math.random().toString(36).slice(2,8)),
+        title: item.title || item.name || 'Untitled Item',
+        desc: item.desc || item.description || '',
+        badge: item.badge || (isFree ? 'FREE' : (price || 'Affiliate')),
+        price: price || item.badge || 'FREE',
+        icon: item.icon || (isFree ? 'FREE' : '🛒'),
+        category: item.category || 'affiliate-shop',
+        meta: item.meta || item.category || 'Affiliate item',
+        link: item.link || item.url || '#',
+        buttonText: item.buttonText || (isFree ? 'Download Now' : 'Buy Now'),
+        source: item.source || 'static'
+      };
+    }
+
+    function getFavouriteIds(){
+      try{return JSON.parse(localStorage.getItem('azobss_liked_products') || '[]');}catch(e){return [];}
+    }
+
+    function render(){
+      const queryText = searchInput.value.trim().toLowerCase();
+      const sortCategory = categorySortSelect?.value || 'all';
+      const favouriteIds = getFavouriteIds();
+      const filtered = products.filter(item => {
+        const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon,item.price].join(' ').toLowerCase();
+        const categoryOk = activeFilter === 'all' || item.category === activeFilter;
+        const sortOk = true;
+        const favOk = !favouriteOnly || favouriteIds.includes(item.id) || localStorage.getItem('azobss_like_' + item.id) === '1';
+      
+        return categoryOk && sortOk && favOk && (!queryText || haystack.includes(queryText));
+      });
+
+      grid.innerHTML = filtered.map(item => `
+        <article class="card" data-product-id="${esc(item.id)}" data-category="${esc(item.category)}">
+          <div class="top">
+            <div class="icon">${esc(item.icon || 'AZ')}</div>
+            <span class="badge">${esc(item.badge || item.price || 'Affiliate')}</span>
+          </div>
+          <h2>${esc(item.title)}</h2>
+          <p>${esc(item.desc)}</p>
+          <div class="meta">${esc(item.meta || item.category || 'Affiliate item')}</div>
+          <div class="card-actions">
+            <span class="card-price">${/^free$/i.test(item.price || item.badge || '') ? 'FREE' : '🛒 ' + esc(item.price || item.badge || '')}${azUsdBadge(item.price || item.badge || '')}</span>
+            <a class="card-open" href="${esc(item.link)}" target="_blank" rel="noopener">${esc(item.buttonText || 'Open')}</a>
+          </div>
+        </article>
+      `).join('');
+emptyState.style.display = filtered.length ? 'none' : 'block';
+    }
+
+    function refreshAdminState(){
+      adminAddItemButton.hidden = !isAdmin();
+    }
+
+    function loadLocalAdminProducts(){
+      try{return JSON.parse(localStorage.getItem(LOCAL_ADMIN_PRODUCTS_KEY) || '[]').map(normalizeProduct);}catch(e){return [];}
+    }
+
+    async function loadFirestoreProducts(){
+      try{
+        const snap = await getDocs(query(collection(db, ADMIN_PRODUCTS_COLLECTION), orderBy('createdAt','desc')));
+        return snap.docs.map(d => normalizeProduct({id:d.id, ...d.data(), source:'firestore'}));
+      }catch(err){
+        console.warn('Affiliate admin products Firestore load skipped:', err);
+        return [];
+      }
+    }
+
+    async function loadProducts(){
+      let staticProducts = [];
+      try{
+        const res = await fetch('../affiliate-products.json', {cache:'no-store'});
+        staticProducts = res.ok ? await res.json() : [];
+      }catch(e){ staticProducts = []; }
+      const firestoreProducts = await loadFirestoreProducts();
+      products = [...firestoreProducts, ...loadLocalAdminProducts(), ...(Array.isArray(staticProducts) ? staticProducts.map(normalizeProduct) : [])];
+      render();
+    }
+
+    chips.forEach(chip => chip.addEventListener('click', () => {
+      activeFilter = chip.dataset.filter || 'all';
+      if(categorySortSelect) categorySortSelect.value = activeFilter;
+      chips.forEach(item => item.classList.toggle('is-active', item === chip));
+      categoryTiles.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
+      favouriteOnly = false;
+      myFavouriteButton?.classList.remove('is-active');
+      render();
+    }));
+    myFavouriteButton?.addEventListener('click', () => {
+      favouriteOnly = !favouriteOnly;
+      myFavouriteButton.classList.toggle('is-active', favouriteOnly);
+      render();
+    });
+    categorySortSelect?.addEventListener('change', () => {
+      activeFilter = categorySortSelect.value || 'all';
+      categoryTiles.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
+      chips.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
+      favouriteOnly = false;
+      myFavouriteButton?.classList.remove('is-active');
+      render();
+    });
+    searchInput.addEventListener('input', render);
+    if(categorySearch){
+      categorySearch.addEventListener('input', () => {
+        const queryText = categorySearch.value.trim().toLowerCase();
+        categoryTiles.forEach(tile => {
+          const name = tile.dataset.name || tile.textContent.toLowerCase();
+          tile.style.display = !queryText || name.includes(queryText) ? '' : 'none';
+        });
+      });
+    }
+    categoryTiles.forEach(tile => tile.addEventListener('click', () => {
+      activeFilter = tile.dataset.filter || 'all';
+      if(categorySortSelect) categorySortSelect.value = activeFilter;
+      categoryTiles.forEach(item => item.classList.toggle('is-active', item === tile));
+      chips.forEach(item => item.classList.toggle('is-active', item.dataset.filter === activeFilter));
+      render();
+    }));
+
+    const modal = document.getElementById('adminProductModal');
+    const form = document.getElementById('adminProductForm');
+    const closeModal = () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); };
+    const openModal = () => { form.reset(); document.getElementById('adminProductPrice').value = 'FREE'; document.getElementById('adminProductIcon').value = '🛒'; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); };
+    adminAddItemButton?.addEventListener('click', openModal);
+    document.getElementById('adminProductClose')?.addEventListener('click', closeModal);
+    document.getElementById('adminProductCancel')?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+
+    form?.addEventListener('submit', async e => {
+      e.preventDefault();
+      if(!isAdmin()) return alert('Admin only.');
+      const product = normalizeProduct({
+        title: document.getElementById('adminProductName').value.trim(),
+        desc: document.getElementById('adminProductDesc').value.trim(),
+        category: document.getElementById('adminProductCategory').value,
+        price: document.getElementById('adminProductPrice').value.trim() || 'FREE',
+        badge: document.getElementById('adminProductPrice').value.trim() || 'FREE',
+        icon: document.getElementById('adminProductIcon').value.trim() || '🛒',
+        buttonText: document.getElementById('adminProductButtonText').value,
+        link: document.getElementById('adminProductLink').value.trim(),
+        meta: document.getElementById('adminProductCategory').selectedOptions[0]?.textContent || 'Affiliate item'
+      });
+      try{
+        await addDoc(collection(db, ADMIN_PRODUCTS_COLLECTION), {...product, createdAt: serverTimestamp(), createdBy: 'zedan91'});
+      }catch(err){
+        const saved = loadLocalAdminProducts();
+        saved.unshift(product);
+        localStorage.setItem(LOCAL_ADMIN_PRODUCTS_KEY, JSON.stringify(saved));
+        alert('Firestore rules belum allow affiliateProducts. Item disimpan local sementara. Tambah rules affiliateProducts untuk sync semua device.');
+      }
+      closeModal();
+      await loadProducts();
+    });
+
+    setInterval(refreshAdminState, 1500);
+    refreshAdminState();
+    loadProducts();
+  </script>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body>
+</html>

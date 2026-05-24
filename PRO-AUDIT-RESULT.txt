@@ -1,0 +1,11 @@
+Audit summary
+============
+Issues found after fix: 2
+JS syntax errors: 0
+
+Issues:
+mojibake marker index.html
+mojibake marker PA-BM/index.html
+
+JS errors:
+[]

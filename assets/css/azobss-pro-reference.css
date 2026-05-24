@@ -1,0 +1,133 @@
+
+/* AZOBSS Pro Reference Override
+   Purpose: one final global layer for consistent navbar, clean spacing and responsive behaviour. */
+:root{
+  --az-bg:#0f172a;
+  --az-panel:#111c2e;
+  --az-border:rgba(148,163,184,.28);
+  --az-green:#22c55e;
+  --az-gold:rgba(218,165,32,.48);
+  --az-text:#f8fafc;
+  --az-muted:#b6c6dc;
+  --az-nav-h:54px;
+}
+html{width:100%;overflow-x:hidden;scroll-behavior:smooth;}
+body{width:100%;overflow-x:hidden;background:var(--az-bg);color:var(--az-text);padding-top:var(--az-nav-h)!important;}
+.market-sticky-bar{position:fixed!important;top:0!important;left:0!important;right:0!important;z-index:5000!important;background:#000!important;border-bottom:1px solid var(--az-gold)!important;box-shadow:0 10px 28px rgba(0,0,0,.34)!important;}
+.market-bar-inner{width:100%!important;margin:0!important;padding:5px 10px!important;box-sizing:border-box!important;}
+.market-main-row{height:44px!important;min-height:44px!important;display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;overflow:hidden!important;}
+.market-brand{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 154px!important;width:154px!important;height:38px!important;max-width:154px!important;overflow:hidden!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.35)!important;background:#0b1220!important;text-decoration:none!important;margin:0!important;}
+.market-brand img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;border:0!important;border-radius:999px!important;background:transparent!important;}
+.nav-whatsapp-circle,.market-category-link{flex:0 0 auto!important;}
+.market-nav{display:flex!important;align-items:center!important;gap:7px!important;flex:1 1 auto!important;min-width:0!important;max-width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;scrollbar-width:none!important;-webkit-overflow-scrolling:touch!important;}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;min-height:32px!important;height:32px!important;padding:0 12px!important;border:1px solid #26344b!important;border-radius:999px!important;background:#101a2b!important;color:#f8fafc!important;text-decoration:none!important;font-size:13px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;text-shadow:none!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)!important;}
+.market-nav a:hover{border-color:var(--az-green)!important;color:var(--az-green)!important;}
+.market-nav a.is-active,.market-nav a.market-nav-primary{background:var(--az-green)!important;border-color:var(--az-green)!important;color:#052e16!important;box-shadow:0 0 15px rgba(34,197,94,.25), inset 0 0 0 1px rgba(255,255,255,.12)!important;}
+.site-auth-actions,.market-user-tools{display:flex!important;align-items:center!important;gap:16px!important;flex:0 0 auto!important;margin-left:4px!important;margin-right:0!important;white-space:nowrap!important;position:static!important;}
+body.is-authenticated .site-auth-actions{display:none!important;}
+body:not(.is-authenticated) .market-user-tools{display:none!important;}
+.market-user-label,.site-auth-btn{font-size:14px!important;font-weight:800!important;color:#fff!important;white-space:nowrap!important;}
+.market-icon-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:24px!important;height:32px!important;color:#fff!important;text-decoration:none!important;flex:0 0 auto!important;}
+.market-icon-btn svg{width:22px!important;height:22px!important;stroke-width:2.2!important;}
+.nav-pa-bm-link.is-hidden{display:inline-flex!important;}
+#azobssTopbar,.topbar{display:none!important;}
+img{max-width:100%;}
+@media(max-width:1120px){
+  .market-brand{flex-basis:132px!important;width:132px!important;max-width:132px!important;height:34px!important;}
+  .market-nav a{font-size:12px!important;padding:0 10px!important;}
+  .market-user-label{max-width:105px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .site-auth-actions,.market-user-tools{gap:10px!important;}
+}
+@media(max-width:760px){
+  :root{--az-nav-h:92px;}
+  .market-main-row{height:auto!important;min-height:82px!important;align-content:flex-start!important;flex-wrap:wrap!important;overflow:visible!important;}
+  .market-brand{flex-basis:126px!important;width:126px!important;height:32px!important;}
+  .market-nav{order:3!important;flex-basis:100%!important;width:100%!important;padding-bottom:4px!important;}
+  .market-nav a{height:30px!important;min-height:30px!important;font-size:12px!important;padding:0 10px!important;}
+  .market-user-tools,.site-auth-actions{margin-left:auto!important;gap:10px!important;}
+  .market-icon-btn{width:22px!important;}
+  .market-icon-btn svg{width:20px!important;height:20px!important;}
+}
+
+/* Account dropdown fix */
+.market-sticky-bar,.market-bar-inner,.market-main-row,.market-user-tools,.user-menu{overflow:visible!important}.user-menu{position:relative!important;cursor:pointer!important}.user-menu .user-dropdown{z-index:99999!important}.user-menu.is-open .user-dropdown{display:block!important}
+
+
+/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */
+.market-sticky-bar,
+.market-bar-inner,
+.market-main-row,
+.market-user-tools,
+.user-menu{
+  overflow:visible !important;
+}
+.user-menu{
+  position:relative !important;
+  z-index:100000 !important;
+}
+.user-menu .user-dropdown,
+#userDropdown{
+  position:absolute !important;
+  top:calc(100% + 10px) !important;
+  right:0 !important;
+  left:auto !important;
+  width:220px !important;
+  min-width:220px !important;
+  max-width:calc(100vw - 16px) !important;
+  padding:8px !important;
+  border-radius:14px !important;
+  background:#08111f !important;
+  border:1px solid rgba(148,163,184,.28) !important;
+  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;
+  z-index:100001 !important;
+  transform:none !important;
+}
+.user-menu:not(.is-open) .user-dropdown{display:none !important;}
+.user-menu.is-open .user-dropdown{display:block !important;}
+.user-dropdown-section{
+  padding:7px 10px 4px !important;
+  font-size:11px !important;
+  line-height:1.1 !important;
+}
+.user-dropdown-item{
+  min-height:38px !important;
+  padding:9px 10px !important;
+  font-size:13px !important;
+  line-height:1.15 !important;
+  border-radius:10px !important;
+}
+@media (max-width:768px){
+  .user-menu .user-dropdown,
+  #userDropdown{
+    position:fixed !important;
+    top:92px !important;
+    right:8px !important;
+    left:auto !important;
+    width:210px !important;
+    min-width:210px !important;
+    max-width:calc(100vw - 16px) !important;
+    max-height:68vh !important;
+    overflow-y:auto !important;
+    border-radius:14px !important;
+  }
+  .user-dropdown-section{
+    padding:7px 10px 4px !important;
+    font-size:10.5px !important;
+  }
+  .user-dropdown-item{
+    padding:9px 10px !important;
+    font-size:13px !important;
+    min-height:36px !important;
+  }
+}
+@media (max-width:420px){
+  .user-menu .user-dropdown,
+  #userDropdown{
+    top:88px !important;
+    right:6px !important;
+    width:196px !important;
+    min-width:196px !important;
+  }
+}
+

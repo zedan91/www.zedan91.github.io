@@ -1,0 +1,15 @@
+AZOBSS Clean Pro Perfect Auth V5 Audit
+
+Production checks completed:
+- Real local broken href/src/action path: 0
+- Dynamic template links skipped safely: expected JS-rendered links only
+- Old redirect index.html#login/signup: 0
+- Local legacy firebase-auth.js include: 0
+- Global auth script included in every HTML page: pass
+- Embedded duplicate profile settings modal removed from index.html and PA-BM/index.html
+- User dropdown standardized by /assets/js/azobss-global-auth.js
+- JavaScript syntax check: pass
+- Mojibake replacement characters: 0
+
+Main auth source of truth:
+/assets/js/azobss-global-auth.js

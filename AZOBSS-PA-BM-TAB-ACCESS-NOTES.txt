@@ -1,0 +1,9 @@
+PA/BM tab visibility rule:
+
+- PA/BM tab is hidden by default.
+- It appears only for admin users.
+- It also appears for registered users who entered member/invite code ZX6186 during sign up.
+- Normal users without ZX6186 will not see the PA/BM tab in navbar.
+
+Main logic file:
+/assets/js/azobss-global-auth.js
