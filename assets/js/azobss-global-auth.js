@@ -2270,7 +2270,7 @@ function bindAuth() {
       // Force-refresh the ID token first, then create /users/{username} BEFORE sending
       // verification email. If Firestore still rejects, delete the half-created Auth user
       // so the next signup attempt will not show email-already-in-use.
-      try{ await newUser.getIdToken(true); }catch(tokenError){ console.warn('AZOBSS token refresh after signup skipped:', tokenError?.code || tokenError?.message || tokenError); }
+      try{ await newUser.getIdToken(true); await newUser.reload(); }catch(tokenError){ console.warn('AZOBSS token refresh after signup skipped:', tokenError?.code || tokenError?.message || tokenError); }
 
       const profile={
         uid:newUser.uid,

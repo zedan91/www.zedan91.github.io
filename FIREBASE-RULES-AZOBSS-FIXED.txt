@@ -19,20 +19,26 @@ service cloud.firestore {
     }
 
     match /users/{username} {
-      // Required for signup username availability check.
+      // Untuk check username semasa signup.
       allow get: if true;
       allow list: if false;
 
-      // Required after Firebase Auth creates the account.
-      // Website must save uid == request.auth.uid.
+      // Signup: Auth user yang baru dibuat boleh create profile sendiri.
       allow create: if request.auth != null
         && request.resource.data.uid == request.auth.uid;
 
-      allow read, update, delete: if isAdmin() || isThisUser(username);
+      // Recovery fix: kalau profile separuh rosak / perlu merge semula,
+      // user yang sama boleh update profile berdasarkan uid yang dihantar.
+      allow update: if isAdmin()
+        || isThisUser(username)
+        || (request.auth != null
+          && request.resource.data.uid == request.auth.uid);
+
+      allow read, delete: if isAdmin() || isThisUser(username);
     }
 
     match /usernameAuthEmails/{username} {
-      // Required for username/email lookup during login/signup.
+      // Untuk lookup username -> email semasa login/signup.
       allow get: if true;
       allow list: if isAdmin();
 
