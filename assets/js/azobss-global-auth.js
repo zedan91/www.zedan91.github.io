@@ -1115,6 +1115,17 @@ function recordDisplayName(record){
 function userDocId(user){
   return String(user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
 }
+function userCanonicalKey(user){
+  return normalizeUsername(user?.usernameKey || user?.name || user?.displayName || user?.id || (user?.email ? String(user.email).split('@')[0] : ''));
+}
+function mergeDuplicateUserRecords(existing, incoming){
+  if(!existing) return incoming;
+  const existingMs = getFirestoreMs(existing.updatedAt || existing.createdAt || existing.createdAtClient || existing.updatedAtClient);
+  const incomingMs = getFirestoreMs(incoming.updatedAt || incoming.createdAt || incoming.createdAtClient || incoming.updatedAtClient);
+  const base = incomingMs >= existingMs ? { ...existing, ...incoming } : { ...incoming, ...existing };
+  base.id = userCanonicalKey(base) || base.id || existing.id || incoming.id;
+  return base;
+}
 function userProfileHtml(user){
   const role = String(user.role || 'member').toLowerCase();
   const hasAccess = role === 'admin' || normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '') === 'ZX6186';
@@ -1183,10 +1194,43 @@ async function saveAdminUserEdit(){
     updatedByAdmin: getSavedUser()?.usernameKey || 'admin'
   };
   try{
-    await setDoc(doc(db, 'users', docId), payload, { merge:true });
+    const oldRef = doc(db, 'users', docId);
+    const newRef = doc(db, 'users', usernameKey);
+    const existingUser = azobssLastRegisteredUsers.find(u => userDocId(u) === docId) || {};
+    const safePayload = {
+      ...existingUser,
+      ...payload,
+      usernameKey,
+      name: usernameKey,
+      displayName: usernameKey
+    };
+    delete safePayload.id;
+
+    // Always save using usernameKey as the Firestore document ID.
+    // This prevents duplicate records such as /users/zedann0001 and /users/zedan0001.
+    await setDoc(newRef, safePayload, { merge:true });
+
+    // If admin renamed / corrected username, remove the old profile document.
+    if(docId !== usernameKey){
+      try{ await deleteDoc(oldRef); }catch(moveError){ console.warn('Old duplicate user profile delete skipped:', moveError); }
+      try{ await deleteDoc(doc(db, 'usernameAuthEmails', docId)); }catch(e){}
+    }
+
+    // Keep username -> email login mapping aligned with the final usernameKey.
+    if(safePayload.email || safePayload.authEmail){
+      try{
+        await setDoc(doc(db, 'usernameAuthEmails', usernameKey), {
+          uid: safePayload.uid || existingUser.uid || '',
+          email: String(safePayload.authEmail || safePayload.email || '').trim().toLowerCase(),
+          usernameKey,
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+      }catch(mapError){ console.warn('Username email mapping update skipped:', mapError); }
+    }
+
     const current = getSavedUser();
     if(current && String(current.usernameKey || '').toLowerCase() === docId){
-      const updated = { ...current, ...payload };
+      const updated = { ...current, ...safePayload };
       delete updated.updatedAt;
       saveUser(updated);
       syncHeader(updated);
@@ -1532,9 +1576,14 @@ async function renderFirebaseAdminRecords(){
   }
 
   try{
-    const users = [];
+    const userMap = new Map();
     const userSnap = await getDocs(collection(db, 'users'));
-    userSnap.forEach(d=>users.push({ id:d.id, ...d.data() }));
+    userSnap.forEach(d=>{
+      const item = { id:d.id, ...d.data() };
+      const key = userCanonicalKey(item) || String(d.id || '').toLowerCase();
+      userMap.set(key, mergeDuplicateUserRecords(userMap.get(key), item));
+    });
+    const users = Array.from(userMap.values());
     users.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
     azobssLastRegisteredUsers = users;
     updateRegisteredUserStats(users);
