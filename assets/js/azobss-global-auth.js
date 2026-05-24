@@ -1,5 +1,10 @@
 
-if(!document.querySelector('script[src*="recaptcha/api.js"]')){const s=document.createElement('script');s.src='https://www.google.com/recaptcha/api.js';s.async=true;s.defer=true;document.head.appendChild(s);}
+// AZOBSS: Load Google reCAPTCHA in explicit mode so multiple widgets inside the auth modal can be tracked reliably.
+window.__AZOBSS_RECAPTCHA_WIDGETS__ = window.__AZOBSS_RECAPTCHA_WIDGETS__ || [];
+window.azobssRecaptchaReady = function(){
+  try { if (typeof window.renderAzobssRecaptchaWidgets === 'function') window.renderAzobssRecaptchaWidgets(); } catch(e){}
+};
+if(!document.querySelector('script[src*="recaptcha/api.js"]')){const s=document.createElement('script');s.src='https://www.google.com/recaptcha/api.js?render=explicit&onload=azobssRecaptchaReady';s.async=true;s.defer=true;document.head.appendChild(s);}
 
 
 function getAzobssPhoneDialForInput(input){
@@ -368,6 +373,61 @@ function injectAdminUserEditModal() {
 const $ = (id) => document.getElementById(id);
 function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
 function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
+
+function renderAzobssRecaptchaWidgets(){
+  const api = window.grecaptcha;
+  if(!api || typeof api.render !== 'function') return;
+  document.querySelectorAll('.g-recaptcha').forEach((el)=>{
+    if(el.dataset.azobssWidgetId) return;
+    try{
+      const widgetId = api.render(el, {sitekey: el.dataset.sitekey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'});
+      el.dataset.azobssWidgetId = String(widgetId);
+      window.__AZOBSS_RECAPTCHA_WIDGETS__.push(widgetId);
+    }catch(e){
+      // If Google already rendered it, keep the form usable instead of blocking the user.
+      console.warn('AZOBSS reCAPTCHA render skipped:', e?.message || e);
+    }
+  });
+}
+window.renderAzobssRecaptchaWidgets = renderAzobssRecaptchaWidgets;
+
+function isAzobssCaptchaVerified(scope){
+  const root = scope && scope.querySelector ? scope : document;
+
+  // Compatibility with older/fake checkbox versions if the baseline still contains them.
+  const legacyCheck = root.querySelector('input[type="checkbox"][id*="Captcha"], input[type="checkbox"][id*="captcha"], input[type="checkbox"][name*="captcha" i]');
+  if(legacyCheck) return legacyCheck.checked === true;
+
+  // Real Google reCAPTCHA widgets. Check only widgets inside the active form/box first.
+  try{
+    const api = window.grecaptcha;
+    if(api && typeof api.getResponse === 'function'){
+      renderAzobssRecaptchaWidgets();
+      const widgets = Array.from(root.querySelectorAll('.g-recaptcha[data-azobss-widget-id]'));
+      for(const el of widgets){
+        const id = Number(el.dataset.azobssWidgetId);
+        if(api.getResponse(id)) return true;
+      }
+      // Fallback for auto-rendered widgets / older builds.
+      if(api.getResponse()) return true;
+    }
+  }catch(e){
+    console.warn('AZOBSS captcha check skipped:', e?.message || e);
+  }
+  return false;
+}
+
+function resetAzobssCaptcha(scope){
+  try{
+    const api = window.grecaptcha;
+    if(!api || typeof api.reset !== 'function') return;
+    const root = scope && scope.querySelector ? scope : document;
+    root.querySelectorAll('.g-recaptcha[data-azobss-widget-id]').forEach((el)=>{
+      const id = Number(el.dataset.azobssWidgetId);
+      if(Number.isFinite(id)) api.reset(id);
+    });
+  }catch(e){}
+}
 
 const AZOBSS_USERNAME_AUTH_COLLECTION = 'usernameAuthEmails';
 async function getAuthEmailForUsername(usernameKey){
@@ -1042,6 +1102,7 @@ function openSiteAuth(mode='signin'){
   if(signupError) signupError.textContent='';
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden','false');
+  setTimeout(()=>{ try{ renderAzobssRecaptchaWidgets(); }catch(e){} }, 80);
   setTimeout(()=>{(isSignup?($('siteSignupUsername')||$('siteSignupName')):($('siteLoginUsername')||$('siteLoginName')))?.focus();},40);
 }
 function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
@@ -2336,7 +2397,7 @@ function bindAuth() {
     const err=$('siteLoginError');
     if(err) err.textContent='';
     if(box) box.hidden = !box.hidden;
-    setTimeout(()=>{ try{ $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 50);
+    setTimeout(()=>{ try{ renderAzobssRecaptchaWidgets(); $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 80);
   });
 
   $('siteSendPasswordResetButton')?.addEventListener('click', async (event)=>{
@@ -2345,7 +2406,7 @@ function bindAuth() {
     if(err){ err.style.color=''; err.textContent=''; }
 
     const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
-    if(!$('siteForgotPasswordCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(!isAzobssCaptchaVerified($('siteForgotPasswordBox') || $('siteSignInForm'))){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!raw){ if(err) err.textContent='Please enter your username or registered email.'; return; }
 
     try{
@@ -2361,6 +2422,7 @@ function bindAuth() {
       }
 
       await sendPasswordResetEmail(auth, resetEmail);
+      resetAzobssCaptcha($('siteForgotPasswordBox') || $('siteSignInForm'));
       if(err){ err.style.color='#62e6a5'; err.textContent='Password reset link sent to '+resetEmail+'. Please check inbox/spam folder.'; }
     }catch(error){
       if(err){
@@ -2380,7 +2442,7 @@ function bindAuth() {
     const phone=getPhoneWithDial('siteSignup');
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
     const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
-    if(!$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(!isAzobssCaptchaVerified($('siteSignUpForm'))){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
     if(window.__AZOBSS_SIGNUP_BUSY__) return;
     window.__AZOBSS_SIGNUP_BUSY__ = true;
@@ -2518,7 +2580,7 @@ function bindAuth() {
       if(submitButton){
         submitButton.textContent = submitButton.dataset.originalText || 'Create Account';
       }
-      try{ $('siteSignUpForm')?.reset(); }catch(_){}
+      try{ $('siteSignUpForm')?.reset(); resetAzobssCaptcha($('siteSignUpForm')); }catch(_){}
       // STOP here after signup success. Do not auto-switch/open the login section.
       return;
     }catch(error){
