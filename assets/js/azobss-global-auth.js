@@ -372,6 +372,10 @@ async function getAuthEmailForUsername(usernameKey){
   const key = normalizeUsername(usernameKey);
   if(!key) return '';
   try{
+    const localEmail = String(localStorage.getItem('azobssAuthEmailMap:' + key) || '').trim().toLowerCase();
+    if(localEmail && localEmail.includes('@')) return localEmail;
+  }catch(_){}
+  try{
     const lookupSnap = await getDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key));
     if(lookupSnap.exists()){
       const data = lookupSnap.data() || {};
@@ -1010,7 +1014,11 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
   const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
-  await setDoc(ref,profile,{merge:true});
+  try{
+    await setDoc(ref,profile,{merge:true});
+  }catch(profileWriteError){
+    console.warn('AZOBSS ensureUserProfile write skipped:', profileWriteError?.code || profileWriteError?.message || profileWriteError);
+  }
   return profile;
 }
 
@@ -2146,12 +2154,14 @@ function bindAuth() {
   $('siteSignInForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
     const err=$('siteLoginError'); if(err) err.textContent='';
-    const usernameKey=normalizeUsername(fieldValue('siteLoginUsername','siteLoginName'));
+    const loginInputRaw=String(fieldValue('siteLoginUsername','siteLoginName')).trim().toLowerCase();
+    const inputIsEmail = loginInputRaw.includes('@');
+    const usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || loginInputRaw.split('@')[0]) : normalizeUsername(loginInputRaw);
     const password=fieldValue('siteLoginPassword');
-    if(!usernameKey || !password){ if(err) err.textContent='Please enter username and password.'; return; }
+    if(!loginInputRaw || !password){ if(err) err.textContent='Please enter username/email and password.'; return; }
     try{
       await setPersistence(auth,browserLocalPersistence);
-      const lookupEmail = await getAuthEmailForUsername(usernameKey);
+      const lookupEmail = inputIsEmail ? loginInputRaw : await getAuthEmailForUsername(usernameKey);
       const loginEmail = lookupEmail || buildUserEmail(usernameKey);
       let credential;
       try{
@@ -2165,7 +2175,13 @@ function bindAuth() {
       }
       try{ await credential.user.reload(); }catch(e){}
       const authUser = auth.currentUser || credential.user;
-      const profile=await ensureUserProfile(authUser,{usernameKey});
+      let profile;
+      try{
+        profile = await ensureUserProfile(authUser,{usernameKey, email: lookupEmail || authUser.email || ''});
+      }catch(profileError){
+        console.warn('AZOBSS login profile recovery skipped:', profileError?.code || profileError?.message || profileError);
+        profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'member'};
+      }
       const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
       const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
       if(!authUser.emailVerified && !isOwnerBypass){
@@ -2175,11 +2191,21 @@ function bindAuth() {
         if(err) err.textContent='Please verify your email first.';
         return;
       }
-      if(realEmail && realEmail.includes('@')) await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
-      await setDoc(doc(db,'users',usernameKey), {verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || ''}, {merge:true});
+      if(realEmail && realEmail.includes('@')){
+        try{ localStorage.setItem('azobssAuthEmailMap:' + usernameKey, realEmail); localStorage.setItem('azobssSignupUsernameByEmail:' + realEmail, usernameKey); }catch(_){}
+        await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
+      }
+      try{
+        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || ''}, {merge:true});
+      }catch(loginProfileUpdateError){
+        console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
+      }
       const signedInUser={uid:authUser.uid,...profile,usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
       saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
-    }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
+    }catch(error){
+      console.warn('AZOBSS login failed:', error?.code || error?.message || error);
+      if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username/email or password. If username login fails, try your Gmail email once.' : ((error?.code || 'Login failed') + ': ' + (error?.message || 'Please try again.'));
+    }
   });
 
 
@@ -2264,6 +2290,10 @@ function bindAuth() {
 
       const credential=await createUserWithEmailAndPassword(auth,email,password);
       const newUser = credential.user;
+      try{
+        localStorage.setItem('azobssAuthEmailMap:' + usernameKey, email);
+        localStorage.setItem('azobssSignupUsernameByEmail:' + email, usernameKey);
+      }catch(_){}
 
       // IMPORTANT FIX:
       // Auth account can appear in Firebase before Firestore accepts /users/{username}.
@@ -2426,7 +2456,11 @@ function bindAuth() {
       }
       const profile=await ensureUserProfile(freshUser);
       const usernameKey = normalizeUsername(profile.usernameKey || freshUser.email?.split('@')[0] || 'user');
-      await setDoc(doc(db,'users',usernameKey), {verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+      try{
+        await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+      }catch(stateProfileUpdateError){
+        console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
+      }
       const fullUser={uid:freshUser.uid,...profile,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
     }
