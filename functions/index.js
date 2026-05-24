@@ -8,10 +8,10 @@ const db = admin.firestore();
 const auth = admin.auth();
 
 // AZOBSS setting:
-// User yang belum verify email lebih daripada 1 minit akan dibuang.
-// Nota: function ini jalan setiap 1 minit. Dalam keadaan sebenar, deletion boleh berlaku lebih kurang 1-2 minit
-// bergantung pada scheduler timing, bukan tepat 60.000 saat.
-const MAX_UNVERIFIED_AGE_MS = 60 * 1000;
+// User yang belum verify email lebih daripada 24 jam akan dibuang.
+// Nota: function ini jalan setiap 1 jam. Dalam keadaan sebenar, deletion boleh berlaku lebih kurang 24-25 jam
+// bergantung pada scheduler timing, bukan tepat 24 jam tepat.
+const MAX_UNVERIFIED_AGE_MS = 24 * 60 * 60 * 1000;
 const PAGE_SIZE = 1000;
 
 async function deleteDocsByUid(collectionName, uid) {
@@ -42,7 +42,7 @@ async function deleteKnownUserDocs(userRecord) {
 
 exports.cleanupUnverifiedUsers = onSchedule(
   {
-    schedule: 'every 1 minutes',
+    schedule: 'every 60 minutes',
     timeZone: 'Asia/Kuala_Lumpur',
     region: 'asia-southeast1',
     memory: '128MiB',

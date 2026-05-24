@@ -2400,8 +2400,8 @@ function bindAuth() {
       if(err){
         err.style.color='#62e6a5';
         err.textContent = profileSaved
-          ? '✅ Your AZOBSS account has been created! Please verify your email within 1 minute, then return and login.'
-          : '✅ Your AZOBSS account has been created! Please verify your email within 1 minute, then return and login.';
+          ? '✅ Your AZOBSS account has been created! Please verify your email within 24 hours, then return and login.'
+          : '✅ Your AZOBSS account has been created! Please verify your email within 24 hours, then return and login.';
       }
       setTimeout(()=>openSiteAuth('signin'), 1200);
     }catch(error){
