@@ -2318,18 +2318,28 @@ function bindAuth() {
         throw lastError;
       }
 
+      let verificationEmailSent = false;
+      try{
+        // Send verification first and never auto-delete the Auth account.
+        // Previous build deleted the Auth user when Firestore was slow/blocked,
+        // causing the user to disappear after ~30 seconds and no Gmail verification.
+        await sendEmailVerification(newUser);
+        verificationEmailSent = true;
+      }catch(verifyError){
+        console.warn('AZOBSS verification email send failed:', verifyError?.code || verifyError?.message || verifyError);
+      }
+
       try{
         await writeSignupProfileWithRetry();
       }catch(profileError){
         console.error('AZOBSS signup profile create failed after retries:', profileError);
-        try{ await deleteUser(newUser); }catch(deleteError){ console.warn('AZOBSS cleanup failed after profile create error:', deleteError?.code || deleteError?.message || deleteError); }
+        // IMPORTANT: do NOT deleteUser(newUser) here. Keep Auth user for recovery/reset.
         try{ await signOut(auth); }catch(_){}
-        const cleanupError = new Error((profileError?.message || 'Firestore profile write failed') + ' | Auth cleanup attempted. Delete this email in Firebase Authentication if it still appears.');
-        cleanupError.code = profileError?.code || 'firestore/profile-write-failed';
-        throw cleanupError;
+        const safeError = new Error((profileError?.message || 'Firestore profile write failed') + (verificationEmailSent ? ' | Verification email was sent. Auth user was kept.' : ' | Auth user was kept.'));
+        safeError.code = profileError?.code || 'firestore/profile-write-failed';
+        safeError.verificationEmailSent = verificationEmailSent;
+        throw safeError;
       }
-
-      await sendEmailVerification(newUser);
       if (invitedByCode === AZOBSS_PA_MEMBER_CODE) {
         localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
         sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
@@ -2348,7 +2358,7 @@ function bindAuth() {
         if(code === 'auth/email-already-in-use') err.textContent = 'This email is already registered. Please use Sign in or Forgot Password.';
         else if(code === 'auth/invalid-email') err.textContent = 'Invalid email address. Please check your email.';
         else if(code === 'auth/weak-password') err.textContent = 'Password is too weak. Use at least 8 characters with uppercase, lowercase and number.';
-        else if(code === 'permission-denied') err.textContent = 'Signup blocked by Firestore rules. Please update Firebase rules or contact admin.';
+        else if(code === 'permission-denied') err.textContent = error?.verificationEmailSent ? 'Account created and verification email sent, but Firestore profile save is blocked. Please update Firebase rules, then login/retry.' : 'Signup blocked by Firestore rules. Please update Firebase rules or contact admin.';
         else if(String(error?.message || '').toLowerCase().includes('permission')) err.textContent = 'Signup blocked by Firebase permission rules. Please contact admin.';
         else err.textContent = 'Sign up failed: ' + (error?.message || 'Please try again.');
       }
