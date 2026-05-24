@@ -164,7 +164,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -264,6 +264,7 @@ function injectModal() {
         <label for="siteForgotPasswordInput">Reset password by username or email
           <input id="siteForgotPasswordInput" autocomplete="username email" placeholder="Enter username or email" type="text">
         </label>
+        <label class="auth-captcha-row" for="siteForgotPasswordCaptcha"><input id="siteForgotPasswordCaptcha" type="checkbox"> I'm not a robot</label>
         <button class="btn secondary" id="siteSendPasswordResetButton" type="button">Send Reset Link</button>
         <p class="auth-reset-note">Enter your AZOBSS username or registered email. Firebase will send a password reset link to the registered account email.</p>
       </div>
@@ -274,7 +275,7 @@ function injectModal() {
         <input id="siteSignupUsername" autocomplete="username" placeholder="Choose a username" required type="text">
       </label>
       <label for="siteSignupPassword">Password
-        <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6" required type="password">
+        <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 8 characters" minlength="8" required type="password">
       </label>
       <label for="siteSignupPhone">Phone Number
         <div class="phone-input-row" data-country-phone="siteSignup" data-default-dial="60">
@@ -294,8 +295,9 @@ function injectModal() {
       <label for="siteSignupInviteCode">Member / Invite Code
         <input id="siteSignupInviteCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
+      <label class="auth-captcha-row" for="siteSignupCaptcha"><input id="siteSignupCaptcha" type="checkbox" required> I'm not a robot</label>
       <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Sign up</button>
+      <button class="btn signup" type="submit">Create Account</button>
       <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
     </form>
   </div>
@@ -716,6 +718,7 @@ document.addEventListener('click',(event)=>{ if(!event.target.closest('.country-
 function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
 function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
 function safeJson(raw){try{return JSON.parse(raw||'null');}catch{return null;}}
+function clearSavedUser(){try{localStorage.removeItem('azobssUser');sessionStorage.removeItem('azobssUser');}catch(e){}}
 function saveUser(user){
   const value = JSON.stringify(user);
   sessionStorage.setItem('azobssCurrentUser', value);
@@ -1006,7 +1009,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const snap = await getDoc(ref);
   if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
-  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   await setDoc(ref,profile,{merge:true});
   return profile;
 }
@@ -2160,10 +2163,21 @@ function bindAuth() {
           throw primaryError;
         }
       }
-      const profile=await ensureUserProfile(credential.user,{usernameKey});
-      const realEmail = String(profile.authEmail || profile.email || credential.user.email || '').trim().toLowerCase();
-      if(realEmail && realEmail.includes('@')) await saveUsernameAuthEmail(usernameKey, realEmail, credential.user.uid);
-      const signedInUser={uid:credential.user.uid,...profile,usernameKey,authEmail:realEmail || credential.user.email};
+      try{ await credential.user.reload(); }catch(e){}
+      const authUser = auth.currentUser || credential.user;
+      const profile=await ensureUserProfile(authUser,{usernameKey});
+      const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
+      const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
+      if(!authUser.emailVerified && !isOwnerBypass){
+        await signOut(auth);
+        clearSavedUser();
+        syncHeader(null);
+        if(err) err.textContent='Please verify your email first.';
+        return;
+      }
+      if(realEmail && realEmail.includes('@')) await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
+      await setDoc(doc(db,'users',usernameKey), {verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || ''}, {merge:true});
+      const signedInUser={uid:authUser.uid,...profile,usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
       saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
     }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
   });
@@ -2185,6 +2199,7 @@ function bindAuth() {
     if(err){ err.style.color=''; err.textContent=''; }
 
     const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
+    if(!$('siteForgotPasswordCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!raw){ if(err) err.textContent='Please enter your username or registered email.'; return; }
 
     try{
@@ -2219,21 +2234,35 @@ function bindAuth() {
     const phone=getPhoneWithDial('siteSignup');
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
     const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
-    if(!usernameKey || password.length<6 || !phone || !email){ if(err) err.textContent='Please complete all required fields.'; return; }
+    if(!$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
     try{
       await setPersistence(auth,browserLocalPersistence);
+      const existingUsername = await getDoc(doc(db,'users',usernameKey));
+      if(existingUsername.exists()){
+        if(err) err.textContent='Username already exists. Please choose another username.';
+        return;
+      }
       const credential=await createUserWithEmailAndPassword(auth,email,password);
-      const profile={uid:credential.user.uid,usernameKey,email,authEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',createdAt:serverTimestamp()};
+      await sendEmailVerification(credential.user);
+      const profile={uid:credential.user.uid,usernameKey,email,authEmail:email,contactEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',verified:false,emailVerified:false,createdAt:serverTimestamp()};
       await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
       if (invitedByCode === AZOBSS_PA_MEMBER_CODE) {
         localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
         sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
       }
       await saveUsernameAuthEmail(usernameKey, email, credential.user.uid);
-      const savedSignupUser={uid:credential.user.uid,usernameKey,email,authEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member'};
-      saveUser(savedSignupUser);
-      syncHeader(savedSignupUser); startAzobssPresenceHeartbeat(savedSignupUser); await recordLoginHistory(savedSignupUser, 'signup'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); closeSiteAuth();
-    }catch(error){ if(err) err.textContent = error?.code==='auth/email-already-in-use' ? 'Username already exists.' : 'Sign up failed. Please try again.'; }
+      await signOut(auth);
+      clearSavedUser();
+      syncHeader(null);
+      if(err){ err.style.color='#62e6a5'; err.textContent='Account created. Please verify your email first, then login.'; }
+      setTimeout(()=>openSiteAuth('signin'), 1200);
+    }catch(error){
+      if(err){
+        err.style.color='';
+        err.textContent = error?.code==='auth/email-already-in-use' ? 'This email is already registered.' : (error?.code==='auth/weak-password' ? 'Password is too weak. Use uppercase, lowercase and number.' : 'Sign up failed. Please try again.');
+      }
+    }
   });
 
   $('profileResetPasswordButton')?.addEventListener('click', async (event)=>{
@@ -2246,7 +2275,7 @@ function bindAuth() {
     const usernameKey=normalizeUsername(saved.usernameKey || saved.name || (auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : ''));
     if(!auth.currentUser || !usernameKey){ if(err) err.textContent='Please login again before reset password.'; return; }
     if(!currentPassword || !newPassword || !confirmPassword){ if(err) err.textContent='Please enter current password and new password.'; return; }
-    if(newPassword.length < 6){ if(err) err.textContent='New password must be at least 6 characters.'; return; }
+    if(newPassword.length < 8){ if(err) err.textContent='New password must be at least 8 characters.'; return; }
     if(newPassword !== confirmPassword){ if(err) err.textContent='Confirm password does not match.'; return; }
     try{
       const credential=EmailAuthProvider.credential(auth.currentUser.email || buildUserEmail(usernameKey), currentPassword);
@@ -2281,7 +2310,23 @@ function bindAuth() {
       if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
       clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); recordGuestHistory(); renderFirebaseAdminRecords(); return;
     }
-    try{ const profile=await ensureUserProfile(firebaseUser); const fullUser={uid:firebaseUser.uid,...profile}; saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords(); }
+    try{
+      try{ await firebaseUser.reload(); }catch(e){}
+      const freshUser = auth.currentUser || firebaseUser;
+      const ownerBypass = String(freshUser.email || '').toLowerCase() === 'zedan91@azobss.local';
+      if(!freshUser.emailVerified && !ownerBypass){
+        await signOut(auth);
+        clearUser();
+        syncHeader(null);
+        enforcePaBmPageAccess(null, true);
+        return;
+      }
+      const profile=await ensureUserProfile(freshUser);
+      const usernameKey = normalizeUsername(profile.usernameKey || freshUser.email?.split('@')[0] || 'user');
+      await setDoc(doc(db,'users',usernameKey), {verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+      const fullUser={uid:freshUser.uid,...profile,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
+      saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
+    }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
