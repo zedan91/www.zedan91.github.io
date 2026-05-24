@@ -2135,6 +2135,7 @@ function bindAuth() {
     if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
     const menu = event.target.closest('#userMenu, .user-menu');
     if (menu) {
+      if (event.target.closest('.user-dropdown a, .user-dropdown button')) return;
       if (event.target.closest('.user-dropdown')) return;
       event.preventDefault();
       event.stopPropagation();
