@@ -2236,13 +2236,32 @@ function bindAuth() {
     const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
     if(!$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
+    if(window.__AZOBSS_SIGNUP_BUSY__) return;
+    window.__AZOBSS_SIGNUP_BUSY__ = true;
+    const submitButton = event.submitter || $('siteSignUpForm')?.querySelector('button[type="submit"]');
+    if(submitButton) submitButton.disabled = true;
     try{
       await setPersistence(auth,browserLocalPersistence);
-      const existingUsername = await getDoc(doc(db,'users',usernameKey));
-      if(existingUsername.exists()){
+
+      // IMPORTANT FIX:
+      // Some Firestore rules block public reads on /users before login.
+      // The previous build treated that permission error as a full signup failure.
+      // We now try the safe username lookup first, and ignore blocked pre-check reads.
+      const existingAuthEmail = await getAuthEmailForUsername(usernameKey);
+      if(existingAuthEmail){
         if(err) err.textContent='Username already exists. Please choose another username.';
         return;
       }
+      try{
+        const existingUsername = await getDoc(doc(db,'users',usernameKey));
+        if(existingUsername.exists()){
+          if(err) err.textContent='Username already exists. Please choose another username.';
+          return;
+        }
+      }catch(precheckError){
+        console.warn('AZOBSS username pre-check skipped:', precheckError?.code || precheckError?.message || precheckError);
+      }
+
       const credential=await createUserWithEmailAndPassword(auth,email,password);
       await sendEmailVerification(credential.user);
       const profile={uid:credential.user.uid,usernameKey,email,authEmail:email,contactEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',verified:false,emailVerified:false,createdAt:serverTimestamp()};
@@ -2258,10 +2277,20 @@ function bindAuth() {
       if(err){ err.style.color='#62e6a5'; err.textContent='Account created. Please verify your email first, then login.'; }
       setTimeout(()=>openSiteAuth('signin'), 1200);
     }catch(error){
+      console.error('AZOBSS signup error:', error);
       if(err){
         err.style.color='';
-        err.textContent = error?.code==='auth/email-already-in-use' ? 'This email is already registered.' : (error?.code==='auth/weak-password' ? 'Password is too weak. Use uppercase, lowercase and number.' : 'Sign up failed. Please try again.');
+        const code = String(error?.code || '');
+        if(code === 'auth/email-already-in-use') err.textContent = 'This email is already registered. Please use Sign in or Forgot Password.';
+        else if(code === 'auth/invalid-email') err.textContent = 'Invalid email address. Please check your email.';
+        else if(code === 'auth/weak-password') err.textContent = 'Password is too weak. Use at least 8 characters with uppercase, lowercase and number.';
+        else if(code === 'permission-denied') err.textContent = 'Signup blocked by Firestore rules. Please update Firebase rules or contact admin.';
+        else if(String(error?.message || '').toLowerCase().includes('permission')) err.textContent = 'Signup blocked by Firebase permission rules. Please contact admin.';
+        else err.textContent = 'Sign up failed: ' + (error?.message || 'Please try again.');
       }
+    }finally{
+      window.__AZOBSS_SIGNUP_BUSY__ = false;
+      if(submitButton) submitButton.disabled = false;
     }
   });
 
