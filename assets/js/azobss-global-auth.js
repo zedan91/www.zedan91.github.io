@@ -1024,7 +1024,7 @@ function isPaBmProtectedPage(){
 }
 function isAzobssMemberProtectedPage(){
   const path = location.pathname.replace(/\\/g,'/');
-  return /\/(affiliate-shop|lucky-draw|purchase-history|member-area|members|my-account)\/?(?:index\.html)?$/i.test(path)
+  return /\/(purchase-history|member-area|members|my-account)\/?(?:index\.html)?$/i.test(path)
     || /\/(purchase-history|member-area|members|my-account)\//i.test(path);
 }
 function showPaBmDeniedAndRedirect(){
