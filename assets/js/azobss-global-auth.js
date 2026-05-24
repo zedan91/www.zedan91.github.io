@@ -922,12 +922,26 @@ function hasPaBmTabAccess(user){
 function isPaBmProtectedPage(){
   return /\/PA-BM\/?(?:index\.html)?$/i.test(location.pathname) || /\/PA-BM\//i.test(location.pathname);
 }
+function isAzobssMemberProtectedPage(){
+  const path = location.pathname.replace(/\\/g,'/');
+  return /\/(affiliate-shop|lucky-draw|purchase-history|member-area|members|my-account)\/?(?:index\.html)?$/i.test(path)
+    || /\/(affiliate-shop|lucky-draw|purchase-history|member-area|members|my-account)\//i.test(path);
+}
 function showPaBmDeniedAndRedirect(){
   // Silent redirect only. Do not show a PA/BM access popup/toast.
   const target = '/';
   if(location.pathname !== target) location.replace(target);
 }
+function showMemberLoginRequired(){
+  try{ sessionStorage.setItem('azobssAccessDeniedMessage','Please login first to access this page.'); }catch(e){}
+  if(location.pathname !== '/') location.replace('/#login');
+  else setTimeout(()=>openSiteAuth('signin'), 80);
+}
 function enforcePaBmPageAccess(user, settled){
+  if(isAzobssMemberProtectedPage() && !user){
+    if(settled) showMemberLoginRequired();
+    return;
+  }
   if(!isPaBmProtectedPage()) return;
   if(hasPaBmTabAccess(user)) return;
   if(settled) showPaBmDeniedAndRedirect();
@@ -2353,7 +2367,10 @@ function bindAuth() {
         // Send verification first and never auto-delete the Auth account.
         // Previous build deleted the Auth user when Firestore was slow/blocked,
         // causing the user to disappear after ~30 seconds and no Gmail verification.
-        await sendEmailVerification(newUser);
+        await sendEmailVerification(newUser, {
+          url: location.origin + '/?azobssVerified=1',
+          handleCodeInApp: false
+        });
         verificationEmailSent = true;
       }catch(verifyError){
         console.warn('AZOBSS verification email send failed:', verifyError?.code || verifyError?.message || verifyError);
@@ -2471,6 +2488,12 @@ function bindAuth() {
     catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
+  const params = new URLSearchParams(location.search || '');
+  if(params.get('azobssVerified') === '1') {
+    try{ sessionStorage.setItem('azobssAccessDeniedMessage','Email verified successfully. Please login.'); }catch(e){}
+    history.replaceState(null,'',location.pathname + '#login');
+    setTimeout(()=>openSiteAuth('signin'), 80);
+  }
   const hash = String(location.hash || '').toLowerCase();
   if (['#login','#signin'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signin'); }
   if (['#signup','#register'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signup'); }
