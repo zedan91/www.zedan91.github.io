@@ -2839,3 +2839,15 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if (event.key === 'Escape') closeMenus();
   }, true);
 })();
+
+
+// AZOBSS fallback forgot-password click fix
+document.addEventListener('click',function(e){
+ const btn=e.target.closest('#siteForgotPasswordButton');
+ if(!btn) return;
+ e.preventDefault();
+ const box=document.getElementById('siteForgotPasswordBox');
+ const err=document.getElementById('siteLoginError');
+ if(err) err.textContent='';
+ if(box) box.hidden=!box.hidden;
+});
