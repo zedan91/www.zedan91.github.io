@@ -2400,8 +2400,8 @@ function bindAuth() {
       if(err){
         err.style.color='#62e6a5';
         err.textContent = profileSaved
-          ? 'Account created. Please check your email and verify first, then login.'
-          : 'Account created and verification email sent. Firestore profile will be repaired after rules are published. Login with your Gmail email first.';
+          ? '✅ Your AZOBSS account has been created! Please verify your email within 1 minute, then return and login.'
+          : '✅ Your AZOBSS account has been created! Please verify your email within 1 minute, then return and login.';
       }
       setTimeout(()=>openSiteAuth('signin'), 1200);
     }catch(error){
