@@ -2688,3 +2688,24 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   return formatPhoneGuide(value);
 };
 
+
+
+// Fallback fix for user dropdown menu
+document.addEventListener('DOMContentLoaded',()=>{
+ const menu=document.getElementById('userMenu');
+ if(menu && !menu.dataset.azFix){
+   menu.dataset.azFix='1';
+   menu.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      this.classList.toggle('is-open');
+      this.setAttribute('aria-expanded',this.classList.contains('is-open')?'true':'false');
+   });
+   document.addEventListener('click',function(e){
+      if(!menu.contains(e.target)){
+         menu.classList.remove('is-open');
+         menu.setAttribute('aria-expanded','false');
+      }
+   });
+ }
+});
