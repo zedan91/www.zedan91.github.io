@@ -1,8 +1,171 @@
-// AZOBSS Firebase Sync: online users, login history, guest visits, and likes.
-// This file is intentionally standalone so it can run on every page without depending on internal module scope.
+
+
+function getAzobssPhoneDialForInput(input){
+  try {
+    const row = input && input.closest ? input.closest('[data-country-phone]') : null;
+    const hidden = row ? row.querySelector('input[type="hidden"][id$="Dial"]') : null;
+    const dial = String(hidden && hidden.value ? hidden.value : '60').replace(/\D/g, '') || '60';
+    return dial;
+  } catch (e) {
+    return '60';
+  }
+}
+
+function getAzobssMaxLocalDigits(input){
+  // ITU E.164: maximum international phone number length is 15 digits including country code.
+  const dial = getAzobssPhoneDialForInput(input);
+  return Math.max(1, 15 - dial.length);
+}
+
+function getPhoneGuideDigits(value, input){
+  const max = getAzobssMaxLocalDigits(input);
+  let digits = String(value || '').replace(/\D/g, '');
+  const dial = getAzobssPhoneDialForInput(input);
+  // If user pastes a full international number into local box, remove the country code.
+  if (digits.startsWith(dial) && digits.length > dial.length + 3) digits = digits.slice(dial.length);
+  // If user pastes a local Malaysia-style 0 prefix after choosing MY +60, remove only that local trunk 0.
+  if (dial === '60' && digits.startsWith('0') && digits.length > 1) digits = digits.slice(1);
+  return digits.slice(0, max);
+}
+
+function formatPhoneGuide(value, input){
+  const digits = getPhoneGuideDigits(value, input);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return digits.slice(0, 2) + '-' + digits.slice(2);
+  return digits.slice(0, 2) + '-' + digits.slice(2, 6) + ' ' + digits.slice(6);
+}
+
+function countPhoneDigitsBefore(value, pos){
+  return String(value || '').slice(0, Math.max(0, pos || 0)).replace(/\D/g, '').length;
+}
+
+function caretFromPhoneDigitIndex(formatted, digitIndex){
+  if (digitIndex <= 0) return 0;
+  let seen = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    if (/\d/.test(formatted[i])) {
+      seen++;
+      if (seen >= digitIndex) return i + 1;
+    }
+  }
+  return formatted.length;
+}
+
+function setPhoneValueAndCaret(input, digits, caretDigitIndex){
+  const formatted = formatPhoneGuide(digits, input);
+  input.value = formatted;
+  const caret = caretFromPhoneDigitIndex(formatted, Math.max(0, caretDigitIndex));
+  requestAnimationFrame(() => {
+    try { input.setSelectionRange(caret, caret); } catch (e) {}
+  });
+}
+
+function bindAzobssPhoneDisplayFormatter(root){
+  const scope = root || document;
+  const ids = ['siteSignupPhone', 'adminUserEditPhone', 'profileEditPhone'];
+  ids.forEach((id) => {
+    const input = scope.getElementById ? scope.getElementById(id) : null;
+    if (!input || input.dataset.azobssPhoneFormatter === '1') return;
+    input.dataset.azobssPhoneFormatter = '1';
+    input.placeholder = '10-3560 0723';
+    input.setAttribute('maxlength', String(15));
+
+    input.addEventListener('beforeinput', (event) => {
+      const type = event.inputType;
+      if (type !== 'deleteContentBackward' && type !== 'deleteContentForward') return;
+      const value = input.value || '';
+      const start = input.selectionStart ?? value.length;
+      const end = input.selectionEnd ?? start;
+      const digits = getPhoneGuideDigits(value, input);
+      let startDigit = countPhoneDigitsBefore(value, start);
+      let endDigit = countPhoneDigitsBefore(value, end);
+
+      event.preventDefault();
+
+      if (start !== end) {
+        const nextDigits = digits.slice(0, startDigit) + digits.slice(endDigit);
+        setPhoneValueAndCaret(input, nextDigits, startDigit);
+      } else if (type === 'deleteContentBackward') {
+        if (startDigit <= 0) {
+          setPhoneValueAndCaret(input, digits, 0);
+        } else {
+          const removeIndex = startDigit - 1;
+          const nextDigits = digits.slice(0, removeIndex) + digits.slice(removeIndex + 1);
+          setPhoneValueAndCaret(input, nextDigits, removeIndex);
+        }
+      } else {
+        if (startDigit >= digits.length) {
+          setPhoneValueAndCaret(input, digits, digits.length);
+        } else {
+          const nextDigits = digits.slice(0, startDigit) + digits.slice(startDigit + 1);
+          setPhoneValueAndCaret(input, nextDigits, startDigit);
+        }
+      }
+
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    input.addEventListener('input', () => {
+      const oldValue = input.value || '';
+      const oldCaret = input.selectionStart ?? oldValue.length;
+      const digitIndex = countPhoneDigitsBefore(oldValue, oldCaret);
+      const digits = getPhoneGuideDigits(oldValue, input);
+      setPhoneValueAndCaret(input, digits, digitIndex);
+    });
+
+    input.addEventListener('paste', () => {
+      setTimeout(() => {
+        const digits = getPhoneGuideDigits(input.value, input);
+        setPhoneValueAndCaret(input, digits, digits.length);
+      }, 0);
+    });
+
+    input.addEventListener('blur', () => {
+      input.value = formatPhoneGuide(input.value, input);
+    });
+  });
+}
+
+(function installAzobssPhoneDisplayFormatter(){
+  if (window.__azobssPhoneDisplayFormatterInstalled) return;
+  window.__azobssPhoneDisplayFormatterInstalled = true;
+  document.addEventListener('DOMContentLoaded', () => bindAzobssPhoneDisplayFormatter(document));
+  setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 300);
+  setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 1200);
+  document.addEventListener('click', () => setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 50), true);
+})();
+
+function normalizePhoneNumber(phone, countryCode="+60"){
+  phone=(phone||"").replace(/\s+/g,"").replace(/-/g,"");
+  if(phone.startsWith("+")) return phone;
+  if(phone.startsWith("0")) return countryCode + phone.substring(1);
+  if(phone.startsWith(countryCode.replace("+",""))) return "+"+phone;
+  return countryCode + phone;
+}
+
+// Clean production URLs: /folder/index.html -> /folder/
+(function cleanAzobssIndexHtmlUrl(){
+  try {
+    var path = window.location.pathname || '';
+    if (/\/index\.html$/i.test(path)) {
+      var cleanPath = path.replace(/index\.html$/i, '');
+      window.history.replaceState(null, document.title, cleanPath + window.location.search + (window.location.hash && window.location.hash !== '/' ? window.location.hash : ''));
+    }
+  } catch (e) {}
+})();
+
+// Remove old / hash if user opens/clicks an old cached logo link
+(function(){
+  if (window.location.hash === '/') {
+    window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+  }
+})();
+
+// AZOBSS Global Auth (single source of truth for all pages)
+// Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, collection, addDoc, getDocs, getDoc, updateDoc, serverTimestamp, deleteDoc, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -14,57 +177,870 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
-const authReady = new Promise(resolve => { try{ onAuthStateChanged(auth, user => resolve(user || null)); }catch{ resolve(null); } });
+const db = getFirestore(app);
 
-const ONLINE_COLLECTION = 'onlineUsers';
-const LOGIN_HISTORY_COLLECTION = 'loginHistory';
-const GUEST_HISTORY_COLLECTION = 'guestHistory';
-const USER_LIKES_COLLECTION = 'userLikes';
-const ONLINE_WINDOW_MS = 120000; // real online only (seen within 2 minutes)
-const PAGE_SIZE = 6;
+function addStyle() {
+  if (document.getElementById('azobss-global-auth-style')) return;
+  const style = document.createElement('style');
+  style.id = 'azobss-global-auth-style';
+  style.textContent = `
+.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
+.auth-modal.is-open{display:flex;}
+.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
+.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.auth-modal-top h3{margin:0;font-size:20px;font-weight:800;}
+.auth-close-btn{width:28px;height:28px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.auth-close-btn:hover{background:rgba(255,255,255,.2);}
+.auth-modal-form{display:grid;gap:14px;}
+.auth-modal-form[hidden]{display:none!important;}
+.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff;}
+.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none;}
+.auth-modal-form input:focus{border-color:#fff;}
+.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6);}
+.auth-modal-form .btn.signup{background:#22c55e;color:#fff;}
+.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
+.auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
+.auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
+.auth-captcha-row{display:flex!important;align-items:center!important;gap:12px!important;font-weight:800!important;color:#fff!important;cursor:pointer;line-height:20px;}
+.auth-captcha-row input[type="checkbox"]{width:20px!important;height:20px!important;margin:0!important;flex-shrink:0;}
 
-function safeJson(raw){ try { return JSON.parse(raw || 'null'); } catch { return null; } }
+.phone-input-row{display:grid;grid-template-columns:minmax(118px,auto) 1fr;gap:8px;align-items:center;}
+.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.country-code-button::after{content:'⌄';margin-left:7px;font-size:13px;color:#cbd5e1;}
+.country-combo{position:relative;}
+.country-code-menu{position:absolute;left:0;top:calc(100% + 8px);width:260px;max-width:calc(100vw - 44px);padding:8px;border:1px solid rgba(211,223,240,.32);border-radius:12px;background:#081326;box-shadow:0 18px 45px rgba(0,0,0,.45);display:none;z-index:10020;}
+.country-combo.is-open .country-code-menu{display:block;}
+.country-menu-search{width:100%;box-sizing:border-box;margin-bottom:7px;border:1px solid rgba(211,223,240,.35);border-radius:9px;background:#0d1628;color:#fff;padding:10px 11px;font:inherit;outline:none;}
+.country-menu-options{max-height:220px;overflow:auto;display:grid;gap:4px;}
+.country-code-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;border-radius:8px;background:transparent;color:#eaf2ff;padding:9px 10px;text-align:left;font:inherit;font-weight:800;cursor:pointer;}
+.country-code-option:hover,.country-code-option:focus{background:rgba(34,197,94,.16);outline:none;}
+.country-option-dial{color:#62e6a5;font-weight:900;}
+.phone-number-wrap{position:relative;}
+/* Phone layout like Android/Google Contacts: country code stays in the country box,
+   the phone input shows local number only. Firebase still saves full +countrycode number. */
+.phone-prefix{display:none!important;}
+.phone-number-wrap input{padding-left:14px!important;}
+body.is-authenticated .site-auth-actions{display:none!important;}
+body.is-authenticated .market-user-tools{display:flex!important;}
+body.is-authenticated .user-menu{display:flex!important;}
+body:not(.is-authenticated) .market-user-tools{display:none!important;}
+.market-user-tools{align-items:center!important;}
+.user-menu{position:relative!important;}
+.user-menu.is-open .user-dropdown{display:block!important;}
+.user-dropdown{z-index:3300!important;}
+.market-nav a.market-nav-active{background:#22c55e!important;border-color:#22c55e!important;color:#052e16!important;text-shadow:none!important;box-shadow:0 0 15px rgba(34,197,94,.34),inset 0 0 0 1px rgba(255,255,255,.12)!important;}
+.az-admin-user-edit-btn{border:0;border-radius:9px;background:#2f6bed;color:#fff;padding:9px 14px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.55);}
+.az-admin-user-edit-btn:hover{filter:brightness(1.08);}
+.az-admin-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.az-admin-modal-actions .btn.secondary{background:#64748b;}
+
+.forgot-password-box{margin-top:10px;padding:12px;border:1px solid rgba(88,166,255,.35);border-radius:14px;background:rgba(15,23,42,.35);display:grid;gap:10px;}
+.forgot-password-box[hidden]{display:none!important;}
+.forgot-password-box .btn.secondary{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;}
+.auth-reset-note{font-size:12px;line-height:1.45;color:#a9c7e8;margin:0;}
+`;
+  document.head.appendChild(style);
+}
+
+function injectModal() {
+  if (document.getElementById('siteAuthModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div class="auth-modal" id="siteAuthModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteAuthTitle">
+    <div class="auth-modal-top">
+      <h3 id="siteAuthTitle">Sign in</h3>
+      <button class="auth-close-btn" id="siteAuthClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="auth-modal-form" id="siteSignInForm">
+      <label for="siteLoginUsername">Username
+        <input id="siteLoginUsername" autocomplete="username" placeholder="Enter your username" required type="text">
+      </label>
+      <label for="siteLoginPassword">Password
+        <input id="siteLoginPassword" autocomplete="current-password" placeholder="Password" required type="password">
+      </label>
+      <p class="request-error" id="siteLoginError"></p>
+      <button class="btn" type="submit">Login</button>
+      <p class="auth-switch-note"><button id="siteForgotPasswordButton" type="button">Forgot password?</button></p>
+      <div class="forgot-password-box" id="siteForgotPasswordBox" hidden>
+        <label for="siteForgotPasswordInput">Reset password by username or email
+          <input id="siteForgotPasswordInput" autocomplete="username email" placeholder="Enter username or email" type="text">
+        </label>
+        <label class="auth-captcha-row" for="siteForgotPasswordCaptcha"><input id="siteForgotPasswordCaptcha" type="checkbox"> I'm not a robot</label>
+        <button class="btn secondary" id="siteSendPasswordResetButton" type="button">Send Reset Link</button>
+        <p class="auth-reset-note">Enter your AZOBSS username or registered email. Firebase will send a password reset link to the registered account email.</p>
+      </div>
+      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
+    </form>
+    <form class="auth-modal-form" id="siteSignUpForm" hidden>
+      <label for="siteSignupUsername">Username
+        <input id="siteSignupUsername" autocomplete="username" placeholder="Choose a username" required type="text">
+      </label>
+      <label for="siteSignupPassword">Password
+        <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 8 characters" minlength="8" required type="password">
+      </label>
+      <label for="siteSignupPhone">Phone Number
+        <div class="phone-input-row" data-country-phone="siteSignup" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <label for="siteSignupEmail">Email
+        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
+      </label>
+      <label for="siteSignupInviteCode">Member / Invite Code
+        <input id="siteSignupInviteCode" placeholder="Enter member code if available (optional)" type="text">
+      </label>
+      <label class="auth-captcha-row" for="siteSignupCaptcha"><input id="siteSignupCaptcha" type="checkbox" required> I'm not a robot</label>
+      <p class="request-error" id="siteSignupError"></p>
+      <button class="btn signup" type="submit">Create Account</button>
+      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
+}
+
+function injectAdminUserEditModal() {
+  if (document.getElementById('adminUserEditModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div class="auth-modal" id="adminUserEditModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminUserEditTitle">
+    <div class="auth-modal-top">
+      <h3 id="adminUserEditTitle">Edit Registered User</h3>
+      <button class="auth-close-btn" id="adminUserEditClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="auth-modal-form" id="adminUserEditForm">
+      <input id="adminUserEditDocId" type="hidden">
+      <label for="adminUserEditUsername">Username / Name
+        <input id="adminUserEditUsername" placeholder="Username" required type="text">
+      </label>
+      <label for="adminUserEditPhone">Phone Number
+        <div class="phone-input-row" data-country-phone="adminUserEdit" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="adminUserEditPhone" inputmode="tel" placeholder="10-3560 0723" type="tel"><input id="adminUserEditDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <label for="adminUserEditEmail">Contact Email
+        <input id="adminUserEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email">
+      </label>
+      <label for="adminUserEditRole">Role
+        <select id="adminUserEditRole">
+          <option value="member">Member</option>
+          <option value="admin">Admin</option>
+        </select>
+      </label>
+      <label for="adminUserEditPaAccess">Allow PA/BM Access
+        <select id="adminUserEditPaAccess">
+          <option value="yes">Yes - allow PA/BM tab</option>
+          <option value="no">No - hide PA/BM tab</option>
+        </select>
+      </label>
+      <label for="adminUserEditMemberCode">Member / Invite Code
+        <input id="adminUserEditMemberCode" placeholder="Enter member code if available (optional)" type="text">
+      </label>
+      <p class="request-error" id="adminUserEditError"></p>
+      <div class="az-admin-modal-actions">
+        <button class="btn signup" type="submit">Save User</button>
+        <button class="btn secondary" id="adminUserEditCancel" type="button">Cancel</button>
+      </div>
+      <p class="auth-switch-note" style="text-align:left">Admin can edit profile records here. Password reset should be done using the reset-password flow.</p>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+}
+
+const $ = (id) => document.getElementById(id);
+function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
+function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
+
+const AZOBSS_USERNAME_AUTH_COLLECTION = 'usernameAuthEmails';
+async function getAuthEmailForUsername(usernameKey){
+  const key = normalizeUsername(usernameKey);
+  if(!key) return '';
+  try{
+    const lookupSnap = await getDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key));
+    if(lookupSnap.exists()){
+      const data = lookupSnap.data() || {};
+      const email = String(data.email || data.authEmail || '').trim().toLowerCase();
+      if(email && email.includes('@')) return email;
+    }
+  }catch(e){
+    console.warn('AZOBSS username auth lookup failed:', e?.code || e?.message || e);
+  }
+  try{
+    const userSnap = await getDoc(doc(db, 'users', key));
+    if(userSnap.exists()){
+      const data = userSnap.data() || {};
+      const email = String(data.authEmail || data.email || '').trim().toLowerCase();
+      if(email && email.includes('@')) return email;
+    }
+  }catch(e){
+    console.warn('AZOBSS users email lookup failed:', e?.code || e?.message || e);
+  }
+  return '';
+}
+async function saveUsernameAuthEmail(usernameKey, email, uid){
+  const key = normalizeUsername(usernameKey);
+  const authEmail = String(email || '').trim().toLowerCase();
+  if(!key || !authEmail || !authEmail.includes('@')) return;
+  try{
+    await setDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key), {
+      usernameKey: key,
+      email: authEmail,
+      authEmail,
+      uid: uid || null,
+      updatedAt: serverTimestamp()
+    }, {merge:true});
+  }catch(e){
+    console.warn('AZOBSS username auth email save failed:', e?.code || e?.message || e);
+  }
+}
+async function migrateUsernameAuthLookupForAdmin(){
+  try{
+    const saved = getSavedUser && getSavedUser();
+    if(!saved || String(saved.email || '').toLowerCase() !== 'zedan91@azobss.local') return;
+    const snap = await getDocs(collection(db, 'users'));
+    const jobs = [];
+    snap.forEach((d)=>{
+      const data = d.data() || {};
+      const usernameKey = normalizeUsername(data.usernameKey || d.id);
+      const email = String(data.authEmail || data.email || '').trim().toLowerCase();
+      if(usernameKey && email && email.includes('@')) jobs.push(saveUsernameAuthEmail(usernameKey, email, data.uid || null));
+    });
+    await Promise.all(jobs.slice(0, 200));
+  }catch(e){
+    console.warn('AZOBSS username auth lookup migration skipped:', e?.code || e?.message || e);
+  }
+}
+
+function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
+const AZOBSS_COUNTRY_DIAL_CODES = [
+  ["🇲🇾", "Malaysia", "60"],
+  ["🇸🇬", "Singapore", "65"],
+  ["🇮🇩", "Indonesia", "62"],
+  ["🇧🇳", "Brunei", "673"],
+  ["🇹🇭", "Thailand", "66"],
+  ["🇵🇭", "Philippines", "63"],
+  ["🇻🇳", "Vietnam", "84"],
+  ["🇨🇳", "China", "86"],
+  ["🇭🇰", "Hong Kong", "852"],
+  ["🇹🇼", "Taiwan", "886"],
+  ["🇯🇵", "Japan", "81"],
+  ["🇰🇷", "South Korea", "82"],
+  ["🇮🇳", "India", "91"],
+  ["🇵🇰", "Pakistan", "92"],
+  ["🇧🇩", "Bangladesh", "880"],
+  ["🇦🇺", "Australia", "61"],
+  ["🇳🇿", "New Zealand", "64"],
+  ["🇬🇧", "United Kingdom", "44"],
+  ["🇺🇸", "United States", "1"],
+  ["🇨🇦", "Canada", "1"],
+  ["🇸🇦", "Saudi Arabia", "966"],
+  ["🇦🇪", "United Arab Emirates", "971"],
+  ["🇦🇫", "Afghanistan", "93"],
+  ["🇦🇱", "Albania", "355"],
+  ["🇩🇿", "Algeria", "213"],
+  ["🇦🇸", "American Samoa", "1684"],
+  ["🇦🇴", "Angola", "244"],
+  ["🇦🇮", "Anguilla", "1264"],
+  ["🇦🇬", "Antigua and Barbuda", "1268"],
+  ["🇦🇷", "Argentina", "54"],
+  ["🇦🇲", "Armenia", "374"],
+  ["🇦🇼", "Aruba", "297"],
+  ["🇦🇹", "Austria", "43"],
+  ["🇦🇿", "Azerbaijan", "994"],
+  ["🇧🇭", "Bahrain", "973"],
+  ["🇧🇧", "Barbados", "1246"],
+  ["🇧🇾", "Belarus", "375"],
+  ["🇧🇪", "Belgium", "32"],
+  ["🇧🇿", "Belize", "501"],
+  ["🇧🇯", "Benin", "229"],
+  ["🇧🇲", "Bermuda", "1441"],
+  ["🇧🇹", "Bhutan", "975"],
+  ["🇧🇴", "Bolivia", "591"],
+  ["🇧🇦", "Bosnia and Herzegovina", "387"],
+  ["🇧🇼", "Botswana", "267"],
+  ["🇧🇷", "Brazil", "55"],
+  ["🇮🇴", "British Indian Ocean Territory", "246"],
+  ["🇧🇬", "Bulgaria", "359"],
+  ["🇧🇫", "Burkina Faso", "226"],
+  ["🇧🇮", "Burundi", "257"],
+  ["🇰🇭", "Cambodia", "855"],
+  ["🇨🇲", "Cameroon", "237"],
+  ["🇨🇻", "Cape Verde", "238"],
+  ["🇰🇾", "Cayman Islands", "1345"],
+  ["🇨🇫", "Central African Republic", "236"],
+  ["🇹🇩", "Chad", "235"],
+  ["🇨🇱", "Chile", "56"],
+  ["🇨🇽", "Christmas Island", "61"],
+  ["🇨🇨", "Cocos (Keeling) Islands", "61"],
+  ["🇨🇴", "Colombia", "57"],
+  ["🇰🇲", "Comoros", "269"],
+  ["🇨🇰", "Cook Islands", "682"],
+  ["🇨🇷", "Costa Rica", "506"],
+  ["🇭🇷", "Croatia", "385"],
+  ["🇨🇺", "Cuba", "53"],
+  ["🇨🇾", "Cyprus", "357"],
+  ["🇨🇿", "Czech Republic", "420"],
+  ["🇨🇩", "Democratic Republic of the Congo", "243"],
+  ["🇩🇰", "Denmark", "45"],
+  ["🇩🇯", "Djibouti", "253"],
+  ["🇩🇲", "Dominica", "1767"],
+  ["🇩🇴", "Dominican Republic", "1809"],
+  ["🇩🇴", "Dominican Republic", "1829"],
+  ["🇩🇴", "Dominican Republic", "1849"],
+  ["🇹🇱", "East Timor", "670"],
+  ["🇪🇨", "Ecuador", "593"],
+  ["🇪🇬", "Egypt", "20"],
+  ["🇸🇻", "El Salvador", "503"],
+  ["🇬🇶", "Equatorial Guinea", "240"],
+  ["🇪🇷", "Eritrea", "291"],
+  ["🇪🇪", "Estonia", "372"],
+  ["🇪🇹", "Ethiopia", "251"],
+  ["🇫🇰", "Falkland Islands", "500"],
+  ["🇫🇴", "Faroe Islands", "298"],
+  ["🇫🇲", "Federated States of Micronesia", "691"],
+  ["🇫🇯", "Fiji", "679"],
+  ["🇫🇮", "Finland", "358"],
+  ["🇫🇷", "France", "33"],
+  ["🇬🇫", "French Guiana", "594"],
+  ["🇵🇫", "French Polynesia", "689"],
+  ["🇬🇦", "Gabon", "241"],
+  ["🇬🇪", "Georgia", "995"],
+  ["🇩🇪", "Germany", "49"],
+  ["🇬🇭", "Ghana", "233"],
+  ["🇬🇮", "Gibraltar", "350"],
+  ["🇬🇷", "Greece", "30"],
+  ["🇬🇱", "Greenland", "299"],
+  ["🇬🇩", "Grenada", "1473"],
+  ["🇬🇵", "Guadeloupe", "590"],
+  ["🇬🇺", "Guam", "1671"],
+  ["🇬🇹", "Guatemala", "502"],
+  ["🇬🇬", "Guernsey", "44"],
+  ["🇬🇳", "Guinea", "224"],
+  ["🇬🇼", "Guinea-Bissau", "245"],
+  ["🇬🇾", "Guyana", "592"],
+  ["🇭🇹", "Haiti", "509"],
+  ["🇭🇳", "Honduras", "504"],
+  ["🇭🇺", "Hungary", "36"],
+  ["🇮🇸", "Iceland", "354"],
+  ["🇮🇷", "Iran", "98"],
+  ["🇮🇶", "Iraq", "964"],
+  ["🇮🇪", "Ireland", "353"],
+  ["🇮🇲", "Isle of Man", "44"],
+  ["🇮🇱", "Israel", "972"],
+  ["🇮🇹", "Italy", "39"],
+  ["🇨🇮", "Ivory Coast", "225"],
+  ["🇯🇲", "Jamaica", "1876"],
+  ["🇯🇪", "Jersey", "44"],
+  ["🇯🇴", "Jordan", "962"],
+  ["🇰🇿", "Kazakhstan", "76"],
+  ["🇰🇿", "Kazakhstan", "77"],
+  ["🇰🇪", "Kenya", "254"],
+  ["🇰🇮", "Kiribati", "686"],
+  ["🇰🇼", "Kuwait", "965"],
+  ["🇰🇬", "Kyrgyzstan", "996"],
+  ["🇱🇦", "Laos", "856"],
+  ["🇱🇻", "Latvia", "371"],
+  ["🇱🇧", "Lebanon", "961"],
+  ["🇱🇸", "Lesotho", "266"],
+  ["🇱🇷", "Liberia", "231"],
+  ["🇱🇾", "Libya", "218"],
+  ["🇱🇮", "Liechtenstein", "423"],
+  ["🇱🇹", "Lithuania", "370"],
+  ["🇱🇺", "Luxembourg", "352"],
+  ["🇲🇴", "Macau", "853"],
+  ["🇲🇬", "Madagascar", "261"],
+  ["🇲🇼", "Malawi", "265"],
+  ["🇲🇻", "Maldives", "960"],
+  ["🇲🇱", "Mali", "223"],
+  ["🇲🇹", "Malta", "356"],
+  ["🇲🇭", "Marshall Islands", "692"],
+  ["🇲🇶", "Martinique", "596"],
+  ["🇲🇷", "Mauritania", "222"],
+  ["🇲🇺", "Mauritius", "230"],
+  ["🇾🇹", "Mayotte", "262"],
+  ["🇲🇽", "Mexico", "52"],
+  ["🇲🇩", "Moldova", "373"],
+  ["🇲🇨", "Monaco", "377"],
+  ["🇲🇳", "Mongolia", "976"],
+  ["🇲🇸", "Montserrat", "1664"],
+  ["🇲🇦", "Morocco", "212"],
+  ["🇲🇿", "Mozambique", "258"],
+  ["🇳🇦", "Namibia", "264"],
+  ["🇳🇷", "Nauru", "674"],
+  ["🇳🇵", "Nepal", "977"],
+  ["🇳🇱", "Netherlands", "31"],
+  ["🇳🇨", "New Caledonia", "687"],
+  ["🇳🇮", "Nicaragua", "505"],
+  ["🇳🇪", "Niger", "227"],
+  ["🇳🇬", "Nigeria", "234"],
+  ["🇳🇺", "Niue", "683"],
+  ["🇳🇫", "Norfolk Island", "672"],
+  ["🇰🇵", "North Korea", "850"],
+  ["🇲🇵", "Northern Mariana Islands", "1670"],
+  ["🇳🇴", "Norway", "47"],
+  ["🇴🇲", "Oman", "968"],
+  ["🇵🇼", "Palau", "680"],
+  ["🇵🇦", "Panama", "507"],
+  ["🇵🇬", "Papua New Guinea", "675"],
+  ["🇵🇾", "Paraguay", "595"],
+  ["🇵🇪", "Peru", "51"],
+  ["🇵🇳", "Pitcairn Islands", "64"],
+  ["🇵🇱", "Poland", "48"],
+  ["🇵🇹", "Portugal", "351"],
+  ["🇵🇷", "Puerto Rico", "1787"],
+  ["🇵🇷", "Puerto Rico", "1939"],
+  ["🇶🇦", "Qatar", "974"],
+  ["🇲🇰", "Republic of Macedonia", "389"],
+  ["🇨🇬", "Republic of the Congo", "242"],
+  ["🇷🇴", "Romania", "40"],
+  ["🇷🇺", "Russia", "7"],
+  ["🇷🇼", "Rwanda", "250"],
+  ["🇷🇪", "Réunion", "262"],
+  ["🇸🇭", "Saint Helena", "290"],
+  ["🇰🇳", "Saint Kitts and Nevis", "1869"],
+  ["🇱🇨", "Saint Lucia", "1758"],
+  ["🇵🇲", "Saint Pierre and Miquelon", "508"],
+  ["🇻🇨", "Saint Vincent and the Grenadines", "1784"],
+  ["🇼🇸", "Samoa", "685"],
+  ["🇸🇲", "San Marino", "378"],
+  ["🇸🇳", "Senegal", "221"],
+  ["🇷🇸", "Serbia", "381"],
+  ["🇸🇨", "Seychelles", "248"],
+  ["🇸🇱", "Sierra Leone", "232"],
+  ["🇸🇰", "Slovakia", "421"],
+  ["🇸🇮", "Slovenia", "386"],
+  ["🇸🇧", "Solomon Islands", "677"],
+  ["🇸🇴", "Somalia", "252"],
+  ["🇿🇦", "South Africa", "27"],
+  ["🇬🇸", "South Georgia", "500"],
+  ["🇸🇸", "South Sudan", "211"],
+  ["🇪🇸", "Spain", "34"],
+  ["🇱🇰", "Sri Lanka", "94"],
+  ["🇸🇩", "Sudan", "249"],
+  ["🇸🇷", "Suriname", "597"],
+  ["🇸🇯", "Svalbard and Jan Mayen", "4779"],
+  ["🇸🇿", "Swaziland", "268"],
+  ["🇸🇪", "Sweden", "46"],
+  ["🇨🇭", "Switzerland", "41"],
+  ["🇸🇾", "Syria", "963"],
+  ["🇸🇹", "São Tomé and Príncipe", "239"],
+  ["🇹🇯", "Tajikistan", "992"],
+  ["🇹🇿", "Tanzania", "255"],
+  ["🇧🇸", "The Bahamas", "1242"],
+  ["🇬🇲", "The Gambia", "220"],
+  ["🇹🇬", "Togo", "228"],
+  ["🇹🇰", "Tokelau", "690"],
+  ["🇹🇴", "Tonga", "676"],
+  ["🇹🇹", "Trinidad and Tobago", "1868"],
+  ["🇹🇳", "Tunisia", "216"],
+  ["🇹🇷", "Turkey", "90"],
+  ["🇹🇲", "Turkmenistan", "993"],
+  ["🇹🇻", "Tuvalu", "688"],
+  ["🇺🇬", "Uganda", "256"],
+  ["🇺🇦", "Ukraine", "380"],
+  ["🇺🇾", "Uruguay", "598"],
+  ["🇺🇿", "Uzbekistan", "998"],
+  ["🇻🇺", "Vanuatu", "678"],
+  ["🇻🇪", "Venezuela", "58"],
+  ["🇼🇫", "Wallis and Futuna", "681"],
+  ["🇪🇭", "Western Sahara", "212"],
+  ["🇾🇪", "Yemen", "967"],
+  ["🇿🇲", "Zambia", "260"],
+  ["🇿🇼", "Zimbabwe", "263"]
+];
+function getCountryByDial(dial){return AZOBSS_COUNTRY_DIAL_CODES.find(c=>c[2]===String(dial||'').replace(/[^0-9]/g,'')) || AZOBSS_COUNTRY_DIAL_CODES[0];}
+function setPhoneDial(prefix, dial){
+  const row=document.querySelector(`[data-country-phone="${prefix}"]`); if(!row) return;
+  const country=getCountryByDial(dial);
+  const hidden=$(prefix+'Dial'); if(hidden) hidden.value=country[2];
+  const btn=row.querySelector('[data-country-button]'); if(btn) btn.textContent=`${country[0]} +${country[2]}`;
+  const pre=row.querySelector('[data-phone-prefix]'); if(pre) pre.textContent=`+${country[2]}`;
+}
+function normalizeAzobssPhone(value, fallbackDial='60'){
+  const dial=String(fallbackDial||'60').replace(/[^0-9]/g,'') || '60';
+  let raw=String(value||'').trim();
+  if(!raw) return '';
+  const hadPlus=/^\s*\+/.test(raw);
+  let digits=raw.replace(/[^0-9]/g,'');
+  if(!digits) return '';
+  if(hadPlus) return '+' + digits;
+  if(digits.startsWith('00')) return '+' + digits.slice(2);
+  if(digits.startsWith(dial)) return '+' + digits;
+  if(digits.startsWith('0')) return '+' + dial + digits.replace(/^0+/,'');
+  return '+' + dial + digits;
+}
+function getPhoneWithDial(prefix){
+  const dial=String($(prefix+'Dial')?.value||'60').replace(/[^0-9]/g,'') || '60';
+  return normalizeAzobssPhone($(prefix+'Phone')?.value||'', dial);
+}
+function splitPhoneToDialLocal(value){
+  const digits=String(value||'').replace(/[^0-9]/g,'');
+  const sorted=[...AZOBSS_COUNTRY_DIAL_CODES].sort((a,b)=>b[2].length-a[2].length);
+  const found=sorted.find(c=>digits.startsWith(c[2]) && digits.length>c[2].length+3);
+  if(found) return {dial:found[2], local:digits.slice(found[2].length).replace(/^0+/,'')};
+  return {dial:'60', local:digits.replace(/^60/,'').replace(/^0+/,'')};
+}
+function setupCountryPhoneSelectors(root=document){
+  root.querySelectorAll('[data-country-phone]').forEach(row=>{
+    if(row.dataset.countryReady==='1') return; row.dataset.countryReady='1';
+    const prefix=row.dataset.countryPhone;
+    const btn=row.querySelector('[data-country-button]');
+    const combo=row.querySelector('.country-combo');
+    const search=row.querySelector('[data-country-search]');
+    const options=row.querySelector('[data-country-options]');
+    const render=(q='')=>{
+      if(!options) return; const query=String(q).trim().toLowerCase();
+      options.innerHTML=AZOBSS_COUNTRY_DIAL_CODES.filter(c=>!query || c.join(' ').toLowerCase().includes(query) || ('+'+c[2]).includes(query)).map(c=>`<button class="country-code-option" type="button" data-dial="${c[2]}"><span>${c[0]} ${c[1]}</span><span class="country-option-dial">+${c[2]}</span></button>`).join('');
+    };
+    render(); setPhoneDial(prefix,row.dataset.defaultDial||'60');
+    btn?.addEventListener('click',()=>{ combo?.classList.toggle('is-open'); if(combo?.classList.contains('is-open')){ render(search?.value||''); setTimeout(()=>search?.focus(),0); } });
+    search?.addEventListener('input',()=>render(search.value));
+    options?.addEventListener('click',(event)=>{ const opt=event.target.closest('[data-dial]'); if(!opt) return; setPhoneDial(prefix,opt.dataset.dial); combo?.classList.remove('is-open'); });
+  });
+}
+document.addEventListener('click',(event)=>{ if(!event.target.closest('.country-combo')) document.querySelectorAll('.country-combo.is-open').forEach(el=>el.classList.remove('is-open')); });
+function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
+function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
+function safeJson(raw){try{return JSON.parse(raw||'null');}catch{return null;}}
+function clearSavedUser(){try{localStorage.removeItem('azobssUser');sessionStorage.removeItem('azobssUser');}catch(e){}}
+function saveUser(user){
+  const value = JSON.stringify(user);
+  sessionStorage.setItem('azobssCurrentUser', value);
+  localStorage.setItem('azobssCurrentUser', value);
+  sessionStorage.setItem('azobssLoggedIn', '1');
+  localStorage.setItem('azobssLoggedIn', '1');
+  window.dispatchEvent(new Event('storage'));
+}
+function clearUser(silent=false){
+  ['azobssCurrentUser','azobssUser','azobssLoggedIn'].forEach((key)=>{
+    sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
+  });
+  if(!silent) window.dispatchEvent(new Event('storage'));
+}
+
+let azobssLogoutInProgress = false;
+async function azobssLogoutOnce(){
+  if(azobssLogoutInProgress) return;
+  azobssLogoutInProgress = true;
+  window.__AZOBSS_LOGGING_OUT__ = true;
+  try{
+    const logoutUser = getSavedUser();
+    if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
+    await removeOnlineUser(logoutUser);
+    document.querySelectorAll('.user-menu.is-open').forEach(el=>{
+      el.classList.remove('is-open');
+      el.setAttribute('aria-expanded','false');
+    });
+    clearUser(true);
+    syncHeader(null);
+    // Do not let storage/admin render loops run during logout. Redirect once, quickly.
+    const redirectTimer = setTimeout(()=>{ window.location.replace('/'); }, 120);
+    try{
+      await Promise.race([
+        signOut(auth),
+        new Promise(resolve=>setTimeout(resolve, 900))
+      ]);
+    }catch(_e){}
+    clearTimeout(redirectTimer);
+  }finally{
+    window.location.replace('/');
+  }
+}
+window.azobssLogoutUser = azobssLogoutOnce;
+window.addEventListener('beforeunload', ()=>{ try{ if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer); }catch(_e){} });
 function getSavedUser(){
   return safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
-         safeJson(localStorage.getItem('azobssCurrentUser')) ||
-         safeJson(sessionStorage.getItem('azobssUser')) ||
-         safeJson(localStorage.getItem('azobssUser'));
+    safeJson(localStorage.getItem('azobssCurrentUser')) ||
+    safeJson(sessionStorage.getItem('azobssUser')) ||
+    safeJson(localStorage.getItem('azobssUser'));
 }
-function userKey(user){
-  const u = user || getSavedUser() || {};
-  // IMPORTANT: AZOBSS user profiles are stored using usernameKey as the document id.
-  // Use uid only as a fallback; otherwise likes can be saved under a uid doc and look empty later.
-  return String(u.usernameKey || u.name || u.displayName || (u.email ? String(u.email).split('@')[0] : '') || u.uid || '').trim().toLowerCase().replace(/[^a-z0-9_\-]/g,'');
+
+// Expose auth helpers for legacy admin panels in index.html and PA-BM/index.html.
+window.getSavedUser = getSavedUser;
+window.hasSavedLogin = function(){ return !!getSavedUser(); };
+window.azobssIsAdminUser = isAzobssAdmin;
+window.azobssHasPaBmAccess = hasPaBmTabAccess;
+function fieldValue(...ids){
+  for (const id of ids) {
+    const el = $(id);
+    if (el) return el.value || '';
+  }
+  return '';
 }
-function likeKeyCandidates(user){
-  const u = user || getSavedUser() || {};
-  const savedKey = userKey(u);
-  const uid = String(auth.currentUser?.uid || u.uid || '').trim().toLowerCase().replace(/[^a-z0-9_\-]/g,'');
-  const out = [];
-  [savedKey, uid].forEach(k => { if(k && !out.includes(k)) out.push(k); });
-  return out;
+
+function normalizeUserMenu() {
+  const dropdown = $('userDropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = `
+    <div class="user-dropdown-section">Buying</div>
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+    <a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
+    <div class="user-dropdown-section">Account</div>
+    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
+    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
 }
-function likeGlobalId(key, itemId){
-  return String(key + '_' + itemId).replace(/[^a-zA-Z0-9_\-]/g,'').slice(0,180);
+
+function normalizePath(pathname) {
+  return String(pathname || '/')
+    .toLowerCase()
+    .replace(/\/index\.html$/, '/')
+    .replace(/\/+$/, '/');
 }
-function compactLikePayload(item, user, key){
-  return {
-    ...item,
-    uid:String(auth.currentUser?.uid || user.uid || ''),
-    usernameKey:key,
-    displayName:String(user.usernameKey||user.name||user.displayName||key),
-    email:String(user.email||auth.currentUser?.email||''),
-    phone:String(user.phone||''),
-    createdAtMs:Number(item.createdAtMs || Date.now()),
-    updatedAtMs:Date.now(),
-    createdAtClient:item.createdAtClient || new Date().toISOString(),
-    updatedAtClient:new Date().toISOString()
-  };
+
+function getActiveNavPath() {
+  const path = normalizePath(location.pathname);
+  if (path === '/') return '';
+  if (path.includes('/pa-bm/')) return '/pa-bm/';
+  if (path.includes('/software-tools/')) return '/software-tools/';
+  if (path.includes('/cad-tools-&-resources/') || path.includes('/cad-tools-%26-resources/')) return '/cad-tools-&-resources/';
+  if (path.includes('/affiliate-shop/')) return '/affiliate-shop/';
+  if (path.includes('/lucky-draw/')) return '/lucky-draw/';
+  if (path.includes('/tools/')) return '/tools/';
+  return '';
 }
-function escapeHtml(value){
-  return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+function syncActiveNav() {
+  const activePath = getActiveNavPath();
+  document.querySelectorAll('.market-nav a').forEach((link) => {
+    link.classList.remove('market-nav-primary', 'is-active', 'market-nav-active');
+    if (!activePath) return;
+
+    let linkPath = '';
+    try {
+      linkPath = normalizePath(new URL(link.getAttribute('href') || '', location.href).pathname);
+    } catch {
+      linkPath = '';
+    }
+
+    if (linkPath.includes(activePath)) {
+      link.classList.add('market-nav-active');
+    }
+  });
+}
+
+function injectProfileSettingsModal() {
+  if (document.getElementById('profileSettingsModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div aria-hidden="true" class="auth-modal" id="profileSettingsModal">
+  <div aria-labelledby="profileSettingsTitle" aria-modal="true" class="auth-modal-card" role="dialog">
+    <div class="auth-modal-top">
+      <h3 id="profileSettingsTitle">Edit Profile</h3>
+      <button aria-label="Close" class="auth-close-btn" id="profileSettingsClose" type="button">×</button>
+    </div>
+    <form class="auth-modal-form" id="profileSettingsForm">
+      <label for="profileEditName">Username / Name<input id="profileEditName" placeholder="Username" required type="text"></label>
+      <label for="profileEditPhone">Phone Number
+        <div class="phone-input-row" data-country-phone="profileEdit" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="profileEditPhone" inputmode="tel" placeholder="10-3560 0723" type="tel"><input id="profileEditDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
+      <p class="profile-settings-note">This updates your profile in Firebase and keeps it saved after reopening the browser.</p>
+      <div class="profile-password-box" aria-label="Reset Password">
+        <p class="profile-password-title">Reset Password</p>
+        <p class="profile-password-help">For security, enter your current password first, then set a new password.</p>
+        <label for="profileCurrentPassword">Current Password<input id="profileCurrentPassword" autocomplete="current-password" placeholder="Current password" type="password"></label>
+        <label for="profileNewPassword">New Password<input id="profileNewPassword" autocomplete="new-password" minlength="6" placeholder="Minimum 6 characters" type="password"></label>
+        <label for="profileConfirmPassword">Confirm New Password<input id="profileConfirmPassword" autocomplete="new-password" minlength="6" placeholder="Re-enter new password" type="password"></label>
+        <button class="btn secondary" id="profileResetPasswordButton" type="button">Reset Password</button>
+      </div>
+      <p class="request-error" id="profileSettingsError"></p>
+      <div class="profile-settings-actions">
+        <button class="btn" id="profileSettingsSaveButton" type="submit">Save Changes</button>
+        <button class="btn" id="profileSettingsCancelButton" type="button">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
+}
+
+const AZOBSS_ADMIN_USERS = ['zedan91'];
+const AZOBSS_PA_MEMBER_CODE = 'ZX6186';
+function getUserKey(user){ return String(user?.usernameKey || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
+function isAzobssAdmin(user){
+  const key = getUserKey(user);
+  const role = String(user?.role || '').trim().toLowerCase();
+  return !!(user && (role === 'admin' || AZOBSS_ADMIN_USERS.includes(key)));
+}
+function normalizePaMemberCode(value){
+  return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+function getPaMemberCodes(user){
+  const u = user || {};
+  const savedCode = normalizePaMemberCode(localStorage.getItem('azobssPaMemberCode') || sessionStorage.getItem('azobssPaMemberCode') || '');
+  return [
+    u.invitedByCode,
+    u.memberCode,
+    u.paMemberCode,
+    u.accessCode,
+    u.inviteCodeUsed,
+    u.signupCode,
+    u.member_code,
+    u.referralCode,
+    // Some older builds stored the entered member code in inviteCode.
+    u.inviteCode,
+    savedCode
+  ].map(normalizePaMemberCode).filter(Boolean);
+}
+function hasPaBmTabAccess(user){
+  if (!user) return false;
+  if (isAzobssAdmin(user)) return true;
+  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
+}
+
+function isPaBmProtectedPage(){
+  return /\/PA-BM\/?(?:index\.html)?$/i.test(location.pathname) || /\/PA-BM\//i.test(location.pathname);
+}
+function showPaBmDeniedAndRedirect(){
+  // Silent redirect only. Do not show a PA/BM access popup/toast.
+  const target = '/';
+  if(location.pathname !== target) location.replace(target);
+}
+function enforcePaBmPageAccess(user, settled){
+  if(!isPaBmProtectedPage()) return;
+  if(hasPaBmTabAccess(user)) return;
+  if(settled) showPaBmDeniedAndRedirect();
+}
+function showAccessDeniedMessage(){
+  let msg = '';
+  try{ msg = sessionStorage.getItem('azobssAccessDeniedMessage') || ''; sessionStorage.removeItem('azobssAccessDeniedMessage'); }catch(e){}
+  if(!msg) return;
+  const box = document.createElement('div');
+  box.className = 'azobss-access-denied-toast';
+  box.textContent = msg;
+  document.body.appendChild(box);
+  setTimeout(()=>box.classList.add('is-visible'), 30);
+  setTimeout(()=>{ box.classList.remove('is-visible'); setTimeout(()=>box.remove(), 350); }, 4200);
+}
+
+function syncHeader(user){
+  const authActions = $('siteAuthActions');
+  const tools = $('marketUserTools');
+  const name = $('signedInName');
+  const avatar = $('userAvatar');
+  const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link'));
+  const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
+  const canShowPaBm = hasPaBmTabAccess(user);
+  const isAdminUser = isAzobssAdmin(user);
+  document.body.classList.toggle('is-admin', !!isAdminUser);
+  document.body.classList.toggle('has-pa-access', !!canShowPaBm);
+  paBmButtons.forEach((paBm) => {
+    paBm.hidden = !canShowPaBm;
+    paBm.classList.toggle('is-hidden', !canShowPaBm);
+    paBm.style.setProperty('display', canShowPaBm ? 'inline-flex' : 'none', 'important');
+    paBm.style.setProperty('visibility', canShowPaBm ? 'visible' : 'hidden', 'important');
+    paBm.style.setProperty('pointer-events', canShowPaBm ? 'auto' : 'none', 'important');
+  });
+  if (display) {
+    document.body.classList.add('is-authenticated');
+    if (name) name.textContent = display;
+    if (avatar) avatar.textContent = initials(display);
+    if (authActions) authActions.style.setProperty('display','none','important');
+    if (tools) tools.style.setProperty('display','flex','important');
+  } else {
+    document.body.classList.remove('is-authenticated');
+    if (authActions) authActions.style.removeProperty('display');
+    if (tools) tools.style.removeProperty('display');
+    document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+  }
+}
+
+function openSiteAuth(mode='signin'){
+  const modal=$('siteAuthModal'), title=$('siteAuthTitle'), signInForm=$('siteSignInForm'), signUpForm=$('siteSignUpForm');
+  if(!modal || !signInForm || !signUpForm) return;
+  const isSignup=mode==='signup' || mode==='register';
+  if(title) title.textContent=isSignup?'Sign up':'Sign in';
+  signInForm.hidden=isSignup;
+  signUpForm.hidden=!isSignup;
+  const loginError=$('siteLoginError'), signupError=$('siteSignupError');
+  if(loginError) loginError.textContent='';
+  if(signupError) signupError.textContent='';
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+  setTimeout(()=>{(isSignup?($('siteSignupUsername')||$('siteSignupName')):($('siteLoginUsername')||$('siteLoginName')))?.focus();},40);
+}
+function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+function openProfileSettings(){
+  const modal=$('profileSettingsModal'); if(!modal) return;
+  const user=getSavedUser() || {};
+  if($('profileEditName')) $('profileEditName').value=user.usernameKey || user.name || '';
+  const parsedPhone=splitPhoneToDialLocal(user.phone || '');
+  setPhoneDial('profileEdit', parsedPhone.dial);
+  if($('profileEditPhone')) $('profileEditPhone').value=formatPhoneGuide(parsedPhone.local || '');
+  if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
+  const err=$('profileSettingsError'); if(err) err.textContent='';
+  ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+}
+function closeProfileSettings(){const modal=$('profileSettingsModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+window.openSiteAuth = openSiteAuth;
+window.closeSiteAuth = closeSiteAuth;
+
+async function ensureUserProfile(firebaseUser, fallback={}){
+  const usernameKey = fallback.usernameKey || normalizeUsername(firebaseUser.email?.split('@')[0] || 'user');
+  const ref = doc(db, 'users', usernameKey);
+  const snap = await getDoc(ref);
+  if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
+  const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
+  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  await setDoc(ref,profile,{merge:true});
+  return profile;
+}
+
+
+
+
+
+// Firebase persistent admin/user records.
+const AZOBSS_LOGIN_HISTORY_COLLECTION = 'loginHistory';
+const AZOBSS_ONLINE_USERS_COLLECTION = 'onlineUsers';
+const AZOBSS_GUEST_HISTORY_COLLECTION = 'guestHistory';
+const AZOBSS_ADMIN_PAGE_SIZE = 6;
+let azobssRegisteredUsersPage = 1;
+let azobssLiveUsersPage = 1;
+let azobssLoginHistoryPage = 1;
+let azobssGuestHistoryPage = 1;
+const AZOBSS_REAL_ONLINE_MS = 120000; // only show users seen within the last 2 minutes
+let azobssPresenceHeartbeatTimer = null;
+
+
+async function azobssCleanupCollection(collectionName){
+ try{
+ const snap=await getDocs(query(collection(db,collectionName),orderBy("createdAt","desc")));
+ if(snap.size<=25) return;
+ const extra=snap.docs.slice(25);
+ for(const d of extra){ await deleteDoc(d.ref);} 
+ }catch(e){console.warn("cleanup",e)}
 }
 function firestoreMs(value){
   if(!value) return 0;
@@ -73,16 +1049,339 @@ function firestoreMs(value){
   const parsed = Date.parse(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
 }
-function formatDateTime(ms){
-  if(!ms) return '-';
-  const d = new Date(ms);
-  return d.toLocaleDateString('en-GB') + ' • ' + d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', hour12:true});
+let azobssLastRegisteredUsers = [];
+function recordDisplayName(record){
+  return escHtml(record.displayName || record.usernameKey || record.name || (record.email ? String(record.email).split('@')[0] : 'User'));
 }
-function todayMonthCounts(rows){
+function userDocId(user){
+  return String(user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
+}
+function userProfileHtml(user){
+  const role = String(user.role || 'member').toLowerCase();
+  const hasAccess = role === 'admin' || normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '') === 'ZX6186';
+  const id = escHtml(userDocId(user));
+  const isSelf = String(getSavedUser()?.usernameKey || '').toLowerCase() === String(id).toLowerCase();
+  const createdDate = user.createdAt?.toDate ? user.createdAt.toDate() : (user.createdAt ? new Date(user.createdAt) : null);
+  const registeredText = createdDate && !isNaN(createdDate) ? createdDate.toLocaleDateString() + " • " + createdDate.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",hour12:true}) : "Unknown";
+  return `<div class="az-admin-user-row-card az-admin-user-compact-card">
+    <div class="az-admin-user-compact-name"><strong>${recordDisplayName(user)}</strong></div>
+    <span class="az-admin-user-access-badge ${hasAccess ? 'is-allowed' : 'is-blocked'}">${hasAccess ? 'PA/BM allowed' : 'PA/BM off'}</span>
+    <span class="az-admin-register-date">${registeredText}</span>
+    <div class="az-admin-user-row-actions">
+      <button class="az-admin-small-btn az-admin-edit-small" type="button" data-admin-edit-user="${id}">Edit</button>
+      <button class="az-admin-small-btn az-admin-delete-small" type="button" data-admin-delete-user="${id}" ${isSelf ? 'disabled title="Cannot delete current admin"' : ''}>Delete</button>
+    </div>
+  </div>`;
+}
+function openAdminUserEdit(userId){
+  if(!isAzobssAdmin(getSavedUser())) return;
+  const id = String(userId || '').toLowerCase();
+  const user = azobssLastRegisteredUsers.find(u => userDocId(u) === id);
+  if(!user) return;
+  const modal = $('adminUserEditModal');
+  if(!modal) return;
+  $('adminUserEditDocId').value = userDocId(user);
+  $('adminUserEditUsername').value = user.usernameKey || user.name || '';
+  const adminPhoneParts = splitPhoneToDialLocal(user.phone || '');
+  setPhoneDial('adminUserEdit', adminPhoneParts.dial);
+  $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
+  $('adminUserEditEmail').value = user.email || '';
+  $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
+  const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
+  $('adminUserEditPaAccess').value = (String(user.role || '').toLowerCase() === 'admin' || normalizePaMemberCode(existingCode) === 'ZX6186') ? 'yes' : 'no';
+  $('adminUserEditMemberCode').value = existingCode;
+  const err = $('adminUserEditError');
+  if(err){ err.textContent=''; err.style.color=''; }
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+}
+function closeAdminUserEdit(){
+  const modal = $('adminUserEditModal');
+  if(modal){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+}
+async function saveAdminUserEdit(){
+  const err = $('adminUserEditError');
+  if(err){ err.textContent=''; err.style.color=''; }
+  if(!isAzobssAdmin(getSavedUser())){ if(err) err.textContent='Admin only.'; return; }
+  const docId = String($('adminUserEditDocId')?.value || '').trim().toLowerCase();
+  const usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
+  if(!docId || !usernameKey){ if(err) err.textContent='Username is required.'; return; }
+  const allowPaAccess = String($('adminUserEditPaAccess')?.value || 'no') === 'yes';
+  const typedCode = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
+  const code = allowPaAccess ? (typedCode || 'ZX6186') : '';
+  const payload = {
+    usernameKey,
+    name: usernameKey,
+    displayName: usernameKey,
+    phone: getPhoneWithDial('adminUserEdit'),
+    email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
+    role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
+    invitedByCode: code,
+    memberCode: code,
+    paMemberCode: code,
+    updatedAt: serverTimestamp(),
+    updatedAtClient: new Date().toISOString(),
+    updatedByAdmin: getSavedUser()?.usernameKey || 'admin'
+  };
+  try{
+    await setDoc(doc(db, 'users', docId), payload, { merge:true });
+    const current = getSavedUser();
+    if(current && String(current.usernameKey || '').toLowerCase() === docId){
+      const updated = { ...current, ...payload };
+      delete updated.updatedAt;
+      saveUser(updated);
+      syncHeader(updated);
+    }
+    if(err){ err.style.color='#62e6a5'; err.textContent='User updated successfully.'; }
+    await renderFirebaseAdminRecords();
+    setTimeout(closeAdminUserEdit, 650);
+  }catch(error){
+    console.warn('Admin user edit failed:', error);
+    if(err) err.textContent='Failed to save user. Check Firebase rules / internet connection.';
+  }
+}
+async function deleteAdminRegisteredUser(userId){
+  if(!isAzobssAdmin(getSavedUser())) return;
+  const docId = String(userId || '').trim().toLowerCase();
+  if(!docId) return;
+  if(String(getSavedUser()?.usernameKey || '').toLowerCase() === docId){
+    alert('Current admin account cannot be deleted here.');
+    return;
+  }
+  const user = azobssLastRegisteredUsers.find(u => userDocId(u) === docId);
+  const name = user ? recordDisplayName(user).replace(/<[^>]+>/g,'') : docId;
+  if(!confirm(`Delete registered user record for ${name}?
+
+This removes the website profile record from Firestore. Firebase Auth login account may still need removal from Firebase Console if required.`)) return;
+  try{
+    await deleteDoc(doc(db, 'users', docId));
+    try{ await deleteDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, docId)); }catch(e){}
+    try{ await deleteDoc(doc(db,'purchaseSummaries',docId)); }catch(e){}
+    try{
+      const cols=['loginHistory','purchaseLogs','userLikes'];
+      for(const c of cols){
+        const qs=await getDocs(query(collection(db,c), where('usernameKey','==',docId)));
+        for(const d of qs.docs){ await deleteDoc(d.ref); }
+      }
+    }catch(e){ console.warn('Cascade delete warning',e);}
+    azobssLastRegisteredUsers = azobssLastRegisteredUsers.filter(u => userDocId(u) !== docId);
+    const maxPage = Math.max(1, Math.ceil(azobssLastRegisteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(azobssRegisteredUsersPage, maxPage);
+    await renderFirebaseAdminRecords();
+  }catch(error){
+    console.warn('Admin delete user failed:', error);
+    alert('Failed to delete user record. Check Firebase rules / internet connection.');
+  }
+}
+function azobssIsRealOnline(user){
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
+  return ms > 0 && (Date.now() - ms) <= AZOBSS_REAL_ONLINE_MS;
+}
+function azobssInlineTime(ms){
+  return ms ? new Date(ms).toLocaleString('en-MY',{hour12:false}) : '-';
+}
+function liveUserHtml(user){
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${recordDisplayName(user)}</strong>
+      <span>Email: ${escHtml(user.email || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(user.phone || '') || '-')}</span>
+      <span>Status: <b class="az-status-online">online</b></span>
+      <span>Seen: ${azobssInlineTime(ms)}</span>
+    </div>
+  </div>`;
+}
+function loginHistoryHtml(row){
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${recordDisplayName(row)}</strong>
+      <span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span>
+      <span>Email: ${escHtml(row.email || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(row.phone || '') || '-')}</span>
+      <span>Time: ${azobssInlineTime(ms)}</span>
+    </div>
+  </div>`;
+}
+function guestHistoryHtml(row){
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  const ip = row.ipAddress || row.ip || '-';
+  const device = row.deviceId || row.deviceFingerprint || '-';
+  const page = row.page || row.path || '/';
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>Guest</strong>
+      <span>IP: ${escHtml(ip)}</span>
+      <span>Device ID: ${escHtml(device)}</span>
+      <span>Page: ${escHtml(page)}</span>
+      <span>Time: ${azobssInlineTime(ms)}</span>
+    </div>
+  </div>`;
+}
+function azobssBuildCompactPagerHtml(current, totalPages){
+  const button = (label, page, disabled, active, title) =>
+    `<button class="guest-history-page-btn is-compact${active ? ' is-active' : ''}" type="button" data-page="${page}" title="${title || label}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+  const pages = [];
+  pages.push(button('&lt;&lt;', 1, current <= 1, false, 'First page'));
+  pages.push(button('P', Math.max(1, current - 1), current <= 1, false, 'Previous page'));
+
+  // Maximum 10 buttons total: <<, P, 6 page numbers, N, >>
+  const maxNumberButtons = 6;
+  let start = Math.max(1, current - Math.floor(maxNumberButtons / 2));
+  let end = Math.min(totalPages, start + maxNumberButtons - 1);
+  start = Math.max(1, end - maxNumberButtons + 1);
+
+  for(let i = start; i <= end; i++){
+    pages.push(button(String(i), i, false, current === i, 'Page ' + i));
+  }
+
+  pages.push(button('N', Math.min(totalPages, current + 1), current >= totalPages, false, 'Next page'));
+  pages.push(button('&gt;&gt;', totalPages, current >= totalPages, false, 'Last page'));
+  return pages.join('');
+}
+function adminPager(el, page, total, size, onPage){
+  if(!el) return;
+  const totalPages = Math.max(1, Math.ceil((total || 0) / size));
+  if(total <= size){ el.innerHTML = ''; return; }
+  page = Math.min(Math.max(1, page), totalPages);
+  el.innerHTML = azobssBuildCompactPagerHtml(page, totalPages);
+  el.querySelectorAll('button[data-page]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      onPage(Number(btn.dataset.page) || page);
+    });
+  });
+}
+async function upsertOnlineUser(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{
+    await setDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase()), {
+      uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || ''), role: u.role || 'member',
+      invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
+      status: 'online',
+      lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString(), lastSeenMs: Date.now()
+    }, { merge:true });
+  }catch(error){ console.warn('Firebase online user save failed:', error); }
+}
+async function removeOnlineUser(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{ await deleteDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase())); }
+  catch(error){ console.warn('Firebase online user remove failed:', error); }
+}
+function startAzobssPresenceHeartbeat(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer);
+  upsertOnlineUser(u);
+  azobssPresenceHeartbeatTimer = setInterval(()=>{
+    if(document.visibilityState !== 'hidden') upsertOnlineUser(getSavedUser() || u);
+  }, 30000);
+}
+async function recordLoginHistory(user, action='login'){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  const sessionKey = `azobssLoginHistorySaved:${action}:${u.usernameKey}`;
+  if(sessionStorage.getItem(sessionKey)) return;
+  sessionStorage.setItem(sessionKey, '1');
+  try{
+    await addDoc(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION), {
+      uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || ''), role: u.role || 'member', action,
+      invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
+      createdAt: serverTimestamp(), createdAtClient: new Date().toISOString(), createdAtMs: Date.now()
+    });
+  }catch(error){ console.warn('Firebase login history save failed:', error); }
+}
+async function saveProfileToFirebase(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{
+    const normalizedUser = {...u, phone: normalizeAzobssPhone(u.phone || '')};
+    await setDoc(doc(db, 'users', String(u.usernameKey).toLowerCase()), {
+      ...normalizedUser,
+      usernameKey: String(u.usernameKey).toLowerCase(),
+      updatedAt: serverTimestamp(),
+      updatedAtClient: new Date().toISOString()
+    }, { merge:true });
+  }catch(error){ console.warn('Firebase profile save failed:', error); }
+}
+
+let azobssOnlineUserIds = new Set();
+function getRegisteredUserControls(){
+  return {
+    search: document.getElementById('registeredUserSearch'),
+    sort: document.getElementById('registeredUserSort'),
+    refresh: document.getElementById('refreshUsersButton')
+  };
+}
+function compactSearchValue(value){
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\s\-()+.]/g, '');
+}
+function registeredUserSearchText(user){
+  const rawValues = [
+    user.id, user.uid,
+    user.usernameKey, user.username, user.displayName, user.name,
+    user.email, user.contactEmail, user.emailAddress, user.userEmail,
+    user.phone, user.phoneNumber, user.whatsapp, user.whatsApp, user.whatsappNumber, user.mobile, user.mobileNumber,
+    user.memberCode, user.invitedByCode, user.paMemberCode, user.accessCode, user.signupCode,
+    user.role
+  ].filter(v => v !== undefined && v !== null);
+  const normalText = rawValues.map(v => String(v).toLowerCase()).join(' ');
+  const compactText = rawValues.map(compactSearchValue).join(' ');
+  const digitsOnly = rawValues.map(v => String(v || '').replace(/\D/g, '')).filter(Boolean).join(' ');
+  return `${normalText} ${compactText} ${digitsOnly}`;
+}
+function registeredUserHasPaAccess(user){
+  const role = String(user.role || 'member').toLowerCase();
+  const code = normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '');
+  return role === 'admin' || code === 'ZX6186' || user.allowPABM === true || user.paBmAllowed === true || String(user.paAccess || '').toLowerCase() === 'yes';
+}
+function registeredUserCreatedMs(user){
+  return firestoreMs(user.createdAt) || firestoreMs(user.createdAtClient) || Number(user.createdAtMs || 0) || firestoreMs(user.updatedAt) || firestoreMs(user.updatedAtClient);
+}
+function getFilteredRegisteredUsers(users){
+  const controls = getRegisteredUserControls();
+  const q = String(controls.search?.value || '').trim().toLowerCase();
+  const sort = String(controls.sort?.value || 'username');
+  let rows = Array.isArray(users) ? users.slice() : [];
+
+  if(q){
+    const compactQ = compactSearchValue(q);
+    const digitQ = q.replace(/\D/g, '');
+    rows = rows.filter(user => {
+      const haystack = registeredUserSearchText(user);
+      return haystack.includes(q) || (compactQ && haystack.includes(compactQ)) || (digitQ && haystack.includes(digitQ));
+    });
+  }
+
+  if(sort === 'onlineOnly'){
+    rows = rows.filter(user => azobssOnlineUserIds.has(userDocId(user)));
+  }else if(sort === 'paAllowed'){
+    rows = rows.filter(registeredUserHasPaAccess);
+  }
+
+  if(sort === 'dateNewest'){
+    rows.sort((a,b)=>registeredUserCreatedMs(b)-registeredUserCreatedMs(a));
+  }else if(sort === 'dateOldest'){
+    rows.sort((a,b)=>registeredUserCreatedMs(a)-registeredUserCreatedMs(b));
+  }else{
+    rows.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
+  }
+  return rows;
+}
+function updateRegisteredUserStats(users){
+  const todayEl = document.getElementById('registeredUsersToday');
+  const monthEl = document.getElementById('registeredUsersMonth');
+  if(!todayEl && !monthEl) return;
   const now = new Date();
   let today = 0, month = 0;
-  (rows || []).forEach(row => {
-    const ms = firestoreMs(row.createdAt) || Number(row.createdAtMs || 0) || firestoreMs(row.lastSeenAt);
+  (users || []).forEach(user => {
+    const ms = registeredUserCreatedMs(user);
     if(!ms) return;
     const d = new Date(ms);
     if(d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()){
@@ -90,488 +1389,1138 @@ function todayMonthCounts(rows){
       if(d.getDate() === now.getDate()) today++;
     }
   });
-  return {today, month};
+  if(todayEl) todayEl.textContent = String(today);
+  if(monthEl) monthEl.textContent = String(month);
 }
-function pager(el, current, total, size, cb){
-  if(!el) return;
-  const pages = Math.max(1, Math.ceil((total || 0) / size));
-  if(total <= size){ el.innerHTML = ''; return; }
-  current = Math.min(Math.max(1, current), pages);
-  const button = (label, page, disabled, active, title) =>
-    `<button type="button" class="guest-history-page-btn is-compact${active ? ' is-active' : ''}" data-page="${page}" title="${title || label}" ${disabled ? 'disabled' : ''}>${label}</button>`;
-  let html = '';
-  html += button('&lt;&lt;', 1, current <= 1, false, 'First page');
-  html += button('P', Math.max(1, current - 1), current <= 1, false, 'Previous page');
-
-  // Maximum 10 buttons total: <<, P, 6 page numbers, N, >>
-  const maxNumberButtons = 6;
-  let start = Math.max(1, current - Math.floor(maxNumberButtons / 2));
-  let end = Math.min(pages, start + maxNumberButtons - 1);
-  start = Math.max(1, end - maxNumberButtons + 1);
-
-  for(let i = start; i <= end; i++){
-    html += button(String(i), i, false, i === current, 'Page ' + i);
-  }
-
-  html += button('N', Math.min(pages, current + 1), current >= pages, false, 'Next page');
-  html += button('&gt;&gt;', pages, current >= pages, false, 'Last page');
-  el.innerHTML = html;
-  el.querySelectorAll('button[data-page]').forEach(btn => btn.addEventListener('click', () => cb(Number(btn.dataset.page) || current)));
-}
-
-function localLikes(){ return safeJson(localStorage.getItem('azLikes')) || []; }
-function saveLocalLikes(arr){ try{ localStorage.setItem('azLikes', JSON.stringify(arr || [])); }catch{} }
-
-function withTimeout(promise, ms, label){
-  let timer;
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error((label || 'Operation') + ' timeout')), ms || 8000);
+function bindRegisteredUsersControls(){
+  const controls = getRegisteredUserControls();
+  [controls.search, controls.sort, controls.refresh].forEach(el => {
+    if(!el || el.dataset.azobssRegisteredUsersBind) return;
+    el.dataset.azobssRegisteredUsersBind = '1';
+    const handler = () => {
+      azobssRegisteredUsersPage = 1;
+      renderFirebaseAdminRecords();
+    };
+    if(el.tagName === 'BUTTON') el.addEventListener('click', handler);
+    else {
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+    }
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
-}
-function setLikesMessage(message){
-  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
-  if(list) list.innerHTML = `<div class="az-like-empty">${escapeHtml(message)}</div>`;
 }
 
-function setUserLikeCache(key, rows){
-  if(!key) return;
-  try{ localStorage.setItem('azLikes:' + key, JSON.stringify(rows || [])); }catch{}
-}
-function getUserLikeCache(key){
-  if(!key) return [];
-  return safeJson(localStorage.getItem('azLikes:' + key)) || [];
-}
-function paintLikeButton(btn, liked){
-  if(!btn) return;
-  const nextText = liked ? '❤️' : '♡';
-  if((btn.textContent || '').trim() !== nextText) btn.textContent = nextText;
-  if(btn.classList.contains('is-liked') !== !!liked) btn.classList.toggle('is-liked', !!liked);
-  if(btn.classList.contains('liked') !== !!liked) btn.classList.toggle('liked', !!liked);
-  const pressed = liked ? 'true' : 'false';
-  if(btn.getAttribute('aria-pressed') !== pressed) btn.setAttribute('aria-pressed', pressed);
-  btn.title = liked ? 'Unlike' : 'Like';
-  btn.style.color = liked ? '#ff3b5c' : '#ffffff';
-}
-function makeLikeId(raw){
-  return btoa(unescape(encodeURIComponent(String(raw || 'azobss-item'))))
-    .replace(/[=+/]/g,'')
-    .slice(0,110);
-}
-function cleanLikeTitle(text){
-  return String(text || '')
-    .replace(/[♡❤️🤍]/g,'')
-    .replace(/\b(like|unlike|open|download now|buyer protection|sold)\b/ig,'')
-    .replace(/\s+/g,' ')
-    .trim()
-    .slice(0,120);
-}
-function pageLikeCategory(){
-  const path = location.pathname.toLowerCase();
-  if(path.includes('/affiliate-shop/')) return 'affiliate';
-  if(path.includes('/software-tools/')) return 'software';
-  if(path.includes('/cad-tools-&-resources/')) return 'cad';
-  return location.pathname.replace(/^\//,'').split('/')[0] || 'local';
-}
-function likeTitleFromCard(card){
-  if(!card) return 'AZOBSS Item';
-  const titleEl = card.querySelector?.('h1,h2,h3,h4,.product-title,.tool-title,.program-title,.download-title,[data-title],strong,b,a');
-  let title = titleEl ? (titleEl.getAttribute('data-title') || titleEl.textContent) : '';
-  if(!cleanLikeTitle(title)){
-    title = (card.innerText || '')
-      .split('\n')
-      .map(cleanLikeTitle)
-      .filter(Boolean)
-      .find(s => !/^rm\s*\d+/i.test(s) && !/^search$/i.test(s)) || 'AZOBSS Item';
+
+function getAzobssDeviceId(){
+  const key = 'azobssDeviceId';
+  let id = localStorage.getItem(key);
+  if(!id){
+    id = 'device-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+    localStorage.setItem(key, id);
   }
-  return cleanLikeTitle(title) || 'AZOBSS Item';
+  return id;
 }
-function getLikeSourceUrl(card, category){
-  if(category === 'cad') return '/CAD-Tools-&-Resources/';
-  const a = card?.querySelector?.('a[href]');
-  const href = a ? String(a.getAttribute('href') || '').trim() : '';
-  if(!href || href === '#' || href.toLowerCase().startsWith('javascript:')) return location.pathname;
-  try{ return new URL(href, location.origin).href; }catch{ return href; }
-}
-function normalizeLikeRow(value, index=0){
-  if(value && typeof value === 'object'){
-    const title = cleanLikeTitle(value.title || value.name || 'AZOBSS Item') || 'AZOBSS Item';
-    const category = String(value.category || value.type || 'local');
-    const pageUrl = String(value.pageUrl || value.url || '#');
-    const createdAtMs = Number(value.createdAtMs || value.updatedAtMs || (Date.parse(value.createdAtClient || '') || (Date.now()-index)));
-    const itemId = String(value.itemId || value.id || makeLikeId(category + '|' + title + '|' + pageUrl));
-    return { itemId, title, category, pageUrl, createdAtClient:value.createdAtClient || new Date(createdAtMs).toISOString(), createdAtMs, updatedAtMs:Number(value.updatedAtMs || createdAtMs) };
-  }
-  const title = cleanLikeTitle(value);
-  if(!title) return null;
-  const category = 'local';
-  const itemId = makeLikeId(category + '|' + title);
-  return { itemId, title, category, pageUrl:'#', createdAtClient:new Date(Date.now()-index).toISOString(), createdAtMs:Date.now()-index, updatedAtMs:Date.now()-index };
-}
-function likeItemFromButton(btn){
-  const selector = '.product-card,.tool-card,.software-card,.download-card,.affiliate-card,.lisp-row,tr,.card';
-  const card = btn.closest(selector) || btn.parentElement;
-  const category = pageLikeCategory();
-  const title = cleanLikeTitle(btn.dataset.title) || likeTitleFromCard(card);
-  const sourceUrl = getLikeSourceUrl(card, category);
-  let itemId = String(btn.dataset.likeId || card?.dataset?.likeId || card?.getAttribute?.('data-like-id') || '').trim();
-  if(!itemId){
-    const allCards = [...document.querySelectorAll(selector)].filter(el => el.classList.contains('az-like-host') || el.querySelector?.(':scope > .azlike.card-like-btn'));
-    const cardIndex = Math.max(0, allCards.indexOf(card));
-    itemId = makeLikeId([category, location.pathname, cardIndex, title, sourceUrl].join('|'));
-    if(btn) btn.dataset.likeId = itemId;
-    if(card?.dataset) card.dataset.likeId = itemId;
-  }
-  return { itemId, title, category, pageUrl:sourceUrl || location.pathname, createdAtClient:new Date().toISOString(), createdAtMs:Date.now(), updatedAtMs:Date.now() };
-}
-async function readLikesFromFirebase(){
-  await authReady.catch(()=>null);
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key) return [];
-  const rows = [];
+async function getAzobssPublicIp(){
+  const cacheKey = 'azobssPublicIpCache';
   try{
-    const q1 = query(collection(db, USER_LIKES_COLLECTION), where('usernameKey','==',key));
-    const snap = await withTimeout(getDocs(q1), 10000, 'Load likes');
-    snap.forEach(d => rows.push(normalizeLikeRow({ id:d.id, ...d.data() })));
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+    if(cached && cached.ip && Date.now() - Number(cached.time || 0) < 3600000) return cached.ip;
+  }catch(_e){}
+  try{
+    const res = await fetch('https://api.ipify.org?format=json', { cache:'no-store' });
+    const data = await res.json();
+    const ip = String(data.ip || '').trim();
+    if(ip) sessionStorage.setItem(cacheKey, JSON.stringify({ ip, time: Date.now() }));
+    return ip || '-';
+  }catch(error){
+    console.warn('Public IP lookup failed:', error);
+    return '-';
+  }
+}
+async function recordGuestHistory(){
+  try{
+    if(getSavedUser()) return;
+    const page = window.location.pathname || '/';
+    const sessionKey = 'azobssGuestHistorySaved:' + page;
+    if(sessionStorage.getItem(sessionKey)) return;
+    sessionStorage.setItem(sessionKey, '1');
+    const deviceId = getAzobssDeviceId();
+    const ipAddress = await getAzobssPublicIp();
+    await addDoc(collection(db, AZOBSS_GUEST_HISTORY_COLLECTION), {
+      page,
+      ipAddress,
+      deviceId,
+      platform: navigator.platform || '',
+      userAgent: navigator.userAgent || '',
+      createdAt: serverTimestamp(),
+      createdAtClient: new Date().toISOString(),
+      createdAtMs: Date.now()
+    });
+  }catch(error){ console.warn('Firebase guest history save failed:', error); }
+}
+async function renderFirebaseAdminRecords(){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  bindRegisteredUsersControls();
 
-    // Fallback: some old likes may be saved by Firebase uid instead of usernameKey.
-    const uid = String(auth.currentUser?.uid || user.uid || '').trim();
-    if(uid && uid !== key){
+  let live = [];
+  try{
+    const liveSnapPre = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
+    liveSnapPre.forEach(d=>live.push({ id:d.id, ...d.data() }));
+    azobssOnlineUserIds = new Set(live.map(userDocId).filter(Boolean));
+  }catch(error){
+    console.warn('Firebase online users pre-read failed:', error);
+    azobssOnlineUserIds = new Set();
+  }
+
+  try{
+    const users = [];
+    const userSnap = await getDocs(collection(db, 'users'));
+    userSnap.forEach(d=>users.push({ id:d.id, ...d.data() }));
+    users.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
+    azobssLastRegisteredUsers = users;
+    updateRegisteredUserStats(users);
+    const filteredUsers = getFilteredRegisteredUsers(users);
+    const maxPage = Math.max(1, Math.ceil(filteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(Math.max(1, azobssRegisteredUsersPage), maxPage);
+    const regList = document.getElementById('registeredUsersList');
+    if(regList){
+      const rows = filteredUsers.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users found.</div>';
+      regList.querySelectorAll('[data-admin-edit-user]').forEach(btn=>btn.addEventListener('click',()=>openAdminUserEdit(btn.dataset.adminEditUser)));
+      regList.querySelectorAll('[data-admin-delete-user]').forEach(btn=>btn.addEventListener('click',()=>deleteAdminRegisteredUser(btn.dataset.adminDeleteUser)));
+      adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, filteredUsers.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderFirebaseAdminRecords();});
+    }
+    const registeredCount = document.getElementById('registeredUserCount');
+    if(registeredCount) registeredCount.textContent = String(users.length);
+  }catch(error){ console.warn('Firebase registered users read failed:', error); }
+
+  try{
+    if(!live.length){
+      const liveSnap = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
+      liveSnap.forEach(d=>live.push({ id:d.id, ...d.data() }));
+      azobssOnlineUserIds = new Set(live.map(userDocId).filter(Boolean));
+    }
+    live = live.filter(azobssIsRealOnline);
+    live.sort((a,b)=>(firestoreMs(b.lastSeenAt)||firestoreMs(b.lastSeenClient))-(firestoreMs(a.lastSeenAt)||firestoreMs(a.lastSeenClient)));
+    const liveMaxPage = Math.max(1, Math.ceil(live.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssLiveUsersPage = Math.min(Math.max(1, azobssLiveUsersPage), liveMaxPage);
+    const liveList = document.getElementById('liveUsersList');
+    if(liveList){
+      const rows = live.slice((azobssLiveUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssLiveUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      liveList.innerHTML = rows.map(liveUserHtml).join('') || '<div class="purchase-summary-item">No users are online right now.</div>';
+      adminPager(document.getElementById('liveUsersPagination'), azobssLiveUsersPage, live.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssLiveUsersPage=page; renderFirebaseAdminRecords();});
+    }
+    const onlineUserCount = document.getElementById('onlineUserCount');
+    if(onlineUserCount) onlineUserCount.textContent = String(live.length);
+  }catch(error){ console.warn('Firebase live users read failed:', error); }
+
+  try{
+    const rows = [];
+    const historySnap = await getDocs(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION));
+    historySnap.forEach(d=>rows.push({ id:d.id, ...d.data() }));
+    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
+    const list = document.getElementById('loginHistoryList');
+    if(list){
+      const visible = rows.slice((azobssLoginHistoryPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssLoginHistoryPage*AZOBSS_ADMIN_PAGE_SIZE);
+      list.innerHTML = visible.map(loginHistoryHtml).join('') || '<div class="purchase-summary-item">No login history yet.</div>';
+      adminPager(document.getElementById('loginHistoryPagination'), azobssLoginHistoryPage, rows.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssLoginHistoryPage=page; renderFirebaseAdminRecords();});
+    }
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0,10);
+    const monthKey = now.toISOString().slice(0,7);
+    const today = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,10)===todayKey).length;
+    const month = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,7)===monthKey).length;
+    const todayEl = document.getElementById('loginHistoryToday'); if(todayEl) todayEl.textContent = String(today);
+    const monthEl = document.getElementById('loginHistoryMonth'); if(monthEl) monthEl.textContent = String(month);
+  }catch(error){ console.warn('Firebase login history read failed:', error); }
+
+  try{
+    const rows = [];
+    const guestSnap = await getDocs(collection(db, AZOBSS_GUEST_HISTORY_COLLECTION));
+    guestSnap.forEach(d=>rows.push({ id:d.id, ...d.data() }));
+    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
+    const list = document.getElementById('guestHistoryList');
+    if(list){
+      const maxPage = Math.max(1, Math.ceil(rows.length / AZOBSS_ADMIN_PAGE_SIZE));
+      azobssGuestHistoryPage = Math.min(Math.max(1, azobssGuestHistoryPage), maxPage);
+      const visible = rows.slice((azobssGuestHistoryPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssGuestHistoryPage*AZOBSS_ADMIN_PAGE_SIZE);
+      list.innerHTML = visible.map(guestHistoryHtml).join('') || '<div class="purchase-summary-item">No guest history yet.</div>';
+      adminPager(document.getElementById('guestHistoryPagination'), azobssGuestHistoryPage, rows.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssGuestHistoryPage=page; renderFirebaseAdminRecords();});
+    }
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0,10);
+    const monthKey = now.toISOString().slice(0,7);
+    const today = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,10)===todayKey).length;
+    const month = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,7)===monthKey).length;
+    const todayEl = document.getElementById('guestVisitsToday'); if(todayEl) todayEl.textContent = String(today);
+    const monthEl = document.getElementById('guestVisitsMonth'); if(monthEl) monthEl.textContent = String(month);
+  }catch(error){ console.warn('Firebase guest history read failed:', error); }
+}
+window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
+
+
+// PA/BM purchase records: one shared source for PA + BM/SBM downloads.
+const AZOBSS_PURCHASE_LOCAL_KEY = 'azobssPurchaseRecords';
+const AZOBSS_PURCHASE_COLLECTION = 'purchaseRecords';
+function readLocalPurchaseRecords(){
+  try { return JSON.parse(localStorage.getItem(AZOBSS_PURCHASE_LOCAL_KEY) || '[]') || []; }
+  catch { return []; }
+}
+function writeLocalPurchaseRecords(records){
+  try { localStorage.setItem(AZOBSS_PURCHASE_LOCAL_KEY, JSON.stringify(records || [])); } catch {}
+}
+function purchaseRecordUser(user){
+  const u = user || getSavedUser() || {};
+  return {
+    uid: String(u.uid || ''),
+    usernameKey: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase(),
+    displayName: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || 'Guest').trim(),
+    phone: String(u.phone || ''),
+    email: String(u.email || '')
+  };
+}
+function normalizePurchasePayload(payload){
+  const userInfo = purchaseRecordUser();
+  const type = String(payload?.productType || payload?.product || payload?.type || 'PA').trim().toUpperCase();
+  const code = String(payload?.itemCode || payload?.code || payload?.station || payload?.pa || payload?.noPA || '').trim().toUpperCase();
+  const negeri = String(payload?.negeri || payload?.state || payload?.stateName || '').trim();
+  const amount = Number(payload?.amount || payload?.price || (type === 'PA' ? 5 : 3));
+  const now = new Date();
+  return {
+    id: 'local-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8),
+    productType: type,
+    itemCode: code,
+    negeri,
+    amount: Number.isFinite(amount) ? amount : (type === 'PA' ? 5 : 3),
+    downloadUrl: String(payload?.downloadUrl || payload?.url || ''),
+    filename: String(payload?.filename || ''),
+    uid: userInfo.uid,
+    usernameKey: userInfo.usernameKey,
+    displayName: userInfo.displayName,
+    phone: userInfo.phone,
+    email: userInfo.email,
+    createdAtClient: now.toISOString(),
+    createdAtMs: now.getTime()
+  };
+}
+function isSamePurchase(a,b){
+  return String(a.id||'') && String(a.id||'') === String(b.id||'') ||
+    (String(a.usernameKey||'') === String(b.usernameKey||'') &&
+     String(a.productType||'') === String(b.productType||'') &&
+     String(a.itemCode||'') === String(b.itemCode||'') &&
+     Math.abs(Number(a.createdAtMs||0)-Number(b.createdAtMs||0)) < 3000);
+}
+function purchasePersistDocId(user){
+  const key = getUserKey(user || getSavedUser());
+  const uid = String((user || getSavedUser() || {}).uid || '').trim();
+  return key || uid || '';
+}
+function purchaseFirestoreSafeRecord(record){
+  const safe = { ...record };
+  delete safe.id;
+  delete safe.firestoreId;
+  Object.keys(safe).forEach(key => {
+    if(safe[key] === undefined) delete safe[key];
+  });
+  return safe;
+}
+async function savePurchaseToFirestoreEverywhere(record){
+  const current = getSavedUser() || {};
+  const docId = purchasePersistDocId(current);
+  const safeRecord = purchaseFirestoreSafeRecord(record);
+  const embeddedRecord = {
+    ...safeRecord,
+    id: record.id || ('purchase-' + Date.now()),
+    createdAtMs: Number(record.createdAtMs || Date.now()),
+    createdAtClient: record.createdAtClient || new Date().toISOString()
+  };
+
+  // 1) Global collection for admin dashboard/reporting.
+  try{
+    const ref = await addDoc(collection(db, AZOBSS_PURCHASE_COLLECTION), { ...safeRecord, createdAt: serverTimestamp() });
+    record.firestoreId = ref.id;
+  }catch(error){
+    console.warn('Firestore global purchase collection save failed:', error);
+  }
+
+  // 2) User profile embedded backup. This fixes records disappearing after browser close
+  // even when Firestore rules block collection queries but allow the user's own profile doc.
+  if(docId){
+    try{
+      await setDoc(doc(db, 'users', docId), {
+        usernameKey: docId,
+        uid: String(current.uid || record.uid || ''),
+        purchaseRecords: arrayUnion(embeddedRecord),
+        purchaseRecordsUpdatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }catch(error){
+      console.warn('Firestore user embedded purchase save failed:', error);
+    }
+  }
+}
+async function recordAzobssPurchase(payload){
+  const user = getSavedUser();
+  if(!user){
+    openSiteAuth('signin');
+    throw new Error('Please login first before download.');
+  }
+  const record = normalizePurchasePayload(payload || {});
+  const local = readLocalPurchaseRecords();
+  if(!local.some(item => isSamePurchase(item, record))){
+    local.unshift(record);
+    writeLocalPurchaseRecords(local.slice(0, 500));
+  }
+  await savePurchaseToFirestoreEverywhere(record);
+  window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: record }));
+  try{ window.dispatchEvent(new Event('storage')); }catch{}
+  return record;
+}
+async function loadAzobssPurchaseRecords(){
+  const current = getSavedUser();
+  const isAdminUser = isAzobssAdmin(current);
+  const merged = [];
+  function push(record){
+    if(!record) return;
+    const normalized = { ...record };
+    normalized.createdAtMs = Number(normalized.createdAtMs || (normalized.createdAtClient ? Date.parse(normalized.createdAtClient) : 0) || 0);
+    normalized.usernameKey = String(normalized.usernameKey || '').trim().toLowerCase();
+    normalized.uid = String(normalized.uid || '');
+    if(!merged.some(item => isSamePurchase(item, normalized))) merged.push(normalized);
+  }
+  function pushSnap(snap){
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      let ms = Number(data.createdAtMs || 0);
+      if(!ms && data.createdAtClient) ms = Date.parse(data.createdAtClient) || 0;
+      if(!ms && data.createdAt && typeof data.createdAt.toMillis === 'function') ms = data.createdAt.toMillis();
+      push({ id: docSnap.id, firestoreId: docSnap.id, ...data, createdAtMs: ms });
+    });
+  }
+
+  // Local cache remains as fast fallback only. The main source is Firestore.
+  readLocalPurchaseRecords().forEach(push);
+
+  try{
+    const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+    if(isAdminUser){
+      // Admin can read all purchase records if Firestore rules allow it.
+      pushSnap(await getDocs(purchaseCol));
+    }else if(current?.uid){
+      // Normal users should only query their own records. This works with stricter Firestore rules.
+      pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
+    }
+
+    const key = getUserKey(current);
+    if(!isAdminUser && key){
+      // Compatibility for older records saved before uid was available.
       try{
-        const q2 = query(collection(db, USER_LIKES_COLLECTION), where('uid','==',uid));
-        const snap2 = await withTimeout(getDocs(q2), 10000, 'Load uid likes');
-        snap2.forEach(d => {
-          const row = normalizeLikeRow({ id:d.id, ...d.data() });
-          if(row && !rows.some(x => x.itemId === row.itemId)) rows.push(row);
-        });
-      }catch(e){ console.warn('AZOBSS uid likes fallback failed:', e); }
+        pushSnap(await getDocs(query(purchaseCol, where('usernameKey', '==', key))));
+      }catch(usernameQueryError){
+        console.warn('Firestore purchase usernameKey compatibility query failed:', usernameQueryError);
+      }
     }
+  }catch(error){
+    console.warn('Firestore purchase collection read fallback:', error);
+  }
 
-    setUserLikeCache(key, rows);
-    return rows;
-  }catch(error){
-    console.warn('AZOBSS read likes failed:', error);
-    const cached = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean);
-    if(cached.length) return cached;
-    throw error;
-  }
-}
-async function writeLikeToFirebase(item){
-  await authReady.catch(()=>null);
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key) throw new Error('Please login first to save likes.');
-  const row = normalizeLikeRow(item);
-  const payload = compactLikePayload(row, user, key);
-  await setDoc(doc(db, USER_LIKES_COLLECTION, likeGlobalId(key,row.itemId)), {
-    ...payload,
-    itemId:row.itemId,
-    title:row.title,
-    category:row.category,
-    pageUrl:row.pageUrl,
-    createdAt:serverTimestamp(),
-    updatedAt:serverTimestamp(),
-    createdAtMs:row.createdAtMs || Date.now(),
-    updatedAtMs:Date.now()
-  }, { merge:true });
-  const cached = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean).filter(x => x.itemId !== row.itemId);
-  cached.unshift({ ...row, updatedAtMs:Date.now() });
-  setUserLikeCache(key, cached);
-  return true;
-}
-async function deleteLikeFromFirebase(item){
-  await authReady.catch(()=>null);
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key) throw new Error('Please login first.');
-  const row = normalizeLikeRow(item);
-  await deleteDoc(doc(db, USER_LIKES_COLLECTION, likeGlobalId(key,row.itemId)));
-  const cached = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean).filter(x => x.itemId !== row.itemId);
-  setUserLikeCache(key, cached);
-  return true;
-}
-async function getFirebaseLikeIds(){
-  const rows = await readLikesFromFirebase();
-  return new Set(rows.map(x => x.itemId).filter(Boolean));
-}
-async function setLike(item, liked){
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key){
-    if(window.openSiteAuth) window.openSiteAuth('signin');
-    else alert('Please login first to save likes.');
-    return false;
-  }
+  // Robust persistence path: read embedded records from user profile docs too.
   try{
-    if(liked) await writeLikeToFirebase(item);
-    else await deleteLikeFromFirebase(item);
-    return true;
-  }catch(error){
-    console.warn('AZOBSS online like save failed:', error);
-    alert('Like tidak berjaya disimpan ke Firebase. Sila cuba semula.');
-    return false;
-  }
-}
-async function refreshLikeButtons(){
-  let firebaseIds = new Set();
-  try{
-    firebaseIds = await getFirebaseLikeIds();
-  }catch(error){
-    console.warn('AZOBSS refresh like buttons failed:', error);
-    const key = userKey(getSavedUser());
-    firebaseIds = new Set(getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean).map(x => x.itemId));
-  }
-  document.querySelectorAll('.azlike').forEach(btn => {
-    const item = likeItemFromButton(btn);
-    const liked = firebaseIds.has(item.itemId);
-    paintLikeButton(btn, liked);
-    btn.style.cursor = 'pointer';
-  });
-}
-function bindLikeClick(){
-  if(document.documentElement.dataset.azobssLikeClickBound === '1') return;
-  document.documentElement.dataset.azobssLikeClickBound = '1';
-  document.addEventListener('click', async (event) => {
-    const btn = event.target.closest?.('.azlike');
-    if(!btn) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if(typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-    const item = likeItemFromButton(btn);
-    const wasLiked = btn.classList.contains('is-liked') || String(btn.textContent || '').includes('❤️');
-    const willLike = !wasLiked;
-    paintLikeButton(btn, willLike);
-    const ok = await setLike(item, willLike);
-    if(!ok){
-      paintLikeButton(btn, wasLiked);
-      return;
+    if(isAdminUser){
+      const usersSnap = await getDocs(collection(db, 'users'));
+      usersSnap.forEach(userDoc => {
+        const userData = userDoc.data() || {};
+        const embedded = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+        embedded.forEach(r => push({
+          ...r,
+          usernameKey: r.usernameKey || userData.usernameKey || userDoc.id,
+          displayName: r.displayName || userData.usernameKey || userDoc.id,
+          phone: r.phone || userData.phone || '',
+          email: r.email || userData.email || ''
+        }));
+      });
+    }else{
+      const docId = purchasePersistDocId(current);
+      if(docId){
+        const userSnap = await getDoc(doc(db, 'users', docId));
+        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+        const embedded = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+        embedded.forEach(r => push({
+          ...r,
+          usernameKey: r.usernameKey || userData.usernameKey || docId,
+          displayName: r.displayName || userData.usernameKey || docId,
+          phone: r.phone || userData.phone || '',
+          email: r.email || userData.email || ''
+        }));
+      }
     }
-    await refreshLikesPage();
-  }, true);
+  }catch(error){
+    console.warn('Firestore embedded purchase records read fallback:', error);
+  }
+
+  const key = getUserKey(current);
+  const rows = merged
+    .filter(item => isAdminUser || String(item.usernameKey || '').toLowerCase() === key || (current?.uid && String(item.uid||'') === String(current.uid)))
+    .sort((a,b) => Number(b.createdAtMs||0) - Number(a.createdAtMs||0));
+
+  // Keep latest Firestore result cached so refresh is fast, but never rely on cache as source of truth.
+  if(rows.length) writeLocalPurchaseRecords(rows.slice(0, 500));
+  return rows;
 }
-let azobssLikesCache = [];
-async function refreshLikesPage(){
-  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
-  if(!list || !/\/likes\/?$/i.test(location.pathname)) return;
-  const user = getSavedUser();
-  const key = userKey(user);
-  if(!user || !key){
-    azobssLikesCache = [];
-    list.innerHTML = '<div class="az-like-empty">Please sign in to view your likes.</div>';
+function escHtml(value){
+  return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+function formatPurchaseDate(record){
+  const ms = Number(record.createdAtMs || (record.createdAtClient ? Date.parse(record.createdAtClient) : 0));
+  if(!ms) return '-';
+  return new Date(ms).toLocaleString('en-MY', { hour12:true, hour:'numeric', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
+}
+const AZOBSS_PURCHASE_PAGE_SIZE = 6;
+const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 6;
+const AZOBSS_PURCHASE_DETAIL_PAGE_SIZE = 6;
+const azobssPurchaseDetailPages = {};
+const azobssPurchaseOpenKeys = {};
+let azobssAdminPurchasePage = 1;
+let azobssUserPurchasePage = 1;
+function clampPage(page, totalPages){
+  return Math.max(1, Math.min(Number(page)||1, Math.max(1, totalPages||1)));
+}
+function renderAzobssPager(container, currentPage, totalItems, pageSize, onPage){
+  if(!container) return;
+  const totalPages = Math.max(1, Math.ceil((Number(totalItems)||0) / pageSize));
+  if(totalItems <= pageSize){
+    container.innerHTML = '';
+    container.hidden = true;
     return;
   }
-  try{
-    azobssLikesCache = await readLikesFromFirebase();
-    renderLikesRows();
-  }catch(error){
-    console.warn('AZOBSS likes page failed:', error);
-    azobssLikesCache = getUserLikeCache(key).map(normalizeLikeRow).filter(Boolean);
-    if(azobssLikesCache.length){
-      renderLikesRows();
-    }else{
-      list.innerHTML = '<div class="az-like-empty">Failed to load likes. Please refresh or sign in again.</div>';
-    }
-  }
-}
-function getLikeSortMs(item){
-  return firestoreMs(item.updatedAt) || Number(item.updatedAtMs || 0) || firestoreMs(item.createdAt) || Number(item.createdAtMs || 0) || 0;
-}
-function applyLikesSearchSort(rows){
-  const q = String(document.getElementById('likesSearchInput')?.value || '').trim().toLowerCase();
-  const sort = String(document.getElementById('likesSortSelect')?.value || 'newest');
-  let out = Array.isArray(rows) ? [...rows] : [];
-  if(q){
-    out = out.filter(item => [item.title, item.category, item.pageUrl].some(v => String(v || '').toLowerCase().includes(q)));
-  }
-  out.sort((a,b)=>{
-    if(sort === 'oldest') return getLikeSortMs(a) - getLikeSortMs(b);
-    if(sort === 'az') return String(a.title || '').localeCompare(String(b.title || ''));
-    if(sort === 'za') return String(b.title || '').localeCompare(String(a.title || ''));
-    if(sort === 'category') return String(a.category || '').localeCompare(String(b.category || '')) || String(a.title || '').localeCompare(String(b.title || ''));
-    return getLikeSortMs(b) - getLikeSortMs(a);
+  currentPage = clampPage(currentPage, totalPages);
+  container.hidden = false;
+  container.classList.add('azobss-record-pagination');
+  container.innerHTML = azobssBuildCompactPagerHtml(currentPage, totalPages);
+  container.querySelectorAll('button[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => onPage(Number(btn.dataset.page) || currentPage));
   });
-  return out;
 }
-function renderLikesRows(){
-  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
-  if(!list) return;
-  const rows = applyLikesSearchSort(azobssLikesCache).map(normalizeLikeRow).filter(Boolean);
-  list.innerHTML = rows.map(item => {
-    const id = escapeHtml(item.itemId || item.id || '');
-    const url = escapeHtml(item.pageUrl || '#');
-    return `<div class="az-like-list-item" data-like-id="${id}" data-url="${url}">
-      <div class="az-like-info"><strong>❤️ ${escapeHtml(item.title || 'AZOBSS Item')}</strong><br><span>${escapeHtml(item.category || '')}</span></div>
-      <div class="az-like-actions">
-        <a class="az-like-open-btn" href="${url}" target="_blank" rel="noopener">Open</a>
-        <button class="az-like-unlike-btn" type="button" data-like-id="${id}">Unlike</button>
-      </div>
+function renderAzobssPurchaseDetailPager(key, currentPage, totalItems){
+  const totalPages = Math.max(1, Math.ceil((Number(totalItems)||0) / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE));
+  if(totalItems <= AZOBSS_PURCHASE_DETAIL_PAGE_SIZE) return '';
+  currentPage = clampPage(currentPage, totalPages);
+  return `<div class="guest-history-pagination az-purchase-detail-pagination" data-purchase-detail-key="${escHtml(key)}">${azobssBuildCompactPagerHtml(currentPage, totalPages)}</div>`;
+}
+function purchaseDetailRowHtml(r){
+  const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
+  const amount = Number(r.amount || 0);
+  return `
+    <div class="user-pa-item purchase-detail-row">
+      <div>Item: <strong>${escHtml(item)}</strong></div>
+      <div>Negeri: <strong>${escHtml(r.negeri || '-')}</strong><br>Amount: <strong>RM${escHtml(amount || '')}</strong></div>
+      <div>Date/Time:<br><strong>${escHtml(formatPurchaseDate(r))}</strong></div>
+      ${r.downloadUrl ? `<a class="user-pa-download" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : ''}
     </div>`;
-  }).join('') || '<div class="az-like-empty">No liked items found.</div>';
 }
-function bindLikesControls(){
-  const search = document.getElementById('likesSearchInput');
-  const sort = document.getElementById('likesSortSelect');
-  if(search && !search.dataset.bound){
-    search.dataset.bound = '1';
-    search.addEventListener('input', renderLikesRows);
+function applyPurchaseSort(records, sort){
+  const rows = records.slice();
+  if(sort === 'oldest') rows.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
+  else if(sort === 'paAsc') rows.sort((a,b)=>String(a.itemCode||'').localeCompare(String(b.itemCode||'')));
+  else if(sort === 'paDesc') rows.sort((a,b)=>String(b.itemCode||'').localeCompare(String(a.itemCode||'')));
+  else if(sort === 'state') rows.sort((a,b)=>String(a.negeri||'').localeCompare(String(b.negeri||'')) || Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  else rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  return rows;
+}
+const AZOBSS_PURCHASE_TOTAL_RESET_KEY = 'azobss_purchase_total_reset_map_v1';
+function readAzobssPurchaseTotalResetMap(){
+  try{ return JSON.parse(localStorage.getItem(AZOBSS_PURCHASE_TOTAL_RESET_KEY) || '{}') || {}; }
+  catch(e){ return {}; }
+}
+function writeAzobssPurchaseTotalResetMap(map){
+  try{ localStorage.setItem(AZOBSS_PURCHASE_TOTAL_RESET_KEY, JSON.stringify(map || {})); }
+  catch(e){}
+}
+function purchaseRecordMs(record){
+  return Number(record?.createdAtMs || record?.timestampMs || record?.createdAtClientMs || 0) || (record?.createdAtClient ? Date.parse(record.createdAtClient) : 0) || (record?.createdAt ? Date.parse(record.createdAt) : 0) || 0;
+}
+function countablePurchaseRows(rows, usernameKey, resetMap){
+  const key = String(usernameKey || '').trim().toLowerCase();
+  const resetAt = Number((resetMap || {})[key] || 0);
+  if(!resetAt) return rows.slice();
+  return rows.filter(r => purchaseRecordMs(r) > resetAt);
+}
+async function loadAzobssPurchaseTotalResetMap(){
+  const map = readAzobssPurchaseTotalResetMap();
+  try{
+    const snap = await getDocs(collection(db, 'users'));
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      const key = String(data.usernameKey || data.username || docSnap.id || '').trim().toLowerCase();
+      const ms = Number(data.purchaseTotalResetAtMs || 0) || (data.purchaseTotalResetAtClient ? Date.parse(data.purchaseTotalResetAtClient) : 0);
+      if(key && ms) map[key] = ms;
+    });
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(error){
+    console.warn('Load purchase total reset map failed:', error);
   }
-  if(sort && !sort.dataset.bound){
-    sort.dataset.bound = '1';
-    sort.addEventListener('change', renderLikesRows);
+  return map;
+}
+
+function sortAdminPurchaseGroups(groupedRows, sort, resetMap){
+  const metric = (key, rows) => {
+    const countable = countablePurchaseRows(rows, key, resetMap);
+    return {
+      units: countable.length,
+      amount: countable.reduce((sum,r)=>sum + (Number(r.amount)||0), 0),
+      updated: Math.max(...rows.map(r=>Number(r.createdAtMs||0)))
+    };
+  };
+  return groupedRows.slice().sort((a,b)=>{
+    const am = metric(a[0], a[1]), bm = metric(b[0], b[1]);
+    if(sort === 'amountAsc') return am.amount - bm.amount;
+    if(sort === 'amountDesc') return bm.amount - am.amount;
+    if(sort === 'unitsAsc') return am.units - bm.units;
+    if(sort === 'unitsDesc') return bm.units - am.units;
+    if(sort === 'username') return String(a[0]).localeCompare(String(b[0]));
+    return bm.updated - am.updated;
+  });
+}
+function renderUserPurchaseSummary(records, resetMap){
+  const current = getSavedUser() || {};
+  const latest = records.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))[0] || {};
+  const currentKey = String(current.usernameKey || current.displayName || latest.usernameKey || latest.displayName || '').trim().toLowerCase();
+  const countableRowsForTotal = countablePurchaseRows(records, currentKey, resetMap);
+  const total = countableRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+  const username = current.displayName || current.username || current.usernameKey || latest.displayName || latest.usernameKey || 'User';
+  const phone = current.phone || latest.phone || '';
+  const lastItem = latest.itemCode ? `${latest.productType || 'PA'} ${latest.itemCode}` : '-';
+  return `<div class="purchase-summary-item user-purchase-summary-card">
+    <div><strong>${escHtml(username)}</strong>${phone ? `<span>${escHtml(phone)}</span>` : ''}</div>
+    <div class="user-purchase-summary-meta">
+      <span>Last: <strong>${escHtml(lastItem)}</strong></span>
+      <span>Unit: <strong>${escHtml(countableRowsForTotal.length)}</strong></span>
+      <span>Total: <strong>RM${escHtml(total)}</strong></span>
+    </div>
+  </div>`;
+}
+function filterPurchaseRows(records, keyword){
+  const q = String(keyword || '').trim().toLowerCase();
+  if(!q) return records.slice();
+  return records.filter(r => [r.usernameKey,r.displayName,r.phone,r.email,r.productType,r.itemCode,r.negeri,formatPurchaseDate(r)].join(' ').toLowerCase().includes(q));
+}
+
+async function resetAzobssPurchaseRecordsForUser(usernameKey){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  const key = String(usernameKey || '').trim().toLowerCase();
+  if(!key) return;
+  if(!confirm('Reset total pembelian untuk ' + key + '?\n\nPurchase history tidak akan dipadam.')) return;
+
+  const resetAtMs = Date.now();
+  const resetAtClient = new Date(resetAtMs).toISOString();
+
+  try{
+    const map = readAzobssPurchaseTotalResetMap();
+    map[key] = resetAtMs;
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(e){ console.warn('Local purchase total reset failed:', e); }
+
+  try{
+    await setDoc(doc(db, 'users', key), {
+      purchaseTotalResetAtMs: resetAtMs,
+      purchaseTotalResetAtClient: resetAtClient,
+      purchaseTotalResetBy: current.usernameKey || current.displayName || 'admin',
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(error){
+    console.warn('Firestore purchase total reset failed:', error);
+    alert('Reset saved locally only. Firebase update failed.');
   }
-  const list = document.getElementById('azobssLikesList') || document.getElementById('list');
-  if(list && !list.dataset.unlikeBound){
-    list.dataset.unlikeBound = '1';
-    list.addEventListener('click', async (event) => {
-      const btn = event.target.closest?.('.az-like-unlike-btn');
-      if(!btn) return;
+
+  azobssAdminPurchasePage = 1;
+  await renderAzobssPurchaseRecords();
+}
+window.azobssResetPurchaseRecordsForUser = resetAzobssPurchaseRecordsForUser;
+window.azobssTogglePurchaseDetails = toggleAzobssPurchaseDetails;
+
+function toggleAzobssPurchaseDetails(button){
+  const card = button && button.closest('.admin-purchase-user-card');
+  if(!card) return;
+  const key = String(card.dataset.userKey || '').toLowerCase();
+  const details = card.querySelector('.admin-purchase-user-details');
+  if(!details) return;
+  const opening = details.hidden || details.style.display === 'none' || !card.classList.contains('is-open');
+  if(key) azobssPurchaseOpenKeys[key] = opening;
+  details.hidden = !opening;
+  details.style.display = opening ? 'grid' : 'none';
+  card.classList.toggle('is-open', opening);
+  button.textContent = opening ? 'Hide' : 'Show';
+}
+
+
+window.azobssSetPurchaseDetailPage = function(key, page){
+  const cleanKey = String(key || '').toLowerCase();
+  if(!cleanKey) return;
+  azobssPurchaseDetailPages[cleanKey] = Math.max(1, Number(page) || 1);
+  azobssPurchaseOpenKeys[cleanKey] = true;
+  renderAzobssPurchaseRecords();
+};
+
+async function renderAzobssPurchaseRecords(){
+  const list = document.getElementById('purchaseSummaryList');
+  const userList = document.getElementById('userPaPurchaseList');
+  if(!list && !userList) return;
+  const current = getSavedUser();
+  const isAdminUser = isAzobssAdmin(current);
+  const adminSearch = String(document.getElementById('purchaseRecordSearch')?.value || '').trim().toLowerCase();
+  const adminSort = String(document.getElementById('purchaseRecordSort')?.value || 'updatedNewest');
+  const userSearch = String(document.getElementById('userPaPurchaseSearch')?.value || '').trim().toLowerCase();
+  const userSort = String(document.getElementById('userPaPurchaseSort')?.value || 'newest');
+  let records = await loadAzobssPurchaseRecords();
+  const purchaseResetMap = await loadAzobssPurchaseTotalResetMap();
+
+  if(isAdminUser){
+    records = filterPurchaseRows(records, adminSearch);
+    const groups = new Map();
+    records.forEach(r => {
+      const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
+      if(!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    });
+    const groupedRows = sortAdminPurchaseGroups(Array.from(groups.entries()), adminSort, purchaseResetMap);
+    const totalPages = Math.max(1, Math.ceil(groupedRows.length / AZOBSS_ADMIN_PURCHASE_PAGE_SIZE));
+    azobssAdminPurchasePage = clampPage(azobssAdminPurchasePage, totalPages);
+    const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE);
+    if(list){
+      list.innerHTML = pageRows.map(([key, rows]) => {
+        rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+        const first = rows[0] || {};
+        const countableRowsForTotal = countablePurchaseRows(rows, key, purchaseResetMap);
+        const total = countableRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+        const unitCount = countableRowsForTotal.length;
+        const lastItem = first.itemCode ? `${first.productType || 'PA'} ${first.itemCode}` : '-';
+        const isDetailOpen = !!azobssPurchaseOpenKeys[key];
+        return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card${isDetailOpen ? ' is-open' : ''}" data-user-key="${escHtml(key)}">
+          <div class="admin-purchase-user-top az-purchase-mini-top">
+            <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong></div>
+            <span class="az-purchase-mini-date">Last buy: <strong>${escHtml(formatPurchaseDate(first)||'-')}</strong></span>
+            <span class="az-purchase-mini-last">Last: <strong>${escHtml(lastItem)}</strong></span>
+            <span class="az-purchase-mini-unit">Unit: <strong>${unitCount}</strong></span>
+            <span class="az-purchase-mini-total">Total: <strong>RM${total}</strong></span>
+            <div class="az-purchase-mini-actions">
+              <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">${isDetailOpen ? 'Hide' : 'Show'}</button>
+              <button type="button" class="az-purchase-reset-btn" onclick="window.azobssResetPurchaseRecordsForUser && window.azobssResetPurchaseRecordsForUser('${escHtml(key)}')">Reset</button>
+            </div>
+          </div>
+          <div class="admin-purchase-user-details az-purchase-mini-details" ${isDetailOpen ? '' : 'hidden'} style="display:${isDetailOpen ? 'grid' : 'none'};">
+            ${(() => {
+              const detailPage = clampPage(azobssPurchaseDetailPages[key] || 1, Math.max(1, Math.ceil(rows.length / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE)));
+              azobssPurchaseDetailPages[key] = detailPage;
+              const detailRows = rows.slice((detailPage - 1) * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE, detailPage * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE);
+              return detailRows.map(r => `<div>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</div>`).join('') + renderAzobssPurchaseDetailPager(key, detailPage, rows.length);
+            })()}
+          </div>
+        </div>`;
+      }).join('') || '<div class="purchase-summary-item">No purchase records yet.</div>';
+    }
+    list?.querySelectorAll('.az-purchase-detail-pagination button[data-page]').forEach(btn => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const holder = btn.closest('.az-purchase-detail-pagination');
+        const key = holder?.dataset.purchaseDetailKey || '';
+        window.azobssSetPurchaseDetailPage && window.azobssSetPurchaseDetailPage(key, Number(btn.dataset.page) || 1);
+      });
+    });
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, groupedRows.length, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, page => {
+      azobssAdminPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    });
+    if(userList) userList.innerHTML = '';
+    const userPanelForAdmin = document.getElementById('userPaPurchasePanel');
+    if(userPanelForAdmin) userPanelForAdmin.style.display = 'none';
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
+  }else{
+    const userPanelForUser = document.getElementById('userPaPurchasePanel');
+    if(userPanelForUser) userPanelForUser.style.display = '';
+    const topRecords = filterPurchaseRows(records, adminSearch);
+    if(list){
+      list.innerHTML = topRecords.length ? renderUserPurchaseSummary(topRecords, purchaseResetMap) : '<div class="purchase-summary-item">No purchase records yet.</div>';
+    }
+    const detailRecords = applyPurchaseSort(filterPurchaseRows(records, userSearch), userSort);
+    const totalPages = Math.max(1, Math.ceil(detailRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    azobssUserPurchasePage = clampPage(azobssUserPurchasePage, totalPages);
+    const visibleRecords = detailRecords.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    if(userList){
+      userList.innerHTML = visibleRecords.map(purchaseDetailRowHtml).join('') || '<div class="purchase-summary-item">No PA purchase list yet.</div>';
+    }
+    const onUserPage = page => {
+      azobssUserPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    };
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, detailRecords.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
+  }
+}
+function bindAzobssPurchaseRecordsUI(){
+  ['refreshPurchaseButton','purchaseRecordSearch','purchaseRecordSort','userPaPurchaseSearch','userPaPurchaseSort'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el || el.dataset.azobssPurchaseBind) return;
+    el.dataset.azobssPurchaseBind = '1';
+    const handler = () => {
+      if(id !== 'refreshPurchaseButton'){
+        azobssAdminPurchasePage = 1;
+        azobssUserPurchasePage = 1;
+      }
+      renderAzobssPurchaseRecords();
+    };
+    el.addEventListener(el.tagName === 'BUTTON' ? 'click' : 'input', handler);
+    if(el.tagName === 'SELECT') el.addEventListener('change', handler);
+  });
+  if(document.getElementById('purchaseSummaryList') || document.getElementById('userPaPurchaseList')){
+    renderAzobssPurchaseRecords();
+  }
+}
+window.azobssRecordPurchase = recordAzobssPurchase;
+window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;
+window.azobssRenderPurchaseRecords = renderAzobssPurchaseRecords;
+window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
+window.addEventListener('storage', renderAzobssPurchaseRecords);
+
+function bindAuth() {
+  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser());
+  bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
+
+  document.addEventListener('click', async (event) => {
+    if (event.target.closest('#logoutButton')) {
       event.preventDefault();
       event.stopPropagation();
-      const id = String(btn.dataset.likeId || btn.closest('.az-like-list-item')?.dataset.likeId || '').trim();
-      const item = azobssLikesCache.map(normalizeLikeRow).filter(Boolean).find(x => x.itemId === id);
-      if(!item) return;
-      btn.disabled = true;
-      btn.textContent = 'Removing...';
-      await setLike(item, false);
-      azobssLikesCache = azobssLikesCache.map(normalizeLikeRow).filter(Boolean).filter(x => x.itemId !== item.itemId);
-      renderLikesRows();
-      await refreshLikeButtons();
-    });
-  }
-}
-function addLikesPageStyle(){
-  if(document.getElementById('azobss-live-likes-style')) return;
-  const style = document.createElement('style');
-  style.id = 'azobss-live-likes-style';
-  style.textContent = `.az-like-list-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin:10px 0;border:1px solid rgba(56,189,248,.25);border-radius:14px;background:#111c2e;color:#fff}.az-like-list-item span{color:#9fb0c9;font-size:13px}.az-like-info{min-width:0}.az-like-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}.az-like-list-item a,.az-like-unlike-btn{border:0;text-decoration:none;padding:8px 14px;border-radius:10px;font-weight:800;cursor:pointer}.az-like-list-item a{background:#2563eb;color:#fff}.az-like-unlike-btn{background:#ef4444;color:#fff}.az-like-unlike-btn:disabled{opacity:.65;cursor:wait}.az-like-empty{padding:16px;border:1px solid rgba(148,163,184,.3);border-radius:14px;background:#111c2e}@media(max-width:640px){.az-like-list-item{align-items:flex-start}.az-like-actions{flex-direction:column;align-items:stretch}.az-like-list-item a,.az-like-unlike-btn{padding:7px 11px;font-size:12px;text-align:center}}`;
-  document.head.appendChild(style);
-}
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      azobssLogoutOnce();
+      return;
+    }
 
-async function boot(){
-  addLikesPageStyle();
-  bindLikesControls();
-  bindLikeClick();
+    if (event.target.closest('#profileSettingsButton')) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+      openProfileSettings();
+      return;
+    }
 
-  // Load Likes page immediately and never leave it stuck on "Loading likes...".
-  refreshLikesPage().catch(error => {
-    console.warn('AZOBSS initial likes load failed:', error);
-    setLikesMessage('Failed to load likes. Please refresh or sign in again.');
-  });
+    const opener = event.target.closest('[data-auth-open], [data-auth], #siteSignInButton, #siteSignUpButton, a[href$="#login"], a[href$="#signin"], a[href$="#signup"], a[href$="#register"]');
+    if (opener) {
+      event.preventDefault(); event.stopPropagation();
+      const value = opener.dataset.authOpen || opener.dataset.auth || opener.getAttribute('href') || opener.id || '';
+      openSiteAuth(/sign.?up|register|signup/i.test(value) ? 'signup' : 'signin');
+      return;
+    }
+    if (event.target.closest('#siteAuthClose')) closeSiteAuth();
+    if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton')) closeProfileSettings();
+    if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
+    if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
+    const menu = event.target.closest('#userMenu, .user-menu');
+    if (menu) {
+      if (event.target.closest('.user-dropdown')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{ if(el!==menu){ el.classList.remove('is-open'); el.setAttribute('aria-expanded','false'); } });
+      menu.classList.toggle('is-open');
+      menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
+    }
+    else document.querySelectorAll('.user-menu.is-open').forEach(el=>{ el.classList.remove('is-open'); el.setAttribute('aria-expanded','false'); });
+  }, false);
 
-  syncGuestVisit().catch(e => console.warn('AZOBSS guest sync failed:', e));
-  syncOnlineUser().catch(e => console.warn('AZOBSS online sync failed:', e));
-  syncLoginHistory().catch(e => console.warn('AZOBSS login history sync failed:', e));
-  renderFirebaseLivePanels().catch(e => console.warn('AZOBSS live panels failed:', e));
-  refreshLikeButtons().catch(e => console.warn('AZOBSS like buttons failed:', e));
-
-  setInterval(() => syncOnlineUser().catch(()=>{}), 30000);
-  setInterval(() => renderFirebaseLivePanels().catch(()=>{}), 45000);
-  window.addEventListener('storage', () => { syncOnlineUser().catch(()=>{}); syncLoginHistory().catch(()=>{}); refreshLikeButtons().catch(()=>{}); refreshLikesPage().catch(()=>{}); });
-  document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState === 'visible') { syncOnlineUser().catch(()=>{}); renderFirebaseLivePanels().catch(()=>{}); refreshLikeButtons().catch(()=>{}); refreshLikesPage().catch(()=>{}); }
-  });
-  window.addEventListener('beforeunload', () => { markOffline(); });
-}
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-else boot();
-
-
-
-// Robust navbar likes link: always go to /likes/ and never to Lucky Draw.
-function normalizeNavbarLikesLink(){
-  document.querySelectorAll('a[aria-label="Likes"], .market-icon-btn').forEach(a => {
-    const label = String(a.getAttribute('aria-label') || '').toLowerCase();
-    const href = String(a.getAttribute('href') || '');
-    const isHeart = label === 'likes' || a.querySelector('svg path[d*="20.8 4.6"]');
-    if(isHeart){
-      a.setAttribute('href','/likes/');
-      a.classList.add('az-navbar-likes-link');
+  document.addEventListener('keydown', (event)=>{
+    if (event.key === 'Escape') {
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+      closeSiteAuth();
+      closeProfileSettings();
+      if (typeof closeAdminUserEdit === 'function') closeAdminUserEdit();
     }
   });
-}
-normalizeNavbarLikesLink();
-setTimeout(normalizeNavbarLikesLink, 300);
-setTimeout(normalizeNavbarLikesLink, 1200);
-document.addEventListener('click', function(event){
-  const a = event.target.closest?.('a[aria-label="Likes"], a.az-navbar-likes-link');
-  if(!a || event.target.closest?.('.azlike')) return;
-  event.preventDefault();
-  event.stopPropagation();
-  if(typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-  window.location.href = '/likes/';
-}, true);
 
-
-// Auto inject like buttons only on allowed pages: Affiliate Shop, Software, and CAD Tools.
-(function(){
-  const allowedLikePages = [
-    { test:/\/affiliate-shop\//i, selector:'.card,.product-card,.affiliate-card' },
-    { test:/\/software-tools\//i, selector:'.download-card,.software-card' },
-    { test:/\/cad-tools-&-resources\//i, selector:'#lispList tr,.lisp-row' }
-  ];
-  function currentConfig(){
-    return allowedLikePages.find(x => x.test.test(location.pathname));
-  }
-  function ensureLikeStyle(){
-    if(document.getElementById('azobss-card-like-style')) return;
-    const style=document.createElement('style');
-    style.id='azobss-card-like-style';
-    style.textContent = `
-      .az-like-host{position:relative!important;}
-      .azlike.card-like-btn{
-        position:absolute!important;top:10px!important;right:10px!important;
-        width:36px!important;height:36px!important;border-radius:50%!important;
-        border:1px solid rgba(255,255,255,.18)!important;background:rgba(2,6,23,.72)!important;
-        color:#fff!important;z-index:50!important;font-size:18px!important;line-height:1!important;
-        display:flex!important;align-items:center!important;justify-content:center!important;
-        cursor:pointer!important;box-shadow:0 8px 22px rgba(0,0,0,.35)!important;transition:.2s!important;
+  document.querySelectorAll('#userMenu, .user-menu').forEach((menu)=>{
+    menu.addEventListener('keydown', (event)=>{
+      if (event.target.closest('.user-dropdown')) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        menu.classList.toggle('is-open');
+        menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
       }
-      .azlike.card-like-btn:hover{transform:scale(1.08)!important;background:rgba(15,23,42,.9)!important;}
-      .azlike.card-like-btn.is-liked{color:#ff3b5c!important;background:rgba(255,59,92,.14)!important;border-color:rgba(255,59,92,.45)!important;}
-      .azlike.card-like-btn.is-liked::after{content:'';position:absolute;inset:-3px;border-radius:999px;box-shadow:0 0 0 2px rgba(255,59,92,.12),0 0 16px rgba(255,59,92,.35);pointer-events:none;}
-      #lispList tr.az-like-host .azlike.card-like-btn{top:50%!important;right:8px!important;transform:translateY(-50%)!important;}
-      #lispList tr.az-like-host .azlike.card-like-btn:hover{transform:translateY(-50%) scale(1.08)!important;}
-      #lispList tr.az-like-host td:last-child{padding-right:48px!important;}
-       .az-like-host .tag,.az-like-host .category-badge,.az-like-host [class*="tag"],.az-like-host [class*="badge"]{margin-right:48px!important;}
-@media(max-width:640px){.azlike.card-like-btn{width:32px!important;height:32px!important;font-size:16px!important;top:8px!important;right:8px!important;}.az-like-host .tag,.az-like-host .category-badge,.az-like-host [class*="tag"],.az-like-host [class*="badge"]{margin-right:40px!important;}}
-    `;
-    document.head.appendChild(style);
-  }
-  function injectAllowedLikeButtons(){
-    const cfg=currentConfig();
-    if(!cfg) return;
-    ensureLikeStyle();
-    document.querySelectorAll(cfg.selector).forEach((card,i)=>{
-      if(!card || card.querySelector(':scope > .azlike.card-like-btn')) return;
-      if(card.tagName === 'TR' && (!card.dataset.id && !card.querySelector('.program-link'))) return;
-      card.classList.add('az-like-host');
-      const b=document.createElement('button');
-      b.type='button';
-      b.className='azlike card-like-btn';
-      b.textContent='♡';
-      b.setAttribute('aria-label','Like item');
-      card.appendChild(b);
-      const itemPreview = likeItemFromButton(b);
-      b.dataset.likeId = itemPreview.itemId;
-      b.dataset.title = itemPreview.title;
-      b.dataset.category = itemPreview.category;
     });
-    if(typeof refreshLikeButtons === 'function') refreshLikeButtons();
-  }
-  function scheduleLikeInjection(){
-    injectAllowedLikeButtons();
-    [350, 900, 1600, 2800].forEach(ms => setTimeout(injectAllowedLikeButtons, ms));
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scheduleLikeInjection, { once:true });
-  else scheduleLikeInjection();
-  // Do not use a body-wide MutationObserver here. It can loop when like buttons repaint
-  // and causes Software/CAD/Affiliate tabs to freeze on some browsers.
+  });
+
+  $('siteSignInForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const err=$('siteLoginError'); if(err) err.textContent='';
+    const usernameKey=normalizeUsername(fieldValue('siteLoginUsername','siteLoginName'));
+    const password=fieldValue('siteLoginPassword');
+    if(!usernameKey || !password){ if(err) err.textContent='Please enter username and password.'; return; }
+    try{
+      await setPersistence(auth,browserLocalPersistence);
+      const lookupEmail = await getAuthEmailForUsername(usernameKey);
+      const loginEmail = lookupEmail || buildUserEmail(usernameKey);
+      let credential;
+      try{
+        credential = await signInWithEmailAndPassword(auth, loginEmail, password);
+      }catch(primaryError){
+        if(lookupEmail){
+          credential = await signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password);
+        }else{
+          throw primaryError;
+        }
+      }
+      try{ await credential.user.reload(); }catch(e){}
+      const authUser = auth.currentUser || credential.user;
+      const profile=await ensureUserProfile(authUser,{usernameKey});
+      const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
+      const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
+      if(!authUser.emailVerified && !isOwnerBypass){
+        await signOut(auth);
+        clearSavedUser();
+        syncHeader(null);
+        if(err) err.textContent='Please verify your email first.';
+        return;
+      }
+      if(realEmail && realEmail.includes('@')) await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
+      await setDoc(doc(db,'users',usernameKey), {verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || ''}, {merge:true});
+      const signedInUser={uid:authUser.uid,...profile,usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
+      saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
+    }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
+  });
+
+
+
+  $('siteForgotPasswordButton')?.addEventListener('click', (event)=>{
+    event.preventDefault();
+    const box=$('siteForgotPasswordBox');
+    const err=$('siteLoginError');
+    if(err) err.textContent='';
+    if(box) box.hidden = !box.hidden;
+    setTimeout(()=>{ try{ $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 50);
+  });
+
+  $('siteSendPasswordResetButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('siteLoginError');
+    if(err){ err.style.color=''; err.textContent=''; }
+
+    const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
+    if(!$('siteForgotPasswordCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(!raw){ if(err) err.textContent='Please enter your username or registered email.'; return; }
+
+    try{
+      let resetEmail = raw;
+      if(!raw.includes('@')){
+        const usernameKey = normalizeUsername(raw);
+        if(!usernameKey){ if(err) err.textContent='Please enter a valid username or registered email.'; return; }
+        resetEmail = await getAuthEmailForUsername(usernameKey);
+        if(!resetEmail){
+          if(err) err.textContent='No email is linked to this username yet. Please enter your registered email, or login once so the system can sync your email.';
+          return;
+        }
+      }
+
+      await sendPasswordResetEmail(auth, resetEmail);
+      if(err){ err.style.color='#62e6a5'; err.textContent='Password reset link sent to '+resetEmail+'. Please check inbox/spam folder.'; }
+    }catch(error){
+      if(err){
+        err.style.color='';
+        err.textContent = error?.code==='auth/user-not-found'
+          ? 'This email is not found in Firebase Authentication. Try your registered email or contact admin.'
+          : 'Unable to send reset email: '+(error?.message || 'Please try again or contact admin.');
+      }
+    }
+  });
+
+  $('siteSignUpForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const err=$('siteSignupError'); if(err) err.textContent='';
+    const usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
+    const password=fieldValue('siteSignupPassword');
+    const phone=getPhoneWithDial('siteSignup');
+    const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
+    const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
+    if(!$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
+    try{
+      await setPersistence(auth,browserLocalPersistence);
+      const existingUsername = await getDoc(doc(db,'users',usernameKey));
+      if(existingUsername.exists()){
+        if(err) err.textContent='Username already exists. Please choose another username.';
+        return;
+      }
+      const credential=await createUserWithEmailAndPassword(auth,email,password);
+      await sendEmailVerification(credential.user);
+      const profile={uid:credential.user.uid,usernameKey,email,authEmail:email,contactEmail:email,phone,inviteCode:buildInviteCode(usernameKey),invitedByCode,memberCode:invitedByCode,paMemberCode:invitedByCode,role:'member',verified:false,emailVerified:false,createdAt:serverTimestamp()};
+      await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
+      if (invitedByCode === AZOBSS_PA_MEMBER_CODE) {
+        localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
+        sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
+      }
+      await saveUsernameAuthEmail(usernameKey, email, credential.user.uid);
+      await signOut(auth);
+      clearSavedUser();
+      syncHeader(null);
+      if(err){ err.style.color='#62e6a5'; err.textContent='Account created. Please verify your email first, then login.'; }
+      setTimeout(()=>openSiteAuth('signin'), 1200);
+    }catch(error){
+      if(err){
+        err.style.color='';
+        err.textContent = error?.code==='auth/email-already-in-use' ? 'This email is already registered.' : (error?.code==='auth/weak-password' ? 'Password is too weak. Use uppercase, lowercase and number.' : 'Sign up failed. Please try again.');
+      }
+    }
+  });
+
+  $('profileResetPasswordButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('profileSettingsError'); if(err) err.textContent='';
+    const currentPassword=String($('profileCurrentPassword')?.value||'');
+    const newPassword=String($('profileNewPassword')?.value||'');
+    const confirmPassword=String($('profileConfirmPassword')?.value||'');
+    const saved=getSavedUser() || {};
+    const usernameKey=normalizeUsername(saved.usernameKey || saved.name || (auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : ''));
+    if(!auth.currentUser || !usernameKey){ if(err) err.textContent='Please login again before reset password.'; return; }
+    if(!currentPassword || !newPassword || !confirmPassword){ if(err) err.textContent='Please enter current password and new password.'; return; }
+    if(newPassword.length < 8){ if(err) err.textContent='New password must be at least 8 characters.'; return; }
+    if(newPassword !== confirmPassword){ if(err) err.textContent='Confirm password does not match.'; return; }
+    try{
+      const credential=EmailAuthProvider.credential(auth.currentUser.email || buildUserEmail(usernameKey), currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, newPassword);
+      ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+      if(err){ err.style.color='#62e6a5'; err.textContent='Password updated successfully.'; setTimeout(()=>{ if(err.textContent==='Password updated successfully.'){ err.textContent=''; err.style.color=''; } }, 3500); }
+    }catch(error){
+      if(err){ err.style.color=''; err.textContent = error?.code==='auth/wrong-password' || error?.code==='auth/invalid-credential' ? 'Current password is wrong.' : 'Password reset failed. Please login again and try.'; }
+    }
+  });
+
+  $('adminUserEditClose')?.addEventListener('click', closeAdminUserEdit);
+  $('adminUserEditCancel')?.addEventListener('click', closeAdminUserEdit);
+  // AZOBSS FIX: keep Edit Registered User modal open when clicking/dragging outside. Close only X/Cancel/ESC.
+  $('adminUserEditForm')?.addEventListener('submit', async (event)=>{ event.preventDefault(); await saveAdminUserEdit(); });
+
+  $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const current=getSavedUser() || {};
+    const updated={...current,
+      usernameKey: normalizeUsername($('profileEditName')?.value) || current.usernameKey || current.name || '',
+      phone: getPhoneWithDial('profileEdit'),
+      email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
+    };
+    saveUser(updated); await saveProfileToFirebase(updated); startAzobssPresenceHeartbeat(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
+  });
+
+  onAuthStateChanged(auth, async (firebaseUser)=>{
+    if(!firebaseUser){
+      if(window.__AZOBSS_LOGGING_OUT__ || azobssLogoutInProgress) return;
+      if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
+      clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); recordGuestHistory(); renderFirebaseAdminRecords(); return;
+    }
+    try{
+      try{ await firebaseUser.reload(); }catch(e){}
+      const freshUser = auth.currentUser || firebaseUser;
+      const ownerBypass = String(freshUser.email || '').toLowerCase() === 'zedan91@azobss.local';
+      if(!freshUser.emailVerified && !ownerBypass){
+        await signOut(auth);
+        clearUser();
+        syncHeader(null);
+        enforcePaBmPageAccess(null, true);
+        return;
+      }
+      const profile=await ensureUserProfile(freshUser);
+      const usernameKey = normalizeUsername(profile.usernameKey || freshUser.email?.split('@')[0] || 'user');
+      await setDoc(doc(db,'users',usernameKey), {verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+      const fullUser={uid:freshUser.uid,...profile,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
+      saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
+    }
+    catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
+  });
+
+  const hash = String(location.hash || '').toLowerCase();
+  if (['#login','#signin'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signin'); }
+  if (['#signup','#register'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signup'); }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAuth);
+else bindAuth();
+
+
+// AZOBSS_FINAL_MOBILE_DROPDOWN_FIX_JS
+(function injectAzobssFinalMobileDropdownFix(){
+  try{
+    var css = '\n/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */\n.market-sticky-bar,\n.market-bar-inner,\n.market-main-row,\n.market-user-tools,\n.user-menu{\n  overflow:visible !important;\n}\n.user-menu{\n  position:relative !important;\n  z-index:100000 !important;\n}\n.user-menu .user-dropdown,\n#userDropdown{\n  position:absolute !important;\n  top:calc(100% + 10px) !important;\n  right:0 !important;\n  left:auto !important;\n  width:220px !important;\n  min-width:220px !important;\n  max-width:calc(100vw - 16px) !important;\n  padding:8px !important;\n  border-radius:14px !important;\n  background:#08111f !important;\n  border:1px solid rgba(148,163,184,.28) !important;\n  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;\n  z-index:100001 !important;\n  transform:none !important;\n}\n.user-menu:not(.is-open) .user-dropdown{display:none !important;}\n.user-menu.is-open .user-dropdown{display:block !important;}\n.user-dropdown-section{\n  padding:7px 10px 4px !important;\n  font-size:11px !important;\n  line-height:1.1 !important;\n}\n.user-dropdown-item{\n  min-height:38px !important;\n  padding:9px 10px !important;\n  font-size:13px !important;\n  line-height:1.15 !important;\n  border-radius:10px !important;\n}\n@media (max-width:768px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    position:fixed !important;\n    top:92px !important;\n    right:8px !important;\n    left:auto !important;\n    width:210px !important;\n    min-width:210px !important;\n    max-width:calc(100vw - 16px) !important;\n    max-height:68vh !important;\n    overflow-y:auto !important;\n    border-radius:14px !important;\n  }\n  .user-dropdown-section{\n    padding:7px 10px 4px !important;\n    font-size:10.5px !important;\n  }\n  .user-dropdown-item{\n    padding:9px 10px !important;\n    font-size:13px !important;\n    min-height:36px !important;\n  }\n}\n@media (max-width:420px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    top:88px !important;\n    right:6px !important;\n    width:196px !important;\n    min-width:196px !important;\n  }\n}\n';
+    function apply(){
+      if(document.getElementById('azobss-final-mobile-dropdown-fix-js')) return;
+      var style=document.createElement('style');
+      style.id='azobss-final-mobile-dropdown-fix-js';
+      style.textContent=css;
+      document.head.appendChild(style);
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+  }catch(e){}
 })();
 
-if(document.readyState==='loading'){
- document.addEventListener('DOMContentLoaded',()=>{setTimeout(refreshLikeButtons,500);setTimeout(refreshLikeButtons,1500);setTimeout(refreshLikeButtons,3000);});
-}else{
- setTimeout(refreshLikeButtons,500);setTimeout(refreshLikeButtons,1500);setTimeout(refreshLikeButtons,3000);
+
+// AZOBSS_HOME_STICKBAR_1TO1_GLOBAL_FIX
+(function injectAzobssHomeStickbarOneToOne(){
+  try{
+    var css = `
+/* AZOBSS HOME STICKBAR 1:1 GLOBAL FIX - source: Home navbar */
+html,body{overflow-x:hidden!important;}
+body{padding-top:58px!important;}
+.market-sticky-bar{
+  position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;
+  min-height:49px!important;height:auto!important;z-index:5000!important;
+  background:#050807!important;border-bottom:1px solid rgba(234,179,8,.55)!important;
+  overflow:visible!important;box-sizing:border-box!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.28)!important;
 }
-window.addEventListener('focus',()=>setTimeout(refreshLikeButtons,300));
+.market-bar-inner{width:100%!important;max-width:none!important;margin:0!important;padding:0 8px!important;box-sizing:border-box!important;}
+.market-main-row{
+  display:flex!important;align-items:center!important;gap:7px!important;min-height:48px!important;height:48px!important;
+  flex-wrap:nowrap!important;overflow:visible!important;width:100%!important;box-sizing:border-box!important;
+}
+.market-brand{
+  flex:0 0 auto!important;width:154px!important;min-width:154px!important;max-width:154px!important;height:38px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;border-radius:999px!important;overflow:hidden!important;text-decoration:none!important;
+  background:transparent!important;border:0!important;margin:0!important;box-sizing:border-box!important;
+}
+.market-brand img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;display:block!important;margin:0!important;padding:0!important;}
+.market-nav{
+  flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:center!important;gap:7px!important;
+  white-space:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;
+  -webkit-overflow-scrolling:touch!important;padding:0 2px!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a,.market-nav button{
+  flex:0 0 auto!important;height:34px!important;min-height:34px!important;max-height:34px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0 12px!important;border-radius:999px!important;box-sizing:border-box!important;
+  font-size:13px!important;font-weight:900!important;line-height:1!important;text-decoration:none!important;white-space:nowrap!important;
+  background:#0e1729!important;border:1px solid rgba(148,163,184,.28)!important;color:#e5e7eb!important;text-shadow:0 1px 8px rgba(0,0,0,.45)!important;
+}
+.market-nav a:hover,.market-icon-btn:hover{color:#14b8a6!important;}
+.market-nav .nav-pa-bm-link[hidden],.market-nav .nav-pa-bm-link.is-hidden,a#paBmNavButton[hidden],a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+.market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;}
+.nav-whatsapp-circle{position:relative!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;box-shadow:0 8px 20px rgba(34,197,94,.25)!important;overflow:visible!important;}
+.nav-whatsapp-circle::before{content:""!important;display:block!important;width:18px!important;height:14px!important;border-radius:999px!important;background:#fff!important;line-height:1!important;}
+.nav-whatsapp-circle::after{content:""!important;position:absolute!important;left:21px!important;top:23px!important;width:7px!important;height:7px!important;background:#fff!important;clip-path:polygon(0 0,100% 0,0 100%)!important;transform:rotate(-12deg)!important;}
+.site-auth-actions{position:static!important;display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important;margin-right:0!important;flex:0 0 auto!important;z-index:auto!important;}
+.site-auth-btn{height:34px!important;min-height:34px!important;padding:0 12px!important;font-size:13px!important;font-weight:900!important;line-height:1!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;}
+.market-user-tools{
+  flex:0 0 auto!important;display:flex!important;align-items:center!important;gap:11px!important;margin-left:auto!important;
+  min-width:max-content!important;white-space:nowrap!important;overflow:visible!important;color:#fff!important;
+}
+.user-menu{height:34px!important;display:inline-flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important;position:relative!important;top:auto!important;right:auto!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;z-index:100000!important;transform:none!important;cursor:pointer!important;}
+.user-avatar{width:28px!important;height:28px!important;min-width:28px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#020617!important;border:1px solid rgba(20,184,166,.38)!important;color:#d1d5db!important;font-size:12px!important;font-weight:900!important;line-height:1!important;}
+.user-name{font-size:14px!important;font-weight:900!important;line-height:1!important;color:#fff!important;white-space:nowrap!important;max-width:140px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.user-menu::after{content:""!important;width:7px!important;height:7px!important;border-right:2px solid currentColor!important;border-bottom:2px solid currentColor!important;color:#9ca3af!important;transform:rotate(45deg)!important;transition:transform .18s ease!important;}
+.user-menu.is-open::after{transform:rotate(225deg)!important;}
+.market-icon-btn{width:24px!important;height:34px!important;min-width:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;flex:0 0 auto!important;color:#e5e7eb!important;background:transparent!important;border:0!important;margin:0!important;text-decoration:none!important;border-radius:999px!important;}
+.market-icon-btn svg{width:23px!important;height:23px!important;stroke:currentColor!important;fill:none!important;stroke-width:2.2!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+.market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
+.market-icon-btn.is-likes-active svg path{fill:#ff4d6d!important;stroke:#ff4d6d!important;}
+.user-upgrade-btn{margin-left:4px!important;border:1px solid rgba(34,197,94,.45)!important;border-radius:999px!important;background:rgba(34,197,94,.14)!important;color:#22c55e!important;font-weight:900!important;padding:3px 8px!important;font-size:11px!important;cursor:pointer!important;}
+@media(max-width:980px){
+  body{padding-top:92px!important;}
+  .market-main-row{height:auto!important;min-height:48px!important;flex-wrap:wrap!important;align-content:center!important;padding:5px 0!important;}
+  .market-brand{width:132px!important;min-width:132px!important;max-width:132px!important;height:34px!important;}
+  .market-user-tools{margin-left:auto!important;gap:9px!important;}
+  .user-name{max-width:115px!important;font-size:13px!important;}
+  .market-nav{order:3!important;flex:0 0 100%!important;width:100%!important;padding:4px 0 2px!important;}
+  .market-nav a,.market-nav button{height:32px!important;min-height:32px!important;padding:0 10px!important;font-size:12px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;}
+  .nav-whatsapp-circle{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;}
+}
+@media(max-width:560px){
+  body{padding-top:96px!important;}
+  .market-bar-inner{padding:0 6px!important;}
+  .market-brand{width:120px!important;min-width:120px!important;max-width:120px!important;height:32px!important;}
+  .market-user-tools{gap:7px!important;}
+  .user-name{display:none!important;}
+  .market-icon-btn{width:22px!important;min-width:22px!important;}
+  .market-icon-btn svg{width:21px!important;height:21px!important;}
+  .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
+}
+`;
+    function apply(){
+      if(document.getElementById('azobss-home-stickbar-1to1-global-fix')) return;
+      var style=document.createElement('style');
+      style.id='azobss-home-stickbar-1to1-global-fix';
+      style.textContent=css;
+      document.head.appendChild(style);
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+  }catch(e){}
+})();
+
+
+// AZOBSS compact one-line admin live/history rows
+(function injectAzobssCompactAdminHistoryRows(){
+  try{
+    if(document.getElementById('azobss-compact-admin-history-style')) return;
+    const style=document.createElement('style');
+    style.id='azobss-compact-admin-history-style';
+    style.textContent=`
+      #liveUsersList .az-admin-inline-card,
+      #loginHistoryList .az-admin-inline-card,
+      #guestHistoryList .az-admin-inline-card{
+        display:block!important;
+        padding:4px 8px!important;
+        min-height:0!important;
+        border-radius:9px!important;
+        margin:0 0 5px!important;
+      }
+      .az-admin-inline-row{
+        display:flex!important;
+        align-items:center!important;
+        gap:7px!important;
+        flex-wrap:wrap!important;
+        width:100%!important;
+        font-size:11px!important;
+        line-height:1.15!important;
+      }
+      .az-admin-inline-row strong{
+        color:#f8fafc!important;
+        font-size:11.5px!important;
+        margin-right:2px!important;
+        line-height:1.15!important;
+      }
+      .az-admin-inline-row span{
+        color:#b9c5d8!important;
+        white-space:nowrap!important;
+        line-height:1.15!important;
+      }
+      .az-status-online{color:#4ade80!important;font-weight:900!important;}
+      #liveUsersList .admin-purchase-user-top,
+      #loginHistoryList .admin-purchase-user-top,
+      #guestHistoryList .admin-purchase-user-top,
+      #liveUsersList .admin-purchase-user-details,
+      #loginHistoryList .admin-purchase-user-details,
+      #guestHistoryList .admin-purchase-user-details{display:none!important;}
+      @media(max-width:640px){
+        .az-admin-inline-row{gap:5px!important;font-size:10px!important;}
+        .az-admin-inline-row strong{font-size:10.5px!important;}
+      }
+    `;
+    document.head.appendChild(style);
+  }catch(_e){}
+})();
+
+
+// auto-init country selectors for dynamic admin modal
+setupCountryPhoneSelectors(document);
+new MutationObserver(()=>setupCountryPhoneSelectors(document)).observe(document.body,{childList:true,subtree:true});
+
+setTimeout(()=>{azobssCleanupCollection("loginHistory");azobssCleanupCollection("guestHistory");azobssCleanupCollection("purchaseLogs");},5000);
+
+
+
+
+/* AZOBSS phone local display helper disabled here.
+   The single active formatter is bindAzobssPhoneDisplayFormatter() near the top of this file.
+   This prevents Backspace from getting stuck on dash/space separators. */
+window.azobssFormatLocalPhoneForDisplay = function(value){
+  return formatPhoneGuide(value);
+};
+
