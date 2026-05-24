@@ -2269,11 +2269,21 @@ function bindAuth() {
       const newUser = credential.user;
 
       // IMPORTANT FIX:
-      // Firebase Auth may create the account before Firestore accepts the profile write.
-      // Force-refresh the ID token first, then create /users/{username} BEFORE sending
-      // verification email. If Firestore still rejects, delete the half-created Auth user
-      // so the next signup attempt will not show email-already-in-use.
-      try{ await newUser.getIdToken(true); }catch(tokenError){ console.warn('AZOBSS token refresh after signup skipped:', tokenError?.code || tokenError?.message || tokenError); }
+      // Auth account can appear in Firebase before Firestore accepts /users/{username}.
+      // Wait for auth state + refresh token, then retry profile writes a few times.
+      // Verification email is sent only after profile documents are saved successfully.
+      const wait = (ms)=>new Promise(resolve=>setTimeout(resolve,ms));
+      try{ await newUser.getIdToken(true); await newUser.reload(); }catch(tokenError){ console.warn('AZOBSS token refresh after signup skipped:', tokenError?.code || tokenError?.message || tokenError); }
+      await wait(1200);
+      if(auth.currentUser?.uid !== newUser.uid){
+        await new Promise(resolve=>{
+          const off = onAuthStateChanged(auth, u=>{
+            if(u?.uid === newUser.uid){ off(); resolve(); }
+          });
+          setTimeout(()=>{ try{ off(); }catch(_){} resolve(); }, 2500);
+        });
+      }
+      try{ await auth.currentUser?.getIdToken(true); }catch(_){}
 
       const profile={
         uid:newUser.uid,
@@ -2290,15 +2300,36 @@ function bindAuth() {
         role:'member',
         verified:false,
         emailVerified:false,
-        createdAt:serverTimestamp()
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
       };
 
+      async function writeSignupProfileWithRetry(){
+        let lastError=null;
+        for(let attempt=1; attempt<=4; attempt++){
+          try{
+            await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
+            await saveUsernameAuthEmail(usernameKey, email, newUser.uid);
+            return;
+          }catch(profileError){
+            lastError=profileError;
+            console.warn('AZOBSS signup profile write retry '+attempt+' failed:', profileError?.code || profileError?.message || profileError);
+            try{ await newUser.getIdToken(true); }catch(_){}
+            await wait(700 * attempt);
+          }
+        }
+        throw lastError;
+      }
+
       try{
-        await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
+        await writeSignupProfileWithRetry();
       }catch(profileError){
-        console.error('AZOBSS signup profile create failed:', profileError);
+        console.error('AZOBSS signup profile create failed after retries:', profileError);
         try{ await deleteUser(newUser); }catch(deleteError){ console.warn('AZOBSS cleanup failed after profile create error:', deleteError?.code || deleteError?.message || deleteError); }
-        throw profileError;
+        try{ await signOut(auth); }catch(_){}
+        const cleanupError = new Error((profileError?.message || 'Firestore profile write failed') + ' | Auth cleanup attempted. Delete this email in Firebase Authentication if it still appears.');
+        cleanupError.code = profileError?.code || 'firestore/profile-write-failed';
+        throw cleanupError;
       }
 
       await sendEmailVerification(newUser);
