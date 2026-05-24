@@ -801,6 +801,44 @@ function normalizeUserMenu() {
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
 }
 
+function bindUserDropdownActions() {
+  const menu = document.getElementById('userMenu') || document.querySelector('.user-menu');
+  const dropdown = document.getElementById('userDropdown') || document.querySelector('.user-dropdown');
+
+  // Important: dropdown item clicks must not be swallowed by the parent user menu toggle.
+  dropdown?.addEventListener('click', (event) => {
+    event.stopPropagation();
+  });
+
+  document.getElementById('profileSettingsButton')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    document.querySelectorAll('.user-menu.is-open').forEach(el => {
+      el.classList.remove('is-open');
+      el.setAttribute('aria-expanded', 'false');
+    });
+    if (typeof openProfileSettings === 'function') openProfileSettings();
+  });
+
+  document.getElementById('logoutButton')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof azobssLogoutOnce === 'function') azobssLogoutOnce();
+  });
+
+  dropdown?.querySelector('a[href="/#purchases"]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    menu?.classList.remove('is-open');
+    menu?.setAttribute('aria-expanded', 'false');
+  });
+
+  dropdown?.querySelector('a[href="/likes/"]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    menu?.classList.remove('is-open');
+    menu?.setAttribute('aria-expanded', 'false');
+  });
+}
+
 function normalizePath(pathname) {
   return String(pathname || '/')
     .toLowerCase()
@@ -2102,7 +2140,7 @@ window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
 window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); syncActiveNav(); syncHeader(getSavedUser());
+  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser());
   bindAzobssPurchaseRecordsUI(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
@@ -2690,23 +2728,3 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
 };
 
 
-
-// Fallback fix for user dropdown menu
-document.addEventListener('DOMContentLoaded',()=>{
- const menu=document.getElementById('userMenu');
- if(menu && !menu.dataset.azFix){
-   menu.dataset.azFix='1';
-   menu.addEventListener('click',function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      this.classList.toggle('is-open');
-      this.setAttribute('aria-expanded',this.classList.contains('is-open')?'true':'false');
-   });
-   document.addEventListener('click',function(e){
-      if(!menu.contains(e.target)){
-         menu.classList.remove('is-open');
-         menu.setAttribute('aria-expanded','false');
-      }
-   });
- }
-});
