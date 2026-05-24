@@ -2727,4 +2727,85 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   return formatPhoneGuide(value);
 };
 
+/* AZOBSS ULTRA-STABLE USER MENU CLICK FIX
+   Fixes Hello, username dropdown toggle + dropdown actions after signup/auth patches. */
+(function azobssUltraStableUserMenuFix(){
+  if (window.__azobssUltraStableUserMenuFixInstalled) return;
+  window.__azobssUltraStableUserMenuFixInstalled = true;
 
+  function closeMenus(except){
+    document.querySelectorAll('#userMenu, .user-menu').forEach(function(menu){
+      if (except && menu === except) return;
+      menu.classList.remove('is-open');
+      menu.setAttribute('aria-expanded','false');
+    });
+  }
+
+  function openSettings(){
+    try {
+      if (typeof openProfileSettings === 'function') return openProfileSettings();
+      if (typeof window.openProfileSettings === 'function') return window.openProfileSettings();
+      var btn = document.querySelector('[data-open-profile-settings], #profileSettingsOpenButton, #settingsButton');
+      if (btn) btn.click();
+    } catch(_e) {}
+  }
+
+  function logout(){
+    try {
+      if (typeof azobssLogoutOnce === 'function') return azobssLogoutOnce();
+      if (typeof window.azobssLogoutUser === 'function') return window.azobssLogoutUser();
+      var old = document.querySelector('[data-auth-logout], #siteLogoutButton');
+      if (old) return old.click();
+    } catch(_e) {}
+  }
+
+  document.addEventListener('click', function(event){
+    var dropdownItem = event.target.closest('#userDropdown .user-dropdown-item, .user-dropdown .user-dropdown-item');
+    if (dropdownItem) {
+      var menuForItem = dropdownItem.closest('#userMenu, .user-menu');
+      event.stopPropagation();
+      if (dropdownItem.id === 'profileSettingsButton' || /settings/i.test(dropdownItem.textContent || '')) {
+        event.preventDefault();
+        if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+        closeMenus();
+        openSettings();
+        return;
+      }
+      if (dropdownItem.id === 'logoutButton' || /log\s*out/i.test(dropdownItem.textContent || '')) {
+        event.preventDefault();
+        if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+        closeMenus();
+        logout();
+        return;
+      }
+      closeMenus();
+      return;
+    }
+
+    var menu = event.target.closest('#userMenu, .user-menu');
+    if (menu) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      var willOpen = !menu.classList.contains('is-open');
+      closeMenus(menu);
+      menu.classList.toggle('is-open', willOpen);
+      menu.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      return;
+    }
+
+    closeMenus();
+  }, true);
+
+  document.addEventListener('keydown', function(event){
+    var menu = event.target.closest && event.target.closest('#userMenu, .user-menu');
+    if (menu && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      var willOpen = !menu.classList.contains('is-open');
+      closeMenus(menu);
+      menu.classList.toggle('is-open', willOpen);
+      menu.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+    if (event.key === 'Escape') closeMenus();
+  }, true);
+})();
