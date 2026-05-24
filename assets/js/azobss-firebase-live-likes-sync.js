@@ -202,9 +202,6 @@ function addStyle() {
 .auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
 .auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
 .auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
-.auth-captcha-row{display:flex!important;align-items:center!important;gap:12px!important;font-weight:800!important;color:#fff!important;cursor:pointer;line-height:20px;}
-.auth-captcha-row input[type="checkbox"]{width:20px!important;height:20px!important;margin:0!important;flex-shrink:0;}
-
 .phone-input-row{display:grid;grid-template-columns:minmax(118px,auto) 1fr;gap:8px;align-items:center;}
 .country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:nowrap;}
 .country-code-button::after{content:'⌄';margin-left:7px;font-size:13px;color:#cbd5e1;}
@@ -374,6 +371,10 @@ const AZOBSS_USERNAME_AUTH_COLLECTION = 'usernameAuthEmails';
 async function getAuthEmailForUsername(usernameKey){
   const key = normalizeUsername(usernameKey);
   if(!key) return '';
+  try{
+    const localEmail = String(localStorage.getItem('azobssAuthEmailMap:' + key) || '').trim().toLowerCase();
+    if(localEmail && localEmail.includes('@')) return localEmail;
+  }catch(_){}
   try{
     const lookupSnap = await getDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key));
     if(lookupSnap.exists()){
@@ -921,12 +922,26 @@ function hasPaBmTabAccess(user){
 function isPaBmProtectedPage(){
   return /\/PA-BM\/?(?:index\.html)?$/i.test(location.pathname) || /\/PA-BM\//i.test(location.pathname);
 }
+function isAzobssMemberProtectedPage(){
+  const path = location.pathname.replace(/\\/g,'/');
+  return /\/(affiliate-shop|lucky-draw|purchase-history|member-area|members|my-account)\/?(?:index\.html)?$/i.test(path)
+    || /\/(affiliate-shop|lucky-draw|purchase-history|member-area|members|my-account)\//i.test(path);
+}
 function showPaBmDeniedAndRedirect(){
   // Silent redirect only. Do not show a PA/BM access popup/toast.
   const target = '/';
   if(location.pathname !== target) location.replace(target);
 }
+function showMemberLoginRequired(){
+  try{ sessionStorage.setItem('azobssAccessDeniedMessage','Please login first to access this page.'); }catch(e){}
+  if(location.pathname !== '/') location.replace('/#login');
+  else setTimeout(()=>openSiteAuth('signin'), 80);
+}
 function enforcePaBmPageAccess(user, settled){
+  if(isAzobssMemberProtectedPage() && !user){
+    if(settled) showMemberLoginRequired();
+    return;
+  }
   if(!isPaBmProtectedPage()) return;
   if(hasPaBmTabAccess(user)) return;
   if(settled) showPaBmDeniedAndRedirect();
@@ -1013,7 +1028,11 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
   const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
-  await setDoc(ref,profile,{merge:true});
+  try{
+    await setDoc(ref,profile,{merge:true});
+  }catch(profileWriteError){
+    console.warn('AZOBSS ensureUserProfile write skipped:', profileWriteError?.code || profileWriteError?.message || profileWriteError);
+  }
   return profile;
 }
 
@@ -2149,12 +2168,15 @@ function bindAuth() {
   $('siteSignInForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
     const err=$('siteLoginError'); if(err) err.textContent='';
-    const usernameKey=normalizeUsername(fieldValue('siteLoginUsername','siteLoginName'));
+    const loginInputRaw=String(fieldValue('siteLoginUsername','siteLoginName')).trim().toLowerCase();
+    const inputIsEmail = loginInputRaw.includes('@');
+    const usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || loginInputRaw.split('@')[0]) : normalizeUsername(loginInputRaw);
     const password=fieldValue('siteLoginPassword');
-    if(!usernameKey || !password){ if(err) err.textContent='Please enter username and password.'; return; }
+    if(!loginInputRaw || !password){ if(err) err.textContent='Please enter username/email and password.'; return; }
     try{
+      if(err){err.style.color='#ffd54a'; err.textContent='⏳ Please wait... Setting up your AZOBSS account...';}
       await setPersistence(auth,browserLocalPersistence);
-      const lookupEmail = await getAuthEmailForUsername(usernameKey);
+      const lookupEmail = inputIsEmail ? loginInputRaw : await getAuthEmailForUsername(usernameKey);
       const loginEmail = lookupEmail || buildUserEmail(usernameKey);
       let credential;
       try{
@@ -2168,7 +2190,13 @@ function bindAuth() {
       }
       try{ await credential.user.reload(); }catch(e){}
       const authUser = auth.currentUser || credential.user;
-      const profile=await ensureUserProfile(authUser,{usernameKey});
+      let profile;
+      try{
+        profile = await ensureUserProfile(authUser,{usernameKey, email: lookupEmail || authUser.email || ''});
+      }catch(profileError){
+        console.warn('AZOBSS login profile recovery skipped:', profileError?.code || profileError?.message || profileError);
+        profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'member'};
+      }
       const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
       const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
       if(!authUser.emailVerified && !isOwnerBypass){
@@ -2178,11 +2206,21 @@ function bindAuth() {
         if(err) err.textContent='Please verify your email first.';
         return;
       }
-      if(realEmail && realEmail.includes('@')) await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
-      await setDoc(doc(db,'users',usernameKey), {verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || ''}, {merge:true});
+      if(realEmail && realEmail.includes('@')){
+        try{ localStorage.setItem('azobssAuthEmailMap:' + usernameKey, realEmail); localStorage.setItem('azobssSignupUsernameByEmail:' + realEmail, usernameKey); }catch(_){}
+        await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
+      }
+      try{
+        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || ''}, {merge:true});
+      }catch(loginProfileUpdateError){
+        console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
+      }
       const signedInUser={uid:authUser.uid,...profile,usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
       saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
-    }catch(error){ if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username or password.' : 'Login failed. Please try again.'; }
+    }catch(error){
+      console.warn('AZOBSS login failed:', error?.code || error?.message || error);
+      if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username/email or password. If username login fails, try your Gmail email once.' : ((error?.code || 'Login failed') + ': ' + (error?.message || 'Please try again.'));
+    }
   });
 
 
@@ -2244,6 +2282,7 @@ function bindAuth() {
     const submitButton = event.submitter || $('siteSignUpForm')?.querySelector('button[type="submit"]');
     if(submitButton) submitButton.disabled = true;
     try{
+      if(err){err.style.color='#ffd54a'; err.textContent='⏳ Please wait... Setting up your AZOBSS account...';}
       await setPersistence(auth,browserLocalPersistence);
 
       // IMPORTANT FIX:
@@ -2267,6 +2306,10 @@ function bindAuth() {
 
       const credential=await createUserWithEmailAndPassword(auth,email,password);
       const newUser = credential.user;
+      try{
+        localStorage.setItem('azobssAuthEmailMap:' + usernameKey, email);
+        localStorage.setItem('azobssSignupUsernameByEmail:' + email, usernameKey);
+      }catch(_){}
 
       // IMPORTANT FIX:
       // Auth account can appear in Firebase before Firestore accepts /users/{username}.
@@ -2326,7 +2369,11 @@ function bindAuth() {
         // Send verification first and never auto-delete the Auth account.
         // Previous build deleted the Auth user when Firestore was slow/blocked,
         // causing the user to disappear after ~30 seconds and no Gmail verification.
-        await sendEmailVerification(newUser);
+        if(err){err.style.color='#87ceeb'; err.textContent='📧 Sending verification email...';}
+        await sendEmailVerification(newUser, {
+          url: location.origin + '/?azobssVerified=1',
+          handleCodeInApp: false
+        });
         verificationEmailSent = true;
       }catch(verifyError){
         console.warn('AZOBSS verification email send failed:', verifyError?.code || verifyError?.message || verifyError);
@@ -2433,13 +2480,23 @@ function bindAuth() {
       }
       const profile=await ensureUserProfile(freshUser);
       const usernameKey = normalizeUsername(profile.usernameKey || freshUser.email?.split('@')[0] || 'user');
-      await setDoc(doc(db,'users',usernameKey), {verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+      try{
+        await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+      }catch(stateProfileUpdateError){
+        console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
+      }
       const fullUser={uid:freshUser.uid,...profile,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
     }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
+  const params = new URLSearchParams(location.search || '');
+  if(params.get('azobssVerified') === '1') {
+    try{ sessionStorage.setItem('azobssAccessDeniedMessage','Email verified successfully. Please login.'); }catch(e){}
+    history.replaceState(null,'',location.pathname + '#login');
+    setTimeout(()=>openSiteAuth('signin'), 80);
+  }
   const hash = String(location.hash || '').toLowerCase();
   if (['#login','#signin'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signin'); }
   if (['#signup','#register'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signup'); }

@@ -2174,6 +2174,7 @@ function bindAuth() {
     const password=fieldValue('siteLoginPassword');
     if(!loginInputRaw || !password){ if(err) err.textContent='Please enter username/email and password.'; return; }
     try{
+      if(err){err.style.color='#ffd54a'; err.textContent='⏳ Please wait... Setting up your AZOBSS account...';}
       await setPersistence(auth,browserLocalPersistence);
       const lookupEmail = inputIsEmail ? loginInputRaw : await getAuthEmailForUsername(usernameKey);
       const loginEmail = lookupEmail || buildUserEmail(usernameKey);
@@ -2281,6 +2282,7 @@ function bindAuth() {
     const submitButton = event.submitter || $('siteSignUpForm')?.querySelector('button[type="submit"]');
     if(submitButton) submitButton.disabled = true;
     try{
+      if(err){err.style.color='#ffd54a'; err.textContent='⏳ Please wait... Setting up your AZOBSS account...';}
       await setPersistence(auth,browserLocalPersistence);
 
       // IMPORTANT FIX:
@@ -2367,6 +2369,7 @@ function bindAuth() {
         // Send verification first and never auto-delete the Auth account.
         // Previous build deleted the Auth user when Firestore was slow/blocked,
         // causing the user to disappear after ~30 seconds and no Gmail verification.
+        if(err){err.style.color='#87ceeb'; err.textContent='📧 Sending verification email...';}
         await sendEmailVerification(newUser, {
           url: location.origin + '/?azobssVerified=1',
           handleCodeInApp: false
