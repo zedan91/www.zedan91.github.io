@@ -1,4 +1,6 @@
 
+if(!document.querySelector('script[src*="recaptcha/api.js"]')){const s=document.createElement('script');s.src='https://www.google.com/recaptcha/api.js';s.async=true;s.defer=true;document.head.appendChild(s);}
+
 
 function getAzobssPhoneDialForInput(input){
   try {
@@ -264,7 +266,7 @@ function injectModal() {
         <label for="siteForgotPasswordInput">Reset password by username or email
           <input id="siteForgotPasswordInput" autocomplete="username email" placeholder="Enter username or email" type="text">
         </label>
-        <label class="auth-captcha-row" for="siteForgotPasswordCaptcha"><input id="siteForgotPasswordCaptcha" type="checkbox"> I'm not a robot</label>
+        <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
         <button class="btn secondary" id="siteSendPasswordResetButton" type="button">Send Reset Link</button>
         <p class="auth-reset-note">Enter your AZOBSS username or registered email. Firebase will send a password reset link to the registered account email.</p>
       </div>
@@ -295,7 +297,7 @@ function injectModal() {
       <label for="siteSignupInviteCode">Member / Invite Code
         <input id="siteSignupInviteCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
-      <label class="auth-captcha-row" for="siteSignupCaptcha"><input id="siteSignupCaptcha" type="checkbox" required> I'm not a robot</label>
+      <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
       <p class="request-error" id="siteSignupError"></p>
       <button class="btn signup" type="submit">Create Account</button>
       <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
