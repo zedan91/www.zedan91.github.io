@@ -2393,17 +2393,17 @@ function bindAuth() {
         localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
         sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
       }
-      await saveUsernameAuthEmail(usernameKey, email, newUser.uid);
+      try{ await saveUsernameAuthEmail(usernameKey, email, newUser.uid); }catch(mapError){ console.warn('AZOBSS username email map save skipped:', mapError?.code || mapError?.message || mapError); }
       await signOut(auth);
       clearSavedUser();
       syncHeader(null);
       if(err){
         err.style.color='#62e6a5';
-        err.textContent = profileSaved
-          ? '✅ Your AZOBSS account has been created! Please verify your email within 24 hours, then return and login.'
-          : '✅ Your AZOBSS account has been created! Please verify your email within 24 hours, then return and login.';
+        err.textContent = '✅ Account created! Please check your Gmail and verify your account before login.';
       }
-      setTimeout(()=>openSiteAuth('signin'), 1200);
+      try{ $('siteSignUpForm')?.reset(); }catch(_){}
+      // STOP here after signup success. Do not auto-switch/open the login section.
+      return;
     }catch(error){
       console.error('AZOBSS signup error:', error);
       if(err){
