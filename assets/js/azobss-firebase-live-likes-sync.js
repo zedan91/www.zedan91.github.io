@@ -2934,3 +2934,251 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if (event.key === 'Escape') closeMenus();
   }, true);
 })();
+
+/* AZOBSS low-quota item likes buttons (restored)
+   - Injects heart buttons into Affiliate / Software / CAD item cards.
+   - Uses one Firestore path only: users/{usernameKey}/likes/{itemId}
+   - Reads once, writes only when user toggles a like. No live listener. */
+(function(){
+  const STYLE_ID = 'azobss-low-quota-like-style';
+  const CACHE_PREFIX = 'azobss_low_quota_likes:';
+  const PAGE_MAP = {
+    '/affiliate-shop': 'Affiliate Shop',
+    '/software-tools': 'Software Tools',
+    '/cad-tools-&-resources': 'CAD Tools & Resources',
+    '/cad-tools-and-resources': 'CAD Tools & Resources'
+  };
+  const state = { loadedFor: '', ids: new Set(), busy: new Set(), loading: null };
+
+  function addLikeStyle(){
+    if(document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      .az-item-like-btn{position:absolute!important;top:14px!important;right:14px!important;z-index:20!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(255,77,109,.45)!important;background:rgba(5,10,22,.78)!important;color:#fff!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:22px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;box-shadow:0 10px 26px rgba(0,0,0,.32)!important;backdrop-filter:blur(8px)!important;transition:transform .18s ease, background .18s ease, border-color .18s ease!important;}
+      .az-item-like-btn:hover{transform:scale(1.07)!important;border-color:#ff4d6d!important;background:rgba(255,77,109,.14)!important;}
+      .az-item-like-btn.is-liked{background:rgba(255,77,109,.22)!important;border-color:#ff4d6d!important;color:#ff4d6d!important;text-shadow:0 0 14px rgba(255,77,109,.45)!important;}
+      .az-item-like-btn[disabled]{opacity:.62!important;cursor:wait!important;transform:none!important;}
+      .card,.download-card,.cad-card{position:relative!important;}
+      .az-like-card{display:grid;gap:8px;border:1px solid rgba(34,197,94,.22);border-radius:14px;background:rgba(15,23,42,.7);padding:14px;color:#fff;cursor:pointer;}
+      .az-like-card-title{font-weight:950;color:#fff;font-size:16px;}
+      .az-like-card-meta{font-size:12px;color:#93c5fd;font-weight:800;}
+      .az-like-card-url{font-size:12px;color:#86efac;word-break:break-all;}
+      .az-like-empty{border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:18px;color:#cbd5e1;}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function safeJson(value){ try{return JSON.parse(value || 'null');}catch(e){return null;} }
+  function cleanKey(value){ return String(value || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,''); }
+  function getSavedUser(){
+    return safeJson(sessionStorage.getItem('azobssUser')) ||
+      safeJson(localStorage.getItem('azobssUser')) ||
+      safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
+      safeJson(localStorage.getItem('azobssCurrentUser')) || null;
+  }
+  function getUsernameKey(){
+    const u = getSavedUser();
+    const key = cleanKey(u?.usernameKey || u?.username || u?.name || u?.id || '');
+    if(key) return key;
+    const authUser = auth.currentUser;
+    if(authUser && authUser.uid) return cleanKey(authUser.uid);
+    return '';
+  }
+  function isLoggedIn(){ return !!(auth.currentUser || sessionStorage.getItem('azobssLoggedIn') === '1' || localStorage.getItem('azobssLoggedIn') === '1'); }
+  function openLogin(){
+    const btn = document.querySelector('[data-auth-open="login"], #siteLoginButton, .site-auth-actions .site-auth-btn');
+    if(btn) btn.click();
+    else alert('Please login first to like items.');
+  }
+  function cacheKey(usernameKey){ return CACHE_PREFIX + usernameKey; }
+  function loadCache(usernameKey){
+    const arr = safeJson(localStorage.getItem(cacheKey(usernameKey))) || [];
+    state.ids = new Set(Array.isArray(arr) ? arr.map(String) : []);
+  }
+  function saveCache(usernameKey){
+    try{ localStorage.setItem(cacheKey(usernameKey), JSON.stringify(Array.from(state.ids))); }catch(e){}
+  }
+  async function loadLikesOnce(){
+    const usernameKey = getUsernameKey();
+    if(!usernameKey) return state.ids;
+    if(state.loadedFor === usernameKey) return state.ids;
+    if(state.loading) return state.loading;
+    loadCache(usernameKey);
+    state.loading = (async()=>{
+      try{
+        const snap = await getDocs(collection(db, 'users', usernameKey, 'likes'));
+        const ids = new Set(state.ids);
+        snap.forEach(d=>ids.add(String(d.id)));
+        state.ids = ids;
+        state.loadedFor = usernameKey;
+        saveCache(usernameKey);
+      }catch(err){
+        console.warn('AZOBSS likes load skipped:', err);
+        state.loadedFor = usernameKey;
+      }finally{
+        state.loading = null;
+      }
+      return state.ids;
+    })();
+    return state.loading;
+  }
+  function setButtonState(btn, liked){
+    if(!btn) return;
+    btn.classList.toggle('is-liked', !!liked);
+    btn.textContent = liked ? '❤️' : '♡';
+    btn.setAttribute('aria-label', liked ? 'Remove from Likes' : 'Add to Likes');
+    btn.title = liked ? 'Remove from Likes' : 'Add to Likes';
+  }
+  function pageType(){
+    const path = String(location.pathname || '').toLowerCase().replace(/\/$/,'');
+    for(const key of Object.keys(PAGE_MAP)) if(path.includes(key)) return PAGE_MAP[key];
+    if(path.includes('cad')) return 'CAD Tools & Resources';
+    if(path.includes('software')) return 'Software Tools';
+    if(path.includes('affiliate')) return 'Affiliate Shop';
+    return 'AZOBSS';
+  }
+  function getCardInfo(card){
+    const isAff = card.matches('.card');
+    const isSw = card.matches('.download-card');
+    const isCad = card.matches('.cad-card');
+    const id = String(card.dataset.productId || card.dataset.cadId || card.dataset.docId || '').trim() || cleanKey(card.querySelector('h2,h3')?.textContent || 'item');
+    const title = String(card.querySelector('h2,h3')?.textContent || id).trim();
+    const desc = String(card.querySelector('p')?.textContent || '').trim();
+    const category = String(card.dataset.category || card.querySelector('.badge,.software-badge,.cad-badge,.meta')?.textContent || pageType()).trim();
+    const linkEl = card.querySelector('.card-open,.download-btn,.cad-action-btn,a[href]');
+    const url = linkEl ? (linkEl.getAttribute('href') || '') : '';
+    return {
+      id: cleanKey(id) || ('item-' + Date.now()),
+      title, desc, category,
+      page: pageType(),
+      type: isAff ? 'affiliate' : (isSw ? 'software' : (isCad ? 'cad' : 'item')),
+      url: url && url !== '#' ? url : location.pathname,
+      savedAt: Date.now()
+    };
+  }
+  function getCards(){
+    const cards = [];
+    document.querySelectorAll('.card[data-product-id], .download-card, .cad-card').forEach(card=>{
+      if(card.closest('.auth-modal,.azobss-pay-modal,.admin-modal,.cad-admin-modal,.software-admin-modal')) return;
+      if(card.querySelector('.az-item-like-btn')) return;
+      const info = getCardInfo(card);
+      if(!info.id || !info.title) return;
+      cards.push({card, info});
+    });
+    return cards;
+  }
+  async function toggleLike(btn, info){
+    if(!isLoggedIn()) { openLogin(); return; }
+    const usernameKey = getUsernameKey();
+    if(!usernameKey){ openLogin(); return; }
+    await loadLikesOnce();
+    const id = String(info.id);
+    if(state.busy.has(id)) return;
+    state.busy.add(id);
+    btn.disabled = true;
+    const nextLiked = !state.ids.has(id);
+    if(nextLiked) state.ids.add(id); else state.ids.delete(id);
+    setButtonState(btn, nextLiked);
+    saveCache(usernameKey);
+    try{
+      if(nextLiked){
+        await setDoc(doc(db, 'users', usernameKey, 'likes', id), {
+          ...info,
+          itemId: id,
+          usernameKey,
+          uid: auth.currentUser?.uid || getSavedUser()?.uid || '',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, {merge:true});
+      }else{
+        await deleteDoc(doc(db, 'users', usernameKey, 'likes', id));
+      }
+    }catch(err){
+      console.warn('AZOBSS like save failed:', err);
+      if(nextLiked) state.ids.delete(id); else state.ids.add(id);
+      setButtonState(btn, !nextLiked);
+      saveCache(usernameKey);
+      alert('Unable to update Likes right now. Please try again later.');
+    }finally{
+      state.busy.delete(id);
+      btn.disabled = false;
+      renderLikesPage(true);
+    }
+  }
+  async function injectLikeButtons(){
+    if(location.pathname.toLowerCase().includes('/likes')) return;
+    addLikeStyle();
+    await loadLikesOnce();
+    getCards().forEach(({card, info})=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'az-item-like-btn';
+      btn.dataset.likeItemId = info.id;
+      setButtonState(btn, state.ids.has(info.id));
+      btn.addEventListener('click', (event)=>{
+        event.preventDefault();
+        event.stopPropagation();
+        toggleLike(btn, info);
+      });
+      card.appendChild(btn);
+    });
+  }
+  function likeCardHtml(row){
+    const title = String(row.title || row.name || row.itemId || 'Liked item');
+    const meta = [row.page, row.category, row.type].filter(Boolean).join(' • ');
+    const url = String(row.url || '');
+    return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}">
+      <div class="az-like-card-title">❤️ ${escapeHtml(title)}</div>
+      <div class="az-like-card-meta">${escapeHtml(meta || 'AZOBSS')}</div>
+      ${url ? `<div class="az-like-card-url">${escapeHtml(url)}</div>` : ''}
+    </div>`;
+  }
+  function escapeHtml(value){
+    return String(value == null ? '' : value).replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  }
+  async function renderLikesPage(skipLoad){
+    const list = document.getElementById('azobssLikesList');
+    if(!list) return;
+    addLikeStyle();
+    if(!isLoggedIn()){
+      list.innerHTML = '<div class="az-like-empty">Please login to view your liked items.</div>';
+      return;
+    }
+    const usernameKey = getUsernameKey();
+    if(!usernameKey){ list.innerHTML = '<div class="az-like-empty">Please login again to load Likes.</div>'; return; }
+    if(!skipLoad) await loadLikesOnce();
+    let rows = [];
+    try{
+      const snap = await getDocs(collection(db, 'users', usernameKey, 'likes'));
+      rows = snap.docs.map(d=>({itemId:d.id, ...d.data()}));
+    }catch(err){
+      console.warn('AZOBSS likes page load failed:', err);
+      rows = Array.from(state.ids).map(id=>({itemId:id, title:id, page:'AZOBSS'}));
+    }
+    const q = String(document.getElementById('likesSearchInput')?.value || '').trim().toLowerCase();
+    if(q){ rows = rows.filter(r=>[r.title,r.category,r.page,r.type,r.url,r.itemId].join(' ').toLowerCase().includes(q)); }
+    const sort = document.getElementById('likesSortSelect')?.value || 'newest';
+    rows.sort((a,b)=> sort === 'oldest' ? Number(a.savedAt||0)-Number(b.savedAt||0) : Number(b.savedAt||0)-Number(a.savedAt||0));
+    list.innerHTML = rows.length ? rows.map(likeCardHtml).join('') : '<div class="az-like-empty">No liked items yet. Tap the heart button on Software, CAD or Affiliate items.</div>';
+  }
+  function scheduleInject(){
+    clearTimeout(scheduleInject.t);
+    scheduleInject.t = setTimeout(injectLikeButtons, 80);
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    injectLikeButtons();
+    renderLikesPage(false);
+    document.getElementById('likesSearchInput')?.addEventListener('input', ()=>renderLikesPage(true));
+    document.getElementById('likesSortSelect')?.addEventListener('change', ()=>renderLikesPage(true));
+    const obs = new MutationObserver(scheduleInject);
+    obs.observe(document.body, {childList:true, subtree:true});
+    setTimeout(injectLikeButtons, 600);
+    setTimeout(injectLikeButtons, 1500);
+  });
+  onAuthStateChanged(auth, ()=>{
+    state.loadedFor = '';
+    state.ids = new Set();
+    setTimeout(()=>{ injectLikeButtons(); renderLikesPage(false); }, 200);
+  });
+})();

@@ -30,6 +30,12 @@ service cloud.firestore {
       allow read, delete: if isAdmin() || isThisUser(username);
     }
 
+
+    match /users/{username}/likes/{itemId} {
+      allow read, create, update, delete: if request.auth != null
+        && (isAdmin() || isThisUser(username) || request.resource.data.uid == request.auth.uid || resource.data.uid == request.auth.uid);
+    }
+
     match /usernameAuthEmails/{username} {
       // Public get only for username -> email lookup.
       allow get: if true;
