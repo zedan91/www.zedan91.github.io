@@ -3177,11 +3177,16 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       .az-item-like-btn.is-liked{background:rgba(255,77,109,.22)!important;border-color:#ff4d6d!important;color:#ff4d6d!important;text-shadow:0 0 14px rgba(255,77,109,.45)!important;}
       .az-item-like-btn[disabled]{opacity:.62!important;cursor:wait!important;transform:none!important;}
       .card,.download-card,.cad-card{position:relative!important;}
-      .az-like-card{display:grid;gap:8px;border:1px solid rgba(34,197,94,.22);border-radius:14px;background:rgba(15,23,42,.7);padding:14px;color:#fff;cursor:pointer;}
+      .az-like-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;border:1px solid rgba(34,197,94,.22);border-radius:14px;background:rgba(15,23,42,.7);padding:14px;color:#fff;cursor:pointer;}
+      .az-like-card-main{min-width:0;}
       .az-like-card-title{font-weight:950;color:#fff;font-size:16px;}
-      .az-like-card-meta{font-size:12px;color:#93c5fd;font-weight:800;}
-      .az-like-card-url{font-size:12px;color:#86efac;word-break:break-all;}
+      .az-like-card-meta{font-size:12px;color:#93c5fd;font-weight:800;margin-top:6px;}
+      .az-like-card-url{font-size:12px;color:#86efac;word-break:break-all;margin-top:8px;}
+      .az-like-unlike-btn{border:0;border-radius:999px;background:#ef4444;color:#fff;font-weight:950;padding:9px 14px;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,.22);white-space:nowrap;}
+      .az-like-unlike-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+      .az-like-unlike-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
       .az-like-empty{border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:18px;color:#cbd5e1;}
+      @media(max-width:640px){.az-like-card{grid-template-columns:1fr}.az-like-unlike-btn{width:100%;}}
     `;
     document.head.appendChild(style);
   }
@@ -3345,15 +3350,42 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const title = String(row.title || row.name || row.itemId || 'Liked item');
     const meta = [row.page, row.category, row.type].filter(Boolean).join(' • ');
     const url = String(row.url || '');
-    return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}">
-      <div class="az-like-card-title">❤️ ${escapeHtml(title)}</div>
-      <div class="az-like-card-meta">${escapeHtml(meta || 'AZOBSS')}</div>
-      ${url ? `<div class="az-like-card-url">${escapeHtml(url)}</div>` : ''}
+    const itemId = String(row.itemId || row.id || '');
+    return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}" data-like-id="${escapeHtml(itemId)}">
+      <div class="az-like-card-main">
+        <div class="az-like-card-title">❤️ ${escapeHtml(title)}</div>
+        <div class="az-like-card-meta">${escapeHtml(meta || 'AZOBSS')}</div>
+        ${url ? `<div class="az-like-card-url">${escapeHtml(url)}</div>` : ''}
+      </div>
+      <button class="az-like-unlike-btn" type="button" data-unlike-id="${escapeHtml(itemId)}">💔 Unlike</button>
     </div>`;
   }
   function escapeHtml(value){
     return String(value == null ? '' : value).replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
   }
+  async function unlikeFromLikesPage(itemId, btn){
+    const usernameKey = getUsernameKey();
+    const id = String(itemId || '').trim();
+    if(!usernameKey || !id) return;
+    if(state.busy.has(id)) return;
+    state.busy.add(id);
+    if(btn) btn.disabled = true;
+    try{
+      await deleteDoc(doc(db, 'users', usernameKey, 'likes', id));
+      state.ids.delete(id);
+      saveCache(usernameKey);
+      const card = btn?.closest?.('.az-like-card');
+      if(card) card.remove();
+      renderLikesPage(false);
+    }catch(err){
+      console.warn('AZOBSS unlike failed:', err);
+      alert('Unable to remove this item from Likes right now. Please try again later.');
+    }finally{
+      state.busy.delete(id);
+      if(btn) btn.disabled = false;
+    }
+  }
+
   async function renderLikesPage(skipLoad){
     const list = document.getElementById('azobssLikesList');
     if(!list) return;
@@ -3395,6 +3427,13 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     renderLikesPage(false);
     document.getElementById('likesSearchInput')?.addEventListener('input', ()=>renderLikesPage(true));
     document.getElementById('likesSortSelect')?.addEventListener('change', ()=>renderLikesPage(true));
+    document.getElementById('azobssLikesList')?.addEventListener('click', (event)=>{
+      const unlikeBtn = event.target.closest('.az-like-unlike-btn');
+      if(!unlikeBtn) return;
+      event.preventDefault();
+      event.stopPropagation();
+      unlikeFromLikesPage(unlikeBtn.dataset.unlikeId, unlikeBtn);
+    });
     const obs = new MutationObserver(scheduleInject);
     obs.observe(document.body, {childList:true, subtree:true});
     setTimeout(injectLikeButtons, 600);
