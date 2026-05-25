@@ -1097,6 +1097,71 @@ function isAzobssAdmin(user){
 function normalizePaMemberCode(value){
   return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
+function getSignupInviteCodeValue(){
+  const selectors = [
+    '#siteSignupInviteCode',
+    '#signupInviteCode',
+    '#signupMemberCode',
+    '#memberInviteCode',
+    '[name="inviteCode"]',
+    '[name="memberCode"]',
+    '[data-invite-code-input]',
+    'input[placeholder*="Invite Code" i]',
+    'input[placeholder*="member code" i]'
+  ];
+  for (const selector of selectors) {
+    try {
+      const el = document.querySelector(selector);
+      if (el && String(el.value || '').trim()) return normalizePaMemberCode(el.value);
+    } catch (_) {}
+  }
+  try {
+    const labels = Array.from(document.querySelectorAll('label'));
+    for (const label of labels) {
+      if (/invite code|member code/i.test(label.textContent || '')) {
+        const el = label.querySelector('input') || document.getElementById(label.getAttribute('for') || '');
+        if (el && String(el.value || '').trim()) return normalizePaMemberCode(el.value);
+      }
+    }
+  } catch (_) {}
+  return '';
+}
+function getPaBmPayloadFromCode(code){
+  const normalizedCode = normalizePaMemberCode(code);
+  const allowed = normalizedCode === AZOBSS_PA_MEMBER_CODE;
+  return {
+    inviteCode: normalizedCode,
+    inviteCodeUsed: normalizedCode,
+    invitedByCode: normalizedCode,
+    memberCode: normalizedCode,
+    paMemberCode: normalizedCode,
+    paBmAccess: allowed,
+    paBmAllowed: allowed,
+    allowPABM: allowed,
+    paAccess: allowed ? 'yes' : 'no'
+  };
+}
+function mergePaBmAccessPreserve(existing={}, incomingCode=''){
+  const code = normalizePaMemberCode(
+    incomingCode || existing.inviteCode || existing.inviteCodeUsed || existing.invitedByCode ||
+    existing.memberCode || existing.paMemberCode || existing.accessCode || existing.signupCode || ''
+  );
+  const codeAllowed = code === AZOBSS_PA_MEMBER_CODE;
+  const flagAllowed = existing.paBmAccess === true || existing.paBmAllowed === true ||
+    existing.allowPABM === true || String(existing.paAccess || '').toLowerCase() === 'yes';
+  const allowed = codeAllowed || flagAllowed;
+  return {
+    inviteCode: code || normalizePaMemberCode(existing.inviteCode || ''),
+    inviteCodeUsed: code || normalizePaMemberCode(existing.inviteCodeUsed || ''),
+    invitedByCode: code || normalizePaMemberCode(existing.invitedByCode || ''),
+    memberCode: code || normalizePaMemberCode(existing.memberCode || ''),
+    paMemberCode: code || normalizePaMemberCode(existing.paMemberCode || ''),
+    paBmAccess: allowed,
+    paBmAllowed: allowed,
+    allowPABM: allowed,
+    paAccess: allowed ? 'yes' : 'no'
+  };
+}
 function getPaMemberCodes(user){
   const u = user || {};
   return [
@@ -1294,10 +1359,9 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const ref = doc(db, 'users', usernameKey);
   const snap = await getDoc(ref);
   if(snap.exists()) return { uid: firebaseUser.uid, id: usernameKey, ...snap.data(), usernameKey: normalizeUsername(snap.data().usernameKey || snap.data().username || usernameKey) };
-  const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
+  const fallbackMemberCode = normalizePaMemberCode(fallback.inviteCode || fallback.inviteCodeUsed || fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
   const signupPhone = normalizeAzobssPhone(fallback.phone || fallback.phoneNumber || '');
-  const hasPaBmSignupAccess = fallbackMemberCode === AZOBSS_PA_MEMBER_CODE;
-  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,inviteCode:fallbackMemberCode,inviteCodeUsed:fallbackMemberCode,invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,paBmAccess:hasPaBmSignupAccess,paBmAllowed:hasPaBmSignupAccess,allowPABM:hasPaBmSignupAccess,paAccess:hasPaBmSignupAccess?'yes':'no',role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,...getPaBmPayloadFromCode(fallbackMemberCode),role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   try{
     await setDoc(ref,profile,{merge:true});
     if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,updatedAt:serverTimestamp()},{merge:true});
@@ -1424,7 +1488,7 @@ function openAdminUserEdit(userId){
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
   const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.inviteCode || user.inviteCodeUsed || user.accessCode || user.signupCode || '';
-  $('adminUserEditPaAccess').value = (registeredUserHasPaAccess(user) || String(existingCode).trim().toUpperCase()==='ZX6186') ? 'yes' : 'no';
+  $('adminUserEditPaAccess').value = (registeredUserHasPaAccess(user) || normalizePaMemberCode(existingCode)===AZOBSS_PA_MEMBER_CODE) ? 'yes' : 'no';
   $('adminUserEditMemberCode').value = existingCode;
   const err = $('adminUserEditError');
   if(err){ err.textContent=''; err.style.color=''; }
@@ -2617,7 +2681,7 @@ function bindAuth() {
         const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
         const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
         preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || '');
-        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone}, {merge:true});
+        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergePaBmAccessPreserve(oldProfileData)}, {merge:true});
       }catch(loginProfileUpdateError){
         console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
       }
@@ -2686,7 +2750,7 @@ function bindAuth() {
     const password=fieldValue('siteSignupPassword');
     const phone=getPhoneWithDial('siteSignup');
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
-    const invitedByCode=normalizePaMemberCode(fieldValue('siteSignupInviteCode'));
+    const invitedByCode=getSignupInviteCodeValue();
     if(!isAzobssCaptchaVerified($('siteSignUpForm'))){ if(err){ err.style.color=''; err.textContent='Please confirm you are not a robot.'; } return; }
     if(err && /confirm you are not a robot/i.test(err.textContent || '')) err.textContent='';
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
@@ -2750,6 +2814,7 @@ function bindAuth() {
       }
       try{ await auth.currentUser?.getIdToken(true); }catch(_){}
 
+      const paBmSignupPayload = getPaBmPayloadFromCode(invitedByCode);
       const profile={
         uid:newUser.uid,
         username:usernameKey,
@@ -2759,19 +2824,7 @@ function bindAuth() {
         contactEmail:email,
         phone,
         phoneNumber:phone,
-        inviteCode:invitedByCode,
-        inviteCodeUsed:invitedByCode,
-        invitedByCode:invitedByCode,
-        invitedByCode,
-        memberCode:invitedByCode,
-        paMemberCode:invitedByCode,
-        paBmAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE,
-        paBmAllowed:invitedByCode===AZOBSS_PA_MEMBER_CODE,
-        allowPABM:invitedByCode===AZOBSS_PA_MEMBER_CODE,
-        paAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE?'yes':'no',
-        paBmAllowed:invitedByCode===AZOBSS_PA_MEMBER_CODE,
-        allowPABM:invitedByCode===AZOBSS_PA_MEMBER_CODE,
-        paAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE?'yes':'no',
+        ...paBmSignupPayload,
         role:'member',
         verified:false,
         emailVerified:false,
@@ -2785,15 +2838,7 @@ function bindAuth() {
           try{
             await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
             if(invitedByCode===AZOBSS_PA_MEMBER_CODE){
-              await setDoc(doc(db,'users',usernameKey),{
-                inviteCode:invitedByCode,
-                memberCode:invitedByCode,
-                paMemberCode:invitedByCode,
-                paBmAccess:true,
-                paBmAllowed:true,
-                allowPABM:true,
-                paAccess:'yes'
-              },{merge:true});
+              await setDoc(doc(db,'users',usernameKey), getPaBmPayloadFromCode(invitedByCode), {merge:true});
             }
             await saveUsernameAuthEmail(usernameKey, email, newUser.uid);
             return;
@@ -2933,7 +2978,7 @@ function bindAuth() {
           const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
           const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
           preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || '');
-          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone}, {merge:true});
+          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone, ...mergePaBmAccessPreserve(oldProfileData)}, {merge:true});
         }
       }catch(stateProfileUpdateError){
         console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);

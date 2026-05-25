@@ -1,0 +1,33 @@
+AZOBSS FINAL PA/BM + PHONE SYNC FIX
+
+Fixes included:
+1. Invite Code field is now read directly from the signup modal using multiple selectors/fallbacks.
+2. If Invite Code = ZX6186, new user profile saves all PA/BM fields:
+   - inviteCode
+   - inviteCodeUsed
+   - invitedByCode
+   - memberCode
+   - paMemberCode
+   - paBmAccess = true
+   - paBmAllowed = true
+   - allowPABM = true
+   - paAccess = yes
+3. Login/auth refresh no longer overwrites PA/BM status back to false.
+4. Login/auth refresh preserves phone and phoneNumber instead of saving them as blank.
+5. Admin Edit Registered User dropdown reads ZX6186/member code and auto selects Yes - allow PA/BM tab.
+6. Both auth JS copies were patched:
+   - assets/js/azobss-global-auth.js
+   - assets/js/azobss-firebase-live-likes-sync.js
+
+Testing steps:
+1. Delete test user from Firebase Authentication.
+2. Delete Firestore docs:
+   - users/<username>
+   - usernameAuthEmails/<username>
+3. Register again with Invite Code: zx6186
+4. Verify email and login.
+5. Confirm:
+   - Sticky bar shows PA / BM
+   - Admin record shows PA/BM allowed
+   - Edit Registered User auto shows Yes - allow PA/BM tab
+   - Phone number is still saved.
