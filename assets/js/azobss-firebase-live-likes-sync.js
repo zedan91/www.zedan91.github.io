@@ -786,7 +786,7 @@ function getSignupPhoneWithDial(){
       return normalizeAzobssPhone(input.value, dial);
     }
   }
-  const input = document.querySelector('#siteSignupPhone,#signupPhone,#registerPhone,input[name="phone"],input[name="phoneNumber"],input[type="tel"]');
+  const input = document.querySelector('#siteSignupPhone,#signupPhone,#registerPhone,#siteRegisterPhone,input[name="signupPhone"],input[name="registerPhone"],input[name="phone"],input[name="phoneNumber"]');
   if(input && String(input.value||'').replace(/\D/g,'')){
     const row = input.closest?.('[data-country-phone]');
     const hidden = row?.querySelector?.('input[type="hidden"][id$="Dial"]');
@@ -1200,7 +1200,7 @@ function openProfileSettings(){
   const modal=$('profileSettingsModal'); if(!modal) return;
   const user=getSavedUser() || {};
   if($('profileEditName')) $('profileEditName').value=user.usernameKey || user.name || '';
-  const parsedPhone=splitPhoneToDialLocal(user.phone || '');
+  const parsedPhone=splitPhoneToDialLocal(user.phone || user.phoneNumber || '');
   setPhoneDial('profileEdit', parsedPhone.dial);
   if($('profileEditPhone')) $('profileEditPhone').value=formatPhoneGuide(parsedPhone.local || '');
   if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
@@ -1289,7 +1289,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,...getPaBmPayloadFromCode(fallbackMemberCode),role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   try{
     await setDoc(ref,profile,{merge:true});
-    if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,updatedAt:serverTimestamp()},{merge:true});
+    if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,username:usernameKey,usernameKey,updatedAt:serverTimestamp()},{merge:true});
   }catch(profileWriteError){
     console.warn('AZOBSS ensureUserProfile write skipped:', profileWriteError?.code || profileWriteError?.message || profileWriteError);
   }
@@ -2494,6 +2494,7 @@ function bindAuth() {
 
   $('siteSignInForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
+    if(event.stopImmediatePropagation) event.stopImmediatePropagation();
     const err=$('siteLoginError'); if(err) err.textContent='';
     const submitButton = event.submitter || $('siteSignInForm')?.querySelector('button[type="submit"]') || $('siteSignInForm')?.querySelector('button');
     const loginInputRaw=String(fieldValue('siteLoginUsername','siteLoginName')).trim().toLowerCase();
@@ -2552,8 +2553,10 @@ function bindAuth() {
       try{
         const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
         const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
-        preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || '');
-        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergePaBmAccessPreserve(oldProfileData)}, {merge:true});
+        preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
+        var mergedPaBmForLogin = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
+        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true});
+        profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin};
       }catch(loginProfileUpdateError){
         console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
       }
@@ -2685,7 +2688,15 @@ function bindAuth() {
       }
       try{ await auth.currentUser?.getIdToken(true); }catch(_){}
 
-      const paBmSignupPayload = getPaBmPayloadFromCode(invitedByCode);
+      const finalSignupInviteCode = normalizePaMemberCode(getSignupInviteCodeValue() || invitedByCode || '');
+      const finalSignupPhone = normalizeAzobssPhone(getSignupPhoneWithDial() || phone || '');
+      try{
+        localStorage.setItem('azobssSignupPhone:' + usernameKey, finalSignupPhone || '');
+        localStorage.setItem('azobssSignupInviteCode:' + usernameKey, finalSignupInviteCode || '');
+        localStorage.setItem('azobssSignupPhoneByEmail:' + email, finalSignupPhone || '');
+        localStorage.setItem('azobssSignupInviteCodeByEmail:' + email, finalSignupInviteCode || '');
+      }catch(_){}
+      const paBmSignupPayload = getPaBmPayloadFromCode(finalSignupInviteCode);
       const profile={
         uid:newUser.uid,
         username:usernameKey,
@@ -2693,8 +2704,8 @@ function bindAuth() {
         email,
         authEmail:email,
         contactEmail:email,
-        phone,
-        phoneNumber:phone,
+        phone: finalSignupPhone,
+        phoneNumber: finalSignupPhone,
         ...paBmSignupPayload,
         role:'member',
         verified:false,
@@ -2847,8 +2858,10 @@ function bindAuth() {
         if(usernameKey && !profile._profileMissing){
           const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
           const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
-          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || '');
-          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone, ...mergePaBmAccessPreserve(oldProfileData)}, {merge:true});
+          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
+          var mergedPaBmForState = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
+          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForState}, {merge:true});
+          profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForState};
         }
       }catch(stateProfileUpdateError){
         console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
