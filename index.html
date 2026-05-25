@@ -9247,7 +9247,17 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
       const category = clean(card.dataset.category || card.getAttribute('data-category') || '');
       const text = clean(card.innerText);
 
-      const matchCategory = filter === 'all' || category === filter;
+      
+const normalizeCategory=v=>String(v||'')
+.toLowerCase()
+.replace(/&/g,'and')
+.replace(/[^a-z0-9]+/g,'')
+.trim();
+
+const matchCategory =
+normalizeCategory(filter)==='all' ||
+normalizeCategory(category)===normalizeCategory(filter);
+
       const matchSearch = !query || text.includes(query) || category.includes(query);
 
       return matchCategory && matchSearch;
