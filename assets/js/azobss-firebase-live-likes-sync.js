@@ -3376,7 +3376,14 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const q = String(document.getElementById('likesSearchInput')?.value || '').trim().toLowerCase();
     if(q){ rows = rows.filter(r=>[r.title,r.category,r.page,r.type,r.url,r.itemId].join(' ').toLowerCase().includes(q)); }
     const sort = document.getElementById('likesSortSelect')?.value || 'newest';
-    rows.sort((a,b)=> sort === 'oldest' ? Number(a.savedAt||0)-Number(b.savedAt||0) : Number(b.savedAt||0)-Number(a.savedAt||0));
+    if(sort==='software') rows=rows.filter(r=>String(r.type||r.category||'').toLowerCase().includes('software'));
+    else if(sort==='cad') rows=rows.filter(r=>String(r.type||r.category||'').toLowerCase().includes('cad'));
+    else if(sort==='affiliate') rows=rows.filter(r=>String(r.type||r.category||'').toLowerCase().includes('affiliate'));
+    else if(sort==='category') rows.sort((a,b)=>String(a.category||'').localeCompare(String(b.category||'')));
+    else if(sort==='az') rows.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
+    else if(sort==='za') rows.sort((a,b)=>String(b.title||'').localeCompare(String(a.title||'')));
+    else if(sort==='oldest') rows.sort((a,b)=>Number(a.savedAt||0)-Number(b.savedAt||0));
+    else rows.sort((a,b)=>Number(b.savedAt||0)-Number(a.savedAt||0));
     list.innerHTML = rows.length ? rows.map(likeCardHtml).join('') : '<div class="az-like-empty">No liked items yet. Tap the heart button on Software, CAD or Affiliate items.</div>';
   }
   function scheduleInject(){
