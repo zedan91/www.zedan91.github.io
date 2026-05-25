@@ -998,7 +998,6 @@ function normalizePaMemberCode(value){
 }
 function getPaMemberCodes(user){
   const u = user || {};
-  const savedCode = normalizePaMemberCode(localStorage.getItem('azobssPaMemberCode') || sessionStorage.getItem('azobssPaMemberCode') || '');
   return [
     u.invitedByCode,
     u.memberCode,
@@ -1009,13 +1008,13 @@ function getPaMemberCodes(user){
     u.member_code,
     u.referralCode,
     // Some older builds stored the entered member code in inviteCode.
-    u.inviteCode,
-    savedCode
+    u.inviteCode
   ].map(normalizePaMemberCode).filter(Boolean);
 }
 function hasPaBmTabAccess(user){
   if (!user) return false;
   if (isAzobssAdmin(user)) return true;
+  if (user.paBmAccess === true || user.paBmAllowed === true || user.allowPABM === true || String(user.paAccess || '').toLowerCase() === 'yes') return true;
   return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
 
@@ -1196,7 +1195,8 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   if(snap.exists()) return { uid: firebaseUser.uid, id: usernameKey, ...snap.data(), usernameKey: normalizeUsername(snap.data().usernameKey || snap.data().username || usernameKey) };
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
   const signupPhone = normalizeAzobssPhone(fallback.phone || fallback.phoneNumber || '');
-  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  const hasPaBmSignupAccess = fallbackMemberCode === AZOBSS_PA_MEMBER_CODE;
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,paBmAccess:hasPaBmSignupAccess,paBmAllowed:hasPaBmSignupAccess,allowPABM:hasPaBmSignupAccess,paAccess:hasPaBmSignupAccess?'yes':'no',role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   try{
     await setDoc(ref,profile,{merge:true});
     if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,updatedAt:serverTimestamp()},{merge:true});
@@ -1293,7 +1293,7 @@ function mergeDuplicateUserRecords(existing, incoming){
 }
 function userProfileHtml(user){
   const role = String(user.role || 'member').toLowerCase();
-  const hasAccess = role === 'admin' || normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '') === 'ZX6186';
+  const hasAccess = registeredUserHasPaAccess(user);
   const id = escHtml(userDocId(user));
   const isSelf = String(getSavedUser()?.usernameKey || '').toLowerCase() === String(id).toLowerCase();
   const createdDate = user.createdAt?.toDate ? user.createdAt.toDate() : (user.createdAt ? new Date(user.createdAt) : null);
@@ -1323,7 +1323,7 @@ function openAdminUserEdit(userId){
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
   const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
-  $('adminUserEditPaAccess').value = (String(user.role || '').toLowerCase() === 'admin' || normalizePaMemberCode(existingCode) === 'ZX6186') ? 'yes' : 'no';
+  $('adminUserEditPaAccess').value = registeredUserHasPaAccess(user) ? 'yes' : 'no';
   $('adminUserEditMemberCode').value = existingCode;
   const err = $('adminUserEditError');
   if(err){ err.textContent=''; err.style.color=''; }
@@ -1355,6 +1355,10 @@ async function saveAdminUserEdit(){
     invitedByCode: code,
     memberCode: code,
     paMemberCode: code,
+    paBmAccess: allowPaAccess,
+    paBmAllowed: allowPaAccess,
+    allowPABM: allowPaAccess,
+    paAccess: allowPaAccess ? 'yes' : 'no',
     updatedAt: serverTimestamp(),
     updatedAtClient: new Date().toISOString(),
     updatedByAdmin: getSavedUser()?.usernameKey || 'admin'
@@ -1609,7 +1613,7 @@ function registeredUserSearchText(user){
 function registeredUserHasPaAccess(user){
   const role = String(user.role || 'member').toLowerCase();
   const code = normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '');
-  return role === 'admin' || code === 'ZX6186' || user.allowPABM === true || user.paBmAllowed === true || String(user.paAccess || '').toLowerCase() === 'yes';
+  return role === 'admin' || code === 'ZX6186' || user.paBmAccess === true || user.allowPABM === true || user.paBmAllowed === true || String(user.paAccess || '').toLowerCase() === 'yes';
 }
 function registeredUserCreatedMs(user){
   return firestoreMs(user.createdAt) || firestoreMs(user.createdAtClient) || Number(user.createdAtMs || 0) || firestoreMs(user.updatedAt) || firestoreMs(user.updatedAtClient);
@@ -2580,7 +2584,7 @@ function bindAuth() {
     const password=fieldValue('siteSignupPassword');
     const phone=getPhoneWithDial('siteSignup');
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
-    const invitedByCode=String(fieldValue('siteSignupInviteCode')).trim().toUpperCase();
+    const invitedByCode=normalizePaMemberCode(fieldValue('siteSignupInviteCode'));
     if(!isAzobssCaptchaVerified($('siteSignUpForm'))){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
     if(window.__AZOBSS_SIGNUP_BUSY__) return;
@@ -2656,6 +2660,10 @@ function bindAuth() {
         invitedByCode,
         memberCode:invitedByCode,
         paMemberCode:invitedByCode,
+        paBmAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE,
+        paBmAllowed:invitedByCode===AZOBSS_PA_MEMBER_CODE,
+        allowPABM:invitedByCode===AZOBSS_PA_MEMBER_CODE,
+        paAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE?'yes':'no',
         role:'member',
         verified:false,
         emailVerified:false,
@@ -2705,10 +2713,7 @@ function bindAuth() {
         // Continue the flow so the user can verify email and login with Gmail/password.
         // Username lookup will work after Firestore rules are published or after login recovery saves the profile.
       }
-      if (invitedByCode === AZOBSS_PA_MEMBER_CODE) {
-        localStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
-        sessionStorage.setItem('azobssPaMemberCode', AZOBSS_PA_MEMBER_CODE);
-      }
+      try{ localStorage.removeItem('azobssPaMemberCode'); sessionStorage.removeItem('azobssPaMemberCode'); }catch(_){}
       try{ await saveUsernameAuthEmail(usernameKey, email, newUser.uid); }catch(mapError){ console.warn('AZOBSS username email map save skipped:', mapError?.code || mapError?.message || mapError); }
       await signOut(auth);
       clearSavedUser();
