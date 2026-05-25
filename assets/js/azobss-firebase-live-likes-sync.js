@@ -420,44 +420,76 @@ const AZOBSS_USERNAME_AUTH_COLLECTION = 'usernameAuthEmails';
 async function getAuthEmailForUsername(usernameKey){
   const key = normalizeUsername(usernameKey);
   if(!key) return '';
+
+  // IMPORTANT FIX:
+  // Do NOT trust localStorage first. Old builds stored username@azobss.local there,
+  // which breaks username login even when Firestore has the real Gmail.
+  const localKey = 'azobssAuthEmailMap:' + key;
+
+  async function readFirestoreMapping(){
+    try{
+      const lookupSnap = await getDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key));
+      if(lookupSnap.exists()){
+        const data = lookupSnap.data() || {};
+        const email = String(data.email || data.authEmail || data.contactEmail || '').trim().toLowerCase();
+        if(email && email.includes('@') && !email.endsWith('@azobss.local')) return email;
+        if(email && email.includes('@')) return email;
+      }
+    }catch(e){
+      console.warn('AZOBSS username auth lookup failed:', e?.code || e?.message || e);
+    }
+    return '';
+  }
+
+  async function readUserProfileEmail(){
+    try{
+      const userSnap = await getDoc(doc(db, 'users', key));
+      if(userSnap.exists()){
+        const data = userSnap.data() || {};
+        const email = String(data.authEmail || data.email || data.contactEmail || '').trim().toLowerCase();
+        if(email && email.includes('@') && !email.endsWith('@azobss.local')){
+          try{ localStorage.setItem(localKey, email); }catch(_){}
+          try{ await saveUsernameAuthEmail(key, email, data.uid || ''); }catch(_){}
+          return email;
+        }
+        if(email && email.includes('@')) return email;
+      }
+    }catch(e){
+      console.warn('AZOBSS users email lookup failed:', e?.code || e?.message || e);
+    }
+    return '';
+  }
+
+  const mappedEmail = await readFirestoreMapping();
+  if(mappedEmail && !mappedEmail.endsWith('@azobss.local')) return mappedEmail;
+
+  const profileEmail = await readUserProfileEmail();
+  if(profileEmail && !profileEmail.endsWith('@azobss.local')) return profileEmail;
+
+  // Only use local cache after Firestore. This prevents stale wrong username@azobss.local mapping.
   try{
-    const localEmail = String(localStorage.getItem('azobssAuthEmailMap:' + key) || '').trim().toLowerCase();
-    if(localEmail && localEmail.includes('@')) return localEmail;
+    const localEmail = String(localStorage.getItem(localKey) || '').trim().toLowerCase();
+    if(localEmail && localEmail.includes('@') && !localEmail.endsWith('@azobss.local')) return localEmail;
   }catch(_){}
-  try{
-    const lookupSnap = await getDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key));
-    if(lookupSnap.exists()){
-      const data = lookupSnap.data() || {};
-      const email = String(data.email || data.authEmail || '').trim().toLowerCase();
-      if(email && email.includes('@')) return email;
-    }
-  }catch(e){
-    console.warn('AZOBSS username auth lookup failed:', e?.code || e?.message || e);
-  }
-  try{
-    const userSnap = await getDoc(doc(db, 'users', key));
-    if(userSnap.exists()){
-      const data = userSnap.data() || {};
-      const email = String(data.authEmail || data.email || '').trim().toLowerCase();
-      if(email && email.includes('@')) return email;
-    }
-  }catch(e){
-    console.warn('AZOBSS users email lookup failed:', e?.code || e?.message || e);
-  }
-  return '';
+
+  return mappedEmail || profileEmail || '';
 }
+
 async function saveUsernameAuthEmail(usernameKey, email, uid){
   const key = normalizeUsername(usernameKey);
   const authEmail = String(email || '').trim().toLowerCase();
   if(!key || !authEmail || !authEmail.includes('@')) return;
   try{
     await setDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key), {
+      username: key,
       usernameKey: key,
       email: authEmail,
       authEmail,
+      contactEmail: authEmail,
       uid: uid || null,
       updatedAt: serverTimestamp()
     }, {merge:true});
+    try{ localStorage.setItem('azobssAuthEmailMap:' + key, authEmail); }catch(_){}
   }catch(e){
     console.warn('AZOBSS username auth email save failed:', e?.code || e?.message || e);
   }
