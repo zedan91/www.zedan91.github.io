@@ -1248,7 +1248,7 @@ function openAdminUserEdit(userId){
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
   const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
-  $('adminUserEditPaAccess').value = (registeredUserHasPaAccess(user) || String(existingCode).trim().toUpperCase()==='ZX6186') ? 'yes' : 'no';
+  $('adminUserEditPaAccess').value = registeredUserHasPaAccess(user) ? 'yes' : 'no';
   $('adminUserEditMemberCode').value = existingCode;
   const err = $('adminUserEditError');
   if(err){ err.textContent=''; err.style.color=''; }
