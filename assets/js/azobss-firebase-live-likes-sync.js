@@ -774,6 +774,33 @@ function getPhoneWithDial(prefix){
   const dial=String($(prefix+'Dial')?.value||'60').replace(/[^0-9]/g,'') || '60';
   return normalizeAzobssPhone($(prefix+'Phone')?.value||'', dial);
 }
+
+function getSignupPhoneWithDial(){
+  // AZOBSS FIX: register phone input has changed names across builds.
+  // Read from all possible signup phone inputs, then save one normalized E.164 number.
+  const possiblePrefixes = ['siteSignup','signup','register','siteRegister'];
+  for(const prefix of possiblePrefixes){
+    const input = $(prefix+'Phone');
+    if(input && String(input.value||'').replace(/\D/g,'')){
+      const dial=String($(prefix+'Dial')?.value||'60').replace(/[^0-9]/g,'') || '60';
+      return normalizeAzobssPhone(input.value, dial);
+    }
+  }
+  const input = document.querySelector('#siteSignupPhone,#signupPhone,#registerPhone,input[name="phone"],input[name="phoneNumber"],input[type="tel"]');
+  if(input && String(input.value||'').replace(/\D/g,'')){
+    const row = input.closest?.('[data-country-phone]');
+    const hidden = row?.querySelector?.('input[type="hidden"][id$="Dial"]');
+    const dial=String(hidden?.value||'60').replace(/[^0-9]/g,'') || '60';
+    return normalizeAzobssPhone(input.value, dial);
+  }
+  return '';
+}
+
+function mergePhonePreserve(currentPhone, newPhone){
+  const next = normalizeAzobssPhone(newPhone || '');
+  if(next) return next;
+  return normalizeAzobssPhone(currentPhone || '');
+}
 function splitPhoneToDialLocal(value){
   const digits=String(value||'').replace(/[^0-9]/g,'');
   const sorted=[...AZOBSS_COUNTRY_DIAL_CODES].sort((a,b)=>b[2].length-a[2].length);
@@ -1007,20 +1034,50 @@ function getSignupInviteCodeValue(){
   } catch (_) {}
   return '';
 }
-function getPaBmPayloadFromCode(code){
-  const normalizedCode = normalizePaMemberCode(code);
-  const allowed = normalizedCode === AZOBSS_PA_MEMBER_CODE;
+
+function isTruthyPaBmValue(value){
+  if(value === true || value === 1) return true;
+  const text = String(value ?? '').trim().toLowerCase();
+  return ['true','yes','y','1','allow','allowed','on','enabled','enable'].includes(text);
+}
+function isFalseyPaBmValue(value){
+  if(value === false || value === 0) return true;
+  const text = String(value ?? '').trim().toLowerCase();
+  return ['false','no','n','0','off','disabled','disable','hide'].includes(text);
+}
+function getPaBmFlagAllowed(user){
+  const u = user || {};
+  const keys = [
+    'paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
+    'allowPaBmTab','paBmTabAllowed','paBmTab','showPaBmTab','canAccessPaBm',
+    'paAccess','pa_bm_access','pa_bm_allowed','allow_pa_bm'
+  ];
+  return keys.some((key)=>isTruthyPaBmValue(u[key]));
+}
+function buildPaBmAccessPayload(allowed, code=''){
+  const normalizedCode = normalizePaMemberCode(code || (allowed ? AZOBSS_PA_MEMBER_CODE : ''));
   return {
     inviteCode: normalizedCode,
     inviteCodeUsed: normalizedCode,
     invitedByCode: normalizedCode,
     memberCode: normalizedCode,
     paMemberCode: normalizedCode,
-    paBmAccess: allowed,
-    paBmAllowed: allowed,
-    allowPABM: allowed,
+    paBmAccess: !!allowed,
+    paBmAllowed: !!allowed,
+    allowPABM: !!allowed,
+    allowPaBm: !!allowed,
+    allowPaBmTab: !!allowed,
+    paBmTabAllowed: !!allowed,
+    showPaBmTab: !!allowed,
+    canAccessPaBm: !!allowed,
     paAccess: allowed ? 'yes' : 'no'
   };
+}
+
+function getPaBmPayloadFromCode(code){
+  const normalizedCode = normalizePaMemberCode(code);
+  const allowed = normalizedCode === AZOBSS_PA_MEMBER_CODE;
+  return buildPaBmAccessPayload(allowed, normalizedCode);
 }
 function mergePaBmAccessPreserve(existing={}, incomingCode=''){
   const code = normalizePaMemberCode(
@@ -1028,20 +1085,8 @@ function mergePaBmAccessPreserve(existing={}, incomingCode=''){
     existing.memberCode || existing.paMemberCode || existing.accessCode || existing.signupCode || ''
   );
   const codeAllowed = code === AZOBSS_PA_MEMBER_CODE;
-  const flagAllowed = existing.paBmAccess === true || existing.paBmAllowed === true ||
-    existing.allowPABM === true || String(existing.paAccess || '').toLowerCase() === 'yes';
-  const allowed = codeAllowed || flagAllowed;
-  return {
-    inviteCode: code || normalizePaMemberCode(existing.inviteCode || ''),
-    inviteCodeUsed: code || normalizePaMemberCode(existing.inviteCodeUsed || ''),
-    invitedByCode: code || normalizePaMemberCode(existing.invitedByCode || ''),
-    memberCode: code || normalizePaMemberCode(existing.memberCode || ''),
-    paMemberCode: code || normalizePaMemberCode(existing.paMemberCode || ''),
-    paBmAccess: allowed,
-    paBmAllowed: allowed,
-    allowPABM: allowed,
-    paAccess: allowed ? 'yes' : 'no'
-  };
+  const allowed = codeAllowed || getPaBmFlagAllowed(existing);
+  return buildPaBmAccessPayload(allowed, code || normalizePaMemberCode(existing.inviteCode || existing.memberCode || ''));
 }
 function getPaMemberCodes(user){
   const u = user || {};
@@ -1061,7 +1106,7 @@ function getPaMemberCodes(user){
 function hasPaBmTabAccess(user){
   if (!user) return false;
   if (isAzobssAdmin(user)) return true;
-  if (user.paBmAccess === true || user.paBmAllowed === true || user.allowPABM === true || String(user.paAccess || '').toLowerCase() === 'yes') return true;
+  if (getPaBmFlagAllowed(user)) return true;
   return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
 
@@ -1109,7 +1154,7 @@ function syncHeader(user){
   const tools = $('marketUserTools');
   const name = $('signedInName');
   const avatar = $('userAvatar');
-  const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link'));
+  const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link, a[href="/PA-BM/"].nav-pa-bm-link'));
   const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
   const canShowPaBm = hasPaBmTabAccess(user);
   const isAdminUser = isAzobssAdmin(user);
@@ -1338,7 +1383,7 @@ function openAdminUserEdit(userId){
   if(!modal) return;
   $('adminUserEditDocId').value = userDocId(user);
   $('adminUserEditUsername').value = user.usernameKey || user.name || '';
-  const adminPhoneParts = splitPhoneToDialLocal(user.phone || '');
+  const adminPhoneParts = splitPhoneToDialLocal(user.phone || user.phoneNumber || '');
   setPhoneDial('adminUserEdit', adminPhoneParts.dial);
   $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
   $('adminUserEditEmail').value = user.email || '';
@@ -1365,12 +1410,15 @@ async function saveAdminUserEdit(){
   const allowPaAccess = String($('adminUserEditPaAccess')?.value || 'no') === 'yes';
   const typedCode = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
   const code = allowPaAccess ? (typedCode || 'ZX6186') : '';
+  const existingAdminUser = azobssLastRegisteredUsers.find(u => userDocId(u) === docId) || {};
+  const adminEditedPhone = getPhoneWithDial('adminUserEdit');
+  const adminFinalPhone = mergePhonePreserve(existingAdminUser.phone || existingAdminUser.phoneNumber || '', adminEditedPhone);
   const payload = {
     usernameKey,
     name: usernameKey,
     displayName: usernameKey,
-    phone: getPhoneWithDial('adminUserEdit'),
-    phoneNumber: getPhoneWithDial('adminUserEdit'),
+    phone: adminFinalPhone,
+    phoneNumber: adminFinalPhone,
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
     role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
     invitedByCode: code,
@@ -1379,6 +1427,11 @@ async function saveAdminUserEdit(){
     paBmAccess: allowPaAccess,
     paBmAllowed: allowPaAccess,
     allowPABM: allowPaAccess,
+    allowPaBm: allowPaAccess,
+    allowPaBmTab: allowPaAccess,
+    paBmTabAllowed: allowPaAccess,
+    showPaBmTab: allowPaAccess,
+    canAccessPaBm: allowPaAccess,
     paAccess: allowPaAccess ? 'yes' : 'no',
     updatedAt: serverTimestamp(),
     updatedAtClient: new Date().toISOString(),
@@ -1447,7 +1500,7 @@ function liveUserHtml(user){
     <div class="az-admin-inline-row">
       <strong>${recordDisplayName(user)}</strong>
       <span>Email: ${escHtml(user.email || '-')}</span>
-      <span>Phone: ${escHtml(normalizeAzobssPhone(user.phone || '') || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(user.phone || user.phoneNumber || '') || '-')}</span>
       <span>Status: <b class="az-status-online">online</b></span>
       <span>Seen: ${azobssInlineTime(ms)}</span>
     </div>
@@ -1460,7 +1513,7 @@ function loginHistoryHtml(row){
       <strong>${recordDisplayName(row)}</strong>
       <span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span>
       <span>Email: ${escHtml(row.email || '-')}</span>
-      <span>Phone: ${escHtml(normalizeAzobssPhone(row.phone || '') || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(row.phone || row.phoneNumber || '') || '-')}</span>
       <span>Time: ${azobssInlineTime(ms)}</span>
     </div>
   </div>`;
@@ -1599,9 +1652,11 @@ function registeredUserSearchText(user){
   return `${normalText} ${compactText} ${digitsOnly}`;
 }
 function registeredUserHasPaAccess(user){
+  if(!user) return false;
   const role = String(user.role || 'member').toLowerCase();
-  const code = normalizePaMemberCode(user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '');
-  return role === 'admin' || code === 'ZX6186' || user.paBmAccess === true || user.allowPABM === true || user.paBmAllowed === true || String(user.paAccess || '').toLowerCase() === 'yes';
+  if(role === 'admin') return true;
+  if(getPaBmFlagAllowed(user)) return true;
+  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
 function registeredUserCreatedMs(user){
   return firestoreMs(user.createdAt) || firestoreMs(user.createdAtClient) || Number(user.createdAtMs || 0) || firestoreMs(user.updatedAt) || firestoreMs(user.updatedAtClient);
@@ -2026,7 +2081,7 @@ async function loadAzobssPurchaseRecords(){
           ...r,
           usernameKey: r.usernameKey || userData.usernameKey || userDoc.id,
           displayName: r.displayName || userData.usernameKey || userDoc.id,
-          phone: r.phone || userData.phone || '',
+          phone: r.phone || r.phoneNumber || userData.phone || userData.phoneNumber || '',
           email: r.email || userData.email || ''
         }));
       });
@@ -2040,7 +2095,7 @@ async function loadAzobssPurchaseRecords(){
           ...r,
           usernameKey: r.usernameKey || userData.usernameKey || docId,
           displayName: r.displayName || userData.usernameKey || docId,
-          phone: r.phone || userData.phone || '',
+          phone: r.phone || r.phoneNumber || userData.phone || userData.phoneNumber || '',
           email: r.email || userData.email || ''
         }));
       }
@@ -2565,7 +2620,7 @@ function bindAuth() {
     const err=$('siteSignupError'); if(err) err.textContent='';
     const usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
     const password=fieldValue('siteSignupPassword');
-    const phone=getPhoneWithDial('siteSignup');
+    const phone=getSignupPhoneWithDial();
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
     const invitedByCode=getSignupInviteCodeValue();
     if(window.isAzobssCaptchaVerified ? !window.isAzobssCaptchaVerified($('siteSignUpForm')) : !$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
@@ -2757,10 +2812,12 @@ function bindAuth() {
   $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
     const current=getSavedUser() || {};
+    const editedProfilePhone = getPhoneWithDial('profileEdit');
+    const finalProfilePhone = mergePhonePreserve(current.phone || current.phoneNumber || '', editedProfilePhone);
     const updated={...current,
       usernameKey: normalizeUsername($('profileEditName')?.value) || current.usernameKey || current.name || '',
-      phone: getPhoneWithDial('profileEdit'),
-      phoneNumber: getPhoneWithDial('profileEdit'),
+      phone: finalProfilePhone,
+      phoneNumber: finalProfilePhone,
       email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
     };
     saveUser(updated); await saveProfileToFirebase(updated); startAzobssPresenceHeartbeat(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
