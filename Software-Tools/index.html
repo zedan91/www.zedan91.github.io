@@ -1158,6 +1158,41 @@ grid-template-columns:repeat(2,1fr)!important;
 }
 }
 </style>
+
+<style>
+/* HARD FIX: remove Software Tools initial boxes like WU/HW/CD/AD/RC/FC */
+#softwareGrid .download-card > div:first-child,
+#softwareGrid .download-card .download-icon,
+#softwareGrid .download-card .software-icon,
+#softwareGrid .download-card .tool-icon,
+#softwareGrid .download-card .app-icon,
+#softwareGrid .download-card .card-icon,
+#softwareGrid .download-card .initial-icon,
+#softwareGrid .download-card .item-icon,
+#softwareGrid .download-card [class*="icon"],
+#softwareGrid .download-card [class*="initial"]{
+  display:none !important;
+}
+
+/* Same fallback if grid ID/class is different */
+.download-card > div:first-child{
+  display:none !important;
+}
+
+/* Keep the like button visible if it is first child */
+.download-card > button:first-child,
+.download-card > .like-btn,
+.download-card > .item-like-btn,
+.download-card > [class*="like"]{
+  display:flex !important;
+}
+
+/* Reduce top empty spacing after icon removal */
+.download-card{
+  padding-top:18px !important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
