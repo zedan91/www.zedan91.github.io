@@ -1240,7 +1240,7 @@ function firestoreMs(value){
 }
 let azobssLastRegisteredUsers = [];
 function recordDisplayName(record){
-  return escHtml(record.displayName || record.usernameKey || record.name || (record.email ? String(record.email).split('@')[0] : 'User'));
+  return escHtml(record.displayName || record.usernameKey || record.name || 'User');
 }
 function userDocId(user){
   return String(user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
@@ -1878,7 +1878,7 @@ function purchaseRecordUser(user){
   return {
     uid: String(u.uid || ''),
     usernameKey: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase(),
-    displayName: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || 'Guest').trim(),
+    displayName: String(u.usernameKey || u.name || u.usernameKey || u.username || 'Guest').trim(),
     phone: String(u.phone || u.phoneNumber || ''),
     email: String(u.email || '')
   };
