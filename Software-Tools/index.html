@@ -1369,7 +1369,7 @@ grid-template-columns:repeat(2,1fr)!important;
       <h2 id="softwareAdminTitle">Add Software Item</h2>
       <button class="software-admin-close" id="softwareAdminClose" type="button" aria-label="Close">×</button>
     </div>
-    <form class="software-admin-form" id="softwareAdminForm">
+    <form class="software-admin-form" id="softwareAdminForm"><input type="hidden" id="softwareEditId" value="">
       <label>Software Name
         <input id="softwareAdminName" type="text" placeholder="Example: Windows Tweaks Pro" required>
       </label>
@@ -1538,7 +1538,7 @@ grid-template-columns:repeat(2,1fr)!important;
 
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-  import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+  import {addDoc, collection, deleteDoc, doc, getDocs, getFirestore, orderBy, query, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -2241,5 +2241,19 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 })();
 </script>
 
+
+<script>
+window.__azobssEditingSoftwareId = window.__azobssEditingSoftwareId || "";
+document.addEventListener("click", function(e){
+  const btn = e.target.closest("[data-edit-id], .software-card-edit-btn, .edit-software-btn, .edit-btn");
+  if(!btn) return;
+  const id = btn.getAttribute("data-edit-id") || btn.getAttribute("data-id") || btn.dataset.id || btn.dataset.editId || "";
+  if(id) window.__azobssEditingSoftwareId = id;
+}, true);
+document.addEventListener("click", function(e){
+  const btn = e.target.closest("[data-add-software], #addSoftwareBtn, .add-software-btn");
+  if(btn) window.__azobssEditingSoftwareId = "";
+}, true);
+</script>
 </body>
 </html>
