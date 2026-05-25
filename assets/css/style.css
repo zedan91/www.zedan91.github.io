@@ -4118,3 +4118,8 @@ body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
 /* AZOBSS phone input: country code stays inside country selector; local phone box displays 10-3560 0723 only. */
 .phone-prefix{display:none!important;}
 .phone-number-wrap input{padding-left:14px!important;}
+
+/* Global card center fix */
+.card,.tool-card,.software-card,.cad-card,.product-card,.software-item,.cad-item{display:flex;flex-direction:column;align-items:center;text-align:center;}
+.card h3,.tool-card h3,.software-card h3,.cad-card h3,.product-card h3,.software-item h3,.cad-item h3{width:100%;min-height:64px;display:flex;align-items:center;justify-content:center;text-align:center;margin:12px auto;}
+.card p,.tool-card p,.software-card p,.cad-card p,.product-card p,.software-item p,.cad-item p{width:90%;margin:0 auto 12px;text-align:center;}
