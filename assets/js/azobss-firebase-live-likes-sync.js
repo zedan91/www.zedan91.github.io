@@ -165,7 +165,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -3166,6 +3166,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     '/cad-tools-and-resources': 'CAD Tools & Resources'
   };
   const state = { loadedFor: '', ids: new Set(), busy: new Set(), loading: null };
+  const likesPageState = { usernameKey: '', rows: [], lastDoc: null, hasMore: false, loading: false, pageSize: 20 };
 
   function addLikeStyle(){
     if(document.getElementById(STYLE_ID)) return;
@@ -3386,6 +3387,79 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     }
   }
 
+  function sortAndFilterLikesRows(rows){
+    let out = [...rows];
+    const q = String(document.getElementById('likesSearchInput')?.value || '').trim().toLowerCase();
+    if(q){
+      out = out.filter(r=>[r.title,r.category,r.page,r.type,r.url,r.itemId].join(' ').toLowerCase().includes(q));
+    }
+    const sort = document.getElementById('likesSortSelect')?.value || 'newest';
+    if(sort==='software') out=out.filter(r=>String(r.type||r.category||r.page||'').toLowerCase().includes('software'));
+    else if(sort==='cad') out=out.filter(r=>String(r.type||r.category||r.page||'').toLowerCase().includes('cad'));
+    else if(sort==='affiliate') out=out.filter(r=>String(r.type||r.category||r.page||'').toLowerCase().includes('affiliate'));
+    else if(sort==='category') out.sort((a,b)=>String(a.category||a.page||'').localeCompare(String(b.category||b.page||'')));
+    else if(sort==='az') out.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
+    else if(sort==='za') out.sort((a,b)=>String(b.title||'').localeCompare(String(a.title||'')));
+    else if(sort==='oldest') out.sort((a,b)=>Number(a.savedAt||a.createdAtMs||0)-Number(b.savedAt||b.createdAtMs||0));
+    else out.sort((a,b)=>Number(b.savedAt||b.createdAtMs||0)-Number(a.savedAt||a.createdAtMs||0));
+    return out;
+  }
+
+  function renderLikesList(){
+    const list = document.getElementById('azobssLikesList');
+    if(!list) return;
+    const rows = sortAndFilterLikesRows(likesPageState.rows);
+    if(!rows.length){
+      list.innerHTML = '<div class="az-like-empty">No liked items yet. Tap the heart button on Software, CAD or Affiliate items.</div>';
+      return;
+    }
+    const more = likesPageState.hasMore
+      ? '<div class="az-like-loadmore-wrap"><button id="azLikesLoadMoreBtn" class="az-like-loadmore" type="button">Load More</button></div>'
+      : '';
+    list.innerHTML = rows.map(likeCardHtml).join('') + more;
+  }
+
+  async function loadLikesPage(reset){
+    const list = document.getElementById('azobssLikesList');
+    if(!list) return;
+    const usernameKey = getUsernameKey();
+    if(!usernameKey) return;
+    if(likesPageState.loading) return;
+    likesPageState.loading = true;
+    if(reset || likesPageState.usernameKey !== usernameKey){
+      likesPageState.usernameKey = usernameKey;
+      likesPageState.rows = [];
+      likesPageState.lastDoc = null;
+      likesPageState.hasMore = false;
+      list.innerHTML = '<div class="az-like-empty">Loading likes...</div>';
+    }
+    try{
+      const baseRef = collection(db, 'users', usernameKey, 'likes');
+      const pageLimit = likesPageState.pageSize;
+      const q = likesPageState.lastDoc
+        ? query(baseRef, orderBy('savedAt','desc'), startAfter(likesPageState.lastDoc), limit(pageLimit))
+        : query(baseRef, orderBy('savedAt','desc'), limit(pageLimit));
+      const snap = await getDocs(q);
+      const incoming = snap.docs.map(d=>({itemId:d.id, ...d.data()}));
+      const seen = new Set(likesPageState.rows.map(r=>String(r.itemId || r.id || '')));
+      incoming.forEach(row=>{
+        const id = String(row.itemId || row.id || '');
+        if(id && !seen.has(id)) likesPageState.rows.push(row);
+      });
+      likesPageState.lastDoc = snap.docs[snap.docs.length-1] || likesPageState.lastDoc;
+      likesPageState.hasMore = snap.docs.length === pageLimit;
+      renderLikesList();
+    }catch(err){
+      console.warn('AZOBSS paged likes load failed, using cache fallback:', err);
+      const fallbackRows = Array.from(state.ids).map(id=>({itemId:id, title:id, page:'AZOBSS', savedAt:0}));
+      likesPageState.rows = fallbackRows;
+      likesPageState.hasMore = false;
+      renderLikesList();
+    }finally{
+      likesPageState.loading = false;
+    }
+  }
+
   async function renderLikesPage(skipLoad){
     const list = document.getElementById('azobssLikesList');
     if(!list) return;
@@ -3396,27 +3470,8 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     }
     const usernameKey = getUsernameKey();
     if(!usernameKey){ list.innerHTML = '<div class="az-like-empty">Please login again to load Likes.</div>'; return; }
-    if(!skipLoad) await loadLikesOnce();
-    let rows = [];
-    try{
-      const snap = await getDocs(collection(db, 'users', usernameKey, 'likes'));
-      rows = snap.docs.map(d=>({itemId:d.id, ...d.data()}));
-    }catch(err){
-      console.warn('AZOBSS likes page load failed:', err);
-      rows = Array.from(state.ids).map(id=>({itemId:id, title:id, page:'AZOBSS'}));
-    }
-    const q = String(document.getElementById('likesSearchInput')?.value || '').trim().toLowerCase();
-    if(q){ rows = rows.filter(r=>[r.title,r.category,r.page,r.type,r.url,r.itemId].join(' ').toLowerCase().includes(q)); }
-    const sort = document.getElementById('likesSortSelect')?.value || 'newest';
-    if(sort==='software') rows=rows.filter(r=>String(r.type||r.category||'').toLowerCase().includes('software'));
-    else if(sort==='cad') rows=rows.filter(r=>String(r.type||r.category||'').toLowerCase().includes('cad'));
-    else if(sort==='affiliate') rows=rows.filter(r=>String(r.type||r.category||'').toLowerCase().includes('affiliate'));
-    else if(sort==='category') rows.sort((a,b)=>String(a.category||'').localeCompare(String(b.category||'')));
-    else if(sort==='az') rows.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
-    else if(sort==='za') rows.sort((a,b)=>String(b.title||'').localeCompare(String(a.title||'')));
-    else if(sort==='oldest') rows.sort((a,b)=>Number(a.savedAt||0)-Number(b.savedAt||0));
-    else rows.sort((a,b)=>Number(b.savedAt||0)-Number(a.savedAt||0));
-    list.innerHTML = rows.length ? rows.map(likeCardHtml).join('') : '<div class="az-like-empty">No liked items yet. Tap the heart button on Software, CAD or Affiliate items.</div>';
+    if(!skipLoad) await loadLikesPage(true);
+    else renderLikesList();
   }
   function scheduleInject(){
     clearTimeout(scheduleInject.t);
@@ -3428,6 +3483,15 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     document.getElementById('likesSearchInput')?.addEventListener('input', ()=>renderLikesPage(true));
     document.getElementById('likesSortSelect')?.addEventListener('change', ()=>renderLikesPage(true));
     document.getElementById('azobssLikesList')?.addEventListener('click', (event)=>{
+      const loadMoreBtn = event.target.closest('#azLikesLoadMoreBtn');
+      if(loadMoreBtn){
+        event.preventDefault();
+        event.stopPropagation();
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading...';
+        loadLikesPage(false);
+        return;
+      }
       const unlikeBtn = event.target.closest('.az-like-unlike-btn');
       if(!unlikeBtn) return;
       event.preventDefault();
@@ -3442,6 +3506,10 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   onAuthStateChanged(auth, ()=>{
     state.loadedFor = '';
     state.ids = new Set();
+    likesPageState.usernameKey = '';
+    likesPageState.rows = [];
+    likesPageState.lastDoc = null;
+    likesPageState.hasMore = false;
     setTimeout(()=>{ injectLikeButtons(); renderLikesPage(false); }, 200);
   });
 })();

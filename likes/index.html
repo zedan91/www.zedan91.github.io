@@ -82,7 +82,11 @@
       .likes-controls{grid-template-columns:1fr;gap:10px;}
       .likes-control input,.likes-control select{height:40px;font-size:13px;}
     }
-  </style>
+  
+    .az-like-loadmore-wrap{display:flex;justify-content:center;margin:18px 0 8px;}
+    .az-like-loadmore{border:1px solid rgba(38,108,246,.55);background:#2563eb;color:#fff;border-radius:14px;padding:12px 22px;font-weight:800;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.45);}
+    .az-like-loadmore:disabled{opacity:.65;cursor:not-allowed;}
+</style>
 
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
@@ -150,6 +154,10 @@
   #registeredUsersList .az-admin-user-compact-card{grid-template-columns:1fr!important;}
   #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
 }
+
+    .az-like-loadmore-wrap{display:flex;justify-content:center;margin:18px 0 8px;}
+    .az-like-loadmore{border:1px solid rgba(38,108,246,.55);background:#2563eb;color:#fff;border-radius:14px;padding:12px 22px;font-weight:800;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.45);}
+    .az-like-loadmore:disabled{opacity:.65;cursor:not-allowed;}
 </style>
 </head>
 <body>
