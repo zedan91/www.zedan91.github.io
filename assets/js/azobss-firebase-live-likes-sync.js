@@ -3178,6 +3178,10 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       .az-item-like-btn.is-liked{background:rgba(255,77,109,.22)!important;border-color:#ff4d6d!important;color:#ff4d6d!important;text-shadow:0 0 14px rgba(255,77,109,.45)!important;}
       .az-item-like-btn[disabled]{opacity:.62!important;cursor:wait!important;transform:none!important;}
       .card,.download-card,.cad-card{position:relative!important;}
+      .az-has-like-btn.card .top{padding-right:54px!important;}
+      .az-has-like-btn.card .badge{max-width:calc(100% - 62px)!important;white-space:normal!important;text-align:center!important;overflow-wrap:anywhere!important;}
+      .az-has-like-btn.card h2{padding-right:8px!important;}
+      .az-has-like-btn.download-card h2,.az-has-like-btn.download-card h3,.az-has-like-btn.cad-card h2,.az-has-like-btn.cad-card h3{padding-right:54px!important;}
       .az-like-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;border:1px solid rgba(34,197,94,.22);border-radius:14px;background:rgba(15,23,42,.7);padding:14px;color:#fff;cursor:pointer;}
       .az-like-card-main{min-width:0;}
       .az-like-card-title{font-weight:950;color:#fff;font-size:16px;}
@@ -3353,6 +3357,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     addLikeStyle();
     await loadLikesOnce();
     getCards().forEach(({card, info})=>{
+      card.classList.add('az-has-like-btn');
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'az-item-like-btn';
