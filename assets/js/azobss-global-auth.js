@@ -1265,7 +1265,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
   const signupPhone = normalizeAzobssPhone(fallback.phone || fallback.phoneNumber || '');
   const hasPaBmSignupAccess = fallbackMemberCode === AZOBSS_PA_MEMBER_CODE;
-  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,inviteCode:fallbackMemberCode||'',invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,paBmAccess:hasPaBmSignupAccess,paBmAllowed:hasPaBmSignupAccess,allowPABM:hasPaBmSignupAccess,paAccess:hasPaBmSignupAccess?'yes':'no',role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,inviteCode:fallbackMemberCode,inviteCodeUsed:fallbackMemberCode,invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,paBmAccess:hasPaBmSignupAccess,paBmAllowed:hasPaBmSignupAccess,allowPABM:hasPaBmSignupAccess,paAccess:hasPaBmSignupAccess?'yes':'no',role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   try{
     await setDoc(ref,profile,{merge:true});
     if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,updatedAt:serverTimestamp()},{merge:true});
@@ -2727,7 +2727,8 @@ function bindAuth() {
         contactEmail:email,
         phone,
         phoneNumber:phone,
-        inviteCode:invitedByCode||'',
+        inviteCode:invitedByCode,
+        inviteCodeUsed:invitedByCode,
         invitedByCode,
         memberCode:invitedByCode,
         paMemberCode:invitedByCode,
