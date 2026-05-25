@@ -1860,6 +1860,44 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     }
     return card.dataset.productId;
   }
+
+  function normalizeSoftwareKey(v){
+    return String(v || '')
+      .toLowerCase()
+      .replace(/https?:\/\//g,'')
+      .replace(/www\./g,'')
+      .replace(/[^a-z0-9]+/g,'')
+      .trim();
+  }
+
+  function getStaticComparableKeys(card){
+    const title = card?.querySelector('h3')?.textContent || card?.dataset.name || '';
+    const href = card?.querySelector('a.download-btn')?.getAttribute('href') || '';
+    const category = card?.dataset.category || '';
+    return new Set([
+      normalizeSoftwareKey(staticProductId(card)),
+      normalizeSoftwareKey(title),
+      normalizeSoftwareKey(href),
+      normalizeSoftwareKey(title + category)
+    ].filter(Boolean));
+  }
+
+  function getDynamicComparableKeys(item){
+    return new Set([
+      normalizeSoftwareKey(item.productId || item.id),
+      normalizeSoftwareKey(item.replacesProductId),
+      normalizeSoftwareKey(item.name),
+      normalizeSoftwareKey(item.downloadLink || item.link || item.url),
+      normalizeSoftwareKey(String(item.name || '') + String(item.category || ''))
+    ].filter(Boolean));
+  }
+
+  function dynamicMatchesStatic(item, card){
+    const d = getDynamicComparableKeys(item);
+    const s = getStaticComparableKeys(card);
+    for(const key of s){ if(d.has(key)) return true; }
+    return false;
+  }
   function getStaticItemFromCard(card){
     const firstBtn = card?.querySelector('a.download-btn');
     const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'Software Item';
@@ -1889,6 +1927,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     softwareDynamicItems.forEach(item => {
       if(item.productId || item.id) ids.push(String(item.productId || item.id));
       if(item.replacesProductId) ids.push(String(item.replacesProductId));
+      getDynamicComparableKeys(item).forEach(k => ids.push(k));
     });
     return new Set(ids.filter(Boolean));
   }
@@ -1913,7 +1952,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const staticCards = getStaticCards();
     const overriddenIds = getOverrideProductIds();
     staticCards.forEach(card => {
-      const isOverridden = overriddenIds.has(String(staticProductId(card)));
+      const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
       card.style.display = isOverridden ? 'none' : '';
     });
 
@@ -1927,14 +1966,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       dynamic = dynamic.filter(item => (item.platforms || ['Windows']).some(p => clean(p) === clean(selectedSoftwarePlatform)));
     }
     staticCards.forEach(card => {
-      const isOverridden = overriddenIds.has(String(staticProductId(card)));
+      const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
       const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
       card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card)) ? '' : 'none';
     });
     if(keyword){
       dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
       staticCards.forEach(card => {
-        const isOverridden = overriddenIds.has(String(staticProductId(card)));
+        const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
         const text = clean(card.dataset.search || card.textContent || '');
         const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
         card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card) && text.includes(keyword)) ? '' : 'none';
@@ -2065,12 +2104,24 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       }
       const saved = loadLocal().filter(x => String(x.productId || x.id) !== String(key));
       localStorage.setItem(LOCAL_KEY, JSON.stringify(saved));
+
+      const deleted = getDeletedStaticIds();
       if(staticCard){
-        const deleted = getDeletedStaticIds();
         deleted.add(String(key));
-        saveDeletedStaticIds(deleted);
         staticCard.remove();
       }
+
+      if(item){
+        if(item.replacesProductId) deleted.add(String(item.replacesProductId));
+        getStaticCards().forEach(card => {
+          if(dynamicMatchesStatic(item, card)){
+            deleted.add(String(staticProductId(card)));
+            card.remove();
+          }
+        });
+      }
+
+      saveDeletedStaticIds(deleted);
       softwareDynamicItems = softwareDynamicItems.filter(x => String(x.productId || x.id) !== String(key));
       applySoftwareFilters();
     }catch(err){
@@ -2214,11 +2265,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         const deleted = getDeletedStaticIds();
         deleted.add(oldEditProductId);
         if(String(item.productId || item.id) !== oldEditProductId) deleted.add(String(item.productId || item.id));
-        saveDeletedStaticIds(deleted);
         getStaticCards().forEach(card => {
           const sid = String(staticProductId(card));
-          if(sid === oldEditProductId || sid === String(item.productId || item.id)) card.remove();
+          if(sid === oldEditProductId || sid === String(item.productId || item.id) || dynamicMatchesStatic({...item, replacesProductId: oldEditProductId}, card)){
+            deleted.add(sid);
+            card.remove();
+          }
         });
+        saveDeletedStaticIds(deleted);
       }else{
         await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91'});
       }
