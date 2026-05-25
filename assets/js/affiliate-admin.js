@@ -780,7 +780,7 @@
     setInterval(() => {
       refreshAdminState();
       ensureCardAdminButtons();
-    }, 500);
+    }, 5000);
   }
 
   if(document.readyState === 'loading'){

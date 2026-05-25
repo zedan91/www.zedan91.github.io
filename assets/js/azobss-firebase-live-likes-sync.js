@@ -1118,7 +1118,7 @@ let azobssRegisteredUsersPage = 1;
 let azobssLiveUsersPage = 1;
 let azobssLoginHistoryPage = 1;
 let azobssGuestHistoryPage = 1;
-const AZOBSS_REAL_ONLINE_MS = 120000; // only show users seen within the last 2 minutes
+const AZOBSS_REAL_ONLINE_MS = 180000; // only show users seen within the last 3 minutes
 let azobssPresenceHeartbeatTimer = null;
 
 
@@ -1389,7 +1389,7 @@ function startAzobssPresenceHeartbeat(user){
   upsertOnlineUser(u);
   azobssPresenceHeartbeatTimer = setInterval(()=>{
     if(document.visibilityState !== 'hidden') upsertOnlineUser(getSavedUser() || u);
-  }, 30000);
+  }, 60000);
 }
 async function recordLoginHistory(user, action='login'){
   const u = user || getSavedUser();
@@ -1504,19 +1504,47 @@ function updateRegisteredUserStats(users){
   if(todayEl) todayEl.textContent = String(today);
   if(monthEl) monthEl.textContent = String(month);
 }
+
+function renderRegisteredUsersFromCacheOnly(){
+  try{
+    const users = Array.isArray(azobssLastRegisteredUsers) ? azobssLastRegisteredUsers : [];
+    updateRegisteredUserStats(users);
+    const filteredUsers = getFilteredRegisteredUsers(users);
+    const maxPage = Math.max(1, Math.ceil(filteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(Math.max(1, azobssRegisteredUsersPage), maxPage);
+    const regList = document.getElementById('registeredUsersList');
+    if(regList){
+      const rows = filteredUsers.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users found.</div>';
+      regList.querySelectorAll('[data-admin-edit-user]').forEach(btn=>btn.addEventListener('click',()=>openAdminUserEdit(btn.dataset.adminEditUser)));
+      regList.querySelectorAll('[data-admin-delete-user]').forEach(btn=>btn.addEventListener('click',()=>deleteAdminRegisteredUser(btn.dataset.adminDeleteUser)));
+      adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, filteredUsers.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderRegisteredUsersFromCacheOnly();});
+    }
+    const registeredCount = document.getElementById('registeredUserCount');
+    if(registeredCount) registeredCount.textContent = String(users.length);
+  }catch(error){
+    console.warn('Registered users local filter failed:', error);
+  }
+}
+
 function bindRegisteredUsersControls(){
   const controls = getRegisteredUserControls();
   [controls.search, controls.sort, controls.refresh].forEach(el => {
     if(!el || el.dataset.azobssRegisteredUsersBind) return;
     el.dataset.azobssRegisteredUsersBind = '1';
-    const handler = () => {
+    const refreshHandler = () => {
       azobssRegisteredUsersPage = 1;
       renderFirebaseAdminRecords();
     };
-    if(el.tagName === 'BUTTON') el.addEventListener('click', handler);
+    const localFilterHandler = () => {
+      azobssRegisteredUsersPage = 1;
+      renderRegisteredUsersFromCacheOnly();
+    };
+    if(el.tagName === 'BUTTON') el.addEventListener('click', refreshHandler);
     else {
-      el.addEventListener('input', handler);
-      el.addEventListener('change', handler);
+      // Do not re-read Firestore on every search keystroke. Filter cached admin rows only.
+      el.addEventListener('input', localFilterHandler);
+      el.addEventListener('change', localFilterHandler);
     }
   });
 }
@@ -1552,7 +1580,7 @@ async function recordGuestHistory(){
   try{
     if(getSavedUser()) return;
     const page = window.location.pathname || '/';
-    const sessionKey = 'azobssGuestHistorySaved:' + page;
+    const sessionKey = 'azobssGuestHistorySaved';
     if(sessionStorage.getItem(sessionKey)) return;
     sessionStorage.setItem(sessionKey, '1');
     const deviceId = getAzobssDeviceId();
