@@ -2748,6 +2748,17 @@ function bindAuth() {
         for(let attempt=1; attempt<=4; attempt++){
           try{
             await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
+            if(invitedByCode===AZOBSS_PA_MEMBER_CODE){
+              await setDoc(doc(db,'users',usernameKey),{
+                inviteCode:invitedByCode,
+                memberCode:invitedByCode,
+                paMemberCode:invitedByCode,
+                paBmAccess:true,
+                paBmAllowed:true,
+                allowPABM:true,
+                paAccess:'yes'
+              },{merge:true});
+            }
             await saveUsernameAuthEmail(usernameKey, email, newUser.uid);
             return;
           }catch(profileError){
