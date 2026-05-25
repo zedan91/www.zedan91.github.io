@@ -1947,13 +1947,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     Array.from(grid.querySelectorAll('[data-software-static="1"]')).forEach(card => { if(deletedStaticIds.has(staticProductId(card))) card.style.display = 'none'; });
     grid.querySelectorAll('[data-admin-software="1"], .software-empty-state').forEach(el => el.remove());
     const keyword = clean(searchInput?.value || '');
-    let sortMode = sortSelect?.value || 'newest';
-    sortMode = String(sortMode).trim();
-    if(['new','newestItem','newestfirst'].includes(sortMode.toLowerCase())) sortMode = 'newest';
-    if(['free','freeSoftwareFirst','freefirst'].includes(sortMode.toLowerCase())) sortMode = 'freeFirst';
-    if(['premium','premiumSoftwareFirst','premiumfirst'].includes(sortMode.toLowerCase())) sortMode = 'premiumFirst';
-    if(['az','nameAsc','nameaz'].includes(sortMode.toLowerCase())) sortMode = 'nameAZ';
-    if(['za','nameDesc','nameza'].includes(sortMode.toLowerCase())) sortMode = 'nameZA';
+    const sortMode = sortSelect?.value || 'newest';
 
     const staticCards = getStaticCards();
     const overriddenIds = getOverrideProductIds();
@@ -1986,7 +1980,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       });
     }
 
-    const typeRank = item => String(item.type || '').toLowerCase() === 'premium' ? 1 : 0;
+    const typeRank = item => item.type === 'premium' ? 1 : 0;
     dynamic.sort((a,b) => {
       if(sortMode === 'freeFirst') return typeRank(a) - typeRank(b) || String(a.name).localeCompare(String(b.name));
       if(sortMode === 'premiumFirst') return typeRank(b) - typeRank(a) || String(a.name).localeCompare(String(b.name));
@@ -1999,20 +1993,16 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       grid.insertAdjacentHTML('afterbegin', dynamic.map(renderItem).join(''));
     }
 
-    // Sort static cards visually too, so dropdown affects ALL cards, not only Firebase/admin items.
-    const staticTypeRank = card => String(card.dataset.type || 'free').toLowerCase() === 'premium' ? 1 : 0;
-    const sortedStatic = staticCards.slice().sort((a,b) => {
-      const an = String(a.dataset.name || a.querySelector('h3')?.textContent || '').toLowerCase();
-      const bn = String(b.dataset.name || b.querySelector('h3')?.textContent || '').toLowerCase();
-      const ac = Number(a.dataset.created || 0);
-      const bc = Number(b.dataset.created || 0);
-      if(sortMode === 'freeFirst') return staticTypeRank(a) - staticTypeRank(b) || an.localeCompare(bn);
-      if(sortMode === 'premiumFirst') return staticTypeRank(b) - staticTypeRank(a) || an.localeCompare(bn);
-      if(sortMode === 'nameAZ') return an.localeCompare(bn);
-      if(sortMode === 'nameZA') return bn.localeCompare(an);
-      return bc - ac || an.localeCompare(bn);
-    });
-    sortedStatic.forEach(card => grid.appendChild(card));
+    // Sort static cards visually when sorting by name/type. Static free items stay after admin items for newest mode.
+    if(sortMode !== 'newest'){
+      const sortedStatic = staticCards.slice().sort((a,b) => {
+        const an = a.dataset.name || '';
+        const bn = b.dataset.name || '';
+        if(sortMode === 'nameZA') return bn.localeCompare(an);
+        return an.localeCompare(bn);
+      });
+      sortedStatic.forEach(card => grid.appendChild(card));
+    }
 
     syncStaticAdminButtons();
     const hasVisibleStatic = staticCards.some(card => card.style.display !== 'none');
