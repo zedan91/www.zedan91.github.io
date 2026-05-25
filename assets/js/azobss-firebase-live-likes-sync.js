@@ -340,7 +340,7 @@ function injectModal() {
       <label for="siteSignupEmail">Email
         <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
       </label>
-      <label for="siteSignupInviteCode">Member / Invite Code
+      <label for="siteSignupInviteCode">Invite Code
         <input id="siteSignupInviteCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
       <label class="auth-captcha-row" for="siteSignupCaptcha"><input id="siteSignupCaptcha" type="checkbox" required> I'm not a robot</label>
@@ -397,7 +397,7 @@ function injectAdminUserEditModal() {
           <option value="no">No - hide PA/BM tab</option>
         </select>
       </label>
-      <label for="adminUserEditMemberCode">Member / Invite Code
+      <label for="adminUserEditMemberCode">Invite Code
         <input id="adminUserEditMemberCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
       <p class="request-error" id="adminUserEditError"></p>
