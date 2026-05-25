@@ -1041,6 +1041,56 @@ width:fit-content !important;
 }
 
 </style>
+
+<style>
+/* Software compact card style */
+.downloads-grid{
+grid-template-columns:repeat(auto-fill,minmax(260px,1fr)) !important;
+gap:18px !important;
+}
+.download-card{
+min-height:300px !important;
+padding:18px !important;
+display:flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:flex-start !important;
+overflow:hidden !important;
+}
+.download-card h3{
+margin:10px auto !important;
+text-align:center !important;
+min-height:52px !important;
+display:flex !important;
+align-items:center !important;
+justify-content:center !important;
+width:100% !important;
+}
+.download-card p{
+margin:0 auto 14px !important;
+text-align:center !important;
+display:-webkit-box !important;
+-webkit-line-clamp:3 !important;
+-webkit-box-orient:vertical !important;
+overflow:hidden !important;
+min-height:60px !important;
+}
+.download-btn{
+margin-top:auto !important;
+width:80% !important;
+text-align:center !important;
+}
+@media(max-width:768px){
+.downloads-grid{
+grid-template-columns:repeat(2,1fr) !important;
+}
+.download-card{
+min-height:270px !important;
+padding:14px !important;
+}
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
