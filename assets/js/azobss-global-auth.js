@@ -1423,7 +1423,7 @@ function openAdminUserEdit(userId){
   $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
-  const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
+  const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.inviteCode || user.inviteCodeUsed || user.accessCode || user.signupCode || '';
   $('adminUserEditPaAccess').value = (registeredUserHasPaAccess(user) || String(existingCode).trim().toUpperCase()==='ZX6186') ? 'yes' : 'no';
   $('adminUserEditMemberCode').value = existingCode;
   const err = $('adminUserEditError');
@@ -2761,10 +2761,14 @@ function bindAuth() {
         phoneNumber:phone,
         inviteCode:invitedByCode,
         inviteCodeUsed:invitedByCode,
+        invitedByCode:invitedByCode,
         invitedByCode,
         memberCode:invitedByCode,
         paMemberCode:invitedByCode,
         paBmAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE,
+        paBmAllowed:invitedByCode===AZOBSS_PA_MEMBER_CODE,
+        allowPABM:invitedByCode===AZOBSS_PA_MEMBER_CODE,
+        paAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE?'yes':'no',
         paBmAllowed:invitedByCode===AZOBSS_PA_MEMBER_CODE,
         allowPABM:invitedByCode===AZOBSS_PA_MEMBER_CODE,
         paAccess:invitedByCode===AZOBSS_PA_MEMBER_CODE?'yes':'no',
