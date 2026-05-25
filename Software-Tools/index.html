@@ -1440,8 +1440,8 @@ grid-template-columns:repeat(2,1fr)!important;
         </label>
       </div>
 
-      <label>YouTube Demo Link
-        <input id="youtubeUrl" type="url" placeholder="https://youtube.com/...">
+      <label>Demo Video Link
+        <input id="demoVideoUrl" type="url" placeholder="https://youtube.com/...">
       </label>
       <label>Platform
         <div class="software-admin-checks" id="softwareAdminPlatforms">
@@ -1686,7 +1686,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       link: item.link || (type === 'premium' ? (item.paymentLink || item.stripeLink) : item.downloadLink) || item.url || '#',
       imageUrl: item.imageUrl || item.image || '',
       gifUrl: item.gifUrl || item.gif || '',
-      youtubeUrl: item.youtubeUrl || '',
+      demoVideoUrl: item.demoVideoUrl || '',
       buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
       createdAtMs: item.createdAtMs || (item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : (Number(item.createdAt) || 0)))
     };
@@ -1795,7 +1795,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       <h3>${esc(item.name)}</h3>
       ${metaHtml}
       <p>${esc(item.desc)}</p>
-      ${gifHtml}${item.youtubeUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.youtubeUrl)}' target='_blank' rel='noopener'>▶ YouTube Demo</a></div>` : ''}
+      ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
       <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
       ${adminEdit}
     </div>`;
@@ -2153,7 +2153,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       icon: iconInput.value.trim(),
       imageUrl: uploadedImage || imageUrlInput?.value.trim(),
       gifUrl: uploadedGif || gifUrlInput?.value.trim(),
-      youtubeUrl: document.getElementById('youtubeUrl')?.value.trim(),
+      demoVideoUrl: document.getElementById('demoVideoUrl')?.value.trim(),
       buttonText: buttonInput.value.trim(),
       downloadLink: downloadLinkInput?.value.trim(),
       paymentLink: paymentLinkInput?.value.trim(),
