@@ -371,6 +371,7 @@ function injectAdminUserEditModal() {
 }
 
 const $ = (id) => document.getElementById(id);
+window.__AZOBSS_MAIN_AUTH_HANDLER_ACTIVE__ = true;
 function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
 function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
 
@@ -380,7 +381,12 @@ function renderAzobssRecaptchaWidgets(){
   document.querySelectorAll('.g-recaptcha').forEach((el)=>{
     if(el.dataset.azobssWidgetId) return;
     try{
-      const widgetId = api.render(el, {sitekey: el.dataset.sitekey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'});
+      const widgetId = api.render(el, {
+        sitekey: el.dataset.sitekey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+        callback: window.azobssCaptchaOk,
+        'expired-callback': window.azobssCaptchaExpired,
+        'error-callback': window.azobssCaptchaExpired
+      });
       el.dataset.azobssWidgetId = String(widgetId);
       window.__AZOBSS_RECAPTCHA_WIDGETS__.push(widgetId);
     }catch(e){
@@ -414,6 +420,8 @@ function isAzobssCaptchaVerified(scope){
   }catch(e){
     console.warn('AZOBSS captcha check skipped:', e?.message || e);
   }
+  // Small grace for Google callback/UI paint timing right after user ticks the checkbox.
+  if(Date.now() - (window.__AZOBSS_CAPTCHA_LAST_OK__ || 0) < 120000) return true;
   return false;
 }
 
@@ -428,6 +436,17 @@ function resetAzobssCaptcha(scope){
     });
   }catch(e){}
 }
+
+window.isAzobssCaptchaVerified = isAzobssCaptchaVerified;
+window.resetAzobssCaptcha = resetAzobssCaptcha;
+window.azobssCaptchaOk = function(token){
+  window.__AZOBSS_CAPTCHA_LAST_OK__ = Date.now();
+  ['siteSignupError','siteLoginError'].forEach((id)=>{
+    const el = document.getElementById(id);
+    if(el && /confirm you are not a robot/i.test(el.textContent || '')) el.textContent = '';
+  });
+};
+window.azobssCaptchaExpired = function(){ window.__AZOBSS_CAPTCHA_LAST_OK__ = 0; };
 
 const AZOBSS_USERNAME_AUTH_COLLECTION = 'usernameAuthEmails';
 async function getAuthEmailForUsername(usernameKey){
@@ -2549,7 +2568,8 @@ function bindAuth() {
     if(err){ err.style.color=''; err.textContent=''; }
 
     const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
-    if(!isAzobssCaptchaVerified($('siteForgotPasswordBox') || $('siteSignInForm'))){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(!isAzobssCaptchaVerified($('siteForgotPasswordBox') || $('siteSignInForm'))){ if(err){ err.style.color=''; err.textContent='Please confirm you are not a robot.'; } return; }
+    if(err && /confirm you are not a robot/i.test(err.textContent || '')) err.textContent='';
     if(!raw){ if(err) err.textContent='Please enter your username or registered email.'; return; }
 
     try{
@@ -2585,7 +2605,8 @@ function bindAuth() {
     const phone=getPhoneWithDial('siteSignup');
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
     const invitedByCode=normalizePaMemberCode(fieldValue('siteSignupInviteCode'));
-    if(!isAzobssCaptchaVerified($('siteSignUpForm'))){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(!isAzobssCaptchaVerified($('siteSignUpForm'))){ if(err){ err.style.color=''; err.textContent='Please confirm you are not a robot.'; } return; }
+    if(err && /confirm you are not a robot/i.test(err.textContent || '')) err.textContent='';
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
     if(window.__AZOBSS_SIGNUP_BUSY__) return;
     window.__AZOBSS_SIGNUP_BUSY__ = true;

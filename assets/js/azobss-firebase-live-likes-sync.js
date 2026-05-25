@@ -2380,12 +2380,13 @@ function bindAuth() {
   });
 
   $('siteSendPasswordResetButton')?.addEventListener('click', async (event)=>{
+    if(window.__AZOBSS_MAIN_AUTH_HANDLER_ACTIVE__) return;
     event.preventDefault();
     const err=$('siteLoginError');
     if(err){ err.style.color=''; err.textContent=''; }
 
     const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
-    if(!$('siteForgotPasswordCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(window.isAzobssCaptchaVerified ? !window.isAzobssCaptchaVerified($('siteForgotPasswordBox') || $('siteSignInForm')) : !$('siteForgotPasswordCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!raw){ if(err) err.textContent='Please enter your username or registered email.'; return; }
 
     try{
@@ -2413,6 +2414,7 @@ function bindAuth() {
   });
 
   $('siteSignUpForm')?.addEventListener('submit', async (event)=>{
+    if(window.__AZOBSS_MAIN_AUTH_HANDLER_ACTIVE__) return;
     event.preventDefault();
     const err=$('siteSignupError'); if(err) err.textContent='';
     const usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
@@ -2420,7 +2422,7 @@ function bindAuth() {
     const phone=getPhoneWithDial('siteSignup');
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
     const invitedByCode=normalizePaMemberCode(fieldValue('siteSignupInviteCode'));
-    if(!$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
+    if(window.isAzobssCaptchaVerified ? !window.isAzobssCaptchaVerified($('siteSignUpForm')) : !$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
     if(window.__AZOBSS_SIGNUP_BUSY__) return;
     window.__AZOBSS_SIGNUP_BUSY__ = true;
