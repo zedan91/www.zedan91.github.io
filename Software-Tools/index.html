@@ -1303,62 +1303,7 @@ grid-template-columns:repeat(2,1fr)!important;
 </div>
 </div>
 <div class="downloads-grid" id="softwareDownloadsGrid">
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="crystaldiskmark" data-product-id="AZSW-CRYSTALDISKMARK" data-category="General Tools" data-search="crystaldiskmark benchmark utility for testing ssd and hard disk speed on windows.">
-<div class="download-icon">CD</div>
-<div class="software-badge free">Free Software</div>
-<h3>CrystalDiskMark</h3>
-<p>Benchmark utility for testing SSD and hard disk speed on Windows.</p>
-<a class="download-btn" href="https://crystalmark.info/en/software/crystaldiskmark/" rel="noopener" target="_blank">Download Now</a>
-</div>
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="hwinfo" data-product-id="AZSW-HWINFO" data-category="System Utilities" data-search="hwinfo tool for monitoring temperature, sensors, hardware details and pc system status.">
-<div class="download-icon">HW</div>
-<div class="software-badge free">Free Software</div>
-<h3>HWInfo</h3>
-<p>Tool for monitoring temperature, sensors, hardware details and PC system status.</p>
-<a class="download-btn" href="https://www.hwinfo.com/download/" rel="noopener" target="_blank">Download Now</a>
-</div>
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="anydesk" data-product-id="AZSW-ANYDESK" data-category="Remote Tools" data-search="anydesk remote support tool for online pc troubleshooting.">
-<div class="download-icon">AD</div>
-<div class="software-badge free">Free Software</div>
-<h3>AnyDesk</h3>
-<p>Remote support tool for online PC troubleshooting.</p>
-<a class="download-btn" href="https://anydesk.com/en/downloads/windows?dv=win_exe" rel="noopener" target="_blank">Download Now</a>
-</div>
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="rustdesk" data-product-id="AZSW-RUSTDESK" data-category="Remote Tools" data-search="rustdesk alternative remote desktop tool for support and remote access.">
-<div class="download-icon">RD</div>
-<div class="software-badge free">Free Software</div>
-<h3>RustDesk</h3>
-<p>Alternative remote desktop tool for support and remote access.</p>
-<a class="download-btn" href="https://rustdesk.com/download" rel="noopener" target="_blank">Download Now</a>
-</div>
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="file converter" data-product-id="AZSW-FILE-CONVERTER" data-category="General Tools" data-search="file converter utility for converting files, images, documents and media formats.">
-<div class="download-icon">FC</div>
-<div class="software-badge free">Free Software</div>
-<h3>File Converter</h3>
-<p>Utility for converting files, images, documents and media formats.</p>
-<a class="download-btn" href="https://file-converter.io/" rel="noopener" target="_blank">Download Now</a>
-</div>
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="pause windows update 10 years" data-product-id="AZSW-PAUSE-WINDOWS-UPDATE-10-YEARS" data-category="System Utilities" data-search="pause windows update 10 years disable windows update pause long period windows 10 windows 11 system utility.">
-<div class="download-icon">WU</div>
-<div class="software-badge free">Free Software</div>
-<h3>Pause Windows Update 10 Years</h3>
-<p>Pause Windows Update for a long period using a ready-to-run Windows batch script.</p>
-<a class="download-btn" download="" href="downloads/disable-windows-update-pause-10-years.bat">Download Now</a>
-</div>
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="faster right click menu" data-product-id="AZSW-FASTER-RIGHT-CLICK-MENU" data-category="System Utilities" data-search="faster right click menu windows 11 context menu registry tweak speed up right click system utility.">
-<div class="download-icon">RC</div>
-<div class="software-badge free">Free Software</div>
-<h3>Faster Right-Click Menu</h3>
-<p>Speed up the Windows 11 right-click menu response with a registry tweak.</p>
-<a class="download-btn" download="" href="downloads/make-windows-11-right-click-menu-faster.reg">Download Now</a>
-</div>
-<div class="download-card" data-software-static="1" data-type="free" data-platforms="Windows" data-created="0" data-name="windows 10 right click menu" data-product-id="AZSW-WINDOWS-10-RIGHT-CLICK-MENU" data-category="System Utilities" data-search="windows 10 right click menu restore classic context menu windows 11 registry batch system utility.">
-<div class="download-icon">W10</div>
-<div class="software-badge free">Free Software</div>
-<h3>Windows 10 Right-Click Menu</h3>
-<p>Restore the classic Windows 10 right-click menu style on Windows 11.</p>
-<a class="download-btn" download="" href="downloads/bring-back-windows-10-right-click-menu-windows-11.bat">Download Now</a>
-</div>
+
 </div>
 </div>
 </section>
@@ -1922,6 +1867,19 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       createdAtMs: Number(card?.dataset.created || 0)
     });
   }
+  function dedupeSoftwareItems(items){
+    const seen = new Set();
+    return [...items].sort((a,b)=>(b.createdAtMs||0)-(a.createdAtMs||0)).filter(item=>{
+      const key = normalizeSoftwareKey((item.name||'') + '|' + (item.downloadLink || item.link || '') + '|' + (item.category || ''));
+      const key2 = normalizeSoftwareKey(item.productId || item.id || '');
+      const finalKey = key || key2;
+      if(!finalKey) return true;
+      if(seen.has(finalKey)) return false;
+      seen.add(finalKey);
+      return true;
+    });
+  }
+
   function getOverrideProductIds(){
     const ids = [];
     softwareDynamicItems.forEach(item => {
@@ -1962,7 +1920,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       card.style.display = isOverridden ? 'none' : '';
     });
 
-    let dynamic = [...softwareDynamicItems].filter(item => isAdmin() || (item.status || 'active') === 'active');
+    let dynamic = dedupeSoftwareItems([...softwareDynamicItems]).filter(item => isAdmin() || (item.status || 'active') === 'active');
     const cardPlatformOk = card => selectedSoftwarePlatform === 'all' || String(card.dataset.platforms || 'Windows').split('|').some(p => clean(p) === clean(selectedSoftwarePlatform));
 
     if(selectedSoftwareCategory !== 'all'){
@@ -2022,7 +1980,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   }
   async function loadItems(){
     if(!grid) return;
-    softwareDynamicItems = [...await loadFirestore(), ...loadLocal()];
+    softwareDynamicItems = dedupeSoftwareItems([...await loadFirestore(), ...loadLocal()]);
     applySoftwareFilters();
   }
   function refreshAdminState(){
