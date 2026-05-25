@@ -1264,8 +1264,8 @@ grid-template-columns:repeat(2,1fr)!important;
   <label>Sort by
     <select id="softwareSortSelect">
       <option value="newest">Newest item</option>
-      <option value="freeFirst">Free Software first</option>
-      <option value="premiumFirst">Premium Software first</option>
+      <option value="freeFirst">Free Software only</option>
+      <option value="premiumFirst">Premium Software only</option>
       <option value="nameAZ">Name A-Z</option>
       <option value="nameZA">Name Z-A</option>
     </select>
@@ -1908,10 +1908,16 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     let sortMode = sortSelect?.value || 'newest';
     sortMode = String(sortMode).trim();
     if(['new','newestItem','newestfirst'].includes(sortMode.toLowerCase())) sortMode = 'newest';
-    if(['free','freeSoftwareFirst','freefirst'].includes(sortMode.toLowerCase())) sortMode = 'freeFirst';
-    if(['premium','premiumSoftwareFirst','premiumfirst'].includes(sortMode.toLowerCase())) sortMode = 'premiumFirst';
+    if(['free','freeSoftwareFirst','freefirst'].includes(sortMode.toLowerCase())) sortMode = 'freeOnly';
+    if(['premium','premiumSoftwareFirst','premiumfirst'].includes(sortMode.toLowerCase())) sortMode = 'premiumOnly';
     if(['az','nameAsc','nameaz'].includes(sortMode.toLowerCase())) sortMode = 'nameAZ';
     if(['za','nameDesc','nameza'].includes(sortMode.toLowerCase())) sortMode = 'nameZA';
+
+    const softwareTypeOf = itemOrCard => {
+      if(!itemOrCard) return 'free';
+      const raw = itemOrCard.dataset ? itemOrCard.dataset.type : itemOrCard.type;
+      return String(raw || 'free').toLowerCase() === 'premium' ? 'premium' : 'free';
+    };
 
     const staticCards = getStaticCards();
     const overriddenIds = getOverrideProductIds();
@@ -1929,10 +1935,17 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(selectedSoftwarePlatform !== 'all'){
       dynamic = dynamic.filter(item => (item.platforms || ['Windows']).some(p => clean(p) === clean(selectedSoftwarePlatform)));
     }
+    if(sortMode === 'freeOnly'){
+      dynamic = dynamic.filter(item => softwareTypeOf(item) === 'free');
+    }
+    if(sortMode === 'premiumOnly'){
+      dynamic = dynamic.filter(item => softwareTypeOf(item) === 'premium');
+    }
     staticCards.forEach(card => {
       const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
       const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
-      card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card)) ? '' : 'none';
+      const typeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
+      card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card) && typeOk) ? '' : 'none';
     });
     if(keyword){
       dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
@@ -1940,14 +1953,15 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
         const text = clean(card.dataset.search || card.textContent || '');
         const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
-        card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card) && text.includes(keyword)) ? '' : 'none';
+        const typeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
+        card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card) && typeOk && text.includes(keyword)) ? '' : 'none';
       });
     }
 
     const typeRank = item => String(item.type || '').toLowerCase() === 'premium' ? 1 : 0;
     dynamic.sort((a,b) => {
-      if(sortMode === 'freeFirst') return typeRank(a) - typeRank(b) || String(a.name).localeCompare(String(b.name));
-      if(sortMode === 'premiumFirst') return typeRank(b) - typeRank(a) || String(a.name).localeCompare(String(b.name));
+      if(sortMode === 'freeOnly') return String(a.name).localeCompare(String(b.name));
+      if(sortMode === 'premiumOnly') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'nameAZ') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'nameZA') return String(b.name).localeCompare(String(a.name));
       return (b.createdAtMs || 0) - (a.createdAtMs || 0);
@@ -1964,8 +1978,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       const bn = String(b.dataset.name || b.querySelector('h3')?.textContent || '').toLowerCase();
       const ac = Number(a.dataset.created || 0);
       const bc = Number(b.dataset.created || 0);
-      if(sortMode === 'freeFirst') return staticTypeRank(a) - staticTypeRank(b) || an.localeCompare(bn);
-      if(sortMode === 'premiumFirst') return staticTypeRank(b) - staticTypeRank(a) || an.localeCompare(bn);
+      if(sortMode === 'freeOnly') return an.localeCompare(bn);
+      if(sortMode === 'premiumOnly') return an.localeCompare(bn);
       if(sortMode === 'nameAZ') return an.localeCompare(bn);
       if(sortMode === 'nameZA') return bn.localeCompare(an);
       return bc - ac || an.localeCompare(bn);
