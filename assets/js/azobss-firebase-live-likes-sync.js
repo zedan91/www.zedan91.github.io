@@ -1094,7 +1094,8 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const snap = await getDoc(ref);
   if(snap.exists()) return { uid: firebaseUser.uid, id: usernameKey, ...snap.data(), usernameKey: normalizeUsername(snap.data().usernameKey || snap.data().username || usernameKey) };
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
-  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  const signupPhone = normalizeAzobssPhone(fallback.phone || fallback.phoneNumber || '');
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   try{
     await setDoc(ref,profile,{merge:true});
     if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,updatedAt:serverTimestamp()},{merge:true});
@@ -1223,6 +1224,7 @@ async function saveAdminUserEdit(){
     name: usernameKey,
     displayName: usernameKey,
     phone: getPhoneWithDial('adminUserEdit'),
+    phoneNumber: getPhoneWithDial('adminUserEdit'),
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
     role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
     invitedByCode: code,
@@ -1367,7 +1369,7 @@ async function upsertOnlineUser(user){
   try{
     await setDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase()), {
       uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
-      email: u.email || '', phone: normalizeAzobssPhone(u.phone || ''), role: u.role || 'member',
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'member',
       invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
       status: 'online',
       lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString(), lastSeenMs: Date.now()
@@ -1398,7 +1400,7 @@ async function recordLoginHistory(user, action='login'){
   try{
     await addDoc(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION), {
       uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
-      email: u.email || '', phone: normalizeAzobssPhone(u.phone || ''), role: u.role || 'member', action,
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'member', action,
       invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
       createdAt: serverTimestamp(), createdAtClient: new Date().toISOString(), createdAtMs: Date.now()
     });
@@ -1408,7 +1410,8 @@ async function saveProfileToFirebase(user){
   const u = user || getSavedUser();
   if(!u || !u.usernameKey) return;
   try{
-    const normalizedUser = {...u, phone: normalizeAzobssPhone(u.phone || '')};
+    const preservedPhone = normalizeAzobssPhone(u.phone || u.phoneNumber || '');
+    const normalizedUser = {...u, phone: preservedPhone, phoneNumber: preservedPhone};
     await setDoc(doc(db, 'users', String(u.usernameKey).toLowerCase()), {
       ...normalizedUser,
       usernameKey: String(u.usernameKey).toLowerCase(),
@@ -1685,7 +1688,7 @@ function purchaseRecordUser(user){
     uid: String(u.uid || ''),
     usernameKey: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase(),
     displayName: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || 'Guest').trim(),
-    phone: String(u.phone || ''),
+    phone: String(u.phone || u.phoneNumber || ''),
     email: String(u.email || '')
   };
 }
@@ -2312,12 +2315,16 @@ function bindAuth() {
         try{ localStorage.setItem('azobssAuthEmailMap:' + usernameKey, realEmail); localStorage.setItem('azobssSignupUsernameByEmail:' + realEmail, usernameKey); }catch(_){}
         await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
       }
+      let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
       try{
-        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || ''}, {merge:true});
+        const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
+        const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
+        preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || '');
+        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone}, {merge:true});
       }catch(loginProfileUpdateError){
         console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
       }
-      const signedInUser={uid:authUser.uid,...profile,usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
+      const signedInUser={uid:authUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
       saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
     }catch(error){
       console.warn('AZOBSS login failed:', error?.code || error?.message || error);
@@ -2451,6 +2458,7 @@ function bindAuth() {
         authEmail:email,
         contactEmail:email,
         phone,
+        phoneNumber:phone,
         inviteCode:buildInviteCode(usernameKey),
         invitedByCode,
         memberCode:invitedByCode,
@@ -2577,6 +2585,7 @@ function bindAuth() {
     const updated={...current,
       usernameKey: normalizeUsername($('profileEditName')?.value) || current.usernameKey || current.name || '',
       phone: getPhoneWithDial('profileEdit'),
+      phoneNumber: getPhoneWithDial('profileEdit'),
       email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
     };
     saveUser(updated); await saveProfileToFirebase(updated); startAzobssPresenceHeartbeat(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
@@ -2601,14 +2610,18 @@ function bindAuth() {
       }
       const profile=await ensureUserProfile(freshUser);
       const usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
+      let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
       try{
         if(usernameKey && !profile._profileMissing){
-          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+          const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
+          const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
+          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || '');
+          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone}, {merge:true});
         }
       }catch(stateProfileUpdateError){
         console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
       }
-      const fullUser={uid:freshUser.uid,...profile,usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
+      const fullUser={uid:freshUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
     }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
