@@ -3261,6 +3261,24 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(path.includes('affiliate')) return 'Affiliate Shop';
     return 'AZOBSS';
   }
+  function normalizeLikeUrl(url, page){
+    let raw = String(url || '').trim();
+    if(!raw || raw === '#') return '';
+    if(/^(https?:|mailto:|tel:|blob:|data:)/i.test(raw)) return raw;
+    raw = raw.replace(/\\/g, '/');
+    if(raw.startsWith('/')) return location.origin + raw;
+
+    const lowerRaw = raw.toLowerCase();
+    if(lowerRaw.startsWith('software-tools/')) return location.origin + '/' + raw.replace(/^\/+/, '');
+    if(lowerRaw.startsWith('cad-tools-&-resources/') || lowerRaw.startsWith('cad-tools-and-resources/')) return location.origin + '/' + raw.replace(/^\/+/, '');
+    if(lowerRaw.startsWith('affiliate-shop/') || lowerRaw.startsWith('likes/')) return location.origin + '/' + raw.replace(/^\/+/, '');
+
+    const pageName = String(page || pageType() || '').toLowerCase();
+    if(pageName.includes('software')) return location.origin + '/Software-Tools/' + raw.replace(/^\/+/, '');
+    if(pageName.includes('cad')) return location.origin + '/CAD-Tools-&-Resources/' + raw.replace(/^\/+/, '');
+    if(pageName.includes('affiliate')) return location.origin + '/affiliate-shop/' + raw.replace(/^\/+/, '');
+    return location.origin + '/' + raw.replace(/^\/+/, '');
+  }
   function getCardInfo(card){
     const isAff = card.matches('.card');
     const isSw = card.matches('.download-card');
@@ -3271,12 +3289,13 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const category = String(card.dataset.category || card.querySelector('.badge,.software-badge,.cad-badge,.meta')?.textContent || pageType()).trim();
     const linkEl = card.querySelector('.card-open,.download-btn,.cad-action-btn,a[href]');
     const url = linkEl ? (linkEl.getAttribute('href') || '') : '';
+    const page = pageType();
     return {
       id: cleanKey(id) || ('item-' + Date.now()),
       title, desc, category,
-      page: pageType(),
+      page,
       type: isAff ? 'affiliate' : (isSw ? 'software' : (isCad ? 'cad' : 'item')),
-      url: url && url !== '#' ? url : location.pathname,
+      url: normalizeLikeUrl(url && url !== '#' ? url : location.pathname, page),
       savedAt: Date.now()
     };
   }
@@ -3350,7 +3369,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   function likeCardHtml(row){
     const title = String(row.title || row.name || row.itemId || 'Liked item');
     const meta = [row.page, row.category, row.type].filter(Boolean).join(' • ');
-    const url = String(row.url || '');
+    const url = normalizeLikeUrl(row.url || row.downloadUrl || row.pageUrl || '', row.page || row.category || row.type || '');
     const itemId = String(row.itemId || row.id || '');
     return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}" data-like-id="${escapeHtml(itemId)}">
       <div class="az-like-card-main">
@@ -3493,10 +3512,18 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
         return;
       }
       const unlikeBtn = event.target.closest('.az-like-unlike-btn');
-      if(!unlikeBtn) return;
-      event.preventDefault();
-      event.stopPropagation();
-      unlikeFromLikesPage(unlikeBtn.dataset.unlikeId, unlikeBtn);
+      if(unlikeBtn){
+        event.preventDefault();
+        event.stopPropagation();
+        unlikeFromLikesPage(unlikeBtn.dataset.unlikeId, unlikeBtn);
+        return;
+      }
+      const card = event.target.closest('.az-like-card[data-url]');
+      const url = card?.dataset?.url || '';
+      if(url){
+        event.preventDefault();
+        window.location.href = normalizeLikeUrl(url, card.dataset.type || '');
+      }
     });
     const obs = new MutationObserver(scheduleInject);
     obs.observe(document.body, {childList:true, subtree:true});
