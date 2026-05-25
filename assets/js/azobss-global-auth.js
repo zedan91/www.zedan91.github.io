@@ -239,12 +239,60 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .az-admin-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
 .az-admin-modal-actions .btn.secondary{background:#64748b;}
 
+.password-toggle-wrap{position:relative;display:block;width:100%;}
+.password-toggle-wrap input{padding-right:48px!important;box-sizing:border-box;width:100%;}
+.password-eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#9ca3af;font-size:20px;cursor:pointer;padding:4px;line-height:1;z-index:5;}
+.password-eye-btn:hover{color:#fff;}
+
 .forgot-password-box{margin-top:10px;padding:12px;border:1px solid rgba(88,166,255,.35);border-radius:14px;background:rgba(15,23,42,.35);display:grid;gap:10px;}
 .forgot-password-box[hidden]{display:none!important;}
 .forgot-password-box .btn.secondary{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;}
 .auth-reset-note{font-size:12px;line-height:1.45;color:#a9c7e8;margin:0;}
 `;
   document.head.appendChild(style);
+}
+
+
+function setupPasswordVisibilityToggles() {
+  const passwordIds = [
+    'siteLoginPassword',
+    'siteSignupPassword',
+    'profileCurrentPassword',
+    'profileNewPassword',
+    'profileConfirmPassword'
+  ];
+
+  passwordIds.forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input || input.dataset.passwordEyeReady === '1') return;
+
+    const wrapper = document.createElement('span');
+    wrapper.className = 'password-toggle-wrap';
+
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'password-eye-btn';
+    btn.setAttribute('aria-label', 'Show password');
+    btn.title = 'Show password';
+    btn.textContent = '👁';
+
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      btn.title = show ? 'Hide password' : 'Show password';
+      btn.textContent = show ? '🙈' : '👁';
+      input.focus();
+    });
+
+    wrapper.appendChild(btn);
+    input.dataset.passwordEyeReady = '1';
+  });
 }
 
 function injectModal() {
@@ -311,6 +359,7 @@ function injectModal() {
 </div>`;
   document.body.appendChild(wrap.firstElementChild);
   setupCountryPhoneSelectors(document);
+  setupPasswordVisibilityToggles();
 }
 
 function injectAdminUserEditModal() {
@@ -1002,6 +1051,7 @@ function injectProfileSettingsModal() {
 </div>`;
   document.body.appendChild(wrap.firstElementChild);
   setupCountryPhoneSelectors(document);
+  setupPasswordVisibilityToggles();
 }
 
 const AZOBSS_ADMIN_USERS = ['zedan91'];
