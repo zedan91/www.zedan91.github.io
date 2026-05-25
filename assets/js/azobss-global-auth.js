@@ -1122,15 +1122,83 @@ function closeProfileSettings(){const modal=$('profileSettingsModal'); if(modal)
 window.openSiteAuth = openSiteAuth;
 window.closeSiteAuth = closeSiteAuth;
 
+async function findExistingUserProfileForAuth(firebaseUser){
+  const uid = String(firebaseUser?.uid || '').trim();
+  const email = String(firebaseUser?.email || '').trim().toLowerCase();
+  const emailLocalKey = normalizeUsername(email ? email.split('@')[0] : '');
+  const candidates = [];
+  if(uid){
+    try{
+      const snap = await getDocs(query(collection(db,'users'), where('uid','==',uid)));
+      snap.forEach(d=>{
+        const data = d.data() || {};
+        candidates.push({id:d.id, ...data, usernameKey: normalizeUsername(data.usernameKey || data.username || data.name || d.id)});
+      });
+    }catch(e){ console.warn('AZOBSS user lookup by uid skipped:', e?.code || e?.message || e); }
+  }
+  if(!candidates.length && email){
+    try{
+      const mapSnap = await getDocs(query(collection(db,'usernameAuthEmails'), where('email','==',email)));
+      for(const d of mapSnap.docs){
+        const key = normalizeUsername(d.id);
+        if(!key) continue;
+        try{
+          const userSnap = await getDoc(doc(db,'users',key));
+          if(userSnap.exists()){
+            const data = userSnap.data() || {};
+            candidates.push({id:key, ...data, usernameKey: normalizeUsername(data.usernameKey || data.username || data.name || key)});
+          }
+        }catch(e){}
+      }
+    }catch(e){ console.warn('AZOBSS usernameAuthEmails lookup skipped:', e?.code || e?.message || e); }
+  }
+  if(!candidates.length) return null;
+  candidates.sort((a,b)=>{
+    const aId = normalizeUsername(a.id || a.usernameKey || a.username || '');
+    const bId = normalizeUsername(b.id || b.usernameKey || b.username || '');
+    const score = (r,id)=>{
+      let s = 0;
+      if(id && id !== emailLocalKey) s += 20;
+      if(id && normalizeUsername(r.usernameKey || r.username || '') === id) s += 10;
+      if(r.email || r.authEmail) s += 2;
+      if(r.phone) s += 1;
+      return s;
+    };
+    return score(b,bId) - score(a,aId);
+  });
+  return candidates[0];
+}
+
 async function ensureUserProfile(firebaseUser, fallback={}){
-  const usernameKey = fallback.usernameKey || normalizeUsername(firebaseUser.email?.split('@')[0] || 'user');
+  const explicitUsernameKey = normalizeUsername(fallback.usernameKey || fallback.username || fallback.name || '');
+  const saved = getSavedUser?.() || {};
+  const savedUsernameKey = String(saved.uid || '') === String(firebaseUser?.uid || '') ? normalizeUsername(saved.usernameKey || saved.username || saved.name || '') : '';
+  const usernameKey = explicitUsernameKey || savedUsernameKey;
+
+  // Important: never create a Firestore username from Gmail prefix (example zedann.0002@gmail.com -> zedann0002).
+  // That was the source of duplicate users. If no real username is supplied, locate the existing profile by uid/email mapping instead.
+  if(!usernameKey){
+    const existingByUid = await findExistingUserProfileForAuth(firebaseUser);
+    if(existingByUid) return { uid: firebaseUser.uid, ...existingByUid };
+    return {
+      uid: firebaseUser.uid,
+      usernameKey:'',
+      email: firebaseUser.email || '',
+      authEmail: firebaseUser.email || '',
+      verified: !!firebaseUser.emailVerified,
+      emailVerified: !!firebaseUser.emailVerified,
+      _profileMissing: true
+    };
+  }
+
   const ref = doc(db, 'users', usernameKey);
   const snap = await getDoc(ref);
-  if(snap.exists()) return { uid: firebaseUser.uid, ...snap.data() };
+  if(snap.exists()) return { uid: firebaseUser.uid, id: usernameKey, ...snap.data(), usernameKey: normalizeUsername(snap.data().usernameKey || snap.data().username || usernameKey) };
   const fallbackMemberCode = normalizePaMemberCode(fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
-  const profile={uid:firebaseUser.uid,usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:normalizeAzobssPhone(fallback.phone||''),inviteCode:buildInviteCode(usernameKey),invitedByCode:fallbackMemberCode,memberCode:fallbackMemberCode,paMemberCode:fallbackMemberCode,role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   try{
     await setDoc(ref,profile,{merge:true});
+    if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,updatedAt:serverTimestamp()},{merge:true});
   }catch(profileWriteError){
     console.warn('AZOBSS ensureUserProfile write skipped:', profileWriteError?.code || profileWriteError?.message || profileWriteError);
   }
@@ -1176,15 +1244,50 @@ function recordDisplayName(record){
 function userDocId(user){
   return String(user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
 }
+function dedupeRegisteredUsers(users){
+  const best = new Map();
+  const scoreUser = (u)=>{
+    const id = normalizeUsername(u?.id || u?.usernameKey || u?.username || u?.name || '');
+    const email = String(u?.email || u?.authEmail || '').toLowerCase();
+    const emailLocalKey = normalizeUsername(email ? email.split('@')[0] : '');
+    let s = 0;
+    if(id && id !== emailLocalKey) s += 100;
+    if(id && normalizeUsername(u?.usernameKey || u?.username || u?.name || '') === id) s += 50;
+    if(u?.phone) s += 5;
+    if(u?.email || u?.authEmail) s += 3;
+    s += Number(firestoreMs(u?.createdAt) || u?.createdAtMs || 0) / 10000000000000;
+    return s;
+  };
+  (users || []).forEach(u=>{
+    const key = String(u?.uid || u?.email || u?.authEmail || userDocId(u) || '').trim().toLowerCase();
+    if(!key) return;
+    const prev = best.get(key);
+    if(!prev || scoreUser(u) > scoreUser(prev)) best.set(key,u);
+  });
+  return Array.from(best.values());
+}
 function userCanonicalKey(user){
-  return normalizeUsername(user?.usernameKey || user?.name || user?.displayName || user?.id || (user?.email ? String(user.email).split('@')[0] : ''));
+  return String(user?.uid || user?.email || user?.authEmail || user?.contactEmail || user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
 }
 function mergeDuplicateUserRecords(existing, incoming){
   if(!existing) return incoming;
+  const pickScore = (u)=>{
+    const id = normalizeUsername(u?.id || u?.usernameKey || u?.username || u?.name || '');
+    const email = String(u?.email || u?.authEmail || '').toLowerCase();
+    const emailLocalKey = normalizeUsername(email ? email.split('@')[0] : '');
+    let s = 0;
+    if(id && id !== emailLocalKey) s += 100;
+    if(id && normalizeUsername(u?.usernameKey || u?.username || u?.name || '') === id) s += 50;
+    if(u?.phone) s += 5;
+    if(u?.email || u?.authEmail) s += 3;
+    return s;
+  };
   const existingMs = getFirestoreMs(existing.updatedAt || existing.createdAt || existing.createdAtClient || existing.updatedAtClient);
   const incomingMs = getFirestoreMs(incoming.updatedAt || incoming.createdAt || incoming.createdAtClient || incoming.updatedAtClient);
   const base = incomingMs >= existingMs ? { ...existing, ...incoming } : { ...incoming, ...existing };
-  base.id = userCanonicalKey(base) || base.id || existing.id || incoming.id;
+  const preferred = pickScore(incoming) >= pickScore(existing) ? incoming : existing;
+  base.id = normalizeUsername(preferred.id || preferred.usernameKey || preferred.username || preferred.name || base.id || '');
+  base.usernameKey = normalizeUsername(preferred.usernameKey || preferred.username || preferred.name || preferred.id || base.usernameKey || '');
   return base;
 }
 function userProfileHtml(user){
@@ -1637,14 +1740,15 @@ async function renderFirebaseAdminRecords(){
   }
 
   try{
-    const userMap = new Map();
+    const rawUsers = [];
     const userSnap = await getDocs(collection(db, 'users'));
-    userSnap.forEach(d=>{
-      const item = { id:d.id, ...d.data() };
-      const key = userCanonicalKey(item) || String(d.id || '').toLowerCase();
+    userSnap.forEach(d=>rawUsers.push({ id:d.id, ...d.data() }));
+    const userMap = new Map();
+    rawUsers.forEach(item=>{
+      const key = userCanonicalKey(item) || String(item.id || '').toLowerCase();
       userMap.set(key, mergeDuplicateUserRecords(userMap.get(key), item));
     });
-    const users = Array.from(userMap.values());
+    const users = dedupeRegisteredUsers(Array.from(userMap.values()));
     users.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
     azobssLastRegisteredUsers = users;
     updateRegisteredUserStats(users);
@@ -2661,13 +2765,15 @@ function bindAuth() {
         return;
       }
       const profile=await ensureUserProfile(freshUser);
-      const usernameKey = normalizeUsername(profile.usernameKey || freshUser.email?.split('@')[0] || 'user');
+      const usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
       try{
-        await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+        if(usernameKey && !profile._profileMissing){
+          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null}, {merge:true});
+        }
       }catch(stateProfileUpdateError){
         console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
       }
-      const fullUser={uid:freshUser.uid,...profile,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
+      const fullUser={uid:freshUser.uid,...profile,usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
     }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
