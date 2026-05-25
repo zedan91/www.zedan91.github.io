@@ -1091,6 +1091,25 @@ padding:14px !important;
 }
 </style>
 
+
+<style>
+.software-card-admin-actions{
+display:flex;
+gap:6px;
+justify-content:flex-end;
+margin-top:8px;
+}
+.software-card-edit-btn,
+.software-card-delete-btn{
+width:30px !important;
+height:30px !important;
+padding:0 !important;
+font-size:14px !important;
+border-radius:8px !important;
+min-width:30px !important;
+overflow:hidden !important;
+}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1683,7 +1702,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const meta = [item.category, item.productId, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
-    const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}">Edit Details</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}">Delete</button></div>` : '';
+    const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title='Delete'>🗑️</button></div>` : '';
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
@@ -1756,7 +1775,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       const id = staticProductId(card);
       card.querySelectorAll('[data-software-static-edit-wrap]').forEach(el => el.remove());
       if(admin){
-        card.insertAdjacentHTML('beforeend', `<div class="software-card-admin-actions" data-software-static-edit-wrap="1"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(id)}">Edit Details</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(id)}">Delete</button></div>`);
+        card.insertAdjacentHTML('beforeend', `<div class="software-card-admin-actions" data-software-static-edit-wrap="1"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(id)}" title='Delete'>🗑️</button></div>`);
       }
     });
   }
