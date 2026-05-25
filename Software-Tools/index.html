@@ -1601,6 +1601,39 @@ grid-template-columns:repeat(2,1fr)!important;
   let pendingSoftwareImportItems = [];
 
   function clean(v){ return String(v || '').trim().toLowerCase(); }
+
+  function normalizeSoftwareCategory(v){
+    return String(v || '')
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, '');
+  }
+
+  function softwareCategoryMatches(value, selected){
+    const s = normalizeSoftwareCategory(selected);
+    if(!s || s === 'all' || s === 'allcategories') return true;
+    const v = normalizeSoftwareCategory(value || 'General Tools');
+    if(v === s) return true;
+    if(v + 's' === s || v === s + 's') return true;
+    const aliases = {
+      systemutility: 'systemutilities',
+      utility: 'systemutilities',
+      utilities: 'systemutilities',
+      videotool: 'videodownloaders',
+      videodownloader: 'videodownloaders',
+      downloader: 'videodownloaders',
+      remote: 'remotetools',
+      remoteutility: 'remotetools',
+      officetool: 'officetools',
+      mediatool: 'mediatools',
+      generaltool: 'generaltools',
+      datatool: 'datarecovery',
+      backuprecovery: 'backupandrecovery'
+    };
+    return (aliases[v] || v) === (aliases[s] || s);
+  }
   
   const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
   function azExtractMyrAmount(price){
@@ -1671,6 +1704,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
       category: item.category || item.softwareCategory || 'Tools',
       productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
+      replacesProductId: item.replacesProductId || item.oldProductId || '',
       status: item.status || 'active',
       version: item.version || '',
       fileSize: item.fileSize || '',
@@ -1851,7 +1885,12 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     });
   }
   function getOverrideProductIds(){
-    return new Set(softwareDynamicItems.map(item => String(item.productId || item.id)).filter(Boolean));
+    const ids = [];
+    softwareDynamicItems.forEach(item => {
+      if(item.productId || item.id) ids.push(String(item.productId || item.id));
+      if(item.replacesProductId) ids.push(String(item.replacesProductId));
+    });
+    return new Set(ids.filter(Boolean));
   }
   function syncStaticAdminButtons(){
     const admin = isAdmin();
@@ -1882,14 +1921,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const cardPlatformOk = card => selectedSoftwarePlatform === 'all' || String(card.dataset.platforms || 'Windows').split('|').some(p => clean(p) === clean(selectedSoftwarePlatform));
 
     if(selectedSoftwareCategory !== 'all'){
-      dynamic = dynamic.filter(item => clean(item.category || 'General Tools') === clean(selectedSoftwareCategory));
+      dynamic = dynamic.filter(item => softwareCategoryMatches(item.category || item.softwareCategory || 'General Tools', selectedSoftwareCategory));
     }
     if(selectedSoftwarePlatform !== 'all'){
       dynamic = dynamic.filter(item => (item.platforms || ['Windows']).some(p => clean(p) === clean(selectedSoftwarePlatform)));
     }
     staticCards.forEach(card => {
       const isOverridden = overriddenIds.has(String(staticProductId(card)));
-      const categoryOk = selectedSoftwareCategory === 'all' || clean(card.dataset.category || 'General Tools') === clean(selectedSoftwareCategory);
+      const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
       card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card)) ? '' : 'none';
     });
     if(keyword){
@@ -1897,7 +1936,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       staticCards.forEach(card => {
         const isOverridden = overriddenIds.has(String(staticProductId(card)));
         const text = clean(card.dataset.search || card.textContent || '');
-        const categoryOk = selectedSoftwareCategory === 'all' || clean(card.dataset.category || 'General Tools') === clean(selectedSoftwareCategory);
+        const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
         card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card) && text.includes(keyword)) ? '' : 'none';
       });
     }
@@ -2161,18 +2200,43 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       secureDownloadLink: secureDownloadInput?.value.trim(),
       link: (typeSelect.value === 'premium' ? (paymentLinkInput?.value.trim() || stripeLinkInput?.value.trim()) : downloadLinkInput?.value.trim())
     });
+    const oldEditProductId = editingSoftwareProductId ? String(editingSoftwareProductId) : '';
     try{
       if(editingSoftwareDocId){
         await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), {...item, updatedAt: serverTimestamp(), updatedBy: 'zedan91'});
+      }else if(oldEditProductId){
+        const existingDynamic = softwareDynamicItems.find(x => String(x.productId || x.id) === oldEditProductId);
+        if(existingDynamic?.docId){
+          await updateDoc(doc(db, SOFTWARE_COLLECTION, existingDynamic.docId), {...item, updatedAt: serverTimestamp(), updatedBy: 'zedan91'});
+        }else{
+          await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91', replacesProductId: oldEditProductId});
+        }
+        const deleted = getDeletedStaticIds();
+        deleted.add(oldEditProductId);
+        if(String(item.productId || item.id) !== oldEditProductId) deleted.add(String(item.productId || item.id));
+        saveDeletedStaticIds(deleted);
+        getStaticCards().forEach(card => {
+          const sid = String(staticProductId(card));
+          if(sid === oldEditProductId || sid === String(item.productId || item.id)) card.remove();
+        });
       }else{
         await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91'});
       }
     }catch(err){
       const saved = loadLocal();
       const key = editingSoftwareProductId || item.productId || item.id;
-      const idx = saved.findIndex(x => String(x.productId || x.id) === String(key));
-      if(idx >= 0) saved[idx] = {...saved[idx], ...item, productId:key, id:key};
-      else saved.unshift(item);
+      const finalKey = item.productId || item.id || key;
+      const idx = saved.findIndex(x => String(x.productId || x.id) === String(key) || String(x.productId || x.id) === String(finalKey));
+      if(idx >= 0) saved[idx] = {...saved[idx], ...item, productId:finalKey, id:finalKey};
+      else saved.unshift({...item, productId:finalKey, id:finalKey});
+      if(editingSoftwareProductId){
+        const deleted = getDeletedStaticIds();
+        deleted.add(String(editingSoftwareProductId));
+        saveDeletedStaticIds(deleted);
+        getStaticCards().forEach(card => {
+          if(String(staticProductId(card)) === String(editingSoftwareProductId)) card.remove();
+        });
+      }
       localStorage.setItem(LOCAL_KEY, JSON.stringify(saved));
       alert(editingSoftwareProductId ? 'Firestore edit failed. Item updated in local fallback only.' : 'Firestore rules belum allow softwareTools. Item disimpan local sementara. Tambah rules softwareTools untuk sync semua device.');
     }
