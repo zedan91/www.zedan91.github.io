@@ -4307,3 +4307,117 @@ body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
 
 /* v29 clean fixes */
 .service-card::before,.service-card::after,.home-service-card::before,.home-service-card::after,.category-card::before,.category-card::after{animation:none!important;filter:none!important;box-shadow:none!important;}
+
+
+/* AZOBSS FINAL REAL FIX - Software page compact equal cards */
+#softwareGrid,
+.software-grid,
+.download-grid{
+  align-items:stretch !important;
+}
+
+#softwareGrid .software-card,
+#softwareGrid .download-card,
+.software-grid .software-card,
+.software-grid .download-card{
+  height:420px !important;
+  min-height:420px !important;
+  max-height:420px !important;
+  padding:28px 28px 20px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  text-align:center !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+
+#softwareGrid .software-card h3,
+#softwareGrid .download-card h3,
+#softwareGrid .software-card .software-title,
+#softwareGrid .download-card .software-title,
+.software-grid .software-card h3,
+.software-grid .download-card h3{
+  width:100% !important;
+  height:62px !important;
+  min-height:62px !important;
+  max-height:62px !important;
+  margin:14px auto 8px !important;
+  padding:0 8px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.12 !important;
+  font-size:21px !important;
+  font-weight:900 !important;
+  white-space:normal !important;
+  overflow:hidden !important;
+  text-wrap:balance !important;
+}
+
+#softwareGrid .software-card .software-meta,
+#softwareGrid .download-card .software-meta,
+.software-grid .software-card .software-meta,
+.software-grid .download-card .software-meta{
+  width:100% !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  margin:0 auto 12px !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  align-content:flex-start !important;
+  justify-content:center !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+  overflow:hidden !important;
+}
+
+#softwareGrid .software-card p,
+#softwareGrid .download-card p,
+.software-grid .software-card p,
+.software-grid .download-card p{
+  width:100% !important;
+  max-width:245px !important;
+  height:88px !important;
+  min-height:88px !important;
+  max-height:88px !important;
+  margin:0 auto 12px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.35 !important;
+  overflow:hidden !important;
+}
+
+#softwareGrid .software-card .download-btn,
+#softwareGrid .download-card .download-btn,
+.software-grid .software-card .download-btn,
+.software-grid .download-card .download-btn{
+  margin-top:auto !important;
+  align-self:center !important;
+}
+
+#softwareGrid .software-card:hover,
+#softwareGrid .download-card:hover,
+.software-grid .software-card:hover,
+.software-grid .download-card:hover{
+  height:420px !important;
+  min-height:420px !important;
+  max-height:420px !important;
+  transform:translateY(-2px) !important;
+}
+
+@media(max-width:768px){
+  #softwareGrid .software-card,
+  #softwareGrid .download-card,
+  .software-grid .software-card,
+  .software-grid .download-card{
+    height:auto !important;
+    min-height:360px !important;
+    max-height:none !important;
+  }
+}
