@@ -3271,96 +3271,151 @@ all.appendChild(wrap);
 </script>
 
 
-<style>
-.software-stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0 10px!important;width:100%;}
-.software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155;color:#e5e7eb;font-weight:800;line-height:1.2;}
-.software-stats .stat-download{border-color:rgba(34,197,94,.45);}
-.software-stats .stat-rating{border-color:rgba(250,204,21,.45);}
-.software-stats .stat-rating{display:inline-flex;align-items:center;gap:4px;}
-.software-rating-stars{display:inline-flex;gap:1px;vertical-align:middle;}
-.software-rating-star{appearance:none;border:0;background:transparent;color:#64748b;font-size:13px;line-height:1;cursor:pointer;padding:0 1px;filter:drop-shadow(0 0 4px rgba(250,204,21,.15));}
-.software-rating-star.is-filled,.software-rating-star:hover,.software-rating-star:hover ~ .software-rating-star{color:#facc15;}
-.software-rating-stars:hover .software-rating-star{color:#facc15;}
-.software-rating-star:hover ~ .software-rating-star{color:#64748b;}
-.software-rating-count{opacity:.72;font-size:10px;margin-left:2px;}
-.software-stats .stat-like{border-color:rgba(244,63,94,.45);}
-</style>
-<script>
-(function(){
-  const KEY='azobss_software_manual_stats_v2';
-  const SEEN_KEY='azobss_software_view_seen_v1';
-  function read(key, fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
-  function write(key, value){try{localStorage.setItem(key, JSON.stringify(value));}catch(e){}}
-  function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
-  function cardKey(card){
-    if(!card.dataset.productId){
-      const title=card.querySelector('h3')?.textContent?.trim()||card.dataset.name||'Software Item';
-      card.dataset.productId='AZSW-'+String(title).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-    }
-    return slug(card.dataset.productId||card.dataset.name||card.querySelector('h3')?.textContent);
-  }
-  function zeroStats(){return {downloads:0,rating:0,likes:0};}
-  function getStats(card){
-    const all=read(KEY,{});
-    const key=cardKey(card);
-    const base=all[key]||{};
-    const st={
-      views:Number(base.views ?? card.dataset.views ?? 0)||0,
-      downloads:Number(base.downloads ?? card.dataset.downloads ?? 0)||0,
-      rating:Number(base.rating ?? card.dataset.rating ?? 0)||0,
-      likes:Number(base.likes ?? card.dataset.likes ?? 0)||0
-    };
-    st.views=Math.max(0,Math.round(st.views));
-    st.downloads=Math.max(0,Math.round(st.downloads));
-    st.rating=Math.max(0,Math.min(5,Number(st.rating.toFixed?st.rating.toFixed(1):st.rating)));
-    st.likes=Math.max(0,Math.round(st.likes));
-    all[key]=st; write(KEY,all);
-    return st;
-  }
-  function saveStats(card, st){
-    const all=read(KEY,{}); const key=cardKey(card);
-    all[key]={views:0,downloads:Math.max(0,Math.round(Number(st.downloads)||0)),rating:Math.max(0,Math.min(5,Number(st.rating)||0)),likes:Math.max(0,Math.round(Number(st.likes)||0))};
-    write(KEY,all);
-    card.dataset.views=String(all[key].views); card.dataset.downloads=String(all[key].downloads); card.dataset.rating=String(all[key].rating); card.dataset.likes=String(all[key].likes);
-    updateStatsUI(card);
-  }
-  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
-  function ensureStatsUI(card){
-    let box=card.querySelector('.software-stats');
-    if(!box){
-      box=document.createElement('div'); box.className='software-stats';
-      const p=card.querySelector('p');
-      if(p) p.insertAdjacentElement('beforebegin',box); else card.appendChild(box);
-    }
-    return box;
-  }
-  function updateStatsUI(card){
-    const st=getStats(card);
-    const box=ensureStatsUI(card);
-    box.innerHTML=`<span class="stat-download">⬇ ${fmt(st.downloads)}</span><span class="stat-rating">⭐ ${Number(st.rating||0).toFixed(1)}</span><span class="stat-like">❤️ ${fmt(st.likes)}</span>`;
-  }
-  function initCards(){document.querySelectorAll('.download-card').forEach(updateStatsUI);}
-  function markViewed(card){ return; }
-  function initViewObserver(){ return; }
-  document.addEventListener('click',function(e){
-    const btn=e.target.closest('.download-card .download-btn'); if(!btn) return;
-    const card=btn.closest('.download-card'); if(!card) return;
-    const st=getStats(card); st.downloads+=1; saveStats(card,st);
-  },true);
-  document.addEventListener('DOMContentLoaded',function(){
-    initCards();
-    const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid');
-    if(grid){new MutationObserver(function(){initCards();}).observe(grid,{childList:true,subtree:false});}
-  });
-})();
-</script>
+<style id="azobss-final-software-stats-style">
+/* AZOBSS final marketplace-style stats bar */
+#softwareGrid .download-card,
+.downloads-grid .download-card{
+  position:relative !important;
+  overflow:hidden !important;
+  padding-bottom:64px !important;
+}
 
-<script id="azobss-software-backend-stats-sync">
+#softwareGrid .download-card .download-btn,
+#softwareGrid .download-card a.download-btn,
+.downloads-grid .download-card .download-btn,
+.downloads-grid .download-card a.download-btn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  width:calc(100% - 52px) !important;
+  max-width:260px !important;
+  height:46px !important;
+  border-radius:10px !important;
+  font-weight:900 !important;
+}
+#softwareGrid .download-card .download-btn::before,
+#softwareGrid .download-card a.download-btn::before,
+.downloads-grid .download-card .download-btn::before,
+.downloads-grid .download-card a.download-btn::before{
+  content:"⬇";
+  font-size:20px;
+  line-height:1;
+  transform:translateY(-1px);
+}
+
+.software-stats{
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  width:100% !important;
+  height:52px !important;
+  display:grid !important;
+  grid-template-columns:1fr 1.25fr 1fr !important;
+  gap:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  background:rgba(2,12,24,.72) !important;
+  border-top:1px solid rgba(20,184,166,.32) !important;
+  border-radius:0 0 18px 18px !important;
+  overflow:visible !important;
+  z-index:5 !important;
+  box-sizing:border-box !important;
+}
+.software-stats .stat-cell{
+  min-width:0 !important;
+  height:52px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  padding:0 8px !important;
+  border-right:1px solid rgba(148,163,184,.18) !important;
+  color:#e5e7eb !important;
+  font-size:14px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  box-sizing:border-box !important;
+}
+.software-stats .stat-cell:last-child{border-right:0 !important;}
+.software-stats .stat-ico{font-size:21px !important;line-height:1 !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;}
+.software-stats .stat-download .stat-ico{color:#22c55e !important;text-shadow:0 0 10px rgba(34,197,94,.35) !important;}
+.software-stats .stat-rating .stat-ico{color:#facc15 !important;text-shadow:0 0 10px rgba(250,204,21,.30) !important;}
+.software-stats .stat-like .stat-ico{color:#fb3f4c !important;text-shadow:0 0 10px rgba(251,63,76,.28) !important;}
+.software-stats .rating-votes{opacity:.78 !important;font-size:12px !important;margin-left:2px !important;}
+.software-stats .stat-rating{position:relative !important;overflow:visible !important;}
+.software-rating-trigger{
+  appearance:none !important;
+  border:0 !important;
+  background:transparent !important;
+  color:inherit !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:7px !important;
+  padding:0 !important;
+  margin:0 !important;
+  font:inherit !important;
+  cursor:pointer !important;
+}
+.software-rating-trigger:hover .stat-ico{transform:scale(1.12) !important;}
+.software-rating-popover{
+  position:absolute !important;
+  left:50% !important;
+  bottom:44px !important;
+  transform:translateX(-50%) translateY(6px) !important;
+  display:flex !important;
+  gap:2px !important;
+  padding:8px 10px !important;
+  border-radius:999px !important;
+  background:rgba(2,8,23,.96) !important;
+  border:1px solid rgba(250,204,21,.55) !important;
+  box-shadow:0 14px 36px rgba(0,0,0,.42),0 0 24px rgba(250,204,21,.12) !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  transition:opacity .15s ease,transform .15s ease !important;
+  z-index:50 !important;
+}
+.stat-rating.is-open .software-rating-popover,
+.stat-rating:hover .software-rating-popover{
+  opacity:1 !important;
+  pointer-events:auto !important;
+  transform:translateX(-50%) translateY(0) !important;
+}
+.software-rating-star{
+  appearance:none !important;
+  border:0 !important;
+  background:transparent !important;
+  color:#64748b !important;
+  font-size:20px !important;
+  line-height:1 !important;
+  cursor:pointer !important;
+  padding:2px !important;
+}
+.software-rating-star:hover,
+.software-rating-star.is-filled,
+.software-rating-star:hover ~ .software-rating-star{color:#facc15 !important;}
+.software-rating-popover:hover .software-rating-star{color:#facc15 !important;}
+.software-rating-popover .software-rating-star:hover ~ .software-rating-star{color:#64748b !important;}
+
+@media(max-width:640px){
+  .software-stats{height:48px !important;}
+  .software-stats .stat-cell{height:48px !important;font-size:12px !important;gap:5px !important;padding:0 5px !important;}
+  .software-stats .stat-ico{font-size:17px !important;}
+  .software-stats .rating-votes{font-size:10px !important;}
+}
+</style>
+
+<script id="azobss-final-software-backend-stats">
 (function(){
+  'use strict';
   const API_BASE=(localStorage.getItem('azobssPremiumBackendUrl')||localStorage.getItem('azobssSoftwareStatsBackendUrl')||'https://azobss-backend.onrender.com').replace(/\/$/,'');
   const LOCAL_KEY='azobss_software_manual_stats_v2';
-  function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
-  function cardProductId(card){
+
+  function cleanId(v){return String(v||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
+  function makeProductId(card){
     if(!card) return 'software-item';
     if(!card.dataset.productId){
       const title=card.querySelector('h3')?.textContent?.trim()||card.dataset.name||'Software Item';
@@ -3368,6 +3423,8 @@ all.appendChild(wrap);
     }
     return card.dataset.productId||card.dataset.name||card.querySelector('h3')?.textContent||'software-item';
   }
+  function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}')||{};}catch(e){return{};}}
+  function writeLocal(v){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(v||{}));}catch(e){}}
   function norm(raw){
     raw=raw||{};
     const ratings={'1':0,'2':0,'3':0,'4':0,'5':0};
@@ -3379,75 +3436,108 @@ all.appendChild(wrap);
       const oldAvg=oldVotes?oldTotal/oldVotes:Math.max(0,Math.min(5,Number(raw.ratingAverage??raw.rating??0)||0));
       if(oldVotes>0&&oldAvg>0){ratings[String(Math.max(1,Math.min(5,Math.round(oldAvg))))]=oldVotes;}
     }
-    const votes=ratings['1']+ratings['2']+ratings['3']+ratings['4']+ratings['5'];
-    const total=(1*ratings['1'])+(2*ratings['2'])+(3*ratings['3'])+(4*ratings['4'])+(5*ratings['5']);
-    const avg=votes?Math.round((total/votes)*10)/10:0;
-    return {downloads:Math.max(0,Math.round(Number(raw.downloads||0))),likes:Math.max(0,Math.round(Number(raw.likes||0))),ratings,rating:avg,ratingVotes:votes,ratingTotal:total};
+    const ratingVotes=ratings['1']+ratings['2']+ratings['3']+ratings['4']+ratings['5'];
+    const ratingTotal=(1*ratings['1'])+(2*ratings['2'])+(3*ratings['3'])+(4*ratings['4'])+(5*ratings['5']);
+    const ratingAverage=ratingVotes?Math.round((ratingTotal/ratingVotes)*10)/10:0;
+    return {
+      views:0,
+      downloads:Math.max(0,Math.round(Number(raw.downloads||0))),
+      likes:Math.max(0,Math.round(Number(raw.likes||0))),
+      ratings,
+      ratingTotal,
+      ratingVotes,
+      rating:ratingAverage,
+      ratingAverage
+    };
   }
-  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
-  function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}')||{};}catch(e){return{};}}
-  function writeLocal(v){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(v||{}));}catch(e){}}
-  function mergeBackendStats(stats){
+  function fmt(n){
+    n=Number(n)||0;
+    if(n>=1000000) return (n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';
+    if(n>=1000) return (n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';
+    return String(Math.round(n));
+  }
+  function getCardStats(card){
     const local=readLocal();
-    Object.entries(stats||{}).forEach(([key,val])=>{
-      const n=norm(val);
-      local[slug(key)]={views:0,downloads:n.downloads,likes:n.likes,ratings:n.ratings,rating:n.rating,ratingVotes:n.ratingVotes,ratingTotal:n.ratingTotal};
-    });
-    writeLocal(local);
-    renderAllStats();
-    if(typeof window.applySoftwareFilters==='function') window.applySoftwareFilters();
-  }
-  async function fetchStats(){
-    try{
-      const res=await fetch(API_BASE+'/api/software-stats',{cache:'no-store'});
-      const data=await res.json();
-      if(data&&data.ok) mergeBackendStats(data.stats||{});
-    }catch(err){console.warn('AZOBSS software stats backend not reachable:',err);}
-  }
-  function getLocalCardStats(card){
-    const local=readLocal();
-    const key=slug(cardProductId(card));
+    const key=cleanId(makeProductId(card));
     const n=norm(local[key]||{downloads:card.dataset.downloads,likes:card.dataset.likes,rating:card.dataset.rating});
     card.dataset.views='0';
     card.dataset.downloads=String(n.downloads);
     card.dataset.likes=String(n.likes);
-    card.dataset.rating=String(n.rating);
+    card.dataset.rating=String(n.ratingAverage);
     return n;
   }
-  function ensureBox(card){
+  function saveOne(productId, stats){
+    const local=readLocal();
+    local[cleanId(productId)]=norm(stats);
+    writeLocal(local);
+  }
+  function mergeStats(stats){
+    const local=readLocal();
+    Object.entries(stats||{}).forEach(([key,val])=>{local[cleanId(key)]=norm(val);});
+    writeLocal(local);
+    renderAll();
+    if(typeof window.applySoftwareFilters==='function') window.applySoftwareFilters();
+  }
+  function ensureStats(card){
     let box=card.querySelector('.software-stats');
     if(!box){
       box=document.createElement('div');
       box.className='software-stats';
-      const p=card.querySelector('p');
-      if(p) p.insertAdjacentElement('beforebegin',box); else card.appendChild(box);
+      card.appendChild(box);
     }
     return box;
   }
-  function ratingHtml(card, st){
-    const productId=cardProductId(card);
-    const avg=Number(st.rating||0);
+  function starButtons(productId, filled){
+    let html='';
+    for(let i=1;i<=5;i++){
+      html+=`<button class="software-rating-star ${i<=filled?'is-filled':''}" type="button" data-rating-value="${i}" data-product-id="${String(productId).replace(/"/g,'&quot;')}" title="Rate ${i} star${i>1?'s':''}">★</button>`;
+    }
+    return html;
+  }
+  function renderCard(card){
+    if(!card || !card.classList.contains('download-card')) return;
+    const productId=makeProductId(card);
+    const st=getCardStats(card);
+    const avg=Number(st.ratingAverage||0);
     const votes=Math.max(0,Math.round(Number(st.ratingVotes||0)));
     const filled=Math.round(avg);
-    let stars='<span class="software-rating-stars" role="group" aria-label="Rate this software">';
-    for(let i=1;i<=5;i++){
-      stars+=`<button class="software-rating-star ${i<=filled?'is-filled':''}" type="button" data-rating-value="${i}" data-product-id="${productId}" title="Rate ${i} star${i>1?'s':''}">★</button>`;
-    }
-    stars+='</span>';
-    return `${stars} <strong>${avg.toFixed(1)}</strong><span class="software-rating-count">(${votes})</span>`;
+    const box=ensureStats(card);
+    box.innerHTML=`
+      <span class="stat-cell stat-download" title="Downloads"><span class="stat-ico">⬇</span><span class="stat-num">${fmt(st.downloads)}</span></span>
+      <span class="stat-cell stat-rating" title="Click to rate">
+        <button class="software-rating-trigger" type="button" aria-label="Rate this software">
+          <span class="stat-ico">★</span><span class="stat-num">${avg.toFixed(1)}</span><span class="rating-votes">(${votes})</span>
+        </button>
+        <span class="software-rating-popover" aria-label="Choose rating">${starButtons(productId,filled)}</span>
+      </span>
+      <span class="stat-cell stat-like" title="Likes"><span class="stat-ico">♥</span><span class="stat-num">${fmt(st.likes)}</span></span>`;
   }
-  function renderCardStats(card){
-    const st=getLocalCardStats(card);
-    ensureBox(card).innerHTML=`<span class="stat-download">⬇ ${fmt(st.downloads)}</span><span class="stat-rating">${ratingHtml(card,st)}</span><span class="stat-like">❤️ ${fmt(st.likes)}</span>`;
+  function renderAll(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card,.download-card').forEach(renderCard);}
+  async function fetchStats(){
+    try{
+      const res=await fetch(API_BASE+'/api/software-stats',{cache:'no-store'});
+      const data=await res.json();
+      if(data&&data.ok) mergeStats(data.stats||{});
+    }catch(err){console.warn('AZOBSS software stats backend not reachable:',err);}
   }
-  function renderAllStats(){document.querySelectorAll('.download-card').forEach(renderCardStats);}
-  async function postStat(endpoint, payload){
+  async function postStat(endpoint,payload){
     const res=await fetch(API_BASE+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
-    const data=await res.json();
+    const data=await res.json().catch(()=>({}));
     if(!res.ok||!data.ok) throw new Error(data.error||'Stats update failed');
     return data;
   }
-  function ratedKey(productId){return 'azobss_rated_'+slug(productId);}
+  function ratedKey(productId){return 'azobss_rated_'+cleanId(productId);}
+
+  document.addEventListener('click',function(e){
+    const trigger=e.target.closest('.software-rating-trigger');
+    if(!trigger) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const cell=trigger.closest('.stat-rating');
+    document.querySelectorAll('.stat-rating.is-open').forEach(x=>{if(x!==cell)x.classList.remove('is-open');});
+    cell?.classList.toggle('is-open');
+  },true);
+
   document.addEventListener('click',async function(e){
     const star=e.target.closest('.software-rating-star');
     if(!star) return;
@@ -3455,48 +3545,56 @@ all.appendChild(wrap);
     e.stopPropagation();
     const card=star.closest('.download-card');
     if(!card) return;
-    const productId=cardProductId(card);
-    const rating=Math.max(1,Math.min(5,Number(star.dataset.ratingValue||0)));
+    const productId=makeProductId(card);
+    const rating=Math.max(1,Math.min(5,Math.round(Number(star.dataset.ratingValue||0))));
     if(!rating) return;
-    if(localStorage.getItem(ratedKey(productId))){
-      alert('You already rated this software on this browser.');
-      return;
-    }
-    star.closest('.software-rating-stars')?.querySelectorAll('button').forEach(b=>b.disabled=true);
+    if(localStorage.getItem(ratedKey(productId))){alert('You already rated this software on this browser.');return;}
+    star.closest('.software-rating-popover')?.querySelectorAll('button').forEach(b=>b.disabled=true);
     try{
       const data=await postStat('/api/software-stats/rate',{productId,rating,name:card.querySelector('h3')?.textContent?.trim()||''});
       localStorage.setItem(ratedKey(productId),String(rating));
-      mergeBackendStats({[data.productId||slug(productId)]:data.stats});
-    }catch(err){
-      alert('Rating failed. Please try again.');
-      renderCardStats(card);
-    }
+      saveOne(data.productId||productId,data.stats||{});
+      renderAll();
+    }catch(err){alert('Rating failed. Please try again.');renderCard(card);}
   },true);
+
   document.addEventListener('click',async function(e){
     const btn=e.target.closest('.download-card .download-btn');
     if(!btn) return;
     const card=btn.closest('.download-card');
     if(!card) return;
-    const productId=cardProductId(card);
+    const productId=makeProductId(card);
     try{
       const data=await postStat('/api/software-stats/download',{productId,name:card.querySelector('h3')?.textContent?.trim()||''});
-      mergeBackendStats({[data.productId||slug(productId)]:data.stats});
+      saveOne(data.productId||productId,data.stats||{});
+      renderAll();
     }catch(err){
-      const local=readLocal(); const key=slug(productId); const st=norm(local[key]||{}); st.downloads+=1; local[key]=st; writeLocal(local); renderCardStats(card);
+      const local=readLocal();
+      const key=cleanId(productId);
+      const st=norm(local[key]||{});
+      st.downloads+=1;
+      local[key]=st;
+      writeLocal(local);
+      renderCard(card);
     }
   },true);
+
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('.stat-rating')) document.querySelectorAll('.stat-rating.is-open').forEach(x=>x.classList.remove('is-open'));
+  });
+
   document.addEventListener('DOMContentLoaded',function(){
-    renderAllStats();
+    renderAll();
     fetchStats();
-    const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid');
-    if(grid){new MutationObserver(function(){renderAllStats(); fetchStats();}).observe(grid,{childList:true,subtree:false});}
+    const grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
+    if(grid){new MutationObserver(function(){renderAll();}).observe(grid,{childList:true,subtree:false});}
     const refresh=document.getElementById('softwareStatsRefreshButton');
     if(refresh){
       refresh.addEventListener('click',async function(){
         try{
-          const items=Array.from(document.querySelectorAll('.download-card')).map(card=>{const st=getLocalCardStats(card);return{productId:cardProductId(card),downloads:st.downloads,likes:st.likes,ratings:st.ratings,ratingAverage:st.rating,ratingVotes:st.ratingVotes||0,ratingTotal:st.ratingTotal||0};});
+          const items=Array.from(document.querySelectorAll('.download-card')).map(card=>{const st=getCardStats(card);return{productId:makeProductId(card),downloads:st.downloads,likes:st.likes,ratings:st.ratings};});
           const data=await postStat('/api/software-stats/admin-set',{items});
-          mergeBackendStats(data.stats||{});
+          mergeStats(data.stats||{});
         }catch(err){console.warn(err);}
       },true);
     }
