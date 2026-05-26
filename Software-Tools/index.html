@@ -1366,6 +1366,18 @@ grid-template-columns:repeat(2,1fr)!important;
 }
 
 </style>
+<style>
+
+/* Product ID is admin-only */
+.product-meta{
+  display:none !important;
+}
+body.azobss-admin-mode .product-meta,
+html.azobss-admin-mode .product-meta{
+  display:block !important;
+}
+
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2563,6 +2575,30 @@ document.addEventListener('DOMContentLoaded', function(){
   if(grid){
     new MutationObserver(fitSoftwareTitles).observe(grid,{childList:true,subtree:true});
   }
+})();
+</script>
+
+
+<script>
+(function(){
+  function azobssSyncAdminProductMeta(){
+    let isAdmin = false;
+    try{
+      const u = JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null') || {};
+      const email = String(u.email || u.authEmail || '').toLowerCase();
+      const username = String(u.username || u.usernameKey || '').toLowerCase();
+      isAdmin = email === 'zedan91@azobss.local' || username === 'zedan91' || u.role === 'admin' || u.isAdmin === true;
+    }catch(e){}
+    document.body.classList.toggle('azobss-admin-mode', !!isAdmin);
+    document.documentElement.classList.toggle('azobss-admin-mode', !!isAdmin);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', azobssSyncAdminProductMeta);
+  }else{
+    azobssSyncAdminProductMeta();
+  }
+  window.addEventListener('storage', azobssSyncAdminProductMeta);
+  setInterval(azobssSyncAdminProductMeta, 1500);
 })();
 </script>
 
