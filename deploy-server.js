@@ -12,12 +12,36 @@ const url = require("url");
 const SOFTWARE_STATS_FILE = path.join(__dirname, "backend", "data", "software-stats.json");
 function cleanSoftwareId(value) { return String(value || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "software-item"; }
 function normalizeSoftwareStats(raw = {}) {
-  const ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
-  const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || 0)));
   const downloads = Math.max(0, Math.round(Number(raw.downloads || 0)));
   const likes = Math.max(0, Math.round(Number(raw.likes || 0)));
-  const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
-  return { downloads, likes, ratingTotal, ratingVotes, ratingAverage };
+
+  const ratings = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+
+  if (raw.ratings && typeof raw.ratings === "object") {
+    for (let star = 1; star <= 5; star += 1) {
+      ratings[String(star)] = Math.max(0, Math.round(Number(raw.ratings[String(star)] || 0)));
+    }
+  } else {
+    // Backward compatibility for old stats format: ratingTotal + ratingVotes.
+    const oldVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
+    const oldTotal = Math.max(0, Number(raw.ratingTotal || 0));
+    const oldAvg = oldVotes ? oldTotal / oldVotes : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
+    if (oldVotes > 0 && oldAvg > 0) {
+      const bucket = String(Math.max(1, Math.min(5, Math.round(oldAvg))));
+      ratings[bucket] = oldVotes;
+    }
+  }
+
+  const ratingVotes = ratings["1"] + ratings["2"] + ratings["3"] + ratings["4"] + ratings["5"];
+  const ratingTotal =
+    (1 * ratings["1"]) +
+    (2 * ratings["2"]) +
+    (3 * ratings["3"]) +
+    (4 * ratings["4"]) +
+    (5 * ratings["5"]);
+  const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : 0;
+
+  return { downloads, likes, ratings, ratingTotal, ratingVotes, ratingAverage };
 }
 function readSoftwareStats() {
   try { if (!fs.existsSync(SOFTWARE_STATS_FILE)) return {}; return JSON.parse(fs.readFileSync(SOFTWARE_STATS_FILE, "utf8")); } catch { return {}; }
@@ -970,18 +994,17 @@ async function handler(req, res) {
 
     if (pathname === "/api/software-stats/rate" && req.method === "POST") {
       const body = JSON.parse((await readBody(req)) || "{}");
-      const rating = Math.max(1, Math.min(5, Number(body.rating || 0)));
-      if (!rating) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid rating" }), "application/json");
+      const rating = Math.round(Number(body.rating || 0));
+      if (rating < 1 || rating > 5) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid rating" }), "application/json");
       const key = cleanSoftwareId(body.productId || body.id || body.name);
       const stats = readSoftwareStats();
       const item = normalizeSoftwareStats(stats[key] || {});
-      item.ratingTotal = Math.max(0, Number(item.ratingTotal || 0)) + rating;
-      item.ratingVotes = Math.max(0, Number(item.ratingVotes || 0)) + 1;
-      item.ratingAverage = Math.round((item.ratingTotal / item.ratingVotes) * 10) / 10;
-      item.updatedAt = new Date().toISOString();
-      stats[key] = item;
+      item.ratings[String(rating)] = Math.max(0, Math.round(Number(item.ratings[String(rating)] || 0))) + 1;
+      const updated = normalizeSoftwareStats(item);
+      updated.updatedAt = new Date().toISOString();
+      stats[key] = updated;
       writeSoftwareStats(stats);
-      return send(res, 200, JSON.stringify({ ok: true, productId: key, stats: item }, null, 2), "application/json");
+      return send(res, 200, JSON.stringify({ ok: true, productId: key, stats: updated }, null, 2), "application/json");
     }
 
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST") {
@@ -990,10 +1013,14 @@ async function handler(req, res) {
       const items = Array.isArray(body.items) ? body.items : [];
       for (const raw of items) {
         const key = cleanSoftwareId(raw.productId || raw.id || raw.name);
-        const ratingAverage = Math.max(0, Math.min(5, Number(raw.ratingAverage ?? raw.rating ?? 0)));
-        const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
-        const ratingTotal = ratingVotes ? ratingAverage * ratingVotes : Number(raw.ratingTotal || 0);
-        stats[key] = normalizeSoftwareStats({ downloads: raw.downloads, likes: raw.likes, ratingAverage, ratingVotes, ratingTotal });
+        stats[key] = normalizeSoftwareStats({
+          downloads: raw.downloads,
+          likes: raw.likes,
+          ratings: raw.ratings,
+          ratingAverage: raw.ratingAverage ?? raw.rating,
+          ratingVotes: raw.ratingVotes ?? raw.votes,
+          ratingTotal: raw.ratingTotal
+        });
         stats[key].updatedAt = new Date().toISOString();
       }
       writeSoftwareStats(stats);

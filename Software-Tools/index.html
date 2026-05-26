@@ -3370,10 +3370,19 @@ all.appendChild(wrap);
   }
   function norm(raw){
     raw=raw||{};
-    const votes=Math.max(0,Math.round(Number(raw.ratingVotes||0)));
-    const total=Math.max(0,Number(raw.ratingTotal||0));
-    const avg=votes?Math.round((total/votes)*10)/10:Math.max(0,Math.min(5,Number(raw.ratingAverage??raw.rating??0)||0));
-    return {downloads:Math.max(0,Math.round(Number(raw.downloads||0))),likes:Math.max(0,Math.round(Number(raw.likes||0))),rating:avg,ratingVotes:votes,ratingTotal:total};
+    const ratings={'1':0,'2':0,'3':0,'4':0,'5':0};
+    if(raw.ratings&&typeof raw.ratings==='object'){
+      for(let i=1;i<=5;i++) ratings[String(i)]=Math.max(0,Math.round(Number(raw.ratings[String(i)]||0)));
+    }else{
+      const oldVotes=Math.max(0,Math.round(Number(raw.ratingVotes||raw.votes||0)));
+      const oldTotal=Math.max(0,Number(raw.ratingTotal||0));
+      const oldAvg=oldVotes?oldTotal/oldVotes:Math.max(0,Math.min(5,Number(raw.ratingAverage??raw.rating??0)||0));
+      if(oldVotes>0&&oldAvg>0){ratings[String(Math.max(1,Math.min(5,Math.round(oldAvg))))]=oldVotes;}
+    }
+    const votes=ratings['1']+ratings['2']+ratings['3']+ratings['4']+ratings['5'];
+    const total=(1*ratings['1'])+(2*ratings['2'])+(3*ratings['3'])+(4*ratings['4'])+(5*ratings['5']);
+    const avg=votes?Math.round((total/votes)*10)/10:0;
+    return {downloads:Math.max(0,Math.round(Number(raw.downloads||0))),likes:Math.max(0,Math.round(Number(raw.likes||0))),ratings,rating:avg,ratingVotes:votes,ratingTotal:total};
   }
   function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
   function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}')||{};}catch(e){return{};}}
@@ -3382,7 +3391,7 @@ all.appendChild(wrap);
     const local=readLocal();
     Object.entries(stats||{}).forEach(([key,val])=>{
       const n=norm(val);
-      local[slug(key)]={views:0,downloads:n.downloads,likes:n.likes,rating:n.rating,ratingVotes:n.ratingVotes,ratingTotal:n.ratingTotal};
+      local[slug(key)]={views:0,downloads:n.downloads,likes:n.likes,ratings:n.ratings,rating:n.rating,ratingVotes:n.ratingVotes,ratingTotal:n.ratingTotal};
     });
     writeLocal(local);
     renderAllStats();
@@ -3485,7 +3494,7 @@ all.appendChild(wrap);
     if(refresh){
       refresh.addEventListener('click',async function(){
         try{
-          const items=Array.from(document.querySelectorAll('.download-card')).map(card=>{const st=getLocalCardStats(card);return{productId:cardProductId(card),downloads:st.downloads,likes:st.likes,rating:st.rating,ratingVotes:st.ratingVotes||0,ratingTotal:st.ratingTotal||0};});
+          const items=Array.from(document.querySelectorAll('.download-card')).map(card=>{const st=getLocalCardStats(card);return{productId:cardProductId(card),downloads:st.downloads,likes:st.likes,ratings:st.ratings,ratingAverage:st.rating,ratingVotes:st.ratingVotes||0,ratingTotal:st.ratingTotal||0};});
           const data=await postStat('/api/software-stats/admin-set',{items});
           mergeBackendStats(data.stats||{});
         }catch(err){console.warn(err);}
