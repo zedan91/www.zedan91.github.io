@@ -2312,7 +2312,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       gifUrl: item.gifUrl || item.gif || '',
       demoVideoUrl: item.demoVideoUrl || '',
       buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
-      views: Number(item.views || 0),
+      views: 0,
       downloads: Number(item.downloads || 0),
       rating: Number(item.rating || 0),
       likes: Number(item.likes || 0),
@@ -2343,7 +2343,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       secureDownloadLink: n.secureDownloadLink,
       imageUrl: n.imageUrl,
       gifUrl: n.gifUrl,
-      views: Number(n.views || 0),
+      views: 0,
       downloads: Number(n.downloads || 0),
       rating: Number(n.rating || 0),
       likes: Number(n.likes || 0),
@@ -2399,7 +2399,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const rating = Number(raw?.rating || 0);
     const likes = Number(raw?.likes || 0);
     return {
-      views: Math.max(0, Math.round(views)),
+      views: 0,
       downloads: Math.max(0, Math.round(downloads)),
       rating: Math.max(0, Math.min(5, Number(rating.toFixed ? rating.toFixed(1) : rating))),
       likes: Math.max(0, Math.round(likes))
@@ -3272,9 +3272,8 @@ all.appendChild(wrap);
 
 
 <style>
-.software-stats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px!important;width:100%;}
+.software-stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0 10px!important;width:100%;}
 .software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155;color:#e5e7eb;font-weight:800;line-height:1.2;}
-.software-stats .stat-view{border-color:rgba(56,189,248,.45);}
 .software-stats .stat-download{border-color:rgba(34,197,94,.45);}
 .software-stats .stat-rating{border-color:rgba(250,204,21,.45);}
 .software-stats .stat-like{border-color:rgba(244,63,94,.45);}
@@ -3293,7 +3292,7 @@ all.appendChild(wrap);
     }
     return slug(card.dataset.productId||card.dataset.name||card.querySelector('h3')?.textContent);
   }
-  function zeroStats(){return {views:0,downloads:0,rating:0,likes:0};}
+  function zeroStats(){return {downloads:0,rating:0,likes:0};}
   function getStats(card){
     const all=read(KEY,{});
     const key=cardKey(card);
@@ -3313,7 +3312,7 @@ all.appendChild(wrap);
   }
   function saveStats(card, st){
     const all=read(KEY,{}); const key=cardKey(card);
-    all[key]={views:Math.max(0,Math.round(Number(st.views)||0)),downloads:Math.max(0,Math.round(Number(st.downloads)||0)),rating:Math.max(0,Math.min(5,Number(st.rating)||0)),likes:Math.max(0,Math.round(Number(st.likes)||0))};
+    all[key]={views:0,downloads:Math.max(0,Math.round(Number(st.downloads)||0)),rating:Math.max(0,Math.min(5,Number(st.rating)||0)),likes:Math.max(0,Math.round(Number(st.likes)||0))};
     write(KEY,all);
     card.dataset.views=String(all[key].views); card.dataset.downloads=String(all[key].downloads); card.dataset.rating=String(all[key].rating); card.dataset.likes=String(all[key].likes);
     updateStatsUI(card);
@@ -3331,29 +3330,20 @@ all.appendChild(wrap);
   function updateStatsUI(card){
     const st=getStats(card);
     const box=ensureStatsUI(card);
-    box.innerHTML=`<span class="stat-view">👁 ${fmt(st.views)}</span><span class="stat-download">⬇ ${fmt(st.downloads)}</span><span class="stat-rating">⭐ ${Number(st.rating||0).toFixed(1)}</span><span class="stat-like">❤️ ${fmt(st.likes)}</span>`;
+    box.innerHTML=`<span class="stat-download">⬇ ${fmt(st.downloads)}</span><span class="stat-rating">⭐ ${Number(st.rating||0).toFixed(1)}</span><span class="stat-like">❤️ ${fmt(st.likes)}</span>`;
   }
   function initCards(){document.querySelectorAll('.download-card').forEach(updateStatsUI);}
-  function markViewed(card){
-    const seen=read(SEEN_KEY,{}); const key=cardKey(card);
-    if(seen[key]) return;
-    seen[key]=Date.now(); write(SEEN_KEY,seen);
-    const st=getStats(card); st.views+=1; saveStats(card,st);
-  }
-  function initViewObserver(){
-    if(!('IntersectionObserver' in window)){ document.querySelectorAll('.download-card').forEach(markViewed); return; }
-    const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){markViewed(e.target);obs.unobserve(e.target);}});},{threshold:0.45});
-    document.querySelectorAll('.download-card').forEach(card=>obs.observe(card));
-  }
+  function markViewed(card){ return; }
+  function initViewObserver(){ return; }
   document.addEventListener('click',function(e){
     const btn=e.target.closest('.download-card .download-btn'); if(!btn) return;
     const card=btn.closest('.download-card'); if(!card) return;
     const st=getStats(card); st.downloads+=1; saveStats(card,st);
   },true);
   document.addEventListener('DOMContentLoaded',function(){
-    initCards(); initViewObserver();
+    initCards();
     const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid');
-    if(grid){new MutationObserver(function(){initCards();initViewObserver();}).observe(grid,{childList:true,subtree:false});}
+    if(grid){new MutationObserver(function(){initCards();}).observe(grid,{childList:true,subtree:false});}
   });
 })();
 </script>
