@@ -2556,7 +2556,6 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const adminEdit = isAdmin() ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button></div>` : '';
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
-      <div class="download-icon">${esc(item.icon)}</div>
       ${isPremium ? `<div class="software-badge premium">${esc(badgeText)}</div>` : ''}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
@@ -4147,6 +4146,304 @@ body.az-software-modal-open .downloads-grid .download-card > .software-card-admi
   document.addEventListener('keydown', function(){ setTimeout(syncModalState, 30); }, true);
   new MutationObserver(syncModalState).observe(document.body, {subtree:true, attributes:true, attributeFilter:['class','style']});
   syncModalState();
+})();
+</script>
+
+
+
+<!-- AZOBSS REAL FINAL CARD LAYOUT FIX: product ID, logo, admin actions, stats footer -->
+<style id="azobss-real-final-card-layout-fix-v3">
+/* Card structure */
+#softwareGrid .download-card,
+.downloads-grid .download-card{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  min-height:430px!important;
+  height:auto!important;
+  padding:18px 24px 64px!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+
+/* Stop old icon text block from leaking under premium cards */
+#softwareGrid .download-card .download-icon,
+.downloads-grid .download-card .download-icon{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  position:absolute!important;
+  pointer-events:none!important;
+}
+
+/* Logo stays at top center, never pushed to bottom */
+#softwareGrid .download-card .software-card-media,
+.downloads-grid .download-card .software-card-media,
+#softwareGrid .download-card .az-logo-media,
+.downloads-grid .download-card .az-logo-media{
+  position:relative!important;
+  top:auto!important;
+  left:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:74px!important;
+  height:74px!important;
+  min-width:74px!important;
+  min-height:74px!important;
+  max-width:74px!important;
+  max-height:74px!important;
+  margin:0 auto 18px!important;
+  order:5!important;
+  z-index:2!important;
+  overflow:hidden!important;
+  flex:0 0 auto!important;
+}
+#softwareGrid .download-card .software-logo-img,
+.downloads-grid .download-card .software-logo-img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+}
+
+/* Badges/titles content order */
+#softwareGrid .download-card .software-badge,
+.downloads-grid .download-card .software-badge{order:8!important;}
+#softwareGrid .download-card h3,
+.downloads-grid .download-card h3{
+  order:10!important;
+  width:100%!important;
+  min-height:46px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  margin:0 auto 12px!important;
+  line-height:1.12!important;
+}
+#softwareGrid .download-card .software-meta,
+.downloads-grid .download-card .software-meta{order:20!important;margin-bottom:18px!important;}
+#softwareGrid .download-card p,
+.downloads-grid .download-card p{
+  order:30!important;
+  width:100%!important;
+  min-height:74px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  margin:0 auto 10px!important;
+  line-height:1.32!important;
+}
+
+/* Product ID must be above Download / Buy button, not inside footer */
+#softwareGrid .download-card > .product-meta,
+.downloads-grid .download-card > .product-meta{
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  display:block!important;
+  order:40!important;
+  width:100%!important;
+  height:auto!important;
+  margin:2px auto 10px!important;
+  padding:0!important;
+  text-align:center!important;
+  color:#3b82f6!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  line-height:1.2!important;
+  letter-spacing:.15px!important;
+  opacity:1!important;
+  z-index:4!important;
+  background:transparent!important;
+  border:0!important;
+  pointer-events:none!important;
+}
+
+/* Button smaller, centered and fully clickable */
+#softwareGrid .download-card > a.download-btn,
+.downloads-grid .download-card > a.download-btn,
+#softwareGrid .download-card > .download-btn,
+.downloads-grid .download-card > .download-btn{
+  order:50!important;
+  position:relative!important;
+  z-index:30!important;
+  width:78%!important;
+  max-width:250px!important;
+  min-width:190px!important;
+  height:50px!important;
+  min-height:50px!important;
+  margin:0 auto 16px!important;
+  padding:0 18px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+  border-radius:13px!important;
+  box-sizing:border-box!important;
+  text-decoration:none!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+#softwareGrid .download-card > a.download-btn *,
+.downloads-grid .download-card > a.download-btn *{pointer-events:none!important;}
+
+/* Love button stays at original top-right */
+#softwareGrid .download-card > .az-like-btn,
+#softwareGrid .download-card > .like-btn,
+#softwareGrid .download-card > .favorite-btn,
+.downloads-grid .download-card > .az-like-btn,
+.downloads-grid .download-card > .like-btn,
+.downloads-grid .download-card > .favorite-btn{
+  position:absolute!important;
+  top:16px!important;
+  right:16px!important;
+  z-index:80!important;
+}
+
+/* Admin buttons below love: generate logo, edit, delete */
+#softwareGrid .download-card > .software-card-admin-actions,
+.downloads-grid .download-card > .software-card-admin-actions{
+  position:absolute!important;
+  top:68px!important;
+  right:16px!important;
+  width:auto!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  z-index:75!important;
+  pointer-events:auto!important;
+  background:transparent!important;
+  border:0!important;
+}
+#softwareGrid .download-card > .software-card-admin-actions button,
+.downloads-grid .download-card > .software-card-admin-actions button{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:50%!important;
+  background:rgba(2,6,23,.78)!important;
+  backdrop-filter:blur(8px)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:14px!important;
+  line-height:1!important;
+  box-shadow:0 8px 18px rgba(0,0,0,.30)!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+#softwareGrid .download-card > .software-card-admin-actions .software-logo-admin-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-logo-admin-btn{border:2px solid #22c55e!important;color:#22c55e!important;}
+#softwareGrid .download-card > .software-card-admin-actions .software-card-edit-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-card-edit-btn{border:2px solid #1e90ff!important;color:#bfdbfe!important;}
+#softwareGrid .download-card > .software-card-admin-actions .software-card-delete-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-card-delete-btn{border:2px solid #ff365f!important;color:#fecaca!important;}
+
+/* Bottom stats: only download + rating, always at bottom */
+#softwareGrid .download-card > .software-stats,
+.downloads-grid .download-card > .software-stats,
+#softwareGrid .download-card > .stats-bar,
+.downloads-grid .download-card > .stats-bar{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  height:54px!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  align-items:stretch!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  z-index:15!important;
+  background:rgba(5,15,30,.96)!important;
+  border-top:1px solid rgba(255,255,255,.10)!important;
+}
+#softwareGrid .download-card > .software-stats > *,
+.downloads-grid .download-card > .software-stats > *,
+#softwareGrid .download-card > .stats-bar > *,
+.downloads-grid .download-card > .stats-bar > *{
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  padding:0 8px!important;
+  margin:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  font-weight:800!important;
+}
+#softwareGrid .download-card > .software-stats > *:nth-child(n+3),
+.downloads-grid .download-card > .software-stats > *:nth-child(n+3),
+#softwareGrid .download-card > .stats-bar > *:nth-child(n+3),
+.downloads-grid .download-card > .stats-bar > *:nth-child(n+3){display:none!important;}
+#softwareGrid .download-card .rating-stars,
+.downloads-grid .download-card .rating-stars{
+  display:inline-flex!important;
+  gap:1px!important;
+  letter-spacing:0!important;
+  color:#facc15!important;
+  font-size:14px!important;
+  max-width:92px!important;
+  overflow:hidden!important;
+}
+#softwareGrid .download-card .software-rating-star,
+.downloads-grid .download-card .software-rating-star{
+  font-size:14px!important;
+  line-height:1!important;
+}
+
+/* Modal wins over card actions */
+.software-admin-modal,.software-admin-modal.is-open{z-index:9000!important;}
+.software-admin-panel{position:relative!important;z-index:9001!important;}
+body.az-software-modal-open #softwareGrid .download-card > .software-card-admin-actions,
+body.az-software-modal-open .downloads-grid .download-card > .software-card-admin-actions{display:none!important;}
+</style>
+<script id="azobss-real-final-card-layout-fix-v3-js">
+(function(){
+  function fixCard(card){
+    if(!card) return;
+    // Remove old text icon block if any survives from previous versions.
+    card.querySelectorAll(':scope > .download-icon').forEach(function(el){ el.remove(); });
+    // Move ID above the Download/Buy button every time cards re-render.
+    var meta = card.querySelector(':scope > .product-meta');
+    var btn = card.querySelector(':scope > .download-btn, :scope > a.download-btn');
+    if(meta && btn && meta.nextElementSibling !== btn){
+      card.insertBefore(meta, btn);
+    }
+    // Keep stats as last child so absolute footer remains clean.
+    var stats = card.querySelector(':scope > .software-stats, :scope > .stats-bar');
+    if(stats && stats !== card.lastElementChild){ card.appendChild(stats); }
+    // Admin action button labels/order.
+    var wrap = card.querySelector(':scope > .software-card-admin-actions');
+    if(wrap){
+      var logo = wrap.querySelector('.software-logo-admin-btn');
+      var edit = wrap.querySelector('.software-card-edit-btn');
+      var del = wrap.querySelector('.software-card-delete-btn');
+      [logo,edit,del].forEach(function(x){ if(x) wrap.appendChild(x); });
+      if(logo){logo.innerHTML='🪄';logo.title='Generate logo from website link';logo.setAttribute('aria-label','Generate logo');}
+      if(edit){edit.innerHTML='✏️';edit.title='Edit software';edit.setAttribute('aria-label','Edit');}
+      if(del){del.innerHTML='🗑️';del.title='Delete software';del.setAttribute('aria-label','Delete');}
+    }
+  }
+  function run(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(fixCard);}
+  document.addEventListener('DOMContentLoaded',function(){run();setTimeout(run,150);setTimeout(run,600);setTimeout(run,1500);var grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');if(grid)new MutationObserver(function(){setTimeout(run,0);}).observe(grid,{childList:true,subtree:true});});
+  document.addEventListener('click',function(){setTimeout(run,50);},true);
 })();
 </script>
 
