@@ -306,9 +306,6 @@
     display:none !important;
 }
 
-
-.buy-price{padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.15);font-size:13px;font-weight:700;}
-.buy-divider{width:1px;height:18px;background:rgba(255,255,255,.35);display:inline-block;}
 </style>
 <style>
 /* COUNTDOWN WORDING FIX V18 */
@@ -2559,14 +2556,13 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const adminEdit = isAdmin() ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button></div>` : '';
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
-      ${isPremium ? `<div class="software-badge premium">${esc(badgeText)}</div>` : ''}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
       ${metaHtml}
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
       ${productIdMeta}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? '<span class="buy-price">'+(item.price||'RM10')+'</span><span class="buy-divider"></span><span class="az-btn-icon">🛒</span><span>Buy Now</span>' : '<span class="az-btn-icon">⬇</span><span>Download Now</span>'}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-divider"></span><span class="az-btn-icon">🛒</span><span>Buy Now</span>` : '<span class="az-btn-icon">⬇</span><span>Download Now</span>'}</a>
       ${adminEdit}
     </div>`;
   }
@@ -3867,8 +3863,9 @@ all.appendChild(wrap);
     if(!btn) return;
     const premium=isPremiumCard(card);
     btn.classList.toggle('premium',premium);
+    const price=(btn.getAttribute('data-product-price')||'RM10').trim() || 'RM10';
     btn.innerHTML = premium
-      ? '<span class="az-btn-icon" aria-hidden="true">🛒</span><span>Buy Now</span>'
+      ? '<span class="buy-price">'+price+'</span><span class="buy-divider"></span><span class="az-btn-icon" aria-hidden="true">🛒</span><span>Buy Now</span>'
       : '<span class="az-btn-icon" aria-hidden="true">⬇</span><span>Download Now</span>';
   }
   function fixStats(card){
@@ -4447,6 +4444,82 @@ body.az-software-modal-open .downloads-grid .download-card > .software-card-admi
   function run(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(fixCard);}
   document.addEventListener('DOMContentLoaded',function(){run();setTimeout(run,150);setTimeout(run,600);setTimeout(run,1500);var grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');if(grid)new MutationObserver(function(){setTimeout(run,0);}).observe(grid,{childList:true,subtree:true});});
   document.addEventListener('click',function(){setTimeout(run,50);},true);
+})();
+</script>
+
+
+
+<!-- AZOBSS FIX: put premium price inside Buy Now button, remove top price badge -->
+<style id="azobss-buy-price-inside-button-final-fix">
+#softwareGrid .download-card .software-badge.premium,
+.downloads-grid .download-card .software-badge.premium,
+#softwareGrid .download-card .price-badge,
+.downloads-grid .download-card .price-badge{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#softwareGrid .download-card .download-btn.premium,
+.downloads-grid .download-card .download-btn.premium,
+#softwareGrid .download-card[data-type="premium"] .download-btn,
+.downloads-grid .download-card[data-type="premium"] .download-btn{
+  background:linear-gradient(90deg,#2b6df8,#3d86ff)!important;
+  color:#fff!important;
+  gap:10px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-decoration:none!important;
+}
+#softwareGrid .download-card .download-btn .buy-price,
+.downloads-grid .download-card .download-btn .buy-price{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:4px 10px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.16)!important;
+  border:1px solid rgba(255,255,255,.22)!important;
+  font-size:13px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  color:#fff!important;
+  white-space:nowrap!important;
+}
+#softwareGrid .download-card .download-btn .buy-divider,
+.downloads-grid .download-card .download-btn .buy-divider{
+  display:inline-block!important;
+  width:1px!important;
+  height:22px!important;
+  background:rgba(255,255,255,.36)!important;
+  flex:0 0 1px!important;
+}
+</style>
+<script id="azobss-buy-price-inside-button-final-fix-js">
+(function(){
+  function isPremium(card, btn){
+    return (card?.dataset?.type||'').toLowerCase()==='premium' || btn?.getAttribute('data-azobss-premium-buy')==='1';
+  }
+  function normalize(card){
+    if(!card) return;
+    card.querySelectorAll('.software-badge.premium,.price-badge').forEach(function(el){ el.remove(); });
+    var btn=card.querySelector(':scope > a.download-btn, :scope > .download-btn, a.download-btn, .download-btn');
+    if(!btn) return;
+    if(!isPremium(card, btn)) return;
+    btn.classList.add('premium');
+    var price=(btn.getAttribute('data-product-price') || card.getAttribute('data-price') || 'RM10').trim() || 'RM10';
+    if(price.toUpperCase()==='FREE') price='RM10';
+    btn.innerHTML='<span class="buy-price">'+price+'</span><span class="buy-divider"></span><span class="az-btn-icon" aria-hidden="true">🛒</span><span>Buy Now</span>';
+  }
+  function run(){
+    document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(normalize);
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    run(); setTimeout(run,250); setTimeout(run,1000); setTimeout(run,2500);
+    var grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
+    if(grid) new MutationObserver(function(){ setTimeout(run,0); }).observe(grid,{childList:true,subtree:true});
+  });
 })();
 </script>
 
