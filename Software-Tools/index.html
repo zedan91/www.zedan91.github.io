@@ -2509,7 +2509,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       ${metaHtml}
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink||item.stripeLink||'#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
       ${productIdMeta}
       ${adminEdit}
     </div>`;
