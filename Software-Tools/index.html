@@ -1409,7 +1409,7 @@ margin-top:10px!important;
 }
 </style>
 
-</head>
+<style>.software-platform-filter{display:flex;flex-wrap:wrap;align-items:center}.software-platform-right{margin-left:auto;display:flex;gap:10px}@media(max-width:768px){.software-platform-right{width:100%;justify-content:center;margin-left:0;margin-top:10px}}</style></head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
@@ -1481,8 +1481,7 @@ margin-top:10px!important;
   <label>Sort by
     <select id="softwareSortSelect">
       <option value="newest">Newest item</option>
-      <option value="freeFirst">Free Software only</option>
-      <option value="premiumFirst">Premium Software only</option>
+      
       <option value="nameAZ">Name A-Z</option>
       <option value="nameZA">Name Z-A</option>
     </select>
@@ -1495,7 +1494,7 @@ margin-top:10px!important;
     <button class="software-platform-btn" type="button" data-software-platform="Windows">💻 Windows</button>
     <button class="software-platform-btn" type="button" data-software-platform="Mac">🍎 Mac</button>
     <button class="software-platform-btn" type="button" data-software-platform="Android">🤖 Android</button>
-    <button class="software-platform-btn" type="button" data-software-platform="iOS">📱 iOS</button>
+    <button class="software-platform-btn" type="button" data-software-platform="iOS">📱 iOS</button><div class="software-platform-right"><button class="software-platform-btn is-active" type="button" data-software-type="all">All</button><button class="software-platform-btn" type="button" data-software-type="free">Free Software</button><button class="software-platform-btn" type="button" data-software-type="premium">Premium Software</button></div>
   </div>
 </div>
 <div class="software-category-card" aria-label="Software categories card">
