@@ -1892,6 +1892,7 @@ margin-top:auto!important;
       <option value="newest">Newest item</option>
       <option value="downloads">Most Download</option>
       <option value="rating">Highest Rating</option>
+      <option value="likes">Most Likes</option>
       <option value="nameAZ">Name A-Z</option>
       <option value="nameZA">Name Z-A</option>
     </select>
@@ -2652,6 +2653,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(['za','nameDesc','nameza'].includes(sortMode.toLowerCase())) sortMode = 'nameZA';
     if(['mostdownload','downloads','download','mostdownloads'].includes(sortMode.toLowerCase())) sortMode = 'downloads';
     if(['highestrating','rating','ratings'].includes(sortMode.toLowerCase())) sortMode = 'rating';
+    if(['mostlikes','likes','like'].includes(sortMode.toLowerCase())) sortMode = 'likes';
 
     const softwareTypeOf = itemOrCard => {
       if(!itemOrCard) return 'free';
@@ -2709,6 +2711,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       if(sortMode === 'nameZA') return String(b.name).localeCompare(String(a.name));
       if(sortMode === 'downloads') return statsForItem(b).downloads - statsForItem(a).downloads || String(a.name).localeCompare(String(b.name));
       if(sortMode === 'rating') return statsForItem(b).rating - statsForItem(a).rating || statsForItem(b).downloads - statsForItem(a).downloads;
+      if(sortMode === 'likes') return statsForItem(b).likes - statsForItem(a).likes || String(a.name).localeCompare(String(b.name));
       return (b.createdAtMs || 0) - (a.createdAtMs || 0);
     });
 
@@ -2730,6 +2733,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       if(sortMode === 'nameZA') return bn.localeCompare(an);
       if(sortMode === 'downloads') return statsForCard(b).downloads - statsForCard(a).downloads || an.localeCompare(bn);
       if(sortMode === 'rating') return statsForCard(b).rating - statsForCard(a).rating || statsForCard(b).downloads - statsForCard(a).downloads;
+      if(sortMode === 'likes') return statsForCard(b).likes - statsForCard(a).likes || an.localeCompare(bn);
       return bc - ac || an.localeCompare(bn);
     });
     sortedStatic.forEach(card => grid.appendChild(card));
@@ -3267,106 +3271,95 @@ all.appendChild(wrap);
 </script>
 
 
-<style id="azobss-clean-download-rating-ui">
-/* AZOBSS clean card stats: only Downloads + Rating, no bottom Likes */
-#softwareGrid .download-card,
-.downloads-grid .download-card{
-  overflow:hidden !important;
-}
-#softwareGrid .download-card .download-btn,
-.downloads-grid .download-card .download-btn{
-  width:calc(100% - 46px) !important;
-  min-height:50px !important;
-  margin:18px auto 0 !important;
-  border-radius:10px !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:10px !important;
-  font-size:17px !important;
-  font-weight:900 !important;
-  line-height:1 !important;
-  text-decoration:none !important;
-  box-shadow:0 10px 22px rgba(34,197,94,.24) !important;
-}
-#softwareGrid .download-card .download-btn:not(.premium),
-.downloads-grid .download-card .download-btn:not(.premium){
-  background:linear-gradient(135deg,#22c55e,#16a34a) !important;
-  color:#fff !important;
-}
-#softwareGrid .download-card .download-btn.premium,
-.downloads-grid .download-card .download-btn.premium{
-  background:linear-gradient(135deg,#3b82f6,#2563eb) !important;
-  color:#fff !important;
-  box-shadow:0 10px 22px rgba(37,99,235,.26) !important;
-}
-#softwareGrid .download-card .az-btn-icon,
-.downloads-grid .download-card .az-btn-icon{
-  font-size:23px !important;
-  line-height:1 !important;
-  transform:translateY(1px);
-}
-.software-stats{
-  display:grid !important;
-  grid-template-columns:1fr 1.5fr !important;
-  align-items:center !important;
-  width:100% !important;
-  margin:12px 0 -1px !important;
-  border-top:1px solid rgba(20,184,166,.24) !important;
-  background:rgba(2,8,23,.35) !important;
-}
-.software-stats .stat-like{display:none !important;}
-.software-stats .stat-download,
-.software-stats .stat-rating{
-  min-height:44px !important;
-  padding:0 10px !important;
-  border:0 !important;
-  border-radius:0 !important;
-  background:transparent !important;
-  color:#e5e7eb !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:9px !important;
-  font-size:15px !important;
-  font-weight:900 !important;
-  line-height:1 !important;
-}
-.software-stats .stat-download{border-right:1px solid rgba(20,184,166,.24) !important;}
-.software-stat-download-icon{color:#22c55e !important;font-size:22px !important;line-height:1 !important;text-shadow:0 0 10px rgba(34,197,94,.32);}
-.software-rating-main-star{color:#facc15 !important;font-size:22px !important;line-height:1 !important;text-shadow:0 0 10px rgba(250,204,21,.25);}
-.software-rating-stars{
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:0 !important;
-  vertical-align:middle !important;
-}
-.software-rating-star{
-  appearance:none !important;
-  border:0 !important;
-  background:transparent !important;
-  color:#64748b !important;
-  font-size:13px !important;
-  line-height:1 !important;
-  cursor:pointer !important;
-  padding:0 1px !important;
-}
-.software-rating-star.is-filled{color:#facc15 !important;}
-.software-rating-stars:hover .software-rating-star{color:#facc15 !important;}
-.software-rating-stars .software-rating-star:hover ~ .software-rating-star{color:#64748b !important;}
-.software-rating-text{display:inline-flex !important;align-items:center !important;gap:5px !important;white-space:nowrap !important;}
-.software-rating-count{opacity:.75 !important;font-size:12px !important;font-weight:900 !important;}
-@media(max-width:700px){
-  #softwareGrid .download-card .download-btn,.downloads-grid .download-card .download-btn{width:calc(100% - 34px) !important;font-size:15px !important;min-height:46px !important;}
-  .software-stats .stat-download,.software-stats .stat-rating{font-size:13px !important;min-height:40px !important;}
-}
+<style>
+.software-stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0 10px!important;width:100%;}
+.software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155;color:#e5e7eb;font-weight:800;line-height:1.2;}
+.software-stats .stat-download{border-color:rgba(34,197,94,.45);}
+.software-stats .stat-rating{border-color:rgba(250,204,21,.45);}
+.software-stats .stat-rating{display:inline-flex;align-items:center;gap:4px;}
+.software-rating-stars{display:inline-flex;gap:1px;vertical-align:middle;}
+.software-rating-star{appearance:none;border:0;background:transparent;color:#64748b;font-size:13px;line-height:1;cursor:pointer;padding:0 1px;filter:drop-shadow(0 0 4px rgba(250,204,21,.15));}
+.software-rating-star.is-filled,.software-rating-star:hover,.software-rating-star:hover ~ .software-rating-star{color:#facc15;}
+.software-rating-stars:hover .software-rating-star{color:#facc15;}
+.software-rating-star:hover ~ .software-rating-star{color:#64748b;}
+.software-rating-count{opacity:.72;font-size:10px;margin-left:2px;}
+.software-stats .stat-like{border-color:rgba(244,63,94,.45);}
 </style>
+<script>
+(function(){
+  const KEY='azobss_software_manual_stats_v2';
+  const SEEN_KEY='azobss_software_view_seen_v1';
+  function read(key, fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
+  function write(key, value){try{localStorage.setItem(key, JSON.stringify(value));}catch(e){}}
+  function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
+  function cardKey(card){
+    if(!card.dataset.productId){
+      const title=card.querySelector('h3')?.textContent?.trim()||card.dataset.name||'Software Item';
+      card.dataset.productId='AZSW-'+String(title).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    }
+    return slug(card.dataset.productId||card.dataset.name||card.querySelector('h3')?.textContent);
+  }
+  function zeroStats(){return {downloads:0,rating:0,likes:0};}
+  function getStats(card){
+    const all=read(KEY,{});
+    const key=cardKey(card);
+    const base=all[key]||{};
+    const st={
+      views:Number(base.views ?? card.dataset.views ?? 0)||0,
+      downloads:Number(base.downloads ?? card.dataset.downloads ?? 0)||0,
+      rating:Number(base.rating ?? card.dataset.rating ?? 0)||0,
+      likes:Number(base.likes ?? card.dataset.likes ?? 0)||0
+    };
+    st.views=Math.max(0,Math.round(st.views));
+    st.downloads=Math.max(0,Math.round(st.downloads));
+    st.rating=Math.max(0,Math.min(5,Number(st.rating.toFixed?st.rating.toFixed(1):st.rating)));
+    st.likes=Math.max(0,Math.round(st.likes));
+    all[key]=st; write(KEY,all);
+    return st;
+  }
+  function saveStats(card, st){
+    const all=read(KEY,{}); const key=cardKey(card);
+    all[key]={views:0,downloads:Math.max(0,Math.round(Number(st.downloads)||0)),rating:Math.max(0,Math.min(5,Number(st.rating)||0)),likes:Math.max(0,Math.round(Number(st.likes)||0))};
+    write(KEY,all);
+    card.dataset.views=String(all[key].views); card.dataset.downloads=String(all[key].downloads); card.dataset.rating=String(all[key].rating); card.dataset.likes=String(all[key].likes);
+    updateStatsUI(card);
+  }
+  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
+  function ensureStatsUI(card){
+    let box=card.querySelector('.software-stats');
+    if(!box){
+      box=document.createElement('div'); box.className='software-stats';
+      const p=card.querySelector('p');
+      if(p) p.insertAdjacentElement('beforebegin',box); else card.appendChild(box);
+    }
+    return box;
+  }
+  function updateStatsUI(card){
+    const st=getStats(card);
+    const box=ensureStatsUI(card);
+    box.innerHTML=`<span class="stat-download"><span class="stat-icon">⬇</span><span class="stat-value">${fmt(st.downloads)}</span></span><span class="stat-rating">⭐ ${Number(st.rating||0).toFixed(1)}</span>`;
+  }
+  function initCards(){document.querySelectorAll('.download-card').forEach(updateStatsUI);}
+  function markViewed(card){ return; }
+  function initViewObserver(){ return; }
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('.download-card .download-btn'); if(!btn) return;
+    const card=btn.closest('.download-card'); if(!card) return;
+    const st=getStats(card); st.downloads+=1; saveStats(card,st);
+  },true);
+  document.addEventListener('DOMContentLoaded',function(){
+    initCards();
+    const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid');
+    if(grid){new MutationObserver(function(){initCards();}).observe(grid,{childList:true,subtree:false});}
+  });
+})();
+</script>
+
 <script id="azobss-software-backend-stats-sync">
 (function(){
   const API_BASE=(localStorage.getItem('azobssPremiumBackendUrl')||localStorage.getItem('azobssSoftwareStatsBackendUrl')||'https://azobss-backend.onrender.com').replace(/\/$/,'');
-  const LOCAL_KEY='azobss_software_manual_stats_v3_download_rating_only';
+  const LOCAL_KEY='azobss_software_manual_stats_v2';
   function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
-  function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function cardProductId(card){
     if(!card) return 'software-item';
     if(!card.dataset.productId){
@@ -3389,68 +3382,68 @@ all.appendChild(wrap);
     const votes=ratings['1']+ratings['2']+ratings['3']+ratings['4']+ratings['5'];
     const total=(1*ratings['1'])+(2*ratings['2'])+(3*ratings['3'])+(4*ratings['4'])+(5*ratings['5']);
     const avg=votes?Math.round((total/votes)*10)/10:0;
-    return {downloads:Math.max(0,Math.round(Number(raw.downloads||0))),ratings,rating:avg,ratingAverage:avg,ratingVotes:votes,ratingTotal:total};
+    return {downloads:Math.max(0,Math.round(Number(raw.downloads||0))),likes:Math.max(0,Math.round(Number(raw.likes||0))),ratings,rating:avg,ratingVotes:votes,ratingTotal:total};
   }
   function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
   function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}')||{};}catch(e){return{};}}
   function writeLocal(v){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(v||{}));}catch(e){}}
   function mergeBackendStats(stats){
     const local=readLocal();
-    Object.entries(stats||{}).forEach(([key,val])=>{const n=norm(val);local[slug(key)]={downloads:n.downloads,ratings:n.ratings,rating:n.rating,ratingAverage:n.rating,ratingVotes:n.ratingVotes,ratingTotal:n.ratingTotal};});
+    Object.entries(stats||{}).forEach(([key,val])=>{
+      const n=norm(val);
+      local[slug(key)]={views:0,downloads:n.downloads,likes:n.likes,ratings:n.ratings,rating:n.rating,ratingVotes:n.ratingVotes,ratingTotal:n.ratingTotal};
+    });
     writeLocal(local);
     renderAllStats();
-    enhanceButtons();
     if(typeof window.applySoftwareFilters==='function') window.applySoftwareFilters();
   }
   async function fetchStats(){
-    try{const res=await fetch(API_BASE+'/api/software-stats',{cache:'no-store'});const data=await res.json();if(data&&data.ok) mergeBackendStats(data.stats||{});}catch(err){console.warn('AZOBSS software stats backend not reachable:',err);}
+    try{
+      const res=await fetch(API_BASE+'/api/software-stats',{cache:'no-store'});
+      const data=await res.json();
+      if(data&&data.ok) mergeBackendStats(data.stats||{});
+    }catch(err){console.warn('AZOBSS software stats backend not reachable:',err);}
   }
   function getLocalCardStats(card){
     const local=readLocal();
     const key=slug(cardProductId(card));
-    const n=norm(local[key]||{downloads:card.dataset.downloads,rating:card.dataset.rating,ratingAverage:card.dataset.rating,ratingVotes:card.dataset.ratingVotes,ratings:card.dataset.ratings});
+    const n=norm(local[key]||{downloads:card.dataset.downloads,likes:card.dataset.likes,rating:card.dataset.rating});
     card.dataset.views='0';
     card.dataset.downloads=String(n.downloads);
+    card.dataset.likes=String(n.likes);
     card.dataset.rating=String(n.rating);
-    card.dataset.ratingVotes=String(n.ratingVotes);
     return n;
   }
   function ensureBox(card){
     let box=card.querySelector('.software-stats');
-    if(!box){box=document.createElement('div');box.className='software-stats';}
-    const btn=card.querySelector('.download-btn');
-    if(btn && box.previousElementSibling!==btn) btn.insertAdjacentElement('afterend',box);
-    else if(!box.parentElement) card.appendChild(box);
+    if(!box){
+      box=document.createElement('div');
+      box.className='software-stats';
+      const p=card.querySelector('p');
+      if(p) p.insertAdjacentElement('beforebegin',box); else card.appendChild(box);
+    }
     return box;
   }
   function ratingHtml(card, st){
-    const productId=esc(cardProductId(card));
+    const productId=cardProductId(card);
     const avg=Number(st.rating||0);
     const votes=Math.max(0,Math.round(Number(st.ratingVotes||0)));
     const filled=Math.round(avg);
     let stars='<span class="software-rating-stars" role="group" aria-label="Rate this software">';
-    for(let i=1;i<=5;i++) stars+=`<button class="software-rating-star ${i<=filled?'is-filled':''}" type="button" data-rating-value="${i}" data-product-id="${productId}" title="Rate ${i} star${i>1?'s':''}">★</button>`;
+    for(let i=1;i<=5;i++){
+      stars+=`<button class="software-rating-star ${i<=filled?'is-filled':''}" type="button" data-rating-value="${i}" data-product-id="${productId}" title="Rate ${i} star${i>1?'s':''}">★</button>`;
+    }
     stars+='</span>';
-    return `<span class="software-rating-text"><span class="software-rating-main-star">★</span>${stars}<strong>${avg.toFixed(1)}</strong><span class="software-rating-count">(${votes})</span></span>`;
+    return `${stars} <strong>${avg.toFixed(1)}</strong><span class="software-rating-count">(${votes})</span>`;
   }
   function renderCardStats(card){
     const st=getLocalCardStats(card);
-    ensureBox(card).innerHTML=`<span class="stat-download"><span class="software-stat-download-icon">↧</span><strong>${fmt(st.downloads)}</strong></span><span class="stat-rating">${ratingHtml(card,st)}</span>`;
+    ensureBox(card).innerHTML=`<span class="stat-download"><span class="stat-icon">⬇</span><span class="stat-value">${fmt(st.downloads)}</span></span><span class="stat-rating">${ratingHtml(card,st)}</span>`;
   }
-  function renderAllStats(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(renderCardStats);}
-  function enhanceButtons(){
-    document.querySelectorAll('#softwareGrid .download-card .download-btn,.downloads-grid .download-card .download-btn').forEach(btn=>{
-      const card=btn.closest('.download-card');
-      const isPremium=btn.classList.contains('premium') || card?.dataset.type==='premium' || /buy/i.test(btn.textContent||'');
-      btn.classList.toggle('premium',!!isPremium);
-      const label=isPremium?'Buy Now':'Download Now';
-      const icon=isPremium?'🛒':'↧';
-      btn.innerHTML=`<span class="az-btn-icon">${icon}</span><span>${label}</span>`;
-    });
-  }
+  function renderAllStats(){document.querySelectorAll('.download-card').forEach(renderCardStats);}
   async function postStat(endpoint, payload){
     const res=await fetch(API_BASE+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
-    const data=await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+    const data=await res.json();
     if(!res.ok||!data.ok) throw new Error(data.error||'Stats update failed');
     return data;
   }
@@ -3458,32 +3451,331 @@ all.appendChild(wrap);
   document.addEventListener('click',async function(e){
     const star=e.target.closest('.software-rating-star');
     if(!star) return;
-    e.preventDefault();e.stopPropagation();
-    const card=star.closest('.download-card'); if(!card) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const card=star.closest('.download-card');
+    if(!card) return;
     const productId=cardProductId(card);
-    const rating=Math.max(1,Math.min(5,Number(star.dataset.ratingValue||0))); if(!rating) return;
-    if(localStorage.getItem(ratedKey(productId))){alert('You already rated this software on this browser.');return;}
+    const rating=Math.max(1,Math.min(5,Number(star.dataset.ratingValue||0)));
+    if(!rating) return;
+    if(localStorage.getItem(ratedKey(productId))){
+      alert('You already rated this software on this browser.');
+      return;
+    }
     star.closest('.software-rating-stars')?.querySelectorAll('button').forEach(b=>b.disabled=true);
-    try{const data=await postStat('/api/software-stats/rate',{productId,rating,name:card.querySelector('h3')?.textContent?.trim()||''});localStorage.setItem(ratedKey(productId),String(rating));mergeBackendStats({[data.productId||slug(productId)]:data.stats});}
-    catch(err){alert('Rating failed. Please try again.');renderCardStats(card);}
+    try{
+      const data=await postStat('/api/software-stats/rate',{productId,rating,name:card.querySelector('h3')?.textContent?.trim()||''});
+      localStorage.setItem(ratedKey(productId),String(rating));
+      mergeBackendStats({[data.productId||slug(productId)]:data.stats});
+    }catch(err){
+      alert('Rating failed. Please try again.');
+      renderCardStats(card);
+    }
   },true);
   document.addEventListener('click',async function(e){
-    const btn=e.target.closest('.download-card .download-btn'); if(!btn) return;
-    const card=btn.closest('.download-card'); if(!card) return;
+    const btn=e.target.closest('.download-card .download-btn');
+    if(!btn) return;
+    const card=btn.closest('.download-card');
+    if(!card) return;
     const productId=cardProductId(card);
-    try{const data=await postStat('/api/software-stats/download',{productId,name:card.querySelector('h3')?.textContent?.trim()||''});mergeBackendStats({[data.productId||slug(productId)]:data.stats});}
-    catch(err){const local=readLocal();const key=slug(productId);const st=norm(local[key]||{});st.downloads+=1;local[key]=st;writeLocal(local);renderCardStats(card);}
+    try{
+      const data=await postStat('/api/software-stats/download',{productId,name:card.querySelector('h3')?.textContent?.trim()||''});
+      mergeBackendStats({[data.productId||slug(productId)]:data.stats});
+    }catch(err){
+      const local=readLocal(); const key=slug(productId); const st=norm(local[key]||{}); st.downloads+=1; local[key]=st; writeLocal(local); renderCardStats(card);
+    }
   },true);
   document.addEventListener('DOMContentLoaded',function(){
-    enhanceButtons();renderAllStats();fetchStats();
-    const grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
-    if(grid){new MutationObserver(function(){enhanceButtons();renderAllStats();fetchStats();}).observe(grid,{childList:true,subtree:false});}
+    renderAllStats();
+    fetchStats();
+    const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid');
+    if(grid){new MutationObserver(function(){renderAllStats(); fetchStats();}).observe(grid,{childList:true,subtree:false});}
     const refresh=document.getElementById('softwareStatsRefreshButton');
-    if(refresh){refresh.addEventListener('click',async function(){
-      try{const items=Array.from(document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card')).map(card=>{const st=getLocalCardStats(card);return{productId:cardProductId(card),downloads:st.downloads,ratings:st.ratings,ratingAverage:st.rating,ratingVotes:st.ratingVotes||0,ratingTotal:st.ratingTotal||0};});const data=await postStat('/api/software-stats/admin-set',{items});mergeBackendStats(data.stats||{});}catch(err){console.warn(err);}
-    },true);}
+    if(refresh){
+      refresh.addEventListener('click',async function(){
+        try{
+          const items=Array.from(document.querySelectorAll('.download-card')).map(card=>{const st=getLocalCardStats(card);return{productId:cardProductId(card),downloads:st.downloads,likes:st.likes,ratings:st.ratings,ratingAverage:st.rating,ratingVotes:st.ratingVotes||0,ratingTotal:st.ratingTotal||0};});
+          const data=await postStat('/api/software-stats/admin-set',{items});
+          mergeBackendStats(data.stats||{});
+        }catch(err){console.warn(err);}
+      },true);
+    }
   });
 })();
 </script>
+
+
+<style id="azobss-final-download-rating-card-fix">
+/* Final AZOBSS Software card fix: no Like stat, clean Download + Rating bar, no crop */
+#softwareGrid .download-card,
+.downloads-grid .download-card{
+  height:470px !important;
+  min-height:470px !important;
+  max-height:470px !important;
+  overflow:hidden !important;
+  padding:24px 28px 0 !important;
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  grid-template-rows:42px 76px 50px 92px 64px 48px !important;
+  grid-template-areas:
+    "badge"
+    "title"
+    "meta"
+    "desc"
+    "button"
+    "stats" !important;
+  row-gap:10px !important;
+  align-items:center !important;
+  justify-items:stretch !important;
+  border-radius:18px !important;
+}
+
+#softwareGrid .download-card h3,
+#softwareGrid .download-card .software-title,
+.downloads-grid .download-card h3,
+.downloads-grid .download-card .software-title{
+  grid-area:title !important;
+  height:76px !important;
+  min-height:76px !important;
+  max-height:76px !important;
+  display:grid !important;
+  place-items:center !important;
+  margin:0 !important;
+  padding:0 8px !important;
+  text-align:center !important;
+  line-height:1.08 !important;
+  overflow:hidden !important;
+}
+
+#softwareGrid .download-card p,
+.downloads-grid .download-card p{
+  grid-area:desc !important;
+  height:92px !important;
+  min-height:92px !important;
+  max-height:92px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 !important;
+  padding:0 4px !important;
+  overflow:hidden !important;
+}
+
+#softwareGrid .download-card .download-btn,
+#softwareGrid .download-card a.download-btn,
+.downloads-grid .download-card .download-btn,
+.downloads-grid .download-card a.download-btn{
+  grid-area:button !important;
+  width:100% !important;
+  max-width:212px !important;
+  height:56px !important;
+  min-height:56px !important;
+  margin:0 auto !important;
+  padding:0 18px !important;
+  border-radius:12px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:10px !important;
+  font-size:17px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  color:#fff !important;
+  background:linear-gradient(180deg,#22d36b,#17b653) !important;
+  box-shadow:0 12px 28px rgba(34,197,94,.18) !important;
+  text-decoration:none !important;
+  white-space:nowrap !important;
+}
+
+#softwareGrid .download-card .download-btn.premium,
+#softwareGrid .download-card a.download-btn.premium,
+.downloads-grid .download-card .download-btn.premium,
+.downloads-grid .download-card a.download-btn.premium,
+#softwareGrid .download-card[data-type="premium"] .download-btn,
+.downloads-grid .download-card[data-type="premium"] .download-btn{
+  background:linear-gradient(180deg,#3b82f6,#2563eb) !important;
+  box-shadow:0 12px 28px rgba(59,130,246,.20) !important;
+}
+
+.az-btn-icon{
+  font-size:22px !important;
+  line-height:1 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  transform:translateY(-1px) !important;
+}
+
+#softwareGrid .download-card .software-stats,
+.downloads-grid .download-card .software-stats{
+  grid-area:stats !important;
+  align-self:end !important;
+  justify-self:stretch !important;
+  width:calc(100% + 56px) !important;
+  height:48px !important;
+  min-height:48px !important;
+  margin:0 -28px !important;
+  padding:0 !important;
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:0 !important;
+  border-top:1px solid rgba(45,212,191,.18) !important;
+  background:rgba(2,6,23,.28) !important;
+  overflow:visible !important;
+  border-radius:0 0 18px 18px !important;
+}
+
+#softwareGrid .download-card .software-stats > span,
+.downloads-grid .download-card .software-stats > span{
+  min-width:0 !important;
+  height:48px !important;
+  margin:0 !important;
+  padding:0 10px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  color:#f8fafc !important;
+  font-size:14px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+}
+
+#softwareGrid .download-card .software-stats > span + span,
+.downloads-grid .download-card .software-stats > span + span{
+  border-left:1px solid rgba(148,163,184,.16) !important;
+}
+
+#softwareGrid .download-card .software-stats .stat-like,
+.downloads-grid .download-card .software-stats .stat-like{
+  display:none !important;
+}
+
+#softwareGrid .download-card .stat-download .stat-icon,
+.downloads-grid .download-card .stat-download .stat-icon,
+#softwareGrid .download-card .stat-download,
+.downloads-grid .download-card .stat-download{
+  color:#22c55e !important;
+}
+
+#softwareGrid .download-card .stat-rating,
+.downloads-grid .download-card .stat-rating{
+  color:#f8fafc !important;
+}
+
+#softwareGrid .download-card .software-rating-stars,
+.downloads-grid .download-card .software-rating-stars{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:0 !important;
+}
+
+#softwareGrid .download-card .software-rating-star,
+.downloads-grid .download-card .software-rating-star{
+  appearance:none !important;
+  border:0 !important;
+  background:transparent !important;
+  color:#475569 !important;
+  width:13px !important;
+  min-width:13px !important;
+  height:18px !important;
+  padding:0 !important;
+  margin:0 !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  cursor:pointer !important;
+}
+
+#softwareGrid .download-card .software-rating-star.is-filled,
+.downloads-grid .download-card .software-rating-star.is-filled,
+#softwareGrid .download-card .software-rating-stars:hover .software-rating-star,
+.downloads-grid .download-card .software-rating-stars:hover .software-rating-star{
+  color:#facc15 !important;
+}
+
+#softwareGrid .download-card .software-rating-stars .software-rating-star:hover ~ .software-rating-star,
+.downloads-grid .download-card .software-rating-stars .software-rating-star:hover ~ .software-rating-star{
+  color:#475569 !important;
+}
+
+#softwareGrid .download-card .software-rating-count,
+.downloads-grid .download-card .software-rating-count{
+  opacity:.78 !important;
+  font-size:12px !important;
+  margin-left:2px !important;
+}
+
+@media (max-width:640px){
+  #softwareGrid .download-card,
+  .downloads-grid .download-card{
+    height:455px !important;
+    min-height:455px !important;
+    max-height:455px !important;
+    padding-left:22px !important;
+    padding-right:22px !important;
+  }
+  #softwareGrid .download-card .software-stats,
+  .downloads-grid .download-card .software-stats{
+    width:calc(100% + 44px) !important;
+    margin-left:-22px !important;
+    margin-right:-22px !important;
+  }
+}
+</style>
+
+<script id="azobss-final-download-rating-card-fix-script">
+(function(){
+  function isPremiumCard(card){
+    const t=(card?.dataset?.type||'').toLowerCase();
+    const badge=(card?.querySelector('.software-badge,.badge')?.textContent||'').toLowerCase();
+    const btn=(card?.querySelector('.download-btn')?.textContent||'').toLowerCase();
+    return t==='premium' || badge.includes('premium') || badge.includes('pro') || btn.includes('buy') || btn.includes('cart');
+  }
+  function fixButton(card){
+    const btn=card.querySelector('.download-btn');
+    if(!btn) return;
+    const premium=isPremiumCard(card);
+    btn.classList.toggle('premium',premium);
+    btn.innerHTML = premium
+      ? '<span class="az-btn-icon" aria-hidden="true">🛒</span><span>Buy Now</span>'
+      : '<span class="az-btn-icon" aria-hidden="true">⬇</span><span>Download Now</span>';
+  }
+  function fixStats(card){
+    let box=card.querySelector('.software-stats');
+    if(!box){
+      box=document.createElement('div');
+      box.className='software-stats';
+      card.appendChild(box);
+    }
+    // Always place stats as the last child so grid-area:stats can sit at the bottom.
+    if(box.parentElement===card && box !== card.lastElementChild) card.appendChild(box);
+    box.querySelectorAll('.stat-like').forEach(el=>el.remove());
+    if(box.children.length>2){
+      Array.from(box.children).slice(2).forEach(el=>el.remove());
+    }
+  }
+  function fixAll(){
+    document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(card=>{
+      fixButton(card);
+      fixStats(card);
+    });
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    fixAll();
+    setTimeout(fixAll,100);
+    setTimeout(fixAll,500);
+    setTimeout(fixAll,1200);
+    const grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
+    if(grid){
+      new MutationObserver(function(){ setTimeout(fixAll,0); }).observe(grid,{childList:true,subtree:true});
+    }
+  });
+  document.addEventListener('click',function(){ setTimeout(fixAll,80); setTimeout(fixAll,600); },true);
+})();
+</script>
+
 </body>
 </html>

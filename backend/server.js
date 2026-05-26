@@ -32,37 +32,12 @@ const PREMIUM_TOKENS_FILE = path.join(DATA_DIR, "premium-download-tokens.json");
 const SOFTWARE_STATS_FILE = path.join(DATA_DIR, "software-stats.json");
 function cleanSoftwareId(value) { return String(value || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "software-item"; }
 function normalizeSoftwareStats(raw = {}) {
+  const ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
+  const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || 0)));
   const downloads = Math.max(0, Math.round(Number(raw.downloads || 0)));
   const likes = Math.max(0, Math.round(Number(raw.likes || 0)));
-  const ratings = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
-
-  if (raw.ratings && typeof raw.ratings === "object") {
-    for (let i = 1; i <= 5; i++) {
-      ratings[String(i)] = Math.max(0, Math.round(Number(raw.ratings[String(i)] || 0)));
-    }
-  } else {
-    const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
-    const ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
-    const fallbackAverage = ratingVotes
-      ? ratingTotal / ratingVotes
-      : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
-
-    if (ratingVotes > 0 && fallbackAverage > 0) {
-      const bucket = String(Math.max(1, Math.min(5, Math.round(fallbackAverage))));
-      ratings[bucket] = ratingVotes;
-    }
-  }
-
-  const ratingVotes = ratings["1"] + ratings["2"] + ratings["3"] + ratings["4"] + ratings["5"];
-  const ratingTotal =
-    1 * ratings["1"] +
-    2 * ratings["2"] +
-    3 * ratings["3"] +
-    4 * ratings["4"] +
-    5 * ratings["5"];
-  const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : 0;
-
-  return { downloads, likes, ratings, ratingTotal, ratingVotes, ratingAverage };
+  const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
+  return { downloads, likes, ratingTotal, ratingVotes, ratingAverage };
 }
 function readSoftwareStats() { return readPremiumJson(SOFTWARE_STATS_FILE, {}); }
 function writeSoftwareStats(stats) { writePremiumJson(SOFTWARE_STATS_FILE, stats || {}); }
@@ -271,16 +246,17 @@ app.post("/api/software-stats/like", (req, res) => {
 });
 
 app.post("/api/software-stats/rate", (req, res) => {
-  const rating = Math.max(1, Math.min(5, Math.round(Number(req.body?.rating || 0))));
+  const rating = Math.max(1, Math.min(5, Number(req.body?.rating || 0)));
   if (!rating) return res.status(400).json({ ok: false, error: "Invalid rating" });
   const stats = readSoftwareStats();
   const { key, item } = getSoftwareStatsItem(stats, req.body?.productId || req.body?.id || req.body?.name);
-  item.ratings = item.ratings || { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
-  item.ratings[String(rating)] = Math.max(0, Math.round(Number(item.ratings[String(rating)] || 0))) + 1;
-  stats[key] = normalizeSoftwareStats(item);
-  stats[key].updatedAt = new Date().toISOString();
+  item.ratingTotal = Math.max(0, Number(item.ratingTotal || 0)) + rating;
+  item.ratingVotes = Math.max(0, Number(item.ratingVotes || 0)) + 1;
+  item.ratingAverage = Math.round((item.ratingTotal / item.ratingVotes) * 10) / 10;
+  item.updatedAt = new Date().toISOString();
+  stats[key] = item;
   writeSoftwareStats(stats);
-  res.json({ ok: true, productId: key, stats: stats[key] });
+  res.json({ ok: true, productId: key, stats: item });
 });
 
 app.post("/api/software-stats/admin-set", requireAdmin, (req, res) => {
@@ -288,13 +264,15 @@ app.post("/api/software-stats/admin-set", requireAdmin, (req, res) => {
   const items = Array.isArray(req.body?.items) ? req.body.items : [];
   for (const raw of items) {
     const key = cleanSoftwareId(raw.productId || raw.id || raw.name);
+    const ratingAverage = Math.max(0, Math.min(5, Number(raw.ratingAverage ?? raw.rating ?? 0)));
+    const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
+    const ratingTotal = ratingVotes ? ratingAverage * ratingVotes : Number(raw.ratingTotal || 0);
     stats[key] = normalizeSoftwareStats({
       downloads: raw.downloads,
       likes: raw.likes,
-      ratings: raw.ratings,
-      ratingAverage: raw.ratingAverage ?? raw.rating,
-      ratingVotes: raw.ratingVotes || raw.votes,
-      ratingTotal: raw.ratingTotal
+      ratingAverage,
+      ratingVotes,
+      ratingTotal
     });
     stats[key].updatedAt = new Date().toISOString();
   }
