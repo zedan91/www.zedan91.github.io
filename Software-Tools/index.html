@@ -1303,6 +1303,69 @@ grid-template-columns:repeat(2,1fr)!important;
 .product-meta:hover{opacity:1 !important;}
 
 </style>
+<style>
+
+/* FINAL FIX: force software card title/category center */
+#softwareDownloadsGrid .download-card,
+.downloads-grid .download-card{
+  align-items:center !important;
+  text-align:center !important;
+}
+
+#softwareDownloadsGrid .download-card h3,
+.downloads-grid .download-card h3,
+#softwareDownloadsGrid .download-card .software-title,
+.downloads-grid .download-card .software-title{
+  width:100% !important;
+  max-width:100% !important;
+  min-height:58px !important;
+  margin:12px auto 8px !important;
+  padding:0 10px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.15 !important;
+  font-size:clamp(17px,1.4vw,22px) !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  white-space:normal !important;
+  text-wrap:balance !important;
+}
+
+#softwareDownloadsGrid .download-card h3.long-title,
+.downloads-grid .download-card h3.long-title,
+#softwareDownloadsGrid .download-card .software-title.long-title,
+.downloads-grid .download-card .software-title.long-title{
+  font-size:clamp(14px,1.1vw,18px) !important;
+  line-height:1.12 !important;
+}
+
+#softwareDownloadsGrid .software-meta,
+.downloads-grid .software-meta{
+  width:100% !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+  text-align:center !important;
+}
+
+#softwareDownloadsGrid .software-meta span,
+.downloads-grid .software-meta span{
+  text-align:center !important;
+}
+
+#softwareDownloadsGrid .download-card p,
+.downloads-grid .download-card p{
+  width:100% !important;
+  text-align:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2480,6 +2543,27 @@ document.addEventListener('DOMContentLoaded', function(){
   fitSoftwareTitles();
   new MutationObserver(fitSoftwareTitles).observe(document.getElementById('softwareDownloadsGrid') || document.body, {childList:true, subtree:true});
 });
+</script>
+
+
+<script>
+(function(){
+  function fitSoftwareTitles(){
+    document.querySelectorAll('#softwareDownloadsGrid .download-card h3, .downloads-grid .download-card h3, .software-title').forEach(function(el){
+      const text=(el.textContent||'').trim();
+      el.classList.toggle('long-title', text.length > 18);
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', fitSoftwareTitles);
+  }else{
+    fitSoftwareTitles();
+  }
+  const grid=document.getElementById('softwareDownloadsGrid');
+  if(grid){
+    new MutationObserver(fitSoftwareTitles).observe(grid,{childList:true,subtree:true});
+  }
+})();
 </script>
 
 </body>
