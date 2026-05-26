@@ -1549,7 +1549,9 @@ margin-top:10px!important;
       <div class="software-admin-row">
         <label>Software Type
           <select id="softwareAdminType">
-          </select>
+<option value="free">Free Software</option>
+<option value="premium">Premium Software</option>
+</select>
         </label>
         <label>Price / Badge
           <input id="softwareAdminPrice" type="text" placeholder="FREE or RM10" value="FREE">
@@ -2727,6 +2729,54 @@ document.addEventListener('DOMContentLoaded', function(){
     (androidBtn || macBtn.nextSibling) ? platformWrap.insertBefore(linuxBtn, androidBtn || macBtn.nextSibling) : platformWrap.appendChild(linuxBtn);
   }, 300);
 });
+</script>
+
+
+<script>
+(function(){
+  function repairSoftwareTypeSelect(){
+    const labels=[...document.querySelectorAll('label')];
+    let sel=document.getElementById('softwareType') || document.querySelector('select[name="softwareType"], select[name="type"], select[data-field="type"]');
+    if(!sel){
+      const label=labels.find(l => /software\s*type/i.test(l.textContent||''));
+      if(label){
+        sel=label.parentElement?.querySelector('select') || label.nextElementSibling;
+        if(!(sel && sel.tagName === 'SELECT')) sel=null;
+      }
+    }
+    if(!sel) return;
+    const current=(sel.value || sel.getAttribute('data-current-value') || '').toLowerCase();
+    sel.innerHTML='<option value="free">Free Software</option><option value="premium">Premium Software</option>';
+    sel.value = current === 'premium' ? 'premium' : 'free';
+  }
+
+  function syncTypeByPrice(){
+    const sel=document.getElementById('softwareType') || document.querySelector('select[name="softwareType"], select[name="type"], select[data-field="type"]');
+    const price=document.getElementById('softwarePrice') || document.querySelector('input[name="price"], input[name="badge"]');
+    const btn=document.getElementById('softwareButtonText') || document.querySelector('input[name="buttonText"]');
+    if(!sel) return;
+    if(sel.value === 'premium'){
+      if(btn && !/buy/i.test(btn.value || '')) btn.value='Buy Now';
+    }else{
+      if(btn && !/download/i.test(btn.value || '')) btn.value='Download Now';
+      if(price && /^(rm)?\s*0?$/i.test(price.value || '')) price.value='FREE';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', repairSoftwareTypeSelect);
+  document.addEventListener('click', function(e){
+    if(e.target.closest('.software-card-edit-btn,.edit-btn,[data-software-edit],[data-edit-id]')){
+      setTimeout(repairSoftwareTypeSelect, 120);
+      setTimeout(repairSoftwareTypeSelect, 500);
+    }
+  }, true);
+  document.addEventListener('change', function(e){
+    if(e.target && (e.target.id === 'softwareType' || e.target.name === 'softwareType' || e.target.name === 'type')){
+      syncTypeByPrice();
+    }
+  }, true);
+  new MutationObserver(repairSoftwareTypeSelect).observe(document.body,{childList:true,subtree:true});
+})();
 </script>
 
 </body>
