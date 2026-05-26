@@ -1459,6 +1459,100 @@ align-items:center !important;
 }
 </style>
 
+
+<style>
+/* Final card alignment: fixed title zone so every card starts content at same level */
+.download-card,
+.software-card{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  text-align:center !important;
+}
+
+.download-card h3,
+.download-card .software-title,
+.software-card h3,
+.software-card .software-title{
+  width:100% !important;
+  height:64px !important;
+  min-height:64px !important;
+  max-height:64px !important;
+  margin:10px auto 8px !important;
+  padding:0 10px !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  text-align:center !important;
+  line-height:1.15 !important;
+  font-size:20px !important;
+  font-weight:900 !important;
+
+  white-space:normal !important;
+  word-break:normal !important;
+  overflow-wrap:break-word !important;
+  overflow:hidden !important;
+}
+
+.download-card h3,
+.download-card .software-title{
+  text-wrap:balance;
+}
+
+/* metadata/badges fixed area */
+.download-card .software-meta,
+.software-card .software-meta{
+  width:100% !important;
+  min-height:46px !important;
+  margin:0 auto 12px !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  align-content:flex-start !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+  text-align:center !important;
+}
+
+/* description fixed rhythm */
+.download-card p,
+.software-card p{
+  width:100% !important;
+  min-height:72px !important;
+  margin:0 auto 14px !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.45 !important;
+}
+
+/* push action button near bottom for consistent card layout */
+.download-card .download-btn,
+.software-card .download-btn{
+  margin-top:auto !important;
+}
+
+/* small screens */
+@media(max-width:768px){
+  .download-card h3,
+  .download-card .software-title,
+  .software-card h3,
+  .software-card .software-title{
+    height:58px !important;
+    min-height:58px !important;
+    max-height:58px !important;
+    font-size:18px !important;
+  }
+  .download-card p,
+  .software-card p{
+    min-height:auto !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
