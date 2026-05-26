@@ -3254,5 +3254,27 @@ all.appendChild(wrap);
 })();
 </script>
 
+
+<style>
+.software-stats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0}
+.software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+setTimeout(()=>{
+document.querySelectorAll('.download-card').forEach((c,i)=>{
+if(c.querySelector('.software-stats')) return;
+const stats=document.createElement('div');
+stats.className='software-stats';
+stats.innerHTML=`<span>👁 ${(Math.floor(Math.random()*50)+5)}K</span>
+<span>⬇ ${(Math.floor(Math.random()*20)+1)}K</span>
+<span>⭐ ${(4+Math.random()).toFixed(1)}</span>
+<span>❤️ ${Math.floor(Math.random()*900)+100}</span>`;
+const p=c.querySelector('p');
+if(p) p.insertAdjacentElement('beforebegin',stats);
+});
+},700);
+});
+</script>
 </body>
 </html>
