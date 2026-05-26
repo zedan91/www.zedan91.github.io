@@ -1409,7 +1409,15 @@ margin-top:10px!important;
 }
 </style>
 
-<style>.software-platform-filter{display:flex;flex-wrap:wrap;align-items:center}.software-platform-right{margin-left:auto;display:flex;gap:10px}@media(max-width:768px){.software-platform-right{width:100%;justify-content:center;margin-left:0;margin-top:10px}}</style></head>
+<style>.software-platform-filter{display:flex;flex-wrap:wrap;align-items:center}.software-platform-right{margin-left:auto;display:flex;gap:10px}@media(max-width:768px){.software-platform-right{width:100%;justify-content:center;margin-left:0;margin-top:10px}}</style><style>
+/* Type filter buttons */
+[data-software-type].is-active{
+  background:linear-gradient(135deg,#16a34a,#22c55e) !important;
+  border-color:#22c55e !important;
+  color:#052e16 !important;
+}
+</style>
+</head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
@@ -1540,8 +1548,6 @@ margin-top:10px!important;
       <div class="software-admin-row">
         <label>Software Type
           <select id="softwareAdminType">
-            <option value="free">Free Software</option>
-            <option value="premium">Premium Software</option>
           </select>
         </label>
         <label>Price / Badge
@@ -1756,6 +1762,7 @@ margin-top:10px!important;
   const platformFilter = document.getElementById('softwarePlatformFilter');
   let selectedSoftwareCategory = 'all';
   let selectedSoftwarePlatform = 'all';
+  let selectedSoftwareType = 'all';
   let softwareDynamicItems = [];
   let editingSoftwareDocId = null;
   let editingSoftwareProductId = null;
@@ -2153,6 +2160,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(selectedSoftwarePlatform !== 'all'){
       dynamic = dynamic.filter(item => (item.platforms || ['Windows']).some(p => clean(p) === clean(selectedSoftwarePlatform)));
     }
+    if(selectedSoftwareType !== 'all'){
+      dynamic = dynamic.filter(item => String(item.type || 'free').toLowerCase() === selectedSoftwareType);
+    }
     if(sortMode === 'freeOnly'){
       dynamic = dynamic.filter(item => softwareTypeOf(item) === 'free');
     }
@@ -2280,6 +2290,15 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(!btn) return;
     selectedSoftwareCategory = btn.getAttribute('data-software-category') || 'all';
     categoryFilter.querySelectorAll('[data-software-category]').forEach(b => b.classList.toggle('is-active', b === btn));
+    applySoftwareFilters();
+  });
+
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-software-type]');
+    if(!btn) return;
+    selectedSoftwareType = btn.getAttribute('data-software-type') || 'all';
+    document.querySelectorAll('[data-software-type]').forEach(b => b.classList.toggle('is-active', b === btn));
     applySoftwareFilters();
   });
 
