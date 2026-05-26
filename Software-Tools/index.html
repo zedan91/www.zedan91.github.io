@@ -877,8 +877,12 @@ width:fit-content !important;
 .software-admin-toolbar{max-width:1180px;margin:0 auto 18px;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
 .software-admin-add-btn{border:1px solid rgba(34,197,94,.55);background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(34,197,94,.20);}
 .software-admin-add-btn:hover{transform:translateY(-1px);filter:brightness(1.05);} 
-.software-admin-import-btn,.software-admin-export-btn,.software-admin-apply-btn{border:1px solid rgba(96,165,250,.42);background:rgba(15,23,42,.95);color:#dbeafe;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.software-admin-import-btn,.software-admin-export-btn,.software-admin-stats-btn{border:1px solid rgba(245,158,11,.45);background:linear-gradient(135deg,#f59e0b,#eab308);color:#111827;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.20);}
+.software-admin-stats-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
+.software-admin-apply-btn{border:1px solid rgba(96,165,250,.42);background:rgba(15,23,42,.95);color:#dbeafe;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
 .software-admin-import-btn:hover,.software-admin-export-btn:hover,.software-admin-apply-btn:hover{border-color:rgba(34,197,94,.55);color:#86efac;transform:translateY(-1px);}
+.software-admin-stats-btn{border:1px solid rgba(245,158,11,.45);background:linear-gradient(135deg,#f59e0b,#eab308);color:#111827;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.20);}
+.software-admin-stats-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
 .software-admin-apply-btn{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:rgba(96,165,250,.65);}
 .software-admin-apply-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.25);}
 .software-admin-json-status{font-size:12px;font-weight:800;color:#93c5fd;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} 
@@ -921,7 +925,9 @@ width:fit-content !important;
 .software-admin-cancel{background:#334155;color:#e2e8f0;}
 .software-admin-save{background:#22c55e;color:#052e16;}
 .software-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
-@media(max-width:640px){.software-admin-row,.software-admin-checks{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center;flex-wrap:wrap}.software-admin-add-btn,.software-admin-import-btn,.software-admin-export-btn,.software-admin-apply-btn{width:100%;}.software-admin-json-status{max-width:100%;text-align:center;}}
+@media(max-width:640px){.software-admin-row,.software-admin-checks{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center;flex-wrap:wrap}.software-admin-add-btn,.software-admin-import-btn,.software-admin-export-btn,.software-admin-stats-btn{border:1px solid rgba(245,158,11,.45);background:linear-gradient(135deg,#f59e0b,#eab308);color:#111827;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.20);}
+.software-admin-stats-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
+.software-admin-apply-btn{width:100%;}.software-admin-json-status{max-width:100%;text-align:center;}}
 </style>
 
 <style id="azobss-premium-flow-style">
@@ -1873,6 +1879,7 @@ margin-top:auto!important;
   <button class="software-admin-import-btn" id="softwareImportJsonButton" type="button" hidden>Import JSON</button>
   <button class="software-admin-export-btn" id="softwareExportJsonButton" type="button" hidden>Export JSON</button>
   <button class="software-admin-apply-btn" id="softwareApplyJsonButton" type="button" hidden disabled>Apply Import</button>
+  <button class="software-admin-stats-btn" id="softwareStatsRefreshButton" type="button" hidden>↻ Refresh Stats</button>
   <input id="softwareImportJsonFile" type="file" accept="application/json,.json" hidden>
   <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span>
 </div>
@@ -1883,7 +1890,9 @@ margin-top:auto!important;
   <label>Sort by
     <select id="softwareSortSelect">
       <option value="newest">Newest item</option>
-      
+      <option value="downloads">Most Download</option>
+      <option value="rating">Highest Rating</option>
+      <option value="likes">Most Likes</option>
       <option value="nameAZ">Name A-Z</option>
       <option value="nameZA">Name Z-A</option>
     </select>
@@ -1991,6 +2000,17 @@ margin-top:auto!important;
         </label>
       </div>
       <div class="software-admin-row">
+        <label>Manual Downloads
+          <input id="softwareAdminDownloads" type="number" min="0" step="1" placeholder="Example: 12540">
+        </label>
+        <label>Manual Rating
+          <input id="softwareAdminRating" type="number" min="0" max="5" step="0.1" placeholder="Example: 4.8">
+        </label>
+      </div>
+      <div class="software-admin-row">
+        <label>Manual Likes
+          <input id="softwareAdminLikes" type="number" min="0" step="1" placeholder="Example: 892">
+        </label>
         <label>Download Limit
           <input id="softwareAdminDownloadLimit" type="number" min="1" max="20" value="3">
         </label>
@@ -2118,12 +2138,14 @@ margin-top:auto!important;
   const SOFTWARE_COLLECTION = 'softwareTools';
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
+  const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v1';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
   const importJsonButton = document.getElementById('softwareImportJsonButton');
   const exportJsonButton = document.getElementById('softwareExportJsonButton');
   const applyJsonButton = document.getElementById('softwareApplyJsonButton');
+  const statsRefreshButton = document.getElementById('softwareStatsRefreshButton');
   const importJsonFile = document.getElementById('softwareImportJsonFile');
   const softwareJsonStatus = document.getElementById('softwareJsonStatus');
   const modal = document.getElementById('softwareAdminModal');
@@ -2145,6 +2167,9 @@ margin-top:auto!important;
   const gifFileInput = document.getElementById('softwareAdminGifFile');
   const mediaPreview = document.getElementById('softwareAdminMediaPreview');
   const productIdInput = document.getElementById('softwareAdminProductId');
+  const downloadsInput = document.getElementById('softwareAdminDownloads');
+  const ratingInput = document.getElementById('softwareAdminRating');
+  const likesInput = document.getElementById('softwareAdminLikes');
   const statusInput = document.getElementById('softwareAdminStatus');
   const versionInput = document.getElementById('softwareAdminVersion');
   const fileSizeInput = document.getElementById('softwareAdminFileSize');
@@ -2287,6 +2312,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       gifUrl: item.gifUrl || item.gif || '',
       demoVideoUrl: item.demoVideoUrl || '',
       buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
+      downloads: Number(item.downloads || 0),
+      rating: Number(item.rating || 0),
+      likes: Number(item.likes || 0),
       createdAtMs: item.createdAtMs || (item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : (Number(item.createdAt) || 0)))
     };
   }
@@ -2314,6 +2342,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       secureDownloadLink: n.secureDownloadLink,
       imageUrl: n.imageUrl,
       gifUrl: n.gifUrl,
+      downloads: Number(n.downloads || 0),
+      rating: Number(n.rating || 0),
+      likes: Number(n.likes || 0),
       createdAtMs: n.createdAtMs || Date.now()
     };
   }
@@ -2342,6 +2373,73 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 800);
   }
+  function readSoftwareStats(){
+    try { return JSON.parse(localStorage.getItem(SOFTWARE_STATS_KEY) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+  function saveSoftwareStats(stats){
+    localStorage.setItem(SOFTWARE_STATS_KEY, JSON.stringify(stats || {}));
+  }
+  function statsKeyFrom(value){
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';
+  }
+  function seededNumber(seed){
+    let h = 2166136261;
+    String(seed || 'azobss').split('').forEach(ch => { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); });
+    return Math.abs(h >>> 0);
+  }
+  function defaultSoftwareStats(name, category){
+    const seed = seededNumber(String(name || '') + '|' + String(category || ''));
+    const downloads = 800 + (seed % 65000);
+    const likes = 35 + ((seed >>> 5) % 6400);
+    const rating = Number((4.1 + ((seed >>> 11) % 9) / 10).toFixed(1));
+    return {downloads, rating: Math.min(5, rating), likes};
+  }
+  function normalizeStats(raw, fallbackName, fallbackCategory){
+    const fallback = defaultSoftwareStats(fallbackName, fallbackCategory);
+    const downloads = Number(raw?.downloads || 0) || fallback.downloads;
+    const rating = Number(raw?.rating || 0) || fallback.rating;
+    const likes = Number(raw?.likes || 0) || fallback.likes;
+    return {downloads: Math.max(0, Math.round(downloads)), rating: Math.max(0, Math.min(5, Number(rating.toFixed ? rating.toFixed(1) : rating))), likes: Math.max(0, Math.round(likes))};
+  }
+  function statsForItem(item){
+    const stats = readSoftwareStats();
+    const key = statsKeyFrom(item?.productId || item?.id || item?.name);
+    return normalizeStats(stats[key] || item || {}, item?.name, item?.category);
+  }
+  function statsForCard(card){
+    const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'Software Item';
+    const key = statsKeyFrom(card?.dataset.productId || card?.dataset.name || name);
+    const stats = readSoftwareStats();
+    return normalizeStats(stats[key] || {downloads:card?.dataset.downloads, rating:card?.dataset.rating, likes:card?.dataset.likes}, name, card?.dataset.category || 'General Tools');
+  }
+  function applyStatsToCard(card){
+    if(!card) return;
+    const st = statsForCard(card);
+    card.dataset.downloads = String(st.downloads);
+    card.dataset.rating = String(st.rating);
+    card.dataset.likes = String(st.likes);
+  }
+  function refreshManualSoftwareStats(){
+    if(!isAdmin()) return alert('Admin only.');
+    const stats = readSoftwareStats();
+    getStaticCards().forEach(card => {
+      const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'Software Item';
+      const key = statsKeyFrom(staticProductId(card) || name);
+      stats[key] = defaultSoftwareStats(name, card?.dataset.category || 'General Tools');
+      card.dataset.downloads = String(stats[key].downloads);
+      card.dataset.rating = String(stats[key].rating);
+      card.dataset.likes = String(stats[key].likes);
+    });
+    softwareDynamicItems.forEach(item => {
+      const key = statsKeyFrom(item.productId || item.id || item.name);
+      stats[key] = normalizeStats(item, item.name, item.category);
+    });
+    saveSoftwareStats(stats);
+    applySoftwareFilters();
+    setJsonStatus('Static stats refreshed: downloads, rating and likes updated locally. Export JSON if you want to keep/push the values.');
+  }
+
   function normalizeImportedSoftwarePayload(payload){
     const raw = Array.isArray(payload) ? payload : (Array.isArray(payload?.items) ? payload.items : (Array.isArray(payload?.softwareTools) ? payload.softwareTools : []));
     return raw.map(item => sanitizeSoftwareItemForJson(item)).filter(item => item.name && item.productId);
@@ -2387,7 +2485,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const productIdMeta = item.productId ? `<div class="product-meta">ID: ${esc(item.productId)}</div>` : '';
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title='Delete'>🗑️</button></div>` : '';
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
       <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
@@ -2486,6 +2584,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       downloadLink: firstBtn?.getAttribute('href') || '',
       link: firstBtn?.getAttribute('href') || '',
       platforms: String(card?.dataset.platforms || 'Windows').split('|').filter(Boolean),
+      downloads: statsForCard(card).downloads,
+      rating: statsForCard(card).rating,
+      likes: statsForCard(card).likes,
       createdAtMs: Number(card?.dataset.created || 0)
     });
   }
@@ -2534,6 +2635,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(['premium','premiumSoftwareFirst','premiumfirst'].includes(sortMode.toLowerCase())) sortMode = 'premiumOnly';
     if(['az','nameAsc','nameaz'].includes(sortMode.toLowerCase())) sortMode = 'nameAZ';
     if(['za','nameDesc','nameza'].includes(sortMode.toLowerCase())) sortMode = 'nameZA';
+    if(['mostdownload','downloads','download','mostdownloads'].includes(sortMode.toLowerCase())) sortMode = 'downloads';
+    if(['highestrating','rating','ratings'].includes(sortMode.toLowerCase())) sortMode = 'rating';
+    if(['mostlikes','likes','like'].includes(sortMode.toLowerCase())) sortMode = 'likes';
 
     const softwareTypeOf = itemOrCard => {
       if(!itemOrCard) return 'free';
@@ -2589,6 +2693,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       if(sortMode === 'premiumOnly') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'nameAZ') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'nameZA') return String(b.name).localeCompare(String(a.name));
+      if(sortMode === 'downloads') return statsForItem(b).downloads - statsForItem(a).downloads || String(a.name).localeCompare(String(b.name));
+      if(sortMode === 'rating') return statsForItem(b).rating - statsForItem(a).rating || statsForItem(b).downloads - statsForItem(a).downloads;
+      if(sortMode === 'likes') return statsForItem(b).likes - statsForItem(a).likes || String(a.name).localeCompare(String(b.name));
       return (b.createdAtMs || 0) - (a.createdAtMs || 0);
     });
 
@@ -2598,6 +2705,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 
     // Sort static cards visually too, so dropdown affects ALL cards, not only Firebase/admin items.
     const staticTypeRank = card => String(card.dataset.type || 'free').toLowerCase() === 'premium' ? 1 : 0;
+    staticCards.forEach(applyStatsToCard);
     const sortedStatic = staticCards.slice().sort((a,b) => {
       const an = String(a.dataset.name || a.querySelector('h3')?.textContent || '').toLowerCase();
       const bn = String(b.dataset.name || b.querySelector('h3')?.textContent || '').toLowerCase();
@@ -2607,6 +2715,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       if(sortMode === 'premiumOnly') return an.localeCompare(bn);
       if(sortMode === 'nameAZ') return an.localeCompare(bn);
       if(sortMode === 'nameZA') return bn.localeCompare(an);
+      if(sortMode === 'downloads') return statsForCard(b).downloads - statsForCard(a).downloads || an.localeCompare(bn);
+      if(sortMode === 'rating') return statsForCard(b).rating - statsForCard(a).rating || statsForCard(b).downloads - statsForCard(a).downloads;
+      if(sortMode === 'likes') return statsForCard(b).likes - statsForCard(a).likes || an.localeCompare(bn);
       return bc - ac || an.localeCompare(bn);
     });
     sortedStatic.forEach(card => grid.appendChild(card));
@@ -2628,6 +2739,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(importJsonButton) importJsonButton.hidden = !admin;
     if(exportJsonButton) exportJsonButton.hidden = !admin;
     if(applyJsonButton) applyJsonButton.hidden = !admin;
+    if(statsRefreshButton) statsRefreshButton.hidden = !admin;
     if(softwareJsonStatus && !admin) softwareJsonStatus.hidden = true;
     syncStaticAdminButtons();
   }
@@ -2673,6 +2785,10 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(secureDownloadInput) secureDownloadInput.value = item?.secureDownloadLink || '';
     if(imageUrlInput) imageUrlInput.value = item?.imageUrl || '';
     if(gifUrlInput) gifUrlInput.value = item?.gifUrl || '';
+    const st = item ? statsForItem(item) : {downloads:'', rating:'', likes:''};
+    if(downloadsInput) downloadsInput.value = st.downloads || '';
+    if(ratingInput) ratingInput.value = st.rating || '';
+    if(likesInput) likesInput.value = st.likes || '';
     syncTypeDefaults();
     updateMediaPreview();
     modal?.classList.add('is-open');
@@ -2821,6 +2937,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     }
   });
 
+  statsRefreshButton?.addEventListener('click', refreshManualSoftwareStats);
   addButton?.addEventListener('click', () => openModal());
   document.getElementById('softwareAdminClose')?.addEventListener('click', closeModal);
   document.getElementById('softwareAdminCancel')?.addEventListener('click', closeModal);
@@ -2865,6 +2982,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       paymentLink: paymentLinkInput?.value.trim(),
       stripeLink: stripeLinkInput?.value.trim(),
       secureDownloadLink: secureDownloadInput?.value.trim(),
+      downloads: Number(downloadsInput?.value || 0),
+      rating: Number(ratingInput?.value || 0),
+      likes: Number(likesInput?.value || 0),
       link: (typeSelect.value === 'premium' ? (paymentLinkInput?.value.trim() || stripeLinkInput?.value.trim()) : downloadLinkInput?.value.trim())
     });
     const oldEditProductId = editingSoftwareProductId ? String(editingSoftwareProductId) : '';
