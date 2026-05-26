@@ -6,6 +6,32 @@ const path = require("path");
 const http = require("http");
 const url = require("url");
 
+// =========================
+// SOFTWARE STATS JSON HELPERS
+// =========================
+const SOFTWARE_STATS_FILE = path.join(__dirname, "backend", "data", "software-stats.json");
+function cleanSoftwareId(value) { return String(value || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "software-item"; }
+function normalizeSoftwareStats(raw = {}) {
+  const ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
+  const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || 0)));
+  const downloads = Math.max(0, Math.round(Number(raw.downloads || 0)));
+  const likes = Math.max(0, Math.round(Number(raw.likes || 0)));
+  const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
+  return { downloads, likes, ratingTotal, ratingVotes, ratingAverage };
+}
+function readSoftwareStats() {
+  try { if (!fs.existsSync(SOFTWARE_STATS_FILE)) return {}; return JSON.parse(fs.readFileSync(SOFTWARE_STATS_FILE, "utf8")); } catch { return {}; }
+}
+function writeSoftwareStats(stats) {
+  fs.mkdirSync(path.dirname(SOFTWARE_STATS_FILE), { recursive: true });
+  fs.writeFileSync(SOFTWARE_STATS_FILE, JSON.stringify(stats || {}, null, 2), "utf8");
+}
+function softwareStatsPayload(stats) {
+  const normalized = {};
+  Object.entries(stats || {}).forEach(([key, value]) => normalized[cleanSoftwareId(key)] = normalizeSoftwareStats(value));
+  return normalized;
+}
+
 const sharp = require("sharp");
 const PDFDocument = require("pdfkit");
 
@@ -905,6 +931,73 @@ async function handler(req, res) {
 
     if (req.method === "OPTIONS") {
       return send(res, 204, "");
+    }
+
+
+    // =========================
+    // SOFTWARE STATS BACKEND SYNC
+    // =========================
+    if (pathname === "/api/software-stats" && req.method === "GET") {
+      const normalized = softwareStatsPayload(readSoftwareStats());
+      writeSoftwareStats(normalized);
+      return send(res, 200, JSON.stringify({ ok: true, stats: normalized, updatedAt: new Date().toISOString() }, null, 2), "application/json");
+    }
+
+    if (pathname === "/api/software-stats/download" && req.method === "POST") {
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const key = cleanSoftwareId(body.productId || body.id || body.name);
+      const stats = readSoftwareStats();
+      const item = normalizeSoftwareStats(stats[key] || {});
+      item.downloads += 1;
+      item.updatedAt = new Date().toISOString();
+      stats[key] = item;
+      writeSoftwareStats(stats);
+      return send(res, 200, JSON.stringify({ ok: true, productId: key, stats: item }, null, 2), "application/json");
+    }
+
+    if (pathname === "/api/software-stats/like" && req.method === "POST") {
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const key = cleanSoftwareId(body.productId || body.id || body.name);
+      const delta = Number(body.delta || 1) < 0 ? -1 : 1;
+      const stats = readSoftwareStats();
+      const item = normalizeSoftwareStats(stats[key] || {});
+      item.likes = Math.max(0, item.likes + delta);
+      item.updatedAt = new Date().toISOString();
+      stats[key] = item;
+      writeSoftwareStats(stats);
+      return send(res, 200, JSON.stringify({ ok: true, productId: key, stats: item }, null, 2), "application/json");
+    }
+
+    if (pathname === "/api/software-stats/rate" && req.method === "POST") {
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const rating = Math.max(1, Math.min(5, Number(body.rating || 0)));
+      if (!rating) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid rating" }), "application/json");
+      const key = cleanSoftwareId(body.productId || body.id || body.name);
+      const stats = readSoftwareStats();
+      const item = normalizeSoftwareStats(stats[key] || {});
+      item.ratingTotal = Math.max(0, Number(item.ratingTotal || 0)) + rating;
+      item.ratingVotes = Math.max(0, Number(item.ratingVotes || 0)) + 1;
+      item.ratingAverage = Math.round((item.ratingTotal / item.ratingVotes) * 10) / 10;
+      item.updatedAt = new Date().toISOString();
+      stats[key] = item;
+      writeSoftwareStats(stats);
+      return send(res, 200, JSON.stringify({ ok: true, productId: key, stats: item }, null, 2), "application/json");
+    }
+
+    if (pathname === "/api/software-stats/admin-set" && req.method === "POST") {
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const stats = readSoftwareStats();
+      const items = Array.isArray(body.items) ? body.items : [];
+      for (const raw of items) {
+        const key = cleanSoftwareId(raw.productId || raw.id || raw.name);
+        const ratingAverage = Math.max(0, Math.min(5, Number(raw.ratingAverage ?? raw.rating ?? 0)));
+        const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
+        const ratingTotal = ratingVotes ? ratingAverage * ratingVotes : Number(raw.ratingTotal || 0);
+        stats[key] = normalizeSoftwareStats({ downloads: raw.downloads, likes: raw.likes, ratingAverage, ratingVotes, ratingTotal });
+        stats[key].updatedAt = new Date().toISOString();
+      }
+      writeSoftwareStats(stats);
+      return send(res, 200, JSON.stringify({ ok: true, stats }, null, 2), "application/json");
     }
 
     // =========================

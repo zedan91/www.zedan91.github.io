@@ -29,6 +29,23 @@ fs.mkdirSync(path.join(UPLOAD_DIR, "lucky-draw"), { recursive: true });
 
 const PREMIUM_ORDERS_FILE = path.join(DATA_DIR, "premium-orders.json");
 const PREMIUM_TOKENS_FILE = path.join(DATA_DIR, "premium-download-tokens.json");
+const SOFTWARE_STATS_FILE = path.join(DATA_DIR, "software-stats.json");
+function cleanSoftwareId(value) { return String(value || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "software-item"; }
+function normalizeSoftwareStats(raw = {}) {
+  const ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
+  const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || 0)));
+  const downloads = Math.max(0, Math.round(Number(raw.downloads || 0)));
+  const likes = Math.max(0, Math.round(Number(raw.likes || 0)));
+  const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
+  return { downloads, likes, ratingTotal, ratingVotes, ratingAverage };
+}
+function readSoftwareStats() { return readPremiumJson(SOFTWARE_STATS_FILE, {}); }
+function writeSoftwareStats(stats) { writePremiumJson(SOFTWARE_STATS_FILE, stats || {}); }
+function getSoftwareStatsItem(stats, productId) {
+  const key = cleanSoftwareId(productId);
+  stats[key] = normalizeSoftwareStats(stats[key] || {});
+  return { key, item: stats[key] };
+}
 function readPremiumJson(file, fallback) { try { if (!fs.existsSync(file)) return fallback; return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; } }
 function writePremiumJson(file, data) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8"); }
 function makePremiumId(prefix = "az") { return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`; }
@@ -190,6 +207,77 @@ app.get("/api/premium/receipt/:orderId", (req, res) => {
   const order = orders.find(o => o.orderId === req.params.orderId);
   if (!order) return res.status(404).send("Receipt not found");
   res.type("html").send(buildReceiptHtml(order));
+});
+
+
+// =========================
+// SOFTWARE STATS BACKEND SYNC
+// Stored in backend/data/software-stats.json
+// =========================
+app.get("/api/software-stats", (req, res) => {
+  const stats = readSoftwareStats();
+  const normalized = {};
+  Object.entries(stats).forEach(([key, value]) => {
+    normalized[cleanSoftwareId(key)] = normalizeSoftwareStats(value);
+  });
+  writeSoftwareStats(normalized);
+  res.json({ ok: true, stats: normalized, updatedAt: new Date().toISOString() });
+});
+
+app.post("/api/software-stats/download", (req, res) => {
+  const stats = readSoftwareStats();
+  const { key, item } = getSoftwareStatsItem(stats, req.body?.productId || req.body?.id || req.body?.name);
+  item.downloads += 1;
+  item.updatedAt = new Date().toISOString();
+  stats[key] = item;
+  writeSoftwareStats(stats);
+  res.json({ ok: true, productId: key, stats: item });
+});
+
+app.post("/api/software-stats/like", (req, res) => {
+  const stats = readSoftwareStats();
+  const { key, item } = getSoftwareStatsItem(stats, req.body?.productId || req.body?.id || req.body?.name);
+  const delta = Number(req.body?.delta || 1) < 0 ? -1 : 1;
+  item.likes = Math.max(0, item.likes + delta);
+  item.updatedAt = new Date().toISOString();
+  stats[key] = item;
+  writeSoftwareStats(stats);
+  res.json({ ok: true, productId: key, stats: item });
+});
+
+app.post("/api/software-stats/rate", (req, res) => {
+  const rating = Math.max(1, Math.min(5, Number(req.body?.rating || 0)));
+  if (!rating) return res.status(400).json({ ok: false, error: "Invalid rating" });
+  const stats = readSoftwareStats();
+  const { key, item } = getSoftwareStatsItem(stats, req.body?.productId || req.body?.id || req.body?.name);
+  item.ratingTotal = Math.max(0, Number(item.ratingTotal || 0)) + rating;
+  item.ratingVotes = Math.max(0, Number(item.ratingVotes || 0)) + 1;
+  item.ratingAverage = Math.round((item.ratingTotal / item.ratingVotes) * 10) / 10;
+  item.updatedAt = new Date().toISOString();
+  stats[key] = item;
+  writeSoftwareStats(stats);
+  res.json({ ok: true, productId: key, stats: item });
+});
+
+app.post("/api/software-stats/admin-set", requireAdmin, (req, res) => {
+  const stats = readSoftwareStats();
+  const items = Array.isArray(req.body?.items) ? req.body.items : [];
+  for (const raw of items) {
+    const key = cleanSoftwareId(raw.productId || raw.id || raw.name);
+    const ratingAverage = Math.max(0, Math.min(5, Number(raw.ratingAverage ?? raw.rating ?? 0)));
+    const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
+    const ratingTotal = ratingVotes ? ratingAverage * ratingVotes : Number(raw.ratingTotal || 0);
+    stats[key] = normalizeSoftwareStats({
+      downloads: raw.downloads,
+      likes: raw.likes,
+      ratingAverage,
+      ratingVotes,
+      ratingTotal
+    });
+    stats[key].updatedAt = new Date().toISOString();
+  }
+  writeSoftwareStats(stats);
+  res.json({ ok: true, stats });
 });
 
 app.get("/api/lucky-draw/prize", (req, res) => {
