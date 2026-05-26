@@ -182,3 +182,6 @@ img{max-width:100%;}
   transform:none !important;
 }
 
+
+/* v29 clean fixes */
+.service-card::before,.service-card::after,.home-service-card::before,.home-service-card::after,.category-card::before,.category-card::after{animation:none!important;filter:none!important;box-shadow:none!important;}

@@ -1286,98 +1286,12 @@ grid-template-columns:repeat(2,1fr)!important;
 }
 
 </style>
-<style>
 
-/* Product ID below Download/Buy button */
-.product-meta{
-  width:100%;
-  margin:8px auto 0 !important;
-  text-align:center !important;
-  font-size:10px !important;
-  color:#7d8698 !important;
-  opacity:.72 !important;
-  letter-spacing:.5px !important;
-  font-weight:500 !important;
-  line-height:1.2 !important;
-}
-.product-meta:hover{opacity:1 !important;}
 
-</style>
-<style>
 
-/* FINAL FIX: force software card title/category center */
-#softwareDownloadsGrid .download-card,
-.downloads-grid .download-card{
-  align-items:center !important;
-  text-align:center !important;
-}
 
-#softwareDownloadsGrid .download-card h3,
-.downloads-grid .download-card h3,
-#softwareDownloadsGrid .download-card .software-title,
-.downloads-grid .download-card .software-title{
-  width:100% !important;
-  max-width:100% !important;
-  min-height:58px !important;
-  margin:12px auto 8px !important;
-  padding:0 10px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-  line-height:1.15 !important;
-  font-size:clamp(17px,1.4vw,22px) !important;
-  overflow-wrap:break-word !important;
-  word-break:normal !important;
-  white-space:normal !important;
-  text-wrap:balance !important;
-}
 
-#softwareDownloadsGrid .download-card h3.long-title,
-.downloads-grid .download-card h3.long-title,
-#softwareDownloadsGrid .download-card .software-title.long-title,
-.downloads-grid .download-card .software-title.long-title{
-  font-size:clamp(14px,1.1vw,18px) !important;
-  line-height:1.12 !important;
-}
 
-#softwareDownloadsGrid .software-meta,
-.downloads-grid .software-meta{
-  width:100% !important;
-  display:flex !important;
-  justify-content:center !important;
-  align-items:center !important;
-  flex-wrap:wrap !important;
-  gap:6px !important;
-  text-align:center !important;
-}
-
-#softwareDownloadsGrid .software-meta span,
-.downloads-grid .software-meta span{
-  text-align:center !important;
-}
-
-#softwareDownloadsGrid .download-card p,
-.downloads-grid .download-card p{
-  width:100% !important;
-  text-align:center !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-}
-
-</style>
-<style>
-
-/* Product ID is admin-only */
-.product-meta{
-  display:none !important;
-}
-body.azobss-admin-mode .product-meta,
-html.azobss-admin-mode .product-meta{
-  display:block !important;
-}
-
-</style>
 
 <style>
 .platform-filter-wrap{
@@ -1417,57 +1331,102 @@ margin-top:10px!important;
   color:#052e16 !important;
 }
 </style>
-<style>
 
-/* Performance fix: remove heavy shining/glow effect on service cards */
+
+
+<style>
+/* v29 clean fixes: lightweight UI, no runtime observers */
 .service-card::before,
 .service-card::after,
 .home-service-card::before,
 .home-service-card::after,
 .category-card::before,
-.category-card::after,
-.card::before,
-.card::after{
+.category-card::after{
   animation:none !important;
   transition:none !important;
   filter:none !important;
   box-shadow:none !important;
 }
 
-/* Only hovered service card expands slightly; other cards stay normal */
 .service-card,
 .home-service-card,
 .category-card{
-  transition:transform .18s ease, border-color .18s ease, background .18s ease !important;
+  transition:transform .16s ease, border-color .16s ease !important;
   transform:none !important;
 }
 
 .service-card:hover,
 .home-service-card:hover,
 .category-card:hover{
-  transform:translateY(-4px) scale(1.02) !important;
+  transform:translateY(-3px) scale(1.015) !important;
   z-index:5 !important;
 }
 
-/* Prevent neighbouring cards from expanding because of parent hover */
 .services-grid:hover .service-card:not(:hover),
 .services-grid:hover .home-service-card:not(:hover),
-.services-grid:hover .category-card:not(:hover),
-.service-grid:hover .service-card:not(:hover),
-.cards-grid:hover .service-card:not(:hover){
+.services-grid:hover .category-card:not(:hover){
   transform:none !important;
   filter:none !important;
   opacity:1 !important;
 }
 
-/* Disable global hover scaling that affects multiple cards */
-.services-grid:hover,
-.service-grid:hover,
-.cards-grid:hover{
-  transform:none !important;
+.product-meta{
+  display:none !important;
 }
 
+body.is-admin .product-meta,
+body.admin .product-meta,
+html.is-admin .product-meta,
+html.admin .product-meta{
+  display:block !important;
+}
+
+.nav-notification,
+.notification-btn,
+.notification-icon,
+.bell-icon,
+[data-nav="notification"],
+[aria-label*="notification" i],
+[title*="notification" i]{
+  display:none !important;
+}
 </style>
+
+
+<style>
+#softwareDownloadsGrid .download-card,
+.downloads-grid .download-card{
+  align-items:center !important;
+  text-align:center !important;
+}
+#softwareDownloadsGrid .download-card h3,
+.downloads-grid .download-card h3,
+#softwareDownloadsGrid .download-card .software-title,
+.downloads-grid .download-card .software-title{
+  width:100% !important;
+  text-align:center !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  line-height:1.15 !important;
+  overflow-wrap:break-word !important;
+  white-space:normal !important;
+}
+#softwareDownloadsGrid .software-meta,
+.downloads-grid .software-meta{
+  width:100% !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
+</style>
+
+
+<style>
+.cart-count-badge,.azobss-cart-count,.cart-btn,.buy-cart-wrap .cart-btn{
+  display:none !important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2647,63 +2606,16 @@ document.addEventListener("click", function(e){
 }, true);
 </script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-  function fitSoftwareTitles(){
-    document.querySelectorAll('#softwareDownloadsGrid .download-card h3').forEach(function(title){
-      const text = (title.textContent || '').trim();
-      title.classList.toggle('long-title', text.length >= 18);
-    });
-  }
-  fitSoftwareTitles();
-  new MutationObserver(fitSoftwareTitles).observe(document.getElementById('softwareDownloadsGrid') || document.body, {childList:true, subtree:true});
-});
-</script>
 
 
-<script>
-(function(){
-  function fitSoftwareTitles(){
-    document.querySelectorAll('#softwareDownloadsGrid .download-card h3, .downloads-grid .download-card h3, .software-title').forEach(function(el){
-      const text=(el.textContent||'').trim();
-      el.classList.toggle('long-title', text.length > 18);
-    });
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', fitSoftwareTitles);
-  }else{
-    fitSoftwareTitles();
-  }
-  const grid=document.getElementById('softwareDownloadsGrid');
-  if(grid){
-    new MutationObserver(fitSoftwareTitles).observe(grid,{childList:true,subtree:true});
-  }
-})();
-</script>
 
 
-<script>
-(function(){
-  function azobssSyncAdminProductMeta(){
-    let isAdmin = false;
-    try{
-      const u = JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null') || {};
-      const email = String(u.email || u.authEmail || '').toLowerCase();
-      const username = String(u.username || u.usernameKey || '').toLowerCase();
-      isAdmin = email === 'zedan91@azobss.local' || username === 'zedan91' || u.role === 'admin' || u.isAdmin === true;
-    }catch(e){}
-    document.body.classList.toggle('azobss-admin-mode', !!isAdmin);
-    document.documentElement.classList.toggle('azobss-admin-mode', !!isAdmin);
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', azobssSyncAdminProductMeta);
-  }else{
-    azobssSyncAdminProductMeta();
-  }
-  window.addEventListener('storage', azobssSyncAdminProductMeta);
-  setInterval(azobssSyncAdminProductMeta, 1500);
-})();
-</script>
+
+
+
+
+
+
 
 
 
@@ -2753,82 +2665,16 @@ all.appendChild(wrap);
 
 
 
-<script>
-try{
-  // Cart temporarily disabled to prevent page loading issue.
-  // localStorage cart data is cleared safely.
-  localStorage.removeItem('azobssCartItemsV1');
-  localStorage.removeItem('azCart');
-}catch(e){}
-</script>
 
 
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    const platformWrap = document.querySelector('.platform-left') || document.querySelector('.software-platforms') || document.querySelector('.platform-filters') || document.querySelector('[data-platform-filter-wrap]');
-    if(!platformWrap) return;
-    const hasLinux = Array.from(platformWrap.querySelectorAll('button')).some(b => /linux/i.test(b.textContent || '') || b.getAttribute('data-software-platform') === 'Linux' || b.getAttribute('data-platform') === 'Linux');
-    if(hasLinux) return;
-    const macBtn = Array.from(platformWrap.querySelectorAll('button')).find(b => /mac/i.test(b.textContent || '') || b.getAttribute('data-software-platform') === 'Mac' || b.getAttribute('data-platform') === 'Mac');
-    const androidBtn = Array.from(platformWrap.querySelectorAll('button')).find(b => /android/i.test(b.textContent || '') || b.getAttribute('data-software-platform') === 'Android' || b.getAttribute('data-platform') === 'Android');
-    if(!macBtn && !androidBtn) return;
-    const linuxBtn = document.createElement('button');
-    linuxBtn.className = macBtn ? macBtn.className : 'software-platform-btn';
-    linuxBtn.setAttribute('data-software-platform','Linux');
-    linuxBtn.textContent = '🐧 Linux';
-    (androidBtn || macBtn.nextSibling) ? platformWrap.insertBefore(linuxBtn, androidBtn || macBtn.nextSibling) : platformWrap.appendChild(linuxBtn);
-  }, 300);
-});
-</script>
 
 
-<script>
-(function(){
-  function repairSoftwareTypeSelect(){
-    const labels=[...document.querySelectorAll('label')];
-    let sel=document.getElementById('softwareType') || document.querySelector('select[name="softwareType"], select[name="type"], select[data-field="type"]');
-    if(!sel){
-      const label=labels.find(l => /software\s*type/i.test(l.textContent||''));
-      if(label){
-        sel=label.parentElement?.querySelector('select') || label.nextElementSibling;
-        if(!(sel && sel.tagName === 'SELECT')) sel=null;
-      }
-    }
-    if(!sel) return;
-    const current=(sel.value || sel.getAttribute('data-current-value') || '').toLowerCase();
-    sel.innerHTML='<option value="free">Free Software</option><option value="premium">Premium Software</option>';
-    sel.value = current === 'premium' ? 'premium' : 'free';
-  }
 
-  function syncTypeByPrice(){
-    const sel=document.getElementById('softwareType') || document.querySelector('select[name="softwareType"], select[name="type"], select[data-field="type"]');
-    const price=document.getElementById('softwarePrice') || document.querySelector('input[name="price"], input[name="badge"]');
-    const btn=document.getElementById('softwareButtonText') || document.querySelector('input[name="buttonText"]');
-    if(!sel) return;
-    if(sel.value === 'premium'){
-      if(btn && !/buy/i.test(btn.value || '')) btn.value='Buy Now';
-    }else{
-      if(btn && !/download/i.test(btn.value || '')) btn.value='Download Now';
-      if(price && /^(rm)?\s*0?$/i.test(price.value || '')) price.value='FREE';
-    }
-  }
 
-  document.addEventListener('DOMContentLoaded', repairSoftwareTypeSelect);
-  document.addEventListener('click', function(e){
-    if(e.target.closest('.software-card-edit-btn,.edit-btn,[data-software-edit],[data-edit-id]')){
-      setTimeout(repairSoftwareTypeSelect, 120);
-      setTimeout(repairSoftwareTypeSelect, 500);
-    }
-  }, true);
-  document.addEventListener('change', function(e){
-    if(e.target && (e.target.id === 'softwareType' || e.target.name === 'softwareType' || e.target.name === 'type')){
-      syncTypeByPrice();
-    }
-  }, true);
-  new MutationObserver(repairSoftwareTypeSelect).observe(document.body,{childList:true,subtree:true});
-})();
-</script>
+
+
+
+
 
 </body>
 </html>
