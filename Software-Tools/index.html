@@ -1380,14 +1380,6 @@ html.azobss-admin-mode .product-meta{
 </style>
 
 <style>
-.cart-btn{margin-left:8px;background:#2d6cff;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer}
-.buy-cart-wrap{display:flex;justify-content:center;align-items:center;gap:8px}
-.cart-count-badge{position:absolute;top:-6px;right:-8px;background:#ff4040;color:#fff;border-radius:50%;font-size:10px;padding:2px 6px}
-.az-cart-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;z-index:9999}
-.az-cart-box{width:420px;max-width:90%;background:#0c1630;margin:100px auto;padding:20px;border-radius:16px;color:#fff}
-</style>
-
-<style>
 .platform-filter-wrap{
 display:flex!important;
 align-items:center!important;
@@ -1415,42 +1407,6 @@ justify-content:center!important;
 margin-top:10px!important;
 }
 }
-</style>
-
-<style>
-/* Sticky cart icon counter */
-.azobss-cart-anchor{
-  position:relative !important;
-  cursor:pointer !important;
-}
-.azobss-cart-count{
-  position:absolute !important;
-  top:-7px !important;
-  right:-9px !important;
-  min-width:16px !important;
-  height:16px !important;
-  padding:0 4px !important;
-  border-radius:999px !important;
-  background:#ff3b4f !important;
-  color:#fff !important;
-  font-size:10px !important;
-  font-weight:900 !important;
-  line-height:16px !important;
-  text-align:center !important;
-  display:none;
-}
-.azobss-cart-count.is-show{display:block !important;}
-</style>
-
-
-<style>
-.buy-cart-wrap{display:flex!important;justify-content:center!important;align-items:center!important;gap:8px!important;width:100%!important;margin-top:auto!important;}
-.cart-btn{background:#2563eb!important;color:#fff!important;border:0!important;border-radius:12px!important;width:44px!important;height:44px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;cursor:pointer!important;font-size:18px!important;}
-.azobss-cart-anchor{position:relative!important;cursor:pointer!important;}
-.azobss-cart-count{position:absolute!important;top:-7px!important;right:-9px!important;min-width:16px!important;height:16px!important;padding:0 4px!important;border-radius:999px!important;background:#ff3b4f!important;color:#fff!important;font-size:10px!important;font-weight:900!important;line-height:16px!important;text-align:center!important;display:none;}
-.azobss-cart-count.is-show{display:block!important;}
-.az-cart-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;z-index:99999;padding:20px;}
-.az-cart-box{width:460px;max-width:95%;margin:80px auto;background:#0c1630;border:1px solid rgba(34,197,94,.35);border-radius:18px;padding:20px;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.45);}
 </style>
 
 </head>
@@ -2724,219 +2680,14 @@ all.appendChild(wrap);
 
 
 
+
 <script>
-(function(){
-  "use strict";
-  const CART_KEY = "azobssCartItemsV1";
-  const CART_LIMIT = 10;
-
-  function readCart(){
-    try{
-      const data = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-      return Array.isArray(data) ? data : [];
-    }catch(e){ return []; }
-  }
-
-  function saveCart(cart){
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    updateCartBadge();
-  }
-
-  function totalQty(cart){
-    return cart.reduce(function(n,x){ return n + Number(x.qty || 1); }, 0);
-  }
-
-  function keyOf(item){
-    return String((item && (item.productId || item.name)) || "").toLowerCase();
-  }
-
-  function escapeHtml(v){
-    return String(v || "").replace(/[&<>"']/g, function(c){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
-    });
-  }
-
-  function getCardItem(card, btn){
-    const title = card && card.querySelector("h3") ? card.querySelector("h3").textContent.trim() : "Item";
-    const productId = (btn && btn.dataset.productId) || (card && card.dataset.productId) || title;
-    const price = (btn && btn.dataset.productPrice) || "";
-    const link = (btn && (btn.dataset.paymentLink || btn.getAttribute("href"))) || "";
-    return { productId: productId, name: title, price: price, link: link, qty: 1 };
-  }
-
-  function addToCart(item){
-    const cart = readCart();
-    if(totalQty(cart) >= CART_LIMIT){
-      alert("🛒 Cart Full (10/10)\nPlease remove item or checkout first.");
-      return;
-    }
-    const key = keyOf(item);
-    const found = cart.find(function(x){ return keyOf(x) === key; });
-    if(found) found.qty = Number(found.qty || 1) + 1;
-    else cart.push(item);
-    saveCart(cart);
-  }
-
-  function removeFromCart(key){
-    const k = String(key || "").toLowerCase();
-    saveCart(readCart().filter(function(x){ return keyOf(x) !== k; }));
-    renderCart();
-  }
-
-  function findStickyCartIcon(){
-    const byHref = document.querySelector('a[href*="cart"], a[href*="Cart"]');
-    if(byHref) return byHref;
-
-    const candidates = Array.from(document.querySelectorAll("a,button,span,div")).filter(function(el){
-      const txt = (el.textContent || "").trim();
-      const cls = String(el.className || "").toLowerCase();
-      const title = String(el.getAttribute("title") || "").toLowerCase();
-      const aria = String(el.getAttribute("aria-label") || "").toLowerCase();
-      return txt.indexOf("🛒") >= 0 || cls.indexOf("cart") >= 0 || title.indexOf("cart") >= 0 || aria.indexOf("cart") >= 0;
-    });
-    return candidates[0] || null;
-  }
-
-  function updateCartBadge(){
-    const icon = findStickyCartIcon();
-    if(!icon) return;
-    icon.classList.add("azobss-cart-anchor");
-    let badge = icon.querySelector(".azobss-cart-count");
-    if(!badge){
-      badge = document.createElement("span");
-      badge.className = "azobss-cart-count";
-      icon.appendChild(badge);
-    }
-    const count = totalQty(readCart());
-    badge.textContent = String(count);
-    badge.classList.toggle("is-show", count > 0);
-  }
-
-  function ensureModal(){
-    if(document.getElementById("azobssCartModal")) return;
-    document.body.insertAdjacentHTML("beforeend",
-      '<div class="az-cart-modal" id="azobssCartModal">' +
-        '<div class="az-cart-box">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">' +
-            '<h2 style="margin:0;font-size:22px;">🛒 Cart</h2>' +
-            '<button id="azobssCartClose" style="border:0;border-radius:10px;background:#334155;color:#fff;padding:8px 12px;cursor:pointer;">✕</button>' +
-          '</div>' +
-          '<div id="azobssCartList"></div>' +
-          '<div id="azobssCartTotal" style="margin-top:14px;font-weight:900;color:#86efac;"></div>' +
-          '<button id="azobssCartCheckout" style="margin-top:14px;width:100%;border:0;border-radius:14px;background:#22c55e;color:#052e16;font-weight:900;padding:12px;cursor:pointer;">Checkout</button>' +
-        '</div>' +
-      '</div>'
-    );
-    document.getElementById("azobssCartClose").addEventListener("click", closeCart);
-    document.getElementById("azobssCartModal").addEventListener("click", function(e){
-      if(e.target && e.target.id === "azobssCartModal") closeCart();
-    });
-    document.getElementById("azobssCartCheckout").addEventListener("click", function(){
-      if(!readCart().length) return alert("Cart is empty.");
-      alert("Checkout flow belum disambung.");
-    });
-  }
-
-  function renderCart(){
-    ensureModal();
-    const cart = readCart();
-    const list = document.getElementById("azobssCartList");
-    const total = document.getElementById("azobssCartTotal");
-    if(!list || !total) return;
-
-    if(!cart.length){
-      list.innerHTML = '<div style="padding:14px;border:1px dashed rgba(148,163,184,.35);border-radius:12px;color:#cbd5e1;">Cart is empty.</div>';
-      total.textContent = "";
-      return;
-    }
-
-    list.innerHTML = cart.map(function(item){
-      return '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(148,163,184,.18);">' +
-        '<div><div style="font-weight:900;">' + escapeHtml(item.name) + '</div>' +
-        '<div style="font-size:12px;color:#94a3b8;">' + escapeHtml(item.price || "") + (Number(item.qty || 1) > 1 ? " × " + Number(item.qty || 1) : "") + '</div></div>' +
-        '<button data-remove-cart="' + escapeHtml(keyOf(item)) + '" style="border:0;border-radius:10px;background:#ef4444;color:#fff;padding:7px 10px;cursor:pointer;">Remove</button>' +
-      '</div>';
-    }).join("");
-
-    Array.from(list.querySelectorAll("[data-remove-cart]")).forEach(function(btn){
-      btn.addEventListener("click", function(){ removeFromCart(btn.getAttribute("data-remove-cart")); });
-    });
-    total.textContent = "Total items: " + totalQty(cart) + " / " + CART_LIMIT;
-  }
-
-  function openCart(){
-    ensureModal();
-    renderCart();
-    document.getElementById("azobssCartModal").style.display = "block";
-  }
-
-  function closeCart(){
-    const modal = document.getElementById("azobssCartModal");
-    if(modal) modal.style.display = "none";
-  }
-
-  function setupStickyCart(){
-    const icon = findStickyCartIcon();
-    if(!icon || icon.dataset.azobssCartReady === "1") return;
-    icon.dataset.azobssCartReady = "1";
-    icon.addEventListener("click", function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      openCart();
-    }, true);
-    updateCartBadge();
-  }
-
-  function setupCardCartButtons(){
-    Array.from(document.querySelectorAll(".download-card")).forEach(function(card){
-      if(card.dataset.azobssCartButtonReady === "1") return;
-      const buyBtn = Array.from(card.querySelectorAll(".download-btn")).find(function(btn){
-        return /buy/i.test(btn.textContent || "") || btn.dataset.azobssPremiumBuy === "1";
-      });
-      if(!buyBtn) return;
-      card.dataset.azobssCartButtonReady = "1";
-
-      const cartBtn = document.createElement("button");
-      cartBtn.type = "button";
-      cartBtn.className = "cart-btn";
-      cartBtn.title = "Add to cart";
-      cartBtn.innerHTML = "🛒";
-
-      if(!buyBtn.parentElement.classList.contains("buy-cart-wrap")){
-        const wrap = document.createElement("div");
-        wrap.className = "buy-cart-wrap";
-        buyBtn.parentNode.insertBefore(wrap, buyBtn);
-        wrap.appendChild(buyBtn);
-        wrap.appendChild(cartBtn);
-      }else{
-        buyBtn.parentElement.appendChild(cartBtn);
-      }
-
-      cartBtn.addEventListener("click", function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        addToCart(getCardItem(card, buyBtn));
-      });
-    });
-  }
-
-  function init(){
-    ensureModal();
-    setupStickyCart();
-    setupCardCartButtons();
-    updateCartBadge();
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-
-  const observer = new MutationObserver(function(){
-    setupStickyCart();
-    setupCardCartButtons();
-    updateCartBadge();
-  });
-  observer.observe(document.body, {childList:true, subtree:true});
-})();
+try{
+  // Cart temporarily disabled to prevent page loading issue.
+  // localStorage cart data is cleared safely.
+  localStorage.removeItem('azobssCartItemsV1');
+  localStorage.removeItem('azCart');
+}catch(e){}
 </script>
 
 </body>
