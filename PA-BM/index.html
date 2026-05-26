@@ -7506,6 +7506,57 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 }
 </style>
 
+<style>
+
+/* Performance fix: remove heavy shining/glow effect on service cards */
+.service-card::before,
+.service-card::after,
+.home-service-card::before,
+.home-service-card::after,
+.category-card::before,
+.category-card::after,
+.card::before,
+.card::after{
+  animation:none !important;
+  transition:none !important;
+  filter:none !important;
+  box-shadow:none !important;
+}
+
+/* Only hovered service card expands slightly; other cards stay normal */
+.service-card,
+.home-service-card,
+.category-card{
+  transition:transform .18s ease, border-color .18s ease, background .18s ease !important;
+  transform:none !important;
+}
+
+.service-card:hover,
+.home-service-card:hover,
+.category-card:hover{
+  transform:translateY(-4px) scale(1.02) !important;
+  z-index:5 !important;
+}
+
+/* Prevent neighbouring cards from expanding because of parent hover */
+.services-grid:hover .service-card:not(:hover),
+.services-grid:hover .home-service-card:not(:hover),
+.services-grid:hover .category-card:not(:hover),
+.service-grid:hover .service-card:not(:hover),
+.cards-grid:hover .service-card:not(:hover){
+  transform:none !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+/* Disable global hover scaling that affects multiple cards */
+.services-grid:hover,
+.service-grid:hover,
+.cards-grid:hover{
+  transform:none !important;
+}
+
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
