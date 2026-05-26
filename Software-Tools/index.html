@@ -1614,165 +1614,199 @@ margin-top:auto!important;
 </style>
 
 
-
-<style id="azobss-final-software-card-perfect-fix">
-/* AZOBSS FINAL FIX - Software page card layout, title centre and compact height */
+<style id="azobss-real-final-force-card-center">
+/* AZOBSS REAL FINAL FORCE FIX
+   Purpose: Software Tools card title TRUE center + compact equal card height.
+   This block is intentionally placed last in <head> and uses exact #softwareGrid selectors. */
 #softwareGrid,
-.software-grid,
 .downloads-grid{
-  align-items: stretch !important;
+  display:grid !important;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr)) !important;
+  gap:18px !important;
+  align-items:stretch !important;
 }
 
-#softwareGrid .software-card,
 #softwareGrid .download-card,
-.software-grid .software-card,
-.downloads-grid .download-card,
-.software-card,
-.download-card{
-  display: grid !important;
-  grid-template-rows: 42px 72px 48px 92px auto !important;
-  align-items: center !important;
-  justify-items: center !important;
-  row-gap: 14px !important;
-  min-height: 430px !important;
-  height: 430px !important;
-  max-height: 430px !important;
-  padding: 30px 28px 26px !important;
-  box-sizing: border-box !important;
-  text-align: center !important;
-  overflow: hidden !important;
+.downloads-grid .download-card{
+  position:relative !important;
+  box-sizing:border-box !important;
+  width:100% !important;
+  height:430px !important;
+  min-height:430px !important;
+  max-height:430px !important;
+  padding:26px 28px 24px !important;
+  overflow:hidden !important;
+
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  grid-template-rows:42px 76px 50px 88px 54px !important;
+  grid-template-areas:
+    "badge"
+    "title"
+    "meta"
+    "desc"
+    "button" !important;
+  row-gap:12px !important;
+  align-items:center !important;
+  justify-items:stretch !important;
+  text-align:center !important;
 }
 
-#softwareGrid .software-card .software-badge,
-#softwareGrid .download-card .software-badge,
-#softwareGrid .software-card .free-software-badge,
-#softwareGrid .download-card .free-software-badge,
-#softwareGrid .software-card .badge,
-#softwareGrid .download-card .badge,
-.software-card .software-badge,
-.download-card .software-badge,
-.software-card .free-software-badge,
-.download-card .free-software-badge,
-.software-card .badge,
-.download-card .badge{
-  grid-row: 1 !important;
-  align-self: center !important;
-  justify-self: center !important;
-  margin: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+/* Hide old initial/icon boxes so they do not reserve invisible space */
+#softwareGrid .download-card .download-icon,
+#softwareGrid .download-card .software-icon,
+#softwareGrid .download-card .tool-icon,
+#softwareGrid .download-card .app-icon,
+#softwareGrid .download-card .card-icon,
+#softwareGrid .download-card .initial-icon,
+#softwareGrid .download-card .item-icon{
+  display:none !important;
+  width:0 !important;
+  height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
 }
 
-#softwareGrid .software-card h3,
+#softwareGrid .download-card .software-badge.free,
+#softwareGrid .download-card .software-badge.premium,
+#softwareGrid .download-card > .software-badge:first-of-type,
+.downloads-grid .download-card .software-badge.free,
+.downloads-grid .download-card .software-badge.premium,
+.downloads-grid .download-card > .software-badge:first-of-type{
+  grid-area:badge !important;
+  justify-self:center !important;
+  align-self:center !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 !important;
+  max-width:max-content !important;
+}
+
+/* The actual title fix: full-width title box + grid place-items center.
+   max-width:none is important because older patches limited title width and made it look off-centre. */
 #softwareGrid .download-card h3,
-#softwareGrid .software-card .software-title,
 #softwareGrid .download-card .software-title,
-.software-card h3,
-.download-card h3,
-.software-card .software-title,
-.download-card .software-title{
-  grid-row: 2 !important;
-  width: 100% !important;
-  max-width: 245px !important;
-  height: 72px !important;
-  min-height: 72px !important;
-  max-height: 72px !important;
-  margin: 0 auto !important;
-  padding: 0 6px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-  line-height: 1.08 !important;
-  font-size: 21px !important;
-  font-weight: 900 !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: normal !important;
-  text-wrap: balance !important;
-  overflow: hidden !important;
+.downloads-grid .download-card h3,
+.downloads-grid .download-card .software-title{
+  grid-area:title !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:76px !important;
+  min-height:76px !important;
+  max-height:76px !important;
+
+  margin:0 auto !important;
+  padding:0 8px !important;
+  box-sizing:border-box !important;
+
+  text-align:center !important;
+  line-height:1.08 !important;
+  font-size:21px !important;
+  font-weight:900 !important;
+  letter-spacing:0 !important;
+
+  white-space:normal !important;
+  word-break:normal !important;
+  overflow-wrap:break-word !important;
+  text-wrap:balance !important;
+  overflow:hidden !important;
+  transform:none !important;
+  left:auto !important;
+  right:auto !important;
 }
 
-#softwareGrid .software-card .software-meta,
 #softwareGrid .download-card .software-meta,
-.software-card .software-meta,
-.download-card .software-meta{
-  grid-row: 3 !important;
-  width: 100% !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  max-height: 48px !important;
-  margin: 0 auto !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  align-content: flex-start !important;
-  justify-content: center !important;
-  flex-wrap: wrap !important;
-  gap: 6px !important;
-  overflow: hidden !important;
-  text-align: center !important;
+.downloads-grid .download-card .software-meta{
+  grid-area:meta !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
+  width:100% !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  align-content:flex-start !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+  overflow:hidden !important;
+  text-align:center !important;
 }
 
-#softwareGrid .software-card p,
 #softwareGrid .download-card p,
-.software-card p,
-.download-card p{
-  grid-row: 4 !important;
-  width: 100% !important;
-  max-width: 250px !important;
-  height: 92px !important;
-  min-height: 92px !important;
-  max-height: 92px !important;
-  margin: 0 auto !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-  line-height: 1.38 !important;
-  overflow: hidden !important;
+.downloads-grid .download-card p{
+  grid-area:desc !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
+  width:100% !important;
+  max-width:none !important;
+  height:88px !important;
+  min-height:88px !important;
+  max-height:88px !important;
+  margin:0 !important;
+  padding:0 2px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.38 !important;
+  overflow:hidden !important;
 }
 
-#softwareGrid .software-card .download-btn,
 #softwareGrid .download-card .download-btn,
-.software-card .download-btn,
-.download-card .download-btn,
-.software-card a.download-btn,
-.download-card a.download-btn{
-  grid-row: 5 !important;
-  align-self: end !important;
-  justify-self: center !important;
-  margin: 0 auto !important;
+#softwareGrid .download-card a.download-btn,
+.downloads-grid .download-card .download-btn,
+.downloads-grid .download-card a.download-btn{
+  grid-area:button !important;
+  justify-self:center !important;
+  align-self:center !important;
+  margin:0 auto !important;
+  width:164px !important;
+  max-width:80% !important;
+  text-align:center !important;
 }
 
-#softwareGrid .software-card .az-like-btn,
 #softwareGrid .download-card .az-like-btn,
-#softwareGrid .software-card .like-btn,
 #softwareGrid .download-card .like-btn,
-.software-card .az-like-btn,
-.download-card .az-like-btn,
-.software-card .like-btn,
-.download-card .like-btn{
-  position: absolute !important;
-  top: 16px !important;
-  right: 16px !important;
+.downloads-grid .download-card .az-like-btn,
+.downloads-grid .download-card .like-btn{
+  position:absolute !important;
+  top:16px !important;
+  right:16px !important;
+  z-index:3 !important;
 }
 
-@media (max-width: 768px){
-  #softwareGrid .software-card,
+@media(max-width:768px){
+  #softwareGrid,
+  .downloads-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
   #softwareGrid .download-card,
-  .software-grid .software-card,
-  .downloads-grid .download-card,
-  .software-card,
-  .download-card{
-    height: auto !important;
-    min-height: 390px !important;
-    max-height: none !important;
-    grid-template-rows: 38px 66px 48px auto auto !important;
-    padding: 24px 22px !important;
-    row-gap: 12px !important;
+  .downloads-grid .download-card{
+    height:390px !important;
+    min-height:390px !important;
+    max-height:390px !important;
+    padding:22px 16px !important;
+    grid-template-rows:38px 68px 48px 82px 50px !important;
+    row-gap:10px !important;
+  }
+  #softwareGrid .download-card h3,
+  .downloads-grid .download-card h3{
+    height:68px !important;
+    min-height:68px !important;
+    max-height:68px !important;
+    font-size:18px !important;
   }
 }
 </style>
@@ -3025,6 +3059,80 @@ all.appendChild(wrap);
 
 
 
+
+
+<script id="azobss-real-final-force-card-center-js">
+/* Lightweight runtime lock: cards are added by Firestore/localStorage after page load,
+   so this reapplies the same grid position to new cards only. */
+(function(){
+  function setImp(el, prop, val){ if(el) el.style.setProperty(prop, val, 'important'); }
+  function fixCard(card){
+    if(!card || card.dataset.azobssRealFinalCentered === '1') return;
+    card.dataset.azobssRealFinalCentered = '1';
+    setImp(card,'display','grid');
+    setImp(card,'grid-template-columns','1fr');
+    setImp(card,'grid-template-rows','42px 76px 50px 88px 54px');
+    setImp(card,'grid-template-areas','"badge" "title" "meta" "desc" "button"');
+    setImp(card,'justify-items','stretch');
+    setImp(card,'align-items','center');
+    setImp(card,'text-align','center');
+    setImp(card,'height','430px');
+    setImp(card,'min-height','430px');
+    setImp(card,'max-height','430px');
+    setImp(card,'position','relative');
+
+    const badge = card.querySelector('.software-badge.free,.software-badge.premium,.software-badge');
+    setImp(badge,'grid-area','badge');
+    setImp(badge,'justify-self','center');
+
+    const title = card.querySelector('h3,.software-title');
+    setImp(title,'grid-area','title');
+    setImp(title,'display','grid');
+    setImp(title,'place-items','center');
+    setImp(title,'justify-self','stretch');
+    setImp(title,'align-self','stretch');
+    setImp(title,'width','100%');
+    setImp(title,'max-width','none');
+    setImp(title,'height','76px');
+    setImp(title,'min-height','76px');
+    setImp(title,'max-height','76px');
+    setImp(title,'margin','0 auto');
+    setImp(title,'padding','0 8px');
+    setImp(title,'text-align','center');
+    setImp(title,'line-height','1.08');
+    setImp(title,'word-break','normal');
+    setImp(title,'overflow-wrap','break-word');
+    setImp(title,'transform','none');
+
+    const meta = card.querySelector('.software-meta');
+    setImp(meta,'grid-area','meta');
+    setImp(meta,'justify-content','center');
+    setImp(meta,'width','100%');
+
+    const desc = card.querySelector('p');
+    setImp(desc,'grid-area','desc');
+    setImp(desc,'display','flex');
+    setImp(desc,'align-items','center');
+    setImp(desc,'justify-content','center');
+    setImp(desc,'text-align','center');
+    setImp(desc,'width','100%');
+    setImp(desc,'max-width','none');
+
+    const btn = card.querySelector('.download-btn');
+    setImp(btn,'grid-area','button');
+    setImp(btn,'justify-self','center');
+    setImp(btn,'margin','0 auto');
+  }
+  function run(){ document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(fixCard); }
+  document.addEventListener('DOMContentLoaded', function(){
+    run();
+    setTimeout(run, 250);
+    setTimeout(run, 1000);
+    const grid = document.querySelector('#softwareGrid,.downloads-grid');
+    if(grid){ new MutationObserver(run).observe(grid,{childList:true,subtree:false}); }
+  });
+})();
+</script>
 
 </body>
 </html>
