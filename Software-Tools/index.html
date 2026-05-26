@@ -1817,6 +1817,39 @@ margin-top:auto!important;
 }
 </style>
 
+
+<style id="azobss-software-logo-from-link-css">
+#softwareGrid .download-card .software-card-media.az-logo-media,
+.downloads-grid .download-card .software-card-media.az-logo-media{
+  width:72px!important;height:72px!important;margin:0 auto 14px!important;border-radius:18px!important;
+  display:grid!important;place-items:center!important;overflow:hidden!important;
+  background:linear-gradient(135deg,rgba(15,23,42,.92),rgba(14,165,233,.20))!important;
+  border:1px solid rgba(56,189,248,.22)!important;box-shadow:0 12px 24px rgba(0,0,0,.22)!important;
+}
+#softwareGrid .download-card .software-logo-img,
+.downloads-grid .download-card .software-logo-img{width:100%!important;height:100%!important;object-fit:contain!important;padding:10px!important;box-sizing:border-box!important;display:block!important;}
+#softwareGrid .download-card .software-logo-initial,
+.downloads-grid .download-card .software-logo-initial{display:none!important;color:#22c55e!important;font-weight:900!important;font-size:24px!important;}
+#softwareGrid .download-card .software-card-media.az-logo-media.is-fallback .software-logo-img,
+.downloads-grid .download-card .software-card-media.az-logo-media.is-fallback .software-logo-img{display:none!important;}
+#softwareGrid .download-card .software-card-media.az-logo-media.is-fallback .software-logo-initial,
+.downloads-grid .download-card .software-card-media.az-logo-media.is-fallback .software-logo-initial{display:block!important;}
+#softwareGrid .download-card .download-icon,
+.downloads-grid .download-card .download-icon{display:none!important;}
+.software-logo-admin-btn{border:1px solid rgba(56,189,248,.45);background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;border-radius:10px;padding:6px 9px;font-size:11px;font-weight:900;cursor:pointer;}
+.software-logo-admin-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+</style>
+<script id="azobss-logo-img-fallback-handler">
+document.addEventListener('error', function(e){
+  const img=e.target.closest&&e.target.closest('.software-logo-img');
+  if(!img) return;
+  const media=img.closest('.az-logo-media');
+  const fallback=img.getAttribute('data-fallback-src');
+  if(fallback && img.src !== fallback){ img.src=fallback; img.removeAttribute('data-fallback-src'); return; }
+  if(media) media.classList.add('is-fallback');
+}, true);
+</script>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2246,6 +2279,25 @@ margin-top:auto!important;
     return text ? '<div class="az-usd-line">' + esc(text) + '</div>' : '';
   }
 function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+  function azSafeLogoFileName(productId, name){
+    const raw = String(productId || name || 'software-logo').trim();
+    return raw.toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'') || 'software-logo';
+  }
+  function azDomainFromUrl(url){
+    try{ return new URL(String(url || ''), location.href).hostname.replace(/^www\./,''); }catch(e){ return ''; }
+  }
+  function azFaviconUrlFromLink(url){
+    const domain = azDomainFromUrl(url);
+    return domain ? 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(domain) + '&sz=128' : '';
+  }
+  function azLocalLogoUrl(productId, name){
+    return 'images/logo/' + azSafeLogoFileName(productId, name) + '.png';
+  }
+  function azLogoSrcForItem(item){
+    const local = azLocalLogoUrl(item?.productId || item?.id, item?.name);
+    return item?.imageUrl || local;
+  }
+
   const MAX_MEDIA_BYTES = 900 * 1024;
   function readMediaFile(input){
     return new Promise(resolve => {
@@ -2490,16 +2542,18 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 
   function renderItem(item){
     const isPremium = item.type === 'premium';
-    const badgeText = isPremium ? 'Pro Software' : '';
+    const badgeText = isPremium ? ('🛒 ' + item.price) : '';
     const usdBadge = isPremium ? azUsdBadge(item.price) : '';
     const mediaSrc = item.imageUrl || item.gifUrl;
-    const mediaHtml = mediaSrc ? `<div class="software-card-media"><img src="${esc(mediaSrc)}" alt="${esc(item.name)} preview" loading="lazy"></div>` : '';
+    const logoSrc = azLogoSrcForItem(item);
+    const logoFallback = azFaviconUrlFromLink(item.downloadLink || item.secureDownloadLink || item.paymentLink || item.stripeLink || item.link);
+    const mediaHtml = `<div class="software-card-media az-logo-media"><img class="software-logo-img" src="${esc(logoSrc)}" data-fallback-src="${esc(logoFallback)}" alt="${esc(item.name)} logo" loading="lazy"><span class="software-logo-initial">${esc(item.icon || (item.name||'').slice(0,2).toUpperCase())}</span></div>`;
     const gifHtml = item.gifUrl && item.imageUrl ? `<div class="software-media-links"><a class="software-media-demo" href="${esc(item.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
     const meta = [item.category, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = item.productId ? `<div class="product-meta">ID: ${esc(item.productId)}</div>` : '';
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
-    const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title='Delete'>🗑️</button></div>` : '';
+    const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Regenerate logo from link">🖼️ Logo</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title='Delete'>🗑️</button></div>` : '';
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
@@ -2593,6 +2647,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       type: card?.dataset.type || 'free',
       price: 'FREE',
       icon,
+      imageUrl: card?.querySelector('.software-logo-img')?.getAttribute('src') || '',
       category,
       status: 'active',
       buttonText: firstBtn?.textContent?.trim() || 'Download Now',
@@ -2634,7 +2689,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       const id = staticProductId(card);
       card.querySelectorAll('[data-software-static-edit-wrap]').forEach(el => el.remove());
       if(admin){
-        card.insertAdjacentHTML('beforeend', `<div class="software-card-admin-actions" data-software-static-edit-wrap="1"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(id)}" title='Delete'>🗑️</button></div>`);
+        card.insertAdjacentHTML('beforeend', `<div class="software-card-admin-actions" data-software-static-edit-wrap="1"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(id)}" title="Regenerate logo from link">🖼️ Logo</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(id)}" title='Delete'>🗑️</button></div>`);
       }
     });
   }
@@ -2878,7 +2933,56 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     }
   }
 
+  async function regenerateSoftwareLogo(key){
+    if(!isAdmin()) return alert('Admin only.');
+    const item = softwareDynamicItems.find(x => String(x.productId || x.id) === String(key));
+    const staticCard = !item ? getStaticCards().find(card => String(staticProductId(card)) === String(key)) : null;
+    const card = staticCard || grid?.querySelector(`[data-product-id="${CSS.escape(String(key))}"]`);
+    const current = item || (staticCard ? getStaticItemFromCard(staticCard) : null);
+    if(!current) return alert('Item data not found.');
+    const link = current.secureDownloadLink || current.downloadLink || current.paymentLink || current.stripeLink || current.link || card?.querySelector('.download-btn')?.getAttribute('href') || '';
+    const favicon = azFaviconUrlFromLink(link);
+    if(!favicon) return alert('No valid website link found for this item.');
+    const productId = current.productId || current.id || key;
+    const imgPath = azLocalLogoUrl(productId, current.name);
+    const updateCard = (targetCard, src) => {
+      if(!targetCard) return;
+      let media = targetCard.querySelector('.software-card-media.az-logo-media');
+      if(!media){
+        media = document.createElement('div');
+        media.className = 'software-card-media az-logo-media';
+        const h3 = targetCard.querySelector('h3');
+        (h3?.parentNode || targetCard).insertBefore(media, h3 || targetCard.firstChild);
+      }
+      media.innerHTML = `<img class="software-logo-img" src="${esc(src)}" data-fallback-src="${esc(favicon)}" alt="${esc(current.name)} logo" loading="lazy"><span class="software-logo-initial">${esc(current.icon || (current.name||'').slice(0,2).toUpperCase())}</span>`;
+      targetCard.dataset.logoLocal = imgPath;
+    };
+    try{
+      if(item?.docId){
+        await updateDoc(doc(db, SOFTWARE_COLLECTION, item.docId), {imageUrl: favicon, updatedAt: serverTimestamp(), updatedBy: 'logo-regen'});
+      }
+      const saved = loadLocal();
+      const idx = saved.findIndex(x => String(x.productId || x.id) === String(productId));
+      const newItem = normalizeItem({...current, imageUrl:favicon, logoLocalPath:imgPath});
+      if(idx >= 0) saved[idx] = {...saved[idx], ...newItem}; else saved.unshift(newItem);
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(saved));
+      if(item){ item.imageUrl = favicon; item.logoLocalPath = imgPath; }
+      updateCard(card, favicon);
+      alert('Logo updated from website favicon. For permanent local repo files, run tools/regenerate-software-logos.js before GitHub push.');
+    }catch(err){
+      console.warn('Regenerate logo failed:', err);
+      alert('Failed to save logo. Logo preview may still work from favicon URL.');
+      updateCard(card, favicon);
+    }
+  }
+
   grid?.addEventListener('click', e => {
+    const logoBtn = e.target.closest('[data-software-logo-regen]');
+    if(logoBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      return regenerateSoftwareLogo(logoBtn.getAttribute('data-software-logo-regen'));
+    }
     const deleteBtn = e.target.closest('[data-software-delete]');
     if(deleteBtn){
       e.preventDefault();
@@ -3855,581 +3959,6 @@ all.appendChild(wrap);
   }, true);
 })();
 </script>
-
-<!-- AZOBSS FINAL PATCH: centered smaller Download/Buy button + clean 2-column stats -->
-<style id="azobss-card-button-stats-final-20260527">
-#softwareGrid .download-card,
-.downloads-grid .download-card,
-#softwareDownloadsGrid .download-card{
-  position:relative!important;
-  overflow:hidden!important;
-  padding-bottom:56px!important;
-  min-height:430px!important;
-}
-
-/* Smaller + centered button. Whole button remains clickable. */
-#softwareGrid .download-card .download-btn,
-.downloads-grid .download-card .download-btn,
-#softwareDownloadsGrid .download-card .download-btn,
-.download-card a.download-btn{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:10px!important;
-  width:74%!important;
-  max-width:225px!important;
-  min-width:180px!important;
-  height:48px!important;
-  min-height:48px!important;
-  padding:0 18px!important;
-  margin:0 auto 18px!important;
-  border-radius:13px!important;
-  font-size:16px!important;
-  font-weight:900!important;
-  line-height:1!important;
-  text-decoration:none!important;
-  cursor:pointer!important;
-  pointer-events:auto!important;
-  position:relative!important;
-  z-index:80!important;
-  box-sizing:border-box!important;
-}
-#softwareGrid .download-card .download-btn *,
-.downloads-grid .download-card .download-btn *,
-#softwareDownloadsGrid .download-card .download-btn *,
-.download-card a.download-btn *{
-  pointer-events:none!important;
-}
-#softwareGrid .download-card .download-btn.premium,
-.downloads-grid .download-card .download-btn.premium,
-#softwareDownloadsGrid .download-card .download-btn.premium{
-  background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;
-}
-.az-btn-svg{
-  width:18px!important;
-  height:18px!important;
-  display:inline-flex!important;
-  flex:0 0 18px!important;
-}
-.az-btn-svg svg{
-  width:18px!important;
-  height:18px!important;
-  display:block!important;
-  fill:currentColor!important;
-}
-
-/* Rebuild bottom stats bar: Download | Rating only */
-#softwareGrid .download-card .software-stats,
-.downloads-grid .download-card .software-stats,
-#softwareDownloadsGrid .download-card .software-stats{
-  position:absolute!important;
-  left:0!important;
-  right:0!important;
-  bottom:0!important;
-  width:100%!important;
-  height:48px!important;
-  display:grid!important;
-  grid-template-columns:95px minmax(0,1fr)!important;
-  align-items:stretch!important;
-  margin:0!important;
-  padding:0!important;
-  gap:0!important;
-  border-top:1px solid rgba(148,163,184,.22)!important;
-  background:rgba(5,15,30,.93)!important;
-  z-index:60!important;
-  overflow:hidden!important;
-  border-radius:0 0 16px 16px!important;
-  box-sizing:border-box!important;
-}
-
-/* Reset old pill styles that affected nested spans */
-#softwareGrid .download-card .software-stats span,
-.downloads-grid .download-card .software-stats span,
-#softwareDownloadsGrid .download-card .software-stats span,
-#softwareGrid .download-card .software-stats button,
-.downloads-grid .download-card .software-stats button,
-#softwareDownloadsGrid .download-card .software-stats button{
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-}
-
-#softwareGrid .download-card .software-stats > .stat-download,
-.downloads-grid .download-card .software-stats > .stat-download,
-#softwareDownloadsGrid .download-card .software-stats > .stat-download,
-#softwareGrid .download-card .software-stats > .stat-rating,
-.downloads-grid .download-card .software-stats > .stat-rating,
-#softwareDownloadsGrid .download-card .software-stats > .stat-rating{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  min-width:0!important;
-  height:48px!important;
-  padding:0 8px!important;
-  margin:0!important;
-  color:#fff!important;
-  font-size:14px!important;
-  font-weight:900!important;
-  line-height:1!important;
-  border-radius:0!important;
-  box-sizing:border-box!important;
-  white-space:nowrap!important;
-}
-#softwareGrid .download-card .software-stats > .stat-download,
-.downloads-grid .download-card .software-stats > .stat-download,
-#softwareDownloadsGrid .download-card .software-stats > .stat-download{
-  gap:9px!important;
-  border-right:1px solid rgba(148,163,184,.22)!important;
-}
-#softwareGrid .download-card .software-stats > .stat-rating,
-.downloads-grid .download-card .software-stats > .stat-rating,
-#softwareDownloadsGrid .download-card .software-stats > .stat-rating{
-  gap:8px!important;
-  justify-content:center!important;
-  overflow:hidden!important;
-}
-
-/* Hide any old like/heart/third item remnants */
-#softwareGrid .download-card .software-stats > .stat-like,
-.downloads-grid .download-card .software-stats > .stat-like,
-#softwareDownloadsGrid .download-card .software-stats > .stat-like,
-#softwareGrid .download-card .software-stats > :nth-child(n+3),
-.downloads-grid .download-card .software-stats > :nth-child(n+3),
-#softwareDownloadsGrid .download-card .software-stats > :nth-child(n+3){
-  display:none!important;
-}
-
-.az-stat-download-icon{
-  width:24px!important;
-  height:24px!important;
-  border:1px solid rgba(34,197,94,.55)!important;
-  border-radius:999px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  color:#22c55e!important;
-  flex:0 0 24px!important;
-}
-.az-stat-download-icon svg{
-  width:14px!important;
-  height:14px!important;
-  fill:currentColor!important;
-  display:block!important;
-}
-.software-stats .stat-value{
-  color:#fff!important;
-  font-size:13px!important;
-  font-weight:900!important;
-  min-width:12px!important;
-}
-.software-rating-stars{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:1px!important;
-  min-width:78px!important;
-  max-width:78px!important;
-  flex:0 0 78px!important;
-  padding:0!important;
-  margin:0!important;
-}
-.software-rating-star{
-  width:14px!important;
-  height:18px!important;
-  padding:0!important;
-  margin:0!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:16px!important;
-  line-height:1!important;
-  color:#475569!important;
-  border:0!important;
-  outline:0!important;
-  cursor:pointer!important;
-  appearance:none!important;
-}
-.software-rating-star.is-filled{
-  color:#facc15!important;
-}
-.software-rating-stars:hover .software-rating-star{
-  color:#facc15!important;
-}
-.software-rating-star:hover ~ .software-rating-star{
-  color:#475569!important;
-}
-.software-stats .stat-rating strong{
-  color:#fff!important;
-  font-size:13px!important;
-  font-weight:900!important;
-  min-width:26px!important;
-}
-.software-rating-count{
-  color:#cbd5e1!important;
-  opacity:.9!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  margin-left:0!important;
-}
-@media(max-width:600px){
-  #softwareGrid .download-card .download-btn,
-  .downloads-grid .download-card .download-btn,
-  #softwareDownloadsGrid .download-card .download-btn,
-  .download-card a.download-btn{
-    width:76%!important;
-    max-width:215px!important;
-    min-width:170px!important;
-    height:46px!important;
-    min-height:46px!important;
-    font-size:15px!important;
-  }
-  #softwareGrid .download-card .software-stats,
-  .downloads-grid .download-card .software-stats,
-  #softwareDownloadsGrid .download-card .software-stats{
-    grid-template-columns:86px minmax(0,1fr)!important;
-  }
-  .software-rating-stars{
-    min-width:70px!important;
-    max-width:70px!important;
-    flex-basis:70px!important;
-  }
-  .software-rating-star{
-    font-size:14px!important;
-    width:13px!important;
-  }
-}
-</style>
-
-<script id="azobss-card-button-stats-final-20260527">
-(function(){
-  const downloadSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-2H5v2Zm7-18v10.17l3.59-3.58L17 10l-6 6-6-6 1.41-1.41L10 12.17V2h2Z"/></svg>';
-  const cartSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2ZM1 2v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45c.75 0 1.41-.41 1.75-1.03L21 5H5.21l-.94-2H1Zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2Z"/></svg>';
-
-  function isPremiumCard(card){
-    const t=(card?.dataset?.type||'').toLowerCase();
-    const badge=(card?.querySelector('.software-badge,.badge,.free-software-badge')?.textContent||'').toLowerCase();
-    const btn=(card?.querySelector('.download-btn')?.textContent||'').toLowerCase();
-    return t.includes('premium') || badge.includes('premium') || badge.includes('pro') || btn.includes('buy') || btn.includes('cart');
-  }
-
-  function fixButton(card){
-    const btn=card.querySelector('.download-btn');
-    if(!btn) return;
-    const premium=isPremiumCard(card);
-    btn.classList.toggle('premium', premium);
-    btn.innerHTML = premium
-      ? '<span class="az-btn-svg">'+cartSvg+'</span><span>Buy Now</span>'
-      : '<span class="az-btn-svg">'+downloadSvg+'</span><span>Download Now</span>';
-
-    const href = premium
-      ? (btn.dataset.paymentLink || btn.dataset.stripeLink || btn.getAttribute('href') || '#')
-      : (btn.dataset.downloadLink || btn.getAttribute('href') || '#');
-
-    if(href && href !== '#') btn.setAttribute('href', href);
-    btn.setAttribute('target','_blank');
-    btn.setAttribute('rel','noopener');
-  }
-
-  function getProductId(card){
-    if(card.dataset.productId) return card.dataset.productId;
-    const title=(card.querySelector('h3,.software-title')?.textContent||'software-item').trim();
-    card.dataset.productId='AZSW-'+title.toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-    return card.dataset.productId;
-  }
-
-  function getDownloadText(box){
-    const old = box.querySelector('.stat-download .stat-value') || box.querySelector('.stat-download');
-    const txt = (old?.textContent || '0').replace(/[^\d.KM]/gi,'').trim();
-    return txt || '0';
-  }
-
-  function getRatingData(box){
-    const strong = box.querySelector('.stat-rating strong');
-    let avg = strong ? strong.textContent.trim() : '';
-    if(!avg){
-      const raw=(box.querySelector('.stat-rating')?.textContent||'0.0').match(/\d+(?:\.\d+)?/);
-      avg=raw?raw[0]:'0.0';
-    }
-    const countEl=box.querySelector('.software-rating-count');
-    let count=countEl ? countEl.textContent.trim() : '(0)';
-    if(!/^\(/.test(count)) count='('+count.replace(/[^\d]/g,'0')+')';
-    return {avg:avg||'0.0', count:count||'(0)'};
-  }
-
-  function buildStars(card, avg){
-    const productId=getProductId(card);
-    const filled=Math.max(0,Math.min(5,Math.round(Number(avg)||0)));
-    let html='<span class="software-rating-stars" role="group" aria-label="Rate this software">';
-    for(let i=1;i<=5;i++){
-      html += '<button class="software-rating-star '+(i<=filled?'is-filled':'')+'" type="button" data-rating-value="'+i+'" data-product-id="'+productId+'" title="Rate '+i+' star'+(i>1?'s':'')+'">★</button>';
-    }
-    html += '</span>';
-    return html;
-  }
-
-  function fixStats(card){
-    let box=card.querySelector('.software-stats');
-    if(!box){
-      box=document.createElement('div');
-      box.className='software-stats';
-      card.appendChild(box);
-    }
-
-    const downloads=getDownloadText(box);
-    const rating=getRatingData(box);
-    box.innerHTML =
-      '<span class="stat-download">'+
-        '<span class="az-stat-download-icon">'+downloadSvg+'</span>'+
-        '<span class="stat-value">'+downloads+'</span>'+
-      '</span>'+
-      '<span class="stat-rating">'+
-        buildStars(card,rating.avg)+
-        '<strong>'+rating.avg+'</strong>'+
-        '<span class="software-rating-count">'+rating.count+'</span>'+
-      '</span>';
-
-    if(box.parentElement===card && box !== card.lastElementChild) card.appendChild(box);
-  }
-
-  function fixCard(card){
-    if(!card) return;
-    fixButton(card);
-    fixStats(card);
-  }
-
-  function fixAll(){
-    document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card,#softwareDownloadsGrid .download-card').forEach(fixCard);
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    fixAll();
-    setTimeout(fixAll,150);
-    setTimeout(fixAll,600);
-    setTimeout(fixAll,1500);
-    const grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
-    if(grid){
-      new MutationObserver(function(){ setTimeout(fixAll,40); }).observe(grid,{childList:true,subtree:true});
-    }
-  });
-
-  document.addEventListener('click', function(e){
-    const btn=e.target.closest('.download-card .download-btn');
-    if(btn){
-      const card=btn.closest('.download-card');
-      setTimeout(function(){ fixCard(card); },80);
-    }
-    const star=e.target.closest('.software-rating-star');
-    if(star){
-      const card=star.closest('.download-card');
-      setTimeout(function(){ fixCard(card); },500);
-      setTimeout(function(){ fixCard(card); },1300);
-    }
-  }, true);
-})();
-</script>
-
-
-
-<style id="azobss-final-card-clean-no-free-badge">
-/* Final card cleanup: remove Free Software label, center/smaller action button, stable 2-column stats */
-#softwareDownloadsGrid .download-card,
-.downloads-grid .download-card,
-#softwareGrid .download-card{
-  position:relative!important;
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
-  min-height:420px!important;
-  height:420px!important;
-  padding:28px 28px 54px!important;
-  overflow:hidden!important;
-  text-align:center!important;
-}
-#softwareDownloadsGrid .download-card .software-badge.free,
-.downloads-grid .download-card .software-badge.free,
-#softwareGrid .download-card .software-badge.free,
-.download-card .free-software-badge{
-  display:none!important;
-  visibility:hidden!important;
-  height:0!important;
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  border:0!important;
-}
-#softwareDownloadsGrid .download-card .software-badge.premium,
-.downloads-grid .download-card .software-badge.premium,
-#softwareGrid .download-card .software-badge.premium{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  min-height:28px!important;
-  padding:6px 14px!important;
-  margin:0 auto 10px!important;
-  border-radius:999px!important;
-  background:linear-gradient(135deg,#0f4da0,#2563eb)!important;
-  border:1px solid rgba(96,165,250,.45)!important;
-  color:#fff!important;
-  font-size:13px!important;
-  font-weight:900!important;
-}
-#softwareDownloadsGrid .download-card .download-icon,
-.downloads-grid .download-card .download-icon,
-#softwareGrid .download-card .download-icon{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:76px!important;
-  height:76px!important;
-  margin:0 auto 12px!important;
-  border-radius:18px!important;
-  font-size:34px!important;
-  line-height:1!important;
-  background:linear-gradient(135deg,rgba(14,165,233,.35),rgba(37,99,235,.25))!important;
-  box-shadow:0 12px 30px rgba(0,0,0,.22)!important;
-}
-#softwareDownloadsGrid .download-card h3,
-.downloads-grid .download-card h3,
-#softwareGrid .download-card h3{
-  width:100%!important;
-  min-height:54px!important;
-  height:54px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  margin:0 auto 10px!important;
-  padding:0 6px!important;
-  text-align:center!important;
-  line-height:1.08!important;
-  font-size:22px!important;
-  font-weight:900!important;
-}
-#softwareDownloadsGrid .download-card .software-meta,
-.downloads-grid .download-card .software-meta,
-#softwareGrid .download-card .software-meta{
-  min-height:44px!important;
-  margin:0 auto 10px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:7px!important;
-  flex-wrap:wrap!important;
-}
-#softwareDownloadsGrid .download-card p,
-.downloads-grid .download-card p,
-#softwareGrid .download-card p{
-  width:100%!important;
-  min-height:78px!important;
-  max-height:78px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  margin:0 auto 14px!important;
-  padding:0 4px!important;
-  text-align:center!important;
-  line-height:1.36!important;
-  overflow:hidden!important;
-}
-#softwareDownloadsGrid .download-card .download-btn,
-.downloads-grid .download-card .download-btn,
-#softwareGrid .download-card .download-btn,
-.download-card a.download-btn{
-  width:calc(100% - 34px)!important;
-  max-width:270px!important;
-  height:48px!important;
-  min-height:48px!important;
-  margin:0 auto 0!important;
-  padding:0 20px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:10px!important;
-  border-radius:12px!important;
-  font-size:18px!important;
-  font-weight:900!important;
-  text-decoration:none!important;
-  cursor:pointer!important;
-  pointer-events:auto!important;
-  position:relative!important;
-  z-index:50!important;
-}
-#softwareDownloadsGrid .download-card .download-btn.premium,
-.downloads-grid .download-card .download-btn.premium,
-#softwareGrid .download-card .download-btn.premium,
-.download-card[data-type="premium"] .download-btn{
-  background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;
-  color:#fff!important;
-}
-.download-card .az-btn-icon{font-size:20px!important;line-height:1!important;pointer-events:none!important;}
-#softwareDownloadsGrid .download-card .software-stats,
-.downloads-grid .download-card .software-stats,
-#softwareGrid .download-card .software-stats,
-.download-card .software-stats{
-  position:absolute!important;
-  left:0!important;
-  right:0!important;
-  bottom:0!important;
-  width:100%!important;
-  height:42px!important;
-  display:grid!important;
-  grid-template-columns:1fr 1.45fr!important;
-  margin:0!important;
-  padding:0!important;
-  border-top:1px solid rgba(148,163,184,.18)!important;
-  background:rgba(3,12,24,.92)!important;
-  overflow:hidden!important;
-  z-index:25!important;
-}
-.download-card .software-stats > span,
-.download-card .software-stats .stat-download,
-.download-card .software-stats .stat-rating{
-  height:42px!important;
-  min-height:42px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:8px!important;
-  margin:0!important;
-  padding:0 8px!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  color:#fff!important;
-  font-size:14px!important;
-  font-weight:900!important;
-  white-space:nowrap!important;
-}
-.download-card .software-stats > span + span{border-left:1px solid rgba(148,163,184,.18)!important;}
-.download-card .software-stats .stat-like,
-.download-card .software-stats > span:nth-child(n+3){display:none!important;}
-.download-card .stat-download .stat-icon,
-.download-card .stat-download i{color:#22c55e!important;font-size:17px!important;}
-.download-card .stat-rating{min-width:0!important;}
-.download-card .software-rating-stars{display:inline-flex!important;gap:2px!important;color:#facc15!important;letter-spacing:0!important;}
-.download-card .software-rating-star{font-size:14px!important;padding:0!important;line-height:1!important;}
-.download-card .software-rating-count{font-size:12px!important;opacity:.78!important;}
-</style>
-<script id="azobss-final-card-clean-no-free-badge-js">
-(function(){
-  function cleanCard(card){
-    if(!card) return;
-    const free = card.querySelectorAll('.software-badge.free,.free-software-badge');
-    free.forEach(el => el.remove());
-    const btn = card.querySelector('a.download-btn,.download-btn');
-    if(btn){
-      const type = (card.dataset.type || '').toLowerCase();
-      const isPremium = type === 'premium' || btn.classList.contains('premium') || btn.dataset.azobssPremiumBuy === '1';
-      if(!btn.querySelector('.az-btn-icon')){
-        btn.innerHTML = isPremium ? '<span class="az-btn-icon">🛒</span><span>Buy Now</span>' : '<span class="az-btn-icon">⬇</span><span>Download Now</span>';
-      }
-    }
-  }
-  function run(){document.querySelectorAll('#softwareDownloadsGrid .download-card,.downloads-grid .download-card,#softwareGrid .download-card').forEach(cleanCard);}
-  document.addEventListener('DOMContentLoaded', function(){run();setTimeout(run,300);setTimeout(run,1200);const g=document.querySelector('#softwareDownloadsGrid,.downloads-grid,#softwareGrid'); if(g) new MutationObserver(run).observe(g,{childList:true,subtree:true});});
-})();
-</script>
-
 </body>
 </html>
 <style>
