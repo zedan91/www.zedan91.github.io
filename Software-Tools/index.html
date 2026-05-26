@@ -1501,6 +1501,7 @@ margin-top:10px!important;
     <button class="software-platform-btn is-active" type="button" data-software-platform="all">▦ All Platforms</button>
     <button class="software-platform-btn" type="button" data-software-platform="Windows">💻 Windows</button>
     <button class="software-platform-btn" type="button" data-software-platform="Mac">🍎 Mac</button>
+    <button class="software-platform-btn" data-software-platform="Linux">🐧 Linux</button>
     <button class="software-platform-btn" type="button" data-software-platform="Android">🤖 Android</button>
     <button class="software-platform-btn" type="button" data-software-platform="iOS">📱 iOS</button><div class="software-platform-right"><button class="software-platform-btn is-active" type="button" data-software-type="all">All</button><button class="software-platform-btn" type="button" data-software-type="free">Free Software</button><button class="software-platform-btn" type="button" data-software-type="premium">Premium Software</button></div>
   </div>
@@ -2706,6 +2707,26 @@ try{
   localStorage.removeItem('azobssCartItemsV1');
   localStorage.removeItem('azCart');
 }catch(e){}
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    const platformWrap = document.querySelector('.platform-left') || document.querySelector('.software-platforms') || document.querySelector('.platform-filters') || document.querySelector('[data-platform-filter-wrap]');
+    if(!platformWrap) return;
+    const hasLinux = Array.from(platformWrap.querySelectorAll('button')).some(b => /linux/i.test(b.textContent || '') || b.getAttribute('data-software-platform') === 'Linux' || b.getAttribute('data-platform') === 'Linux');
+    if(hasLinux) return;
+    const macBtn = Array.from(platformWrap.querySelectorAll('button')).find(b => /mac/i.test(b.textContent || '') || b.getAttribute('data-software-platform') === 'Mac' || b.getAttribute('data-platform') === 'Mac');
+    const androidBtn = Array.from(platformWrap.querySelectorAll('button')).find(b => /android/i.test(b.textContent || '') || b.getAttribute('data-software-platform') === 'Android' || b.getAttribute('data-platform') === 'Android');
+    if(!macBtn && !androidBtn) return;
+    const linuxBtn = document.createElement('button');
+    linuxBtn.className = macBtn ? macBtn.className : 'software-platform-btn';
+    linuxBtn.setAttribute('data-software-platform','Linux');
+    linuxBtn.textContent = '🐧 Linux';
+    (androidBtn || macBtn.nextSibling) ? platformWrap.insertBefore(linuxBtn, androidBtn || macBtn.nextSibling) : platformWrap.appendChild(linuxBtn);
+  }, 300);
+});
 </script>
 
 </body>
