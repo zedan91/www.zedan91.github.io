@@ -306,6 +306,9 @@
     display:none !important;
 }
 
+
+.buy-price{padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.15);font-size:13px;font-weight:700;}
+.buy-divider{width:1px;height:18px;background:rgba(255,255,255,.35);display:inline-block;}
 </style>
 <style>
 /* COUNTDOWN WORDING FIX V18 */
@@ -2563,7 +2566,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
       ${productIdMeta}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? '<span class="az-btn-icon">🛒</span><span>Buy Now</span>' : '<span class="az-btn-icon">⬇</span><span>Download Now</span>'}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? '<span class="buy-price">'+(item.price||'RM10')+'</span><span class="buy-divider"></span><span class="az-btn-icon">🛒</span><span>Buy Now</span>' : '<span class="az-btn-icon">⬇</span><span>Download Now</span>'}</a>
       ${adminEdit}
     </div>`;
   }
