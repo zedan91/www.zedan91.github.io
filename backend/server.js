@@ -31,6 +31,20 @@ const PREMIUM_ORDERS_FILE = path.join(DATA_DIR, "premium-orders.json");
 const PREMIUM_TOKENS_FILE = path.join(DATA_DIR, "premium-download-tokens.json");
 const SOFTWARE_STATS_FILE = path.join(DATA_DIR, "software-stats.json");
 function cleanSoftwareId(value) { return String(value || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "software-item"; }
+function cleanLogoFileName(value) { return String(value || "software-logo").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "software-logo"; }
+function softwareLogoDir() {
+  const envRoot = process.env.AZOBSS_REPO_ROOT || process.env.REPO_ROOT || "";
+  const winRoot = "C:/Users/USER/Documents/GitHub/www.zedan91.github.io";
+  const root = envRoot ? path.resolve(envRoot) : (fs.existsSync(winRoot) ? winRoot : path.resolve(__dirname, ".."));
+  return path.join(root, "Software-Tools", "images", "logo");
+}
+function faviconFromUrl(value) {
+  try {
+    const u = new URL(String(value || ""));
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(u.hostname.replace(/^www\./, ""))}&sz=128`;
+  } catch { return ""; }
+}
+function publicLogoPath(fileName) { return `images/logo/${fileName}`; }
 function normalizeSoftwareStats(raw = {}) {
   const ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
   const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || 0)));
@@ -222,6 +236,32 @@ app.get("/api/software-stats", (req, res) => {
   });
   writeSoftwareStats(normalized);
   res.json({ ok: true, stats: normalized, updatedAt: new Date().toISOString() });
+});
+
+app.post("/api/software-logo/save", requireAdmin, async (req, res) => {
+  try {
+    const productId = cleanLogoFileName(req.body?.productId || req.body?.id || req.body?.name || "software-logo");
+    const sourceUrl = cleanPremiumUrl(req.body?.sourceUrl || req.body?.downloadLink || req.body?.url || "");
+    const requestedLogo = cleanPremiumUrl(req.body?.logoUrl || "");
+    const logoUrl = requestedLogo || faviconFromUrl(sourceUrl);
+    if (!logoUrl) return res.status(400).json({ ok: false, error: "No valid source/logo URL" });
+
+    const dir = softwareLogoDir();
+    fs.mkdirSync(dir, { recursive: true });
+    const fileName = `${productId}.png`;
+    const fullPath = path.join(dir, fileName);
+
+    const response = await fetch(logoUrl, { headers: { "User-Agent": "AZOBSS-Logo-Regenerator/1.0" } });
+    if (!response.ok) return res.status(502).json({ ok: false, error: `Logo fetch failed HTTP ${response.status}` });
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (!buffer.length) return res.status(502).json({ ok: false, error: "Logo file empty" });
+    fs.writeFileSync(fullPath, buffer);
+
+    res.json({ ok: true, productId, savedPath: publicLogoPath(fileName), fullPath, sourceUrl, logoUrl, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error("software-logo/save failed", err);
+    res.status(500).json({ ok: false, error: err.message || "Failed to save logo" });
+  }
 });
 
 app.post("/api/software-stats/download", (req, res) => {
