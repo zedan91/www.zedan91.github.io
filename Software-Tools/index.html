@@ -3276,6 +3276,13 @@ all.appendChild(wrap);
 .software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155;color:#e5e7eb;font-weight:800;line-height:1.2;}
 .software-stats .stat-download{border-color:rgba(34,197,94,.45);}
 .software-stats .stat-rating{border-color:rgba(250,204,21,.45);}
+.software-stats .stat-rating{display:inline-flex;align-items:center;gap:4px;}
+.software-rating-stars{display:inline-flex;gap:1px;vertical-align:middle;}
+.software-rating-star{appearance:none;border:0;background:transparent;color:#64748b;font-size:13px;line-height:1;cursor:pointer;padding:0 1px;filter:drop-shadow(0 0 4px rgba(250,204,21,.15));}
+.software-rating-star.is-filled,.software-rating-star:hover,.software-rating-star:hover ~ .software-rating-star{color:#facc15;}
+.software-rating-stars:hover .software-rating-star{color:#facc15;}
+.software-rating-star:hover ~ .software-rating-star{color:#64748b;}
+.software-rating-count{opacity:.72;font-size:10px;margin-left:2px;}
 .software-stats .stat-like{border-color:rgba(244,63,94,.45);}
 </style>
 <script>
@@ -3408,9 +3415,21 @@ all.appendChild(wrap);
     }
     return box;
   }
+  function ratingHtml(card, st){
+    const productId=cardProductId(card);
+    const avg=Number(st.rating||0);
+    const votes=Math.max(0,Math.round(Number(st.ratingVotes||0)));
+    const filled=Math.round(avg);
+    let stars='<span class="software-rating-stars" role="group" aria-label="Rate this software">';
+    for(let i=1;i<=5;i++){
+      stars+=`<button class="software-rating-star ${i<=filled?'is-filled':''}" type="button" data-rating-value="${i}" data-product-id="${productId}" title="Rate ${i} star${i>1?'s':''}">★</button>`;
+    }
+    stars+='</span>';
+    return `${stars} <strong>${avg.toFixed(1)}</strong><span class="software-rating-count">(${votes})</span>`;
+  }
   function renderCardStats(card){
     const st=getLocalCardStats(card);
-    ensureBox(card).innerHTML=`<span class="stat-download">⬇ ${fmt(st.downloads)}</span><span class="stat-rating">⭐ ${Number(st.rating||0).toFixed(1)}</span><span class="stat-like">❤️ ${fmt(st.likes)}</span>`;
+    ensureBox(card).innerHTML=`<span class="stat-download">⬇ ${fmt(st.downloads)}</span><span class="stat-rating">${ratingHtml(card,st)}</span><span class="stat-like">❤️ ${fmt(st.likes)}</span>`;
   }
   function renderAllStats(){document.querySelectorAll('.download-card').forEach(renderCardStats);}
   async function postStat(endpoint, payload){
@@ -3419,6 +3438,31 @@ all.appendChild(wrap);
     if(!res.ok||!data.ok) throw new Error(data.error||'Stats update failed');
     return data;
   }
+  function ratedKey(productId){return 'azobss_rated_'+slug(productId);}
+  document.addEventListener('click',async function(e){
+    const star=e.target.closest('.software-rating-star');
+    if(!star) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const card=star.closest('.download-card');
+    if(!card) return;
+    const productId=cardProductId(card);
+    const rating=Math.max(1,Math.min(5,Number(star.dataset.ratingValue||0)));
+    if(!rating) return;
+    if(localStorage.getItem(ratedKey(productId))){
+      alert('You already rated this software on this browser.');
+      return;
+    }
+    star.closest('.software-rating-stars')?.querySelectorAll('button').forEach(b=>b.disabled=true);
+    try{
+      const data=await postStat('/api/software-stats/rate',{productId,rating,name:card.querySelector('h3')?.textContent?.trim()||''});
+      localStorage.setItem(ratedKey(productId),String(rating));
+      mergeBackendStats({[data.productId||slug(productId)]:data.stats});
+    }catch(err){
+      alert('Rating failed. Please try again.');
+      renderCardStats(card);
+    }
+  },true);
   document.addEventListener('click',async function(e){
     const btn=e.target.closest('.download-card .download-btn');
     if(!btn) return;
