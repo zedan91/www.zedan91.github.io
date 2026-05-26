@@ -3855,6 +3855,379 @@ all.appendChild(wrap);
   }, true);
 })();
 </script>
+
+<!-- AZOBSS FINAL PATCH: centered smaller Download/Buy button + clean 2-column stats -->
+<style id="azobss-card-button-stats-final-20260527">
+#softwareGrid .download-card,
+.downloads-grid .download-card,
+#softwareDownloadsGrid .download-card{
+  position:relative!important;
+  overflow:hidden!important;
+  padding-bottom:56px!important;
+  min-height:430px!important;
+}
+
+/* Smaller + centered button. Whole button remains clickable. */
+#softwareGrid .download-card .download-btn,
+.downloads-grid .download-card .download-btn,
+#softwareDownloadsGrid .download-card .download-btn,
+.download-card a.download-btn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+  width:74%!important;
+  max-width:225px!important;
+  min-width:180px!important;
+  height:48px!important;
+  min-height:48px!important;
+  padding:0 18px!important;
+  margin:0 auto 18px!important;
+  border-radius:13px!important;
+  font-size:16px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+  position:relative!important;
+  z-index:80!important;
+  box-sizing:border-box!important;
+}
+#softwareGrid .download-card .download-btn *,
+.downloads-grid .download-card .download-btn *,
+#softwareDownloadsGrid .download-card .download-btn *,
+.download-card a.download-btn *{
+  pointer-events:none!important;
+}
+#softwareGrid .download-card .download-btn.premium,
+.downloads-grid .download-card .download-btn.premium,
+#softwareDownloadsGrid .download-card .download-btn.premium{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;
+}
+.az-btn-svg{
+  width:18px!important;
+  height:18px!important;
+  display:inline-flex!important;
+  flex:0 0 18px!important;
+}
+.az-btn-svg svg{
+  width:18px!important;
+  height:18px!important;
+  display:block!important;
+  fill:currentColor!important;
+}
+
+/* Rebuild bottom stats bar: Download | Rating only */
+#softwareGrid .download-card .software-stats,
+.downloads-grid .download-card .software-stats,
+#softwareDownloadsGrid .download-card .software-stats{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  height:48px!important;
+  display:grid!important;
+  grid-template-columns:95px minmax(0,1fr)!important;
+  align-items:stretch!important;
+  margin:0!important;
+  padding:0!important;
+  gap:0!important;
+  border-top:1px solid rgba(148,163,184,.22)!important;
+  background:rgba(5,15,30,.93)!important;
+  z-index:60!important;
+  overflow:hidden!important;
+  border-radius:0 0 16px 16px!important;
+  box-sizing:border-box!important;
+}
+
+/* Reset old pill styles that affected nested spans */
+#softwareGrid .download-card .software-stats span,
+.downloads-grid .download-card .software-stats span,
+#softwareDownloadsGrid .download-card .software-stats span,
+#softwareGrid .download-card .software-stats button,
+.downloads-grid .download-card .software-stats button,
+#softwareDownloadsGrid .download-card .software-stats button{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+
+#softwareGrid .download-card .software-stats > .stat-download,
+.downloads-grid .download-card .software-stats > .stat-download,
+#softwareDownloadsGrid .download-card .software-stats > .stat-download,
+#softwareGrid .download-card .software-stats > .stat-rating,
+.downloads-grid .download-card .software-stats > .stat-rating,
+#softwareDownloadsGrid .download-card .software-stats > .stat-rating{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  height:48px!important;
+  padding:0 8px!important;
+  margin:0!important;
+  color:#fff!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  border-radius:0!important;
+  box-sizing:border-box!important;
+  white-space:nowrap!important;
+}
+#softwareGrid .download-card .software-stats > .stat-download,
+.downloads-grid .download-card .software-stats > .stat-download,
+#softwareDownloadsGrid .download-card .software-stats > .stat-download{
+  gap:9px!important;
+  border-right:1px solid rgba(148,163,184,.22)!important;
+}
+#softwareGrid .download-card .software-stats > .stat-rating,
+.downloads-grid .download-card .software-stats > .stat-rating,
+#softwareDownloadsGrid .download-card .software-stats > .stat-rating{
+  gap:8px!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+}
+
+/* Hide any old like/heart/third item remnants */
+#softwareGrid .download-card .software-stats > .stat-like,
+.downloads-grid .download-card .software-stats > .stat-like,
+#softwareDownloadsGrid .download-card .software-stats > .stat-like,
+#softwareGrid .download-card .software-stats > :nth-child(n+3),
+.downloads-grid .download-card .software-stats > :nth-child(n+3),
+#softwareDownloadsGrid .download-card .software-stats > :nth-child(n+3){
+  display:none!important;
+}
+
+.az-stat-download-icon{
+  width:24px!important;
+  height:24px!important;
+  border:1px solid rgba(34,197,94,.55)!important;
+  border-radius:999px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#22c55e!important;
+  flex:0 0 24px!important;
+}
+.az-stat-download-icon svg{
+  width:14px!important;
+  height:14px!important;
+  fill:currentColor!important;
+  display:block!important;
+}
+.software-stats .stat-value{
+  color:#fff!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  min-width:12px!important;
+}
+.software-rating-stars{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:1px!important;
+  min-width:78px!important;
+  max-width:78px!important;
+  flex:0 0 78px!important;
+  padding:0!important;
+  margin:0!important;
+}
+.software-rating-star{
+  width:14px!important;
+  height:18px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:16px!important;
+  line-height:1!important;
+  color:#475569!important;
+  border:0!important;
+  outline:0!important;
+  cursor:pointer!important;
+  appearance:none!important;
+}
+.software-rating-star.is-filled{
+  color:#facc15!important;
+}
+.software-rating-stars:hover .software-rating-star{
+  color:#facc15!important;
+}
+.software-rating-star:hover ~ .software-rating-star{
+  color:#475569!important;
+}
+.software-stats .stat-rating strong{
+  color:#fff!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  min-width:26px!important;
+}
+.software-rating-count{
+  color:#cbd5e1!important;
+  opacity:.9!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  margin-left:0!important;
+}
+@media(max-width:600px){
+  #softwareGrid .download-card .download-btn,
+  .downloads-grid .download-card .download-btn,
+  #softwareDownloadsGrid .download-card .download-btn,
+  .download-card a.download-btn{
+    width:76%!important;
+    max-width:215px!important;
+    min-width:170px!important;
+    height:46px!important;
+    min-height:46px!important;
+    font-size:15px!important;
+  }
+  #softwareGrid .download-card .software-stats,
+  .downloads-grid .download-card .software-stats,
+  #softwareDownloadsGrid .download-card .software-stats{
+    grid-template-columns:86px minmax(0,1fr)!important;
+  }
+  .software-rating-stars{
+    min-width:70px!important;
+    max-width:70px!important;
+    flex-basis:70px!important;
+  }
+  .software-rating-star{
+    font-size:14px!important;
+    width:13px!important;
+  }
+}
+</style>
+
+<script id="azobss-card-button-stats-final-20260527">
+(function(){
+  const downloadSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-2H5v2Zm7-18v10.17l3.59-3.58L17 10l-6 6-6-6 1.41-1.41L10 12.17V2h2Z"/></svg>';
+  const cartSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2ZM1 2v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45c.75 0 1.41-.41 1.75-1.03L21 5H5.21l-.94-2H1Zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2Z"/></svg>';
+
+  function isPremiumCard(card){
+    const t=(card?.dataset?.type||'').toLowerCase();
+    const badge=(card?.querySelector('.software-badge,.badge,.free-software-badge')?.textContent||'').toLowerCase();
+    const btn=(card?.querySelector('.download-btn')?.textContent||'').toLowerCase();
+    return t.includes('premium') || badge.includes('premium') || badge.includes('pro') || btn.includes('buy') || btn.includes('cart');
+  }
+
+  function fixButton(card){
+    const btn=card.querySelector('.download-btn');
+    if(!btn) return;
+    const premium=isPremiumCard(card);
+    btn.classList.toggle('premium', premium);
+    btn.innerHTML = premium
+      ? '<span class="az-btn-svg">'+cartSvg+'</span><span>Buy Now</span>'
+      : '<span class="az-btn-svg">'+downloadSvg+'</span><span>Download Now</span>';
+
+    const href = premium
+      ? (btn.dataset.paymentLink || btn.dataset.stripeLink || btn.getAttribute('href') || '#')
+      : (btn.dataset.downloadLink || btn.getAttribute('href') || '#');
+
+    if(href && href !== '#') btn.setAttribute('href', href);
+    btn.setAttribute('target','_blank');
+    btn.setAttribute('rel','noopener');
+  }
+
+  function getProductId(card){
+    if(card.dataset.productId) return card.dataset.productId;
+    const title=(card.querySelector('h3,.software-title')?.textContent||'software-item').trim();
+    card.dataset.productId='AZSW-'+title.toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    return card.dataset.productId;
+  }
+
+  function getDownloadText(box){
+    const old = box.querySelector('.stat-download .stat-value') || box.querySelector('.stat-download');
+    const txt = (old?.textContent || '0').replace(/[^\d.KM]/gi,'').trim();
+    return txt || '0';
+  }
+
+  function getRatingData(box){
+    const strong = box.querySelector('.stat-rating strong');
+    let avg = strong ? strong.textContent.trim() : '';
+    if(!avg){
+      const raw=(box.querySelector('.stat-rating')?.textContent||'0.0').match(/\d+(?:\.\d+)?/);
+      avg=raw?raw[0]:'0.0';
+    }
+    const countEl=box.querySelector('.software-rating-count');
+    let count=countEl ? countEl.textContent.trim() : '(0)';
+    if(!/^\(/.test(count)) count='('+count.replace(/[^\d]/g,'0')+')';
+    return {avg:avg||'0.0', count:count||'(0)'};
+  }
+
+  function buildStars(card, avg){
+    const productId=getProductId(card);
+    const filled=Math.max(0,Math.min(5,Math.round(Number(avg)||0)));
+    let html='<span class="software-rating-stars" role="group" aria-label="Rate this software">';
+    for(let i=1;i<=5;i++){
+      html += '<button class="software-rating-star '+(i<=filled?'is-filled':'')+'" type="button" data-rating-value="'+i+'" data-product-id="'+productId+'" title="Rate '+i+' star'+(i>1?'s':'')+'">★</button>';
+    }
+    html += '</span>';
+    return html;
+  }
+
+  function fixStats(card){
+    let box=card.querySelector('.software-stats');
+    if(!box){
+      box=document.createElement('div');
+      box.className='software-stats';
+      card.appendChild(box);
+    }
+
+    const downloads=getDownloadText(box);
+    const rating=getRatingData(box);
+    box.innerHTML =
+      '<span class="stat-download">'+
+        '<span class="az-stat-download-icon">'+downloadSvg+'</span>'+
+        '<span class="stat-value">'+downloads+'</span>'+
+      '</span>'+
+      '<span class="stat-rating">'+
+        buildStars(card,rating.avg)+
+        '<strong>'+rating.avg+'</strong>'+
+        '<span class="software-rating-count">'+rating.count+'</span>'+
+      '</span>';
+
+    if(box.parentElement===card && box !== card.lastElementChild) card.appendChild(box);
+  }
+
+  function fixCard(card){
+    if(!card) return;
+    fixButton(card);
+    fixStats(card);
+  }
+
+  function fixAll(){
+    document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card,#softwareDownloadsGrid .download-card').forEach(fixCard);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    fixAll();
+    setTimeout(fixAll,150);
+    setTimeout(fixAll,600);
+    setTimeout(fixAll,1500);
+    const grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
+    if(grid){
+      new MutationObserver(function(){ setTimeout(fixAll,40); }).observe(grid,{childList:true,subtree:true});
+    }
+  });
+
+  document.addEventListener('click', function(e){
+    const btn=e.target.closest('.download-card .download-btn');
+    if(btn){
+      const card=btn.closest('.download-card');
+      setTimeout(function(){ fixCard(card); },80);
+    }
+    const star=e.target.closest('.software-rating-star');
+    if(star){
+      const card=star.closest('.download-card');
+      setTimeout(function(){ fixCard(card); },500);
+      setTimeout(function(){ fixCard(card); },1300);
+    }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
 <style>
