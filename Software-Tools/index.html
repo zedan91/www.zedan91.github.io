@@ -289,14 +289,13 @@
 .az-usd-line{font-size:12px;color:#93c5fd;font-weight:800;margin-top:4px;white-space:nowrap}
 
 .product-meta{
-    margin-top:6px;
-    margin-bottom:8px;
-    font-size:11px;
-    color:#7d8698;
-    opacity:.72;
-    text-align:center;
-    letter-spacing:.5px;
-    font-weight:500;
+    margin-top:8px !important;
+    text-align:center !important;
+    font-size:10px !important;
+    color:#7d8698 !important;
+    opacity:.72 !important;
+    letter-spacing:.5px !important;
+    font-weight:500 !important;
 }
 
 .product-meta:hover{
@@ -1216,18 +1215,76 @@ grid-template-columns:repeat(2,1fr)!important;
 <style>
 /* Product ID / SKU metadata style */
 .product-meta{
-  width:100%;
-  margin:4px 0 8px !important;
-  font-size:10.5px !important;
-  color:#8a94a8 !important;
-  opacity:.78 !important;
-  text-align:center !important;
-  letter-spacing:.45px !important;
-  font-weight:600 !important;
-  line-height:1.2 !important;
+    margin-top:8px !important;
+    text-align:center !important;
+    font-size:10px !important;
+    color:#7d8698 !important;
+    opacity:.72 !important;
+    letter-spacing:.5px !important;
+    font-weight:500 !important;
 }
 .product-meta:hover{opacity:1 !important;}
 .sku-badge{display:none !important;}
+</style>
+<style>
+
+/* Center title + category badges and auto-fit long titles */
+.download-card{
+  align-items:center !important;
+  text-align:center !important;
+}
+
+.download-card h3{
+  width:100% !important;
+  min-height:54px !important;
+  margin:12px auto 8px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.15 !important;
+  font-size:clamp(18px, 1.55vw, 22px) !important;
+  overflow-wrap:anywhere !important;
+  text-wrap:balance !important;
+}
+
+.download-card h3.long-title{
+  font-size:clamp(15px, 1.25vw, 19px) !important;
+}
+
+.software-meta{
+  width:100% !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+  text-align:center !important;
+}
+
+.software-meta span{
+  max-width:100% !important;
+  text-align:center !important;
+  line-height:1.15 !important;
+}
+
+.download-card p{
+  width:100% !important;
+  text-align:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+.software-card-admin-actions,
+.admin-actions{
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  gap:10px !important;
+  width:100% !important;
+  margin-top:12px !important;
+}
+
 </style>
 </head>
 <body>
@@ -1255,6 +1312,7 @@ grid-template-columns:repeat(2,1fr)!important;
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name">Hello, <span id="signedInName"></span></div>
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
+${productIdMeta}
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
 <a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
@@ -1810,7 +1868,6 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
       ${metaHtml}
-      ${productIdMeta}
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
       <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
@@ -2393,5 +2450,19 @@ document.addEventListener("click", function(e){
   if(btn) window.__azobssEditingSoftwareId = "";
 }, true);
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function fitSoftwareTitles(){
+    document.querySelectorAll('#softwareDownloadsGrid .download-card h3').forEach(function(title){
+      const text = (title.textContent || '').trim();
+      title.classList.toggle('long-title', text.length >= 18);
+    });
+  }
+  fitSoftwareTitles();
+  new MutationObserver(fitSoftwareTitles).observe(document.getElementById('softwareDownloadsGrid') || document.body, {childList:true, subtree:true});
+});
+</script>
+
 </body>
 </html>
