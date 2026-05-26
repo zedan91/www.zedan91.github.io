@@ -2383,24 +2383,46 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function statsKeyFrom(value){
     return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';
   }
-  function seededNumber(seed){
-    let h = 2166136261;
-    String(seed || 'azobss').split('').forEach(ch => { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); });
-    return Math.abs(h >>> 0);
-  }
   function defaultSoftwareStats(name, category){
-    const seed = seededNumber(String(name || '') + '|' + String(category || ''));
-    const downloads = 800 + (seed % 65000);
-    const likes = 35 + ((seed >>> 5) % 6400);
-    const rating = Number((4.1 + ((seed >>> 11) % 9) / 10).toFixed(1));
-    return {downloads, rating: Math.min(5, rating), likes};
+    return {views:0, downloads:0, rating:0, likes:0};
   }
   function normalizeStats(raw, fallbackName, fallbackCategory){
-    const fallback = defaultSoftwareStats(fallbackName, fallbackCategory);
-    const downloads = Number(raw?.downloads || 0) || fallback.downloads;
-    const rating = Number(raw?.rating || 0) || fallback.rating;
-    const likes = Number(raw?.likes || 0) || fallback.likes;
-    return {downloads: Math.max(0, Math.round(downloads)), rating: Math.max(0, Math.min(5, Number(rating.toFixed ? rating.toFixed(1) : rating))), likes: Math.max(0, Math.round(likes))};
+    const views = Number(raw?.views || 0);
+    const downloads = Number(raw?.downloads || 0);
+    const rating = Number(raw?.rating || 0);
+    const likes = Number(raw?.likes || 0);
+    return {
+      views: Math.max(0, Math.round(views)),
+      downloads: Math.max(0, Math.round(downloads)),
+      rating: Math.max(0, Math.min(5, Number((Number.isFinite(rating) ? rating : 0).toFixed(1)))),
+      likes: Math.max(0, Math.round(likes))
+    };
+  }
+  function formatStatsNumber(value){
+    const n = Number(value || 0);
+    if(n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 0 : 1).replace(/\.0$/,'') + 'M';
+    if(n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/,'') + 'K';
+    return String(Math.max(0, Math.round(n)));
+  }
+  function softwareStatsHtml(st){
+    const s = normalizeStats(st || {});
+    return `<span title="Views">👁 ${formatStatsNumber(s.views)}</span><span title="Downloads">⬇ ${formatStatsNumber(s.downloads)}</span><span title="Rating">⭐ ${Number(s.rating || 0).toFixed(1)}</span><span title="Likes">❤️ ${formatStatsNumber(s.likes)}</span>`;
+  }
+  function ensureStatsRow(card){
+    if(!card) return null;
+    let row = card.querySelector('.software-stats');
+    if(!row){
+      row = document.createElement('div');
+      row.className = 'software-stats';
+      const p = card.querySelector('p');
+      if(p) p.insertAdjacentElement('beforebegin', row);
+      else card.appendChild(row);
+    }
+    return row;
+  }
+  function updateStatsRow(card){
+    const row = ensureStatsRow(card);
+    if(row) row.innerHTML = softwareStatsHtml(statsForCard(card));
   }
   function statsForItem(item){
     const stats = readSoftwareStats();
@@ -2416,9 +2438,11 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function applyStatsToCard(card){
     if(!card) return;
     const st = statsForCard(card);
+    card.dataset.views = String(st.views);
     card.dataset.downloads = String(st.downloads);
     card.dataset.rating = String(st.rating);
     card.dataset.likes = String(st.likes);
+    updateStatsRow(card);
   }
   function refreshManualSoftwareStats(){
     if(!isAdmin()) return alert('Admin only.');
@@ -2426,10 +2450,17 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     getStaticCards().forEach(card => {
       const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'Software Item';
       const key = statsKeyFrom(staticProductId(card) || name);
-      stats[key] = defaultSoftwareStats(name, card?.dataset.category || 'General Tools');
+      stats[key] = normalizeStats(stats[key] || {
+        views: card.dataset.views,
+        downloads: card.dataset.downloads,
+        rating: card.dataset.rating,
+        likes: card.dataset.likes
+      });
+      card.dataset.views = String(stats[key].views);
       card.dataset.downloads = String(stats[key].downloads);
       card.dataset.rating = String(stats[key].rating);
       card.dataset.likes = String(stats[key].likes);
+      updateStatsRow(card);
     });
     softwareDynamicItems.forEach(item => {
       const key = statsKeyFrom(item.productId || item.id || item.name);
@@ -2437,7 +2468,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     });
     saveSoftwareStats(stats);
     applySoftwareFilters();
-    setJsonStatus('Static stats refreshed: downloads, rating and likes updated locally. Export JSON if you want to keep/push the values.');
+    setJsonStatus('Stats refreshed locally. Views/downloads increase on this browser only. Export JSON if you want to keep/push the values.');
   }
 
   function normalizeImportedSoftwarePayload(payload){
@@ -2485,13 +2516,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const productIdMeta = item.productId ? `<div class="product-meta">ID: ${esc(item.productId)}</div>` : '';
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="software-card-admin-actions"><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title='Edit'>✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title='Delete'>🗑️</button></div>` : '';
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
       <div class="download-icon">${esc(item.icon)}</div>
       <div class="software-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
       ${metaHtml}
+      <div class="software-stats">${softwareStatsHtml(statsForItem(item))}</div>
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
       <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : item.link)}" rel="noopener" target="_blank">${esc(item.buttonText)}</a>
@@ -2584,6 +2616,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       downloadLink: firstBtn?.getAttribute('href') || '',
       link: firstBtn?.getAttribute('href') || '',
       platforms: String(card?.dataset.platforms || 'Windows').split('|').filter(Boolean),
+      views: statsForCard(card).views,
       downloads: statsForCard(card).downloads,
       rating: statsForCard(card).rating,
       likes: statsForCard(card).likes,
@@ -3256,25 +3289,71 @@ all.appendChild(wrap);
 
 
 <style>
-.software-stats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0}
-.software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155}
+.software-stats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px}
+.software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155;color:#e5e7eb;line-height:1.2}
 </style>
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
-setTimeout(()=>{
-document.querySelectorAll('.download-card').forEach((c,i)=>{
-if(c.querySelector('.software-stats')) return;
-const stats=document.createElement('div');
-stats.className='software-stats';
-stats.innerHTML=`<span>👁 ${(Math.floor(Math.random()*50)+5)}K</span>
-<span>⬇ ${(Math.floor(Math.random()*20)+1)}K</span>
-<span>⭐ ${(4+Math.random()).toFixed(1)}</span>
-<span>❤️ ${Math.floor(Math.random()*900)+100}</span>`;
-const p=c.querySelector('p');
-if(p) p.insertAdjacentElement('beforebegin',stats);
-});
-},700);
-});
+(function(){
+  const KEY = 'azobss_software_manual_stats_v1';
+  const SEEN_KEY = 'azobss_software_viewed_session_v1';
+  function read(){ try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){return{};} }
+  function save(v){ localStorage.setItem(KEY, JSON.stringify(v||{})); }
+  function key(v){ return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item'; }
+  function cardKey(card){
+    const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'software-item';
+    if(!card.dataset.productId){ card.dataset.productId = 'AZSW-' + name.toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+    return key(card.dataset.productId || card.dataset.name || name);
+  }
+  function cleanNum(v){ return Math.max(0, Math.round(Number(v||0) || 0)); }
+  function cleanRating(v){ return Math.max(0, Math.min(5, Number((Number(v||0)||0).toFixed(1)))); }
+  function norm(raw){ return {views:cleanNum(raw?.views), downloads:cleanNum(raw?.downloads), rating:cleanRating(raw?.rating), likes:cleanNum(raw?.likes)}; }
+  function fmt(v){ const n=cleanNum(v); if(n>=1000000)return (n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M'; if(n>=1000)return (n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K'; return String(n); }
+  function html(s){ s=norm(s); return `<span title="Views">👁 ${fmt(s.views)}</span><span title="Downloads">⬇ ${fmt(s.downloads)}</span><span title="Rating">⭐ ${s.rating.toFixed(1)}</span><span title="Likes">❤️ ${fmt(s.likes)}</span>`; }
+  function ensureRow(card){
+    let row = card.querySelector('.software-stats');
+    if(!row){ row=document.createElement('div'); row.className='software-stats'; const p=card.querySelector('p'); if(p)p.insertAdjacentElement('beforebegin',row); else card.appendChild(row); }
+    return row;
+  }
+  function getStats(card){
+    const all=read(); const k=cardKey(card);
+    const s=norm(all[k] || {views:card.dataset.views, downloads:card.dataset.downloads, rating:card.dataset.rating, likes:card.dataset.likes});
+    all[k]=s; save(all);
+    card.dataset.views=s.views; card.dataset.downloads=s.downloads; card.dataset.rating=s.rating; card.dataset.likes=s.likes;
+    return s;
+  }
+  function setStats(card,s){
+    const all=read(); const k=cardKey(card); all[k]=norm(s); save(all);
+    card.dataset.views=all[k].views; card.dataset.downloads=all[k].downloads; card.dataset.rating=all[k].rating; card.dataset.likes=all[k].likes;
+    ensureRow(card).innerHTML=html(all[k]);
+  }
+  function renderAll(){ document.querySelectorAll('.download-card').forEach(c=>ensureRow(c).innerHTML=html(getStats(c))); }
+  function inc(card,field){ const s=getStats(card); s[field]=cleanNum(s[field])+1; setStats(card,s); }
+  function initViews(){
+    let seen={}; try{seen=JSON.parse(sessionStorage.getItem(SEEN_KEY)||'{}')||{};}catch(e){}
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver(entries=>{
+      entries.forEach(en=>{
+        if(en.isIntersecting && en.intersectionRatio >= 0.35){
+          const c=en.target; const k=cardKey(c);
+          if(!seen[k]){ seen[k]=1; sessionStorage.setItem(SEEN_KEY, JSON.stringify(seen)); inc(c,'views'); }
+          io.unobserve(c);
+        }
+      });
+    },{threshold:[0.35]}) : null;
+    document.querySelectorAll('.download-card').forEach(c=>{ if(io) io.observe(c); });
+  }
+  document.addEventListener('click', function(e){
+    const btn=e.target.closest('.download-btn');
+    if(!btn) return;
+    const card=btn.closest('.download-card');
+    if(card) inc(card,'downloads');
+  }, true);
+  document.addEventListener('DOMContentLoaded', function(){
+    renderAll(); initViews();
+    setTimeout(function(){renderAll(); initViews();},800);
+    const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid,#softwareGrid');
+    if(grid){ new MutationObserver(function(){renderAll(); initViews();}).observe(grid,{childList:true,subtree:true}); }
+  });
+})();
 </script>
 </body>
 </html>
