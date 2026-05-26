@@ -3984,7 +3984,7 @@ all.appendChild(wrap);
 
 <style id="azobss-card-admin-logo-layout-final">
 #softwareGrid .download-card,.downloads-grid .download-card{position:relative!important;}
-#softwareGrid .download-card .software-card-admin-actions,.downloads-grid .download-card .software-card-admin-actions{position:absolute!important;top:64px!important;right:16px!important;width:auto!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;z-index:6000!important;pointer-events:auto!important;}
+#softwareGrid .download-card .software-card-admin-actions,.downloads-grid .download-card .software-card-admin-actions{position:absolute!important;top:64px!important;right:16px!important;width:auto!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;z-index:60!important;pointer-events:auto!important;}
 #softwareGrid .download-card .software-logo-admin-btn,#softwareGrid .download-card .software-card-edit-btn,#softwareGrid .download-card .software-card-delete-btn,.downloads-grid .download-card .software-logo-admin-btn,.downloads-grid .download-card .software-card-edit-btn,.downloads-grid .download-card .software-card-delete-btn{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;padding:0!important;margin:0!important;border-radius:50%!important;background:rgba(2,6,23,.72)!important;backdrop-filter:blur(8px)!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:16px!important;line-height:1!important;font-weight:900!important;box-shadow:0 10px 25px rgba(0,0,0,.28)!important;cursor:pointer!important;pointer-events:auto!important;}
 #softwareGrid .download-card .software-logo-admin-btn,.downloads-grid .download-card .software-logo-admin-btn{border:2px solid #22c55e!important;color:#22c55e!important;}
 #softwareGrid .download-card .software-card-edit-btn,.downloads-grid .download-card .software-card-edit-btn{border:2px solid #1e90ff!important;color:#bfdbfe!important;}
@@ -4001,6 +4001,152 @@ all.appendChild(wrap);
   function normalizeAdminActions(card){const wrap=card.querySelector('.software-card-admin-actions');if(!wrap)return;const logo=wrap.querySelector('.software-logo-admin-btn');const edit=wrap.querySelector('.software-card-edit-btn');const del=wrap.querySelector('.software-card-delete-btn');if(logo){logo.innerHTML='🪄';logo.title='Generate logo from website link';logo.setAttribute('aria-label','Generate logo');}if(edit){edit.innerHTML='✏️';edit.title='Edit software';edit.setAttribute('aria-label','Edit');}if(del){del.innerHTML='🗑️';del.title='Delete software';del.setAttribute('aria-label','Delete');}}
   function run(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(function(card){moveProductId(card);normalizeAdminActions(card);});}
   document.addEventListener('DOMContentLoaded',function(){run();setTimeout(run,300);setTimeout(run,1200);const grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');if(grid)new MutationObserver(function(){setTimeout(run,0);}).observe(grid,{childList:true,subtree:true});});
+})();
+</script>
+
+
+
+<!-- AZOBSS final fix: admin action buttons + modal overlay + product id position -->
+<style id="azobss-final-admin-action-position-fix">
+/* Keep card admin buttons only inside software cards and never above the edit modal */
+#softwareGrid .download-card > .software-card-admin-actions,
+.downloads-grid .download-card > .software-card-admin-actions{
+  position:absolute!important;
+  top:72px!important;
+  right:14px!important;
+  width:auto!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  z-index:60!important;
+  pointer-events:auto!important;
+}
+
+/* Modal must always cover card buttons */
+.software-admin-modal,
+.software-admin-modal.is-open{
+  z-index:9000!important;
+}
+.software-admin-panel{
+  position:relative!important;
+  z-index:9001!important;
+}
+
+/* If the edit modal is open, hide floating card actions behind it completely */
+body.az-software-modal-open #softwareGrid .download-card > .software-card-admin-actions,
+body.az-software-modal-open .downloads-grid .download-card > .software-card-admin-actions{
+  display:none!important;
+}
+
+#softwareGrid .download-card > .software-card-admin-actions .software-logo-admin-btn,
+#softwareGrid .download-card > .software-card-admin-actions .software-card-edit-btn,
+#softwareGrid .download-card > .software-card-admin-actions .software-card-delete-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-logo-admin-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-card-edit-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-card-delete-btn{
+  width:36px!important;
+  height:36px!important;
+  min-width:36px!important;
+  min-height:36px!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:50%!important;
+  background:rgba(2,6,23,.78)!important;
+  backdrop-filter:blur(8px)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:15px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  box-shadow:0 8px 18px rgba(0,0,0,.30)!important;
+  cursor:pointer!important;
+}
+#softwareGrid .download-card > .software-card-admin-actions .software-logo-admin-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-logo-admin-btn{
+  border:2px solid #22c55e!important;
+  color:#22c55e!important;
+}
+#softwareGrid .download-card > .software-card-admin-actions .software-card-edit-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-card-edit-btn{
+  border:2px solid #1e90ff!important;
+  color:#bfdbfe!important;
+}
+#softwareGrid .download-card > .software-card-admin-actions .software-card-delete-btn,
+.downloads-grid .download-card > .software-card-admin-actions .software-card-delete-btn{
+  border:2px solid #ff365f!important;
+  color:#fecaca!important;
+}
+
+/* Keep love button original top-right */
+#softwareGrid .download-card > .az-like-btn,
+#softwareGrid .download-card > .like-btn,
+.downloads-grid .download-card > .az-like-btn,
+.downloads-grid .download-card > .like-btn{
+  position:absolute!important;
+  top:16px!important;
+  right:16px!important;
+  z-index:70!important;
+}
+
+/* Product ID above button, not inside footer */
+#softwareGrid .download-card > .product-meta,
+.downloads-grid .download-card > .product-meta{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  color:#3b82f6!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  letter-spacing:.2px!important;
+  margin:2px auto 8px!important;
+  opacity:1!important;
+  order:50!important;
+}
+#softwareGrid .download-card > .download-btn,
+.downloads-grid .download-card > .download-btn{
+  order:60!important;
+}
+#softwareGrid .download-card > .software-stats,
+.downloads-grid .download-card > .software-stats{
+  order:70!important;
+}
+
+@media(max-width:640px){
+  #softwareGrid .download-card > .software-card-admin-actions,
+  .downloads-grid .download-card > .software-card-admin-actions{
+    top:64px!important;
+    right:10px!important;
+    gap:6px!important;
+  }
+  #softwareGrid .download-card > .software-card-admin-actions .software-logo-admin-btn,
+  #softwareGrid .download-card > .software-card-admin-actions .software-card-edit-btn,
+  #softwareGrid .download-card > .software-card-admin-actions .software-card-delete-btn,
+  .downloads-grid .download-card > .software-card-admin-actions .software-logo-admin-btn,
+  .downloads-grid .download-card > .software-card-admin-actions .software-card-edit-btn,
+  .downloads-grid .download-card > .software-card-admin-actions .software-card-delete-btn{
+    width:32px!important;
+    height:32px!important;
+    min-width:32px!important;
+    min-height:32px!important;
+    font-size:13px!important;
+  }
+}
+</style>
+<script id="azobss-final-modal-action-hide-fix">
+(function(){
+  function syncModalState(){
+    var open = !!document.querySelector('.software-admin-modal.is-open,[id*="software"][class*="modal"].is-open');
+    document.body.classList.toggle('az-software-modal-open', open);
+  }
+  document.addEventListener('click', function(){ setTimeout(syncModalState, 30); }, true);
+  document.addEventListener('keydown', function(){ setTimeout(syncModalState, 30); }, true);
+  new MutationObserver(syncModalState).observe(document.body, {subtree:true, attributes:true, attributeFilter:['class','style']});
+  syncModalState();
 })();
 </script>
 
