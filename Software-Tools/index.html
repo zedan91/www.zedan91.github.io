@@ -2143,13 +2143,13 @@ document.addEventListener('error', function(e){
       
       
     </div>
-    <p class="azobss-pay-note" id="azobssPayInstruction">Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, tekan Check Payment / Unlock Download.</p>
+    <p class="azobss-pay-note" id="azobssPayInstruction">Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, tekan Submit Payment Proof.</p>
     <label class="azobss-pay-field">Payment Reference / Receipt Note
       <input id="azobssPayReference" type="text" placeholder="Contoh: nama bank, masa bayaran atau nombor rujukan">
     </label>
     <div class="azobss-pay-actions">
-      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment Link</button>
-      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Check Payment / Unlock Download</button>
+      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Bank Transfer</button>
+      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Submit Payment Proof</button>
     </div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
@@ -3268,20 +3268,20 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const inst = document.getElementById('azobssPayInstruction');
     if(!inst) return;
     if(currentMethod === 'bank'){
-      inst.textContent = 'Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, masukkan rujukan ringkas jika ada dan tekan Check Payment / Unlock Download.';
+      inst.textContent = 'Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, masukkan rujukan ringkas jika ada dan tekan Submit Payment Proof.';
       openPaymentBtn.textContent = 'Open Bank Transfer';
     }else if(currentMethod === 'toyyibpay'){
-      inst.textContent = 'Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan Check Payment / Unlock Download selepas pembayaran selesai.';
+      inst.textContent = 'Tekan Open Bank Transfer untuk bayar melalui ToyyibPay, kemudian tekan Submit Payment Proof selepas pembayaran selesai.';
       openPaymentBtn.textContent = 'Open ToyyibPay';
     }else if(currentMethod === 'stripe'){
-      inst.textContent = 'Pay by Stripe for international card payment, then press Check Payment / Unlock Download after payment is completed.';
+      inst.textContent = 'Pay by Stripe for international card payment, then press Submit Payment Proof after payment is completed.';
       openPaymentBtn.textContent = 'Open Stripe';
     }else{
-      inst.textContent = 'Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan Check Payment / Unlock Download.';
+      inst.textContent = 'Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan Submit Payment Proof.';
       openPaymentBtn.textContent = 'Open QR Payment';
     }
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
-    completeBtn.textContent = 'Check Payment / Unlock Download';
+    completeBtn.textContent = 'Submit Payment Proof';
   }
 
   function open(product){
@@ -3318,13 +3318,19 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(!currentProduct) return;
     errorBox.textContent = '';
     successBox.classList.remove('is-open');
-    const downloadUrl = toAbsolute(currentProduct.secureDownloadLink || currentProduct.downloadLink || '');
+
     const note = refInput?.value?.trim() || '';
-    if(downloadUrl){
-      successBox.innerHTML = `<b>Pembayaran direkod ✅</b><br><span>Jika bayaran sudah selesai, gunakan link download di bawah.</span>${note ? `<br><span>Reference: ${esc(note)}</span>` : ''}<br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a>`;
-    }else{
-      successBox.innerHTML = `<b>Payment note saved ✅</b><br><span>Admin akan semak bayaran anda. Download link belum diset untuk item ini.</span>${note ? `<br><span>Reference: ${esc(note)}</span>` : ''}`;
+
+    if(!note){
+      errorBox.textContent = 'Please enter payment reference / receipt note.';
+      return;
     }
+
+    completeBtn.disabled = true;
+    completeBtn.textContent = 'Pending Verification';
+
+    successBox.innerHTML = `<b>Payment proof submitted ⏳</b><br><span>Admin akan semak pembayaran anda terlebih dahulu sebelum download dibuka.</span><br><span>Status: Pending Verification</span>${note ? `<br><span>Reference: ${esc(note)}</span>` : ''}`;
+
     successBox.classList.add('is-open');
   });
 
@@ -4007,7 +4013,7 @@ async function verifyToyyibPayment(billCode){
 
     if(verifyBtn){
       verifyBtn.disabled=false;
-      verifyBtn.textContent='Check Payment / Unlock Download';
+      verifyBtn.textContent='Submit Payment Proof';
     }
   }catch(err){
     console.error(err);
