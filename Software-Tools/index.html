@@ -2317,8 +2317,10 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function getCurrentUserObject(){ try { return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null'); } catch(e){ return null; } }
   function isAdmin(){
     const currentUser = getCurrentUserObject();
+    const adminEmails=['zedan91@azobss.local','zedan9107@gmail.com'];
     return sessionStorage.getItem('azobssLoggedIn') === '1' && (
-      clean(currentUser?.usernameKey) === 'zedan91' || clean(currentUser?.email) === 'zedan91@azobss.local'
+      clean(currentUser?.usernameKey)==='zedan91' ||
+      adminEmails.includes(clean(currentUser?.email))
     );
   }
 
