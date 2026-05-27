@@ -2328,7 +2328,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       usernameText
     ].map(clean).filter(Boolean);
     const email = clean(currentUser?.email);
-    const adminUsers = new Set(['zedan91','zedan0001','azobss','admin']);
+    const adminUsers = new Set(['zedan91']);
     const adminEmails = new Set(['zedan91@azobss.local','zedan9107@gmail.com']);
     return logged && (candidates.some(v => adminUsers.has(v)) || adminEmails.has(email));
   }
