@@ -5056,5 +5056,280 @@ border-right:1px solid rgba(255,255,255,.25)!important;
 })();
 </script>
 
+
+<!-- AZOBSS FINAL PATCH: practical 5-star rating + clean download footer icon -->
+<style id="azobss-practical-5star-footer-final">
+#softwareGrid .download-card > .software-stats,
+.downloads-grid .download-card > .software-stats{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  height:52px!important;
+  margin:0!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-columns:38% 62%!important;
+  background:rgba(3,12,27,.92)!important;
+  border-top:1px solid rgba(45,212,191,.16)!important;
+  border-radius:0 0 18px 18px!important;
+  overflow:hidden!important;
+  z-index:80!important;
+}
+#softwareGrid .download-card > .software-stats > span,
+.downloads-grid .download-card > .software-stats > span{
+  height:52px!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0 8px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#f8fafc!important;
+}
+#softwareGrid .download-card > .software-stats > span + span,
+.downloads-grid .download-card > .software-stats > span + span{
+  border-left:1px solid rgba(148,163,184,.18)!important;
+}
+#softwareGrid .download-card .stat-download .stat-icon,
+.downloads-grid .download-card .stat-download .stat-icon{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  border-radius:50%!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#21d46b!important;
+  background:rgba(34,197,94,.12)!important;
+  box-shadow:inset 0 0 0 1px rgba(34,197,94,.35), 0 0 16px rgba(34,197,94,.12)!important;
+}
+#softwareGrid .download-card .stat-download .stat-icon svg,
+.downloads-grid .download-card .stat-download .stat-icon svg{
+  width:18px!important;
+  height:18px!important;
+  display:block!important;
+}
+#softwareGrid .download-card .stat-download .stat-value,
+.downloads-grid .download-card .stat-download .stat-value{
+  min-width:18px!important;
+  color:#fff!important;
+  font-size:14px!important;
+  font-weight:900!important;
+}
+#softwareGrid .download-card .stat-rating,
+.downloads-grid .download-card .stat-rating{
+  gap:7px!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+}
+#softwareGrid .download-card .rating-display,
+.downloads-grid .download-card .rating-display,
+#softwareGrid .download-card .rating-main-star,
+.downloads-grid .download-card .rating-main-star{
+  display:none!important;
+}
+#softwareGrid .download-card .software-rating-stars,
+.downloads-grid .download-card .software-rating-stars{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:1px!important;
+  min-width:78px!important;
+  height:28px!important;
+  padding:0 7px!important;
+  border-radius:999px!important;
+  background:rgba(15,23,42,.88)!important;
+  box-shadow:inset 0 0 0 1px rgba(148,163,184,.24)!important;
+}
+#softwareGrid .download-card .software-rating-star,
+.downloads-grid .download-card .software-rating-star{
+  appearance:none!important;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  width:13px!important;
+  min-width:13px!important;
+  height:24px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#556171!important;
+  font-size:14px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  transition:transform .14s ease,color .14s ease!important;
+  text-shadow:none!important;
+}
+#softwareGrid .download-card .software-rating-star.is-filled,
+.downloads-grid .download-card .software-rating-star.is-filled{
+  color:#facc15!important;
+  filter:drop-shadow(0 0 5px rgba(250,204,21,.25))!important;
+}
+#softwareGrid .download-card .software-rating-stars:hover .software-rating-star,
+.downloads-grid .download-card .software-rating-stars:hover .software-rating-star{
+  color:#facc15!important;
+}
+#softwareGrid .download-card .software-rating-stars .software-rating-star:hover ~ .software-rating-star,
+.downloads-grid .download-card .software-rating-stars .software-rating-star:hover ~ .software-rating-star{
+  color:#556171!important;
+}
+#softwareGrid .download-card .software-rating-star:hover,
+.downloads-grid .download-card .software-rating-star:hover{
+  transform:scale(1.18)!important;
+}
+#softwareGrid .download-card .rating-value,
+.downloads-grid .download-card .rating-value{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  white-space:nowrap!important;
+  color:#fff!important;
+  font-size:14px!important;
+  font-weight:900!important;
+}
+#softwareGrid .download-card .rating-value strong,
+.downloads-grid .download-card .rating-value strong{
+  color:#fff!important;
+  font-size:14px!important;
+  font-weight:900!important;
+}
+#softwareGrid .download-card .software-rating-count,
+.downloads-grid .download-card .software-rating-count{
+  color:#cbd5e1!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  opacity:.86!important;
+  margin-left:2px!important;
+}
+#softwareGrid .download-card > .download-btn,
+.downloads-grid .download-card > .download-btn{
+  margin-bottom:18px!important;
+}
+#softwareGrid .download-card > .download-btn.premium,
+.downloads-grid .download-card > .download-btn.premium{
+  width:82%!important;
+  max-width:230px!important;
+  padding:0 12px!important;
+  gap:8px!important;
+}
+#softwareGrid .download-card .buy-price,
+.downloads-grid .download-card .buy-price{
+  flex:0 0 auto!important;
+  min-width:48px!important;
+  max-width:none!important;
+}
+@media(max-width:640px){
+  #softwareGrid .download-card > .software-stats,
+  .downloads-grid .download-card > .software-stats{
+    height:50px!important;
+  }
+  #softwareGrid .download-card > .software-stats > span,
+  .downloads-grid .download-card > .software-stats > span{
+    height:50px!important;
+    gap:6px!important;
+  }
+  #softwareGrid .download-card .software-rating-stars,
+  .downloads-grid .download-card .software-rating-stars{
+    min-width:72px!important;
+    padding:0 5px!important;
+  }
+  #softwareGrid .download-card .software-rating-star,
+  .downloads-grid .download-card .software-rating-star{
+    width:12px!important;
+    min-width:12px!important;
+    font-size:13px!important;
+  }
+}
+</style>
+<script id="azobss-practical-5star-footer-final-js">
+(function(){
+  function slug(v){
+    return String(v||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';
+  }
+  function cardProductId(card){
+    if(!card) return 'software-item';
+    return card.dataset.productId || card.getAttribute('data-product-id') || card.querySelector('.software-rating-star')?.dataset.productId || ('AZSW-'+slug(card.querySelector('h3')?.textContent||'software-item').toUpperCase());
+  }
+  function parseNum(text){
+    const m=String(text||'').match(/(\d+(?:\.\d+)?)/);
+    return m ? Number(m[1]) : 0;
+  }
+  function getStats(card){
+    const ratingText=card.querySelector('.rating-display strong,.stat-rating strong,.rating-value strong')?.textContent || card.dataset.rating || '0';
+    const countText=card.querySelector('.software-rating-count,.rating-display')?.textContent || '(0)';
+    const downloadText=card.querySelector('.stat-download .stat-value,.stat-download')?.textContent || card.dataset.downloads || '0';
+    return {
+      downloads: parseNum(downloadText),
+      rating: Math.max(0,Math.min(5,parseNum(ratingText))),
+      votes: Math.max(0,Math.round(parseNum(countText)))
+    };
+  }
+  function fmt(n){
+    n=Number(n)||0;
+    if(n>=1000000) return (n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';
+    if(n>=1000) return (n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';
+    return String(Math.round(n));
+  }
+  function downloadIcon(){
+    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+  }
+  function buildStars(card, rating, votes){
+    const productId=cardProductId(card);
+    const filled=Math.round(Number(rating)||0);
+    let html='<span class="software-rating-stars" role="group" aria-label="Rate this software">';
+    for(let i=1;i<=5;i++){
+      html+='<button class="software-rating-star '+(i<=filled?'is-filled':'')+'" type="button" data-rating-value="'+i+'" data-product-id="'+productId+'" title="Rate '+i+' star'+(i>1?'s':'')+'">★</button>';
+    }
+    html+='</span><span class="rating-value"><strong>'+Number(rating||0).toFixed(1)+'</strong><span class="software-rating-count">('+Math.round(Number(votes)||0)+')</span></span>';
+    return html;
+  }
+  function fixCard(card){
+    if(!card || card.dataset.azPracticalFooterLock === '1') return;
+    const stats=getStats(card);
+    let box=card.querySelector(':scope > .software-stats, :scope > .stats-bar');
+    if(!box){
+      box=document.createElement('div');
+      box.className='software-stats';
+      card.appendChild(box);
+    }
+    box.className='software-stats';
+    if(box !== card.lastElementChild) card.appendChild(box);
+    box.innerHTML=
+      '<span class="stat-download"><span class="stat-icon">'+downloadIcon()+'</span><span class="stat-value">'+fmt(stats.downloads)+'</span></span>'+
+      '<span class="stat-rating">'+buildStars(card, stats.rating, stats.votes)+'</span>';
+  }
+  function run(){
+    document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(fixCard);
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    run();
+    setTimeout(run,100);
+    setTimeout(run,500);
+    setTimeout(run,1400);
+    setTimeout(run,2600);
+    const grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
+    if(grid) new MutationObserver(function(){ setTimeout(run,0); }).observe(grid,{childList:true,subtree:true});
+  });
+  document.addEventListener('click',function(e){
+    if(e.target.closest('.software-rating-star')) return;
+    setTimeout(run,120);
+    setTimeout(run,900);
+  },true);
+  window.azobssFixPracticalRatingFooter=run;
+})();
+</script>
+
 </body>
 </html>
