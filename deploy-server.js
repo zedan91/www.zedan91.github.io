@@ -6,6 +6,8 @@ const path = require("path");
 const http = require("http");
 const url = require("url");
 const crypto = require("crypto");
+const TOYYIB_SECRET_KEY=process.env.TOYYIB_SECRET_KEY;
+const TOYYIB_CATEGORY_CODE=process.env.TOYYIB_CATEGORY_CODE;
 
 // =========================
 // SOFTWARE STATS JSON HELPERS
