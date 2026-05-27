@@ -20,6 +20,10 @@ const ADMIN_KEY = process.env.ADMIN_KEY || "change-this-admin-key";
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
+app.use(express.json());
+const TOYYIB_SECRET_KEY=process.env.TOYYIB_SECRET_KEY||'';
+const TOYYIB_CATEGORY_CODE=process.env.TOYYIB_CATEGORY_CODE||'';
+const FRONTEND_BASE_URL=(process.env.FRONTEND_BASE_URL||'').replace(/\/$/, '');
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || "*").split(",").map((v) => v.trim()).filter(Boolean);
 
 app.set("trust proxy", true);
@@ -870,6 +874,34 @@ cron.schedule("* * * * *", async () => {
     selectedBy: "cron"
   });
 }, { timezone: "Asia/Kuala_Lumpur" });
+
+
+
+// ToyyibPay
+app.post("/api/create-toyyib-bill", async (req,res)=>{
+ try{
+  const {name,email,phone,amount,productId}=req.body||{};
+  const params=new URLSearchParams({
+   userSecretKey:TOYYIB_SECRET_KEY,
+   categoryCode:TOYYIB_CATEGORY_CODE,
+   billName:productId||'AZOBSS Purchase',
+   billDescription:productId||'Purchase',
+   billPriceSetting:'1',
+   billPayorInfo:'1',
+   billAmount:String(Math.round(Number(amount||0)*100)),
+   billReturnUrl:FRONTEND_BASE_URL+'/payment-success/',
+   billCallbackUrl:PUBLIC_BASE_URL+'/api/toyyib-callback',
+   billTo:name||'Customer',
+   billEmail:email||'',
+   billPhone:phone||''
+  });
+  const r=await fetch('https://toyyibpay.com/index.php/api/createBill',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params});
+  const data=await r.json();
+  if(!data?.[0]?.BillCode) throw new Error('Bill create failed');
+  res.json({ok:true,url:'https://toyyibpay.com/'+data[0].BillCode});
+ }catch(e){res.status(400).json({ok:false,error:e.message})}
+});
+app.post("/api/toyyib-callback",(req,res)=>{res.json({ok:true})});
 
 app.use((err, req, res, next) => {
   res.status(400).json({ ok: false, error: err.message || "Server error" });
