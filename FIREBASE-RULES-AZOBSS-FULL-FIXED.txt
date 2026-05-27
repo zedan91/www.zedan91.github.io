@@ -55,6 +55,15 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /settings/softwareStats {
+      // One-document software stats bundle: downloads + ratings persist across deploys.
+      // Public read/write is intentionally allowed for lightweight public counters.
+      // Rating spam is limited in frontend with ratedBy browser token.
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
     match /purchaseSummaries/{username} {
       allow read: if isAdmin() || isThisUser(username);
 

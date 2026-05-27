@@ -3531,81 +3531,117 @@ all.appendChild(wrap);
   .azb-rate-votes{font-size:11px !important;}
 }
 </style>
-<script id="azobss-final-software-stats-js">
+<script type="module" id="azobss-final-software-stats-js">
+/* AZOBSS FINAL SOFTWARE STATS: Firestore 1-document bundle + anti-spam rating + clean footer */
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
 (function(){
   'use strict';
-  const STORE_KEY='azobss_final_software_stats_v3';
-  const VOTER_KEY='azobss_rating_voter_id_v1';
-  const OLD_KEYS=['azobss_clean_footer_rating_v2','azobss_clean_footer_rating_v1','azobss_rating_click_fix_v1','azobss_software_manual_stats_v2'];
-  const API_BASE=(localStorage.getItem('azobssPremiumBackendUrl')||localStorage.getItem('azobssSoftwareStatsBackendUrl')||window.AZOBSS_STATS_API||'https://azobss-backend.onrender.com').replace(/\/$/,'');
-  let renderTimer=0;
-  let syncTimer=0;
-  let syncing=false;
 
-  function slug(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,120)||'software-item';}
-  function readKey(k){try{return JSON.parse(localStorage.getItem(k)||'{}')||{};}catch(e){return{};}}
-  function read(){return readKey(STORE_KEY);}
-  function write(v){try{localStorage.setItem(STORE_KEY,JSON.stringify(v||{}));}catch(e){}}
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain: 'azobss.firebaseapp.com',
+    projectId: 'azobss',
+    storageBucket: 'azobss.firebasestorage.app',
+    messagingSenderId: '159277716405',
+    appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ONE DOCUMENT ONLY: deploy baru tidak reset, quota rendah.
+  // Firestore path: settings/softwareStats
+  const STATS_DOC = doc(db, 'settings', 'softwareStats');
+
+  const STORE_KEY = 'azobss_firestore_software_stats_bundle_v1';
+  const VOTER_KEY = 'azobss_rating_voter_id_v1';
+  const OLD_KEYS = ['azobss_final_software_stats_v3','azobss_clean_footer_rating_v2','azobss_clean_footer_rating_v1','azobss_rating_click_fix_v1','azobss_software_manual_stats_v2'];
+
+  let renderTimer = 0;
+  let syncing = false;
+
+  function slug(v){
+    return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,120) || 'software-item';
+  }
+  function readKey(k){ try{return JSON.parse(localStorage.getItem(k)||'{}')||{};}catch(e){return{};} }
+  function readBundle(){ return readKey(STORE_KEY); }
+  function writeBundle(v){ try{localStorage.setItem(STORE_KEY, JSON.stringify(v||{}));}catch(e){} }
+  function getItems(bundle){ return (bundle && typeof bundle.items === 'object') ? bundle.items : {}; }
+  function saveItems(items){ writeBundle({items: items || {}, cachedAt: Date.now()}); }
   function voterId(){
-    let id=localStorage.getItem(VOTER_KEY);
+    let id = localStorage.getItem(VOTER_KEY);
     if(!id){
-      id='browser_'+(crypto&&crypto.randomUUID?crypto.randomUUID():String(Date.now())+'_'+Math.random().toString(36).slice(2));
-      localStorage.setItem(VOTER_KEY,id);
+      id = 'browser_' + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).slice(2)));
+      localStorage.setItem(VOTER_KEY, id);
     }
     return id;
   }
-  function productId(card){return card?.dataset?.productId || card?.getAttribute('data-product-id') || card?.querySelector('[data-product-id]')?.getAttribute('data-product-id') || card?.querySelector('h3')?.textContent?.trim() || 'software-item';}
-  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
+  function productId(card){
+    return card?.dataset?.productId || card?.getAttribute('data-product-id') || card?.querySelector('[data-product-id]')?.getAttribute('data-product-id') || card?.querySelector('h3')?.textContent?.trim() || 'software-item';
+  }
+  function fmt(n){
+    n=Number(n)||0;
+    if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';
+    if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';
+    return String(Math.round(n));
+  }
   function normalize(raw,card){
     raw=raw||{};
     const ratings={'1':0,'2':0,'3':0,'4':0,'5':0};
-    if(raw.ratings && typeof raw.ratings==='object'){
-      for(let i=1;i<=5;i++) ratings[String(i)]=Math.max(0,Math.round(Number(raw.ratings[String(i)]||0)));
+    if(raw.ratings && typeof raw.ratings === 'object'){
+      for(let i=1;i<=5;i++) ratings[String(i)] = Math.max(0, Math.round(Number(raw.ratings[String(i)]||0)));
     }else{
       const votes=Math.max(0,Math.round(Number(raw.ratingVotes||raw.votes||0)));
       const avg=Math.max(0,Math.min(5,Number(raw.ratingAverage||raw.rating||card?.dataset?.rating||0)));
       if(votes>0 && avg>0) ratings[String(Math.max(1,Math.min(5,Math.round(avg))))]=votes;
     }
-    let votes=0,total=0;for(let i=1;i<=5;i++){votes+=ratings[String(i)];total+=i*ratings[String(i)];}
-    const avg=votes?Math.round((total/votes)*10)/10:Math.max(0,Math.min(5,Number(raw.ratingAverage||raw.rating||card?.dataset?.rating||0)));
-    const ratedBy=(raw.ratedBy&&typeof raw.ratedBy==='object')?raw.ratedBy:{};
-    const myRatings=(raw.myRatings&&typeof raw.myRatings==='object')?raw.myRatings:{};
-    const downloads=Math.max(0,Math.round(Number(raw.downloads??card?.dataset?.downloads??0)||0));
-    return {downloads,ratings,ratingVotes:votes,ratingTotal:total,rating:avg,ratingAverage:avg,ratedBy,myRatings};
+    let votes=0,total=0;
+    for(let i=1;i<=5;i++){ votes += ratings[String(i)]; total += i*ratings[String(i)]; }
+    const avg = votes ? Math.round((total/votes)*10)/10 : Math.max(0,Math.min(5,Number(raw.ratingAverage||raw.rating||card?.dataset?.rating||0)));
+    const ratedBy = (raw.ratedBy && typeof raw.ratedBy === 'object') ? raw.ratedBy : {};
+    const downloads = Math.max(0, Math.round(Number(raw.downloads ?? card?.dataset?.downloads ?? 0)||0));
+    return {downloads, ratings, ratingVotes:votes, ratingTotal:total, rating:avg, ratingAverage:avg, ratedBy};
   }
-  function mergeBackendStats(stats){
-    const local=read();
-    Object.entries(stats||{}).forEach(([key,value])=>{
-      local[slug(key)]=normalize(value);
-    });
-    write(local);
+  function legacyStatsFor(key){
+    for(const oldKey of OLD_KEYS){
+      const old = readKey(oldKey);
+      if(old[key]) return old[key];
+      if(old.items && old.items[key]) return old.items[key];
+    }
+    return null;
   }
   function statsFor(card){
-    const key=slug(productId(card));
-    const local=read();
-    let raw=local[key];
-    if(!raw){for(const oldKey of OLD_KEYS){const old=readKey(oldKey); if(old[key]){raw=old[key]; break;}}}
-    const st=normalize(raw,card);
-    local[key]=st;
-    write(local);
+    const key = slug(productId(card));
+    const bundle = readBundle();
+    const items = getItems(bundle);
+    const raw = items[key] || legacyStatsFor(key) || {downloads:card?.dataset?.downloads, rating:card?.dataset?.rating};
+    const st = normalize(raw, card);
+    items[key] = st;
+    saveItems(items);
     return st;
   }
-  function save(card,st,skipRender){
-    const key=slug(productId(card));
-    const local=read();
-    st=normalize(st,card);
-    local[key]=st;
-    write(local);
-    card.dataset.downloads=String(st.downloads||0);
-    card.dataset.rating=String(st.rating||0);
-    if(!skipRender) render(card);
+  function saveLocal(card, st, skipRender){
+    const key = slug(productId(card));
+    const items = getItems(readBundle());
+    st = normalize(st, card);
+    items[key] = st;
+    saveItems(items);
+    if(card){
+      card.dataset.downloads = String(st.downloads||0);
+      card.dataset.rating = String(st.rating||0);
+    }
+    if(card && !skipRender) render(card);
   }
-  function dlSvg(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
+  function dlSvg(){
+    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';
+  }
   function starsHtml(avg){
-    const filled=Math.round(Number(avg)||0);
-    let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';
-    for(let i=1;i<=5;i++) out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';
-    return out+'</span>';
+    const filled = Math.round(Number(avg)||0);
+    let out = '<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';
+    for(let i=1;i<=5;i++) out += '<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';
+    return out + '</span>';
   }
   function footerHtml(st){
     return '<span class="azb-stat-download"><span class="azb-dl-badge">'+dlSvg()+'</span><strong class="azb-dl-number">'+fmt(st.downloads)+'</strong></span>'+
@@ -3613,35 +3649,60 @@ all.appendChild(wrap);
   }
   function render(card){
     if(!card || !card.classList || !card.classList.contains('download-card')) return;
-    let box=card.querySelector(':scope > .software-stats');
-    if(!box){box=document.createElement('div');box.className='software-stats';card.appendChild(box);} else {box.className='software-stats';}
-    if(card.lastElementChild!==box) card.appendChild(box);
-    const st=statsFor(card);
-    const html=footerHtml(st);
-    if(box.innerHTML!==html) box.innerHTML=html;
+    let box = card.querySelector(':scope > .software-stats');
+    if(!box){ box=document.createElement('div'); box.className='software-stats'; card.appendChild(box); }
+    else { box.className='software-stats'; }
+    if(card.lastElementChild !== box) card.appendChild(box);
+    const st = statsFor(card);
+    const html = footerHtml(st);
+    if(box.innerHTML !== html) box.innerHTML = html;
   }
-  function renderAll(){document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);}
-  function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderAll,80);}
-  async function post(endpoint,payload){
+  function renderAll(){
+    document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);
+  }
+  function scheduleRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(renderAll,80); }
+
+  async function loadStatsBundle(){
+    if(syncing) return;
+    syncing = true;
     try{
-      if(!API_BASE)return null;
-      const res=await fetch(API_BASE+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
-      const data=await res.json().catch(()=>null);
-      if(data && data.stats){
-        const local=read();
-        local[slug(data.productId || payload.productId || payload.name)] = normalize(data.stats);
-        write(local);
+      const snap = await getDoc(STATS_DOC); // 1 Firestore read only
+      if(snap.exists()){
+        const data = snap.data() || {};
+        const remoteItems = getItems(data);
+        const items = getItems(readBundle());
+        Object.entries(remoteItems).forEach(([key,value]) => { items[slug(key)] = normalize(value); });
+        saveItems(items);
+        renderAll();
+      }else{
+        // Create empty bundle once; rules must allow this path.
+        await setDoc(STATS_DOC, {items:{}, createdAt:serverTimestamp(), updatedAt:serverTimestamp()}, {merge:true});
       }
-      return data;
-    }catch(e){return null;}
+    }catch(err){
+      console.warn('AZOBSS Firestore stats sync failed. Using local cache fallback.', err);
+    }finally{ syncing = false; }
   }
-  async function syncFromBackend(){
-    if(syncing || !API_BASE) return;
-    syncing=true;
+  function mergeOneLocal(productKey, stat){
+    const items = getItems(readBundle());
+    items[slug(productKey)] = normalize(stat);
+    saveItems(items);
+  }
+  async function recordDownload(card){
+    const key = slug(productId(card));
+    const st = statsFor(card);
+    st.downloads += 1;
+    saveLocal(card, st, false);
     try{
-      const res=await fetch(API_BASE+'/api/software-stats',{cache:'no-store'});
-      if(res.ok){const data=await res.json(); if(data && data.stats){mergeBackendStats(data.stats); renderAll();}}
-    }catch(e){} finally{syncing=false;}
+      await setDoc(STATS_DOC, {items:{}, updatedAt:serverTimestamp()}, {merge:true});
+      await updateDoc(STATS_DOC, {
+        ['items.'+key+'.downloads']: increment(1),
+        ['items.'+key+'.name']: card.querySelector('h3')?.textContent?.trim() || '',
+        ['items.'+key+'.updatedAtMs']: Date.now(),
+        updatedAt: serverTimestamp()
+      });
+    }catch(err){
+      console.warn('AZOBSS download Firestore update failed. Local cache kept.', err);
+    }
   }
   function rateFromEvent(e,wrap){
     const btn=e.target.closest?.('.azb-star');
@@ -3650,62 +3711,99 @@ all.appendChild(wrap);
     const clientX=e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || rect.left;
     return Math.max(1,Math.min(5,Math.ceil(((clientX-rect.left)/Math.max(1,rect.width))*5)));
   }
-  function applyLocalRating(card,rating){
-    const key=slug(productId(card));
-    const st=statsFor(card);
-    const id=voterId();
-    const old=Number(st.myRatings[id]||0);
-    if(old>=1 && old<=5) st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);
-    st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);
-    st.myRatings[id]=rating;
-    let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}
-    st.ratingVotes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:0;st.ratingAverage=st.rating;
-    save(card,st,false);
-    return key;
+  async function recordRating(card, rating){
+    const key = slug(productId(card));
+    const voter = voterId();
+
+    // Optimistic local update: replace previous rating, not add duplicate vote.
+    const st = statsFor(card);
+    const old = Number(st.ratedBy[voter] || 0);
+    if(old>=1 && old<=5) st.ratings[String(old)] = Math.max(0, Number(st.ratings[String(old)]||0)-1);
+    st.ratings[String(rating)] = Math.max(0, Number(st.ratings[String(rating)]||0)+1);
+    st.ratedBy[voter] = rating;
+    let votes=0,total=0;
+    for(let i=1;i<=5;i++){ const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0))); st.ratings[String(i)]=c; votes+=c; total+=i*c; }
+    st.ratingVotes=votes; st.ratingTotal=total; st.rating=votes?Math.round((total/votes)*10)/10:0; st.ratingAverage=st.rating;
+    saveLocal(card, st, false);
+
+    // Transaction: 1 user/browser/IP token = 1 rating per software. Re-rate replaces old rating.
+    try{
+      await runTransaction(db, async(transaction) => {
+        const snap = await transaction.get(STATS_DOC);
+        const data = snap.exists() ? (snap.data() || {}) : {items:{}};
+        const items = getItems(data);
+        const remote = normalize(items[key] || {}, card);
+        const prev = Number(remote.ratedBy?.[voter] || 0);
+        if(prev>=1 && prev<=5) remote.ratings[String(prev)] = Math.max(0, Number(remote.ratings[String(prev)]||0)-1);
+        remote.ratings[String(rating)] = Math.max(0, Number(remote.ratings[String(rating)]||0)+1);
+        remote.ratedBy = remote.ratedBy || {};
+        remote.ratedBy[voter] = rating;
+        let rv=0, rt=0;
+        for(let i=1;i<=5;i++){ const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0))); remote.ratings[String(i)]=c; rv+=c; rt+=i*c; }
+        remote.ratingVotes = rv;
+        remote.ratingTotal = rt;
+        remote.rating = rv ? Math.round((rt/rv)*10)/10 : 0;
+        remote.ratingAverage = remote.rating;
+        remote.downloads = Math.max(0, Math.round(Number(remote.downloads||0)));
+        remote.name = card.querySelector('h3')?.textContent?.trim() || '';
+        remote.updatedAtMs = Date.now();
+        transaction.set(STATS_DOC, {
+          items: {[key]: remote},
+          updatedAt: serverTimestamp()
+        }, {merge:true});
+        mergeOneLocal(key, remote);
+      });
+      render(card);
+    }catch(err){
+      console.warn('AZOBSS rating Firestore transaction failed. Local cache kept.', err);
+    }
   }
   function handleRate(e){
-    const hit=e.target.closest?.('.azb-stars,.azb-star');
+    const hit = e.target.closest?.('.azb-stars,.azb-star');
     if(!hit) return;
-    const wrap=hit.classList.contains('azb-stars')?hit:hit.closest('.azb-stars');
-    const card=wrap && wrap.closest('.download-card');
+    const wrap = hit.classList.contains('azb-stars') ? hit : hit.closest('.azb-stars');
+    const card = wrap && wrap.closest('.download-card');
     if(!wrap || !card) return;
     e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation();
-    const rating=rateFromEvent(e,wrap); if(!rating) return;
-    const now=Date.now(); if(wrap.dataset.busyUntil && now<Number(wrap.dataset.busyUntil)) return;
-    wrap.dataset.busyUntil=String(now+250);
-    const pid=productId(card);
-    applyLocalRating(card,rating);
-    post('/api/software-stats/rate',{productId:pid,rating,voterId:voterId(),name:card.querySelector('h3')?.textContent?.trim()||''}).then(()=>{clearTimeout(syncTimer);syncTimer=setTimeout(syncFromBackend,350);});
+    const rating = rateFromEvent(e,wrap); if(!rating) return;
+    const now = Date.now(); if(wrap.dataset.busyUntil && now < Number(wrap.dataset.busyUntil)) return;
+    wrap.dataset.busyUntil = String(now + 350);
+    recordRating(card, rating);
   }
   function handleDownload(e){
     if(e.target.closest?.('.azb-stars,.azb-star')) return;
-    const btn=e.target.closest?.('.download-card .download-btn');
+    const btn = e.target.closest?.('.download-card .download-btn');
     if(!btn) return;
-    const card=btn.closest('.download-card'); if(!card) return;
-    const st=statsFor(card); st.downloads+=1; save(card,st,false);
-    post('/api/software-stats/download',{productId:productId(card),name:card.querySelector('h3')?.textContent?.trim()||''}).then(()=>{clearTimeout(syncTimer);syncTimer=setTimeout(syncFromBackend,350);});
+    const card = btn.closest('.download-card'); if(!card) return;
+    recordDownload(card);
   }
 
-  document.addEventListener('pointerdown',handleRate,true);
-  document.addEventListener('click',function(e){
-    if(e.target.closest?.('.azb-stars,.azb-star')){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();return;}
+  document.addEventListener('pointerdown', handleRate, true);
+  document.addEventListener('click', function(e){
+    if(e.target.closest?.('.azb-stars,.azb-star')){
+      e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation(); return;
+    }
     handleDownload(e);
-  },true);
-  document.addEventListener('keydown',function(e){
+  }, true);
+  document.addEventListener('keydown', function(e){
     const wrap=e.target.closest?.('.azb-stars'); if(!wrap) return;
     if(!['1','2','3','4','5'].includes(e.key)) return;
     e.preventDefault();
-    const btn=wrap.querySelector('[data-rate="'+e.key+'"]'); if(btn) btn.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:btn.getBoundingClientRect().left+2}));
-  },true);
-  document.addEventListener('DOMContentLoaded',function(){
+    const btn=wrap.querySelector('[data-rate="'+e.key+'"]');
+    if(btn) btn.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:btn.getBoundingClientRect().left+2}));
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function(){
     renderAll();
-    syncFromBackend();
+    loadStatsBundle();
     [100,300,800,1600,3000].forEach(t=>setTimeout(renderAll,t));
     const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid')||document.body;
     new MutationObserver(scheduleRender).observe(root,{childList:true,subtree:true});
   });
-  window.azobssRenderSoftwareStatsFooter=renderAll;
-  window.azobssSyncSoftwareStatsFromBackend=syncFromBackend;
+
+  window.azobssRenderSoftwareStatsFooter = renderAll;
+  window.azobssSyncSoftwareStatsFromBackend = loadStatsBundle;
+  window.azobssSyncSoftwareStatsFromFirestore = loadStatsBundle;
   setTimeout(renderAll,0);
 })();
 </script>
