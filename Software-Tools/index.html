@@ -3535,6 +3535,7 @@ all.appendChild(wrap);
 /* AZOBSS FINAL SOFTWARE STATS: Firestore 1-document bundle + anti-spam rating + clean footer */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
 (function(){
   'use strict';
@@ -3550,6 +3551,21 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, increment
 
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
+  let authAttempted = false;
+
+  async function ensureStatsAuth(){
+    if(auth.currentUser) return auth.currentUser;
+    if(authAttempted) return auth.currentUser;
+    authAttempted = true;
+    try{
+      const cred = await signInAnonymously(auth);
+      return cred.user;
+    }catch(err){
+      console.warn('AZOBSS stats auth failed. Enable Firebase Authentication > Anonymous sign-in, or login before rating/downloading.', err);
+      return null;
+    }
+  }
 
   // ONE DOCUMENT ONLY: deploy baru tidak reset, quota rendah.
   // Firestore path: settings/softwareStats
@@ -3693,6 +3709,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, increment
     st.downloads += 1;
     saveLocal(card, st, false);
     try{
+      await ensureStatsAuth();
       await setDoc(STATS_DOC, {items:{}, updatedAt:serverTimestamp()}, {merge:true});
       await updateDoc(STATS_DOC, {
         ['items.'+key+'.downloads']: increment(1),
@@ -3728,6 +3745,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, increment
 
     // Transaction: 1 user/browser/IP token = 1 rating per software. Re-rate replaces old rating.
     try{
+      await ensureStatsAuth();
       await runTransaction(db, async(transaction) => {
         const snap = await transaction.get(STATS_DOC);
         const data = snap.exists() ? (snap.data() || {}) : {items:{}};
