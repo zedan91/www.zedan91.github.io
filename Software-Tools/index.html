@@ -3713,8 +3713,8 @@ all.appendChild(wrap);
 
 
 <!-- AZOBSS COMPACT FOOTER OVERRIDE START -->
-<style id="azobss-compact-footer-override">
-/* Compact download + rating footer - final override */
+<style id="azobss-compact-footer-override-final">
+/* Compact download + rating footer only */
 .download-card{
   padding-bottom:42px !important;
 }
@@ -3722,16 +3722,17 @@ all.appendChild(wrap);
 #softwareGrid .download-card > .software-stats,
 #softwareDownloadsGrid .download-card > .software-stats,
 .downloads-grid .download-card > .software-stats{
-  height:38px !important;
-  min-height:38px !important;
-  grid-template-columns:76px minmax(0,1fr) !important;
+  height:40px !important;
+  min-height:40px !important;
+  grid-template-columns:74px minmax(0,1fr) !important;
   border-radius:0 0 16px 16px !important;
+  overflow:hidden !important;
 }
 .azb-stat-download,
 .azb-stat-rating{
-  height:38px !important;
-  min-height:38px !important;
-  gap:4px !important;
+  height:40px !important;
+  min-height:40px !important;
+  gap:5px !important;
   padding:0 5px !important;
   font-size:12px !important;
 }
@@ -3740,7 +3741,7 @@ all.appendChild(wrap);
   height:26px !important;
   min-width:26px !important;
   border-width:1px !important;
-  box-shadow:0 0 10px rgba(34,197,94,.20), inset 0 0 8px rgba(34,197,94,.08) !important;
+  box-shadow:0 0 10px rgba(34,197,94,.22), inset 0 0 8px rgba(34,197,94,.08) !important;
 }
 .azb-dl-badge svg{
   width:12px !important;
@@ -3758,7 +3759,7 @@ all.appendChild(wrap);
   padding:2px 5px !important;
   gap:0 !important;
   min-height:24px !important;
-  max-width:88px !important;
+  max-width:90px !important;
 }
 .azb-star{
   width:12px !important;
@@ -3776,7 +3777,7 @@ all.appendChild(wrap);
 }
 @media(max-width:640px){
   .download-card{padding-bottom:42px !important;}
-  .download-card > .software-stats{height:42px !important;min-height:42px !important;grid-template-columns:78px minmax(0,1fr) !important;}
+  .download-card > .software-stats{height:42px !important;min-height:42px !important;grid-template-columns:76px minmax(0,1fr) !important;}
   .azb-stat-download,.azb-stat-rating{height:42px !important;min-height:42px !important;}
   .azb-dl-badge{width:28px !important;height:28px !important;min-width:28px !important;}
   .azb-stars{max-width:92px !important;}
