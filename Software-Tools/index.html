@@ -3786,5 +3786,218 @@ all.appendChild(wrap);
 </style>
 <!-- AZOBSS COMPACT FOOTER OVERRIDE END -->
 
+
+<!-- AZOBSS PAGINATION 8 CARDS FINAL: one source only, after all render scripts -->
+<style id="azobss-pagination-8-final-css">
+  #softwarePagination.az-pagination-final{
+    width:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:8px !important;
+    margin:26px auto 10px !important;
+    padding:10px 0 4px !important;
+    flex-wrap:wrap !important;
+    grid-column:1 / -1 !important;
+  }
+  #softwarePagination.az-pagination-final[hidden]{display:none !important;}
+  #softwarePagination .az-page-btn{
+    min-width:38px !important;
+    height:38px !important;
+    padding:0 12px !important;
+    border-radius:999px !important;
+    border:1px solid rgba(34,211,238,.35) !important;
+    background:rgba(2,8,23,.88) !important;
+    color:#dffbff !important;
+    font-size:14px !important;
+    font-weight:800 !important;
+    cursor:pointer !important;
+    box-shadow:0 10px 22px rgba(0,0,0,.22) !important;
+    transition:transform .15s ease, background .15s ease, border-color .15s ease !important;
+  }
+  #softwarePagination .az-page-btn:hover:not(:disabled){
+    transform:translateY(-1px) !important;
+    background:rgba(14,165,233,.18) !important;
+    border-color:rgba(34,211,238,.75) !important;
+  }
+  #softwarePagination .az-page-btn.is-active{
+    background:linear-gradient(135deg,#00e676,#22d3ee) !important;
+    color:#04111f !important;
+    border-color:rgba(255,255,255,.55) !important;
+  }
+  #softwarePagination .az-page-btn:disabled{
+    opacity:.45 !important;
+    cursor:not-allowed !important;
+  }
+  #softwarePagination .az-page-dots{
+    color:#9ca3af !important;
+    font-weight:900 !important;
+    padding:0 2px !important;
+  }
+</style>
+<script id="azobss-pagination-8-final-js">
+(function(){
+  if(window.__AZOBSS_PAGINATION_8_FINAL__) return;
+  window.__AZOBSS_PAGINATION_8_FINAL__ = true;
+
+  const PER_PAGE = 8;
+  let currentPage = 1;
+  let running = false;
+  let lastSignature = '';
+
+  function getGrid(){
+    return document.querySelector('#softwareGrid') || document.querySelector('#softwareDownloadsGrid') || document.querySelector('.downloads-grid');
+  }
+
+  function ensureControls(grid){
+    let controls = document.getElementById('softwarePagination');
+    if(!controls){
+      controls = document.createElement('div');
+      controls.id = 'softwarePagination';
+      controls.className = 'az-pagination-final';
+      controls.setAttribute('aria-label','Software pagination');
+    }
+    if(grid && controls.parentNode !== grid.parentNode){
+      grid.insertAdjacentElement('afterend', controls);
+    }else if(grid && controls.previousElementSibling !== grid){
+      grid.insertAdjacentElement('afterend', controls);
+    }
+    return controls;
+  }
+
+  function isRealCard(el){
+    return el && el.nodeType === 1 && el.matches('.download-card,.software-card,.software-product-card') && !el.classList.contains('software-empty-state');
+  }
+
+  function clearPaginationHide(cards){
+    cards.forEach(card => {
+      if(card.dataset.azPageHidden === '1'){
+        card.style.removeProperty('display');
+        card.dataset.azPageHidden = '0';
+      }
+    });
+  }
+
+  function cardIsFilterVisible(card){
+    if(card.dataset.azPageHidden === '1') return true;
+    if(card.hidden) return false;
+    if(card.classList.contains('software-empty-state')) return false;
+    const inline = (card.getAttribute('style') || '').toLowerCase();
+    if(/display\s*:\s*none/.test(inline)) return false;
+    const cs = window.getComputedStyle(card);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+
+  function visibleCards(grid){
+    const all = Array.from(grid.children).filter(isRealCard);
+    clearPaginationHide(all);
+    return all.filter(cardIsFilterVisible);
+  }
+
+  function makePages(total, current){
+    const out = [];
+    for(let i=1;i<=total;i++){
+      if(i===1 || i===total || Math.abs(i-current)<=1){
+        out.push(i);
+      }else if(out[out.length-1] !== '...'){
+        out.push('...');
+      }
+    }
+    return out;
+  }
+
+  function renderControls(controls, totalPages){
+    if(totalPages <= 1){
+      controls.hidden = true;
+      controls.innerHTML = '';
+      return;
+    }
+    controls.hidden = false;
+    const parts = [];
+    parts.push(`<button type="button" class="az-page-btn" data-page="prev" ${currentPage<=1?'disabled':''}>‹ Prev</button>`);
+    makePages(totalPages,currentPage).forEach(p => {
+      if(p === '...') parts.push('<span class="az-page-dots">…</span>');
+      else parts.push(`<button type="button" class="az-page-btn ${p===currentPage?'is-active':''}" data-page="${p}">${p}</button>`);
+    });
+    parts.push(`<button type="button" class="az-page-btn" data-page="next" ${currentPage>=totalPages?'disabled':''}>Next ›</button>`);
+    controls.innerHTML = parts.join('');
+  }
+
+  function apply(reset){
+    const grid = getGrid();
+    if(!grid) return;
+    const controls = ensureControls(grid);
+    const cards = visibleCards(grid);
+    const signature = cards.map(c => c.dataset.productId || c.dataset.name || c.querySelector('h3')?.textContent?.trim() || '').join('|');
+    if(reset || signature !== lastSignature){
+      currentPage = 1;
+      lastSignature = signature;
+    }
+    const totalPages = Math.max(1, Math.ceil(cards.length / PER_PAGE));
+    if(currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * PER_PAGE;
+    const end = start + PER_PAGE;
+    cards.forEach((card, i) => {
+      if(i >= start && i < end){
+        card.dataset.azPageHidden = '0';
+        card.style.removeProperty('display');
+      }else{
+        card.dataset.azPageHidden = '1';
+        card.style.setProperty('display','none','important');
+      }
+    });
+    renderControls(controls, totalPages);
+  }
+
+  function schedule(reset=false){
+    if(running) return;
+    running = true;
+    setTimeout(() => {
+      running = false;
+      apply(reset);
+    }, 80);
+  }
+
+  document.addEventListener('click', function(e){
+    const pageBtn = e.target.closest('#softwarePagination .az-page-btn');
+    if(pageBtn){
+      e.preventDefault();
+      const grid = getGrid();
+      const cards = grid ? visibleCards(grid) : [];
+      const totalPages = Math.max(1, Math.ceil(cards.length / PER_PAGE));
+      const action = pageBtn.dataset.page;
+      if(action === 'prev') currentPage = Math.max(1, currentPage - 1);
+      else if(action === 'next') currentPage = Math.min(totalPages, currentPage + 1);
+      else currentPage = Number(action) || 1;
+      apply(false);
+      document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid')?.scrollIntoView({behavior:'smooth',block:'start'});
+      return;
+    }
+    if(e.target.closest('[data-software-category],[data-software-platform],[data-software-type]')){
+      schedule(true);
+    }
+  }, true);
+
+  document.addEventListener('input', function(e){
+    if(e.target.matches('#softwareSearch, [type="search"], input[name*="search" i]')) schedule(true);
+  }, true);
+  document.addEventListener('change', function(e){
+    if(e.target.matches('select, input, textarea')) schedule(true);
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const grid = getGrid();
+    if(grid){
+      const obs = new MutationObserver(() => schedule(false));
+      obs.observe(grid,{childList:true,subtree:false,attributes:true,attributeFilter:['style','class','hidden']});
+    }
+    schedule(true);
+    setTimeout(()=>schedule(true),400);
+    setTimeout(()=>schedule(true),1200);
+    setTimeout(()=>schedule(true),2500);
+  });
+})();
+</script>
+
 </body>
 </html>
