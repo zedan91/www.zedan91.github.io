@@ -3834,6 +3834,10 @@ all.appendChild(wrap);
     font-weight:900 !important;
     padding:0 2px !important;
   }
+
+  #softwareGrid, #softwareDownloadsGrid, .downloads-grid, #softwarePagination{
+    overflow-anchor:none !important;
+  }
 </style>
 <script id="azobss-pagination-8-final-js">
 (function(){
@@ -3969,8 +3973,10 @@ all.appendChild(wrap);
       if(action === 'prev') currentPage = Math.max(1, currentPage - 1);
       else if(action === 'next') currentPage = Math.min(totalPages, currentPage + 1);
       else currentPage = Number(action) || 1;
+      const keepY = window.scrollY;
       apply(false);
-      document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid')?.scrollIntoView({behavior:'smooth',block:'start'});
+      // Do not auto-scroll when user clicks pagination. Keep the page position stable.
+      requestAnimationFrame(() => window.scrollTo({ top: keepY, left: window.scrollX, behavior: 'auto' }));
       return;
     }
     if(e.target.closest('[data-software-category],[data-software-platform],[data-software-type]')){
