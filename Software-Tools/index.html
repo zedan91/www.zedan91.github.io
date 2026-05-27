@@ -2137,16 +2137,19 @@ document.addEventListener('error', function(e){
   <div class="azobss-pay-panel" role="dialog" aria-modal="true" aria-labelledby="azobssPayTitle">
     <div class="azobss-pay-head"><h2 id="azobssPayTitle">Complete Purchase</h2><button class="azobss-pay-close" id="azobssPayClose" type="button">×</button></div>
     <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
-    <div class="azobss-pay-options azobss-pay-options-simple">
-      <button class="azobss-pay-option is-active" data-method="bank-transfer" type="button">🏦 Bank Transfer / FPX</button>
+    <div class="azobss-pay-options">
+      <button class="azobss-pay-option" data-method="qr" type="button">QR Payment</button>
+      <button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer</button>
+      <button class="azobss-pay-option" data-method="toyyibpay" type="button">ToyyibPay</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe</button>
     </div>
-    <p class="azobss-pay-note" id="azobssPayInstruction">Tekan Continue Payment untuk buka bill rasmi ToyyibPay dan pilih bank FPX. Selepas bayar, tekan Check Payment / Unlock Download.</p>
-    <label class="azobss-pay-field azobss-pay-field-hidden" style="display:none">Payment Reference / Receipt Note
-      <input id="azobssPayReference" type="text" placeholder="Auto verify by ToyyibPay">
+    <p class="azobss-pay-note" id="azobssPayInstruction">Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, tekan I Have Paid.</p>
+    <label class="azobss-pay-field">Payment Reference / Receipt Note
+      <input id="azobssPayReference" type="text" placeholder="Contoh: nama bank, masa bayaran atau nombor rujukan">
     </label>
     <div class="azobss-pay-actions">
-      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayOpenPayment" type="button">Continue Payment</button>
-      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayComplete" type="button">Check Payment / Unlock Download</button>
+      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment Link</button>
+      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">I Have Paid</button>
     </div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
@@ -3228,88 +3231,118 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 <script id="azobss-premium-flow-script">
 (function(){
-  const API_BASE = (localStorage.getItem('azobssPremiumBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
   const modal = document.getElementById('azobssPremiumPayModal');
   if(!modal || window.__azobssPremiumFlowReady) return;
   window.__azobssPremiumFlowReady = true;
+
   const productBox = document.getElementById('azobssPayProduct');
   const errorBox = document.getElementById('azobssPayError');
   const successBox = document.getElementById('azobssPaySuccess');
   const refInput = document.getElementById('azobssPayReference');
   const openPaymentBtn = document.getElementById('azobssPayOpenPayment');
   const completeBtn = document.getElementById('azobssPayComplete');
+  const closeBtn = document.getElementById('azobssPayClose');
+
   let currentProduct = null;
-  let currentMethod = 'toyyibpay';
-  let currentToyyibOrder = null;
+  let currentMethod = 'bank';
+
   function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function getUser(){try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser')||'null') || {};}catch(e){return {};}}
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
-  function open(product){currentProduct=product; currentMethod='toyyibpay'; currentToyyibOrder=null; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(refInput) refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.add('is-active')); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Bayaran menggunakan Bank Transfer / FPX melalui bill rasmi ToyyibPay. Link download keluar selepas bayaran berjaya.</div>`; updateInstruction();}
-  function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
+  function azUsdBadge(price){return /usd|\$/i.test(String(price||'')) ? '<span style="font-size:12px;color:#93c5fd">USD</span>' : '';}
+
+  function setActiveMethod(method){
+    currentMethod = method || 'bank';
+    modal.querySelectorAll('.azobss-pay-option').forEach(btn=>{
+      btn.classList.toggle('is-active', btn.dataset.method === currentMethod);
+    });
+    updateInstruction();
+  }
+
   function activePaymentLink(){
     if(!currentProduct) return '';
-    return currentToyyibOrder?.paymentUrl || '';
+    if(currentMethod === 'stripe') return toAbsolute(currentProduct.stripeLink || '');
+    return toAbsolute(currentProduct.paymentLink || '');
   }
-  async function createToyyibBill(){
-    if(!currentProduct) throw new Error('Product not selected');
-    if(currentToyyibOrder?.paymentUrl) return currentToyyibOrder;
-    openPaymentBtn.disabled = true;
-    openPaymentBtn.textContent = 'Creating bill...';
-    try{
-      const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({product:currentProduct,user:getUser()})
-      });
-      const data = await res.json().catch(()=>({ok:false,error:'Invalid ToyyibPay response'}));
-      if(!res.ok || !data.ok) throw new Error(data.error || 'Failed create ToyyibPay bill');
-      currentToyyibOrder = data;
-      return data;
-    } finally {
-      openPaymentBtn.disabled = false;
-      openPaymentBtn.textContent = 'Continue Payment';
+
+  function updateInstruction(){
+    const inst = document.getElementById('azobssPayInstruction');
+    if(!inst) return;
+    if(currentMethod === 'bank'){
+      inst.textContent = 'Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, masukkan rujukan ringkas jika ada dan tekan I Have Paid.';
+      openPaymentBtn.textContent = 'Open Bank Transfer';
+    }else if(currentMethod === 'toyyibpay'){
+      inst.textContent = 'Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.';
+      openPaymentBtn.textContent = 'Open ToyyibPay';
+    }else if(currentMethod === 'stripe'){
+      inst.textContent = 'Pay by Stripe for international card payment, then press I Have Paid after payment is completed.';
+      openPaymentBtn.textContent = 'Open Stripe';
+    }else{
+      inst.textContent = 'Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.';
+      openPaymentBtn.textContent = 'Open QR Payment';
     }
+    openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
+    completeBtn.textContent = 'I Have Paid';
   }
-  async function checkToyyibOrder(){
-    if(!currentToyyibOrder?.orderId) throw new Error('Sila tekan Continue Payment dahulu untuk jana bill bank transfer.');
-    const res = await fetch(API_BASE + '/api/toyyib/order/' + encodeURIComponent(currentToyyibOrder.orderId));
-    const data = await res.json().catch(()=>({ok:false,error:'Invalid order response'}));
-    if(!res.ok || !data.ok) throw new Error(data.error || 'Payment check failed');
-    return data;
+
+  function open(product){
+    currentProduct = product;
+    errorBox.textContent = '';
+    successBox.classList.remove('is-open');
+    successBox.innerHTML = '';
+    if(refInput) refInput.value = '';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden','false');
+    productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Pilih Bank Transfer / FPX untuk pembayaran yang stabil.</div>`;
+    setActiveMethod('bank');
   }
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(inst) inst.textContent='Tekan Continue Payment untuk buka bill rasmi ToyyibPay dan pilih bank FPX. Selepas bayar, tekan Check Payment / Unlock Download.'; if(openPaymentBtn) openPaymentBtn.style.display=''; if(completeBtn) completeBtn.textContent='Check Payment / Unlock Download';}
-  document.getElementById('azobssPayClose')?.addEventListener('click', close);
-  modal.addEventListener('click', e=>{if(e.target===modal)close();});
-  modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod='toyyibpay'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.add('is-active')); updateInstruction();}));
-  openPaymentBtn?.addEventListener('click',async()=>{
-    try{
-      errorBox.textContent='';
-      currentMethod='toyyibpay';
-      const bill = await createToyyibBill();
-      const url = bill.paymentUrl || '';
-      if(url) window.open(url, '_blank', 'noopener');
-    }catch(err){ errorBox.textContent = err.message || 'Failed open payment link'; }
+
+  function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
+
+  closeBtn?.addEventListener('click', close);
+  modal.addEventListener('click', e=>{if(e.target===modal) close();});
+  modal.querySelectorAll('.azobss-pay-option').forEach(btn=>{
+    btn.addEventListener('click',()=>setActiveMethod(btn.dataset.method));
   });
-  completeBtn?.addEventListener('click', async()=>{
-    if(!currentProduct)return;
-    errorBox.textContent=''; successBox.classList.remove('is-open');
-    completeBtn.disabled=true; completeBtn.textContent='Processing...';
-    try{
-      currentMethod='toyyibpay';
-      const data = await checkToyyibOrder();
-      if(!data.paid) throw new Error('Payment belum berjaya / masih pending. Sila selesaikan bayaran bank transfer dahulu, kemudian tekan semula.');
-      const downloadUrl = toAbsolute(data.downloadUrl);
-      const receiptUrl = toAbsolute(data.receiptUrl);
-      successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif mengikut tetapan produk / had download admin.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
-      successBox.classList.add('is-open');
-    }catch(err){errorBox.textContent=err.message || 'Gagal proses pembayaran.';}
-    finally{completeBtn.disabled=false; completeBtn.textContent='Check Payment / Unlock Download';}
+
+  openPaymentBtn?.addEventListener('click',()=>{
+    errorBox.textContent = '';
+    const url = activePaymentLink();
+    if(!url){
+      errorBox.textContent = 'Payment link belum diset untuk item ini.';
+      return;
+    }
+    window.open(url, '_blank', 'noopener');
   });
+
+  completeBtn?.addEventListener('click',()=>{
+    if(!currentProduct) return;
+    errorBox.textContent = '';
+    successBox.classList.remove('is-open');
+    const downloadUrl = toAbsolute(currentProduct.secureDownloadLink || currentProduct.downloadLink || '');
+    const note = refInput?.value?.trim() || '';
+    if(downloadUrl){
+      successBox.innerHTML = `<b>Pembayaran direkod ✅</b><br><span>Jika bayaran sudah selesai, gunakan link download di bawah.</span>${note ? `<br><span>Reference: ${esc(note)}</span>` : ''}<br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a>`;
+    }else{
+      successBox.innerHTML = `<b>Payment note saved ✅</b><br><span>Admin akan semak bayaran anda. Download link belum diset untuk item ini.</span>${note ? `<br><span>Reference: ${esc(note)}</span>` : ''}`;
+    }
+    successBox.classList.add('is-open');
+  });
+
   document.addEventListener('click', e=>{
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
-    if(!trigger)return;
+    if(!trigger) return;
     e.preventDefault();
-    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',stripeLink:trigger.dataset.stripeLink||'',secureDownloadLink:trigger.dataset.downloadLink||'',downloadLimit:Number(trigger.dataset.downloadLimit||3),expiryHours:Number(trigger.dataset.expiryHours??24)};
+    const product = {
+      id: trigger.dataset.productId || '',
+      name: trigger.dataset.productName || 'Premium Item',
+      price: trigger.dataset.productPrice || 'RM0',
+      paymentLink: trigger.dataset.paymentLink || '',
+      stripeLink: trigger.dataset.stripeLink || '',
+      secureDownloadLink: trigger.dataset.downloadLink || '',
+      downloadLink: trigger.dataset.downloadLink || '',
+      downloadLimit: Number(trigger.dataset.downloadLimit || 3),
+      expiryHours: Number(trigger.dataset.expiryHours ?? 24)
+    };
     open(product);
   });
 })();
