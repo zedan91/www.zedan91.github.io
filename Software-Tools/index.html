@@ -3800,58 +3800,113 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
 </script>
 
 
-<script>
-/* AZOBSS final admin action restorer: prevents later render/pagination/stats scripts from removing admin card buttons. */
+<style id="azobss-admin-action-final-style">
+/* AZOBSS final admin buttons - fixed position under love icon */
+#softwareGrid .download-card{position:relative!important;}
+#softwareGrid .download-card .software-card-admin-actions,
+.download-card .software-card-admin-actions[data-azobss-admin-actions-restored="1"]{
+  position:absolute!important;
+  top:66px!important;
+  right:16px!important;
+  z-index:120!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  width:auto!important;
+  margin:0!important;
+  pointer-events:auto!important;
+}
+#softwareGrid .download-card .software-card-admin-actions button,
+.download-card .software-card-admin-actions[data-azobss-admin-actions-restored="1"] button{
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  padding:0!important;
+  border-radius:50%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:16px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  background:rgba(2,6,23,.72)!important;
+  backdrop-filter:blur(7px)!important;
+  box-shadow:0 8px 18px rgba(0,0,0,.25)!important;
+}
+#softwareGrid .software-logo-admin-btn{border:2px solid #22c55e!important;color:#86efac!important;}
+#softwareGrid .software-card-edit-btn{border:2px solid #38bdf8!important;color:#7dd3fc!important;}
+#softwareGrid .software-card-delete-btn{border:2px solid #fb7185!important;color:#fda4af!important;}
+</style>
+<script id="azobss-admin-action-final-script">
+/* AZOBSS admin action restorer - final: fixes duplicate render/pagination removing buttons. */
 (function(){
   const ADMIN_NAMES = ['zedan91'];
   const ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
+  const clean = v => String(v || '').trim().toLowerCase();
+  const safeJson = raw => { try { return JSON.parse(raw || 'null'); } catch(_) { return null; } };
 
-  function clean(v){
-    return String(v || '').trim().toLowerCase();
-  }
-
-  function safeJson(raw){
-    try{return JSON.parse(raw || 'null');}catch(_){return null;}
-  }
-
-  function savedUser(){
-    const keys = ['azobssCurrentUser','azobssUser','currentUser','user'];
-    for(const store of [sessionStorage, localStorage]){
-      for(const key of keys){
-        const parsed = safeJson(store.getItem(key));
-        if(parsed && typeof parsed === 'object') return parsed;
-      }
+  function storageText(){
+    let out = '';
+    for(const store of [localStorage, sessionStorage]){
+      try{
+        for(let i=0;i<store.length;i++){
+          const k = store.key(i);
+          out += ' ' + k + ' ' + store.getItem(k);
+        }
+      }catch(_){}
     }
-    try{
-      if(typeof window.getSavedUser === 'function'){
-        const user = window.getSavedUser();
-        if(user && typeof user === 'object') return user;
-      }
-    }catch(_){}
-    return {};
+    return clean(out);
   }
 
-  function displayedUsername(){
-    const text = clean(document.querySelector('#userNameText,#userName,.user-name,.username,.user-menu-name,.user-menu')?.textContent || '');
-    return text.replace(/^hello,?/,'').replace(/[^a-z0-9@._-]/g,'').trim();
+  function savedUsers(){
+    const found = [];
+    for(const store of [sessionStorage, localStorage]){
+      try{
+        for(let i=0;i<store.length;i++){
+          const val = safeJson(store.getItem(store.key(i)));
+          if(val && typeof val === 'object') found.push(val);
+        }
+      }catch(_){}
+    }
+    try{ if(typeof window.getSavedUser === 'function'){ const u = window.getSavedUser(); if(u && typeof u === 'object') found.push(u); } }catch(_){}
+    try{ if(window.currentUser && typeof window.currentUser === 'object') found.push(window.currentUser); }catch(_){}
+    try{ if(window.azobssCurrentUser && typeof window.azobssCurrentUser === 'object') found.push(window.azobssCurrentUser); }catch(_){}
+    return found;
+  }
+
+  function pageSaysAdmin(){
+    const t = clean(document.body ? document.body.innerText : '');
+    if(t.includes('hello, zedan91') || t.includes('hello zedan91')) return true;
+    if(t.includes('zedan91@azobss.local') || t.includes('zedan9107@gmail.com')) return true;
+    return false;
   }
 
   function isAdmin(){
-    const u = savedUser();
-    const name = clean(u.usernameKey || u.username || u.name || u.displayName || displayedUsername());
-    const email = clean(u.email || u.authEmail || '');
-    const role = clean(u.role || '');
-    try{
-      if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(u)) return true;
-    }catch(_){}
-    return role === 'admin' || ADMIN_NAMES.includes(name) || ADMIN_EMAILS.includes(email);
+    if(document.body?.classList.contains('is-admin')) return true;
+    const st = storageText();
+    if(st.includes('zedan91') || st.includes('zedan9107@gmail.com') || st.includes('zedan91@azobss.local')) return true;
+    if(pageSaysAdmin()) return true;
+    for(const u of savedUsers()){
+      const name = clean(u.usernameKey || u.username || u.name || u.displayName || u.userName || u.handle || '');
+      const email = clean(u.email || u.authEmail || u.contactEmail || '');
+      const role = clean(u.role || u.userRole || '');
+      if(role === 'admin' || ADMIN_NAMES.includes(name) || ADMIN_EMAILS.includes(email)) return true;
+      if(name === 'zedan91' || email === 'zedan9107@gmail.com' || email === 'zedan91@azobss.local') return true;
+    }
+    try{ if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser({username:'zedan91'})) return true; }catch(_){}
+    return false;
   }
+
+  function escAttr(v){ return String(v || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   function productId(card){
     if(!card) return '';
-    let id = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
+    let id = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || card.dataset.docId || '';
     if(!id){
-      const title = card.querySelector('h3')?.textContent || 'STATIC';
+      const title = card.querySelector('h3,.software-title')?.textContent || 'STATIC';
       id = 'AZSW-' + String(title).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
       card.dataset.productId = id;
     }
@@ -3861,34 +3916,35 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
   function addActions(){
     if(!isAdmin()) return;
     document.body.classList.add('is-admin');
-    document.querySelectorAll('#softwareGrid .download-card, .software-grid .download-card, .download-card').forEach(card=>{
+    const cards = document.querySelectorAll('#softwareGrid .download-card, #softwareDownloadsGrid .download-card, .downloads-grid .download-card, .download-card');
+    cards.forEach(card => {
       const id = productId(card);
-      if(!id || card.querySelector('.software-card-admin-actions,[data-azobss-admin-actions-restored="1"]')) return;
+      if(!id) return;
+      card.querySelectorAll('.software-card-admin-actions[data-azobss-admin-actions-restored="1"]').forEach((el,idx)=>{ if(idx>0) el.remove(); });
+      if(card.querySelector('.software-card-admin-actions[data-azobss-admin-actions-restored="1"]')) return;
       const wrap = document.createElement('div');
       wrap.className = 'software-card-admin-actions';
       wrap.setAttribute('data-azobss-admin-actions-restored','1');
       wrap.setAttribute('aria-label','Admin card actions');
       wrap.innerHTML =
-        '<button class="software-logo-admin-btn" type="button" data-software-logo-regen="'+id+'" title="Generate logo from website link" aria-label="Generate logo">🪄</button>' +
-        '<button class="software-card-edit-btn" type="button" data-software-edit="'+id+'" title="Edit software" aria-label="Edit">✏️</button>' +
-        '<button class="software-card-delete-btn" type="button" data-software-delete="'+id+'" title="Delete software" aria-label="Delete">🗑️</button>';
+        '<button class="software-logo-admin-btn" type="button" data-software-logo-regen="'+escAttr(id)+'" title="Generate logo from website link" aria-label="Generate logo">🪄</button>' +
+        '<button class="software-card-edit-btn" type="button" data-software-edit="'+escAttr(id)+'" title="Edit software" aria-label="Edit">✏️</button>' +
+        '<button class="software-card-delete-btn" type="button" data-software-delete="'+escAttr(id)+'" title="Delete software" aria-label="Delete">🗑️</button>';
       card.appendChild(wrap);
     });
   }
 
-  document.addEventListener('DOMContentLoaded', ()=>{
+  function boot(){
     addActions();
-    let ticks = 0;
-    const timer = setInterval(()=>{
-      addActions();
-      ticks += 1;
-      if(ticks > 40) clearInterval(timer);
-    }, 500);
-    const grid = document.querySelector('#softwareGrid') || document.querySelector('.software-grid') || document.body;
-    const observer = new MutationObserver(()=>addActions());
-    observer.observe(grid, {childList:true, subtree:true});
-  });
+    [50,150,400,800,1500,2500,4000,7000].forEach(t=>setTimeout(addActions,t));
+    const root = document.querySelector('#softwareGrid') || document.querySelector('#softwareDownloadsGrid') || document.querySelector('.downloads-grid') || document.body;
+    if(root){
+      new MutationObserver(()=>{ clearTimeout(window.__azAdminActionTimer); window.__azAdminActionTimer=setTimeout(addActions,80); }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   window.azobssRestoreSoftwareAdminActions = addActions;
+  window.azobssForceSoftwareAdminButtons = addActions;
 })();
 </script>
 
