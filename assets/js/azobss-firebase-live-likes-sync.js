@@ -994,13 +994,15 @@ function injectProfileSettingsModal() {
   setupPasswordVisibilityToggles();
 }
 
-const AZOBSS_ADMIN_USERS = ['zedan91'];
+const AZOBSS_ADMIN_USERS = ['zedan91','zedan9107'];
+const AZOBSS_ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
 const AZOBSS_PA_MEMBER_CODE = 'ZX6186';
 function getUserKey(user){ return String(user?.usernameKey || user?.username || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
 function isAzobssAdmin(user){
   const key = getUserKey(user);
   const role = String(user?.role || '').trim().toLowerCase();
-  return !!(user && (role === 'admin' || AZOBSS_ADMIN_USERS.includes(key)));
+  const email = String(user?.email || user?.authEmail || '').trim().toLowerCase();
+  return !!(user && (role === 'admin' || AZOBSS_ADMIN_USERS.includes(key) || AZOBSS_ADMIN_EMAILS.includes(email)));
 }
 function normalizePaMemberCode(value){
   return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');

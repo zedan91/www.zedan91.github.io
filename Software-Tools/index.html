@@ -2314,21 +2314,54 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const hasMedia = !!(imageUrlInput?.value || gifUrlInput?.value || imageFileInput?.files?.length || gifFileInput?.files?.length);
     mediaPreview.style.display = hasMedia ? 'flex' : 'none';
   }
-  function getCurrentUserObject(){ try { return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null'); } catch(e){ return null; } }
+  function getCurrentUserObject(){
+    const keys = ['azobssCurrentUser','azobssUser','currentUser','user'];
+    for(const store of [sessionStorage, localStorage]){
+      for(const key of keys){
+        try{
+          const value = store.getItem(key);
+          if(value){
+            const parsed = JSON.parse(value);
+            if(parsed && typeof parsed === 'object') return parsed;
+          }
+        }catch(_){}
+      }
+    }
+    try{
+      if(typeof window.getSavedUser === 'function'){
+        const saved = window.getSavedUser();
+        if(saved && typeof saved === 'object') return saved;
+      }
+    }catch(_){}
+    return null;
+  }
+
   function isAdmin(){
-    const currentUser = getCurrentUserObject();
-    const adminEmails=['zedan91@azobss.local','zedan9107@gmail.com'];
-    const username = clean(currentUser?.usernameKey || currentUser?.username || localStorage.getItem('username') || sessionStorage.getItem('username'));
-    const email = clean(currentUser?.email);
-    return (
-      sessionStorage.getItem('azobssLoggedIn') === '1' ||
-      localStorage.getItem('azobssLoggedIn') === '1'
-    ) && (
-      username==='zedan91' ||
-      email==='zedan9107@gmail.com' ||
-      email==='zedan91@azobss.local' ||
-      adminEmails.includes(email)
+    const currentUser = getCurrentUserObject() || {};
+    const adminEmails = ['zedan91@azobss.local','zedan9107@gmail.com'];
+    const adminNames = ['zedan91'];
+    const displayedUser = clean(
+      document.querySelector('#userNameText,#userName,.user-name,.username,.user-menu-name')?.textContent || ''
+    ).replace(/^hello,?/,'').trim();
+    const username = clean(
+      currentUser.usernameKey ||
+      currentUser.username ||
+      currentUser.name ||
+      currentUser.displayName ||
+      localStorage.getItem('username') ||
+      sessionStorage.getItem('username') ||
+      localStorage.getItem('azobssUsername') ||
+      sessionStorage.getItem('azobssUsername') ||
+      displayedUser
     );
+    const email = clean(currentUser.email || currentUser.authEmail || localStorage.getItem('email') || sessionStorage.getItem('email'));
+    const role = clean(currentUser.role || localStorage.getItem('azobssRole') || sessionStorage.getItem('azobssRole'));
+    const globalAdmin = (typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(currentUser)) || false;
+
+    return globalAdmin ||
+      role === 'admin' ||
+      adminNames.includes(username) ||
+      adminEmails.includes(email);
   }
 
   function makeProductId(prefix){
@@ -3763,6 +3796,99 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
     setTimeout(()=>schedule(true),1200);
     setTimeout(()=>schedule(true),2500);
   });
+})();
+</script>
+
+
+<script>
+/* AZOBSS final admin action restorer: prevents later render/pagination/stats scripts from removing admin card buttons. */
+(function(){
+  const ADMIN_NAMES = ['zedan91'];
+  const ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
+
+  function clean(v){
+    return String(v || '').trim().toLowerCase();
+  }
+
+  function safeJson(raw){
+    try{return JSON.parse(raw || 'null');}catch(_){return null;}
+  }
+
+  function savedUser(){
+    const keys = ['azobssCurrentUser','azobssUser','currentUser','user'];
+    for(const store of [sessionStorage, localStorage]){
+      for(const key of keys){
+        const parsed = safeJson(store.getItem(key));
+        if(parsed && typeof parsed === 'object') return parsed;
+      }
+    }
+    try{
+      if(typeof window.getSavedUser === 'function'){
+        const user = window.getSavedUser();
+        if(user && typeof user === 'object') return user;
+      }
+    }catch(_){}
+    return {};
+  }
+
+  function displayedUsername(){
+    const text = clean(document.querySelector('#userNameText,#userName,.user-name,.username,.user-menu-name,.user-menu')?.textContent || '');
+    return text.replace(/^hello,?/,'').replace(/[^a-z0-9@._-]/g,'').trim();
+  }
+
+  function isAdmin(){
+    const u = savedUser();
+    const name = clean(u.usernameKey || u.username || u.name || u.displayName || displayedUsername());
+    const email = clean(u.email || u.authEmail || '');
+    const role = clean(u.role || '');
+    try{
+      if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(u)) return true;
+    }catch(_){}
+    return role === 'admin' || ADMIN_NAMES.includes(name) || ADMIN_EMAILS.includes(email);
+  }
+
+  function productId(card){
+    if(!card) return '';
+    let id = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
+    if(!id){
+      const title = card.querySelector('h3')?.textContent || 'STATIC';
+      id = 'AZSW-' + String(title).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+      card.dataset.productId = id;
+    }
+    return id;
+  }
+
+  function addActions(){
+    if(!isAdmin()) return;
+    document.body.classList.add('is-admin');
+    document.querySelectorAll('#softwareGrid .download-card, .software-grid .download-card, .download-card').forEach(card=>{
+      const id = productId(card);
+      if(!id || card.querySelector('.software-card-admin-actions,[data-azobss-admin-actions-restored="1"]')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'software-card-admin-actions';
+      wrap.setAttribute('data-azobss-admin-actions-restored','1');
+      wrap.setAttribute('aria-label','Admin card actions');
+      wrap.innerHTML =
+        '<button class="software-logo-admin-btn" type="button" data-software-logo-regen="'+id+'" title="Generate logo from website link" aria-label="Generate logo">🪄</button>' +
+        '<button class="software-card-edit-btn" type="button" data-software-edit="'+id+'" title="Edit software" aria-label="Edit">✏️</button>' +
+        '<button class="software-card-delete-btn" type="button" data-software-delete="'+id+'" title="Delete software" aria-label="Delete">🗑️</button>';
+      card.appendChild(wrap);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    addActions();
+    let ticks = 0;
+    const timer = setInterval(()=>{
+      addActions();
+      ticks += 1;
+      if(ticks > 40) clearInterval(timer);
+    }, 500);
+    const grid = document.querySelector('#softwareGrid') || document.querySelector('.software-grid') || document.body;
+    const observer = new MutationObserver(()=>addActions());
+    observer.observe(grid, {childList:true, subtree:true});
+  });
+  window.azobssRestoreSoftwareAdminActions = addActions;
 })();
 </script>
 
