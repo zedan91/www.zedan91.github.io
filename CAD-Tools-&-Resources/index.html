@@ -1718,8 +1718,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     <div class="azobss-pay-options">
       <button class="azobss-pay-option is-active" data-method="qr" type="button">QR Payment</button>
       <button class="azobss-pay-option" data-method="bank" type="button">Bank Transfer</button>
-      <button class="azobss-pay-option" data-method="toyyibpay" type="button">ToyyibPay</button>
-      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe</button>
+      <button class="azobss-pay-option" data-method="toyyibpay" type="button">Hidden</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button">Hidden</button>
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Bayar ikut pilihan di atas. Link download hanya muncul selepas anda sahkan bayaran.</p>
     <label class="azobss-pay-field">Payment Reference / Receipt Note
@@ -1727,7 +1727,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     </label>
     <div class="azobss-pay-actions">
       <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment Link</button>
-      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">I Have Paid</button>
+      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Check Payment / Unlock Download</button>
     </div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
@@ -2057,7 +2057,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
   function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
   function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; if(currentMethod==='toyyibpay') return currentProduct.paymentLink || ''; return currentProduct.paymentLink || currentProduct.stripeLink || ''; }
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay by Stripe for international card payment, then press I Have Paid after payment is completed.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan I Have Paid selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan I Have Paid.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay by Stripe for international card payment, then press Check Payment / Unlock Download after payment is completed.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment Link untuk bayar melalui ToyyibPay, kemudian tekan Check Payment / Unlock Download selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan Check Payment / Unlock Download.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan Check Payment / Unlock Download.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'qr'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
@@ -2075,7 +2075,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif mengikut tetapan produk / had download admin.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
       successBox.classList.add('is-open');
     }catch(err){errorBox.textContent=err.message || 'Gagal proses pembayaran.';}
-    finally{completeBtn.disabled=false; completeBtn.textContent='I Have Paid';}
+    finally{completeBtn.disabled=false; completeBtn.textContent='Check Payment / Unlock Download';}
   });
   document.addEventListener('click', e=>{
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
@@ -2087,5 +2087,31 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
 })();
 </script>
 
+<script>
+async function verifyToyyibPayment(billCode){
+  try{
+    const verifyBtn=document.querySelector('.check-payment-btn');
+    if(verifyBtn){ verifyBtn.disabled=true; verifyBtn.textContent='Checking Payment...'; }
+
+    const res = await fetch(`${window.API_BASE_URL || 'https://azobss-backend.onrender.com'}/api/verify-payment?billCode=${billCode}`);
+    const data = await res.json();
+
+    if(data && (data.paid === true || data.status === 'paid')){
+      alert('Payment verified successfully! Download unlocked.');
+      document.body.classList.add('payment-unlocked');
+    }else{
+      alert('Payment not confirmed yet. Please complete payment first.');
+    }
+
+    if(verifyBtn){
+      verifyBtn.disabled=false;
+      verifyBtn.textContent='Check Payment / Unlock Download';
+    }
+  }catch(err){
+    console.error(err);
+    alert('Unable to verify payment status.');
+  }
+}
+</script>
 </body>
 </html>
