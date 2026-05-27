@@ -4505,14 +4505,292 @@ border-right:1px solid rgba(255,255,255,.25)!important;
 })();
 </script>
 
+
+<!-- AZOBSS FINAL TARGETED FIX: footer icons + premium Buy button only -->
+<style id="azobss-targeted-icons-buy-button-fix-v1">
+/* Keep card structure stable and reserve room for footer */
+#softwareGrid .download-card,
+.downloads-grid .download-card{
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+  padding-bottom:58px!important;
+  box-sizing:border-box!important;
+}
+
+/* Product ID stays above the button, not inside footer */
+#softwareGrid .download-card > .product-meta,
+.downloads-grid .download-card > .product-meta{
+  order:40!important;
+  position:relative!important;
+  inset:auto!important;
+  width:100%!important;
+  margin:6px auto 10px!important;
+  padding:0!important;
+  height:auto!important;
+  text-align:center!important;
+  background:transparent!important;
+  border:0!important;
+  color:#3b82f6!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  line-height:1.15!important;
+  pointer-events:none!important;
+}
+
+/* Download / Buy button: full clickable, centered, not touching footer */
+#softwareGrid .download-card > a.download-btn,
+.downloads-grid .download-card > a.download-btn,
+#softwareGrid .download-card > .download-btn,
+.downloads-grid .download-card > .download-btn{
+  order:50!important;
+  position:relative!important;
+  z-index:30!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:9px!important;
+  width:76%!important;
+  max-width:225px!important;
+  min-width:178px!important;
+  height:52px!important;
+  min-height:52px!important;
+  margin:0 auto 24px!important;
+  padding:0 14px!important;
+  border-radius:13px!important;
+  box-sizing:border-box!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-decoration:none!important;
+  font-size:17px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#fff!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+#softwareGrid .download-card > a.download-btn *,
+.downloads-grid .download-card > a.download-btn *{
+  pointer-events:none!important;
+}
+
+/* Premium button content: RM10 | cart | Buy Now stays INSIDE button */
+#softwareGrid .download-card > a.download-btn.premium,
+.downloads-grid .download-card > a.download-btn.premium,
+#softwareGrid .download-card[data-type="premium"] > a.download-btn,
+.downloads-grid .download-card[data-type="premium"] > a.download-btn{
+  background:linear-gradient(90deg,#2f73ff,#3d86ff)!important;
+  box-shadow:0 12px 26px rgba(59,130,246,.22)!important;
+}
+#softwareGrid .download-card .buy-price,
+.downloads-grid .download-card .buy-price{
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  flex:0 0 auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:28px!important;
+  padding:0 9px!important;
+  margin:0!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.18)!important;
+  border:0!important;
+  color:#fff!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#softwareGrid .download-card .buy-divider,
+.downloads-grid .download-card .buy-divider{
+  display:block!important;
+  flex:0 0 1px!important;
+  width:1px!important;
+  height:22px!important;
+  margin:0 2px!important;
+  background:rgba(255,255,255,.34)!important;
+}
+#softwareGrid .download-card .az-btn-icon,
+.downloads-grid .download-card .az-btn-icon{
+  position:static!important;
+  transform:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  font-size:20px!important;
+  line-height:1!important;
+}
+
+/* Hide old price badge above premium card */
+#softwareGrid .download-card .software-badge.premium,
+.downloads-grid .download-card .software-badge.premium,
+#softwareGrid .download-card .price-badge,
+.downloads-grid .download-card .price-badge{
+  display:none!important;
+}
+
+/* Footer stats rebuilt: two clean columns only */
+#softwareGrid .download-card > .software-stats,
+.downloads-grid .download-card > .software-stats,
+#softwareGrid .download-card > .stats-bar,
+.downloads-grid .download-card > .stats-bar{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  height:54px!important;
+  display:grid!important;
+  grid-template-columns:38% 62%!important;
+  align-items:stretch!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  z-index:15!important;
+  background:rgba(5,15,30,.96)!important;
+  border-top:1px solid rgba(255,255,255,.10)!important;
+  border-radius:0 0 18px 18px!important;
+}
+#softwareGrid .download-card > .software-stats > *,
+.downloads-grid .download-card > .software-stats > *,
+#softwareGrid .download-card > .stats-bar > *,
+.downloads-grid .download-card > .stats-bar > *{
+  min-width:0!important;
+  height:54px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  padding:0 8px!important;
+  margin:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  color:#fff!important;
+  font-weight:900!important;
+}
+#softwareGrid .download-card > .software-stats > *:first-child,
+.downloads-grid .download-card > .software-stats > *:first-child{
+  border-right:1px solid rgba(255,255,255,.10)!important;
+}
+#softwareGrid .download-card > .software-stats > *:nth-child(n+3),
+.downloads-grid .download-card > .software-stats > *:nth-child(n+3){
+  display:none!important;
+}
+
+/* Download counter icon */
+#softwareGrid .download-card .stat-download .stat-icon,
+.downloads-grid .download-card .stat-download .stat-icon{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#22c55e!important;
+  font-size:22px!important;
+  line-height:1!important;
+  width:22px!important;
+  height:22px!important;
+}
+#softwareGrid .download-card .stat-download .stat-value,
+.downloads-grid .download-card .stat-download .stat-value{
+  font-size:15px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#fff!important;
+}
+
+/* Rating stars + value must not be clipped */
+#softwareGrid .download-card .stat-rating,
+.downloads-grid .download-card .stat-rating{
+  justify-content:center!important;
+  gap:8px!important;
+}
+#softwareGrid .download-card .software-rating-stars,
+.downloads-grid .download-card .software-rating-stars{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:1px!important;
+  min-width:82px!important;
+  max-width:none!important;
+  overflow:visible!important;
+  flex:0 0 auto!important;
+}
+#softwareGrid .download-card .software-rating-star,
+.downloads-grid .download-card .software-rating-star{
+  appearance:none!important;
+  border:0!important;
+  background:transparent!important;
+  padding:0!important;
+  margin:0!important;
+  width:15px!important;
+  height:18px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#64748b!important;
+  font-size:15px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+}
+#softwareGrid .download-card .software-rating-star.is-filled,
+.downloads-grid .download-card .software-rating-star.is-filled,
+#softwareGrid .download-card .software-rating-stars:hover .software-rating-star,
+.downloads-grid .download-card .software-rating-stars:hover .software-rating-star{
+  color:#facc15!important;
+}
+#softwareGrid .download-card .software-rating-stars .software-rating-star:hover ~ .software-rating-star,
+.downloads-grid .download-card .software-rating-stars .software-rating-star:hover ~ .software-rating-star{
+  color:#64748b!important;
+}
+#softwareGrid .download-card .stat-rating strong,
+.downloads-grid .download-card .stat-rating strong,
+#softwareGrid .download-card .software-rating-count,
+.downloads-grid .download-card .software-rating-count{
+  flex:0 0 auto!important;
+  font-size:14px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  color:#fff!important;
+}
+#softwareGrid .download-card .software-rating-count,
+.downloads-grid .download-card .software-rating-count{
+  color:#cbd5e1!important;
+}
+</style>
+<script id="azobss-targeted-icons-buy-button-fix-v1-js">
+(function(){
+  function fix(card){
+    if(!card) return;
+    card.querySelectorAll(':scope > .price-badge, :scope > .software-badge.premium').forEach(function(el){ el.remove(); });
+    var meta=card.querySelector(':scope > .product-meta');
+    var btn=card.querySelector(':scope > a.download-btn, :scope > .download-btn');
+    if(meta && btn && meta.nextElementSibling !== btn){ card.insertBefore(meta, btn); }
+    if(btn && (card.dataset.type||'').toLowerCase()==='premium'){
+      btn.classList.add('premium');
+      var price=(btn.getAttribute('data-product-price') || card.getAttribute('data-price') || 'RM10').trim() || 'RM10';
+      if(price.toUpperCase()==='FREE') price='RM10';
+      if(!btn.querySelector('.buy-price')){
+        btn.innerHTML='<span class="buy-price">'+price+'</span><span class="buy-divider"></span><span class="az-btn-icon" aria-hidden="true">🛒</span><span>Buy Now</span>';
+      }
+    }
+    var stats=card.querySelector(':scope > .software-stats, :scope > .stats-bar');
+    if(stats && stats !== card.lastElementChild){ card.appendChild(stats); }
+  }
+  function run(){ document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(fix); }
+  document.addEventListener('DOMContentLoaded', function(){
+    run(); setTimeout(run,150); setTimeout(run,800); setTimeout(run,1800);
+    var grid=document.querySelector('#softwareGrid,.downloads-grid,#softwareDownloadsGrid');
+    if(grid) new MutationObserver(function(){ setTimeout(run,0); }).observe(grid,{childList:true,subtree:true});
+  });
+})();
+</script>
+
 </body>
 </html>
-<style>
-.stats-bar,.software-stats{grid-template-columns:80px 1fr!important;height:48px!important}
-.stats-bar > :last-child::after{display:none!important;content:none!important}
-.stats-bar .download i,.stats-bar .fa-download{color:#22c55e!important;display:inline-block!important}
-.stats-bar .download{min-width:80px!important}
-.stats-bar .rating{display:flex!important;justify-content:center!important;gap:10px!important}
-.rating-stars,.software-rating-stars{min-width:90px!important;display:flex!important;justify-content:center!important}
-.stats-bar .circle,.stats-bar .like,.stats-bar .heart{display:none!important}
-</style>
