@@ -3980,3 +3980,132 @@ all.appendChild(wrap);
 
 </body>
 </html>
+
+<style id="azobss-pagination-8-cards-force-visible-fix">
+/* Force pagination hidden cards to stay hidden even when old card CSS uses display:flex!important */
+#softwareDownloadsGrid > .download-card.az-page-hidden,
+#softwareGrid > .download-card.az-page-hidden,
+.downloads-grid > .download-card.az-page-hidden{
+  display:none!important;
+}
+#azobssSoftwarePagination{
+  grid-column:1 / -1!important;
+}
+</style>
+<script id="azobss-pagination-8-cards-force-fix">
+(function(){
+  'use strict';
+  const PAGE_SIZE = 8;
+  let currentPage = 1;
+  let timer = null;
+
+  function getGrid(){
+    return document.getElementById('softwareDownloadsGrid') || document.getElementById('softwareGrid') || document.querySelector('.downloads-grid');
+  }
+
+  function ensureNav(grid){
+    let nav = document.getElementById('azobssSoftwarePagination');
+    if(!nav){
+      nav = document.createElement('div');
+      nav.id = 'azobssSoftwarePagination';
+      nav.className = 'azobss-pagination';
+      nav.setAttribute('aria-label','Software pagination');
+      grid.insertAdjacentElement('afterend', nav);
+    }
+    return nav;
+  }
+
+  function isFilterHidden(card){
+    // Filter scripts hide items with inline display:none. Pagination uses class only.
+    return String(card.style.display || '').trim().toLowerCase() === 'none' && !card.classList.contains('az-page-hidden');
+  }
+
+  function getCards(grid){
+    return Array.from(grid.children).filter(el =>
+      el && el.classList && el.classList.contains('download-card') && !isFilterHidden(el)
+    );
+  }
+
+  function pageButton(label, page, active, disabled){
+    return '<button type="button" class="azobss-page-btn '+(active?'is-active':'')+'" data-az-page="'+page+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
+  }
+
+  function render(reset){
+    const grid = getGrid();
+    if(!grid) return;
+    if(reset) currentPage = 1;
+
+    const all = getCards(grid);
+    const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+    currentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+    all.forEach((card, idx) => {
+      const show = idx >= (currentPage - 1) * PAGE_SIZE && idx < currentPage * PAGE_SIZE;
+      card.classList.toggle('az-page-hidden', !show);
+    });
+
+    const nav = ensureNav(grid);
+    if(all.length <= PAGE_SIZE){
+      nav.hidden = true;
+      nav.innerHTML = '';
+      return;
+    }
+
+    nav.hidden = false;
+    let html = '';
+    html += pageButton('‹', currentPage - 1, false, currentPage <= 1);
+    for(let i=1;i<=totalPages;i++){
+      if(i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1){
+        html += pageButton(String(i), i, i === currentPage, false);
+      }else if(i === currentPage - 2 || i === currentPage + 2){
+        html += '<span class="azobss-page-info">…</span>';
+      }
+    }
+    html += pageButton('›', currentPage + 1, false, currentPage >= totalPages);
+    html += '<span class="azobss-page-info">'+all.length+' items · 8/page</span>';
+    nav.innerHTML = html;
+  }
+
+  function schedule(reset){
+    clearTimeout(timer);
+    timer = setTimeout(() => render(reset), 60);
+  }
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest && e.target.closest('#azobssSoftwarePagination [data-az-page]');
+    if(btn){
+      const page = Number(btn.getAttribute('data-az-page'));
+      if(Number.isFinite(page)){
+        currentPage = page;
+        render(false);
+        const grid = getGrid();
+        if(grid) grid.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+      e.preventDefault();
+      return;
+    }
+    if(e.target.closest && e.target.closest('[data-software-category], [data-software-platform], [data-software-type]')){
+      schedule(true);
+    }
+  }, true);
+
+  document.addEventListener('input', function(e){
+    if(e.target && (e.target.id === 'softwareSearchInput' || e.target.matches('input[type="search"]'))) schedule(true);
+  }, true);
+
+  document.addEventListener('change', function(e){
+    if(e.target && (e.target.id === 'softwareSortSelect' || e.target.matches('select'))) schedule(true);
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const grid = getGrid();
+    if(grid){
+      new MutationObserver(() => schedule(false)).observe(grid,{childList:true, subtree:false, attributes:true, attributeFilter:['style','class']});
+    }
+    schedule(true);
+    [150,500,1000,2000,4000].forEach(t => setTimeout(() => schedule(false), t));
+  });
+
+  window.azobssApplySoftwarePagination = function(reset){ schedule(!!reset); };
+})();
+</script>
