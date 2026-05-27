@@ -2318,9 +2318,16 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function isAdmin(){
     const currentUser = getCurrentUserObject();
     const adminEmails=['zedan91@azobss.local','zedan9107@gmail.com'];
-    return sessionStorage.getItem('azobssLoggedIn') === '1' && (
-      clean(currentUser?.usernameKey)==='zedan91' ||
-      adminEmails.includes(clean(currentUser?.email))
+    const username = clean(currentUser?.usernameKey || currentUser?.username || localStorage.getItem('username') || sessionStorage.getItem('username'));
+    const email = clean(currentUser?.email);
+    return (
+      sessionStorage.getItem('azobssLoggedIn') === '1' ||
+      localStorage.getItem('azobssLoggedIn') === '1'
+    ) && (
+      username==='zedan91' ||
+      email==='zedan9107@gmail.com' ||
+      email==='zedan91@azobss.local' ||
+      adminEmails.includes(email)
     );
   }
 
