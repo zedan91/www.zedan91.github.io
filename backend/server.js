@@ -7,6 +7,7 @@ import path from "path";
 import dotenv from "dotenv";
 import cron from "node-cron";
 import { fileURLToPath } from "url";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -63,6 +64,14 @@ function normalizeSoftwareStats(raw = {}) {
     }
   }
 
+  const ratedBy = (raw.ratedBy && typeof raw.ratedBy === "object") ? raw.ratedBy : {};
+  const cleanRatedBy = {};
+  for (const [voter, value] of Object.entries(ratedBy)) {
+    const safeVoter = cleanSoftwareId(voter).slice(0, 160);
+    const star = Math.max(1, Math.min(5, Math.round(Number(value || 0))));
+    if (safeVoter && star) cleanRatedBy[safeVoter] = star;
+  }
+
   let ratingTotal = 0;
   let ratingVotes = 0;
   for (const star of [1, 2, 3, 4, 5]) {
@@ -75,7 +84,7 @@ function normalizeSoftwareStats(raw = {}) {
     ? Math.round((ratingTotal / ratingVotes) * 10) / 10
     : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
 
-  return { downloads, likes, ratings, ratingTotal, ratingVotes, ratingAverage };
+  return { downloads, likes, ratings, ratedBy: cleanRatedBy, ratingTotal, ratingVotes, ratingAverage };
 }
 function readSoftwareStats() { return readPremiumJson(SOFTWARE_STATS_FILE, {}); }
 function writeSoftwareStats(stats) { writePremiumJson(SOFTWARE_STATS_FILE, stats || {}); }
@@ -84,6 +93,14 @@ function getSoftwareStatsItem(stats, productId) {
   stats[key] = normalizeSoftwareStats(stats[key] || {});
   return { key, item: stats[key] };
 }
+
+function getRatingVoterId(req) {
+  const bodyVoter = cleanSoftwareId(req.body?.voterId || req.body?.userId || req.body?.uid || req.body?.username || req.body?.email || "");
+  if (bodyVoter && bodyVoter !== "software-item") return `client_${bodyVoter}`;
+  const ip = String(req.headers["x-forwarded-for"] || req.ip || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+  return "ip_" + crypto.createHash("sha256").update(ip).digest("hex").slice(0, 24);
+}
+
 function readPremiumJson(file, fallback) { try { if (!fs.existsSync(file)) return fallback; return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; } }
 function writePremiumJson(file, data) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8"); }
 function makePremiumId(prefix = "az") { return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`; }
@@ -314,20 +331,21 @@ app.post("/api/software-stats/rate", (req, res) => {
   if (!rating) return res.status(400).json({ ok: false, error: "Invalid rating" });
   const stats = readSoftwareStats();
   const { key, item } = getSoftwareStatsItem(stats, req.body?.productId || req.body?.id || req.body?.name);
+  item.ratings = item.ratings && typeof item.ratings === "object" ? item.ratings : { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+  for (const star of ["1", "2", "3", "4", "5"]) item.ratings[star] = Math.max(0, Math.round(Number(item.ratings[star] || 0)));
+  item.ratedBy = item.ratedBy && typeof item.ratedBy === "object" ? item.ratedBy : {};
 
-  item.ratings = item.ratings && typeof item.ratings === "object"
-    ? item.ratings
-    : { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
-  for (const star of ["1", "2", "3", "4", "5"]) {
-    item.ratings[star] = Math.max(0, Math.round(Number(item.ratings[star] || 0)));
-  }
+  const voterId = getRatingVoterId(req);
+  const previous = Math.max(0, Math.min(5, Math.round(Number(item.ratedBy[voterId] || 0))));
+  if (previous >= 1 && previous <= 5) item.ratings[String(previous)] = Math.max(0, item.ratings[String(previous)] - 1);
   item.ratings[String(rating)] += 1;
+  item.ratedBy[voterId] = rating;
 
   const normalized = normalizeSoftwareStats(item);
   normalized.updatedAt = new Date().toISOString();
   stats[key] = normalized;
   writeSoftwareStats(stats);
-  res.json({ ok: true, productId: key, stats: normalized });
+  res.json({ ok: true, productId: key, voterId, stats: normalized });
 });
 
 app.post("/api/software-stats/admin-set", requireAdmin, (req, res) => {

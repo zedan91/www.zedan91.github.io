@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const url = require("url");
+const crypto = require("crypto");
 
 // =========================
 // SOFTWARE STATS JSON HELPERS
@@ -14,7 +15,6 @@ function cleanSoftwareId(value) { return String(value || "").toLowerCase().repla
 function normalizeSoftwareStats(raw = {}) {
   const downloads = Math.max(0, Math.round(Number(raw.downloads || 0)));
   const likes = Math.max(0, Math.round(Number(raw.likes || 0)));
-
   const ratings = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
 
   if (raw.ratings && typeof raw.ratings === "object") {
@@ -22,7 +22,6 @@ function normalizeSoftwareStats(raw = {}) {
       ratings[String(star)] = Math.max(0, Math.round(Number(raw.ratings[String(star)] || 0)));
     }
   } else {
-    // Backward compatibility for old stats format: ratingTotal + ratingVotes.
     const oldVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
     const oldTotal = Math.max(0, Number(raw.ratingTotal || 0));
     const oldAvg = oldVotes ? oldTotal / oldVotes : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
@@ -32,16 +31,19 @@ function normalizeSoftwareStats(raw = {}) {
     }
   }
 
+  const ratedBy = (raw.ratedBy && typeof raw.ratedBy === "object") ? raw.ratedBy : {};
+  const cleanRatedBy = {};
+  Object.entries(ratedBy).forEach(([voter, value]) => {
+    const safeVoter = cleanSoftwareId(voter).slice(0, 160);
+    const star = Math.max(1, Math.min(5, Math.round(Number(value || 0))));
+    if (safeVoter && star) cleanRatedBy[safeVoter] = star;
+  });
+
   const ratingVotes = ratings["1"] + ratings["2"] + ratings["3"] + ratings["4"] + ratings["5"];
-  const ratingTotal =
-    (1 * ratings["1"]) +
-    (2 * ratings["2"]) +
-    (3 * ratings["3"]) +
-    (4 * ratings["4"]) +
-    (5 * ratings["5"]);
+  const ratingTotal = (1 * ratings["1"]) + (2 * ratings["2"]) + (3 * ratings["3"]) + (4 * ratings["4"]) + (5 * ratings["5"]);
   const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : 0;
 
-  return { downloads, likes, ratings, ratingTotal, ratingVotes, ratingAverage };
+  return { downloads, likes, ratings, ratedBy: cleanRatedBy, ratingTotal, ratingVotes, ratingAverage };
 }
 function readSoftwareStats() {
   try { if (!fs.existsSync(SOFTWARE_STATS_FILE)) return {}; return JSON.parse(fs.readFileSync(SOFTWARE_STATS_FILE, "utf8")); } catch { return {}; }
@@ -54,6 +56,14 @@ function softwareStatsPayload(stats) {
   const normalized = {};
   Object.entries(stats || {}).forEach(([key, value]) => normalized[cleanSoftwareId(key)] = normalizeSoftwareStats(value));
   return normalized;
+}
+
+
+function getRatingVoterIdFromBody(req, body) {
+  const bodyVoter = cleanSoftwareId(body.voterId || body.userId || body.uid || body.username || body.email || "");
+  if (bodyVoter && bodyVoter !== "software-item") return `client_${bodyVoter}`;
+  const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+  return "ip_" + crypto.createHash("sha256").update(ip).digest("hex").slice(0, 24);
 }
 
 const sharp = require("sharp");
@@ -999,12 +1009,19 @@ async function handler(req, res) {
       const key = cleanSoftwareId(body.productId || body.id || body.name);
       const stats = readSoftwareStats();
       const item = normalizeSoftwareStats(stats[key] || {});
-      item.ratings[String(rating)] = Math.max(0, Math.round(Number(item.ratings[String(rating)] || 0))) + 1;
+      item.ratings = item.ratings && typeof item.ratings === "object" ? item.ratings : { "1":0,"2":0,"3":0,"4":0,"5":0 };
+      for (const star of ["1","2","3","4","5"]) item.ratings[star] = Math.max(0, Math.round(Number(item.ratings[star] || 0)));
+      item.ratedBy = item.ratedBy && typeof item.ratedBy === "object" ? item.ratedBy : {};
+      const voterId = getRatingVoterIdFromBody(req, body);
+      const previous = Math.max(0, Math.min(5, Math.round(Number(item.ratedBy[voterId] || 0))));
+      if (previous >= 1 && previous <= 5) item.ratings[String(previous)] = Math.max(0, item.ratings[String(previous)] - 1);
+      item.ratings[String(rating)] += 1;
+      item.ratedBy[voterId] = rating;
       const updated = normalizeSoftwareStats(item);
       updated.updatedAt = new Date().toISOString();
       stats[key] = updated;
       writeSoftwareStats(stats);
-      return send(res, 200, JSON.stringify({ ok: true, productId: key, stats: updated }, null, 2), "application/json");
+      return send(res, 200, JSON.stringify({ ok: true, productId: key, voterId, stats: updated }, null, 2), "application/json");
     }
 
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST") {
