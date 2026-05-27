@@ -3659,5 +3659,60 @@ all.appendChild(wrap);
 
 
 
+
+<!-- AZOBSS BACKEND JSON STATS SYNC: persist downloads/rating after refresh -->
+<script id="azobss-backend-json-stats-sync">
+(function(){
+  const STORE_KEY='azobss_clean_footer_rating_v2';
+  const API_BASE=(localStorage.getItem('azobssPremiumBackendUrl')||localStorage.getItem('azobssSoftwareStatsBackendUrl')||window.AZOBSS_STATS_API||'https://azobss-backend.onrender.com').replace(/\/$/,'');
+  function slug(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';}
+  function read(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')||{};}catch(e){return{};}}
+  function write(v){try{localStorage.setItem(STORE_KEY,JSON.stringify(v||{}));}catch(e){}}
+  function normalize(raw){
+    raw=raw||{};
+    const ratings={'1':0,'2':0,'3':0,'4':0,'5':0};
+    if(raw.ratings && typeof raw.ratings==='object'){
+      for(let i=1;i<=5;i++) ratings[String(i)]=Math.max(0,Math.round(Number(raw.ratings[String(i)]||0)));
+    }else{
+      const votes=Math.max(0,Math.round(Number(raw.ratingVotes||0)));
+      const avg=Math.max(0,Math.min(5,Number(raw.ratingAverage||raw.rating||0)));
+      if(votes>0 && avg>0) ratings[String(Math.max(1,Math.min(5,Math.round(avg))))]=votes;
+    }
+    let total=0,votes=0;
+    for(let i=1;i<=5;i++){const c=ratings[String(i)];votes+=c;total+=i*c;}
+    const avg=votes?Math.round((total/votes)*10)/10:Math.max(0,Math.min(5,Number(raw.ratingAverage||raw.rating||0)));
+    return {downloads:Math.max(0,Math.round(Number(raw.downloads||0))),ratings,ratingVotes:votes,ratingTotal:total,rating:avg,ratingAverage:avg};
+  }
+  async function syncFromBackend(){
+    if(!API_BASE) return;
+    try{
+      const res=await fetch(API_BASE+'/api/software-stats',{cache:'no-store'});
+      if(!res.ok) return;
+      const data=await res.json();
+      if(!data || !data.stats) return;
+      const local=read();
+      Object.entries(data.stats).forEach(([key,value])=>{
+        local[slug(key)]=normalize(value);
+      });
+      write(local);
+      document.querySelectorAll('.download-card').forEach(card=>{
+        const key=slug(card.dataset.productId || card.getAttribute('data-product-id') || card.querySelector('h3')?.textContent || '');
+        if(local[key]){
+          card.dataset.downloads=String(local[key].downloads||0);
+          card.dataset.rating=String(local[key].rating||local[key].ratingAverage||0);
+        }
+      });
+      if(typeof window.azobssRenderCleanFooterRating==='function') window.azobssRenderCleanFooterRating();
+    }catch(err){console.warn('AZOBSS backend stats sync skipped:',err);}
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    syncFromBackend();
+    setTimeout(syncFromBackend,600);
+    setTimeout(syncFromBackend,1800);
+  });
+  window.azobssSyncSoftwareStatsFromBackend=syncFromBackend;
+})();
+</script>
+
 </body>
 </html>

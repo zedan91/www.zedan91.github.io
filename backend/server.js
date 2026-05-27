@@ -46,12 +46,36 @@ function faviconFromUrl(value) {
 }
 function publicLogoPath(fileName) { return `images/logo/${fileName}`; }
 function normalizeSoftwareStats(raw = {}) {
-  const ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
-  const ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || 0)));
   const downloads = Math.max(0, Math.round(Number(raw.downloads || 0)));
   const likes = Math.max(0, Math.round(Number(raw.likes || 0)));
-  const ratingAverage = ratingVotes ? Math.round((ratingTotal / ratingVotes) * 10) / 10 : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
-  return { downloads, likes, ratingTotal, ratingVotes, ratingAverage };
+  const ratings = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+
+  if (raw.ratings && typeof raw.ratings === "object") {
+    for (const star of ["1", "2", "3", "4", "5"]) {
+      ratings[star] = Math.max(0, Math.round(Number(raw.ratings[star] || 0)));
+    }
+  } else {
+    const oldVotes = Math.max(0, Math.round(Number(raw.ratingVotes || 0)));
+    const oldAverage = Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
+    if (oldVotes > 0 && oldAverage > 0) {
+      const roundedStar = String(Math.max(1, Math.min(5, Math.round(oldAverage))));
+      ratings[roundedStar] = oldVotes;
+    }
+  }
+
+  let ratingTotal = 0;
+  let ratingVotes = 0;
+  for (const star of [1, 2, 3, 4, 5]) {
+    const count = ratings[String(star)];
+    ratingVotes += count;
+    ratingTotal += star * count;
+  }
+
+  const ratingAverage = ratingVotes
+    ? Math.round((ratingTotal / ratingVotes) * 10) / 10
+    : Math.max(0, Math.min(5, Number(raw.ratingAverage || raw.rating || 0)));
+
+  return { downloads, likes, ratings, ratingTotal, ratingVotes, ratingAverage };
 }
 function readSoftwareStats() { return readPremiumJson(SOFTWARE_STATS_FILE, {}); }
 function writeSoftwareStats(stats) { writePremiumJson(SOFTWARE_STATS_FILE, stats || {}); }
@@ -286,17 +310,24 @@ app.post("/api/software-stats/like", (req, res) => {
 });
 
 app.post("/api/software-stats/rate", (req, res) => {
-  const rating = Math.max(1, Math.min(5, Number(req.body?.rating || 0)));
+  const rating = Math.max(1, Math.min(5, Math.round(Number(req.body?.rating || 0))));
   if (!rating) return res.status(400).json({ ok: false, error: "Invalid rating" });
   const stats = readSoftwareStats();
   const { key, item } = getSoftwareStatsItem(stats, req.body?.productId || req.body?.id || req.body?.name);
-  item.ratingTotal = Math.max(0, Number(item.ratingTotal || 0)) + rating;
-  item.ratingVotes = Math.max(0, Number(item.ratingVotes || 0)) + 1;
-  item.ratingAverage = Math.round((item.ratingTotal / item.ratingVotes) * 10) / 10;
-  item.updatedAt = new Date().toISOString();
-  stats[key] = item;
+
+  item.ratings = item.ratings && typeof item.ratings === "object"
+    ? item.ratings
+    : { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+  for (const star of ["1", "2", "3", "4", "5"]) {
+    item.ratings[star] = Math.max(0, Math.round(Number(item.ratings[star] || 0)));
+  }
+  item.ratings[String(rating)] += 1;
+
+  const normalized = normalizeSoftwareStats(item);
+  normalized.updatedAt = new Date().toISOString();
+  stats[key] = normalized;
   writeSoftwareStats(stats);
-  res.json({ ok: true, productId: key, stats: item });
+  res.json({ ok: true, productId: key, stats: normalized });
 });
 
 app.post("/api/software-stats/admin-set", requireAdmin, (req, res) => {
