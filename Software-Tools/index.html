@@ -2027,7 +2027,7 @@ document.addEventListener('error', function(e){
           <select id="softwareAdminStatus">
             <option value="active">Active - publish now</option>
             <option value="draft">Draft - admin only</option>
-            <option value="hidden">Hidden - hide from public</option>
+            <option value="hidden"> - hide from public</option>
           </select>
         </label>
       </div>
@@ -2140,8 +2140,8 @@ document.addEventListener('error', function(e){
     <div class="azobss-pay-options">
       <button class="azobss-pay-option" data-method="qr" type="button">QR Payment</button>
       <button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer</button>
-      <button class="azobss-pay-option" data-method="toyyibpay" type="button">Hidden</button>
-      <button class="azobss-pay-option" data-method="stripe" type="button">Hidden</button>
+      
+      
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, tekan Check Payment / Unlock Download.</p>
     <label class="azobss-pay-field">Payment Reference / Receipt Note
@@ -3695,15 +3695,15 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
 
   function clearPaginationHide(cards){
     cards.forEach(card => {
-      if(card.dataset.azPageHidden === '1'){
+      if(card.dataset.azPage === '1'){
         card.style.removeProperty('display');
-        card.dataset.azPageHidden = '0';
+        card.dataset.azPage = '0';
       }
     });
   }
 
   function cardIsFilterVisible(card){
-    if(card.dataset.azPageHidden === '1') return true;
+    if(card.dataset.azPage === '1') return true;
     if(card.hidden) return false;
     if(card.classList.contains('software-empty-state')) return false;
     const inline = (card.getAttribute('style') || '').toLowerCase();
@@ -3763,10 +3763,10 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
     const end = start + PER_PAGE;
     cards.forEach((card, i) => {
       if(i >= start && i < end){
-        card.dataset.azPageHidden = '0';
+        card.dataset.azPage = '0';
         card.style.removeProperty('display');
       }else{
-        card.dataset.azPageHidden = '1';
+        card.dataset.azPage = '1';
         card.style.setProperty('display','none','important');
       }
     });
@@ -4015,5 +4015,44 @@ async function verifyToyyibPayment(billCode){
   }
 }
 </script>
+
+<script id="azobss-payment-hidden-tabs-cleaner">
+(function(){
+  function cleanPaymentPopupHiddenTabs(){
+    const roots = Array.from(document.querySelectorAll('.payment-modal, .purchase-modal, .modal, [id*="payment" i], [class*="payment" i]'));
+    const candidates = roots.length ? roots : [document];
+    candidates.forEach(root => {
+      root.querySelectorAll('button, a, .payment-tab, .payment-method, [data-method], [data-payment]').forEach(el => {
+        const label = (el.textContent || '').trim().toLowerCase();
+        const method = String(el.dataset?.method || el.dataset?.payment || el.getAttribute('data-method') || '').toLowerCase();
+        if (
+          label === 'hidden' ||
+          label === '' && (method === 'stripe' || method === 'toyyibpay' || method === 'toyyib') ||
+          label === 'stripe' ||
+          label === 'toyyibpay' ||
+          label === 'toyyib pay'
+        ) {
+          el.remove();
+        }
+      });
+    });
+  }
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('button, a');
+    if(!btn) return;
+    const label = (btn.textContent || '').trim().toLowerCase();
+    if(label === 'hidden' || label === 'stripe' || label === 'toyyibpay' || label === 'toyyib pay'){
+      e.preventDefault();
+      e.stopPropagation();
+      btn.remove();
+    }
+  }, true);
+
+  cleanPaymentPopupHiddenTabs();
+  new MutationObserver(cleanPaymentPopupHiddenTabs).observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
+
 </body>
 </html>
