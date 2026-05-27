@@ -3841,62 +3841,69 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
 #softwareGrid .software-card-delete-btn{border:2px solid #fb7185!important;color:#fda4af!important;}
 </style>
 <script id="azobss-admin-action-final-script">
-/* AZOBSS admin action restorer - final: fixes duplicate render/pagination removing buttons. */
+/* AZOBSS admin action restorer - final locked: show ONLY for active admin login. */
 (function(){
   const ADMIN_NAMES = ['zedan91'];
   const ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
   const clean = v => String(v || '').trim().toLowerCase();
   const safeJson = raw => { try { return JSON.parse(raw || 'null'); } catch(_) { return null; } };
 
-  function storageText(){
-    let out = '';
-    for(const store of [localStorage, sessionStorage]){
-      try{
-        for(let i=0;i<store.length;i++){
-          const k = store.key(i);
-          out += ' ' + k + ' ' + store.getItem(k);
-        }
-      }catch(_){}
-    }
-    return clean(out);
+  function visibleLoginName(){
+    const text = clean(document.body ? document.body.innerText : '');
+    const m = text.match(/hello,\s*([a-z0-9_.@-]+)/i) || text.match(/hello\s+([a-z0-9_.@-]+)/i);
+    return m ? clean(m[1]) : '';
+  }
+
+  function pageHasActiveLogin(){
+    const text = clean(document.body ? document.body.innerText : '');
+    if(text.includes('hello,')) return true;
+    try{
+      if(window.currentUser || window.azobssCurrentUser) return true;
+      if(typeof window.getSavedUser === 'function' && window.getSavedUser()) return true;
+    }catch(_){ }
+    return false;
   }
 
   function savedUsers(){
     const found = [];
+    // Only read known current-user keys, NOT all localStorage text, to avoid stale zedan91 making guest an admin.
+    const keys = [
+      'azobss_current_user','azobssCurrentUser','currentUser','user','authUser',
+      'azobss_user','loggedInUser','loginUser','firebaseUser'
+    ];
     for(const store of [sessionStorage, localStorage]){
-      try{
-        for(let i=0;i<store.length;i++){
-          const val = safeJson(store.getItem(store.key(i)));
+      for(const k of keys){
+        try{
+          const val = safeJson(store.getItem(k));
           if(val && typeof val === 'object') found.push(val);
-        }
-      }catch(_){}
+        }catch(_){ }
+      }
     }
-    try{ if(typeof window.getSavedUser === 'function'){ const u = window.getSavedUser(); if(u && typeof u === 'object') found.push(u); } }catch(_){}
-    try{ if(window.currentUser && typeof window.currentUser === 'object') found.push(window.currentUser); }catch(_){}
-    try{ if(window.azobssCurrentUser && typeof window.azobssCurrentUser === 'object') found.push(window.azobssCurrentUser); }catch(_){}
+    try{ if(typeof window.getSavedUser === 'function'){ const u = window.getSavedUser(); if(u && typeof u === 'object') found.push(u); } }catch(_){ }
+    try{ if(window.currentUser && typeof window.currentUser === 'object') found.push(window.currentUser); }catch(_){ }
+    try{ if(window.azobssCurrentUser && typeof window.azobssCurrentUser === 'object') found.push(window.azobssCurrentUser); }catch(_){ }
     return found;
   }
 
-  function pageSaysAdmin(){
-    const t = clean(document.body ? document.body.innerText : '');
-    if(t.includes('hello, zedan91') || t.includes('hello zedan91')) return true;
-    if(t.includes('zedan91@azobss.local') || t.includes('zedan9107@gmail.com')) return true;
-    return false;
-  }
-
   function isAdmin(){
-    if(document.body?.classList.contains('is-admin')) return true;
-    const st = storageText();
-    if(st.includes('zedan91') || st.includes('zedan9107@gmail.com') || st.includes('zedan91@azobss.local')) return true;
-    if(pageSaysAdmin()) return true;
+    const loginName = visibleLoginName();
+    if(loginName && ADMIN_NAMES.includes(loginName)) return true;
+
+    // If no active login is visible/known, never show admin buttons even if old localStorage contains zedan91.
+    if(!pageHasActiveLogin()) return false;
+
     for(const u of savedUsers()){
       const name = clean(u.usernameKey || u.username || u.name || u.displayName || u.userName || u.handle || '');
       const email = clean(u.email || u.authEmail || u.contactEmail || '');
       const role = clean(u.role || u.userRole || '');
-      if(role === 'admin' || ADMIN_NAMES.includes(name) || ADMIN_EMAILS.includes(email)) return true;
-      if(name === 'zedan91' || email === 'zedan9107@gmail.com' || email === 'zedan91@azobss.local') return true;
+      if((role === 'admin' || role === 'administrator') && (ADMIN_NAMES.includes(name) || ADMIN_EMAILS.includes(email))) return true;
+      if(ADMIN_NAMES.includes(name) || ADMIN_EMAILS.includes(email)) return true;
     }
-    try{ if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser({username:'zedan91'})) return true; }catch(_){}
+    try{
+      if(typeof window.azobssIsAdminUser === 'function'){
+        for(const u of savedUsers()) if(window.azobssIsAdminUser(u)) return true;
+      }
+    }catch(_){ }
     return false;
   }
 
@@ -3913,8 +3920,16 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
     return id;
   }
 
+  function removeActions(){
+    document.body.classList.remove('is-admin');
+    document.querySelectorAll('.software-card-admin-actions[data-azobss-admin-actions-restored="1"]').forEach(el=>el.remove());
+  }
+
   function addActions(){
-    if(!isAdmin()) return;
+    if(!isAdmin()){
+      removeActions();
+      return;
+    }
     document.body.classList.add('is-admin');
     const cards = document.querySelectorAll('#softwareGrid .download-card, #softwareDownloadsGrid .download-card, .downloads-grid .download-card, .download-card');
     cards.forEach(card => {
