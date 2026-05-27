@@ -3822,185 +3822,65 @@ all.appendChild(wrap);
 </script>
 
 
-<style id="azobss-pagination-8-cards-final">
-.az-page-hidden{display:none!important;}
-.azobss-pagination{
+
+<style id="azobss-pagination-8-cards-clean-final">
+/* AZOBSS clean pagination: show only 8 cards per page */
+#softwareDownloadsGrid > .download-card.az-page-hidden,
+#softwareGrid > .download-card.az-page-hidden,
+.downloads-grid > .download-card.az-page-hidden{
+  display:none !important;
+}
+#azobssSoftwarePagination.azobss-pagination{
   width:100%;
-  display:flex;
+  display:flex !important;
   align-items:center;
   justify-content:center;
   gap:8px;
   flex-wrap:wrap;
-  margin:22px auto 4px;
+  margin:22px auto 28px;
   padding:12px 0 4px;
+  grid-column:1 / -1 !important;
+  clear:both;
 }
-.azobss-pagination[hidden]{display:none!important;}
-.azobss-page-btn{
+#azobssSoftwarePagination[hidden]{display:none !important;}
+#azobssSoftwarePagination .azobss-page-btn{
   min-width:38px;
   height:36px;
-  padding:0 12px;
+  padding:0 13px;
   border-radius:999px;
-  border:1px solid rgba(56,189,248,.35);
-  background:rgba(15,23,42,.92);
+  border:1px solid rgba(56,189,248,.38);
+  background:rgba(15,23,42,.94);
   color:#e5f3ff;
   font-weight:800;
   cursor:pointer;
   box-shadow:0 8px 18px rgba(0,0,0,.22);
 }
-.azobss-page-btn:hover{transform:translateY(-1px);filter:brightness(1.08);}
-.azobss-page-btn.is-active{
+#azobssSoftwarePagination .azobss-page-btn:hover{transform:translateY(-1px);filter:brightness(1.08);}
+#azobssSoftwarePagination .azobss-page-btn.is-active{
   background:linear-gradient(135deg,#22c55e,#16a34a);
   border-color:rgba(34,197,94,.75);
   color:#04110a;
 }
-.azobss-page-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
-.azobss-page-info{
+#azobssSoftwarePagination .azobss-page-btn:disabled{opacity:.42;cursor:not-allowed;transform:none;}
+#azobssSoftwarePagination .azobss-page-info{
   color:#9fb7d7;
   font-size:12px;
   font-weight:800;
-  padding:0 6px;
+  padding:0 5px;
 }
 </style>
-<script id="azobss-pagination-8-cards-final">
-(function(){
-  const PAGE_SIZE = 8;
-  let currentPage = 1;
-  let scheduled = false;
-
-  function grid(){
-    return document.getElementById('softwareDownloadsGrid') || document.getElementById('softwareGrid') || document.querySelector('.downloads-grid');
-  }
-
-  function controls(){
-    const g = grid();
-    if(!g) return null;
-    let el = document.getElementById('azobssSoftwarePagination');
-    if(!el){
-      el = document.createElement('div');
-      el.id = 'azobssSoftwarePagination';
-      el.className = 'azobss-pagination';
-      el.setAttribute('aria-label','Software pagination');
-      g.insertAdjacentElement('afterend', el);
-    }
-    return el;
-  }
-
-  function cards(){
-    const g = grid();
-    if(!g) return [];
-    const list = Array.from(g.children).filter(el => el && el.classList && el.classList.contains('download-card'));
-    return list.filter(el => {
-      const inlineHidden = String(el.style.display || '').trim().toLowerCase() === 'none';
-      return !inlineHidden;
-    });
-  }
-
-  function render(){
-    scheduled = false;
-    const all = cards();
-    const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
-    if(currentPage > totalPages) currentPage = totalPages;
-    if(currentPage < 1) currentPage = 1;
-
-    all.forEach((card, idx) => {
-      const show = idx >= (currentPage - 1) * PAGE_SIZE && idx < currentPage * PAGE_SIZE;
-      card.classList.toggle('az-page-hidden', !show);
-    });
-
-    const nav = controls();
-    if(!nav) return;
-    if(all.length <= PAGE_SIZE){
-      nav.hidden = true;
-      nav.innerHTML = '';
-      return;
-    }
-    nav.hidden = false;
-
-    const btn = (label, page, extra='', disabled=false) => `<button class="azobss-page-btn ${extra}" type="button" data-az-page="${page}" ${disabled?'disabled':''}>${label}</button>`;
-    let html = '';
-    html += btn('‹', currentPage - 1, '', currentPage <= 1);
-
-    const pages = [];
-    for(let i=1;i<=totalPages;i++){
-      if(i === 1 || i === totalPages || Math.abs(i-currentPage) <= 1) pages.push(i);
-    }
-    let last = 0;
-    pages.forEach(p => {
-      if(last && p - last > 1) html += '<span class="azobss-page-info">…</span>';
-      html += btn(String(p), p, p===currentPage?'is-active':'');
-      last = p;
-    });
-    html += btn('›', currentPage + 1, '', currentPage >= totalPages);
-    html += `<span class="azobss-page-info">${all.length} items · ${PAGE_SIZE}/page</span>`;
-    nav.innerHTML = html;
-  }
-
-  function schedule(reset){
-    if(reset) currentPage = 1;
-    if(scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(render);
-  }
-
-  document.addEventListener('click', function(e){
-    const pageBtn = e.target.closest && e.target.closest('[data-az-page]');
-    if(pageBtn){
-      const page = Number(pageBtn.getAttribute('data-az-page'));
-      if(Number.isFinite(page)){
-        currentPage = page;
-        schedule(false);
-        const g = grid();
-        if(g) g.scrollIntoView({behavior:'smooth', block:'start'});
-      }
-      return;
-    }
-    if(e.target.closest && e.target.closest('[data-software-category], [data-software-platform], [data-software-type]')){
-      schedule(true);
-    }
-  }, true);
-
-  document.addEventListener('input', function(e){
-    if(e.target && e.target.id === 'softwareSearchInput') schedule(true);
-  }, true);
-  document.addEventListener('change', function(e){
-    if(e.target && e.target.id === 'softwareSortSelect') schedule(true);
-  }, true);
-
-  document.addEventListener('DOMContentLoaded', function(){
-    const g = grid();
-    if(g){
-      new MutationObserver(function(){ schedule(false); }).observe(g,{childList:true,subtree:false,attributes:true,attributeFilter:['style','class']});
-    }
-    schedule(true);
-    [200,600,1200,2500].forEach(t => setTimeout(() => schedule(false), t));
-  });
-  window.azobssApplySoftwarePagination = function(reset){ schedule(!!reset); };
-})();
-</script>
-
-</body>
-</html>
-
-<style id="azobss-pagination-8-cards-force-visible-fix">
-/* Force pagination hidden cards to stay hidden even when old card CSS uses display:flex!important */
-#softwareDownloadsGrid > .download-card.az-page-hidden,
-#softwareGrid > .download-card.az-page-hidden,
-.downloads-grid > .download-card.az-page-hidden{
-  display:none!important;
-}
-#azobssSoftwarePagination{
-  grid-column:1 / -1!important;
-}
-</style>
-<script id="azobss-pagination-8-cards-force-fix">
+<script id="azobss-pagination-8-cards-clean-final">
 (function(){
   'use strict';
   const PAGE_SIZE = 8;
   let currentPage = 1;
   let timer = null;
+  let rendering = false;
 
   function getGrid(){
-    return document.getElementById('softwareDownloadsGrid') || document.getElementById('softwareGrid') || document.querySelector('.downloads-grid');
+    return document.getElementById('softwareDownloadsGrid') ||
+           document.getElementById('softwareGrid') ||
+           document.querySelector('.downloads-grid');
   }
 
   function ensureNav(grid){
@@ -4010,30 +3890,38 @@ all.appendChild(wrap);
       nav.id = 'azobssSoftwarePagination';
       nav.className = 'azobss-pagination';
       nav.setAttribute('aria-label','Software pagination');
+    }
+    if(nav.parentElement !== grid.parentElement || nav.previousElementSibling !== grid){
       grid.insertAdjacentElement('afterend', nav);
     }
     return nav;
   }
 
-  function isFilterHidden(card){
-    // Filter scripts hide items with inline display:none. Pagination uses class only.
-    return String(card.style.display || '').trim().toLowerCase() === 'none' && !card.classList.contains('az-page-hidden');
+  function isHiddenByFilter(card){
+    const inline = String(card.style.display || '').trim().toLowerCase();
+    return inline === 'none';
   }
 
   function getCards(grid){
     return Array.from(grid.children).filter(el =>
-      el && el.classList && el.classList.contains('download-card') && !isFilterHidden(el)
+      el && el.classList && el.classList.contains('download-card') && !isHiddenByFilter(el)
     );
   }
 
-  function pageButton(label, page, active, disabled){
+  function pageBtn(label, page, active, disabled){
     return '<button type="button" class="azobss-page-btn '+(active?'is-active':'')+'" data-az-page="'+page+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
   }
 
   function render(reset){
     const grid = getGrid();
     if(!grid) return;
+    rendering = true;
     if(reset) currentPage = 1;
+
+    // Remove old pagination class before calculating visible cards, then respect inline filter display:none.
+    Array.from(grid.children).forEach(el => {
+      if(el && el.classList) el.classList.remove('az-page-hidden');
+    });
 
     const all = getCards(grid);
     const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
@@ -4048,27 +3936,29 @@ all.appendChild(wrap);
     if(all.length <= PAGE_SIZE){
       nav.hidden = true;
       nav.innerHTML = '';
+      rendering = false;
       return;
     }
 
     nav.hidden = false;
     let html = '';
-    html += pageButton('‹', currentPage - 1, false, currentPage <= 1);
+    html += pageBtn('‹', currentPage - 1, false, currentPage <= 1);
     for(let i=1;i<=totalPages;i++){
-      if(i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1){
-        html += pageButton(String(i), i, i === currentPage, false);
+      if(i === 1 || i === totalPages || Math.abs(i-currentPage) <= 1){
+        html += pageBtn(String(i), i, i === currentPage, false);
       }else if(i === currentPage - 2 || i === currentPage + 2){
         html += '<span class="azobss-page-info">…</span>';
       }
     }
-    html += pageButton('›', currentPage + 1, false, currentPage >= totalPages);
+    html += pageBtn('›', currentPage + 1, false, currentPage >= totalPages);
     html += '<span class="azobss-page-info">'+all.length+' items · 8/page</span>';
     nav.innerHTML = html;
+    rendering = false;
   }
 
   function schedule(reset){
     clearTimeout(timer);
-    timer = setTimeout(() => render(reset), 60);
+    timer = setTimeout(() => render(!!reset), 80);
   }
 
   document.addEventListener('click', function(e){
@@ -4082,30 +3972,38 @@ all.appendChild(wrap);
         if(grid) grid.scrollIntoView({behavior:'smooth', block:'start'});
       }
       e.preventDefault();
+      e.stopPropagation();
       return;
     }
-    if(e.target.closest && e.target.closest('[data-software-category], [data-software-platform], [data-software-type]')){
+    if(e.target.closest && e.target.closest('[data-software-category], [data-software-platform], [data-software-type], .filter-btn, .category-btn')){
       schedule(true);
     }
   }, true);
 
   document.addEventListener('input', function(e){
-    if(e.target && (e.target.id === 'softwareSearchInput' || e.target.matches('input[type="search"]'))) schedule(true);
+    if(e.target && (e.target.id === 'softwareSearchInput' || e.target.matches('input[type="search"], input.search-input'))) schedule(true);
   }, true);
 
   document.addEventListener('change', function(e){
     if(e.target && (e.target.id === 'softwareSortSelect' || e.target.matches('select'))) schedule(true);
   }, true);
 
-  document.addEventListener('DOMContentLoaded', function(){
+  function start(){
     const grid = getGrid();
     if(grid){
-      new MutationObserver(() => schedule(false)).observe(grid,{childList:true, subtree:false, attributes:true, attributeFilter:['style','class']});
+      new MutationObserver(function(){ if(!rendering) schedule(false); }).observe(grid,{childList:true, subtree:false});
     }
     schedule(true);
-    [150,500,1000,2000,4000].forEach(t => setTimeout(() => schedule(false), t));
-  });
+    [150,400,800,1500,3000,5000].forEach(t => setTimeout(() => schedule(false), t));
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 
   window.azobssApplySoftwarePagination = function(reset){ schedule(!!reset); };
 })();
 </script>
+
+</body>
+</html>
+
