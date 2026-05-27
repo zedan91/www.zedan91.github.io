@@ -3692,7 +3692,7 @@ import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/1
         renderAll();
       }else{
         // Create empty bundle once; rules must allow this path.
-        await setDoc(STATS_DOC, {items:{}, createdAt:serverTimestamp(), updatedAt:serverTimestamp()}, {merge:true});
+        await setDoc(STATS_DOC, {items:{}}, {merge:true});
       }
     }catch(err){
       console.warn('AZOBSS Firestore stats sync failed. Using local cache fallback.', err);
@@ -3710,12 +3710,11 @@ import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/1
     saveLocal(card, st, false);
     try{
       await ensureStatsAuth();
-      await setDoc(STATS_DOC, {items:{}, updatedAt:serverTimestamp()}, {merge:true});
+      await setDoc(STATS_DOC, {items:{}}, {merge:true});
       await updateDoc(STATS_DOC, {
         ['items.'+key+'.downloads']: increment(1),
         ['items.'+key+'.name']: card.querySelector('h3')?.textContent?.trim() || '',
-        ['items.'+key+'.updatedAtMs']: Date.now(),
-        updatedAt: serverTimestamp()
+        ['items.'+key+'.updatedAtMs']: Date.now()
       });
     }catch(err){
       console.warn('AZOBSS download Firestore update failed. Local cache kept.', err);
@@ -3766,8 +3765,7 @@ import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/1
         remote.name = card.querySelector('h3')?.textContent?.trim() || '';
         remote.updatedAtMs = Date.now();
         transaction.set(STATS_DOC, {
-          items: {[key]: remote},
-          updatedAt: serverTimestamp()
+          items: {[key]: remote}
         }, {merge:true});
         mergeOneLocal(key, remote);
       });
