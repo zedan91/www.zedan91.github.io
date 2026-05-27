@@ -21,9 +21,6 @@ const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
 app.use(express.json());
-const TOYYIB_SECRET_KEY=process.env.TOYYIB_SECRET_KEY||'';
-const TOYYIB_CATEGORY_CODE=process.env.TOYYIB_CATEGORY_CODE||'';
-const FRONTEND_BASE_URL=(process.env.FRONTEND_BASE_URL||'').replace(/\/$/, '');
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || "*").split(",").map((v) => v.trim()).filter(Boolean);
 
 app.set("trust proxy", true);
@@ -429,6 +426,65 @@ app.get("/api/toyyib/order/:orderId", async (req, res) => {
   if (order.status === "paid") return res.json(toyyibPaidResponse(order, req));
   res.json({ ok:true, paid:false, orderId: order.orderId, status: order.status || "pending", billCode: order.billCode, paymentUrl: order.paymentUrl });
 });
+
+
+app.get("/api/verify-payment", async (req, res) => {
+  try {
+    const billCode = cleanPremiumText(req.query.billCode || req.query.billcode || "", 80);
+    const orderId = cleanPremiumText(req.query.orderId || req.query.order_id || "", 120);
+
+    if (!billCode && !orderId) {
+      return res.status(400).json({
+        ok: false,
+        paid: false,
+        status: "missing_reference",
+        error: "Missing billCode or orderId"
+      });
+    }
+
+    let order = findPremiumOrderByAny({ orderId, billCode });
+
+    // If local order exists, refresh from ToyyibPay and return download info if paid.
+    if (order) {
+      if (order.status !== "paid") order = await refreshToyyibOrderStatus(order);
+      if (order.status === "paid") return res.json(toyyibPaidResponse(order, req));
+      return res.json({
+        ok: true,
+        paid: false,
+        status: order.status || "pending",
+        orderId: order.orderId,
+        billCode: order.billCode,
+        paymentUrl: order.paymentUrl
+      });
+    }
+
+    // Fallback: verify directly by billCode even if local order file was reset/redeployed.
+    if (!billCode) {
+      return res.status(404).json({ ok: false, paid: false, status: "order_not_found", error: "Order not found" });
+    }
+
+    const result = await toyyibPost("getBillTransactions", { billCode });
+    const tx = Array.isArray(result) ? result[0] : null;
+    const paid = !!(tx && String(tx.billpaymentStatus || tx.billStatus || "") === "1");
+
+    return res.json({
+      ok: true,
+      paid,
+      status: paid ? "paid" : "pending",
+      billCode,
+      transaction: tx || null
+    });
+  } catch (err) {
+    console.error("ToyyibPay verify payment failed:", err);
+    return res.status(500).json({
+      ok: false,
+      paid: false,
+      status: "error",
+      error: err.message || "Failed to verify payment"
+    });
+  }
+});
+
 
 app.post("/api/toyyib-callback", async (req, res) => {
   try {
