@@ -996,7 +996,7 @@ function injectProfileSettingsModal() {
 
 const AZOBSS_ADMIN_USERS = ['zedan91'];
 const AZOBSS_PA_MEMBER_CODE = 'ZX6186';
-function getUserKey(user){ return String(user?.usernameKey || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
+function getUserKey(user){ return String(user?.usernameKey || user?.username || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
 function isAzobssAdmin(user){
   const key = getUserKey(user);
   const role = String(user?.role || '').trim().toLowerCase();
