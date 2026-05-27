@@ -15,3 +15,11 @@ services:
         value: "*"
       - key: TZ
         value: Asia/Kuala_Lumpur
+      - key: TOYYIB_SECRET_KEY
+        sync: false
+      - key: TOYYIB_CATEGORY_CODE
+        value: wqrblyk7
+      - key: FRONTEND_BASE_URL
+        value: https://www.azobss.com
+      - key: TOYYIB_BASE_URL
+        value: https://toyyibpay.com
