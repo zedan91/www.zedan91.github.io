@@ -5888,3 +5888,20 @@ border-right:1px solid rgba(255,255,255,.25)!important;
 
 </body>
 </html>
+<style>
+#softwareGrid .software-rating-stars button,#softwareDownloadsGrid .software-rating-stars button{background:none!important;border:none!important;color:#666!important;font-size:16px!important;padding:0 1px!important;cursor:pointer!important}
+#softwareGrid .software-rating-stars .is-filled,#softwareDownloadsGrid .software-rating-stars .is-filled{color:#ffcc33!important}
+#softwareGrid .stats-bar .rating-pill{display:none!important}
+</style>
+<script>
+setTimeout(()=>{
+document.querySelectorAll('#softwareGrid .stats-bar,#softwareDownloadsGrid .stats-bar').forEach(s=>{
+let kids=s.children;if(kids.length>=2){
+let right=kids[1];
+let score=(right.textContent.match(/\d+\.\d+/)||['0.0'])[0];
+let count=(right.textContent.match(/\((\d+)\)/)||['','0'])[1];
+right.innerHTML='<span class="software-rating-stars"><button class="software-rating-star is-filled">★</button><button class="software-rating-star is-filled">★</button><button class="software-rating-star is-filled">★</button><button class="software-rating-star is-filled">★</button><button class="software-rating-star">★</button></span><span style="margin-left:6px">'+score+' ('+count+')</span>';
+}
+});
+},1200);
+</script>
