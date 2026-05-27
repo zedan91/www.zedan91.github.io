@@ -306,6 +306,11 @@
     display:none !important;
 }
 
+
+.azobss-pay-steps{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+.azobss-pay-step{background:#0d1b34;border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700;color:#9fb5d9}
+.azobss-pay-step.is-active{background:#16c34a;color:#fff;border-color:#16c34a}
+
 </style>
 <style>
 /* COUNTDOWN WORDING FIX V18 */
@@ -2143,13 +2148,19 @@ document.addEventListener('error', function(e){
       
       
     </div>
-    <p class="azobss-pay-note" id="azobssPayInstruction">Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, tekan Submit Payment Proof.</p>
+    <div class="azobss-pay-steps">
+      <div class="azobss-pay-step is-active">1. Open Payment</div>
+      <div class="azobss-pay-step">2. Submit Proof</div>
+      <div class="azobss-pay-step">3. Admin Verify</div>
+      <div class="azobss-pay-step">4. Unlock Download</div>
+    </div>
+    <p class="azobss-pay-note" id="azobssPayInstruction">Complete your payment using Bank Transfer / FPX or QR Payment. After payment, submit your payment proof for admin verification before download is unlocked.</p>
     <label class="azobss-pay-field">Payment Reference / Receipt Note
       <input id="azobssPayReference" type="text" placeholder="Contoh: nama bank, masa bayaran atau nombor rujukan">
     </label>
     <div class="azobss-pay-actions">
-      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Bank Transfer</button>
-      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Submit Payment Proof</button>
+      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
+      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Submit Proof</button>
     </div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
@@ -3268,20 +3279,20 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const inst = document.getElementById('azobssPayInstruction');
     if(!inst) return;
     if(currentMethod === 'bank'){
-      inst.textContent = 'Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, masukkan rujukan ringkas jika ada dan tekan Submit Payment Proof.';
-      openPaymentBtn.textContent = 'Open Bank Transfer';
+      inst.textContent = 'Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, masukkan rujukan ringkas jika ada dan tekan Submit Proof.';
+      openPaymentBtn.textContent = 'Open Payment';
     }else if(currentMethod === 'toyyibpay'){
-      inst.textContent = 'Tekan Open Bank Transfer untuk bayar melalui ToyyibPay, kemudian tekan Submit Payment Proof selepas pembayaran selesai.';
+      inst.textContent = 'Tekan Open Payment untuk bayar melalui ToyyibPay, kemudian tekan Submit Proof selepas pembayaran selesai.';
       openPaymentBtn.textContent = 'Open ToyyibPay';
     }else if(currentMethod === 'stripe'){
-      inst.textContent = 'Pay by Stripe for international card payment, then press Submit Payment Proof after payment is completed.';
+      inst.textContent = 'Pay by Stripe for international card payment, then press Submit Proof after payment is completed.';
       openPaymentBtn.textContent = 'Open Stripe';
     }else{
-      inst.textContent = 'Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan Submit Payment Proof.';
+      inst.textContent = 'Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan Submit Proof.';
       openPaymentBtn.textContent = 'Open QR Payment';
     }
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
-    completeBtn.textContent = 'Submit Payment Proof';
+    completeBtn.textContent = 'Submit Proof';
   }
 
   function open(product){
@@ -4013,7 +4024,7 @@ async function verifyToyyibPayment(billCode){
 
     if(verifyBtn){
       verifyBtn.disabled=false;
-      verifyBtn.textContent='Submit Payment Proof';
+      verifyBtn.textContent='Submit Proof';
     }
   }catch(err){
     console.error(err);

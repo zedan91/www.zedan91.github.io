@@ -921,6 +921,11 @@ white-space:nowrap !important;
 
 .az-usd-price{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;font-size:.82em;font-weight:900;color:#93c5fd;white-space:nowrap;opacity:.95}
 .az-usd-line{font-size:12px;color:#93c5fd;font-weight:800;margin-top:4px;white-space:nowrap}
+
+.azobss-pay-steps{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+.azobss-pay-step{background:#0d1b34;border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700;color:#9fb5d9}
+.azobss-pay-step.is-active{background:#16c34a;color:#fff;border-color:#16c34a}
+
 </style>
 <style>
 /* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
@@ -1726,8 +1731,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
       <input id="azobssPayReference" type="text" placeholder="Contoh: nama bank, masa bayaran atau nombor rujukan">
     </label>
     <div class="azobss-pay-actions">
-      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Bank Transfer</button>
-      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Submit Payment Proof</button>
+      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
+      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Submit Proof</button>
     </div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
@@ -2057,7 +2062,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
   function open(product){currentProduct=product; currentMethod='qr'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; refInput.value=''; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
   function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; if(currentMethod==='toyyibpay') return currentProduct.paymentLink || ''; return currentProduct.paymentLink || currentProduct.stripeLink || ''; }
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay by Stripe for international card payment, then press Submit Payment Proof after payment is completed.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Bank Transfer untuk bayar melalui ToyyibPay, kemudian tekan Submit Payment Proof selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan Submit Payment Proof.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan Submit Payment Proof.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay by Stripe for international card payment, then press Submit Proof after payment is completed.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment untuk bayar melalui ToyyibPay, kemudian tekan Submit Proof selepas pembayaran selesai.'; else if(currentMethod==='bank') inst.textContent='Buat transaksi bank seperti biasa. Masukkan rujukan/resit ringkas, kemudian tekan Submit Proof.'; else inst.textContent='Bayar menggunakan QR yang disediakan. Masukkan rujukan/resit ringkas, kemudian tekan Submit Proof.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'qr'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
@@ -2075,7 +2080,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif mengikut tetapan produk / had download admin.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
       successBox.classList.add('is-open');
     }catch(err){errorBox.textContent=err.message || 'Gagal proses pembayaran.';}
-    finally{completeBtn.disabled=false; completeBtn.textContent='Submit Payment Proof';}
+    finally{completeBtn.disabled=false; completeBtn.textContent='Submit Proof';}
   });
   document.addEventListener('click', e=>{
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
@@ -2105,7 +2110,7 @@ async function verifyToyyibPayment(billCode){
 
     if(verifyBtn){
       verifyBtn.disabled=false;
-      verifyBtn.textContent='Submit Payment Proof';
+      verifyBtn.textContent='Submit Proof';
     }
   }catch(err){
     console.error(err);
