@@ -3630,8 +3630,10 @@ all.appendChild(wrap);
 
 
 
-<!-- AZOBSS CLEAN FINAL FOOTER RATING FIX: only Download + 5 clickable stars -->
-<style id="azobss-clean-final-footer-rating-fix">
+
+
+<!-- AZOBSS TARGETED RATING CLICK FIX - Download + 5 clickable stars only -->
+<style id="azobss-targeted-rating-click-fix-css">
 #softwareGrid .download-card,
 .downloads-grid .download-card,
 #softwareDownloadsGrid .download-card{
@@ -3639,7 +3641,6 @@ all.appendChild(wrap);
   overflow:hidden !important;
   padding-bottom:58px !important;
 }
-
 #softwareGrid .download-card > .software-stats,
 .downloads-grid .download-card > .software-stats,
 #softwareDownloadsGrid .download-card > .software-stats{
@@ -3653,19 +3654,18 @@ all.appendChild(wrap);
   padding:0 !important;
   display:grid !important;
   grid-template-columns:92px 1fr !important;
-  align-items:stretch !important;
+  align-items:center !important;
   background:rgba(3,10,24,.96) !important;
   border-top:1px solid rgba(45,212,191,.18) !important;
   border-radius:0 0 18px 18px !important;
   overflow:hidden !important;
-  z-index:40 !important;
+  z-index:80 !important;
 }
-
 #softwareGrid .download-card > .software-stats > span,
 .downloads-grid .download-card > .software-stats > span,
 #softwareDownloadsGrid .download-card > .software-stats > span{
-  min-width:0 !important;
   height:54px !important;
+  min-width:0 !important;
   margin:0 !important;
   padding:0 8px !important;
   border:0 !important;
@@ -3674,50 +3674,50 @@ all.appendChild(wrap);
   align-items:center !important;
   justify-content:center !important;
   gap:8px !important;
+  box-sizing:border-box !important;
   white-space:nowrap !important;
   overflow:hidden !important;
-  box-sizing:border-box !important;
 }
-
 #softwareGrid .download-card > .software-stats > span + span,
 .downloads-grid .download-card > .software-stats > span + span,
 #softwareDownloadsGrid .download-card > .software-stats > span + span{
   border-left:1px solid rgba(148,163,184,.18) !important;
 }
-
-.az-footer-download-icon{
-  width:34px !important;
-  height:34px !important;
-  min-width:34px !important;
+.azb-download-badge{
+  width:36px !important;
+  height:36px !important;
+  min-width:36px !important;
   border-radius:999px !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   color:#22c55e !important;
-  background:rgba(34,197,94,.12) !important;
-  border:1px solid rgba(34,197,94,.48) !important;
-  box-shadow:0 0 14px rgba(34,197,94,.18) !important;
+  background:rgba(34,197,94,.13) !important;
+  border:1px solid rgba(34,197,94,.55) !important;
+  box-shadow:0 0 14px rgba(34,197,94,.2) !important;
 }
-.az-footer-download-icon svg{width:17px !important;height:17px !important;display:block !important;}
-.az-footer-download-count{font-size:14px !important;font-weight:900 !important;color:#fff !important;min-width:16px !important;}
-
-.az-footer-stars{
+.azb-download-badge svg{width:17px !important;height:17px !important;display:block !important;}
+.azb-download-count{font-size:14px !important;font-weight:900 !important;color:#fff !important;min-width:16px !important;}
+.azb-rating-stars{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   gap:1px !important;
   flex:0 0 auto !important;
   min-width:82px !important;
+  position:relative !important;
+  z-index:100 !important;
 }
-.az-footer-star{
+.azb-rating-star{
   appearance:none !important;
+  -webkit-appearance:none !important;
   border:0 !important;
   outline:0 !important;
   background:transparent !important;
   box-shadow:none !important;
   width:15px !important;
   min-width:15px !important;
-  height:22px !important;
+  height:24px !important;
   padding:0 !important;
   margin:0 !important;
   display:inline-flex !important;
@@ -3731,95 +3731,92 @@ all.appendChild(wrap);
   pointer-events:auto !important;
   transition:transform .12s ease,color .12s ease !important;
 }
-.az-footer-star.is-filled{color:#facc15 !important;text-shadow:0 0 7px rgba(250,204,21,.25) !important;}
-.az-footer-stars:hover .az-footer-star{color:#facc15 !important;transform:scale(1.08) !important;}
-.az-footer-stars .az-footer-star:hover ~ .az-footer-star{color:#64748b !important;transform:none !important;}
-.az-footer-rating-value{font-size:14px !important;font-weight:900 !important;color:#fff !important;min-width:24px !important;text-align:left !important;}
-.az-footer-rating-votes{font-size:12px !important;font-weight:800 !important;color:#cbd5e1 !important;opacity:.85 !important;}
-
-/* Hide old broken rating/download leftovers created by previous patches */
+.azb-rating-star.is-filled{color:#facc15 !important;text-shadow:0 0 7px rgba(250,204,21,.25) !important;}
+.azb-rating-stars:hover .azb-rating-star{color:#facc15 !important;transform:scale(1.08) !important;}
+.azb-rating-stars .azb-rating-star:hover ~ .azb-rating-star{color:#64748b !important;transform:none !important;}
+.azb-rating-value{font-size:14px !important;font-weight:900 !important;color:#fff !important;min-width:24px !important;text-align:left !important;}
+.azb-rating-votes{font-size:12px !important;font-weight:800 !important;color:#cbd5e1 !important;opacity:.85 !important;}
+.download-card .software-stats .stat-like,
 .download-card .software-stats .rating-display,
 .download-card .software-stats .rating-main-star,
-.download-card .software-stats .software-rating-count:not(.az-footer-rating-votes),
-.download-card .software-stats .stat-like{display:none !important;}
-
+.download-card .software-stats .software-rating-count{display:none !important;}
 @media(max-width:640px){
-  #softwareGrid .download-card > .software-stats,
-  .downloads-grid .download-card > .software-stats,
-  #softwareDownloadsGrid .download-card > .software-stats{grid-template-columns:86px 1fr !important;}
-  .az-footer-stars{min-width:76px !important;}
-  .az-footer-star{width:14px !important;min-width:14px !important;font-size:15px !important;}
+  #softwareGrid .download-card > .software-stats,.downloads-grid .download-card > .software-stats,#softwareDownloadsGrid .download-card > .software-stats{grid-template-columns:86px 1fr !important;}
+  .azb-rating-stars{min-width:76px !important;}
+  .azb-rating-star{width:14px !important;min-width:14px !important;font-size:15px !important;}
 }
 </style>
-<script id="azobss-clean-final-footer-rating-fix-script">
+<script id="azobss-targeted-rating-click-fix-js">
 (function(){
-  const LOCAL_KEY='azobss_software_manual_stats_v2';
-  const API_BASE = (window.AZOBSS_STATS_API || '').replace(/\/$/, '');
-  function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';}
-  function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}')||{};}catch(e){return{};}}
-  function writeLocal(obj){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(obj||{}));}catch(e){}}
-  function productId(card){
-    return card?.dataset?.productId || card?.getAttribute('data-product-id') || card?.querySelector('[data-product-id]')?.getAttribute('data-product-id') || card?.querySelector('h3')?.textContent?.trim() || 'software-item';
-  }
+  const KEY='azobss_rating_click_fix_v1';
+  const API_BASE=(window.AZOBSS_STATS_API || window.SOFTWARE_STATS_API || '').replace(/\/$/,'');
+  function slug(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';}
+  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){return{};}}
+  function write(v){try{localStorage.setItem(KEY,JSON.stringify(v||{}));}catch(e){}}
+  function cardId(card){return card?.dataset?.productId || card?.getAttribute('data-product-id') || card?.querySelector('[data-product-id]')?.getAttribute('data-product-id') || card?.querySelector('h3')?.textContent?.trim() || 'software-item';}
   function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
-  function statsFor(card){
-    const id=productId(card), local=readLocal(), raw=local[slug(id)] || local[id] || {};
+  function baseStats(card){
+    const id=slug(cardId(card));
+    const all=read();
+    const raw=all[id] || {};
     const downloads=Math.max(0,Math.round(Number(raw.downloads ?? card.dataset.downloads ?? 0)||0));
+    let ratings=raw.ratings;
+    if(!ratings || typeof ratings!=='object') ratings={'1':0,'2':0,'3':0,'4':0,'5':0};
     let votes=0,total=0;
-    if(raw.ratings && typeof raw.ratings==='object'){
-      for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(raw.ratings[String(i)]||0))); votes+=c; total+=i*c;}
-    }else{
-      votes=Math.max(0,Math.round(Number(raw.ratingVotes||raw.votes||0)));
-      total=Math.max(0,Number(raw.ratingTotal||0));
-    }
-    const fallback=Number(raw.ratingAverage ?? raw.rating ?? card.dataset.rating ?? 0)||0;
-    const avg=votes ? Math.round((total/votes)*10)/10 : Math.max(0,Math.min(5,fallback));
-    return {downloads, votes, avg};
+    for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(ratings[String(i)]||0))); votes+=c; total+=i*c; ratings[String(i)]=c;}
+    let avg=votes ? Math.round((total/votes)*10)/10 : Math.max(0,Math.min(5,Number(raw.rating ?? card.dataset.rating ?? 0)||0));
+    return {downloads,ratings,votes,total,avg};
   }
   function downloadSvg(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';}
-  function starButtons(card, avg){
-    const id=String(productId(card)).replace(/"/g,'&quot;');
+  function stars(card, avg){
+    const id=String(cardId(card)).replace(/"/g,'&quot;');
     const filled=Math.round(Number(avg)||0);
-    let html='<span class="az-footer-stars" role="group" aria-label="Rate this software">';
-    for(let i=1;i<=5;i++) html+='<button type="button" class="az-footer-star software-rating-star '+(i<=filled?'is-filled':'')+'" data-rating-value="'+i+'" data-product-id="'+id+'" title="Rate '+i+' star">★</button>';
-    return html+'</span>';
+    let out='<span class="azb-rating-stars" role="group" aria-label="Rate this software">';
+    for(let i=1;i<=5;i++) out+='<button type="button" class="azb-rating-star '+(i<=filled?'is-filled':'')+'" data-azb-rating="'+i+'" data-product-id="'+id+'" title="Rate '+i+' star">★</button>';
+    return out+'</span>';
   }
-  function renderCard(card){
-    if(!card || card.dataset.azFooterRendering==='1') return;
-    card.dataset.azFooterRendering='1';
-    try{
-      let box=card.querySelector(':scope > .software-stats');
-      if(!box){box=document.createElement('div');box.className='software-stats';card.appendChild(box);}
-      if(box !== card.lastElementChild) card.appendChild(box);
-      const st=statsFor(card);
-      card.dataset.downloads=String(st.downloads);
-      card.dataset.rating=String(st.avg);
-      box.innerHTML='<span class="stat-download az-footer-download-cell"><span class="az-footer-download-icon">'+downloadSvg()+'</span><strong class="az-footer-download-count">'+fmt(st.downloads)+'</strong></span><span class="stat-rating az-footer-rating-cell">'+starButtons(card,st.avg)+'<strong class="az-footer-rating-value">'+Number(st.avg||0).toFixed(1)+'</strong><span class="az-footer-rating-votes">('+Math.round(Number(st.votes)||0)+')</span></span>';
-    }finally{card.dataset.azFooterRendering='0';}
+  function render(card){
+    if(!card) return;
+    let box=card.querySelector(':scope > .software-stats');
+    if(!box){box=document.createElement('div');box.className='software-stats';card.appendChild(box);}
+    if(box !== card.lastElementChild) card.appendChild(box);
+    const st=baseStats(card);
+    card.dataset.downloads=String(st.downloads);
+    card.dataset.rating=String(st.avg);
+    box.innerHTML='<span class="stat-download azb-download-cell"><span class="azb-download-badge">'+downloadSvg()+'</span><strong class="azb-download-count">'+fmt(st.downloads)+'</strong></span><span class="stat-rating azb-rating-cell">'+stars(card,st.avg)+'<strong class="azb-rating-value">'+Number(st.avg||0).toFixed(1)+'</strong><span class="azb-rating-votes">('+st.votes+')</span></span>';
   }
-  function run(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card,#softwareDownloadsGrid .download-card').forEach(renderCard);}
-  async function rate(card, rating){
-    const id=productId(card), key=slug(id), local=readLocal();
-    const raw=local[key] || local[id] || {downloads:Number(card.dataset.downloads||0),ratings:{'1':0,'2':0,'3':0,'4':0,'5':0}};
-    raw.ratings = raw.ratings && typeof raw.ratings==='object' ? raw.ratings : {'1':0,'2':0,'3':0,'4':0,'5':0};
-    raw.ratings[String(rating)] = Math.max(0,Math.round(Number(raw.ratings[String(rating)]||0))) + 1;
-    let votes=0,total=0; for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(raw.ratings[String(i)]||0))); votes+=c; total+=i*c;}
-    raw.ratingVotes=votes; raw.ratingTotal=total; raw.rating= votes ? Math.round((total/votes)*10)/10 : 0;
-    local[key]=raw; writeLocal(local); renderCard(card);
-    if(API_BASE){try{await fetch(API_BASE+'/api/software-stats/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productId:id,rating:Number(rating)})});}catch(e){}}
+  function renderAll(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card,#softwareDownloadsGrid .download-card').forEach(render);}
+  function saveRating(card,rating){
+    const id=slug(cardId(card));
+    const all=read();
+    const st=baseStats(card);
+    st.ratings[String(rating)]=Math.max(0,Math.round(Number(st.ratings[String(rating)]||0)))+1;
+    let votes=0,total=0;for(let i=1;i<=5;i++){const c=Number(st.ratings[String(i)]||0);votes+=c;total+=i*c;}
+    all[id]={downloads:st.downloads,ratings:st.ratings,ratingVotes:votes,ratingTotal:total,rating:votes?Math.round((total/votes)*10)/10:0};
+    write(all);
+    render(card);
+    if(API_BASE){fetch(API_BASE+'/api/software-stats/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productId:cardId(card),rating:Number(rating)})}).catch(()=>{});}
   }
-  window.azobssRenderCleanFiveStarFooter=run;
   document.addEventListener('click',function(e){
-    const star=e.target.closest('.az-footer-star');
-    if(star){e.preventDefault(); e.stopPropagation(); const card=star.closest('.download-card'); const rating=Math.max(1,Math.min(5,Number(star.dataset.ratingValue||0))); if(card&&rating) rate(card,rating); return;}
-    if(e.target.closest('.download-btn')) setTimeout(run,200);
+    const star=e.target.closest('.azb-rating-star');
+    if(!star) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
+    const card=star.closest('.download-card');
+    const rating=Math.max(1,Math.min(5,Number(star.dataset.azbRating||0)));
+    if(card&&rating) saveRating(card,rating);
+  },true);
+  document.addEventListener('mouseover',function(e){
+    const star=e.target.closest('.azb-rating-star'); if(!star) return;
+    const wrap=star.closest('.azb-rating-stars'); const val=Number(star.dataset.azbRating||0);
+    wrap?.querySelectorAll('.azb-rating-star').forEach((b,idx)=>b.classList.toggle('is-hover',idx<val));
   },true);
   document.addEventListener('DOMContentLoaded',function(){
-    run(); [50,150,400,900,1600,3000].forEach(t=>setTimeout(run,t));
+    renderAll(); [50,150,400,900,1600,3000].forEach(t=>setTimeout(renderAll,t));
     const root=document.querySelector('#softwareGrid') || document.querySelector('.downloads-grid') || document.querySelector('#softwareDownloadsGrid') || document.body;
-    new MutationObserver(function(){clearTimeout(window.__azCleanFooterTimer); window.__azCleanFooterTimer=setTimeout(run,30);}).observe(root,{childList:true,subtree:true});
+    new MutationObserver(function(){clearTimeout(window.__azbRateFixTimer);window.__azbRateFixTimer=setTimeout(renderAll,40);}).observe(root,{childList:true,subtree:true});
   });
-  setTimeout(run,0); setInterval(run,2000);
+  window.azobssForceRenderFiveStarRating=renderAll;
+  setTimeout(renderAll,0); setInterval(renderAll,1200);
 })();
 </script>
 
