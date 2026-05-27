@@ -3395,276 +3395,48 @@ all.appendChild(wrap);
 </script>
 
 
-<style>
-.software-stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0 10px!important;width:100%;}
-.software-stats span{font-size:11px;background:#0f172a;padding:4px 8px;border-radius:20px;border:1px solid #334155;color:#e5e7eb;font-weight:800;line-height:1.2;}
-.software-stats .stat-download{border-color:rgba(34,197,94,.45);}
-.software-stats .stat-rating{border-color:rgba(250,204,21,.45);}
-.software-stats .stat-rating{display:inline-flex;align-items:center;gap:4px;}
-.software-rating-stars{display:inline-flex;gap:1px;vertical-align:middle;}
-.software-rating-star{appearance:none;border:0;background:transparent;color:#64748b;font-size:13px;line-height:1;cursor:pointer;padding:0 1px;filter:drop-shadow(0 0 4px rgba(250,204,21,.15));}
-.software-rating-star.is-filled,.software-rating-star:hover,.software-rating-star:hover ~ .software-rating-star{color:#facc15;}
-.software-rating-stars:hover .software-rating-star{color:#facc15;}
-.software-rating-star:hover ~ .software-rating-star{color:#64748b;}
-.software-rating-count{opacity:.72;font-size:10px;margin-left:2px;}
-.software-stats .stat-like{border-color:rgba(244,63,94,.45);}
-</style>
-<script>
-(function(){
-  const KEY='azobss_software_manual_stats_v2';
-  const SEEN_KEY='azobss_software_view_seen_v1';
-  function read(key, fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
-  function write(key, value){try{localStorage.setItem(key, JSON.stringify(value));}catch(e){}}
-  function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
-  function cardKey(card){
-    if(!card.dataset.productId){
-      const title=card.querySelector('h3')?.textContent?.trim()||card.dataset.name||'Software Item';
-      card.dataset.productId='AZSW-'+String(title).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-    }
-    return slug(card.dataset.productId||card.dataset.name||card.querySelector('h3')?.textContent);
-  }
-  function zeroStats(){return {downloads:0,rating:0,likes:0};}
-  function getStats(card){
-    const all=read(KEY,{});
-    const key=cardKey(card);
-    const base=all[key]||{};
-    const st={
-      views:Number(base.views ?? card.dataset.views ?? 0)||0,
-      downloads:Number(base.downloads ?? card.dataset.downloads ?? 0)||0,
-      rating:Number(base.rating ?? card.dataset.rating ?? 0)||0,
-      likes:Number(base.likes ?? card.dataset.likes ?? 0)||0
-    };
-    st.views=Math.max(0,Math.round(st.views));
-    st.downloads=Math.max(0,Math.round(st.downloads));
-    st.rating=Math.max(0,Math.min(5,Number(st.rating.toFixed?st.rating.toFixed(1):st.rating)));
-    st.likes=Math.max(0,Math.round(st.likes));
-    all[key]=st; write(KEY,all);
-    return st;
-  }
-  function saveStats(card, st){
-    const all=read(KEY,{}); const key=cardKey(card);
-    all[key]={views:0,downloads:Math.max(0,Math.round(Number(st.downloads)||0)),rating:Math.max(0,Math.min(5,Number(st.rating)||0)),likes:Math.max(0,Math.round(Number(st.likes)||0))};
-    write(KEY,all);
-    card.dataset.views=String(all[key].views); card.dataset.downloads=String(all[key].downloads); card.dataset.rating=String(all[key].rating); card.dataset.likes=String(all[key].likes);
-    updateStatsUI(card);
-  }
-  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
-  function ensureStatsUI(card){
-    let box=card.querySelector('.software-stats');
-    if(!box){
-      box=document.createElement('div'); box.className='software-stats';
-      const p=card.querySelector('p');
-      if(p) p.insertAdjacentElement('beforebegin',box); else card.appendChild(box);
-    }
-    return box;
-  }
-  function updateStatsUI(card){
-    const st=getStats(card);
-    const box=ensureStatsUI(card);
-    box.innerHTML=`<span class="stat-download"><span class="stat-icon">⬇</span><span class="stat-value">${fmt(st.downloads)}</span></span><span class="stat-rating">⭐ ${Number(st.rating||0).toFixed(1)}</span>`;
-  }
-  function initCards(){document.querySelectorAll('.download-card').forEach(updateStatsUI);}
-  function markViewed(card){ return; }
-  function initViewObserver(){ return; }
-  document.addEventListener('click',function(e){
-    const btn=e.target.closest('.download-card .download-btn'); if(!btn) return;
-    const card=btn.closest('.download-card'); if(!card) return;
-    const st=getStats(card); st.downloads+=1; saveStats(card,st);
-  },true);
-  document.addEventListener('DOMContentLoaded',function(){
-    initCards();
-    const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid');
-    if(grid){new MutationObserver(function(){initCards();}).observe(grid,{childList:true,subtree:false});}
-  });
-})();
-</script>
-
-<script id="azobss-software-backend-stats-sync">
-(function(){
-  const API_BASE=(localStorage.getItem('azobssPremiumBackendUrl')||localStorage.getItem('azobssSoftwareStatsBackendUrl')||'https://azobss-backend.onrender.com').replace(/\/$/,'');
-  const LOCAL_KEY='azobss_software_manual_stats_v2';
-  function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
-  function cardProductId(card){
-    if(!card) return 'software-item';
-    if(!card.dataset.productId){
-      const title=card.querySelector('h3')?.textContent?.trim()||card.dataset.name||'Software Item';
-      card.dataset.productId='AZSW-'+String(title).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-    }
-    return card.dataset.productId||card.dataset.name||card.querySelector('h3')?.textContent||'software-item';
-  }
-  function norm(raw){
-    raw=raw||{};
-    const ratings={'1':0,'2':0,'3':0,'4':0,'5':0};
-    if(raw.ratings&&typeof raw.ratings==='object'){
-      for(let i=1;i<=5;i++) ratings[String(i)]=Math.max(0,Math.round(Number(raw.ratings[String(i)]||0)));
-    }else{
-      const oldVotes=Math.max(0,Math.round(Number(raw.ratingVotes||raw.votes||0)));
-      const oldTotal=Math.max(0,Number(raw.ratingTotal||0));
-      const oldAvg=oldVotes?oldTotal/oldVotes:Math.max(0,Math.min(5,Number(raw.ratingAverage??raw.rating??0)||0));
-      if(oldVotes>0&&oldAvg>0){ratings[String(Math.max(1,Math.min(5,Math.round(oldAvg))))]=oldVotes;}
-    }
-    const votes=ratings['1']+ratings['2']+ratings['3']+ratings['4']+ratings['5'];
-    const total=(1*ratings['1'])+(2*ratings['2'])+(3*ratings['3'])+(4*ratings['4'])+(5*ratings['5']);
-    const avg=votes?Math.round((total/votes)*10)/10:0;
-    return {downloads:Math.max(0,Math.round(Number(raw.downloads||0))),likes:Math.max(0,Math.round(Number(raw.likes||0))),ratings,rating:avg,ratingVotes:votes,ratingTotal:total};
-  }
-  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
-  function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}')||{};}catch(e){return{};}}
-  function writeLocal(v){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(v||{}));}catch(e){}}
-  function mergeBackendStats(stats){
-    const local=readLocal();
-    Object.entries(stats||{}).forEach(([key,val])=>{
-      const n=norm(val);
-      local[slug(key)]={views:0,downloads:n.downloads,likes:n.likes,ratings:n.ratings,rating:n.rating,ratingVotes:n.ratingVotes,ratingTotal:n.ratingTotal};
-    });
-    writeLocal(local);
-    renderAllStats();
-    if(typeof window.applySoftwareFilters==='function') window.applySoftwareFilters();
-  }
-  async function fetchStats(){
-    try{
-      const res=await fetch(API_BASE+'/api/software-stats',{cache:'no-store'});
-      const data=await res.json();
-      if(data&&data.ok) mergeBackendStats(data.stats||{});
-    }catch(err){console.warn('AZOBSS software stats backend not reachable:',err);}
-  }
-  function getLocalCardStats(card){
-    const local=readLocal();
-    const key=slug(cardProductId(card));
-    const n=norm(local[key]||{downloads:card.dataset.downloads,likes:card.dataset.likes,rating:card.dataset.rating});
-    card.dataset.views='0';
-    card.dataset.downloads=String(n.downloads);
-    card.dataset.likes=String(n.likes);
-    card.dataset.rating=String(n.rating);
-    return n;
-  }
-  function ensureBox(card){
-    let box=card.querySelector('.software-stats');
-    if(!box){
-      box=document.createElement('div');
-      box.className='software-stats';
-      const p=card.querySelector('p');
-      if(p) p.insertAdjacentElement('beforebegin',box); else card.appendChild(box);
-    }
-    return box;
-  }
-  function ratingHtml(card, st){
-    const productId=cardProductId(card);
-    const avg=Number(st.rating||0);
-    const votes=Math.max(0,Math.round(Number(st.ratingVotes||0)));
-    const filled=Math.round(avg);
-    let stars='<span class="software-rating-stars" role="group" aria-label="Rate this software">';
-    for(let i=1;i<=5;i++){
-      stars+=`<button class="software-rating-star ${i<=filled?'is-filled':''}" type="button" data-rating-value="${i}" data-product-id="${productId}" title="Rate ${i} star${i>1?'s':''}">★</button>`;
-    }
-    stars+='</span>';
-    return `<span class="rating-display"><span class="rating-main-star" aria-hidden="true">★</span><strong>${avg.toFixed(1)}</strong><span class="software-rating-count">(${votes})</span></span>${stars}`;
-  }
-  function renderCardStats(card){
-    const st=getLocalCardStats(card);
-    ensureBox(card).innerHTML=`<span class="stat-download"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M12 3v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 17v2.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span class="stat-value">${fmt(st.downloads)}</span></span><span class="stat-rating">${ratingHtml(card,st)}</span>`;
-  }
-  function renderAllStats(){document.querySelectorAll('.download-card').forEach(renderCardStats);}
-  async function postStat(endpoint, payload){
-    const res=await fetch(API_BASE+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
-    const data=await res.json();
-    if(!res.ok||!data.ok) throw new Error(data.error||'Stats update failed');
-    return data;
-  }
-  function ratedKey(productId){return 'azobss_rated_'+slug(productId);}
-  document.addEventListener('click',async function(e){
-    const star=e.target.closest('.software-rating-star');
-    if(!star) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const card=star.closest('.download-card');
-    if(!card) return;
-    const productId=cardProductId(card);
-    const rating=Math.max(1,Math.min(5,Number(star.dataset.ratingValue||0)));
-    if(!rating) return;
-    if(localStorage.getItem(ratedKey(productId))){
-      alert('You already rated this software on this browser.');
-      return;
-    }
-    star.closest('.software-rating-stars')?.querySelectorAll('button').forEach(b=>b.disabled=true);
-    try{
-      const data=await postStat('/api/software-stats/rate',{productId,rating,name:card.querySelector('h3')?.textContent?.trim()||''});
-      localStorage.setItem(ratedKey(productId),String(rating));
-      mergeBackendStats({[data.productId||slug(productId)]:data.stats});
-    }catch(err){
-      alert('Rating failed. Please try again.');
-      renderCardStats(card);
-    }
-  },true);
-  document.addEventListener('click',async function(e){
-    const btn=e.target.closest('.download-card .download-btn');
-    if(!btn) return;
-    const card=btn.closest('.download-card');
-    if(!card) return;
-    const productId=cardProductId(card);
-    try{
-      const data=await postStat('/api/software-stats/download',{productId,name:card.querySelector('h3')?.textContent?.trim()||''});
-      mergeBackendStats({[data.productId||slug(productId)]:data.stats});
-    }catch(err){
-      const local=readLocal(); const key=slug(productId); const st=norm(local[key]||{}); st.downloads+=1; local[key]=st; writeLocal(local); renderCardStats(card);
-    }
-  },true);
-  document.addEventListener('DOMContentLoaded',function(){
-    renderAllStats();
-    fetchStats();
-    const grid=document.querySelector('#softwareDownloadsGrid,.downloads-grid');
-    if(grid){new MutationObserver(function(){renderAllStats(); fetchStats();}).observe(grid,{childList:true,subtree:false});}
-    const refresh=document.getElementById('softwareStatsRefreshButton');
-    if(refresh){
-      refresh.addEventListener('click',async function(){
-        try{
-          const items=Array.from(document.querySelectorAll('.download-card')).map(card=>{const st=getLocalCardStats(card);return{productId:cardProductId(card),downloads:st.downloads,likes:st.likes,ratings:st.ratings,ratingAverage:st.rating,ratingVotes:st.ratingVotes||0,ratingTotal:st.ratingTotal||0};});
-          const data=await postStat('/api/software-stats/admin-set',{items});
-          mergeBackendStats(data.stats||{});
-        }catch(err){console.warn(err);}
-      },true);
-    }
-  });
-})();
-</script>
 
 
-
-
-
-<!-- AZOBSS TARGETED RATING CLICK FIX - Download + 5 clickable stars only -->
-<style id="azobss-targeted-rating-click-fix-css">
+<!-- AZOBSS CLEAN FOOTER DOWNLOAD + 5 STAR RATING (single final script) -->
+<style id="azobss-clean-footer-rating-css">
+#softwareDownloadsGrid .download-card,
 #softwareGrid .download-card,
-.downloads-grid .download-card,
-#softwareDownloadsGrid .download-card{
+.downloads-grid .download-card{
   position:relative !important;
   overflow:hidden !important;
   padding-bottom:58px !important;
+  box-sizing:border-box !important;
 }
+
+#softwareDownloadsGrid .download-card > .software-stats,
 #softwareGrid .download-card > .software-stats,
-.downloads-grid .download-card > .software-stats,
-#softwareDownloadsGrid .download-card > .software-stats{
+.downloads-grid .download-card > .software-stats{
   position:absolute !important;
   left:0 !important;
   right:0 !important;
   bottom:0 !important;
   width:100% !important;
-  height:54px !important;
+  height:56px !important;
   margin:0 !important;
   padding:0 !important;
   display:grid !important;
-  grid-template-columns:92px 1fr !important;
+  grid-template-columns:98px minmax(0,1fr) !important;
   align-items:center !important;
-  background:rgba(3,10,24,.96) !important;
-  border-top:1px solid rgba(45,212,191,.18) !important;
+  background:linear-gradient(180deg, rgba(3,10,24,.95), rgba(2,8,20,.98)) !important;
+  border-top:1px solid rgba(45,212,191,.22) !important;
   border-radius:0 0 18px 18px !important;
   overflow:hidden !important;
-  z-index:80 !important;
+  z-index:90 !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04) !important;
 }
-#softwareGrid .download-card > .software-stats > span,
-.downloads-grid .download-card > .software-stats > span,
-#softwareDownloadsGrid .download-card > .software-stats > span{
-  height:54px !important;
+
+#softwareDownloadsGrid .download-card > .software-stats > .azb-download-cell,
+#softwareDownloadsGrid .download-card > .software-stats > .azb-rating-cell,
+#softwareGrid .download-card > .software-stats > .azb-download-cell,
+#softwareGrid .download-card > .software-stats > .azb-rating-cell,
+.downloads-grid .download-card > .software-stats > .azb-download-cell,
+.downloads-grid .download-card > .software-stats > .azb-rating-cell{
+  height:56px !important;
   min-width:0 !important;
   margin:0 !important;
   padding:0 8px !important;
@@ -3677,13 +3449,18 @@ all.appendChild(wrap);
   box-sizing:border-box !important;
   white-space:nowrap !important;
   overflow:hidden !important;
+  color:#fff !important;
+  font-weight:900 !important;
 }
-#softwareGrid .download-card > .software-stats > span + span,
-.downloads-grid .download-card > .software-stats > span + span,
-#softwareDownloadsGrid .download-card > .software-stats > span + span{
+
+#softwareDownloadsGrid .download-card > .software-stats > .azb-rating-cell,
+#softwareGrid .download-card > .software-stats > .azb-rating-cell,
+.downloads-grid .download-card > .software-stats > .azb-rating-cell{
   border-left:1px solid rgba(148,163,184,.18) !important;
+  justify-content:center !important;
 }
-.azb-download-badge{
+
+.azb-download-icon{
   width:36px !important;
   height:36px !important;
   min-width:36px !important;
@@ -3691,33 +3468,45 @@ all.appendChild(wrap);
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  color:#22c55e !important;
-  background:rgba(34,197,94,.13) !important;
+  color:#20e66b !important;
+  background:radial-gradient(circle at 50% 35%, rgba(34,197,94,.24), rgba(34,197,94,.08)) !important;
   border:1px solid rgba(34,197,94,.55) !important;
-  box-shadow:0 0 14px rgba(34,197,94,.2) !important;
+  box-shadow:0 0 14px rgba(34,197,94,.22), inset 0 0 10px rgba(34,197,94,.08) !important;
 }
-.azb-download-badge svg{width:17px !important;height:17px !important;display:block !important;}
-.azb-download-count{font-size:14px !important;font-weight:900 !important;color:#fff !important;min-width:16px !important;}
-.azb-rating-stars{
+.azb-download-icon svg{
+  width:18px !important;
+  height:18px !important;
+  display:block !important;
+}
+.azb-download-num{
+  font-size:14px !important;
+  font-weight:900 !important;
+  color:#fff !important;
+  min-width:18px !important;
+  text-align:left !important;
+}
+
+.azb-stars{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   gap:1px !important;
   flex:0 0 auto !important;
   min-width:82px !important;
+  max-width:86px !important;
   position:relative !important;
-  z-index:100 !important;
+  z-index:120 !important;
 }
-.azb-rating-star{
+.azb-star{
   appearance:none !important;
   -webkit-appearance:none !important;
   border:0 !important;
   outline:0 !important;
   background:transparent !important;
   box-shadow:none !important;
-  width:15px !important;
-  min-width:15px !important;
-  height:24px !important;
+  width:16px !important;
+  min-width:16px !important;
+  height:26px !important;
   padding:0 !important;
   margin:0 !important;
   display:inline-flex !important;
@@ -3729,96 +3518,222 @@ all.appendChild(wrap);
   color:#64748b !important;
   cursor:pointer !important;
   pointer-events:auto !important;
-  transition:transform .12s ease,color .12s ease !important;
+  transition:transform .12s ease,color .12s ease,text-shadow .12s ease !important;
 }
-.azb-rating-star.is-filled{color:#facc15 !important;text-shadow:0 0 7px rgba(250,204,21,.25) !important;}
-.azb-rating-stars:hover .azb-rating-star{color:#facc15 !important;transform:scale(1.08) !important;}
-.azb-rating-stars .azb-rating-star:hover ~ .azb-rating-star{color:#64748b !important;transform:none !important;}
-.azb-rating-value{font-size:14px !important;font-weight:900 !important;color:#fff !important;min-width:24px !important;text-align:left !important;}
-.azb-rating-votes{font-size:12px !important;font-weight:800 !important;color:#cbd5e1 !important;opacity:.85 !important;}
-.download-card .software-stats .stat-like,
+.azb-star.is-filled{
+  color:#ffcc28 !important;
+  text-shadow:0 0 8px rgba(250,204,21,.35) !important;
+}
+.azb-stars:hover .azb-star{
+  color:#ffcc28 !important;
+  transform:scale(1.08) !important;
+}
+.azb-stars .azb-star:hover ~ .azb-star{
+  color:#64748b !important;
+  transform:none !important;
+  text-shadow:none !important;
+}
+.azb-rating-num{
+  font-size:14px !important;
+  font-weight:900 !important;
+  color:#fff !important;
+  min-width:24px !important;
+  text-align:left !important;
+}
+.azb-rating-votes{
+  font-size:12px !important;
+  font-weight:800 !important;
+  color:#cbd5e1 !important;
+  opacity:.85 !important;
+}
+
+/* kill old rating pills/classes so only final footer appears */
 .download-card .software-stats .rating-display,
 .download-card .software-stats .rating-main-star,
-.download-card .software-stats .software-rating-count{display:none !important;}
+.download-card .software-stats .software-rating-count,
+.download-card .software-stats .stat-like,
+.download-card .software-stats .rating-pill,
+.download-card .software-stats .rating-box{
+  display:none !important;
+}
+
 @media(max-width:640px){
-  #softwareGrid .download-card > .software-stats,.downloads-grid .download-card > .software-stats,#softwareDownloadsGrid .download-card > .software-stats{grid-template-columns:86px 1fr !important;}
-  .azb-rating-stars{min-width:76px !important;}
-  .azb-rating-star{width:14px !important;min-width:14px !important;font-size:15px !important;}
+  #softwareDownloadsGrid .download-card > .software-stats,
+  #softwareGrid .download-card > .software-stats,
+  .downloads-grid .download-card > .software-stats{
+    grid-template-columns:90px minmax(0,1fr) !important;
+  }
+  .azb-download-icon{width:34px !important;height:34px !important;min-width:34px !important;}
+  .azb-stars{min-width:74px !important;max-width:78px !important;}
+  .azb-star{width:14px !important;min-width:14px !important;font-size:15px !important;}
+  .azb-rating-num{font-size:13px !important;}
+  .azb-rating-votes{font-size:11px !important;}
 }
 </style>
-<script id="azobss-targeted-rating-click-fix-js">
+
+<script id="azobss-clean-footer-rating-js">
 (function(){
-  const KEY='azobss_rating_click_fix_v1';
-  const API_BASE=(window.AZOBSS_STATS_API || window.SOFTWARE_STATS_API || '').replace(/\/$/,'');
-  function slug(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';}
-  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){return{};}}
-  function write(v){try{localStorage.setItem(KEY,JSON.stringify(v||{}));}catch(e){}}
-  function cardId(card){return card?.dataset?.productId || card?.getAttribute('data-product-id') || card?.querySelector('[data-product-id]')?.getAttribute('data-product-id') || card?.querySelector('h3')?.textContent?.trim() || 'software-item';}
-  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
-  function baseStats(card){
-    const id=slug(cardId(card));
-    const all=read();
-    const raw=all[id] || {};
-    const downloads=Math.max(0,Math.round(Number(raw.downloads ?? card.dataset.downloads ?? 0)||0));
+  const STORE_KEY='azobss_clean_footer_rating_v1';
+  const OLD_KEYS=['azobss_rating_click_fix_v1','azobss_software_manual_stats_v2'];
+  const API_BASE=(localStorage.getItem('azobssPremiumBackendUrl')||localStorage.getItem('azobssSoftwareStatsBackendUrl')||window.AZOBSS_STATS_API||'https://azobss-backend.onrender.com').replace(/\/$/,'');
+
+  function slug(v){
+    return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';
+  }
+  function readKey(key){
+    try{return JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){return{};}
+  }
+  function read(){return readKey(STORE_KEY);}
+  function write(v){try{localStorage.setItem(STORE_KEY,JSON.stringify(v||{}));}catch(e){}}
+  function productId(card){
+    return card?.dataset?.productId || card?.getAttribute('data-product-id') || card?.querySelector('[data-product-id]')?.getAttribute('data-product-id') || card?.querySelector('h3')?.textContent?.trim() || 'software-item';
+  }
+  function fmt(n){
+    n=Number(n)||0;
+    if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';
+    if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';
+    return String(Math.round(n));
+  }
+  function normalize(raw, card){
+    raw=raw||{};
     let ratings=raw.ratings;
     if(!ratings || typeof ratings!=='object') ratings={'1':0,'2':0,'3':0,'4':0,'5':0};
     let votes=0,total=0;
-    for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(ratings[String(i)]||0))); votes+=c; total+=i*c; ratings[String(i)]=c;}
-    let avg=votes ? Math.round((total/votes)*10)/10 : Math.max(0,Math.min(5,Number(raw.rating ?? card.dataset.rating ?? 0)||0));
+    for(let i=1;i<=5;i++){
+      const c=Math.max(0,Math.round(Number(ratings[String(i)]||0)));
+      ratings[String(i)]=c;
+      votes+=c;
+      total+=i*c;
+    }
+    let avg=votes ? Math.round((total/votes)*10)/10 : Math.max(0,Math.min(5,Number(raw.rating ?? raw.ratingAverage ?? card?.dataset?.rating ?? 0)||0));
+    let downloads=Math.max(0,Math.round(Number(raw.downloads ?? card?.dataset?.downloads ?? 0)||0));
     return {downloads,ratings,votes,total,avg};
   }
-  function downloadSvg(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';}
-  function stars(card, avg){
-    const id=String(cardId(card)).replace(/"/g,'&quot;');
-    const filled=Math.round(Number(avg)||0);
-    let out='<span class="azb-rating-stars" role="group" aria-label="Rate this software">';
-    for(let i=1;i<=5;i++) out+='<button type="button" class="azb-rating-star '+(i<=filled?'is-filled':'')+'" data-azb-rating="'+i+'" data-product-id="'+id+'" title="Rate '+i+' star">★</button>';
-    return out+'</span>';
+  function allStatsFor(card){
+    const id=slug(productId(card));
+    const local=read();
+    let raw=local[id];
+
+    if(!raw){
+      for(const key of OLD_KEYS){
+        const old=readKey(key);
+        if(old[id]){raw=old[id];break;}
+      }
+    }
+
+    const st=normalize(raw,card);
+    local[id]={downloads:st.downloads,ratings:st.ratings,ratingVotes:st.votes,ratingTotal:st.total,rating:st.avg};
+    write(local);
+    return st;
   }
-  function render(card){
-    if(!card) return;
-    let box=card.querySelector(':scope > .software-stats');
-    if(!box){box=document.createElement('div');box.className='software-stats';card.appendChild(box);}
-    if(box !== card.lastElementChild) card.appendChild(box);
-    const st=baseStats(card);
+  function save(card, st){
+    const id=slug(productId(card));
+    const local=read();
+    st=normalize(st,card);
+    local[id]={downloads:st.downloads,ratings:st.ratings,ratingVotes:st.votes,ratingTotal:st.total,rating:st.avg};
+    write(local);
     card.dataset.downloads=String(st.downloads);
     card.dataset.rating=String(st.avg);
-    box.innerHTML='<span class="stat-download azb-download-cell"><span class="azb-download-badge">'+downloadSvg()+'</span><strong class="azb-download-count">'+fmt(st.downloads)+'</strong></span><span class="stat-rating azb-rating-cell">'+stars(card,st.avg)+'<strong class="azb-rating-value">'+Number(st.avg||0).toFixed(1)+'</strong><span class="azb-rating-votes">('+st.votes+')</span></span>';
-  }
-  function renderAll(){document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card,#softwareDownloadsGrid .download-card').forEach(render);}
-  function saveRating(card,rating){
-    const id=slug(cardId(card));
-    const all=read();
-    const st=baseStats(card);
-    st.ratings[String(rating)]=Math.max(0,Math.round(Number(st.ratings[String(rating)]||0)))+1;
-    let votes=0,total=0;for(let i=1;i<=5;i++){const c=Number(st.ratings[String(i)]||0);votes+=c;total+=i*c;}
-    all[id]={downloads:st.downloads,ratings:st.ratings,ratingVotes:votes,ratingTotal:total,rating:votes?Math.round((total/votes)*10)/10:0};
-    write(all);
     render(card);
-    if(API_BASE){fetch(API_BASE+'/api/software-stats/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productId:cardId(card),rating:Number(rating)})}).catch(()=>{});}
   }
+  function dlSvg(){
+    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';
+  }
+  function starHtml(card, avg){
+    const filled=Math.round(Number(avg)||0);
+    let out='<span class="azb-stars" role="group" aria-label="Rate this software">';
+    for(let i=1;i<=5;i++){
+      out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" title="Rate '+i+' star">★</button>';
+    }
+    out+='</span>';
+    return out;
+  }
+  function render(card){
+    if(!card || !card.classList || !card.classList.contains('download-card')) return;
+    let box=card.querySelector(':scope > .software-stats');
+    if(!box){
+      box=document.createElement('div');
+      box.className='software-stats';
+      card.appendChild(box);
+    }
+    if(card.lastElementChild !== box) card.appendChild(box);
+
+    const st=allStatsFor(card);
+    card.dataset.downloads=String(st.downloads);
+    card.dataset.rating=String(st.avg);
+
+    box.innerHTML =
+      '<span class="azb-download-cell">'+
+        '<span class="azb-download-icon">'+dlSvg()+'</span>'+
+        '<strong class="azb-download-num">'+fmt(st.downloads)+'</strong>'+
+      '</span>'+
+      '<span class="azb-rating-cell">'+
+        starHtml(card, st.avg)+
+        '<strong class="azb-rating-num">'+Number(st.avg||0).toFixed(1)+'</strong>'+
+        '<span class="azb-rating-votes">('+st.votes+')</span>'+
+      '</span>';
+  }
+  function renderAll(){
+    document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);
+  }
+  async function post(endpoint, payload){
+    try{
+      if(!API_BASE) return null;
+      const res=await fetch(API_BASE+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
+      const data=await res.json().catch(()=>null);
+      return data;
+    }catch(e){return null;}
+  }
+
   document.addEventListener('click',function(e){
-    const star=e.target.closest('.azb-rating-star');
+    const star=e.target.closest('.azb-star');
     if(!star) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+
     const card=star.closest('.download-card');
-    const rating=Math.max(1,Math.min(5,Number(star.dataset.azbRating||0)));
-    if(card&&rating) saveRating(card,rating);
+    if(!card) return;
+    const rating=Math.max(1,Math.min(5,Number(star.dataset.rate||0)));
+    if(!rating) return;
+
+    const st=allStatsFor(card);
+    st.ratings[String(rating)]=Math.max(0,Math.round(Number(st.ratings[String(rating)]||0)))+1;
+    let votes=0,total=0;
+    for(let i=1;i<=5;i++){const c=Number(st.ratings[String(i)]||0);votes+=c;total+=i*c;}
+    st.votes=votes; st.total=total; st.avg=votes?Math.round((total/votes)*10)/10:0;
+    save(card,st);
+    post('/api/software-stats/rate',{productId:productId(card),rating,name:card.querySelector('h3')?.textContent?.trim()||''});
   },true);
-  document.addEventListener('mouseover',function(e){
-    const star=e.target.closest('.azb-rating-star'); if(!star) return;
-    const wrap=star.closest('.azb-rating-stars'); const val=Number(star.dataset.azbRating||0);
-    wrap?.querySelectorAll('.azb-rating-star').forEach((b,idx)=>b.classList.toggle('is-hover',idx<val));
+
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('.download-card .download-btn');
+    if(!btn) return;
+    const card=btn.closest('.download-card');
+    if(!card) return;
+    const st=allStatsFor(card);
+    st.downloads+=1;
+    save(card,st);
+    post('/api/software-stats/download',{productId:productId(card),name:card.querySelector('h3')?.textContent?.trim()||''});
   },true);
+
   document.addEventListener('DOMContentLoaded',function(){
-    renderAll(); [50,150,400,900,1600,3000].forEach(t=>setTimeout(renderAll,t));
-    const root=document.querySelector('#softwareGrid') || document.querySelector('.downloads-grid') || document.querySelector('#softwareDownloadsGrid') || document.body;
-    new MutationObserver(function(){clearTimeout(window.__azbRateFixTimer);window.__azbRateFixTimer=setTimeout(renderAll,40);}).observe(root,{childList:true,subtree:true});
+    renderAll();
+    [50,150,400,900,1600,3000].forEach(t=>setTimeout(renderAll,t));
+    const root=document.querySelector('#softwareDownloadsGrid') || document.querySelector('#softwareGrid') || document.querySelector('.downloads-grid') || document.body;
+    let timer=0;
+    new MutationObserver(function(){
+      clearTimeout(timer);
+      timer=setTimeout(renderAll,60);
+    }).observe(root,{childList:true,subtree:true});
   });
-  window.azobssForceRenderFiveStarRating=renderAll;
-  setTimeout(renderAll,0); setInterval(renderAll,1200);
+
+  window.azobssRenderCleanFooterRating=renderAll;
+  setTimeout(renderAll,0);
+  setInterval(renderAll,1800);
 })();
 </script>
+
 
 </body>
 </html>
