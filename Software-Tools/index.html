@@ -2318,9 +2318,19 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function getCurrentUserObject(){ try { return JSON.parse(sessionStorage.getItem('azobssCurrentUser') || 'null'); } catch(e){ return null; } }
   function isAdmin(){
     const currentUser = getCurrentUserObject();
-    return sessionStorage.getItem('azobssLoggedIn') === '1' && (
-      clean(currentUser?.usernameKey) === 'zedan91' || clean(currentUser?.email) === 'zedan91@azobss.local'
-    );
+    const logged = sessionStorage.getItem('azobssLoggedIn') === '1';
+    const usernameText = (document.getElementById('signedInName')?.textContent || '');
+    const candidates = [
+      currentUser?.usernameKey,
+      currentUser?.username,
+      currentUser?.name,
+      currentUser?.displayName,
+      usernameText
+    ].map(clean).filter(Boolean);
+    const email = clean(currentUser?.email);
+    const adminUsers = new Set(['zedan91','zedan0001','azobss','admin']);
+    const adminEmails = new Set(['zedan91@azobss.local','zedan9107@gmail.com']);
+    return logged && (candidates.some(v => adminUsers.has(v)) || adminEmails.has(email));
   }
 
   function makeProductId(prefix){
@@ -3724,5 +3734,91 @@ all.appendChild(wrap);
 #softwareGrid .azb-rate-value,#softwareDownloadsGrid .azb-rate-value,.downloads-grid .azb-rate-value{font-size:13px!important;min-width:23px!important;}
 #softwareGrid .azb-rate-votes,#softwareDownloadsGrid .azb-rate-votes,.downloads-grid .azb-rate-votes{font-size:11px!important;}
 </style>
+
+
+<style id="azobss-restore-admin-actions-visible">
+/* Restore admin card buttons after footer compact patch */
+#softwareGrid .download-card,
+#softwareDownloadsGrid .download-card,
+.downloads-grid .download-card{
+  position:relative!important;
+}
+#softwareGrid .download-card .software-card-admin-actions,
+#softwareDownloadsGrid .download-card .software-card-admin-actions,
+.downloads-grid .download-card .software-card-admin-actions{
+  position:absolute!important;
+  top:64px!important;
+  right:16px!important;
+  width:auto!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  z-index:250!important;
+  pointer-events:auto!important;
+}
+#softwareGrid .download-card .software-card-admin-actions button,
+#softwareDownloadsGrid .download-card .software-card-admin-actions button,
+.downloads-grid .download-card .software-card-admin-actions button{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:15px!important;
+  line-height:1!important;
+  box-shadow:0 8px 18px rgba(0,0,0,.25)!important;
+  backdrop-filter:blur(8px)!important;
+}
+#softwareGrid .download-card .software-logo-admin-btn,
+#softwareDownloadsGrid .download-card .software-logo-admin-btn,
+.downloads-grid .download-card .software-logo-admin-btn{
+  border:2px solid #22c55e!important;
+  background:rgba(2,6,23,.80)!important;
+  color:#86efac!important;
+}
+#softwareGrid .download-card .software-card-edit-btn,
+#softwareDownloadsGrid .download-card .software-card-edit-btn,
+.downloads-grid .download-card .software-card-edit-btn{
+  border:2px solid #38bdf8!important;
+  background:rgba(2,6,23,.80)!important;
+  color:#e0f2fe!important;
+}
+#softwareGrid .download-card .software-card-delete-btn,
+#softwareDownloadsGrid .download-card .software-card-delete-btn,
+.downloads-grid .download-card .software-card-delete-btn{
+  border:2px solid #fb7185!important;
+  background:rgba(2,6,23,.80)!important;
+  color:#ffe4e6!important;
+}
+#softwareGrid .download-card .software-card-admin-actions button:hover,
+#softwareDownloadsGrid .download-card .software-card-admin-actions button:hover,
+.downloads-grid .download-card .software-card-admin-actions button:hover{
+  transform:scale(1.08)!important;
+  filter:brightness(1.1)!important;
+}
+</style>
+<script id="azobss-admin-actions-refresh-after-login">
+(function(){
+  function refreshIfAdminAppears(){
+    try{
+      if(typeof window.azobssRenderSoftwareItems === 'function') window.azobssRenderSoftwareItems();
+      if(typeof window.renderSoftwareItems === 'function') window.renderSoftwareItems();
+      if(typeof window.renderSoftware === 'function') window.renderSoftware();
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(refreshIfAdminAppears,300);
+    setTimeout(refreshIfAdminAppears,1200);
+  });
+})();
+</script>
+
 </body>
 </html>
