@@ -1,1 +1,0 @@
-Fixed: premiumDownloadFileLink/secureDownloadLink is now passed from frontend to backend. Backend uses it for secure token download and verify-payment also triggers email if callback did not send it.
