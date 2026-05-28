@@ -6,8 +6,122 @@ const path = require("path");
 const http = require("http");
 const url = require("url");
 const crypto = require("crypto");
+let nodemailer = null;
+try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
 const TOYYIB_SECRET_KEY=process.env.TOYYIB_SECRET_KEY;
 const TOYYIB_CATEGORY_CODE=process.env.TOYYIB_CATEGORY_CODE;
+
+const TOYYIB_BASE_URL = (process.env.TOYYIB_BASE_URL || (String(process.env.TOYYIB_SANDBOX || "").toLowerCase() === "true" ? "https://dev.toyyibpay.com" : "https://toyyibpay.com")).replace(/\/$/, "");
+const TOYYIB_RETURN_URL = process.env.TOYYIB_RETURN_URL || "";
+const TOYYIB_CALLBACK_URL = process.env.TOYYIB_CALLBACK_URL || "";
+const FRONTEND_BASE_URL = (process.env.FRONTEND_BASE_URL || process.env.SITE_BASE_URL || "https://www.azobss.com").replace(/\/$/, "");
+const PUBLIC_BASE_URL_ENV = (process.env.PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "");
+
+function publicBaseUrlFromReq(req) {
+  if (PUBLIC_BASE_URL_ENV) return PUBLIC_BASE_URL_ENV;
+  const proto = (req.headers["x-forwarded-proto"] || "https").split(",")[0].trim();
+  const host = req.headers.host || "azobss-backend.onrender.com";
+  return `${proto}://${host}`.replace(/\/$/, "");
+}
+
+function parseAmountToSen(value) {
+  const n = Number(String(value || "").replace(/rm/ig, "").replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.round(n * 100);
+}
+
+function cleanForToyyib(value, max = 100) {
+  return String(value || "").replace(/[^a-zA-Z0-9 _.,@+\-()]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+async function postToyyib(endpoint, payload) {
+  const body = new URLSearchParams();
+  Object.entries(payload || {}).forEach(([k, v]) => body.append(k, String(v ?? "")));
+  const r = await fetch(`${TOYYIB_BASE_URL}/index.php/api/${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body
+  });
+  const text = await r.text();
+  let json = null;
+  try { json = JSON.parse(text); } catch (_) {}
+  if (!r.ok) throw new Error(`ToyyibPay API ${r.status}: ${text.slice(0, 250)}`);
+  return json || text;
+}
+
+function readPremiumOrders() { return readPremiumJson(PREMIUM_ORDERS_FILE, []); }
+function writePremiumOrders(orders) { writePremiumJson(PREMIUM_ORDERS_FILE, (orders || []).slice(0, 500)); }
+function upsertPremiumOrder(order) {
+  const orders = readPremiumOrders();
+  const idx = orders.findIndex(o => o.orderId === order.orderId || (order.billCode && o.billCode === order.billCode));
+  if (idx >= 0) orders[idx] = { ...orders[idx], ...order, updatedAt: new Date().toISOString() };
+  else orders.unshift({ ...order, updatedAt: new Date().toISOString() });
+  writePremiumOrders(orders);
+  return idx >= 0 ? orders[idx] : orders[0];
+}
+function findPremiumOrderByAny(ref = {}) {
+  return readPremiumOrders().find(o => (ref.orderId && o.orderId === ref.orderId) || (ref.billCode && o.billCode === ref.billCode) || (ref.billcode && o.billCode === ref.billcode)) || null;
+}
+function mailReady() { return !!(nodemailer && process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS); }
+function makeMailer() {
+  if (!mailReady()) return null;
+  const port = Number(process.env.SMTP_PORT || 587);
+  return nodemailer.createTransport({ host: process.env.SMTP_HOST, port, secure: port === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+}
+function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
+  const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Terima kasih. Pembayaran anda telah berjaya disahkan.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#b45309"><b>Important:</b> Link ini akan auto-expire selepas download pertama. Jika tidak digunakan, link akan tamat tempoh pada ${expires}.</p><p><a href="${receiptUrl}">View receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
+}
+async function maybeSendDownloadEmail(order, req) {
+  try {
+    const email = cleanPremiumText(order?.user?.email || order?.email || "", 180);
+    if (!email || order.emailSentAt || !order.downloadToken || !mailReady()) return order;
+    const base = publicBaseUrlFromReq(req);
+    const downloadUrl = `${base}/api/premium/download/${encodeURIComponent(order.downloadToken)}`;
+    const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}`;
+    await makeMailer().sendMail({
+      from: process.env.MAIL_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: `AZOBSS Download Ready - ${cleanPremiumText(order.productName || "Digital Product", 80)}`,
+      html: buildAzobssDownloadEmail(order, downloadUrl, receiptUrl),
+      text: `AZOBSS Download Ready\n\nProduct: ${order.productName}\nOrder ID: ${order.orderId}\nDownload: ${downloadUrl}\nReceipt: ${receiptUrl}\n\nLink auto-expire selepas download pertama.`
+    });
+    return upsertPremiumOrder({ ...order, emailSentAt: new Date().toISOString(), emailTo: email });
+  } catch (e) {
+    console.error("SMTP send failed:", e.message);
+    return upsertPremiumOrder({ ...order, emailError: e.message, emailErrorAt: new Date().toISOString() });
+  }
+}
+function makeDownloadForOrder(order) {
+  if (!order || order.downloadToken) return order;
+  const token = makeId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
+  const now = Date.now();
+  const expiryHours = Math.max(1, Math.min(24 * 30, Number(order.expiryHours || 24)));
+  const expiresAtMs = now + expiryHours * 60 * 60 * 1000;
+  savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: order.downloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload: 1 });
+  return upsertPremiumOrder({ ...order, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload: 1 });
+}
+async function refreshToyyibOrder(order, req) {
+  if (!order || !order.billCode) return order;
+  try {
+    const result = await postToyyib("getBillTransactions", { billCode: order.billCode });
+    const tx = Array.isArray(result) ? result[0] : null;
+    const paid = !!(tx && String(tx.billpaymentStatus || tx.billStatus || tx.status || "") === "1");
+    if (!paid) return order;
+    let paidOrder = upsertPremiumOrder({ ...order, status: "paid", paymentMethod: "toyyibpay", paymentReference: tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno || order.paymentReference || "", toyyibTransaction: tx, paidAt: new Date().toISOString() });
+    paidOrder = makeDownloadForOrder(paidOrder);
+    await maybeSendDownloadEmail(paidOrder, req);
+    return findPremiumOrderByAny({ orderId: paidOrder.orderId }) || paidOrder;
+  } catch (e) {
+    console.error("ToyyibPay refresh failed:", e.message);
+    return order;
+  }
+}
+function paidPayload(order, req) {
+  const base = publicBaseUrlFromReq(req);
+  const o = makeDownloadForOrder(order);
+  return { ok: true, success: true, paid: true, orderId: o.orderId, status: o.status, downloadUrl: `${base}/api/premium/download/${encodeURIComponent(o.downloadToken)}`, receiptUrl: `${base}/api/premium/receipt/${encodeURIComponent(o.orderId)}`, expiresAt: o.tokenExpiresAt, maxDownload: 1 };
+}
 
 // =========================
 // SOFTWARE STATS JSON HELPERS
@@ -967,6 +1081,98 @@ async function handler(req, res) {
 
     if (req.method === "OPTIONS") {
       return send(res, 204, "");
+    }
+
+
+    // =========================
+    // TOYYIBPAY DYNAMIC PAYMENT ROUTES (Render deploy-server.js)
+    // =========================
+    if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "GET") {
+      return send(res, 405, JSON.stringify({ ok:false, error:"Use POST for this endpoint." }, null, 2), "application/json");
+    }
+
+    if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST") {
+      let data = {};
+      try { data = JSON.parse((await readBody(req)) || "{}"); }
+      catch (e) { return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Invalid JSON" }), "application/json"); }
+
+      try {
+        if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
+          return send(res, 500, JSON.stringify({ ok:false, success:false, error:"ToyyibPay env belum lengkap. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." }, null, 2), "application/json");
+        }
+        const product = data.product || {};
+        const productName = cleanPremiumText(product.name || data.productName || data.title || "AZOBSS Digital Product", 160);
+        const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), 160);
+        const amountText = cleanPremiumText(product.price || data.amount || data.price || "", 40);
+        const amountSen = parseAmountToSen(amountText);
+        const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink || data.fileUrl || "");
+        const user = getPremiumUser(data);
+        if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing product name or valid amount." }, null, 2), "application/json");
+        if (!downloadLink) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Download link belum diset untuk produk ini." }, null, 2), "application/json");
+        const orderId = makeId("tp");
+        const apiBase = publicBaseUrlFromReq(req);
+        const requestedReturnUrl = cleanPremiumUrl(data.returnUrl || data.redirectUrl || data.successUrl || "");
+        const returnUrl = requestedReturnUrl || TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/Software-Tools/?payment=return&orderId=${encodeURIComponent(orderId)}`;
+        const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
+        const billPayload = {
+          userSecretKey: TOYYIB_SECRET_KEY,
+          categoryCode: TOYYIB_CATEGORY_CODE,
+          billName: cleanForToyyib(productName, 30) || "AZOBSS Digital",
+          billDescription: cleanForToyyib(`AZOBSS Digital Software & Tools Payment - ${productName}`, 100),
+          billPriceSetting: 1,
+          billPayorInfo: 1,
+          billAmount: amountSen,
+          billReturnUrl: returnUrl,
+          billCallbackUrl: callbackUrl,
+          billExternalReferenceNo: orderId,
+          billTo: cleanForToyyib(user.username || user.email || "AZOBSS Customer", 30),
+          billEmail: cleanForToyyib(user.email || "", 80),
+          billPhone: cleanForToyyib(user.phone || "", 20),
+          billSplitPayment: 0,
+          billSplitPaymentArgs: "",
+          billPaymentChannel: 0,
+          billContentEmail: `Thank you for purchasing ${cleanForToyyib(productName, 60)} from AZOBSS.`,
+          billChargeToCustomer: 1,
+          billExpiryDays: 3,
+          enableDuitNowQR: 1,
+          chargeDuitNowQR: 0
+        };
+        const apiResult = await postToyyib("createBill", billPayload);
+        const billCode = Array.isArray(apiResult) ? (apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode)) : (apiResult && apiResult.BillCode);
+        if (!billCode) return send(res, 502, JSON.stringify({ ok:false, success:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult }, null, 2), "application/json");
+        const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user, downloadLink, maxDownload:1, expiryHours:24, createdAt:new Date().toISOString() });
+        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");
+      } catch (e) {
+        console.error("Create ToyyibPay bill failed:", e.message);
+        return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/verify-payment" && req.method === "GET") {
+      const billCode = cleanPremiumText(parsed.query.billCode || parsed.query.billcode || "", 80);
+      const orderId = cleanPremiumText(parsed.query.orderId || parsed.query.order_id || "", 120);
+      let order = findPremiumOrderByAny({ orderId, billCode });
+      if (!order) return send(res, 404, JSON.stringify({ ok:false, paid:false, status:"order_not_found", error:"Order not found" }, null, 2), "application/json");
+      if (order.status !== "paid") order = await refreshToyyibOrder(order, req);
+      if (order.status === "paid") return send(res, 200, JSON.stringify(paidPayload(order, req), null, 2), "application/json");
+      return send(res, 200, JSON.stringify({ ok:true, paid:false, orderId:order.orderId, status:order.status || "pending", billCode:order.billCode, paymentUrl:order.paymentUrl }, null, 2), "application/json");
+    }
+
+    if (pathname === "/api/toyyib-callback" && req.method === "POST") {
+      let data = {};
+      try { data = JSON.parse((await readBody(req)) || "{}"); } catch (_) { data = {}; }
+      if (!Object.keys(data).length) {
+        // ToyyibPay may send form-urlencoded; parse fallback from raw body already lost? Keep JSON route safe.
+      }
+      const billCode = cleanPremiumText(data.billcode || data.billCode || data.bill_code || "", 80);
+      const orderId = cleanPremiumText(data.order_id || data.orderId || data.externalReferenceNo || "", 120);
+      let order = findPremiumOrderByAny({ orderId, billCode });
+      if (order) {
+        order = await refreshToyyibOrder(order, req);
+        if (order.status === "paid") return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+      }
+      return send(res, 200, JSON.stringify({ ok:true, status:"received" }), "application/json");
     }
 
 
