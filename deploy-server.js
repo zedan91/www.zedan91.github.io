@@ -2210,15 +2210,36 @@ setInterval(
 // RUN ON STARTUP
 cleanupTempFiles();
 
-http.createServer(handler)
-.listen(PORT, "0.0.0.0", () => {
+const HOST = "0.0.0.0";
+const SERVER_PORT = Number(process.env.PORT || PORT || 10000);
+
+const server = http.createServer((req, res) => {
+  Promise.resolve(handler(req, res)).catch((error) => {
+    console.error("Unhandled request error:", error && (error.stack || error.message) || error);
+    if (!res.headersSent) {
+      res.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+      res.end(JSON.stringify({ ok: false, error: "Internal server error" }));
+    } else {
+      try { res.end(); } catch (_) {}
+    }
+  });
+});
+
+server.on("error", (error) => {
+  console.error("Server listen error:", error && (error.stack || error.message) || error);
+  process.exitCode = 1;
+});
+
+server.listen(SERVER_PORT, HOST, () => {
 
   console.log("");
   console.log("================================");
   console.log(" AZOBSS BACKEND RUNNING");
   console.log("================================");
-  console.log("PORT:", PORT);
+  console.log("HOST:", HOST);
+  console.log("PORT:", SERVER_PORT);
   console.log("ROOT:", ROOT);
+  console.log("HEALTH:", `/api/create-payment`);
   console.log("================================");
   console.log("");
 
