@@ -3383,11 +3383,16 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
           product: currentProduct,
           user: {...storedUser(), email},
           buyerEmail: email,
+          email: email,
+          buyerPhone: '01135600723',
           returnUrl: returnUrl
         })
       });
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
-      if(!res.ok || !data.ok || !data.paymentUrl) throw new Error(data.error || 'Failed to generate ToyyibPay payment.');
+      if(!res.ok || !data.ok || !data.paymentUrl){
+        const rawMsg = data.raw ? ' [' + JSON.stringify(data.raw).slice(0,160) + ']' : '';
+        throw new Error((data.error || 'Failed to generate ToyyibPay payment.') + rawMsg);
+      }
       if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
       if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
       window.location.href = data.paymentUrl;

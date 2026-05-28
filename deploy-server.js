@@ -283,8 +283,8 @@ function getPremiumUser(data) {
   return {
     uid: cleanPremiumText(user.uid || data.uid, 120),
     username: cleanPremiumText(user.username || user.usernameKey || data.username, 80),
-    email: cleanPremiumText(user.email || data.email, 160),
-    phone: cleanPremiumText(user.phone || data.phone, 40)
+    email: cleanPremiumText(user.email || data.buyerEmail || data.email || data.customerEmail || data.billEmail, 160),
+    phone: cleanPremiumText(user.phone || data.phone || data.buyerPhone || '01135600723', 40)
   };
 }
 
@@ -1128,8 +1128,8 @@ async function handler(req, res) {
           billCallbackUrl: callbackUrl,
           billExternalReferenceNo: orderId,
           billTo: cleanForToyyib(user.username || user.email || "AZOBSS Customer", 30),
-          billEmail: cleanForToyyib(user.email || "", 80),
-          billPhone: cleanForToyyib(user.phone || "", 20),
+          billEmail: cleanForToyyib(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
+          billPhone: cleanForToyyib(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
           billSplitPayment: 0,
           billSplitPaymentArgs: "",
           billPaymentChannel: 0,
@@ -1140,8 +1140,14 @@ async function handler(req, res) {
           chargeDuitNowQR: 0
         };
         const apiResult = await postToyyib("createBill", billPayload);
+        console.log("ToyyibPay createBill response:", JSON.stringify(apiResult).slice(0, 1000));
         const billCode = Array.isArray(apiResult) ? (apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode)) : (apiResult && apiResult.BillCode);
-        if (!billCode) return send(res, 502, JSON.stringify({ ok:false, success:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult }, null, 2), "application/json");
+        if (!billCode) {
+          const detail = Array.isArray(apiResult) ? (apiResult[0] || {}) : apiResult;
+          const msg = (detail && (detail.msg || detail.Message || detail.error || detail.Error || detail.status)) || "ToyyibPay tidak return BillCode.";
+          console.error("ToyyibPay no BillCode detail:", JSON.stringify(apiResult).slice(0, 1500));
+          return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
+        }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
         upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user, downloadLink, maxDownload:1, expiryHours:24, createdAt:new Date().toISOString() });
         return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");

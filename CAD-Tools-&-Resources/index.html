@@ -2122,10 +2122,13 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       localStorage.setItem('azobss_last_checkout_page', returnUrl);
       const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({product:currentProduct,user:{...storedUser(),email},buyerEmail:email,returnUrl})
+        body:JSON.stringify({product:currentProduct,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',returnUrl})
       });
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
-      if(!res.ok || !data.ok || !data.paymentUrl) throw new Error(data.error || 'Failed to generate ToyyibPay payment.');
+      if(!res.ok || !data.ok || !data.paymentUrl){
+        const rawMsg = data.raw ? ' [' + JSON.stringify(data.raw).slice(0,160) + ']' : '';
+        throw new Error((data.error || 'Failed to generate ToyyibPay payment.') + rawMsg);
+      }
       if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
       if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
       window.location.href = data.paymentUrl;
@@ -2142,7 +2145,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const email = buyerEmail();
     completeBtn.disabled=true; completeBtn.textContent='Processing...';
     try{
-      const res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:currentProduct,user:{...storedUser(),email},buyerEmail:email,paymentMethod:currentMethod,paymentReference:''})});
+      const res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:currentProduct,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
       if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
       const downloadUrl = toAbsolute(data.downloadUrl);
