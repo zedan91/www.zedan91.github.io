@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import cron from "node-cron";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
@@ -22,6 +23,14 @@ const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
 app.use(express.json());
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || "*").split(",").map((v) => v.trim()).filter(Boolean);
+
+// CORS must be registered before API routes.
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin || CORS_ORIGIN.includes("*") || CORS_ORIGIN.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  }
+}));
 
 app.set("trust proxy", true);
 
@@ -115,6 +124,77 @@ function updatePremiumToken(token, updater) { const tokens = readPremiumJson(PRE
 function buildReceiptHtml(order) { const rows = [["Receipt No", order.orderId], ["Status", order.status], ["Product", order.productName], ["Amount", order.amount], ["Payment Method", order.paymentMethod], ["Reference", order.paymentReference || "-"], ["Username", order.user?.username || "-"], ["Email", order.user?.email || "-"], ["Date", new Date(order.paidAt || order.createdAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })]].map(([k,v]) => `<tr><th>${k}</th><td>${v || "-"}</td></tr>`).join(""); return `<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Receipt</title><style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111;padding:24px}.receipt{max-width:720px;margin:auto;background:#fff;border:1px solid #ddd;border-radius:14px;padding:24px}h1{margin-top:0}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}th{width:180px;color:#555}.ok{color:#16a34a;font-weight:700}.print{margin-top:20px}</style></head><body><div class="receipt"><h1>AZOBSS Payment Receipt</h1><p class="ok">Pembelian selesai ✅</p><table>${rows}</table><p class="print"><button onclick="window.print()">Print / Save PDF</button></p></div></body></html>`; }
 
 
+function mailEnabled() {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
+function mailFrom() {
+  return process.env.MAIL_FROM || process.env.SMTP_USER || "";
+}
+
+function createMailer() {
+  if (!mailEnabled()) return null;
+  const port = Number(process.env.SMTP_PORT || 587);
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure: port === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+}
+
+function buildDownloadEmailHtml(order, downloadUrl, receiptUrl) {
+  const productName = cleanPremiumText(order.productName || "AZOBSS Digital Product", 160);
+  const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111">
+    <div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px">
+      <h2 style="margin-top:0">AZOBSS Download Ready ✅</h2>
+      <p>Terima kasih. Pembayaran anda telah berjaya disahkan.</p>
+      <p><b>Product:</b> ${productName}<br><b>Order ID:</b> ${order.orderId}<br><b>Amount:</b> ${order.amount || "-"}</p>
+      <p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p>
+      <p style="color:#b45309"><b>Important:</b> Link ini akan auto-expire selepas download pertama. Jika tidak digunakan, link akan tamat tempoh pada ${expires}.</p>
+      <p><a href="${receiptUrl}">View receipt</a></p>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0">
+      <p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p>
+    </div>
+  </body></html>`;
+}
+
+async function sendDownloadEmailForOrder(order, req) {
+  try {
+    if (!order || order.emailSentAt || !order.downloadToken) return order;
+    const email = cleanPremiumText(order.user?.email || order.email || "", 180);
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return order;
+    if (!mailEnabled()) {
+      console.warn("SMTP env not configured; download email not sent for", order.orderId);
+      return order;
+    }
+    const base = req ? publicBaseUrl(req) : (PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "");
+    if (!base) {
+      console.warn("PUBLIC_BASE_URL missing; download email not sent for", order.orderId);
+      return order;
+    }
+    const downloadUrl = `${base}/api/premium/download/${encodeURIComponent(order.downloadToken)}`;
+    const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}`;
+    const transporter = createMailer();
+    await transporter.sendMail({
+      from: mailFrom(),
+      to: email,
+      subject: `AZOBSS Download Ready - ${cleanPremiumText(order.productName || "Digital Product", 80)}`,
+      html: buildDownloadEmailHtml(order, downloadUrl, receiptUrl),
+      text: `AZOBSS Download Ready\n\nProduct: ${order.productName}\nOrder ID: ${order.orderId}\nDownload: ${downloadUrl}\nReceipt: ${receiptUrl}\n\nImportant: Link auto-expire selepas download pertama.`
+    });
+    return upsertPremiumOrder({ ...order, emailSentAt: new Date().toISOString(), emailTo: email });
+  } catch (err) {
+    console.error("Download email failed:", err.message);
+    return upsertPremiumOrder({ ...order, emailError: err.message, emailErrorAt: new Date().toISOString() });
+  }
+}
+
+
 // =========================
 // TOYYIBPAY PAYMENT GATEWAY
 // =========================
@@ -173,7 +253,7 @@ function makePremiumDownloadForOrder(order) {
   if (order.downloadToken) return order;
   const token = makePremiumId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
-  const maxDownload = Math.max(1, Math.min(20, Number(order.maxDownload || 3)));
+  const maxDownload = 1; // secure digital delivery: expire after first download
   const expiryHours = Math.max(0, Math.min(24 * 30, Number(order.expiryHours ?? 24)));
   const expiresAtMs = expiryHours === 0 ? now + (100 * 365 * 24 * 60 * 60 * 1000) : now + expiryHours * 60 * 60 * 1000;
   savePremiumToken({
@@ -204,7 +284,9 @@ async function refreshToyyibOrderStatus(order) {
         toyyibTransaction: tx,
         paidAt: new Date().toISOString()
       });
-      return makePremiumDownloadForOrder(paid);
+      const withDownload = makePremiumDownloadForOrder(paid);
+      await sendDownloadEmailForOrder(withDownload);
+      return withDownload;
     }
   } catch (err) {
     console.warn("ToyyibPay status check failed:", err.message);
@@ -358,7 +440,7 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
     const amountSen = toyyibAmountSen(amountText);
     const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
     const user = getPremiumUser(data);
-    const requestedLimit = Math.max(1, Math.min(20, Number(product.downloadLimit || data.downloadLimit || product.maxDownload || 3)));
+    const requestedLimit = 1; // auto-expire after first download
     const requestedExpiryHours = Math.max(0, Math.min(24 * 30, Number(product.expiryHours ?? data.expiryHours ?? 24)));
     if (!productName || !amountSen) return res.status(400).json({ ok:false, error:"Missing product name or valid amount." });
     if (!downloadLink) return res.status(400).json({ ok:false, error:"Premium download link belum diset untuk produk ini." });
@@ -505,7 +587,10 @@ app.post("/api/toyyib-callback", async (req, res) => {
     };
     if (update.status === "paid") update.paidAt = new Date().toISOString();
     order = upsertPremiumOrder(update);
-    if (order.status === "paid") makePremiumDownloadForOrder(order);
+    if (order.status === "paid") {
+      const withDownload = makePremiumDownloadForOrder(order);
+      await sendDownloadEmailForOrder(withDownload, req);
+    }
     res.send("OK");
   } catch (err) {
     res.status(500).send("ERROR");
@@ -518,6 +603,7 @@ app.get("/api/toyyib/return", async (req, res) => {
   let order = findPremiumOrderByAny({ orderId, billCode });
   if (order && order.status !== "paid") order = await refreshToyyibOrderStatus(order);
   const paid = order?.status === "paid";
+  if (paid) order = await sendDownloadEmailForOrder(makePremiumDownloadForOrder(order), req);
   const base = publicBaseUrl(req);
   const front = frontendBaseUrl(req);
   const downloadUrl = paid && order.downloadToken ? `${base}/api/premium/download/${encodeURIComponent(order.downloadToken)}` : "";
@@ -526,7 +612,7 @@ app.get("/api/toyyib/return", async (req, res) => {
 });
 
 
-app.post("/api/premium/complete-purchase", (req, res) => {
+app.post("/api/premium/complete-purchase", async (req, res) => {
   const data = req.body || {};
   const product = data.product || {};
   const productName = cleanPremiumText(product.name || data.productName, 160);
@@ -535,7 +621,7 @@ app.post("/api/premium/complete-purchase", (req, res) => {
   const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
   const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);
   const paymentReference = cleanPremiumText(data.paymentReference || data.reference || "", 200);
-  const requestedLimit = Math.max(1, Math.min(20, Number(product.downloadLimit || data.downloadLimit || product.maxDownload || 3)));
+  const requestedLimit = 1; // auto-expire after first download
   const requestedExpiryHours = Math.max(0, Math.min(24 * 30, Number(product.expiryHours ?? data.expiryHours ?? 24)));
   const expiresAtMs = requestedExpiryHours === 0 ? Date.now() + (100 * 365 * 24 * 60 * 60 * 1000) : Date.now() + requestedExpiryHours * 60 * 60 * 1000;
   const user = getPremiumUser(data);
@@ -547,17 +633,33 @@ app.post("/api/premium/complete-purchase", (req, res) => {
   const order = { orderId, productId, productName, amount, status:"paid", paymentMethod, paymentReference, user, createdAt:new Date(now).toISOString(), paidAt:new Date(now).toISOString(), downloadToken:token, tokenExpiresAt:new Date(expiresAtMs).toISOString(), maxDownload:requestedLimit };
   savePremiumOrder(order);
   savePremiumToken({ token, orderId, productId, productName, user, downloadLink, createdAt:now, expiresAt:expiresAtMs, usedCount:0, maxDownload:requestedLimit });
-  res.json({ ok:true, orderId, status:"paid", message:"Pembelian selesai. Link download sementara telah dijana.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:requestedLimit });
+  await sendDownloadEmailForOrder(order, req);
+  res.json({ ok:true, orderId, status:"paid", message:"Pembelian selesai. Link download sementara telah dijana dan email akan dihantar jika SMTP aktif.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:requestedLimit });
 });
 
 app.get("/api/premium/download/:token", (req, res) => {
   const token = req.params.token;
   const saved = findPremiumToken(token);
-  if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 3)) return res.status(403).send("Download link expired or already used too many times.");
-  updatePremiumToken(token, t => ({ ...t, usedCount: Number(t.usedCount || 0) + 1, lastUsedAt: Date.now() }));
+  if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
+    return res.status(403).send("Download link expired. This secure link can only be used once.");
+  }
+
+  // Mark used immediately so the link expires after the first successful access/redirect.
+  updatePremiumToken(token, t => ({
+    ...t,
+    usedCount: Number(t.maxDownload || 1),
+    expired: true,
+    expiredReason: "first_download",
+    lastUsedAt: Date.now()
+  }));
+
   const target = saved.downloadLink;
   if (/^https?:\/\//i.test(target)) return res.redirect(302, target);
-  if (target.startsWith("/")) { const filePath = path.resolve(path.join(__dirname, "..", target)); if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return res.status(404).send("File not found"); return res.download(filePath); }
+  if (target.startsWith("/")) {
+    const filePath = path.resolve(path.join(__dirname, "..", target));
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return res.status(404).send("File not found");
+    return res.download(filePath);
+  }
   res.status(404).send("Invalid download link");
 });
 
@@ -934,31 +1036,7 @@ cron.schedule("* * * * *", async () => {
 
 
 
-// ToyyibPay
-app.post("/api/create-toyyib-bill", async (req,res)=>{
- try{
-  const {name,email,phone,amount,productId}=req.body||{};
-  const params=new URLSearchParams({
-   userSecretKey:TOYYIB_SECRET_KEY,
-   categoryCode:TOYYIB_CATEGORY_CODE,
-   billName:productId||'AZOBSS Purchase',
-   billDescription:productId||'Purchase',
-   billPriceSetting:'1',
-   billPayorInfo:'1',
-   billAmount:String(Math.round(Number(amount||0)*100)),
-   billReturnUrl:FRONTEND_BASE_URL+'/payment-success/',
-   billCallbackUrl:PUBLIC_BASE_URL+'/api/toyyib-callback',
-   billTo:name||'Customer',
-   billEmail:email||'',
-   billPhone:phone||''
-  });
-  const r=await fetch('https://toyyibpay.com/index.php/api/createBill',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params});
-  const data=await r.json();
-  if(!data?.[0]?.BillCode) throw new Error('Bill create failed');
-  res.json({ok:true,url:'https://toyyibpay.com/'+data[0].BillCode});
- }catch(e){res.status(400).json({ok:false,error:e.message})}
-});
-app.post("/api/toyyib-callback",(req,res)=>{res.json({ok:true})});
+// Legacy /api/create-toyyib-bill removed. Use /api/toyyib/create-bill.
 
 app.use((err, req, res, next) => {
   res.status(400).json({ ok: false, error: err.message || "Server error" });
