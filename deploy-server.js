@@ -374,6 +374,39 @@ function readBody(req) {
   });
 }
 
+function parseRequestBody(raw = "") {
+  const text = String(raw || "").trim();
+  if (!text) return {};
+  try { return JSON.parse(text); } catch (_) {}
+  const out = {};
+  try {
+    const params = new URLSearchParams(text);
+    for (const [key, value] of params.entries()) out[key] = value;
+  } catch (_) {}
+  return out;
+}
+
+function toyyibStatusIsPaid(data = {}) {
+  const values = [
+    data.status_id,
+    data.status,
+    data.billpaymentStatus,
+    data.billPaymentStatus,
+    data.payment_status,
+    data.paymentStatus,
+    data.transaction_status
+  ].map(v => String(v ?? "").trim().toLowerCase());
+  return values.some(v => v === "1" || v === "paid" || v === "success" || v === "successful");
+}
+
+function getToyyibBillCode(data = {}) {
+  return cleanPremiumText(data.billcode || data.billCode || data.bill_code || data.BillCode || data.billcode_id || data.refno || "", 80);
+}
+
+function getToyyibOrderId(data = {}) {
+  return cleanPremiumText(data.order_id || data.orderId || data.externalReferenceNo || data.billExternalReferenceNo || data.bill_external_reference_no || data.referenceNo || "", 120);
+}
+
 function mimeType(filePath) {
 
   const ext = path.extname(filePath).toLowerCase();
@@ -1095,8 +1128,8 @@ async function handler(req, res) {
 
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST") {
       let data = {};
-      try { data = JSON.parse((await readBody(req)) || "{}"); }
-      catch (e) { return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Invalid JSON" }), "application/json"); }
+      try { data = parseRequestBody(await readBody(req)); }
+      catch (e) { return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Invalid request body" }), "application/json"); }
 
       try {
         if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
@@ -1167,20 +1200,42 @@ async function handler(req, res) {
       return send(res, 200, JSON.stringify({ ok:true, paid:false, orderId:order.orderId, status:order.status || "pending", billCode:order.billCode, paymentUrl:order.paymentUrl }, null, 2), "application/json");
     }
 
-    if (pathname === "/api/toyyib-callback" && req.method === "POST") {
-      let data = {};
-      try { data = JSON.parse((await readBody(req)) || "{}"); } catch (_) { data = {}; }
-      if (!Object.keys(data).length) {
-        // ToyyibPay may send form-urlencoded; parse fallback from raw body already lost? Keep JSON route safe.
+    if (pathname === "/api/toyyib-callback" && (req.method === "POST" || req.method === "GET")) {
+      let data = { ...(parsed.query || {}) };
+      if (req.method === "POST") {
+        const raw = await readBody(req);
+        data = { ...data, ...parseRequestBody(raw) };
       }
-      const billCode = cleanPremiumText(data.billcode || data.billCode || data.bill_code || "", 80);
-      const orderId = cleanPremiumText(data.order_id || data.orderId || data.externalReferenceNo || "", 120);
+      console.log("ToyyibPay callback received:", JSON.stringify(data).slice(0, 1500));
+
+      const billCode = getToyyibBillCode(data);
+      const orderId = getToyyibOrderId(data);
       let order = findPremiumOrderByAny({ orderId, billCode });
-      if (order) {
-        order = await refreshToyyibOrder(order, req);
-        if (order.status === "paid") return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+
+      if (!order) {
+        console.warn("ToyyibPay callback order not found:", JSON.stringify({ orderId, billCode }).slice(0, 500));
+        return send(res, 200, JSON.stringify({ ok:true, status:"received", note:"order_not_found" }), "application/json");
       }
-      return send(res, 200, JSON.stringify({ ok:true, status:"received" }), "application/json");
+
+      if (toyyibStatusIsPaid(data)) {
+        order = upsertPremiumOrder({
+          ...order,
+          status: "paid",
+          paymentMethod: "toyyibpay",
+          paymentReference: data.transaction_id || data.billpaymentInvoiceNo || data.refno || data.order_id || order.paymentReference || "",
+          toyyibCallback: data,
+          paidAt: new Date().toISOString()
+        });
+        order = makeDownloadForOrder(order);
+        await maybeSendDownloadEmail(order, req);
+        const latest = findPremiumOrderByAny({ orderId: order.orderId }) || order;
+        console.log("ToyyibPay callback processed paid:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
+        return send(res, 200, JSON.stringify({ ok:true, status:"paid", emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
+      }
+
+      order = await refreshToyyibOrder(order, req);
+      if (order.status === "paid") return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+      return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false }), "application/json");
     }
 
 
