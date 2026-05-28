@@ -74,23 +74,54 @@ function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
 }
 async function maybeSendDownloadEmail(order, req) {
   try {
-    const email = cleanPremiumText(order?.user?.email || order?.buyerEmail || order?.email || "", 180); console.log("AZOBSS EMAIL TARGET:", email || "NO_EMAIL");
-    if (!email || order.emailSentAt || !order.downloadToken || !mailReady()) return order;
+    let current = order || {};
+    const email = cleanPremiumText(current?.user?.email || current?.buyerEmail || current?.email || current?.billEmail || "", 180);
+    const realDownloadLink = cleanPremiumUrl(
+      current.downloadLink ||
+      current.premiumDownloadFileLink ||
+      current.secureDownloadLink ||
+      current.privateDownloadLink ||
+      current.downloadUrl ||
+      ""
+    );
+
+    console.log("AZOBSS EMAIL TARGET:", email || "NO_EMAIL");
+    console.log("AZOBSS DOWNLOAD LINK:", realDownloadLink || "NO_DOWNLOAD_LINK");
+    console.log("AZOBSS MAIL READY:", mailReady() ? "YES" : "NO", JSON.stringify({
+      nodemailer: !!nodemailer,
+      SMTP_HOST: !!process.env.SMTP_HOST,
+      SMTP_PORT: !!process.env.SMTP_PORT,
+      SMTP_USER: !!process.env.SMTP_USER,
+      SMTP_PASS: !!process.env.SMTP_PASS
+    }));
+
+    if (!email) return upsertPremiumOrder({ ...current, emailError: "Buyer email missing", emailErrorAt: new Date().toISOString() });
+    if (!realDownloadLink) return upsertPremiumOrder({ ...current, emailError: "Premium Download File Link missing", emailErrorAt: new Date().toISOString() });
+    if (current.emailSentAt) return current;
+    if (!mailReady()) return upsertPremiumOrder({ ...current, emailError: "SMTP not ready. Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and nodemailer dependency.", emailErrorAt: new Date().toISOString() });
+
+    // Ensure the order and token always carry the real premium download target.
+    current = upsertPremiumOrder({ ...current, email, buyerEmail: email, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink });
+    current = makeDownloadForOrder(current);
+
     const base = publicBaseUrlFromReq(req);
-    const downloadUrl = `${base}/api/premium/download/${encodeURIComponent(order.downloadToken)}`;
-    const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}`;
-    console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:order.orderId,email,downloadToken:order.downloadToken}).slice(0,500));
+    const downloadUrl = `${base}/api/premium/download/${encodeURIComponent(current.downloadToken)}`;
+    const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(current.orderId)}`;
+    console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:current.orderId,email,downloadToken:current.downloadToken,downloadLink:realDownloadLink}).slice(0,800));
+
     await makeMailer().sendMail({
       from: process.env.MAIL_FROM || process.env.SMTP_USER,
       to: email,
-      subject: `AZOBSS Download Ready - ${cleanPremiumText(order.productName || "Digital Product", 80)}`,
-      html: buildAzobssDownloadEmail(order, downloadUrl, receiptUrl),
-      text: `AZOBSS Download Ready\n\nProduct: ${order.productName}\nOrder ID: ${order.orderId}\nDownload: ${downloadUrl}\nReceipt: ${receiptUrl}\n\nLink auto-expire selepas download pertama.`
+      subject: `AZOBSS Download Ready - ${cleanPremiumText(current.productName || "Digital Product", 80)}`,
+      html: buildAzobssDownloadEmail(current, downloadUrl, receiptUrl),
+      text: `AZOBSS Download Ready\n\nProduct: ${current.productName}\nOrder ID: ${current.orderId}\nDownload: ${downloadUrl}\nReceipt: ${receiptUrl}\n\nLink auto-expire selepas download pertama.`
     });
-    return upsertPremiumOrder({ ...order, emailSentAt: new Date().toISOString(), emailTo: email });
+
+    console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email }).slice(0,500));
+    return upsertPremiumOrder({ ...current, emailSentAt: new Date().toISOString(), emailTo: email, emailError: null });
   } catch (e) {
-    console.error("SMTP send failed:", e.message);
-    return upsertPremiumOrder({ ...order, emailError: e.message, emailErrorAt: new Date().toISOString() });
+    console.error("SMTP send failed:", e && (e.stack || e.message || e));
+    return upsertPremiumOrder({ ...(order || {}), emailError: e.message || String(e), emailErrorAt: new Date().toISOString() });
   }
 }
 function makeDownloadForOrder(order) {
@@ -99,8 +130,9 @@ function makeDownloadForOrder(order) {
   const now = Date.now();
   const expiryHours = Math.max(1, Math.min(24 * 30, Number(order.expiryHours || 24)));
   const expiresAtMs = now + expiryHours * 60 * 60 * 1000;
-  savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: order.downloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload: 1 });
-  return upsertPremiumOrder({ ...order, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload: 1 });
+  const realDownloadLink = cleanPremiumUrl(order.downloadLink || order.premiumDownloadFileLink || order.secureDownloadLink || order.privateDownloadLink || order.downloadUrl || "");
+  savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload: 1 });
+  return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload: 1 });
 }
 async function refreshToyyibOrder(order, req) {
   if (!order || !order.billCode) return order;
