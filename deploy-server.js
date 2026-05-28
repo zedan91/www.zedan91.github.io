@@ -182,8 +182,10 @@ function getRatingVoterIdFromBody(req, body) {
   return "ip_" + crypto.createHash("sha256").update(ip).digest("hex").slice(0, 24);
 }
 
-const sharp = require("sharp");
-const PDFDocument = require("pdfkit");
+let sharp = null;
+let PDFDocument = null;
+try { sharp = require("sharp"); } catch {}
+try { PDFDocument = require("pdfkit"); } catch {}
 
 let firebaseAdmin = null;
 try {
