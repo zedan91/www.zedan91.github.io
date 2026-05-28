@@ -2623,7 +2623,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
       ${productIdMeta}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-divider"></span><span class="az-btn-icon">🛒</span><span class="buy-text">Buy Now</span>` : '<span class="az-btn-icon">⬇</span><span class="download-text">Download Now</span>'}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-divider"></span><span class="az-btn-icon">🛒</span><span class="buy-text">Buy Now</span>` : '<span class="az-btn-icon">⬇</span><span class="download-text">Download Now</span>'}</a>
       ${adminEdit}
     </div>`;
   }
@@ -3381,7 +3381,10 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          product: currentProduct,
+          product: {...currentProduct, premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink, secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink, downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink},
+          premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
+          secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
+          downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink,
           user: {...storedUser(), email},
           buyerEmail: email,
           email: email,
@@ -3436,8 +3439,10 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       price: trigger.dataset.productPrice || 'RM0',
       paymentLink: trigger.dataset.paymentLink || '',
       stripeLink: trigger.dataset.stripeLink || '',
-      secureDownloadLink: trigger.dataset.downloadLink || '',
-      downloadLink: trigger.dataset.downloadLink || '',
+      secureDownloadLink: trigger.dataset.downloadLink || trigger.dataset.premiumDownloadFileLink || '',
+      premiumDownloadFileLink: trigger.dataset.premiumDownloadFileLink || trigger.dataset.downloadLink || '',
+      privateDownloadLink: trigger.dataset.premiumDownloadFileLink || trigger.dataset.downloadLink || '',
+      downloadLink: trigger.dataset.downloadLink || trigger.dataset.premiumDownloadFileLink || '',
       downloadLimit: Number(trigger.dataset.downloadLimit || 3),
       expiryHours: Number(trigger.dataset.expiryHours ?? 24)
     };
@@ -4149,6 +4154,34 @@ async function verifyToyyibPayment(billCode){
 
   cleanPaymentPopupHiddenTabs();
   new MutationObserver(cleanPaymentPopupHiddenTabs).observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
+
+
+<script id="azobss-auto-email-after-toyyibpay-return">
+(function(){
+  if (window.__azobssAutoVerifyPaymentReturn) return;
+  window.__azobssAutoVerifyPaymentReturn = true;
+  async function run(){
+    try{
+      const billCode = localStorage.getItem('azobss_last_bill_code') || '';
+      const orderId = localStorage.getItem('azobss_last_order_id') || '';
+      if(!billCode && !orderId) return;
+      const key = 'azobss_verified_' + (orderId || billCode);
+      if(sessionStorage.getItem(key)) return;
+      const api = window.API_BASE_URL || window.AZOBSS_BACKEND_URL || 'https://azobss-backend.onrender.com';
+      const qs = new URLSearchParams();
+      if(billCode) qs.set('billCode', billCode);
+      if(orderId) qs.set('orderId', orderId);
+      const res = await fetch(api + '/api/verify-payment?' + qs.toString(), {cache:'no-store'});
+      const data = await res.json().catch(()=>null);
+      if(data && (data.paid === true || data.status === 'paid')){
+        sessionStorage.setItem(key, '1');
+        console.log('AZOBSS payment verified; email trigger status:', data.emailSent, data.emailError || '');
+      }
+    }catch(e){ console.warn('AZOBSS auto verify skipped:', e && e.message ? e.message : e); }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(run, 1200)); else setTimeout(run, 1200);
 })();
 </script>
 

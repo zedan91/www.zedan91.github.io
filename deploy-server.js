@@ -70,7 +70,7 @@ function makeMailer() {
 }
 function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
-  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Terima kasih. Pembayaran anda telah berjaya disahkan.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#b45309"><b>Important:</b> Link ini akan auto-expire selepas download pertama. Jika tidak digunakan, link akan tamat tempoh pada ${expires}.</p><p><a href="${receiptUrl}">View receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Terima kasih. Pembayaran anda telah berjaya disahkan.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will redirect to your Premium Download File Link after verification.</p><p style="color:#b45309"><b>Important:</b> Link ini akan auto-expire selepas download pertama. Jika tidak digunakan, link akan tamat tempoh pada ${expires}.</p><p><a href="${receiptUrl}">View receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
 }
 async function maybeSendDownloadEmail(order, req) {
   try {
@@ -1140,7 +1140,18 @@ async function handler(req, res) {
         const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), 160);
         const amountText = cleanPremiumText(product.price || data.amount || data.price || "", 40);
         const amountSen = parseAmountToSen(amountText);
-        const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink || data.fileUrl || "");
+        const downloadLink = cleanPremiumUrl(
+          product.secureDownloadLink ||
+          product.premiumDownloadFileLink ||
+          product.privateDownloadLink ||
+          product.downloadLink ||
+          data.secureDownloadLink ||
+          data.premiumDownloadFileLink ||
+          data.privateDownloadLink ||
+          data.downloadLink ||
+          data.fileUrl ||
+          ""
+        );
         const user = getPremiumUser(data);
         if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing product name or valid amount." }, null, 2), "application/json");
         if (!downloadLink) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Download link belum diset untuk produk ini." }, null, 2), "application/json");
@@ -1196,7 +1207,11 @@ async function handler(req, res) {
       let order = findPremiumOrderByAny({ orderId, billCode });
       if (!order) return send(res, 404, JSON.stringify({ ok:false, paid:false, status:"order_not_found", error:"Order not found" }, null, 2), "application/json");
       if (order.status !== "paid") order = await refreshToyyibOrder(order, req);
-      if (order.status === "paid") return send(res, 200, JSON.stringify(paidPayload(order, req), null, 2), "application/json");
+      if (order.status === "paid") {
+        order = makeDownloadForOrder(order);
+        if (!order.emailSentAt) order = await maybeSendDownloadEmail(order, req);
+        return send(res, 200, JSON.stringify({ ...paidPayload(order, req), emailSent: !!order.emailSentAt, emailError: order.emailError || null, emailTo: order.emailTo || order.user?.email || order.email || null }, null, 2), "application/json");
+      }
       return send(res, 200, JSON.stringify({ ok:true, paid:false, orderId:order.orderId, status:order.status || "pending", billCode:order.billCode, paymentUrl:order.paymentUrl }, null, 2), "application/json");
     }
 

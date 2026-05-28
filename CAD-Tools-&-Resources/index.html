@@ -1920,7 +1920,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       ${metaHtml}
       <p>${esc(clean.description)}</p>
       ${gifHtml}
-      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-premium-download-file-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
       ${adminEdit}
     </article>`;
   }
@@ -2123,7 +2123,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       localStorage.setItem('azobss_last_checkout_page', returnUrl);
       const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({product:currentProduct,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',returnUrl})
+        body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',returnUrl})
       });
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
       if(!res.ok || !data.ok || !data.paymentUrl){
@@ -2146,7 +2146,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const email = buyerEmail();
     completeBtn.disabled=true; completeBtn.textContent='Processing...';
     try{
-      const res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:currentProduct,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
+      const res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
       if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
       const downloadUrl = toAbsolute(data.downloadUrl);
@@ -2160,7 +2160,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
     if(!trigger)return;
     e.preventDefault();
-    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',stripeLink:trigger.dataset.stripeLink||'',secureDownloadLink:trigger.dataset.downloadLink||''};
+    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',stripeLink:trigger.dataset.stripeLink||'',secureDownloadLink:trigger.dataset.downloadLink||trigger.dataset.premiumDownloadFileLink||'',premiumDownloadFileLink:trigger.dataset.premiumDownloadFileLink||trigger.dataset.downloadLink||'',privateDownloadLink:trigger.dataset.premiumDownloadFileLink||trigger.dataset.downloadLink||'',downloadLink:trigger.dataset.downloadLink||trigger.dataset.premiumDownloadFileLink||''};
     open(product);
   });
 })();
@@ -2228,6 +2228,34 @@ async function verifyToyyibPayment(billCode){
 
   cleanPaymentPopupHiddenTabs();
   new MutationObserver(cleanPaymentPopupHiddenTabs).observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
+
+
+<script id="azobss-auto-email-after-toyyibpay-return">
+(function(){
+  if (window.__azobssAutoVerifyPaymentReturn) return;
+  window.__azobssAutoVerifyPaymentReturn = true;
+  async function run(){
+    try{
+      const billCode = localStorage.getItem('azobss_last_bill_code') || '';
+      const orderId = localStorage.getItem('azobss_last_order_id') || '';
+      if(!billCode && !orderId) return;
+      const key = 'azobss_verified_' + (orderId || billCode);
+      if(sessionStorage.getItem(key)) return;
+      const api = window.API_BASE_URL || window.AZOBSS_BACKEND_URL || 'https://azobss-backend.onrender.com';
+      const qs = new URLSearchParams();
+      if(billCode) qs.set('billCode', billCode);
+      if(orderId) qs.set('orderId', orderId);
+      const res = await fetch(api + '/api/verify-payment?' + qs.toString(), {cache:'no-store'});
+      const data = await res.json().catch(()=>null);
+      if(data && (data.paid === true || data.status === 'paid')){
+        sessionStorage.setItem(key, '1');
+        console.log('AZOBSS payment verified; email trigger status:', data.emailSent, data.emailError || '');
+      }
+    }catch(e){ console.warn('AZOBSS auto verify skipped:', e && e.message ? e.message : e); }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(run, 1200)); else setTimeout(run, 1200);
 })();
 </script>
 
