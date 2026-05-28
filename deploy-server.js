@@ -62,9 +62,14 @@ function upsertPremiumOrder(order) {
 function findPremiumOrderByAny(ref = {}) {
   return readPremiumOrders().find(o => (ref.orderId && o.orderId === ref.orderId) || (ref.billCode && o.billCode === ref.billCode) || (ref.billcode && o.billCode === ref.billcode)) || null;
 }
-function mailReady() { return !!(nodemailer && process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS); }
+function getBrevoApiKey() {
+  return String(process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || "").trim();
+}
+function brevoApiReady() { return !!getBrevoApiKey(); }
+function smtpReady() { return !!(nodemailer && process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS); }
+function mailReady() { return brevoApiReady() || smtpReady(); }
 function makeMailer() {
-  if (!mailReady()) return null;
+  if (!smtpReady()) return null;
 
   const port = Number(process.env.SMTP_PORT || 587);
   const secureEnv = String(process.env.SMTP_SECURE || "").trim().toLowerCase();
@@ -83,6 +88,37 @@ function makeMailer() {
     greetingTimeout: 30000,
     socketTimeout: 30000
   });
+}
+async function sendBrevoApiEmail({ to, subject, html, text }) {
+  const apiKey = getBrevoApiKey();
+  if (!apiKey) throw new Error("BREVO_API_KEY missing");
+  const fromEmail = cleanPremiumText(process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "", 180);
+  if (!fromEmail) throw new Error("MAIL_FROM missing");
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "accept": "application/json",
+      "api-key": apiKey,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      sender: { name: process.env.MAIL_FROM_NAME || "AZOBSS", email: fromEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text
+    })
+  });
+
+  const bodyText = await response.text();
+  let bodyJson = null;
+  try { bodyJson = JSON.parse(bodyText); } catch (_) {}
+  if (!response.ok) {
+    const message = bodyJson && (bodyJson.message || bodyJson.error) ? (bodyJson.message || bodyJson.error) : bodyText;
+    throw new Error(`Brevo API ${response.status}: ${String(message).slice(0, 500)}`);
+  }
+  return bodyJson || { raw: bodyText };
 }
 function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
@@ -104,17 +140,19 @@ async function maybeSendDownloadEmail(order, req) {
     console.log("AZOBSS EMAIL TARGET:", email || "NO_EMAIL");
     console.log("AZOBSS DOWNLOAD LINK:", realDownloadLink || "NO_DOWNLOAD_LINK");
     console.log("AZOBSS MAIL READY:", mailReady() ? "YES" : "NO", JSON.stringify({
+      brevoApi: brevoApiReady(),
       nodemailer: !!nodemailer,
       SMTP_HOST: !!process.env.SMTP_HOST,
       SMTP_PORT: !!process.env.SMTP_PORT,
       SMTP_USER: !!process.env.SMTP_USER,
-      SMTP_PASS: !!process.env.SMTP_PASS
+      SMTP_PASS: !!process.env.SMTP_PASS,
+      BREVO_API_KEY: !!getBrevoApiKey()
     }));
 
     if (!email) return upsertPremiumOrder({ ...current, emailError: "Buyer email missing", emailErrorAt: new Date().toISOString() });
     if (!realDownloadLink) return upsertPremiumOrder({ ...current, emailError: "Premium Download File Link missing", emailErrorAt: new Date().toISOString() });
     if (current.emailSentAt) return current;
-    if (!mailReady()) return upsertPremiumOrder({ ...current, emailError: "SMTP not ready. Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and nodemailer dependency.", emailErrorAt: new Date().toISOString() });
+    if (!mailReady()) return upsertPremiumOrder({ ...current, emailError: "Email not ready. Set BREVO_API_KEY + MAIL_FROM, or SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS.", emailErrorAt: new Date().toISOString() });
 
     // Ensure the order and token always carry the real premium download target.
     current = upsertPremiumOrder({ ...current, email, buyerEmail: email, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink });
@@ -125,29 +163,48 @@ async function maybeSendDownloadEmail(order, req) {
     const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(current.orderId)}`;
     console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:current.orderId,email,downloadToken:current.downloadToken,downloadLink:realDownloadLink}).slice(0,800));
 
-    const transporter = makeMailer();
-    console.log("AZOBSS SMTP CONFIG", JSON.stringify({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: String(process.env.SMTP_SECURE || "").trim().toLowerCase() || (Number(process.env.SMTP_PORT || 587) === 465 ? "auto-true" : "auto-false"),
-      requireTLS: Number(process.env.SMTP_PORT || 587) === 587
-    }));
+    const subject = `AZOBSS Download Ready - ${cleanPremiumText(current.productName || "Digital Product", 80)}`;
+    const html = buildAzobssDownloadEmail(current, downloadUrl, receiptUrl);
+    const text = `AZOBSS Download Ready
 
-    await transporter.verify();
-    console.log("AZOBSS SMTP VERIFY OK");
+Product: ${current.productName}
+Order ID: ${current.orderId}
+Download: ${downloadUrl}
+Receipt: ${receiptUrl}
 
-    const sendInfo = await transporter.sendMail({
-      from: process.env.MAIL_FROM || process.env.SMTP_USER,
-      to: email,
-      subject: `AZOBSS Download Ready - ${cleanPremiumText(current.productName || "Digital Product", 80)}`,
-      html: buildAzobssDownloadEmail(current, downloadUrl, receiptUrl),
-      text: `AZOBSS Download Ready\n\nProduct: ${current.productName}\nOrder ID: ${current.orderId}\nDownload: ${downloadUrl}\nReceipt: ${receiptUrl}\n\nLink auto-expire selepas download pertama.`
-    });
+Link auto-expire selepas download pertama.`;
 
-    console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email, messageId: sendInfo && sendInfo.messageId || null }).slice(0,500));
+    let sendInfo = null;
+    if (brevoApiReady()) {
+      console.log("AZOBSS BREVO API SEND START", JSON.stringify({ orderId: current.orderId, email, from: process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "" }).slice(0,500));
+      sendInfo = await sendBrevoApiEmail({ to: email, subject, html, text });
+      console.log("AZOBSS BREVO API SENT OK", JSON.stringify({ orderId: current.orderId, email, response: sendInfo }).slice(0,800));
+    } else {
+      const transporter = makeMailer();
+      console.log("AZOBSS SMTP CONFIG", JSON.stringify({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: String(process.env.SMTP_SECURE || "").trim().toLowerCase() || (Number(process.env.SMTP_PORT || 587) === 465 ? "auto-true" : "auto-false"),
+        requireTLS: Number(process.env.SMTP_PORT || 587) === 587
+      }));
+
+      await transporter.verify();
+      console.log("AZOBSS SMTP VERIFY OK");
+
+      sendInfo = await transporter.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: email,
+        subject,
+        html,
+        text
+      });
+      console.log("AZOBSS SMTP EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email, messageId: sendInfo && sendInfo.messageId || null }).slice(0,500));
+    }
+
+    console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email, via: brevoApiReady() ? "brevo-api" : "smtp" }).slice(0,500));
     return upsertPremiumOrder({ ...current, emailSentAt: new Date().toISOString(), emailTo: email, emailError: null });
   } catch (e) {
-    console.error("SMTP send failed:", e && (e.stack || e.message || e));
+    console.error("AZOBSS email send failed:", e && (e.stack || e.message || e));
     return upsertPremiumOrder({ ...(order || {}), emailError: e.message || String(e), emailErrorAt: new Date().toISOString() });
   }
 }
