@@ -74,11 +74,12 @@ function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
 }
 async function maybeSendDownloadEmail(order, req) {
   try {
-    const email = cleanPremiumText(order?.user?.email || order?.email || "", 180);
+    const email = cleanPremiumText(order?.user?.email || order?.buyerEmail || order?.email || "", 180); console.log("AZOBSS EMAIL TARGET:", email || "NO_EMAIL");
     if (!email || order.emailSentAt || !order.downloadToken || !mailReady()) return order;
     const base = publicBaseUrlFromReq(req);
     const downloadUrl = `${base}/api/premium/download/${encodeURIComponent(order.downloadToken)}`;
     const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}`;
+    console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:order.orderId,email,downloadToken:order.downloadToken}).slice(0,500));
     await makeMailer().sendMail({
       from: process.env.MAIL_FROM || process.env.SMTP_USER,
       to: email,
@@ -1193,7 +1194,7 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user, downloadLink, maxDownload:1, expiryHours:24, createdAt:new Date().toISOString() });
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", premiumDownloadFileLink: downloadLink, downloadLink, maxDownload:1, expiryHours:24, createdAt:new Date().toISOString() });
         return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
