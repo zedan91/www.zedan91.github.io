@@ -1,0 +1,11 @@
+AZOBSS PA/BM Invite Code Sync Fix
+
+Fixed the PA/BM access mismatch:
+- Member/invite code ZX6186 now saves to Firestore as PA/BM access fields during signup.
+- Admin Registered User Records now reads the same access logic as the navbar.
+- Admin Edit User now saves paBmAccess / paBmAllowed / allowPABM / paAccess consistently.
+- Navbar no longer relies on old localStorage/sessionStorage invite-code cache, so PA/BM tab will follow Firestore profile status.
+
+For old users already created before this fix:
+- If they used ZX6186 but show PA/BM off, edit them in admin panel and set Allow PA/BM Access = Yes once.
+- Or manually set users/{username}: paBmAccess=true, paBmAllowed=true, allowPABM=true, paAccess="yes".

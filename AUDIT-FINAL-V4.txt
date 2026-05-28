@@ -1,0 +1,8 @@
+AZOBSS final audit v4
+- All HTML files include /assets/js/azobss-global-auth.js
+- Broken local href/src scan: 0
+- Old index.html#login / index.html#signup redirects: 0
+- Legacy local firebase-auth.js include: 0
+- Duplicate old Profile / My Sales menu wording: 0
+- JavaScript syntax check with node --check: pass
+- Fixed lucky-draw Login/Register button control-character attribute issue

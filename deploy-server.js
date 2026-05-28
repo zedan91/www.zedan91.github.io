@@ -65,27 +65,8 @@ function findPremiumOrderByAny(ref = {}) {
 function mailReady() { return !!(nodemailer && process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS); }
 function makeMailer() {
   if (!mailReady()) return null;
-
   const port = Number(process.env.SMTP_PORT || 587);
-  const secureEnv = String(process.env.SMTP_SECURE || "").trim().toLowerCase();
-  const secure = secureEnv ? ["1", "true", "yes", "on"].includes(secureEnv) : port === 465;
-
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port,
-    secure,
-    requireTLS: port === 587,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
+  return nodemailer.createTransport({ host: process.env.SMTP_HOST, port, secure: port === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
 }
 function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
@@ -128,18 +109,7 @@ async function maybeSendDownloadEmail(order, req) {
     const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(current.orderId)}`;
     console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:current.orderId,email,downloadToken:current.downloadToken,downloadLink:realDownloadLink}).slice(0,800));
 
-    const transporter = makeMailer();
-    console.log("AZOBSS SMTP CONFIG", JSON.stringify({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: String(process.env.SMTP_SECURE || "").trim().toLowerCase() || (Number(process.env.SMTP_PORT || 587) === 465 ? "auto-true" : "auto-false"),
-      requireTLS: Number(process.env.SMTP_PORT || 587) === 587
-    }));
-
-    await transporter.verify();
-    console.log("AZOBSS SMTP VERIFY OK");
-
-    const sendInfo = await transporter.sendMail({
+    await makeMailer().sendMail({
       from: process.env.MAIL_FROM || process.env.SMTP_USER,
       to: email,
       subject: `AZOBSS Download Ready - ${cleanPremiumText(current.productName || "Digital Product", 80)}`,
@@ -147,7 +117,7 @@ async function maybeSendDownloadEmail(order, req) {
       text: `AZOBSS Download Ready\n\nProduct: ${current.productName}\nOrder ID: ${current.orderId}\nDownload: ${downloadUrl}\nReceipt: ${receiptUrl}\n\nLink auto-expire selepas download pertama.`
     });
 
-    console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email, messageId: sendInfo && sendInfo.messageId || null }).slice(0,500));
+    console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email }).slice(0,500));
     return upsertPremiumOrder({ ...current, emailSentAt: new Date().toISOString(), emailTo: email, emailError: null });
   } catch (e) {
     console.error("SMTP send failed:", e && (e.stack || e.message || e));

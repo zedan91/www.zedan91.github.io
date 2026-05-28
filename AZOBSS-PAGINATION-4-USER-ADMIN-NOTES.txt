@@ -1,0 +1,6 @@
+AZOBSS pagination update
+- Purchase records for admin: 4 user cards per page.
+- Purchase records for normal user/member: 4 purchase items per page.
+- Pagination auto hides when records are 4 or less.
+- Search/sort resets back to page 1.
+- Applies through /assets/js/azobss-global-auth.js.

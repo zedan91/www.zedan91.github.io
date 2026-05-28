@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RAM Usage Checker - AZOBSS Tools</title>
+<style>
+:root{--bg:#07111f;--card:#101c2d;--card2:#13243a;--text:#eef5ff;--muted:#9fb2c8;--accent:#25d366;--blue:#3b82f6;--warn:#facc15;--danger:#ef4444;--line:rgba(255,255,255,.1)}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#102544,#07111f 55%);color:var(--text);line-height:1.55}
+.header{padding:26px 16px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
+.header a{color:#9bd1ff;text-decoration:none}.wrap{max-width:1120px;margin:auto;padding:24px 16px}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+label{display:block;margin:10px 0 6px;color:var(--muted);font-weight:bold}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.13);background:#07111f;color:var(--text);outline:none}
+button,.btn{display:inline-block;padding:12px 16px;border:0;border-radius:12px;background:var(--blue);color:white;font-weight:bold;cursor:pointer;text-decoration:none;margin-top:12px}
+button:hover,.btn:hover{filter:brightness(1.1)}.result{margin-top:14px;padding:15px;border-radius:14px;background:#07111f;border:1px solid rgba(255,255,255,.1);white-space:pre-wrap}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(37,211,102,.15);color:#68ff9e;font-size:13px;margin:4px 4px 4px 0}
+.muted{color:var(--muted)}.footer{text-align:center;color:var(--muted);padding:30px 10px}
+.table{width:100%;border-collapse:collapse;margin-top:12px}.table th,.table td{border:1px solid rgba(255,255,255,.1);padding:10px;text-align:left}.table th{background:#0b1728}
+.copy{background:#22c55e}.small{font-size:13px}.good{color:#86efac}.warn{color:#fde047}.bad{color:#fca5a5}
+.kpi{display:grid;gap:8px;background:#07111f;border:1px solid var(--line);border-radius:14px;padding:14px}.kpi strong{font-size:22px;color:#68ff9e}
+ul{padding-left:20px}.pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.pill{padding:8px 10px;border-radius:999px;background:rgba(37,211,102,.12);color:#86efac;font-size:13px}
+</style>
+<style>
+/* SAFE HIDE: top marketplace/search strip only */
+form:has(input[placeholder*="Search for an item"]),
+div:has(> input[placeholder*="Search for an item"]),
+section:has(input[placeholder*="Search for an item"]),
+.marketplace-search,
+.search-strip,
+.search-bar,
+.top-search{
+  display:none !important;
+  height:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+</style>
+<style>
+/* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
+body{padding-top:54px !important;}
+.market-sticky-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;background:#000 !important;border-bottom:1px solid rgba(218,165,32,.45) !important;box-shadow:0 10px 24px rgba(0,0,0,.28) !important;}
+.market-bar-inner{width:100% !important;margin:0 !important;padding:0 26px 0 8px !important;box-sizing:border-box !important;}
+.market-main-row{min-height:48px !important;display:flex !important;align-items:center !important;gap:7px !important;flex-wrap:nowrap !important;}
+.market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;text-decoration:none !important;margin-left:0 !important;}
+.market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
+.market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow:hidden !important;white-space:nowrap !important;scrollbar-width:none !important;}
+.market-nav::-webkit-scrollbar{display:none !important;}
+.market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 10px !important;border:1px solid rgba(148,163,184,.28) !important;border-radius:999px !important;background:#0e1729 !important;color:#e5e7eb !important;text-decoration:none !important;font-size:clamp(11px,1vw,13px) !important;font-weight:800 !important;line-height:1 !important;white-space:nowrap !important;text-shadow:0 1px 8px rgba(0,0,0,.45) !important;box-shadow:none !important;}
+.market-nav a:hover{color:#14b8a6 !important;}
+.market-nav a.market-nav-primary{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;text-shadow:none !important;box-shadow:0 0 15px rgba(34,197,94,.34), inset 0 0 0 1px rgba(255,255,255,.12) !important;}
+.nav-pa-bm-link.is-hidden{display:none !important;}
+.nav-whatsapp-circle{width:38px !important;height:38px !important;min-width:38px !important;min-height:38px !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;background:#22c55e !important;color:#fff !important;font-size:0 !important;font-weight:900 !important;box-shadow:0 8px 20px rgba(34,197,94,.25) !important;vertical-align:middle !important;}
+.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !important;min-width:44px !important;max-width:44px !important;height:44px !important;padding:0 !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important;}
+.site-auth-actions{position:static !important;display:flex !important;align-items:center !important;gap:20px !important;flex:0 0 auto !important;z-index:auto !important;margin-left:auto !important;margin-right:10px !important;}
+.site-auth-btn{display:inline-flex !important;align-items:center !important;gap:0 !important;border:0 !important;border-radius:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;line-height:1 !important;text-decoration:none !important;cursor:pointer !important;transition:.2s !important;}
+.site-auth-btn:hover{color:#14b8a6 !important;}
+@media(max-width:760px){body{padding-top:92px !important;}.market-bar-inner{width:100% !important;padding:0 6px !important;}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important;}.market-brand{width:116px !important;height:30px !important;}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important;}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important;}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important;}.site-auth-btn{font-size:13px !important;white-space:nowrap !important;}}
+</style>
+<style>
+/* Secondary page auth state bridge */
+.market-user-tools{display:none;align-items:center !important;gap:20px !important;margin-left:auto !important;}
+body.is-authenticated .site-auth-actions{display:none !important;}
+body.is-authenticated .market-user-tools{display:flex !important;}
+body:not(.is-authenticated) .market-user-tools{display:none !important;}
+.user-menu{position:relative !important;display:flex !important;align-items:center !important;gap:8px !important;color:#fff !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;min-height:34px !important;}
+.user-avatar{display:inline-grid !important;place-items:center !important;width:26px !important;height:26px !important;border-radius:999px !important;border:1px solid rgba(20,184,166,.75) !important;background:#03121f !important;color:#fff !important;font-size:11px !important;font-weight:bold !important;text-transform:uppercase !important;}
+.user-name{white-space:nowrap !important;color:#fff !important;}
+.user-menu::after{content:"" !important;width:7px !important;height:7px !important;border-right:2px solid #cbd5e1 !important;border-bottom:2px solid #cbd5e1 !important;transform:rotate(45deg) translateY(-2px) !important;margin-left:2px !important;flex:0 0 auto !important;}
+.user-dropdown{position:absolute !important;top:calc(100% + 10px) !important;right:0 !important;min-width:190px !important;padding:8px !important;border:1px solid rgba(148,163,184,.22) !important;border-radius:14px !important;background:#08111f !important;box-shadow:0 18px 50px rgba(0,0,0,.45) !important;display:none !important;z-index:3300 !important;}
+.user-menu.is-open .user-dropdown{display:block !important;}
+.user-dropdown-section{padding:8px 10px 5px !important;color:#94a3b8 !important;font-size:11px !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:.08em !important;}
+.user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
+.user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
+@media(max-width:760px){.market-user-tools{gap:12px !important;margin-left:auto !important;}.user-name{max-width:120px !important;overflow:hidden !important;text-overflow:ellipsis !important;}}</style>
+<style>
+/* Stable CSS chat icon: avoids emoji/encoding corruption */
+.nav-whatsapp-circle{position:relative !important;font-size:0 !important;overflow:visible !important;}
+.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
+.nav-whatsapp-circle::after{content:"" !important;position:absolute !important;left:13px !important;top:23px !important;width:7px !important;height:7px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+.whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
+.whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
+.whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
+</style>
+
+<style id="azobss-pro-navbar-icons-css">
+.market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:nowrap;}
+.user-upgrade-btn{border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.14);color:#22c55e;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;}
+.market-icon-btn{display:inline-grid;place-items:center;width:28px;height:34px;color:#f8fafc;text-decoration:none;border:0;background:transparent;}
+.market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.market-icon-btn:hover{color:#22c55e;}
+@media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:hidden;text-overflow:ellipsis}}
+</style>
+
+<style id="azobss-pro-navbar-consistency-v1">
+/* AZOBSS PRO GLOBAL NAVBAR CONSISTENCY */
+.market-sticky-bar{
+  position:sticky!important;top:0!important;z-index:9999!important;
+  width:100%!important;background:#050607!important;border-bottom:1px solid #b6891d!important;
+  box-sizing:border-box!important;min-height:50px!important;
+}
+.market-bar-inner{
+  width:100%!important;max-width:none!important;margin:0!important;padding:5px 8px!important;box-sizing:border-box!important;
+}
+.market-main-row{
+  display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:38px!important;
+  flex-wrap:nowrap!important;white-space:nowrap!important;
+}
+.market-brand{
+  flex:0 0 154px!important;width:154px!important;height:38px!important;min-width:154px!important;max-width:154px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;
+  border-radius:999px!important;background:#0f172a!important;border:1px solid rgba(148,163,184,.35)!important;
+  margin:0!important;padding:0!important;box-sizing:border-box!important;text-decoration:none!important;
+}
+.market-brand img{
+  display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;margin:0!important;padding:0!important;
+}
+.market-nav{
+  display:flex!important;align-items:center!important;gap:7px!important;flex:1 1 auto!important;min-width:0!important;overflow-x:auto!important;
+  scrollbar-width:none!important;white-space:nowrap!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a,.market-nav button{
+  height:38px!important;min-height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:999px!important;padding:0 14px!important;line-height:1!important;box-sizing:border-box!important;
+  background:#111827!important;border:1px solid rgba(148,163,184,.45)!important;color:#fff!important;text-decoration:none!important;
+  font-size:14px!important;font-weight:800!important;box-shadow:inset 0 -1px 0 rgba(255,255,255,.08)!important;
+}
+.market-nav a.active,.market-nav a[aria-current="page"],.market-nav a.is-active{
+  background:#22c55e!important;color:#06120b!important;border-color:#16a34a!important;
+}
+.market-nav a:has(.nav-whatsapp-circle){
+  flex:0 0 44px!important;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;
+  padding:0!important;border-radius:999px!important;background:#22c55e!important;border:2px solid rgba(255,255,255,.16)!important;
+}
+.nav-whatsapp-circle{
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;
+}
+.nav-whatsapp-circle::before{content:"\1F4AC"!important;font-size:18px!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.site-auth-actions,.market-user-tools{
+  display:flex!important;align-items:center!important;gap:10px!important;flex:0 0 auto!important;margin-left:auto!important;white-space:nowrap!important;
+}
+.user-menu{height:38px!important;display:inline-flex!important;align-items:center!important;gap:8px!important;}
+.user-avatar{
+  width:26px!important;height:26px!important;min-width:26px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:11px!important;line-height:1!important;
+}
+.user-name{font-size:14px!important;font-weight:800!important;line-height:1!important;color:#fff!important;}
+.market-icon-btn{
+  width:28px!important;height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  color:#fff!important;background:transparent!important;border:0!important;padding:0!important;margin:0!important;
+}
+.market-icon-btn svg{width:24px!important;height:24px!important;stroke:currentColor!important;fill:none!important;stroke-width:2!important;}
+.market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
+.site-auth-btn{
+  height:34px!important;border-radius:999px!important;padding:0 13px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:14px!important;font-weight:800!important;line-height:1!important;
+}
+@media(max-width:780px){
+  .market-main-row{gap:6px!important;}
+  .market-brand{flex-basis:138px!important;width:138px!important;min-width:138px!important;max-width:138px!important;height:36px!important;}
+  .market-nav a,.market-nav button{height:36px!important;min-height:36px!important;padding:0 11px!important;font-size:13px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;}
+  .market-icon-btn{width:26px!important;}
+}
+</style>
+
+<style id="azobss-navbar-responsive-final-v2">
+/* AZOBSS final responsive navbar override */
+html,body{overflow-x:hidden!important;}
+body{padding-top:58px!important;}
+.market-sticky-bar{
+  position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;
+  min-height:49px!important;height:auto!important;z-index:5000!important;
+  background:#050807!important;border-bottom:1px solid rgba(234,179,8,.55)!important;
+  overflow:visible!important;box-sizing:border-box!important;
+}
+.market-bar-inner{width:100%!important;max-width:none!important;margin:0!important;padding:0 8px!important;box-sizing:border-box!important;}
+.market-main-row{
+  display:flex!important;align-items:center!important;gap:7px!important;min-height:48px!important;height:48px!important;
+  flex-wrap:nowrap!important;overflow:visible!important;width:100%!important;box-sizing:border-box!important;
+}
+.market-brand{
+  flex:0 0 auto!important;width:154px!important;max-width:154px!important;height:38px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;border-radius:999px!important;overflow:hidden!important;
+}
+.market-brand img{width:100%!important;height:100%!important;object-fit:contain!important;display:block!important;}
+.market-nav{
+  flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:center!important;gap:7px!important;
+  white-space:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;
+  -webkit-overflow-scrolling:touch!important;padding:0 2px!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a,.market-nav button{
+  flex:0 0 auto!important;height:34px!important;min-height:34px!important;max-height:34px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0 12px!important;border-radius:999px!important;box-sizing:border-box!important;
+  font-size:13px!important;font-weight:900!important;line-height:1!important;text-decoration:none!important;white-space:nowrap!important;
+}
+.market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;}
+.nav-whatsapp-circle{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;}
+.market-user-tools{
+  flex:0 0 auto!important;display:flex!important;align-items:center!important;gap:11px!important;margin-left:auto!important;
+  min-width:max-content!important;white-space:nowrap!important;overflow:visible!important;
+}
+.user-menu{height:34px!important;display:inline-flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important;}
+.user-avatar{width:28px!important;height:28px!important;min-width:28px!important;font-size:12px!important;}
+.user-name{font-size:14px!important;line-height:1!important;white-space:nowrap!important;max-width:140px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.market-icon-btn{width:24px!important;height:34px!important;min-width:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;flex:0 0 auto!important;}
+.market-icon-btn svg{width:23px!important;height:23px!important;stroke-width:2.2!important;}
+.site-auth-actions{position:static!important;display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important;flex:0 0 auto!important;z-index:auto!important;}
+.site-auth-btn{height:34px!important;min-height:34px!important;padding:0 12px!important;font-size:13px!important;line-height:1!important;border-radius:999px!important;}
+@media(max-width:980px){
+  body{padding-top:92px!important;}
+  .market-main-row{height:auto!important;min-height:48px!important;flex-wrap:wrap!important;align-content:center!important;padding:5px 0!important;}
+  .market-brand{width:132px!important;max-width:132px!important;height:34px!important;}
+  .market-user-tools{margin-left:auto!important;gap:9px!important;}
+  .user-name{max-width:115px!important;font-size:13px!important;}
+  .market-nav{order:3!important;flex:0 0 100%!important;width:100%!important;padding:4px 0 2px!important;}
+  .market-nav a,.market-nav button{height:32px!important;min-height:32px!important;padding:0 10px!important;font-size:12px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;}
+  .nav-whatsapp-circle{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;}
+}
+@media(max-width:560px){
+  body{padding-top:96px!important;}
+  .market-bar-inner{padding:0 6px!important;}
+  .market-brand{width:120px!important;max-width:120px!important;height:32px!important;}
+  .market-user-tools{gap:7px!important;}
+  .user-name{display:none!important;}
+  .market-icon-btn{width:22px!important;min-width:22px!important;}
+  .market-icon-btn svg{width:21px!important;height:21px!important;}
+  .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
+}
+</style>
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+
+<style id="azobss-pa-bm-access-lock-final">
+/* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
+.market-nav .nav-pa-bm-link[hidden],
+.market-nav .nav-pa-bm-link.is-hidden,
+a#paBmNavButton[hidden],
+a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+
+<style id="azobss-final-mobile-account-dropdown-fix">
+
+/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */
+.market-sticky-bar,
+.market-bar-inner,
+.market-main-row,
+.market-user-tools,
+.user-menu{
+  overflow:visible !important;
+}
+.user-menu{
+  position:relative !important;
+  z-index:100000 !important;
+}
+.user-menu .user-dropdown,
+#userDropdown{
+  position:absolute !important;
+  top:calc(100% + 10px) !important;
+  right:0 !important;
+  left:auto !important;
+  width:220px !important;
+  min-width:220px !important;
+  max-width:calc(100vw - 16px) !important;
+  padding:8px !important;
+  border-radius:14px !important;
+  background:#08111f !important;
+  border:1px solid rgba(148,163,184,.28) !important;
+  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;
+  z-index:100001 !important;
+  transform:none !important;
+}
+.user-menu:not(.is-open) .user-dropdown{display:none !important;}
+.user-menu.is-open .user-dropdown{display:block !important;}
+.user-dropdown-section{
+  padding:7px 10px 4px !important;
+  font-size:11px !important;
+  line-height:1.1 !important;
+}
+.user-dropdown-item{
+  min-height:38px !important;
+  padding:9px 10px !important;
+  font-size:13px !important;
+  line-height:1.15 !important;
+  border-radius:10px !important;
+}
+@media (max-width:768px){
+  .user-menu .user-dropdown,
+  #userDropdown{
+    position:fixed !important;
+    top:92px !important;
+    right:8px !important;
+    left:auto !important;
+    width:210px !important;
+    min-width:210px !important;
+    max-width:calc(100vw - 16px) !important;
+    max-height:68vh !important;
+    overflow-y:auto !important;
+    border-radius:14px !important;
+  }
+  .user-dropdown-section{
+    padding:7px 10px 4px !important;
+    font-size:10.5px !important;
+  }
+  .user-dropdown-item{
+    padding:9px 10px !important;
+    font-size:13px !important;
+    min-height:36px !important;
+  }
+}
+@media (max-width:420px){
+  .user-menu .user-dropdown,
+  #userDropdown{
+    top:88px !important;
+    right:6px !important;
+    width:196px !important;
+    min-width:196px !important;
+  }
+}
+
+</style>
+
+<style id="azobss-admin-compact-pagination-fix">
+/* AZOBSS admin compact lists: 4 records per page + smaller row bars */
+#registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
+#registeredUsersList .az-admin-user-row-card,
+#registeredUsersList .az-admin-user-compact-card,
+#liveUsersList .purchase-summary-item,
+#loginHistoryList .purchase-summary-item,
+#guestHistoryList .purchase-summary-item{
+  min-height:0!important;
+  padding:7px 10px!important;
+  border-radius:9px!important;
+  line-height:1.12!important;
+  font-size:12px!important;
+}
+#registeredUsersList .az-admin-user-compact-card{
+  display:grid!important;
+  grid-template-columns:minmax(145px,1fr) 105px 126px 92px!important;
+  gap:8px!important;
+  align-items:center!important;
+}
+#registeredUsersList .az-admin-user-compact-name strong{font-size:12px!important;}
+#registeredUsersList .az-admin-user-access-badge{font-size:10px!important;padding:2px 5px!important;white-space:nowrap!important;}
+#registeredUsersList .az-admin-register-date{font-size:11px!important;white-space:nowrap!important;}
+#registeredUsersList .az-admin-user-row-actions{display:flex!important;gap:6px!important;justify-content:flex-end!important;}
+#registeredUsersList .az-admin-small-btn{height:24px!important;min-width:50px!important;padding:0 8px!important;border-radius:6px!important;font-size:10px!important;}
+.admin-live-panel{margin-top:10px!important;padding-top:10px!important;}
+.admin-live-panel h4{font-size:14px!important;margin:0 0 8px!important;}
+.guest-history-stats{gap:8px!important;margin:0 0 8px!important;}
+.guest-history-stat{padding:6px 10px!important;border-radius:8px!important;font-size:11px!important;}
+.guest-history-stat strong{font-size:18px!important;margin-top:2px!important;}
+#liveUsersList .admin-purchase-user-card,
+#loginHistoryList .admin-purchase-user-card,
+#guestHistoryList .admin-purchase-user-card{gap:4px!important;}
+#liveUsersList .admin-purchase-user-top,
+#loginHistoryList .admin-purchase-user-top,
+#guestHistoryList .admin-purchase-user-top{
+  display:flex!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  align-items:center!important;
+}
+#liveUsersList .admin-purchase-user-top strong,
+#loginHistoryList .admin-purchase-user-top strong,
+#guestHistoryList .admin-purchase-user-top strong{font-size:12px!important;}
+#liveUsersList .admin-purchase-user-top span,
+#loginHistoryList .admin-purchase-user-top span,
+#guestHistoryList .admin-purchase-user-top span{font-size:11px!important;white-space:nowrap!important;}
+#liveUsersList .admin-purchase-user-details,
+#loginHistoryList .admin-purchase-user-details,
+#guestHistoryList .admin-purchase-user-details{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:5px 12px!important;
+  padding-top:4px!important;
+  border-top:0!important;
+  font-size:11px!important;
+  color:#cbd5e1!important;
+}
+.guest-history-pagination{gap:5px!important;margin-top:7px!important;align-items:center!important;}
+.guest-history-page-btn{min-width:28px!important;height:28px!important;padding:0 8px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important;}
+.guest-history-page-btn.is-compact{min-width:26px!important;height:26px!important;padding:0 7px!important;}
+.guest-history-page-dots{display:inline-flex!important;align-items:center!important;height:26px!important;padding:0 2px!important;color:#94a3b8!important;font-weight:bold!important;}
+@media(max-width:700px){
+  #registeredUsersList .az-admin-user-compact-card{grid-template-columns:1fr!important;}
+  #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
+}
+</style>
+<style>
+
+/* Performance fix: remove heavy shining/glow effect on service cards */
+.service-card::before,
+.service-card::after,
+.home-service-card::before,
+.home-service-card::after,
+.category-card::before,
+.category-card::after,
+.card::before,
+.card::after{
+  animation:none !important;
+  transition:none !important;
+  filter:none !important;
+  box-shadow:none !important;
+}
+
+/* Only hovered service card expands slightly; other cards stay normal */
+.service-card,
+.home-service-card,
+.category-card{
+  transition:transform .18s ease, border-color .18s ease, background .18s ease !important;
+  transform:none !important;
+}
+
+.service-card:hover,
+.home-service-card:hover,
+.category-card:hover{
+  transform:translateY(-4px) scale(1.02) !important;
+  z-index:5 !important;
+}
+
+/* Prevent neighbouring cards from expanding because of parent hover */
+.services-grid:hover .service-card:not(:hover),
+.services-grid:hover .home-service-card:not(:hover),
+.services-grid:hover .category-card:not(:hover),
+.service-grid:hover .service-card:not(:hover),
+.cards-grid:hover .service-card:not(:hover){
+  transform:none !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+/* Disable global hover scaling that affects multiple cards */
+.services-grid:hover,
+.service-grid:hover,
+.cards-grid:hover{
+  transform:none !important;
+}
+
+</style>
+</head>
+<body>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="/">
+<img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="/Software-Tools/">Software</a>
+<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/affiliate-shop/">Affiliate Shop</a>
+<a href="/lucky-draw/">Lucky Draw</a>
+<a  href="/tools/">Mini Web Tools</a>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
+<div class="user-dropdown-section">Account</div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
+</div>
+<a aria-label="Likes" class="market-icon-btn" href="/likes/">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+</a>
+<a aria-label="Cart" class="market-icon-btn" href="/affiliate-shop/">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+</a>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+</a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class="header"><h1>RAM Usage Checker</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="/tools/">&lt; Back to Tools</a>   |   <a href="/">Home</a></div>
+<div class="wrap">
+<div class="card"><p>Check RAM pressure and get upgrade suggestion.</p><div class="grid">
+<div><label>Total RAM (GB)</label><input id="total" type="number" value="8"/></div>
+<div><label>Used RAM (GB)</label><input id="used" step="any" type="number" value="6.5"/></div>
+<div><label>Main Usage</label><select id="usage"><option>Office / browsing</option><option>Gaming</option><option>Editing / design</option><option>Heavy multitasking</option></select></div>
+</div><div class="result" id="result"></div></div>
+<div class="card"><h2>RAM Capacity Guide</h2><table class="table"><tr><th>RAM</th><th>Suitable For</th></tr><tr><td>4GB</td><td>Very basic use only</td></tr><tr><td>8GB</td><td>Office, browsing, light work</td></tr><tr><td>16GB</td><td>Gaming and smooth daily use</td></tr><tr><td>32GB</td><td>Editing, AutoCAD, heavy multitasking</td></tr><tr><td>64GB+</td><td>Professional rendering, VM, large project</td></tr></table></div>
+</div>
+<div class="footer">(c) 2026 AZOBSS.COM - PC Tools &amp; Utilities</div>
+<script>
+function calc(){let t=+total.value||0,u=+used.value||0,p=t?u/t*100:0;let need=p>85?"High RAM pressure. Upgrade recommended.":p>70?"Moderate usage. Upgrade if PC feels slow.":"RAM usage looks okay.";let rec=usage.value==="Office / browsing"?"8GB - 16GB":usage.value==="Gaming"?"16GB - 32GB":usage.value==="Editing / design"?"32GB recommended":"32GB - 64GB";result.innerHTML=`RAM usage: <b>${p.toFixed(1)}%</b>\nAvailable RAM: <b>${Math.max(t-u,0).toFixed(1)} GB</b>\nStatus: <b>${need}</b>\nRecommended for ${usage.value}: <b>${rec}</b>\n\nTip: Check Task Manager > Processes to see which app uses the most memory.`}
+document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
+</script>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body></html>

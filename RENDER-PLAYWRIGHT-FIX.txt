@@ -1,0 +1,15 @@
+AZOBSS Render Playwright Fix
+
+Recommended Render settings:
+Build Command: npm install
+Start Command: npm start
+
+Why:
+- package.json postinstall runs: npx playwright install chromium
+- This avoids ./render-build.sh permission issues on Render Free.
+
+If you still use Build Command ./render-build.sh, this file is included and executable, but npm install is recommended.
+
+After deploy:
+- Open Render Logs and confirm Chromium install completed.
+- Hard refresh website with Ctrl+Shift+R.
