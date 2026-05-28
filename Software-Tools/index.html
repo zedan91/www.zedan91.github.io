@@ -3242,6 +3242,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 <script id="azobss-premium-flow-script">
 (function(){
+  const API_BASE = (localStorage.getItem('azobssPremiumBackendUrl') || localStorage.getItem('azobssSoftwareStatsBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
   const modal = document.getElementById('azobssPremiumPayModal');
   if(!modal || window.__azobssPremiumFlowReady) return;
   window.__azobssPremiumFlowReady = true;
@@ -3308,7 +3309,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function activePaymentLink(){
     if(!currentProduct) return '';
     if(currentMethod === 'stripe') return toAbsolute(currentProduct.stripeLink || '');
-    return toAbsolute(currentProduct.paymentLink || '');
+    // For Bank Transfer / FPX, payment link is generated dynamically by backend ToyyibPay API.
+    // Existing product paymentLink is only used as fallback if API fails.
+    return 'dynamic-toyyibpay';
   }
 
   function updateInstruction(){
@@ -3328,7 +3331,6 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       openPaymentBtn.textContent = 'Open Payment';
     }
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
-    if(completeBtn) completeBtn.textContent = 'Submit Proof';
   }
 
   function open(product){
@@ -3352,16 +3354,54 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     btn.addEventListener('click',()=>setActiveMethod(btn.dataset.method));
   });
 
-  openPaymentBtn?.addEventListener('click',()=>{
+  openPaymentBtn?.addEventListener('click', async ()=>{
     errorBox.textContent = '';
+    successBox.classList.remove('is-open');
     if(!requireBuyerEmail()) return;
-    const url = activePaymentLink();
-    if(!url){
-      errorBox.textContent = 'Payment link belum diset untuk item ini.';
+    if(!currentProduct){ errorBox.textContent = 'Product not found.'; return; }
+
+    // Stripe/external payment still uses its own link in same tab.
+    if(currentMethod === 'stripe'){
+      const url = toAbsolute(currentProduct.stripeLink || '');
+      if(!url){ errorBox.textContent = 'Stripe/payment link belum diset untuk item ini.'; return; }
+      localStorage.setItem('azobss_last_checkout_page', window.location.href);
+      window.location.href = url;
       return;
     }
-    localStorage.setItem('azobss_last_checkout_page', window.location.href);
-    window.location.href = url;
+
+    const email = buyerEmail();
+    const originalText = openPaymentBtn.textContent;
+    openPaymentBtn.disabled = true;
+    openPaymentBtn.textContent = 'Generating Payment...';
+    try{
+      const returnUrl = window.location.href.split('#')[0];
+      localStorage.setItem('azobss_last_checkout_page', returnUrl);
+      const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          product: currentProduct,
+          user: {...storedUser(), email},
+          buyerEmail: email,
+          returnUrl: returnUrl
+        })
+      });
+      const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+      if(!res.ok || !data.ok || !data.paymentUrl) throw new Error(data.error || 'Failed to generate ToyyibPay payment.');
+      if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
+      if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
+      window.location.href = data.paymentUrl;
+    }catch(err){
+      const fallback = toAbsolute(currentProduct.paymentLink || '');
+      errorBox.textContent = (err.message || 'Gagal generate payment.') + (fallback ? ' Fallback payment link available.' : '');
+      if(fallback){
+        successBox.innerHTML = `<b>Fallback available</b><br><span>Backend belum ready / env belum lengkap. Anda masih boleh buka payment link manual.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`;
+        successBox.classList.add('is-open');
+      }
+    }finally{
+      openPaymentBtn.disabled = false;
+      openPaymentBtn.textContent = originalText || 'Open Payment';
+    }
   });
 
   completeBtn?.addEventListener('click',()=>{

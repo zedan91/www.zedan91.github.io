@@ -365,7 +365,8 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
 
     const orderId = makePremiumId("tp");
     const apiBase = publicBaseUrl(req);
-    const returnUrl = TOYYIB_RETURN_URL || `${apiBase}/api/toyyib/return`;
+    const requestedReturnUrl = cleanPremiumUrl(data.returnUrl || data.redirectUrl || data.successUrl);
+    const returnUrl = requestedReturnUrl || TOYYIB_RETURN_URL || `${apiBase}/api/toyyib/return`;
     const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
     const billPayload = {
       userSecretKey: TOYYIB_SECRET_KEY,

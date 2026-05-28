@@ -2097,12 +2097,44 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
   function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
-  function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; if(currentMethod==='toyyibpay') return currentProduct.paymentLink || ''; return currentProduct.paymentLink || currentProduct.stripeLink || ''; }
+  function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; return 'dynamic-toyyibpay'; }
   function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay in the same tab. After payment is completed, you will return to the last visited page and download will be ready once verified.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment untuk bayar melalui ToyyibPay di tab yang sama. Selepas bayaran selesai, anda akan kembali ke halaman terakhir dan download akan tersedia selepas payment verified.'; else if(currentMethod==='bank') inst.textContent='Untuk guest buyer, masukkan email dahulu. Tekan Open Payment dan selesaikan pembayaran di tab yang sama. Link download akan dihantar ke email selepas payment verified.'; else inst.textContent='Untuk guest buyer, masukkan email dahulu. Tekan Open Payment dan selesaikan pembayaran di tab yang sama. Link download akan dihantar ke email selepas payment verified.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'bank'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
-  openPaymentBtn?.addEventListener('click',()=>{errorBox.textContent=''; if(!requireBuyerEmail()) return; const link = activePaymentLink(); if(link) window.open(link, '_blank', 'noopener');});
+  openPaymentBtn?.addEventListener('click', async ()=>{
+    errorBox.textContent=''; successBox.classList.remove('is-open');
+    if(!requireBuyerEmail()) return;
+    if(!currentProduct){ errorBox.textContent='Product not found.'; return; }
+    if(currentMethod === 'stripe'){
+      const link = toAbsolute(currentProduct.stripeLink || '');
+      if(!link){ errorBox.textContent='Stripe/payment link belum diset untuk item ini.'; return; }
+      localStorage.setItem('azobss_last_checkout_page', window.location.href);
+      window.location.href = link;
+      return;
+    }
+    const email = buyerEmail();
+    const originalText = openPaymentBtn.textContent;
+    openPaymentBtn.disabled = true;
+    openPaymentBtn.textContent = 'Generating Payment...';
+    try{
+      const returnUrl = window.location.href.split('#')[0];
+      localStorage.setItem('azobss_last_checkout_page', returnUrl);
+      const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({product:currentProduct,user:{...storedUser(),email},buyerEmail:email,returnUrl})
+      });
+      const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+      if(!res.ok || !data.ok || !data.paymentUrl) throw new Error(data.error || 'Failed to generate ToyyibPay payment.');
+      if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
+      if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
+      window.location.href = data.paymentUrl;
+    }catch(err){
+      const fallback = toAbsolute(currentProduct.paymentLink || '');
+      errorBox.textContent = (err.message || 'Gagal generate payment.') + (fallback ? ' Fallback payment link available.' : '');
+      if(fallback){successBox.innerHTML=`<b>Fallback available</b><br><span>Backend belum ready / env belum lengkap. Anda masih boleh buka payment link manual.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`; successBox.classList.add('is-open');}
+    }finally{openPaymentBtn.disabled=false; openPaymentBtn.textContent=originalText || 'Open Payment';}
+  });
   completeBtn?.addEventListener('click', async()=>{
     if(!currentProduct)return;
     errorBox.textContent=''; successBox.classList.remove('is-open');
