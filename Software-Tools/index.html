@@ -1862,6 +1862,7 @@ document.addEventListener('error', function(e){
   .azobss-pay-field-hidden{display:none!important;}
   #azobssPayOpenPayment{background:#22c55e;color:#06121f;border-color:#22c55e;}
   #azobssPayComplete{background:#10213a;color:#e5f0ff;border-color:#2563eb;}
+.azobss-pay-required{color:#fb7185}.azobss-pay-helper{display:block;margin-top:6px;color:#93c5fd;font-size:12px;font-weight:600;line-height:1.35}.azobss-pay-field.is-invalid input{border-color:#fb7185!important;box-shadow:0 0 0 3px rgba(251,113,133,.22),0 0 18px rgba(251,113,133,.22)!important;animation:azobssPayShake .28s ease-in-out}.azobss-pay-field.is-invalid{color:#fecaca!important}.azobss-pay-btn.is-blocked{filter:saturate(.7) brightness(.9)}@keyframes azobssPayShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 </style>
 </head>
 <body>
@@ -2149,17 +2150,17 @@ document.addEventListener('error', function(e){
     </div>
     <div class="azobss-pay-steps">
       <div class="azobss-pay-step is-active">1. Open Payment</div>
-      <div class="azobss-pay-step">2. Submit Proof</div>
-      <div class="azobss-pay-step">3. Admin Verify</div>
-      <div class="azobss-pay-step">4. Unlock Download</div>
+      <div class="azobss-pay-step">2. Complete Payment</div>
+      <div class="azobss-pay-step">3. Payment Verified</div>
+      <div class="azobss-pay-step">4. Download Ready</div>
     </div>
-    <p class="azobss-pay-note" id="azobssPayInstruction">Buat pembayaran melalui Bank Transfer / FPX, kemudian submit proof untuk admin verify sebelum download dibuka.</p>
-    <label class="azobss-pay-field">Buyer Email
-      <input id="azobssPayReference" type="text" placeholder="Example: your email address">
+    <p class="azobss-pay-note" id="azobssPayInstruction">Masukkan email pembeli dahulu untuk guest buyer, kemudian tekan Open Payment.</p>
+    <label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email <span class="azobss-pay-required">*</span>
+      <input id="azobssPayReference" type="email" autocomplete="email" inputmode="email" placeholder="Enter buyer email address" required>
+      <small class="azobss-pay-helper">Guest buyer wajib isi email sebelum Open Payment. Link download akan dihantar ke email ini.</small>
     </label>
     <div class="azobss-pay-actions">
       <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
-      <button class="azobss-pay-btn azobss-pay-primary" id="azobssPayComplete" type="button">Submit Proof</button>
     </div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
@@ -3259,6 +3260,42 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
   function azUsdBadge(price){return /usd|\$/i.test(String(price||'')) ? '<span style="font-size:12px;color:#93c5fd">USD</span>' : '';}
+  function storedUser(){
+    for(const key of ['azobssCurrentUser','azobssUser']){
+      for(const store of [sessionStorage, localStorage]){
+        try{ const raw=store.getItem(key); if(raw){ const obj=JSON.parse(raw); if(obj && typeof obj==='object') return obj; } }catch(e){}
+      }
+    }
+    return {};
+  }
+  function userEmail(){ const u=storedUser(); return String(u.email || u.realEmail || u.authEmail || '').trim(); }
+  function isLoggedIn(){ return !!(userEmail() || sessionStorage.getItem('azobssLoggedIn')==='1' || localStorage.getItem('azobssLoggedIn')==='1'); }
+  function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim()); }
+  function buyerEmail(){ return userEmail() || String(refInput?.value || '').trim(); }
+  function syncBuyerEmailField(){
+    const field=document.getElementById('azobssBuyerEmailField');
+    if(!field || !refInput) return;
+    const logged=isLoggedIn();
+    field.classList.toggle('azobss-pay-field-hidden', logged);
+    field.classList.remove('is-invalid');
+    if(logged){ refInput.value = userEmail() || ''; }
+    openPaymentBtn?.classList.toggle('is-blocked', !logged && !validEmail(refInput.value));
+  }
+  function requireBuyerEmail(){
+    const field=document.getElementById('azobssBuyerEmailField');
+    if(isLoggedIn()) return true;
+    if(validEmail(refInput?.value)) return true;
+    if(field) field.classList.add('is-invalid');
+    if(errorBox) errorBox.textContent = 'Please enter a valid buyer email address before Open Payment.';
+    refInput?.focus();
+    refInput?.scrollIntoView({behavior:'smooth',block:'center'});
+    return false;
+  }
+  refInput?.addEventListener('input',()=>{
+    const field=document.getElementById('azobssBuyerEmailField');
+    if(validEmail(refInput.value)) field?.classList.remove('is-invalid');
+    syncBuyerEmailField();
+  });
 
   function setActiveMethod(method){
     currentMethod = method || 'bank';
@@ -3278,20 +3315,20 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const inst = document.getElementById('azobssPayInstruction');
     if(!inst) return;
     if(currentMethod === 'bank'){
-      inst.textContent = 'Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, masukkan rujukan ringkas jika ada dan tekan Submit Proof.';
+      inst.textContent = 'Untuk guest buyer, masukkan email dahulu. Tekan Open Payment dan selesaikan pembayaran di tab yang sama. Link download akan dihantar ke email selepas payment verified.';
       openPaymentBtn.textContent = 'Open Payment';
     }else if(currentMethod === 'toyyibpay'){
-      inst.textContent = 'Tekan Open Payment untuk bayar melalui ToyyibPay, kemudian tekan Submit Proof selepas pembayaran selesai.';
+      inst.textContent = 'Tekan Open Payment untuk bayar melalui ToyyibPay di tab yang sama. Selepas bayaran selesai, anda akan kembali ke halaman terakhir dan download akan tersedia selepas payment verified.';
       openPaymentBtn.textContent = 'Open ToyyibPay';
     }else if(currentMethod === 'stripe'){
-      inst.textContent = 'Pay by Stripe for international card payment, then press Submit Proof after payment is completed.';
+      inst.textContent = 'Pay in the same tab. After payment is completed, you will return to the last visited page and download will be ready once verified.';
       openPaymentBtn.textContent = 'Open Stripe';
     }else{
-      inst.textContent = 'Buat pembayaran melalui Bank Transfer / FPX. Selepas selesai bayar, masukkan rujukan ringkas jika ada dan tekan Submit Proof.';
+      inst.textContent = 'Untuk guest buyer, masukkan email dahulu. Tekan Open Payment dan selesaikan pembayaran di tab yang sama. Link download akan dihantar ke email selepas payment verified.';
       openPaymentBtn.textContent = 'Open Payment';
     }
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
-    completeBtn.textContent = 'Submit Proof';
+    if(completeBtn) completeBtn.textContent = 'Submit Proof';
   }
 
   function open(product){
@@ -3299,7 +3336,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     errorBox.textContent = '';
     successBox.classList.remove('is-open');
     successBox.innerHTML = '';
-    if(refInput) refInput.value = '';
+    if(refInput && !userEmail()) refInput.value = '';
+    syncBuyerEmailField();
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden','false');
     productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Pilih Bank Transfer / FPX untuk pembayaran yang stabil.</div>`;
@@ -3316,12 +3354,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 
   openPaymentBtn?.addEventListener('click',()=>{
     errorBox.textContent = '';
+    if(!requireBuyerEmail()) return;
     const url = activePaymentLink();
     if(!url){
       errorBox.textContent = 'Payment link belum diset untuk item ini.';
       return;
     }
-    window.open(url, '_blank', 'noopener');
+    localStorage.setItem('azobss_last_checkout_page', window.location.href);
+    window.location.href = url;
   });
 
   completeBtn?.addEventListener('click',()=>{
@@ -3329,17 +3369,13 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     errorBox.textContent = '';
     successBox.classList.remove('is-open');
 
-    const note = refInput?.value?.trim() || '';
-
-    if(!note){
-      errorBox.textContent = 'Please enter payment reference / receipt note.';
-      return;
-    }
+    if(!requireBuyerEmail()) return;
+    const email = buyerEmail();
 
     completeBtn.disabled = true;
     completeBtn.textContent = 'Pending Verification';
 
-    successBox.innerHTML = `<b>Payment proof submitted ⏳</b><br><span>Admin akan semak pembayaran anda terlebih dahulu sebelum download dibuka.</span><br><span>Status: Pending Verification</span>${note ? `<br><span>Reference: ${esc(note)}</span>` : ''}`;
+    successBox.innerHTML = `<b>Payment proof submitted ⏳</b><br><span>Admin akan semak pembayaran anda terlebih dahulu sebelum download dibuka.</span><br><span>Status: Pending Verification</span>${email ? `<br><span>Buyer email: ${esc(email)}</span>` : ''}`;
 
     successBox.classList.add('is-open');
   });
