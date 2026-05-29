@@ -1910,12 +1910,19 @@ window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
 // PA/BM purchase records: one shared source for PA + BM/SBM downloads.
 const AZOBSS_PURCHASE_LOCAL_KEY = 'azobssPurchaseRecords';
 const AZOBSS_PURCHASE_COLLECTION = 'purchaseRecords';
+function clearLegacyPurchaseBrowserCache(){
+  try { localStorage.removeItem(AZOBSS_PURCHASE_LOCAL_KEY); } catch {}
+}
 function readLocalPurchaseRecords(){
-  try { return JSON.parse(localStorage.getItem(AZOBSS_PURCHASE_LOCAL_KEY) || '[]') || []; }
-  catch { return []; }
+  // Firestore is the single source of truth for PA/BM records.
+  // Old browser cache caused deleted/old items to reappear and inflate Total.
+  clearLegacyPurchaseBrowserCache();
+  return [];
 }
 function writeLocalPurchaseRecords(records){
-  try { localStorage.setItem(AZOBSS_PURCHASE_LOCAL_KEY, JSON.stringify(records || [])); } catch {}
+  // Do not persist PA/BM purchase records in browser storage.
+  // This keeps all browsers consistent with Firestore/admin delete/payment status.
+  clearLegacyPurchaseBrowserCache();
 }
 function purchaseRecordUser(user){
   const u = user || getSavedUser() || {};
@@ -2093,8 +2100,9 @@ async function loadAzobssPurchaseRecords(){
     });
   }
 
-  // Local cache remains as fast fallback only. The main source is Firestore.
-  readLocalPurchaseRecords().forEach(push);
+  // Browser cache is intentionally ignored here.
+  // Firestore/admin records are the only source for Purchase Records Saya and Total.
+  clearLegacyPurchaseBrowserCache();
 
   try{
     const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
