@@ -673,6 +673,49 @@ async function fetchJupem(jupemUrl) {
 }
 
 
+async function fetchPelanAkuiCandidates(noPA, negeri) {
+  const paUpper = `${noPA}.TIF`;
+  const paLower = `${noPA}.tif`;
+  const paRaw = `${noPA}`;
+  const stateUpper = String(negeri || "").toUpperCase();
+  const stateTitle = stateUpper.charAt(0) + stateUpper.slice(1).toLowerCase();
+
+  const candidates = [
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paLower)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paRaw)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateTitle)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?NoPA=${encodeURIComponent(paUpper)}&Negeri=${encodeURIComponent(stateUpper)}`
+  ];
+
+  let lastResult = null;
+
+  for (const url of candidates) {
+    try {
+      console.log("Fetching PA candidate:", url);
+      const response = await fetchJupem(url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const firstText = buffer.slice(0, 200).toString("utf8").toLowerCase();
+      const looksHTML = firstText.includes("<html") || firstText.includes("<!doctype") || firstText.includes("not found");
+      const validFile = response.ok && buffer.length > 100 && !looksHTML;
+
+      lastResult = { response, buffer, url, firstText, validFile };
+
+      if (validFile) {
+        return lastResult;
+      }
+    } catch (err) {
+      console.error("PA candidate failed:", url, err && err.message ? err.message : err);
+      lastResult = { response: null, buffer: Buffer.alloc(0), url, firstText: "", validFile: false, error: err };
+    }
+  }
+
+  return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
+}
+
+
+
 
 function normalizeAffiliateUrl(rawUrl) {
   const value = String(rawUrl || '').trim();
@@ -1781,21 +1824,13 @@ async function handler(req, res) {
         { recursive: true }
       );
 
-      const fileName =
-        `${noPA}.TIF`;
+      const paResult =
+        await fetchPelanAkuiCandidates(noPA, negeri);
 
-      const jupemUrl =
-`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
-
-      console.log(
-        "Fetching:",
-        jupemUrl
-      );
-
-      const response =
-        await fetchJupem(jupemUrl);
-
-      if (!response.ok) {
+      if (
+        !paResult ||
+        !paResult.validFile
+      ) {
 
         return send(
           res,
@@ -1809,34 +1844,7 @@ async function handler(req, res) {
       }
 
       const buffer =
-        Buffer.from(
-          await response.arrayBuffer()
-        );
-
-      const firstText =
-        buffer
-          .slice(0, 120)
-          .toString("utf8")
-          .toLowerCase();
-
-      const looksHTML =
-        firstText.includes("<html");
-
-      if (
-        !buffer.length ||
-        looksHTML
-      ) {
-
-        return send(
-          res,
-          404,
-          JSON.stringify({
-            ok: false,
-            error: "Invalid PA file"
-          }),
-          "application/json"
-        );
-      }
+        paResult.buffer;
 
       const tempName =
 `${noPA}.tif`;
@@ -1989,21 +1997,13 @@ if (
     );
   }
 
-  const fileName =
-    `${noPA}.TIF`;
+  const paResult =
+    await fetchPelanAkuiCandidates(noPA, negeri);
 
-  const jupemUrl =
-`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
-
-  console.log(
-    "Fetching PDF:",
-    jupemUrl
-  );
-
-  const response =
-    await fetchJupem(jupemUrl);
-
-  if (!response.ok) {
+  if (
+    !paResult ||
+    !paResult.validFile
+  ) {
     return send(
       res,
       404,
@@ -2016,30 +2016,7 @@ if (
   }
 
   const tifBuffer =
-    Buffer.from(
-      await response.arrayBuffer()
-    );
-
-  const firstText =
-    tifBuffer
-      .slice(0, 120)
-      .toString("utf8")
-      .toLowerCase();
-
-  if (
-    !tifBuffer.length ||
-    firstText.includes("<html")
-  ) {
-    return send(
-      res,
-      404,
-      JSON.stringify({
-        ok: false,
-        error: "Invalid PA file"
-      }),
-      "application/json"
-    );
-  }
+    paResult.buffer;
 
   const pngBuffer =
     await sharp(tifBuffer)
