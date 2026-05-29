@@ -46,6 +46,14 @@
     const baseName = benchmarkSafeFilename(`${productType}-${code}`) || 'BM-SBM-download';
     return baseName.toLowerCase().endsWith('.pdf') ? baseName : `${baseName}.pdf`;
   }
+  function benchmarkCartAddedText(item){
+    item = item || {};
+    const type = String(item.productType || item.product || (String(item.jenis || '1') === '2' ? 'SBM' : 'BM')).trim().toUpperCase();
+    const code = String(item.itemCode || item.stationNo || item.stesen || item.productId || item.id || '').trim().toUpperCase();
+    const label = [type, code].filter(Boolean).join(' ');
+    return (label || 'Item') + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+  }
+
 
   async function triggerBenchmarkDownload(anchor){
     const url = anchor.getAttribute('href');
@@ -154,7 +162,7 @@
     renderCart();
     if (statusEl) {
       statusEl.style.display = 'block';
-      statusEl.textContent = exists ? 'Item already in benchmark cart.' : 'Benchmark item added to cart.';
+      statusEl.textContent = exists ? (benchmarkCartAddedText(item).replace('Item added to cart.', 'already in cart.')) : benchmarkCartAddedText(item);
     }
   }
 
@@ -327,7 +335,7 @@
       }
       if (statusEl) {
         statusEl.style.display = 'block';
-        statusEl.textContent = 'Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+        statusEl.textContent = benchmarkCartAddedText(payload);
       }
       if (typeof window.azobssRenderPurchaseRecords === 'function') {
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
