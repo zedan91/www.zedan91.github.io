@@ -674,9 +674,14 @@ async function fetchJupem(jupemUrl) {
 
 
 async function fetchPelanAkuiCandidates(noPA, negeri) {
-  const paUpper = `${noPA}.TIF`;
-  const paLower = `${noPA}.tif`;
-  const paRaw = `${noPA}`;
+  const cleanPA = String(noPA || "")
+    .trim()
+    .replace(/\.tif$/i, "")
+    .replace(/^PA/i, "");
+
+  const paUpper = `PA${cleanPA}.TIF`;
+  const paLower = `PA${cleanPA}.tif`;
+  const paRaw = `PA${cleanPA}`;
   const stateUpper = String(negeri || "").toUpperCase();
   const stateTitle = stateUpper.charAt(0) + stateUpper.slice(1).toLowerCase();
 
