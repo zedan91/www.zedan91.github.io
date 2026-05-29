@@ -325,7 +325,13 @@
           });
         } catch (error) {}
       }
-      triggerBenchmarkDownload(benchmarkDownload);
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+      }
+      if (typeof window.azobssRenderPurchaseRecords === 'function') {
+        setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+      }
       return;
     }
     const addButton = event.target.closest('[data-add-benchmark]');

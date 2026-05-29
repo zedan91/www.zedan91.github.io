@@ -8504,6 +8504,11 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
   }
 }
 </style>
+
+<style id="azobss-pa-bm-add-cart-lock-css">
+.user-pa-download.is-locked{background:#334155!important;color:#cbd5e1!important;cursor:not-allowed!important;box-shadow:none!important;text-decoration:none!important;}
+.bm-record-download{cursor:pointer!important;}
+</style>
 </head>
 <body id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -9034,7 +9039,7 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 </label>
 <p class="request-error" id="paError"></p>
 <button class="btn blue download-pdf-btn" id="downloadTifButton" onclick="return azobssDirectPaDownload(event);" type="button">
-<span class="download-pa-main">Download PA</span>
+<span class="download-pa-main">Add to Cart</span>
 <span class="pdf-price-tag">RM5 per unit</span>
 </button>
 <div hidden="" id="downloadResultActions">
@@ -9097,7 +9102,7 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 <thead>
 <tr>
 <th>NO.</th>
-<th>DOWNLOAD</th>
+<th>ADD TO CART</th>
 <th>NO. STESEN</th>
 <th>NEGERI</th>
 <th>DAERAH</th>
@@ -10496,7 +10501,7 @@ normalizeCategory(category)===normalizeCategory(filter);
           <div><strong>${esc(item.stationNo || '-')}</strong><br>${esc(item.product || '')}</div>
           <div>${esc(item.negeri || '-')}<br>${esc(item.daerah || '')}</div>
           <div>${esc(item.harga || 'RM3')}</div>
-          <div>${item.downloadUrl ? `<a class="small-action-btn blue bm-record-download" data-benchmark-record="${benchmarkRecordPayload(item)}" data-benchmark-filename="${esc(benchmarkDownloadFilename(item))}" download="${esc(benchmarkDownloadFilename(item))}" style="text-decoration:none;" href="${esc(item.downloadUrl)}">Download</a>` : ''}</div>
+          <div><span class="small-action-btn">In cart</span></div>
           <button class="small-action-btn" type="button" data-remove-benchmark-cart="${index}">Remove</button>
         </div>`;
     }).join('');
@@ -10549,7 +10554,7 @@ normalizeCategory(category)===normalizeCategory(filter);
       const downloadUrl = productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''; // always use backend link
 
       const downloadButton = downloadUrl
-        ? `<a href="${esc(downloadUrl)}" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" download="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download" style="padding:6px 12px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">â¬‡ Download</a>`
+        ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download" style="padding:6px 12px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">Add to Cart</button>`
         : '-';
 
       return `
@@ -10723,7 +10728,13 @@ normalizeCategory(category)===normalizeCategory(filter);
           });
         } catch (error) {}
       }
-      triggerBenchmarkDownload(benchmarkDownload);
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+      }
+      if (typeof window.azobssRenderPurchaseRecords === 'function') {
+        setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+      }
       return;
     }
     const pageButton = event.target.closest('[data-benchmark-page]');
@@ -12021,10 +12032,25 @@ document.addEventListener('DOMContentLoaded', function(){
 
     if (paStatus) {
       paStatus.style.display = 'block';
-      paStatus.textContent = 'Converting PA to PDF... please wait.';
+      paStatus.textContent = 'Adding PA to cart...';
     }
 
     try {
+      if (typeof window.azobssRecordPurchase === 'function') {
+        await window.azobssRecordPurchase({
+          productType: 'PA',
+          itemCode: number,
+          negeri: document.getElementById('negeri') ? document.getElementById('negeri').value : '',
+          amount: 5,
+          url: url,
+          filename: 'PA' + number + '.pdf'
+        });
+      }
+      if (paStatus) paStatus.textContent = 'PA added to cart. Sila tekan Proceed to Payment untuk bayar.';
+      if (typeof window.azobssRenderPurchaseRecords === 'function') {
+        setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+      }
+      return false;
       var response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) throw new Error('PA not found / PA tiada dalam sistem');
       var blob = await response.blob();
@@ -12039,7 +12065,7 @@ document.addEventListener('DOMContentLoaded', function(){
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
       if (paStatus) paStatus.textContent = 'PA downloaded successfully!';
     } catch (error) {
-      if (paError) paError.textContent = error.message || 'Download PA failed.';
+      if (paError) paError.textContent = error.message || 'Add to cart failed.';
       if (paStatus) paStatus.style.display = 'none';
     }
 
@@ -12164,54 +12190,23 @@ document.addEventListener('DOMContentLoaded', function(){
       els.button.disabled = true;
     }
 
-    setMessage('loading', 'Sedang semak PA...');
+    setMessage('loading', 'Adding PA to cart...');
 
     try{
-      var response = await fetch(built.url, { cache: 'no-store' });
-      var contentType = (response.headers.get('content-type') || '').toLowerCase();
-
-      if(!response.ok){
-        throw new Error('PA_NOT_FOUND');
-      }
-
-      if(contentType.indexOf('application/json') !== -1 || contentType.indexOf('text/json') !== -1){
-        var data = await response.json().catch(function(){ return null; });
-        if(!data || data.ok === false){
-          throw new Error('PA_NOT_FOUND');
-        }
-      }
-
-      var blob = await response.blob();
-      if(!blob || !blob.size){
-        throw new Error('PA_NOT_FOUND');
-      }
-
-      var objectUrl = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = objectUrl;
-      a.download = 'PA' + built.number + '.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
-
       if(typeof window.azobssRecordPurchase === 'function'){
-        try{
-          await window.azobssRecordPurchase({
-            productType: 'PA',
-            itemCode: built.number,
-            negeri: built.negeri,
-            amount: 5,
-            url: built.url
-          });
-        }catch(recordError){
-          console.error('Failed to save PA purchase record:', recordError);
-          setMessage('error', 'Download berjaya, tapi rekod pembelian gagal disimpan. Sila refresh/login semula.');
-          return false;
-        }
+        await window.azobssRecordPurchase({
+          productType: 'PA',
+          itemCode: built.number,
+          negeri: built.negeri,
+          amount: 5,
+          url: built.url,
+          filename: 'PA' + built.number + '.pdf'
+        });
       }
-
-      setMessage('success', '✔ Download berjaya');
+      if(typeof window.azobssRenderPurchaseRecords === 'function'){
+        setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+      }
+      setMessage('success', '✔ PA added to cart. Sila tekan Proceed to Payment untuk bayar.');
     }catch(error){
       setMessage('error', 'Maaf, PA tiada dalam simpanan');
     }finally{

@@ -2193,10 +2193,24 @@ async function recordAzobssPurchase(payload){
   const user = getSavedUser();
   if(!user){
     openSiteAuth('signin');
-    throw new Error('Please login first before download.');
+    throw new Error('Please login first before add to cart.');
   }
   const record = normalizePurchasePayload(payload || {});
   const local = readLocalPurchaseRecords();
+  const resetMap = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
+  const resetAt = Number((resetMap || {})[String(record.usernameKey || '').toLowerCase()] || 0);
+  const existingUnpaid = local.find(item =>
+    String(item.usernameKey || '').toLowerCase() === String(record.usernameKey || '').toLowerCase() &&
+    String(item.productType || '').toUpperCase() === String(record.productType || '').toUpperCase() &&
+    String(item.itemCode || '').toUpperCase() === String(record.itemCode || '').toUpperCase() &&
+    String(item.negeri || '').toUpperCase() === String(record.negeri || '').toUpperCase() &&
+    purchaseRecordMs(item) > resetAt
+  );
+  if(existingUnpaid){
+    window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: existingUnpaid }));
+    try{ window.dispatchEvent(new Event('storage')); }catch{}
+    return existingUnpaid;
+  }
   if(!local.some(item => isSamePurchase(item, record))){
     local.unshift(record);
     writeLocalPurchaseRecords(local.slice(0, 500));
@@ -2337,6 +2351,16 @@ function renderAzobssPurchaseDetailPager(key, currentPage, totalItems){
   currentPage = clampPage(currentPage, totalPages);
   return `<div class="guest-history-pagination az-purchase-detail-pagination" data-purchase-detail-key="${escHtml(key)}">${azobssBuildCompactPagerHtml(currentPage, totalPages)}</div>`;
 }
+function azobssIsPurchasePaidForDownload(r){
+  try{
+    const current = getSavedUser() || {};
+    const key = String(current.usernameKey || current.displayName || current.username || r?.usernameKey || '').trim().toLowerCase();
+    const map = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
+    const resetAt = Number((map || {})[key] || 0);
+    const itemMs = purchaseRecordMs ? purchaseRecordMs(r) : Number(r?.createdAtMs || 0);
+    return !!(resetAt && itemMs && itemMs <= resetAt);
+  }catch(e){ return false; }
+}
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
   const amount = Number(r.amount || 0);
@@ -2345,7 +2369,7 @@ function purchaseDetailRowHtml(r){
       <div>Item: <strong>${escHtml(item)}</strong></div>
       <div>Negeri: <strong>${escHtml(r.negeri || '-')}</strong><br>Amount: <strong>RM${escHtml(amount || '')}</strong></div>
       <div>Date/Time:<br><strong>${escHtml(formatPurchaseDate(r))}</strong></div>
-      ${r.downloadUrl ? `<a class="user-pa-download" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : ''}
+      ${(r.downloadUrl && azobssIsPurchasePaidForDownload(r)) ? `<a class="user-pa-download" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : '<span class="user-pa-download is-locked">Pending Payment</span>'}
     </div>`;
 }
 function applyPurchaseSort(records, sort){
