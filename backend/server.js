@@ -129,7 +129,7 @@ function mailEnabled() {
 }
 
 function mailFrom() {
-  return process.env.MAIL_FROM || "noreply@azobss.com";
+  return process.env.MAIL_FROM || process.env.SMTP_USER || "";
 }
 
 function createMailer() {
@@ -634,7 +634,7 @@ app.post("/api/premium/complete-purchase", async (req, res) => {
   savePremiumOrder(order);
   savePremiumToken({ token, orderId, productId, productName, user, downloadLink, createdAt:now, expiresAt:expiresAtMs, usedCount:0, maxDownload:requestedLimit });
   await sendDownloadEmailForOrder(order, req);
-  res.json({ ok:true, orderId, status:"paid", message:"Pembelian selesai. Link download sementara telah dijana dan email akan dihantar jika SMTP aktif.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:requestedLimit });
+  res.json({ ok:true, orderId, status:"paid", message:"Purchase completed. A temporary download link has been generated and an email will be sent if SMTP is enabled.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:requestedLimit });
 });
 
 app.get("/api/premium/download/:token", (req, res) => {

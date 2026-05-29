@@ -14,11 +14,11 @@ TOYYIB_SECRET_KEY
 TOYYIB_CATEGORY_CODE
 PUBLIC_BASE_URL=https://azobss-backend.onrender.com
 FRONTEND_BASE_URL=https://www.azobss.com
-SMTP_HOST=smtp-relay.brevo.com
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your-brevo-smtp-login@smtp-brevo.com
+SMTP_USER=yourgmail@gmail.com
 SMTP_PASS=GOOGLE_APP_PASSWORD
-MAIL_FROM=noreply@azobss.com
+MAIL_FROM=yourgmail@gmail.com
 
 After upload/deploy:
 1. Push this ZIP/code to GitHub/backend repo.
