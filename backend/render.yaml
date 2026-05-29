@@ -23,12 +23,14 @@ services:
       - key: TOYYIB_BASE_URL
         value: https://toyyibpay.com
       - key: SMTP_HOST
-        value: smtp.gmail.com
+        value: smtp-relay.brevo.com
       - key: SMTP_PORT
         value: "587"
+      - key: SMTP_SECURE
+        value: "false"
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
         sync: false
       - key: MAIL_FROM
-        sync: false
+        value: noreply@azobss.com

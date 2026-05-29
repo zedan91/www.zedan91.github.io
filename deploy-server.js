@@ -92,7 +92,7 @@ function makeMailer() {
 async function sendBrevoApiEmail({ to, subject, html, text }) {
   const apiKey = getBrevoApiKey();
   if (!apiKey) throw new Error("BREVO_API_KEY missing");
-  const fromEmail = cleanPremiumText(process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "", 180);
+  const fromEmail = cleanPremiumText(process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || "noreply@azobss.com", 180);
   if (!fromEmail) throw new Error("MAIL_FROM missing");
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -176,7 +176,7 @@ Link auto-expire selepas download pertama.`;
 
     let sendInfo = null;
     if (brevoApiReady()) {
-      console.log("AZOBSS BREVO API SEND START", JSON.stringify({ orderId: current.orderId, email, from: process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "" }).slice(0,500));
+      console.log("AZOBSS BREVO API SEND START", JSON.stringify({ orderId: current.orderId, email, from: process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || "noreply@azobss.com" }).slice(0,500));
       sendInfo = await sendBrevoApiEmail({ to: email, subject, html, text });
       console.log("AZOBSS BREVO API SENT OK", JSON.stringify({ orderId: current.orderId, email, response: sendInfo }).slice(0,800));
     } else {
@@ -192,7 +192,7 @@ Link auto-expire selepas download pertama.`;
       console.log("AZOBSS SMTP VERIFY OK");
 
       sendInfo = await transporter.sendMail({
-        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        from: process.env.MAIL_FROM || "noreply@azobss.com",
         to: email,
         subject,
         html,

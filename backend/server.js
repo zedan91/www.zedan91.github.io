@@ -129,7 +129,7 @@ function mailEnabled() {
 }
 
 function mailFrom() {
-  return process.env.MAIL_FROM || process.env.SMTP_USER || "";
+  return process.env.MAIL_FROM || "noreply@azobss.com";
 }
 
 function createMailer() {
