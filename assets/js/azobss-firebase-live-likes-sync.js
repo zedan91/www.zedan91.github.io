@@ -2434,6 +2434,112 @@ async function resetAzobssPurchaseRecordsForUser(usernameKey){
 window.azobssResetPurchaseRecordsForUser = resetAzobssPurchaseRecordsForUser;
 window.azobssTogglePurchaseDetails = toggleAzobssPurchaseDetails;
 
+function azobssPurchaseDeletePayload(r){
+  return encodeURIComponent(JSON.stringify({
+    firestoreId: r.firestoreId || '',
+    id: r.id || '',
+    usernameKey: r.usernameKey || '',
+    uid: r.uid || '',
+    productType: r.productType || 'PA',
+    itemCode: r.itemCode || '',
+    negeri: r.negeri || '',
+    amount: Number(r.amount) || 0,
+    createdAtMs: Number(r.createdAtMs) || 0,
+    createdAtClient: r.createdAtClient || ''
+  }));
+}
+function azobssPurchaseSameForDelete(a,b){
+  if(!a || !b) return false;
+  const aid = String(a.firestoreId || a.id || '');
+  const bid = String(b.firestoreId || b.id || '');
+  if(aid && bid && aid === bid) return true;
+  return String(a.usernameKey || '').toLowerCase() === String(b.usernameKey || '').toLowerCase()
+    && String(a.productType || '').toUpperCase() === String(b.productType || '').toUpperCase()
+    && String(a.itemCode || '').toUpperCase() === String(b.itemCode || '').toUpperCase()
+    && String(a.negeri || '').toUpperCase() === String(b.negeri || '').toUpperCase()
+    && Number(a.createdAtMs || 0) === Number(b.createdAtMs || 0)
+    && Number(a.amount || 0) === Number(b.amount || 0);
+}
+async function azobssDeletePurchaseRecordByPayload(rawPayload, silent){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return false;
+  let target = null;
+  try{ target = typeof rawPayload === 'string' ? JSON.parse(decodeURIComponent(rawPayload)) : rawPayload; }catch(e){ target = null; }
+  if(!target) return false;
+  const key = String(target.usernameKey || target.displayName || '').trim().toLowerCase();
+  if(!silent && !confirm('Buang rekod ini?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''))) return false;
+
+  try{
+    const local = readLocalPurchaseRecords().filter(r => !azobssPurchaseSameForDelete(r, target));
+    writeLocalPurchaseRecords(local.slice(0, 500));
+  }catch(e){ console.warn('Local purchase delete failed:', e); }
+
+  try{
+    const directId = String(target.firestoreId || target.id || '');
+    if(directId) await deleteDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, directId));
+  }catch(e){ console.warn('Direct purchase delete skipped:', e); }
+
+  try{
+    const snap = await getDocs(collection(db, AZOBSS_PURCHASE_COLLECTION));
+    const deletions = [];
+    snap.forEach(d => {
+      const data = d.data() || {};
+      const candidate = { id:d.id, firestoreId:d.id, ...data, createdAtMs:Number(data.createdAtMs || (data.createdAtClient ? Date.parse(data.createdAtClient) : 0) || 0) };
+      if(azobssPurchaseSameForDelete(candidate, target)) deletions.push(deleteDoc(d.ref));
+    });
+    if(deletions.length) await Promise.allSettled(deletions);
+  }catch(e){ console.warn('Purchase collection search delete skipped:', e); }
+
+  if(key){
+    try{
+      const userRef = doc(db, 'users', key);
+      const snap = await getDoc(userRef);
+      if(snap.exists()){
+        const data = snap.data() || {};
+        const embedded = Array.isArray(data.purchaseRecords) ? data.purchaseRecords : [];
+        const filtered = embedded.filter(r => !azobssPurchaseSameForDelete({ ...r, usernameKey:r.usernameKey || key }, target));
+        if(filtered.length !== embedded.length){
+          await setDoc(userRef, { purchaseRecords: filtered, purchaseRecordsUpdatedAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge:true });
+        }
+      }
+    }catch(e){ console.warn('Embedded purchase delete skipped:', e); }
+  }
+  if(!silent) await renderAzobssPurchaseRecords();
+  return true;
+}
+async function azobssDeleteOnePurchaseRecord(rawPayload){
+  await azobssDeletePurchaseRecordByPayload(rawPayload, false);
+}
+async function azobssDeletePendingPurchaseRecordsForUser(usernameKey){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  const key = String(usernameKey || '').trim().toLowerCase();
+  if(!key) return;
+  const records = (await loadAzobssPurchaseRecords()).filter(r => String(r.usernameKey || r.displayName || '').trim().toLowerCase() === key);
+  const resetMap = await loadAzobssPurchaseTotalResetMap();
+  const pending = countablePurchaseRows(records, key, resetMap);
+  if(!pending.length){ alert('Tiada rekod pending untuk ' + key + '.'); return; }
+  if(!confirm('Buang semua Pending Payment untuk ' + key + '?\n\nJumlah rekod: ' + pending.length + '\nTindakan ini tidak boleh undo.')) return;
+  for(const r of pending){ await azobssDeletePurchaseRecordByPayload(azobssPurchaseDeletePayload(r), true); }
+  azobssAdminPurchasePage = 1;
+  await renderAzobssPurchaseRecords();
+}
+async function azobssDeleteAllPurchaseRecordsForUser(usernameKey){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  const key = String(usernameKey || '').trim().toLowerCase();
+  if(!key) return;
+  const records = (await loadAzobssPurchaseRecords()).filter(r => String(r.usernameKey || r.displayName || '').trim().toLowerCase() === key);
+  if(!records.length){ alert('Tiada rekod untuk ' + key + '.'); return; }
+  if(!confirm('Buang SEMUA rekod purchase list untuk ' + key + '?\n\nJumlah rekod: ' + records.length + '\nTindakan ini tidak boleh undo.')) return;
+  for(const r of records){ await azobssDeletePurchaseRecordByPayload(azobssPurchaseDeletePayload(r), true); }
+  azobssAdminPurchasePage = 1;
+  await renderAzobssPurchaseRecords();
+}
+window.azobssDeleteOnePurchaseRecord = azobssDeleteOnePurchaseRecord;
+window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRecordsForUser;
+window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
+
 function toggleAzobssPurchaseDetails(button){
   const card = button && button.closest('.admin-purchase-user-card');
   if(!card) return;
@@ -2500,7 +2606,9 @@ async function renderAzobssPurchaseRecords(){
             <span class="az-purchase-mini-total">Total: <strong>RM${total}</strong></span>
             <div class="az-purchase-mini-actions">
               <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">${isDetailOpen ? 'Hide' : 'Show'}</button>
+              <button type="button" class="az-purchase-pending-btn" onclick="window.azobssDeletePendingPurchaseRecordsForUser && window.azobssDeletePendingPurchaseRecordsForUser('${escHtml(key)}')">Pending</button>
               <button type="button" class="az-purchase-reset-btn" onclick="window.azobssResetPurchaseRecordsForUser && window.azobssResetPurchaseRecordsForUser('${escHtml(key)}')">Reset</button>
+              <button type="button" class="az-purchase-delete-all-btn" onclick="window.azobssDeleteAllPurchaseRecordsForUser && window.azobssDeleteAllPurchaseRecordsForUser('${escHtml(key)}')">All</button>
             </div>
           </div>
           <div class="admin-purchase-user-details az-purchase-mini-details" ${isDetailOpen ? '' : 'hidden'} style="display:${isDetailOpen ? 'grid' : 'none'};">
@@ -2508,7 +2616,7 @@ async function renderAzobssPurchaseRecords(){
               const detailPage = clampPage(azobssPurchaseDetailPages[key] || 1, Math.max(1, Math.ceil(rows.length / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE)));
               azobssPurchaseDetailPages[key] = detailPage;
               const detailRows = rows.slice((detailPage - 1) * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE, detailPage * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE);
-              return detailRows.map(r => `<div>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</div>`).join('') + renderAzobssPurchaseDetailPager(key, detailPage, rows.length);
+              return detailRows.map(r => `<div class="az-purchase-detail-line"><span>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span><button type="button" class="az-purchase-detail-delete-btn" onclick="window.azobssDeleteOnePurchaseRecord && window.azobssDeleteOnePurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Delete</button></div>`).join('') + renderAzobssPurchaseDetailPager(key, detailPage, rows.length);
             })()}
           </div>
         </div>`;

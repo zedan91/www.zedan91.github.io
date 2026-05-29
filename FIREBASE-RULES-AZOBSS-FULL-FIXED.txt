@@ -82,6 +82,17 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+
+    match /purchaseRecords/{purchaseId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
     match /purchaseLogs/{purchaseId} {
       allow read: if isAdmin()
         || (request.auth != null && resource.data.uid == request.auth.uid);
