@@ -2091,7 +2091,7 @@ window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
 
 // PA/BM purchase records: one shared source for PA + BM/SBM downloads.
 const AZOBSS_PURCHASE_LOCAL_KEY = 'azobssPurchaseRecords';
-const AZOBSS_PURCHASE_COLLECTION = 'purchaseRecords';
+const AZOBSS_PURCHASE_COLLECTION = 'purchaseLogs';
 function clearLegacyPurchaseBrowserCache(){
   try { localStorage.removeItem(AZOBSS_PURCHASE_LOCAL_KEY); } catch {}
 }
@@ -2129,6 +2129,7 @@ function normalizePurchasePayload(payload){
     itemCode: code,
     negeri,
     amount: Number.isFinite(amount) ? amount : (type === 'PA' ? 5 : 3),
+    status: String(payload?.status || 'pending').trim().toLowerCase(),
     downloadUrl: String(payload?.downloadUrl || payload?.url || ''),
     filename: String(payload?.filename || ''),
     uid: userInfo.uid,
@@ -2227,12 +2228,19 @@ async function azobssVerifyPurchaseFileExists(record){
   return true;
 }
 
+function azobssPurchaseItemKey(item){
+  item = item || {};
+  return [
+    String(item.usernameKey || '').trim().toLowerCase(),
+    String(item.uid || '').trim(),
+    String(item.productType || item.product || '').trim().toUpperCase(),
+    String(item.itemCode || item.stationNo || item.stesen || item.code || '').trim().toUpperCase(),
+    String(item.negeri || item.state || '').trim().toUpperCase()
+  ].join('|');
+}
+
 function azobssSameCartItem(a, b){
-  return String(a && a.usernameKey || '').toLowerCase() === String(b && b.usernameKey || '').toLowerCase()
-    && String(a && a.uid || '') === String(b && b.uid || '')
-    && String(a && a.productType || '').toUpperCase() === String(b && b.productType || '').toUpperCase()
-    && String(a && a.itemCode || '').toUpperCase() === String(b && b.itemCode || '').toUpperCase()
-    && String(a && a.negeri || '').toUpperCase() === String(b && b.negeri || '').toUpperCase();
+  return azobssPurchaseItemKey(a) === azobssPurchaseItemKey(b);
 }
 
 async function azobssFindExistingCartPurchase(record){
@@ -2240,6 +2248,14 @@ async function azobssFindExistingCartPurchase(record){
   const resetAt = Number((resetMap || {})[String(record.usernameKey || '').toLowerCase()] || 0);
   const current = getSavedUser() || {};
   const candidates = [];
+
+  function pushItem(item){
+    if(!item) return;
+    let ms = Number(item.createdAtMs || 0);
+    if(!ms && item.createdAtClient) ms = Date.parse(item.createdAtClient) || 0;
+    if(!ms && item.createdAt && typeof item.createdAt.toMillis === 'function') ms = item.createdAt.toMillis();
+    candidates.push({ ...item, createdAtMs: ms });
+  }
 
   function pushSnap(snap){
     snap.forEach(docSnap => {
@@ -2256,15 +2272,24 @@ async function azobssFindExistingCartPurchase(record){
     if(current && current.uid){
       pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
     }
+    if(record.usernameKey){
+      pushSnap(await getDocs(query(purchaseCol, where('usernameKey', '==', String(record.usernameKey)))));
+    }
   }catch(error){}
 
   try{
     const key = getUserKey(current);
     if(key){
+      const userSnap = await getDoc(doc(db, 'users', key));
+      if(userSnap.exists()){
+        const data = userSnap.data() || {};
+        (Array.isArray(data.purchaseRecords) ? data.purchaseRecords : []).forEach(pushItem);
+      }
+
       const summarySnap = await getDoc(doc(db, AZOBSS_PURCHASE_SUMMARIES_COLLECTION, key));
       if(summarySnap.exists()){
         const data = summarySnap.data() || {};
-        (Array.isArray(data.records) ? data.records : []).forEach(item => candidates.push(item));
+        (Array.isArray(data.records) ? data.records : []).forEach(pushItem);
       }
     }
   }catch(error){}
@@ -2272,7 +2297,7 @@ async function azobssFindExistingCartPurchase(record){
   return candidates.find(item =>
     azobssSameCartItem(item, record)
     && purchaseRecordMs(item) > resetAt
-    && String(item.status || 'pending').toLowerCase() !== 'paid'
+    && ['paid','cancelled','deleted'].indexOf(String(item.status || 'pending').toLowerCase()) === -1
   ) || null;
 }
 
