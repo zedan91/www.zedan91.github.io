@@ -10424,7 +10424,7 @@ normalizeCategory(category)===normalizeCategory(filter);
   }
 
   function benchmarkCartAlreadyText(item){
-    return benchmarkCartLabel(item) + ' sudah masuk dalam cart. Sila tekan Proceed to Payment untuk bayar.';
+    return benchmarkCartLabel(item) + ' sudah ada dalam cart.';
   }
 
 
@@ -12124,7 +12124,7 @@ document.addEventListener('DOMContentLoaded', function(){
         });
       }
       if (paStatus) paStatus.textContent = (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
-        ? 'PA ' + number + ' sudah masuk dalam cart. Sila tekan Proceed to Payment untuk bayar.'
+        ? 'PA ' + number + ' sudah ada dalam cart.'
         : 'PA ' + number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
       if (typeof window.azobssRenderPurchaseRecords === 'function') {
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
@@ -12273,7 +12273,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     try{
       // Semak dahulu sama ada PA benar-benar wujud di backend/JUPEM.
-      // Jangan masukkan cart dan jangan kira total jika PA tiada dalam simpanan.
+      // Jangan masukkan cart dan jangan kira total jika PA Maaf, tiada dalam simpanan.
       var checkResponse = await fetch(built.url, { cache: 'no-store' });
       if(!checkResponse.ok){
         throw new Error('PA tiada dalam simpanan');
@@ -12299,7 +12299,7 @@ document.addEventListener('DOMContentLoaded', function(){
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
       }
       setMessage('success', (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
-        ? '✔ PA ' + built.number + ' sudah masuk dalam cart. Sila tekan Proceed to Payment untuk bayar.'
+        ? '✔ PA ' + built.number + ' sudah ada dalam cart.'
         : '✔ PA ' + built.number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.');
     }catch(error){
       setMessage('error', 'PA tiada dalam simpanan');
