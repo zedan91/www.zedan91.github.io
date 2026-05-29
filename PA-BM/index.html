@@ -11160,6 +11160,15 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     try {
+      var checkResponse = await fetch(url, { cache: 'no-store' });
+      if (!checkResponse.ok) throw new Error('PA tiada dalam simpanan');
+      var checkBlob = await checkResponse.blob();
+      if (!checkBlob || !checkBlob.size) throw new Error('PA tiada dalam simpanan');
+      var checkType = String(checkResponse.headers.get('content-type') || '').toLowerCase();
+      if (/text|json|html/.test(checkType)) {
+        var checkText = (await checkBlob.text()).slice(0, 800).toLowerCase();
+        if (/not found|tiada|invalid|error|failed|cannot|no such|404/.test(checkText)) throw new Error('PA tiada dalam simpanan');
+      }
       if (typeof window.azobssRecordPurchase === 'function') {
         await window.azobssRecordPurchase({
           productType: 'PA',
@@ -11189,7 +11198,7 @@ document.addEventListener('DOMContentLoaded', function(){
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
       if (paStatus) paStatus.textContent = 'PA downloaded successfully!';
     } catch (error) {
-      if (paError) paError.textContent = error.message || 'Add to cart failed.';
+      if (paError) paError.textContent = error.message || 'PA tiada dalam simpanan';
       if (paStatus) paStatus.style.display = 'none';
     }
 

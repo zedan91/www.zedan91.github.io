@@ -2007,6 +2007,37 @@ async function savePurchaseToFirestoreEverywhere(record){
     }
   }
 }
+
+async function azobssVerifyPurchaseFileExists(record){
+  const type = String(record && record.productType || '').trim().toUpperCase();
+  const url = String(record && record.downloadUrl || '').trim();
+  if(!/^PA$|^BM|^SBM/.test(type)) return true;
+  if(!url){
+    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
+  }
+  let response;
+  try{
+    response = await fetch(url, { cache: 'no-store' });
+  }catch(error){
+    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
+  }
+  if(!response || !response.ok){
+    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
+  }
+  const contentType = String(response.headers && response.headers.get('content-type') || '').toLowerCase();
+  const blob = await response.blob();
+  if(!blob || !blob.size){
+    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
+  }
+  if(/text|json|html/.test(contentType)){
+    const text = (await blob.text()).slice(0, 800).toLowerCase();
+    if(/not found|tiada|invalid|error|failed|cannot|no such|404/.test(text)){
+      throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
+    }
+  }
+  return true;
+}
+
 async function recordAzobssPurchase(payload){
   const user = getSavedUser();
   if(!user){
@@ -2014,6 +2045,8 @@ async function recordAzobssPurchase(payload){
     throw new Error('Please login first before add to cart.');
   }
   const record = normalizePurchasePayload(payload || {});
+  // Final safety guard: PA/BM/SBM mesti wujud dahulu sebelum masuk cart/total.
+  await azobssVerifyPurchaseFileExists(record);
   const local = readLocalPurchaseRecords();
   const resetMap = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
   const resetAt = Number((resetMap || {})[String(record.usernameKey || '').toLowerCase()] || 0);
