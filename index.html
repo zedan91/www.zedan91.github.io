@@ -12470,6 +12470,115 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 @media(max-width:900px){body.is-admin #purchaseSummaryList .az-purchase-mini-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important;flex-wrap:wrap!important;}}
 </style>
 
+
+<style id="azobss-pa-bm-payment-success-popup-real-fix">
+.azobss-payment-success-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2147483000;padding:18px;font-family:inherit;}
+.azobss-payment-success-modal.show{display:flex!important;}
+.azobss-payment-success-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);}
+.azobss-payment-success-box{position:relative;width:min(440px,calc(100vw - 32px));border:1px solid rgba(74,255,160,.36);border-radius:22px;background:linear-gradient(180deg,rgba(18,35,30,.98),rgba(7,13,14,.98));box-shadow:0 24px 80px rgba(0,0,0,.55),0 0 30px rgba(43,255,139,.14);color:#eefdf5;text-align:center;padding:28px 22px 24px;}
+.azobss-payment-success-close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:#bfffd8;font-size:28px;line-height:1;cursor:pointer;}
+.azobss-payment-success-icon{font-size:42px;margin-bottom:8px;}
+.azobss-payment-success-box h3{margin:0 0 12px;color:#4cff9a;font-size:24px;font-weight:900;}
+.azobss-payment-success-box p{margin:8px 0;color:#dfffee;font-size:15px;line-height:1.55;}
+.azobss-payment-success-go{margin-top:18px;width:100%;border:0;border-radius:999px;background:linear-gradient(135deg,#36ff8a,#00c968);color:#04130a;font-weight:900;padding:13px 18px;cursor:pointer;box-shadow:0 10px 28px rgba(0,255,120,.22);}
+.azobss-payment-success-go:hover{filter:brightness(1.05);transform:translateY(-1px);}
+</style>
+<script id="azobss-pa-bm-payment-success-popup-real-fix-script">
+(function(){
+  'use strict';
+  var POPUP_KEY_PREFIX = 'azobss_pa_bm_success_popup_seen_';
+
+  function getReturnKey(){
+    try{
+      var p = new URLSearchParams(window.location.search || '');
+      return p.get('orderId') || p.get('order_id') || p.get('billcode') || p.get('billCode') || p.get('transaction_id') || p.get('payment_id') || 'latest';
+    }catch(e){ return 'latest'; }
+  }
+
+  function scrollToLatestPurchaseList(){
+    var target = document.getElementById('userPaPurchasePanel')
+      || document.getElementById('userPaPurchaseList')
+      || Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,section,div')).find(function(el){
+          return /Latest\s+Purchase\s+List/i.test(el.textContent || '');
+        });
+    if(target){ target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  }
+
+  function ensurePaymentSuccessModal(){
+    var modal = document.getElementById('azobssPaBmPaymentSuccessModal');
+    if(modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'azobssPaBmPaymentSuccessModal';
+    modal.className = 'azobss-payment-success-modal';
+    modal.innerHTML = ''+
+      '<div class="azobss-payment-success-backdrop" data-close="1"></div>'+
+      '<div class="azobss-payment-success-box" role="dialog" aria-modal="true" aria-labelledby="azobssPaymentSuccessTitle">'+
+        '<button type="button" class="azobss-payment-success-close" aria-label="Close">×</button>'+
+        '<div class="azobss-payment-success-icon">✅</div>'+
+        '<h3 id="azobssPaymentSuccessTitle">Pembayaran Berjaya!</h3>'+
+        '<p>Terima kasih atas pembelian anda.</p>'+
+        '<p>Sila muat turun fail anda di bahagian <strong>'Latest Purchase List'</strong>.</p>'+
+        '<button type="button" class="azobss-payment-success-go">Go to Latest Purchase List</button>'+
+      '</div>';
+    document.body.appendChild(modal);
+    function close(){ modal.classList.remove('show'); }
+    modal.querySelector('.azobss-payment-success-close')?.addEventListener('click', close);
+    modal.querySelector('.azobss-payment-success-backdrop')?.addEventListener('click', close);
+    modal.querySelector('.azobss-payment-success-go')?.addEventListener('click', function(){
+      close();
+      setTimeout(scrollToLatestPurchaseList, 80);
+    });
+    return modal;
+  }
+
+  function showPaymentSuccessPopup(force){
+    try{
+      var key = POPUP_KEY_PREFIX + getReturnKey();
+      if(!force && sessionStorage.getItem(key) === '1') return;
+      sessionStorage.setItem(key, '1');
+      var modal = ensurePaymentSuccessModal();
+      modal.classList.add('show');
+    }catch(e){ console.warn('AZOBSS payment popup failed:', e); }
+  }
+
+  window.azobssShowPaBmPaymentSuccessPopup = showPaymentSuccessPopup;
+
+  function looksLikeSuccessfulToyyibReturn(){
+    try{
+      var p = new URLSearchParams(window.location.search || '');
+      var statusId = String(p.get('status_id') || p.get('status') || '').trim().toLowerCase();
+      var payment = String(p.get('payment') || '').trim().toLowerCase();
+      var hasBill = !!(p.get('billcode') || p.get('billCode'));
+      if(statusId === '1' || statusId === 'paid' || statusId === 'success' || payment === 'success' || payment === 'paid') return true;
+      if(payment === 'return' && hasBill && (statusId === '' || statusId === '1')) return true;
+      return false;
+    }catch(e){ return false; }
+  }
+
+  function observeSuccessStatusText(){
+    var status = document.getElementById('paBmToyyibStatus');
+    if(!status || !window.MutationObserver) return;
+    var obs = new MutationObserver(function(){
+      var txt = String(status.textContent || '').toLowerCase();
+      if(txt.includes('pembayaran berjaya') || txt.includes('payment success') || txt.includes('payment successful')){
+        showPaymentSuccessPopup(true);
+      }
+    });
+    obs.observe(status, { childList:true, characterData:true, subtree:true });
+  }
+
+  function run(){
+    observeSuccessStatusText();
+    if(looksLikeSuccessfulToyyibReturn()){
+      setTimeout(function(){ showPaymentSuccessPopup(false); }, 700);
+    }
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
+</script>
+
 </body>
 </html>
 <script>
