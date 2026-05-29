@@ -1,6 +1,0 @@
-AZOBSS Likes Firebase Real Online Fix
-
-- Likes now save using usernameKey and uid fallback.
-- Writes multiple Firebase locations: users/{key}/likes, users/{key}.likesMap, userLikes, likes.
-- Likes page reads subcollection + embedded map + global collection.
-- LocalStorage is cache/fallback only.
