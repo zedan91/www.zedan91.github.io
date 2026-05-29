@@ -9,6 +9,13 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const url = require("url");
+
+const sharpModule = require("sharp");
+const sharp = typeof sharpModule === "function" ? sharpModule : (sharpModule.default || sharpModule);
+const PDFDocument = require("pdfkit");
+
+console.log("Sharp loaded type:", typeof sharp);
+
 const crypto = require("crypto");
 let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
@@ -302,12 +309,6 @@ function getRatingVoterIdFromBody(req, body) {
   const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
   return "ip_" + crypto.createHash("sha256").update(ip).digest("hex").slice(0, 24);
 }
-
-let sharp = null;
-let PDFDocument = null;
-try { sharp = require("sharp"); } catch {}
-try { PDFDocument = require("pdfkit"); } catch {}
-
 let firebaseAdmin = null;
 try {
   firebaseAdmin = require("firebase-admin");
