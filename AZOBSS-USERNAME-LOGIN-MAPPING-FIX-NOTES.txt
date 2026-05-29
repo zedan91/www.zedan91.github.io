@@ -1,0 +1,14 @@
+AZOBSS Username Login Mapping Fix
+
+Fixed:
+- Username login now reads Firestore usernameAuthEmails/users profile before old localStorage cache.
+- Old cached username@azobss.local values no longer override real Gmail mapping.
+- usernameAuthEmails/{username} now saves:
+  username, usernameKey, email, authEmail, contactEmail, uid
+- Signup/login recovery will repair username -> Gmail mapping automatically.
+
+Test:
+1. Register zedan0001 with zedann.0001@gmail.com.
+2. Verify email.
+3. Login with Gmail once if needed.
+4. Then login with username zedan0001.

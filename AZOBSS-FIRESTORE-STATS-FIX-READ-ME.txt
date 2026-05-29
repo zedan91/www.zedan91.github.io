@@ -1,0 +1,20 @@
+AZOBSS Firestore Software Stats Fix
+
+What was fixed in this ZIP:
+- Software-Tools/index.html now writes only the top-level `items` map in Firestore document `settings/softwareStats`.
+- Removed top-level `updatedAt` writes from the stats update code because the previous Firestore Rules blocked it.
+- This prevents download/rating from appearing to save locally and then resetting after refresh/deploy.
+
+Firebase required setup:
+1. Firebase Console > Authentication > Sign-in method > enable Anonymous.
+2. Firestore Database > create document path: settings/softwareStats
+   Initial data:
+   {
+     "items": {}
+   }
+3. Firestore Database > Rules > paste/publish: FIREBASE-RULES-AZOBSS-SOFTWARESTATS-FIXED.txt
+
+Important:
+- If Anonymous Auth is disabled, public users cannot save download/rating.
+- If the rules are not published, Firestore will deny writes.
+- If the document does not exist, this ZIP can create it only after anonymous/login auth succeeds.

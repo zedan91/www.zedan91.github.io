@@ -1,0 +1,15 @@
+AZOBSS PA/BM Purchase Records Fix
+
+Fixed issue: PA and BM/SBM downloads were not being saved into purchase records because the global auth cleanup removed/missed the shared purchase record function.
+
+Changes:
+- Added window.azobssRecordPurchase() into assets/js/azobss-global-auth.js.
+- PA downloads now save record after successful PDF download.
+- BM/SBM downloads now save record when the download button is clicked.
+- Records are saved to localStorage as fallback and Firestore collection purchaseRecords when allowed.
+- Admin Purchase Records panel can render all records.
+- User purchase list can render current user's records.
+
+Important:
+- Firestore rules must allow authenticated users to create purchaseRecords and admin to read all purchaseRecords.
+- If Firestore blocks write/read, localStorage fallback still works only on the same browser/device.

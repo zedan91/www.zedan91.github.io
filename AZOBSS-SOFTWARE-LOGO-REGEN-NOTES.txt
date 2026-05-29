@@ -1,0 +1,26 @@
+AZOBSS Software Logo Regeneration
+
+What was added:
+1. Admin-only "Logo" button on software cards.
+   - It uses the software download/payment link domain to generate a favicon/logo preview.
+   - It updates the card preview and saves imageUrl for dynamic/admin items when possible.
+
+2. Local logo folder:
+   Software-Tools/images/logo/
+
+3. Local Node script:
+   tools/regenerate-software-logos.js
+
+How to save logos permanently into your GitHub repo folder:
+1. Put your latest software export JSON in the repo root.
+2. Run:
+   node tools/regenerate-software-logos.js "azobss-software-tools-export (5).json"
+3. It will save logos into:
+   Software-Tools/images/logo/
+4. It will generate:
+   azobss-software-tools-export (5).with-logos.json
+5. Import/push the updated JSON and logo folder.
+
+Important:
+GitHub Pages cannot write files directly to C:\Users\USER\Documents\GitHub\www.zedan91.github.io\Software-Tools\images\logo from the browser.
+So permanent repo file saving must be done by the local Node script or by backend/GitHub API.

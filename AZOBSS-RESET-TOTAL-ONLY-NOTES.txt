@@ -1,0 +1,13 @@
+AZOBSS Reset Total Only Fix
+
+Reset button in admin Purchase Records now resets only the user's total purchase counter:
+- Unit count shown in summary resets to 0
+- Total RM shown in summary resets to RM0
+- Purchase history/details are not deleted
+- Latest/Last purchase remains visible
+- Future purchases after reset will count again from 0
+
+Implementation:
+- Stores purchaseTotalResetAtMs and purchaseTotalResetAtClient in Firestore users/{usernameKey}
+- Keeps purchaseRecords collection untouched
+- Keeps embedded user purchaseRecords untouched

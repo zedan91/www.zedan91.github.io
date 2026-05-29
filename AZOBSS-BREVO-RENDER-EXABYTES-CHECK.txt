@@ -1,0 +1,33 @@
+AZOBSS Brevo / Render / Exabytes alignment check
+
+Fixed in this baseline:
+- deploy-server.js sender fallback is now noreply@azobss.com, not SMTP_USER.
+- SMTP sendMail from fallback is now noreply@azobss.com.
+- backend/server.js sender fallback is now noreply@azobss.com.
+- render.yaml and backend/render.yaml now default to Brevo SMTP host smtp-relay.brevo.com.
+- MAIL_FROM default in render.yaml is noreply@azobss.com.
+- .env example/docs updated from Gmail SMTP to Brevo SMTP.
+
+Render Environment should be:
+BREVO_API_KEY=your Brevo API key (optional if SMTP works)
+FRONTEND_BASE_URL=https://www.azobss.com
+PUBLIC_BASE_URL=https://azobss-backend.onrender.com
+MAIL_FROM=noreply@azobss.com
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your Brevo SMTP login
+SMTP_PASS=your Brevo SMTP key
+
+Exabytes DNS already seen OK:
+- brevo-code TXT
+- brevo1._domainkey CNAME
+- brevo2._domainkey CNAME
+- _dmarc TXT
+
+Brevo already seen OK:
+- azobss.com Authenticated
+- AZOBSS <noreply@azobss.com> Verified
+
+Important after deploy:
+- In Render, set MAIL_FROM=noreply@azobss.com, then Manual Deploy Latest Commit.
