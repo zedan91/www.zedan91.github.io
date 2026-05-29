@@ -2612,6 +2612,39 @@ async function azobssResetCurrentPurchaseTotalAfterPaid(orderId){
   if(totalEl) totalEl.textContent = 'RM0.00';
   try{ await renderAzobssPurchaseRecords(); }catch(e){}
 }
+
+
+function azobssShowPaBmPaymentSuccessPopup(){
+  try{
+    let modal = document.getElementById('azobssPaBmPaymentSuccessModal');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'azobssPaBmPaymentSuccessModal';
+      modal.className = 'azobss-payment-success-modal';
+      modal.innerHTML = `
+        <div class="azobss-payment-success-backdrop" data-close="1"></div>
+        <div class="azobss-payment-success-box" role="dialog" aria-modal="true" aria-labelledby="azobssPaymentSuccessTitle">
+          <button type="button" class="azobss-payment-success-close" aria-label="Close">×</button>
+          <div class="azobss-payment-success-icon">✅</div>
+          <h3 id="azobssPaymentSuccessTitle">Pembayaran Berjaya!</h3>
+          <p>Terima kasih atas pembelian anda.</p>
+          <p>Sila muat turun fail anda di bahagian <strong>'Latest Purchase List'</strong>.</p>
+          <button type="button" class="azobss-payment-success-go">Go to Latest Purchase List</button>
+        </div>`;
+      document.body.appendChild(modal);
+      const close = () => modal.classList.remove('show');
+      modal.querySelector('.azobss-payment-success-close')?.addEventListener('click', close);
+      modal.querySelector('.azobss-payment-success-backdrop')?.addEventListener('click', close);
+      modal.querySelector('.azobss-payment-success-go')?.addEventListener('click', () => {
+        close();
+        const target = document.getElementById('userPaPurchasePanel') || document.getElementById('userPaPurchaseList');
+        if(target){ target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      });
+    }
+    modal.classList.add('show');
+  }catch(e){ console.warn('Payment success popup failed:', e); }
+}
+
 async function azobssCheckPaBmToyyibReturn(){
   const status = document.getElementById('paBmToyyibStatus');
   const params = new URLSearchParams(window.location.search || '');
@@ -2626,7 +2659,8 @@ async function azobssCheckPaBmToyyibReturn(){
       await azobssResetCurrentPurchaseTotalAfterPaid(orderId);
       sessionStorage.setItem('azobss_pa_bm_paid_reset_' + orderId, '1');
       sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
-      if(status) status.textContent = 'Payment Successful ✔ Total reset to RM0.00';
+      if(status) status.textContent = 'Pembayaran berjaya. Total reset kepada RM0.00';
+      azobssShowPaBmPaymentSuccessPopup();
     }else if(status){
       status.textContent = 'Payment pending. If already paid, refresh this page.';
     }

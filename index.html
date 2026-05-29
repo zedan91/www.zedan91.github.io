@@ -8509,6 +8509,20 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 .user-pa-download.is-locked{background:#334155!important;color:#cbd5e1!important;cursor:not-allowed!important;box-shadow:none!important;text-decoration:none!important;}
 .bm-record-download{cursor:pointer!important;}
 </style>
+<style>
+
+/* AZOBSS PA/BM payment success popup */
+.azobss-payment-success-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit;}
+.azobss-payment-success-modal.show{display:flex;}
+.azobss-payment-success-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);}
+.azobss-payment-success-box{position:relative;width:min(440px,calc(100vw - 32px));border:1px solid rgba(74,255,160,.32);border-radius:22px;background:linear-gradient(180deg,rgba(18,35,30,.98),rgba(7,13,14,.98));box-shadow:0 24px 80px rgba(0,0,0,.55),0 0 30px rgba(43,255,139,.14);color:#eefdf5;text-align:center;padding:28px 22px 24px;}
+.azobss-payment-success-close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:#bfffd8;font-size:28px;line-height:1;cursor:pointer;}
+.azobss-payment-success-icon{font-size:42px;margin-bottom:8px;}
+.azobss-payment-success-box h3{margin:0 0 12px;color:#4cff9a;font-size:24px;font-weight:900;}
+.azobss-payment-success-box p{margin:8px 0;color:#dfffee;font-size:15px;line-height:1.55;}
+.azobss-payment-success-go{margin-top:18px;width:100%;border:0;border-radius:999px;background:linear-gradient(135deg,#36ff8a,#00c968);color:#04130a;font-weight:900;padding:13px 18px;cursor:pointer;box-shadow:0 10px 28px rgba(0,255,120,.22);}
+.azobss-payment-success-go:hover{filter:brightness(1.05);transform:translateY(-1px);}
+</style>
 </head>
 <body id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
