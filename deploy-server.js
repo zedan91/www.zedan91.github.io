@@ -9,13 +9,6 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const url = require("url");
-
-const sharpModule = require("sharp");
-const sharp = typeof sharpModule === "function" ? sharpModule : (sharpModule.default || sharpModule);
-const PDFDocument = require("pdfkit");
-
-console.log("Sharp loaded type:", typeof sharp);
-
 const crypto = require("crypto");
 let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
@@ -2006,7 +1999,7 @@ if (
 }
 
 // =========================
-// JUPEM PA PDF CONVERTER
+// JUPEM PA DIRECT DOWNLOAD (NO SHARP)
 // =========================
 
 if (
@@ -2057,7 +2050,7 @@ if (
 `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
 
   console.log(
-    "Fetching PDF:",
+    "Fetching PA direct:",
     jupemUrl
   );
 
@@ -2083,13 +2076,14 @@ if (
 
   const firstText =
     tifBuffer
-      .slice(0, 120)
+      .slice(0, 160)
       .toString("utf8")
       .toLowerCase();
 
   if (
     !tifBuffer.length ||
-    firstText.includes("<html")
+    firstText.includes("<html") ||
+    firstText.includes("<!doctype")
   ) {
     return send(
       res,
@@ -2102,60 +2096,18 @@ if (
     );
   }
 
-  const pngBuffer =
-    await sharp(tifBuffer)
-      .png()
-      .toBuffer();
+  const safeName =
+    `PA${paCleanForFile}`.replace(/[^A-Z0-9_-]/gi, "");
 
-  const meta =
-    await sharp(pngBuffer)
-      .metadata();
-
-  const doc =
-    new PDFDocument({
-      autoFirstPage: false,
-      margin: 0
-    });
-
-  const chunks = [];
-
-  doc.on("data", chunk => chunks.push(chunk));
-
-  doc.on("end", () => {
-    const pdfBuffer =
-      Buffer.concat(chunks);
-
-const safeName =
-      `${noPA}`.replace(/[^A-Z0-9_-]/gi, "");
-
-    res.writeHead(200, {
-      "Content-Type": "application/pdf",
-      "Content-Disposition":
-        `attachment; filename="${safeName}.pdf"`,
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*"
-    });
-
-    res.end(pdfBuffer);
+  res.writeHead(200, {
+    "Content-Type": "image/tiff",
+    "Content-Disposition":
+      `attachment; filename="${safeName}.TIF"`,
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*"
   });
 
-  doc.addPage({
-    size: [meta.width, meta.height],
-    margin: 0
-  });
-
-  doc.image(
-    pngBuffer,
-    0,
-    0,
-    {
-      width: meta.width,
-      height: meta.height
-    }
-  );
-
-  doc.end();
-
+  res.end(tifBuffer);
   return;
 }
 
