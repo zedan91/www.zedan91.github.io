@@ -451,7 +451,7 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const amountSen = totalAmount * 100;
     const orderId = makePremiumId("pabm");
     const apiBase = publicBaseUrl(req);
-    const returnUrl = TOYYIB_RETURN_URL || `${apiBase}/api/toyyib/return`;
+    const returnUrl = TOYYIB_RETURN_URL || `${frontendBaseUrl(req)}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
     const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
     const billPayload = {
       userSecretKey: TOYYIB_SECRET_KEY,

@@ -2450,11 +2450,58 @@ async function azobssRefreshPaBmToyyibTotal(records, resetMap){
   try{
     const rows = azobssPurchasePaymentRows(records || await loadAzobssPurchaseRecords(), resetMap || await loadAzobssPurchaseTotalResetMap());
     const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
-    el.textContent = 'RM' + total;
+    el.textContent = 'RM' + Number(total || 0).toFixed(2);
     return total;
   }catch(e){
     console.warn('Refresh PA/BM ToyyibPay total failed:', e);
     return 0;
+  }
+}
+async function azobssResetCurrentPurchaseTotalAfterPaid(orderId){
+  const current = getSavedUser() || {};
+  const key = String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase();
+  if(!key) return;
+  const resetAtMs = Date.now();
+  const resetAtClient = new Date(resetAtMs).toISOString();
+  try{
+    const map = readAzobssPurchaseTotalResetMap();
+    map[key] = resetAtMs;
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(e){ console.warn('Local payment reset failed:', e); }
+  try{
+    await setDoc(doc(db, 'users', key), {
+      purchaseTotalResetAtMs: resetAtMs,
+      purchaseTotalResetAtClient: resetAtClient,
+      purchaseTotalResetBy: 'toyyibpay',
+      lastPaBmPaymentOrderId: String(orderId || ''),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(e){ console.warn('Firebase payment reset failed:', e); }
+  const totalEl = document.getElementById('paBmToyyibTotal');
+  if(totalEl) totalEl.textContent = 'RM0.00';
+  try{ await renderAzobssPurchaseRecords(); }catch(e){}
+}
+async function azobssCheckPaBmToyyibReturn(){
+  const status = document.getElementById('paBmToyyibStatus');
+  const params = new URLSearchParams(window.location.search || '');
+  const orderId = params.get('orderId') || params.get('order_id') || sessionStorage.getItem('azobss_pa_bm_pending_order_id') || '';
+  const paymentReturn = params.get('payment') === 'return' || !!params.get('status_id') || !!params.get('billcode') || !!params.get('billCode');
+  if(!paymentReturn || !orderId || sessionStorage.getItem('azobss_pa_bm_paid_reset_' + orderId) === '1') return;
+  try{
+    if(status) status.textContent = 'Checking payment status...';
+    const res = await fetch(azobssGetBackendBaseUrl() + '/api/verify-payment?orderId=' + encodeURIComponent(orderId));
+    const data = await res.json().catch(()=>({}));
+    if(data && (data.paid || data.status === 'paid')){
+      await azobssResetCurrentPurchaseTotalAfterPaid(orderId);
+      sessionStorage.setItem('azobss_pa_bm_paid_reset_' + orderId, '1');
+      sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+      if(status) status.textContent = 'Payment Successful ✔ Total reset to RM0.00';
+    }else if(status){
+      status.textContent = 'Payment pending. If already paid, refresh this page.';
+    }
+  }catch(e){
+    console.warn('PA/BM payment return check failed:', e);
+    if(status) status.textContent = 'Unable to verify payment yet. Please refresh later.';
   }
 }
 async function azobssPayPaBmToyyib(){
@@ -2464,14 +2511,14 @@ async function azobssPayPaBmToyyib(){
   if(!current){ openSiteAuth('signin'); return; }
   const oldText = btn ? btn.textContent : '';
   try{
-    if(btn){ btn.disabled = true; btn.textContent = 'Creating ToyyibPay bill...'; }
+    if(btn){ btn.disabled = true; btn.textContent = 'Preparing payment...'; }
     if(status) status.textContent = 'Sila tunggu. Sistem sedang kira semula total...';
     const records = await loadAzobssPurchaseRecords();
     const resetMap = await loadAzobssPurchaseTotalResetMap();
     const rows = azobssPurchasePaymentRows(records, resetMap);
     const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
     if(!rows.length || total <= 0) throw new Error('Tiada total pembelian PA/BM untuk dibayar.');
-    if(status) status.textContent = 'Total RM' + total + ' dihantar ke ToyyibPay...';
+    if(status) status.textContent = 'Total RM' + total + ' dihantar ke payment gateway...';
     const payload = {
       usernameKey: String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase(),
       uid: String(current.uid || ''),
@@ -2482,15 +2529,16 @@ async function azobssPayPaBmToyyib(){
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
     });
     const data = await res.json().catch(()=>({}));
-    if(!res.ok || !data.ok) throw new Error(data.error || 'Gagal create ToyyibPay bill.');
-    if(status) status.textContent = 'Redirect ke ToyyibPay...';
+    if(!res.ok || !data.ok) throw new Error(data.error || 'Gagal create payment bill.');
+    if(data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
+    if(status) status.textContent = 'Redirect to payment page...';
     window.location.href = data.paymentUrl || data.url || data.redirectUrl;
   }catch(error){
-    console.error('PA/BM ToyyibPay failed:', error);
-    if(status) status.textContent = error.message || 'Gagal create ToyyibPay bill.';
-    alert(error.message || 'Gagal create ToyyibPay bill.');
+    console.error('PA/BM payment failed:', error);
+    if(status) status.textContent = error.message || 'Gagal create payment bill.';
+    alert(error.message || 'Gagal create payment bill.');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || 'Pay with ToyyibPay'; }
+    if(btn){ btn.disabled = false; btn.textContent = oldText || 'Proceed to Payment'; }
   }
 }
 function bindAzobssPaBmToyyibButton(){
@@ -2500,6 +2548,7 @@ function bindAzobssPaBmToyyibButton(){
     btn.addEventListener('click', azobssPayPaBmToyyib);
   }
   azobssRefreshPaBmToyyibTotal();
+  azobssCheckPaBmToyyibReturn();
 }
 window.azobssPayPaBmToyyib = azobssPayPaBmToyyib;
 
