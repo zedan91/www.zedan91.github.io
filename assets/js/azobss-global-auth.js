@@ -2227,6 +2227,55 @@ async function azobssVerifyPurchaseFileExists(record){
   return true;
 }
 
+function azobssSameCartItem(a, b){
+  return String(a && a.usernameKey || '').toLowerCase() === String(b && b.usernameKey || '').toLowerCase()
+    && String(a && a.uid || '') === String(b && b.uid || '')
+    && String(a && a.productType || '').toUpperCase() === String(b && b.productType || '').toUpperCase()
+    && String(a && a.itemCode || '').toUpperCase() === String(b && b.itemCode || '').toUpperCase()
+    && String(a && a.negeri || '').toUpperCase() === String(b && b.negeri || '').toUpperCase();
+}
+
+async function azobssFindExistingCartPurchase(record){
+  const resetMap = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
+  const resetAt = Number((resetMap || {})[String(record.usernameKey || '').toLowerCase()] || 0);
+  const current = getSavedUser() || {};
+  const candidates = [];
+
+  function pushSnap(snap){
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      let ms = Number(data.createdAtMs || 0);
+      if(!ms && data.createdAtClient) ms = Date.parse(data.createdAtClient) || 0;
+      if(!ms && data.createdAt && typeof data.createdAt.toMillis === 'function') ms = data.createdAt.toMillis();
+      candidates.push({ id: docSnap.id, firestoreId: docSnap.id, ...data, createdAtMs: ms });
+    });
+  }
+
+  try{
+    const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+    if(current && current.uid){
+      pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
+    }
+  }catch(error){}
+
+  try{
+    const key = getUserKey(current);
+    if(key){
+      const summarySnap = await getDoc(doc(db, AZOBSS_PURCHASE_SUMMARIES_COLLECTION, key));
+      if(summarySnap.exists()){
+        const data = summarySnap.data() || {};
+        (Array.isArray(data.records) ? data.records : []).forEach(item => candidates.push(item));
+      }
+    }
+  }catch(error){}
+
+  return candidates.find(item =>
+    azobssSameCartItem(item, record)
+    && purchaseRecordMs(item) > resetAt
+    && String(item.status || 'pending').toLowerCase() !== 'paid'
+  ) || null;
+}
+
 async function recordAzobssPurchase(payload){
   const user = getSavedUser();
   if(!user){
@@ -2236,25 +2285,17 @@ async function recordAzobssPurchase(payload){
   const record = normalizePurchasePayload(payload || {});
   // Final safety guard: PA/BM/SBM mesti wujud dahulu sebelum masuk cart/total.
   await azobssVerifyPurchaseFileExists(record);
-  const local = readLocalPurchaseRecords();
-  const resetMap = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
-  const resetAt = Number((resetMap || {})[String(record.usernameKey || '').toLowerCase()] || 0);
-  const existingUnpaid = local.find(item =>
-    String(item.usernameKey || '').toLowerCase() === String(record.usernameKey || '').toLowerCase() &&
-    String(item.productType || '').toUpperCase() === String(record.productType || '').toUpperCase() &&
-    String(item.itemCode || '').toUpperCase() === String(record.itemCode || '').toUpperCase() &&
-    String(item.negeri || '').toUpperCase() === String(record.negeri || '').toUpperCase() &&
-    purchaseRecordMs(item) > resetAt
-  );
+
+  // Firestore is the source of truth. If the item is already pending in cart,
+  // do not add it again and do not increase total.
+  const existingUnpaid = await azobssFindExistingCartPurchase(record);
   if(existingUnpaid){
-    window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: existingUnpaid }));
+    const alreadyRecord = { ...existingUnpaid, __azobssAlreadyInCart: true };
+    window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: alreadyRecord }));
     try{ window.dispatchEvent(new Event('storage')); }catch{}
-    return existingUnpaid;
+    return alreadyRecord;
   }
-  if(!local.some(item => isSamePurchase(item, record))){
-    local.unshift(record);
-    writeLocalPurchaseRecords(local.slice(0, 500));
-  }
+
   await savePurchaseToFirestoreEverywhere(record);
   window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: record }));
   try{ window.dispatchEvent(new Event('storage')); }catch{}

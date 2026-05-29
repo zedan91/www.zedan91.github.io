@@ -322,23 +322,41 @@
     const benchmarkDownload = event.target.closest('[data-benchmark-record]');
     if (benchmarkDownload) {
       event.preventDefault();
-      if (typeof window.azobssRecordPurchase === 'function') {
-        try {
-          const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
+      try {
+        const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
+        const successMessage = benchmarkCartAddedText(payload);
+
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = successMessage;
+        }
+
+        if (typeof window.azobssRecordPurchase === 'function') {
           window.azobssRecordPurchase(payload).catch(function(error){
             if (statusEl) {
               statusEl.style.display = 'block';
               statusEl.textContent = error.message || 'Failed to save BM/SBM purchase record.';
             }
           });
-        } catch (error) {}
-      }
-      if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = benchmarkCartAddedText(payload);
-      }
-      if (typeof window.azobssRenderPurchaseRecords === 'function') {
-        setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+        }
+
+        if (typeof window.azobssRenderPurchaseRecords === 'function') {
+          setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+        }
+
+        [120, 450, 900, 1400].forEach(function(delayMs){
+          setTimeout(function(){
+            if (statusEl) {
+              statusEl.style.display = 'block';
+              statusEl.textContent = successMessage;
+            }
+          }, delayMs);
+        });
+      } catch (error) {
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'BM/SBM item failed to add to cart.';
+        }
       }
       return;
     }

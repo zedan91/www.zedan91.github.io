@@ -10412,12 +10412,19 @@ normalizeCategory(category)===normalizeCategory(filter);
     const baseName = benchmarkSafeFilename(`${productType}-${code}`) || 'BM-SBM-download';
     return baseName.toLowerCase().endsWith('.pdf') ? baseName : `${baseName}.pdf`;
   }
-  function benchmarkCartAddedText(item){
+  function benchmarkCartLabel(item){
     item = item || {};
     const type = String(item.productType || item.product || (String(item.jenis || '1') === '2' ? 'SBM' : 'BM')).trim().toUpperCase();
     const code = String(item.itemCode || item.stationNo || item.stesen || item.productId || item.id || '').trim().toUpperCase();
-    const label = [type, code].filter(Boolean).join(' ');
-    return (label || 'Item') + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+    return [type, code].filter(Boolean).join(' ') || 'Item';
+  }
+
+  function benchmarkCartAddedText(item){
+    return benchmarkCartLabel(item) + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+  }
+
+  function benchmarkCartAlreadyText(item){
+    return benchmarkCartLabel(item) + ' sudah masuk dalam cart. Sila tekan Proceed to Payment untuk bayar.';
   }
 
 
@@ -10528,7 +10535,7 @@ normalizeCategory(category)===normalizeCategory(filter);
     renderCart();
     if (statusEl) {
       statusEl.style.display = 'block';
-      statusEl.textContent = exists ? (benchmarkCartAddedText(item).replace('Item added to cart.', 'already in cart.')) : benchmarkCartAddedText(item);
+      statusEl.textContent = exists ? benchmarkCartAlreadyText(item) : benchmarkCartAddedText(item);
     }
   }
 
@@ -10753,18 +10760,38 @@ normalizeCategory(category)===normalizeCategory(filter);
             throw new Error('BM/SBM tiada dalam simpanan');
           }
 
+          let successMessage = benchmarkCartAddedText(payload);
+
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = successMessage;
+          }
+
           if (typeof window.azobssRecordPurchase === 'function') {
-            await window.azobssRecordPurchase(payload);
+            const savedRecord = await window.azobssRecordPurchase(payload);
+            if (savedRecord && savedRecord.__azobssAlreadyInCart) {
+              successMessage = benchmarkCartAlreadyText(payload);
+            }
           }
 
           if (statusEl) {
             statusEl.style.display = 'block';
-            statusEl.textContent = benchmarkCartAddedText(payload);
+            statusEl.textContent = successMessage;
           }
 
           if (typeof window.azobssRenderPurchaseRecords === 'function') {
             setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
           }
+
+          // Kekalkan mesej item yang baru masuk cart supaya tidak ditindih mesej carian seperti "1 BM/SBM record found".
+          [120, 450, 900, 1400].forEach(function(delayMs){
+            setTimeout(function(){
+              if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.textContent = successMessage;
+              }
+            }, delayMs);
+          });
         } catch (error) {
           if (statusEl) {
             statusEl.style.display = 'block';
@@ -12085,8 +12112,9 @@ document.addEventListener('DOMContentLoaded', function(){
         var checkText = (await checkBlob.text()).slice(0, 800).toLowerCase();
         if (/not found|tiada|invalid|error|failed|cannot|no such|404/.test(checkText)) throw new Error('PA tiada dalam simpanan');
       }
+      var paSavedRecord = null;
       if (typeof window.azobssRecordPurchase === 'function') {
-        await window.azobssRecordPurchase({
+        paSavedRecord = await window.azobssRecordPurchase({
           productType: 'PA',
           itemCode: number,
           negeri: document.getElementById('negeri') ? document.getElementById('negeri').value : '',
@@ -12095,7 +12123,9 @@ document.addEventListener('DOMContentLoaded', function(){
           filename: 'PA' + number + '.pdf'
         });
       }
-      if (paStatus) paStatus.textContent = 'PA ' + number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+      if (paStatus) paStatus.textContent = (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
+        ? 'PA ' + number + ' sudah masuk dalam cart. Sila tekan Proceed to Payment untuk bayar.'
+        : 'PA ' + number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
       if (typeof window.azobssRenderPurchaseRecords === 'function') {
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
       }
@@ -12254,8 +12284,9 @@ document.addEventListener('DOMContentLoaded', function(){
         throw new Error('PA tiada dalam simpanan');
       }
 
+      var paSavedRecord = null;
       if(typeof window.azobssRecordPurchase === 'function'){
-        await window.azobssRecordPurchase({
+        paSavedRecord = await window.azobssRecordPurchase({
           productType: 'PA',
           itemCode: built.number,
           negeri: built.negeri,
@@ -12267,7 +12298,9 @@ document.addEventListener('DOMContentLoaded', function(){
       if(typeof window.azobssRenderPurchaseRecords === 'function'){
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
       }
-      setMessage('success', '✔ PA ' + built.number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.');
+      setMessage('success', (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
+        ? '✔ PA ' + built.number + ' sudah masuk dalam cart. Sila tekan Proceed to Payment untuk bayar.'
+        : '✔ PA ' + built.number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.');
     }catch(error){
       setMessage('error', 'PA tiada dalam simpanan');
     }finally{
