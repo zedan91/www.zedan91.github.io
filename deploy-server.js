@@ -1,13 +1,4 @@
 
-async function convertTifBufferToPngBuffer(tifBuffer) {
-  if (typeof sharp !== "function") {
-    throw new Error("Sharp image processor is not installed or not loaded. Please ensure package.json includes sharp.");
-  }
-
-  return await convertTifBufferToPngBuffer(tifBuffer);
-}
-
-
 // Allow PA/BM download proxy to fetch JUPEM resources even when the remote SSL chain is incomplete on Render/Node.
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED || "0";
 
@@ -1838,13 +1829,27 @@ async function handler(req, res) {
         { recursive: true }
       );
 
-      const paResult =
-        await fetchPelanAkuiCandidates(noPA, negeri);
+      const paCleanForFile =
+        String(noPA || "")
+          .trim()
+          .replace(/\.TIF$/i, "")
+          .replace(/^PA/i, "");
 
-      if (
-        !paResult ||
-        !paResult.validFile
-      ) {
+      const fileName =
+        `PA${paCleanForFile}.TIF`;
+
+      const jupemUrl =
+`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
+
+      console.log(
+        "Fetching:",
+        jupemUrl
+      );
+
+      const response =
+        await fetchJupem(jupemUrl);
+
+      if (!response.ok) {
 
         return send(
           res,
@@ -1858,10 +1863,37 @@ async function handler(req, res) {
       }
 
       const buffer =
-        paResult.buffer;
+        Buffer.from(
+          await response.arrayBuffer()
+        );
+
+      const firstText =
+        buffer
+          .slice(0, 120)
+          .toString("utf8")
+          .toLowerCase();
+
+      const looksHTML =
+        firstText.includes("<html");
+
+      if (
+        !buffer.length ||
+        looksHTML
+      ) {
+
+        return send(
+          res,
+          404,
+          JSON.stringify({
+            ok: false,
+            error: "Invalid PA file"
+          }),
+          "application/json"
+        );
+      }
 
       const tempName =
-`${noPA}.tif`;
+`PA${paCleanForFile}.tif`;
 
       const tempPath =
         path.join(
@@ -2011,13 +2043,27 @@ if (
     );
   }
 
-  const paResult =
-    await fetchPelanAkuiCandidates(noPA, negeri);
+  const paCleanForFile =
+    String(noPA || "")
+      .trim()
+      .replace(/\.TIF$/i, "")
+      .replace(/^PA/i, "");
 
-  if (
-    !paResult ||
-    !paResult.validFile
-  ) {
+  const fileName =
+    `PA${paCleanForFile}.TIF`;
+
+  const jupemUrl =
+`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
+
+  console.log(
+    "Fetching PDF:",
+    jupemUrl
+  );
+
+  const response =
+    await fetchJupem(jupemUrl);
+
+  if (!response.ok) {
     return send(
       res,
       404,
@@ -2030,10 +2076,35 @@ if (
   }
 
   const tifBuffer =
-    paResult.buffer;
+    Buffer.from(
+      await response.arrayBuffer()
+    );
+
+  const firstText =
+    tifBuffer
+      .slice(0, 120)
+      .toString("utf8")
+      .toLowerCase();
+
+  if (
+    !tifBuffer.length ||
+    firstText.includes("<html")
+  ) {
+    return send(
+      res,
+      404,
+      JSON.stringify({
+        ok: false,
+        error: "Invalid PA file"
+      }),
+      "application/json"
+    );
+  }
 
   const pngBuffer =
-    await convertTifBufferToPngBuffer(tifBuffer);
+    await sharp(tifBuffer)
+      .png()
+      .toBuffer();
 
   const meta =
     await sharp(pngBuffer)
