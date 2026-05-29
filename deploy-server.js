@@ -1,4 +1,7 @@
-const { Agent } = require('undici');
+
+// Allow PA/BM download proxy to fetch JUPEM resources even when the remote SSL chain is incomplete on Render/Node.
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED || "0";
+
 // AZOBSS Render Backend Server
 // Supports: website hosting + affiliate online sync + JUPEM PA hold system
 
@@ -659,14 +662,7 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback) {
 }
 
 async function fetchJupem(jupemUrl) {
-  const agent = new Agent({
-    connect: {
-      rejectUnauthorized: false
-    }
-  });
-
   return await fetch(jupemUrl, {
-    dispatcher: agent,
     redirect: "follow",
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
