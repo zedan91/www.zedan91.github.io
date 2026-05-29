@@ -1,3 +1,4 @@
+const { Agent } = require('undici');
 // AZOBSS Render Backend Server
 // Supports: website hosting + affiliate online sync + JUPEM PA hold system
 
@@ -658,7 +659,14 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback) {
 }
 
 async function fetchJupem(jupemUrl) {
+  const agent = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    }
+  });
+
   return await fetch(jupemUrl, {
+    dispatcher: agent,
     redirect: "follow",
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
