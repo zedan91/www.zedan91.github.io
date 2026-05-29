@@ -7567,6 +7567,115 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 }
 
 </style>
+
+<style id="azobss-pa-bm-payment-top-final-fix">
+/* AZOBSS PA/BM final payment card: replaces old blue Pembayaran banner, no side overlap */
+.payment-cta-wrap.toyyibpay-payment-top{
+  width:100% !important;
+  max-width:560px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:28px auto 26px !important;
+  padding:0 14px !important;
+  box-sizing:border-box !important;
+  clear:both !important;
+  position:relative !important;
+  z-index:1 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-card-top{
+  width:100% !important;
+  max-width:500px !important;
+  padding:28px 30px !important;
+  text-align:center !important;
+  border:1px solid rgba(34,197,94,.9) !important;
+  border-radius:18px !important;
+  background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,18,37,.96)) !important;
+  box-shadow:0 18px 45px rgba(0,0,0,.32), 0 0 26px rgba(34,197,94,.10) !important;
+  box-sizing:border-box !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{
+  margin:0 0 12px !important;
+  color:#fff !important;
+  font-size:28px !important;
+  line-height:1.1 !important;
+  font-weight:900 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-subtitle{
+  margin:0 0 20px !important;
+  color:#e5e7eb !important;
+  font-size:17px !important;
+  line-height:1.2 !important;
+  font-weight:900 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{
+  margin:0 0 22px !important;
+  color:#facc15 !important;
+  font-size:30px !important;
+  line-height:1.18 !important;
+  font-weight:900 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{
+  display:inline-block !important;
+  margin-top:4px !important;
+  color:#22c55e !important;
+  font-size:34px !important;
+  font-weight:950 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-pay-btn{
+  width:min(330px,100%) !important;
+  min-height:66px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 auto !important;
+  padding:12px 22px !important;
+  border-radius:12px !important;
+  background:linear-gradient(135deg,#22c55e,#16a34a) !important;
+  color:#fff !important;
+  font-size:24px !important;
+  line-height:1.2 !important;
+  font-weight:950 !important;
+  text-align:center !important;
+  white-space:normal !important;
+  box-shadow:0 12px 26px rgba(34,197,94,.24) !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-status{
+  display:block !important;
+  min-height:0 !important;
+  margin:14px 0 0 !important;
+  color:#f8fafc !important;
+  font-size:15px !important;
+  line-height:1.35 !important;
+  font-weight:500 !important;
+}
+#adminPurchasePanel .purchase-panel-layout{
+  display:block !important;
+  grid-template-columns:1fr !important;
+  overflow:visible !important;
+}
+#adminPurchasePanel .payment-qr-wrap.toyyibpay-payment-wrap{display:none !important;}
+@media(max-width:640px){
+  .payment-cta-wrap.toyyibpay-payment-top{
+    max-width:100% !important;
+    margin:18px auto 20px !important;
+    padding:0 12px !important;
+  }
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-card-top{
+    max-width:100% !important;
+    padding:22px 16px !important;
+    border-radius:16px !important;
+  }
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{font-size:24px !important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-subtitle{font-size:15px !important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{font-size:26px !important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{font-size:30px !important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-pay-btn{
+    min-height:58px !important;
+    font-size:20px !important;
+  }
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8144,11 +8253,16 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 <div class="benchmark-cart-list" id="benchmarkCartList" style="display:none;"></div>
 </div>
 </div>
-<div class="payment-cta-wrap login-only" id="paymentCtaWrap">
-        <button class="btn blue payment-cta-button" id="paymentScrollButton" type="button">
-          Pembayaran
-        </button>
-        <div class="payment-total-cta" id="paymentTotalText">Total : RM0</div>
+<div class="payment-cta-wrap login-only toyyibpay-payment-top" id="paymentCtaWrap">
+        <div class="payment-qr-card toyyibpay-payment-card toyyibpay-payment-card-top">
+          <h3 class="toyyibpay-payment-title">Payment</h3>
+          <p class="toyyibpay-payment-subtitle">FPX / Online Banking</p>
+          <p class="toyyibpay-payment-amount">Total:<br><strong id="paBmToyyibTotal">RM0.00</strong></p>
+          <button class="qr-action-btn green toyyibpay-pay-btn" id="payPaBmToyyibButton" type="button">
+            Proceed to Payment
+          </button>
+          <p class="qr-copy-status toyyibpay-payment-status" id="paBmToyyibStatus">Redirect to payment page</p>
+        </div>
       </div>
 <div class="admin-purchase-panel" id="adminPurchasePanel">
 <div class="purchase-panel-layout">
@@ -8213,17 +8327,7 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 <div class="guest-history-pagination" id="userPaPurchasePagination"></div>
 </div>
 </div>
-<div class="payment-qr-wrap toyyibpay-payment-wrap">
-<div class="payment-qr-card toyyibpay-payment-card">
-<h3 class="toyyibpay-payment-title">Payment</h3>
-<p class="toyyibpay-payment-subtitle">FPX / Online Banking</p>
-<p class="toyyibpay-payment-amount">Total: <strong id="paBmToyyibTotal">RM0.00</strong></p>
-<button class="qr-action-btn green toyyibpay-pay-btn" id="payPaBmToyyibButton" type="button">
-                  Proceed to Payment
-                </button>
-<p class="qr-copy-status toyyibpay-payment-status" id="paBmToyyibStatus"></p>
-</div>
-</div>
+
 </div>
 </div>
 <div class="registered-users-panel" id="registeredUsersPanel">
@@ -11304,6 +11408,11 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     totalEl.textContent = 'Total : ' + total;
+    const payTotalEl = document.getElementById('paBmToyyibTotal');
+    if(payTotalEl){
+      const n = parseFloat(String(total).replace(/[^0-9.]/g,'')) || 0;
+      payTotalEl.textContent = 'RM' + n.toFixed(2);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', function(){
