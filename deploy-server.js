@@ -1,4 +1,13 @@
 
+async function convertTifBufferToPngBuffer(tifBuffer) {
+  if (typeof sharp !== "function") {
+    throw new Error("Sharp image processor is not installed or not loaded. Please ensure package.json includes sharp.");
+  }
+
+  return await convertTifBufferToPngBuffer(tifBuffer);
+}
+
+
 // Allow PA/BM download proxy to fetch JUPEM resources even when the remote SSL chain is incomplete on Render/Node.
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED || "0";
 
@@ -2024,9 +2033,7 @@ if (
     paResult.buffer;
 
   const pngBuffer =
-    await sharp(tifBuffer)
-      .png()
-      .toBuffer();
+    await convertTifBufferToPngBuffer(tifBuffer);
 
   const meta =
     await sharp(pngBuffer)
