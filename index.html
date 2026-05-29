@@ -10420,7 +10420,7 @@ normalizeCategory(category)===normalizeCategory(filter);
   }
 
   function benchmarkCartAddedText(item){
-    return benchmarkCartLabel(item) + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+    return benchmarkCartLabel(item) + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.";
   }
 
   function benchmarkCartAlreadyText(item){
@@ -12099,18 +12099,18 @@ document.addEventListener('DOMContentLoaded', function(){
 
     if (paStatus) {
       paStatus.style.display = 'block';
-      paStatus.textContent = 'Adding PA to cart...';
+      paStatus.textContent = 'Menambah PA ke cart...';
     }
 
     try {
       var checkResponse = await fetch(url, { cache: 'no-store' });
-      if (!checkResponse.ok) throw new Error('PA tiada dalam simpanan');
+      if (!checkResponse.ok) throw new Error('Maaf, PA tiada dalam simpanan.');
       var checkBlob = await checkResponse.blob();
-      if (!checkBlob || !checkBlob.size) throw new Error('PA tiada dalam simpanan');
+      if (!checkBlob || !checkBlob.size) throw new Error('Maaf, PA tiada dalam simpanan.');
       var checkType = String(checkResponse.headers.get('content-type') || '').toLowerCase();
       if (/text|json|html/.test(checkType)) {
         var checkText = (await checkBlob.text()).slice(0, 800).toLowerCase();
-        if (/not found|tiada|invalid|error|failed|cannot|no such|404/.test(checkText)) throw new Error('PA tiada dalam simpanan');
+        if (/not found|tiada|invalid|error|failed|cannot|no such|404/.test(checkText)) throw new Error('Maaf, PA tiada dalam simpanan.');
       }
       var paSavedRecord = null;
       if (typeof window.azobssRecordPurchase === 'function') {
@@ -12125,7 +12125,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }
       if (paStatus) paStatus.textContent = (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
         ? 'PA ' + number + ' sudah ada dalam cart.'
-        : 'PA ' + number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+        : 'PA ' + number + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.";
       if (typeof window.azobssRenderPurchaseRecords === 'function') {
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
       }
@@ -12144,7 +12144,7 @@ document.addEventListener('DOMContentLoaded', function(){
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
       if (paStatus) paStatus.textContent = 'PA downloaded successfully!';
     } catch (error) {
-      if (paError) paError.textContent = error.message || 'PA tiada dalam simpanan';
+      if (paError) paError.textContent = error.message || 'Maaf, PA tiada dalam simpanan.';
       if (paStatus) paStatus.style.display = 'none';
     }
 
@@ -12269,19 +12269,19 @@ document.addEventListener('DOMContentLoaded', function(){
       els.button.disabled = true;
     }
 
-    setMessage('loading', 'Adding PA to cart...');
+    setMessage('loading', 'Menambah PA ke cart...');
 
     try{
       // Semak dahulu sama ada PA benar-benar wujud di backend/JUPEM.
       // Jangan masukkan cart dan jangan kira total jika PA Maaf, tiada dalam simpanan.
       var checkResponse = await fetch(built.url, { cache: 'no-store' });
       if(!checkResponse.ok){
-        throw new Error('PA tiada dalam simpanan');
+        throw new Error('Maaf, PA tiada dalam simpanan.');
       }
 
       var checkBlob = await checkResponse.blob();
       if(!checkBlob || !checkBlob.size){
-        throw new Error('PA tiada dalam simpanan');
+        throw new Error('Maaf, PA tiada dalam simpanan.');
       }
 
       var paSavedRecord = null;
@@ -12300,9 +12300,9 @@ document.addEventListener('DOMContentLoaded', function(){
       }
       setMessage('success', (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
         ? '✔ PA ' + built.number + ' sudah ada dalam cart.'
-        : '✔ PA ' + built.number + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.');
+        : '✔ PA ' + built.number + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.");
     }catch(error){
-      setMessage('error', 'PA tiada dalam simpanan');
+      setMessage('error', 'Maaf, PA tiada dalam simpanan.');
     }finally{
       if(els.button){
         els.button.disabled = false;

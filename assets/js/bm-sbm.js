@@ -54,7 +54,7 @@
   }
 
   function benchmarkCartAddedText(item){
-    return benchmarkCartLabel(item) + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+    return benchmarkCartLabel(item) + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.";
   }
 
   function benchmarkCartAlreadyText(item){
