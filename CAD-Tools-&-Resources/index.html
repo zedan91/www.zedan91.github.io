@@ -2096,10 +2096,10 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     syncBuyerEmailField();
   });
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
-  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Download link akan dijana sementara selepas bayaran disahkan.</div>`; updateInstruction();}
+  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">A temporary download link will be generated after payment verification.</div>`; updateInstruction();}
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
   function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; return 'dynamic-toyyibpay'; }
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay in the same tab. After payment is completed, you will return to the last visited page and download will be ready once verified.'; else if(currentMethod==='toyyibpay') inst.textContent='Tekan Open Payment untuk bayar melalui ToyyibPay di tab yang sama. Selepas bayaran selesai, anda akan kembali ke halaman terakhir dan download akan tersedia selepas payment verified.'; else if(currentMethod==='bank') inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; else inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay in the same tab. After payment is completed, you will return to the last visited page and download will be ready once verified.'; else if(currentMethod==='toyyibpay') inst.textContent='Click Open Payment to pay through Bank Transfer / FPX in the same tab. After payment is completed, you will return to AZOBSS and your download will be ready once payment is verified.'; else if(currentMethod==='bank') inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; else inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'bank'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
@@ -2109,7 +2109,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     if(!currentProduct){ errorBox.textContent='Product not found.'; return; }
     if(currentMethod === 'stripe'){
       const link = toAbsolute(currentProduct.stripeLink || '');
-      if(!link){ errorBox.textContent='Stripe/payment link belum diset untuk item ini.'; return; }
+      if(!link){ errorBox.textContent='Stripe/payment link is not set for this item.'; return; }
       localStorage.setItem('azobss_last_checkout_page', window.location.href);
       window.location.href = link;
       return;
@@ -2135,8 +2135,8 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       window.location.href = data.paymentUrl;
     }catch(err){
       const fallback = toAbsolute(currentProduct.paymentLink || '');
-      errorBox.textContent = (err.message || 'Gagal generate payment.') + (fallback ? ' Fallback payment link available.' : '');
-      if(fallback){successBox.innerHTML=`<b>Fallback available</b><br><span>Backend belum ready / env belum lengkap. Anda masih boleh buka payment link manual.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`; successBox.classList.add('is-open');}
+      errorBox.textContent = (err.message || 'Failed to generate payment.') + (fallback ? ' Fallback payment link available.' : '');
+      if(fallback){successBox.innerHTML=`<b>Fallback available</b><br><span>The backend is not ready or environment variables are incomplete. You may still open the manual payment link.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`; successBox.classList.add('is-open');}
     }finally{openPaymentBtn.disabled=false; openPaymentBtn.textContent=originalText || 'Open Payment';}
   });
   completeBtn?.addEventListener('click', async()=>{
@@ -2151,9 +2151,10 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
       const downloadUrl = toAbsolute(data.downloadUrl);
       const receiptUrl = toAbsolute(data.receiptUrl);
-      successBox.innerHTML = `<b>Pembelian selesai ✅</b><br><span>Temporary download link aktif mengikut tetapan produk / had download admin.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
+      successBox.innerHTML = `<b>Payment Successful ✅</b><br><span>Your temporary download link is active according to the product settings and download limit.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
       successBox.classList.add('is-open');
-    }catch(err){errorBox.textContent=err.message || 'Gagal proses pembayaran.';}
+      if(window.showAzobssPaymentSuccessPopup) window.showAzobssPaymentSuccessPopup({receiptUrl: receiptUrl});
+    }catch(err){errorBox.textContent=err.message || 'Failed to process payment.';}
     finally{completeBtn.disabled=false; completeBtn.textContent='Submit Proof';}
   });
   document.addEventListener('click', e=>{
@@ -2232,30 +2233,98 @@ async function verifyToyyibPayment(billCode){
 </script>
 
 
-<script id="azobss-auto-email-after-toyyibpay-return">
+<script id="azobss-payment-success-popup-hook">
 (function(){
-  if (window.__azobssAutoVerifyPaymentReturn) return;
-  window.__azobssAutoVerifyPaymentReturn = true;
-  async function run(){
+  if (window.__azobssPaymentSuccessPopupHook) return;
+  window.__azobssPaymentSuccessPopupHook = true;
+
+  function ensurePopup(){
+    var existing = document.getElementById('azobssPaymentSuccessEmailPopup');
+    if(existing) return existing;
+
+    var style = document.createElement('style');
+    style.id = 'azobssPaymentSuccessEmailPopupStyle';
+    style.textContent = `
+      .azobss-success-email-overlay{position:fixed;inset:0;background:rgba(2,6,23,.72);backdrop-filter:blur(8px);z-index:2147483000;display:none;align-items:center;justify-content:center;padding:18px}
+      .azobss-success-email-overlay.is-open{display:flex}
+      .azobss-success-email-card{width:min(94vw,520px);background:linear-gradient(180deg,#ffffff,#f8fafc);color:#0f172a;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.35);padding:28px;text-align:center;border:1px solid rgba(15,23,42,.08)}
+      .azobss-success-email-icon{font-size:48px;margin-bottom:8px}
+      .azobss-success-email-card h2{margin:0 0 12px;font-size:25px;line-height:1.2;color:#0f172a}
+      .azobss-success-email-card p{margin:10px 0;color:#334155;line-height:1.55;font-size:15px}
+      .azobss-success-email-note{background:#ecfdf5;border:1px solid #bbf7d0;border-radius:16px;padding:12px 14px;margin:16px 0;color:#166534!important;font-weight:700}
+      .azobss-success-email-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+      .azobss-success-email-btn{border:0;border-radius:999px;background:#16a34a;color:#fff;font-weight:800;padding:12px 22px;cursor:pointer;box-shadow:0 10px 24px rgba(22,163,74,.28)}
+      .azobss-success-email-link{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#0f172a;color:#fff!important;text-decoration:none;font-weight:800;padding:12px 18px}
+      @media(max-width:520px){.azobss-success-email-card{padding:22px}.azobss-success-email-card h2{font-size:22px}}
+    `;
+    document.head.appendChild(style);
+
+    var overlay = document.createElement('div');
+    overlay.id = 'azobssPaymentSuccessEmailPopup';
+    overlay.className = 'azobss-success-email-overlay';
+    overlay.setAttribute('aria-hidden','true');
+    overlay.innerHTML = `
+      <div class="azobss-success-email-card" role="dialog" aria-modal="true" aria-labelledby="azobssPaymentSuccessEmailTitle">
+        <div class="azobss-success-email-icon">🎉</div>
+        <h2 id="azobssPaymentSuccessEmailTitle">Payment Successful</h2>
+        <p>Thank you for your purchase.</p>
+        <p class="azobss-success-email-note">Your download link and payment receipt have been sent to your email address.</p>
+        <p>Please check your Inbox. If you cannot find the email, kindly check your Spam/Junk Folder or Promotions Folder.</p>
+        <p>If you still do not receive the email within 10 minutes, please contact us for assistance.</p>
+        <p><b>Thank you for supporting AZOBSS.</b></p>
+        <div class="azobss-success-email-actions">
+          <button type="button" class="azobss-success-email-btn" id="azobssPaymentSuccessEmailOk">OK</button>
+          <a class="azobss-success-email-link" id="azobssPaymentSuccessEmailReceipt" href="#" target="_blank" rel="noopener" style="display:none">View Receipt</a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) window.closeAzobssPaymentSuccessPopup(); });
+    overlay.querySelector('#azobssPaymentSuccessEmailOk')?.addEventListener('click', window.closeAzobssPaymentSuccessPopup);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') window.closeAzobssPaymentSuccessPopup(); });
+    return overlay;
+  }
+
+  window.closeAzobssPaymentSuccessPopup = function(){
+    var overlay = document.getElementById('azobssPaymentSuccessEmailPopup');
+    if(!overlay) return;
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden','true');
+  };
+
+  window.showAzobssPaymentSuccessPopup = function(payload){
+    var overlay = ensurePopup();
+    var receipt = overlay.querySelector('#azobssPaymentSuccessEmailReceipt');
+    var receiptUrl = payload && payload.receiptUrl ? String(payload.receiptUrl) : '';
+    if(receipt && receiptUrl){ receipt.href = receiptUrl; receipt.style.display = ''; }
+    else if(receipt){ receipt.style.display = 'none'; }
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden','false');
+  };
+
+  async function autoVerifyAfterReturn(){
     try{
-      const billCode = localStorage.getItem('azobss_last_bill_code') || '';
-      const orderId = localStorage.getItem('azobss_last_order_id') || '';
+      var billCode = localStorage.getItem('azobss_last_bill_code') || '';
+      var orderId = localStorage.getItem('azobss_last_order_id') || '';
       if(!billCode && !orderId) return;
-      const key = 'azobss_verified_' + (orderId || billCode);
+      var key = 'azobss_verified_' + (orderId || billCode);
       if(sessionStorage.getItem(key)) return;
-      const api = window.API_BASE_URL || window.AZOBSS_BACKEND_URL || 'https://azobss-backend.onrender.com';
-      const qs = new URLSearchParams();
+      var api = window.API_BASE_URL || window.AZOBSS_BACKEND_URL || 'https://azobss-backend.onrender.com';
+      var qs = new URLSearchParams();
       if(billCode) qs.set('billCode', billCode);
       if(orderId) qs.set('orderId', orderId);
-      const res = await fetch(api + '/api/verify-payment?' + qs.toString(), {cache:'no-store'});
-      const data = await res.json().catch(()=>null);
+      var res = await fetch(api + '/api/verify-payment?' + qs.toString(), {cache:'no-store'});
+      var data = await res.json().catch(function(){ return null; });
       if(data && (data.paid === true || data.status === 'paid')){
         sessionStorage.setItem(key, '1');
         console.log('AZOBSS payment verified; email trigger status:', data.emailSent, data.emailError || '');
+        window.showAzobssPaymentSuccessPopup({ receiptUrl: data.receiptUrl || '' });
       }
     }catch(e){ console.warn('AZOBSS auto verify skipped:', e && e.message ? e.message : e); }
   }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(run, 1200)); else setTimeout(run, 1200);
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(autoVerifyAfterReturn, 1200); });
+  else setTimeout(autoVerifyAfterReturn, 1200);
 })();
 </script>
 
