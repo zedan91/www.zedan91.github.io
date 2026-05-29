@@ -46,12 +46,19 @@
     const baseName = benchmarkSafeFilename(`${productType}-${code}`) || 'BM-SBM-download';
     return baseName.toLowerCase().endsWith('.pdf') ? baseName : `${baseName}.pdf`;
   }
-  function benchmarkCartAddedText(item){
+  function benchmarkCartLabel(item){
     item = item || {};
     const type = String(item.productType || item.product || (String(item.jenis || '1') === '2' ? 'SBM' : 'BM')).trim().toUpperCase();
     const code = String(item.itemCode || item.stationNo || item.stesen || item.productId || item.id || '').trim().toUpperCase();
-    const label = [type, code].filter(Boolean).join(' ');
-    return (label || 'Item') + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+    return [type, code].filter(Boolean).join(' ') || 'Item';
+  }
+
+  function benchmarkCartAddedText(item){
+    return benchmarkCartLabel(item) + ' Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+  }
+
+  function benchmarkCartAlreadyText(item){
+    return benchmarkCartLabel(item) + ' sudah masuk dalam cart. Sila tekan Proceed to Payment untuk bayar.';
   }
 
 
@@ -162,7 +169,7 @@
     renderCart();
     if (statusEl) {
       statusEl.style.display = 'block';
-      statusEl.textContent = exists ? (benchmarkCartAddedText(item).replace('Item added to cart.', 'already in cart.')) : benchmarkCartAddedText(item);
+      statusEl.textContent = exists ? benchmarkCartAlreadyText(item) : benchmarkCartAddedText(item);
     }
   }
 
@@ -322,42 +329,48 @@
     const benchmarkDownload = event.target.closest('[data-benchmark-record]');
     if (benchmarkDownload) {
       event.preventDefault();
-      try {
-        const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
-        const successMessage = benchmarkCartAddedText(payload);
 
-        if (statusEl) {
-          statusEl.style.display = 'block';
-          statusEl.textContent = successMessage;
-        }
+      (async function(){
+        try {
+          const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
+          let successMessage = benchmarkCartAddedText(payload);
 
-        if (typeof window.azobssRecordPurchase === 'function') {
-          window.azobssRecordPurchase(payload).catch(function(error){
-            if (statusEl) {
-              statusEl.style.display = 'block';
-              statusEl.textContent = error.message || 'Failed to save BM/SBM purchase record.';
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = successMessage;
+          }
+
+          if (typeof window.azobssRecordPurchase === 'function') {
+            const savedRecord = await window.azobssRecordPurchase(payload);
+            if (savedRecord && savedRecord.__azobssAlreadyInCart) {
+              successMessage = benchmarkCartAlreadyText(payload);
             }
+          }
+
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = successMessage;
+          }
+
+          if (typeof window.azobssRenderPurchaseRecords === 'function') {
+            setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+          }
+
+          [120, 450, 900, 1400].forEach(function(delayMs){
+            setTimeout(function(){
+              if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.textContent = successMessage;
+              }
+            }, delayMs);
           });
+        } catch (error) {
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = error.message || 'BM/SBM item failed to add to cart.';
+          }
         }
-
-        if (typeof window.azobssRenderPurchaseRecords === 'function') {
-          setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
-        }
-
-        [120, 450, 900, 1400].forEach(function(delayMs){
-          setTimeout(function(){
-            if (statusEl) {
-              statusEl.style.display = 'block';
-              statusEl.textContent = successMessage;
-            }
-          }, delayMs);
-        });
-      } catch (error) {
-        if (statusEl) {
-          statusEl.style.display = 'block';
-          statusEl.textContent = 'BM/SBM item failed to add to cart.';
-        }
-      }
+      })();
       return;
     }
     const addButton = event.target.closest('[data-add-benchmark]');
