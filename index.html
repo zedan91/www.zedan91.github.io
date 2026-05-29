@@ -10717,24 +10717,56 @@ normalizeCategory(category)===normalizeCategory(filter);
     const benchmarkDownload = event.target.closest('[data-benchmark-record]');
     if (benchmarkDownload) {
       event.preventDefault();
-      if (typeof window.azobssRecordPurchase === 'function') {
+
+      (async function(){
         try {
           const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
-          window.azobssRecordPurchase(payload).catch(function(error){
-            if (statusEl) {
-              statusEl.style.display = 'block';
-              statusEl.textContent = error.message || 'Failed to save BM/SBM purchase record.';
-            }
-          });
-        } catch (error) {}
-      }
-      if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
-      }
-      if (typeof window.azobssRenderPurchaseRecords === 'function') {
-        setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
-      }
+
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Checking BM/SBM record...';
+          }
+
+          benchmarkDownload.disabled = true;
+
+          // Semak dahulu sama ada fail BM/SBM benar-benar wujud.
+          // Kalau tiada, jangan masuk cart dan jangan tambah total.
+          if (!payload.downloadUrl) {
+            throw new Error('BM/SBM tiada dalam simpanan');
+          }
+
+          const checkResponse = await fetch(payload.downloadUrl, { cache: 'no-store' });
+          if (!checkResponse.ok) {
+            throw new Error('BM/SBM tiada dalam simpanan');
+          }
+
+          const checkBlob = await checkResponse.blob();
+          if (!checkBlob || !checkBlob.size) {
+            throw new Error('BM/SBM tiada dalam simpanan');
+          }
+
+          if (typeof window.azobssRecordPurchase === 'function') {
+            await window.azobssRecordPurchase(payload);
+          }
+
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Item added to cart. Sila tekan Proceed to Payment untuk bayar.';
+          }
+
+          if (typeof window.azobssRenderPurchaseRecords === 'function') {
+            setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+          }
+        } catch (error) {
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = error.message || 'BM/SBM tiada dalam simpanan';
+          }
+        } finally {
+          benchmarkDownload.disabled = false;
+        }
+      })();
+
       return;
     }
     const pageButton = event.target.closest('[data-benchmark-page]');
@@ -12193,6 +12225,18 @@ document.addEventListener('DOMContentLoaded', function(){
     setMessage('loading', 'Adding PA to cart...');
 
     try{
+      // Semak dahulu sama ada PA benar-benar wujud di backend/JUPEM.
+      // Jangan masukkan cart dan jangan kira total jika PA tiada dalam simpanan.
+      var checkResponse = await fetch(built.url, { cache: 'no-store' });
+      if(!checkResponse.ok){
+        throw new Error('PA tiada dalam simpanan');
+      }
+
+      var checkBlob = await checkResponse.blob();
+      if(!checkBlob || !checkBlob.size){
+        throw new Error('PA tiada dalam simpanan');
+      }
+
       if(typeof window.azobssRecordPurchase === 'function'){
         await window.azobssRecordPurchase({
           productType: 'PA',
@@ -12200,7 +12244,7 @@ document.addEventListener('DOMContentLoaded', function(){
           negeri: built.negeri,
           amount: 5,
           url: built.url,
-          filename: 'PA' + built.number + '.pdf'
+          filename: 'PA' + built.number + '.TIF'
         });
       }
       if(typeof window.azobssRenderPurchaseRecords === 'function'){
@@ -12208,7 +12252,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }
       setMessage('success', '✔ PA added to cart. Sila tekan Proceed to Payment untuk bayar.');
     }catch(error){
-      setMessage('error', 'Maaf, PA tiada dalam simpanan');
+      setMessage('error', 'PA tiada dalam simpanan');
     }finally{
       if(els.button){
         els.button.disabled = false;
