@@ -12,7 +12,7 @@ What changed:
 - Amount is converted to sen automatically: RM1 = 100, RM5 = 500, RM25 = 2500.
 - Payment opens in the same tab using window.location.href.
 - Backend can receive returnUrl from the current page, so ToyyibPay can redirect buyer back to the last visited AZOBSS page.
-- Guest buyer must enter Buyer Email before Open Payment.
+- Guest buyer must enter Buyer Email Address before Open Payment.
 - Logged-in users do not see the email box.
 
 ToyyibPay dashboard recommendation:
