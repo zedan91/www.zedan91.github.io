@@ -1284,6 +1284,76 @@ async function handler(req, res) {
     // =========================
     // TOYYIBPAY DYNAMIC PAYMENT ROUTES (Render deploy-server.js)
     // =========================
+
+
+    if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST") {
+      let data = {};
+      try { data = parseRequestBody(await readBody(req)); }
+      catch (e) { return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Invalid request body" }), "application/json"); }
+      try {
+        if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
+          return send(res, 500, JSON.stringify({ ok:false, success:false, error:"ToyyibPay env belum lengkap. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." }, null, 2), "application/json");
+        }
+        const user = getPremiumUser(data);
+        const usernameKey = cleanPremiumText(data.usernameKey || user.username || "", 80).toLowerCase();
+        const uid = cleanPremiumText(data.uid || user.uid || "", 120);
+        const rawItems = Array.isArray(data.items) ? data.items : [];
+        const items = rawItems.map((item) => ({
+          id: cleanPremiumText(item.id || "", 120),
+          productType: cleanPremiumText(item.productType || "PA", 20).toUpperCase(),
+          itemCode: cleanPremiumText(item.itemCode || "", 80),
+          negeri: cleanPremiumText(item.negeri || "", 80),
+          amount: Math.max(0, Math.round(Number(item.amount || 0))),
+          createdAtMs: Number(item.createdAtMs || 0) || 0
+        })).filter((item) => item.itemCode && (item.amount === 3 || item.amount === 5));
+        if (!items.length) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Tiada rekod PA/BM yang sah untuk dibayar." }, null, 2), "application/json");
+        const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+        if (totalAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Total bayaran tidak sah." }, null, 2), "application/json");
+        const amountSen = totalAmount * 100;
+        const orderId = makeId("pabm");
+        const apiBase = publicBaseUrlFromReq(req);
+        const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
+        const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
+        const productName = `PA/BM Purchase Records (${items.length} unit)`;
+        const billPayload = {
+          userSecretKey: TOYYIB_SECRET_KEY,
+          categoryCode: TOYYIB_CATEGORY_CODE,
+          billName: cleanForToyyib("AZOBSS PA BM", 30),
+          billDescription: cleanForToyyib(`AZOBSS PA/BM Payment - ${items.length} unit - RM${totalAmount}`, 100),
+          billPriceSetting: 1,
+          billPayorInfo: 1,
+          billAmount: amountSen,
+          billReturnUrl: returnUrl,
+          billCallbackUrl: callbackUrl,
+          billExternalReferenceNo: orderId,
+          billTo: cleanForToyyib(user.username || usernameKey || user.email || "AZOBSS Customer", 30),
+          billEmail: cleanForToyyib(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
+          billPhone: cleanForToyyib(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
+          billSplitPayment: 0,
+          billSplitPaymentArgs: "",
+          billPaymentChannel: 0,
+          billContentEmail: `Thank you for your AZOBSS PA/BM payment. Total: RM${totalAmount}.`,
+          billChargeToCustomer: 1,
+          billExpiryDays: 3,
+          enableDuitNowQR: 1,
+          chargeDuitNowQR: 0
+        };
+        const apiResult = await postToyyib("createBill", billPayload);
+        const billCode = Array.isArray(apiResult) ? (apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode)) : (apiResult && apiResult.BillCode);
+        if (!billCode) {
+          const detail = Array.isArray(apiResult) ? (apiResult[0] || {}) : apiResult;
+          const msg = (detail && (detail.msg || detail.Message || detail.error || detail.Error || detail.status)) || "ToyyibPay tidak return BillCode.";
+          return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
+        }
+        const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+        upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, unit:items.length, status:"pending" }, null, 2), "application/json");
+      } catch (e) {
+        console.error("Create PA/BM ToyyibPay bill failed:", e.message);
+        return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create PA/BM ToyyibPay bill" }, null, 2), "application/json");
+      }
+    }
+
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "GET") {
       return send(res, 405, JSON.stringify({ ok:false, error:"Use POST for this endpoint." }, null, 2), "application/json");
     }

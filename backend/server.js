@@ -427,6 +427,66 @@ app.get("/api/health", (req, res) => {
 });
 
 
+
+
+app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
+  try {
+    if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
+      return res.status(500).json({ ok:false, error:"ToyyibPay env belum diset. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." });
+    }
+    const data = req.body || {};
+    const user = getPremiumUser(data);
+    const usernameKey = cleanPremiumText(data.usernameKey || user.username || "", 80).toLowerCase();
+    const rawItems = Array.isArray(data.items) ? data.items : [];
+    const items = rawItems.map((item) => ({
+      id: cleanPremiumText(item.id || "", 120),
+      productType: cleanPremiumText(item.productType || "PA", 20).toUpperCase(),
+      itemCode: cleanPremiumText(item.itemCode || "", 80),
+      negeri: cleanPremiumText(item.negeri || "", 80),
+      amount: Math.max(0, Math.round(Number(item.amount || 0))),
+      createdAtMs: Number(item.createdAtMs || 0) || 0
+    })).filter((item) => item.itemCode && (item.amount === 3 || item.amount === 5));
+    if (!items.length) return res.status(400).json({ ok:false, error:"Tiada rekod PA/BM yang sah untuk dibayar." });
+    const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+    const amountSen = totalAmount * 100;
+    const orderId = makePremiumId("pabm");
+    const apiBase = publicBaseUrl(req);
+    const returnUrl = TOYYIB_RETURN_URL || `${apiBase}/api/toyyib/return`;
+    const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
+    const billPayload = {
+      userSecretKey: TOYYIB_SECRET_KEY,
+      categoryCode: TOYYIB_CATEGORY_CODE,
+      billName: toyyibClean("AZOBSS PA BM", 30),
+      billDescription: toyyibClean(`AZOBSS PA/BM Payment - ${items.length} unit - RM${totalAmount}`, 100),
+      billPriceSetting: 1,
+      billPayorInfo: 1,
+      billAmount: amountSen,
+      billReturnUrl: returnUrl,
+      billCallbackUrl: callbackUrl,
+      billExternalReferenceNo: orderId,
+      billTo: toyyibClean(user.username || usernameKey || user.email || "AZOBSS Customer", 30),
+      billEmail: toyyibClean(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
+      billPhone: toyyibClean(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
+      billSplitPayment: 0,
+      billSplitPaymentArgs: "",
+      billPaymentChannel: 0,
+      billContentEmail: `Thank you for your AZOBSS PA/BM payment. Total: RM${totalAmount}.`,
+      billChargeToCustomer: 1,
+      billExpiryDays: 3,
+      enableDuitNowQR: 1,
+      chargeDuitNowQR: 0
+    };
+    const apiResult = await toyyibPost("createBill", billPayload);
+    const billCode = Array.isArray(apiResult) ? (apiResult[0]?.BillCode || apiResult[0]?.billCode) : apiResult?.BillCode;
+    if (!billCode) return res.status(502).json({ ok:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult });
+    const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+    upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName:`PA/BM Purchase Records (${items.length} unit)`, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, unit:items.length });
+  } catch (err) {
+    res.status(500).json({ ok:false, error: err.message || "Failed create PA/BM ToyyibPay bill" });
+  }
+});
+
 app.post("/api/toyyib/create-bill", async (req, res) => {
   try {
     if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
