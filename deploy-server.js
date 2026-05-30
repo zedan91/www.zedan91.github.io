@@ -22,26 +22,52 @@ function azobssLoadBackendModule(moduleName) {
     path.join(__dirname, "backend", "node_modules", moduleName)
   ];
 
+  const errors = [];
   for (const candidate of candidates) {
     try {
       return require(candidate);
     } catch (err) {
-      // Try the next location. Render sometimes installs dependencies in /backend/node_modules
-      // while this service is started with `node deploy-server.js` from the project root.
+      errors.push(candidate + " => " + (err && err.message ? err.message.split("\n")[0] : String(err)));
     }
   }
 
+  console.warn("AZOBSS module load failed for " + moduleName + ":", errors);
   return null;
 }
 
-sharp = azobssLoadBackendModule("sharp");
-PDFDocument = azobssLoadBackendModule("pdfkit");
+function azobssEnsurePdfDependencies() {
+  sharp = azobssLoadBackendModule("sharp");
+  PDFDocument = azobssLoadBackendModule("pdfkit");
+
+  if (sharp && PDFDocument) return;
+
+  // Render Free sometimes reuses an old build/cache or skips native optional packages.
+  // Runtime self-heal installs only when the PDF converter dependencies are missing.
+  if (process.env.AZOBSS_DISABLE_RUNTIME_NPM === "1") return;
+
+  try {
+    const childProcess = require("child_process");
+    console.warn("AZOBSS PDF deps missing. Running one-time runtime install for sharp/pdfkit...");
+    childProcess.execSync(
+      "npm install --no-audit --no-fund --include=optional sharp@0.32.6 pdfkit@0.15.0",
+      { cwd: __dirname, stdio: "inherit", env: Object.assign({}, process.env, { npm_config_registry: "https://registry.npmjs.org/" }) }
+    );
+  } catch (installErr) {
+    console.error("AZOBSS runtime install for PDF deps failed:", installErr && installErr.message ? installErr.message : installErr);
+  }
+
+  sharp = azobssLoadBackendModule("sharp");
+  PDFDocument = azobssLoadBackendModule("pdfkit");
+}
+
+azobssEnsurePdfDependencies();
 
 console.log("PDF converter dependencies:", {
   sharp: !!sharp,
   pdfkit: !!PDFDocument,
   rootNodeModules: fs.existsSync(path.join(__dirname, "node_modules")),
-  backendNodeModules: fs.existsSync(path.join(__dirname, "backend", "node_modules"))
+  backendNodeModules: fs.existsSync(path.join(__dirname, "backend", "node_modules")),
+  nodeVersion: process.version
 });
 
 async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
