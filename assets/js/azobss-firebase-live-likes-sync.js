@@ -299,8 +299,8 @@ function injectModal() {
       <button class="auth-close-btn" id="siteAuthClose" type="button" aria-label="Close">×</button>
     </div>
     <form class="auth-modal-form" id="siteSignInForm">
-      <label for="siteLoginUsername">Username
-        <input id="siteLoginUsername" autocomplete="username" placeholder="Enter your username" required type="text">
+      <label for="siteLoginUsername">Username / Email
+        <input id="siteLoginUsername" autocomplete="username" placeholder="Enter your username or email" required type="text">
       </label>
       <label for="siteLoginPassword">Password
         <input id="siteLoginPassword" autocomplete="current-password" placeholder="Password" required type="password">
@@ -319,7 +319,7 @@ function injectModal() {
       <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
     </form>
     <form class="auth-modal-form" id="siteSignUpForm" hidden>
-      <label for="siteSignupUsername">Username
+      <label for="siteSignupUsername">Username / Email
         <input id="siteSignupUsername" autocomplete="username" placeholder="Choose a username" required type="text">
       </label>
       <label for="siteSignupPassword">Password
@@ -367,7 +367,7 @@ function injectAdminUserEditModal() {
     </div>
     <form class="auth-modal-form" id="adminUserEditForm">
       <input id="adminUserEditDocId" type="hidden">
-      <label for="adminUserEditUsername">Username / Name
+      <label for="adminUserEditUsername">Username / Email / Name
         <input id="adminUserEditUsername" placeholder="Username" required type="text">
       </label>
       <label for="adminUserEditPhone">Phone Number
@@ -958,7 +958,7 @@ function injectProfileSettingsModal() {
       <button aria-label="Close" class="auth-close-btn" id="profileSettingsClose" type="button">×</button>
     </div>
     <form class="auth-modal-form" id="profileSettingsForm">
-      <label for="profileEditName">Username / Name<input id="profileEditName" placeholder="Username" required type="text"></label>
+      <label for="profileEditName">Username / Email / Name<input id="profileEditName" placeholder="Username" required type="text"></label>
       <label for="profileEditPhone">Phone Number
         <div class="phone-input-row" data-country-phone="profileEdit" data-default-dial="60">
           <div class="country-combo">
