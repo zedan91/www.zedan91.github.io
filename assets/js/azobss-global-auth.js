@@ -2483,12 +2483,39 @@ function azobssCanUncartPurchase(r){
     return !!(uidOk || (currentKey && rowKey && currentKey === rowKey));
   }catch(e){ return false; }
 }
+
+function azobssBuildPaidPurchaseDownloadUrl(r){
+  r = r || {};
+  const type = String(r.productType || r.product || '').trim().toUpperCase();
+  if(type === 'PA'){
+    const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+    const negeri = String(r.negeri || r.state || '').trim();
+    if(itemCode && negeri){
+      return 'https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA' + encodeURIComponent(itemCode) + '.TIF&negeri=' + encodeURIComponent(negeri);
+    }
+  }
+  return String(r.downloadUrl || r.url || '').trim();
+}
+function azobssPaidPurchaseDownloadFilename(r){
+  r = r || {};
+  const type = String(r.productType || r.product || '').trim().toUpperCase();
+  if(type === 'PA'){
+    const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+    return itemCode ? ('PA' + itemCode + '.pdf') : 'PA.pdf';
+  }
+  const code = String(r.itemCode || r.stationNo || r.stesen || r.productId || '').trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
+  const prefix = type || (String(r.jenis || '1') === '2' ? 'SBM' : 'BM');
+  return (prefix + (code ? '-' + code : '') + '.pdf').replace(/-+/g, '-');
+}
+
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
   const amount = Number(r.amount || 0);
   const canUncart = azobssCanUncartPurchase(r);
-  const actionHtml = (r.downloadUrl && azobssIsPurchasePaidForDownload(r))
-    ? `<a class="user-pa-download" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>`
+  const paidDownloadUrl = azobssBuildPaidPurchaseDownloadUrl(r);
+  const paidDownloadName = azobssPaidPurchaseDownloadFilename(r);
+  const actionHtml = (paidDownloadUrl && azobssIsPurchasePaidForDownload(r))
+    ? `<a class="user-pa-download" href="${escHtml(paidDownloadUrl)}" download="${escHtml(paidDownloadName)}" target="_blank" rel="noopener">Download</a>`
     : `<div class="user-pa-pending-action"><span class="user-pa-download is-locked">Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Uncart</button>` : ''}</div>`;
   return `
     <div class="user-pa-item purchase-detail-row">

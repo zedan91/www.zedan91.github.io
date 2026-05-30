@@ -9,6 +9,8 @@ import cron from "node-cron";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import sharp from "sharp";
+import PDFDocument from "pdfkit";
 
 dotenv.config();
 
@@ -1094,6 +1096,130 @@ cron.schedule("* * * * *", async () => {
   });
 }, { timezone: "Asia/Kuala_Lumpur" });
 
+
+
+
+// =========================
+// PA PDF CONVERTER HELPERS
+// =========================
+function cleanPaNumber(value) {
+  return String(value || "").trim().toUpperCase().replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
+}
+
+function cleanPaState(value) {
+  return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9 ._\-]/g, " ").replace(/\s+/g, " ");
+}
+
+async function fetchJupemFile(targetUrl) {
+  return fetch(targetUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+      "Accept": "image/tiff,image/*,application/pdf,application/octet-stream,*/*"
+    }
+  });
+}
+
+async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
+  const pages = [];
+  const meta = await sharp(tifBuffer, { pages: -1, limitInputPixels: false }).metadata();
+  const pageCount = Math.max(1, Number(meta.pages || 1));
+
+  for (let i = 0; i < pageCount; i++) {
+    const pngBuffer = await sharp(tifBuffer, { page: i, limitInputPixels: false })
+      .rotate()
+      .png()
+      .toBuffer();
+    const imgMeta = await sharp(pngBuffer).metadata();
+    pages.push({
+      buffer: pngBuffer,
+      width: Math.max(1, Number(imgMeta.width || meta.width || 595)),
+      height: Math.max(1, Number(imgMeta.height || meta.height || 842))
+    });
+  }
+
+  return await new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      autoFirstPage: false,
+      margin: 0,
+      info: { Title: safeName || "PA PDF", Creator: "AZOBSS PA Converter" }
+    });
+    const chunks = [];
+    doc.on("data", chunk => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    pages.forEach(page => {
+      doc.addPage({ size: [page.width, page.height], margin: 0 });
+      doc.image(page.buffer, 0, 0, { width: page.width, height: page.height });
+    });
+
+    doc.end();
+  });
+}
+
+app.get("/api/pa-pdf", async (req, res) => {
+  try {
+    const noPA = cleanPaNumber(req.query.noPA || req.query.pa || req.query.noPa);
+    const negeri = cleanPaState(req.query.negeri || req.query.state);
+
+    if (!noPA) return res.status(400).json({ ok: false, error: "Missing noPA" });
+    if (!negeri) return res.status(400).json({ ok: false, error: "Missing negeri" });
+
+    const fileName = `PA${noPA}.TIF`;
+    const safeName = `PA${noPA}`.replace(/[^A-Z0-9_-]/gi, "");
+    const jupemUrl = `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
+
+    const response = await fetchJupemFile(jupemUrl);
+    if (!response.ok) return res.status(404).json({ ok: false, error: "PA not found" });
+
+    const tifBuffer = Buffer.from(await response.arrayBuffer());
+    const firstText = tifBuffer.slice(0, 180).toString("utf8").toLowerCase();
+
+    if (!tifBuffer.length || firstText.includes("<html") || firstText.includes("<!doctype")) {
+      return res.status(404).json({ ok: false, error: "Invalid PA file" });
+    }
+
+    const pdfBuffer = await convertTifBufferToPdfBuffer(tifBuffer, safeName);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pdf"`);
+    res.setHeader("Cache-Control", "no-store");
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("PA PDF conversion failed:", error);
+    res.status(500).json({ ok: false, error: "PA PDF conversion failed" });
+  }
+});
+
+app.get("/api/download-stesen-tanda-aras", async (req, res) => {
+  try {
+    const productId = String(req.query.productId || req.query.id || "").trim().replace(/[^0-9]/g, "");
+    const jenis = String(req.query.jenis || "1").trim() === "2" ? "2" : "1";
+    if (!productId) return res.status(400).json({ ok: false, error: "Missing productId" });
+
+    const jupemUrl = `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunStesenTandaAras/${encodeURIComponent(productId)}?jenis=${encodeURIComponent(jenis)}`;
+    const response = await fetchJupemFile(jupemUrl);
+    if (!response.ok) return res.status(404).json({ ok: false, error: "BM/SBM not found" });
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const firstText = buffer.slice(0, 180).toString("utf8").toLowerCase();
+    if (!buffer.length || firstText.includes("<html") || firstText.includes("<!doctype")) {
+      return res.status(404).json({ ok: false, error: "Invalid BM/SBM file" });
+    }
+
+    const contentType = response.headers.get("content-type") || "application/octet-stream";
+    const safePrefix = jenis === "2" ? "SBM" : "BM";
+    const ext = contentType.includes("pdf") ? "pdf" : (contentType.includes("zip") ? "zip" : "dat");
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", `attachment; filename="${safePrefix}-${productId}.${ext}"`);
+    res.setHeader("Cache-Control", "no-store");
+    res.send(buffer);
+  } catch (error) {
+    console.error("BM/SBM download failed:", error);
+    res.status(500).json({ ok: false, error: "BM/SBM download failed" });
+  }
+});
 
 
 // Legacy /api/create-toyyib-bill removed. Use /api/toyyib/create-bill.

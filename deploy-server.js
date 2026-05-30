@@ -12,6 +12,59 @@ const url = require("url");
 const crypto = require("crypto");
 let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
+let sharp = null;
+let PDFDocument = null;
+try { sharp = require("sharp"); } catch (e) { sharp = null; }
+try { PDFDocument = require("pdfkit"); } catch (e) { PDFDocument = null; }
+
+async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
+  if (!sharp || !PDFDocument) {
+    const missing = !sharp && !PDFDocument ? "sharp and pdfkit" : (!sharp ? "sharp" : "pdfkit");
+    throw new Error("PDF converter dependency missing: " + missing);
+  }
+
+  const pages = [];
+  const meta = await sharp(tifBuffer, { pages: -1 }).metadata();
+  const pageCount = Math.max(1, Number(meta.pages || 1));
+
+  for (let i = 0; i < pageCount; i++) {
+    const imageBuffer = await sharp(tifBuffer, { page: i, limitInputPixels: false })
+      .rotate()
+      .png()
+      .toBuffer();
+    const imgMeta = await sharp(imageBuffer).metadata();
+    pages.push({
+      buffer: imageBuffer,
+      width: Math.max(1, Number(imgMeta.width || meta.width || 595)),
+      height: Math.max(1, Number(imgMeta.height || meta.height || 842))
+    });
+  }
+
+  return await new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      autoFirstPage: false,
+      margin: 0,
+      info: {
+        Title: safeName || "PA PDF",
+        Creator: "AZOBSS PA Converter"
+      }
+    });
+    const chunks = [];
+    doc.on("data", chunk => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    for (const page of pages) {
+      const width = page.width;
+      const height = page.height;
+      doc.addPage({ size: [width, height], margin: 0 });
+      doc.image(page.buffer, 0, 0, { width, height });
+    }
+
+    doc.end();
+  });
+}
+
 const TOYYIB_SECRET_KEY=process.env.TOYYIB_SECRET_KEY;
 const TOYYIB_CATEGORY_CODE=process.env.TOYYIB_CATEGORY_CODE;
 
@@ -2169,15 +2222,31 @@ if (
   const safeName =
     `PA${paCleanForFile}`.replace(/[^A-Z0-9_-]/gi, "");
 
+  let pdfBuffer;
+  try {
+    pdfBuffer = await convertTifBufferToPdfBuffer(tifBuffer, safeName);
+  } catch (convertError) {
+    console.error("PA PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
+    return send(
+      res,
+      500,
+      JSON.stringify({
+        ok: false,
+        error: "PA PDF conversion failed. Please make sure sharp and pdfkit are installed on the backend."
+      }),
+      "application/json"
+    );
+  }
+
   res.writeHead(200, {
-    "Content-Type": "image/tiff",
+    "Content-Type": "application/pdf",
     "Content-Disposition":
-      `attachment; filename="${safeName}.TIF"`,
+      `attachment; filename="${safeName}.pdf"`,
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": "*"
   });
 
-  res.end(tifBuffer);
+  res.end(pdfBuffer);
   return;
 }
 
