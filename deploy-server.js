@@ -2203,21 +2203,11 @@ if (
       .replace(/\.TIF$/i, "")
       .replace(/^PA/i, "");
 
-  const fileName =
-    `PA${paCleanForFile}.TIF`;
+  // Use the same multi-candidate PA fetcher as the check/cart flow.
+  // This prevents false "PA not found" caused by noPa/noPA casing or state formatting.
+  const paResult = await fetchPelanAkuiCandidates(noPA, negeri);
 
-  const jupemUrl =
-`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
-
-  console.log(
-    "Fetching PA direct:",
-    jupemUrl
-  );
-
-  const response =
-    await fetchJupem(jupemUrl);
-
-  if (!response.ok) {
+  if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
     return send(
       res,
       404,
@@ -2229,32 +2219,7 @@ if (
     );
   }
 
-  const tifBuffer =
-    Buffer.from(
-      await response.arrayBuffer()
-    );
-
-  const firstText =
-    tifBuffer
-      .slice(0, 160)
-      .toString("utf8")
-      .toLowerCase();
-
-  if (
-    !tifBuffer.length ||
-    firstText.includes("<html") ||
-    firstText.includes("<!doctype")
-  ) {
-    return send(
-      res,
-      404,
-      JSON.stringify({
-        ok: false,
-        error: "Invalid PA file"
-      }),
-      "application/json"
-    );
-  }
+  const tifBuffer = paResult.buffer;
 
   const safeName =
     `PA${paCleanForFile}`.replace(/[^A-Z0-9_-]/gi, "");
