@@ -11201,15 +11201,12 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     try {
-      var checkResponse = await fetch(url, { cache: 'no-store' });
-      if (!checkResponse.ok) throw new Error('Maaf, PA tiada dalam simpanan.');
-      var checkBlob = await checkResponse.blob();
-      if (!checkBlob || !checkBlob.size) throw new Error('Maaf, PA tiada dalam simpanan.');
-      var checkType = String(checkResponse.headers.get('content-type') || '').toLowerCase();
-      if (/text|json|html/.test(checkType)) {
-        var checkText = (await checkBlob.text()).slice(0, 800).toLowerCase();
-        if (/not found|tiada|invalid|error|failed|cannot|no such|404/.test(checkText)) throw new Error('Maaf, PA tiada dalam simpanan.');
-      }
+      // Semak kewujudan PA tanpa convert PDF supaya PA yang betul tidak false-not-found.
+      var checkUrl = url.replace('/api/pa-pdf', '/api/check-pa');
+      var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
+      if (!checkResponse.ok) throw new Error('Maaf, PA ' + number + ' tiada dalam simpanan.');
+      var checkData = await checkResponse.json().catch(function(){ return null; });
+      if (!checkData || checkData.ok !== true) throw new Error('Maaf, PA ' + number + ' tiada dalam simpanan.');
       var paSavedRecord = null;
       if (typeof window.azobssRecordPurchase === 'function') {
         paSavedRecord = await window.azobssRecordPurchase({
@@ -11242,7 +11239,7 @@ document.addEventListener('DOMContentLoaded', function(){
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
       if (paStatus) paStatus.textContent = 'PA downloaded successfully!';
     } catch (error) {
-      if (paError) paError.textContent = error.message || 'Maaf, PA tiada dalam simpanan.';
+      if (paError) paError.textContent = error.message || ('Maaf, PA ' + number + ' tiada dalam simpanan.');
       if (paStatus) paStatus.style.display = 'none';
     }
 
@@ -11370,6 +11367,18 @@ document.addEventListener('DOMContentLoaded', function(){
     setMessage('loading', 'Menambah PA ke cart...');
 
     try{
+      // Semak PA melalui endpoint ringan /api/check-pa dahulu.
+      // Ini elak guna converter PDF sebagai check, yang boleh beri false-not-found bila proses convert lambat/gagal.
+      var checkUrl = built.url.replace('/api/pa-pdf', '/api/check-pa');
+      var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
+      if(!checkResponse.ok){
+        throw new Error('Maaf, PA ' + built.number + ' tiada dalam simpanan.');
+      }
+      var checkData = await checkResponse.json().catch(function(){ return null; });
+      if(!checkData || checkData.ok !== true){
+        throw new Error('Maaf, PA ' + built.number + ' tiada dalam simpanan.');
+      }
+
       var paSavedRecord = null;
       if(typeof window.azobssRecordPurchase === 'function'){
         paSavedRecord = await window.azobssRecordPurchase({
@@ -11388,7 +11397,7 @@ document.addEventListener('DOMContentLoaded', function(){
         ? '✔ PA ' + built.number + ' sudah ada dalam cart.'
         : '✔ PA ' + built.number + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.");
     }catch(error){
-      setMessage('error', 'Maaf, PA tiada dalam simpanan.');
+      setMessage('error', error && error.message ? error.message : 'Maaf, PA ' + built.number + ' tiada dalam simpanan.');
     }finally{
       if(els.button){
         els.button.disabled = false;

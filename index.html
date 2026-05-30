@@ -12159,7 +12159,7 @@ document.addEventListener('DOMContentLoaded', function(){
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 5000);
       if (paStatus) paStatus.textContent = 'PA downloaded successfully!';
     } catch (error) {
-      if (paError) paError.textContent = error.message || 'Maaf, PA tiada dalam simpanan.';
+      if (paError) paError.textContent = error.message || ('Maaf, PA ' + number + ' tiada dalam simpanan.');
       if (paStatus) paStatus.style.display = 'none';
     }
 
