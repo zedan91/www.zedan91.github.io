@@ -2286,15 +2286,33 @@ function azobssIsPurchasePaidForDownload(r){
     return !!(resetAt && itemMs && itemMs <= resetAt);
   }catch(e){ return false; }
 }
+
+function azobssCanUncartPurchase(r){
+  try{
+    const current = getSavedUser() || {};
+    if(isAzobssAdmin && isAzobssAdmin(current)) return false; // admin already has Delete controls in admin view
+    const status = String(r?.status || 'pending').trim().toLowerCase();
+    if(['paid','cancelled','deleted'].includes(status)) return false;
+    if(azobssIsPurchasePaidForDownload(r)) return false;
+    const currentKey = String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase();
+    const rowKey = String(r?.usernameKey || r?.displayName || '').trim().toLowerCase();
+    const uidOk = current.uid && String(r?.uid || '') === String(current.uid);
+    return !!(uidOk || (currentKey && rowKey && currentKey === rowKey));
+  }catch(e){ return false; }
+}
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
   const amount = Number(r.amount || 0);
+  const canUncart = azobssCanUncartPurchase(r);
+  const actionHtml = (r.downloadUrl && azobssIsPurchasePaidForDownload(r))
+    ? `<a class="user-pa-download" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>`
+    : `<div class="user-pa-pending-action"><span class="user-pa-download is-locked">Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Uncart</button>` : ''}</div>`;
   return `
     <div class="user-pa-item purchase-detail-row">
       <div>Item: <strong>${escHtml(item)}</strong></div>
       <div>Negeri: <strong>${escHtml(r.negeri || '-')}</strong><br>Amount: <strong>RM${escHtml(amount || '')}</strong></div>
       <div>Date/Time:<br><strong>${escHtml(formatPurchaseDate(r))}</strong></div>
-      ${(r.downloadUrl && azobssIsPurchasePaidForDownload(r)) ? `<a class="user-pa-download" href="${escHtml(r.downloadUrl)}" target="_blank" rel="noopener">Download</a>` : '<span class="user-pa-download is-locked">Pending Payment</span>'}
+      ${actionHtml}
     </div>`;
 }
 function applyPurchaseSort(records, sort){
@@ -2585,6 +2603,7 @@ function azobssPurchaseDeletePayload(r){
     itemCode: r.itemCode || '',
     negeri: r.negeri || '',
     amount: Number(r.amount) || 0,
+    status: r.status || 'pending',
     createdAtMs: Number(r.createdAtMs) || 0,
     createdAtClient: r.createdAtClient || ''
   }));
@@ -2603,12 +2622,25 @@ function azobssPurchaseSameForDelete(a,b){
 }
 async function azobssDeletePurchaseRecordByPayload(rawPayload, silent){
   const current = getSavedUser();
-  if(!isAzobssAdmin(current)) return false;
+  const isAdminUser = isAzobssAdmin(current);
   let target = null;
   try{ target = typeof rawPayload === 'string' ? JSON.parse(decodeURIComponent(rawPayload)) : rawPayload; }catch(e){ target = null; }
   if(!target) return false;
   const key = String(target.usernameKey || target.displayName || '').trim().toLowerCase();
-  if(!silent && !confirm('Buang rekod ini?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''))) return false;
+  const currentKey = String(current?.usernameKey || current?.displayName || current?.username || '').trim().toLowerCase();
+  const uidOk = current?.uid && String(target.uid || '') === String(current.uid);
+  const userOwnPending = !isAdminUser
+    && (uidOk || (currentKey && key && currentKey === key))
+    && !['paid','cancelled','deleted'].includes(String(target.status || 'pending').trim().toLowerCase())
+    && !azobssIsPurchasePaidForDownload(target);
+  if(!isAdminUser && !userOwnPending){
+    if(!silent) alert('Item ini tidak boleh dibuang kerana bukan pending cart anda.');
+    return false;
+  }
+  const confirmText = isAdminUser
+    ? ('Buang rekod ini?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''))
+    : ('Buang item ini daripada cart?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''));
+  if(!silent && !confirm(confirmText)) return false;
 
   try{
     const local = readLocalPurchaseRecords().filter(r => !azobssPurchaseSameForDelete(r, target));
@@ -2651,6 +2683,13 @@ async function azobssDeletePurchaseRecordByPayload(rawPayload, silent){
 async function azobssDeleteOnePurchaseRecord(rawPayload){
   await azobssDeletePurchaseRecordByPayload(rawPayload, false);
 }
+async function azobssUncartPurchaseRecord(rawPayload){
+  const ok = await azobssDeletePurchaseRecordByPayload(rawPayload, false);
+  if(ok){
+    const status = document.getElementById('paBmToyyibStatus');
+    if(status) status.textContent = 'Item telah dibuang daripada cart. Total telah dikemaskini.';
+  }
+}
 async function azobssDeletePendingPurchaseRecordsForUser(usernameKey){
   const current = getSavedUser();
   if(!isAzobssAdmin(current)) return;
@@ -2678,6 +2717,7 @@ async function azobssDeleteAllPurchaseRecordsForUser(usernameKey){
   await renderAzobssPurchaseRecords();
 }
 window.azobssDeleteOnePurchaseRecord = azobssDeleteOnePurchaseRecord;
+window.azobssUncartPurchaseRecord = azobssUncartPurchaseRecord;
 window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRecordsForUser;
 window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
 
