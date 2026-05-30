@@ -449,6 +449,74 @@ function initFirebaseAdmin() {
   return false;
 }
 
+
+const AZOBSS_PA_BM_MAX_DOWNLOADS = 5;
+const AZOBSS_PA_BM_VALID_MS = 7 * 24 * 60 * 60 * 1000;
+function azobssPaidStatus(value) {
+  return ["paid", "success", "completed", "settled"].includes(String(value || "").trim().toLowerCase());
+}
+function azobssPaBmRecordType(record) {
+  return String(record && (record.productType || record.product || record.type) || "").trim().toUpperCase();
+}
+function azobssPaBmRecordCode(record) {
+  return String(record && (record.itemCode || record.pa || record.noPA || record.stesen || record.stationNo || record.code) || "").trim().toUpperCase();
+}
+function azobssFirestoreMs(value) {
+  if (!value) return 0;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Date.parse(value) || 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value._seconds === "number") return value._seconds * 1000;
+  return 0;
+}
+function azobssRecordPaidAtMs(record) {
+  return Number(record.paidAtMs || 0)
+    || azobssFirestoreMs(record.paidAt)
+    || azobssFirestoreMs(record.paidAtClient)
+    || azobssFirestoreMs(record.updatedAt)
+    || Number(record.createdAtMs || 0)
+    || azobssFirestoreMs(record.createdAtClient)
+    || azobssFirestoreMs(record.createdAt)
+    || Date.now();
+}
+function azobssRecordMaxDownloads(record) {
+  const max = Number(record.maxDownloads || record.maxDownload || 0);
+  return max > 0 ? max : AZOBSS_PA_BM_MAX_DOWNLOADS;
+}
+function azobssRecordDownloadCount(record) {
+  return Math.max(0, Number(record.downloadCount || record.usedCount || 0));
+}
+function azobssRecordExpiresAtMs(record) {
+  const explicit = Number(record.downloadExpiresAtMs || record.expiresAtMs || 0)
+    || azobssFirestoreMs(record.downloadExpiresAtClient)
+    || azobssFirestoreMs(record.expiresAt);
+  return explicit || (azobssRecordPaidAtMs(record) + AZOBSS_PA_BM_VALID_MS);
+}
+async function azobssGetPurchaseRecord(recordId) {
+  if (!initFirebaseAdmin()) throw new Error("Firebase Admin is not configured on backend.");
+  const db = firebaseAdmin.firestore();
+  const ref = db.collection("purchaseLogs").doc(String(recordId || ""));
+  const snap = await ref.get();
+  if (!snap.exists) return { ref, record: null };
+  return { ref, record: Object.assign({ firestoreId: snap.id }, snap.data() || {}) };
+}
+async function azobssIncrementPurchaseDownload(ref, record, nowMs) {
+  const used = azobssRecordDownloadCount(record);
+  const max = azobssRecordMaxDownloads(record);
+  await ref.set({
+    downloadCount: used + 1,
+    maxDownloads: max,
+    downloadExpiresAtMs: azobssRecordExpiresAtMs(record),
+    downloadExpiresAtClient: new Date(azobssRecordExpiresAtMs(record)).toISOString(),
+    lastDownloadedAtMs: nowMs,
+    lastDownloadedAtClient: new Date(nowMs).toISOString(),
+    updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+}
+function azobssPaBmDownloadError(res, status, message) {
+  return send(res, status, JSON.stringify({ ok: false, error: message }, null, 2), "application/json");
+}
+
 function buildUserEmail(usernameKey) {
   return `${usernameKey}@azobss.local`;
 }
@@ -2209,6 +2277,83 @@ if (
     console.error("PA check failed:", error && (error.stack || error.message || error));
     return send(res, 500, JSON.stringify({ ok: false, error: "PA check failed" }), "application/json");
   }
+}
+
+
+// =========================
+// PA/BM CONTROLLED DOWNLOAD (5 DOWNLOADS / 7 DAYS)
+// =========================
+
+if (pathname === "/api/pa-bm-download" && req.method === "GET") {
+  const recordId = String(parsed.query.recordId || "").trim();
+  if (!recordId) return azobssPaBmDownloadError(res, 400, "Missing recordId");
+
+  let ref, record;
+  try {
+    const result = await azobssGetPurchaseRecord(recordId);
+    ref = result.ref;
+    record = result.record;
+  } catch (error) {
+    console.error("PA/BM controlled download Firebase error:", error && (error.stack || error.message || error));
+    return azobssPaBmDownloadError(res, 500, "Download verification failed.");
+  }
+
+  if (!record) return azobssPaBmDownloadError(res, 404, "Purchase record not found.");
+  if (!azobssPaidStatus(record.status)) return azobssPaBmDownloadError(res, 403, "Payment is still pending.");
+
+  const nowMs = Date.now();
+  const expiresAtMs = azobssRecordExpiresAtMs(record);
+  const used = azobssRecordDownloadCount(record);
+  const max = azobssRecordMaxDownloads(record);
+
+  if (nowMs > expiresAtMs) return azobssPaBmDownloadError(res, 403, "Tempoh download telah tamat.");
+  if (used >= max) return azobssPaBmDownloadError(res, 403, "Had download telah digunakan.");
+
+  const type = azobssPaBmRecordType(record);
+  const code = azobssPaBmRecordCode(record);
+
+  if (type === "PA") {
+    const itemCode = String(code || "").replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
+    const negeri = cleanState(record.negeri || record.state || "");
+    if (!itemCode || !negeri) return azobssPaBmDownloadError(res, 400, "Invalid PA record.");
+
+    const paResult = await fetchPelanAkuiCandidates("PA" + itemCode + ".TIF", negeri);
+    if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
+      return azobssPaBmDownloadError(res, 404, "PA not found.");
+    }
+
+    const safeName = ("PA" + itemCode).replace(/[^A-Z0-9_-]/gi, "");
+    let pdfBuffer;
+    try {
+      pdfBuffer = await convertTifBufferToPdfBuffer(paResult.buffer, safeName);
+    } catch (convertError) {
+      console.error("PA controlled PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
+      return azobssPaBmDownloadError(res, 500, "PA PDF conversion failed.");
+    }
+
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*"
+    });
+    res.end(pdfBuffer);
+    return;
+  }
+
+  const downloadUrl = String(record.downloadUrl || record.url || "").trim();
+  if (!downloadUrl) return azobssPaBmDownloadError(res, 400, "Download URL missing.");
+
+  try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+  res.writeHead(302, {
+    "Location": downloadUrl,
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*"
+  });
+  res.end();
+  return;
 }
 
 // =========================

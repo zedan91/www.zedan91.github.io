@@ -2092,6 +2092,9 @@ window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
 // PA/BM purchase records: one shared source for PA + BM/SBM downloads.
 const AZOBSS_PURCHASE_LOCAL_KEY = 'azobssPurchaseRecords';
 const AZOBSS_PURCHASE_COLLECTION = 'purchaseLogs';
+const AZOBSS_PA_BM_MAX_DOWNLOADS = 5;
+const AZOBSS_PA_BM_VALID_DAYS = 7;
+const AZOBSS_PA_BM_VALID_MS = AZOBSS_PA_BM_VALID_DAYS * 24 * 60 * 60 * 1000;
 function clearLegacyPurchaseBrowserCache(){
   try { localStorage.removeItem(AZOBSS_PURCHASE_LOCAL_KEY); } catch {}
 }
@@ -2138,7 +2141,9 @@ function normalizePurchasePayload(payload){
     phone: userInfo.phone,
     email: userInfo.email,
     createdAtClient: now.toISOString(),
-    createdAtMs: now.getTime()
+    createdAtMs: now.getTime(),
+    downloadCount: 0,
+    maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS
   };
 }
 function isSamePurchase(a,b){
@@ -2508,15 +2513,73 @@ function azobssPaidPurchaseDownloadFilename(r){
   return (prefix + (code ? '-' + code : '') + '.pdf').replace(/-+/g, '-');
 }
 
+function azobssPurchasePaidAtMs(r){
+  return Number(r?.paidAtMs || 0)
+    || (r?.paidAtClient ? Date.parse(r.paidAtClient) : 0)
+    || (r?.updatedAt && typeof r.updatedAt.toMillis === 'function' ? r.updatedAt.toMillis() : 0)
+    || purchaseRecordMs(r)
+    || Date.now();
+}
+function azobssPurchaseDownloadMax(r){
+  const max = Number(r?.maxDownloads || r?.maxDownload || 0);
+  return max > 0 ? max : AZOBSS_PA_BM_MAX_DOWNLOADS;
+}
+function azobssPurchaseDownloadCount(r){
+  return Math.max(0, Number(r?.downloadCount || r?.usedCount || 0));
+}
+function azobssPurchaseDownloadExpiresAtMs(r){
+  const explicit = Number(r?.downloadExpiresAtMs || r?.expiresAtMs || 0)
+    || (r?.downloadExpiresAtClient ? Date.parse(r.downloadExpiresAtClient) : 0)
+    || (r?.expiresAt ? Date.parse(r.expiresAt) : 0);
+  if(explicit) return explicit;
+  return azobssPurchasePaidAtMs(r) + AZOBSS_PA_BM_VALID_MS;
+}
+function azobssPurchaseDownloadRemainingDays(r){
+  const ms = azobssPurchaseDownloadExpiresAtMs(r) - Date.now();
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+}
+function azobssPurchaseDownloadExpired(r){
+  return Date.now() > azobssPurchaseDownloadExpiresAtMs(r);
+}
+function azobssPurchaseDownloadLimitReached(r){
+  return azobssPurchaseDownloadCount(r) >= azobssPurchaseDownloadMax(r);
+}
+function azobssPurchaseDownloadAllowed(r){
+  return azobssIsPurchasePaidForDownload(r) && !azobssPurchaseDownloadExpired(r) && !azobssPurchaseDownloadLimitReached(r);
+}
+function azobssBuildControlledPurchaseDownloadUrl(r){
+  const firestoreId = String(r?.firestoreId || r?.id || '').trim();
+  if(!firestoreId) return azobssBuildPaidPurchaseDownloadUrl(r);
+  return 'https://azobss-backend.onrender.com/api/pa-bm-download?recordId=' + encodeURIComponent(firestoreId);
+}
+function azobssPurchaseDownloadMetaHtml(r){
+  if(!azobssIsPurchasePaidForDownload(r)) return '';
+  const used = azobssPurchaseDownloadCount(r);
+  const max = azobssPurchaseDownloadMax(r);
+  const days = azobssPurchaseDownloadRemainingDays(r);
+  return `<div class="az-download-meta">Downloads: <strong>${used}/${max}</strong><br>Tempoh sah: <strong>${days} hari</strong></div>`;
+}
+
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
   const amount = Number(r.amount || 0);
   const canUncart = azobssCanUncartPurchase(r);
-  const paidDownloadUrl = azobssBuildPaidPurchaseDownloadUrl(r);
+  const paidDownloadUrl = azobssBuildControlledPurchaseDownloadUrl(r);
   const paidDownloadName = azobssPaidPurchaseDownloadFilename(r);
-  const actionHtml = (paidDownloadUrl && azobssIsPurchasePaidForDownload(r))
-    ? `<a class="user-pa-download" href="${escHtml(paidDownloadUrl)}" download="${escHtml(paidDownloadName)}" target="_blank" rel="noopener">Download</a>`
-    : `<div class="user-pa-pending-action"><span class="user-pa-download is-locked">Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Uncart</button>` : ''}</div>`;
+  const paid = azobssIsPurchasePaidForDownload(r);
+  const allowed = azobssPurchaseDownloadAllowed(r);
+  const expired = paid && azobssPurchaseDownloadExpired(r);
+  const limitReached = paid && azobssPurchaseDownloadLimitReached(r);
+  const downloadMeta = azobssPurchaseDownloadMetaHtml(r);
+  let actionHtml = '';
+  if(paid && paidDownloadUrl && allowed){
+    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="${escHtml(paidDownloadUrl)}" download="${escHtml(paidDownloadName)}" target="_blank" rel="noopener">Download</a></div>`;
+  }else if(paid){
+    const reason = limitReached ? 'Had download telah digunakan' : (expired ? 'Tempoh download telah tamat' : 'Expired');
+    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<span class="user-pa-download is-locked">${escHtml(reason)}</span></div>`;
+  }else{
+    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked">Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Uncart</button>` : ''}</div>`;
+  }
   return `
     <div class="user-pa-item purchase-detail-row">
       <div>Item: <strong>${escHtml(item)}</strong></div>
@@ -2525,6 +2588,7 @@ function purchaseDetailRowHtml(r){
       ${actionHtml}
     </div>`;
 }
+
 function applyPurchaseSort(records, sort){
   const rows = records.slice();
   if(sort === 'oldest') rows.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
@@ -2692,6 +2756,10 @@ async function azobssResetCurrentPurchaseTotalAfterPaid(orderId){
             paidAtMs: resetAtMs,
             paidAtClient: resetAtClient,
             paymentOrderId: String(orderId || ''),
+            downloadCount: 0,
+            maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS,
+            downloadExpiresAtMs: resetAtMs + AZOBSS_PA_BM_VALID_MS,
+            downloadExpiresAtClient: new Date(resetAtMs + AZOBSS_PA_BM_VALID_MS).toISOString(),
             updatedAt: serverTimestamp()
           }, { merge:true });
         }catch(e){}
