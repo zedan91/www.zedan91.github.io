@@ -172,7 +172,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -2460,6 +2460,7 @@ function renderAzobssPurchaseDetailPager(key, currentPage, totalItems){
 }
 function azobssIsPurchasePaidForDownload(r){
   try{
+    if(azobssIsPurchaseStatusPaid(r)) return true;
     const current = getSavedUser() || {};
     const key = String(current.usernameKey || current.displayName || current.username || r?.usernameKey || '').trim().toLowerCase();
     const map = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
@@ -2474,7 +2475,7 @@ function azobssCanUncartPurchase(r){
     const current = getSavedUser() || {};
     if(isAzobssAdmin && isAzobssAdmin(current)) return false; // admin already has Delete controls in admin view
     const status = String(r?.status || 'pending').trim().toLowerCase();
-    if(['paid','cancelled','deleted'].includes(status)) return false;
+    if(['paid','success','completed','settled','cancelled','deleted'].includes(status)) return false;
     if(azobssIsPurchasePaidForDownload(r)) return false;
     const currentKey = String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase();
     const rowKey = String(r?.usernameKey || r?.displayName || '').trim().toLowerCase();
@@ -2518,22 +2519,47 @@ function writeAzobssPurchaseTotalResetMap(map){
 function purchaseRecordMs(record){
   return Number(record?.createdAtMs || record?.timestampMs || record?.createdAtClientMs || 0) || (record?.createdAtClient ? Date.parse(record.createdAtClient) : 0) || (record?.createdAt ? Date.parse(record.createdAt) : 0) || 0;
 }
+function azobssPurchaseStatus(r){
+  return String(r?.status || 'pending').trim().toLowerCase();
+}
+function azobssIsPurchaseStatusPaid(r){
+  return ['paid','success','completed','settled'].includes(azobssPurchaseStatus(r));
+}
 function countablePurchaseRows(rows, usernameKey, resetMap){
   const key = String(usernameKey || '').trim().toLowerCase();
   const resetAt = Number((resetMap || {})[key] || 0);
-  if(!resetAt) return rows.slice();
-  return rows.filter(r => purchaseRecordMs(r) > resetAt);
+  return (rows || []).filter(r => {
+    const status = azobssPurchaseStatus(r);
+    if(['paid','success','completed','settled','cancelled','deleted'].includes(status)) return false;
+    return !resetAt || purchaseRecordMs(r) > resetAt;
+  });
 }
 async function loadAzobssPurchaseTotalResetMap(){
   const map = readAzobssPurchaseTotalResetMap();
+  const current = getSavedUser() || {};
+  const isAdminUser = isAzobssAdmin(current);
+
+  function applyUserDoc(docSnap){
+    if(!docSnap || !docSnap.exists || !docSnap.exists()) return;
+    const data = docSnap.data() || {};
+    const key = String(data.usernameKey || data.username || docSnap.id || '').trim().toLowerCase();
+    const ms = Number(data.purchaseTotalResetAtMs || 0) || (data.purchaseTotalResetAtClient ? Date.parse(data.purchaseTotalResetAtClient) : 0);
+    if(key && ms) map[key] = ms;
+  }
+
   try{
-    const snap = await getDocs(collection(db, 'users'));
-    snap.forEach(docSnap => {
-      const data = docSnap.data() || {};
-      const key = String(data.usernameKey || data.username || docSnap.id || '').trim().toLowerCase();
-      const ms = Number(data.purchaseTotalResetAtMs || 0) || (data.purchaseTotalResetAtClient ? Date.parse(data.purchaseTotalResetAtClient) : 0);
-      if(key && ms) map[key] = ms;
-    });
+    if(isAdminUser){
+      const snap = await getDocs(collection(db, 'users'));
+      snap.forEach(applyUserDoc);
+    }else{
+      const docIds = Array.from(new Set([
+        purchasePersistDocId(current),
+        String(current.usernameKey || current.username || current.displayName || '').trim().toLowerCase()
+      ].filter(Boolean)));
+      for(const id of docIds){
+        try{ applyUserDoc(await getDoc(doc(db, 'users', id))); }catch(e){}
+      }
+    }
     writeAzobssPurchaseTotalResetMap(map);
   }catch(error){
     console.warn('Load purchase total reset map failed:', error);
@@ -2628,7 +2654,25 @@ async function azobssResetCurrentPurchaseTotalAfterPaid(orderId){
   }catch(e){ console.warn('Firebase payment reset failed:', e); }
   const totalEl = document.getElementById('paBmToyyibTotal');
   if(totalEl) totalEl.textContent = 'RM0.00';
+  try{
+    const records = await loadAzobssPurchaseRecords();
+    const unpaidRows = azobssPurchasePaymentRows(records, { [key]: 0 }).filter(r => !azobssIsPurchasePaidForDownload(r));
+    for(const r of unpaidRows){
+      if(r.firestoreId){
+        try{
+          await setDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, r.firestoreId), {
+            status: 'paid',
+            paidAtMs: resetAtMs,
+            paidAtClient: resetAtClient,
+            paymentOrderId: String(orderId || ''),
+            updatedAt: serverTimestamp()
+          }, { merge:true });
+        }catch(e){}
+      }
+    }
+  }catch(e){ console.warn('Mark purchaseLogs paid failed:', e); }
   try{ await renderAzobssPurchaseRecords(); }catch(e){}
+  try{ azobssSchedulePurchaseRecordsRefresh('payment paid'); }catch(e){}
 }
 
 
@@ -2668,23 +2712,42 @@ async function azobssCheckPaBmToyyibReturn(){
   const params = new URLSearchParams(window.location.search || '');
   const orderId = params.get('orderId') || params.get('order_id') || sessionStorage.getItem('azobss_pa_bm_pending_order_id') || '';
   const paymentReturn = params.get('payment') === 'return' || !!params.get('status_id') || !!params.get('billcode') || !!params.get('billCode');
-  if(!paymentReturn || !orderId || sessionStorage.getItem('azobss_pa_bm_paid_reset_' + orderId) === '1') return;
+  if(!paymentReturn) return;
+
+  // Selepas balik dari ToyyibPay, refresh list beberapa kali kerana auth/Firestore callback kadang lambat.
+  [300, 900, 1800, 3500, 6500].forEach(function(ms){
+    setTimeout(function(){
+      try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
+      try{ azobssSchedulePurchaseRecordsRefresh('toyyib return retry'); }catch(e){}
+    }, ms);
+  });
+
+  if(!orderId){
+    if(status) status.textContent = 'Payment returned. Refreshing purchase list...';
+    return;
+  }
+  if(sessionStorage.getItem('azobss_pa_bm_paid_reset_' + orderId) === '1'){
+    try{ azobssSchedulePurchaseRecordsRefresh('already verified return'); }catch(e){}
+    return;
+  }
   try{
     if(status) status.textContent = 'Checking payment status...';
-    const res = await fetch(azobssGetBackendBaseUrl() + '/api/verify-payment?orderId=' + encodeURIComponent(orderId));
+    const res = await fetch(azobssGetBackendBaseUrl() + '/api/verify-payment?orderId=' + encodeURIComponent(orderId), { cache:'no-store' });
     const data = await res.json().catch(()=>({}));
-    if(data && (data.paid || data.status === 'paid')){
+    if(data && (data.paid || data.status === 'paid' || data.status === 'success')){
       await azobssResetCurrentPurchaseTotalAfterPaid(orderId);
       sessionStorage.setItem('azobss_pa_bm_paid_reset_' + orderId, '1');
       sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
-      if(status) status.textContent = 'Pembayaran berjaya. Total reset kepada RM0.00';
+      if(status) status.textContent = 'Pembayaran berjaya. Senarai pembelian dikemaskini.';
       azobssShowPaBmPaymentSuccessPopup();
+      [500, 1500, 3000].forEach(ms => setTimeout(() => azobssSchedulePurchaseRecordsRefresh('paid verify retry'), ms));
     }else if(status){
-      status.textContent = 'Payment pending. If already paid, refresh this page.';
+      status.textContent = 'Payment pending. Sistem sedang sync semula...';
+      setTimeout(azobssCheckPaBmToyyibReturn, 3500);
     }
   }catch(e){
     console.warn('PA/BM payment return check failed:', e);
-    if(status) status.textContent = 'Unable to verify payment yet. Please refresh later.';
+    if(status) status.textContent = 'Unable to verify payment yet. Purchase list will refresh automatically.';
   }
 }
 async function azobssPayPaBmToyyib(){
@@ -3024,7 +3087,53 @@ async function renderAzobssPurchaseRecords(){
   }
   azobssRefreshPaBmToyyibTotal(records, purchaseResetMap);
 }
+
+let azobssPurchaseRealtimeUnsubs = [];
+let azobssPurchaseRealtimeKey = '';
+let azobssPurchaseRenderTimer = null;
+function azobssSchedulePurchaseRecordsRefresh(reason){
+  try{
+    clearTimeout(azobssPurchaseRenderTimer);
+    azobssPurchaseRenderTimer = setTimeout(async function(){
+      try{ await renderAzobssPurchaseRecords(); }catch(e){ console.warn('Purchase refresh failed:', reason, e); }
+      try{ window.dispatchEvent(new Event('azobss:purchases-updated')); }catch(e){}
+    }, 250);
+  }catch(e){}
+}
+function startAzobssPurchaseRealtimeSync(){
+  const current = getSavedUser() || {};
+  const uid = String(current.uid || '').trim();
+  const key = String(current.usernameKey || current.username || current.displayName || '').trim().toLowerCase();
+  const syncKey = uid + '|' + key;
+  if(!uid && !key) return;
+  if(azobssPurchaseRealtimeKey === syncKey && azobssPurchaseRealtimeUnsubs.length) return;
+  azobssPurchaseRealtimeUnsubs.forEach(unsub => { try{ unsub(); }catch(e){} });
+  azobssPurchaseRealtimeUnsubs = [];
+  azobssPurchaseRealtimeKey = syncKey;
+  const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+  try{
+    if(uid){
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(query(purchaseCol, where('uid', '==', uid)), function(){
+        azobssSchedulePurchaseRecordsRefresh('purchaseLogs uid snapshot');
+      }, function(e){ console.warn('purchase uid snapshot failed:', e); }));
+    }
+  }catch(e){ console.warn('start uid purchase listener failed:', e); }
+  try{
+    if(key){
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(query(purchaseCol, where('usernameKey', '==', key)), function(){
+        azobssSchedulePurchaseRecordsRefresh('purchaseLogs username snapshot');
+      }, function(e){ console.warn('purchase username snapshot failed:', e); }));
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(doc(db, 'users', key), function(){
+        azobssSchedulePurchaseRecordsRefresh('user purchase reset snapshot');
+      }, function(e){ console.warn('user reset snapshot failed:', e); }));
+    }
+  }catch(e){ console.warn('start key purchase listener failed:', e); }
+}
+window.azobssRefreshPaBmPurchasesNow = function(){
+  azobssSchedulePurchaseRecordsRefresh('manual');
+};
 function bindAzobssPurchaseRecordsUI(){
+  try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
   ['refreshPurchaseButton','purchaseRecordSearch','purchaseRecordSort','userPaPurchaseSearch','userPaPurchaseSort'].forEach(id => {
     const el = document.getElementById(id);
     if(!el || el.dataset.azobssPurchaseBind) return;

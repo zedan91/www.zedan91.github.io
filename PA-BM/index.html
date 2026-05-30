@@ -11554,7 +11554,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
         '<div class="azobss-payment-success-icon">✅</div>'+
         '<h3 id="azobssPaymentSuccessTitle">Pembayaran Berjaya!</h3>'+
         '<p>Terima kasih atas pembelian anda.</p>'+
-        '<p>Sila muat turun fail anda di bahagian <strong>'Latest Purchase List'</strong>.</p>'+
+        '<p>Sila muat turun fail anda di bahagian <strong>\'Latest Purchase List\'</strong>.</p>'+
         '<button type="button" class="azobss-payment-success-go">Go to Latest Purchase List</button>'+
       '</div>';
     document.body.appendChild(modal);
@@ -11613,6 +11613,35 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();
+})();
+</script>
+
+
+<script id="azobss-pa-bm-purchase-sync-perfect-fix">
+(function(){
+  'use strict';
+  function refreshPurchases(){
+    try{
+      if(window.azobssRenderPurchaseRecords) window.azobssRenderPurchaseRecords();
+      if(window.azobssRefreshPaBmPurchasesNow) window.azobssRefreshPaBmPurchasesNow();
+      window.dispatchEvent(new Event('azobss:purchases-updated'));
+    }catch(e){}
+  }
+  function isPaymentReturn(){
+    try{
+      var p = new URLSearchParams(location.search || '');
+      return p.get('payment') === 'return' || !!p.get('status_id') || !!p.get('billcode') || !!p.get('billCode') || !!p.get('orderId') || !!p.get('order_id');
+    }catch(e){ return false; }
+  }
+  window.addEventListener('azobssPurchaseRecorded', refreshPurchases);
+  window.addEventListener('azobss:purchases-updated', function(){ setTimeout(refreshPurchases, 250); }, { once:true });
+  document.addEventListener('DOMContentLoaded', function(){
+    refreshPurchases();
+    if(isPaymentReturn()){
+      [300,900,1800,3500,6500,10000].forEach(function(ms){ setTimeout(refreshPurchases, ms); });
+    }
+  });
+  window.addEventListener('focus', refreshPurchases);
 })();
 </script>
 
