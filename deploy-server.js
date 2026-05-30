@@ -2121,6 +2121,43 @@ if (
   return;
 }
 
+
+// =========================
+// JUPEM PA EXISTENCE CHECK (NO PDF CONVERT)
+// =========================
+
+if (
+  pathname === "/api/check-pa" &&
+  req.method === "GET"
+) {
+  const noPA = cleanPA(parsed.query.noPA || parsed.query.pa || parsed.query.noPa);
+  const negeri = cleanState(parsed.query.negeri || parsed.query.state);
+
+  if (!noPA) {
+    return send(res, 400, JSON.stringify({ ok: false, error: "Missing noPA" }), "application/json");
+  }
+  if (!negeri) {
+    return send(res, 400, JSON.stringify({ ok: false, error: "Missing negeri" }), "application/json");
+  }
+
+  try {
+    const result = await fetchPelanAkuiCandidates(noPA, negeri);
+    if (!result || !result.validFile) {
+      return send(res, 404, JSON.stringify({ ok: false, error: "PA not found" }), "application/json");
+    }
+
+    return send(res, 200, JSON.stringify({
+      ok: true,
+      noPA: `PA${String(noPA || "").replace(/^PA/i, "").replace(/\.TIF$/i, "")}.TIF`,
+      negeri,
+      size: result.buffer ? result.buffer.length : 0
+    }), "application/json");
+  } catch (error) {
+    console.error("PA check failed:", error && (error.stack || error.message || error));
+    return send(res, 500, JSON.stringify({ ok: false, error: "PA check failed" }), "application/json");
+  }
+}
+
 // =========================
 // JUPEM PA DIRECT DOWNLOAD (NO SHARP)
 // =========================

@@ -1157,6 +1157,39 @@ async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
   });
 }
 
+
+app.get("/api/check-pa", async (req, res) => {
+  try {
+    const noPA = cleanPaNumber(req.query.noPA || req.query.pa || req.query.noPa);
+    const negeri = cleanPaState(req.query.negeri || req.query.state);
+
+    if (!noPA) return res.status(400).json({ ok: false, error: "Missing noPA" });
+    if (!negeri) return res.status(400).json({ ok: false, error: "Missing negeri" });
+
+    const fileName = `PA${noPA}.TIF`;
+    const candidates = [
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`,
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`,
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName.toLowerCase())}&negeri=${encodeURIComponent(negeri)}`
+    ];
+
+    for (const jupemUrl of candidates) {
+      const response = await fetchJupemFile(jupemUrl);
+      if (!response.ok) continue;
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const firstText = buffer.slice(0, 180).toString("utf8").toLowerCase();
+      if (buffer.length > 100 && !firstText.includes("<html") && !firstText.includes("<!doctype")) {
+        return res.json({ ok: true, noPA: fileName, negeri, size: buffer.length });
+      }
+    }
+
+    return res.status(404).json({ ok: false, error: "PA not found" });
+  } catch (error) {
+    console.error("PA check failed:", error);
+    res.status(500).json({ ok: false, error: "PA check failed" });
+  }
+});
+
 app.get("/api/pa-pdf", async (req, res) => {
   try {
     const noPA = cleanPaNumber(req.query.noPA || req.query.pa || req.query.noPa);
