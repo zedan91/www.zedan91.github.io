@@ -2127,7 +2127,7 @@ if (
 // =========================
 
 if (
-  pathname === "/api/check-pa" &&
+  (pathname === "/api/check-pa" || pathname === "/api/pa") &&
   req.method === "GET"
 ) {
   const noPA = cleanPA(parsed.query.noPA || parsed.query.pa || parsed.query.noPa);

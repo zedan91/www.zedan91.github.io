@@ -12122,7 +12122,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     try {
-      var checkUrl = url.replace('/api/pa-pdf', '/api/pa');
+      var checkUrl = url.replace('/api/pa-pdf', '/api/check-pa');
       var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
       if (!checkResponse.ok) throw new Error('Maaf, PA ' + number + ' tiada dalam simpanan.');
       var checkData = await checkResponse.json().catch(function(){ return null; });
@@ -12289,7 +12289,7 @@ document.addEventListener('DOMContentLoaded', function(){
     try{
       // Semak dahulu sama ada PA benar-benar wujud di backend/JUPEM.
       // Jangan masukkan cart dan jangan kira total jika PA Maaf, tiada dalam simpanan.
-      var checkUrl = built.url.replace('/api/pa-pdf', '/api/pa');
+      var checkUrl = built.url.replace('/api/pa-pdf', '/api/check-pa');
       var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
       if(!checkResponse.ok){
         throw new Error('Maaf, PA ' + built.number + ' tiada dalam simpanan.');
