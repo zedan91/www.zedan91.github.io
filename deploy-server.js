@@ -14,8 +14,35 @@ let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
 let sharp = null;
 let PDFDocument = null;
-try { sharp = require("sharp"); } catch (e) { sharp = null; }
-try { PDFDocument = require("pdfkit"); } catch (e) { PDFDocument = null; }
+
+function azobssLoadBackendModule(moduleName) {
+  const candidates = [
+    moduleName,
+    path.join(__dirname, "node_modules", moduleName),
+    path.join(__dirname, "backend", "node_modules", moduleName)
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      return require(candidate);
+    } catch (err) {
+      // Try the next location. Render sometimes installs dependencies in /backend/node_modules
+      // while this service is started with `node deploy-server.js` from the project root.
+    }
+  }
+
+  return null;
+}
+
+sharp = azobssLoadBackendModule("sharp");
+PDFDocument = azobssLoadBackendModule("pdfkit");
+
+console.log("PDF converter dependencies:", {
+  sharp: !!sharp,
+  pdfkit: !!PDFDocument,
+  rootNodeModules: fs.existsSync(path.join(__dirname, "node_modules")),
+  backendNodeModules: fs.existsSync(path.join(__dirname, "backend", "node_modules"))
+});
 
 async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
   if (!sharp || !PDFDocument) {
