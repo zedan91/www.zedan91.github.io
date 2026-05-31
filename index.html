@@ -12828,61 +12828,6 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 }
 </style>
 
-
-
-<style id="azobss-pa-bm-gold-highlight-action-final-fix">
-/* Final PA/BM purchase list colour + action cleanup.
-   Highlight only BM/PA item code and RM price in gold.
-   All other purchase details stay white. Cart-X only appears for pending records. */
-:root{--azobss-pabm-gold:#facc15;}
-#userPaPurchaseList .compact-table-row .col-item,
-#userPaPurchaseList .compact-table-row .col-item strong{color:var(--azobss-pabm-gold)!important;font-weight:950!important;}
-#userPaPurchaseList .compact-table-row .col-price{color:var(--azobss-pabm-gold)!important;font-weight:950!important;}
-#userPaPurchaseList .compact-table-row .col-state,
-#userPaPurchaseList .compact-table-row .col-state strong,
-#userPaPurchaseList .compact-table-row .col-date,
-#userPaPurchaseList .compact-table-row .col-dl,
-#userPaPurchaseList .compact-table-row .col-dl strong,
-#userPaPurchaseList .compact-table-row .col-exp,
-#userPaPurchaseList .compact-table-row .col-exp strong{color:#fff!important;font-weight:800!important;}
-#userPaPurchaseList .compact-table-header .col-item,
-#userPaPurchaseList .compact-table-header .col-item strong,
-#userPaPurchaseList .compact-table-header .col-price,
-#userPaPurchaseList .compact-table-header .col-state,
-#userPaPurchaseList .compact-table-header .col-state strong,
-#userPaPurchaseList .compact-table-header .col-date,
-#userPaPurchaseList .compact-table-header .col-dl,
-#userPaPurchaseList .compact-table-header .col-dl strong,
-#userPaPurchaseList .compact-table-header .col-exp,
-#userPaPurchaseList .compact-table-header .col-exp strong{color:#e5e7eb!important;font-weight:950!important;}
-#userPaPurchaseList .user-pa-pending-action{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;flex-wrap:nowrap!important;white-space:nowrap!important;}
-#userPaPurchaseList .user-pa-download.is-pending-status{color:#fbbf24!important;background:rgba(251,191,36,.08)!important;border:1px solid rgba(245,158,11,.80)!important;}
-#userPaPurchaseList .user-pa-uncart-btn.is-cart-remove-btn{background:rgba(15,23,42,.72)!important;border:1px solid rgba(148,163,184,.45)!important;color:#fff!important;}
-#userPaPurchaseList .cart-x-mark{border-color:#ef4444!important;color:#ef4444!important;background:rgba(15,23,42,.95)!important;}
-/* Ensure paid/used/expired rows do not show cart/delete controls from older styles. */
-#userPaPurchaseList .col-action > .user-pa-download:not(.is-pending-status) + .user-pa-uncart-btn,
-#userPaPurchaseList .col-action > .user-pa-download:not(.is-pending-status) ~ .user-pa-uncart-btn{display:none!important;}
-@media (min-width:761px){
-  #userPaPurchaseList .compact-purchase-row{grid-template-columns:44px minmax(120px,1.05fr) minmax(120px,.95fr) 85px minmax(165px,1.15fr) 95px 90px 155px!important;}
-  #userPaPurchaseList .col-action{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;overflow:visible!important;white-space:nowrap!important;}
-  #userPaPurchaseList .user-pa-download{min-width:92px!important;height:28px!important;min-height:28px!important;}
-  #userPaPurchaseList .user-pa-download.is-pending-status{min-width:108px!important;max-width:112px!important;height:28px!important;padding:0 8px!important;font-size:11px!important;border-radius:7px!important;}
-  #userPaPurchaseList .user-pa-uncart-btn.is-cart-remove-btn{width:34px!important;min-width:34px!important;height:28px!important;min-height:28px!important;padding:0!important;border-radius:7px!important;}
-}
-@media (max-width:760px){
-  #userPaPurchaseList .compact-table-row .col-item,
-  #userPaPurchaseList .compact-table-row .col-item strong,
-  #userPaPurchaseList .compact-table-row .col-price{color:var(--azobss-pabm-gold)!important;}
-  #userPaPurchaseList .compact-table-row .col-state,
-  #userPaPurchaseList .compact-table-row .col-state strong,
-  #userPaPurchaseList .compact-table-row .col-date,
-  #userPaPurchaseList .compact-table-row .col-dl,
-  #userPaPurchaseList .compact-table-row .col-dl strong,
-  #userPaPurchaseList .compact-table-row .col-exp,
-  #userPaPurchaseList .compact-table-row .col-exp strong{color:#fff!important;}
-}
-</style>
-
 </body>
 </html>
 <script>
