@@ -11892,8 +11892,8 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 #userPaPurchaseList .compact-table-row:hover{background:rgba(37,99,235,.08)!important;}
 #userPaPurchaseList .compact-purchase-row>div{padding:5px 8px!important;line-height:1.1!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 #userPaPurchaseList .col-no{font-weight:900!important;color:#e5e7eb!important;text-align:left!important;}
-#userPaPurchaseList .col-item strong,#userPaPurchaseList .col-state strong,#userPaPurchaseList .col-date,#userPaPurchaseList .col-dl strong,#userPaPurchaseList .col-exp strong{color:#22c55e!important;font-weight:900!important;}
-#userPaPurchaseList .col-price{color:#fff!important;font-weight:800!important;}
+#userPaPurchaseList .col-item strong,#userPaPurchaseList .col-price{color:#facc15!important;font-weight:900!important;}#userPaPurchaseList .col-state strong,#userPaPurchaseList .col-date,#userPaPurchaseList .col-dl strong,#userPaPurchaseList .col-exp strong{color:#fff!important;font-weight:900!important;}
+#userPaPurchaseList .col-price{color:#facc15!important;font-weight:950!important;}
 #userPaPurchaseList .col-dl,#userPaPurchaseList .col-exp{color:#cbd5e1!important;}
 #userPaPurchaseList .col-action{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;overflow:visible!important;}
 #userPaPurchaseList .user-pa-download-wrap{display:contents!important;}
@@ -12053,6 +12053,62 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     border:1.5px solid #ef4444!important;color:#ef4444!important;background:rgba(15,23,42,.92)!important;
     display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:11px!important;font-weight:950!important;line-height:1!important;
   }
+}
+</style>
+
+
+
+<style id="azobss-pa-bm-gold-white-action-final-override">
+/* AZOBSS final: highlight only BM/PA + RM in gold, keep other details white, and keep pending action in one row. */
+:root{--azobss-pa-gold:#facc15;--azobss-pa-white:#ffffff;}
+#userPaPurchaseList .compact-purchase-row.compact-table-row{
+  grid-template-columns:44px minmax(135px,1fr) minmax(145px,.95fr) 92px minmax(185px,1.1fr) 110px 96px 242px!important;
+  min-width:1048px!important;
+}
+#userPaPurchaseList .compact-table-header .col-item,
+#userPaPurchaseList .compact-table-header .col-state,
+#userPaPurchaseList .compact-table-header .col-price,
+#userPaPurchaseList .compact-table-header .col-date,
+#userPaPurchaseList .compact-table-header .col-dl,
+#userPaPurchaseList .compact-table-header .col-exp,
+#userPaPurchaseList .compact-table-header .col-action{color:#ffffff!important;}
+#userPaPurchaseList .compact-table-row .col-item,
+#userPaPurchaseList .compact-table-row .col-item strong,
+#userPaPurchaseList .compact-table-row [data-col="item"],
+#userPaPurchaseList .compact-table-row [data-col="item"] strong,
+#userPaPurchaseList .compact-table-row .col-price,
+#userPaPurchaseList .compact-table-row .col-price strong,
+#userPaPurchaseList .compact-table-row [data-col="price"]{color:var(--azobss-pa-gold)!important;font-weight:950!important;}
+#userPaPurchaseList .compact-table-row .col-state,
+#userPaPurchaseList .compact-table-row .col-state strong,
+#userPaPurchaseList .compact-table-row .col-date,
+#userPaPurchaseList .compact-table-row .col-dl,
+#userPaPurchaseList .compact-table-row .col-dl strong,
+#userPaPurchaseList .compact-table-row .col-exp,
+#userPaPurchaseList .compact-table-row .col-exp strong{color:var(--azobss-pa-white)!important;font-weight:850!important;}
+#userPaPurchaseList .compact-table-row .col-action{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;overflow:visible!important;white-space:nowrap!important;min-width:0!important;}
+#userPaPurchaseList .compact-table-row .user-pa-pending-action{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;flex-wrap:nowrap!important;width:100%!important;white-space:nowrap!important;overflow:visible!important;}
+#userPaPurchaseList .compact-table-row .user-pa-download.is-pending-status{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:136px!important;max-width:none!important;height:30px!important;min-height:30px!important;padding:0 12px!important;font-size:12px!important;font-weight:950!important;color:#fbbf24!important;background:rgba(251,191,36,.07)!important;border:1px solid rgba(245,158,11,.82)!important;border-radius:8px!important;line-height:1!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;}
+#userPaPurchaseList .compact-table-row .user-pa-uncart-btn.is-cart-remove-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;min-width:38px!important;height:30px!important;min-height:30px!important;padding:0!important;border-radius:8px!important;border:1px solid rgba(148,163,184,.45)!important;background:rgba(15,23,42,.72)!important;color:#fff!important;overflow:visible!important;}
+#userPaPurchaseList .compact-table-row .cart-x-icon{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:16px!important;line-height:1!important;}
+#userPaPurchaseList .compact-table-row .cart-x-mark{position:absolute!important;right:-8px!important;top:-8px!important;width:15px!important;height:15px!important;border-radius:50%!important;border:1.5px solid #ef4444!important;color:#ef4444!important;background:rgba(15,23,42,.95)!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:12px!important;font-weight:950!important;line-height:1!important;}
+#userPaPurchaseList .compact-table-row .user-pa-download:not(.is-pending-status){min-width:112px!important;}
+@media(max-width:760px){
+  #userPaPurchaseList .compact-purchase-row.compact-table-row{grid-template-columns:26px minmax(0,1fr) auto auto!important;min-width:0!important;width:100%!important;}
+  #userPaPurchaseList .compact-table-row .col-item,
+  #userPaPurchaseList .compact-table-row .col-item strong{color:var(--azobss-pa-gold)!important;font-size:15px!important;line-height:1.05!important;font-weight:950!important;}
+  #userPaPurchaseList .compact-table-row .col-price{color:var(--azobss-pa-gold)!important;font-size:12px!important;font-weight:950!important;}
+  #userPaPurchaseList .compact-table-row .col-state,
+  #userPaPurchaseList .compact-table-row .col-state strong{color:#ffffff!important;font-size:12.5px!important;line-height:1.05!important;font-weight:850!important;}
+  #userPaPurchaseList .compact-table-row .col-date,
+  #userPaPurchaseList .compact-table-row .col-dl,
+  #userPaPurchaseList .compact-table-row .col-dl strong,
+  #userPaPurchaseList .compact-table-row .col-exp,
+  #userPaPurchaseList .compact-table-row .col-exp strong{color:#ffffff!important;}
+  #userPaPurchaseList .compact-table-row .col-action{gap:5px!important;}
+  #userPaPurchaseList .compact-table-row .user-pa-pending-action{gap:5px!important;width:auto!important;}
+  #userPaPurchaseList .compact-table-row .user-pa-download.is-pending-status{min-width:100px!important;height:22px!important;min-height:22px!important;font-size:11px!important;padding:0 8px!important;border-radius:999px!important;}
+  #userPaPurchaseList .compact-table-row .user-pa-uncart-btn.is-cart-remove-btn{width:32px!important;min-width:32px!important;height:24px!important;min-height:24px!important;border-radius:7px!important;}
 }
 </style>
 

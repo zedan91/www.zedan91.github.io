@@ -4322,21 +4322,3 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-line{display:flex!importa
 body.is-admin #purchaseSummaryList .az-purchase-detail-line span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef4444!important;color:#fff!important;border:0!important;border-radius:7px!important;height:24px!important;padding:0 9px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;flex:0 0 auto!important;}
 @media(max-width:900px){body.is-admin #purchaseSummaryList .az-purchase-mini-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important;flex-wrap:wrap!important;}}
-
-
-/* MOBILE PA/BM CARD TEXT ENLARGE */
-@media (max-width:700px){
-  .user-pa-item strong{
-    font-size:1.15rem !important;
-    font-weight:800 !important;
-  }
-  .user-pa-item{
-    font-size:12px !important;
-  }
-  .user-pa-item .state,
-  .user-pa-item .negeri,
-  .user-pa-item .state-name{
-    font-size:1rem !important;
-    font-weight:600 !important;
-  }
-}
