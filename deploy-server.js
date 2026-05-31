@@ -336,6 +336,13 @@ async function refreshToyyibOrder(order, req) {
     const paid = !!(tx && String(tx.billpaymentStatus || tx.billStatus || tx.status || "") === "1");
     if (!paid) return order;
     let paidOrder = upsertPremiumOrder({ ...order, status: "paid", paymentMethod: "toyyibpay", paymentReference: tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno || order.paymentReference || "", toyyibTransaction: tx, paidAt: new Date().toISOString() });
+    if (Array.isArray(paidOrder.paBmItems) && paidOrder.paBmItems.length) {
+      try {
+        await azobssMarkPaBmOrderPaid(paidOrder, tx || {});
+      } catch (paBmError) {
+        console.error("PA/BM purchaseLogs paid update failed during verify:", paBmError.message);
+      }
+    }
     paidOrder = makeDownloadForOrder(paidOrder);
     await maybeSendDownloadEmail(paidOrder, req);
     return findPremiumOrderByAny({ orderId: paidOrder.orderId }) || paidOrder;
@@ -651,6 +658,130 @@ async function azobssIncrementPurchaseDownload(ref, record, nowMs) {
     lastDownloadedAtClient: new Date(nowMs).toISOString(),
     updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
+}
+
+function azobssCleanCompare(value) {
+  return String(value || "").trim().toUpperCase().replace(/\s+/g, " ");
+}
+function azobssCleanUsernameKey(value) {
+  return String(value || "").trim().toLowerCase();
+}
+async function azobssFindPaBmPurchaseRef(db, item, order) {
+  const ids = [
+    item && item.firestoreId,
+    item && item.purchaseLogId,
+    item && item.recordId,
+    item && item.localId,
+    item && item.id
+  ].filter(Boolean).map((v) => String(v).trim()).filter(Boolean);
+
+  for (const id of ids) {
+    const ref = db.collection("purchaseLogs").doc(id);
+    const snap = await ref.get();
+    if (snap.exists) return { ref, record: Object.assign({ firestoreId: snap.id }, snap.data() || {}) };
+  }
+
+  const user = (order && order.user) || {};
+  const uid = String((item && item.uid) || user.uid || "").trim();
+  const usernameKey = azobssCleanUsernameKey((item && item.usernameKey) || user.usernameKey || user.username || "");
+  const itemCode = azobssCleanCompare((item && (item.itemCode || item.code || item.noPa || item.stesen)) || "");
+  const productType = azobssCleanCompare((item && (item.productType || item.type || item.jenisProduk)) || "PA");
+
+  async function scan(querySnap) {
+    let best = null;
+    querySnap.forEach((docSnap) => {
+      if (best) return;
+      const data = docSnap.data() || {};
+      const sameCode = azobssCleanCompare(data.itemCode || data.code || data.noPa || data.stesen) === itemCode;
+      const sameType = azobssCleanCompare(data.productType || data.type || "PA") === productType;
+      const status = String(data.status || "").toLowerCase();
+      if (sameCode && sameType && (status === "pending" || status === "paid" || !status)) {
+        best = { ref: docSnap.ref, record: Object.assign({ firestoreId: docSnap.id }, data) };
+      }
+    });
+    return best;
+  }
+
+  if (uid) {
+    const byUid = await db.collection("purchaseLogs").where("uid", "==", uid).limit(200).get();
+    const found = await scan(byUid);
+    if (found) return found;
+  }
+
+  if (usernameKey) {
+    const byUsername = await db.collection("purchaseLogs").where("usernameKey", "==", usernameKey).limit(200).get();
+    const found = await scan(byUsername);
+    if (found) return found;
+  }
+
+  const fallbackId = ids[0] || "";
+  const ref = fallbackId ? db.collection("purchaseLogs").doc(fallbackId) : db.collection("purchaseLogs").doc();
+  return { ref, record: null };
+}
+async function azobssMarkPaBmOrderPaid(order, paymentData = {}) {
+  if (!order || !Array.isArray(order.paBmItems) || !order.paBmItems.length) return { updated: 0, skipped: true };
+  if (!initFirebaseAdmin()) {
+    throw new Error("Firebase Admin is not configured on backend. " + (firebaseAdminInitError || ""));
+  }
+
+  const db = firebaseAdmin.firestore();
+  const nowMs = Date.now();
+  const expiresAtMs = nowMs + AZOBSS_PA_BM_VALID_MS;
+  const user = order.user || {};
+  let updated = 0;
+
+  for (const rawItem of order.paBmItems) {
+    const item = rawItem || {};
+    const found = await azobssFindPaBmPurchaseRef(db, item, order);
+    const prev = found.record || {};
+    const productType = String(item.productType || prev.productType || "PA").trim().toUpperCase();
+    const itemCode = String(item.itemCode || prev.itemCode || "").trim();
+    const negeri = String(item.negeri || prev.negeri || "").trim();
+    const uid = String(item.uid || prev.uid || user.uid || "").trim();
+    const usernameKey = azobssCleanUsernameKey(item.usernameKey || prev.usernameKey || user.usernameKey || user.username || "");
+    const amount = Math.max(0, Math.round(Number(item.amount || prev.amount || (productType === "PA" ? 5 : 3))));
+
+    const payload = {
+      uid,
+      usernameKey,
+      displayName: String(prev.displayName || user.displayName || user.username || usernameKey || ""),
+      email: String(prev.email || user.email || ""),
+      phone: String(prev.phone || user.phone || ""),
+      productType,
+      itemCode,
+      negeri,
+      amount,
+      downloadUrl: String(prev.downloadUrl || item.downloadUrl || item.url || ""),
+      filename: String(prev.filename || item.filename || (productType === "PA" && itemCode ? ("PA" + itemCode + ".pdf") : "")),
+      status: "paid",
+      paymentStatus: "paid",
+      orderId: String(order.orderId || prev.orderId || ""),
+      billCode: String(order.billCode || prev.billCode || ""),
+      paymentReference: String(paymentData.transaction_id || paymentData.billpaymentInvoiceNo || paymentData.refno || order.paymentReference || prev.paymentReference || ""),
+      paidAtMs: Number(prev.paidAtMs || 0) || nowMs,
+      paidAtClient: prev.paidAtClient || new Date(nowMs).toISOString(),
+      downloadCount: Math.max(0, Number(prev.downloadCount || 0)),
+      maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS,
+      downloadExpiresAtMs: Number(prev.downloadExpiresAtMs || 0) || expiresAtMs,
+      downloadExpiresAtClient: prev.downloadExpiresAtClient || new Date(expiresAtMs).toISOString(),
+      updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!prev.createdAtMs) {
+      payload.createdAtMs = Number(item.createdAtMs || 0) || nowMs;
+      payload.createdAtClient = new Date(payload.createdAtMs).toISOString();
+    }
+
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === undefined || payload[key] === null || payload[key] === "") delete payload[key];
+    });
+
+    await found.ref.set(payload, { merge: true });
+    updated += 1;
+  }
+
+  console.log("PA/BM purchaseLogs marked paid:", JSON.stringify({ orderId: order.orderId, billCode: order.billCode, updated }).slice(0, 1000));
+  return { updated, skipped: false };
 }
 function azobssPaBmDownloadError(res, status, message) {
   return send(res, status, JSON.stringify({ ok: false, error: message }, null, 2), "application/json");
@@ -1786,15 +1917,29 @@ async function handler(req, res) {
           toyyibCallback: data,
           paidAt: new Date().toISOString()
         });
+        let paBmUpdate = { updated: 0, skipped: true };
+        if (Array.isArray(order.paBmItems) && order.paBmItems.length) {
+          try {
+            paBmUpdate = await azobssMarkPaBmOrderPaid(order, data || {});
+          } catch (paBmError) {
+            console.error("PA/BM purchaseLogs paid update failed during callback:", paBmError.message);
+          }
+        }
         order = makeDownloadForOrder(order);
         await maybeSendDownloadEmail(order, req);
         const latest = findPremiumOrderByAny({ orderId: order.orderId }) || order;
-        console.log("ToyyibPay callback processed paid:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
-        return send(res, 200, JSON.stringify({ ok:true, status:"paid", emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
+        console.log("ToyyibPay callback processed paid:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, paBmUpdated: paBmUpdate.updated || 0, emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
+        return send(res, 200, JSON.stringify({ ok:true, status:"paid", paBmUpdated: paBmUpdate.updated || 0, emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
       }
 
       order = await refreshToyyibOrder(order, req);
-      if (order.status === "paid") return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+      if (order.status === "paid") {
+        if (Array.isArray(order.paBmItems) && order.paBmItems.length) {
+          try { await azobssMarkPaBmOrderPaid(order, data || {}); }
+          catch (paBmError) { console.error("PA/BM purchaseLogs paid update failed after refresh:", paBmError.message); }
+        }
+        return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+      }
       return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false }), "application/json");
     }
 
