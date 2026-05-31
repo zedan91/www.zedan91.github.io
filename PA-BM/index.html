@@ -7711,6 +7711,14 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 @media(max-width:700px){.user-pa-pending-action{justify-content:flex-start;}}
 .bm-record-download{cursor:pointer!important;}
 </style>
+
+<style>
+.compact-table-row{display:grid;grid-template-columns:40px 1.4fr 1fr 80px 180px 70px 80px 170px;align-items:center;padding:6px 10px!important;min-height:42px!important;gap:8px}
+.compact-table-row .user-pa-download-wrap{display:flex;justify-content:flex-end;align-items:center;gap:6px}
+.compact-table-row .download-meta{display:none}
+.col-item,.col-state{font-weight:600}
+@media(max-width:900px){.compact-table-row{grid-template-columns:30px 1fr 1fr 60px 120px 60px 60px 120px;font-size:12px}}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -11872,6 +11880,30 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   }
 })();
 </script>
+
+
+<style id="azobss-pa-bm-compact-table-final-fix">
+/* AZOBSS Latest Purchase List compact table final */
+#userPaPurchaseList.user-pa-list{display:block!important;overflow-x:auto!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:12px!important;background:rgba(10,20,36,.50)!important;}
+#userPaPurchaseList .compact-purchase-row{display:grid!important;grid-template-columns:44px minmax(135px,1.15fr) minmax(145px,1fr) 90px minmax(185px,1.3fr) 120px 105px 125px!important;align-items:center!important;gap:0!important;min-width:920px!important;min-height:38px!important;padding:0 12px!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.22)!important;background:transparent!important;box-shadow:none!important;}
+#userPaPurchaseList .compact-purchase-row:last-child{border-bottom:0!important;}
+#userPaPurchaseList .compact-table-header{min-height:40px!important;background:rgba(8,16,30,.70)!important;color:#dbeafe!important;font-size:12px!important;font-weight:900!important;text-transform:none!important;position:sticky!important;top:0!important;z-index:2!important;}
+#userPaPurchaseList .compact-table-row{font-size:12px!important;color:#e5e7eb!important;}
+#userPaPurchaseList .compact-table-row:hover{background:rgba(37,99,235,.08)!important;}
+#userPaPurchaseList .compact-purchase-row>div{padding:5px 8px!important;line-height:1.1!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+#userPaPurchaseList .col-no{font-weight:900!important;color:#e5e7eb!important;text-align:left!important;}
+#userPaPurchaseList .col-item strong,#userPaPurchaseList .col-state strong,#userPaPurchaseList .col-date,#userPaPurchaseList .col-dl strong,#userPaPurchaseList .col-exp strong{color:#22c55e!important;font-weight:900!important;}
+#userPaPurchaseList .col-price{color:#fff!important;font-weight:800!important;}
+#userPaPurchaseList .col-dl,#userPaPurchaseList .col-exp{color:#cbd5e1!important;}
+#userPaPurchaseList .col-action{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;overflow:visible!important;}
+#userPaPurchaseList .user-pa-download-wrap{display:contents!important;}
+#userPaPurchaseList .az-download-meta{display:none!important;}
+#userPaPurchaseList .user-pa-download{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:92px!important;height:28px!important;min-height:28px!important;padding:0 12px!important;border-radius:7px!important;font-size:12px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;}
+#userPaPurchaseList .user-pa-download.is-locked{background:#334155!important;color:#e5e7eb!important;min-width:92px!important;}
+#userPaPurchaseList .user-pa-pending-action{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;}
+#userPaPurchaseList .user-pa-uncart-btn{height:28px!important;min-height:28px!important;padding:0 10px!important;border-radius:7px!important;font-size:11px!important;font-weight:900!important;}
+@media(max-width:760px){#userPaPurchaseList.user-pa-list{border-radius:10px!important;}#userPaPurchaseList .compact-purchase-row{min-width:860px!important;grid-template-columns:38px 130px 140px 75px 170px 110px 95px 115px!important;min-height:36px!important;padding:0 8px!important;}#userPaPurchaseList .compact-purchase-row>div{padding:4px 6px!important;font-size:11px!important;}#userPaPurchaseList .user-pa-download{height:26px!important;min-height:26px!important;min-width:86px!important;font-size:11px!important;}}
+</style>
 
 </body>
 </html>
