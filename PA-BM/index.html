@@ -7594,15 +7594,15 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 </style>
 
 <style id="azobss-pa-bm-payment-top-final-fix">
-/* AZOBSS PA/BM final payment card: replaces old blue Pembayaran banner, no side overlap */
+/* AZOBSS PA/BM payment card compact final: Payment title above Total, method logos below status */
 .payment-cta-wrap.toyyibpay-payment-top{
   width:100% !important;
-  max-width:560px !important;
+  max-width:500px !important;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  margin:28px auto 26px !important;
-  padding:0 14px !important;
+  margin:22px auto 22px !important;
+  padding:0 12px !important;
   box-sizing:border-box !important;
   clear:both !important;
   position:relative !important;
@@ -7610,69 +7610,108 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-card-top{
   width:100% !important;
-  max-width:500px !important;
-  padding:28px 30px !important;
+  max-width:430px !important;
+  padding:22px 24px 24px !important;
   text-align:center !important;
   border:1px solid rgba(34,197,94,.9) !important;
-  border-radius:18px !important;
+  border-radius:17px !important;
   background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,18,37,.96)) !important;
-  box-shadow:0 18px 45px rgba(0,0,0,.32), 0 0 26px rgba(34,197,94,.10) !important;
+  box-shadow:0 14px 36px rgba(0,0,0,.30), 0 0 20px rgba(34,197,94,.09) !important;
   box-sizing:border-box !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{
   margin:0 0 12px !important;
-  color:#fff !important;
-  font-size:28px !important;
-  line-height:1.1 !important;
-  font-weight:900 !important;
+  color:#ffffff !important;
+  font-size:24px !important;
+  line-height:1.05 !important;
+  font-weight:950 !important;
+  letter-spacing:.2px !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-subtitle{
-  margin:0 0 20px !important;
-  color:#e5e7eb !important;
-  font-size:17px !important;
-  line-height:1.2 !important;
-  font-weight:900 !important;
+  display:none !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{
-  margin:0 0 22px !important;
+  margin:0 0 18px !important;
   color:#facc15 !important;
-  font-size:30px !important;
-  line-height:1.18 !important;
-  font-weight:900 !important;
+  font-size:28px !important;
+  line-height:1.12 !important;
+  font-weight:950 !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{
   display:inline-block !important;
-  margin-top:4px !important;
+  margin-top:3px !important;
   color:#22c55e !important;
-  font-size:34px !important;
+  font-size:32px !important;
   font-weight:950 !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-pay-btn{
-  width:min(330px,100%) !important;
-  min-height:66px !important;
+  width:min(300px,100%) !important;
+  min-height:58px !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   margin:0 auto !important;
-  padding:12px 22px !important;
+  padding:10px 20px !important;
   border-radius:12px !important;
   background:linear-gradient(135deg,#22c55e,#16a34a) !important;
   color:#fff !important;
-  font-size:24px !important;
-  line-height:1.2 !important;
+  font-size:22px !important;
+  line-height:1.15 !important;
   font-weight:950 !important;
   text-align:center !important;
   white-space:normal !important;
-  box-shadow:0 12px 26px rgba(34,197,94,.24) !important;
+  box-shadow:0 10px 22px rgba(34,197,94,.22) !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-status{
   display:block !important;
   min-height:0 !important;
-  margin:14px 0 0 !important;
+  margin:12px 0 0 !important;
   color:#f8fafc !important;
-  font-size:15px !important;
-  line-height:1.35 !important;
+  font-size:14px !important;
+  line-height:1.25 !important;
   font-weight:500 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-logos{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:12px !important;
+  margin:14px auto 0 !important;
+  color:#f8fafc !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  font-size:22px !important;
+  font-weight:950 !important;
+  letter-spacing:.2px !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx::before{
+  content:"◈" !important;
+  color:#38bdf8 !important;
+  font-size:18px !important;
+  line-height:1 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  font-size:16px !important;
+  font-weight:900 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank::before{
+  content:"🏦" !important;
+  font-size:18px !important;
+  line-height:1 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-divider{
+  width:1px !important;
+  height:24px !important;
+  background:rgba(255,255,255,.55) !important;
+  display:inline-block !important;
 }
 #adminPurchasePanel .purchase-panel-layout{
   display:block !important;
@@ -7683,22 +7722,29 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 @media(max-width:640px){
   .payment-cta-wrap.toyyibpay-payment-top{
     max-width:100% !important;
-    margin:18px auto 20px !important;
-    padding:0 12px !important;
+    margin:16px auto 18px !important;
+    padding:0 10px !important;
   }
   .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-card-top{
     max-width:100% !important;
-    padding:22px 16px !important;
-    border-radius:16px !important;
+    padding:19px 14px 20px !important;
+    border-radius:15px !important;
   }
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{font-size:24px !important;}
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-subtitle{font-size:15px !important;}
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{font-size:26px !important;}
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{font-size:30px !important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{font-size:21px !important;margin-bottom:10px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{font-size:24px !important;margin-bottom:16px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{font-size:28px !important;}
   .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-pay-btn{
-    min-height:58px !important;
-    font-size:20px !important;
+    min-height:52px !important;
+    font-size:19px !important;
+    width:min(280px,100%) !important;
   }
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-status{font-size:13px!important;margin-top:10px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-logos{gap:10px!important;margin-top:12px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx{font-size:19px!important;gap:6px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx::before{font-size:16px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank{font-size:14px!important;gap:5px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank::before{font-size:16px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-divider{height:20px!important;}
 }
 </style>
 
@@ -8299,12 +8345,17 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 <div class="payment-cta-wrap login-only toyyibpay-payment-top" id="paymentCtaWrap">
         <div class="payment-qr-card toyyibpay-payment-card toyyibpay-payment-card-top">
           <h3 class="toyyibpay-payment-title">Payment</h3>
-          <p class="toyyibpay-payment-subtitle">FPX / Online Banking</p>
+          <p class="toyyibpay-payment-subtitle" aria-hidden="true">FPX / Online Banking</p>
           <p class="toyyibpay-payment-amount">Total:<br><strong id="paBmToyyibTotal">RM0.00</strong></p>
           <button class="qr-action-btn green toyyibpay-pay-btn" id="payPaBmToyyibButton" type="button">
             Proceed to Payment
           </button>
           <p class="qr-copy-status toyyibpay-payment-status" id="paBmToyyibStatus">Redirect to payment page</p>
+          <div class="toyyibpay-method-logos" aria-label="FPX Online Banking">
+            <span class="toyyibpay-method-fpx">FPX</span>
+            <span class="toyyibpay-method-divider" aria-hidden="true"></span>
+            <span class="toyyibpay-method-bank">Online Banking</span>
+          </div>
         </div>
       </div>
 <div class="admin-purchase-panel" id="adminPurchasePanel">
@@ -11885,7 +11936,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 <style id="azobss-pa-bm-compact-table-final-fix">
 /* AZOBSS Latest Purchase List compact table final */
 #userPaPurchaseList.user-pa-list{display:block!important;overflow-x:auto!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:12px!important;background:rgba(10,20,36,.50)!important;}
-#userPaPurchaseList .compact-purchase-row{display:grid!important;grid-template-columns:44px minmax(120px,1.1fr) minmax(150px,1.2fr) 90px minmax(150px,1fr) 90px 90px 210px!important;align-items:center!important;gap:0!important;min-width:920px!important;min-height:38px!important;padding:0 12px!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.22)!important;background:transparent!important;box-shadow:none!important;}
+#userPaPurchaseList .compact-purchase-row{display:grid!important;grid-template-columns:44px minmax(120px,1.05fr) minmax(120px,.95fr) 85px minmax(165px,1.15fr) 95px 90px 155px!important;align-items:center!important;gap:0!important;min-width:920px!important;min-height:38px!important;padding:0 12px!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.22)!important;background:transparent!important;box-shadow:none!important;}
 #userPaPurchaseList .compact-purchase-row:last-child{border-bottom:0!important;}
 #userPaPurchaseList .compact-table-header{min-height:40px!important;background:rgba(8,16,30,.70)!important;color:#dbeafe!important;font-size:12px!important;font-weight:900!important;text-transform:none!important;position:sticky!important;top:0!important;z-index:2!important;}
 #userPaPurchaseList .compact-table-row{font-size:12px!important;color:#e5e7eb!important;}
@@ -11895,7 +11946,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 #userPaPurchaseList .col-item strong,#userPaPurchaseList .col-price{color:#facc15!important;font-weight:900!important;}#userPaPurchaseList .col-state strong,#userPaPurchaseList .col-date,#userPaPurchaseList .col-dl strong,#userPaPurchaseList .col-exp strong{color:#fff!important;font-weight:900!important;}
 #userPaPurchaseList .col-price{color:#facc15!important;font-weight:950!important;}
 #userPaPurchaseList .col-dl,#userPaPurchaseList .col-exp{color:#cbd5e1!important;}
-#userPaPurchaseList .col-action{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:8px!important;overflow:visible!important;white-space:nowrap!important;}
+#userPaPurchaseList .col-action{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;overflow:visible!important;}
 #userPaPurchaseList .user-pa-download-wrap{display:contents!important;}
 #userPaPurchaseList .az-download-meta{display:none!important;}
 #userPaPurchaseList .user-pa-download{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:92px!important;height:28px!important;min-height:28px!important;padding:0 12px!important;border-radius:7px!important;font-size:12px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;}
