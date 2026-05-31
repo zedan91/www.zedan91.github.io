@@ -2586,11 +2586,11 @@ function azobssPurchaseDownloadPayload(r){
     }));
   }catch(e){ return ''; }
 }
-async function azobssClientControlledDownload(encodedPayload){
+async function azobssClientControlledDownload(encodedPayload, linkEl){
   let r = {};
   try{ r = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ r = {}; }
 
-  const link = (window.event && window.event.currentTarget) ? window.event.currentTarget : null;
+  const link = linkEl || (window.event && window.event.currentTarget) || null;
   const originalText = link ? link.textContent : '';
   const used = azobssPurchaseDownloadCount(r);
   const max = azobssPurchaseDownloadMax(r);
@@ -2700,7 +2700,7 @@ function purchaseDetailRowHtml(r){
   const downloadMeta = azobssPurchaseDownloadMetaHtml(r);
   let actionHtml = '';
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="${escHtml(paidDownloadUrl)}" download="${escHtml(paidDownloadName)}" onclick="return window.azobssClientControlledDownload ? window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}') : true;">Download</a></div>`;
+    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" onclick="if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this); } return false;">Download</a></div>`;
   }else if(paid){
     const reason = limitReached ? 'Had download telah digunakan' : (expired ? 'Tempoh download telah tamat' : 'Expired');
     actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<span class="user-pa-download is-locked">${escHtml(reason)}</span></div>`;
