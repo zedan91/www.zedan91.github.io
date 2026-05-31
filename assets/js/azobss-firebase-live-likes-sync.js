@@ -2517,6 +2517,17 @@ function azobssPurchaseDownloadMetaHtml(r){
   return `<div class="az-download-meta">Downloads: <strong>${used}/${max}</strong><br>Tempoh sah: <strong>${days} hari</strong></div>`;
 }
 
+
+function azobssShortStateNameForPurchaseMobile(state){
+  const raw = String(state || '').trim();
+  const s = raw.toUpperCase().replace(/\s+/g,' ');
+  if(!raw) return '-';
+  if(s.includes('KUALA LUMPUR')) return 'W.P Kuala Lumpur';
+  if(s.includes('PUTRAJAYA')) return 'W.P Putrajaya';
+  if(s.includes('LABUAN')) return 'W.P Labuan';
+  return raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/\bWp\b/g,'W.P').replace(/\bW\.p\b/g,'W.P');
+}
+
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
   const amount = Number(r.amount || 0);
@@ -2537,14 +2548,14 @@ function purchaseDetailRowHtml(r){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
     actionHtml = `<span class="user-pa-download is-locked">${escHtml(reason)}</span>`;
   }else{
-    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked">Pending</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Uncart</button>` : ''}</div>`;
+    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
   }
   const idx = (window.__azPurchaseRowIndex = (window.__azPurchaseRowIndex||0)+1);
   return `
     <div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-row">
       <div class="col-no">${idx}</div>
       <div class="col-item"><strong>${escHtml(item)}</strong></div>
-      <div class="col-state"><strong>${escHtml(r.negeri || '-')}</strong></div>
+      <div class="col-state"><strong>${escHtml(azobssShortStateNameForPurchaseMobile(r.negeri || r.state || '-'))}</strong></div>
       <div class="col-price">RM${escHtml(amount || '')}</div>
       <div class="col-date">${escHtml(formatPurchaseDate(r))}</div>
       <div class="col-dl" title="Muat Turun">⬇ <strong>${escHtml(String(used))}/${escHtml(String(max))}</strong></div>
