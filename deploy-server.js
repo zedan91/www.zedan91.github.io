@@ -539,13 +539,106 @@ function azobssRecordExpiresAtMs(record) {
   return explicit || (azobssRecordPaidAtMs(record) + AZOBSS_PA_BM_VALID_MS);
 }
 async function azobssGetPurchaseRecord(recordId) {
-  if (!initFirebaseAdmin()) throw new Error("Firebase Admin is not configured on backend. " + (firebaseAdminInitError || ""));
+  if (!initFirebaseAdmin()) {
+    throw new Error("Firebase Admin is not configured on backend. " + (firebaseAdminInitError || ""));
+  }
+
   const db = firebaseAdmin.firestore();
-  const ref = db.collection("purchaseLogs").doc(String(recordId || ""));
+  const id = String(recordId || "").trim();
+  const ref = db.collection("purchaseLogs").doc(id);
+
+  if (!id) return { ref, record: null };
+
+  // 1) Normal path: purchaseLogs/{recordId}
   const snap = await ref.get();
-  if (!snap.exists) return { ref, record: null };
-  return { ref, record: Object.assign({ firestoreId: snap.id }, snap.data() || {}) };
+  if (snap.exists) {
+    return { ref, record: Object.assign({ firestoreId: snap.id }, snap.data() || {}) };
+  }
+
+  // 2) Compatibility path:
+  // Older AZOBSS builds saved paid/pending PA-BM records inside users/{username}.purchaseRecords
+  // but did not always create purchaseLogs. If Download button sends that embedded id,
+  // migrate it into purchaseLogs automatically so 5x/7-day limit can work.
+  let found = null;
+  let foundUser = null;
+
+  const usersSnap = await db.collection("users").get();
+  usersSnap.forEach((userDoc) => {
+    if (found) return;
+    const userData = userDoc.data() || {};
+    const records = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+    for (const r of records) {
+      if (!r) continue;
+      const ids = [
+        r.firestoreId,
+        r.purchaseLogId,
+        r.id,
+        r.recordId,
+        r.localId
+      ].filter(Boolean).map(v => String(v));
+      if (ids.includes(id)) {
+        found = Object.assign({}, r);
+        foundUser = Object.assign({ firestoreUserId: userDoc.id }, userData);
+        break;
+      }
+    }
+  });
+
+  if (!found) {
+    console.warn("PA/BM purchase record not found in purchaseLogs or embedded users.purchaseRecords:", id);
+    return { ref, record: null };
+  }
+
+  const createdAtMs = Number(found.createdAtMs || 0)
+    || azobssFirestoreMs(found.createdAtClient)
+    || azobssFirestoreMs(found.createdAt)
+    || Date.now();
+
+  const resetAtMs = Number(foundUser && foundUser.purchaseTotalResetAtMs || 0)
+    || azobssFirestoreMs(foundUser && foundUser.purchaseTotalResetAtClient);
+
+  const status = azobssPaidStatus(found.status)
+    ? String(found.status || "paid").toLowerCase()
+    : (resetAtMs && createdAtMs && createdAtMs <= resetAtMs ? "paid" : String(found.status || "pending").toLowerCase());
+
+  const paidAtMs = Number(found.paidAtMs || 0)
+    || azobssFirestoreMs(found.paidAtClient)
+    || azobssFirestoreMs(found.paidAt)
+    || (status === "paid" ? (resetAtMs || Date.now()) : 0);
+
+  const migrated = Object.assign({}, found, {
+    firestoreId: id,
+    id: found.id || id,
+    uid: String(found.uid || (foundUser && foundUser.uid) || ""),
+    usernameKey: String(found.usernameKey || (foundUser && (foundUser.usernameKey || foundUser.firestoreUserId)) || "").trim().toLowerCase(),
+    displayName: String(found.displayName || (foundUser && (foundUser.displayName || foundUser.usernameKey || foundUser.firestoreUserId)) || ""),
+    phone: String(found.phone || found.phoneNumber || (foundUser && (foundUser.phone || foundUser.phoneNumber)) || ""),
+    email: String(found.email || (foundUser && foundUser.email) || ""),
+    status,
+    createdAtMs,
+    createdAtClient: found.createdAtClient || new Date(createdAtMs).toISOString(),
+    paidAtMs: paidAtMs || undefined,
+    paidAtClient: paidAtMs ? new Date(paidAtMs).toISOString() : undefined,
+    downloadCount: Math.max(0, Number(found.downloadCount || found.usedCount || 0)),
+    maxDownloads: azobssRecordMaxDownloads(found),
+    downloadExpiresAtMs: Number(found.downloadExpiresAtMs || found.expiresAtMs || 0)
+      || azobssFirestoreMs(found.downloadExpiresAtClient)
+      || azobssFirestoreMs(found.expiresAt)
+      || (paidAtMs ? paidAtMs + AZOBSS_PA_BM_VALID_MS : undefined),
+    updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+    migratedFromEmbeddedPurchaseRecords: true
+  });
+
+  Object.keys(migrated).forEach((key) => {
+    if (migrated[key] === undefined) delete migrated[key];
+  });
+
+  await ref.set(migrated, { merge: true });
+  console.log("PA/BM embedded purchase record migrated to purchaseLogs:", id);
+
+  return { ref, record: Object.assign({ firestoreId: id }, migrated) };
 }
+
 async function azobssIncrementPurchaseDownload(ref, record, nowMs) {
   const used = azobssRecordDownloadCount(record);
   const max = azobssRecordMaxDownloads(record);

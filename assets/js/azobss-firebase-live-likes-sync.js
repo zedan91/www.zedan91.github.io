@@ -1910,6 +1910,7 @@ window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
 // PA/BM purchase records: one shared source for PA + BM/SBM downloads.
 const AZOBSS_PURCHASE_LOCAL_KEY = 'azobssPurchaseRecords';
 const AZOBSS_PURCHASE_COLLECTION = 'purchaseLogs';
+const AZOBSS_PURCHASE_SUMMARIES_COLLECTION = 'purchaseSummaries';
 const AZOBSS_PA_BM_MAX_DOWNLOADS = 5;
 const AZOBSS_PA_BM_VALID_DAYS = 7;
 const AZOBSS_PA_BM_VALID_MS = AZOBSS_PA_BM_VALID_DAYS * 24 * 60 * 60 * 1000;
@@ -1996,16 +1997,20 @@ async function savePurchaseToFirestoreEverywhere(record){
     createdAtClient: record.createdAtClient || new Date().toISOString()
   };
 
-  // 1) Global collection for admin dashboard/reporting.
+  // 1) Global collection for admin dashboard/reporting and controlled download.
+  // This document id is the source for /api/pa-bm-download?recordId=...
   try{
     const ref = await addDoc(collection(db, AZOBSS_PURCHASE_COLLECTION), { ...safeRecord, createdAt: serverTimestamp() });
     record.firestoreId = ref.id;
+    embeddedRecord.firestoreId = ref.id;
+    embeddedRecord.purchaseLogId = ref.id;
   }catch(error){
     console.warn('Firestore global purchase collection save failed:', error);
   }
 
   // 2) User profile embedded backup. This fixes records disappearing after browser close
   // even when Firestore rules block collection queries but allow the user's own profile doc.
+  // If purchaseLogs create succeeded, embed the firestoreId so backend can still migrate/verify.
   if(docId){
     try{
       await setDoc(doc(db, 'users', docId), {
