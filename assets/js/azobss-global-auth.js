@@ -2548,10 +2548,83 @@ function azobssPurchaseDownloadAllowed(r){
   return azobssIsPurchasePaidForDownload(r) && !azobssPurchaseDownloadExpired(r) && !azobssPurchaseDownloadLimitReached(r);
 }
 function azobssBuildControlledPurchaseDownloadUrl(r){
-  const firestoreId = String(r?.firestoreId || r?.id || '').trim();
-  if(!firestoreId) return azobssBuildPaidPurchaseDownloadUrl(r);
-  return 'https://azobss-backend.onrender.com/api/pa-bm-download?recordId=' + encodeURIComponent(firestoreId);
+  // Build the actual PA/BM file URL. Download limit is enforced on the logged-in page
+  // before opening this URL, so users do not hit a backend verification error when
+  // Firebase Admin credentials are not configured on Render.
+  return azobssBuildPaidPurchaseDownloadUrl(r);
 }
+function azobssPurchaseDownloadPayload(r){
+  try{
+    return encodeURIComponent(JSON.stringify({
+      firestoreId: r?.firestoreId || r?.id || '',
+      id: r?.id || '',
+      uid: r?.uid || '',
+      usernameKey: r?.usernameKey || '',
+      productType: r?.productType || r?.product || '',
+      itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
+      negeri: r?.negeri || r?.state || '',
+      downloadUrl: r?.downloadUrl || r?.url || '',
+      status: r?.status || '',
+      downloadCount: azobssPurchaseDownloadCount(r),
+      maxDownloads: azobssPurchaseDownloadMax(r),
+      paidAtMs: azobssPurchasePaidAtMs(r),
+      downloadExpiresAtMs: azobssPurchaseDownloadExpiresAtMs(r)
+    }));
+  }catch(e){ return ''; }
+}
+async function azobssClientControlledDownload(encodedPayload){
+  let r = {};
+  try{ r = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ r = {}; }
+  const firestoreId = String(r.firestoreId || r.id || '').trim();
+  const used = azobssPurchaseDownloadCount(r);
+  const max = azobssPurchaseDownloadMax(r);
+  const expiresAtMs = azobssPurchaseDownloadExpiresAtMs(r);
+
+  if(!azobssIsPurchasePaidForDownload(r)){
+    alert('Payment masih belum selesai.');
+    return false;
+  }
+  if(Date.now() > expiresAtMs){
+    alert('Tempoh download telah tamat.');
+    try{ azobssSchedulePurchaseRecordsRefresh('expired download click'); }catch(e){}
+    return false;
+  }
+  if(used >= max){
+    alert('Had download telah digunakan.');
+    try{ azobssSchedulePurchaseRecordsRefresh('limit download click'); }catch(e){}
+    return false;
+  }
+
+  const directUrl = azobssBuildPaidPurchaseDownloadUrl(r);
+  if(!directUrl){
+    alert('Link download tidak tersedia.');
+    return false;
+  }
+
+  // Update Firestore counter first. If rules are not updated yet, still allow the paid
+  // user to download, but show a console warning so the page does not fail with JSON error.
+  if(firestoreId){
+    try{
+      const newCount = used + 1;
+      await setDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, firestoreId), {
+        downloadCount: newCount,
+        maxDownloads: max,
+        downloadExpiresAtMs: expiresAtMs,
+        downloadExpiresAtClient: new Date(expiresAtMs).toISOString(),
+        lastDownloadedAtMs: Date.now(),
+        lastDownloadedAtClient: new Date().toISOString(),
+        updatedAt: serverTimestamp()
+      }, { merge:true });
+    }catch(e){
+      console.warn('Download counter update failed. Check Firestore Rules for purchaseLogs download fields.', e);
+    }
+  }
+
+  try{ azobssSchedulePurchaseRecordsRefresh('download click'); }catch(e){}
+  window.open(directUrl, '_blank', 'noopener');
+  return false;
+}
+window.azobssClientControlledDownload = azobssClientControlledDownload;
 function azobssPurchaseDownloadMetaHtml(r){
   if(!azobssIsPurchasePaidForDownload(r)) return '';
   const used = azobssPurchaseDownloadCount(r);
@@ -2573,7 +2646,7 @@ function purchaseDetailRowHtml(r){
   const downloadMeta = azobssPurchaseDownloadMetaHtml(r);
   let actionHtml = '';
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="${escHtml(paidDownloadUrl)}" download="${escHtml(paidDownloadName)}" target="_blank" rel="noopener">Download</a></div>`;
+    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="${escHtml(paidDownloadUrl)}" download="${escHtml(paidDownloadName)}" onclick="return window.azobssClientControlledDownload ? window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}') : true;">Download</a></div>`;
   }else if(paid){
     const reason = limitReached ? 'Had download telah digunakan' : (expired ? 'Tempoh download telah tamat' : 'Expired');
     actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<span class="user-pa-download is-locked">${escHtml(reason)}</span></div>`;
