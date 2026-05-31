@@ -12884,6 +12884,135 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 }
 </style>
 
+
+<style id="azobss-pa-bm-action-count-final-audit-fix">
+/* Final audited Latest Purchase List layout:
+   - Remove Muat Turun column
+   - Show download count beside Download/Digunakan only
+   - Pending Payment has no 0/5 count
+   - Remove desktop horizontal scrollbar
+*/
+@media (min-width: 761px){
+  #userPaPurchaseList.user-pa-list{
+    overflow-x:hidden!important;
+    max-width:100%!important;
+  }
+  #userPaPurchaseList .compact-purchase-row.compact-table-header,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row{
+    grid-template-columns:
+      44px
+      minmax(128px,.92fr)
+      minmax(150px,.95fr)
+      90px
+      minmax(170px,1.06fr)
+      96px
+      minmax(250px,1.18fr)!important;
+    min-width:0!important;
+    width:100%!important;
+    box-sizing:border-box!important;
+  }
+  #userPaPurchaseList .col-dl{
+    display:none!important;
+  }
+  #userPaPurchaseList .compact-purchase-row>div{
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+  #userPaPurchaseList .col-item,
+  #userPaPurchaseList .col-state,
+  #userPaPurchaseList .col-price,
+  #userPaPurchaseList .col-date,
+  #userPaPurchaseList .col-exp{
+    justify-self:start!important;
+    text-align:left!important;
+  }
+  #userPaPurchaseList .compact-table-row .col-item,
+  #userPaPurchaseList .compact-table-row .col-item strong,
+  #userPaPurchaseList .compact-table-row .col-price{
+    color:#facc15!important;
+    font-weight:950!important;
+  }
+  #userPaPurchaseList .compact-table-row .col-state,
+  #userPaPurchaseList .compact-table-row .col-state strong,
+  #userPaPurchaseList .compact-table-row .col-date,
+  #userPaPurchaseList .compact-table-row .col-exp,
+  #userPaPurchaseList .compact-table-row .col-exp strong,
+  #userPaPurchaseList .az-action-download-count{
+    color:#ffffff!important;
+    font-weight:850!important;
+  }
+  #userPaPurchaseList .col-action{
+    display:flex!important;
+    justify-content:flex-end!important;
+    align-items:center!important;
+    gap:8px!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+    min-width:0!important;
+  }
+  #userPaPurchaseList .user-pa-action-with-count{
+    display:inline-flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:8px!important;
+    white-space:nowrap!important;
+    flex-wrap:nowrap!important;
+    min-width:0!important;
+  }
+  #userPaPurchaseList .az-action-download-count{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    line-height:1!important;
+    font-size:12px!important;
+    min-width:42px!important;
+    flex:0 0 auto!important;
+  }
+  #userPaPurchaseList .user-pa-pending-action{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:8px!important;
+    flex-wrap:nowrap!important;
+    width:auto!important;
+    white-space:nowrap!important;
+  }
+  #userPaPurchaseList .user-pa-download.is-pending-status{
+    min-width:142px!important;
+    max-width:none!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+  #userPaPurchaseList .user-pa-uncart-btn.is-cart-remove-btn{
+    flex:0 0 38px!important;
+    width:38px!important;
+    min-width:38px!important;
+  }
+}
+@media (max-width:760px){
+  #userPaPurchaseList .col-dl{display:none!important;}
+  #userPaPurchaseList .user-pa-action-with-count{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:5px!important;
+    white-space:nowrap!important;
+  }
+  #userPaPurchaseList .az-action-download-count{
+    color:#ffffff!important;
+    font-size:10.5px!important;
+    font-weight:850!important;
+  }
+  #userPaPurchaseList .col-exp{
+    grid-column:2!important;
+    grid-row:3!important;
+    margin-left:0!important;
+    transform:translateX(54px)!important;
+  }
+}
+</style>
+
 </body>
 </html>
 <script>

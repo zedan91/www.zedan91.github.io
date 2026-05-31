@@ -2724,11 +2724,12 @@ function purchaseDetailRowHtml(r){
   const max = azobssPurchaseDownloadMax(r);
   const days = azobssPurchaseDownloadRemainingDays(r);
   let actionHtml = '';
+  const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>`;
+    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>${dlMetaHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
-    actionHtml = `<span class="user-pa-download is-locked">${escHtml(reason)}</span>`;
+    actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}</div>`;
   }else{
     actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
   }
@@ -2740,7 +2741,6 @@ function purchaseDetailRowHtml(r){
       <div class="col-state"><strong>${escHtml(azobssShortStateNameForPurchaseMobile(r.negeri || r.state || '-'))}</strong></div>
       <div class="col-price">RM${escHtml(amount || '')}</div>
       <div class="col-date">${escHtml(formatPurchaseDate(r))}</div>
-      <div class="col-dl" title="Muat Turun">⬇ <strong>${escHtml(String(used))}/${escHtml(String(max))}</strong></div>
       <div class="col-exp" title="Tempoh">🕒 <strong>${escHtml(String(days))} hari</strong></div>
       <div class="col-action">${actionHtml}</div>
     </div>`;
@@ -2753,7 +2753,6 @@ function azobssPurchaseTableHeaderHtml(){
     <div class="col-state">📍 Negeri</div>
     <div class="col-price">RM Harga</div>
     <div class="col-date">📅 Tarikh / Masa</div>
-    <div class="col-dl">⬇ Muat Turun</div>
     <div class="col-exp">🕒 Tempoh</div>
     <div class="col-action">Tindakan</div>
   </div>`;
