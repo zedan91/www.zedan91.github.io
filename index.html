@@ -12828,6 +12828,53 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 }
 </style>
 
+
+
+<style id="azobss-pa-bm-mobile-text-size-force-final">
+/* Final override: mobile only. Enlarge PA/BM code and state name without changing desktop layout. */
+@media (max-width: 760px){
+  #userPaPurchaseList .compact-purchase-row.compact-table-row{
+    row-gap:0!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-item,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-item strong,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-item span,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row [data-col="item"],
+  #userPaPurchaseList .compact-purchase-row.compact-table-row [data-col="item"] strong{
+    font-size:15px!important;
+    line-height:1.05!important;
+    font-weight:950!important;
+    color:#facc15!important;
+    letter-spacing:.1px!important;
+  }
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-state,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-state strong,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-state span,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row [data-col="state"],
+  #userPaPurchaseList .compact-purchase-row.compact-table-row [data-col="state"] strong{
+    font-size:12.5px!important;
+    line-height:1.05!important;
+    font-weight:850!important;
+    color:#fff!important;
+  }
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-price,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-price strong,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row [data-col="price"]{
+    color:#facc15!important;
+    font-weight:950!important;
+  }
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-date,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-dl,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-dl strong,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-exp,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-exp strong{
+    color:#fff!important;
+  }
+}
+</style>
+
 </body>
 </html>
 <script>
