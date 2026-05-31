@@ -11749,6 +11749,130 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 })();
 </script>
 
+
+<script id="azobss-pa-bm-payment-return-stay-scroll-final-fix">
+(function(){
+  'use strict';
+
+  function hasPaymentReturn(){
+    try{
+      var p = new URLSearchParams(window.location.search || '');
+      var statusId = String(p.get('status_id') || p.get('status') || '').trim().toLowerCase();
+      var payment = String(p.get('payment') || '').trim().toLowerCase();
+      return !!(
+        p.get('billcode') || p.get('billCode') || p.get('orderId') || p.get('order_id') ||
+        p.get('transaction_id') || p.get('payment_id') ||
+        statusId === '1' || statusId === 'paid' || statusId === 'success' ||
+        payment === 'success' || payment === 'paid' || payment === 'return'
+      );
+    }catch(e){ return false; }
+  }
+
+  function getLatestTarget(){
+    return document.getElementById('userPaPurchasePanel')
+      || document.getElementById('userPaPurchaseList')
+      || Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,section,div')).find(function(el){
+        return /Latest\s+Purchase\s+List/i.test(el.textContent || '');
+      });
+  }
+
+  function scrollLatest(){
+    var target = getLatestTarget();
+    if(target){
+      try{ target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      catch(e){ target.scrollIntoView(true); }
+    }
+  }
+
+  function refreshPurchaseList(){
+    try{ if(window.azobssRefreshPaBmPurchasesNow) window.azobssRefreshPaBmPurchasesNow(); }catch(e){}
+    try{ if(window.azobssRenderPurchaseRecords) window.azobssRenderPurchaseRecords(); }catch(e){}
+    try{ window.dispatchEvent(new Event('azobss:purchases-updated')); }catch(e){}
+  }
+
+  function keepPopupVisible(){
+    var modal = document.getElementById('azobssPaBmPaymentSuccessModal');
+    if(!modal) return;
+    modal.classList.add('show');
+    modal.setAttribute('data-stay-after-payment','1');
+
+    /* Do not let accidental mobile taps/backdrop handlers close the success popup. */
+    var backdrop = modal.querySelector('.azobss-payment-success-backdrop');
+    if(backdrop){
+      backdrop.style.pointerEvents = 'none';
+    }
+
+    var goBtn = modal.querySelector('.azobss-payment-success-go');
+    if(goBtn && !goBtn.dataset.azobssScrollFixed){
+      goBtn.dataset.azobssScrollFixed = '1';
+      goBtn.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+        modal.classList.remove('show');
+        refreshPurchaseList();
+        setTimeout(scrollLatest, 120);
+        setTimeout(scrollLatest, 700);
+      }, true);
+    }
+  }
+
+  function showStableSuccessPopup(){
+    refreshPurchaseList();
+    try{
+      if(window.azobssShowPaBmPaymentSuccessPopup){
+        window.azobssShowPaBmPaymentSuccessPopup(true);
+      }
+    }catch(e){}
+    keepPopupVisible();
+    setTimeout(keepPopupVisible, 400);
+    setTimeout(refreshPurchaseList, 800);
+    setTimeout(scrollLatest, 1200);
+    setTimeout(scrollLatest, 2500);
+  }
+
+  /* If ToyyibPay returns to PA/BM on mobile, stay on this page and go to Latest Purchase List. */
+  function runPaymentReturnFix(){
+    if(!hasPaymentReturn()) return;
+    document.documentElement.classList.add('azobss-payment-return-page');
+
+    /* Avoid old scripts reading stale "seen" state and hiding the popup. */
+    try{
+      Object.keys(sessionStorage).forEach(function(k){
+        if(/^azobss_pa_bm_success_popup_seen_/.test(k)) sessionStorage.removeItem(k);
+      });
+    }catch(e){}
+
+    [250, 900, 1800, 3500, 6500].forEach(function(ms){
+      setTimeout(showStableSuccessPopup, ms);
+    });
+  }
+
+  /* Capture any success status text and keep the popup/scroll flow stable. */
+  function observeSuccessText(){
+    var status = document.getElementById('paBmToyyibStatus');
+    if(!status || !window.MutationObserver) return;
+    var obs = new MutationObserver(function(){
+      var txt = String(status.textContent || '').toLowerCase();
+      if(txt.includes('pembayaran berjaya') || txt.includes('payment success') || txt.includes('payment successful')){
+        showStableSuccessPopup();
+      }
+    });
+    obs.observe(status, { childList:true, characterData:true, subtree:true });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      observeSuccessText();
+      runPaymentReturnFix();
+    });
+  }else{
+    observeSuccessText();
+    runPaymentReturnFix();
+  }
+})();
+</script>
+
 </body>
 </html>
 <script>
