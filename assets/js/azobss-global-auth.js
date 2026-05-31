@@ -2491,6 +2491,11 @@ function azobssCanUncartPurchase(r){
 
 function azobssBuildPaidPurchaseDownloadUrl(r){
   r = r || {};
+  const recordId = String(r.firestoreId || r.id || '').trim();
+  if(recordId){
+    return 'https://azobss-backend.onrender.com/api/pa-bm-download?recordId=' + encodeURIComponent(recordId);
+  }
+  // Fallback only for legacy paid records without Firestore document id.
   const type = String(r.productType || r.product || '').trim().toUpperCase();
   if(type === 'PA'){
     const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
@@ -2579,18 +2584,19 @@ function azobssPurchaseDownloadPayload(r){
 async function azobssClientControlledDownload(encodedPayload){
   let r = {};
   try{ r = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ r = {}; }
-  const firestoreId = String(r.firestoreId || r.id || '').trim();
+
+  const link = (window.event && window.event.currentTarget) ? window.event.currentTarget : null;
+  const originalText = link ? link.textContent : '';
   const used = azobssPurchaseDownloadCount(r);
   const max = azobssPurchaseDownloadMax(r);
   const expiresAtMs = azobssPurchaseDownloadExpiresAtMs(r);
 
-  // Do not show the old false "Payment masih belum selesai" popup here.
-  // The UI only renders this Download button for paid/unlocked rows.
   if(Date.now() > expiresAtMs){
     alert('Tempoh download telah tamat.');
     try{ azobssSchedulePurchaseRecordsRefresh('expired download click'); }catch(e){}
     return false;
   }
+
   if(used >= max){
     alert('Had download telah digunakan.');
     try{ azobssSchedulePurchaseRecordsRefresh('limit download click'); }catch(e){}
@@ -2603,32 +2609,69 @@ async function azobssClientControlledDownload(encodedPayload){
     return false;
   }
 
-  if(firestoreId){
-    try{
-      const newCount = used + 1;
-      const paidAtMs = Number(r.paidAtMs || 0) || Date.now();
-      await setDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, firestoreId), {
-        status: 'paid',
-        paidAtMs: paidAtMs,
-        paidAtClient: new Date(paidAtMs).toISOString(),
-        downloadCount: newCount,
-        maxDownloads: max,
-        downloadExpiresAtMs: expiresAtMs,
-        downloadExpiresAtClient: new Date(expiresAtMs).toISOString(),
-        lastDownloadedAtMs: Date.now(),
-        lastDownloadedAtClient: new Date().toISOString(),
-        updatedAt: serverTimestamp()
-      }, { merge:true });
-    }catch(e){
-      console.warn('Download counter update failed. Please update Firebase Rules for purchaseLogs download fields.', e);
-      // Still allow the paid customer to download; the next refresh will keep the old count
-      // until Firestore Rules are updated.
+  try{
+    if(link){
+      link.dataset.busy = '1';
+      link.textContent = 'Preparing Download...';
+      link.style.pointerEvents = 'none';
+      link.setAttribute('aria-busy', 'true');
+    }
+
+    const response = await fetch(directUrl, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+
+    if(!response.ok){
+      let message = 'Download gagal. Sila cuba lagi.';
+      try{
+        const data = await response.json();
+        if(data && data.error) message = data.error;
+      }catch(e){}
+      alert(message);
+      return false;
+    }
+
+    const blob = await response.blob();
+    if(!blob || !blob.size){
+      alert('Fail download kosong. Sila cuba lagi.');
+      return false;
+    }
+
+    let filename = azobssPaidPurchaseDownloadFilename(r);
+    const disposition = response.headers.get('content-disposition') || response.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
+    if(match){
+      filename = decodeURIComponent(match[1] || match[2] || filename);
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 15000);
+
+    try{ azobssSchedulePurchaseRecordsRefresh('download success'); }catch(e){}
+    setTimeout(function(){
+      try{ azobssSchedulePurchaseRecordsRefresh('download success delayed'); }catch(e){}
+    }, 1200);
+
+    return false;
+  }catch(error){
+    console.error('Controlled download failed:', error);
+    alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
+    return false;
+  }finally{
+    if(link){
+      link.dataset.busy = '';
+      link.textContent = originalText || 'Download';
+      link.style.pointerEvents = '';
+      link.removeAttribute('aria-busy');
     }
   }
-
-  try{ azobssSchedulePurchaseRecordsRefresh('download click'); }catch(e){}
-  window.open(directUrl, '_blank', 'noopener');
-  return false;
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
 function azobssPurchaseDownloadMetaHtml(r){

@@ -2337,7 +2337,8 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
       "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*"
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Expose-Headers": "Content-Disposition"
     });
     res.end(pdfBuffer);
     return;
@@ -2346,13 +2347,43 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   const downloadUrl = String(record.downloadUrl || record.url || "").trim();
   if (!downloadUrl) return azobssPaBmDownloadError(res, 400, "Download URL missing.");
 
+  // Proxy BM/SBM through AZOBSS backend so users never see the Render cold-start page
+  // or the raw onrender.com / JUPEM endpoint. This also ensures the 5x/7-day counter
+  // only increases after a real file is successfully prepared.
+  let bmResponse;
+  try {
+    bmResponse = await fetchJupem(downloadUrl);
+  } catch (fetchError) {
+    console.error("BM/SBM controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+    return azobssPaBmDownloadError(res, 502, "Fail sedang disediakan. Sila cuba semula sebentar lagi.");
+  }
+
+  if (!bmResponse || !bmResponse.ok) {
+    return azobssPaBmDownloadError(res, 404, "BM/SBM not found.");
+  }
+
+  const bmBuffer = Buffer.from(await bmResponse.arrayBuffer());
+  const bmFirstText = bmBuffer.slice(0, 160).toString("utf8").toLowerCase();
+  if (!bmBuffer.length || bmFirstText.includes("<html")) {
+    return azobssPaBmDownloadError(res, 404, "Invalid BM/SBM file.");
+  }
+
   try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
-  res.writeHead(302, {
-    "Location": downloadUrl,
+
+  const contentType = bmResponse.headers.get("content-type") || "application/octet-stream";
+  const productType = String(record.productType || record.product || type || "BM").trim().toUpperCase();
+  const safeCode = String(code || record.itemCode || record.stesen || "download").replace(/[^A-Z0-9_-]/gi, "-");
+  const ext = contentType.includes("pdf") ? "pdf" : (contentType.includes("zip") ? "zip" : (contentType.includes("tif") ? "tif" : "dat"));
+  const safePrefix = productType === "SBM" ? "SBM" : "BM";
+
+  res.writeHead(200, {
+    "Content-Type": contentType,
+    "Content-Disposition": `attachment; filename="${safePrefix}-${safeCode}.${ext}"`,
     "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*"
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Expose-Headers": "Content-Disposition"
   });
-  res.end();
+  res.end(bmBuffer);
   return;
 }
 
