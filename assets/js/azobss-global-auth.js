@@ -2586,12 +2586,21 @@ function azobssPurchaseDownloadPayload(r){
     }));
   }catch(e){ return ''; }
 }
-async function azobssClientControlledDownload(encodedPayload, linkEl){
+async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
+  try{
+    const ev = clickEvent || (window.event || null);
+    if(ev){
+      if(typeof ev.preventDefault === 'function') ev.preventDefault();
+      if(typeof ev.stopPropagation === 'function') ev.stopPropagation();
+      if(typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
+    }
+  }catch(e){}
   let r = {};
   try{ r = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ r = {}; }
 
   const link = linkEl || (window.event && window.event.currentTarget) || null;
   const originalText = link ? link.textContent : '';
+  if(link && link.dataset && link.dataset.busy === '1') return false;
   const used = azobssPurchaseDownloadCount(r);
   const max = azobssPurchaseDownloadMax(r);
   const expiresAtMs = azobssPurchaseDownloadExpiresAtMs(r);
@@ -2620,6 +2629,9 @@ async function azobssClientControlledDownload(encodedPayload, linkEl){
       link.textContent = 'Preparing Download...';
       link.style.pointerEvents = 'none';
       link.setAttribute('aria-busy', 'true');
+      link.setAttribute('href', '#');
+      link.removeAttribute('download');
+      link.removeAttribute('target');
     }
 
     const response = await fetch(directUrl, {
@@ -2700,7 +2712,7 @@ function purchaseDetailRowHtml(r){
   const downloadMeta = azobssPurchaseDownloadMetaHtml(r);
   let actionHtml = '';
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" onclick="if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this); } return false;">Download</a></div>`;
+    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a></div>`;
   }else if(paid){
     const reason = limitReached ? 'Had download telah digunakan' : (expired ? 'Tempoh download telah tamat' : 'Expired');
     actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<span class="user-pa-download is-locked">${escHtml(reason)}</span></div>`;
