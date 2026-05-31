@@ -12510,6 +12510,78 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 .azobss-payment-success-box p{margin:8px 0;color:#dfffee;font-size:15px;line-height:1.55;}
 .azobss-payment-success-go{margin-top:18px;width:100%;border:0;border-radius:999px;background:linear-gradient(135deg,#36ff8a,#00c968);color:#04130a;font-weight:900;padding:13px 18px;cursor:pointer;box-shadow:0 10px 28px rgba(0,255,120,.22);}
 .azobss-payment-success-go:hover{filter:brightness(1.05);transform:translateY(-1px);}
+
+/* AZOBSS PA/BM compact latest purchase rows + download meta */
+.user-pa-item.purchase-detail-row.compact-purchase-row,
+.user-pa-item.purchase-detail-row{
+  display:grid !important;
+  grid-template-columns:minmax(130px,.8fr) minmax(150px,.9fr) minmax(210px,1fr) auto !important;
+  align-items:center !important;
+  gap:10px !important;
+  padding:9px 12px !important;
+  min-height:42px !important;
+}
+.compact-purchase-row > div{
+  line-height:1.15 !important;
+}
+.compact-purchase-row span,
+.compact-purchase-row .purchase-info{
+  color:#e5e7eb !important;
+}
+.compact-purchase-row strong{
+  color:#22c55e !important;
+}
+.compact-purchase-row .purchase-dot{
+  opacity:.65 !important;
+  margin:0 4px !important;
+}
+.user-pa-download-wrap{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+}
+.az-download-meta{
+  display:flex !important;
+  gap:8px !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  white-space:nowrap !important;
+  font-size:12px !important;
+  line-height:1.1 !important;
+  color:#cbd5e1 !important;
+  text-align:right !important;
+}
+.user-pa-download{
+  padding:8px 13px !important;
+  min-width:78px !important;
+  text-align:center !important;
+}
+@media(max-width:760px){
+  .user-pa-item.purchase-detail-row.compact-purchase-row,
+  .user-pa-item.purchase-detail-row{
+    grid-template-columns:1fr !important;
+    gap:6px !important;
+    padding:10px 12px !important;
+  }
+  .user-pa-download-wrap{
+    justify-content:stretch !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:6px !important;
+  }
+  .az-download-meta{
+    justify-content:flex-start !important;
+    flex-wrap:wrap !important;
+    white-space:normal !important;
+    text-align:left !important;
+  }
+  .user-pa-download{
+    width:100% !important;
+  }
+}
+
 </style>
 <script id="azobss-pa-bm-payment-success-popup-real-fix-script">
 (function(){

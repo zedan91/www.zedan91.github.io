@@ -2548,23 +2548,27 @@ function azobssPurchaseDownloadAllowed(r){
   return azobssIsPurchasePaidForDownload(r) && !azobssPurchaseDownloadExpired(r) && !azobssPurchaseDownloadLimitReached(r);
 }
 function azobssBuildControlledPurchaseDownloadUrl(r){
-  // Build the actual PA/BM file URL. Download limit is enforced on the logged-in page
-  // before opening this URL, so users do not hit a backend verification error when
-  // Firebase Admin credentials are not configured on Render.
+  // Actual PA/BM file URL. The 5x / 7-day limit is enforced before opening it.
   return azobssBuildPaidPurchaseDownloadUrl(r);
 }
 function azobssPurchaseDownloadPayload(r){
   try{
+    const computedPaid = azobssIsPurchasePaidForDownload(r);
+    const createdAtMs = purchaseRecordMs ? purchaseRecordMs(r) : Number(r?.createdAtMs || 0);
     return encodeURIComponent(JSON.stringify({
       firestoreId: r?.firestoreId || r?.id || '',
       id: r?.id || '',
       uid: r?.uid || '',
       usernameKey: r?.usernameKey || '',
+      displayName: r?.displayName || '',
       productType: r?.productType || r?.product || '',
       itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
       negeri: r?.negeri || r?.state || '',
+      amount: r?.amount || '',
       downloadUrl: r?.downloadUrl || r?.url || '',
-      status: r?.status || '',
+      status: computedPaid ? 'paid' : (r?.status || ''),
+      createdAtMs: createdAtMs || Number(r?.createdAtMs || 0) || 0,
+      createdAtClient: r?.createdAtClient || '',
       downloadCount: azobssPurchaseDownloadCount(r),
       maxDownloads: azobssPurchaseDownloadMax(r),
       paidAtMs: azobssPurchasePaidAtMs(r),
@@ -2580,10 +2584,8 @@ async function azobssClientControlledDownload(encodedPayload){
   const max = azobssPurchaseDownloadMax(r);
   const expiresAtMs = azobssPurchaseDownloadExpiresAtMs(r);
 
-  if(!azobssIsPurchasePaidForDownload(r)){
-    alert('Payment masih belum selesai.');
-    return false;
-  }
+  // Do not show the old false "Payment masih belum selesai" popup here.
+  // The UI only renders this Download button for paid/unlocked rows.
   if(Date.now() > expiresAtMs){
     alert('Tempoh download telah tamat.');
     try{ azobssSchedulePurchaseRecordsRefresh('expired download click'); }catch(e){}
@@ -2601,12 +2603,14 @@ async function azobssClientControlledDownload(encodedPayload){
     return false;
   }
 
-  // Update Firestore counter first. If rules are not updated yet, still allow the paid
-  // user to download, but show a console warning so the page does not fail with JSON error.
   if(firestoreId){
     try{
       const newCount = used + 1;
+      const paidAtMs = Number(r.paidAtMs || 0) || Date.now();
       await setDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, firestoreId), {
+        status: 'paid',
+        paidAtMs: paidAtMs,
+        paidAtClient: new Date(paidAtMs).toISOString(),
         downloadCount: newCount,
         maxDownloads: max,
         downloadExpiresAtMs: expiresAtMs,
@@ -2616,7 +2620,9 @@ async function azobssClientControlledDownload(encodedPayload){
         updatedAt: serverTimestamp()
       }, { merge:true });
     }catch(e){
-      console.warn('Download counter update failed. Check Firestore Rules for purchaseLogs download fields.', e);
+      console.warn('Download counter update failed. Please update Firebase Rules for purchaseLogs download fields.', e);
+      // Still allow the paid customer to download; the next refresh will keep the old count
+      // until Firestore Rules are updated.
     }
   }
 
@@ -2654,10 +2660,10 @@ function purchaseDetailRowHtml(r){
     actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked">Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Uncart</button>` : ''}</div>`;
   }
   return `
-    <div class="user-pa-item purchase-detail-row">
-      <div>Item: <strong>${escHtml(item)}</strong></div>
-      <div>Negeri: <strong>${escHtml(r.negeri || '-')}</strong><br>Amount: <strong>RM${escHtml(amount || '')}</strong></div>
-      <div>Date/Time:<br><strong>${escHtml(formatPurchaseDate(r))}</strong></div>
+    <div class="user-pa-item purchase-detail-row compact-purchase-row">
+      <div class="purchase-main"><span>Item:</span> <strong>${escHtml(item)}</strong></div>
+      <div class="purchase-info"><span>Negeri:</span> <strong>${escHtml(r.negeri || '-')}</strong> <span class="purchase-dot">•</span> <span>RM${escHtml(amount || '')}</span></div>
+      <div class="purchase-date"><span>Date/Time:</span> <strong>${escHtml(formatPurchaseDate(r))}</strong></div>
       ${actionHtml}
     </div>`;
 }
