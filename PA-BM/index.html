@@ -5322,20 +5322,6 @@ font-weight:900 !important;
   gap:4px;
 }
 
-
-@media (max-width:768px){
-a[aria-label="Likes"].market-icon-btn,
-a[aria-label="Cart"].market-icon-btn,
-a[aria-label="Notifications"].market-icon-btn,
-a[aria-label="Chat"].market-icon-btn{display:none!important;}
-.user-dropdown{min-width:260px;}
-.user-dropdown .user-dropdown-section:first-child + .user-dropdown-item + .user-dropdown-item{
-display:block!important;
-}
-.user-dropdown::before{content:'';}
-.market-brand-text,.brand-text,.logo-text{display:none!important;}
-.market-brand img{max-width:48px!important;}
-}
 </style>
 <style>
 /* FORCE RESTORE PURCHASE RECORDS USERS PANEL */
@@ -8070,10 +8056,6 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
 <a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
-<a class="user-dropdown-item" href="/affiliate-shop/" role="menuitem">Cart</a>
-<a class="user-dropdown-item" href="/PA-BM/#request" role="menuitem">Notifications</a>
-<a class="user-dropdown-item" href="https://alvo.chat/6nZ2" target="_blank" role="menuitem">Chat</a>
-
 <div class="user-dropdown-section">Account</div>
 <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
