@@ -12591,8 +12591,28 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   function getReturnKey(){
     try{
       var p = new URLSearchParams(window.location.search || '');
-      return p.get('orderId') || p.get('order_id') || p.get('billcode') || p.get('billCode') || p.get('transaction_id') || p.get('payment_id') || 'latest';
+      return p.get('orderId')
+        || p.get('order_id')
+        || p.get('billcode')
+        || p.get('billCode')
+        || p.get('transaction_id')
+        || p.get('payment_id')
+        || p.get('billCode')
+        || 'latest';
     }catch(e){ return 'latest'; }
+  }
+
+  function getPopupKey(){
+    return POPUP_KEY_PREFIX + getReturnKey();
+  }
+
+  function alreadyShownForThisTransaction(){
+    try{ return sessionStorage.getItem(getPopupKey()) === '1'; }
+    catch(e){ return false; }
+  }
+
+  function markShownForThisTransaction(){
+    try{ sessionStorage.setItem(getPopupKey(), '1'); }catch(e){}
   }
 
   function scrollToLatestPurchaseList(){
@@ -12611,19 +12631,19 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     modal.id = 'azobssPaBmPaymentSuccessModal';
     modal.className = 'azobss-payment-success-modal';
     modal.innerHTML = ''+
-      '<div class="azobss-payment-success-backdrop" data-close="1"></div>'+
+      '<div class="azobss-payment-success-backdrop"></div>'+
       '<div class="azobss-payment-success-box" role="dialog" aria-modal="true" aria-labelledby="azobssPaymentSuccessTitle">'+
         '<button type="button" class="azobss-payment-success-close" aria-label="Close">×</button>'+
         '<div class="azobss-payment-success-icon">✅</div>'+
         '<h3 id="azobssPaymentSuccessTitle">Pembayaran Berjaya!</h3>'+
         '<p>Terima kasih atas pembelian anda.</p>'+
-        '<p>Sila muat turun fail anda di bahagian <strong>'Latest Purchase List'</strong>.</p>'+
+        '<p>Sila muat turun fail anda di bahagian <strong>Latest Purchase List</strong>.</p>'+
         '<button type="button" class="azobss-payment-success-go">Go to Latest Purchase List</button>'+
       '</div>';
     document.body.appendChild(modal);
     function close(){ modal.classList.remove('show'); }
     modal.querySelector('.azobss-payment-success-close')?.addEventListener('click', close);
-    modal.querySelector('.azobss-payment-success-backdrop')?.addEventListener('click', close);
+    // Backdrop click intentionally does not close the popup on phone.
     modal.querySelector('.azobss-payment-success-go')?.addEventListener('click', function(){
       close();
       setTimeout(scrollToLatestPurchaseList, 80);
@@ -12631,13 +12651,13 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     return modal;
   }
 
-  function showPaymentSuccessPopup(force){
+  function showPaymentSuccessPopup(){
     try{
-      var key = POPUP_KEY_PREFIX + getReturnKey();
-      if(!force && sessionStorage.getItem(key) === '1') return;
-      sessionStorage.setItem(key, '1');
+      if(alreadyShownForThisTransaction()) return;
+      markShownForThisTransaction();
       var modal = ensurePaymentSuccessModal();
       modal.classList.add('show');
+      setTimeout(scrollToLatestPurchaseList, 250);
     }catch(e){ console.warn('AZOBSS payment popup failed:', e); }
   }
 
@@ -12648,7 +12668,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
       var p = new URLSearchParams(window.location.search || '');
       var statusId = String(p.get('status_id') || p.get('status') || '').trim().toLowerCase();
       var payment = String(p.get('payment') || '').trim().toLowerCase();
-      var hasBill = !!(p.get('billcode') || p.get('billCode'));
+      var hasBill = !!(p.get('billcode') || p.get('billCode') || p.get('orderId') || p.get('transaction_id') || p.get('payment_id'));
       if(statusId === '1' || statusId === 'paid' || statusId === 'success' || payment === 'success' || payment === 'paid') return true;
       if(payment === 'return' && hasBill && (statusId === '' || statusId === '1')) return true;
       return false;
@@ -12661,7 +12681,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     var obs = new MutationObserver(function(){
       var txt = String(status.textContent || '').toLowerCase();
       if(txt.includes('pembayaran berjaya') || txt.includes('payment success') || txt.includes('payment successful')){
-        showPaymentSuccessPopup(true);
+        showPaymentSuccessPopup();
       }
     });
     obs.observe(status, { childList:true, characterData:true, subtree:true });
@@ -12670,7 +12690,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   function run(){
     observeSuccessStatusText();
     if(looksLikeSuccessfulToyyibReturn()){
-      setTimeout(function(){ showPaymentSuccessPopup(false); }, 700);
+      setTimeout(showPaymentSuccessPopup, 700);
     }
   }
 
