@@ -1,0 +1,17 @@
+FIREBASE ADMIN ENV REQUIRED - PA/BM CONTROLLED DOWNLOAD
+
+Untuk fungsi download limit 5x / 7 hari, backend Render perlu baca/update Firestore melalui Firebase Admin SDK.
+
+Di Render > Environment, tambah SALAH SATU pilihan berikut:
+
+PILIHAN A - Satu JSON penuh:
+FIREBASE_SERVICE_ACCOUNT_JSON={paste service account JSON penuh dari Firebase Console}
+
+PILIHAN B - Pecah kepada 3 env:
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
+Nota:
+- Private key mesti kekalkan \n newline.
+- Selepas tambah env, tekan Save, kemudian Manual Deploy > Clear Build Cache & Deploy.
+- Jika tiada env ini, endpoint /api/pa-bm-download akan keluar Download verification failed kerana backend tidak boleh verify purchaseLogs.

@@ -416,8 +416,50 @@ try {
 }
 
 let firebaseAdminReady = false;
+let firebaseAdminInitError = "";
+function azobssNormalizePrivateKey(value) {
+  return String(value || "")
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\\n/g, "\n")
+    .replace(/\n/g, "\n")
+    .trim();
+}
+function azobssParseFirebaseServiceAccount() {
+  const jsonText = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+    || process.env.FIREBASE_SERVICE_ACCOUNT
+    || process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+    || "";
+
+  if (jsonText) {
+    const parsed = JSON.parse(jsonText);
+    if (parsed.private_key) parsed.private_key = azobssNormalizePrivateKey(parsed.private_key);
+    return parsed;
+  }
+
+  const projectId = process.env.FIREBASE_PROJECT_ID
+    || process.env.GCLOUD_PROJECT
+    || process.env.GOOGLE_CLOUD_PROJECT
+    || "";
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || "";
+  const privateKey = azobssNormalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY || "");
+
+  if (projectId && clientEmail && privateKey) {
+    return {
+      type: "service_account",
+      project_id: projectId,
+      client_email: clientEmail,
+      private_key: privateKey
+    };
+  }
+
+  return null;
+}
 function initFirebaseAdmin() {
-  if (!firebaseAdmin || firebaseAdminReady) return firebaseAdminReady;
+  if (!firebaseAdmin) {
+    firebaseAdminInitError = "firebase-admin package is not installed.";
+    return false;
+  }
+  if (firebaseAdminReady) return true;
 
   try {
     if (firebaseAdmin.apps && firebaseAdmin.apps.length) {
@@ -425,13 +467,13 @@ function initFirebaseAdmin() {
       return true;
     }
 
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "";
-    if (serviceAccountJson) {
-      const serviceAccount = JSON.parse(serviceAccountJson);
+    const serviceAccount = azobssParseFirebaseServiceAccount();
+    if (serviceAccount) {
       firebaseAdmin.initializeApp({
         credential: firebaseAdmin.credential.cert(serviceAccount)
       });
       firebaseAdminReady = true;
+      console.log("Firebase Admin ready: service account configured.");
       return true;
     }
 
@@ -440,10 +482,14 @@ function initFirebaseAdmin() {
         credential: firebaseAdmin.credential.applicationDefault()
       });
       firebaseAdminReady = true;
+      console.log("Firebase Admin ready: application default credentials.");
       return true;
     }
+
+    firebaseAdminInitError = "Missing Firebase Admin env. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY.";
   } catch (error) {
-    console.error("Firebase Admin init failed:", error.message);
+    firebaseAdminInitError = error && (error.stack || error.message || String(error)) || "Unknown Firebase Admin init error.";
+    console.error("Firebase Admin init failed:", firebaseAdminInitError);
   }
 
   return false;
@@ -493,7 +539,7 @@ function azobssRecordExpiresAtMs(record) {
   return explicit || (azobssRecordPaidAtMs(record) + AZOBSS_PA_BM_VALID_MS);
 }
 async function azobssGetPurchaseRecord(recordId) {
-  if (!initFirebaseAdmin()) throw new Error("Firebase Admin is not configured on backend.");
+  if (!initFirebaseAdmin()) throw new Error("Firebase Admin is not configured on backend. " + (firebaseAdminInitError || ""));
   const db = firebaseAdmin.firestore();
   const ref = db.collection("purchaseLogs").doc(String(recordId || ""));
   const snap = await ref.get();
