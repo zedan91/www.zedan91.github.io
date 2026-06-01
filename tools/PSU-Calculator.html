@@ -565,14 +565,7 @@ document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",
     const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=read(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} save(a); render(); return;}
     if(e.target.closest('[data-az-cart-checkout]')){const first=read()[0]; if(!first)return; if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(first); closePanel();} else if(first.pageUrl){location.href=first.pageUrl;} else {alert('Buka page Software Tools atau CAD Tools untuk checkout item ini.');} return;}
   });
-  document.addEventListener('click',function(e){
-    const t=e.target.closest('[data-azobss-premium-buy="1"]'); if(!t)return;
-    e.preventDefault(); e.stopImmediatePropagation();
-    const card=t.closest('.software-product-card,.software-card,.download-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card,article,li,div')||t.parentElement;
-    const img=card?.querySelector('img')?.getAttribute('src')||'';
-    const source=location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software';
-    add({id:t.dataset.productId||t.dataset.productName||t.href,name:t.dataset.productName||t.textContent.trim()||'Premium Item',price:t.dataset.productPrice||'RM0',paymentLink:t.dataset.paymentLink||'',stripeLink:t.dataset.stripeLink||'',secureDownloadLink:t.dataset.downloadLink||t.dataset.premiumDownloadFileLink||'',premiumDownloadFileLink:t.dataset.premiumDownloadFileLink||t.dataset.downloadLink||'',downloadLink:t.dataset.downloadLink||t.dataset.premiumDownloadFileLink||'',source,category:source,image:img,pageUrl:location.href.split('#')[0]});
-  },true);
+  // AZOBSS fix: Buy Now is no longer hijacked by cart. Only .az-card-cart-btn adds items to this cart.
   window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
 })();
 </script>
