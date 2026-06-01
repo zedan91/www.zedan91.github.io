@@ -691,6 +691,32 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 }
 
 </style>
+<style id="azobss-shop-cart-css">
+.market-icon-btn{position:relative;}
+.az-shop-cart-badge{position:absolute;right:-7px;top:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);display:none;}
+.az-shop-cart-badge.is-show{display:inline-block;}
+.az-shop-cart-panel{position:fixed;top:78px;right:18px;width:min(390px,calc(100vw - 28px));max-height:72vh;overflow:auto;background:rgba(7,12,20,.98);border:1px solid rgba(148,163,184,.35);border-radius:18px;box-shadow:0 22px 60px rgba(0,0,0,.45);z-index:999999;color:#fff;padding:16px;display:none;backdrop-filter:blur(14px);}
+.az-shop-cart-panel.is-open{display:block;}
+.az-shop-cart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.az-shop-cart-head h3{margin:0;font-size:20px;font-weight:950;}
+.az-shop-cart-close{border:0;background:rgba(255,255,255,.08);color:#fff;width:34px;height:34px;border-radius:10px;font-size:22px;cursor:pointer;}
+.az-shop-cart-empty{color:#cbd5e1;padding:14px;border:1px dashed rgba(148,163,184,.35);border-radius:12px;text-align:center;}
+.az-shop-cart-item{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(148,163,184,.25);}
+.az-shop-cart-thumb{width:54px;height:54px;border-radius:10px;background:#fff;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#0f172a;font-weight:900;overflow:hidden;}
+.az-shop-cart-title{font-weight:900;line-height:1.2;margin-bottom:3px;}
+.az-shop-cart-meta{font-size:12px;color:#94a3b8;}
+.az-shop-cart-price{font-size:13px;color:#4ade80;font-weight:900;margin-top:4px;}
+.az-shop-cart-actions{display:flex;align-items:center;gap:6px;}
+.az-shop-cart-qty{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.35);border-radius:9px;overflow:hidden;height:32px;}
+.az-shop-cart-qty button,.az-shop-cart-remove{border:0;background:rgba(255,255,255,.08);color:#fff;height:32px;min-width:30px;cursor:pointer;font-weight:900;}
+.az-shop-cart-qty span{min-width:28px;text-align:center;font-weight:800;}
+.az-shop-cart-remove{border-radius:9px;color:#fecaca;font-size:16px;}
+.az-shop-cart-total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:950;margin:14px 0 12px;}
+.az-shop-cart-total strong{color:#4ade80;}
+.az-shop-cart-checkout{width:100%;border:0;border-radius:12px;background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#fff;font-weight:950;padding:12px 14px;cursor:pointer;font-size:15px;}
+.az-shop-cart-note{font-size:12px;color:#94a3b8;margin-top:9px;line-height:1.45;}
+@media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -727,7 +753,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 <a aria-label="Likes" class="market-icon-btn" href="/likes/">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" href="/affiliate-shop/">
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
 <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
@@ -951,5 +978,40 @@ loadCurrencies();
 fetchLiveRates();
 
 </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script></body>
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+(function(){
+  if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
+  const KEY='azobss_shop_cart_v1';
+  const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
+  const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]').filter(Boolean)}catch(e){return[]}};
+  const save=a=>{localStorage.setItem(KEY,JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));};
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function ensurePanel(){let p=document.getElementById('azShopCartPanel'); if(p)return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
+  function updateBadges(){const total=read().reduce((s,i)=>s+Number(i.qty||1),0); document.querySelectorAll('[data-az-shop-cart-badge]').forEach(b=>{b.textContent=total; b.classList.toggle('is-show',total>0);});}
+  function render(){const p=ensurePanel(), body=p.querySelector('#azShopCartBody'), items=read(); const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0); p.querySelector('h3').textContent='My Cart ('+totalQty+')'; if(!items.length){body.innerHTML='<div class="az-shop-cart-empty">Cart kosong.<br><small>Cart ini hanya untuk Software dan CAD Tools.</small></div>'; updateBadges(); return;} const total=items.reduce((s,i)=>s+moneyVal(i.price)*Number(i.qty||1),0); body.innerHTML=items.map((i,idx)=>`<div class="az-shop-cart-item"><div class="az-shop-cart-thumb">${i.image?`<img src="${esc(i.image)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc((i.name||'?').slice(0,1))}</div><div><div class="az-shop-cart-title">${esc(i.name)}</div><div class="az-shop-cart-meta">${esc(i.category||i.source||'Software/CAD Tools')}</div><div class="az-shop-cart-price">${esc(i.price||'RM0')}</div></div><div class="az-shop-cart-actions"><span class="az-shop-cart-qty"><button type="button" data-az-cart-minus="${idx}">−</button><span>${Number(i.qty||1)}</span><button type="button" data-az-cart-plus="${idx}">+</button></span><button type="button" class="az-shop-cart-remove" data-az-cart-remove="${idx}" title="Remove">🗑</button></div></div>`).join('')+`<div class="az-shop-cart-total"><span>Total</span><strong>${fmt(total)}</strong></div><button class="az-shop-cart-checkout" type="button" data-az-cart-checkout>Go to Cart Checkout</button><div class="az-shop-cart-note">Nota: Cart ini hanya untuk Software dan CAD Tools. Ia tidak berkaitan dengan PA/BM cart.</div>`; updateBadges();}
+  function openPanel(){render(); ensurePanel().classList.add('is-open');}
+  function closePanel(){ensurePanel().classList.remove('is-open');}
+  function add(item){const items=read(); const id=String(item.id||item.name||Date.now()); const found=items.find(x=>String(x.id)===id && String(x.source)===String(item.source)); if(found) found.qty=Number(found.qty||1)+1; else items.push({...item,id,qty:1,addedAt:Date.now()}); save(items); openPanel();}
+  window.azobssAddShopCart=add; window.azobssOpenShopCart=openPanel; window.azobssShopCartItems=read;
+  document.addEventListener('click',function(e){
+    const toggle=e.target.closest('[data-az-shop-cart-toggle]'); if(toggle){e.preventDefault(); const p=ensurePanel(); p.classList.contains('is-open')?closePanel():openPanel(); return;}
+    if(e.target.closest('.az-shop-cart-close')){closePanel();return;}
+    const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=read(); a.splice(Number(rem.dataset.azCartRemove),1); save(a); render(); return;}
+    const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=read(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; save(a); render(); return;}
+    const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=read(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} save(a); render(); return;}
+    if(e.target.closest('[data-az-cart-checkout]')){const first=read()[0]; if(!first)return; if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(first); closePanel();} else if(first.pageUrl){location.href=first.pageUrl;} else {alert('Buka page Software Tools atau CAD Tools untuk checkout item ini.');} return;}
+  });
+  document.addEventListener('click',function(e){
+    const t=e.target.closest('[data-azobss-premium-buy="1"]'); if(!t)return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const card=t.closest('.software-product-card,.software-card,.download-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card,article,li,div')||t.parentElement;
+    const img=card?.querySelector('img')?.getAttribute('src')||'';
+    const source=location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software';
+    add({id:t.dataset.productId||t.dataset.productName||t.href,name:t.dataset.productName||t.textContent.trim()||'Premium Item',price:t.dataset.productPrice||'RM0',paymentLink:t.dataset.paymentLink||'',stripeLink:t.dataset.stripeLink||'',secureDownloadLink:t.dataset.downloadLink||t.dataset.premiumDownloadFileLink||'',premiumDownloadFileLink:t.dataset.premiumDownloadFileLink||t.dataset.downloadLink||'',downloadLink:t.dataset.downloadLink||t.dataset.premiumDownloadFileLink||'',source,category:source,image:img,pageUrl:location.href.split('#')[0]});
+  },true);
+  window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
+})();
+</script>
+</body>
 </html>
