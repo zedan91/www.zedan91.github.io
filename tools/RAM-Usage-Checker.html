@@ -840,7 +840,7 @@ import { getFirestore, collection, doc, addDoc, getDocs, getDoc, updateDoc, quer
   function ensureButtons(){
     if(document.getElementById('azSupportBtn')) return;
     const wrap=document.createElement('span');
-    wrap.id='azobssSupportBellWrap';
+    wrap.id='azobssSupportBellWrap';wrap.style.display='none';
     wrap.style.display='inline-flex';
     wrap.style.alignItems='center';
     wrap.innerHTML = `
@@ -848,9 +848,15 @@ import { getFirestore, collection, doc, addDoc, getDocs, getDoc, updateDoc, quer
       <button id="azBellBtn" class="azobss-mini-action-btn" type="button" title="Notifications">🔔<span id="azBellBadge" class="azobss-mini-badge"></span></button>
     `;
     const bar=findBar();
-    bar.appendChild(wrap);
-    document.getElementById('azSupportBtn').addEventListener('click',()=>{openModal('azSupportModal'); loadSupport();});
-    document.getElementById('azBellBtn').addEventListener('click',()=>{openModal('azBellModal'); loadNotifications();});
+    // removed duplicate support/bell buttons
+    
+const existingChat=document.querySelector('.fa-comment,.fa-comments,[data-chat],[title*="chat"],[title*="Chat"]');
+if(existingChat){existingChat.addEventListener('click',()=>{openModal('azSupportModal'); loadSupport();});}
+
+    
+const existingBell=document.querySelector('.fa-bell,[data-bell],[title*="notification"],[title*="Notification"]');
+if(existingBell){existingBell.addEventListener('click',()=>{openModal('azBellModal'); loadNotifications();});}
+
   }
 
   function ensureModals(){
