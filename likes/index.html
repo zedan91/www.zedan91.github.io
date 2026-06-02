@@ -343,8 +343,8 @@ function updateBadges(){const total=read().reduce((s,i)=>s+Number(i.qty||1),0); 
   function render(){const p=ensurePanel(), body=p.querySelector('#azShopCartBody'), items=read(); const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0); p.querySelector('h3').textContent='My Cart ('+totalQty+')'; if(!items.length){body.innerHTML='<div class="az-shop-cart-empty">Cart kosong.<br><small>Cart ini hanya untuk Software dan CAD Tools.</small></div>'; updateBadges(); return;} const total=items.reduce((s,i)=>s+moneyVal(i.price)*Number(i.qty||1),0); body.innerHTML=items.map((i,idx)=>`<div class="az-shop-cart-item"><div class="az-shop-cart-thumb">${i.image?`<img src="${esc(i.image)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc((i.name||'?').slice(0,1))}</div><div><div class="az-shop-cart-title">${esc(i.name)}</div><div class="az-shop-cart-meta">${esc(i.category||i.source||'Software/CAD Tools')}</div><div class="az-shop-cart-price">${esc(i.price||'RM0')}</div></div><div class="az-shop-cart-actions"><span class="az-shop-cart-qty"><button type="button" data-az-cart-minus="${idx}">−</button><span>${Number(i.qty||1)}</span><button type="button" data-az-cart-plus="${idx}">+</button></span><button type="button" class="az-shop-cart-remove" data-az-cart-remove="${idx}" title="Remove">🗑</button></div></div>`).join('')+`<div class="az-shop-cart-total"><span>Total</span><strong>${fmt(total)}</strong></div><button class="az-shop-cart-checkout" type="button" data-az-cart-checkout>Go to Cart Checkout</button><div class="az-shop-cart-note">Nota: Cart ini hanya untuk Software dan CAD Tools. Ia tidak berkaitan dengan PA/BM cart.</div>`; updateBadges();}
   function openPanel(){render(); ensurePanel().classList.add('is-open');}
   function closePanel(){ensurePanel().classList.remove('is-open');}
-  function add(item){const items=read(); const id=String(item.id||item.name||Date.now()); const found=items.find(x=>String(x.id)===id && String(x.source)===String(item.source)); if(found) found.qty=Number(found.qty||1)+1; else items.push({...item,id,qty:1,addedAt:Date.now()}); save(items); openPanel();}
-  window.azobssAddShopCart=add; window.azobssOpenShopCart=openPanel; window.azobssShopCartItems=read;
+  function add(item){const items=read(); const id=String(item.id||item.name||Date.now()); const src=String(item.source||''); const found=items.find(x=>String(x.id)===id && String(x.source||'')===src); if(found) found.qty=Number(found.qty||1)+1; else items.push({...item,id,source:src,qty:1,addedAt:Date.now()}); save(items); render(); updateBadges(); openPanel(); setTimeout(()=>{render();updateBadges();window.dispatchEvent(new Event('azobss-shop-cart-updated'));},60);}
+  window.azobssAddShopCart=add; window.azobssOpenShopCart=openPanel; window.azobssShopCartItems=read; window.azobssRefreshShopCart=function(){try{render();updateBadges();}catch(e){}};
   document.addEventListener('click',function(e){
     const toggle=e.target.closest('[data-az-shop-cart-toggle]'); if(toggle){e.preventDefault(); const p=ensurePanel(); p.classList.contains('is-open')?closePanel():openPanel(); return;}
     if(e.target.closest('.az-shop-cart-close')){closePanel();return;}
@@ -493,17 +493,22 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
         const data = snap.data() || {};
         const cloudItems = Array.isArray(data.items) ? data.items.filter(Boolean) : [];
         const cloudTime = Number(data.updatedAtMs || 0);
+        const currentLocalItems = readCart();
+        const finalItems = currentLocalItems.length ? mergeCart(cloudItems, currentLocalItems) : cloudItems;
         loadingFromCloud = true;
-        saveCart(cloudItems);
+        saveCart(finalItems);
         localStorage.setItem(metaKey(), JSON.stringify({updatedAt:cloudTime || Date.now()}));
         loadingFromCloud = false;
+        if(currentLocalItems.length) setTimeout(pushCloud, 250);
       }else if(localItems.length){
         await pushCloud();
       }else{
+        const currentLocalItems = readCart();
         loadingFromCloud = true;
-        saveCart([]);
+        saveCart(currentLocalItems);
         localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()}));
         loadingFromCloud = false;
+        if(currentLocalItems.length) setTimeout(pushCloud, 250);
       }
       if(typeof window.azobssOpenShopCart === 'function'){
         window.dispatchEvent(new Event('azobss-shop-cart-updated'));
@@ -518,7 +523,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   window.addEventListener('azobss-shop-cart-updated', ()=>{
     markLocalUpdated();
     clearTimeout(syncTimer);
-    syncTimer = setTimeout(pushCloud, 500);
+    syncTimer = setTimeout(pushCloud, 150);
   });
 
   onAuthStateChanged(auth, user => {
