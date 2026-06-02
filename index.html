@@ -13272,37 +13272,56 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 })();
 </script>
 
+
+
+<script id="azobss-software-admin-id-and-download-arrow-audit-fix">
+(function(){
+  if(window.__azAdminIdArrowAuditFix) return;
+  window.__azAdminIdArrowAuditFix = true;
+  function cleanDownloadButtons(){
+    document.querySelectorAll('#softwareGrid .download-card .download-btn,[data-admin-software="1"] .download-btn').forEach(function(btn){
+      if(btn.getAttribute('data-azobss-premium-buy') === '1' || btn.classList.contains('premium')) return;
+      btn.querySelectorAll('.az-btn-icon').forEach(function(el){ el.remove(); });
+      var txt = (btn.textContent || '').replace(/^\s*[⬇↓↧⇩⤓]+\s*/,'').trim();
+      if(/download\s*now/i.test(txt)) btn.innerHTML = '<span class="download-text">Download Now</span>';
+    });
+  }
+  function copyText(v){
+    try{ if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(v); }catch(e){}
+    var ta=document.createElement('textarea'); ta.value=v; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); return Promise.resolve();
+  }
+  function notify(msg){ if(window.azShowToast) window.azShowToast(msg); else if(window.showToast) window.showToast(msg); else alert(msg); }
+  function ensureIdButtons(){
+    if(!document.body.classList.contains('is-admin') && !(document.body.innerText||'').toLowerCase().includes('hello, zedan91')) return;
+    document.querySelectorAll('#softwareGrid .download-card,[data-admin-software="1"]').forEach(function(card){
+      var id = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
+      if(!id){
+        var title = (card.querySelector('h3,.software-title')||{}).textContent || 'STATIC';
+        id = 'AZSW-' + title.toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+        card.setAttribute('data-product-id', id);
+      }
+      var wrap = card.querySelector('.software-card-admin-actions');
+      if(!wrap) return;
+      if(!wrap.querySelector('.software-card-id-btn')){
+        var b=document.createElement('button');
+        b.type='button'; b.className='software-card-id-btn'; b.setAttribute('data-software-id', id); b.title='Copy Product ID'; b.setAttribute('aria-label','Product ID'); b.textContent='🆔';
+        wrap.appendChild(b);
+      }
+    });
+  }
+  document.addEventListener('click', function(e){
+    var b=e.target.closest && e.target.closest('.software-card-id-btn');
+    if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var id=b.getAttribute('data-software-id') || b.closest('[data-product-id]')?.getAttribute('data-product-id') || '';
+    copyText(id).then(function(){ notify('Product ID copied: '+id); });
+  }, true);
+  function run(){ cleanDownloadButtons(); ensureIdButtons(); }
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState !== 'loading') run();
+  [150,400,900,1500,3000,5000].forEach(function(t){ setTimeout(run,t); });
+  new MutationObserver(function(){ clearTimeout(window.__azAdminIdArrowAuditTimer); window.__azAdminIdArrowAuditTimer=setTimeout(run,80); }).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
-<script>
-function confirmDeleteProgram(id){
- const ok=confirm('Delete this LISP permanently?\n\nThis action cannot be undone.');
- if(ok){
-   deleteProgram(id);
- }
-}
-</script>
-
-
-
-<style id="azobss-buy-now-cart-layout-v2">
-.az-card-cart-slot{
-display:flex!important;
-align-items:center!important;
-justify-content:center!important;
-gap:8px!important;
-width:100%!important;
-}
-.az-card-cart-slot .download-btn,
-.az-card-cart-slot .buy-now-btn,
-.az-card-cart-slot a[class*="buy"]{
-flex:1 1 auto!important;
-order:1!important;
-}
-.az-card-cart-slot .az-card-cart-btn{
-flex:0 0 44px!important;
-width:44px!important;
-height:44px!important;
-order:2!important;
-}
-</style>
