@@ -13441,5 +13441,124 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 })();
 </script>
 
+
+
+<!-- AZOBSS REAL HIDE PRODUCT ID TEXT PATCH - keep search working -->
+<style id="azobss-real-hide-id-text-style">
+.az-hidden-product-id-token,
+.az-card-visible-product-id,
+.az-product-id-hidden-real{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  width:0!important;
+  height:0!important;
+  max-width:0!important;
+  max-height:0!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  font-size:0!important;
+  line-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+</style>
+<script id="azobss-real-hide-id-text-keep-search-script">
+(function(){
+  if(window.__azobssRealHideIdTextPatch) return;
+  window.__azobssRealHideIdTextPatch = true;
+  var ID_RE = /\bID\s*:\s*(AZSW[-_A-Z0-9]+)\b/ig;
+  var ONLY_ID_RE = /^\s*ID\s*:\s*(AZSW[-_A-Z0-9]+)\s*$/i;
+  function softwareCards(){
+    return Array.from(document.querySelectorAll([
+      '#softwareGrid .download-card',
+      '#softwareDownloadsGrid .download-card',
+      '.downloads-grid .download-card',
+      '.software-card',
+      '.software-product-card',
+      '[data-admin-software="1"]',
+      '[data-product-id]'
+    ].join(','))).filter(function(card){
+      return card && !card.closest('#paBmSection,#paBmCart,#purchaseRecords,#purchaseRecordsPanel');
+    });
+  }
+  function addHiddenToken(card,id){
+    if(!card || !id) return;
+    id=String(id).trim().toUpperCase();
+    card.setAttribute('data-product-id',id);
+    card.dataset.productId=id;
+    var token=card.querySelector(':scope > .az-hidden-product-id-token');
+    if(!token){
+      token=document.createElement('span');
+      token.className='az-hidden-product-id-token';
+      token.setAttribute('aria-hidden','true');
+      card.appendChild(token);
+    }
+    token.textContent=' '+id+' ';
+  }
+  function hideIdTextNodes(card){
+    if(!card) return;
+    var foundId = card.getAttribute('data-product-id') || card.dataset.productId || '';
+    var walker=document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
+      acceptNode:function(node){
+        var p=node.parentElement;
+        if(!p) return NodeFilter.FILTER_REJECT;
+        if(p.closest('.az-hidden-product-id-token,.software-card-id-btn,button,a,script,style,textarea,input,select')) return NodeFilter.FILTER_REJECT;
+        var txt=node.nodeValue||'';
+        return /\bID\s*:\s*AZSW[-_A-Z0-9]+\b/i.test(txt) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var nodes=[];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(node){
+      var txt=node.nodeValue||'';
+      var m=txt.match(/\bID\s*:\s*(AZSW[-_A-Z0-9]+)\b/i);
+      if(m && m[1]) foundId=m[1];
+      node.nodeValue=txt.replace(ID_RE,'');
+    });
+    if(foundId) addHiddenToken(card,foundId);
+    Array.from(card.querySelectorAll('p,div,span,small,strong,em')).forEach(function(el){
+      if(el.closest('.az-hidden-product-id-token,.software-card-id-btn,button,a,script,style,textarea,input,select')) return;
+      var t=(el.textContent||'').trim();
+      var m=t.match(ONLY_ID_RE);
+      if(m && m[1]){
+        addHiddenToken(card,m[1]);
+        el.classList.add('az-product-id-hidden-real');
+        el.setAttribute('aria-hidden','true');
+        el.textContent='';
+      }
+    });
+  }
+  function patchSearchById(){
+    var qInputs=Array.from(document.querySelectorAll('input[type="search"],input[placeholder*="Search"],input[placeholder*="search"],input[id*="search" i],input[class*="search" i]'));
+    function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();}
+    function reveal(){
+      var q='';
+      if(document.activeElement && qInputs.includes(document.activeElement)) q=document.activeElement.value||'';
+      if(!q){ for(var i=0;i<qInputs.length;i++){ if(qInputs[i].value){ q=qInputs[i].value; break; } } }
+      q=norm(q); if(!q) return;
+      softwareCards().forEach(function(card){
+        var id=norm(card.getAttribute('data-product-id') || card.dataset.productId || '');
+        if(id && id.indexOf(q)!==-1){
+          card.hidden=false; card.removeAttribute('hidden');
+          if(card.style && card.style.display==='none') card.style.display='';
+          var p=card.parentElement;
+          while(p && p!==document.body){ if(p.hidden) p.hidden=false; if(p.style && p.style.display==='none') p.style.display=''; p=p.parentElement; }
+        }
+      });
+    }
+    document.addEventListener('input',function(e){
+      if(e.target && qInputs.includes(e.target)){ setTimeout(reveal,80); setTimeout(reveal,250); setTimeout(reveal,700); }
+    },true);
+  }
+  function run(){ softwareCards().forEach(hideIdTextNodes); }
+  document.addEventListener('DOMContentLoaded',function(){ run(); patchSearchById(); setTimeout(run,300); setTimeout(run,1000); setTimeout(run,2500); });
+  if(document.readyState!=='loading'){ run(); patchSearchById(); setTimeout(run,300); setTimeout(run,1000); setTimeout(run,2500); }
+  var timer=null;
+  new MutationObserver(function(){ clearTimeout(timer); timer=setTimeout(run,60); }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+})();
+</script>
+
 </body>
 </html>
