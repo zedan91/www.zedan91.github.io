@@ -1972,6 +1972,28 @@ document.addEventListener('error', function(e){
   visibility:hidden!important;
 }
 
+
+<style id="azobss-download-click-fix">
+.download-btn,
+.download-btn *{
+  pointer-events:auto!important;
+}
+.download-btn::before,
+.download-btn::after,
+.download-card::before,
+.download-card::after{
+  pointer-events:none!important;
+}
+.download-btn{
+  position:relative!important;
+  z-index:50!important;
+  cursor:pointer!important;
+}
+.az-software-buy-cart-row .download-btn{
+  width:100%!important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
