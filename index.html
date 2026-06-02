@@ -13323,5 +13323,123 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   new MutationObserver(function(){ clearTimeout(window.__azAdminIdArrowAuditTimer); window.__azAdminIdArrowAuditTimer=setTimeout(run,80); }).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+
+<style id="azobss-hide-product-id-keep-search-final">
+/* Hide visible Software Product ID text on cards, but keep it available for search/text lookup. */
+.az-hidden-product-id-token,
+.az-card-visible-product-id,
+.software-card-product-id,
+.software-product-id,
+.product-id-row,
+.product-id-label,
+.product-id-text{
+  position:absolute!important;
+  left:-9999px!important;
+  top:auto!important;
+  width:1px!important;
+  height:1px!important;
+  max-width:1px!important;
+  max-height:1px!important;
+  overflow:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  font-size:0!important;
+  line-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+</style>
+<script id="azobss-hide-id-search-patch-final">
+(function(){
+  if(window.__azobssHideIdSearchFinal) return;
+  window.__azobssHideIdSearchFinal = true;
+  var ID_RE = /\b(?:ID\s*:\s*)?(AZSW[-_A-Z0-9]+)\b/i;
+  function isSoftwareCard(card){
+    return !!(card && card.matches && card.matches('#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.software-card,.software-product-card,[data-admin-software="1"]'));
+  }
+  function getCards(){
+    return Array.from(document.querySelectorAll('#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.software-card,.software-product-card,[data-admin-software="1"]'));
+  }
+  function ensureIdForCard(card){
+    if(!isSoftwareCard(card)) return '';
+    var raw = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
+    var text = card.textContent || '';
+    var m = text.match(ID_RE);
+    var id = raw || (m && m[1]) || '';
+    if(!id){
+      var btn = card.querySelector('[data-product-id],[data-software-id],[data-product-name],[data-doc-id]');
+      if(btn) id = btn.getAttribute('data-product-id') || btn.getAttribute('data-software-id') || btn.dataset.productId || btn.dataset.id || btn.getAttribute('data-doc-id') || '';
+    }
+    if(id){
+      id = String(id).trim().toUpperCase();
+      card.setAttribute('data-product-id', id);
+      card.dataset.productId = id;
+      var token = card.querySelector(':scope > .az-hidden-product-id-token');
+      if(!token){
+        token = document.createElement('span');
+        token.className = 'az-hidden-product-id-token';
+        token.setAttribute('aria-hidden','true');
+        card.appendChild(token);
+      }
+      token.textContent = ' ID: ' + id + ' ';
+    }
+    return id;
+  }
+  function hideVisibleIdText(card){
+    if(!isSoftwareCard(card)) return;
+    ensureIdForCard(card);
+    Array.from(card.querySelectorAll('p,div,span,small')).forEach(function(el){
+      if(el.classList.contains('az-hidden-product-id-token') || el.classList.contains('software-card-id-btn')) return;
+      if(el.querySelector('button,a,input,textarea,select,img,svg')) return;
+      var t = (el.textContent || '').trim();
+      if(/^ID\s*:\s*AZSW[-_A-Z0-9]+$/i.test(t) || /^AZSW[-_A-Z0-9]+$/i.test(t)){
+        el.classList.add('az-card-visible-product-id');
+        el.setAttribute('aria-hidden','true');
+      }
+    });
+  }
+  function run(){ getCards().forEach(hideVisibleIdText); }
+  function norm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+  function currentSearchValue(){
+    var inputs = Array.from(document.querySelectorAll('input[type="search"],input[placeholder*="Search"],input[placeholder*="search"],input[id*="search" i],input[class*="search" i]'));
+    var active = document.activeElement;
+    if(active && inputs.includes(active)) return active.value || '';
+    for(var i=0;i<inputs.length;i++){ if(inputs[i].value) return inputs[i].value; }
+    return '';
+  }
+  function revealIdMatches(){
+    var q = norm(currentSearchValue());
+    if(!q) return;
+    getCards().forEach(function(card){
+      var id = norm(ensureIdForCard(card));
+      if(id && id.indexOf(q) !== -1){
+        card.hidden = false;
+        card.removeAttribute('hidden');
+        if(card.style && (card.style.display === 'none')) card.style.display = '';
+        var p = card.parentElement;
+        while(p && p !== document.body){
+          if(p.hidden) p.hidden = false;
+          if(p.style && p.style.display === 'none') p.style.display = '';
+          p = p.parentElement;
+        }
+      }
+    });
+  }
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.matches && e.target.matches('input[type="search"],input[placeholder*="Search"],input[placeholder*="search"],input[id*="search" i],input[class*="search" i]')){
+      setTimeout(function(){ run(); revealIdMatches(); }, 60);
+      setTimeout(revealIdMatches, 180);
+      setTimeout(revealIdMatches, 450);
+    }
+  }, true);
+  document.addEventListener('DOMContentLoaded', function(){ run(); setTimeout(run,300); setTimeout(run,1000); });
+  if(document.readyState !== 'loading'){ run(); setTimeout(run,300); setTimeout(run,1000); }
+  var timer=null;
+  new MutationObserver(function(){ clearTimeout(timer); timer=setTimeout(function(){ run(); revealIdMatches(); },80); }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+})();
+</script>
+
 </body>
 </html>
