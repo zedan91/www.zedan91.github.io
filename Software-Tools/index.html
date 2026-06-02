@@ -1996,6 +1996,31 @@ document.addEventListener('error', function(e){
 }
 </style>
 
+
+<style id="azobss-az-card-cart-real-click-fix">
+.az-card-cart-btn,
+.az-card-cart-btn:hover,
+.az-card-cart-btn:active{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  user-select:none!important;
+  position:relative!important;
+  z-index:999!important;
+}
+.az-card-cart-btn *,
+.az-card-cart-btn .az-card-cart-icon,
+.az-card-cart-btn .az-card-cart-text,
+.az-card-cart-slot *{
+  pointer-events:none!important;
+}
+.az-card-cart-slot{
+  pointer-events:auto!important;
+  position:relative!important;
+  z-index:998!important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -4591,12 +4616,12 @@ return;
         btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'az-card-cart-btn';
-        btn.addEventListener('click', function(ev){
+        function azRunCardCart(ev){
           ev.preventDefault();
           ev.stopPropagation();
           if(btn.dataset.azCartBusy === '1') return;
           btn.dataset.azCartBusy = '1';
-          setTimeout(() => { btn.dataset.azCartBusy = '0'; }, 350);
+          setTimeout(() => { btn.dataset.azCartBusy = '0'; }, 450);
           const fresh = buildItem(card);
           if(typeof window.azobssAddShopCart === 'function') {
             window.azobssAddShopCart(fresh);
@@ -4611,7 +4636,9 @@ return;
           btn.classList.add('is-carted');
           setTimeout(() => updateButton(btn, fresh), 30);
           setTimeout(() => window.dispatchEvent(new Event('azobss-shop-cart-updated')), 80);
-        });
+        }
+        btn.addEventListener('pointerup', azRunCardCart);
+        btn.addEventListener('click', azRunCardCart);
         slot.appendChild(btn);
       }
       updateButton(btn, item);
