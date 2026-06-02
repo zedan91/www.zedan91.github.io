@@ -120,3 +120,5 @@ main().catch((err) => {
 });
 
 /* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */
+
+/* Popular category order: General Tools | System Utilities | Antivirus | Security | Compression | Video Downloaders | Internet | Media Tools | Office Tools | Operating System | Remote Tools | Data Recovery | Backup & Recovery | Ebook | Burning | Graphic Design | Emulators */
