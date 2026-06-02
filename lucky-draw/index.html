@@ -1409,8 +1409,7 @@ import { getFirestore, collection, doc, addDoc, getDocs, getDoc, updateDoc, quer
     wrap.style.display='inline-flex';
     wrap.style.alignItems='center';
     wrap.innerHTML = `
-      <button id="azSupportBtn" class="azobss-mini-action-btn" type="button" title="Contact Admin / Support">💬</button>
-      <button id="azBellBtn" class="azobss-mini-action-btn" type="button" title="Notifications">🔔<span id="azBellBadge" class="azobss-mini-badge"></span></button>
+      
     `;
     const bar=findBar();
     // removed duplicate support/bell buttons
@@ -1499,6 +1498,7 @@ if(existingBell){existingBell.addEventListener('click',()=>{openModal('azBellMod
     loadSupport();
   }
 
+  window.azobssLoadSupportMessages = loadSupport;
   async function loadSupport(){
     const box=document.getElementById('azSupportList');
     const note=document.getElementById('azSupportLoginNote');
@@ -1583,6 +1583,7 @@ if(existingBell){existingBell.addEventListener('click',()=>{openModal('azBellMod
     updateBadge();
   };
 
+  window.azobssLoadNotifications = loadNotifications;
   async function loadNotifications(){
     const box=document.getElementById('azNotificationList');
     if(!box) return;
@@ -1630,6 +1631,91 @@ if(existingBell){existingBell.addEventListener('click',()=>{openModal('azBellMod
 
   document.addEventListener('DOMContentLoaded',()=>{ensureButtons();ensureModals();updateBadge();});
   if(document.readyState!=='loading'){ensureButtons();ensureModals();updateBadge();}
+})();
+</script>
+
+
+<script id="azobss-force-existing-chat-bell-bind">
+(function(){
+  if(window.__azForceExistingChatBellBind) return;
+  window.__azForceExistingChatBellBind = true;
+
+  function openAzModal(id){
+    var modal=document.getElementById(id);
+    if(modal){ modal.classList.add('is-open'); return true; }
+    return false;
+  }
+
+  function norm(t){ return String(t||'').toLowerCase().trim(); }
+
+  function isChatElement(el){
+    var txt = norm(el.textContent || el.getAttribute('title') || el.getAttribute('aria-label') || el.className || '');
+    return txt.includes('💬') || txt.includes('chat') || txt.includes('message') || txt.includes('comment');
+  }
+
+  function isBellElement(el){
+    var txt = norm(el.textContent || el.getAttribute('title') || el.getAttribute('aria-label') || el.className || '');
+    return txt.includes('🔔') || txt.includes('bell') || txt.includes('notification') || txt.includes('notif');
+  }
+
+  function bindExistingIcons(){
+    var candidates = Array.from(document.querySelectorAll('button,a,[role="button"],.market-icon-btn,.nav-icon,.icon-btn,.topbar button,.topbar a,header button,header a'));
+    candidates.forEach(function(el){
+      if(el.dataset.azSupportBound === '1') return;
+
+      if(isChatElement(el)){
+        el.dataset.azSupportBound = '1';
+        el.title = 'Contact Admin / Support';
+        el.addEventListener('click', function(e){
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          e.stopPropagation();
+          openAzModal('azSupportModal');
+          if(typeof window.azobssLoadSupportMessages === 'function') window.azobssLoadSupportMessages();
+        }, true);
+      }
+
+      if(isBellElement(el)){
+        el.dataset.azSupportBound = '1';
+        el.title = 'Notifications';
+        el.addEventListener('click', function(e){
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          e.stopPropagation();
+          openAzModal('azBellModal');
+          if(typeof window.azobssLoadNotifications === 'function') window.azobssLoadNotifications();
+        }, true);
+      }
+    });
+  }
+
+  document.addEventListener('click', function(e){
+    var el = e.target.closest && e.target.closest('button,a,[role="button"],.market-icon-btn,.nav-icon,.icon-btn');
+    if(!el) return;
+
+    if(isChatElement(el)){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+      openAzModal('azSupportModal');
+      if(typeof window.azobssLoadSupportMessages === 'function') window.azobssLoadSupportMessages();
+    }
+
+    if(isBellElement(el)){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+      openAzModal('azBellModal');
+      if(typeof window.azobssLoadNotifications === 'function') window.azobssLoadNotifications();
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', bindExistingIcons);
+  if(document.readyState !== 'loading') bindExistingIcons();
+  setTimeout(bindExistingIcons,500);
+  setTimeout(bindExistingIcons,1500);
+  setTimeout(bindExistingIcons,3000);
+  new MutationObserver(bindExistingIcons).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 
