@@ -4912,7 +4912,7 @@ document.addEventListener('click',function(e){
    if(!href || href==='#') return;
    e.preventDefault();
    e.stopPropagation();
-   window.location.href=href;
+   window.open(href,'_blank','noopener,noreferrer');
  }
  document.addEventListener('pointerup',handle,true);
  document.addEventListener('click',handle,true);
