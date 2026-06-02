@@ -13115,7 +13115,24 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=read(); a.splice(Number(rem.dataset.azCartRemove),1); save(a); render(); return;}
     const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=read(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; save(a); render(); return;}
     const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=read(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} save(a); render(); return;}
-    if(e.target.closest('[data-az-cart-checkout]')){const first=read()[0]; if(!first)return; if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(first); closePanel();} else if(first.pageUrl){location.href=first.pageUrl;} else {alert('Open the Software Tools or CAD Tools page to checkout this item.');} return;}
+    if(e.target.closest('[data-az-cart-checkout]')){
+const items=read();
+if(!items.length)return;
+const totalAmount=items.reduce((s,i)=>s+((parseFloat(String(i.price||0).replace(/[^0-9.]/g,''))||0)*Number(i.qty||1)),0);
+const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0);
+const checkoutItem={
+id:'CART-CHECKOUT',
+name:`${totalQty} Item(s)`,
+price:`RM${totalAmount.toFixed(2)}`,
+qty:totalQty,
+cartItems:items,
+isCartCheckout:true
+};
+if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(checkoutItem); closePanel();}
+else if(items[0].pageUrl){location.href=items[0].pageUrl;}
+else {alert('Open the Software Tools or CAD Tools page to checkout this item.');}
+return;
+}
   });
   // AZOBSS fix: keep original Software/CAD Buy Now buttons working.
   // Cart adding is handled only by the separate card cart icon button.
