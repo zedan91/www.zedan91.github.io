@@ -2447,7 +2447,7 @@ async function verifyToyyibPayment(billCode){
     const yes = inCart(item);
     btn.classList.toggle('is-carted', yes);
     btn.setAttribute('aria-label', yes ? 'Carted' : 'Add to cart');
-    btn.innerHTML = '<span class="az-card-cart-icon">'+(yes?'✓':'🛒')+'</span><span class="az-card-cart-text">'+(yes?'Carted':'Add to Cart')+'</span>';
+    btn.innerHTML = '<span class="az-card-cart-icon">🛒</span>';
   }
   function eligibleCards(){
     if(!isShopPage()) return [];
