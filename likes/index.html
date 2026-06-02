@@ -934,6 +934,72 @@ if(existingBell){existingBell.addEventListener('click',()=>{openModal('azBellMod
 })();
 </script>
 
+
+<script id="azobss-bind-last-topbar-bell-chat-icons">
+(function(){
+  if(window.__azBindLastTopbarBellChatIcons) return;
+  window.__azBindLastTopbarBellChatIcons = true;
+
+  function openModal(id){
+    var m=document.getElementById(id);
+    if(m){m.classList.add('is-open');return true;}
+    return false;
+  }
+
+  function scoreTop(el){
+    var r=el.getBoundingClientRect();
+    if(!r || r.width<12 || r.height<12) return false;
+    if(r.top>95) return false;
+    if(r.left < (window.innerWidth*0.55)) return false;
+    return true;
+  }
+
+  function bind(){
+    var els=Array.from(document.querySelectorAll('header button,header a,.topbar button,.topbar a,.floating-nav button,.floating-nav a,.market-icon-btn,.nav-icon,.icon-btn,[role="button"]'))
+      .filter(scoreTop);
+
+    /* ambil icon sebelah kanan selepas heart/cart: biasanya bell dan chat ialah 2 icon terakhir */
+    var iconEls=els.filter(function(el){
+      var t=(el.textContent||'').trim();
+      var hasSvg=!!el.querySelector('svg');
+      return hasSvg || t==='♡' || t==='♥' || t==='🛒' || t==='';
+    });
+
+    if(iconEls.length < 2) return;
+
+    var chat = iconEls[iconEls.length-1];
+    var bell = iconEls[iconEls.length-2];
+
+    if(bell && bell.dataset.azBellBound !== '1'){
+      bell.dataset.azBellBound='1';
+      bell.title='Notifications';
+      bell.setAttribute('aria-label','Notifications');
+      bell.addEventListener('click',function(e){
+        e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+        openModal('azBellModal');
+        if(typeof window.azobssLoadNotifications==='function') window.azobssLoadNotifications();
+      },true);
+    }
+
+    if(chat && chat.dataset.azChatBound !== '1'){
+      chat.dataset.azChatBound='1';
+      chat.title='Contact Admin / Support';
+      chat.setAttribute('aria-label','Contact Admin / Support');
+      chat.addEventListener('click',function(e){
+        e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+        openModal('azSupportModal');
+        if(typeof window.azobssLoadSupportMessages==='function') window.azobssLoadSupportMessages();
+      },true);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', bind);
+  if(document.readyState!=='loading') bind();
+  [300,800,1500,3000].forEach(function(t){setTimeout(bind,t);});
+  new MutationObserver(bind).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
 </body>
 </html>
 
