@@ -568,10 +568,170 @@ document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",
     const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=read(); a.splice(Number(rem.dataset.azCartRemove),1); save(a); render(); return;}
     const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=read(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; save(a); render(); return;}
     const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=read(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} save(a); render(); return;}
-    if(e.target.closest('[data-az-cart-checkout]')){const first=read()[0]; if(!first)return; if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(first); closePanel();} else if(first.pageUrl){location.href=first.pageUrl;} else {alert('Buka page Software Tools atau CAD Tools untuk checkout item ini.');} return;}
+    if(e.target.closest('[data-az-cart-checkout]')){
+const items=read();
+if(!items.length)return;
+const totalAmount=items.reduce((s,i)=>s+((parseFloat(String(i.price||0).replace(/[^0-9.]/g,''))||0)*Number(i.qty||1)),0);
+const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0);
+const firstItem=items[0]||{};
+const checkoutItem={
+id:'CART-CHECKOUT',
+name:`${totalQty} Item(s)`,
+price:`RM${totalAmount.toFixed(2)}`,
+qty:totalQty,
+cartItems:items,
+isCartCheckout:true,
+downloadLink:firstItem.downloadLink||firstItem.secureDownloadLink||firstItem.premiumDownloadFileLink||'',
+secureDownloadLink:firstItem.secureDownloadLink||firstItem.downloadLink||firstItem.premiumDownloadFileLink||'',
+premiumDownloadFileLink:firstItem.premiumDownloadFileLink||firstItem.secureDownloadLink||firstItem.downloadLink||''
+};
+if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(checkoutItem); closePanel();}
+else if(items[0].pageUrl){location.href=items[0].pageUrl;}
+else {alert('Buka page Software Tools atau CAD Tools untuk checkout item ini.');}
+return;
+}
   });
   // AZOBSS fix: Buy Now is no longer hijacked by cart. Only .az-card-cart-btn adds items to this cart.
   window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
+})();
+</script>
+<script type="module" id="azobss-cart-firestore-sync-js">
+/* AZOBSS cart persistence:
+   - Guest buyers: localStorage only.
+   - Logged-in Firebase users: localStorage + Firestore sync.
+*/
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azobssCartFirestoreSyncReady) return;
+  window.__azobssCartFirestoreSyncReady = true;
+
+  const CART_KEY = 'azobss_shop_cart_v1';
+  const META_KEY = 'azobss_shop_cart_v1_meta';
+  const COLLECTION = 'userCarts';
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain: 'azobss.firebaseapp.com',
+    projectId: 'azobss',
+    storageBucket: 'azobss.firebasestorage.app',
+    messagingSenderId: '159277716405',
+    appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let currentUid = '';
+  let syncTimer = null;
+  let loadingFromCloud = false;
+
+  function readCart(){
+    try{
+      const parsed = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    }catch(e){ return []; }
+  }
+
+  function saveCart(items){
+    localStorage.setItem(CART_KEY, JSON.stringify(Array.isArray(items) ? items.filter(Boolean) : []));
+    window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+  }
+
+  function localUpdatedAt(){
+    try{
+      const meta = JSON.parse(localStorage.getItem(META_KEY) || '{}');
+      return Number(meta.updatedAt || 0);
+    }catch(e){ return 0; }
+  }
+
+  function markLocalUpdated(){
+    if(loadingFromCloud) return;
+    try{ localStorage.setItem(META_KEY, JSON.stringify({updatedAt:Date.now()})); }catch(e){}
+  }
+
+  function itemKey(i){
+    return String(i?.source || '') + '::' + String(i?.id || i?.name || '');
+  }
+
+  function mergeCart(a,b){
+    const map = new Map();
+    [...(Array.isArray(a)?a:[]), ...(Array.isArray(b)?b:[])].filter(Boolean).forEach(item=>{
+      const key = itemKey(item);
+      if(!key || key === '::') return;
+      const old = map.get(key);
+      if(!old) map.set(key, {...item, qty:Number(item.qty||1)});
+      else{
+        const oldQty = Number(old.qty||1);
+        const newQty = Number(item.qty||1);
+        map.set(key, {...old, ...item, qty:Math.max(oldQty, newQty)});
+      }
+    });
+    return Array.from(map.values());
+  }
+
+  async function pushCloud(){
+    if(!currentUid || loadingFromCloud) return;
+    const items = readCart();
+    const totalQty = items.reduce((s,i)=>s+Number(i.qty||1),0);
+    try{
+      await setDoc(doc(db, COLLECTION, currentUid), {
+        uid: currentUid,
+        items,
+        totalQty,
+        updatedAtMs: Date.now(),
+        updatedAt: serverTimestamp()
+      }, {merge:true});
+    }catch(err){
+      console.warn('AZOBSS cart Firestore sync skipped:', err);
+    }
+  }
+
+  async function pullCloud(user){
+    currentUid = user?.uid || '';
+    if(!currentUid) return;
+    try{
+      const ref = doc(db, COLLECTION, currentUid);
+      const snap = await getDoc(ref);
+      const localItems = readCart();
+      const localTime = localUpdatedAt();
+      if(snap.exists()){
+        const data = snap.data() || {};
+        const cloudItems = Array.isArray(data.items) ? data.items.filter(Boolean) : [];
+        const cloudTime = Number(data.updatedAtMs || 0);
+        if(cloudTime > localTime){
+          loadingFromCloud = true;
+          saveCart(mergeCart(cloudItems, localItems.length && localTime > cloudTime ? localItems : []));
+          localStorage.setItem(META_KEY, JSON.stringify({updatedAt:cloudTime || Date.now()}));
+          loadingFromCloud = false;
+        }else if(localItems.length){
+          await pushCloud();
+        }
+      }else if(localItems.length){
+        await pushCloud();
+      }
+      if(typeof window.azobssOpenShopCart === 'function'){
+        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+      }
+    }catch(err){
+      console.warn('AZOBSS cart Firestore load skipped:', err);
+    }finally{
+      loadingFromCloud = false;
+    }
+  }
+
+  window.addEventListener('azobss-shop-cart-updated', ()=>{
+    markLocalUpdated();
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(pushCloud, 500);
+  });
+
+  onAuthStateChanged(auth, user => {
+    if(user) pullCloud(user);
+    else currentUid = '';
+  });
 })();
 </script>
 </body></html>
