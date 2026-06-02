@@ -13099,7 +13099,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   const KEY='azobss_shop_cart_v1';
   const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
   const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]').filter(Boolean)}catch(e){return[]}};
+  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]').filter(Boolean).filter(i=>!(String(i.source||'').toLowerCase()==='software' && !/RM\s*[0-9]/i.test(String(i.price||''))))}catch(e){return[]}};
   const save=a=>{localStorage.setItem(KEY,JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));};
   function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function ensurePanel(){let p=document.getElementById('azShopCartPanel'); if(p)return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
@@ -13150,6 +13150,28 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     const buy = card.querySelector('[data-azobss-premium-buy="1"],a.download-btn,a.cad-action-btn,a[href]');
     return buy?.getAttribute('href') || '';
   };
+  function isPremiumSoftwareCard(card){
+    if(isCADPage()) return true;
+    const type = String(card?.dataset?.type || card?.getAttribute('data-type') || '').toLowerCase().trim();
+    if(type === 'premium') return true;
+    if(type === 'free') return false;
+    const premiumBuy = card?.querySelector?.('[data-azobss-premium-buy="1"]');
+    if(premiumBuy) return true;
+    const freeBuy = card?.querySelector?.('[data-azobss-premium-buy="0"]');
+    if(freeBuy) return false;
+    const text = String(card?.innerText || '').toLowerCase();
+    if(/free software|download now|\bfree\b/.test(text) && !/buy now|rm\s*\d/i.test(text)) return false;
+    return /buy now|rm\s*\d/i.test(text);
+  }
+  function cleanupSoftwareCartSlot(card){
+    const row = card?.querySelector?.(':scope > .az-software-buy-cart-row');
+    if(row){
+      const buy = row.querySelector(':scope > a.download-btn, :scope > button.download-btn');
+      if(buy) card.insertBefore(buy, row);
+      row.remove();
+    }
+    card?.querySelectorAll?.(':scope > .az-card-cart-slot, :scope > .az-software-buy-cart-row > .az-card-cart-slot').forEach(el => el.remove());
+  }
   const buildItem = (card) => {
     const src = sourceName();
     const title = getTitle(card);
@@ -13184,12 +13206,14 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
       const t = getTitle(card);
       if(!t || t === 'Item') return false;
       if(card.classList.contains('software-empty-state') || card.classList.contains('cad-empty-state')) return false;
+      if(!isCADPage() && !isPremiumSoftwareCard(card)){ cleanupSoftwareCartSlot(card); return false; }
       return true;
     });
   }
   function patchCards(){
     eligibleCards().forEach(card => {
       const isSoftwareCard = !isCADPage();
+      if(isSoftwareCard && !isPremiumSoftwareCard(card)){ cleanupSoftwareCartSlot(card); return; }
       const buyBtn = isSoftwareCard ? card.querySelector(':scope > a.download-btn, :scope > button.download-btn') : null;
       let slot = card.querySelector(':scope > .az-card-cart-slot, :scope > .az-software-buy-cart-row > .az-card-cart-slot');
       if(isSoftwareCard && buyBtn){

@@ -2376,7 +2376,7 @@ async function verifyToyyibPayment(billCode){
   const KEY='azobss_shop_cart_v1';
   const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
   const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]').filter(Boolean)}catch(e){return[]}};
+  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]').filter(Boolean).filter(i=>!(String(i.source||'').toLowerCase()==='software' && !/RM\s*[0-9]/i.test(String(i.price||''))))}catch(e){return[]}};
   const save=a=>{localStorage.setItem(KEY,JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));};
   function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function ensurePanel(){let p=document.getElementById('azShopCartPanel'); if(p)return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
