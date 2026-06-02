@@ -4901,6 +4901,24 @@ document.addEventListener('click',function(e){
  window.open(href,'_blank','noopener');
 },true);
 </script>
+
+<script id="azobss-download-delegation-hard-fix">
+(function(){
+ function handle(e){
+   const btn=e.target && e.target.closest ? e.target.closest('.download-btn') : null;
+   if(!btn) return;
+   if(btn.dataset.azobssPremiumBuy==='1') return;
+   const href=btn.getAttribute('href')||btn.dataset.downloadLink||btn.dataset.secureDownloadLink;
+   if(!href || href==='#') return;
+   e.preventDefault();
+   e.stopPropagation();
+   window.location.href=href;
+ }
+ document.addEventListener('pointerup',handle,true);
+ document.addEventListener('click',handle,true);
+})();
+</script>
+
 </body>
 </html>
 
