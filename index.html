@@ -8566,6 +8566,44 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 @media(max-width:760px){.az-card-cart-btn{width:38px!important;height:34px!important;min-width:38px!important;min-height:34px!important}.az-card-cart-btn .az-card-cart-icon{font-size:15px!important}}
 </style>
 
+
+<style id="azobss-software-buy-cart-row-css">
+/* AZOBSS fix: Software Buy Now keeps payment function; cart icon is separate beside it. */
+#softwareGrid .download-card .az-software-buy-cart-row,
+#softwareDownloadsGrid .download-card .az-software-buy-cart-row,
+.downloads-grid .download-card .az-software-buy-cart-row{
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;width:100%!important;margin-top:8px!important;
+}
+#softwareGrid .download-card .az-software-buy-cart-row > .download-btn,
+#softwareDownloadsGrid .download-card .az-software-buy-cart-row > .download-btn,
+.downloads-grid .download-card .az-software-buy-cart-row > .download-btn{
+  flex:1 1 auto!important;width:auto!important;margin:0!important;
+}
+#softwareGrid .download-card .az-software-buy-cart-row > .az-card-cart-slot,
+#softwareDownloadsGrid .download-card .az-software-buy-cart-row > .az-card-cart-slot,
+.downloads-grid .download-card .az-software-buy-cart-row > .az-card-cart-slot{
+  flex:0 0 auto!important;width:auto!important;margin:0!important;order:0!important;
+}
+#softwareGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
+#softwareDownloadsGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
+.downloads-grid .download-card .az-software-buy-cart-row .az-card-cart-btn{
+  width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;padding:0!important;margin:0!important;border-radius:14px!important;
+}
+#softwareGrid .download-card .az-software-buy-cart-row .az-card-cart-text,
+#softwareDownloadsGrid .download-card .az-software-buy-cart-row .az-card-cart-text,
+.downloads-grid .download-card .az-software-buy-cart-row .az-card-cart-text{
+  position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}
+@media(max-width:760px){
+  #softwareGrid .download-card .az-software-buy-cart-row,
+  #softwareDownloadsGrid .download-card .az-software-buy-cart-row,
+  .downloads-grid .download-card .az-software-buy-cart-row{gap:8px!important;}
+  #softwareGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
+  #softwareDownloadsGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
+  .downloads-grid .download-card .az-software-buy-cart-row .az-card-cart-btn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;}
+}
+</style>
+
 <style id="azobss-shop-cart-css">
 .market-icon-btn{position:relative;}
 .az-shop-cart-badge{position:absolute;right:-7px;top:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);display:none;}
@@ -13151,8 +13189,27 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   }
   function patchCards(){
     eligibleCards().forEach(card => {
-      let slot = card.querySelector(':scope > .az-card-cart-slot');
-      if(!slot){
+      const isSoftwareCard = !isCADPage();
+      const buyBtn = isSoftwareCard ? card.querySelector(':scope > a.download-btn, :scope > button.download-btn') : null;
+      let slot = card.querySelector(':scope > .az-card-cart-slot, :scope > .az-software-buy-cart-row > .az-card-cart-slot');
+      if(isSoftwareCard && buyBtn){
+        let row = card.querySelector(':scope > .az-software-buy-cart-row');
+        if(!row){
+          row = document.createElement('div');
+          row.className = 'az-software-buy-cart-row';
+          card.insertBefore(row, buyBtn);
+          row.appendChild(buyBtn);
+        } else if(buyBtn.parentElement !== row){
+          row.insertBefore(buyBtn, row.firstChild);
+        }
+        if(!slot){
+          slot = document.createElement('div');
+          slot.className = 'az-card-cart-slot';
+          row.appendChild(slot);
+        } else if(slot.parentElement !== row){
+          row.appendChild(slot);
+        }
+      } else if(!slot){
         slot = document.createElement('div');
         slot.className = 'az-card-cart-slot';
         card.appendChild(slot);
