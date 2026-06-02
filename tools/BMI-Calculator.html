@@ -640,6 +640,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   let currentUid = '';
   let syncTimer = null;
   let loadingFromCloud = false;
+  let cloudPulling = false;
+  let cloudReady = false;
 
   try{
     // Remove old shared cart key so logged-in cart cannot leak into guest view.
@@ -694,7 +696,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   }
 
   async function pushCloud(){
-    if(!currentUid || loadingFromCloud) return;
+    if(!currentUid || loadingFromCloud || cloudPulling || !cloudReady) return;
     const items = readCart();
     const totalQty = items.reduce((s,i)=>s+Number(i.qty||1),0);
     try{
@@ -713,6 +715,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   async function pullCloud(user){
     currentUid = user?.uid || '';
     if(!currentUid) return;
+    cloudPulling = true;
+    cloudReady = false;
     try{
       const ref = doc(db, COLLECTION, currentUid);
       const snap = await getDoc(ref);
@@ -720,20 +724,29 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
       const localTime = localUpdatedAt();
       if(snap.exists()){
         const data = snap.data() || {};
-        const cloudItems = Array.isArray(data.items) ? data.items.filter(Boolean) : [];
+        const now = Date.now();
+        const maxAge = 60*24*60*60*1000;
+        const cloudItems = (Array.isArray(data.items) ? data.items.filter(Boolean) : [])
+          .filter(i => !i.addedAt || (now - Number(i.addedAt)) <= maxAge);
         const cloudTime = Number(data.updatedAtMs || 0);
         loadingFromCloud = true;
         localStorage.setItem(CART_KEY, JSON.stringify(cloudItems));
         localStorage.setItem(metaKey(), JSON.stringify({updatedAt:cloudTime || Date.now()}));
         loadingFromCloud = false;
+        cloudReady = true;
+        if(Array.isArray(data.items) && data.items.length !== cloudItems.length){
+          setTimeout(pushCloud, 300);
+        }
         window.dispatchEvent(new Event('azobss-shop-cart-updated'));
       }else if(localItems.length){
+        cloudReady = true;
         await pushCloud();
       }else{
         loadingFromCloud = true;
         localStorage.setItem(CART_KEY, JSON.stringify([]));
         localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()}));
         loadingFromCloud = false;
+        cloudReady = true;
         window.dispatchEvent(new Event('azobss-shop-cart-updated'));
       }
       if(typeof window.azobssOpenShopCart === 'function'){
@@ -743,6 +756,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
       console.warn('AZOBSS cart Firestore load skipped:', err);
     }finally{
       loadingFromCloud = false;
+      cloudPulling = false;
     }
   }
 
