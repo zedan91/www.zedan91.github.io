@@ -2397,13 +2397,17 @@ const items=read();
 if(!items.length)return;
 const totalAmount=items.reduce((s,i)=>s+((parseFloat(String(i.price||0).replace(/[^0-9.]/g,''))||0)*Number(i.qty||1)),0);
 const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0);
+const firstItem=items[0]||{};
 const checkoutItem={
 id:'CART-CHECKOUT',
 name:`${totalQty} Item(s)`,
 price:`RM${totalAmount.toFixed(2)}`,
 qty:totalQty,
 cartItems:items,
-isCartCheckout:true
+isCartCheckout:true,
+downloadLink:firstItem.downloadLink||firstItem.secureDownloadLink||firstItem.premiumDownloadFileLink||'',
+secureDownloadLink:firstItem.secureDownloadLink||firstItem.downloadLink||firstItem.premiumDownloadFileLink||'',
+premiumDownloadFileLink:firstItem.premiumDownloadFileLink||firstItem.secureDownloadLink||firstItem.downloadLink||''
 };
 if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(checkoutItem); closePanel();}
 else if(items[0].pageUrl){location.href=items[0].pageUrl;}
