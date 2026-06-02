@@ -4163,3 +4163,5 @@ document.addEventListener('click',function(e){
  if(err) err.textContent='';
  if(box) box.hidden=!box.hidden;
 });
+
+/* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */

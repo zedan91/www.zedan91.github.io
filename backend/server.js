@@ -1264,3 +1264,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`AZOBSS Lucky Draw Backend running on port ${PORT}`);
 });
+
+/* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */

@@ -118,3 +118,5 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+/* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */

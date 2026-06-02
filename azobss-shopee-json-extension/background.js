@@ -21,3 +21,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true;
 });
+
+/* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */

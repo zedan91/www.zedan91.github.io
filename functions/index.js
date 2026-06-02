@@ -106,3 +106,5 @@ exports.cleanupUnverifiedUsers = onSchedule(
     });
   }
 );
+
+/* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */

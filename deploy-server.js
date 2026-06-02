@@ -3059,3 +3059,4 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("");
 
 });
+/* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */

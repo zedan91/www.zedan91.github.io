@@ -4357,3 +4357,5 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     setTimeout(()=>{ injectLikeButtons(); renderLikesPage(false); }, 200);
   });
 })();
+
+/* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */
