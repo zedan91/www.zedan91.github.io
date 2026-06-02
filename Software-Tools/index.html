@@ -4421,7 +4421,7 @@ return;
   if(window.__azobssCardCartButtonPatch) return;
   window.__azobssCardCartButtonPatch = true;
 
-  const CART_KEY = 'azobss_shop_cart_v1';
+  let CART_KEY = 'azobss_shop_cart_guest_v1';
   const isShopPage = () => /\/(Software-Tools|CAD-Tools-&-Resources)\/?/i.test(location.pathname) || document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.cad-card-grid,.cad-tools-shop');
   const isCADPage = () => /CAD-Tools-&-Resources/i.test(location.pathname) || !!document.querySelector('.cad-tools-shop,.cad-card-grid');
   const sourceName = () => isCADPage() ? 'CAD Tools' : 'Software';
@@ -4664,7 +4664,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   if(window.__azobssCartFirestoreSyncReady) return;
   window.__azobssCartFirestoreSyncReady = true;
 
-  const CART_KEY = 'azobss_shop_cart_v1';
+  let CART_KEY = 'azobss_shop_cart_guest_v1';
   const META_KEY = 'azobss_shop_cart_v1_meta';
   const COLLECTION = 'userCarts';
   const firebaseConfig = {
@@ -4785,8 +4785,15 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   });
 
   onAuthStateChanged(auth, user => {
-    if(user) pullCloud(user);
-    else currentUid = '';
+    if(user){
+      CART_KEY = 'azobss_shop_cart_user_' + user.uid + '_v1';
+      pullCloud(user);
+      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+    }else{
+      currentUid = '';
+      CART_KEY = 'azobss_shop_cart_guest_v1';
+      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+    }
   });
 })();
 </script>
