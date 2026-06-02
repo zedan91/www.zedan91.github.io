@@ -2097,7 +2097,7 @@ document.addEventListener('error', function(e){
       <h2 id="softwareAdminTitle">Add Software Item</h2>
       <button class="software-admin-close" id="softwareAdminClose" type="button" aria-label="Close">×</button>
     </div>
-    <form class="software-admin-form" id="softwareAdminForm"><input type="hidden" id="softwareEditId" value="">
+    <form class="software-admin-form" id="softwareAdminForm" novalidate><input type="hidden" id="softwareEditId" value="">
       <label>Software Name
         <input id="softwareAdminName" type="text" placeholder="Example: Windows Tweaks Pro" required>
       </label>
@@ -2265,7 +2265,7 @@ document.addEventListener('error', function(e){
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab.</p>
     <label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email Address Address <span class="azobss-pay-required">*</span>
-      <input id="azobssPayReference" type="email" autocomplete="email" inputmode="email" placeholder="Enter buyer email address" required>
+      <input id="azobssPayReference" formnovalidate type="email" autocomplete="email" inputmode="email" placeholder="Enter buyer email address">
       <small class="azobss-pay-helper">Guest buyers must enter an email address before opening payment. The download link and payment receipt will be sent to this email address.</small>
     </label>
     <div class="azobss-pay-actions">
