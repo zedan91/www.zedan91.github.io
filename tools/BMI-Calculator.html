@@ -549,11 +549,11 @@ document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
-  const KEY='azobss_shop_cart_v1';
+  const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
   const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
   const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]').filter(Boolean)}catch(e){return[]}};
-  const save=a=>{localStorage.setItem(KEY,JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));};
+  const read=()=>{try{return JSON.parse(localStorage.getItem(getKey())||'[]').filter(Boolean)}catch(e){return[]}};
+  const save=a=>{localStorage.setItem(getKey(),JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));};
   function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function ensurePanel(){let p=document.getElementById('azShopCartPanel'); if(p)return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
   function updateBadges(){const total=read().reduce((s,i)=>s+Number(i.qty||1),0); document.querySelectorAll('[data-az-shop-cart-badge]').forEach(b=>{b.textContent=total; b.classList.toggle('is-show',total>0);});}
@@ -609,7 +609,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   window.__azobssCartFirestoreSyncReady = true;
 
   let CART_KEY = 'azobss_shop_cart_guest_v1';
-  const META_KEY = 'azobss_shop_cart_v1_meta';
+  window.__azobssCurrentCartKey = CART_KEY;
+  const metaKey = () => CART_KEY + '_meta';
   const COLLECTION = 'userCarts';
   const firebaseConfig = {
     apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -628,6 +629,14 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   let syncTimer = null;
   let loadingFromCloud = false;
 
+  try{
+    // Remove old shared cart key so logged-in cart cannot leak into guest view.
+    if(localStorage.getItem('azobss_shop_cart_v1') !== null){
+      localStorage.removeItem('azobss_shop_cart_v1');
+      localStorage.removeItem('azobss_shop_cart_v1_meta');
+    }
+  }catch(e){}
+
   function readCart(){
     try{
       const parsed = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
@@ -642,14 +651,14 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
 
   function localUpdatedAt(){
     try{
-      const meta = JSON.parse(localStorage.getItem(META_KEY) || '{}');
+      const meta = JSON.parse(localStorage.getItem(metaKey()) || '{}');
       return Number(meta.updatedAt || 0);
     }catch(e){ return 0; }
   }
 
   function markLocalUpdated(){
     if(loadingFromCloud) return;
-    try{ localStorage.setItem(META_KEY, JSON.stringify({updatedAt:Date.now()})); }catch(e){}
+    try{ localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()})); }catch(e){}
   }
 
   function itemKey(i){
@@ -701,16 +710,17 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
         const data = snap.data() || {};
         const cloudItems = Array.isArray(data.items) ? data.items.filter(Boolean) : [];
         const cloudTime = Number(data.updatedAtMs || 0);
-        if(cloudTime > localTime){
-          loadingFromCloud = true;
-          saveCart(mergeCart(cloudItems, localItems.length && localTime > cloudTime ? localItems : []));
-          localStorage.setItem(META_KEY, JSON.stringify({updatedAt:cloudTime || Date.now()}));
-          loadingFromCloud = false;
-        }else if(localItems.length){
-          await pushCloud();
-        }
+        loadingFromCloud = true;
+        saveCart(cloudItems);
+        localStorage.setItem(metaKey(), JSON.stringify({updatedAt:cloudTime || Date.now()}));
+        loadingFromCloud = false;
       }else if(localItems.length){
         await pushCloud();
+      }else{
+        loadingFromCloud = true;
+        saveCart([]);
+        localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()}));
+        loadingFromCloud = false;
       }
       if(typeof window.azobssOpenShopCart === 'function'){
         window.dispatchEvent(new Event('azobss-shop-cart-updated'));
@@ -731,11 +741,13 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   onAuthStateChanged(auth, user => {
     if(user){
       CART_KEY = 'azobss_shop_cart_user_' + user.uid + '_v1';
+      window.__azobssCurrentCartKey = CART_KEY;
       pullCloud(user);
       window.dispatchEvent(new Event('azobss-shop-cart-updated'));
     }else{
       currentUid = '';
       CART_KEY = 'azobss_shop_cart_guest_v1';
+      window.__azobssCurrentCartKey = CART_KEY;
       window.dispatchEvent(new Event('azobss-shop-cart-updated'));
     }
   });
