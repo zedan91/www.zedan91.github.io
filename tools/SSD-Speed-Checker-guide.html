@@ -631,6 +631,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   const db = getFirestore(app);
 
   let currentUid = '';
+  window.__azobssCurrentCartUid = '';
   let syncTimer = null;
   let loadingFromCloud = false;
 
@@ -752,13 +753,19 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
     if(user){
       CART_KEY = 'azobss_shop_cart_user_' + user.uid + '_v1';
       window.__azobssCurrentCartKey = CART_KEY;
-      pullCloud(user);
-      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+      window.__azobssCurrentCartUid = user.uid;
+      pullCloud(user).then(()=> {
+        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+        setTimeout(()=>window.dispatchEvent(new Event('azobss-shop-cart-updated')),250);
+        setTimeout(()=>window.dispatchEvent(new Event('azobss-shop-cart-updated')),900);
+      });
     }else{
       currentUid = '';
+      window.__azobssCurrentCartUid = '';
       CART_KEY = 'azobss_shop_cart_guest_v1';
       window.__azobssCurrentCartKey = CART_KEY;
       window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+      setTimeout(()=>window.dispatchEvent(new Event('azobss-shop-cart-updated')),250);
     }
   });
 })();
