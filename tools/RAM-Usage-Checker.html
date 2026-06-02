@@ -473,6 +473,33 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .az-shop-cart-note{font-size:12px;color:#94a3b8;margin-top:9px;line-height:1.45;}
 @media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
 </style>
+
+<style id="azobss-support-notification-css">
+.azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
+.azobss-mini-action-btn:hover{transform:translateY(-1px);border-color:#22c55e!important;box-shadow:0 0 18px rgba(34,197,94,.22)!important}
+.azobss-mini-badge{position:absolute;right:-5px;top:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;display:none}
+.azobss-mini-badge.is-show{display:inline-block}
+.azobss-modal-lite{position:fixed;inset:0;z-index:9999999;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.72);backdrop-filter:blur(8px);padding:18px}
+.azobss-modal-lite.is-open{display:flex}
+.azobss-modal-card{width:min(560px,calc(100vw - 26px));max-height:86vh;overflow:auto;border-radius:22px;border:1px solid rgba(148,163,184,.3);background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(2,6,23,.98));box-shadow:0 30px 90px rgba(0,0,0,.55);color:#fff;padding:18px}
+.azobss-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.azobss-modal-head h3{margin:0;font-size:20px;font-weight:950}
+.azobss-modal-close{border:0;background:rgba(255,255,255,.08);color:#fff;width:34px;height:34px;border-radius:12px;cursor:pointer;font-size:18px}
+.azobss-lite-input,.azobss-lite-textarea,.azobss-lite-select{width:100%;box-sizing:border-box;margin:7px 0 10px;padding:11px 12px;border-radius:13px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.85);color:#fff;outline:none}
+.azobss-lite-textarea{min-height:95px;resize:vertical}
+.azobss-lite-btn{border:0;border-radius:13px;padding:11px 14px;font-weight:900;cursor:pointer;background:#22c55e;color:#052e16}
+.azobss-lite-btn.secondary{background:rgba(148,163,184,.18);color:#e5e7eb}
+.azobss-lite-list{display:grid;gap:10px;margin-top:12px}
+.azobss-lite-item{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.62);border-radius:15px;padding:12px}
+.azobss-lite-item strong{display:block;margin-bottom:5px}
+.azobss-lite-meta{font-size:12px;color:#93c5fd;margin-top:6px}
+.azobss-lite-reply{margin-top:8px;padding:9px;border-radius:12px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25)}
+.azobss-lite-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.azobss-admin-only-lite{display:none}
+body.azobss-support-admin .azobss-admin-only-lite{display:block}
+@media(max-width:760px){.azobss-mini-action-btn{width:34px!important;height:34px!important;font-size:16px!important;margin-left:4px!important}.azobss-modal-card{padding:15px}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -776,6 +803,265 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   });
 })();
 </script>
+
+<script type="module" id="azobss-support-notification-js">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, collection, doc, addDoc, getDocs, getDoc, updateDoc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azobssSupportNotificationReady) return;
+  window.__azobssSupportNotificationReady=true;
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain: 'azobss.firebaseapp.com',
+    projectId: 'azobss',
+    storageBucket: 'azobss.firebasestorage.app',
+    messagingSenderId: '159277716405',
+    appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+  let currentUser = null;
+  let isAdmin = false;
+
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function toast(msg){ if(window.azShowToast) window.azShowToast(msg); else if(window.showToast) window.showToast(msg); else alert(msg); }
+  function findBar(){
+    return document.querySelector('.floating-nav,.topbar,.sticky-bar,.nav-actions,.market-actions,.header-actions,.site-actions,header nav,header') || document.body;
+  }
+  function openModal(id){document.getElementById(id)?.classList.add('is-open');}
+  function closeModal(id){document.getElementById(id)?.classList.remove('is-open');}
+
+  function ensureButtons(){
+    if(document.getElementById('azSupportBtn')) return;
+    const wrap=document.createElement('span');
+    wrap.id='azobssSupportBellWrap';
+    wrap.style.display='inline-flex';
+    wrap.style.alignItems='center';
+    wrap.innerHTML = `
+      <button id="azSupportBtn" class="azobss-mini-action-btn" type="button" title="Contact Admin / Support">💬</button>
+      <button id="azBellBtn" class="azobss-mini-action-btn" type="button" title="Notifications">🔔<span id="azBellBadge" class="azobss-mini-badge"></span></button>
+    `;
+    const bar=findBar();
+    bar.appendChild(wrap);
+    document.getElementById('azSupportBtn').addEventListener('click',()=>{openModal('azSupportModal'); loadSupport();});
+    document.getElementById('azBellBtn').addEventListener('click',()=>{openModal('azBellModal'); loadNotifications();});
+  }
+
+  function ensureModals(){
+    if(document.getElementById('azSupportModal')) return;
+    const div=document.createElement('div');
+    div.innerHTML=`
+    <div id="azSupportModal" class="azobss-modal-lite">
+      <div class="azobss-modal-card">
+        <div class="azobss-modal-head"><h3>💬 Contact Admin / Support</h3><button class="azobss-modal-close" data-close="azSupportModal">×</button></div>
+        <div id="azSupportLoginNote"></div>
+        <form id="azSupportForm" novalidate>
+          <input id="azSupportSubject" class="azobss-lite-input" maxlength="90" placeholder="Subject / Tajuk">
+          <textarea id="azSupportMessage" class="azobss-lite-textarea" maxlength="1000" placeholder="Tulis mesej ringkas kepada admin..."></textarea>
+          <button class="azobss-lite-btn" type="submit">Send Message</button>
+        </form>
+        <div class="azobss-admin-only-lite">
+          <hr style="border-color:rgba(148,163,184,.2);margin:16px 0">
+          <h3 style="margin:0 0 8px">Admin Support Inbox</h3>
+        </div>
+        <div id="azSupportList" class="azobss-lite-list"></div>
+      </div>
+    </div>
+
+    <div id="azBellModal" class="azobss-modal-lite">
+      <div class="azobss-modal-card">
+        <div class="azobss-modal-head"><h3>🔔 Notifications</h3><button class="azobss-modal-close" data-close="azBellModal">×</button></div>
+        <div class="azobss-admin-only-lite">
+          <h4 style="margin:0 0 8px">Create Announcement</h4>
+          <form id="azNotificationForm" novalidate>
+            <select id="azNotificationType" class="azobss-lite-select">
+              <option value="lucky_started">Lucky Draw Started</option>
+              <option value="lucky_ending">Lucky Draw Ending Soon</option>
+              <option value="maintenance">Website Maintenance Tonight</option>
+              <option value="payment_verified">Payment Verified</option>
+              <option value="download_ready">Download Ready</option>
+            </select>
+            <input id="azNotificationTitle" class="azobss-lite-input" maxlength="100" placeholder="Notification title">
+            <textarea id="azNotificationBody" class="azobss-lite-textarea" maxlength="700" placeholder="Notification message"></textarea>
+            <button class="azobss-lite-btn" type="submit">Publish Notification</button>
+          </form>
+          <hr style="border-color:rgba(148,163,184,.2);margin:16px 0">
+        </div>
+        <div id="azNotificationList" class="azobss-lite-list"></div>
+      </div>
+    </div>`;
+    document.body.appendChild(div);
+    document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+    document.querySelectorAll('.azobss-modal-lite').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('is-open')}));
+
+    document.getElementById('azSupportForm').addEventListener('submit', submitSupport);
+    document.getElementById('azNotificationForm').addEventListener('submit', submitNotification);
+  }
+
+  async function submitSupport(e){
+    e.preventDefault();
+    if(!currentUser){toast('Please login first.');return;}
+    const subject=document.getElementById('azSupportSubject').value.trim();
+    const message=document.getElementById('azSupportMessage').value.trim();
+    if(!message){toast('Please write your message.');return;}
+    await addDoc(collection(db,'supportMessages'),{
+      uid:currentUser.uid,
+      email:currentUser.email||'',
+      username:window.azobssCurrentUsername||currentUser.displayName||currentUser.email||'User',
+      subject:subject||'Support Request',
+      message,
+      reply:'',
+      status:'open',
+      createdAt:serverTimestamp(),
+      createdAtMs:Date.now(),
+      repliedAt:null
+    });
+    document.getElementById('azSupportSubject').value='';
+    document.getElementById('azSupportMessage').value='';
+    toast('Message sent to admin.');
+    loadSupport();
+  }
+
+  async function loadSupport(){
+    const box=document.getElementById('azSupportList');
+    const note=document.getElementById('azSupportLoginNote');
+    if(!box) return;
+    if(!currentUser){
+      note.innerHTML='<div class="azobss-lite-item">Please login to contact admin.</div>';
+      box.innerHTML='';
+      return;
+    }
+    note.innerHTML='';
+    box.innerHTML='<div class="azobss-lite-item">Loading...</div>';
+    try{
+      const q = isAdmin
+        ? query(collection(db,'supportMessages'), orderBy('createdAtMs','desc'), limit(20))
+        : query(collection(db,'supportMessages'), where('uid','==',currentUser.uid), orderBy('createdAtMs','desc'), limit(20));
+      const snap=await getDocs(q);
+      const rows=[];
+      snap.forEach(d=>{
+        const x=d.data();
+        rows.push(`<div class="azobss-lite-item">
+          <strong>${esc(x.subject||'Support Request')}</strong>
+          <div>${esc(x.message||'')}</div>
+          ${x.reply?`<div class="azobss-lite-reply"><b>Admin Reply:</b><br>${esc(x.reply)}</div>`:''}
+          <div class="azobss-lite-meta">${esc(x.status||'open')} • ${esc(x.email||'')}</div>
+          ${isAdmin?`<div class="azobss-lite-row" style="margin-top:8px"><input class="azobss-lite-input" id="reply_${d.id}" placeholder="Reply..." style="margin:0;flex:1"><button class="azobss-lite-btn secondary" data-reply-id="${d.id}" type="button">Reply</button></div>`:''}
+        </div>`);
+      });
+      box.innerHTML=rows.join('') || '<div class="azobss-lite-item">No support messages.</div>';
+      box.querySelectorAll('[data-reply-id]').forEach(btn=>btn.addEventListener('click', async()=>{
+        const id=btn.dataset.replyId;
+        const inp=document.getElementById('reply_'+id);
+        const reply=(inp?.value||'').trim();
+        if(!reply){toast('Write a reply first.');return;}
+        await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});
+        toast('Reply saved.');
+        loadSupport();
+      }));
+    }catch(err){
+      box.innerHTML='<div class="azobss-lite-item">Unable to load support messages. Check Firebase Rules.</div>';
+      console.warn('AZOBSS support load failed:',err);
+    }
+  }
+
+  async function submitNotification(e){
+    e.preventDefault();
+    if(!isAdmin){toast('Admin only.');return;}
+    const type=document.getElementById('azNotificationType').value;
+    const title=document.getElementById('azNotificationTitle').value.trim();
+    const body=document.getElementById('azNotificationBody').value.trim();
+    if(!title && !body){toast('Please write notification.');return;}
+    await addDoc(collection(db,'notifications'),{
+      type,
+      title:title||type.replaceAll('_',' '),
+      body,
+      scope:'all',
+      uid:'',
+      createdBy:currentUser.email||'admin',
+      createdAt:serverTimestamp(),
+      createdAtMs:Date.now(),
+      active:true
+    });
+    document.getElementById('azNotificationTitle').value='';
+    document.getElementById('azNotificationBody').value='';
+    toast('Notification published.');
+    loadNotifications();
+    updateBadge();
+  }
+
+  window.azobssCreateNotification = async function(payload){
+    if(!currentUser) return;
+    const p=payload||{};
+    await addDoc(collection(db,'notifications'),{
+      type:p.type||'system',
+      title:p.title||'Notification',
+      body:p.body||'',
+      scope:p.scope||'user',
+      uid:p.uid||currentUser.uid,
+      createdAt:serverTimestamp(),
+      createdAtMs:Date.now(),
+      active:true
+    });
+    updateBadge();
+  };
+
+  async function loadNotifications(){
+    const box=document.getElementById('azNotificationList');
+    if(!box) return;
+    box.innerHTML='<div class="azobss-lite-item">Loading...</div>';
+    try{
+      const snap=await getDocs(query(collection(db,'notifications'), where('active','==',true), orderBy('createdAtMs','desc'), limit(20)));
+      const rows=[];
+      snap.forEach(d=>{
+        const x=d.data();
+        if(x.scope==='user' && currentUser && x.uid && x.uid!==currentUser.uid && !isAdmin) return;
+        if(x.scope==='user' && !currentUser && !isAdmin) return;
+        rows.push(`<div class="azobss-lite-item"><strong>${esc(x.title||'Notification')}</strong><div>${esc(x.body||'')}</div><div class="azobss-lite-meta">${esc(x.type||'system')}</div></div>`);
+      });
+      box.innerHTML=rows.join('') || '<div class="azobss-lite-item">No notifications.</div>';
+    }catch(err){
+      box.innerHTML='<div class="azobss-lite-item">Unable to load notifications. Check Firebase Rules.</div>';
+      console.warn('AZOBSS notifications load failed:',err);
+    }
+  }
+
+  async function updateBadge(){
+    const badge=document.getElementById('azBellBadge');
+    if(!badge) return;
+    try{
+      const snap=await getDocs(query(collection(db,'notifications'), where('active','==',true), orderBy('createdAtMs','desc'), limit(20)));
+      let n=0;
+      snap.forEach(d=>{
+        const x=d.data();
+        if(x.scope==='all') n++;
+        else if(currentUser && x.uid===currentUser.uid) n++;
+      });
+      badge.textContent=String(Math.min(n,99));
+      badge.classList.toggle('is-show',n>0);
+    }catch(e){}
+  }
+
+  onAuthStateChanged(auth, user=>{
+    currentUser=user||null;
+    isAdmin=!!(user && String(user.email||'').toLowerCase()===ADMIN_EMAIL.toLowerCase());
+    document.body.classList.toggle('azobss-support-admin', isAdmin);
+    ensureButtons();
+    ensureModals();
+    updateBadge();
+  });
+
+  document.addEventListener('DOMContentLoaded',()=>{ensureButtons();ensureModals();updateBadge();});
+  if(document.readyState!=='loading'){ensureButtons();ensureModals();updateBadge();}
+})();
+</script>
+
 </body></html>
 
 /* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */
