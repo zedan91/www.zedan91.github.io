@@ -632,7 +632,6 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   const db = getFirestore(app);
 
   let currentUid = '';
-  window.__azobssCurrentCartUid = '';
   let syncTimer = null;
   let loadingFromCloud = false;
 
@@ -717,22 +716,19 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
         const data = snap.data() || {};
         const cloudItems = Array.isArray(data.items) ? data.items.filter(Boolean) : [];
         const cloudTime = Number(data.updatedAtMs || 0);
-        const currentLocalItems = readCart();
-        const finalItems = currentLocalItems.length ? mergeCart(cloudItems, currentLocalItems) : cloudItems;
         loadingFromCloud = true;
-        saveCart(finalItems);
+        localStorage.setItem(CART_KEY, JSON.stringify(cloudItems));
         localStorage.setItem(metaKey(), JSON.stringify({updatedAt:cloudTime || Date.now()}));
         loadingFromCloud = false;
-        if(currentLocalItems.length) setTimeout(pushCloud, 250);
+        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
       }else if(localItems.length){
         await pushCloud();
       }else{
-        const currentLocalItems = readCart();
         loadingFromCloud = true;
-        saveCart(currentLocalItems);
+        localStorage.setItem(CART_KEY, JSON.stringify([]));
         localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()}));
         loadingFromCloud = false;
-        if(currentLocalItems.length) setTimeout(pushCloud, 250);
+        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
       }
       if(typeof window.azobssOpenShopCart === 'function'){
         window.dispatchEvent(new Event('azobss-shop-cart-updated'));
@@ -744,6 +740,9 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
     }
   }
 
+  window.azobssCartDebug=function(){
+    return {uid: currentUid, key: CART_KEY, items: readCart()};
+  };
   window.addEventListener('azobss-shop-cart-updated', ()=>{
     markLocalUpdated();
     clearTimeout(syncTimer);
@@ -754,19 +753,13 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
     if(user){
       CART_KEY = 'azobss_shop_cart_user_' + user.uid + '_v1';
       window.__azobssCurrentCartKey = CART_KEY;
-      window.__azobssCurrentCartUid = user.uid;
-      pullCloud(user).then(()=> {
-        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-        setTimeout(()=>window.dispatchEvent(new Event('azobss-shop-cart-updated')),250);
-        setTimeout(()=>window.dispatchEvent(new Event('azobss-shop-cart-updated')),900);
-      });
+      pullCloud(user);
+      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
     }else{
       currentUid = '';
-      window.__azobssCurrentCartUid = '';
       CART_KEY = 'azobss_shop_cart_guest_v1';
       window.__azobssCurrentCartKey = CART_KEY;
       window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-      setTimeout(()=>window.dispatchEvent(new Event('azobss-shop-cart-updated')),250);
     }
   });
 })();
