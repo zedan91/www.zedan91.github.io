@@ -2989,7 +2989,13 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : '';
     if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none';
     if(stripeLinkLabel) stripeLinkLabel.style.display = premium ? '' : 'none';
-    if(downloadLinkInput) downloadLinkInput.required = !premium;
+    if(downloadLinkInput){
+      downloadLinkInput.required = !premium;
+      if(premium){
+        downloadLinkInput.removeAttribute('required');
+        downloadLinkInput.setCustomValidity('');
+      }
+    }
     if(paymentLinkInput) paymentLinkInput.required = false;
     if(stripeLinkInput) stripeLinkInput.required = false;
   }
@@ -3262,6 +3268,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
 
   form?.addEventListener('submit', async e => {
+    if(downloadLinkInput){downloadLinkInput.setCustomValidity('');}
     e.preventDefault();
     if(!isAdmin()) return alert('Admin only.');
     syncTypeDefaults();
