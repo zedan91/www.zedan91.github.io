@@ -1942,6 +1942,27 @@ document.addEventListener('error', function(e){
 @media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
 </style>
 
+
+<style id="azobss-buy-now-price-gap-renderer-fix">
+/* Fix Premium Software button text: RM1 Buy Now, not RM1Buy Now */
+.download-card .download-btn.premium,
+.download-card a.download-btn.premium,
+.software-card .download-btn.premium,
+.software-product-card .download-btn.premium{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:5px!important;
+  white-space:nowrap!important;
+}
+.download-btn.premium .buy-price,
+.download-btn.premium .buy-text{
+  display:inline-flex!important;
+  align-items:center!important;
+  line-height:1!important;
+}
+.download-btn.premium .buy-divider{display:none!important;}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2701,7 +2722,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Demo</a></div>` : ''}
       ${productIdMeta}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-divider"></span><span class="buy-text">Buy Now</span>` : '<span class="az-btn-icon">⬇</span><span class="download-text">Download Now</span>'}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="az-btn-icon">⬇</span><span class="download-text">Download Now</span>'}</a>
       ${adminEdit}
     </div>`;
   }
@@ -4510,5 +4531,41 @@ async function verifyToyyibPayment(billCode){
 })();
 </script>
 
+
+<script id="azobss-buy-now-spacing-runtime-fix">
+(function(){
+  if(window.__azBuyNowSpacingFix) return;
+  window.__azBuyNowSpacingFix=true;
+  function fix(btn){
+    if(!btn || !btn.classList || !btn.classList.contains('premium')) return;
+    const price = btn.querySelector('.buy-price');
+    const text = btn.querySelector('.buy-text');
+    if(price && text){
+      const divider = btn.querySelector('.buy-divider');
+      if(divider) divider.remove();
+      btn.style.display='inline-flex';
+      btn.style.alignItems='center';
+      btn.style.justifyContent='center';
+      btn.style.gap='5px';
+      btn.style.whiteSpace='nowrap';
+      return;
+    }
+    const raw=(btn.textContent||'').trim();
+    const m=raw.match(/^(RM\s*[0-9][0-9,.]*)(Buy Now)$/i);
+    if(m){
+      btn.innerHTML='<span class="buy-price">'+m[1].replace(/\s+/g,'')+'</span><span class="buy-text">Buy Now</span>';
+      btn.style.display='inline-flex';
+      btn.style.alignItems='center';
+      btn.style.justifyContent='center';
+      btn.style.gap='5px';
+      btn.style.whiteSpace='nowrap';
+    }
+  }
+  function run(){document.querySelectorAll('.download-btn.premium,[data-azobss-premium-buy="1"]').forEach(fix);}
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState!=='loading') run();
+  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
