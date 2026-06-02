@@ -2711,7 +2711,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const gifHtml = item.gifUrl && item.imageUrl ? `<div class="software-media-links"><a class="software-media-demo" href="${esc(item.gifUrl)}" target="_blank" rel="noopener">GIF Demo</a></div>` : '';
     const meta = [item.category, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
-    const productIdMeta = item.productId ? `<div class="product-meta">ID: ${esc(item.productId)}</div>` : '';
+    const productIdMeta = '';
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
@@ -4567,6 +4567,84 @@ async function verifyToyyibPayment(billCode){
   new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="azobss-admin-id-icon-under-delete-final">
+/* Admin-only Product ID icon: vertical action column on Software cards */
+.download-card[data-admin-software="1"]{
+  position:relative !important;
+}
+.download-card[data-admin-software="1"] .software-card-admin-actions{
+  position:absolute !important;
+  top:14px !important;
+  right:14px !important;
+  z-index:30 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:6px !important;
+  margin:0 !important;
+  padding:0 !important;
+  flex-wrap:nowrap !important;
+}
+.download-card[data-admin-software="1"] .software-card-admin-actions button{
+  width:32px !important;
+  min-width:32px !important;
+  height:32px !important;
+  min-height:32px !important;
+  padding:0 !important;
+  margin:0 !important;
+  border-radius:999px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  cursor:pointer !important;
+}
+.download-card[data-admin-software="1"] .software-card-id-btn{
+  border:1px solid rgba(45,212,191,.55) !important;
+  background:linear-gradient(135deg,#0f766e,#14b8a6) !important;
+  color:#fff !important;
+  box-shadow:0 8px 18px rgba(20,184,166,.20) !important;
+}
+.download-card[data-admin-software="1"] .product-meta{
+  display:none !important;
+}
+</style>
+<script id="azobss-admin-id-copy-handler-final">
+(function(){
+  function showProductIdCopied(id){
+    if(!id) return;
+    const msg = 'Product ID copied: ' + id;
+    if(window.azShowToast) window.azShowToast(msg);
+    else if(window.showToast) window.showToast(msg);
+    else alert(msg);
+  }
+  document.addEventListener('click', async function(e){
+    const btn = e.target.closest && e.target.closest('.software-card-id-btn');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const id = btn.getAttribute('data-software-id') || btn.closest('[data-product-id]')?.getAttribute('data-product-id') || '';
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(id);
+      }else{
+        const ta = document.createElement('textarea');
+        ta.value = id;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+    }catch(err){}
+    showProductIdCopied(id);
+  }, true);
+})();
+</script>
+
 </body>
 </html>
-document.addEventListener('click',async(e)=>{const b=e.target.closest('.software-card-id-btn');if(!b)return;const id=b.dataset.softwareId||'';try{await navigator.clipboard.writeText(id);}catch{} alert('Product ID copied: '+id);});
