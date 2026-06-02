@@ -4921,6 +4921,26 @@ document.addEventListener('click',function(e){
 })();
 </script>
 
+
+<script id="azobss-cart-click-hard-fix">
+document.addEventListener('click',function(e){
+ const btn=e.target.closest('.cart-btn,.add-cart-btn,[data-add-cart],[data-az-add-cart],.btn-cart');
+ if(!btn) return;
+ btn.style.pointerEvents='auto';
+},true);
+</script>
+<style id="azobss-cart-click-css-fix">
+.cart-btn,.add-cart-btn,.btn-cart,[data-add-cart],[data-az-add-cart]{
+ cursor:pointer!important;
+ pointer-events:auto!important;
+ position:relative!important;
+ z-index:60!important;
+}
+.cart-btn *,.add-cart-btn *,.btn-cart *{
+ pointer-events:none!important;
+}
+</style>
+
 </body>
 </html>
 
