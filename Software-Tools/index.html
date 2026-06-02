@@ -4888,6 +4888,19 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   });
 })();
 </script>
+
+<script id="azobss-download-btn-direct-click-fix">
+document.addEventListener('click',function(e){
+ const btn=e.target.closest('.download-btn');
+ if(!btn) return;
+ if(btn.dataset.azobssPremiumBuy==='1') return;
+ const href=btn.getAttribute('href')||btn.dataset.downloadLink||btn.dataset.secureDownloadLink;
+ if(!href || href==='#') return;
+ e.preventDefault();
+ e.stopPropagation();
+ window.open(href,'_blank','noopener');
+},true);
+</script>
 </body>
 </html>
 
