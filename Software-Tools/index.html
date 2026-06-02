@@ -2011,9 +2011,6 @@ document.addEventListener('error', function(e){
 .az-card-cart-btn *,
 .az-card-cart-btn .az-card-cart-icon,
 .az-card-cart-btn .az-card-cart-text,
-.az-card-cart-slot *{
-  pointer-events:none!important;
-}
 .az-card-cart-slot{
   pointer-events:auto!important;
   position:relative!important;
@@ -4637,7 +4634,6 @@ return;
           setTimeout(() => updateButton(btn, fresh), 30);
           setTimeout(() => window.dispatchEvent(new Event('azobss-shop-cart-updated')), 80);
         }
-        btn.addEventListener('pointerup', azRunCardCart);
         btn.addEventListener('click', azRunCardCart);
         slot.appendChild(btn);
       }
@@ -4978,6 +4974,24 @@ document.addEventListener('click',function(e){
 .cart-btn svg,
 .cart-btn i,
 .cart-btn span{
+  pointer-events:none!important;
+}
+</style>
+
+
+<style id="azobss-cart-button-safe-click-override">
+.az-card-cart-slot,
+.az-card-cart-btn{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+.az-card-cart-btn{
+  position:relative!important;
+  z-index:9999!important;
+}
+.az-card-cart-btn > *,
+.az-card-cart-btn .az-card-cart-icon,
+.az-card-cart-btn .az-card-cart-text{
   pointer-events:none!important;
 }
 </style>
