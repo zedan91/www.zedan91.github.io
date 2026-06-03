@@ -1,0 +1,19 @@
+AZOBSS MINIMAL FIX
+
+Baseline:
+AZOBSS-HIDE-ADMIN-ICON-GUEST-USER-FIX_20260604_051755.zip
+
+Fixed:
+- Broken JS syntax:
+  'mobile':'Software','Mobile & Accessories'
+  -> 'mobile':'Mobile & Accessories'
+
+Files syntax fixed:
+PA-BM/index.html
+index.html
+
+Also:
+- Added document.body guard in admin icon hide script.
+- Did not edit login flow.
+- Did not edit auth JS logic.
+- Syntax check after patch: 0 errors.

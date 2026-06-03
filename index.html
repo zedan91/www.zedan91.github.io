@@ -8977,7 +8977,7 @@ body.az-admin-icon-confirmed [href="/admin/"][aria-label="Admin Dashboard"]{
     return role === 'admin'
       || username === 'zedan91'
       || email === 'zedan91@azobss.local'
-      || document.body.classList.contains('azobss-support-admin');
+      || (document.body && document.body.classList.contains('azobss-support-admin'));
   }
 
   function findMini(){
@@ -8997,7 +8997,7 @@ body.az-admin-icon-confirmed [href="/admin/"][aria-label="Admin Dashboard"]{
 
   function run(){
     var ok = !!isAdmin();
-    document.body.classList.toggle('az-admin-icon-confirmed', ok);
+    if(document.body) document.body.classList.toggle('az-admin-icon-confirmed', ok);
 
     var icon = findIcon();
     if(!icon) return;
@@ -11552,7 +11552,7 @@ normalizeCategory(category)===normalizeCategory(filter);
   }
   function labelFromCategory(v){
     return ({
-      'computer':'Computer & Accessories','mobile':'Software','Mobile & Accessories','automotive':'Automotive',
+      'computer':'Computer & Accessories','mobile':'Mobile & Accessories','automotive':'Automotive',
       'home-living':'Home & Living','baby':'Baby & Toys','sports':'Sports & Outdoor','fashion':'Fashion Accessories','others':'Others'
     })[v] || 'Others';
   }

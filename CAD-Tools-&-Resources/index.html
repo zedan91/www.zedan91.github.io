@@ -1863,7 +1863,7 @@ body.az-admin-icon-confirmed [href="/admin/"][aria-label="Admin Dashboard"]{
     return role === 'admin'
       || username === 'zedan91'
       || email === 'zedan91@azobss.local'
-      || document.body.classList.contains('azobss-support-admin');
+      || (document.body && document.body.classList.contains('azobss-support-admin'));
   }
 
   function findMini(){
@@ -1883,7 +1883,7 @@ body.az-admin-icon-confirmed [href="/admin/"][aria-label="Admin Dashboard"]{
 
   function run(){
     var ok = !!isAdmin();
-    document.body.classList.toggle('az-admin-icon-confirmed', ok);
+    if(document.body) document.body.classList.toggle('az-admin-icon-confirmed', ok);
 
     var icon = findIcon();
     if(!icon) return;
