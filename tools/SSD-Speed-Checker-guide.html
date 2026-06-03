@@ -1825,8 +1825,12 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   window.__azAdminDashboardIconLinkPatch=true;
 
   function isAdminVisible(){
+    const body=(document.body?.innerText||'').toLowerCase();
     return document.body.classList.contains('azobss-support-admin')
-      || (document.body.innerText||'').toLowerCase().includes('hello, zedan91');
+      || body.includes('zedan91')
+      || body.includes('admin dashboard')
+      || body.includes('hello, zedan91')
+      || body.includes('hello zedan91');
   }
 
   function findMiniWebTools(){
@@ -1916,10 +1920,16 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
     const mini=findMiniWebTools();
     if(mini && mini.parentNode){
+
       mini.insertAdjacentElement('afterend',a);
     }else{
       const nav=findNav();
       if(nav) nav.appendChild(a);
+      else{
+        const targets=[...document.querySelectorAll('a,button,div')];
+        const profile=targets.find(x=>(x.textContent||'').toLowerCase().includes('hello,'));
+        if(profile && profile.parentNode) profile.parentNode.insertBefore(a, profile);
+      }
     }
 
     updateAdminBadge(a);
