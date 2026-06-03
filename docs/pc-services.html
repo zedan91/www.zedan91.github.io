@@ -1,4 +1,96 @@
 
+<style id="az-admin-icon-strict-style">
+#azAdminDashboardIconLink,
+#azAdminDashboardTopLink,
+#azAdminStrictIconLink,
+.az-admin-dashboard-direct-link,
+[href="/admin/"][title="Admin Dashboard"],
+[href="/admin/"][aria-label="Admin Dashboard"]{
+  display:none!important;
+}
+body.az-admin-verified #azAdminDashboardIconLink,
+body.az-admin-verified #azAdminDashboardTopLink,
+body.az-admin-verified #azAdminStrictIconLink,
+body.az-admin-verified .az-admin-dashboard-direct-link,
+body.az-admin-verified [href="/admin/"][title="Admin Dashboard"],
+body.az-admin-verified [href="/admin/"][aria-label="Admin Dashboard"]{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-admin-icon-strict-check">
+(function(){
+  if(window.__azAdminIconStrictCheck) return;
+  window.__azAdminIconStrictCheck = true;
+
+  function readUser(){
+    var keys = ['azobssUser','azobss_current_user','azobssSavedUser','azobssCurrentUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj) return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function isAdmin(){
+    var u = readUser();
+    var role = String(u.role || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.name || u.displayName || '').toLowerCase();
+    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
+
+    return role === 'admin'
+      || username === 'zedan91'
+      || email === 'zedan91@azobss.local'
+      || (document.body && document.body.classList.contains('azobss-support-admin'));
+  }
+
+  function findMini(){
+    return Array.from(document.querySelectorAll('a,button,[role="button"]')).find(function(el){
+      return (el.textContent || '').trim().toLowerCase().includes('mini web tools');
+    });
+  }
+
+  function findIcon(){
+    return document.getElementById('azAdminDashboardIconLink')
+      || document.getElementById('azAdminDashboardTopLink')
+      || document.getElementById('azAdminStrictIconLink')
+      || document.querySelector('.az-admin-dashboard-direct-link')
+      || document.querySelector('[href="/admin/"][title="Admin Dashboard"]')
+      || document.querySelector('[href="/admin/"][aria-label="Admin Dashboard"]');
+  }
+
+  function run(){
+    if(!document.body) return;
+    var ok = isAdmin();
+    document.body.classList.toggle('az-admin-verified', ok);
+
+    var icon = findIcon();
+    if(!icon) return;
+
+    icon.textContent = '🛠️';
+    icon.href = '/admin/';
+    icon.title = 'Admin Dashboard';
+    icon.setAttribute('aria-label','Admin Dashboard');
+
+    var mini = findMini();
+    if(mini && mini.parentNode && mini.nextElementSibling !== icon){
+      mini.insertAdjacentElement('afterend', icon);
+    }
+    if(icon.parentElement) icon.parentElement.style.overflow = 'visible';
+  }
+
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState !== 'loading') run();
+  [300,800,1500,3000,5000,8000].forEach(function(t){ setTimeout(run,t); });
+  window.addEventListener('storage', run);
+  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+})();
+</script>
+
 <style id="azobss-support-notification-panel-style">
 /* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
 #azBellModal.azobss-modal-lite,
@@ -1208,126 +1300,3 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 </script>
 
 
-<script id="azobss-admin-dashboard-icon-link-patch">
-(function(){
-  if(window.__azAdminDashboardIconLinkPatch) return;
-  window.__azAdminDashboardIconLinkPatch=true;
-
-  function isAdminVisible(){
-    const body=(document.body?.innerText||'').toLowerCase();
-    return document.body.classList.contains('azobss-support-admin')
-      || body.includes('zedan91')
-      || body.includes('admin dashboard')
-      || body.includes('hello, zedan91')
-      || body.includes('hello zedan91');
-  }
-
-  function findMiniWebTools(){
-    const links=[...document.querySelectorAll('a,button,[role="button"]')];
-    return links.find(el=>(el.textContent||'').trim().toLowerCase().includes('mini web tools'));
-  }
-
-  function findNav(){
-    return document.querySelector('.floating-nav,.topbar,.sticky-bar,.nav-actions,.market-actions,.header-actions,.site-actions,header nav,header') || null;
-  }
-
-  async function updateAdminBadge(a){
-    try{
-      if(!a || window.__azAdminBadgeBusy) return;
-      window.__azAdminBadgeBusy=true;
-
-      const appMod=await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js');
-      const authMod=await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
-      const fsMod=await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
-      const config={
-        apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
-        authDomain:'azobss.firebaseapp.com',
-        projectId:'azobss',
-        storageBucket:'azobss.firebasestorage.app',
-        messagingSenderId:'159277716405',
-        appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
-      };
-      const app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp(config);
-      const db=fsMod.getFirestore(app);
-
-      let count=0;
-
-      try{
-        const support=await fsMod.getDocs(fsMod.query(fsMod.collection(db,'supportMessages'),fsMod.orderBy('createdAtMs','desc'),fsMod.limit(50)));
-        support.forEach(d=>{
-          const x=d.data();
-          const status=String(x.status||'open').toLowerCase();
-          const reply=String(x.reply||'').trim();
-          if(status==='open' || !reply) count++;
-        });
-      }catch(e){}
-
-      try{
-        const purchases=await fsMod.getDocs(fsMod.query(fsMod.collection(db,'purchaseLogs'),fsMod.orderBy('createdAtMs','desc'),fsMod.limit(50)));
-        purchases.forEach(d=>{
-          const x=d.data();
-          const status=String(x.status||'').toLowerCase();
-          if(!status || status==='pending' || status==='unpaid' || status==='waiting') count++;
-        });
-      }catch(e){}
-
-      const badge=a.querySelector('.az-admin-dashboard-badge');
-      if(badge){
-        if(count>0){
-          badge.textContent=String(Math.min(count,99));
-          badge.style.display='inline-flex';
-        }else{
-          badge.style.display='none';
-        }
-      }
-    }catch(e){
-      console.warn('AZOBSS admin badge update failed:',e);
-    }finally{
-      window.__azAdminBadgeBusy=false;
-    }
-  }
-
-  function addAdminLink(){
-    if(!isAdminVisible()) return;
-
-    const old=document.getElementById('azAdminDashboardTopLink');
-    if(old && old.textContent.trim()==='Admin') old.remove();
-
-    if(document.getElementById('azAdminDashboardIconLink')) return;
-
-    const a=document.createElement('a');
-    a.id='azAdminDashboardIconLink';
-    a.href='/admin/';
-    a.title='Admin Dashboard';
-    a.setAttribute('aria-label','Admin Dashboard');
-    a.innerHTML='<span class="az-admin-dashboard-icon">🛠️</span><span class="az-admin-dashboard-badge" style="display:none">0</span>';
-    a.style.cssText='position:relative;display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;min-width:42px;border-radius:999px;margin-left:6px;background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid rgba(34,197,94,.45);color:#22c55e;text-decoration:none;font-size:20px;font-weight:950;box-shadow:0 0 14px rgba(34,197,94,.14);vertical-align:middle;';
-    const style=document.createElement('style');
-    style.id='azAdminDashboardIconStyle';
-    style.textContent='#azAdminDashboardIconLink:hover{transform:translateY(-1px);box-shadow:0 0 16px rgba(34,197,94,.32)!important}.az-admin-dashboard-badge{position:absolute;top:-7px;right:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(2,6,23,.95)}';
-    if(!document.getElementById('azAdminDashboardIconStyle')) document.head.appendChild(style);
-
-    const mini=findMiniWebTools();
-    if(mini && mini.parentNode){
-
-      mini.insertAdjacentElement('afterend',a);
-    }else{
-      const nav=findNav();
-      if(nav) nav.appendChild(a);
-      else{
-        const targets=[...document.querySelectorAll('a,button,div')];
-        const profile=targets.find(x=>(x.textContent||'').toLowerCase().includes('hello,'));
-        if(profile && profile.parentNode) profile.parentNode.insertBefore(a, profile);
-      }
-    }
-
-    updateAdminBadge(a);
-    setInterval(()=>updateAdminBadge(a),30000);
-  }
-
-  document.addEventListener('DOMContentLoaded',addAdminLink);
-  if(document.readyState!=='loading') addAdminLink();
-  [500,1500,3000,5000].forEach(t=>setTimeout(addAdminLink,t));
-  new MutationObserver(addAdminLink).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>

@@ -1495,8 +1495,8 @@ function mergeDuplicateUserRecords(existing, incoming){
     if(u?.email || u?.authEmail) s += 3;
     return s;
   };
-  const existingMs = getFirestoreMs(existing.updatedAt || existing.createdAt || existing.createdAtClient || existing.updatedAtClient);
-  const incomingMs = getFirestoreMs(incoming.updatedAt || incoming.createdAt || incoming.createdAtClient || incoming.updatedAtClient);
+  const existingMs = firestoreMs(existing.updatedAt || existing.createdAt || existing.createdAtClient || existing.updatedAtClient);
+  const incomingMs = firestoreMs(incoming.updatedAt || incoming.createdAt || incoming.createdAtClient || incoming.updatedAtClient);
   const base = incomingMs >= existingMs ? { ...existing, ...incoming } : { ...incoming, ...existing };
   const preferred = pickScore(incoming) >= pickScore(existing) ? incoming : existing;
   base.id = normalizeUsername(preferred.id || preferred.usernameKey || preferred.username || preferred.name || base.id || '');
