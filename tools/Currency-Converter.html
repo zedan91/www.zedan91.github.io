@@ -1471,6 +1471,47 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 })();
 </script>
 
+
+<style id="az-bell-badge-style">
+#azBellBadge{position:fixed;z-index:99999999;background:#ef4444;color:#fff;min-width:18px;height:18px;padding:0 4px;border-radius:999px;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center}
+</style>
+<script>
+(function(){
+const KEY='azobss_notifications_seen_at';
+function updateBellBadge(){
+ const bell=document.querySelector('[title="Notifications"]');
+ if(!bell) return;
+ let badge=document.getElementById('azBellBadge');
+ if(!badge){badge=document.createElement('div');badge.id='azBellBadge';document.body.appendChild(badge);}
+ const r=bell.getBoundingClientRect();
+ badge.style.left=(window.scrollX+r.right-6)+'px';
+ badge.style.top=(window.scrollY+r.top-6)+'px';
+ const seen=Number(localStorage.getItem(KEY)||0);
+ const items=[...document.querySelectorAll('#azNotificationList .azobss-lite-item')];
+ const count=items.length && !items[0].textContent.includes('No notifications') ? items.length : 0;
+ if(count>0 && seen===0){badge.textContent=count;badge.style.display='flex';}
+ else badge.style.display='none';
+}
+const oldOpen=window.azobssLoadNotifications;
+if(oldOpen){
+ window.azobssLoadNotifications=async function(){
+   const r=await oldOpen.apply(this,arguments);
+   setTimeout(updateBellBadge,500);
+   return r;
+ }
+}
+document.addEventListener('click',e=>{
+ const bell=e.target.closest('[title="Notifications"]');
+ if(bell){
+   localStorage.setItem(KEY,Date.now());
+   const b=document.getElementById('azBellBadge'); if(b) b.style.display='none';
+ }
+},true);
+setInterval(updateBellBadge,2000);
+window.addEventListener('load',()=>setTimeout(updateBellBadge,1500));
+})();
+</script>
+
 </body>
 </html>
 
