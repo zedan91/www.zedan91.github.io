@@ -2,6 +2,7 @@
 
 <html>
 <head>
+<base href="../"/>
 <meta charset="utf-8"/>
 <title>AZOBSS | PC Service, Info Lot &amp; Digital Tools</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -1730,7 +1731,6 @@
       display: none !important;
     }
 
-    #paForm,
     #adminPurchasePanel,
     #registeredUsersPanel,
     .login-only {
@@ -2669,7 +2669,7 @@ body.is-admin #guestHistoryPanel,
   display:flex !important;
   flex-direction:column !important;
   align-items:center !important;
-  justify-content:flex-start !important;
+  justify-content:center !important;
   gap:10px !important;
   border:0 !important;
   border-right:1px solid #eef2f7 !important;
@@ -3555,7 +3555,7 @@ body:not(.is-admin) .affiliate-card-admin-actions{
   .user-compact-actions{
     width:100% !important;
     flex-direction:row !important;
-    justify-content:flex-start !important;
+    justify-content:center !important;
   }
 }
 
@@ -3647,7 +3647,7 @@ body:not(.is-admin) .affiliate-card-admin-actions{
   .user-compact-actions{
     width:100% !important;
     flex-direction:row !important;
-    justify-content:flex-start !important;
+    justify-content:center !important;
   }
 }
 
@@ -4575,7 +4575,7 @@ body.is-admin .lucky-draw-prize-admin{
 .cad-category-panel h3{
   margin:0 0 14px !important;
   color:#fb923c !important;
-  font-size:22px !important;
+  font-size:42px !important;
   text-align:left !important;
 }
 
@@ -4690,7 +4690,7 @@ body.is-admin .lucky-draw-prize-admin{
 @media(max-width:760px){
   .azobss-topbar{
     overflow-x:auto !important;
-    justify-content:flex-start !important;
+    justify-content:center !important;
     -webkit-overflow-scrolling:touch !important;
   }
   .azobss-topbar::-webkit-scrollbar{
@@ -5116,7 +5116,7 @@ body:not(.is-admin) #purchaseSummaryList .small-action-btn{
     flex-direction:column !important;
   }
   .user-purchase-summary-meta{
-    justify-content:flex-start !important;
+    justify-content:center !important;
     text-align:left !important;
   }
   .purchase-detail-row{
@@ -5209,28 +5209,83 @@ body:not(.is-admin) #purchaseSummaryList .small-action-btn{
 }
 
 
+/* PAYMENT CTA CENTER + TOTAL */
+.payment-cta-wrap{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  margin:14px auto 28px !important;
+  text-align:center !important;
+}
+
+.payment-cta-button{
+  width:min(360px, 90vw) !important;
+  min-height:54px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:10px !important;
+  margin:0 auto !important;
+  border-radius:12px !important;
+  font-size:30px !important;
+  font-weight:800 !important;
+}
+
+.payment-cta-button::before{
+  content:"▣";
+  font-size:24px;
+  line-height:1;
+}
+
+.payment-total-cta{
+  color:#facc15 !important;
+  font-size:34px !important;
+  font-weight:900 !important;
+  line-height:1.15 !important;
+  text-shadow:0 2px 8px rgba(250,204,21,.18) !important;
+}
+
+@media(max-width:768px){
+.payment-total-cta{
+font-size:24px !important;
+font-weight:900 !important;
+}
+}
+
+
+@media(max-width:640px){
+  .payment-cta-wrap{
+    gap:5px !important;
+    margin:12px auto 22px !important;
+  }
+  .payment-cta-button{
+    width:min(280px, 82vw) !important;
+    min-height:46px !important;
+    font-size:18px !important;
+    border-radius:10px !important;
+  }
+  .payment-cta-button::before{
+    font-size:20px !important;
+  }
+  .payment-total-cta{
+    font-size:15px !important;
+    line-height:1.1 !important;
+  }
+}
+
+@media(max-width:380px){
+  .payment-total-cta{
+    font-size:13px !important;
+  }
+}
+
+
 /* AZOBSS phone input: country code stays inside country selector; local phone box displays 10-3560 0723 only. */
 .phone-prefix{display:none!important;}
 .phone-number-wrap input{padding-left:14px!important;}
-
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
 
 
 /* AZOBSS PA/BM ToyyibPay payment box */
@@ -5310,50 +5365,12 @@ body:not(.is-admin) #purchaseSummaryList .small-action-btn{
     grid-template-columns: 1fr !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 body:not(.is-admin) #purchaseRecordTools,
 body:not(.is-admin) .purchase-record-actions{
 display:none !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* MOBILE AFFILIATE SHOP RESPONSIVE FIX - AZOBSS */
@@ -5379,46 +5396,8 @@ display:none !important;
   .affiliate-back-btn{min-width:0 !important;width:100% !important;}
 }
 @media (min-width: 769px) and (max-width: 1100px){.affiliate-products{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}}
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -5630,25 +5609,6 @@ a.btn:has(.globe-icon):hover{ box-shadow:0 0 44px rgba(34,197,94,.25), 0 20px 50
     min-width:100% !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -5665,7 +5625,7 @@ a.btn:has(.globe-icon):hover{ box-shadow:0 0 44px rgba(34,197,94,.25), 0 20px 50
   display:flex !important;
   flex-wrap:wrap !important;
   align-items:stretch !important;
-  justify-content:flex-start !important;
+  justify-content:center !important;
   gap:16px !important;
   row-gap:16px !important;
   overflow:visible !important;
@@ -5803,25 +5763,6 @@ a.btn:has(.globe-icon):hover{ box-shadow:0 0 44px rgba(34,197,94,.25), 0 20px 50
     width:100% !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -5881,25 +5822,6 @@ a.btn:has(.globe-icon):hover{ box-shadow:0 0 44px rgba(34,197,94,.25), 0 20px 50
         height:70px !important;
     }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -5978,25 +5900,6 @@ a.btn span{
     height:48px !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6093,25 +5996,6 @@ a.btn.orange[href="#software"] span::first-line{
     height:44px !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6197,25 +6081,6 @@ a.btn.orange[href="#software"] span::first-line{
   }
 
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6241,25 +6106,6 @@ a.btn.orange[href="#software"] span::first-line{
     font-weight:900 !important;
     letter-spacing:.4px !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6304,7 +6150,7 @@ a.btn.orange[href="#software"] span::first-line{
 
 .lucky-draw-top-countdown strong{
   color:#22c55e !important;
-  font-size:28px !important;
+  font-size:24px !important;
   line-height:1.1 !important;
   font-weight:1000 !important;
   font-variant-numeric:tabular-nums !important;
@@ -6337,25 +6183,6 @@ a.btn.orange[href="#software"] span::first-line{
     font-size:24px !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6427,7 +6254,7 @@ a.btn.orange[href="#software"] span::first-line{
   justify-content:center !important;
 
   color:#fde047 !important;
-  font-size:22px !important;
+  font-size:42px !important;
   font-weight:1000 !important;
   text-align:center !important;
 
@@ -6456,25 +6283,6 @@ a.btn.orange[href="#software"] span::first-line{
     font-size:18px !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6534,25 +6342,6 @@ a.btn.orange[href="#software"] span::first-line{
     width:100% !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6591,25 +6380,6 @@ body.is-admin .lucky-draw-remove-participant-btn{
   background:#dc2626 !important;
   color:#fff !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6672,25 +6442,6 @@ body.is-admin .lucky-draw-pagination{
     font-size:12px;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6808,25 +6559,6 @@ body.is-admin .lucky-draw-pagination{
     max-height:260px;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6838,25 +6570,6 @@ body.is-admin .lucky-draw-pagination{
   overflow:hidden !important;
   text-overflow:ellipsis !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* =========================================================
@@ -6896,25 +6609,6 @@ body.is-admin .lucky-draw-admin-pagination{
   opacity:.45;
   cursor:not-allowed;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 .lucky-draw-folder-note{
@@ -6931,25 +6625,6 @@ body.is-admin .lucky-draw-admin-pagination{
   background:#0b1120 !important;
   padding:16px !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* COUNTDOWN WORDING FIX V18 */
@@ -6958,25 +6633,6 @@ body.is-admin .lucky-draw-admin-pagination{
   line-height:1.35 !important;
   white-space:normal !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* SAFE HIDE: top marketplace/search strip only */
@@ -6994,25 +6650,6 @@ section:has(input[placeholder*="Search for an item"]),
   padding:0 !important;
   overflow:hidden !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* NAV WHATSAPP CIRCLE BUTTON FIX */
@@ -7053,25 +6690,6 @@ button:has(.nav-whatsapp-circle){
   justify-content:center !important;
   overflow:hidden !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* Rapatkan logo AZOBSS ke kiri */
@@ -7087,25 +6705,6 @@ button:has(.nav-whatsapp-circle){
  margin-left:-18px !important;
  padding-left:0 !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* FINAL HOME MOVE UP WITHOUT BIG AZOBSS TITLE */
@@ -7227,25 +6826,6 @@ body{
   z-index: auto !important;
   margin: 0 auto 22px !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 /* Stable CSS chat icon: avoids emoji/encoding corruption */
@@ -7255,68 +6835,30 @@ body{
 .whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
-</style><style>#liveUsersPanel,#loginHistoryPanel,#guestHistoryPanel{display:block!important;visibility:visible!important;opacity:1!important}
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
-</style><style>
+</style><style>#liveUsersPanel,#loginHistoryPanel,#guestHistoryPanel{display:block!important;visibility:visible!important;opacity:1!important}</style><style>
 /* Move PA/BM tools to the dedicated /PA-BM/ page. */
 body:not(.pa-bm-page) #request {
   display: none !important;
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
+</style><style>
+/* Dedicated PA/BM page: keep the shared sticky bar and show only the PA/BM workspace. */
+body.pa-bm-page .azobss-topbar,
+body.pa-bm-page .hero,
+body.pa-bm-page #Software,
+body.pa-bm-page #software,
+body.pa-bm-page #affiliate,
+body.pa-bm-page #luckyDraw,
+body.pa-bm-page #memberLogin,
+body.pa-bm-page footer {
+  display: none !important;
 }
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
+body.pa-bm-page #request {
+  display: block !important;
+  padding-top: 72px !important;
 }
-
+body.pa-bm-page #request .card {
+  margin-top: 0 !important;
+}
 </style>
 <style id="azobss-pro-navbar-icons-css">
 .market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:nowrap;}
@@ -7325,25 +6867,6 @@ body:not(.pa-bm-page) #request {
 .market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .market-icon-btn:hover{color:#22c55e;}
 @media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:hidden;text-overflow:ellipsis}}
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 
 <style id="azobss-pro-navbar-consistency-v1">
@@ -7418,25 +6941,6 @@ body:not(.pa-bm-page) #request {
   .market-nav a:has(.nav-whatsapp-circle){width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;}
   .market-icon-btn{width:26px!important;}
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 
 <style id="azobss-navbar-responsive-final-v2">
@@ -7506,25 +7010,6 @@ body{padding-top:58px!important;}
   .market-icon-btn svg{width:21px!important;height:21px!important;}
   .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
 
@@ -7534,6 +7019,61 @@ body{padding-top:58px!important;}
 .market-nav .nav-pa-bm-link.is-hidden,
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+
+<style>
+/* AZOBSS FIX: Purchase Records pagination style like reference screenshot */
+#purchaseRecordsPagination,
+#userPaPurchasePagination{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-wrap:wrap !important;
+  gap:7px !important;
+  margin-top:10px !important;
+}
+#purchaseRecordsPagination[hidden],
+#userPaPurchasePagination[hidden]{
+  display:none !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn,
+#userPaPurchasePagination .guest-history-page-btn{
+  min-width:34px !important;
+  height:34px !important;
+  padding:0 10px !important;
+  border:1px solid rgba(37,99,235,.65) !important;
+  border-radius:8px !important;
+  background:#0f172a !important;
+  color:#cbd5e1 !important;
+  font-weight:800 !important;
+  font-size:13px !important;
+  line-height:1 !important;
+  box-shadow:none !important;
+  cursor:pointer !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn:hover:not(:disabled),
+#userPaPurchasePagination .guest-history-page-btn:hover:not(:disabled){
+  border-color:#22c55e !important;
+  color:#fff !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn.is-active,
+#userPaPurchasePagination .guest-history-page-btn.is-active{
+  background:#22c55e !important;
+  border-color:#22c55e !important;
+  color:#052e16 !important;
+}
+#purchaseRecordsPagination .guest-history-page-btn:disabled,
+#userPaPurchasePagination .guest-history-page-btn:disabled{
+  opacity:.55 !important;
+  cursor:not-allowed !important;
+}
+</style>
+
+<style id="azobss-pa-bm-page-access-guard">
+body:not(.has-pa-access) main,
+body:not(.has-pa-access) .pa-section,
+body:not(.has-pa-access) #paForm,
+body:not(.has-pa-access) #adminPurchasePanel{display:none!important;}
 
 
 /* AZOBSS REGISTERED USERS - TRUE ONE LINE COMPACT FINAL */
@@ -7647,25 +7187,6 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
     overflow-x:auto !important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 
@@ -7688,25 +7209,6 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 @media(max-width:760px){
   body.is-admin .az-purchase-mini-top{grid-template-columns:1fr!important;align-items:start!important;}
   body.is-admin .az-purchase-mini-actions{justify-content:flex-start!important;}
-}
-
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
 }
 
 </style>
@@ -7790,40 +7292,21 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
   }
 }
 
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
-#registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:4px!important;}
+#registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
 #registeredUsersList .az-admin-user-row-card,
 #registeredUsersList .az-admin-user-compact-card,
 #liveUsersList .purchase-summary-item,
 #loginHistoryList .purchase-summary-item,
 #guestHistoryList .purchase-summary-item{
   min-height:0!important;
-  padding:4px 8px!important;
-  border-radius:8px!important;
+  padding:7px 10px!important;
+  border-radius:9px!important;
   line-height:1.12!important;
-  font-size:11px!important;
+  font-size:12px!important;
 }
 #registeredUsersList .az-admin-user-compact-card{
   display:grid!important;
@@ -7836,11 +7319,11 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 #registeredUsersList .az-admin-register-date{font-size:11px!important;white-space:nowrap!important;}
 #registeredUsersList .az-admin-user-row-actions{display:flex!important;gap:6px!important;justify-content:flex-end!important;}
 #registeredUsersList .az-admin-small-btn{height:24px!important;min-width:50px!important;padding:0 8px!important;border-radius:6px!important;font-size:10px!important;}
-.admin-live-panel{margin-top:8px!important;padding-top:8px!important;}
-.admin-live-panel h4{font-size:13px!important;margin:0 0 7px!important;}
-.guest-history-stats{gap:8px!important;margin:0 0 7px!important;}
-.guest-history-stat{padding:5px 10px!important;border-radius:8px!important;font-size:10.5px!important;}
-.guest-history-stat strong{font-size:17px!important;margin-top:1px!important;}
+.admin-live-panel{margin-top:10px!important;padding-top:10px!important;}
+.admin-live-panel h4{font-size:14px!important;margin:0 0 8px!important;}
+.guest-history-stats{gap:8px!important;margin:0 0 8px!important;}
+.guest-history-stat{padding:6px 10px!important;border-radius:8px!important;font-size:11px!important;}
+.guest-history-stat strong{font-size:18px!important;margin-top:2px!important;}
 #liveUsersList .admin-purchase-user-card,
 #loginHistoryList .admin-purchase-user-card,
 #guestHistoryList .admin-purchase-user-card{gap:4px!important;}
@@ -7869,47 +7352,14 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
   font-size:11px!important;
   color:#cbd5e1!important;
 }
-.guest-history-pagination{gap:4px!important;margin-top:6px!important;align-items:center!important;}
-.guest-history-page-btn{min-width:26px!important;height:26px!important;padding:0 7px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important;}
+.guest-history-pagination{gap:5px!important;margin-top:7px!important;align-items:center!important;}
+.guest-history-page-btn{min-width:28px!important;height:28px!important;padding:0 8px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important;}
 .guest-history-page-btn.is-compact{min-width:26px!important;height:26px!important;padding:0 7px!important;}
 .guest-history-page-dots{display:inline-flex!important;align-items:center!important;height:26px!important;padding:0 2px!important;color:#94a3b8!important;font-weight:bold!important;}
-
-#liveUsersList .az-admin-inline-card,
-#loginHistoryList .az-admin-inline-card,
-#guestHistoryList .az-admin-inline-card{padding:4px 8px!important;margin-bottom:5px!important;min-height:0!important;}
-#liveUsersList .az-admin-inline-row,
-#loginHistoryList .az-admin-inline-row,
-#guestHistoryList .az-admin-inline-row{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important;font-size:11px!important;line-height:1.15!important;}
-#liveUsersList .az-admin-inline-row strong,
-#loginHistoryList .az-admin-inline-row strong,
-#guestHistoryList .az-admin-inline-row strong{font-size:11.5px!important;color:#fff!important;}
-#liveUsersList .az-admin-inline-row span,
-#loginHistoryList .az-admin-inline-row span,
-#guestHistoryList .az-admin-inline-row span{white-space:nowrap!important;}
-
 @media(max-width:700px){
   #registeredUsersList .az-admin-user-compact-card{grid-template-columns:1fr!important;}
   #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 <style>
 
@@ -8002,114 +7452,6 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
   body.is-admin #purchaseSummaryList .az-purchase-mini-total{flex:0 1 auto!important;}
   body.is-admin #purchaseSummaryList .az-purchase-mini-actions{margin-left:0!important;}
 }
-
-/* AZOBSS FIX 2026-05-23: purchase admin compact row + fully visible Show/Reset */
-#purchaseSummaryList .purchase-summary-item.admin-purchase-user-card.az-purchase-mini-card{width:100%!important;max-width:100%!important;overflow:visible!important;padding:7px 10px!important;margin:0 0 7px!important;box-sizing:border-box!important;}
-#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{display:grid!important;grid-template-columns:minmax(95px,1fr) minmax(210px,1.55fr) minmax(110px,.9fr) minmax(52px,.45fr) minmax(70px,.55fr) 128px!important;column-gap:10px!important;align-items:center!important;width:100%!important;max-width:100%!important;min-height:32px!important;overflow:visible!important;box-sizing:border-box!important;}
-#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top>*{min-width:0!important;white-space:nowrap!important;box-sizing:border-box!important;}
-#purchaseSummaryList .az-purchase-mini-user,#purchaseSummaryList .az-purchase-mini-date,#purchaseSummaryList .az-purchase-mini-last,#purchaseSummaryList .az-purchase-mini-unit,#purchaseSummaryList .az-purchase-mini-total{overflow:hidden!important;text-overflow:ellipsis!important;font-size:12px!important;line-height:1.05!important;}
-#purchaseSummaryList .az-purchase-mini-user strong,#purchaseSummaryList .az-purchase-mini-date strong,#purchaseSummaryList .az-purchase-mini-last strong,#purchaseSummaryList .az-purchase-mini-unit strong,#purchaseSummaryList .az-purchase-mini-total strong{font-size:12px!important;line-height:1.05!important;}
-#purchaseSummaryList .az-purchase-mini-actions{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;width:128px!important;min-width:128px!important;max-width:128px!important;overflow:visible!important;justify-self:end!important;}
-#purchaseSummaryList .az-purchase-show-btn,#purchaseSummaryList .az-purchase-reset-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:60px!important;min-width:60px!important;max-width:60px!important;flex:0 0 60px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0!important;border-radius:8px!important;font-size:11px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important;box-sizing:border-box!important;}
-#purchaseSummaryList .az-purchase-reset-btn{background:#ef4444!important;color:#fff!important;}
-#purchaseSummaryList .az-purchase-show-btn{background:#2563eb!important;color:#fff!important;}
-@media(max-width:900px){#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{grid-template-columns:minmax(95px,1fr) minmax(185px,1.35fr) minmax(105px,.85fr) 50px 68px 128px!important;column-gap:7px!important;overflow-x:auto!important;scrollbar-width:thin!important;}}
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
-</style>
-<style>
-
-/* AZOBSS FIX 2026-05-23: tiny compact purchase action buttons so Show + Reset fit inside card */
-#purchaseSummaryList .purchase-summary-item.admin-purchase-user-card.az-purchase-mini-card{
-  overflow:hidden !important;
-  padding:7px 8px !important;
-}
-#purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{
-  display:grid !important;
-  grid-template-columns:minmax(88px,1fr) minmax(175px,1.45fr) minmax(100px,.9fr) minmax(44px,.42fr) minmax(64px,.55fr) 94px !important;
-  column-gap:8px !important;
-  align-items:center !important;
-  width:100% !important;
-  max-width:100% !important;
-  overflow:hidden !important;
-}
-#purchaseSummaryList .az-purchase-mini-actions{
-  width:94px !important;
-  min-width:94px !important;
-  max-width:94px !important;
-  display:flex !important;
-  flex-direction:row !important;
-  align-items:center !important;
-  justify-content:flex-end !important;
-  gap:4px !important;
-  overflow:visible !important;
-  justify-self:end !important;
-}
-#purchaseSummaryList .az-purchase-show-btn,
-#purchaseSummaryList .az-purchase-reset-btn{
-  width:45px !important;
-  min-width:45px !important;
-  max-width:45px !important;
-  flex:0 0 45px !important;
-  height:26px !important;
-  min-height:26px !important;
-  padding:0 !important;
-  margin:0 !important;
-  border-radius:7px !important;
-  font-size:10px !important;
-  font-weight:800 !important;
-  line-height:1 !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  white-space:nowrap !important;
-  box-sizing:border-box !important;
-}
-#purchaseSummaryList .az-purchase-reset-btn{
-  margin-right:0 !important;
-}
-@media(max-width:900px){
-  #purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{
-    grid-template-columns:minmax(78px,1fr) minmax(150px,1.35fr) minmax(88px,.85fr) 40px 58px 94px !important;
-    column-gap:5px !important;
-  }
-}
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 
 <style>
@@ -8197,178 +7539,8 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
     border-radius:22px!important;
   }
 }
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
 </style>
 
-<style>
-
-/* AZOBSS HARD FIX: center Software/CAD/Affiliate cards consistently */
-.downloads-grid,
-.software-grid,
-.cad-grid,
-.affiliate-grid,
-.products-grid{
-  align-items:stretch !important;
-}
-.download-card,
-.software-card,
-.software-product-card,
-.cad-card,
-.cad-item,
-.affiliate-card,
-.product-card{
-  position:relative !important;
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:flex-start !important;
-  text-align:center !important;
-  box-sizing:border-box !important;
-}
-.download-card .download-icon,
-.software-card .download-icon,
-.software-product-card .download-icon,
-.cad-card .download-icon,
-.cad-item .download-icon,
-.affiliate-card .download-icon,
-.product-card .download-icon{
-  margin-left:auto !important;
-  margin-right:auto !important;
-  flex:0 0 auto !important;
-}
-.download-card .software-badge,
-.download-card .free-software-badge,
-.download-card .badge,
-.software-card .software-badge,
-.software-card .free-software-badge,
-.software-card .badge,
-.software-product-card .software-badge,
-.software-product-card .free-software-badge,
-.software-product-card .badge,
-.cad-card .badge,
-.cad-item .badge,
-.affiliate-card .badge,
-.product-card .badge{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  align-self:center !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-  text-align:center !important;
-}
-.download-card h3,
-.software-card h3,
-.software-product-card h3,
-.cad-card h3,
-.cad-item h3,
-.affiliate-card h3,
-.product-card h3{
-  width:100% !important;
-  max-width:240px !important;
-  min-height:58px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-  line-height:1.22 !important;
-  margin:12px auto 10px !important;
-  padding:0 8px !important;
-  box-sizing:border-box !important;
-}
-.download-card p,
-.software-card p,
-.software-product-card p,
-.cad-card p,
-.cad-item p,
-.affiliate-card p,
-.product-card p{
-  width:100% !important;
-  max-width:245px !important;
-  min-height:70px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-  line-height:1.45 !important;
-  margin:0 auto 16px !important;
-  padding:0 8px !important;
-  box-sizing:border-box !important;
-}
-.download-card .download-btn,
-.software-card .download-btn,
-.software-product-card .download-btn,
-.cad-card .download-btn,
-.cad-item .download-btn,
-.affiliate-card .download-btn,
-.product-card .download-btn,
-.download-card a.download-btn,
-.software-card a.download-btn,
-.software-product-card a.download-btn{
-  margin-top:auto !important;
-  align-self:center !important;
-  text-align:center !important;
-}
-.download-card .az-like-btn,
-.download-card .like-btn,
-.software-card .az-like-btn,
-.software-card .like-btn,
-.software-product-card .az-like-btn,
-.software-product-card .like-btn,
-.cad-card .az-like-btn,
-.cad-card .like-btn,
-.affiliate-card .az-like-btn,
-.affiliate-card .like-btn,
-.product-card .az-like-btn,
-.product-card .like-btn{
-  position:absolute !important;
-  top:16px !important;
-  right:16px !important;
-  z-index:5 !important;
-}
-@media (max-width:700px){
-  .download-card h3,.software-card h3,.software-product-card h3,.cad-card h3,.cad-item h3,.affiliate-card h3,.product-card h3{min-height:auto !important;}
-  .download-card p,.software-card p,.software-product-card p,.cad-card p,.cad-item p,.affiliate-card p,.product-card p{min-height:auto !important;}
-}
-
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
-</style>
 <style>
 
 /* Performance fix: remove heavy shining/glow effect on service cards */
@@ -8422,15 +7594,15 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 </style>
 
 <style id="azobss-pa-bm-payment-top-final-fix">
-/* AZOBSS PA/BM final payment card: replaces old blue Pembayaran banner, no side overlap */
+/* AZOBSS PA/BM payment card compact final: Payment title above Total, method logos below status */
 .payment-cta-wrap.toyyibpay-payment-top{
   width:100% !important;
-  max-width:560px !important;
+  max-width:500px !important;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  margin:28px auto 26px !important;
-  padding:0 14px !important;
+  margin:22px auto 22px !important;
+  padding:0 12px !important;
   box-sizing:border-box !important;
   clear:both !important;
   position:relative !important;
@@ -8438,69 +7610,108 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-card-top{
   width:100% !important;
-  max-width:500px !important;
-  padding:28px 30px !important;
+  max-width:430px !important;
+  padding:22px 24px 24px !important;
   text-align:center !important;
   border:1px solid rgba(34,197,94,.9) !important;
-  border-radius:18px !important;
+  border-radius:17px !important;
   background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,18,37,.96)) !important;
-  box-shadow:0 18px 45px rgba(0,0,0,.32), 0 0 26px rgba(34,197,94,.10) !important;
+  box-shadow:0 14px 36px rgba(0,0,0,.30), 0 0 20px rgba(34,197,94,.09) !important;
   box-sizing:border-box !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{
   margin:0 0 12px !important;
-  color:#fff !important;
-  font-size:28px !important;
-  line-height:1.1 !important;
-  font-weight:900 !important;
+  color:#ffffff !important;
+  font-size:24px !important;
+  line-height:1.05 !important;
+  font-weight:950 !important;
+  letter-spacing:.2px !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-subtitle{
-  margin:0 0 20px !important;
-  color:#e5e7eb !important;
-  font-size:17px !important;
-  line-height:1.2 !important;
-  font-weight:900 !important;
+  display:none !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{
-  margin:0 0 22px !important;
+  margin:0 0 18px !important;
   color:#facc15 !important;
-  font-size:30px !important;
-  line-height:1.18 !important;
-  font-weight:900 !important;
+  font-size:28px !important;
+  line-height:1.12 !important;
+  font-weight:950 !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{
   display:inline-block !important;
-  margin-top:4px !important;
+  margin-top:3px !important;
   color:#22c55e !important;
-  font-size:34px !important;
+  font-size:32px !important;
   font-weight:950 !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-pay-btn{
-  width:min(330px,100%) !important;
-  min-height:66px !important;
+  width:min(300px,100%) !important;
+  min-height:58px !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   margin:0 auto !important;
-  padding:12px 22px !important;
+  padding:10px 20px !important;
   border-radius:12px !important;
   background:linear-gradient(135deg,#22c55e,#16a34a) !important;
   color:#fff !important;
-  font-size:24px !important;
-  line-height:1.2 !important;
+  font-size:22px !important;
+  line-height:1.15 !important;
   font-weight:950 !important;
   text-align:center !important;
   white-space:normal !important;
-  box-shadow:0 12px 26px rgba(34,197,94,.24) !important;
+  box-shadow:0 10px 22px rgba(34,197,94,.22) !important;
 }
 .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-status{
   display:block !important;
   min-height:0 !important;
-  margin:14px 0 0 !important;
+  margin:12px 0 0 !important;
   color:#f8fafc !important;
-  font-size:15px !important;
-  line-height:1.35 !important;
+  font-size:14px !important;
+  line-height:1.25 !important;
   font-weight:500 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-logos{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:12px !important;
+  margin:14px auto 0 !important;
+  color:#f8fafc !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  font-size:30px !important;
+  font-weight:950 !important;
+  letter-spacing:.2px !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx::before{
+  content:"◈" !important;
+  color:#38bdf8 !important;
+  font-size:24px !important;
+  line-height:1 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  font-size:18px !important;
+  font-weight:900 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank::before{
+  content:"🏦" !important;
+  font-size:22px !important;
+  line-height:1 !important;
+}
+.payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-divider{
+  width:1px !important;
+  height:28px !important;
+  background:rgba(255,255,255,.55) !important;
+  display:inline-block !important;
 }
 #adminPurchasePanel .purchase-panel-layout{
   display:block !important;
@@ -8511,22 +7722,29 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 @media(max-width:640px){
   .payment-cta-wrap.toyyibpay-payment-top{
     max-width:100% !important;
-    margin:18px auto 20px !important;
-    padding:0 12px !important;
+    margin:16px auto 18px !important;
+    padding:0 10px !important;
   }
   .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-card-top{
     max-width:100% !important;
-    padding:22px 16px !important;
-    border-radius:16px !important;
+    padding:19px 14px 20px !important;
+    border-radius:15px !important;
   }
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{font-size:24px !important;}
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-subtitle{font-size:15px !important;}
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{font-size:26px !important;}
-  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{font-size:30px !important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-title{font-size:21px !important;margin-bottom:10px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount{font-size:24px !important;margin-bottom:16px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-amount strong{font-size:28px !important;}
   .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-pay-btn{
-    min-height:58px !important;
-    font-size:20px !important;
+    min-height:52px !important;
+    font-size:19px !important;
+    width:min(280px,100%) !important;
   }
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-payment-status{font-size:13px!important;margin-top:10px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-logos{gap:10px!important;margin-top:12px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx{font-size:24px!important;gap:6px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-fpx::before{font-size:20px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank{font-size:16px!important;gap:5px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-bank::before{font-size:18px!important;}
+  .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-divider{height:22px!important;}
 }
 </style>
 
@@ -8539,98 +7757,14 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-details[hidden]{display:non
 @media(max-width:700px){.user-pa-pending-action{justify-content:flex-start;}}
 .bm-record-download{cursor:pointer!important;}
 </style>
+
 <style>
-
-/* AZOBSS PA/BM payment success popup */
-.azobss-payment-success-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit;}
-.azobss-payment-success-modal.show{display:flex;}
-.azobss-payment-success-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);}
-.azobss-payment-success-box{position:relative;width:min(440px,calc(100vw - 32px));border:1px solid rgba(74,255,160,.32);border-radius:22px;background:linear-gradient(180deg,rgba(18,35,30,.98),rgba(7,13,14,.98));box-shadow:0 24px 80px rgba(0,0,0,.55),0 0 30px rgba(43,255,139,.14);color:#eefdf5;text-align:center;padding:28px 22px 24px;}
-.azobss-payment-success-close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:#bfffd8;font-size:28px;line-height:1;cursor:pointer;}
-.azobss-payment-success-icon{font-size:42px;margin-bottom:8px;}
-.azobss-payment-success-box h3{margin:0 0 12px;color:#4cff9a;font-size:24px;font-weight:900;}
-.azobss-payment-success-box p{margin:8px 0;color:#dfffee;font-size:15px;line-height:1.55;}
-.azobss-payment-success-go{margin-top:18px;width:100%;border:0;border-radius:999px;background:linear-gradient(135deg,#36ff8a,#00c968);color:#04130a;font-weight:900;padding:13px 18px;cursor:pointer;box-shadow:0 10px 28px rgba(0,255,120,.22);}
-.azobss-payment-success-go:hover{filter:brightness(1.05);transform:translateY(-1px);}
+.compact-table-row{display:grid;grid-template-columns:40px 1.4fr 1fr 80px 180px 70px 80px 170px;align-items:center;padding:6px 10px!important;min-height:42px!important;gap:8px}
+.compact-table-row .user-pa-download-wrap{display:flex;justify-content:flex-end;align-items:center;gap:6px}
+.compact-table-row .download-meta{display:none}
+.col-item,.col-state{font-weight:600}
+@media(max-width:900px){.compact-table-row{grid-template-columns:30px 1fr 1fr 60px 120px 60px 60px 120px;font-size:12px}}
 </style>
-
-
-<style id="azobss-shop-card-cart-button-css">
-/* AZOBSS patch: separate card cart icon for Software + CAD only. Does not touch PA/BM cart or original Buy Now buttons. */
-.az-card-cart-slot{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;margin-top:8px!important;gap:8px!important;order:99!important;}
-.az-card-cart-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;border:1px solid rgba(96,165,250,.48)!important;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.96))!important;color:#eaf2ff!important;border-radius:999px!important;width:42px!important;height:38px!important;min-width:42px!important;min-height:38px!important;padding:0!important;font-size:15px!important;font-weight:950!important;line-height:1!important;cursor:pointer!important;text-decoration:none!important;box-shadow:0 10px 22px rgba(37,99,235,.18), inset 0 1px 0 rgba(255,255,255,.08)!important;transition:transform .16s ease,filter .16s ease,border-color .16s ease!important;white-space:nowrap!important;flex:0 0 auto!important;}
-.az-card-cart-btn:hover{transform:translateY(-1px)!important;filter:brightness(1.08)!important;border-color:rgba(34,197,94,.75)!important;color:#bbf7d0!important;}
-.az-card-cart-btn.is-carted{background:linear-gradient(135deg,#16a34a,#22c55e)!important;color:#052e16!important;border-color:#22c55e!important;}
-.az-card-cart-btn .az-card-cart-icon{font-size:16px!important;line-height:1!important;}
-.az-card-cart-btn .az-card-cart-text{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
-@media(max-width:760px){.az-card-cart-btn{width:38px!important;height:34px!important;min-width:38px!important;min-height:34px!important}.az-card-cart-btn .az-card-cart-icon{font-size:15px!important}}
-</style>
-
-
-<style id="azobss-software-buy-cart-row-css">
-/* AZOBSS fix: Software Buy Now keeps payment function; cart icon is separate beside it. */
-#softwareGrid .download-card .az-software-buy-cart-row,
-#softwareDownloadsGrid .download-card .az-software-buy-cart-row,
-.downloads-grid .download-card .az-software-buy-cart-row{
-  display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;width:100%!important;margin-top:8px!important;
-}
-#softwareGrid .download-card .az-software-buy-cart-row > .download-btn,
-#softwareDownloadsGrid .download-card .az-software-buy-cart-row > .download-btn,
-.downloads-grid .download-card .az-software-buy-cart-row > .download-btn{
-  flex:1 1 auto!important;width:auto!important;margin:0!important;
-}
-#softwareGrid .download-card .az-software-buy-cart-row > .az-card-cart-slot,
-#softwareDownloadsGrid .download-card .az-software-buy-cart-row > .az-card-cart-slot,
-.downloads-grid .download-card .az-software-buy-cart-row > .az-card-cart-slot{
-  flex:0 0 auto!important;width:auto!important;margin:0!important;order:0!important;
-}
-#softwareGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
-#softwareDownloadsGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
-.downloads-grid .download-card .az-software-buy-cart-row .az-card-cart-btn{
-  width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;padding:0!important;margin:0!important;border-radius:14px!important;
-}
-#softwareGrid .download-card .az-software-buy-cart-row .az-card-cart-text,
-#softwareDownloadsGrid .download-card .az-software-buy-cart-row .az-card-cart-text,
-.downloads-grid .download-card .az-software-buy-cart-row .az-card-cart-text{
-  position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
-}
-@media(max-width:760px){
-  #softwareGrid .download-card .az-software-buy-cart-row,
-  #softwareDownloadsGrid .download-card .az-software-buy-cart-row,
-  .downloads-grid .download-card .az-software-buy-cart-row{gap:8px!important;}
-  #softwareGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
-  #softwareDownloadsGrid .download-card .az-software-buy-cart-row .az-card-cart-btn,
-  .downloads-grid .download-card .az-software-buy-cart-row .az-card-cart-btn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;}
-}
-</style>
-
-<style id="azobss-shop-cart-css">
-.market-icon-btn{position:relative;}
-.az-shop-cart-badge{position:absolute;right:-7px;top:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);display:none;}
-.az-shop-cart-badge.is-show{display:inline-block;}
-.az-shop-cart-panel{position:fixed;top:78px;right:18px;width:min(390px,calc(100vw - 28px));max-height:72vh;overflow:auto;background:rgba(7,12,20,.98);border:1px solid rgba(148,163,184,.35);border-radius:18px;box-shadow:0 22px 60px rgba(0,0,0,.45);z-index:999999;color:#fff;padding:16px;display:none;backdrop-filter:blur(14px);}
-.az-shop-cart-panel.is-open{display:block;}
-.az-shop-cart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-.az-shop-cart-head h3{margin:0;font-size:20px;font-weight:950;}
-.az-shop-cart-close{border:0;background:rgba(255,255,255,.08);color:#fff;width:34px;height:34px;border-radius:10px;font-size:22px;cursor:pointer;}
-.az-shop-cart-empty{color:#cbd5e1;padding:14px;border:1px dashed rgba(148,163,184,.35);border-radius:12px;text-align:center;}
-.az-shop-cart-item{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(148,163,184,.25);}
-.az-shop-cart-thumb{width:54px;height:54px;border-radius:10px;background:#fff;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#0f172a;font-weight:900;overflow:hidden;}
-.az-shop-cart-title{font-weight:900;line-height:1.2;margin-bottom:3px;}
-.az-shop-cart-meta{font-size:12px;color:#94a3b8;}
-.az-shop-cart-price{font-size:13px;color:#4ade80;font-weight:900;margin-top:4px;}
-.az-shop-cart-actions{display:flex;align-items:center;gap:6px;}
-.az-shop-cart-qty{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.35);border-radius:9px;overflow:hidden;height:32px;}
-.az-shop-cart-qty button,.az-shop-cart-remove{border:0;background:rgba(255,255,255,.08);color:#fff;height:32px;min-width:30px;cursor:pointer;font-weight:900;}
-.az-shop-cart-qty span{min-width:28px;text-align:center;font-weight:800;}
-.az-shop-cart-remove{border-radius:9px;color:#fecaca;font-size:16px;}
-.az-shop-cart-total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:950;margin:14px 0 12px;}
-.az-shop-cart-total strong{color:#4ade80;}
-.az-shop-cart-checkout{width:100%;border:0;border-radius:12px;background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#fff;font-weight:950;padding:12px 14px;cursor:pointer;font-size:15px;}
-.az-shop-cart-note{font-size:12px;color:#94a3b8;margin-top:9px;line-height:1.45;}
-@media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
-</style>
-
 
 <style id="azobss-support-notification-css">
 .azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
@@ -8928,7 +8062,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 </script>
 
 </head>
-<body id="top">
+<body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
 <div class="azobss-topbar-inner">
 <a aria-label="AZOBSS Home" class="azobss-topbar-brand" href="/">
@@ -8938,11 +8072,11 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <button aria-label="Scroll menu left" class="azobss-nav-arrow azobss-nav-left" type="button">‹</button>
 <div class="azobss-nav-scroll" id="azobssNavScroll">
 <a class="azobss-nav-chip" href="/Software-Tools/">Software</a>
-<a class="azobss-nav-chip" href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a class="azobss-nav-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>
 <a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a>
 <a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>
 <a class="azobss-nav-chip" href="/lucky-draw/">Lucky Draw</a>
-<a class="azobss-nav-chip" href="/PA-BM/">Request PA / Info Lot</a>
+<a class="azobss-nav-chip" href="/PA-BM/#request">Request PA / Info Lot</a>
 <a class="azobss-nav-chip" href="#contact">Contact</a>
 </div>
 <button aria-label="Scroll menu right" class="azobss-nav-arrow azobss-nav-right" type="button">›</button>
@@ -9195,13 +8329,13 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <div class="market-bar-inner">
 <div class="market-main-row">
 <a aria-label="AZOBSS" class="market-brand" href="/">
-<img alt="AZOBSS" src="images/logo-azobss.jpg"/>
+<img alt="AZOBSS" src="/images/logo-azobss.jpg"/>
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
 <a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
 <a href="/Software-Tools/">Software</a>
-<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/CAD-Tools-&-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
 <a href="/tools/">Mini Web Tools</a></nav>
@@ -9224,11 +8358,10 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <a aria-label="Likes" class="market-icon-btn" href="/likes/">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
-<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
+<a aria-label="Cart" class="market-icon-btn" href="/affiliate-shop/">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
-<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/">
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
@@ -9265,12 +8398,12 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <div class="hero">
 <h1 class="hero-azobss-title-hidden">AZOBSS</h1>
 <div aria-label="AZOBSS social links" class="social-strip">
-<a aria-label="Facebook" href="https://www.facebook.com/profile.php?id=61572521488242" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/facebook.svg"/></a>
-<a aria-label="TikTok" href="https://www.tiktok.com/@alphatime07" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/tiktok.svg"/></a>
-<a aria-label="Threads" href="https://www.threads.com/@zedan910706?hl=en" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/threads.svg"/></a>
-<a aria-label="YouTube" href="https://www.youtube.com/@AZTech-d3b" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/youtube.svg"/></a>
-<a aria-label="Carousell" href="https://www.carousell.com.my/u/azobss_07/" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/carousell.svg"/></a>
-<a aria-label="Gmail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=zedan9107@gmail.com" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/email.svg"/></a>
+<a aria-label="Facebook" href="https://www.facebook.com/profile.php?id=61572521488242" rel="noopener" target="_blank"><img alt="" loading="lazy" src="/images/facebook.svg"/></a>
+<a aria-label="TikTok" href="https://www.tiktok.com/@alphatime07" rel="noopener" target="_blank"><img alt="" loading="lazy" src="/images/tiktok.svg"/></a>
+<a aria-label="Threads" href="https://www.threads.com/@zedan910706?hl=en" rel="noopener" target="_blank"><img alt="" loading="lazy" src="/images/threads.svg"/></a>
+<a aria-label="YouTube" href="https://www.youtube.com/@AZTech-d3b" rel="noopener" target="_blank"><img alt="" loading="lazy" src="/images/youtube.svg"/></a>
+<a aria-label="Carousell" href="https://www.carousell.com.my/u/azobss_07/" rel="noopener" target="_blank"><img alt="" loading="lazy" src="/images/carousell.svg"/></a>
+<a aria-label="Gmail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=zedan9107@gmail.com" rel="noopener" target="_blank"><img alt="" loading="lazy" src="/images/email.svg"/></a>
 </div>
 <div class="hero-actions">
 <a aria-label="WhatsApp" class="hero-whatsapp" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
@@ -9312,7 +8445,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <p class="services-subtitle">PC Service | Info Lot | Digital Tools | CAD Tools &amp; Resources</p>
 <div class="grid services-grid">
 <div aria-label="Lihat info Format Windows" class="card service-card" role="button" tabindex="0">
-<img alt="Format Windows" src="images/format-windows.jpg"/>
+<img alt="Format Windows" src="/images/format-windows.jpg"/>
 <p>Format Windows</p>
 <div class="service-info">
 <p>- Format Windows 10/11 RM50</p>
@@ -9321,7 +8454,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 </div>
 </div>
 <div aria-label="Lihat info PC Repair" class="card service-card" role="button" tabindex="0">
-<img alt="PC Repair" src="images/pc-repair.jpg"/>
+<img alt="PC Repair" src="/images/pc-repair.jpg"/>
 <p>PC Repair</p>
 <div class="service-info">
 <p>- LCD Screen Laptop &amp; Replacement (RM250+)</p>
@@ -9332,7 +8465,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 </div>
 </div>
 <div aria-label="Lihat info Troubleshoot Windows Online" class="card service-card" role="button" tabindex="0">
-<img alt="Troubleshoot Windows Online" src="images/remote-support.jpg"/>
+<img alt="Troubleshoot Windows Online" src="/images/remote-support.jpg"/>
 <p>Troubleshoot Windows Online</p>
 <div class="service-info">
 <p>- RM30</p>
@@ -9343,7 +8476,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 </div>
 </div>
 <div aria-label="View Cadastral Lot Info Check details" class="card service-card" role="button" tabindex="0">
-<img alt="Cadastral Lot Info Check" src="images/info-lot.jpg"/>
+<img alt="Cadastral Lot Info Check" src="/images/info-lot.jpg"/>
 <p>Info Lot Kadaster</p>
 <div class="service-info">
 <p>- Check lot number, mukim and district</p>
@@ -9353,7 +8486,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 </div>
 </div>
 <div aria-label="View Lot and Boundary Stone Check details" class="card service-card" role="button" tabindex="0">
-<img alt="Lot and Boundary Stone Check" src="images/ukur-tanah.jpg"/>
+<img alt="Lot and Boundary Stone Check" src="/images/ukur-tanah.jpg"/>
 <p>Lot &amp; Boundary Stone Check</p>
 <div class="service-info">
 <p>- Find boundary stones</p>
@@ -9382,45 +8515,13 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 </div>
 </div>
 <div class="section" id="affiliate">
-<style>
-.azpromo{max-width:900px;margin:20px auto;padding:30px;border-radius:26px;background:linear-gradient(135deg,#081225,#0d1b4d);border:1px solid rgba(0,180,255,.4);box-shadow:0 0 35px rgba(0,120,255,.25);position:relative;overflow:hidden}
-.azpromo:before{content:"";position:absolute;right:-50px;top:-50px;width:220px;height:220px;border-radius:50%;background:radial-gradient(rgba(0,150,255,.35),transparent)}
-.azpromo h3{font-size:38px;margin-bottom:10px}
-.azpromo p{opacity:.9}
-.azfeatures{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:20px 0}
-.azfeatures span{padding:10px 16px;background:rgba(255,255,255,.08);border-radius:30px}
-.azcta{display:block;text-align:center;padding:18px;border-radius:16px;background:linear-gradient(90deg,#2563eb,#3b82f6);font-size:24px;font-weight:bold;color:#fff;text-decoration:none;box-shadow:0 0 20px rgba(59,130,246,.5)}
-.azluck{background:linear-gradient(135deg,#1b1400,#3d2800)!important;border-color:#ffbf00!important}
-.azluck .azcta{background:linear-gradient(90deg,#f59e0b,#facc15);color:#111}
-
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
-
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
-
-</style>
-<div class="azpromo">
-<h3>🛒 AZOBSS Affiliate Shop</h3>
+<h2 id="AffiliateShop">AZOBSS Affiliate Shop</h2>
+<p style="text-align:center;">Recommended tools, gadgets &amp; useful items.</p>
+<div style="max-width:420px;margin:20px auto;background:#111827;border-radius:16px;padding:20px;text-align:center;border:1px solid rgba(255,255,255,.1);">
+<div style="font-size:18px;font-weight:900;letter-spacing:.04em;">SHOP</div>
+<h3>AZOBSS Affiliate Shop</h3>
 <p>Browse selected products and useful recommendations.</p>
-<div class="azfeatures">
-<span>🔥 Best Deals</span>
-<span>🛡 Secure</span>
-<span>✨ Recommended</span>
-</div>
-<a class="azcta" href="/affiliate-shop/">Browse Now →</a>
+<a class="btn" href="/affiliate-shop/">Browse Now</a>
 </div>
 </div>
 <div class="section" id="request">
@@ -9428,7 +8529,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <div class="card" id="requestCard" style="max-width:700px;margin:auto;">
 <h3>Pelan Akui</h3>
 <p class="login-info" id="loginInfo"></p>
-<form action="" class="request-form" hidden="" id="paForm" onsubmit="return azobssDirectPaDownload(event);">
+<form action="" class="request-form" id="paForm" onsubmit="return azobssDirectPaDownload(event);">
 <label for="paNumber">
           No PA
           <input id="paNumber" inputmode="numeric" placeholder="Contoh: 123456" required="" type="text"/>
@@ -9536,18 +8637,20 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <div class="benchmark-cart-list" id="benchmarkCartList" style="display:none;"></div>
 </div>
 </div>
-<a class="btn blue login-only" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
-        WhatsApp For Help
-      </a>
 <div class="payment-cta-wrap login-only toyyibpay-payment-top" id="paymentCtaWrap">
         <div class="payment-qr-card toyyibpay-payment-card toyyibpay-payment-card-top">
           <h3 class="toyyibpay-payment-title">Payment</h3>
-          <p class="toyyibpay-payment-subtitle">FPX / Online Banking</p>
+          <p class="toyyibpay-payment-subtitle" aria-hidden="true">FPX / Online Banking</p>
           <p class="toyyibpay-payment-amount">Total:<br><strong id="paBmToyyibTotal">RM0.00</strong></p>
           <button class="qr-action-btn green toyyibpay-pay-btn" id="payPaBmToyyibButton" type="button">
             Proceed to Payment
           </button>
           <p class="qr-copy-status toyyibpay-payment-status" id="paBmToyyibStatus">Redirect to payment page</p>
+          <div class="toyyibpay-method-logos" aria-label="FPX Online Banking">
+            <span class="toyyibpay-method-fpx">FPX</span>
+            <span class="toyyibpay-method-divider" aria-hidden="true"></span>
+            <span class="toyyibpay-method-bank">Online Banking</span>
+          </div>
         </div>
       </div>
 <div class="admin-purchase-panel" id="adminPurchasePanel">
@@ -9578,8 +8681,6 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <option value="unitsDesc">Unit: highest</option>
 <option value="unitsAsc">Unit: lowest</option>
 <option value="updatedNewest">Latest updated</option>
-<option value="dateNewest" selected>Date registered: newest</option>
-<option value="dateOldest">Date registered: oldest</option>
 <option value="username">Username / Email A-Z</option>
 </select>
 </label>
@@ -9642,12 +8743,11 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <label for="registeredUserSort">
             Sort by
             <select id="registeredUserSort">
-<option value="dateNewest" selected>Date registered: newest</option>
-<option value="dateOldest">Date registered: oldest</option>
 <option value="username">Username / Email A-Z</option>
 <option value="onlineOnly">Online users only</option>
 <option value="paAllowed">PA Access Allowed</option>
-
+<option value="dateNewest" selected>Date registered: newest</option>
+<option value="dateOldest">Date registered: oldest</option>
 </select>
 </label>
 <button class="btn blue" id="refreshUsersButton" type="button">
@@ -9707,9 +8807,9 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <div class="section" id="luckyDraw">
 <div class="lucky-draw-card" style="max-width:700px;text-align:center">
 <span class="lucky-draw-kicker">Lucky Draw</span>
-<h2>🎁 Monthly Lucky Draw</h2>
-<p><div class="azpromo azluck"><p>Join our monthly lucky draw and stand a chance to win prizes.</p><div class="azfeatures"><span>🏆 Win Prize</span><span>⚡ Easy Join</span><span>🎉 Monthly Event</span></div></p>
-<a class="btn orange" href="/lucky-draw/">Join Now →</a></div>
+<h2>Monthly Lucky Draw</h2>
+<p>Join our monthly lucky draw and stand a chance to win prizes.</p>
+<a class="btn orange" href="/lucky-draw/">Join Now</a>
 </div>
 </div>
 <div class="section member-login-section">
@@ -10610,17 +9710,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
       const category = clean(card.dataset.category || card.getAttribute('data-category') || '');
       const text = clean(card.innerText);
 
-      
-const normalizeCategory=v=>String(v||'')
-.toLowerCase()
-.replace(/&/g,'and')
-.replace(/[^a-z0-9]+/g,'')
-.trim();
-
-const matchCategory =
-normalizeCategory(filter)==='all' ||
-normalizeCategory(category)===normalizeCategory(filter);
-
+      const matchCategory = filter === 'all' || category === filter;
       const matchSearch = !query || text.includes(query) || category.includes(query);
 
       return matchCategory && matchSearch;
@@ -10837,14 +9927,8 @@ normalizeCategory(category)===normalizeCategory(filter);
     const code = String(item.itemCode || item.stationNo || item.stesen || item.productId || item.id || '').trim().toUpperCase();
     return [type, code].filter(Boolean).join(' ') || 'Item';
   }
-
-  function benchmarkCartAddedText(item){
-    return benchmarkCartLabel(item) + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.";
-  }
-
-  function benchmarkCartAlreadyText(item){
-    return benchmarkCartLabel(item) + ' sudah ada dalam cart.';
-  }
+  function benchmarkCartAddedText(item){ return benchmarkCartLabel(item) + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar."; }
+  function benchmarkCartAlreadyText(item){ return benchmarkCartLabel(item) + ' sudah ada dalam cart.'; }
 
 
   async function triggerBenchmarkDownload(anchor){
@@ -10871,15 +9955,12 @@ normalizeCategory(category)===normalizeCategory(filter);
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 1000);
       if (statusEl) statusEl.textContent = `Downloaded as ${filename}`;
     } catch (error) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      if (statusEl) statusEl.textContent = `Download opened. If browser still shows ID name, backend must allow file rename/CORS.`;
+      console.error('BM/SBM silent download failed:', error);
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Download sedang disediakan. Sila cuba semula sebentar lagi.';
+      }
+      alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
     }
   }
 
@@ -10906,7 +9987,7 @@ normalizeCategory(category)===normalizeCategory(filter);
   }
 
   function saveCart(items){
-    localStorage.setItem(getCartKey(), JSON.stringify(items));
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
   }
 
   function getOpenEbizUrl(){
@@ -11151,76 +10232,51 @@ normalizeCategory(category)===normalizeCategory(filter);
     const benchmarkDownload = event.target.closest('[data-benchmark-record]');
     if (benchmarkDownload) {
       event.preventDefault();
+      try {
+        const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
 
-      (async function(){
-        try {
-          const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
-
-          if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.textContent = 'Checking BM/SBM record...';
-          }
-
-          benchmarkDownload.disabled = true;
-
-          // Semak dahulu sama ada fail BM/SBM benar-benar wujud.
-          // Kalau tiada, jangan masuk cart dan jangan tambah total.
-          if (!payload.downloadUrl) {
-            throw new Error('BM/SBM tiada dalam simpanan');
-          }
-
-          const checkResponse = await fetch(payload.downloadUrl, { cache: 'no-store' });
-          if (!checkResponse.ok) {
-            throw new Error('BM/SBM tiada dalam simpanan');
-          }
-
-          const checkBlob = await checkResponse.blob();
-          if (!checkBlob || !checkBlob.size) {
-            throw new Error('BM/SBM tiada dalam simpanan');
-          }
-
-          let successMessage = benchmarkCartAddedText(payload);
-
-          if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.textContent = successMessage;
-          }
-
-          if (typeof window.azobssRecordPurchase === 'function') {
-            const savedRecord = await window.azobssRecordPurchase(payload);
-            if (savedRecord && savedRecord.__azobssAlreadyInCart) {
-              successMessage = benchmarkCartAlreadyText(payload);
-            }
-          }
-
-          if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.textContent = successMessage;
-          }
-
-          if (typeof window.azobssRenderPurchaseRecords === 'function') {
-            setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
-          }
-
-          // Kekalkan mesej item yang baru masuk cart supaya tidak ditindih mesej carian seperti "1 BM/SBM record found".
-          [120, 450, 900, 1400].forEach(function(delayMs){
-            setTimeout(function(){
-              if (statusEl) {
-                statusEl.style.display = 'block';
-                statusEl.textContent = successMessage;
-              }
-            }, delayMs);
-          });
-        } catch (error) {
-          if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.textContent = error.message || 'BM/SBM tiada dalam simpanan';
-          }
-        } finally {
-          benchmarkDownload.disabled = false;
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'Sedang menambah BM/SBM ke cart...';
         }
-      })();
 
+        if (typeof window.azobssRecordPurchase === 'function') {
+          window.azobssRecordPurchase(payload).then(function(savedRecord){
+            if (statusEl) {
+              statusEl.style.display = 'block';
+              statusEl.textContent = (savedRecord && savedRecord.__azobssAlreadyInCart)
+                ? benchmarkCartAlreadyText(payload)
+                : benchmarkCartAddedText(payload);
+            }
+            if (typeof window.azobssRenderPurchaseRecords === 'function') {
+              setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+            }
+          }).catch(function(error){
+            if (statusEl) {
+              statusEl.style.display = 'block';
+              statusEl.textContent = error.message || 'Gagal menyimpan rekod BM/SBM.';
+            }
+          });
+        } else {
+          if (statusEl) {
+            statusEl.textContent = benchmarkCartAddedText(payload);
+          }
+        }
+
+        [120, 450, 900, 1400].forEach(function(delayMs){
+          setTimeout(function(){
+            if (statusEl) {
+              statusEl.style.display = 'block';
+              statusEl.textContent = successMessage;
+            }
+          }, delayMs);
+        });
+      } catch (error) {
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'BM/SBM item failed to add to cart.';
+        }
+      }
       return;
     }
     const pageButton = event.target.closest('[data-benchmark-page]');
@@ -12522,6 +11578,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     try {
+      // Semak kewujudan PA tanpa convert PDF supaya PA yang betul tidak false-not-found.
       var checkUrl = url.replace('/api/pa-pdf', '/api/check-pa');
       var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
       if (!checkResponse.ok) throw new Error('Maaf, PA ' + number + ' tiada dalam simpanan.');
@@ -12687,14 +11744,13 @@ document.addEventListener('DOMContentLoaded', function(){
     setMessage('loading', 'Menambah PA ke cart...');
 
     try{
-      // Semak dahulu sama ada PA benar-benar wujud di backend/JUPEM.
-      // Jangan masukkan cart dan jangan kira total jika PA Maaf, tiada dalam simpanan.
+      // Semak PA melalui endpoint ringan /api/check-pa dahulu.
+      // Ini elak guna converter PDF sebagai check, yang boleh beri false-not-found bila proses convert lambat/gagal.
       var checkUrl = built.url.replace('/api/pa-pdf', '/api/check-pa');
       var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
       if(!checkResponse.ok){
         throw new Error('Maaf, PA ' + built.number + ' tiada dalam simpanan.');
       }
-
       var checkData = await checkResponse.json().catch(function(){ return null; });
       if(!checkData || checkData.ok !== true){
         throw new Error('Maaf, PA ' + built.number + ' tiada dalam simpanan.');
@@ -12754,109 +11810,74 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
-/* AZOBSS FINAL FIX: keep purchase rows compact but make Show + Reset fully visible */
-body.is-admin #purchaseSummaryList,
-body.is-admin #purchaseSummaryList *{
-  box-sizing:border-box!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-mini-card{
-  width:100%!important;
-  max-width:100%!important;
-  overflow:hidden!important;
-  padding:6px 8px!important;
-  margin:0 0 6px!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-mini-top{
-  display:grid!important;
-  width:100%!important;
-  max-width:100%!important;
-  grid-template-columns:minmax(110px,1.1fr) minmax(190px,1.65fr) minmax(115px,1fr) minmax(56px,.5fr) minmax(76px,.65fr) 118px!important;
-  gap:6px!important;
-  align-items:center!important;
-  min-height:30px!important;
-  overflow:hidden!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-mini-user,
-body.is-admin #purchaseSummaryList .az-purchase-mini-date,
-body.is-admin #purchaseSummaryList .az-purchase-mini-last,
-body.is-admin #purchaseSummaryList .az-purchase-mini-unit,
-body.is-admin #purchaseSummaryList .az-purchase-mini-total{
-  min-width:0!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-size:12px!important;
-  line-height:1.05!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-mini-user{
-  flex:none!important;
-  max-width:none!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-mini-user strong,
-body.is-admin #purchaseSummaryList .az-purchase-mini-top strong{
-  font-size:12px!important;
-  line-height:1.05!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-mini-actions{
-  width:118px!important;
-  min-width:118px!important;
-  max-width:118px!important;
-  display:flex!important;
-  flex-direction:row!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:6px!important;
-  overflow:visible!important;
-  margin:0!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-show-btn,
-body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
-  width:56px!important;
-  min-width:56px!important;
-  max-width:56px!important;
-  flex:0 0 56px!important;
-  height:28px!important;
-  padding:0!important;
-  margin:0!important;
-  border-radius:8px!important;
-  font-size:11px!important;
-  line-height:1!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  white-space:nowrap!important;
-}
-body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
-  margin-right:0!important;
-}
-@media(max-width:760px){
-  body.is-admin #purchaseSummaryList .az-purchase-mini-top{
-    grid-template-columns:minmax(95px,1fr) minmax(150px,1.3fr) minmax(100px,.9fr) 48px 68px 112px!important;
-    overflow-x:auto!important;
+<script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+
+<script>
+(function(){
+  function getPaymentTarget(){
+    const copyBtn = document.getElementById('copyAccountButton');
+    if(copyBtn){
+      return copyBtn.closest('.payment-qr-wrap, .payment-qr-card, aside, .purchase-panel-layout') || copyBtn;
+    }
+    const qrImg = document.querySelector('img[src*="payment-qr"], img[src*="qr"], img[alt*="QR" i]');
+    if(qrImg){
+      return qrImg.closest('.payment-qr-wrap, .payment-qr-card, aside, .purchase-panel-layout') || qrImg;
+    }
+    return document.getElementById('adminPurchasePanel');
   }
-}
 
+  function updatePaymentTotalText(){
+    const totalEl = document.getElementById('paymentTotalText');
+    if(!totalEl) return;
 
-.admin-actions{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    margin-top:14px !important;
-    width:100% !important;
-}
+    let total = 'RM0';
+    const meta = document.querySelector('.user-purchase-summary-meta');
+    if(meta){
+      const spans = Array.from(meta.querySelectorAll('span'));
+      const totalSpan = spans.find(function(span){
+        return /^\s*Total\s*:/i.test(span.textContent || '');
+      });
+      if(totalSpan){
+        const strong = totalSpan.querySelector('strong');
+        const raw = (strong ? strong.textContent : totalSpan.textContent.replace(/^\s*Total\s*:/i,'')).trim();
+        if(raw) total = /^RM/i.test(raw) ? raw : ('RM' + raw.replace(/^RM/i,''));
+      }
+    }
 
-.edit-btn,.delete-btn{
-    width:32px !important;
-    height:32px !important;
-    border-radius:10px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-}
+    totalEl.textContent = 'Total : ' + total;
+    const payTotalEl = document.getElementById('paBmToyyibTotal');
+    if(payTotalEl){
+      const n = parseFloat(String(total).replace(/[^0-9.]/g,'')) || 0;
+      payTotalEl.textContent = 'RM' + n.toFixed(2);
+    }
+  }
 
-</style><style id="azobss-admin-purchase-delete-tools-style">
+  document.addEventListener('DOMContentLoaded', function(){
+    const btn = document.getElementById('paymentScrollButton');
+    if(btn){
+      btn.addEventListener('click', function(){
+        const target = getPaymentTarget();
+        if(target){
+          target.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+      });
+    }
+
+    updatePaymentTotalText();
+
+    const watchTarget = document.getElementById('purchaseSummaryList') || document.getElementById('adminPurchasePanel') || document.body;
+    if(watchTarget && window.MutationObserver){
+      const obs = new MutationObserver(updatePaymentTotalText);
+      obs.observe(watchTarget, {childList:true, subtree:true, characterData:true});
+    }
+
+    window.addEventListener('azobss:purchases-updated', updatePaymentTotalText);
+    setTimeout(updatePaymentTotalText, 400);
+    setTimeout(updatePaymentTotalText, 1200);
+  });
+})();
+</script>
+<style id="azobss-admin-purchase-delete-tools-style">
 body.is-admin #purchaseSummaryList .az-purchase-mini-actions{width:260px!important;min-width:260px!important;max-width:260px!important;gap:5px!important;}
 body.is-admin #purchaseSummaryList .az-purchase-show-btn,
 body.is-admin #purchaseSummaryList .az-purchase-reset-btn,
@@ -12946,7 +11967,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     gap:6px !important;
   }
   .az-download-meta{
-    justify-content:flex-start !important;
+    justify-content:center !important;
     flex-wrap:wrap !important;
     white-space:normal !important;
     text-align:left !important;
@@ -12965,28 +11986,8 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   function getReturnKey(){
     try{
       var p = new URLSearchParams(window.location.search || '');
-      return p.get('orderId')
-        || p.get('order_id')
-        || p.get('billcode')
-        || p.get('billCode')
-        || p.get('transaction_id')
-        || p.get('payment_id')
-        || p.get('billCode')
-        || 'latest';
+      return p.get('orderId') || p.get('order_id') || p.get('billcode') || p.get('billCode') || p.get('transaction_id') || p.get('payment_id') || 'latest';
     }catch(e){ return 'latest'; }
-  }
-
-  function getPopupKey(){
-    return POPUP_KEY_PREFIX + getReturnKey();
-  }
-
-  function alreadyShownForThisTransaction(){
-    try{ return sessionStorage.getItem(getPopupKey()) === '1'; }
-    catch(e){ return false; }
-  }
-
-  function markShownForThisTransaction(){
-    try{ sessionStorage.setItem(getPopupKey(), '1'); }catch(e){}
   }
 
   function scrollToLatestPurchaseList(){
@@ -13005,19 +12006,19 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     modal.id = 'azobssPaBmPaymentSuccessModal';
     modal.className = 'azobss-payment-success-modal';
     modal.innerHTML = ''+
-      '<div class="azobss-payment-success-backdrop"></div>'+
+      '<div class="azobss-payment-success-backdrop" data-close="1"></div>'+
       '<div class="azobss-payment-success-box" role="dialog" aria-modal="true" aria-labelledby="azobssPaymentSuccessTitle">'+
         '<button type="button" class="azobss-payment-success-close" aria-label="Close">×</button>'+
         '<div class="azobss-payment-success-icon">✅</div>'+
         '<h3 id="azobssPaymentSuccessTitle">Pembayaran Berjaya!</h3>'+
         '<p>Terima kasih atas pembelian anda.</p>'+
-        '<p>Sila muat turun fail anda di bahagian <strong>Latest Purchase List</strong>.</p>'+
+        '<p>Sila muat turun fail anda di bahagian <strong>\'Latest Purchase List\'</strong>.</p>'+
         '<button type="button" class="azobss-payment-success-go">Go to Latest Purchase List</button>'+
       '</div>';
     document.body.appendChild(modal);
     function close(){ modal.classList.remove('show'); }
     modal.querySelector('.azobss-payment-success-close')?.addEventListener('click', close);
-    // Backdrop click intentionally does not close the popup on phone.
+    modal.querySelector('.azobss-payment-success-backdrop')?.addEventListener('click', close);
     modal.querySelector('.azobss-payment-success-go')?.addEventListener('click', function(){
       close();
       setTimeout(scrollToLatestPurchaseList, 80);
@@ -13025,13 +12026,13 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     return modal;
   }
 
-  function showPaymentSuccessPopup(){
+  function showPaymentSuccessPopup(force){
     try{
-      if(alreadyShownForThisTransaction()) return;
-      markShownForThisTransaction();
+      var key = POPUP_KEY_PREFIX + getReturnKey();
+      if(!force && sessionStorage.getItem(key) === '1') return;
+      sessionStorage.setItem(key, '1');
       var modal = ensurePaymentSuccessModal();
       modal.classList.add('show');
-      setTimeout(scrollToLatestPurchaseList, 250);
     }catch(e){ console.warn('AZOBSS payment popup failed:', e); }
   }
 
@@ -13042,7 +12043,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
       var p = new URLSearchParams(window.location.search || '');
       var statusId = String(p.get('status_id') || p.get('status') || '').trim().toLowerCase();
       var payment = String(p.get('payment') || '').trim().toLowerCase();
-      var hasBill = !!(p.get('billcode') || p.get('billCode') || p.get('orderId') || p.get('transaction_id') || p.get('payment_id'));
+      var hasBill = !!(p.get('billcode') || p.get('billCode'));
       if(statusId === '1' || statusId === 'paid' || statusId === 'success' || payment === 'success' || payment === 'paid') return true;
       if(payment === 'return' && hasBill && (statusId === '' || statusId === '1')) return true;
       return false;
@@ -13055,7 +12056,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     var obs = new MutationObserver(function(){
       var txt = String(status.textContent || '').toLowerCase();
       if(txt.includes('pembayaran berjaya') || txt.includes('payment success') || txt.includes('payment successful')){
-        showPaymentSuccessPopup();
+        showPaymentSuccessPopup(true);
       }
     });
     obs.observe(status, { childList:true, characterData:true, subtree:true });
@@ -13064,7 +12065,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
   function run(){
     observeSuccessStatusText();
     if(looksLikeSuccessfulToyyibReturn()){
-      setTimeout(showPaymentSuccessPopup, 700);
+      setTimeout(function(){ showPaymentSuccessPopup(false); }, 700);
     }
   }
 
@@ -13074,10 +12075,163 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 </script>
 
 
+<script id="azobss-pa-bm-purchase-sync-perfect-fix">
+(function(){
+  'use strict';
+  function refreshPurchases(){
+    try{
+      if(window.azobssRenderPurchaseRecords) window.azobssRenderPurchaseRecords();
+      if(window.azobssRefreshPaBmPurchasesNow) window.azobssRefreshPaBmPurchasesNow();
+      window.dispatchEvent(new Event('azobss:purchases-updated'));
+    }catch(e){}
+  }
+  function isPaymentReturn(){
+    try{
+      var p = new URLSearchParams(location.search || '');
+      return p.get('payment') === 'return' || !!p.get('status_id') || !!p.get('billcode') || !!p.get('billCode') || !!p.get('orderId') || !!p.get('order_id');
+    }catch(e){ return false; }
+  }
+  window.addEventListener('azobssPurchaseRecorded', refreshPurchases);
+  window.addEventListener('azobss:purchases-updated', function(){ setTimeout(refreshPurchases, 250); }, { once:true });
+  document.addEventListener('DOMContentLoaded', function(){
+    refreshPurchases();
+    if(isPaymentReturn()){
+      [300,900,1800,3500,6500,10000].forEach(function(ms){ setTimeout(refreshPurchases, ms); });
+    }
+  });
+  window.addEventListener('focus', refreshPurchases);
+})();
+</script>
+
+
+<script id="azobss-pa-bm-payment-return-stay-scroll-final-fix">
+(function(){
+  'use strict';
+
+  function hasPaymentReturn(){
+    try{
+      var p = new URLSearchParams(window.location.search || '');
+      var statusId = String(p.get('status_id') || p.get('status') || '').trim().toLowerCase();
+      var payment = String(p.get('payment') || '').trim().toLowerCase();
+      return !!(
+        p.get('billcode') || p.get('billCode') || p.get('orderId') || p.get('order_id') ||
+        p.get('transaction_id') || p.get('payment_id') ||
+        statusId === '1' || statusId === 'paid' || statusId === 'success' ||
+        payment === 'success' || payment === 'paid' || payment === 'return'
+      );
+    }catch(e){ return false; }
+  }
+
+  function getLatestTarget(){
+    return document.getElementById('userPaPurchasePanel')
+      || document.getElementById('userPaPurchaseList')
+      || Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,section,div')).find(function(el){
+        return /Latest\s+Purchase\s+List/i.test(el.textContent || '');
+      });
+  }
+
+  function scrollLatest(){
+    var target = getLatestTarget();
+    if(target){
+      try{ target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      catch(e){ target.scrollIntoView(true); }
+    }
+  }
+
+  function refreshPurchaseList(){
+    try{ if(window.azobssRefreshPaBmPurchasesNow) window.azobssRefreshPaBmPurchasesNow(); }catch(e){}
+    try{ if(window.azobssRenderPurchaseRecords) window.azobssRenderPurchaseRecords(); }catch(e){}
+    try{ window.dispatchEvent(new Event('azobss:purchases-updated')); }catch(e){}
+  }
+
+  function keepPopupVisible(){
+    var modal = document.getElementById('azobssPaBmPaymentSuccessModal');
+    if(!modal) return;
+    modal.classList.add('show');
+    modal.setAttribute('data-stay-after-payment','1');
+
+    /* Do not let accidental mobile taps/backdrop handlers close the success popup. */
+    var backdrop = modal.querySelector('.azobss-payment-success-backdrop');
+    if(backdrop){
+      backdrop.style.pointerEvents = 'none';
+    }
+
+    var goBtn = modal.querySelector('.azobss-payment-success-go');
+    if(goBtn && !goBtn.dataset.azobssScrollFixed){
+      goBtn.dataset.azobssScrollFixed = '1';
+      goBtn.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+        modal.classList.remove('show');
+        refreshPurchaseList();
+        setTimeout(scrollLatest, 120);
+        setTimeout(scrollLatest, 700);
+      }, true);
+    }
+  }
+
+  function showStableSuccessPopup(){
+    refreshPurchaseList();
+    try{
+      if(window.azobssShowPaBmPaymentSuccessPopup){
+        window.azobssShowPaBmPaymentSuccessPopup(true);
+      }
+    }catch(e){}
+    keepPopupVisible();
+    setTimeout(keepPopupVisible, 400);
+    setTimeout(refreshPurchaseList, 800);
+    setTimeout(scrollLatest, 1200);
+    setTimeout(scrollLatest, 2500);
+  }
+
+  /* If ToyyibPay returns to PA/BM on mobile, stay on this page and go to Latest Purchase List. */
+  function runPaymentReturnFix(){
+    if(!hasPaymentReturn()) return;
+    document.documentElement.classList.add('azobss-payment-return-page');
+
+    /* Avoid old scripts reading stale "seen" state and hiding the popup. */
+    try{
+      Object.keys(sessionStorage).forEach(function(k){
+        if(/^azobss_pa_bm_success_popup_seen_/.test(k)) sessionStorage.removeItem(k);
+      });
+    }catch(e){}
+
+    [250, 900, 1800, 3500, 6500].forEach(function(ms){
+      setTimeout(showStableSuccessPopup, ms);
+    });
+  }
+
+  /* Capture any success status text and keep the popup/scroll flow stable. */
+  function observeSuccessText(){
+    var status = document.getElementById('paBmToyyibStatus');
+    if(!status || !window.MutationObserver) return;
+    var obs = new MutationObserver(function(){
+      var txt = String(status.textContent || '').toLowerCase();
+      if(txt.includes('pembayaran berjaya') || txt.includes('payment success') || txt.includes('payment successful')){
+        showStableSuccessPopup();
+      }
+    });
+    obs.observe(status, { childList:true, characterData:true, subtree:true });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      observeSuccessText();
+      runPaymentReturnFix();
+    });
+  }else{
+    observeSuccessText();
+    runPaymentReturnFix();
+  }
+})();
+</script>
+
+
 <style id="azobss-pa-bm-compact-table-final-fix">
 /* AZOBSS Latest Purchase List compact table final */
 #userPaPurchaseList.user-pa-list{display:block!important;overflow-x:auto!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:12px!important;background:rgba(10,20,36,.50)!important;}
-#userPaPurchaseList .compact-purchase-row{display:grid!important;grid-template-columns:44px minmax(135px,1.15fr) minmax(145px,1fr) 90px minmax(185px,1.3fr) 120px 105px 125px!important;align-items:center!important;gap:0!important;min-width:920px!important;min-height:38px!important;padding:0 12px!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.22)!important;background:transparent!important;box-shadow:none!important;}
+#userPaPurchaseList .compact-purchase-row{display:grid!important;grid-template-columns:44px minmax(120px,1.05fr) minmax(120px,.95fr) 85px minmax(165px,1.15fr) 95px 90px 155px!important;align-items:center!important;gap:0!important;min-width:920px!important;min-height:38px!important;padding:0 12px!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.22)!important;background:transparent!important;box-shadow:none!important;}
 #userPaPurchaseList .compact-purchase-row:last-child{border-bottom:0!important;}
 #userPaPurchaseList .compact-table-header{min-height:40px!important;background:rgba(8,16,30,.70)!important;color:#dbeafe!important;font-size:12px!important;font-weight:900!important;text-transform:none!important;position:sticky!important;top:0!important;z-index:2!important;}
 #userPaPurchaseList .compact-table-row{font-size:12px!important;color:#e5e7eb!important;}
@@ -13094,6 +12248,52 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 #userPaPurchaseList .user-pa-download.is-locked{background:#334155!important;color:#e5e7eb!important;min-width:92px!important;}
 #userPaPurchaseList .user-pa-pending-action{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;}
 #userPaPurchaseList .user-pa-uncart-btn{height:28px!important;min-height:28px!important;padding:0 10px!important;border-radius:7px!important;font-size:11px!important;font-weight:900!important;}
+
+/* AZOBSS desktop action one-line fix: keep Pending Payment + uncart icon in one row */
+@media (min-width: 761px){
+  #userPaPurchaseList .col-action{
+    display:flex!important;
+    justify-content:flex-end!important;
+    align-items:center!important;
+    gap:6px!important;
+    overflow:visible!important;
+    white-space:nowrap!important;
+  }
+  #userPaPurchaseList .user-pa-pending-action{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    flex-wrap:nowrap!important;
+    gap:6px!important;
+    width:100%!important;
+    min-width:0!important;
+    white-space:nowrap!important;
+  }
+  #userPaPurchaseList .user-pa-download.is-pending-status{
+    flex:0 0 auto!important;
+    min-width:108px!important;
+    max-width:112px!important;
+    height:28px!important;
+    padding:0 8px!important;
+    font-size:11px!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:clip!important;
+  }
+  #userPaPurchaseList .user-pa-uncart-btn.is-cart-remove-btn{
+    flex:0 0 34px!important;
+    width:34px!important;
+    min-width:34px!important;
+    height:28px!important;
+    min-height:28px!important;
+    padding:0!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+}
 @media(max-width:760px){#userPaPurchaseList.user-pa-list{border-radius:10px!important;}#userPaPurchaseList .compact-purchase-row{min-width:860px!important;grid-template-columns:38px 130px 140px 75px 170px 110px 95px 115px!important;min-height:36px!important;padding:0 8px!important;}#userPaPurchaseList .compact-purchase-row>div{padding:4px 6px!important;font-size:11px!important;}#userPaPurchaseList .user-pa-download{height:26px!important;min-height:26px!important;min-width:86px!important;font-size:11px!important;}}
 </style>
 
@@ -13387,699 +12587,6 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
 }
 </style>
 
-
-<script id="azobss-shop-cart-js">
-(function(){
-  if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
-  const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
-  const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
-  const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const read=()=>{try{
-const now=Date.now();
-const maxAge=60*24*60*60*1000;
-const items=JSON.parse(localStorage.getItem(getKey())||'[]')
-.filter(Boolean)
-.filter(i=>!(String(i.source||'').toLowerCase()==='software' && !/RM\s*[0-9]/i.test(String(i.price||''))))
-.filter(i=>!i.addedAt || (now-Number(i.addedAt))<=maxAge);
-localStorage.setItem(getKey(),JSON.stringify(items));
-return items;
-}catch(e){return[]}};
-  const save=a=>{localStorage.setItem(getKey(),JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));try{updateBadges();render();}catch(e){}};
-  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  function ensurePanel(){let p=document.getElementById('azShopCartPanel'); if(p)return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
-  
-window.__azobssCartClickLock=window.__azobssCartClickLock||new WeakMap();
-function lockCartButton(btn){
- try{
-   if(!btn) return false;
-   if(window.__azobssCartClickLock.get(btn)) return true;
-   window.__azobssCartClickLock.set(btn,true);
-   setTimeout(()=>window.__azobssCartClickLock.delete(btn),400);
- }catch(e){}
- return false;
-}
-function updateBadges(){const total=read().reduce((s,i)=>s+Number(i.qty||1),0); document.querySelectorAll('[data-az-shop-cart-badge]').forEach(b=>{b.textContent=total; b.classList.toggle('is-show',total>0);});}
-  function render(){const p=ensurePanel(), body=p.querySelector('#azShopCartBody'), items=read(); const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0); p.querySelector('h3').textContent='My Cart ('+totalQty+')'; if(!items.length){body.innerHTML='<div class="az-shop-cart-empty">Cart is empty.<br><small>This cart is only for Software and CAD Tools.</small></div>'; updateBadges(); return;} const total=items.reduce((s,i)=>s+moneyVal(i.price)*Number(i.qty||1),0); body.innerHTML=items.map((i,idx)=>`<div class="az-shop-cart-item"><div class="az-shop-cart-thumb">${i.image?`<img src="${esc(i.image)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc((i.name||'?').slice(0,1))}</div><div><div class="az-shop-cart-title">${esc(i.name)}</div><div class="az-shop-cart-meta">${esc(i.category||i.source||'Software/CAD Tools')}</div><div class="az-shop-cart-price">${esc(i.price||'RM0')}</div></div><div class="az-shop-cart-actions"><span class="az-shop-cart-qty"><button type="button" data-az-cart-minus="${idx}">−</button><span>${Number(i.qty||1)}</span><button type="button" data-az-cart-plus="${idx}">+</button></span><button type="button" class="az-shop-cart-remove" data-az-cart-remove="${idx}" title="Remove">🗑</button></div></div>`).join('')+`<div class="az-shop-cart-total"><span>Total</span><strong>${fmt(total)}</strong></div><button class="az-shop-cart-checkout" type="button" data-az-cart-checkout>Go to Cart Checkout</button><div class="az-shop-cart-note">Note: Your cart items will be saved for up to 2 months before being automatically reset.</div>`; updateBadges();}
-  function openPanel(){render(); ensurePanel().classList.add('is-open');}
-  function closePanel(){ensurePanel().classList.remove('is-open');}
-  function add(item){const items=read().slice(0,100); const id=String(item.id||item.name||Date.now()); const src=String(item.source||''); const found=items.find(x=>String(x.id)===id && String(x.source||'')===src); if(found) found.qty=Number(found.qty||1)+1; else { if(items.length>=100){ if(window.azShowToast) window.azShowToast('Cart limit reached: maximum 100 items.'); else alert('Cart limit reached: maximum 100 items.'); return; } items.push({...item,id,source:src,qty:1,addedAt:Date.now()}); } save(items.slice(0,100)); render(); updateBadges(); openPanel(); setTimeout(()=>{render();updateBadges();window.dispatchEvent(new Event('azobss-shop-cart-updated'));},60);}
-  window.azobssAddShopCart=add; window.azobssOpenShopCart=openPanel; window.azobssShopCartItems=read; window.azobssRefreshShopCart=function(){try{render();updateBadges();}catch(e){}};
-  document.addEventListener('click',function(e){
-    const toggle=e.target.closest('[data-az-shop-cart-toggle]'); if(toggle){e.preventDefault(); const p=ensurePanel(); p.classList.contains('is-open')?closePanel():openPanel(); return;}
-    if(e.target.closest('.az-shop-cart-close')){closePanel();return;}
-    const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=read(); a.splice(Number(rem.dataset.azCartRemove),1); save(a); render(); return;}
-    const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=read(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; save(a); render(); return;}
-    const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=read(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} save(a); render(); return;}
-    if(e.target.closest('[data-az-cart-checkout]')){
-const items=read();
-if(!items.length)return;
-const totalAmount=items.reduce((s,i)=>s+((parseFloat(String(i.price||0).replace(/[^0-9.]/g,''))||0)*Number(i.qty||1)),0);
-const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0);
-const firstItem=items[0]||{};
-const checkoutItem={
-id:'CART-CHECKOUT',
-name:`${totalQty} Item(s)`,
-price:`RM${totalAmount.toFixed(2)}`,
-qty:totalQty,
-cartItems:items,
-isCartCheckout:true,
-downloadLink:firstItem.downloadLink||firstItem.secureDownloadLink||firstItem.premiumDownloadFileLink||'',
-secureDownloadLink:firstItem.secureDownloadLink||firstItem.downloadLink||firstItem.premiumDownloadFileLink||'',
-premiumDownloadFileLink:firstItem.premiumDownloadFileLink||firstItem.secureDownloadLink||firstItem.downloadLink||''
-};
-if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(checkoutItem); closePanel();}
-else if(items[0].pageUrl){location.href=items[0].pageUrl;}
-else {alert('Open the Software Tools or CAD Tools page to checkout this item.');}
-return;
-}
-  });
-  // AZOBSS fix: keep original Software/CAD Buy Now buttons working.
-  // Cart adding is handled only by the separate card cart icon button.
-  window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
-})();
-</script>
-
-<script id="azobss-card-cart-button-js">
-(function(){
-  if(window.__azobssCardCartButtonPatch) return;
-  window.__azobssCardCartButtonPatch = true;
-
-  const getCartKey = () => window.__azobssCurrentCartKey || 'azobss_shop_cart_guest_v1';
-  const isShopPage = () => /\/(Software-Tools|CAD-Tools-&-Resources)\/?/i.test(location.pathname) || document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.cad-card-grid,.cad-tools-shop');
-  const isCADPage = () => /CAD-Tools-&-Resources/i.test(location.pathname) || !!document.querySelector('.cad-tools-shop,.cad-card-grid');
-  const sourceName = () => isCADPage() ? 'CAD Tools' : 'Software';
-  const escText = s => String(s||'').replace(/\s+/g,' ').trim();
-  const readCart = () => { try { return JSON.parse(localStorage.getItem(getCartKey())||'[]').filter(Boolean); } catch(e){ return []; } };
-  const moneyText = (card) => {
-    const explicit = card.querySelector('[data-product-price],[data-price]');
-    if(explicit) return explicit.dataset.productPrice || explicit.dataset.price || '';
-    const text = card.innerText || '';
-    const m = text.match(/RM\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?/i);
-    return m ? m[0].replace(/\s+/g,'') : 'RM0';
-  };
-  const getTitle = (card) => {
-    const el = card.querySelector('h3,.software-title,.cad-title,.card-title,[data-product-name],[data-title]');
-    return escText(el?.dataset?.productName || el?.dataset?.title || el?.textContent || card.getAttribute('data-title') || card.getAttribute('aria-label') || 'Item');
-  };
-  const getImage = (card) => card.querySelector('img')?.getAttribute('src') || '';
-  const getPrimaryLink = (card) => {
-    const buy = card.querySelector('[data-azobss-premium-buy="1"],a.download-btn,a.cad-action-btn,a[href]');
-    return buy?.getAttribute('href') || '';
-  };
-  function isPremiumSoftwareCard(card){
-    if(isCADPage()) return true;
-    const type = String(card?.dataset?.type || card?.getAttribute('data-type') || '').toLowerCase().trim();
-    if(type === 'premium') return true;
-    if(type === 'free') return false;
-    const premiumBuy = card?.querySelector?.('[data-azobss-premium-buy="1"]');
-    if(premiumBuy) return true;
-    const freeBuy = card?.querySelector?.('[data-azobss-premium-buy="0"]');
-    if(freeBuy) return false;
-    const text = String(card?.innerText || '').toLowerCase();
-    if(/free software|download now|\bfree\b/.test(text) && !/buy now|rm\s*\d/i.test(text)) return false;
-    return /buy now|rm\s*\d/i.test(text);
-  }
-  function cleanupSoftwareCartSlot(card){
-    const row = card?.querySelector?.(':scope > .az-software-buy-cart-row');
-    if(row){
-      const buy = row.querySelector(':scope > a.download-btn, :scope > button.download-btn');
-      if(buy) card.insertBefore(buy, row);
-      row.remove();
-    }
-    card?.querySelectorAll?.(':scope > .az-card-cart-slot, :scope > .az-software-buy-cart-row > .az-card-cart-slot').forEach(el => el.remove());
-  }
-  const buildItem = (card) => {
-    const src = sourceName();
-    const title = getTitle(card);
-    const primary = card.querySelector('[data-azobss-premium-buy="1"],a.download-btn,a.cad-action-btn,a[href],button');
-    const id = primary?.dataset?.productId || primary?.dataset?.productName || card.dataset.productId || card.dataset.id || (src + ':' + title);
-    const price = primary?.dataset?.productPrice || moneyText(card);
-    const href = getPrimaryLink(card);
-    return {
-      id, name:title, price, source:src, category:src, image:getImage(card),
-      paymentLink: primary?.dataset?.paymentLink || '', stripeLink: primary?.dataset?.stripeLink || '',
-      secureDownloadLink: primary?.dataset?.downloadLink || primary?.dataset?.premiumDownloadFileLink || href || '',
-      premiumDownloadFileLink: primary?.dataset?.premiumDownloadFileLink || primary?.dataset?.downloadLink || href || '',
-      downloadLink: primary?.dataset?.downloadLink || primary?.dataset?.premiumDownloadFileLink || href || '',
-      pageUrl: location.href.split('#')[0]
-    };
-  };
-  const inCart = (item) => readCart().some(x => String(x.id)===String(item.id) && String(x.source)===String(item.source));
-  function updateButton(btn, item){
-    const yes = inCart(item);
-    btn.classList.toggle('is-carted', yes);
-    btn.setAttribute('aria-label', yes ? 'Carted' : 'Add to cart');
-    btn.setAttribute('title', yes ? 'Carted' : 'Add to cart');
-    btn.innerHTML = '<span class="az-card-cart-icon">'+(yes?'✓':'🛒')+'</span><span class="az-card-cart-text">'+(yes?'Carted':'Add to Cart')+'</span>';
-  }
-  function eligibleCards(){
-    if(!isShopPage()) return [];
-    const selectors = isCADPage()
-      ? '.cad-card-grid .cad-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card,.resource-card'
-      : '#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.software-card,.software-product-card';
-    return Array.from(document.querySelectorAll(selectors)).filter(card => {
-      if(!card || card.closest('#userPaPurchaseList,#benchmarkCartList,.pa-section,.bm-section,#PA-BM,[data-pa],[data-bm]')) return false;
-      const t = getTitle(card);
-      if(!t || t === 'Item') return false;
-      if(card.classList.contains('software-empty-state') || card.classList.contains('cad-empty-state')) return false;
-      if(!isCADPage() && !isPremiumSoftwareCard(card)){ cleanupSoftwareCartSlot(card); return false; }
-      return true;
-    });
-  }
-  function patchCards(){
-    eligibleCards().forEach(card => {
-      const isSoftwareCard = !isCADPage();
-      if(isSoftwareCard && !isPremiumSoftwareCard(card)){ cleanupSoftwareCartSlot(card); return; }
-      const buyBtn = isSoftwareCard ? card.querySelector(':scope > a.download-btn, :scope > button.download-btn') : null;
-      let slot = card.querySelector(':scope > .az-card-cart-slot, :scope > .az-software-buy-cart-row > .az-card-cart-slot');
-      if(isSoftwareCard && buyBtn){
-        let row = card.querySelector(':scope > .az-software-buy-cart-row');
-        if(!row){
-          row = document.createElement('div');
-          row.className = 'az-software-buy-cart-row';
-          card.insertBefore(row, buyBtn);
-          row.appendChild(buyBtn);
-        } else if(buyBtn.parentElement !== row){
-          row.insertBefore(buyBtn, row.firstChild);
-        }
-        if(!slot){
-          slot = document.createElement('div');
-          slot.className = 'az-card-cart-slot';
-          row.appendChild(slot);
-        } else if(slot.parentElement !== row){
-          row.appendChild(slot);
-        }
-      } else if(!slot){
-        slot = document.createElement('div');
-        slot.className = 'az-card-cart-slot';
-        card.appendChild(slot);
-      }
-      let btn = slot.querySelector('.az-card-cart-btn');
-      const item = buildItem(card);
-      if(!btn){
-        btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'az-card-cart-btn';
-        btn.addEventListener('click', function(ev){
-          ev.preventDefault();
-          ev.stopPropagation();
-          if(btn.dataset.azCartBusy === '1') return;
-          btn.dataset.azCartBusy = '1';
-          setTimeout(() => { btn.dataset.azCartBusy = '0'; }, 350);
-          const fresh = buildItem(card);
-          if(typeof window.azobssAddShopCart === 'function') {
-            window.azobssAddShopCart(fresh);
-          } else {
-            const items = readCart();
-            const found = items.find(x => String(x.id)===String(fresh.id) && String(x.source)===String(fresh.source));
-            if(found) found.qty = Number(found.qty||1)+1; else { if(items.length>=100){ if(window.azShowToast) window.azShowToast('Cart limit reached: maximum 100 items.'); else alert('Cart limit reached: maximum 100 items.'); return; } items.push({...fresh, qty:1, addedAt:Date.now()}); }
-            localStorage.setItem(getCartKey(), JSON.stringify(items.slice(0,100)));
-            window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-            if(typeof window.azobssOpenShopCart === 'function') window.azobssOpenShopCart();
-          }
-          btn.classList.add('is-carted');
-          setTimeout(() => updateButton(btn, fresh), 30);
-          setTimeout(() => window.dispatchEvent(new Event('azobss-shop-cart-updated')), 80);
-        });
-        slot.appendChild(btn);
-      }
-      updateButton(btn, item);
-    });
-  }
-  let timer = null;
-  function schedule(){ clearTimeout(timer); timer = setTimeout(patchCards, 80); }
-  document.addEventListener('DOMContentLoaded', () => { patchCards(); [250,700,1500,3000].forEach(t => setTimeout(patchCards,t)); });
-  window.addEventListener('azobss-shop-cart-updated', schedule);
-  if(document.readyState !== 'loading') { patchCards(); [250,700,1500,3000].forEach(t => setTimeout(patchCards,t)); }
-  new MutationObserver(schedule).observe(document.documentElement, {childList:true, subtree:true});
-})();
-</script>
-
-
-
-<script id="azobss-software-admin-id-and-download-arrow-audit-fix">
-(function(){
-  if(window.__azAdminIdArrowAuditFix) return;
-  window.__azAdminIdArrowAuditFix = true;
-  function cleanDownloadButtons(){
-    document.querySelectorAll('#softwareGrid .download-card .download-btn,[data-admin-software="1"] .download-btn').forEach(function(btn){
-      if(btn.getAttribute('data-azobss-premium-buy') === '1' || btn.classList.contains('premium')) return;
-      btn.querySelectorAll('.az-btn-icon').forEach(function(el){ el.remove(); });
-      var txt = (btn.textContent || '').replace(/^\s*[⬇↓↧⇩⤓]+\s*/,'').trim();
-      if(/download\s*now/i.test(txt)) btn.innerHTML = '<span class="download-text">Download Now</span>';
-    });
-  }
-  function copyText(v){
-    try{ if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(v); }catch(e){}
-    var ta=document.createElement('textarea'); ta.value=v; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); return Promise.resolve();
-  }
-  function notify(msg){ if(window.azShowToast) window.azShowToast(msg); else if(window.showToast) window.showToast(msg); else alert(msg); }
-  function ensureIdButtons(){
-    if(!document.body.classList.contains('is-admin') && !(document.body.innerText||'').toLowerCase().includes('hello, zedan91')) return;
-    document.querySelectorAll('#softwareGrid .download-card,[data-admin-software="1"]').forEach(function(card){
-      var id = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
-      if(!id){
-        var title = (card.querySelector('h3,.software-title')||{}).textContent || 'STATIC';
-        id = 'AZSW-' + title.toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-        card.setAttribute('data-product-id', id);
-      }
-      var wrap = card.querySelector('.software-card-admin-actions');
-      if(!wrap) return;
-      if(!wrap.querySelector('.software-card-id-btn')){
-        var b=document.createElement('button');
-        b.type='button'; b.className='software-card-id-btn'; b.setAttribute('data-software-id', id); b.title='Copy Product ID'; b.setAttribute('aria-label','Product ID'); b.textContent='🆔';
-        wrap.appendChild(b);
-      }
-    });
-  }
-  document.addEventListener('click', function(e){
-    var b=e.target.closest && e.target.closest('.software-card-id-btn');
-    if(!b) return;
-    e.preventDefault(); e.stopPropagation();
-    var id=b.getAttribute('data-software-id') || b.closest('[data-product-id]')?.getAttribute('data-product-id') || '';
-    copyText(id).then(function(){ notify('Product ID copied: '+id); });
-  }, true);
-  function run(){ cleanDownloadButtons(); ensureIdButtons(); }
-  document.addEventListener('DOMContentLoaded', run);
-  if(document.readyState !== 'loading') run();
-  [150,400,900,1500,3000,5000].forEach(function(t){ setTimeout(run,t); });
-  new MutationObserver(function(){ clearTimeout(window.__azAdminIdArrowAuditTimer); window.__azAdminIdArrowAuditTimer=setTimeout(run,80); }).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-
-
-<style id="azobss-hide-product-id-keep-search-final">
-/* Hide visible Software Product ID text on cards, but keep it available for search/text lookup. */
-.az-hidden-product-id-token,
-.az-card-visible-product-id,
-.software-card-product-id,
-.software-product-id,
-.product-id-row,
-.product-id-label,
-.product-id-text{
-  position:absolute!important;
-  left:-9999px!important;
-  top:auto!important;
-  width:1px!important;
-  height:1px!important;
-  max-width:1px!important;
-  max-height:1px!important;
-  overflow:hidden!important;
-  opacity:0!important;
-  pointer-events:none!important;
-  font-size:0!important;
-  line-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  border:0!important;
-}
-</style>
-<script id="azobss-hide-id-search-patch-final">
-(function(){
-  if(window.__azobssHideIdSearchFinal) return;
-  window.__azobssHideIdSearchFinal = true;
-  var ID_RE = /\b(?:ID\s*:\s*)?(AZSW[-_A-Z0-9]+)\b/i;
-  function isSoftwareCard(card){
-    return !!(card && card.matches && card.matches('#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.software-card,.software-product-card,[data-admin-software="1"]'));
-  }
-  function getCards(){
-    return Array.from(document.querySelectorAll('#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.software-card,.software-product-card,[data-admin-software="1"]'));
-  }
-  function ensureIdForCard(card){
-    if(!isSoftwareCard(card)) return '';
-    var raw = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
-    var text = card.textContent || '';
-    var m = text.match(ID_RE);
-    var id = raw || (m && m[1]) || '';
-    if(!id){
-      var btn = card.querySelector('[data-product-id],[data-software-id],[data-product-name],[data-doc-id]');
-      if(btn) id = btn.getAttribute('data-product-id') || btn.getAttribute('data-software-id') || btn.dataset.productId || btn.dataset.id || btn.getAttribute('data-doc-id') || '';
-    }
-    if(id){
-      id = String(id).trim().toUpperCase();
-      card.setAttribute('data-product-id', id);
-      card.dataset.productId = id;
-      var token = card.querySelector(':scope > .az-hidden-product-id-token');
-      if(!token){
-        token = document.createElement('span');
-        token.className = 'az-hidden-product-id-token';
-        token.setAttribute('aria-hidden','true');
-        card.appendChild(token);
-      }
-      token.textContent = ' ID: ' + id + ' ';
-    }
-    return id;
-  }
-  function hideVisibleIdText(card){
-    if(!isSoftwareCard(card)) return;
-    ensureIdForCard(card);
-    Array.from(card.querySelectorAll('p,div,span,small')).forEach(function(el){
-      if(el.classList.contains('az-hidden-product-id-token') || el.classList.contains('software-card-id-btn')) return;
-      if(el.querySelector('button,a,input,textarea,select,img,svg')) return;
-      var t = (el.textContent || '').trim();
-      if(/^ID\s*:\s*AZSW[-_A-Z0-9]+$/i.test(t) || /^AZSW[-_A-Z0-9]+$/i.test(t)){
-        el.classList.add('az-card-visible-product-id');
-        el.setAttribute('aria-hidden','true');
-      }
-    });
-  }
-  function run(){ getCards().forEach(hideVisibleIdText); }
-  function norm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
-  function currentSearchValue(){
-    var inputs = Array.from(document.querySelectorAll('input[type="search"],input[placeholder*="Search"],input[placeholder*="search"],input[id*="search" i],input[class*="search" i]'));
-    var active = document.activeElement;
-    if(active && inputs.includes(active)) return active.value || '';
-    for(var i=0;i<inputs.length;i++){ if(inputs[i].value) return inputs[i].value; }
-    return '';
-  }
-  function revealIdMatches(){
-    var q = norm(currentSearchValue());
-    if(!q) return;
-    getCards().forEach(function(card){
-      var id = norm(ensureIdForCard(card));
-      if(id && id.indexOf(q) !== -1){
-        card.hidden = false;
-        card.removeAttribute('hidden');
-        if(card.style && (card.style.display === 'none')) card.style.display = '';
-        var p = card.parentElement;
-        while(p && p !== document.body){
-          if(p.hidden) p.hidden = false;
-          if(p.style && p.style.display === 'none') p.style.display = '';
-          p = p.parentElement;
-        }
-      }
-    });
-  }
-  document.addEventListener('input', function(e){
-    if(e.target && e.target.matches && e.target.matches('input[type="search"],input[placeholder*="Search"],input[placeholder*="search"],input[id*="search" i],input[class*="search" i]')){
-      setTimeout(function(){ run(); revealIdMatches(); }, 60);
-      setTimeout(revealIdMatches, 180);
-      setTimeout(revealIdMatches, 450);
-    }
-  }, true);
-  document.addEventListener('DOMContentLoaded', function(){ run(); setTimeout(run,300); setTimeout(run,1000); });
-  if(document.readyState !== 'loading'){ run(); setTimeout(run,300); setTimeout(run,1000); }
-  var timer=null;
-  new MutationObserver(function(){ clearTimeout(timer); timer=setTimeout(function(){ run(); revealIdMatches(); },80); }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
-})();
-</script>
-
-
-
-<!-- AZOBSS REAL HIDE PRODUCT ID TEXT PATCH - keep search working -->
-<style id="azobss-real-hide-id-text-style">
-.az-hidden-product-id-token,
-.az-card-visible-product-id,
-.az-product-id-hidden-real{
-  display:none!important;
-  visibility:hidden!important;
-  opacity:0!important;
-  width:0!important;
-  height:0!important;
-  max-width:0!important;
-  max-height:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  font-size:0!important;
-  line-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  border:0!important;
-}
-</style>
-<script id="azobss-real-hide-id-text-keep-search-script">
-(function(){
-  if(window.__azobssRealHideIdTextPatch) return;
-  window.__azobssRealHideIdTextPatch = true;
-  var ID_RE = /\bID\s*:\s*(AZSW[-_A-Z0-9]+)\b/ig;
-  var ONLY_ID_RE = /^\s*ID\s*:\s*(AZSW[-_A-Z0-9]+)\s*$/i;
-  function softwareCards(){
-    return Array.from(document.querySelectorAll([
-      '#softwareGrid .download-card',
-      '#softwareDownloadsGrid .download-card',
-      '.downloads-grid .download-card',
-      '.software-card',
-      '.software-product-card',
-      '[data-admin-software="1"]',
-      '[data-product-id]'
-    ].join(','))).filter(function(card){
-      return card && !card.closest('#paBmSection,#paBmCart,#purchaseRecords,#purchaseRecordsPanel');
-    });
-  }
-  function addHiddenToken(card,id){
-    if(!card || !id) return;
-    id=String(id).trim().toUpperCase();
-    card.setAttribute('data-product-id',id);
-    card.dataset.productId=id;
-    var token=card.querySelector(':scope > .az-hidden-product-id-token');
-    if(!token){
-      token=document.createElement('span');
-      token.className='az-hidden-product-id-token';
-      token.setAttribute('aria-hidden','true');
-      card.appendChild(token);
-    }
-    token.textContent=' '+id+' ';
-  }
-  function hideIdTextNodes(card){
-    if(!card) return;
-    var foundId = card.getAttribute('data-product-id') || card.dataset.productId || '';
-    var walker=document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
-      acceptNode:function(node){
-        var p=node.parentElement;
-        if(!p) return NodeFilter.FILTER_REJECT;
-        if(p.closest('.az-hidden-product-id-token,.software-card-id-btn,button,a,script,style,textarea,input,select')) return NodeFilter.FILTER_REJECT;
-        var txt=node.nodeValue||'';
-        return /\bID\s*:\s*AZSW[-_A-Z0-9]+\b/i.test(txt) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-      }
-    });
-    var nodes=[];
-    while(walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach(function(node){
-      var txt=node.nodeValue||'';
-      var m=txt.match(/\bID\s*:\s*(AZSW[-_A-Z0-9]+)\b/i);
-      if(m && m[1]) foundId=m[1];
-      node.nodeValue=txt.replace(ID_RE,'');
-    });
-    if(foundId) addHiddenToken(card,foundId);
-    Array.from(card.querySelectorAll('p,div,span,small,strong,em')).forEach(function(el){
-      if(el.closest('.az-hidden-product-id-token,.software-card-id-btn,button,a,script,style,textarea,input,select')) return;
-      var t=(el.textContent||'').trim();
-      var m=t.match(ONLY_ID_RE);
-      if(m && m[1]){
-        addHiddenToken(card,m[1]);
-        el.classList.add('az-product-id-hidden-real');
-        el.setAttribute('aria-hidden','true');
-        el.textContent='';
-      }
-    });
-  }
-  function patchSearchById(){
-    var qInputs=Array.from(document.querySelectorAll('input[type="search"],input[placeholder*="Search"],input[placeholder*="search"],input[id*="search" i],input[class*="search" i]'));
-    function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();}
-    function reveal(){
-      var q='';
-      if(document.activeElement && qInputs.includes(document.activeElement)) q=document.activeElement.value||'';
-      if(!q){ for(var i=0;i<qInputs.length;i++){ if(qInputs[i].value){ q=qInputs[i].value; break; } } }
-      q=norm(q); if(!q) return;
-      softwareCards().forEach(function(card){
-        var id=norm(card.getAttribute('data-product-id') || card.dataset.productId || '');
-        if(id && id.indexOf(q)!==-1){
-          card.hidden=false; card.removeAttribute('hidden');
-          if(card.style && card.style.display==='none') card.style.display='';
-          var p=card.parentElement;
-          while(p && p!==document.body){ if(p.hidden) p.hidden=false; if(p.style && p.style.display==='none') p.style.display=''; p=p.parentElement; }
-        }
-      });
-    }
-    document.addEventListener('input',function(e){
-      if(e.target && qInputs.includes(e.target)){ setTimeout(reveal,80); setTimeout(reveal,250); setTimeout(reveal,700); }
-    },true);
-  }
-  function run(){ softwareCards().forEach(hideIdTextNodes); }
-  document.addEventListener('DOMContentLoaded',function(){ run(); patchSearchById(); setTimeout(run,300); setTimeout(run,1000); setTimeout(run,2500); });
-  if(document.readyState!=='loading'){ run(); patchSearchById(); setTimeout(run,300); setTimeout(run,1000); setTimeout(run,2500); }
-  var timer=null;
-  new MutationObserver(function(){ clearTimeout(timer); timer=setTimeout(run,60); }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
-})();
-</script>
-
-<script type="module" id="azobss-cart-firestore-sync-js">
-/* AZOBSS cart persistence:
-   - Guest buyers: localStorage only.
-   - Logged-in Firebase users: localStorage + Firestore sync.
-*/
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-
-(function(){
-  if(window.__azobssCartFirestoreSyncReady) return;
-  window.__azobssCartFirestoreSyncReady = true;
-
-  let CART_KEY = 'azobss_shop_cart_guest_v1';
-  window.__azobssCurrentCartKey = CART_KEY;
-  const metaKey = () => CART_KEY + '_meta';
-  const COLLECTION = 'userCarts';
-  const firebaseConfig = {
-    apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
-    authDomain: 'azobss.firebaseapp.com',
-    projectId: 'azobss',
-    storageBucket: 'azobss.firebasestorage.app',
-    messagingSenderId: '159277716405',
-    appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
-  };
-
-  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  let currentUid = '';
-  let syncTimer = null;
-  let loadingFromCloud = false;
-  let cloudPulling = false;
-  let cloudReady = false;
-
-  try{
-    // Remove old shared cart key so logged-in cart cannot leak into guest view.
-    if(localStorage.getItem('azobss_shop_cart_v1') !== null){
-      localStorage.removeItem('azobss_shop_cart_v1');
-      localStorage.removeItem('azobss_shop_cart_v1_meta');
-    }
-  }catch(e){}
-
-  function readCart(){
-    try{
-      const parsed = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-    }catch(e){ return []; }
-  }
-
-  function saveCart(items){
-    localStorage.setItem(CART_KEY, JSON.stringify(Array.isArray(items) ? items.filter(Boolean) : []));
-    window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-  }
-
-  function localUpdatedAt(){
-    try{
-      const meta = JSON.parse(localStorage.getItem(metaKey()) || '{}');
-      return Number(meta.updatedAt || 0);
-    }catch(e){ return 0; }
-  }
-
-  function markLocalUpdated(){
-    if(loadingFromCloud) return;
-    try{ localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()})); }catch(e){}
-  }
-
-  function itemKey(i){
-    return String(i?.source || '') + '::' + String(i?.id || i?.name || '');
-  }
-
-  function mergeCart(a,b){
-    const map = new Map();
-    [...(Array.isArray(a)?a:[]), ...(Array.isArray(b)?b:[])].filter(Boolean).forEach(item=>{
-      const key = itemKey(item);
-      if(!key || key === '::') return;
-      const old = map.get(key);
-      if(!old) map.set(key, {...item, qty:Number(item.qty||1)});
-      else{
-        const oldQty = Number(old.qty||1);
-        const newQty = Number(item.qty||1);
-        map.set(key, {...old, ...item, qty:Math.max(oldQty, newQty)});
-      }
-    });
-    return Array.from(map.values());
-  }
-
-  async function pushCloud(){
-    if(!currentUid || loadingFromCloud || cloudPulling || !cloudReady) return;
-    const items = readCart();
-    const totalQty = items.reduce((s,i)=>s+Number(i.qty||1),0);
-    try{
-      await setDoc(doc(db, COLLECTION, currentUid), {
-        uid: currentUid,
-        items,
-        totalQty,
-        updatedAtMs: Date.now(),
-        updatedAt: serverTimestamp()
-      }, {merge:true});
-    }catch(err){
-      console.warn('AZOBSS cart Firestore sync skipped:', err);
-    }
-  }
-
-  async function pullCloud(user){
-    currentUid = user?.uid || '';
-    if(!currentUid) return;
-    cloudPulling = true;
-    cloudReady = false;
-    try{
-      const ref = doc(db, COLLECTION, currentUid);
-      const snap = await getDoc(ref);
-      const localItems = readCart();
-      const localTime = localUpdatedAt();
-      if(snap.exists()){
-        const data = snap.data() || {};
-        const now = Date.now();
-        const maxAge = 60*24*60*60*1000;
-        const cloudItems = (Array.isArray(data.items) ? data.items.filter(Boolean) : [])
-          .filter(i => !i.addedAt || (now - Number(i.addedAt)) <= maxAge);
-        const cloudTime = Number(data.updatedAtMs || 0);
-        loadingFromCloud = true;
-        localStorage.setItem(CART_KEY, JSON.stringify(cloudItems));
-        localStorage.setItem(metaKey(), JSON.stringify({updatedAt:cloudTime || Date.now()}));
-        loadingFromCloud = false;
-        cloudReady = true;
-        if(Array.isArray(data.items) && data.items.length !== cloudItems.length){
-          setTimeout(pushCloud, 300);
-        }
-        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-      }else if(localItems.length){
-        cloudReady = true;
-        await pushCloud();
-      }else{
-        loadingFromCloud = true;
-        localStorage.setItem(CART_KEY, JSON.stringify([]));
-        localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()}));
-        loadingFromCloud = false;
-        cloudReady = true;
-        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-      }
-      if(typeof window.azobssOpenShopCart === 'function'){
-        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-      }
-    }catch(err){
-      console.warn('AZOBSS cart Firestore load skipped:', err);
-    }finally{
-      loadingFromCloud = false;
-      cloudPulling = false;
-    }
-  }
-
-  window.azobssCartDebug=function(){
-    return {uid: currentUid, key: CART_KEY, items: readCart()};
-  };
-  window.addEventListener('azobss-shop-cart-updated', ()=>{
-    markLocalUpdated();
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(pushCloud, 150);
-  });
-
-  onAuthStateChanged(auth, user => {
-    if(user){
-      CART_KEY = 'azobss_shop_cart_user_' + user.uid + '_v1';
-      window.__azobssCurrentCartKey = CART_KEY;
-      pullCloud(user);
-      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-    }else{
-      currentUid = '';
-      CART_KEY = 'azobss_shop_cart_guest_v1';
-      window.__azobssCurrentCartKey = CART_KEY;
-      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-    }
-  });
-})();
-</script>
 
 
 <script type="module" id="azobss-clean-support-notification-final">
@@ -14949,6 +13456,14 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 </body>
 </html>
+<script>
+function confirmDeleteProgram(id){
+ const ok=confirm('Delete this LISP permanently?\n\nThis action cannot be undone.');
+ if(ok){
+   deleteProgram(id);
+ }
+}
+</script>
 
 
 

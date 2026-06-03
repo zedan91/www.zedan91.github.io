@@ -2,90 +2,152 @@
 
 <html lang="en">
 <head>
-<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>BMI Calculator - AZOBSS Tools</title>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lucky Draw | AZOBSS</title>
+<meta content="AZOBSS Lucky Draw page with invite link, participant list, current prize and admin controls." name="description"/>
 <style>
-:root{--bg:#07111f;--card:#101c2d;--card2:#13243a;--text:#eef5ff;--muted:#9fb2c8;--accent:#25d366;--blue:#3b82f6;--warn:#facc15;--danger:#ef4444;--line:rgba(255,255,255,.1)}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#102544,#07111f 55%);color:var(--text);line-height:1.55}
-.header{padding:26px 16px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
-.header a{color:#9bd1ff;text-decoration:none}.wrap{max-width:1120px;margin:auto;padding:24px 16px}
-.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-label{display:block;margin:10px 0 6px;color:var(--muted);font-weight:bold}
-input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.13);background:#07111f;color:var(--text);outline:none}
-button,.btn{display:inline-block;padding:12px 16px;border:0;border-radius:12px;background:var(--blue);color:white;font-weight:bold;cursor:pointer;text-decoration:none;margin-top:12px}
-button:hover,.btn:hover{filter:brightness(1.1)}.result{margin-top:14px;padding:15px;border-radius:14px;background:#07111f;border:1px solid rgba(255,255,255,.1);white-space:pre-wrap}
-.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(37,211,102,.15);color:#68ff9e;font-size:13px;margin:4px 4px 4px 0}
-.muted{color:var(--muted)}.footer{text-align:center;color:var(--muted);padding:30px 10px}
-.table{width:100%;border-collapse:collapse;margin-top:12px}.table th,.table td{border:1px solid rgba(255,255,255,.1);padding:10px;text-align:left}.table th{background:#0b1728}
-.copy{background:#22c55e}.small{font-size:13px}.good{color:#86efac}.warn{color:#fde047}.bad{color:#fca5a5}
-.kpi{display:grid;gap:8px;background:#07111f;border:1px solid var(--line);border-radius:14px;padding:14px}.kpi strong{font-size:22px;color:#68ff9e}
-ul{padding-left:20px}.pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.pill{padding:8px 10px;border-radius:999px;background:rgba(37,211,102,.12);color:#86efac;font-size:13px}
-</style>
-<style>
-/* SAFE HIDE: top marketplace/search strip only */
-form:has(input[placeholder*="Search for an item"]),
-div:has(> input[placeholder*="Search for an item"]),
-section:has(input[placeholder*="Search for an item"]),
-.marketplace-search,
-.search-strip,
-.search-bar,
-.top-search{
-  display:none !important;
-  height:0 !important;
-  min-height:0 !important;
-  margin:0 !important;
-  padding:0 !important;
-  overflow:hidden !important;
-}
-</style>
-<style>
-/* Shared AZOBSS sticky navigation - mirrors index.html final sticky bar */
-body{padding-top:54px !important;}
-.market-sticky-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:3200 !important;background:#000 !important;border-bottom:1px solid rgba(218,165,32,.45) !important;box-shadow:0 10px 24px rgba(0,0,0,.28) !important;}
-.market-bar-inner{width:100% !important;margin:0 !important;padding:0 26px 0 8px !important;box-sizing:border-box !important;}
-.market-main-row{min-height:48px !important;display:flex !important;align-items:center !important;gap:7px !important;flex-wrap:nowrap !important;}
-.market-brand{display:inline-flex !important;align-items:center !important;flex:0 0 auto !important;width:154px !important;height:38px !important;overflow:hidden !important;border-radius:999px !important;text-decoration:none !important;margin-left:0 !important;}
-.market-brand img{display:block !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center !important;border:0 !important;border-radius:999px !important;background:transparent !important;}
-.market-nav{display:flex !important;align-items:center !important;gap:7px !important;flex:1 1 auto !important;min-width:0 !important;overflow:hidden !important;white-space:nowrap !important;scrollbar-width:none !important;}
-.market-nav::-webkit-scrollbar{display:none !important;}
-.market-nav a{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;min-height:32px !important;padding:0 10px !important;border:1px solid rgba(148,163,184,.28) !important;border-radius:999px !important;background:#0e1729 !important;color:#e5e7eb !important;text-decoration:none !important;font-size:clamp(11px,1vw,13px) !important;font-weight:800 !important;line-height:1 !important;white-space:nowrap !important;text-shadow:0 1px 8px rgba(0,0,0,.45) !important;box-shadow:none !important;}
-.market-nav a:hover{color:#14b8a6 !important;}
-.market-nav a.market-nav-primary{background:#22c55e !important;border-color:#22c55e !important;color:#052e16 !important;text-shadow:none !important;box-shadow:0 0 15px rgba(34,197,94,.34), inset 0 0 0 1px rgba(255,255,255,.12) !important;}
-.nav-pa-bm-link.is-hidden{display:none !important;}
-.nav-whatsapp-circle{width:38px !important;height:38px !important;min-width:38px !important;min-height:38px !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;background:#22c55e !important;color:#fff !important;font-size:0 !important;font-weight:900 !important;box-shadow:0 8px 20px rgba(34,197,94,.25) !important;vertical-align:middle !important;}
-.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
-a:has(.nav-whatsapp-circle),button:has(.nav-whatsapp-circle){width:44px !important;min-width:44px !important;max-width:44px !important;height:44px !important;padding:0 !important;border-radius:999px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important;}
-.site-auth-actions{position:static !important;display:flex !important;align-items:center !important;gap:20px !important;flex:0 0 auto !important;z-index:auto !important;margin-left:auto !important;margin-right:10px !important;}
-.site-auth-btn{display:inline-flex !important;align-items:center !important;gap:0 !important;border:0 !important;border-radius:0 !important;background:transparent !important;color:#fff !important;padding:0 !important;font-size:14px !important;font-weight:bold !important;line-height:1 !important;text-decoration:none !important;cursor:pointer !important;transition:.2s !important;}
-.site-auth-btn:hover{color:#14b8a6 !important;}
-@media(max-width:760px){body{padding-top:92px !important;}.market-bar-inner{width:100% !important;padding:0 6px !important;}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important;}.market-brand{width:116px !important;height:30px !important;}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important;}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important;}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important;}.site-auth-btn{font-size:13px !important;white-space:nowrap !important;}}
-</style>
-<style>
-/* Secondary page auth state bridge */
-.market-user-tools{display:none;align-items:center !important;gap:20px !important;margin-left:auto !important;}
-body.is-authenticated .site-auth-actions{display:none !important;}
-body.is-authenticated .market-user-tools{display:flex !important;}
-body:not(.is-authenticated) .market-user-tools{display:none !important;}
-.user-menu{position:relative !important;display:flex !important;align-items:center !important;gap:8px !important;color:#fff !important;font-size:14px !important;font-weight:bold !important;cursor:pointer !important;min-height:34px !important;}
-.user-avatar{display:inline-grid !important;place-items:center !important;width:26px !important;height:26px !important;border-radius:999px !important;border:1px solid rgba(20,184,166,.75) !important;background:#03121f !important;color:#fff !important;font-size:11px !important;font-weight:bold !important;text-transform:uppercase !important;}
-.user-name{white-space:nowrap !important;color:#fff !important;}
-.user-menu::after{content:"" !important;width:7px !important;height:7px !important;border-right:2px solid #cbd5e1 !important;border-bottom:2px solid #cbd5e1 !important;transform:rotate(45deg) translateY(-2px) !important;margin-left:2px !important;flex:0 0 auto !important;}
-.user-dropdown{position:absolute !important;top:calc(100% + 10px) !important;right:0 !important;min-width:190px !important;padding:8px !important;border:1px solid rgba(148,163,184,.22) !important;border-radius:14px !important;background:#08111f !important;box-shadow:0 18px 50px rgba(0,0,0,.45) !important;display:none !important;z-index:3300 !important;}
-.user-menu.is-open .user-dropdown{display:block !important;}
-.user-dropdown-section{padding:8px 10px 5px !important;color:#94a3b8 !important;font-size:11px !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:.08em !important;}
-.user-dropdown-item{width:100% !important;display:flex !important;align-items:center !important;gap:10px !important;padding:10px !important;border:0 !important;border-radius:10px !important;background:transparent !important;color:#e5e7eb !important;text-decoration:none !important;font-size:13px !important;font-weight:800 !important;text-align:left !important;cursor:pointer !important;}
-.user-dropdown-item:hover{background:rgba(30,41,59,.9) !important;color:#fff !important;}
-@media(max-width:760px){.market-user-tools{gap:12px !important;margin-left:auto !important;}.user-name{max-width:120px !important;overflow:hidden !important;text-overflow:ellipsis !important;}}</style>
-<style>
-/* Stable CSS chat icon: avoids emoji/encoding corruption */
-.nav-whatsapp-circle{position:relative !important;font-size:0 !important;overflow:visible !important;}
-.nav-whatsapp-circle::before{content:"" !important;display:block !important;width:18px !important;height:14px !important;border-radius:999px !important;background:#fff !important;line-height:1 !important;}
-.nav-whatsapp-circle::after{content:"" !important;position:absolute !important;left:13px !important;top:23px !important;width:7px !important;height:7px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
-.whatsapp{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:58px !important;height:58px !important;padding:0 !important;font-size:0 !important;position:fixed !important;}
-.whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
-.whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
-</style>
+    :root{
+      --bg:#050914;
+      --panel:#0e1729;
+      --panel-2:#101c31;
+      --line:rgba(148,163,184,.22);
+      --text:#f8fafc;
+      --muted:#a8b3c7;
+      --green:#22c55e;
+      --green-soft:rgba(34,197,94,.18);
+      --orange:#f97316;
+      --blue:#2563eb;
+      --danger:#ef4444;
+      --gold:#d8b341;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg)}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#102544 0,#07111f 31%,#050914 70%);color:var(--text);padding-top:54px}
+    a{color:inherit}
+    button,input,textarea{font:inherit}
+
+    .market-sticky-bar{position:fixed;top:0;left:0;right:0;z-index:3200;background:#000;border-bottom:1px solid rgba(218,165,32,.45);box-shadow:0 10px 24px rgba(0,0,0,.28)}
+    .market-bar-inner{width:100%;margin:0;padding:0 26px 0 8px}
+    .market-main-row{min-height:48px;display:flex;align-items:center;gap:7px;flex-wrap:nowrap}
+    .market-brand{display:inline-flex;align-items:center;flex:0 0 auto;width:154px;height:38px;overflow:hidden;border-radius:999px;text-decoration:none;margin-left:0}
+    .market-brand img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;border:0;border-radius:999px;background:transparent}
+    .market-nav{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;scrollbar-width:none}
+    .market-nav::-webkit-scrollbar{display:none}
+    .market-nav a{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:32px;padding:0 10px;border:1px solid rgba(148,163,184,.28);border-radius:999px;background:#0e1729;color:#e5e7eb;text-decoration:none;font-size:clamp(11px,1vw,13px);font-weight:800;line-height:1;white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,.45)}
+    .market-nav a:hover,.market-nav a.is-active{color:#052e16;background:#22c55e;border-color:#22c55e;text-shadow:none;box-shadow:0 0 15px rgba(34,197,94,.34),inset 0 0 0 1px rgba(255,255,255,.12)}
+    .nav-pa-bm-link.is-hidden{display:none}
+    .nav-whatsapp-circle{position:relative;width:38px;height:38px;min-width:38px;min-height:38px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:#22c55e;color:#fff;font-size:0;font-weight:900;box-shadow:0 8px 20px rgba(34,197,94,.25);vertical-align:middle;overflow:visible}
+    .nav-whatsapp-circle::before{content:"";display:block;width:18px;height:14px;border-radius:999px;background:#fff;line-height:1}
+    .nav-whatsapp-circle::after{content:"";position:absolute;left:13px;top:23px;width:7px;height:7px;background:#fff;clip-path:polygon(0 0,100% 0,0 100%);transform:rotate(-12deg)}
+    a:has(.nav-whatsapp-circle){width:44px;min-width:44px;max-width:44px;height:44px;padding:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+    .site-auth-actions{position:static;display:flex;align-items:center;gap:20px;flex:0 0 auto;margin-left:auto;margin-right:10px}
+    .site-auth-btn{display:inline-flex;align-items:center;border:0;background:transparent;color:#fff;padding:0;font-size:14px;font-weight:bold;line-height:1;text-decoration:none;cursor:pointer}
+    .site-auth-btn:hover{color:#14b8a6}
+    .market-user-tools{display:none;align-items:center;gap:20px;margin-left:auto}
+    body.is-authenticated .site-auth-actions{display:none}
+    body.is-authenticated .market-user-tools{display:flex}
+    .user-menu{position:relative;display:flex;align-items:center;gap:8px;color:#fff;font-size:14px;font-weight:bold;cursor:pointer;min-height:34px}
+    .user-avatar{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:999px;border:1px solid rgba(20,184,166,.75);background:#03121f;color:#fff;font-size:11px;font-weight:bold;text-transform:uppercase}
+    .user-name{white-space:nowrap;color:#fff}
+    .user-menu::after{content:"";width:7px;height:7px;border-right:2px solid #cbd5e1;border-bottom:2px solid #cbd5e1;transform:rotate(45deg) translateY(-2px);margin-left:2px;flex:0 0 auto}
+    .user-dropdown{position:absolute;top:calc(100% + 10px);right:0;min-width:190px;padding:8px;border:1px solid rgba(148,163,184,.22);border-radius:14px;background:#08111f;box-shadow:0 18px 50px rgba(0,0,0,.45);display:none;z-index:3300}
+    .user-menu.is-open .user-dropdown{display:block}
+    .user-dropdown-section{padding:8px 10px 5px;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+    .user-dropdown-item{width:100%;display:flex;align-items:center;gap:10px;padding:10px;border:0;border-radius:10px;background:transparent;color:#e5e7eb;text-decoration:none;font-size:13px;font-weight:800;text-align:left;cursor:pointer}
+    .user-dropdown-item:hover{background:rgba(30,41,59,.9);color:#fff}
+
+    main{width:min(1080px,calc(100% - 28px));margin:0 auto;padding:24px 0 58px}
+    .lucky-shell{border:1px solid rgba(34,197,94,.25);border-radius:18px;background:linear-gradient(180deg,rgba(19,36,58,.95),rgba(8,14,28,.96));box-shadow:0 20px 48px rgba(0,0,0,.35);padding:18px}
+    .top-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:14px;align-items:stretch}
+    .panel{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#101c31,#08111f);padding:16px}
+    .kicker{display:inline-flex;width:max-content;border:1px solid rgba(216,179,65,.55);border-radius:999px;padding:5px 9px;color:#facc15;font-size:10px;font-weight:900;text-transform:uppercase}
+    h1,h2,h3{margin:0;line-height:1.15}
+    h1{font-size:clamp(24px,4vw,38px);margin-top:9px}
+    h2{font-size:20px}
+    h3{font-size:16px}
+    p{color:#cbd5e1;line-height:1.55;margin:10px 0}
+    .rules{margin:12px 0 0;padding-left:18px;color:#cbd5e1;line-height:1.55}
+    .invite-tools{display:grid;gap:10px;margin-top:16px}
+    .field-label{display:block;margin:0 0 6px;color:#dbeafe;font-size:12px;font-weight:900}
+    .invite-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+    input,textarea{width:100%;border:1px solid rgba(148,163,184,.32);border-radius:10px;background:#060d1c;color:#fff;padding:11px 12px;outline:none}
+    textarea{min-height:94px;resize:vertical;line-height:1.45}
+    input:focus,textarea:focus{border-color:rgba(34,197,94,.72);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 15px;border:0;border-radius:10px;text-decoration:none;font-weight:900;color:#fff;background:var(--blue);cursor:pointer;white-space:nowrap}
+    .btn:hover{filter:brightness(1.08)}
+    .btn.green{background:var(--green);color:#052e16}
+    .btn.orange{background:var(--orange)}
+    .btn.dark{background:#111827;color:#e5e7eb;border:1px solid rgba(148,163,184,.25)}
+    .btn:disabled{opacity:.55;cursor:not-allowed;filter:none}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:8px}
+    .mini-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+    .mini-status{border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#07101f;padding:11px}
+    .mini-status span{display:block;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase}
+    .mini-status strong{display:block;margin-top:4px;color:#22c55e;font-size:14px}
+    .status-note{margin-top:12px;color:#facc15;font-size:13px;min-height:18px}
+    .status-note.error{color:#fecaca}
+
+    .right-stack{display:grid;gap:14px}
+    .countdown-panel{border-color:rgba(34,197,94,.36)}
+    .countdown-panel span{display:block;color:#86efac;font-size:11px;font-weight:900;text-transform:uppercase}
+    .countdown-panel strong{display:block;color:#22c55e;font-size:clamp(24px,4vw,42px);line-height:1;margin-top:6px;font-family:Consolas,monospace}
+    .countdown-panel small{display:block;color:#94a3b8;margin-top:5px}
+    .spin-box{min-height:150px;display:grid;place-items:center;border:1px solid rgba(34,197,94,.25);border-radius:12px;background:radial-gradient(circle at center,rgba(34,197,94,.14),#050914 62%)}
+    .spin-box strong{color:#facc15;font-size:30px}
+    .spin-box span{display:block;color:#e5e7eb;font-weight:900;margin-top:8px}
+
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+    .summary-box{border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#07101f;padding:14px}
+    .summary-box span{display:block;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase}
+    .summary-box strong{display:block;margin-top:5px;color:#22c55e;font-size:24px}
+    .summary-box.winner strong{color:#facc15}
+
+    .prize-panel{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1fr);gap:16px;align-items:stretch}
+    .prize-image-wrap{border:1px solid rgba(148,163,184,.2);border-radius:14px;background:#030817;display:grid;place-items:center;overflow:hidden;min-height:320px}
+    .prize-image-wrap img{width:100%;height:100%;object-fit:contain;display:block}
+    .description{white-space:pre-wrap;color:#cbd5e1;line-height:1.55}
+    .admin-panel{display:none;margin-top:16px;border-color:rgba(249,115,22,.45)}
+    body.is-admin .admin-panel{display:block}
+    .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .admin-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+    .file-input{padding:10px;background:#060d1c;border-radius:10px;border:1px solid rgba(148,163,184,.32);color:#cbd5e1}
+    .admin-json{margin-top:12px}
+
+    .participants{margin-top:16px}
+    .participants-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+    .participant-list{display:grid;gap:8px}
+    .participant-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#07101f;padding:10px 12px}
+    .participant-card strong{font-size:14px}
+    .participant-card span{display:block;color:#94a3b8;font-size:12px;margin-top:3px}
+    .empty{border:1px dashed rgba(148,163,184,.24);border-radius:10px;padding:14px;color:#94a3b8}
+
+    footer{color:#8aa0bd;text-align:center;font-size:13px;margin-top:24px}
+    .whatsapp{position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:999px;background:#22c55e;box-shadow:0 18px 40px rgba(34,197,94,.28);display:flex;align-items:center;justify-content:center;z-index:2500}
+    .whatsapp::before{content:"";display:block;width:25px;height:19px;border-radius:999px;background:#fff}
+    .whatsapp::after{content:"";position:absolute;left:31px;top:34px;width:10px;height:10px;background:#fff;clip-path:polygon(0 0,100% 0,0 100%);transform:rotate(-12deg)}
+
+    @media(max-width:900px){
+      .top-grid,.prize-panel,.admin-grid{grid-template-columns:1fr}
+      .prize-image-wrap{min-height:240px}
+    }
+    @media(max-width:760px){
+      body{padding-top:92px}
+      .market-bar-inner{padding:0 6px}
+      .market-main-row{min-height:auto;padding-top:9px;gap:6px;flex-wrap:wrap}
+      .market-brand{width:116px;height:30px}
+      .market-nav{order:3;width:100%;flex-basis:100%;gap:6px;overflow:hidden;padding-bottom:8px}
+      .market-nav a{min-height:30px;padding:0 8px;font-size:11px}
+      .site-auth-actions{margin-left:auto;margin-right:10px;gap:12px}
+      .site-auth-btn{font-size:13px;white-space:nowrap}
+      .market-user-tools{gap:12px;margin-left:auto}
+      .user-name{max-width:120px;overflow:hidden;text-overflow:ellipsis}
+      main{width:min(100% - 16px,1080px);padding-top:14px}
+      .lucky-shell{padding:10px}
+      .invite-row{grid-template-columns:1fr}
+      .summary-grid,.mini-status-grid{grid-template-columns:1fr}
+    }
+  </style>
 
 <style id="azobss-pro-navbar-icons-css">
 .market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:nowrap;}
@@ -771,7 +833,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 
 </head>
 <body>
-<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<header aria-label="AZOBSS navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">
 <a aria-label="AZOBSS" class="market-brand" href="/">
@@ -784,7 +846,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a  href="/tools/">Mini Web Tools</a></nav>
+<a href="/tools/">Mini Web Tools</a></nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
@@ -819,28 +881,523 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 </div>
 </div>
 </header>
-<div class="header"><h1>BMI Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="/tools/">&lt; Back to Tools</a>   |   <a href="/">Home</a></div>
-<div class="wrap">
-<div class="card"><p>Calculate BMI, category, healthy weight range and estimated daily calorie needs.</p><div class="grid">
-<div><label>Unit</label><select id="unit"><option value="metric">Metric - kg/cm</option><option value="imperial">Imperial - lb/inch</option></select></div>
-<div><label>Weight</label><input id="weight" step="any" type="number" value="45"/></div>
-<div><label>Height</label><input id="height" step="any" type="number" value="154"/></div>
-<div><label>Age</label><input id="age" type="number" value="35"/></div>
-<div><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
-<div><label>Activity</label><select id="activity"><option value="1.2">Low / little exercise</option><option value="1.375">Light exercise</option><option value="1.55">Moderate exercise</option><option value="1.725">Heavy exercise</option></select></div>
-</div><div class="result" id="result"></div></div>
-<div class="card"><h2>BMI Category Guide</h2><table class="table"><tr><th>BMI</th><th>Category</th></tr><tr><td>Below 18.5</td><td>Underweight</td></tr><tr><td>18.5 - 24.9</td><td>Normal</td></tr><tr><td>25.0 - 29.9</td><td>Overweight</td></tr><tr><td>30.0 and above</td><td>Obese</td></tr></table><p class="muted small">BMI is a general guide only. Muscle mass, body frame and health condition can affect interpretation.</p></div>
+<main>
+<section class="lucky-shell">
+<div class="top-grid">
+<div class="panel">
+<span class="kicker">Lucky Draw</span>
+<h1>Peraduan Lucky Draw User</h1>
+<p>User yang login boleh join Lucky Draw selepas share website AZOBSS menggunakan invite link masing-masing.</p>
+<ul class="rules">
+<li>Login dahulu sebelum join Lucky Draw.</li>
+<li>Share invite link anda kepada orang lain.</li>
+<li>Satu device dan satu IP address hanya boleh join sekali untuk bulan ini.</li>
+<li>Admin boleh edit hadiah, gambar, tajuk dan description.</li>
+</ul>
+<div class="invite-tools">
+<div>
+<label class="field-label" for="inviteLink">Login untuk dapatkan invite link</label>
+<div class="invite-row">
+<input id="inviteLink" readonly="" type="text" value="Login dahulu untuk jana invite link"/>
+<button class="btn" id="copyInviteButton" type="button">Copy Invite Link</button>
 </div>
-<div class="footer">(c) 2026 AZOBSS.COM - PC Tools &amp; Utilities</div>
+</div>
+<div class="actions">
+<button class="btn orange" id="shareInviteButton" type="button">Share Website</button>
+<button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
+<a class="btn dark" data-auth-open="login" href="#">Login / Register</a>
+</div>
+<div class="mini-status-grid">
+<div class="mini-status"><span>Invite code anda</span><strong id="inviteCodeText">-</strong></div>
+<div class="mini-status"><span>Status share</span><strong id="shareStatusText">Belum share</strong></div>
+</div>
+<div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
+</div>
+</div>
+<div class="right-stack">
+<div class="panel countdown-panel">
+<span>Lucky Draw akan berjalan dalam</span>
+<strong id="countdownText">-- hari --:--:--</strong>
+<small id="targetText">31/05/2026, 10:00 PM Malaysia</small>
+</div>
+<div class="panel spin-box">
+<div>
+<strong>Prize</strong>
+<span id="winnerText">Pemenang belum dipilih</span>
+</div>
+</div>
+</div>
+</div>
+<div class="summary-grid">
+<div class="summary-box">
+<span>Jumlah peserta join</span>
+<strong id="participantTotal">0</strong>
+</div>
+<div class="summary-box winner">
+<span>Pemenang bulan ini</span>
+<strong id="winnerName">Belum dipilih</strong>
+</div>
+</div>
+<div class="panel prize-panel">
+<div class="prize-image-wrap">
+<img alt="Lucky Draw Prize" id="prizeImage" onerror="this.onerror=null;this.src='/lucky-draw/Multi cooker Philips.jpg';" src="/lucky-draw/prize-placeholder.svg"/>
+</div>
+<div>
+<span class="kicker">Hadiah Lucky Draw</span>
+<h2 id="prizeTitle" style="margin-top:10px">Hadiah belum diumumkan</h2>
+<p class="description" id="prizeDescription">Admin belum upload hadiah Lucky Draw bulan ini.</p>
+</div>
+</div>
+<div class="panel admin-panel" id="adminPrizePanel">
+<span class="kicker">Admin</span>
+<h2 style="margin-top:10px">Edit Hadiah Lucky Draw</h2>
+<div class="admin-grid" style="margin-top:12px">
+<div>
+<label class="field-label" for="prizeTitleInput">Tajuk hadiah</label>
+<input id="prizeTitleInput" placeholder="Tajuk hadiah" type="text"/>
+</div>
+<div>
+<label class="field-label" for="prizeImageFile">Gambar hadiah</label>
+<input accept="image/*" class="file-input" id="prizeImageFile" type="file"/>
+</div>
+</div>
+<div style="margin-top:12px">
+<label class="field-label" for="prizeDescriptionInput">Description</label>
+<textarea id="prizeDescriptionInput" placeholder="Description hadiah"></textarea>
+</div>
+<div class="admin-json">
+<label class="field-label" for="prizeJsonInput">Add / edit JSON</label>
+<textarea id="prizeJsonInput" placeholder='{"title":"Hadiah","description":"Maklumat hadiah","imageUrl":"https://..."}'></textarea>
+</div>
+<div class="admin-actions">
+<button class="btn green" id="savePrizeButton" type="button">Save Prize</button>
+<button class="btn dark" id="applyJsonButton" type="button">Apply JSON</button>
+<button class="btn orange" id="downloadJsonButton" type="button">Download JSON</button>
+<button class="btn dark" id="refreshPrizeButton" type="button">Refresh</button>
+</div>
+<div class="status-note" id="adminStatus"></div>
+</div>
+<div class="panel participants">
+<div class="participants-head">
+<div>
+<span class="kicker">Peserta Lucky Draw</span>
+<h2 style="margin-top:10px">Senarai peserta bulan ini</h2>
+</div>
+<button class="btn dark" id="refreshEntriesButton" type="button">Refresh</button>
+</div>
+<div class="participant-list" id="participantList">
+<div class="empty">Loading peserta...</div>
+</div>
+</div>
+</section>
+<footer>© 2026 AZOBSS. All rights reserved.</footer>
+</main>
+<a aria-label="WhatsApp" class="whatsapp" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"></a>
 <script>
-function cat(b){return b<18.5?"Underweight":b<25?"Normal":b<30?"Overweight":"Obese"}
-function calc(){let u=unit.value,w=parseFloat(weight.value)||0,h=parseFloat(height.value)||0,a=parseFloat(age.value)||0;if(!w||!h){result.innerHTML="Please enter weight and height.";return}
-let kg=u==="metric"?w:w*0.453592;let cm=u==="metric"?h:h*2.54;let m=cm/100;let bmi=kg/(m*m);let min=18.5*m*m,max=24.9*m*m;
-let bmr=gender.value==="male"?(10*kg+6.25*cm-5*a+5):(10*kg+6.25*cm-5*a-161);let tdee=bmr*parseFloat(activity.value);
-result.innerHTML=`BMI: <b>${bmi.toFixed(1)}</b>\nCategory: <b>${cat(bmi)}</b>\n\nHealthy weight range for your height:\n<b>${min.toFixed(1)} kg - ${max.toFixed(1)} kg</b>\n\nEstimated BMR: <b>${Math.round(bmr)} kcal/day</b>\nEstimated maintenance calories: <b>${Math.round(tdee)} kcal/day</b>\n\nSimple note:\n- If underweight: add calories slowly and focus on protein.\n- If normal: maintain balanced food and movement.\n- If overweight: small calorie deficit is usually better than extreme diet.`
-}
-document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
-</script>
+    const API_BASE = (localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
+    const ADMIN_USERNAME = 'zedan91';
+    const MEMBER_PA_CODE = 'ZX6186';
+    const DRAW_TARGET = new Date('2026-05-31T22:00:00+08:00');
+    const savedInviteFromUrl = new URLSearchParams(location.search).get('invite') || '';
+    if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', cleanInviteCode(savedInviteFromUrl));
+
+    const els = {
+      auth: document.getElementById('siteAuthActions'),
+      tools: document.getElementById('marketUserTools'),
+      menu: document.getElementById('userMenu'),
+      avatar: document.getElementById('userAvatar'),
+      name: document.getElementById('signedInName'),
+      paBm: document.getElementById('paBmNavButton'),
+      inviteLink: document.getElementById('inviteLink'),
+      inviteCode: document.getElementById('inviteCodeText'),
+      shareStatus: document.getElementById('shareStatusText'),
+      status: document.getElementById('joinStatus'),
+      joinButton: document.getElementById('joinLuckyDrawButton'),
+      copyButton: document.getElementById('copyInviteButton'),
+      shareButton: document.getElementById('shareInviteButton'),
+      countdown: document.getElementById('countdownText'),
+      total: document.getElementById('participantTotal'),
+      participants: document.getElementById('participantList'),
+      winner: document.getElementById('winnerName'),
+      winnerText: document.getElementById('winnerText'),
+      prizeImage: document.getElementById('prizeImage'),
+      prizeTitle: document.getElementById('prizeTitle'),
+      prizeDescription: document.getElementById('prizeDescription'),
+      prizeTitleInput: document.getElementById('prizeTitleInput'),
+      prizeDescriptionInput: document.getElementById('prizeDescriptionInput'),
+      prizeImageFile: document.getElementById('prizeImageFile'),
+      prizeJsonInput: document.getElementById('prizeJsonInput'),
+      adminStatus: document.getElementById('adminStatus')
+    };
+
+    function parseUser(raw){try{return raw ? JSON.parse(raw) : null;}catch(e){return null;}}
+    function readUser(){
+      return parseUser(sessionStorage.getItem('azobssCurrentUser')) ||
+        parseUser(localStorage.getItem('azobssCurrentUser')) ||
+        parseUser(sessionStorage.getItem('azobssUser')) ||
+        parseUser(localStorage.getItem('azobssUser'));
+    }
+    function initials(name){
+      return String(name || 'AZ').trim().split(/\s+/).slice(0,2).map(part => part.charAt(0).toUpperCase()).join('') || 'AZ';
+    }
+    function normalizeUsername(name){
+      return String(name || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    }
+    function cleanInviteCode(value){
+      return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24);
+    }
+    function buildInviteCode(usernameKey){
+      const clean = normalizeUsername(usernameKey || 'user').toUpperCase();
+      return 'AZ' + clean.slice(0, 10) + String(clean.length + 91).slice(-2);
+    }
+    function monthKey(){
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+    function getShareKey(user){
+      return 'azobssLuckyShare_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
+    }
+    function getJoinKey(user){
+      return 'azobssLuckyJoin_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
+    }
+    function buildInviteUrl(user){
+      const code = cleanInviteCode(user && user.inviteCode ? user.inviteCode : buildInviteCode(user && user.usernameKey));
+      return location.origin + '/lucky-draw/?invite=' + encodeURIComponent(code);
+    }
+    function isAdmin(user){
+      const key = normalizeUsername(user && (user.usernameKey || user.name));
+      const role = String(user && user.role || '').trim().toLowerCase();
+      return !!(user && (role === 'admin' || key === ADMIN_USERNAME));
+    }
+    function hasPaBmAccess(user){
+      const code = cleanInviteCode(user && (user.invitedByCode || user.memberCode || user.paMemberCode));
+      return !!(user && (isAdmin(user) || code === MEMBER_PA_CODE));
+    }
+    function escapeHtml(value){
+      return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    async function apiFetch(path, options){
+      const res = await fetch(API_BASE + path, options || {});
+      return res;
+    }
+
+    function setStatus(message, error){
+      els.status.textContent = message || '';
+      els.status.classList.toggle('error', !!error);
+    }
+    function setAdminStatus(message, error){
+      els.adminStatus.textContent = message || '';
+      els.adminStatus.classList.toggle('error', !!error);
+    }
+    function getDeviceId(){
+      let id = localStorage.getItem('azobssLuckyDrawDeviceId');
+      if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('azobssLuckyDrawDeviceId', id);
+      }
+      return id;
+    }
+    function getDeviceFingerprint(){
+      return [
+        getDeviceId(),
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+      ].join('|').slice(0, 150);
+    }
+
+    function showUser(){
+      const user = readUser();
+      const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
+      document.body.classList.toggle('is-admin', isAdmin(user));
+      if (els.paBm) {
+        const canPa = hasPaBmAccess(user);
+        els.paBm.hidden = !canPa;
+        els.paBm.classList.toggle('is-hidden', !canPa);
+      }
+      if (display) {
+        els.name.textContent = display;
+        els.avatar.textContent = initials(display);
+        document.body.classList.add('is-authenticated');
+        if (els.auth) els.auth.style.display = 'none';
+        if (els.tools) els.tools.style.display = 'flex';
+      } else {
+        document.body.classList.remove('is-authenticated');
+        if (els.auth) els.auth.style.display = 'flex';
+        if (els.tools) els.tools.style.display = 'none';
+      }
+      updateInvitePanel();
+    }
+
+    function updateInvitePanel(){
+      const user = readUser();
+      if (!user || !(user.usernameKey || user.name)) {
+        els.inviteLink.value = 'Login dahulu untuk jana invite link';
+        els.inviteCode.textContent = '-';
+        els.shareStatus.textContent = 'Belum share';
+        els.joinButton.disabled = false;
+        setStatus('Login dahulu untuk aktifkan Lucky Draw.', false);
+        return;
+      }
+
+      if (!user.usernameKey) user.usernameKey = normalizeUsername(user.name);
+      if (!user.inviteCode) user.inviteCode = buildInviteCode(user.usernameKey);
+      const inviteUrl = buildInviteUrl(user);
+      const shared = localStorage.getItem(getShareKey(user)) === '1';
+      const joined = localStorage.getItem(getJoinKey(user)) === '1';
+      els.inviteLink.value = inviteUrl;
+      els.inviteCode.textContent = user.inviteCode;
+      els.shareStatus.textContent = shared ? 'Sudah share' : 'Belum share';
+      els.joinButton.disabled = joined;
+      if (joined) setStatus('Anda sudah join Lucky Draw bulan ini.');
+      else if (shared) setStatus('Share sudah direkod. Anda boleh join Lucky Draw.');
+      else setStatus('Share invite link dahulu sebelum join Lucky Draw.');
+    }
+
+    function tickCountdown(){
+      const diff = Math.max(0, DRAW_TARGET - new Date());
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor(diff / 3600000) % 24;
+      const minutes = Math.floor(diff / 60000) % 60;
+      const seconds = Math.floor(diff / 1000) % 60;
+      els.countdown.textContent = days + ' hari ' +
+        String(hours).padStart(2,'0') + ':' +
+        String(minutes).padStart(2,'0') + ':' +
+        String(seconds).padStart(2,'0');
+    }
+
+    async function loadPrize(){
+      try {
+        const res = await apiFetch('/api/lucky-draw/prize?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+        const data = await res.json();
+        if (data && data.ok && data.prize) {
+          renderPrize(data.prize);
+          return;
+        }
+      } catch(e) {}
+
+      try {
+        const res = await fetch('/lucky-draw/giveaway-prize.json', {cache:'no-store'});
+        const data = await res.json();
+        renderPrize(data || {});
+      } catch(e) {}
+    }
+
+    function normalizeImagePath(image){
+      const value = String(image || '').trim();
+      if (!value) return '/lucky-draw/prize-placeholder.svg';
+      if (/^https?:\/\//i.test(value) || value.startsWith('data:image/')) return value;
+      if (value.startsWith('../')) return value;
+      return '../' + value.replace(/^\/+/, '');
+    }
+    function renderPrize(prize){
+      const image = normalizeImagePath(prize.imageUrl || prize.image);
+      const title = prize.title || 'Hadiah belum diumumkan';
+      const desc = prize.description || 'Admin belum upload hadiah Lucky Draw bulan ini.';
+      els.prizeImage.src = image;
+      els.prizeTitle.textContent = title;
+      els.prizeDescription.textContent = desc;
+      els.prizeTitleInput.value = prize.title || '';
+      els.prizeDescriptionInput.value = prize.description || '';
+      els.prizeJsonInput.value = JSON.stringify({
+        monthKey: prize.monthKey || monthKey(),
+        title,
+        description: desc,
+        imageUrl: prize.imageUrl || prize.image || ''
+      }, null, 2);
+    }
+
+    async function loadEntries(){
+      try {
+        const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Entries error');
+        const rows = Array.isArray(data.entries) ? data.entries : [];
+        els.total.textContent = String(data.total || rows.length || 0);
+        renderParticipants(rows);
+      } catch(e) {
+        els.participants.innerHTML = '<div class="empty">Backend peserta belum dapat dibaca.</div>';
+      }
+    }
+
+    function renderParticipants(rows){
+      if (!rows.length) {
+        els.participants.innerHTML = '<div class="empty">Belum ada peserta Lucky Draw.</div>';
+        return;
+      }
+      els.participants.innerHTML = rows.slice(0, 20).map((entry, i) => {
+        const name = escapeHtml(entry.name || entry.usernameKey || 'User');
+        const joined = entry.joinedAt ? new Date(entry.joinedAt).toLocaleString('en-MY') : '-';
+        return '<div class="participant-card"><div><strong>' + (i + 1) + '. ' + name + '</strong><span>' + escapeHtml(joined) + '</span></div><span>' + escapeHtml(entry.inviteCode || '') + '</span></div>';
+      }).join('');
+    }
+
+    async function loadWinner(){
+      try {
+        const res = await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+        const data = await res.json();
+        const winner = data && data.winner;
+        const name = winner ? (winner.name || winner.usernameKey || 'Winner') : 'Belum dipilih';
+        els.winner.textContent = name;
+        els.winnerText.textContent = winner ? 'Tahniah ' + name : 'Pemenang belum dipilih';
+      } catch(e) {}
+    }
+
+    async function copyInvite(){
+      const user = readUser();
+      if (!user || !(user.usernameKey || user.name)) {
+        setStatus('Login dahulu sebelum copy invite link.', true);
+        return;
+      }
+      await navigator.clipboard.writeText(els.inviteLink.value);
+      setStatus('Invite link berjaya disalin. Share link ini dahulu sebelum join.');
+    }
+
+    function shareInvite(){
+      const user = readUser();
+      if (!user || !(user.usernameKey || user.name)) {
+        setStatus('Login dahulu sebelum share invite link.', true);
+        return;
+      }
+      const inviteUrl = els.inviteLink.value;
+      const code = els.inviteCode.textContent;
+      const text = 'Jom join AZOBSS. Guna invite code saya: ' + code + ' ' + inviteUrl;
+      localStorage.setItem(getShareKey(user), '1');
+      updateInvitePanel();
+      if (navigator.share) {
+        navigator.share({title:'AZOBSS Lucky Draw', text, url:inviteUrl}).catch(function(){});
+      } else {
+        window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+      }
+    }
+
+    async function joinLuckyDraw(){
+      const user = readUser();
+      if (!user || !(user.usernameKey || user.name)) {
+        setStatus('Login dahulu sebelum join Lucky Draw.', true);
+        return;
+      }
+      if (localStorage.getItem(getShareKey(user)) !== '1') {
+        setStatus('Share invite link dahulu sebelum join Lucky Draw.', true);
+        return;
+      }
+      const usernameKey = normalizeUsername(user.usernameKey || user.name);
+      const inviteCode = cleanInviteCode(user.inviteCode || buildInviteCode(usernameKey));
+      const payload = {
+        monthKey: monthKey(),
+        usernameKey,
+        uid: user.uid || '',
+        name: user.name || usernameKey,
+        phone: user.phone || '',
+        contactEmail: user.contactEmail || user.email || '',
+        inviteCode,
+        inviteUrl: buildInviteUrl({usernameKey, inviteCode}),
+        invitedByCode: cleanInviteCode(localStorage.getItem('azobssLuckyDrawLastInvite') || user.invitedByCode || ''),
+        shareConfirmed: true,
+        deviceFingerprint: getDeviceFingerprint()
+      };
+      setStatus('Sedang submit penyertaan...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/entries', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Join gagal');
+        localStorage.setItem(getJoinKey(user), '1');
+        updateInvitePanel();
+        setStatus('Anda berjaya join Lucky Draw bulan ini. Semoga berjaya!');
+        await loadEntries();
+      } catch(e) {
+        setStatus(e.message || 'Join gagal.', true);
+      }
+    }
+
+    async function savePrize(){
+      if (!isAdmin(readUser())) {
+        setAdminStatus('Admin sahaja boleh save hadiah.', true);
+        return;
+      }
+      const form = new FormData();
+      form.append('monthKey', monthKey());
+      form.append('title', els.prizeTitleInput.value.trim());
+      form.append('description', els.prizeDescriptionInput.value.trim());
+      form.append('updatedBy', normalizeUsername(readUser().usernameKey || readUser().name));
+      try {
+        const parsed = JSON.parse(els.prizeJsonInput.value || '{}');
+        if (parsed.imageUrl || parsed.image) form.append('imageUrl', parsed.imageUrl || parsed.image);
+      } catch(e) {}
+      if (els.prizeImageFile.files && els.prizeImageFile.files[0]) {
+        form.append('image', els.prizeImageFile.files[0]);
+      }
+      setAdminStatus('Saving hadiah...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/prize', {method:'POST', body:form});
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Save gagal');
+        renderPrize(data.prize || {});
+        setAdminStatus('Hadiah berjaya disimpan.');
+      } catch(e) {
+        setAdminStatus(e.message || 'Save hadiah gagal.', true);
+      }
+    }
+
+    function applyJson(){
+      try {
+        const data = JSON.parse(els.prizeJsonInput.value || '{}');
+        if (data.title !== undefined) els.prizeTitleInput.value = data.title;
+        if (data.description !== undefined) els.prizeDescriptionInput.value = data.description;
+        renderPrize({
+          title: els.prizeTitleInput.value,
+          description: els.prizeDescriptionInput.value,
+          imageUrl: data.imageUrl || data.image || ''
+        });
+        setAdminStatus('JSON diaplikasi ke preview. Tekan Save Prize untuk publish.');
+      } catch(e) {
+        setAdminStatus('JSON tidak valid: ' + e.message, true);
+      }
+    }
+
+    function downloadJson(){
+      const payload = {
+        monthKey: monthKey(),
+        title: els.prizeTitleInput.value.trim(),
+        description: els.prizeDescriptionInput.value.trim(),
+        imageUrl: (() => {
+          try { const data = JSON.parse(els.prizeJsonInput.value || '{}'); return data.imageUrl || data.image || ''; }
+          catch(e) { return ''; }
+        })(),
+        updatedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Lucky-Draw-prize.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    els.copyButton.addEventListener('click', copyInvite);
+    els.shareButton.addEventListener('click', shareInvite);
+    els.joinButton.addEventListener('click', joinLuckyDraw);
+    document.getElementById('refreshEntriesButton').addEventListener('click', loadEntries);
+    document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
+    document.getElementById('savePrizeButton').addEventListener('click', savePrize);
+    document.getElementById('applyJsonButton').addEventListener('click', applyJson);
+    document.getElementById('downloadJsonButton').addEventListener('click', downloadJson);
+
+    window.addEventListener('storage', showUser);
+
+    tickCountdown();
+    setInterval(tickCountdown, 1000);
+    showUser();
+    loadPrize();
+    loadEntries();
+    loadWinner();
+    setInterval(loadEntries, 30000);
+  </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
@@ -1946,7 +2503,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 
 
-</body></html>
+</body>
+</html>
 
 
 
