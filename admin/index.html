@@ -87,10 +87,22 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
         <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">Open Support</div><div id="statSupport" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">Purchase Logs</div><div id="statPurchases" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h2>Quick Monitor</h2>
+        <div class="toolbar">
+          <button class="btn gray" data-tab="users">👥 Users</button>
+          <button class="btn gray" data-tab="online">🟢 Online Users</button>
+          <button class="btn gray" data-tab="support">💬 Support Inbox</button>
+          <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
+          <button class="btn gray" data-tab="purchases">💰 Purchases</button>
+          <button class="btn gray" data-tab="activity">📈 Activity</button>
+        </div>
       </div>
       <div class="split">
         <div class="card"><h2>Latest Support</h2><div id="overviewSupport" class="list"></div></div>
@@ -244,9 +256,13 @@ async function loadOverview(){
   $('#statOnline').textContent=online?.size??0;
   $('#statLogins').textContent=logins?.size??0;
   $('#statVisits').textContent=guests?.size??0;
-  $('#statSupport').textContent=support?.size??0;
+  let openSupportCount=0;
+  support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
+  let pendingPurchaseCount=0;
+  purchases?.forEach(d=>{const x=d.data(); const status=String(x.status||'').toLowerCase(); if(!status || status==='pending' || status==='unpaid' || status==='waiting') pendingPurchaseCount++;});
+  $('#statSupport').textContent=openSupportCount;
   $('#statNotifications').textContent=notif?.size??0;
-  $('#statPurchases').textContent=purchases?.size??0;
+  $('#statPurchases').textContent=pendingPurchaseCount;
   $('#statGuests').textContent=guests?.size??0;
 
   const supportRows=[];
