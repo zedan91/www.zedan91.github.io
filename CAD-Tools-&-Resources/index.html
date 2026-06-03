@@ -1693,9 +1693,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 
 
 
-<style id="az-admin-direct-icon-style">
-.az-admin-dashboard-direct-link{
-  display:none!important;
+
+<style id="az-admin-strict-created-icon-style">
+#azAdminStrictIconLink{
+  display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
   width:42px!important;
@@ -1713,22 +1714,19 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   position:relative!important;
   vertical-align:middle!important;
 }
-body.az-admin-auth-confirmed .az-admin-dashboard-direct-link{
-  display:inline-flex!important;
-}
-.az-admin-dashboard-direct-link:hover{
+#azAdminStrictIconLink:hover{
   transform:translateY(-1px);
   box-shadow:0 0 16px rgba(34,197,94,.32)!important;
 }
 </style>
-<script type="module" id="az-admin-direct-icon-auth-only">
+<script type="module" id="az-admin-strict-created-icon-auth-only">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 (function(){
-  if(window.__azAdminDirectIconAuthOnly) return;
-  window.__azAdminDirectIconAuthOnly=true;
+  if(window.__azAdminStrictCreatedIconAuthOnly) return;
+  window.__azAdminStrictCreatedIconAuthOnly=true;
 
   const firebaseConfig={
     apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -1744,20 +1742,50 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
   const db=getFirestore(app);
   const ADMIN_EMAIL='zedan91@azobss.local';
 
-  function hide(){
-    document.body.classList.remove('az-admin-visible');
-    document.body.classList.remove('az-admin-auth-confirmed');
+  function removeIcon(){
+    document.querySelectorAll('#azAdminStrictIconLink,#azAdminDashboardIconLink,#azAdminDashboardTopLink,.az-admin-dashboard-direct-link').forEach(x=>x.remove());
+    document.body.classList.remove('az-admin-visible','az-admin-auth-confirmed');
   }
 
-  function show(){
-    document.body.classList.add('az-admin-auth-confirmed');
+  function findMiniWebTools(){
+    const links=[...document.querySelectorAll('a,button,[role="button"]')];
+    return links.find(el=>(el.textContent||'').trim().toLowerCase().includes('mini web tools'));
   }
 
-  async function checkUserDoc(user){
+  function findNav(){
+    return document.querySelector('.market-sticky-bar,.floating-nav,.topbar,.sticky-bar,.nav-actions,.market-actions,.header-actions,.site-actions,header nav,header') || null;
+  }
+
+  function createIcon(){
+    if(document.getElementById('azAdminStrictIconLink')) return;
+
+    const a=document.createElement('a');
+    a.id='azAdminStrictIconLink';
+    a.href='/admin/';
+    a.title='Admin Dashboard';
+    a.setAttribute('aria-label','Admin Dashboard');
+    a.textContent='🛠️';
+
+    const mini=findMiniWebTools();
+    if(mini && mini.parentNode){
+      mini.insertAdjacentElement('afterend',a);
+      return;
+    }
+
+    const nav=findNav();
+    if(nav) nav.appendChild(a);
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email=String(user.email||'').toLowerCase();
+    if(email===ADMIN_EMAIL) return true;
+
     const candidates=[
       'zedan91',
-      user?.email?.split('@')[0],
-      user?.displayName
+      user.email?.split('@')[0],
+      user.displayName
     ].filter(Boolean).map(x=>String(x).toLowerCase());
 
     for(const id of candidates){
@@ -1766,31 +1794,22 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
         if(!snap.exists()) continue;
         const x=snap.data()||{};
         const role=String(x.role||'').toLowerCase();
-        const email=String(x.email||x.authEmail||'').toLowerCase();
+        const docEmail=String(x.email||x.authEmail||'').toLowerCase();
         const username=String(x.username||x.usernameKey||x.name||id).toLowerCase();
-        if(role==='admin' || email===ADMIN_EMAIL || username==='zedan91') return true;
+        if(role==='admin' || docEmail===ADMIN_EMAIL || username==='zedan91') return true;
       }catch(e){}
     }
+
     return false;
   }
 
   onAuthStateChanged(auth,async user=>{
-    hide();
-
-    if(!user) return;
-
-    const authEmail=String(user.email||'').toLowerCase();
-    if(authEmail===ADMIN_EMAIL){
-      show();
-      return;
-    }
-
-    const ok=await checkUserDoc(user);
-    if(ok) show();
-    else hide();
+    removeIcon();
+    const ok=await isAdmin(user);
+    if(ok) createIcon();
   });
 
-  hide();
+  removeIcon();
 })();
 </script>
 
@@ -1809,8 +1828,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 <a  href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a href="/tools/">Mini Web Tools</a><a class="az-admin-dashboard-direct-link" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
-</nav>
+<a href="/tools/">Mini Web Tools</a></nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
