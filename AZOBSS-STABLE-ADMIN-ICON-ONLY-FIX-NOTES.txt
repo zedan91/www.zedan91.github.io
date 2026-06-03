@@ -1,0 +1,15 @@
+AZOBSS STABLE BASELINE ADMIN ICON ONLY FIX
+
+Used only the uploaded stable baseline:
+AZOBSS-ADMIN-ICON-STRICT-AUTH-NO-DUPLICATE-FIX_20260604_003814_20260604_032605.zip
+
+Changed:
+- Admin 🛠️ icon placement helper only.
+- Fixed 2 syntax errors from category map:
+  'mobile':'Software','Mobile & Accessories'
+  -> 'mobile':'Mobile & Accessories'
+
+Not changed:
+- Login flow.
+- Auth flow.
+- Timeout patches.
