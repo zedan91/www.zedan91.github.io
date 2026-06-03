@@ -1175,6 +1175,100 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
 })();
 </script>
 
+
+<style id="az-chat-badge-style">
+#azChatUnreadBadge{
+position:absolute;top:-7px;right:-8px;z-index:999999999;
+display:none;min-width:18px;height:18px;padding:0 5px;
+border-radius:999px;background:#ef4444;color:#fff;
+font-size:11px;font-weight:900;line-height:18px;text-align:center;
+box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;
+}
+</style>
+<script type="module" id="az-chat-badge-final">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+ if(window.__azChatBadgeFinal) return;
+ window.__azChatBadgeFinal=true;
+
+ const app=getApps().length?getApps()[0]:initializeApp({
+ apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+ authDomain:'azobss.firebaseapp.com',
+ projectId:'azobss',
+ storageBucket:'azobss.firebasestorage.app',
+ messagingSenderId:'159277716405',
+ appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+ });
+
+ const auth=getAuth(app);
+ const db=getFirestore(app);
+ const KEY='azobss_support_seen_at_v1';
+
+ function getChat(){
+   return document.querySelector('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"]');
+ }
+
+ function badge(){
+   const chat=getChat();
+   if(!chat) return null;
+   let b=chat.querySelector('#azChatUnreadBadge');
+   if(!b){
+      chat.style.position='relative';
+      b=document.createElement('span');
+      b.id='azChatUnreadBadge';
+      chat.appendChild(b);
+   }
+   return b;
+ }
+
+ async function update(){
+   const b=badge();
+   if(!b || !auth.currentUser) return;
+
+   const seen=Number(localStorage.getItem(KEY)||0);
+   let count=0;
+
+   try{
+      const snap=await getDocs(
+       query(collection(db,'supportMessages'),
+       where('uid','==',auth.currentUser.uid),
+       orderBy('createdAtMs','desc'),
+       limit(50))
+      );
+
+      snap.forEach(d=>{
+        const x=d.data();
+        const reply=x.reply||'';
+        const repliedAt=Number(x.repliedAtMs||0);
+        if(reply && repliedAt>seen) count++;
+      });
+
+      if(count>0){
+        b.textContent=Math.min(count,99);
+        b.style.display='block';
+      }else{
+        b.style.display='none';
+      }
+   }catch(e){}
+ }
+
+ document.addEventListener('click',e=>{
+   const chat=getChat();
+   if(chat && (e.target===chat || chat.contains(e.target))){
+      localStorage.setItem(KEY,str(Date.now()) if False else String(Date.now()));
+      const b=badge(); if(b) b.style.display='none';
+   }
+ },true);
+
+ setTimeout(update,1500);
+ setInterval(update,15000);
+ window.azUpdateChatBadge=update;
+})();
+</script>
+
 </body></html>
 
 /* Logo Priority: Upload Image > Image URL > Favicon Domain > Default AZOBSS Logo */
