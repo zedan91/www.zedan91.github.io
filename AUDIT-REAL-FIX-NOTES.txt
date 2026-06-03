@@ -1,1 +1,0 @@
-Fixed Software-Tools renderer: Free Download Now arrow removed. Fixed admin action restorer: ID icon added under Delete. Removed invalid JavaScript placed after </html>. Added runtime audit fixer for cached/old rendered cards. PA/BM untouched.

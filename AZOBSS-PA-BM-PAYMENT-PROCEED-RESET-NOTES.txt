@@ -1,1 +1,0 @@
-PA/BM payment UI updated to Payment / FPX Online Banking / Proceed to Payment. After ToyyibPay return is verified as paid, user total is reset to RM0.00 using purchaseTotalResetAtMs on the user record. Manual QR/bank wording removed from this payment card.
