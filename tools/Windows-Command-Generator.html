@@ -688,7 +688,7 @@ body.az-admin-verified [href="/admin/"][aria-label="Admin Dashboard"]{
   function isAdmin(){
     var u = readUser();
     var role = String(u.role || '').toLowerCase();
-    var username = String(u.usernameKey || u.username || u.name || u.displayName || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
     var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
 
     return role === 'admin'
@@ -1929,6 +1929,26 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 </script>
 
 
+
+
+<script id="az-admin-icon-recheck-after-login-fix">
+(function(){
+  if(window.__azAdminIconRecheckAfterLoginFix) return;
+  window.__azAdminIconRecheckAfterLoginFix = true;
+
+  function nudgeAdminIcon(){
+    try{
+      window.dispatchEvent(new Event('storage'));
+    }catch(e){}
+  }
+
+  document.addEventListener('DOMContentLoaded', nudgeAdminIcon);
+  window.addEventListener('focus', nudgeAdminIcon);
+  setTimeout(nudgeAdminIcon, 500);
+  setTimeout(nudgeAdminIcon, 1500);
+  setTimeout(nudgeAdminIcon, 3000);
+})();
+</script>
 
 </body></html>
 
