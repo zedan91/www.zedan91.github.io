@@ -8808,6 +8808,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 
 
 
+
 <style id="az-admin-strict-created-icon-style">
 #azAdminStrictIconLink{
   display:inline-flex!important;
@@ -8855,10 +8856,10 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
   const auth=getAuth(app);
   const db=getFirestore(app);
   const ADMIN_EMAIL='zedan91@azobss.local';
+  let adminConfirmed=false;
 
   function removeIcon(){
     document.querySelectorAll('#azAdminStrictIconLink,#azAdminDashboardIconLink,#azAdminDashboardTopLink,.az-admin-dashboard-direct-link').forEach(x=>x.remove());
-    document.body.classList.remove('az-admin-visible','az-admin-auth-confirmed');
   }
 
   function findMiniWebTools(){
@@ -8871,7 +8872,8 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
   }
 
   function createIcon(){
-    if(document.getElementById('azAdminStrictIconLink')) return;
+    if(!adminConfirmed) return false;
+    if(document.getElementById('azAdminStrictIconLink')) return true;
 
     const a=document.createElement('a');
     a.id='azAdminStrictIconLink';
@@ -8883,11 +8885,22 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
     const mini=findMiniWebTools();
     if(mini && mini.parentNode){
       mini.insertAdjacentElement('afterend',a);
-      return;
+      return true;
     }
 
     const nav=findNav();
-    if(nav) nav.appendChild(a);
+    if(nav){
+      nav.appendChild(a);
+      return true;
+    }
+
+    return false;
+  }
+
+  function scheduleCreate(){
+    if(!adminConfirmed) return;
+    createIcon();
+    [200,500,1000,1800,3000,5000,8000].forEach(t=>setTimeout(createIcon,t));
   }
 
   async function isAdmin(user){
@@ -8918,10 +8931,21 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
   }
 
   onAuthStateChanged(auth,async user=>{
+    adminConfirmed=false;
     removeIcon();
+
     const ok=await isAdmin(user);
-    if(ok) createIcon();
+    adminConfirmed=!!ok;
+
+    if(adminConfirmed) scheduleCreate();
   });
+
+  document.addEventListener('DOMContentLoaded',scheduleCreate);
+  if(document.readyState!=='loading') scheduleCreate();
+
+  new MutationObserver(function(){
+    if(adminConfirmed && !document.getElementById('azAdminStrictIconLink')) createIcon();
+  }).observe(document.documentElement,{childList:true,subtree:true});
 
   removeIcon();
 })();
