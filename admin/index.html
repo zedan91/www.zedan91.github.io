@@ -46,9 +46,10 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 </style>
 
 
-<style id="az-admin-direct-icon-style">
-.az-admin-dashboard-direct-link{
-  display:none!important;
+
+<style id="az-admin-strict-created-icon-style">
+#azAdminStrictIconLink{
+  display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
   width:42px!important;
@@ -66,22 +67,19 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
   position:relative!important;
   vertical-align:middle!important;
 }
-body.az-admin-auth-confirmed .az-admin-dashboard-direct-link{
-  display:inline-flex!important;
-}
-.az-admin-dashboard-direct-link:hover{
+#azAdminStrictIconLink:hover{
   transform:translateY(-1px);
   box-shadow:0 0 16px rgba(34,197,94,.32)!important;
 }
 </style>
-<script type="module" id="az-admin-direct-icon-auth-only">
+<script type="module" id="az-admin-strict-created-icon-auth-only">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 (function(){
-  if(window.__azAdminDirectIconAuthOnly) return;
-  window.__azAdminDirectIconAuthOnly=true;
+  if(window.__azAdminStrictCreatedIconAuthOnly) return;
+  window.__azAdminStrictCreatedIconAuthOnly=true;
 
   const firebaseConfig={
     apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -97,20 +95,50 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
   const db=getFirestore(app);
   const ADMIN_EMAIL='zedan91@azobss.local';
 
-  function hide(){
-    document.body.classList.remove('az-admin-visible');
-    document.body.classList.remove('az-admin-auth-confirmed');
+  function removeIcon(){
+    document.querySelectorAll('#azAdminStrictIconLink,#azAdminDashboardIconLink,#azAdminDashboardTopLink,.az-admin-dashboard-direct-link').forEach(x=>x.remove());
+    document.body.classList.remove('az-admin-visible','az-admin-auth-confirmed');
   }
 
-  function show(){
-    document.body.classList.add('az-admin-auth-confirmed');
+  function findMiniWebTools(){
+    const links=[...document.querySelectorAll('a,button,[role="button"]')];
+    return links.find(el=>(el.textContent||'').trim().toLowerCase().includes('mini web tools'));
   }
 
-  async function checkUserDoc(user){
+  function findNav(){
+    return document.querySelector('.market-sticky-bar,.floating-nav,.topbar,.sticky-bar,.nav-actions,.market-actions,.header-actions,.site-actions,header nav,header') || null;
+  }
+
+  function createIcon(){
+    if(document.getElementById('azAdminStrictIconLink')) return;
+
+    const a=document.createElement('a');
+    a.id='azAdminStrictIconLink';
+    a.href='/admin/';
+    a.title='Admin Dashboard';
+    a.setAttribute('aria-label','Admin Dashboard');
+    a.textContent='🛠️';
+
+    const mini=findMiniWebTools();
+    if(mini && mini.parentNode){
+      mini.insertAdjacentElement('afterend',a);
+      return;
+    }
+
+    const nav=findNav();
+    if(nav) nav.appendChild(a);
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email=String(user.email||'').toLowerCase();
+    if(email===ADMIN_EMAIL) return true;
+
     const candidates=[
       'zedan91',
-      user?.email?.split('@')[0],
-      user?.displayName
+      user.email?.split('@')[0],
+      user.displayName
     ].filter(Boolean).map(x=>String(x).toLowerCase());
 
     for(const id of candidates){
@@ -119,145 +147,22 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
         if(!snap.exists()) continue;
         const x=snap.data()||{};
         const role=String(x.role||'').toLowerCase();
-        const email=String(x.email||x.authEmail||'').toLowerCase();
+        const docEmail=String(x.email||x.authEmail||'').toLowerCase();
         const username=String(x.username||x.usernameKey||x.name||id).toLowerCase();
-        if(role==='admin' || email===ADMIN_EMAIL || username==='zedan91') return true;
+        if(role==='admin' || docEmail===ADMIN_EMAIL || username==='zedan91') return true;
       }catch(e){}
     }
+
     return false;
   }
 
   onAuthStateChanged(auth,async user=>{
-    hide();
-
-    if(!user) return;
-
-    const authEmail=String(user.email||'').toLowerCase();
-    if(authEmail===ADMIN_EMAIL){
-      show();
-      return;
-    }
-
-    const ok=await checkUserDoc(user);
-    if(ok) show();
-    else hide();
+    removeIcon();
+    const ok=await isAdmin(user);
+    if(ok) createIcon();
   });
 
-  hide();
-})();
-</script>
-
-
-<style id="az-admin-icon-hide-guest-user-style">
-#azAdminStrictIconLink,
-#azAdminDashboardIconLink,
-#azAdminDashboardTopLink,
-.az-admin-dashboard-direct-link,
-[href="/admin/"][title="Admin Dashboard"],
-[href="/admin/"][aria-label="Admin Dashboard"]{
-  display:none!important;
-}
-body.az-admin-icon-confirmed #azAdminStrictIconLink,
-body.az-admin-icon-confirmed #azAdminDashboardIconLink,
-body.az-admin-icon-confirmed #azAdminDashboardTopLink,
-body.az-admin-icon-confirmed .az-admin-dashboard-direct-link,
-body.az-admin-icon-confirmed [href="/admin/"][title="Admin Dashboard"],
-body.az-admin-icon-confirmed [href="/admin/"][aria-label="Admin Dashboard"]{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:42px!important;
-  height:42px!important;
-  min-width:42px!important;
-  border-radius:999px!important;
-  margin-left:6px!important;
-  margin-right:4px!important;
-  padding:0!important;
-  background:linear-gradient(135deg,#1e293b,#0f172a)!important;
-  border:1px solid rgba(34,197,94,.55)!important;
-  color:#22c55e!important;
-  text-decoration:none!important;
-  font-size:20px!important;
-  font-weight:950!important;
-  line-height:1!important;
-  box-shadow:0 0 14px rgba(34,197,94,.18)!important;
-  position:relative!important;
-  z-index:99999!important;
-  flex:0 0 42px!important;
-  opacity:1!important;
-  visibility:visible!important;
-}
-</style>
-<script id="az-admin-icon-hide-guest-user-check">
-(function(){
-  if(window.__azAdminIconHideGuestUserCheck) return;
-  window.__azAdminIconHideGuestUserCheck = true;
-
-  function readUser(){
-    var keys = ['azobssUser','azobss_current_user','azobssSavedUser','azobssCurrentUser'];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw = localStorage.getItem(keys[i]);
-        if(raw){
-          var obj = JSON.parse(raw);
-          if(obj) return obj;
-        }
-      }catch(e){}
-    }
-    return {};
-  }
-
-  function isAdmin(){
-    var u = readUser();
-    var role = String(u.role || '').toLowerCase();
-    var username = String(u.usernameKey || u.username || u.name || u.displayName || '').toLowerCase();
-    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
-
-    return role === 'admin'
-      || username === 'zedan91'
-      || email === 'zedan91@azobss.local'
-      || (document.body && document.body.classList.contains('azobss-support-admin'));
-  }
-
-  function findMini(){
-    return Array.from(document.querySelectorAll('a,button,[role="button"]')).find(function(el){
-      return (el.textContent || '').trim().toLowerCase().includes('mini web tools');
-    });
-  }
-
-  function findIcon(){
-    return document.getElementById('azAdminStrictIconLink')
-      || document.getElementById('azAdminDashboardIconLink')
-      || document.getElementById('azAdminDashboardTopLink')
-      || document.querySelector('.az-admin-dashboard-direct-link')
-      || document.querySelector('[href="/admin/"][title="Admin Dashboard"]')
-      || document.querySelector('[href="/admin/"][aria-label="Admin Dashboard"]');
-  }
-
-  function run(){
-    var ok = !!isAdmin();
-    if(document.body) document.body.classList.toggle('az-admin-icon-confirmed', ok);
-
-    var icon = findIcon();
-    if(!icon) return;
-
-    icon.textContent = '🛠️';
-    icon.href = '/admin/';
-    icon.title = 'Admin Dashboard';
-    icon.setAttribute('aria-label','Admin Dashboard');
-
-    var mini = findMini();
-    if(mini && mini.parentNode && mini.nextElementSibling !== icon){
-      mini.insertAdjacentElement('afterend', icon);
-    }
-    if(icon.parentElement) icon.parentElement.style.overflow = 'visible';
-  }
-
-  document.addEventListener('DOMContentLoaded', run);
-  if(document.readyState !== 'loading') run();
-  [200,600,1200,2500,5000,8000].forEach(function(t){ setTimeout(run,t); });
-  window.addEventListener('storage', run);
-  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  removeIcon();
 })();
 </script>
 
