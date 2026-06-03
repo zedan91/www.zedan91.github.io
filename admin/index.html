@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AZOBSS Admin Dashboard</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+:root{--bg:#07111f;--panel:#111c2d;--panel2:#0d1728;--border:rgba(148,163,184,.25);--text:#f8fafc;--muted:#9fb3d0;--green:#22c55e;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top left,rgba(34,197,94,.12),transparent 34%),linear-gradient(180deg,#07111f,#050b14);color:var(--text);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
+a{color:inherit;text-decoration:none}
+.admin-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;background:rgba(5,10,18,.92);border-right:1px solid var(--border);padding:18px 14px;backdrop-filter:blur(16px)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:950;font-size:22px;margin:4px 8px 22px}
+.brand .logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#22c55e);display:grid;place-items:center}
+.nav{display:grid;gap:7px}
+.nav button,.home-link{border:1px solid transparent;background:transparent;color:#dbeafe;text-align:left;border-radius:14px;padding:12px 13px;font-weight:850;cursor:pointer;font-size:14px;display:flex;gap:10px;align-items:center}
+.nav button:hover,.home-link:hover{background:rgba(30,41,59,.75);border-color:var(--border)}
+.nav button.active{background:linear-gradient(135deg,rgba(34,197,94,.24),rgba(59,130,246,.16));border-color:rgba(34,197,94,.55);color:#fff}
+.side-footer{position:absolute;bottom:16px;left:14px;right:14px;color:var(--muted);font-size:12px}
+.main{padding:22px;min-width:0}
+.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}
+.title h1{margin:0;font-size:30px;line-height:1.1}.title p{margin:6px 0 0;color:var(--muted)}
+.admin-pill{display:flex;align-items:center;gap:9px;background:rgba(15,23,42,.85);border:1px solid var(--border);border-radius:999px;padding:9px 12px;font-weight:850;color:#dbeafe}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.card{background:rgba(15,23,42,.78);border:1px solid var(--border);border-radius:18px;padding:15px;box-shadow:0 18px 45px rgba(0,0,0,.24)}
+.stat-label{font-size:12px;color:var(--muted);font-weight:850;text-transform:uppercase;letter-spacing:.04em}.stat-value{font-size:28px;font-weight:950;margin-top:6px;color:#5cff9d}
+.section{display:none}.section.active{display:block}
+.section h2{margin:0 0 12px;font-size:22px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
+input,select,textarea{background:#050b16;border:1px solid rgba(148,163,184,.28);color:#fff;border-radius:12px;padding:11px 12px;outline:none}
+input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
+.btn{border:0;border-radius:12px;background:#2563eb;color:white;font-weight:900;padding:11px 14px;cursor:pointer}.btn:hover{filter:brightness(1.08)}
+.btn.green{background:#22c55e;color:#052e16}.btn.red{background:#ef4444}.btn.gray{background:#334155}.btn.amber{background:#f59e0b;color:#1f1300}
+.list{display:grid;gap:8px}.item{background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:11px;display:grid;gap:5px}
+.item-row{display:flex;justify-content:space-between;gap:12px;align-items:center}.item-title{font-weight:950;color:#7cffb0}.item-meta{font-size:12px;color:#c7d2fe}.item-actions{display:flex;gap:7px;flex-wrap:wrap}.item-actions .btn{padding:8px 10px;border-radius:10px;font-size:12px}
+.tabs-note{color:var(--muted);font-size:13px;margin:6px 0 14px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hidden{display:none!important}.danger{color:#fecaca}.ok{color:#86efac}.warn{color:#fde68a}
+.table-card{overflow:auto}.mini-table{width:100%;border-collapse:collapse;font-size:13px}.mini-table th,.mini-table td{border-bottom:1px solid rgba(148,163,184,.18);padding:10px;text-align:left}.mini-table th{color:#bfdbfe}
+.login-cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:999999}
+.login-box{width:min(430px,92vw);background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:20px;padding:22px;text-align:center}
+@media(max-width:980px){.admin-shell{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.side-footer{position:static;margin-top:15px}.grid{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+@media(max-width:560px){.main{padding:14px}.grid{grid-template-columns:1fr}.nav{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div id="loginCover" class="login-cover">
+  <div class="login-box">
+    <h2>🔐 AZOBSS Admin Dashboard</h2>
+    <p id="loginState">Checking admin access...</p>
+    <a class="btn green" href="/">Back to AZOBSS</a>
+  </div>
+</div>
+
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
+    <nav class="nav">
+      <button data-tab="overview" class="active">📊 Overview</button>
+      <button data-tab="users">👥 Users</button>
+      <button data-tab="online">🟢 Online Users</button>
+      <button data-tab="activity">📈 Activity</button>
+      <button data-tab="support">💬 Support Inbox</button>
+      <button data-tab="notifications">🔔 Notifications</button>
+      <button data-tab="purchases">💰 Purchase Records</button>
+      <button data-tab="lucky">🎁 Lucky Draw</button>
+      <button data-tab="settings">⚙️ Settings</button>
+      <a class="home-link" href="/">🏠 Back Home</a>
+    </nav>
+    <div class="side-footer">Admin-only module. Loads are limited to reduce Firestore quota.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title">
+        <h1>Admin Dashboard</h1>
+        <p>Monitor users, activity, support, notifications and purchases in one clean place.</p>
+      </div>
+      <div class="admin-pill"><span id="adminAvatar">Z</span><span id="adminName">Admin</span></div>
+    </div>
+
+    <section id="overview" class="section active">
+      <div class="grid">
+        <div class="card"><div class="stat-label">Total Users</div><div id="statUsers" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Open Support</div><div id="statSupport" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Purchase Logs</div><div id="statPurchases" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Latest Support</h2><div id="overviewSupport" class="list"></div></div>
+        <div class="card"><h2>Latest Activity</h2><div id="overviewActivity" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="users" class="section">
+      <h2>👥 Registered User Records</h2>
+      <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest 50 users are loaded.</p>
+      <div class="toolbar">
+        <input id="userSearch" placeholder="Search username, email or phone" style="flex:1;min-width:240px">
+        <button class="btn" id="refreshUsers">Search / Refresh</button>
+      </div>
+      <div id="usersList" class="list"></div>
+    </section>
+
+    <section id="online" class="section">
+      <h2>🟢 Online Logged-In Users</h2>
+      <div class="toolbar"><button class="btn" id="refreshOnline">Refresh Online Users</button></div>
+      <div id="onlineList" class="list"></div>
+    </section>
+
+    <section id="activity" class="section">
+      <h2>📈 Activity</h2>
+      <div class="split">
+        <div class="card"><h2>Logged-In Users History</h2><div id="loginHistoryList" class="list"></div></div>
+        <div class="card"><h2>Guest Visit History</h2><div id="guestHistoryList" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="support" class="section">
+      <h2>💬 Support Inbox</h2>
+      <p class="tabs-note">Latest 50 support messages. Reply or delete messages here.</p>
+      <div class="toolbar"><button class="btn" id="refreshSupport">Refresh Support</button></div>
+      <div id="supportList" class="list"></div>
+    </section>
+
+    <section id="notifications" class="section">
+      <h2>🔔 Notifications</h2>
+      <div class="card">
+        <h2>Create Announcement</h2>
+        <div class="toolbar">
+          <select id="notifType">
+            <option value="lucky_started">Lucky Draw Started</option>
+            <option value="lucky_ending">Lucky Draw Ending Soon</option>
+            <option value="maintenance">Website Maintenance Tonight</option>
+            <option value="payment_verified">Payment Verified</option>
+            <option value="download_ready">Download Ready</option>
+          </select>
+          <input id="notifTitle" placeholder="Notification title" style="flex:1;min-width:220px">
+        </div>
+        <textarea id="notifBody" placeholder="Notification message"></textarea>
+        <div class="toolbar">
+          <button class="btn green" id="publishNotif">Publish Notification</button>
+          <button class="btn red" id="clearNotif">Clear Notifications</button>
+        </div>
+      </div>
+      <div class="card"><h2>Latest Notifications</h2><div id="notificationsList" class="list"></div></div>
+    </section>
+
+    <section id="purchases" class="section">
+      <h2>💰 Purchase Records</h2>
+      <p class="tabs-note">Latest 50 purchase logs and summaries.</p>
+      <div class="split">
+        <div class="card"><h2>Purchase Logs</h2><div id="purchaseLogsList" class="list"></div></div>
+        <div class="card"><h2>Purchase Summaries</h2><div id="purchaseSummariesList" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="lucky" class="section">
+      <h2>🎁 Lucky Draw</h2>
+      <div class="card">
+        <p class="tabs-note">Lucky Draw admin controls remain in the existing Lucky Draw page for now.</p>
+        <a class="btn green" href="/lucky-draw/">Open Lucky Draw Admin</a>
+      </div>
+    </section>
+
+    <section id="settings" class="section">
+      <h2>⚙️ Settings</h2>
+      <div class="card">
+        <h2>Signup Gate</h2>
+        <p class="tabs-note">Quick view for settings/signupGate.</p>
+        <div id="settingsBox" class="list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+const firebaseConfig = {"apiKey": "AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8", "authDomain": "azobss.firebaseapp.com", "projectId": "azobss", "storageBucket": "azobss.firebasestorage.app", "messagingSenderId": "159277716405", "appId": "1:159277716405:web:17d8924b6b6380e2b77ffc"};
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const ADMIN_EMAIL='zedan91@azobss.local';
+
+let currentUser=null;
+let adminProfile=null;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function fmtDate(v){
+  try{
+    let d=null;
+    if(v?.toDate)d=v.toDate();
+    else if(typeof v==='number')d=new Date(v);
+    else if(typeof v==='string')d=new Date(v);
+    if(!d||isNaN(d))return '-';
+    return d.toLocaleString('en-MY',{hour12:true});
+  }catch(e){return '-'}
+}
+function toast(msg){alert(msg)}
+function isAdminUser(){
+  const email=String(currentUser?.email||adminProfile?.email||adminProfile?.authEmail||'').toLowerCase();
+  const role=String(adminProfile?.role||'').toLowerCase();
+  const username=String(adminProfile?.username||adminProfile?.usernameKey||adminProfile?.name||'').toLowerCase();
+  return email===ADMIN_EMAIL || role==='admin' || username==='zedan91';
+}
+async function getAdminProfile(user){
+  if(!user)return null;
+  const candidates=['zedan91', user.email?.split('@')[0], user.displayName].filter(Boolean);
+  for(const c of candidates){
+    try{
+      const snap=await getDoc(doc(db,'users',String(c).toLowerCase()));
+      if(snap.exists())return {id:snap.id,...snap.data()};
+    }catch(e){}
+  }
+  return null;
+}
+function item(title,meta='',actions=''){
+  return `<div class="item"><div class="item-row"><div><div class="item-title">${title}</div>${meta?`<div class="item-meta">${meta}</div>`:''}</div><div class="item-actions">${actions}</div></div></div>`;
+}
+async function safeGet(q){
+  try{return await getDocs(q)}catch(e){console.warn('Admin dashboard query failed:',e);return null}
+}
+
+async function loadOverview(){
+  const users=await safeGet(query(collection(db,'users'),limit(50)));
+  const online=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+
+  $('#statUsers').textContent=users?.size??0;
+  $('#statOnline').textContent=online?.size??0;
+  $('#statLogins').textContent=logins?.size??0;
+  $('#statVisits').textContent=guests?.size??0;
+  $('#statSupport').textContent=support?.size??0;
+  $('#statNotifications').textContent=notif?.size??0;
+  $('#statPurchases').textContent=purchases?.size??0;
+  $('#statGuests').textContent=guests?.size??0;
+
+  const supportRows=[];
+  support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
+  $('#overviewSupport').innerHTML=supportRows.join('')||'<div class="item">No support messages.</div>';
+
+  const activityRows=[];
+  logins?.forEach(d=>{if(activityRows.length<5){const x=d.data();activityRows.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))}});
+  $('#overviewActivity').innerHTML=activityRows.join('')||'<div class="item">No activity.</div>';
+}
+
+async function loadUsers(){
+  const search=($('#userSearch').value||'').toLowerCase().trim();
+  const snap=await safeGet(query(collection(db,'users'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x={id:d.id,...d.data()};
+    const hay=(d.id+' '+(x.email||'')+' '+(x.phone||x.phoneNumber||'')+' '+(x.displayName||x.name||'')).toLowerCase();
+    if(search && !hay.includes(search))return;
+    const allowed=!!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);
+    rows.push(item(
+      esc(d.id),
+      `${esc(x.email||x.authEmail||'-')} • ${allowed?'<span class="ok">PA/BM allowed</span>':'<span class="danger">PA/BM off</span>'} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
+      `<button class="btn gray" data-edit-user="${esc(d.id)}">Toggle PA/BM</button><button class="btn red" data-del-user="${esc(d.id)}">Delete</button>`
+    ));
+  });
+  $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
+}
+async function loadOnline(){
+  const snap=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();rows.push(item(esc(x.username||d.id),`${esc(x.email||'')} • Status: <span class="ok">${esc(x.status||'online')}</span> • Seen: ${fmtDate(x.lastSeenMs||x.updatedAtMs||x.updatedAt)}`))});
+  $('#onlineList').innerHTML=rows.join('')||'<div class="item">No online users.</div>';
+}
+async function loadActivity(){
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const lr=[]; logins?.forEach(d=>{const x=d.data();lr.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • Phone: ${esc(x.phone||'-')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const gr=[]; guests?.forEach(d=>{const x=d.data();gr.push(item('Guest',`IP: ${esc(x.ipAddress||'-')} • Page: ${esc(x.page||'/')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  $('#loginHistoryList').innerHTML=lr.join('')||'<div class="item">No login history.</div>';
+  $('#guestHistoryList').innerHTML=gr.join('')||'<div class="item">No guest history.</div>';
+}
+async function loadSupport(){
+  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x=d.data();
+    rows.push(`<div class="item">
+      <div class="item-row"><div><div class="item-title">${esc(x.subject||'Support Request')}</div><div>${esc(x.message||'')}</div>${x.reply?`<div class="item-meta ok">Reply: ${esc(x.reply)}</div>`:''}<div class="item-meta">${esc(x.email||'')} • ${esc(x.status||'open')} • ${fmtDate(x.createdAtMs||x.createdAt)}</div></div><div class="item-actions"><button class="btn red" data-del-support="${d.id}">Delete</button></div></div>
+      <div class="toolbar"><input id="reply_${d.id}" placeholder="Reply..." style="flex:1"><button class="btn green" data-reply-support="${d.id}">Reply</button></div>
+    </div>`);
+  });
+  $('#supportList').innerHTML=rows.join('')||'<div class="item">No support messages.</div>';
+}
+async function loadNotifications(){
+  let snap=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  if(!snap)snap=await safeGet(query(collection(db,'notifications'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
+  $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
+}
+async function loadPurchases(){
+  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)));
+  const lr=[]; logs?.forEach(d=>{const x=d.data();lr.push(item(esc(x.usernameKey||x.username||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • ${esc(x.status||'')} • RM${esc(x.amount||x.total||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
+  $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No purchase logs.</div>';
+  $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No purchase summaries.</div>';
+}
+async function loadSettings(){
+  const snap=await getDoc(doc(db,'settings','signupGate')).catch(()=>null);
+  if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
+  else $('#settingsBox').innerHTML='<div class="item">No signupGate settings found.</div>';
+}
+async function publishNotification(){
+  const type=$('#notifType').value, title=$('#notifTitle').value.trim(), body=$('#notifBody').value.trim();
+  if(!title&&!body)return toast('Please write notification.');
+  await addDoc(collection(db,'notifications'),{active:true,scope:'all',type,title:title||type,body,createdAtMs:Date.now(),createdAt:serverTimestamp(),createdBy:currentUser?.email||'admin',createdByUid:currentUser?.uid||''});
+  $('#notifTitle').value='';$('#notifBody').value=''; await loadNotifications(); await loadOverview(); toast('Notification published.');
+}
+async function clearNotifications(){
+  if(!confirm('Delete latest notifications?'))return;
+  const snap=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)));
+  const jobs=[]; snap?.forEach(d=>jobs.push(deleteDoc(doc(db,'notifications',d.id))));
+  await Promise.all(jobs); await loadNotifications(); await loadOverview(); toast('Notifications cleared.');
+}
+async function initSection(id){
+  if(id==='overview')return loadOverview();
+  if(id==='users')return loadUsers();
+  if(id==='online')return loadOnline();
+  if(id==='activity')return loadActivity();
+  if(id==='support')return loadSupport();
+  if(id==='notifications')return loadNotifications();
+  if(id==='purchases')return loadPurchases();
+  if(id==='settings')return loadSettings();
+}
+document.addEventListener('click',async e=>{
+  const tab=e.target.closest('[data-tab]');
+  if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
+  const edit=e.target.closest('[data-edit-user]');
+  if(edit){const id=edit.dataset.editUser;const ref=doc(db,'users',id);const s=await getDoc(ref);const x=s.data()||{};const now=!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);await updateDoc(ref,{paBmAllowed:now,allowPABM:now,allowPaBm:now,canAccessPaBm:now,showPaBmTab:now,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});await loadUsers();return;}
+  const du=e.target.closest('[data-del-user]');
+  if(du&&confirm('Delete user '+du.dataset.delUser+'?')){await deleteDoc(doc(db,'users',du.dataset.delUser));await loadUsers();await loadOverview();return;}
+  const ds=e.target.closest('[data-del-support]');
+  if(ds&&confirm('Delete support message?')){await deleteDoc(doc(db,'supportMessages',ds.dataset.delSupport));await loadSupport();await loadOverview();return;}
+  const rs=e.target.closest('[data-reply-support]');
+  if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
+  const dn=e.target.closest('[data-del-notif]');
+  if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+});
+$('#refreshUsers').addEventListener('click',loadUsers);
+$('#userSearch').addEventListener('input',()=>setTimeout(loadUsers,80));
+$('#refreshOnline').addEventListener('click',loadOnline);
+$('#refreshSupport').addEventListener('click',loadSupport);
+$('#publishNotif').addEventListener('click',publishNotification);
+$('#clearNotif').addEventListener('click',clearNotifications);
+
+onAuthStateChanged(auth,async user=>{
+  currentUser=user;
+  if(!user){$('#loginState').textContent='Please login as admin from main website first.';return;}
+  adminProfile=await getAdminProfile(user);
+  if(!isAdminUser()){$('#loginState').textContent='Access denied. Admin only.';return;}
+  $('#loginCover').classList.add('hidden');
+  $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
+  $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
+  await loadOverview();
+});
+</script>
+</body>
+</html>

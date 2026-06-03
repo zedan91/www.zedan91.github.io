@@ -2439,6 +2439,42 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 })();
 </script>
 
+
+<script id="azobss-admin-dashboard-link-patch">
+(function(){
+  if(window.__azAdminDashboardLinkPatch) return;
+  window.__azAdminDashboardLinkPatch=true;
+
+  function isAdminVisible(){
+    return document.body.classList.contains('azobss-support-admin')
+      || (document.body.innerText||'').toLowerCase().includes('hello, zedan91');
+  }
+
+  function findNav(){
+    return document.querySelector('.floating-nav,.topbar,.sticky-bar,.nav-actions,.market-actions,.header-actions,.site-actions,header nav,header') || null;
+  }
+
+  function addAdminLink(){
+    if(!isAdminVisible()) return;
+    if(document.getElementById('azAdminDashboardTopLink')) return;
+    const nav=findNav();
+    if(!nav) return;
+    const a=document.createElement('a');
+    a.id='azAdminDashboardTopLink';
+    a.href='/admin/';
+    a.textContent='Admin';
+    a.title='Admin Dashboard';
+    a.style.cssText='display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-left:6px;padding:9px 14px;border-radius:999px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#052e16;font-weight:950;text-decoration:none;border:1px solid rgba(34,197,94,.55);box-shadow:0 0 16px rgba(34,197,94,.18);';
+    nav.appendChild(a);
+  }
+
+  document.addEventListener('DOMContentLoaded',addAdminLink);
+  if(document.readyState!=='loading') addAdminLink();
+  [500,1500,3000,5000].forEach(t=>setTimeout(addAdminLink,t));
+  new MutationObserver(addAdminLink).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
 </body>
 </html>
 
