@@ -478,7 +478,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
     box.innerHTML='<div class="azobss-lite-item">Loading...</div>';
     try{
       let snap;
-      if(adminNow()) snap=await getDocs(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(20)));
+      if(adminNow()) snap=await getDocs(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
       else snap=await getDocs(query(collection(db,'supportMessages'),where('uid','==',currentUser.uid),orderBy('createdAtMs','desc'),limit(20)));
       const rows=[];
       snap.forEach(d=>{
