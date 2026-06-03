@@ -187,22 +187,6 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-function azobssWithTimeout(promise, ms, label){
-  return Promise.race([
-    promise,
-    new Promise((_, reject)=>setTimeout(()=>reject(new Error((label || 'Operation') + ' timeout after ' + ms + 'ms')), ms))
-  ]);
-}
-function azobssRestoreLoginButton(btn){
-  try{
-    if(btn){
-      btn.disabled = false;
-      btn.textContent = btn.dataset.originalText || 'Login';
-    }
-  }catch(_){}
-}
-
-
 function addStyle() {
   if (document.getElementById('azobss-global-auth-style')) return;
   const style = document.createElement('style');
@@ -1466,7 +1450,6 @@ function firestoreMs(value){
   const parsed = Date.parse(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
 }
-function getFirestoreMs(value){ return firestoreMs(value); }
 let azobssLastRegisteredUsers = [];
 function recordDisplayName(record){
   return escHtml(record.displayName || record.usernameKey || record.name || 'User');
@@ -3467,7 +3450,7 @@ function bindAuth() {
       openSiteAuth(/sign.?up|register|signup/i.test(value) ? 'signup' : 'signin');
       return;
     }
-    if (event.target.closest('#siteAuthClose')) console.log('AZOBSS login success: closing auth modal'); closeSiteAuth();
+    if (event.target.closest('#siteAuthClose')) closeSiteAuth();
     if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton')) closeProfileSettings();
     if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
     if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
@@ -3523,50 +3506,27 @@ function bindAuth() {
         submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Login';
         submitButton.disabled = true;
         submitButton.textContent = '⏳ Please wait...';
-        const azLoginWatchdogBtn = submitButton;
-        setTimeout(()=>{
-          try{
-            if(azLoginWatchdogBtn && azLoginWatchdogBtn.disabled && (document.getElementById('siteAuthModal')?.classList.contains('is-open'))){
-              console.warn('AZOBSS login watchdog restored stuck button.');
-              azobssRestoreLoginButton(azLoginWatchdogBtn);
-              const ebox=document.getElementById('siteLoginError');
-              if(ebox){
-                ebox.style.color='#ffb4b4';
-                ebox.textContent='Login taking too long. Please try again. If still stuck, refresh once.';
-              }
-            }
-          }catch(_){}
-        }, 14000);
       }
       // Give the browser one frame to paint the Please wait message before Firebase starts.
       await new Promise(resolve => requestAnimationFrame(() => resolve()));
-      await azobssWithTimeout(setPersistence(auth,browserLocalPersistence), 5000, 'Auth persistence');
-      let lookupEmail = '';
-      try{
-        lookupEmail = inputIsEmail ? loginInputRaw : await Promise.race([
-          getAuthEmailForUsername(usernameKey),
-          new Promise(resolve=>setTimeout(()=>resolve(''), 4500))
-        ]);
-      }catch(lookupError){
-        console.warn('AZOBSS username email lookup timeout/skipped:', lookupError?.code || lookupError?.message || lookupError);
-        lookupEmail = inputIsEmail ? loginInputRaw : '';
-      }
+      await setPersistence(auth,browserLocalPersistence);
+      const lookupEmail = inputIsEmail ? loginInputRaw : await getAuthEmailForUsername(usernameKey);
       const loginEmail = lookupEmail || buildUserEmail(usernameKey);
       let credential;
       try{
-        credential = await azobssWithTimeout(signInWithEmailAndPassword(auth, loginEmail, password), 9000, 'Firebase sign in');
+        credential = await signInWithEmailAndPassword(auth, loginEmail, password);
       }catch(primaryError){
         if(lookupEmail){
-          credential = await azobssWithTimeout(signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password), 9000, 'Firebase fallback sign in');
+          credential = await signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password);
         }else{
           throw primaryError;
         }
       }
-      try{ await azobssWithTimeout(credential.user.reload(), 4000, 'User reload'); }catch(e){ console.warn('AZOBSS user reload skipped:', e?.message || e); }
+      try{ await credential.user.reload(); }catch(e){}
       const authUser = auth.currentUser || credential.user;
       let profile;
       try{
-        profile = await azobssWithTimeout(ensureUserProfile(authUser,{usernameKey, email: lookupEmail || authUser.email || ''}), 7000, 'Ensure user profile');
+        profile = await ensureUserProfile(authUser,{usernameKey, email: lookupEmail || authUser.email || ''});
       }catch(profileError){
         console.warn('AZOBSS login profile recovery skipped:', profileError?.code || profileError?.message || profileError);
         profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'member'};
@@ -3582,7 +3542,7 @@ function bindAuth() {
       }
       if(realEmail && realEmail.includes('@')){
         try{ localStorage.setItem('azobssAuthEmailMap:' + usernameKey, realEmail); localStorage.setItem('azobssSignupUsernameByEmail:' + realEmail, usernameKey); }catch(_){}
-        await azobssWithTimeout(saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid), 4000, 'Save username auth email');
+        await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
       }
       let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
       try{
@@ -3590,36 +3550,20 @@ function bindAuth() {
         const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
         preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
         var mergedPaBmForLogin = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
-        await Promise.race([
-          setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true}),
-          new Promise((_, reject)=>setTimeout(()=>reject(new Error('profile update timeout')), 4500))
-        ]);
+        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true});
         profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin};
       }catch(loginProfileUpdateError){
         console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
       }
       const signedInUser={uid:authUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
-      saveUser(signedInUser);
-      syncHeader(signedInUser);
-      closeSiteAuth();
-      try{
-        if(submitButton){
-          submitButton.disabled = false;
-          submitButton.textContent = submitButton.dataset.originalText || 'Login';
-        }
-      }catch(_){}
-      setTimeout(()=>{
-        try{ startAzobssPresenceHeartbeat(signedInUser); }catch(e){ console.warn('AZOBSS presence skipped:', e); }
-        Promise.resolve().then(()=>recordLoginHistory(signedInUser, 'login')).catch(e=>console.warn('AZOBSS login history skipped:', e));
-        try{ bindAzobssPurchaseRecordsUI(); }catch(e){ console.warn('AZOBSS purchase UI bind skipped:', e); }
-        try{ renderAzobssPurchaseRecords(); }catch(e){ console.warn('AZOBSS purchase records render skipped:', e); }
-        try{ renderFirebaseAdminRecords(); }catch(e){ console.warn('AZOBSS admin records render skipped:', e); }
-        Promise.resolve().then(()=>migrateUsernameAuthLookupForAdmin()).catch(e=>console.warn('AZOBSS username migration skipped:', e));
-      }, 0);
+      saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
     }catch(error){
       console.warn('AZOBSS login failed:', error?.code || error?.message || error);
       if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username/email or password. If username login fails, try your Gmail email once.' : ((error?.code || 'Login failed') + ': ' + (error?.message || 'Please try again.'));
-      azobssRestoreLoginButton(submitButton);
+      if(submitButton){
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || 'Login';
+      }
     }
   });
 
@@ -3696,7 +3640,7 @@ function bindAuth() {
       }
       // Give the browser one frame to paint the Please wait message before Firebase starts.
       await new Promise(resolve => requestAnimationFrame(() => resolve()));
-      await azobssWithTimeout(setPersistence(auth,browserLocalPersistence), 5000, 'Auth persistence');
+      await setPersistence(auth,browserLocalPersistence);
 
       // IMPORTANT FIX:
       // Some Firestore rules block public reads on /users before login.
