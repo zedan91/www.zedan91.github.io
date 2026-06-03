@@ -13033,6 +13033,156 @@ import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, limit
 })();
 </script>
 
+
+<script id="azobss-notification-capture-final-fix">
+(function(){
+  if(window.__azNotificationCaptureFinalFix) return;
+  window.__azNotificationCaptureFinalFix = true;
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain: 'azobss.firebaseapp.com',
+    projectId: 'azobss',
+    storageBucket: 'azobss.firebasestorage.app',
+    messagingSenderId: '159277716405',
+    appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function toast(msg){ if(window.azShowToast) window.azShowToast(msg); else if(window.showToast) window.showToast(msg); else alert(msg); }
+
+  async function getFirebase(){
+    const appMod = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js');
+    const authMod = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+    const fsMod = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(firebaseConfig);
+    return { auth: authMod.getAuth(app), db: fsMod.getFirestore(app), fs: fsMod };
+  }
+
+  function isPublishBtn(el){
+    const btn = el && el.closest ? el.closest('button,input[type="submit"],input[type="button"],[role="button"]') : null;
+    if(!btn) return null;
+    const text = (btn.textContent || btn.value || '').trim().toLowerCase();
+    if(text.includes('publish notification')) return btn;
+    return null;
+  }
+
+  async function loadNotifications(){
+    const box=document.getElementById('azNotificationList');
+    if(!box) return;
+    try{
+      const {auth,db,fs}=await getFirebase();
+      let snap;
+      try{
+        snap = await fs.getDocs(fs.query(fs.collection(db,'notifications'), fs.where('active','==',true), fs.orderBy('createdAtMs','desc'), fs.limit(20)));
+      }catch(e){
+        console.warn('AZOBSS notifications indexed read failed, fallback full read:', e);
+        snap = await fs.getDocs(fs.collection(db,'notifications'));
+      }
+      const rows=[];
+      snap.forEach(d=>{
+        const x=d.data();
+        if(x.active!==true) return;
+        if(x.scope==='user'){
+          const uid=auth.currentUser?.uid||'';
+          if(x.uid && x.uid!==uid && !document.body.classList.contains('azobss-support-admin')) return;
+        }
+        rows.push(x);
+      });
+      rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+      box.innerHTML = rows.slice(0,20).map(x=>`
+        <div class="azobss-lite-item">
+          <strong>${esc(x.title||'Notification')}</strong>
+          <div>${esc(x.body||'')}</div>
+          <div class="azobss-lite-meta">${esc(x.type||'system')}</div>
+        </div>`).join('') || '<div class="azobss-lite-item">No notifications available.</div>';
+    }catch(err){
+      console.error('AZOBSS notifications load final failed:',err);
+      box.innerHTML='<div class="azobss-lite-item">Unable to load notifications: '+esc(err.message||err.code||err)+'</div>';
+    }
+  }
+
+  async function publishNotification(ev){
+    if(ev){
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      ev.stopPropagation();
+    }
+
+    console.log('AZOBSS Publish Notification clicked - capture final');
+
+    try{
+      const {auth,db,fs}=await getFirebase();
+
+      const isAdmin = document.body.classList.contains('azobss-support-admin')
+        || String(auth.currentUser?.email||'').toLowerCase()==='zedan91@azobss.local'
+        || (document.body.innerText||'').toLowerCase().includes('hello, zedan91');
+
+      if(!isAdmin){
+        alert('Admin only. Please login as zedan91.');
+        return;
+      }
+
+      const type=document.getElementById('azNotificationType')?.value || 'maintenance';
+      const title=(document.getElementById('azNotificationTitle')?.value || '').trim();
+      const body=(document.getElementById('azNotificationBody')?.value || '').trim();
+
+      if(!title && !body){
+        alert('Please write notification title or message.');
+        return;
+      }
+
+      const payload={
+        active:true,
+        scope:'all',
+        type:type,
+        title:title || type.replaceAll('_',' '),
+        body:body,
+        createdAtMs:Date.now(),
+        createdAt:fs.serverTimestamp(),
+        createdBy:auth.currentUser?.email || 'admin',
+        createdByUid:auth.currentUser?.uid || ''
+      };
+
+      const ref=await fs.addDoc(fs.collection(db,'notifications'),payload);
+      console.log('AZOBSS notification published OK - capture final:',ref.id,payload);
+      toast('Notification published.');
+
+      const t=document.getElementById('azNotificationTitle'); if(t) t.value='';
+      const b=document.getElementById('azNotificationBody'); if(b) b.value='';
+
+      await loadNotifications();
+    }catch(err){
+      console.error('AZOBSS notification publish failed - capture final:',err);
+      alert('Notification publish failed: '+(err.message||err.code||err));
+    }
+  }
+
+  window.azobssPublishNotificationDirect = publishNotification;
+  window.azobssLoadNotifications = loadNotifications;
+
+  document.addEventListener('click',function(e){
+    const btn=isPublishBtn(e.target);
+    if(btn) publishNotification(e);
+  },true);
+
+  document.addEventListener('submit',function(e){
+    const form=e.target;
+    if(form && form.id==='azNotificationForm') publishNotification(e);
+  },true);
+
+  function english(){
+    const s=document.getElementById('azSupportSubject');
+    if(s) s.placeholder='Subject';
+    const m=document.getElementById('azSupportMessage');
+    if(m) m.placeholder='Write your message to admin...';
+  }
+  document.addEventListener('DOMContentLoaded',english);
+  if(document.readyState!=='loading') english();
+  setInterval(english,1200);
+})();
+</script>
+
 </body>
 </html>
 <script>
