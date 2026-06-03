@@ -500,6 +500,153 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 @media(max-width:760px){.azobss-mini-action-btn{width:34px!important;height:34px!important;font-size:16px!important;margin-left:4px!important}.azobss-modal-card{padding:15px}}
 </style>
 
+
+<style id="azobss-support-notification-panel-style">
+/* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
+#azBellModal.azobss-modal-lite,
+#azSupportModal.azobss-modal-lite{
+  position:fixed!important;
+  inset:auto!important;
+  top:78px!important;
+  right:18px!important;
+  left:auto!important;
+  bottom:auto!important;
+  z-index:9999999!important;
+  display:none!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  width:min(410px,calc(100vw - 28px))!important;
+  max-height:72vh!important;
+  overflow:visible!important;
+  padding:0!important;
+  background:transparent!important;
+  backdrop-filter:none!important;
+  pointer-events:none!important;
+}
+
+#azBellModal.azobss-modal-lite.is-open,
+#azSupportModal.azobss-modal-lite.is-open{
+  display:block!important;
+  pointer-events:auto!important;
+}
+
+#azBellModal .azobss-modal-card,
+#azSupportModal .azobss-modal-card{
+  width:100%!important;
+  max-height:72vh!important;
+  overflow:auto!important;
+  border-radius:18px!important;
+  border:1px solid rgba(148,163,184,.35)!important;
+  background:rgba(7,12,20,.98)!important;
+  box-shadow:0 22px 60px rgba(0,0,0,.45)!important;
+  color:#fff!important;
+  padding:14px!important;
+  backdrop-filter:blur(14px)!important;
+  transform-origin:top right!important;
+  animation:azPanelDrop .16s ease-out!important;
+}
+
+#azBellModal .azobss-modal-card::before,
+#azSupportModal .azobss-modal-card::before{
+  content:""!important;
+  position:absolute!important;
+  top:-8px!important;
+  right:42px!important;
+  width:14px!important;
+  height:14px!important;
+  transform:rotate(45deg)!important;
+  background:rgba(7,12,20,.98)!important;
+  border-left:1px solid rgba(148,163,184,.25)!important;
+  border-top:1px solid rgba(148,163,184,.25)!important;
+}
+
+#azBellModal .azobss-modal-head,
+#azSupportModal .azobss-modal-head{
+  position:sticky!important;
+  top:0!important;
+  z-index:2!important;
+  background:rgba(7,12,20,.98)!important;
+  padding-bottom:10px!important;
+  margin-bottom:10px!important;
+  border-bottom:1px solid rgba(148,163,184,.18)!important;
+}
+
+#azBellModal .azobss-modal-head h3,
+#azSupportModal .azobss-modal-head h3{
+  font-size:18px!important;
+  line-height:1.2!important;
+}
+
+#azBellModal .azobss-modal-close,
+#azSupportModal .azobss-modal-close{
+  width:32px!important;
+  height:32px!important;
+  border-radius:999px!important;
+}
+
+#azBellModal .azobss-lite-list,
+#azSupportModal .azobss-lite-list{
+  display:grid!important;
+  gap:8px!important;
+  margin-top:10px!important;
+}
+
+#azBellModal .azobss-lite-item,
+#azSupportModal .azobss-lite-item{
+  border-radius:14px!important;
+  padding:11px!important;
+  background:rgba(15,23,42,.72)!important;
+  border:1px solid rgba(148,163,184,.22)!important;
+}
+
+#azBellModal .azobss-lite-item:hover,
+#azSupportModal .azobss-lite-item:hover{
+  background:rgba(30,41,59,.88)!important;
+  border-color:rgba(34,197,94,.35)!important;
+}
+
+#azBellModal .azobss-lite-input,
+#azBellModal .azobss-lite-textarea,
+#azBellModal .azobss-lite-select,
+#azSupportModal .azobss-lite-input,
+#azSupportModal .azobss-lite-textarea,
+#azSupportModal .azobss-lite-select{
+  border-radius:12px!important;
+  margin:6px 0 8px!important;
+}
+
+#azBellModal .azobss-lite-textarea,
+#azSupportModal .azobss-lite-textarea{
+  min-height:78px!important;
+}
+
+#azBellModal .azobss-lite-btn,
+#azSupportModal .azobss-lite-btn{
+  border-radius:12px!important;
+  padding:10px 13px!important;
+}
+
+@keyframes azPanelDrop{
+  from{opacity:0;transform:translateY(-8px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+@media(max-width:760px){
+  #azBellModal.azobss-modal-lite,
+  #azSupportModal.azobss-modal-lite{
+    top:68px!important;
+    right:10px!important;
+    width:calc(100vw - 20px)!important;
+    max-height:76vh!important;
+  }
+  #azBellModal .azobss-modal-card,
+  #azSupportModal .azobss-modal-card{
+    max-height:76vh!important;
+    padding:13px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1407,6 +1554,35 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   new MutationObserver(ensureButton).observe(document.documentElement,{childList:true,subtree:true});
 
   window.azobssClearNotifications = clearNotifications;
+})();
+</script>
+
+
+<script id="azobss-panel-outside-close-fix">
+(function(){
+  if(window.__azPanelOutsideCloseFix) return;
+  window.__azPanelOutsideCloseFix=true;
+
+  function isPanel(id){return id==='azBellModal'||id==='azSupportModal';}
+
+  document.addEventListener('click',function(e){
+    const openPanels=[...document.querySelectorAll('#azBellModal.is-open,#azSupportModal.is-open')];
+    if(!openPanels.length) return;
+
+    const clickedBell=e.target.closest && e.target.closest('[title="Notifications"]');
+    const clickedChat=e.target.closest && e.target.closest('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"]');
+    if(clickedBell || clickedChat) return;
+
+    openPanels.forEach(p=>{
+      if(!p.contains(e.target)) p.classList.remove('is-open');
+    });
+  },false);
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      document.querySelectorAll('#azBellModal.is-open,#azSupportModal.is-open').forEach(p=>p.classList.remove('is-open'));
+    }
+  });
 })();
 </script>
 
