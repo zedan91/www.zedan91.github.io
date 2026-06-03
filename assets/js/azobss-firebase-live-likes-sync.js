@@ -1330,6 +1330,7 @@ function firestoreMs(value){
   const parsed = Date.parse(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
 }
+function getFirestoreMs(value){ return firestoreMs(value); }
 let azobssLastRegisteredUsers = [];
 function recordDisplayName(record){
   return escHtml(record.displayName || record.usernameKey || record.name || 'User');
@@ -3327,7 +3328,16 @@ function bindAuth() {
       // Give the browser one frame to paint the Please wait message before Firebase starts.
       await new Promise(resolve => requestAnimationFrame(() => resolve()));
       await setPersistence(auth,browserLocalPersistence);
-      const lookupEmail = inputIsEmail ? loginInputRaw : await getAuthEmailForUsername(usernameKey);
+      let lookupEmail = '';
+      try{
+        lookupEmail = inputIsEmail ? loginInputRaw : await Promise.race([
+          getAuthEmailForUsername(usernameKey),
+          new Promise(resolve=>setTimeout(()=>resolve(''), 4500))
+        ]);
+      }catch(lookupError){
+        console.warn('AZOBSS username email lookup timeout/skipped:', lookupError?.code || lookupError?.message || lookupError);
+        lookupEmail = inputIsEmail ? loginInputRaw : '';
+      }
       const loginEmail = lookupEmail || buildUserEmail(usernameKey);
       let credential;
       try{
@@ -3367,13 +3377,32 @@ function bindAuth() {
         const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
         preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
         var mergedPaBmForLogin = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
-        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true});
+        await Promise.race([
+          setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true}),
+          new Promise((_, reject)=>setTimeout(()=>reject(new Error('profile update timeout')), 4500))
+        ]);
         profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin};
       }catch(loginProfileUpdateError){
         console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
       }
       const signedInUser={uid:authUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
-      saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
+      saveUser(signedInUser);
+      syncHeader(signedInUser);
+      closeSiteAuth();
+      try{
+        if(submitButton){
+          submitButton.disabled = false;
+          submitButton.textContent = submitButton.dataset.originalText || 'Login';
+        }
+      }catch(_){}
+      setTimeout(()=>{
+        try{ startAzobssPresenceHeartbeat(signedInUser); }catch(e){ console.warn('AZOBSS presence skipped:', e); }
+        Promise.resolve().then(()=>recordLoginHistory(signedInUser, 'login')).catch(e=>console.warn('AZOBSS login history skipped:', e));
+        try{ bindAzobssPurchaseRecordsUI(); }catch(e){ console.warn('AZOBSS purchase UI bind skipped:', e); }
+        try{ renderAzobssPurchaseRecords(); }catch(e){ console.warn('AZOBSS purchase records render skipped:', e); }
+        try{ renderFirebaseAdminRecords(); }catch(e){ console.warn('AZOBSS admin records render skipped:', e); }
+        Promise.resolve().then(()=>migrateUsernameAuthLookupForAdmin()).catch(e=>console.warn('AZOBSS username migration skipped:', e));
+      }, 0);
     }catch(error){
       console.warn('AZOBSS login failed:', error?.code || error?.message || error);
       if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username/email or password. If username login fails, try your Gmail email once.' : ((error?.code || 'Login failed') + ': ' + (error?.message || 'Please try again.'));

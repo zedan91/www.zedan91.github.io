@@ -1,0 +1,15 @@
+AZOBSS LOGIN FULL UNSTUCK PATCH
+
+Audit findings:
+1. Code defined firestoreMs() but some admin logic called getFirestoreMs().
+   Added alias: getFirestoreMs(value){ return firestoreMs(value); }
+
+2. Login was waiting for non-critical Firestore/admin jobs before closing modal:
+   - recordLoginHistory
+   - renderFirebaseAdminRecords
+   - migrateUsernameAuthLookupForAdmin
+   These now run in the background after login closes.
+
+3. Username email lookup and profile update now have timeout protection so login UI cannot be stuck forever.
+
+4. Syntax checked all JS and inline scripts after patch.
