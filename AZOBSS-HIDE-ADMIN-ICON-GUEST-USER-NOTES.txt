@@ -1,0 +1,7 @@
+AZOBSS HIDE ADMIN ICON FOR GUEST / USER
+
+Changed only:
+- Hide 🛠️ admin icon by default.
+- Show only when saved AZOBSS user is admin / zedan91.
+- Place icon after Mini Web Tools.
+- Did not edit login flow.
