@@ -137,6 +137,129 @@ body.az-admin-verified [href="/admin/"][aria-label="Admin Dashboard"]{
 })();
 </script>
 
+
+<style id="az-admin-access-guard-style">
+body:not(.az-admin-access-ok) .admin-shell{
+  display:none!important;
+}
+#azAdminAccessDenied{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:linear-gradient(180deg,#07111f,#050b14);
+  color:#fff;
+  font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;
+}
+#azAdminAccessDenied .box{
+  width:min(460px,92vw);
+  border:1px solid rgba(148,163,184,.25);
+  background:rgba(15,23,42,.92);
+  border-radius:20px;
+  padding:22px;
+  text-align:center;
+  box-shadow:0 20px 70px rgba(0,0,0,.4);
+}
+#azAdminAccessDenied h2{margin:0 0 8px;font-size:24px}
+#azAdminAccessDenied p{color:#cbd5e1}
+#azAdminAccessDenied a{
+  display:inline-flex;
+  margin-top:12px;
+  padding:11px 16px;
+  border-radius:999px;
+  background:#22c55e;
+  color:#052e16;
+  font-weight:900;
+  text-decoration:none;
+}
+body.az-admin-access-ok #azAdminAccessDenied{display:none!important}
+</style>
+<script type="module" id="az-admin-access-guard">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azAdminAccessGuard) return;
+  window.__azAdminAccessGuard = true;
+
+  const firebaseConfig = {
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+
+  function showDenied(message){
+    document.body.classList.remove('az-admin-access-ok');
+    let box = document.getElementById('azAdminAccessDenied');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'azAdminAccessDenied';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+      document.body.appendChild(box);
+    }
+    const msg = document.getElementById('azAdminAccessMessage');
+    if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+  }
+
+  function showAdmin(){
+    document.body.classList.add('az-admin-access-ok');
+    const box = document.getElementById('azAdminAccessDenied');
+    if(box) box.remove();
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email = String(user.email || '').toLowerCase();
+    if(email === ADMIN_EMAIL) return true;
+
+    const candidates = [
+      'zedan91',
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || ''
+    ].filter(Boolean).map(x => String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap = await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x = snap.data() || {};
+        const role = String(x.role || '').toLowerCase();
+        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
+        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  showDenied('Checking admin access...');
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      showDenied('Please login as admin first.');
+      return;
+    }
+
+    const ok = await isAdmin(user);
+    if(ok) showAdmin();
+    else showDenied('Access denied. Admin account required.');
+  });
+})();
+</script>
+
 </head>
 <body>
 <div id="loginCover" class="login-cover">
