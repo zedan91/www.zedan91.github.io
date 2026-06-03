@@ -707,7 +707,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
       document.getElementById('azSupportSubject').value='';
       document.getElementById('azSupportMessage').value='';
       toast('Message sent to admin.');
-      loadSupport();
+      loadSupport(); if(window.azUpdateChatBadge) setTimeout(window.azUpdateChatBadge,800);
     }catch(err){console.error('AZOBSS support send failed:',err);alert('Support message failed: '+(err.message||err.code||err));}
   }
 
@@ -730,7 +730,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
         const id=btn.dataset.replyId, inp=document.getElementById('reply_'+id), reply=(inp?.value||'').trim();
         if(!reply){toast('Write a reply first.');return;}
         await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});
-        toast('Reply saved.'); loadSupport();
+        toast('Reply saved.'); loadSupport(); if(window.azUpdateChatBadge) setTimeout(window.azUpdateChatBadge,800);
       }));
     }catch(err){console.error('AZOBSS support load failed:',err);box.innerHTML='<div class="azobss-lite-item">Unable to load support messages: '+esc(err.message||err.code||err)+'</div>';}
   }
@@ -936,7 +936,8 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
 </script>
 
 
-<style id="az-chat-badge-style">
+
+<style id="az-chat-badge-style-v2">
 #azChatUnreadBadge{
 position:absolute;top:-7px;right:-8px;z-index:999999999;
 display:none;min-width:18px;height:18px;padding:0 5px;
@@ -945,14 +946,14 @@ font-size:11px;font-weight:900;line-height:18px;text-align:center;
 box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;
 }
 </style>
-<script type="module" id="az-chat-badge-final">
+<script type="module" id="az-chat-badge-admin-user-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 (function(){
- if(window.__azChatBadgeFinal) return;
- window.__azChatBadgeFinal=true;
+ if(window.__azChatBadgeAdminUserFinal) return;
+ window.__azChatBadgeAdminUserFinal=true;
 
  const app=getApps().length?getApps()[0]:initializeApp({
  apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -965,10 +966,25 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
 
  const auth=getAuth(app);
  const db=getFirestore(app);
- const KEY='azobss_support_seen_at_v1';
+ const USER_KEY='azobss_support_seen_at_user_v2';
+ const ADMIN_KEY='azobss_support_seen_at_admin_v2';
+
+ function isAdmin(){
+   return document.body.classList.contains('azobss-support-admin')
+     || (document.body.innerText||'').toLowerCase().includes('hello, zedan91')
+     || String(auth.currentUser?.email||'').toLowerCase()==='zedan91@azobss.local';
+ }
 
  function getChat(){
-   return document.querySelector('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"]');
+   let chat=document.querySelector('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"]');
+   if(chat) return chat;
+   const candidates=[...document.querySelectorAll('header button,header a,.topbar button,.topbar a,.floating-nav button,.floating-nav a,.market-icon-btn,.nav-icon,.icon-btn,[role="button"]')].filter(el=>{
+     const r=el.getBoundingClientRect();
+     return r.width>=12 && r.height>=12 && r.top<95 && r.left>window.innerWidth*0.55;
+   });
+   const iconEls=candidates.filter(el=>el.querySelector('svg') || (el.textContent||'').trim()==='');
+   if(iconEls.length>=1) return iconEls[iconEls.length-1];
+   return null;
  }
 
  function badge(){
@@ -986,46 +1002,75 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
 
  async function update(){
    const b=badge();
-   if(!b || !auth.currentUser) return;
+   if(!b || !auth.currentUser){ if(b)b.style.display='none'; return; }
 
-   const seen=Number(localStorage.getItem(KEY)||0);
+   const admin=isAdmin();
+   const seen=Number(localStorage.getItem(admin?ADMIN_KEY:USER_KEY)||0);
    let count=0;
 
    try{
-      const snap=await getDocs(
-       query(collection(db,'supportMessages'),
-       where('uid','==',auth.currentUser.uid),
-       orderBy('createdAtMs','desc'),
-       limit(50))
-      );
-
-      snap.forEach(d=>{
-        const x=d.data();
-        const reply=x.reply||'';
-        const repliedAt=Number(x.repliedAtMs||0);
-        if(reply && repliedAt>seen) count++;
-      });
+      let snap;
+      if(admin){
+        try{
+          snap=await getDocs(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+        }catch(e){
+          snap=await getDocs(collection(db,'supportMessages'));
+        }
+        snap.forEach(d=>{
+          const x=d.data();
+          const ms=Number(x.createdAtMs||0);
+          const status=String(x.status||'open').toLowerCase();
+          const reply=String(x.reply||'').trim();
+          if(ms>seen && (!reply || status==='open')) count++;
+        });
+      }else{
+        try{
+          snap=await getDocs(query(collection(db,'supportMessages'),where('uid','==',auth.currentUser.uid),orderBy('createdAtMs','desc'),limit(50)));
+        }catch(e){
+          snap=await getDocs(collection(db,'supportMessages'));
+        }
+        snap.forEach(d=>{
+          const x=d.data();
+          if(String(x.uid||'')!==String(auth.currentUser.uid)) return;
+          const reply=String(x.reply||'').trim();
+          const repliedAt=Number(x.repliedAtMs||x.updatedAtMs||x.createdAtMs||0);
+          if(reply && repliedAt>seen) count++;
+        });
+      }
 
       if(count>0){
-        b.textContent=Math.min(count,99);
+        b.textContent=String(Math.min(count,99));
         b.style.display='block';
       }else{
         b.style.display='none';
       }
-   }catch(e){}
+   }catch(e){
+      console.warn('AZOBSS chat badge update failed:',e);
+      if(b) b.style.display='none';
+   }
+ }
+
+ function markSeen(){
+   localStorage.setItem(isAdmin()?ADMIN_KEY:USER_KEY,String(Date.now()));
+   const b=badge(); if(b) b.style.display='none';
  }
 
  document.addEventListener('click',e=>{
    const chat=getChat();
    if(chat && (e.target===chat || chat.contains(e.target))){
-      localStorage.setItem(KEY,str(Date.now()) if False else String(Date.now()));
-      const b=badge(); if(b) b.style.display='none';
+      markSeen();
+      setTimeout(update,1200);
    }
  },true);
 
- setTimeout(update,1500);
- setInterval(update,15000);
  window.azUpdateChatBadge=update;
+ window.azMarkSupportSeen=markSeen;
+
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(update,1500));
+ if(document.readyState!=='loading') setTimeout(update,1500);
+ setTimeout(update,3000);
+ setTimeout(update,6000);
+ setInterval(update,15000);
 })();
 </script>
 

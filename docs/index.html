@@ -464,7 +464,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
       document.getElementById('azSupportSubject').value='';
       document.getElementById('azSupportMessage').value='';
       toast('Message sent to admin.');
-      loadSupport();
+      loadSupport(); if(window.azUpdateChatBadge) setTimeout(window.azUpdateChatBadge,800);
     }catch(err){console.error('AZOBSS support send failed:',err);alert('Support message failed: '+(err.message||err.code||err));}
   }
 
@@ -487,7 +487,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
         const id=btn.dataset.replyId, inp=document.getElementById('reply_'+id), reply=(inp?.value||'').trim();
         if(!reply){toast('Write a reply first.');return;}
         await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});
-        toast('Reply saved.'); loadSupport();
+        toast('Reply saved.'); loadSupport(); if(window.azUpdateChatBadge) setTimeout(window.azUpdateChatBadge,800);
       }));
     }catch(err){console.error('AZOBSS support load failed:',err);box.innerHTML='<div class="azobss-lite-item">Unable to load support messages: '+esc(err.message||err.code||err)+'</div>';}
   }
