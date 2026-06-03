@@ -1028,6 +1028,22 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+function azobssWithTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_, reject)=>setTimeout(()=>reject(new Error((label || 'Operation') + ' timeout after ' + ms + 'ms')), ms))
+  ]);
+}
+function azobssRestoreLoginButton(btn){
+  try{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = btn.dataset.originalText || 'Login';
+    }
+  }catch(_){}
+}
+
+
   let currentUid = '';
   let syncTimer = null;
   let loadingFromCloud = false;

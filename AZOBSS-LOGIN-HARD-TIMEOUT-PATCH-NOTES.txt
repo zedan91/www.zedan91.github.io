@@ -1,0 +1,11 @@
+AZOBSS LOGIN HARD TIMEOUT PATCH
+
+This patch prevents the login modal from staying stuck on "Please wait":
+- setPersistence timeout: 5s
+- signInWithEmailAndPassword timeout: 9s
+- fallback sign-in timeout: 9s
+- user.reload timeout: 4s
+- ensureUserProfile timeout: 7s
+- saveUsernameAuthEmail timeout: 4s
+- UI watchdog restores Login button after 14s if modal is still open.
+- Added console log when login succeeds and modal closes.
