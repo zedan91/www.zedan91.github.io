@@ -605,23 +605,21 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   }
 
   function ensureBadge(){
-    let b=document.getElementById('azBellUnreadBadge');
+    const bell=getBell();
+    if(!bell) return null;
+    let b=bell.querySelector('#azBellUnreadBadge');
     if(!b){
       b=document.createElement('span');
       b.id='azBellUnreadBadge';
-      b.style.cssText='position:fixed;z-index:999999999;display:none;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;';
-      document.body.appendChild(b);
+      b.style.cssText='position:absolute;z-index:999999999;display:none;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;top:-7px;right:-8px;';
+      bell.style.position='relative';
+      bell.appendChild(b);
     }
     return b;
   }
 
   function positionBadge(){
-    const bell=getBell();
-    const badge=ensureBadge();
-    if(!bell) return;
-    const r=bell.getBoundingClientRect();
-    badge.style.left=(window.scrollX + r.right - 7) + 'px';
-    badge.style.top=(window.scrollY + r.top - 7) + 'px';
+    return;
   }
 
   async function fetchUnreadCount(){
