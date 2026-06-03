@@ -1,0 +1,244 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == "zedan91@azobss.local";
+    }
+
+    function isThisUser(username) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(username))
+        && request.auth.uid == get(/databases/$(database)/documents/users/$(username)).data.uid;
+    }
+
+    match /users/{username} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update: if isAdmin()
+        || isThisUser(username)
+        || (
+          request.auth != null
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid
+        );
+
+      allow read, delete: if isAdmin() || isThisUser(username);
+    }
+
+
+    match /users/{username}/likes/{itemId} {
+      allow read, create, update, delete: if request.auth != null
+        && (isAdmin() || isThisUser(username) || request.resource.data.uid == request.auth.uid || resource.data.uid == request.auth.uid);
+    }
+
+    match /usernameAuthEmails/{username} {
+      allow get: if true;
+      allow list: if isAdmin();
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update: if isAdmin()
+        || (
+          request.auth != null
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid
+        );
+
+      allow delete: if isAdmin() || (
+        request.auth != null
+        && resource.data.uid == request.auth.uid
+      );
+    }
+
+    match /settings/signupGate {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/softwareStats {
+      // One-document software stats bundle: downloads + ratings persist across deploys.
+      // Public read/write is intentionally allowed for lightweight public counters.
+      // Rating spam is limited in frontend with ratedBy browser token.
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /purchaseSummaries/{username} {
+      allow read: if isAdmin() || isThisUser(username);
+
+      allow create: if isAdmin() || (
+        request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.usernameKey == username
+      );
+
+      allow update: if isAdmin() || (
+        isThisUser(username)
+        && resource.data.uid == request.auth.uid
+        && resource.data.usernameKey == username
+      );
+
+      allow delete: if isAdmin();
+    }
+
+
+    match /purchaseRecords/{purchaseId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /purchaseLogs/{purchaseId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == "pending";
+
+      // Admin/backend boleh update semua.
+      // User hanya boleh update medan download milik sendiri.
+      // Ini membenarkan rekod pending yang sudah dibayar melalui ToyyibPay bertukar kepada paid
+      // dan menaikkan downloadCount, tanpa membenarkan user ubah amount/item/uid.
+      allow update: if isAdmin()
+        || (
+          request.auth != null
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "status",
+            "paidAtMs",
+            "paidAtClient",
+            "downloadCount",
+            "maxDownloads",
+            "downloadExpiresAtMs",
+            "downloadExpiresAtClient",
+            "lastDownloadedAtMs",
+            "lastDownloadedAtClient",
+            "updatedAt"
+          ])
+          && request.resource.data.status in ["paid", "success", "completed", "settled"]
+          && (
+            resource.data.status in ["pending", "paid", "success", "completed", "settled"]
+          )
+          && request.resource.data.downloadCount is number
+          && request.resource.data.downloadCount >= (resource.data.downloadCount is number ? resource.data.downloadCount : 0)
+          && request.resource.data.downloadCount <= 5
+        );
+
+      allow delete: if isAdmin()
+        || (
+          request.auth != null
+          && resource.data.uid == request.auth.uid
+          && resource.data.status == "pending"
+        );
+    }
+
+    match /siteStats/{docId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /sitePresence/{visitorId} {
+      allow read: if isAdmin();
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /userLikes/{likeId} {
+      allow read: if request.auth != null;
+
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
+    match /onlineUsers/{uid} {
+      allow read: if isAdmin();
+
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow delete: if isAdmin()
+        || (request.auth != null
+        && resource.data.uid == request.auth.uid);
+    }
+
+    match /loginHistory/{docId} {
+      allow read: if isAdmin();
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /guestHistory/{docId} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    match /softwareTools/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /cadTools/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /affiliateProducts/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin()
+        || (request.auth != null
+        && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /downloadTokens/{tokenId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /receipts/{receiptId} {
+      allow read: if isAdmin()
+        || (request.auth != null
+        && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+  }
+}

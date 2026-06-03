@@ -1,0 +1,22 @@
+AZOBSS PA PDF Render Dependency Fix
+
+Punca dari log Render:
+PA dijumpai, tetapi PDF gagal kerana sharp/pdfkit tidak dijumpai semasa runtime.
+
+Fix dibuat:
+1. deploy-server.js kini cuba load sharp/pdfkit dari:
+   - root node_modules
+   - backend/node_modules
+   Ini selesaikan kes Render install dependency di folder backend tetapi start command jalankan node deploy-server.js dari root.
+
+2. render.yaml dikemaskini supaya service azobss-backend guna:
+   buildCommand: npm install --include=optional
+   startCommand: node deploy-server.js
+
+3. render-build.sh dikemaskini untuk install dependency root dan backend.
+
+Selepas deploy:
+- Di Render, buat Manual Deploy.
+- Jika masih gagal, buat Clear Build Cache & Deploy.
+- Log baru patut tunjuk:
+  PDF converter dependencies: { sharp: true, pdfkit: true, ... }

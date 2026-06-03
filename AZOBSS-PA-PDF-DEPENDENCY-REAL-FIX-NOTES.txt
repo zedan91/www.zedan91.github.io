@@ -1,0 +1,11 @@
+PA PDF dependency real fix:
+- Removed package-lock.json so Render will not reuse stale/foreign lockfile URLs.
+- .npmrc forces public npm registry and optional dependencies.
+- package.json pins sharp to 0.32.6 and pdfkit to 0.15.0 for Render/Linux compatibility.
+- deploy-server.js now logs exact require errors and can self-heal by installing sharp/pdfkit once at runtime if Render cache misses them.
+- render-build.sh verifies require.resolve('sharp') and require.resolve('pdfkit') during build.
+
+After upload to GitHub:
+1. Render Settings > Build Command should be: bash render-build.sh
+2. Start Command should be: node deploy-server.js
+3. Manual Deploy > Clear Build Cache & Deploy.

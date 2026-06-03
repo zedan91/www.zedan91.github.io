@@ -1,0 +1,10 @@
+AZOBSS Add to Cart Reliable Fix
+
+Fixed:
+- Card Add to Cart script no longer reads old/guest-only CART_KEY.
+- Button updates instantly and opens My Cart immediately.
+- Firestore login pull will not overwrite a new Add to Cart click that happens while sync is still loading.
+- Sync debounce reduced to 150ms.
+
+Firebase Rules:
+- No change required.
