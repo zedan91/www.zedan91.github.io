@@ -710,6 +710,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 </style>
 
 
+
 <style id="az-admin-direct-icon-style">
 .az-admin-dashboard-direct-link{
   display:none!important;
@@ -730,7 +731,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   position:relative!important;
   vertical-align:middle!important;
 }
-body.az-admin-visible .az-admin-dashboard-direct-link{
+body.az-admin-auth-confirmed .az-admin-dashboard-direct-link{
   display:inline-flex!important;
 }
 .az-admin-dashboard-direct-link:hover{
@@ -738,25 +739,76 @@ body.az-admin-visible .az-admin-dashboard-direct-link{
   box-shadow:0 0 16px rgba(34,197,94,.32)!important;
 }
 </style>
-<script id="az-admin-direct-icon-visibility">
-(function(){
-  if(window.__azAdminDirectIconVisibility) return;
-  window.__azAdminDirectIconVisibility=true;
+<script type="module" id="az-admin-direct-icon-auth-only">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
-  function check(){
-    const txt=(document.body?.innerText||'').toLowerCase();
-    const ok=document.body.classList.contains('azobss-support-admin')
-      || txt.includes('hello, zedan91')
-      || txt.includes('hello zedan91')
-      || txt.includes('zedan91@azobss.local')
-      || /hello,\s*zedan91/.test(txt);
-    document.body.classList.toggle('az-admin-visible', !!ok);
+(function(){
+  if(window.__azAdminDirectIconAuthOnly) return;
+  window.__azAdminDirectIconAuthOnly=true;
+
+  const firebaseConfig={
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+  const auth=getAuth(app);
+  const db=getFirestore(app);
+  const ADMIN_EMAIL='zedan91@azobss.local';
+
+  function hide(){
+    document.body.classList.remove('az-admin-visible');
+    document.body.classList.remove('az-admin-auth-confirmed');
   }
 
-  document.addEventListener('DOMContentLoaded',check);
-  if(document.readyState!=='loading') check();
-  [300,800,1500,3000,5000].forEach(t=>setTimeout(check,t));
-  new MutationObserver(check).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  function show(){
+    document.body.classList.add('az-admin-auth-confirmed');
+  }
+
+  async function checkUserDoc(user){
+    const candidates=[
+      'zedan91',
+      user?.email?.split('@')[0],
+      user?.displayName
+    ].filter(Boolean).map(x=>String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap=await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x=snap.data()||{};
+        const role=String(x.role||'').toLowerCase();
+        const email=String(x.email||x.authEmail||'').toLowerCase();
+        const username=String(x.username||x.usernameKey||x.name||id).toLowerCase();
+        if(role==='admin' || email===ADMIN_EMAIL || username==='zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  onAuthStateChanged(auth,async user=>{
+    hide();
+
+    if(!user) return;
+
+    const authEmail=String(user.email||'').toLowerCase();
+    if(authEmail===ADMIN_EMAIL){
+      show();
+      return;
+    }
+
+    const ok=await checkUserDoc(user);
+    if(ok) show();
+    else hide();
+  });
+
+  hide();
 })();
 </script>
 
