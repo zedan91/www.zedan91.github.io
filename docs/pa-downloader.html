@@ -1,4 +1,63 @@
 
+<style id="az-admin-static-button-style">
+#azAdminStrictIconLink.admin-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:18px!important;
+  line-height:1!important;
+}
+body.az-admin-safe-ok #azAdminStrictIconLink.admin-dashboard-btn{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-admin-static-button-check">
+(function(){
+  if(window.__azAdminStaticButtonCheck) return;
+  window.__azAdminStaticButtonCheck = true;
+
+  function readUser(){
+    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj) return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function isAdmin(){
+    var u = readUser();
+    var role = String(u.role || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
+    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
+    return role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local';
+  }
+
+  function refreshAdminButton(){
+    if(!document.body) return;
+    document.body.classList.toggle('az-admin-safe-ok', isAdmin());
+  }
+
+  document.addEventListener('DOMContentLoaded', refreshAdminButton);
+  if(document.readyState !== 'loading') refreshAdminButton();
+  window.addEventListener('storage', refreshAdminButton);
+  window.addEventListener('focus', refreshAdminButton);
+  setTimeout(refreshAdminButton, 500);
+  setTimeout(refreshAdminButton, 1500);
+  setTimeout(refreshAdminButton, 3000);
+})();
+</script>
+
 <style id="azobss-support-notification-panel-style">
 /* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
 #azBellModal.azobss-modal-lite,
@@ -1224,118 +1283,3 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 
 
-<style id="az-admin-dashboard-safe-style">
-#azAdminStrictIconLink{
-  display:none!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:42px!important;
-  height:42px!important;
-  min-width:42px!important;
-  border-radius:999px!important;
-  margin-left:6px!important;
-  margin-right:4px!important;
-  padding:0!important;
-  background:linear-gradient(135deg,#1e293b,#0f172a)!important;
-  border:1px solid rgba(34,197,94,.55)!important;
-  color:#22c55e!important;
-  text-decoration:none!important;
-  font-size:20px!important;
-  font-weight:950!important;
-  line-height:1!important;
-  box-shadow:0 0 14px rgba(34,197,94,.18)!important;
-  position:relative!important;
-  z-index:9999!important;
-  flex:0 0 42px!important;
-}
-body.az-admin-safe-ok #azAdminStrictIconLink{
-  display:inline-flex!important;
-}
-</style>
-<script id="az-admin-dashboard-safe-no-loop">
-(function(){
-  if(window.__azAdminDashboardSafeNoLoop) return;
-  window.__azAdminDashboardSafeNoLoop = true;
-
-  function readUser(){
-    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
-        if(raw){
-          var obj = JSON.parse(raw);
-          if(obj) return obj;
-        }
-      }catch(e){}
-    }
-    return {};
-  }
-
-  function isAdmin(){
-    var u = readUser();
-    var role = String(u.role || '').toLowerCase();
-    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
-    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
-    return role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local';
-  }
-
-  function findAfterTarget(){
-    var items = Array.from(document.querySelectorAll('a,button,[role="button"]'));
-    return items.find(function(el){
-      return (el.textContent || '').trim().toLowerCase().includes('mini web tools');
-    }) || items.find(function(el){
-      return (el.textContent || '').trim().toLowerCase().includes('lucky draw');
-    }) || items.find(function(el){
-      return (el.textContent || '').trim().toLowerCase().includes('affiliate shop');
-    }) || items.find(function(el){
-      return (el.textContent || '').trim().toLowerCase().includes('cad tools');
-    }) || items.find(function(el){
-      return (el.textContent || '').trim().toLowerCase().includes('software');
-    });
-  }
-
-  function findNavFallback(){
-    return document.querySelector('#azobssNavScroll,.azobss-nav-scroll,.azobss-topbar-inner,.floating-nav,.topbar,.sticky-bar,.market-sticky-bar,.nav-actions,.market-actions,header nav,header');
-  }
-
-  function ensureButtonOnce(){
-    var icon = document.getElementById('azAdminStrictIconLink');
-    if(icon) return icon;
-
-    var target = findAfterTarget();
-    icon = document.createElement('a');
-    icon.id = 'azAdminStrictIconLink';
-    icon.href = '/admin/';
-    icon.title = 'Admin Dashboard';
-    icon.setAttribute('aria-label','Admin Dashboard');
-    icon.textContent = '🛠️';
-
-    if(target && target.parentNode){
-      target.insertAdjacentElement('afterend', icon);
-      return icon;
-    }
-
-    var nav = findNavFallback();
-    if(nav){
-      nav.appendChild(icon);
-      return icon;
-    }
-
-    icon.remove();
-    return null;
-  }
-
-  function refresh(){
-    if(!document.body) return;
-    var ok = isAdmin();
-    document.body.classList.toggle('az-admin-safe-ok', ok);
-    if(ok) ensureButtonOnce();
-  }
-
-  document.addEventListener('DOMContentLoaded', refresh);
-  if(document.readyState !== 'loading') refresh();
-  window.addEventListener('storage', refresh);
-  window.addEventListener('focus', refresh);
-  [250,800,1500,3000,5000,8000].forEach(function(t){ setTimeout(refresh,t); });
-})();
-</script>
