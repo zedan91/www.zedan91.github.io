@@ -1,0 +1,23 @@
+AZOBSS MY SOFTWARE OWNER AUTOSET PATCH
+
+Fixed:
+- When staff/semiAdmin/admin adds Software via + Add Software Item, item auto receives:
+  ownerUid, ownerUsername, ownerEmail
+  createdByUid, createdByUsername, createdByEmail
+  staffUid/staffUsername/staffEmail
+  sellerUid/sellerUsername/sellerEmail
+  commissionRate: 70
+  ownerShare: 70
+  platformShare: 30
+  commissionPolicy: 70% owner / 30% AZOBSS
+
+My Software filter:
+- Filters by ownerUid/createdByUid/staffUid/sellerUid
+- Also fallback by ownerUsername/createdByUsername/staffUsername/sellerUsername
+- Also fallback by ownerEmail/createdByEmail/staffEmail/sellerEmail
+- Also fallback by createdBy/updatedBy for older items.
+
+Note:
+- Old items without owner metadata may not appear until admin/staff edits and saves them once.
+
+Syntax errors: 1

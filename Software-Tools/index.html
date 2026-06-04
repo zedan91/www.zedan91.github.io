@@ -3770,29 +3770,49 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(azIsFullSoftwareAdmin()) return true;
     const u = azCurrentSoftwareOwner();
     const vals = [
-      item.ownerUid, item.createdByUid, item.staffUid, item.sellerUid,
-      item.ownerUsername, item.createdByUsername, item.staffUsername, item.sellerUsername,
-      item.ownerEmail, item.createdByEmail, item.staffEmail, item.sellerEmail
+      item.ownerUid, item.createdByUid, item.staffUid, item.sellerUid, item.uid,
+      item.ownerUsername, item.createdByUsername, item.staffUsername, item.sellerUsername, item.usernameKey, item.username,
+      item.ownerEmail, item.createdByEmail, item.staffEmail, item.sellerEmail, item.email,
+      item.createdBy, item.updatedBy
     ].map(v => String(v || '').toLowerCase()).filter(Boolean);
-    return vals.includes(u.uid.toLowerCase()) || vals.includes(u.username) || vals.includes(u.email);
+
+    const uid = String(u.uid || '').toLowerCase();
+    const username = String(u.username || '').toLowerCase();
+    const email = String(u.email || '').toLowerCase();
+
+    return (!!uid && vals.includes(uid))
+      || (!!username && vals.includes(username))
+      || (!!email && vals.includes(email));
   }
 
   function azApplySoftwareCommissionOwner(item){
     try{
       const u = azCurrentSoftwareOwner();
       if(!item || typeof item !== 'object') return item;
+
+      // Always attach owner metadata on add/save when missing.
       if(!item.ownerUid && u.uid) item.ownerUid = u.uid;
       if(!item.createdByUid && u.uid) item.createdByUid = u.uid;
+      if(!item.staffUid && u.uid) item.staffUid = u.uid;
+      if(!item.sellerUid && u.uid) item.sellerUid = u.uid;
+
       if(!item.ownerUsername && u.username) item.ownerUsername = u.username;
       if(!item.createdByUsername && u.username) item.createdByUsername = u.username;
+      if(!item.staffUsername && u.username) item.staffUsername = u.username;
+      if(!item.sellerUsername && u.username) item.sellerUsername = u.username;
+
       if(!item.ownerEmail && u.email) item.ownerEmail = u.email;
       if(!item.createdByEmail && u.email) item.createdByEmail = u.email;
+      if(!item.staffEmail && u.email) item.staffEmail = u.email;
+      if(!item.sellerEmail && u.email) item.sellerEmail = u.email;
+
       item.commissionRate = 70;
       item.ownerShare = 70;
       item.platformShare = 30;
       item.commissionPolicy = '70% owner / 30% AZOBSS';
       item.updatedByUid = u.uid || item.updatedByUid || '';
       item.updatedByUsername = u.username || item.updatedByUsername || '';
+      item.updatedByEmail = u.email || item.updatedByEmail || '';
       item.updatedAtClient = new Date().toISOString();
     }catch(e){}
     return item;
@@ -4062,7 +4082,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     syncStaticAdminButtons();
     const hasVisibleStatic = staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
-      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software milik anda akan dipaparkan.</div>');
+      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software yang ditambah selepas owner auto-set akan muncul. Item lama perlu edit/resave untuk assign owner.</div>');
     }
   }
   async function loadItems(){
@@ -4442,13 +4462,13 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const oldEditProductId = editingSoftwareProductId ? String(editingSoftwareProductId) : '';
     try{
       if(editingSoftwareDocId){
-        await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), {...item, updatedAt: serverTimestamp(), updatedBy: 'zedan91'});
+        await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), {...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'});
       }else if(oldEditProductId){
         const existingDynamic = softwareDynamicItems.find(x => String(x.productId || x.id) === oldEditProductId);
         if(existingDynamic?.docId){
-          await updateDoc(doc(db, SOFTWARE_COLLECTION, existingDynamic.docId), {...item, updatedAt: serverTimestamp(), updatedBy: 'zedan91'});
+          await updateDoc(doc(db, SOFTWARE_COLLECTION, existingDynamic.docId), {...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'});
         }else{
-          await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91', replacesProductId: oldEditProductId});
+          await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91', replacesProductId: oldEditProductId});
         }
         const deleted = getDeletedStaticIds();
         deleted.add(oldEditProductId);
@@ -4462,7 +4482,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         });
         saveDeletedStaticIds(deleted);
       }else{
-        await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'zedan91'});
+        await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91'});
       }
     }catch(err){
       const saved = loadLocal();
