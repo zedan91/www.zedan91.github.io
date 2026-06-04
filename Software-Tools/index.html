@@ -3788,7 +3788,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         if(existing?.docId){
           await updateDoc(doc(db, SOFTWARE_COLLECTION, existing.docId), {...item, updatedAt: serverTimestamp(), updatedBy: 'json-import'});
         }else{
-          await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: 'json-import'});
+          await addDoc(collection(db, SOFTWARE_COLLECTION), {...azForceSoftwareOwnerMetadata(item), createdAt: serverTimestamp(), createdBy: 'json-import'});
         }
         firestoreSaved++;
       }catch(err){
@@ -3871,6 +3871,42 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       item.updatedByEmail=u.email||item.updatedByEmail||'';
       item.updatedAtClient=new Date().toISOString();
     }catch(e){}
+    return item;
+  }
+
+
+  function azForceSoftwareOwnerMetadata(item){
+    const u = azCurrentSoftwareOwner();
+    const key = String(u.uid || u.username || u.email || 'unknown-owner').toLowerCase();
+
+    item.ownerKey = key;
+    item.createdByKey = key;
+    item.staffOwnerKey = key;
+
+    item.ownerUid = u.uid || item.ownerUid || '';
+    item.createdByUid = u.uid || item.createdByUid || '';
+    item.staffUid = u.uid || item.staffUid || '';
+    item.sellerUid = u.uid || item.sellerUid || '';
+
+    item.ownerUsername = u.username || item.ownerUsername || '';
+    item.createdByUsername = u.username || item.createdByUsername || '';
+    item.staffUsername = u.username || item.staffUsername || '';
+    item.sellerUsername = u.username || item.sellerUsername || '';
+
+    item.ownerEmail = u.email || item.ownerEmail || '';
+    item.createdByEmail = u.email || item.createdByEmail || '';
+    item.staffEmail = u.email || item.staffEmail || '';
+    item.sellerEmail = u.email || item.sellerEmail || '';
+
+    item.commissionRate = 70;
+    item.ownerShare = 70;
+    item.platformShare = 30;
+    item.commissionPolicy = '70% owner / 30% AZOBSS';
+    item.updatedByUid = u.uid || '';
+    item.updatedByUsername = u.username || '';
+    item.updatedByEmail = u.email || '';
+    item.updatedAtClient = new Date().toISOString();
+
     return item;
   }
 
@@ -4554,7 +4590,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     syncTypeDefaults();
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
-    const item = azApplySoftwareCommissionOwner(normalizeItem({
+    let item = azApplySoftwareCommissionOwner(normalizeItem({
       id: productIdInput?.value.trim() || makeProductId('AZSW'),
       productId: productIdInput?.value.trim() || makeProductId('AZSW'),
       status: statusInput?.value || 'active',
@@ -4583,16 +4619,17 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       likes: Number(likesInput?.value || 0),
       link: (typeSelect.value === 'premium' ? (paymentLinkInput?.value.trim() || stripeLinkInput?.value.trim()) : downloadLinkInput?.value.trim())
     }));
+    item = azForceSoftwareOwnerMetadata(item);
     const oldEditProductId = editingSoftwareProductId ? String(editingSoftwareProductId) : '';
     try{
       if(editingSoftwareDocId){
-        await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), {...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'});
+        await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), {...azForceSoftwareOwnerMetadata(item), updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'});
       }else if(oldEditProductId){
         const existingDynamic = softwareDynamicItems.find(x => String(x.productId || x.id) === oldEditProductId);
         if(existingDynamic?.docId){
-          await updateDoc(doc(db, SOFTWARE_COLLECTION, existingDynamic.docId), {...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'});
+          await updateDoc(doc(db, SOFTWARE_COLLECTION, existingDynamic.docId), {...azForceSoftwareOwnerMetadata(item), updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'});
         }else{
-          await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91', replacesProductId: oldEditProductId});
+          await addDoc(collection(db, SOFTWARE_COLLECTION), {...azForceSoftwareOwnerMetadata(item), createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91', replacesProductId: oldEditProductId});
         }
         const deleted = getDeletedStaticIds();
         deleted.add(oldEditProductId);
@@ -4606,7 +4643,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         });
         saveDeletedStaticIds(deleted);
       }else{
-        await addDoc(collection(db, SOFTWARE_COLLECTION), {...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91'});
+        await addDoc(collection(db, SOFTWARE_COLLECTION), {...azForceSoftwareOwnerMetadata(item), createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91'});
       }
     }catch(err){
       const saved = loadLocal();
