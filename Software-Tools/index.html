@@ -2333,7 +2333,7 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{display:inline-fl
   <button class="software-admin-apply-btn" id="softwareApplyJsonButton" type="button" hidden disabled>Apply Import</button>
   <button class="software-admin-stats-btn" id="softwareStatsRefreshButton" type="button" hidden>↻ Refresh Stats</button>
   <input id="softwareImportJsonFile" type="file" accept="application/json,.json" hidden>
-  <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
+  <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><div id="azStaffCommissionNoteSoftware" class="software-admin-json-status" style="display:none;margin-top:8px">📢 Staff/Semi-admin commission: 70% owner / 30% AZOBSS. Staff hanya boleh lihat jualan dan komisen produk sendiri.</div><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
 </div>
 <div class="software-shop-controls" aria-label="Software search and sorting controls">
   <label>Search
@@ -6120,6 +6120,74 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 
 
+
+
+<script id="az-staff-owner-commission-metadata-patch">
+(function(){
+  if(window.__azStaffOwnerCommissionMetadataPatch) return;
+  window.__azStaffOwnerCommissionMetadataPatch = true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(raw){ var obj=JSON.parse(raw); if(obj) return obj; }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function userIdentity(){
+    var u=readUser();
+    return {
+      uid: String(u.uid || ''),
+      username: String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase(),
+      email: String(u.email || u.authEmail || u.contactEmail || '').toLowerCase(),
+      role: String(u.role || '').toLowerCase()
+    };
+  }
+
+  window.azobssApplyOwnerCommissionFields = function(item){
+    try{
+      var u=userIdentity();
+      if(!item || typeof item !== 'object') return item;
+      if(!item.createdByUid && u.uid) item.createdByUid = u.uid;
+      if(!item.createdByUsername && u.username) item.createdByUsername = u.username;
+      if(!item.createdByEmail && u.email) item.createdByEmail = u.email;
+      if(!item.ownerUid && u.uid) item.ownerUid = u.uid;
+      if(!item.ownerUsername && u.username) item.ownerUsername = u.username;
+      if(!item.ownerEmail && u.email) item.ownerEmail = u.email;
+      if(item.commissionRate == null) item.commissionRate = 70;
+      if(item.ownerShare == null) item.ownerShare = 70;
+      if(item.platformShare == null) item.platformShare = 30;
+      item.commissionPolicy = item.commissionPolicy || '70% owner / 30% AZOBSS';
+      item.updatedByUid = u.uid || item.updatedByUid || '';
+      item.updatedByUsername = u.username || item.updatedByUsername || '';
+      item.updatedAtClient = new Date().toISOString();
+    }catch(e){}
+    return item;
+  };
+
+  window.azobssGetCurrentStaffOwner = userIdentity;
+})();
+</script>
+
+
+<script id="az-staff-commission-note-show-software">
+(function(){
+  function show(){
+    var el=document.getElementById('azStaffCommissionNoteSoftware');
+    if(!el) return;
+    var u={};
+    try{u=JSON.parse(localStorage.getItem('azobssCurrentUser')||sessionStorage.getItem('azobssCurrentUser')||'{}')}catch(e){}
+    var role=String(u.role||'').toLowerCase();
+    var ok=role==='admin'||role==='semiadmin'||role==='staff'||String(u.id||u.usernameKey||'').toLowerCase()==='zedan91';
+    el.style.display=ok?'block':'none';
+  }
+  document.addEventListener('DOMContentLoaded',show); if(document.readyState!=='loading')show(); window.addEventListener('storage',show); window.addEventListener('focus',show); setTimeout(show,1000);
+})();
+</script>
 
 </body>
 </html>
