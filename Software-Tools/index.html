@@ -3454,7 +3454,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const hasMedia = !!(imageUrlInput?.value || gifUrlInput?.value || imageFileInput?.files?.length || gifFileInput?.files?.length);
     mediaPreview.style.display = hasMedia ? 'flex' : 'none';
   }
-  function getCurrentUserObject(){
+  window.getCurrentUserObject = window.getCurrentUserObject || function getCurrentUserObject(){
     const keys = ['azobssCurrentUser','azobssUser','currentUser','user'];
     for(const store of [sessionStorage, localStorage]){
       for(const key of keys){
@@ -3474,7 +3474,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       }
     }catch(_){}
     return null;
-  }
+  };
+
+  const getCurrentUserObject = window.getCurrentUserObject;
 
   function isAdmin(){
     const currentUser = getCurrentUserObject() || {};
@@ -3979,7 +3981,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     syncStaticAdminButtons();
     const hasVisibleStatic = staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
-      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found.</div>');
+      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Admin/staff boleh tekan + Add Software Item untuk tambah item.</div>');
     }
   }
   async function loadItems(){
@@ -3988,7 +3990,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     applySoftwareFilters();
   }
   function refreshAdminState(){
-    const currentUser=(window.getCurrentUserObject && window.getCurrentUserObject())||{};
+    const currentUser=(typeof getCurrentUserObject==='function' ? getCurrentUserObject() : {})||{};
     const role=String(currentUser.role||localStorage.getItem('azobssRole')||'').toLowerCase();
     const admin=isAdmin();
 
@@ -4001,7 +4003,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(applyJsonButton) applyJsonButton.hidden = !admin;
     if(statsRefreshButton) statsRefreshButton.hidden = !admin;
     if(softwareJsonStatus && !admin) softwareJsonStatus.hidden = true;
-    const staffNote=document.getElementById('az-software-staff-direct-note'); if(staffNote) staffNote.hidden=!admin;
+    const staffNote=document.getElementById('az-software-staff-direct-note'); if(staffNote) staffNote.hidden=!(admin||isStaffLike);
     syncStaticAdminButtons();
   }
   function syncTypeDefaults(){
@@ -4256,7 +4258,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   });
   applyJsonButton?.addEventListener('click', async () => {
     if(!isAdmin()) return alert('Admin only.');
-    if(!pendingSoftwareImportItems.length) return alert('<span class='admin-only'>Import JSON</span> first.');
+    if(!pendingSoftwareImportItems.length) return alert('Import JSON first.');
     if(!confirm(`Apply ${pendingSoftwareImportItems.length} software item(s) to Firestore?`)) return;
     applyJsonButton.disabled = true;
     applyJsonButton.textContent = 'Applying...';
