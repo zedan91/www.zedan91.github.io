@@ -3047,6 +3047,9 @@ line-height:1.6;
   <input id="softwareImportJsonFile" type="file" accept="application/json,.json" hidden>
   <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><div id="azStaffCommissionNoteSoftware" class="software-admin-json-status" style="display:none;margin-top:8px"></div><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
 </div>
+<div id="azSoftwareAutoCommissionNote" class="software-admin-json-status" style="display:none;margin-top:10px;padding:12px 14px;border:1px solid rgba(34,197,94,.55);border-radius:14px;background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(20,83,45,.35));color:#d1fae5;font-weight:800">
+💰 Auto Commission: Software yang staff/semi-admin tambah akan auto set <b>70% komisen owner</b> dan <b>30% AZOBSS</b>.
+</div>
 <div class="software-shop-controls" aria-label="Software search and sorting controls">
   <label>Search
     <input id="softwareSearchInput" type="search" placeholder="Search software name or description...">
@@ -3704,7 +3707,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     let firestoreSaved = 0;
     let localSaved = 0;
     for(const raw of items){
-      const item = normalizeItem(raw);
+      const item = azApplySoftwareCommissionOwner(normalizeItem(raw));
       const key = String(item.productId || item.id || '').toLowerCase();
       const existing = byProductId.get(key);
       try{
@@ -3727,6 +3730,61 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     return {firestoreSaved, localSaved};
   }
 
+
+  function azCurrentSoftwareOwner(){
+    const currentUser = (typeof getCurrentUserObject === 'function' ? getCurrentUserObject() : {}) || {};
+    return {
+      uid: String(currentUser.uid || ''),
+      username: String(currentUser.usernameKey || currentUser.username || currentUser.id || currentUser.name || currentUser.displayName || '').toLowerCase(),
+      email: String(currentUser.email || currentUser.authEmail || currentUser.contactEmail || '').toLowerCase(),
+      role: String(currentUser.role || localStorage.getItem('azobssRole') || sessionStorage.getItem('azobssRole') || '').toLowerCase(),
+      permissions: currentUser.permissions || {}
+    };
+  }
+
+  function azIsFullSoftwareAdmin(){
+    const u = azCurrentSoftwareOwner();
+    return u.role === 'admin' || u.username === 'zedan91' || u.email === 'zedan91@azobss.local' || u.email === 'zedan9107@gmail.com';
+  }
+
+  function azCanManageOwnSoftware(){
+    const u = azCurrentSoftwareOwner();
+    return azIsFullSoftwareAdmin() || ((u.role === 'semiadmin' || u.role === 'staff') && u.permissions.canManageSoftware === true);
+  }
+
+  function azIsOwnSoftwareItem(item){
+    if(azIsFullSoftwareAdmin()) return true;
+    const u = azCurrentSoftwareOwner();
+    const vals = [
+      item.ownerUid, item.createdByUid, item.staffUid, item.sellerUid,
+      item.ownerUsername, item.createdByUsername, item.staffUsername, item.sellerUsername,
+      item.ownerEmail, item.createdByEmail, item.staffEmail, item.sellerEmail
+    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
+    return vals.includes(u.uid.toLowerCase()) || vals.includes(u.username) || vals.includes(u.email);
+  }
+
+  function azApplySoftwareCommissionOwner(item){
+    try{
+      const u = azCurrentSoftwareOwner();
+      if(!item || typeof item !== 'object') return item;
+      if(!item.ownerUid && u.uid) item.ownerUid = u.uid;
+      if(!item.createdByUid && u.uid) item.createdByUid = u.uid;
+      if(!item.ownerUsername && u.username) item.ownerUsername = u.username;
+      if(!item.createdByUsername && u.username) item.createdByUsername = u.username;
+      if(!item.ownerEmail && u.email) item.ownerEmail = u.email;
+      if(!item.createdByEmail && u.email) item.createdByEmail = u.email;
+      item.commissionRate = 70;
+      item.ownerShare = 70;
+      item.platformShare = 30;
+      item.commissionPolicy = '70% owner / 30% AZOBSS';
+      item.updatedByUid = u.uid || item.updatedByUid || '';
+      item.updatedByUsername = u.username || item.updatedByUsername || '';
+      item.updatedAtClient = new Date().toISOString();
+    }catch(e){}
+    return item;
+  }
+
+
   function renderItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
@@ -3740,7 +3798,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
-    const adminEdit = isAdmin() ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
+    const adminEdit = (azCanManageOwnSoftware() && azIsOwnSoftwareItem(item)) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
       ${badgeExtra}
@@ -4327,7 +4385,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     syncTypeDefaults();
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
-    const item = normalizeItem({
+    const item = azApplySoftwareCommissionOwner(normalizeItem({
       id: productIdInput?.value.trim() || makeProductId('AZSW'),
       productId: productIdInput?.value.trim() || makeProductId('AZSW'),
       status: statusInput?.value || 'active',
@@ -4355,7 +4413,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       rating: Number(ratingInput?.value || 0),
       likes: Number(likesInput?.value || 0),
       link: (typeSelect.value === 'premium' ? (paymentLinkInput?.value.trim() || stripeLinkInput?.value.trim()) : downloadLinkInput?.value.trim())
-    });
+    }));
     const oldEditProductId = editingSoftwareProductId ? String(editingSoftwareProductId) : '';
     try{
       if(editingSoftwareDocId){
@@ -7069,6 +7127,29 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(run, 600);
   setTimeout(run, 1800);
   setTimeout(run, 3500);
+})();
+</script>
+
+
+<script id="az-software-auto-commission-note-show">
+(function(){
+  function run(){
+    try{
+      var el=document.getElementById('azSoftwareAutoCommissionNote');
+      if(!el) return;
+      var u={};
+      try{u=JSON.parse(localStorage.getItem('azobssCurrentUser')||sessionStorage.getItem('azobssCurrentUser')||'{}')}catch(e){}
+      var role=String(u.role||'').toLowerCase();
+      var username=String(u.usernameKey||u.username||u.id||'').toLowerCase();
+      var ok=role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91';
+      el.style.display=ok?'block':'none';
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.readyState!=='loading')run();
+  window.addEventListener('focus',run);
+  window.addEventListener('storage',run);
+  setTimeout(run,800);
 })();
 </script>
 
