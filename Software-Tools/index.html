@@ -3989,21 +3989,49 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     softwareDynamicItems = dedupeSoftwareItems([...await loadFirestore(), ...loadLocal()]);
     applySoftwareFilters();
   }
+  function azGetSoftwareRoleInfo(){
+    const currentUser = (typeof getCurrentUserObject === 'function' ? getCurrentUserObject() : {}) || {};
+    const role = String(currentUser.role || localStorage.getItem('azobssRole') || sessionStorage.getItem('azobssRole') || '').toLowerCase();
+    const username = String(currentUser.usernameKey || currentUser.username || currentUser.id || currentUser.name || currentUser.displayName || '').toLowerCase();
+    const email = String(currentUser.email || currentUser.authEmail || currentUser.contactEmail || '').toLowerCase();
+    const permissions = currentUser.permissions || {};
+    const isFullAdmin = role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local' || email === 'zedan9107@gmail.com';
+    const isStaffLike = (role === 'semiadmin' || role === 'staff') && permissions.canManageSoftware === true;
+    return { currentUser, role, username, email, permissions, isFullAdmin, isStaffLike };
+  }
+
   function refreshAdminState(){
-    const currentUser=(typeof getCurrentUserObject==='function' ? getCurrentUserObject() : {})||{};
-    const role=String(currentUser.role||localStorage.getItem('azobssRole')||'').toLowerCase();
-    const admin=isAdmin();
+    const roleInfo = azGetSoftwareRoleInfo();
+    const fullAdmin = roleInfo.isFullAdmin;
+    const staffLike = roleInfo.isStaffLike;
+    const canAdd = fullAdmin || staffLike || isAdmin();
 
-    const isStaffLike=(role==='semiadmin'||role==='staff');
+    // Full admin: all toolbar buttons.
+    // Semi-admin/staff: Add Software Item only.
+    // Guest/member: no toolbar buttons.
+    if(addButton) addButton.hidden = !canAdd;
 
-    if(addButton) addButton.hidden = !(admin||isStaffLike);
+    if(importJsonButton) importJsonButton.hidden = !fullAdmin;
+    if(exportJsonButton) exportJsonButton.hidden = !fullAdmin;
+    if(applyJsonButton) applyJsonButton.hidden = !fullAdmin;
+    if(statsRefreshButton) statsRefreshButton.hidden = !fullAdmin;
 
-    if(importJsonButton) importJsonButton.hidden = !admin;
-    if(exportJsonButton) exportJsonButton.hidden = !admin;
-    if(applyJsonButton) applyJsonButton.hidden = !admin;
-    if(statsRefreshButton) statsRefreshButton.hidden = !admin;
-    if(softwareJsonStatus && !admin) softwareJsonStatus.hidden = true;
-    const staffNote=document.getElementById('az-software-staff-direct-note'); if(staffNote) staffNote.hidden=!(admin||isStaffLike);
+    // Extra hard-hide to override old CSS/JS states for staff/semiAdmin.
+    [importJsonButton, exportJsonButton, applyJsonButton, statsRefreshButton].forEach(btn => {
+      if(!btn) return;
+      if(!fullAdmin){
+        btn.hidden = true;
+        btn.style.display = 'none';
+        btn.setAttribute('aria-hidden','true');
+      }else{
+        btn.style.display = '';
+        btn.removeAttribute('aria-hidden');
+      }
+    });
+
+    if(softwareJsonStatus && !fullAdmin) softwareJsonStatus.hidden = true;
+    const staffNote = document.getElementById('az-software-staff-direct-note');
+    if(staffNote) staffNote.hidden = !(fullAdmin || staffLike);
     syncStaticAdminButtons();
   }
   function syncTypeDefaults(){
@@ -7027,6 +7055,23 @@ document.addEventListener('DOMContentLoaded',function(){
  }
 });
 </script>
+
+<script id="az-software-toolbar-role-refresh-fix">
+(function(){
+  function run(){
+    try{
+      if(typeof refreshAdminState === 'function') refreshAdminState();
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded', run);
+  window.addEventListener('focus', run);
+  window.addEventListener('storage', run);
+  setTimeout(run, 600);
+  setTimeout(run, 1800);
+  setTimeout(run, 3500);
+})();
+</script>
+
 </body>
 </html>
 

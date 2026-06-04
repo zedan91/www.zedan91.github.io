@@ -1,0 +1,21 @@
+AZOBSS SOFTWARE STAFF TOOLBAR ONLY ADD FIX
+
+Software Tools toolbar behavior:
+- Full admin zedan91/admin:
+  + Add Software Item
+  Import JSON
+  Export JSON
+  Apply Import
+  Refresh Stats
+
+- semiAdmin/staff with permissions.canManageSoftware=true:
+  + Add Software Item ONLY
+
+- Guest/member:
+  no admin toolbar buttons
+
+Patch:
+- Replaced refreshAdminState() with stricter role split.
+- Added hard-hide style/display for Import/Export/Apply/Refresh when not full admin.
+- No MutationObserver.
+- No card rendering changes.
