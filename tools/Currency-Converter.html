@@ -953,6 +953,21 @@ body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
 })();
 </script>
 
+
+<style id="az-staff-dashboard-button-style">
+.azStaffDashboardBtn.staff-dashboard-btn{display:none!important;align-items:center!important;justify-content:center!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:999px!important;font-size:17px!important;line-height:1!important}
+body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{display:inline-flex!important}
+</style>
+<script id="az-staff-dashboard-button-check">
+(function(){
+ if(window.__azStaffDashboardButtonCheck)return; window.__azStaffDashboardButtonCheck=true;
+ function readUser(){var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];for(var i=0;i<keys.length;i++){try{var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);if(raw){var obj=JSON.parse(raw);if(obj)return obj}}catch(e){}}return{}}
+ function ok(){var u=readUser();var role=String(u.role||'').toLowerCase();var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();return role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91'||email==='zedan91@azobss.local'}
+ function refresh(){if(document.body)document.body.classList.toggle('az-staff-safe-ok',ok())}
+ document.addEventListener('DOMContentLoaded',refresh); if(document.readyState!=='loading')refresh(); window.addEventListener('storage',refresh); window.addEventListener('focus',refresh); setTimeout(refresh,500); setTimeout(refresh,1500); setTimeout(refresh,3000);
+})();
+</script>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -968,7 +983,7 @@ body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a  href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a></nav>
+<a  href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a></nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>

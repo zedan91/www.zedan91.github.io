@@ -228,6 +228,21 @@ body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
 })();
 </script>
 
+
+<style id="az-staff-dashboard-button-style">
+.azStaffDashboardBtn.staff-dashboard-btn{display:none!important;align-items:center!important;justify-content:center!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:999px!important;font-size:17px!important;line-height:1!important}
+body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{display:inline-flex!important}
+</style>
+<script id="az-staff-dashboard-button-check">
+(function(){
+ if(window.__azStaffDashboardButtonCheck)return; window.__azStaffDashboardButtonCheck=true;
+ function readUser(){var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];for(var i=0;i<keys.length;i++){try{var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);if(raw){var obj=JSON.parse(raw);if(obj)return obj}}catch(e){}}return{}}
+ function ok(){var u=readUser();var role=String(u.role||'').toLowerCase();var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();return role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91'||email==='zedan91@azobss.local'}
+ function refresh(){if(document.body)document.body.classList.toggle('az-staff-safe-ok',ok())}
+ document.addEventListener('DOMContentLoaded',refresh); if(document.readyState!=='loading')refresh(); window.addEventListener('storage',refresh); window.addEventListener('focus',refresh); setTimeout(refresh,500); setTimeout(refresh,1500); setTimeout(refresh,3000);
+})();
+</script>
+
 </head>
 <body>
 <div id="loginCover" class="login-cover">
@@ -251,6 +266,7 @@ body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
       <button data-tab="purchases">💰 Purchase Records</button>
       <button data-tab="payments">💳 Payments & Totals</button>
       <button data-tab="lucky">🎁 Lucky Draw</button>
+      <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings">⚙️ Settings</button>
       <a class="home-link" href="/">🏠 Back Home</a>
     </nav>
@@ -409,6 +425,28 @@ body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
         <a class="btn green" href="/lucky-draw/">Open Lucky Draw Admin</a>
       </div>
     </section>
+
+
+    <section id="staffroles" class="section">
+      <h2>🧑‍💼 Staff / Semi-Admin Roles</h2>
+      <p class="tabs-note">Set role dan permission staff. Staff boleh akses /staff/ sahaja, bukan admin penuh.</p>
+      <div class="card">
+        <div class="toolbar">
+          <input id="staffUsername" placeholder="Username, contoh: zedanstaff" style="flex:1;min-width:220px">
+          <select id="staffRole"><option value="semiAdmin">semiAdmin</option><option value="staff">staff</option><option value="member">member</option></select>
+          <button class="btn green" id="saveStaffRole">Save Role</button>
+        </div>
+        <div class="toolbar">
+          <label><input type="checkbox" id="permSoftware"> Manage Software</label>
+          <label><input type="checkbox" id="permCAD"> Manage CAD</label>
+          <label><input type="checkbox" id="permCommission"> Manage Commission</label>
+          <label><input type="checkbox" id="permPayments"> View Payments</label>
+          <label><input type="checkbox" id="permApprove"> Approve Payment</label>
+        </div>
+      </div>
+      <div class="card"><h2>Latest Staff Users</h2><div id="staffRolesList" class="list"></div></div>
+    </section>
+
 
     <section id="settings" class="section">
       <h2>⚙️ Settings</h2>
@@ -627,6 +665,28 @@ async function loadPurchases(){
   $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No purchase logs.</div>';
   $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No purchase summaries.</div>';
 }
+
+async function loadStaffRoles(){
+  const snap = await safeGet(query(collection(db,'users'),limit(100)));
+  const rows = [];
+  snap?.forEach(d=>{
+    const x=d.data()||{};
+    const role=String(x.role||'member');
+    if(!['admin','semiAdmin','semiadmin','staff'].includes(role)) return;
+    rows.push(item(esc(d.id), `Role: ${esc(role)} • Permissions: <pre>${esc(JSON.stringify(x.permissions||{},null,2))}</pre>`));
+  });
+  $('#staffRolesList').innerHTML=rows.join('')||'<div class="item">No staff users found.</div>';
+}
+async function saveStaffRole(){
+  const username=String($('#staffUsername')?.value||'').trim().toLowerCase();
+  if(!username) return alert('Enter username.');
+  const role=$('#staffRole')?.value||'semiAdmin';
+  const permissions={canManageSoftware:!!$('#permSoftware')?.checked,canManageCAD:!!$('#permCAD')?.checked,canManageCommission:!!$('#permCommission')?.checked,canViewPayments:!!$('#permPayments')?.checked,canApprovePayment:!!$('#permApprove')?.checked,canEditUsers:false};
+  await updateDoc(doc(db,'users',username),{role,permissions,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});
+  await loadStaffRoles();
+  alert('Staff role saved.');
+}
+
 async function loadSettings(){
   const snap=await getDoc(doc(db,'settings','signupGate')).catch(()=>null);
   if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
@@ -653,6 +713,7 @@ async function initSection(id){
   if(id==='notifications')return loadNotifications();
   if(id==='purchases')return loadPurchases();
   if(id==='payments')return loadPayments();
+  if(id==='staffroles')return loadStaffRoles();
   if(id==='settings')return loadSettings();
 }
 document.addEventListener('click',async e=>{
@@ -677,6 +738,7 @@ $('#publishNotif').addEventListener('click',publishNotification);
 $('#clearNotif').addEventListener('click',clearNotifications);
 $('#refreshPayments')?.addEventListener('click',loadPayments);
 $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
+$('#saveStaffRole')?.addEventListener('click',saveStaffRole);
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;
