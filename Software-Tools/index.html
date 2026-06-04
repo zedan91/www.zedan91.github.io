@@ -3805,79 +3805,84 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   }
 
 
+
+  function azReadSoftwareCurrentUser(){
+    const keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(const store of [sessionStorage,localStorage]){
+      for(const key of keys){
+        try{const raw=store.getItem(key); if(raw){const obj=JSON.parse(raw); if(obj&&typeof obj==='object') return obj;}}catch(e){}
+      }
+    }
+    try{ if(typeof window.getSavedUser==='function'){const obj=window.getSavedUser(); if(obj&&typeof obj==='object') return obj;} }catch(e){}
+    return {};
+  }
+
   function azCurrentSoftwareOwner(){
-    const currentUser = (typeof getCurrentUserObject === 'function' ? getCurrentUserObject() : {}) || {};
-    return {
-      uid: String(currentUser.uid || ''),
-      username: String(currentUser.usernameKey || currentUser.username || currentUser.id || currentUser.name || currentUser.displayName || '').toLowerCase(),
-      email: String(currentUser.email || currentUser.authEmail || currentUser.contactEmail || '').toLowerCase(),
-      role: String(currentUser.role || localStorage.getItem('azobssRole') || sessionStorage.getItem('azobssRole') || '').toLowerCase(),
-      permissions: currentUser.permissions || {}
-    };
+    const u=azReadSoftwareCurrentUser();
+    const shown=String(document.querySelector('#userNameText,#userName,.user-name,.username,.user-menu-name')?.textContent||'').replace(/^\s*hello\s*,?\s*/i,'').trim();
+    const uid=String(u.uid||u.userId||u.authUid||u.firebaseUid||localStorage.getItem('azobssUid')||sessionStorage.getItem('azobssUid')||'').trim();
+    const username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||localStorage.getItem('username')||sessionStorage.getItem('username')||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername')||shown||'').toLowerCase().trim();
+    const email=String(u.email||u.authEmail||u.contactEmail||localStorage.getItem('email')||sessionStorage.getItem('email')||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||'').toLowerCase().trim();
+    const role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase().trim();
+    return {uid,username,email,role,permissions:u.permissions||{}};
   }
 
   function azIsFullSoftwareAdmin(){
-    const u = azCurrentSoftwareOwner();
-    return u.role === 'admin' || u.username === 'zedan91' || u.email === 'zedan91@azobss.local' || u.email === 'zedan9107@gmail.com';
+    const u=azCurrentSoftwareOwner();
+    return u.role==='admin'||u.username==='zedan91'||u.email==='zedan91@azobss.local'||u.email==='zedan9107@gmail.com';
   }
 
   function azCanManageOwnSoftware(){
-    const u = azCurrentSoftwareOwner();
-    return azIsFullSoftwareAdmin() || ((u.role === 'semiadmin' || u.role === 'staff') && u.permissions.canManageSoftware === true);
-  }
-
-  function azIsOwnSoftwareItem(item){
-    if(azIsFullSoftwareAdmin()) return true;
-    const u = azCurrentSoftwareOwner();
-    const vals = [
-      item.ownerUid, item.createdByUid, item.staffUid, item.sellerUid, item.uid,
-      item.ownerUsername, item.createdByUsername, item.staffUsername, item.sellerUsername, item.usernameKey, item.username,
-      item.ownerEmail, item.createdByEmail, item.staffEmail, item.sellerEmail, item.email,
-      item.createdBy, item.updatedBy
-    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
-
-    const uid = String(u.uid || '').toLowerCase();
-    const username = String(u.username || '').toLowerCase();
-    const email = String(u.email || '').toLowerCase();
-
-    return (!!uid && vals.includes(uid))
-      || (!!username && vals.includes(username))
-      || (!!email && vals.includes(email));
+    const u=azCurrentSoftwareOwner();
+    return azIsFullSoftwareAdmin()||((u.role==='semiadmin'||u.role==='staff')&&u.permissions.canManageSoftware===true);
   }
 
   function azApplySoftwareCommissionOwner(item){
     try{
-      const u = azCurrentSoftwareOwner();
-      if(!item || typeof item !== 'object') return item;
+      const u=azCurrentSoftwareOwner();
+      if(!item||typeof item!=='object') return item;
+      const key=String(u.uid||u.username||u.email||'unknown-owner').toLowerCase();
 
-      // Always attach owner metadata on add/save when missing.
-      if(!item.ownerUid && u.uid) item.ownerUid = u.uid;
-      if(!item.createdByUid && u.uid) item.createdByUid = u.uid;
-      if(!item.staffUid && u.uid) item.staffUid = u.uid;
-      if(!item.sellerUid && u.uid) item.sellerUid = u.uid;
+      item.ownerKey=item.ownerKey||key;
+      item.createdByKey=item.createdByKey||key;
+      item.staffOwnerKey=item.staffOwnerKey||key;
 
-      if(!item.ownerUsername && u.username) item.ownerUsername = u.username;
-      if(!item.createdByUsername && u.username) item.createdByUsername = u.username;
-      if(!item.staffUsername && u.username) item.staffUsername = u.username;
-      if(!item.sellerUsername && u.username) item.sellerUsername = u.username;
+      if(!item.ownerUid&&u.uid)item.ownerUid=u.uid;
+      if(!item.createdByUid&&u.uid)item.createdByUid=u.uid;
+      if(!item.staffUid&&u.uid)item.staffUid=u.uid;
+      if(!item.sellerUid&&u.uid)item.sellerUid=u.uid;
 
-      if(!item.ownerEmail && u.email) item.ownerEmail = u.email;
-      if(!item.createdByEmail && u.email) item.createdByEmail = u.email;
-      if(!item.staffEmail && u.email) item.staffEmail = u.email;
-      if(!item.sellerEmail && u.email) item.sellerEmail = u.email;
+      if(!item.ownerUsername&&u.username)item.ownerUsername=u.username;
+      if(!item.createdByUsername&&u.username)item.createdByUsername=u.username;
+      if(!item.staffUsername&&u.username)item.staffUsername=u.username;
+      if(!item.sellerUsername&&u.username)item.sellerUsername=u.username;
 
-      item.commissionRate = 70;
-      item.ownerShare = 70;
-      item.platformShare = 30;
-      item.commissionPolicy = '70% owner / 30% AZOBSS';
-      item.updatedByUid = u.uid || item.updatedByUid || '';
-      item.updatedByUsername = u.username || item.updatedByUsername || '';
-      item.updatedByEmail = u.email || item.updatedByEmail || '';
-      item.updatedAtClient = new Date().toISOString();
+      if(!item.ownerEmail&&u.email)item.ownerEmail=u.email;
+      if(!item.createdByEmail&&u.email)item.createdByEmail=u.email;
+      if(!item.staffEmail&&u.email)item.staffEmail=u.email;
+      if(!item.sellerEmail&&u.email)item.sellerEmail=u.email;
+
+      item.commissionRate=70;
+      item.ownerShare=70;
+      item.platformShare=30;
+      item.commissionPolicy='70% owner / 30% AZOBSS';
+      item.updatedByUid=u.uid||item.updatedByUid||'';
+      item.updatedByUsername=u.username||item.updatedByUsername||'';
+      item.updatedByEmail=u.email||item.updatedByEmail||'';
+      item.updatedAtClient=new Date().toISOString();
     }catch(e){}
     return item;
   }
 
+  function azIsOwnSoftwareItemStrict(item){
+    const u=azCurrentSoftwareOwner();
+    const key=String(u.uid||u.username||u.email||'').toLowerCase();
+    const keys=[item.ownerKey,item.createdByKey,item.staffOwnerKey].map(v=>String(v||'').toLowerCase()).filter(Boolean);
+    const uidFields=[item.ownerUid,item.createdByUid,item.staffUid,item.sellerUid].map(v=>String(v||'').toLowerCase()).filter(Boolean);
+    const userFields=[item.ownerUsername,item.createdByUsername,item.staffUsername,item.sellerUsername].map(v=>String(v||'').toLowerCase()).filter(Boolean);
+    const emailFields=[item.ownerEmail,item.createdByEmail,item.staffEmail,item.sellerEmail].map(v=>String(v||'').toLowerCase()).filter(Boolean);
+    return (!!key&&keys.includes(key))|| (!!u.uid&&uidFields.includes(String(u.uid).toLowerCase())) || (!!u.username&&userFields.includes(u.username)) || (!!u.email&&emailFields.includes(u.email));
+  }
 
   function renderItem(item){
     const isPremium = item.type === 'premium';
@@ -4041,12 +4046,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 
 
   function azOwnerKeyForSoftware(item){
-    const vals=[
-      item.ownerUid,item.createdByUid,item.staffUid,item.sellerUid,
-      item.ownerUsername,item.createdByUsername,item.staffUsername,item.sellerUsername,
-      item.ownerEmail,item.createdByEmail,item.staffEmail,item.sellerEmail
-    ].map(v=>String(v||'').toLowerCase()).filter(Boolean);
-    return vals[0] || '';
+    return String(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '').toLowerCase();
   }
 
   function azOwnerLabelForSoftware(item){
@@ -4088,30 +4088,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   });
 
 
-  function azIsOwnSoftwareItemStrict(item){
-    const u = azCurrentSoftwareOwner();
-    const uid = String(u.uid || '').toLowerCase();
-    const username = String(u.username || '').toLowerCase();
-    const email = String(u.email || '').toLowerCase();
-
-    const uidFields = [
-      item.ownerUid, item.createdByUid, item.staffUid, item.sellerUid
-    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
-
-    const usernameFields = [
-      item.ownerUsername, item.createdByUsername, item.staffUsername, item.sellerUsername
-    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
-
-    const emailFields = [
-      item.ownerEmail, item.createdByEmail, item.staffEmail, item.sellerEmail
-    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
-
-    return (!!uid && uidFields.includes(uid))
-      || (!!username && usernameFields.includes(username))
-      || (!!email && emailFields.includes(email));
-  }
-
-  function applySoftwareFilters(){
+    function applySoftwareFilters(){
     if(!grid) return;
     refreshSoftwareOwnerAccountFilter();
     const deletedStaticIds = getDeletedStaticIds();
@@ -7431,6 +7408,17 @@ document.addEventListener('DOMContentLoaded',function(){
 
 
 <!-- az-my-software-filter-actual-fix: dynamic list now filters by azIsOwnSoftwareItemStrict(item) -->
+
+<script id="az-my-software-owner-debug-helper">
+window.azDebugMySoftwareOwner=function(){
+  try{
+    const owner=(typeof azCurrentSoftwareOwner==='function')?azCurrentSoftwareOwner():{};
+    const items=(typeof softwareDynamicItems!=='undefined'?softwareDynamicItems:[]).map(x=>({name:x.name,productId:x.productId,ownerKey:x.ownerKey,ownerUid:x.ownerUid,ownerUsername:x.ownerUsername,ownerEmail:x.ownerEmail,createdByKey:x.createdByKey,createdByUid:x.createdByUid,createdByUsername:x.createdByUsername,createdByEmail:x.createdByEmail,mine:(typeof azIsOwnSoftwareItemStrict==='function')?azIsOwnSoftwareItemStrict(x):false}));
+    console.table(items); return {owner,items};
+  }catch(e){console.error(e);return null;}
+};
+</script>
+
 </body>
 </html>
 
