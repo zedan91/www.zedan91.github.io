@@ -3016,6 +3016,20 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 })();
 </script>
 
+
+<style id="az-software-owner-account-filter-style">
+.software-owner-account-filter{
+  height:38px;
+  border-radius:999px;
+  border:1px solid rgba(34,197,94,.55);
+  background:#07111f;
+  color:#d1fae5;
+  font-weight:800;
+  padding:0 12px;
+  outline:none;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3114,7 +3128,7 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
     <button class="software-platform-btn" type="button" data-software-platform="Mac">🍎 Mac</button>
     <button class="software-platform-btn" data-software-platform="Linux">🐧 Linux</button>
     <button class="software-platform-btn" type="button" data-software-platform="Android">🤖 Android</button>
-    <button class="software-platform-btn" type="button" data-software-platform="iOS">📱 iOS</button><div class="software-platform-right"><button class="software-platform-btn is-active" type="button" data-software-type="all">All</button><button class="software-platform-btn" type="button" data-software-type="free">Free Software</button><button class="software-platform-btn" type="button" data-software-type="premium">Premium Software</button><button class="software-platform-btn my-software-filter-btn" type="button" data-software-owner-filter="mine" hidden>👤 My Software</button></div>
+    <button class="software-platform-btn" type="button" data-software-platform="iOS">📱 iOS</button><div class="software-platform-right"><button class="software-platform-btn is-active" type="button" data-software-type="all">All</button><button class="software-platform-btn" type="button" data-software-type="free">Free Software</button><button class="software-platform-btn" type="button" data-software-type="premium">Premium Software</button><button class="software-platform-btn my-software-filter-btn" type="button" data-software-owner-filter="mine" hidden>👤 My Software</button><select id="softwareOwnerAccountFilter" class="software-owner-account-filter" hidden><option value="all">Software by Account: All</option></select></div>
   </div>
 </div>
 <div class="software-category-card" aria-label="Software categories card">
@@ -3403,6 +3417,7 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
   let selectedSoftwarePlatform = 'all';
   let selectedSoftwareType = 'all';
   let selectedSoftwareOwnerFilter = 'all';
+  let selectedSoftwareOwnerAccount = 'all';
   let softwareDynamicItems = [];
   let editingSoftwareDocId = null;
   let editingSoftwareProductId = null;
@@ -4008,8 +4023,57 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     applySoftwareFilters();
   });
 
+
+  function azOwnerKeyForSoftware(item){
+    const vals=[
+      item.ownerUid,item.createdByUid,item.staffUid,item.sellerUid,
+      item.ownerUsername,item.createdByUsername,item.staffUsername,item.sellerUsername,
+      item.ownerEmail,item.createdByEmail,item.staffEmail,item.sellerEmail
+    ].map(v=>String(v||'').toLowerCase()).filter(Boolean);
+    return vals[0] || '';
+  }
+
+  function azOwnerLabelForSoftware(item){
+    return String(
+      item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername ||
+      item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail ||
+      item.ownerUid || item.createdByUid || item.productId || 'Unknown Owner'
+    );
+  }
+
+  function refreshSoftwareOwnerAccountFilter(){
+    const select=document.getElementById('softwareOwnerAccountFilter');
+    if(!select) return;
+    const roleInfo = (typeof azGetSoftwareRoleInfo === 'function') ? azGetSoftwareRoleInfo() : {};
+    const fullAdmin = !!roleInfo.isFullAdmin;
+    select.hidden = !fullAdmin;
+    if(!fullAdmin) return;
+
+    const current = select.value || 'all';
+    const map = new Map();
+    dedupeSoftwareItems([...softwareDynamicItems]).forEach(item=>{
+      const key=azOwnerKeyForSoftware(item);
+      if(key) map.set(key, azOwnerLabelForSoftware(item));
+    });
+
+    const opts=['<option value="all">Software by Account: All</option>'];
+    Array.from(map.entries()).sort((a,b)=>String(a[1]).localeCompare(String(b[1]))).forEach(([key,label])=>{
+      opts.push(`<option value="${esc(key)}">${esc(label)}</option>`);
+    });
+    select.innerHTML=opts.join('');
+    select.value = Array.from(map.keys()).includes(current) ? current : 'all';
+    selectedSoftwareOwnerAccount = select.value;
+  }
+
+
+  document.getElementById('softwareOwnerAccountFilter')?.addEventListener('change', e=>{
+    selectedSoftwareOwnerAccount = e.target.value || 'all';
+    applySoftwareFilters();
+  });
+
   function applySoftwareFilters(){
     if(!grid) return;
+    refreshSoftwareOwnerAccountFilter();
     const deletedStaticIds = getDeletedStaticIds();
     Array.from(grid.querySelectorAll('[data-software-static="1"]')).forEach(card => { if(deletedStaticIds.has(staticProductId(card))) card.style.display = 'none'; });
     grid.querySelectorAll('[data-admin-software="1"], .software-empty-state').forEach(el => el.remove());
@@ -4136,6 +4200,11 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const staffLike = roleInfo.isStaffLike;
     const canAdd = fullAdmin || staffLike || isAdmin();
 
+    if(fullAdmin && selectedSoftwareOwnerFilter === 'mine'){
+      selectedSoftwareOwnerFilter = 'all';
+      document.querySelector('[data-software-owner-filter="mine"]')?.classList.remove('is-active');
+    }
+
     // Full admin: all toolbar buttons.
     // Semi-admin/staff: Add Software Item only.
     // Guest/member: no toolbar buttons.
@@ -4161,7 +4230,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 
     if(softwareJsonStatus && !fullAdmin) softwareJsonStatus.hidden = true;
     const mySoftwareFilterBtn = document.querySelector('[data-software-owner-filter="mine"]');
-    if(mySoftwareFilterBtn) mySoftwareFilterBtn.hidden = !(fullAdmin || staffLike);
+    if(mySoftwareFilterBtn) mySoftwareFilterBtn.hidden = !staffLike;
+    const ownerAccountFilter = document.getElementById('softwareOwnerAccountFilter');
+    if(ownerAccountFilter) ownerAccountFilter.hidden = !fullAdmin;
     const staffNote = document.getElementById('az-software-staff-direct-note');
     if(staffNote) staffNote.hidden = !(fullAdmin || staffLike);
     syncStaticAdminButtons();
