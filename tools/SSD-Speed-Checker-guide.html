@@ -1821,6 +1821,7 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 
 
+
 <style id="az-admin-dashboard-safe-style">
 #azAdminStrictIconLink{
   display:none!important;
@@ -1876,16 +1877,30 @@ body.az-admin-safe-ok #azAdminStrictIconLink{
     return role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local';
   }
 
+  function findAfterTarget(){
+    var items = Array.from(document.querySelectorAll('a,button,[role="button"]'));
+    return items.find(function(el){
+      return (el.textContent || '').trim().toLowerCase().includes('mini web tools');
+    }) || items.find(function(el){
+      return (el.textContent || '').trim().toLowerCase().includes('lucky draw');
+    }) || items.find(function(el){
+      return (el.textContent || '').trim().toLowerCase().includes('affiliate shop');
+    }) || items.find(function(el){
+      return (el.textContent || '').trim().toLowerCase().includes('cad tools');
+    }) || items.find(function(el){
+      return (el.textContent || '').trim().toLowerCase().includes('software');
+    });
+  }
+
+  function findNavFallback(){
+    return document.querySelector('#azobssNavScroll,.azobss-nav-scroll,.azobss-topbar-inner,.floating-nav,.topbar,.sticky-bar,.market-sticky-bar,.nav-actions,.market-actions,header nav,header');
+  }
+
   function ensureButtonOnce(){
     var icon = document.getElementById('azAdminStrictIconLink');
     if(icon) return icon;
 
-    var mini = Array.from(document.querySelectorAll('a,button,[role="button"]')).find(function(el){
-      return (el.textContent || '').trim().toLowerCase().includes('mini web tools');
-    });
-
-    if(!mini || !mini.parentNode) return null;
-
+    var target = findAfterTarget();
     icon = document.createElement('a');
     icon.id = 'azAdminStrictIconLink';
     icon.href = '/admin/';
@@ -1893,25 +1908,33 @@ body.az-admin-safe-ok #azAdminStrictIconLink{
     icon.setAttribute('aria-label','Admin Dashboard');
     icon.textContent = '🛠️';
 
-    mini.insertAdjacentElement('afterend', icon);
-    return icon;
+    if(target && target.parentNode){
+      target.insertAdjacentElement('afterend', icon);
+      return icon;
+    }
+
+    var nav = findNavFallback();
+    if(nav){
+      nav.appendChild(icon);
+      return icon;
+    }
+
+    icon.remove();
+    return null;
   }
 
   function refresh(){
     if(!document.body) return;
-    ensureButtonOnce();
-    document.body.classList.toggle('az-admin-safe-ok', isAdmin());
+    var ok = isAdmin();
+    document.body.classList.toggle('az-admin-safe-ok', ok);
+    if(ok) ensureButtonOnce();
   }
 
   document.addEventListener('DOMContentLoaded', refresh);
   if(document.readyState !== 'loading') refresh();
   window.addEventListener('storage', refresh);
   window.addEventListener('focus', refresh);
-
-  // Limited retries only. No MutationObserver. No infinite DOM loop.
-  [250,800,1500,3000,5000].forEach(function(t){
-    setTimeout(refresh, t);
-  });
+  [250,800,1500,3000,5000,8000].forEach(function(t){ setTimeout(refresh,t); });
 })();
 </script>
 
