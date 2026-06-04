@@ -3030,6 +3030,22 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 }
 </style>
 
+
+<style id="az-my-software-guest-hide-force-style">
+[data-software-owner-filter="mine"],
+.my-software-filter-btn{
+  display:none!important;
+}
+body.az-software-staff-role-ok [data-software-owner-filter="mine"],
+body.az-software-staff-role-ok .my-software-filter-btn{
+  display:inline-flex!important;
+}
+body.az-software-full-admin [data-software-owner-filter="mine"],
+body.az-software-full-admin .my-software-filter-btn{
+  display:none!important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -4199,6 +4215,10 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const fullAdmin = roleInfo.isFullAdmin;
     const staffLike = roleInfo.isStaffLike;
     const canAdd = fullAdmin || staffLike || isAdmin();
+    if(document.body){
+      document.body.classList.toggle('az-software-full-admin', !!fullAdmin);
+      document.body.classList.toggle('az-software-staff-role-ok', !!staffLike && !fullAdmin);
+    }
 
     if(fullAdmin && selectedSoftwareOwnerFilter === 'mine'){
       selectedSoftwareOwnerFilter = 'all';
@@ -4230,7 +4250,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 
     if(softwareJsonStatus && !fullAdmin) softwareJsonStatus.hidden = true;
     const mySoftwareFilterBtn = document.querySelector('[data-software-owner-filter="mine"]');
-    if(mySoftwareFilterBtn) mySoftwareFilterBtn.hidden = !staffLike;
+    if(mySoftwareFilterBtn) mySoftwareFilterBtn.hidden = !(staffLike && !fullAdmin);
     const ownerAccountFilter = document.getElementById('softwareOwnerAccountFilter');
     if(ownerAccountFilter) ownerAccountFilter.hidden = !fullAdmin;
     const staffNote = document.getElementById('az-software-staff-direct-note');
@@ -7331,6 +7351,54 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(cleanHelloText,500);
   setTimeout(cleanHelloText,1500);
   setTimeout(cleanHelloText,3000);
+})();
+</script>
+
+
+<script id="az-my-software-guest-hide-role-check">
+(function(){
+  if(window.__azMySoftwareGuestHideRoleCheck)return;
+  window.__azMySoftwareGuestHideRoleCheck=true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(raw){var u=JSON.parse(raw); if(u)return u;}
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function refresh(){
+    var u=readUser();
+    var role=String(u.role||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
+    var perms=u.permissions||{};
+    var fullAdmin=role==='admin'||username==='zedan91'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com';
+    var staffLike=(role==='semiadmin'||role==='staff') && perms.canManageSoftware===true;
+
+    if(document.body){
+      document.body.classList.toggle('az-software-full-admin', fullAdmin);
+      document.body.classList.toggle('az-software-staff-role-ok', staffLike && !fullAdmin);
+    }
+
+    var btn=document.querySelector('[data-software-owner-filter="mine"]');
+    if(btn) btn.hidden=!(staffLike && !fullAdmin);
+
+    var select=document.getElementById('softwareOwnerAccountFilter');
+    if(select) select.hidden=!fullAdmin;
+  }
+
+  document.addEventListener('DOMContentLoaded',refresh);
+  if(document.readyState!=='loading')refresh();
+  window.addEventListener('storage',refresh);
+  window.addEventListener('focus',refresh);
+  setTimeout(refresh,300);
+  setTimeout(refresh,1000);
+  setTimeout(refresh,2500);
 })();
 </script>
 
