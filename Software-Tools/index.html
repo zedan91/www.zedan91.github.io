@@ -3892,7 +3892,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
-    const adminEdit = (azCanManageOwnSoftware() && azIsOwnSoftwareItem(item)) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
+    const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
       ${mediaHtml}
       ${badgeExtra}
@@ -4087,6 +4087,30 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     applySoftwareFilters();
   });
 
+
+  function azIsOwnSoftwareItemStrict(item){
+    const u = azCurrentSoftwareOwner();
+    const uid = String(u.uid || '').toLowerCase();
+    const username = String(u.username || '').toLowerCase();
+    const email = String(u.email || '').toLowerCase();
+
+    const uidFields = [
+      item.ownerUid, item.createdByUid, item.staffUid, item.sellerUid
+    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
+
+    const usernameFields = [
+      item.ownerUsername, item.createdByUsername, item.staffUsername, item.sellerUsername
+    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
+
+    const emailFields = [
+      item.ownerEmail, item.createdByEmail, item.staffEmail, item.sellerEmail
+    ].map(v => String(v || '').toLowerCase()).filter(Boolean);
+
+    return (!!uid && uidFields.includes(uid))
+      || (!!username && usernameFields.includes(username))
+      || (!!email && emailFields.includes(email));
+  }
+
   function applySoftwareFilters(){
     if(!grid) return;
     refreshSoftwareOwnerAccountFilter();
@@ -4189,9 +4213,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     sortedStatic.forEach(card => grid.appendChild(card));
 
     syncStaticAdminButtons();
-    const hasVisibleStatic = staticCards.some(card => card.style.display !== 'none');
+    const hasVisibleStatic = selectedSoftwareOwnerFilter === 'mine' ? false : staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
-      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software yang ditambah selepas owner auto-set akan muncul. Item lama perlu edit/resave untuk assign owner.</div>');
+      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software yang ditambah selepas owner auto-set akan muncul. Item lama tanpa owner tidak akan muncul; edit & save sekali untuk assign owner.</div>');
     }
   }
   async function loadItems(){
