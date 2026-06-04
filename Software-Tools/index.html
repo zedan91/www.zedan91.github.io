@@ -2974,6 +2974,19 @@ line-height:1.6;
 })();
 </script>
 
+
+<style id="az-my-software-filter-style">
+.my-software-filter-btn{
+  border-color:rgba(34,197,94,.55)!important;
+  color:#d1fae5!important;
+}
+.my-software-filter-btn.is-active{
+  background:#22c55e!important;
+  color:#052e16!important;
+  box-shadow:0 0 14px rgba(34,197,94,.28)!important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3072,7 +3085,7 @@ line-height:1.6;
     <button class="software-platform-btn" type="button" data-software-platform="Mac">🍎 Mac</button>
     <button class="software-platform-btn" data-software-platform="Linux">🐧 Linux</button>
     <button class="software-platform-btn" type="button" data-software-platform="Android">🤖 Android</button>
-    <button class="software-platform-btn" type="button" data-software-platform="iOS">📱 iOS</button><div class="software-platform-right"><button class="software-platform-btn is-active" type="button" data-software-type="all">All</button><button class="software-platform-btn" type="button" data-software-type="free">Free Software</button><button class="software-platform-btn" type="button" data-software-type="premium">Premium Software</button></div>
+    <button class="software-platform-btn" type="button" data-software-platform="iOS">📱 iOS</button><div class="software-platform-right"><button class="software-platform-btn is-active" type="button" data-software-type="all">All</button><button class="software-platform-btn" type="button" data-software-type="free">Free Software</button><button class="software-platform-btn" type="button" data-software-type="premium">Premium Software</button><button class="software-platform-btn my-software-filter-btn" type="button" data-software-owner-filter="mine" hidden>👤 My Software</button></div>
   </div>
 </div>
 <div class="software-category-card" aria-label="Software categories card">
@@ -3360,6 +3373,7 @@ line-height:1.6;
   let selectedSoftwareCategory = 'all';
   let selectedSoftwarePlatform = 'all';
   let selectedSoftwareType = 'all';
+  let selectedSoftwareOwnerFilter = 'all';
   let softwareDynamicItems = [];
   let editingSoftwareDocId = null;
   let editingSoftwareProductId = null;
@@ -3936,6 +3950,15 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       }
     });
   }
+
+  document.addEventListener('click', e => {
+    const ownerBtn = e.target.closest('[data-software-owner-filter]');
+    if(!ownerBtn) return;
+    selectedSoftwareOwnerFilter = selectedSoftwareOwnerFilter === 'mine' ? 'all' : 'mine';
+    ownerBtn.classList.toggle('is-active', selectedSoftwareOwnerFilter === 'mine');
+    applySoftwareFilters();
+  });
+
   function applySoftwareFilters(){
     if(!grid) return;
     const deletedStaticIds = getDeletedStaticIds();
@@ -3963,7 +3986,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const overriddenIds = getOverrideProductIds();
     staticCards.forEach(card => {
       const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
-      card.style.display = isOverridden ? 'none' : '';
+      card.style.display = (selectedSoftwareOwnerFilter === 'mine' || isOverridden) ? 'none' : '';
     });
 
     let dynamic = dedupeSoftwareItems([...softwareDynamicItems]).filter(item => isAdmin() || (item.status || 'active') === 'active');
@@ -3988,7 +4011,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
       const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
       const typeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
-      card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card) && typeOk) ? '' : 'none';
+      card.style.display = (selectedSoftwareOwnerFilter !== 'mine' && !isOverridden && categoryOk && cardPlatformOk(card) && typeOk) ? '' : 'none';
     });
     if(keyword){
       dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
@@ -3997,7 +4020,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         const text = clean(card.dataset.search || card.textContent || '');
         const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
         const typeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
-        card.style.display = (!isOverridden && categoryOk && cardPlatformOk(card) && typeOk && text.includes(keyword)) ? '' : 'none';
+        card.style.display = (selectedSoftwareOwnerFilter !== 'mine' && !isOverridden && categoryOk && cardPlatformOk(card) && typeOk && text.includes(keyword)) ? '' : 'none';
       });
     }
 
@@ -4039,7 +4062,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     syncStaticAdminButtons();
     const hasVisibleStatic = staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
-      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Admin/staff boleh tekan + Add Software Item untuk tambah item.</div>');
+      grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software milik anda akan dipaparkan.</div>');
     }
   }
   async function loadItems(){
@@ -4088,6 +4111,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     });
 
     if(softwareJsonStatus && !fullAdmin) softwareJsonStatus.hidden = true;
+    const mySoftwareFilterBtn = document.querySelector('[data-software-owner-filter="mine"]');
+    if(mySoftwareFilterBtn) mySoftwareFilterBtn.hidden = !(fullAdmin || staffLike);
     const staffNote = document.getElementById('az-software-staff-direct-note');
     if(staffNote) staffNote.hidden = !(fullAdmin || staffLike);
     syncStaticAdminButtons();
