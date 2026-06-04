@@ -3029,10 +3029,10 @@ line-height:1.6;
 <div class="downloads-inner">
 
 <div id="commissionPolicyCard" class="commission-policy-card">
-<div class="title">💰 STAFF COMMISSION POLICY</div>
-<div class="row">🟢 <b>70% Commission</b> — Anda menerima 70% daripada setiap jualan produk anda.</div>
-<div class="row">🔵 <b>30% Platform Fee</b> — AZOBSS menerima 30% untuk hosting, maintenance dan pemasaran.</div>
-<div class="row">🔒 <b>Private Sales Access</b> — Anda hanya boleh melihat jualan dan komisen produk milik anda sendiri.</div>
+<div class="title">💰 STAFF & SEMI‑ADMIN COMMISSION POLICY</div>
+<div class="row">🟢 <b>70% Commission</b> — Anda menerima 70% komisen bagi setiap jualan Software atau CAD Tools milik anda.</div>
+<div class="row">🔵 <b>30% Platform Fee</b> — 30% diperuntukkan kepada AZOBSS untuk hosting, maintenance, pembangunan dan pemasaran platform.</div>
+<div class="row">🔒 <b>Private Sales Access</b> — Akses jualan dan komisen adalah peribadi. Anda hanya boleh melihat rekod produk milik anda sendiri.</div>
 </div>
 <h1>💻 Software Tools & Downloads</h1>
 <p class="downloads-intro">
@@ -3988,8 +3988,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     applySoftwareFilters();
   }
   function refreshAdminState(){
-    const admin = isAdmin();
-    if(addButton) addButton.hidden = !admin;
+    const currentUser=(window.getCurrentUserObject && window.getCurrentUserObject())||{};
+    const role=String(currentUser.role||localStorage.getItem('azobssRole')||'').toLowerCase();
+    const admin=isAdmin();
+
+    const isStaffLike=(role==='semiadmin'||role==='staff');
+
+    if(addButton) addButton.hidden = !(admin||isStaffLike);
+
     if(importJsonButton) importJsonButton.hidden = !admin;
     if(exportJsonButton) exportJsonButton.hidden = !admin;
     if(applyJsonButton) applyJsonButton.hidden = !admin;
