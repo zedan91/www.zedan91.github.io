@@ -1832,7 +1832,7 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{display:inline-fl
       <button class="cad-admin-export-btn admin-only inline-admin" id="cadExportJsonButton" type="button" hidden>Export JSON</button>
       <button class="cad-admin-apply-btn admin-only inline-admin" id="cadApplyJsonButton" type="button" hidden disabled>Apply Import</button>
       <input id="cadImportJsonInput" type="file" accept="application/json,.json" hidden>
-      <span class="cad-admin-json-status" id="cadJsonStatus" hidden></span>
+      <span class="cad-admin-json-status" id="cadJsonStatus" hidden></span><span class="cad-admin-json-status" id="az-cad-staff-direct-note" hidden>Staff/Semi-admin mode</span>
     </div>
   </div>
   <div class="cad-shop-controls" aria-label="CAD tools search and sorting controls">
@@ -2125,7 +2125,19 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     mediaPreview.style.display = hasMedia ? 'flex' : 'none';
   }
   function getSavedUser(){try{return JSON.parse(sessionStorage.getItem('azobssCurrentUser')||'null');}catch(e){return null;}}
-  function isAdmin(){const user=getSavedUser();return !!(user && String(user.usernameKey||'').toLowerCase()===ADMIN_USERNAME);}
+  function isAdmin(){
+    const user=getSavedUser() || {};
+    const role=String(user.role||'').toLowerCase();
+    const username=String(user.usernameKey||user.username||user.id||user.name||user.displayName||'').toLowerCase();
+    const email=String(user.email||user.authEmail||user.contactEmail||'').toLowerCase();
+    const permissions=user.permissions||{};
+    return !!(
+      username===ADMIN_USERNAME ||
+      email==='zedan91@azobss.local' ||
+      role==='admin' ||
+      ((role==='semiadmin'||role==='staff') && permissions.canManageCAD===true)
+    );
+  }
   const DEFAULT_CAD_ITEMS = [
     {
       id:'sample-lisp-program',
@@ -2323,7 +2335,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     applyFilters();
   });
   searchInput?.addEventListener('input',applyFilters); sortSelect?.addEventListener('change',applyFilters);
-  function applyAdminButton(){const admin=isAdmin();document.body.classList.toggle('is-lisp-admin', admin);[addBtn,importJsonButton,exportJsonButton,applyJsonButton].forEach(btn=>{if(btn) btn.hidden=!admin;}); if(cadJsonStatus && !admin) cadJsonStatus.hidden=true;}
+  function applyAdminButton(){const admin=isAdmin();document.body.classList.toggle('is-lisp-admin', admin);[addBtn,importJsonButton,exportJsonButton,applyJsonButton].forEach(btn=>{if(btn) btn.hidden=!admin;}); if(cadJsonStatus && !admin) cadJsonStatus.hidden=true; const staffNote=document.getElementById('az-cad-staff-direct-note'); if(staffNote) staffNote.hidden=!admin;}
   window.addEventListener('storage',()=>{applyAdminButton();applyFilters();});
   applyAdminButton(); applyFilters();
 })();

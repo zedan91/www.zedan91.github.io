@@ -5,11 +5,15 @@
 <title>AZOBSS Staff Dashboard</title>
 <style>
 body{margin:0;background:#07111f;color:#fff;font-family:system-ui,Segoe UI,Arial,sans-serif}.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}.side{background:#050b14;border-right:1px solid #223;padding:18px}.brand{font-size:22px;font-weight:900;margin-bottom:18px}.nav{display:grid;gap:8px}.nav button,.nav a{padding:12px;border-radius:12px;border:1px solid transparent;background:#101827;color:#dbeafe;text-align:left;text-decoration:none;font-weight:800;cursor:pointer}.nav button.active{background:#14532d;border-color:#22c55e}.main{padding:22px}.section{display:none}.section.active{display:block}.card{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:15px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{font-size:28px;color:#5cff9d;font-weight:900}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}input,select,textarea{background:#020617;border:1px solid #334155;color:#fff;border-radius:10px;padding:10px}textarea{width:100%;min-height:90px}.btn{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer}.green{background:#22c55e;color:#052e16}.list{display:grid;gap:8px}.item{background:#111827;border:1px solid #334155;border-radius:12px;padding:10px}.muted{color:#94a3b8;font-size:13px}.cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:99999}.box{background:#0f172a;border:1px solid #334155;border-radius:18px;padding:24px;text-align:center;width:min(440px,92vw)}body.staff-ok .cover{display:none}body:not(.staff-ok) .shell{display:none}@media(max-width:800px){.shell{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.side{position:relative}}
+
+#software,#cad,[data-tab="software"],[data-tab="cad"]{display:none!important}.staff-direct-links{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.staff-direct-links a{background:#14532d;border:1px solid #22c55e;color:#dcfce7;padding:10px 12px;border-radius:12px;font-weight:900;text-decoration:none}
 </style>
 
 <style id="az-staff-dashboard-button-style">
 .azStaffDashboardBtn.staff-dashboard-btn{display:none!important;align-items:center!important;justify-content:center!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:999px!important;font-size:17px!important;line-height:1!important}
 body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{display:inline-flex!important}
+
+#software,#cad,[data-tab="software"],[data-tab="cad"]{display:none!important}.staff-direct-links{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.staff-direct-links a{background:#14532d;border:1px solid #22c55e;color:#dcfce7;padding:10px 12px;border-radius:12px;font-weight:900;text-decoration:none}
 </style>
 <script id="az-staff-dashboard-button-check">
 (function(){

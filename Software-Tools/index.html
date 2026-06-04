@@ -2333,7 +2333,7 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{display:inline-fl
   <button class="software-admin-apply-btn" id="softwareApplyJsonButton" type="button" hidden disabled>Apply Import</button>
   <button class="software-admin-stats-btn" id="softwareStatsRefreshButton" type="button" hidden>↻ Refresh Stats</button>
   <input id="softwareImportJsonFile" type="file" accept="application/json,.json" hidden>
-  <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span>
+  <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
 </div>
 <div class="software-shop-controls" aria-label="Software search and sorting controls">
   <label>Search
@@ -2774,6 +2774,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const username = clean(
       currentUser.usernameKey ||
       currentUser.username ||
+      currentUser.id ||
       currentUser.name ||
       currentUser.displayName ||
       localStorage.getItem('username') ||
@@ -2782,14 +2783,17 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       sessionStorage.getItem('azobssUsername') ||
       displayedUser
     );
-    const email = clean(currentUser.email || currentUser.authEmail || localStorage.getItem('email') || sessionStorage.getItem('email'));
+    const email = clean(currentUser.email || currentUser.authEmail || currentUser.contactEmail || localStorage.getItem('email') || sessionStorage.getItem('email'));
     const role = clean(currentUser.role || localStorage.getItem('azobssRole') || sessionStorage.getItem('azobssRole'));
+    const permissions = currentUser.permissions || {};
     const globalAdmin = (typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(currentUser)) || false;
+    const canManageSoftware = permissions.canManageSoftware === true;
 
     return globalAdmin ||
       role === 'admin' ||
       adminNames.includes(username) ||
-      adminEmails.includes(email);
+      adminEmails.includes(email) ||
+      ((role === 'semiadmin' || role === 'staff') && canManageSoftware);
   }
 
   function makeProductId(prefix){
@@ -3279,6 +3283,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(applyJsonButton) applyJsonButton.hidden = !admin;
     if(statsRefreshButton) statsRefreshButton.hidden = !admin;
     if(softwareJsonStatus && !admin) softwareJsonStatus.hidden = true;
+    const staffNote=document.getElementById('az-software-staff-direct-note'); if(staffNote) staffNote.hidden=!admin;
     syncStaticAdminButtons();
   }
   function syncTypeDefaults(){
