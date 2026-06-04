@@ -1,0 +1,11 @@
+AZOBSS ADMIN ICON CREATE IF MISSING FIX
+
+Fixed:
+- If admin icon element is missing/null, script creates:
+  <a id="azAdminStrictIconLink" href="/admin/">🛠️</a>
+- Reads admin from azobssCurrentUser / azobssUser / sessionStorage.
+- Supports id:"zedan91" and role:"admin".
+- Guest/user normal: icon removed/hidden.
+- Admin: icon appears after Mini Web Tools.
+
+No login flow changes.

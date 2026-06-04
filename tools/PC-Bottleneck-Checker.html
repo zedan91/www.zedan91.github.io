@@ -1931,6 +1931,138 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 })();
 </script>
 
+
+<script id="az-admin-icon-create-if-missing-fix">
+(function(){
+  if(window.__azAdminIconCreateIfMissingFix) return;
+  window.__azAdminIconCreateIfMissingFix = true;
+
+  function readUser(){
+    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj) return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function isAdmin(){
+    var u = readUser();
+    var role = String(u.role || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
+    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
+
+    return role === 'admin'
+      || username === 'zedan91'
+      || email === 'zedan91@azobss.local'
+      || (document.body && document.body.classList.contains('azobss-support-admin'));
+  }
+
+  function findMini(){
+    return Array.from(document.querySelectorAll('a,button,[role="button"]')).find(function(el){
+      return (el.textContent || '').trim().toLowerCase().includes('mini web tools');
+    });
+  }
+
+  function getOrCreateIcon(){
+    var icon = document.getElementById('azAdminStrictIconLink')
+      || document.getElementById('azAdminDashboardIconLink')
+      || document.getElementById('azAdminDashboardTopLink')
+      || document.querySelector('.az-admin-dashboard-direct-link')
+      || document.querySelector('[href="/admin/"][title="Admin Dashboard"]')
+      || document.querySelector('[href="/admin/"][aria-label="Admin Dashboard"]');
+
+    if(!icon && isAdmin()){
+      icon = document.createElement('a');
+      icon.id = 'azAdminStrictIconLink';
+      icon.className = 'az-admin-dashboard-direct-link';
+      icon.href = '/admin/';
+      icon.title = 'Admin Dashboard';
+      icon.setAttribute('aria-label','Admin Dashboard');
+      icon.textContent = '🛠️';
+    }
+    return icon;
+  }
+
+  function run(){
+    if(!document.body) return;
+    var ok = isAdmin();
+    document.body.classList.toggle('az-admin-verified', ok);
+
+    var icon = getOrCreateIcon();
+    if(!icon) return;
+
+    if(!ok){
+      icon.remove();
+      return;
+    }
+
+    icon.textContent = '🛠️';
+    icon.href = '/admin/';
+    icon.title = 'Admin Dashboard';
+    icon.setAttribute('aria-label','Admin Dashboard');
+
+    var mini = findMini();
+    if(mini && mini.parentNode && mini.nextElementSibling !== icon){
+      mini.insertAdjacentElement('afterend', icon);
+    }else if(!icon.parentNode){
+      var nav = document.querySelector('.azobss-nav-scroll,#azobssNavScroll,.azobss-topbar-inner,.floating-nav,.topbar,header nav,header');
+      if(nav) nav.appendChild(icon);
+    }
+
+    if(icon.parentElement) icon.parentElement.style.overflow = 'visible';
+  }
+
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState !== 'loading') run();
+  [200,600,1200,2500,5000,8000].forEach(function(t){ setTimeout(run,t); });
+  window.addEventListener('storage', run);
+  window.addEventListener('focus', run);
+  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+})();
+</script>
+<style id="az-admin-icon-create-if-missing-style">
+#azAdminStrictIconLink,
+#azAdminDashboardIconLink,
+#azAdminDashboardTopLink,
+.az-admin-dashboard-direct-link{
+  display:none!important;
+}
+body.az-admin-verified #azAdminStrictIconLink,
+body.az-admin-verified #azAdminDashboardIconLink,
+body.az-admin-verified #azAdminDashboardTopLink,
+body.az-admin-verified .az-admin-dashboard-direct-link{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  border-radius:999px!important;
+  margin-left:6px!important;
+  margin-right:4px!important;
+  padding:0!important;
+  background:linear-gradient(135deg,#1e293b,#0f172a)!important;
+  border:1px solid rgba(34,197,94,.55)!important;
+  color:#22c55e!important;
+  text-decoration:none!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  box-shadow:0 0 14px rgba(34,197,94,.18)!important;
+  position:relative!important;
+  z-index:99999!important;
+  flex:0 0 42px!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+</style>
+
 </body></html>
 
 
