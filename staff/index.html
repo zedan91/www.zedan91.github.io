@@ -9,19 +9,62 @@ body{margin:0;background:#07111f;color:#fff;font-family:system-ui,Segoe UI,Arial
 #software,#cad,[data-tab="software"],[data-tab="cad"]{display:none!important}.staff-direct-links{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.staff-direct-links a{background:#14532d;border:1px solid #22c55e;color:#dcfce7;padding:10px 12px;border-radius:12px;font-weight:900;text-decoration:none}
 </style>
 
-<style id="az-staff-dashboard-button-style">
-.azStaffDashboardBtn.staff-dashboard-btn{display:none!important;align-items:center!important;justify-content:center!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:999px!important;font-size:17px!important;line-height:1!important}
-body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{display:inline-flex!important}
 
-#software,#cad,[data-tab="software"],[data-tab="cad"]{display:none!important}.staff-direct-links{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.staff-direct-links a{background:#14532d;border:1px solid #22c55e;color:#dcfce7;padding:10px 12px;border-radius:12px;font-weight:900;text-decoration:none}
+<style id="az-staff-dashboard-button-style">
+.azStaffDashboardBtn.staff-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:17px!important;
+  line-height:1!important;
+}
+body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
+  display:inline-flex!important;
+}
 </style>
 <script id="az-staff-dashboard-button-check">
 (function(){
- if(window.__azStaffDashboardButtonCheck)return; window.__azStaffDashboardButtonCheck=true;
- function readUser(){var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];for(var i=0;i<keys.length;i++){try{var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);if(raw){var obj=JSON.parse(raw);if(obj)return obj}}catch(e){}}return{}}
- function ok(){var u=readUser();var role=String(u.role||'').toLowerCase();var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();return role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91'||email==='zedan91@azobss.local'}
- function refresh(){if(document.body)document.body.classList.toggle('az-staff-safe-ok',ok())}
- document.addEventListener('DOMContentLoaded',refresh); if(document.readyState!=='loading')refresh(); window.addEventListener('storage',refresh); window.addEventListener('focus',refresh); setTimeout(refresh,500); setTimeout(refresh,1500); setTimeout(refresh,3000);
+  if(window.__azStaffDashboardButtonCheck)return;
+  window.__azStaffDashboardButtonCheck=true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj=JSON.parse(raw);
+          if(obj)return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function ok(){
+    var u=readUser();
+    var role=String(u.role||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
+    return role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91'||email==='zedan91@azobss.local';
+  }
+
+  function refresh(){
+    if(document.body) document.body.classList.toggle('az-staff-safe-ok',ok());
+  }
+
+  document.addEventListener('DOMContentLoaded',refresh);
+  if(document.readyState!=='loading')refresh();
+  window.addEventListener('storage',refresh);
+  window.addEventListener('focus',refresh);
+  setTimeout(refresh,400);
+  setTimeout(refresh,1200);
+  setTimeout(refresh,2500);
 })();
 </script>
 
@@ -144,4 +187,40 @@ async function sales(){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='commission')loadList('commissionRecords','#comList');if(b.dataset.tab==='sales')sales();}});
 $('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#submitCom').onclick=submitCom;$('#refreshSales').onclick=sales;
 onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.');profile=await getProfile(u);if(!profile)return deny('User profile not found.');perms=profile.permissions||{};const role=String(profile.role||'').toLowerCase();if(!(role==='admin'||role==='semiadmin'||role==='staff'||isAdmin(profile)))return deny('Staff role required.');allow();overview();});
-</script></body></html>
+</script>
+<script id="az-remove-hello-label-fix">
+(function(){
+  if(window.__azRemoveHelloLabelFix)return;
+  window.__azRemoveHelloLabelFix=true;
+
+  function cleanHelloText(){
+    var selectors=[
+      '#userNameText','#userName','.user-name','.username','.user-menu-name',
+      '.profile-name','.profile-label','.az-user-name','.azobss-user-name'
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(function(el){
+      if(!el || !el.textContent) return;
+      var t=el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
+      if(t && t!==el.textContent.trim()) el.textContent=t;
+    });
+
+    document.querySelectorAll('span,div,a,button,strong,b').forEach(function(el){
+      if(!el || !el.childNodes || el.childNodes.length!==1) return;
+      var txt=el.textContent||'';
+      if(/^\s*hello\s*,\s*[\w.@+-]+\s*$/i.test(txt)){
+        el.textContent=txt.replace(/^\s*hello\s*,?\s*/i,'').trim();
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',cleanHelloText);
+  if(document.readyState!=='loading')cleanHelloText();
+  window.addEventListener('storage',cleanHelloText);
+  window.addEventListener('focus',cleanHelloText);
+  setTimeout(cleanHelloText,500);
+  setTimeout(cleanHelloText,1500);
+  setTimeout(cleanHelloText,3000);
+})();
+</script>
+
+</body></html>
