@@ -4143,6 +4143,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     });
 
     let dynamic = dedupeSoftwareItems([...softwareDynamicItems]).filter(item => isAdmin() || (item.status || 'active') === 'active');
+    if(selectedSoftwareOwnerFilter === 'mine'){
+      dynamic = dynamic.filter(item => azIsOwnSoftwareItemStrict(item));
+    }
     const cardPlatformOk = card => selectedSoftwarePlatform === 'all' || String(card.dataset.platforms || 'Windows').split('|').some(p => clean(p) === clean(selectedSoftwarePlatform));
 
     if(selectedSoftwareCategory !== 'all'){
@@ -7426,6 +7429,8 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 </script>
 
+
+<!-- az-my-software-filter-actual-fix: dynamic list now filters by azIsOwnSoftwareItemStrict(item) -->
 </body>
 </html>
 
