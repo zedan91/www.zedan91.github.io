@@ -711,8 +711,9 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 
 
 
+
 <style id="az-admin-static-button-style">
-#azAdminStrictIconLink.admin-dashboard-btn{
+.azAdminDashboardBtn.admin-dashboard-btn{
   display:none!important;
   align-items:center!important;
   justify-content:center!important;
@@ -724,7 +725,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   font-size:18px!important;
   line-height:1!important;
 }
-body.az-admin-safe-ok #azAdminStrictIconLink.admin-dashboard-btn{
+body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
   display:inline-flex!important;
 }
 </style>
@@ -764,9 +765,9 @@ body.az-admin-safe-ok #azAdminStrictIconLink.admin-dashboard-btn{
   if(document.readyState !== 'loading') refreshAdminButton();
   window.addEventListener('storage', refreshAdminButton);
   window.addEventListener('focus', refreshAdminButton);
-  setTimeout(refreshAdminButton, 500);
-  setTimeout(refreshAdminButton, 1500);
-  setTimeout(refreshAdminButton, 3000);
+  setTimeout(refreshAdminButton, 300);
+  setTimeout(refreshAdminButton, 1000);
+  setTimeout(refreshAdminButton, 2500);
 })();
 </script>
 
@@ -785,7 +786,7 @@ body.az-admin-safe-ok #azAdminStrictIconLink.admin-dashboard-btn{
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a href="/tools/">Mini Web Tools</a><a id="azAdminStrictIconLink" class="azobss-nav-chip admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a></nav>
+<a href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a></nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
