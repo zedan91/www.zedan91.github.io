@@ -249,6 +249,7 @@ body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
       <button data-tab="support">💬 Support Inbox</button>
       <button data-tab="notifications">🔔 Notifications</button>
       <button data-tab="purchases">💰 Purchase Records</button>
+      <button data-tab="payments">💳 Payments & Totals</button>
       <button data-tab="lucky">🎁 Lucky Draw</button>
       <button data-tab="settings">⚙️ Settings</button>
       <a class="home-link" href="/">🏠 Back Home</a>
@@ -356,6 +357,50 @@ body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
         <div class="card"><h2>Purchase Summaries</h2><div id="purchaseSummariesList" class="list"></div></div>
       </div>
     </section>
+
+
+    <section id="payments" class="section">
+      <h2>💳 Payments & Totals</h2>
+      <p class="tabs-note">Ringkasan total pembelian mengikut kategori: PA/BM, Software dan CAD Tools.</p>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">PA/BM Total RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Software Total RM</div><div id="payTotalSoftware" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">CAD Tools Total RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">All Purchases RM</div><div id="payTotalAll" class="stat-value">0</div></div>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <h2>Payment Status</h2>
+          <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:0">
+            <div class="card"><div class="stat-label">Pending</div><div id="payPendingCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Verified/Paid</div><div id="payPaidCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Total Records</div><div id="payRecordCount" class="stat-value">0</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Quick Filter</h2>
+          <div class="toolbar">
+            <select id="paymentCategoryFilter">
+              <option value="all">All</option>
+              <option value="pabm">PA/BM</option>
+              <option value="software">Software</option>
+              <option value="cad">CAD Tools</option>
+              <option value="pending">Pending Only</option>
+              <option value="paid">Paid/Verified Only</option>
+            </select>
+            <button class="btn" id="refreshPayments">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Latest Payment / Purchase Records</h2>
+        <div id="paymentsList" class="list"></div>
+      </div>
+    </section>
+
 
     <section id="lucky" class="section">
       <h2>🎁 Lucky Draw</h2>
@@ -508,6 +553,72 @@ async function loadNotifications(){
   snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
   $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
 }
+
+async function loadPayments(){
+  const filter = ($('#paymentCategoryFilter')?.value || 'all').toLowerCase();
+  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(100)));
+  const records = [];
+
+  logs?.forEach(d=>{
+    const x = {id:d.id, ...d.data()};
+    const typeRaw = String(x.productType || x.category || x.source || x.itemType || x.type || '').toLowerCase();
+    const nameRaw = String(x.title || x.name || x.itemName || x.filename || x.itemCode || '').toLowerCase();
+    const hay = typeRaw + ' ' + nameRaw;
+
+    let category = 'Others';
+    if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = 'PA/BM';
+    else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad')) category = 'CAD Tools';
+    else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = 'Software';
+
+    const amount = Number(x.amount || x.total || x.totalAmount || x.price || x.paymentAmount || 0) || 0;
+    const status = String(x.status || x.paymentStatus || '').toLowerCase();
+    const paid = ['paid','verified','success','completed','approved','confirmed'].includes(status);
+    const pending = !paid && (!status || ['pending','unpaid','waiting','manual','review'].includes(status));
+
+    records.push({...x, category, amount, paid, pending});
+  });
+
+  const totals = {pabm:0, software:0, cad:0, all:0, pending:0, paid:0};
+  records.forEach(x=>{
+    totals.all += x.amount;
+    if(x.category === 'PA/BM') totals.pabm += x.amount;
+    if(x.category === 'Software') totals.software += x.amount;
+    if(x.category === 'CAD Tools') totals.cad += x.amount;
+    if(x.pending) totals.pending++;
+    if(x.paid) totals.paid++;
+  });
+
+  if($('#payTotalPABM')) $('#payTotalPABM').textContent = totals.pabm.toFixed(2);
+  if($('#payTotalSoftware')) $('#payTotalSoftware').textContent = totals.software.toFixed(2);
+  if($('#payTotalCAD')) $('#payTotalCAD').textContent = totals.cad.toFixed(2);
+  if($('#payTotalAll')) $('#payTotalAll').textContent = totals.all.toFixed(2);
+  if($('#payPendingCount')) $('#payPendingCount').textContent = totals.pending;
+  if($('#payPaidCount')) $('#payPaidCount').textContent = totals.paid;
+  if($('#payRecordCount')) $('#payRecordCount').textContent = records.length;
+
+  const filtered = records.filter(x=>{
+    if(filter === 'all') return true;
+    if(filter === 'pabm') return x.category === 'PA/BM';
+    if(filter === 'software') return x.category === 'Software';
+    if(filter === 'cad') return x.category === 'CAD Tools';
+    if(filter === 'pending') return x.pending;
+    if(filter === 'paid') return x.paid;
+    return true;
+  }).slice(0,50);
+
+  const rows = filtered.map(x=>{
+    const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
+    const buyer = esc(x.usernameKey || x.username || x.displayName || x.email || '-');
+    const itemName = esc(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productType || 'Purchase');
+    return item(
+      `${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)}`,
+      `${buyer} • ${itemName} • Status: ${statusText} • ${fmtDate(x.createdAtMs||x.createdAt)}`
+    );
+  });
+
+  $('#paymentsList').innerHTML = rows.join('') || '<div class="item">No payment records found.</div>';
+}
+
 async function loadPurchases(){
   const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
   const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)));
@@ -541,6 +652,7 @@ async function initSection(id){
   if(id==='support')return loadSupport();
   if(id==='notifications')return loadNotifications();
   if(id==='purchases')return loadPurchases();
+  if(id==='payments')return loadPayments();
   if(id==='settings')return loadSettings();
 }
 document.addEventListener('click',async e=>{
@@ -563,6 +675,8 @@ $('#refreshOnline').addEventListener('click',loadOnline);
 $('#refreshSupport').addEventListener('click',loadSupport);
 $('#publishNotif').addEventListener('click',publishNotification);
 $('#clearNotif').addEventListener('click',clearNotifications);
+$('#refreshPayments')?.addEventListener('click',loadPayments);
+$('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;
