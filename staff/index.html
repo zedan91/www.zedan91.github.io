@@ -468,7 +468,7 @@ onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.'
     });
 
     document.querySelectorAll('a[aria-label="Notifications"]').forEach(function(a){
-      a.setAttribute('href','/PA-BM/');
+      if(!a.dataset.azGlobalBellPatched){a.setAttribute('href','#');}
     });
 
     document.querySelectorAll('a[aria-label="Likes"]').forEach(function(a){
@@ -495,4 +495,5 @@ onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.'
 })();
 </script>
 
+<script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>
 </body></html>

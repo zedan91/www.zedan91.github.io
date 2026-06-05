@@ -2048,7 +2048,7 @@ onAuthStateChanged(auth,async user=>{
     });
 
     document.querySelectorAll('a[aria-label="Notifications"]').forEach(function(a){
-      a.setAttribute('href','/PA-BM/');
+      if(!a.dataset.azGlobalBellPatched){a.setAttribute('href','#');}
     });
 
     document.querySelectorAll('a[aria-label="Likes"]').forEach(function(a){
@@ -2174,5 +2174,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+<script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>
 </body>
 </html>
