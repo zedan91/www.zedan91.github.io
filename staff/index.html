@@ -164,7 +164,7 @@ body.az-role-is-stafflike .azStaffDashboardBtn{
 <a aria-label="Likes" class="market-icon-btn" href="/likes/">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<a aria-label="Cart" data-az-shop-cart-toggle class="market-icon-btn" href="#" data-az-shop-cart-toggle>
 <span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
@@ -417,6 +417,81 @@ onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.'
   setTimeout(apply,400);
   setTimeout(apply,1200);
   setTimeout(apply,3000);
+})();
+</script>
+
+
+<script id="az-stickybar-icons-action-badge-fix">
+(function(){
+  if(window.__azStickybarIconsActionBadgeFix)return;
+  window.__azStickybarIconsActionBadgeFix=true;
+
+  function readCartCount(){
+    try{
+      var keys=['azobssCart','azShopCart','cart','azobss_cart'];
+      for(var i=0;i<keys.length;i++){
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(!raw)continue;
+        var data=JSON.parse(raw);
+        if(Array.isArray(data))return data.length;
+        if(Array.isArray(data.items))return data.items.reduce(function(n,x){return n+Number(x.qty||x.quantity||1);},0);
+      }
+    }catch(e){}
+    return 0;
+  }
+
+  function updateCartBadge(){
+    var n=readCartCount();
+    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
+      b.textContent=String(n);
+      b.style.display=n>0?'inline-flex':'inline-flex';
+    });
+  }
+
+  function bindButtons(){
+    document.querySelectorAll('[data-az-shop-cart-toggle],a[aria-label="Cart"]').forEach(function(a){
+      if(a.__azCartBound)return;
+      a.__azCartBound=true;
+      a.addEventListener('click',function(e){
+        if(a.getAttribute('href')==='#')e.preventDefault();
+        if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
+        if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
+        var cart=document.querySelector('#azShopCartDrawer,#cartDrawer,.az-shop-cart-drawer,[data-az-shop-cart-drawer]');
+        if(cart){
+          cart.classList.toggle('open');
+          cart.classList.toggle('is-open');
+          cart.hidden=false;
+          return;
+        }
+        window.location.href='/Software-Tools/';
+      });
+    });
+
+    document.querySelectorAll('a[aria-label="Notifications"]').forEach(function(a){
+      a.setAttribute('href','/PA-BM/');
+    });
+
+    document.querySelectorAll('a[aria-label="Likes"]').forEach(function(a){
+      a.setAttribute('href','/likes/');
+    });
+
+    document.querySelectorAll('a[aria-label="Chat"]').forEach(function(a){
+      if(!a.getAttribute('href') || a.getAttribute('href')==='#') a.setAttribute('href','https://alvo.chat/6nZ2');
+      a.setAttribute('target','_blank');
+      a.setAttribute('rel','noopener');
+    });
+  }
+
+  function run(){
+    bindButtons();
+    updateCartBadge();
+  }
+
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.readyState!=='loading')run();
+  window.addEventListener('storage',run);
+  window.addEventListener('focus',run);
+  setInterval(updateCartBadge,1500);
 })();
 </script>
 
