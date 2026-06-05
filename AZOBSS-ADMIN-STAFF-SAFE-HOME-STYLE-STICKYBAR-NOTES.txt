@@ -1,0 +1,14 @@
+AZOBSS ADMIN/STAFF SAFE HOME-STYLE STICKYBAR
+
+Fixed:
+- Removed broken copied Home navbar that caused raw blue links / huge background issue.
+- Added safe Home-style stickybar to /admin/ and /staff/.
+- Visual style matches Home pill/navbar style without depending on fragile Home-only CSS/JS.
+- Keeps dashboard layouts intact.
+- Staff Commission tab/form cleaned if present.
+
+Patched:
+['admin/index.html', 'staff/index.html']
+
+Syntax errors:
+0
