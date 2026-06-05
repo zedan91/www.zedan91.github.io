@@ -690,6 +690,22 @@ body.az-role-is-stafflike .azStaffDashboardBtn{
 .az-shop-cart-badge{position:absolute!important;top:-5px!important;right:-5px!important;min-width:18px!important;height:18px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:999px!important;background:#ef4444!important;color:#fff!important;font-size:10px!important;font-weight:950!important;padding:0 5px!important}
 </style>
 
+
+<style id="az-admin-registered-pabm-style">
+.az-admin-registered-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 10px}
+.az-admin-registered-search{flex:1;min-width:220px;height:34px;border-radius:10px;border:1px solid rgba(148,163,184,.35);background:#020617;color:#fff;padding:0 12px}
+.az-admin-registered-list{display:grid;gap:6px}
+.az-admin-reg-row{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 10px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:rgba(15,23,42,.66);font-size:12px}
+.az-admin-reg-badge{height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:0 8px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:11px;font-weight:950}
+.az-admin-reg-title{font-size:13px;font-weight:950;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-admin-reg-sub{font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-admin-reg-time{font-size:10px;color:#94a3b8;text-align:right;white-space:nowrap}
+.az-admin-reg-pagination{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:8px}
+.az-admin-reg-pagination button{padding:6px 10px;border:0;border-radius:999px;background:#1d4ed8;color:#fff;font-weight:950}
+.az-admin-reg-pagination button:disabled{opacity:.45}
+@media(max-width:760px){.az-admin-reg-row{grid-template-columns:1fr}.az-admin-reg-time{text-align:left}}
+</style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -821,6 +837,20 @@ body.az-role-is-stafflike .azStaffDashboardBtn{
 
     <section id="users" class="section">
       <h2>👥 Registered User Records</h2>
+      <div class="card" id="registeredUsersAdminCard">
+        <h2>Registered User Records</h2>
+        <div class="az-admin-registered-toolbar">
+          <input id="registeredUsersSearch" class="az-admin-registered-search" placeholder="Search username / email / phone...">
+          <button class="btn" id="registeredUsersRefreshBtn" type="button">Refresh</button>
+        </div>
+        <div id="registeredUsersAdminList" class="az-admin-registered-list"></div>
+        <div class="az-admin-reg-pagination">
+          <button id="registeredUsersPrevBtn" type="button">◀ Prev</button>
+          <span id="registeredUsersPageInfo">Page 1 / 1</span>
+          <button id="registeredUsersNextBtn" type="button">Next ▶</button>
+        </div>
+      </div>
+
       <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest 50 users are loaded.</p>
       <div class="toolbar">
         <input id="userSearch" placeholder="Search username, email or phone" style="flex:1;min-width:240px">
@@ -1504,6 +1534,59 @@ async function loadOnlineUsers(){
 }
 function loadOnline(){return loadOnlineUsers();}
 
+
+let adminRegisteredUsersCache=[];
+let adminRegisteredUsersPage=1;
+const ADMIN_REGISTERED_PAGE_SIZE=10;
+function azRegMs(v){
+  if(!v)return 0;
+  if(typeof v==='number')return v;
+  if(v.seconds)return v.seconds*1000;
+  const n=Number(v); if(!Number.isNaN(n)&&n>0)return n;
+  const d=Date.parse(v); return Number.isNaN(d)?0:d;
+}
+function azRegTime(x){
+  const ms=azRegMs(x.createdAtMs||x.registeredAtMs||x.updatedAtMs||x.createdAt||x.registeredAt||x.updatedAt);
+  return ms?new Date(ms).toLocaleString():'-';
+}
+function azRegUser(x){
+  return x.usernameKey||x.username||x.name||x.displayName||x.email||x.uid||'Unknown';
+}
+function azRegSub(x){
+  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', x.role?('Role: '+x.role):''].filter(Boolean).join(' • ');
+}
+function renderRegisteredUsersAdmin(){
+  const box=$('#registeredUsersAdminList'); if(!box)return;
+  const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
+  const rows=adminRegisteredUsersCache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));
+  const totalPages=Math.max(1,Math.ceil(rows.length/ADMIN_REGISTERED_PAGE_SIZE));
+  adminRegisteredUsersPage=Math.min(Math.max(1,adminRegisteredUsersPage),totalPages);
+  const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
+  const page=rows.slice(start,start+ADMIN_REGISTERED_PAGE_SIZE);
+  box.innerHTML=page.map(x=>`<div class="az-admin-reg-row">
+    <span class="az-admin-reg-badge">👤 Registered</span>
+    <div>
+      <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
+      <div class="az-admin-reg-sub">${esc(azRegSub(x))}</div>
+    </div>
+    <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
+  </div>`).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
+  if($('#registeredUsersPageInfo'))$('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} records`;
+  if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
+  if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
+}
+async function loadRegisteredUsersAdmin(){
+  const rows=[];
+  try{
+    const snap=await safeGet(query(collection(db,'users'),limit(200)));
+    snap?.forEach(d=>rows.push({docId:d.id,usernameKey:d.id,...d.data()}));
+  }catch(e){console.warn('registered users load failed',e);}
+  rows.sort((a,b)=>azRegMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt||b.registeredAt||b.updatedAt)-azRegMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt||a.registeredAt||a.updatedAt));
+  adminRegisteredUsersCache=rows;
+  adminRegisteredUsersPage=1;
+  renderRegisteredUsersAdmin();
+}
+
 async function loadAdminActivity(){
   const collections = [
     ['loginHistory','login'],
@@ -1545,7 +1628,7 @@ async function clearNotifications(){
 }
 async function initSection(id){
   if(id==='overview')return loadOverview();
-  if(id==='users')return loadUsers();
+  if(id==='users'){ if(typeof loadUsers==='function')loadUsers(); return loadRegisteredUsersAdmin(); }
   if(id==='online')return loadOnline();
   if(id==='activity')return loadActivity();
   if(id==='support')return loadSupport();
