@@ -1813,6 +1813,25 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 })();
 </script>
 
+
+<style id="az-my-cad-owner-style">
+[data-cad-owner-filter="mine"],.my-cad-filter-btn{display:none!important}
+body.az-cad-staff-role-ok [data-cad-owner-filter="mine"],
+body.az-cad-staff-role-ok .my-cad-filter-btn{display:inline-flex!important}
+.my-cad-filter-btn{
+  align-items:center;justify-content:center;border-radius:999px;
+  border:1px solid rgba(34,197,94,.55);background:#102033;color:#d1fae5;
+  font-weight:900;padding:10px 14px;margin:8px;cursor:pointer
+}
+.my-cad-filter-btn.is-active{background:#22c55e!important;color:#052e16!important}
+.az-cad-owner-note{
+  margin:12px 0;padding:12px 14px;border-radius:14px;
+  border:1px solid rgba(34,197,94,.55);
+  background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(20,83,45,.35));
+  color:#d1fae5;font-weight:800
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -4007,6 +4026,107 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(cleanHelloText,500);
   setTimeout(cleanHelloText,1500);
   setTimeout(cleanHelloText,3000);
+})();
+</script>
+
+<button class="cad-filter-btn my-cad-filter-btn" type="button" data-cad-owner-filter="mine" hidden>👤 My CAD Tools</button>
+
+<script id="az-cad-owner-tracking-script">
+(function(){
+  if(window.__azCadOwnerTracking)return; window.__azCadOwnerTracking=true;
+  let mineOnly=false;
+
+  function readUser(){
+    const keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(const store of [sessionStorage,localStorage]){
+      for(const key of keys){
+        try{const raw=store.getItem(key); if(raw){const obj=JSON.parse(raw); if(obj&&typeof obj==='object')return obj;}}catch(e){}
+      }
+    }
+    return {};
+  }
+  function currentOwner(){
+    const u=readUser();
+    const shown=String(document.querySelector('#signedInName,#userNameText,#userName,.user-name,.username,.user-menu-name')?.textContent||'').replace(/^\s*hello\s*,?\s*/i,'').trim();
+    const uid=String(u.uid||u.userId||u.authUid||u.firebaseUid||localStorage.getItem('azobssUid')||sessionStorage.getItem('azobssUid')||'').trim();
+    const email=String(u.email||u.authEmail||u.contactEmail||localStorage.getItem('email')||sessionStorage.getItem('email')||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||'').toLowerCase().trim();
+    const username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||localStorage.getItem('username')||sessionStorage.getItem('username')||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername')||shown||email.split('@')[0]||'').toLowerCase().trim();
+    const role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase().trim();
+    return {uid,email,username,role,permissions:u.permissions||{}};
+  }
+  function fullAdmin(){
+    const u=currentOwner();
+    return u.role==='admin'||u.username==='zedan91'||u.email==='zedan91@azobss.local'||u.email==='zedan9107@gmail.com';
+  }
+  function staffLike(){
+    const u=currentOwner();
+    return !fullAdmin() && (u.role==='semiadmin'||u.role==='staff') && (u.permissions.canManageCAD===true || u.permissions.canManageCad===true || u.permissions.canManageCADTools===true);
+  }
+  function ownerKey(){
+    const u=currentOwner();
+    return String(u.uid||u.username||u.email||'').toLowerCase();
+  }
+  function itemMine(el){
+    const key=ownerKey();
+    if(!key)return false;
+    const vals=[
+      el.dataset.ownerKey,el.dataset.createdByKey,el.dataset.staffOwnerKey,
+      el.dataset.ownerUid,el.dataset.createdByUid,el.dataset.staffUid,el.dataset.sellerUid,
+      el.dataset.ownerUsername,el.dataset.createdByUsername,el.dataset.staffUsername,el.dataset.sellerUsername,
+      el.dataset.ownerEmail,el.dataset.createdByEmail,el.dataset.staffEmail,el.dataset.sellerEmail
+    ].map(v=>String(v||'').toLowerCase()).filter(Boolean);
+    return vals.includes(key);
+  }
+  window.azApplyCadOwnerMetadata=function(item){
+    const u=currentOwner();
+    const key=String(u.uid||u.username||u.email||'unknown-owner').toLowerCase();
+    item.ownerKey=item.ownerKey||key;
+    item.createdByKey=item.createdByKey||key;
+    item.staffOwnerKey=item.staffOwnerKey||key;
+    item.ownerUid=u.uid||item.ownerUid||'';
+    item.createdByUid=u.uid||item.createdByUid||'';
+    item.staffUid=u.uid||item.staffUid||'';
+    item.sellerUid=u.uid||item.sellerUid||'';
+    item.ownerUsername=u.username||item.ownerUsername||'';
+    item.createdByUsername=u.username||item.createdByUsername||'';
+    item.staffUsername=u.username||item.staffUsername||'';
+    item.sellerUsername=u.username||item.sellerUsername||'';
+    item.ownerEmail=u.email||item.ownerEmail||'';
+    item.createdByEmail=u.email||item.createdByEmail||'';
+    item.staffEmail=u.email||item.staffEmail||'';
+    item.sellerEmail=u.email||item.sellerEmail||'';
+    item.commissionRate=70; item.ownerShare=70; item.platformShare=30;
+    item.commissionPolicy='70% owner / 30% AZOBSS';
+    return item;
+  };
+  function refreshRole(){
+    document.body.classList.toggle('az-cad-staff-role-ok',staffLike());
+    document.body.classList.toggle('az-cad-full-admin',fullAdmin());
+    document.querySelectorAll('[data-cad-owner-filter="mine"]').forEach(btn=>btn.hidden=!staffLike());
+  }
+  function filter(){
+    refreshRole();
+    document.querySelectorAll('[data-cad-item="1"],.cad-card,.cad-item,.lisp-card,.tool-card').forEach(el=>{
+      if(mineOnly){
+        el.style.display=itemMine(el)?'':'none';
+      }else if(el.style.display==='none'){
+        el.style.display='';
+      }
+    });
+  }
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-cad-owner-filter="mine"]');
+    if(!btn)return;
+    mineOnly=!mineOnly;
+    btn.classList.toggle('is-active',mineOnly);
+    filter();
+  });
+  document.addEventListener('DOMContentLoaded',()=>{refreshRole();filter();});
+  if(document.readyState!=='loading'){refreshRole();filter();}
+  window.addEventListener('storage',()=>{refreshRole();filter();});
+  window.addEventListener('focus',()=>{refreshRole();filter();});
+  setTimeout(()=>{refreshRole();filter();},800);
+  setTimeout(()=>{refreshRole();filter();},2200);
 })();
 </script>
 
