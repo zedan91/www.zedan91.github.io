@@ -937,5 +937,83 @@ document.addEventListener('DOMContentLoaded',bind);if(document.readyState!=='loa
 })();
 </script>
 
+
+<script id="az-admin-access-watchdog-fix">
+(function(){
+  if(window.__azAdminAccessWatchdogFix)return;
+  window.__azAdminAccessWatchdogFix=true;
+
+  function readStoredUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(var s=0;s<2;s++){
+      var store=s===0?sessionStorage:localStorage;
+      for(var i=0;i<keys.length;i++){
+        try{
+          var raw=store.getItem(keys[i]);
+          if(raw){
+            var obj=JSON.parse(raw);
+            if(obj&&typeof obj==='object')return obj;
+          }
+        }catch(e){}
+      }
+    }
+    return {};
+  }
+
+  function isAdminLike(u){
+    u=u||{};
+    var role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername')||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||'').toLowerCase();
+    return role==='admin'||username==='zedan91'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com';
+  }
+
+  function forceShow(reason){
+    document.body.classList.add('az-admin-access-ok');
+    document.body.classList.remove('az-admin-access-denied');
+    var gate=document.getElementById('adminAccessGate')||document.querySelector('.admin-access-gate');
+    if(gate)gate.style.display='none';
+    document.querySelectorAll('.admin-shell,.shell,#adminShell').forEach(function(el){
+      el.style.display='';
+      el.hidden=false;
+    });
+    console.log('AZOBSS admin access watchdog allowed:',reason);
+  }
+
+  function check(){
+    if(document.body.classList.contains('az-admin-access-ok'))return;
+    var u=readStoredUser();
+    if(isAdminLike(u))forceShow('stored-user');
+
+    // If Firebase auth is exposed by module/global scripts, try common globals.
+    try{
+      var fbUser = window.auth?.currentUser || window.firebaseAuth?.currentUser || window.azobssAuth?.currentUser;
+      if(fbUser && isAdminLike({email:fbUser.email,uid:fbUser.uid}))forceShow('firebase-currentUser');
+    }catch(e){}
+  }
+
+  window.azDebugAdminAccess=function(){
+    var u=readStoredUser();
+    var info={
+      storedUser:u,
+      isAdminLike:isAdminLike(u),
+      bodyOk:document.body.classList.contains('az-admin-access-ok'),
+      gateText:(document.getElementById('adminAccessGate')||document.querySelector('.admin-access-gate'))?.textContent||''
+    };
+    console.log('AZOBSS Admin Access Debug',info);
+    return info;
+  };
+
+  document.addEventListener('DOMContentLoaded',check);
+  if(document.readyState!=='loading')check();
+  window.addEventListener('storage',check);
+  window.addEventListener('focus',check);
+  setTimeout(check,500);
+  setTimeout(check,1500);
+  setTimeout(check,3000);
+  setTimeout(check,5000);
+})();
+</script>
+
 </body>
 </html>

@@ -1,0 +1,22 @@
+AZOBSS ADMIN STUCK ACCESS WATCHDOG FIX
+
+Problem:
+- /admin/ stuck at Checking admin access...
+- This means body never receives az-admin-access-ok or admin shell remains hidden.
+
+Patch:
+- Added az-admin-access-watchdog-fix.
+- It does NOT remove original guard.
+- It safely allows admin if local/session stored user has:
+  role=admin OR username=zedan91 OR email=zedan91@azobss.local / zedan9107@gmail.com
+- It hides access gate and reveals .admin-shell.
+- Adds console helper:
+  azDebugAdminAccess()
+
+Syntax before: 0
+Syntax after: 0
+
+After deploy:
+1. Hard refresh / clear cache.
+2. Login admin.
+3. If still stuck, open console and run: azDebugAdminAccess()

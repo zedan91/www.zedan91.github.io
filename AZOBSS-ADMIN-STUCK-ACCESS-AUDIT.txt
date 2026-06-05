@@ -1,0 +1,682 @@
+
+## Checking admin access
+
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email = String(user.email || '').toLowerCase();
+    if(email === ADMIN_EMAIL) return true;
+
+    const candidates = [
+      'zedan91',
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || ''
+    ].filter(Boolean).map(x => String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap = await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x = snap.data() || {};
+        const role = String(x.role || '').toLowerCase();
+        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
+        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  showDenied('Checking admin access...');
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      showDenied('Please login as admin first.');
+      return;
+    }
+
+    const ok = await isAdmin(user);
+    if(ok) showAdmin();
+    else showDenied('Access denied. Admin account required.');
+  });
+})();
+
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+document.addEventListener('click', e=>{
+  const editBtn = e.target.closest('[data-edit-commission]');
+  if(editBtn) editCommissionRecord(editBtn.getAttribute('data-edit-commission'));
+  const delBtn = e.target.closest('[data-delete-commission]');
+  if(delBtn) deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));
+});
+
+</script>
+
+
+
+<style id="az-admin-static-button-style">
+.azAdminDashboardBtn.admin-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:18px!important;
+  line-height:1!important;
+}
+body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-admin-static-button-check">
+(function(){
+  if(window.__azAdminStaticButtonCheck) return;
+  window.__azAdminStaticButtonCheck = true;
+
+  function readUser(){
+    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj) return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function isAdmin(){
+    var u = readUser();
+    var role = String(u.role || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
+    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
+    return role === 'a
+
+
+## az-admin-access-ok
+apse;font-size:13px}.mini-table th,.mini-table td{border-bottom:1px solid rgba(148,163,184,.18);padding:10px;text-align:left}.mini-table th{color:#bfdbfe}
+.login-cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:999999}
+.login-box{width:min(430px,92vw);background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:20px;padding:22px;text-align:center}
+@media(max-width:980px){.admin-shell{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.side-footer{position:static;margin-top:15px}.grid{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+@media(max-width:560px){.main{padding:14px}.grid{grid-template-columns:1fr}.nav{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
+</style>
+
+<style id="az-admin-access-guard-style">
+body:not(.az-admin-access-ok) .admin-shell{
+  display:none!important;
+}
+#azAdminAccessDenied{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:linear-gradient(180deg,#07111f,#050b14);
+  color:#fff;
+  font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;
+}
+#azAdminAccessDenied .box{
+  width:min(460px,92vw);
+  border:1px solid rgba(148,163,184,.25);
+  background:rgba(15,23,42,.92);
+  border-radius:20px;
+  padding:22px;
+  text-align:center;
+  box-shadow:0 20px 70px rgba(0,0,0,.4);
+}
+#azAdminAccessDenied h2{margin:0 0 8px;font-size:24px}
+#azAdminAccessDenied p{color:#cbd5e1}
+#azAdminAccessDenied a{
+  display:inline-flex;
+  margin-top:12px;
+  padding:11px 16px;
+  border-radius:999px;
+  background:#22c55e;
+  color:#052e16;
+  font-weight:900;
+  text-decoration:none;
+}
+body.az-admin-access-ok #azAdminAccessDenied{display:none!important}
+</style>
+<script type="module" id="az-admin-access-guard">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azAdminAccessGuard) return;
+  window.__azAdminAccessGuard = true;
+
+  const firebaseConfig = {
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+
+  function showDenied(message){
+    document.body.classList.remove('az-admin-access-ok');
+    let box = document.getElementById('azAdminAccessDenied');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'azAdminAccessDenied';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdm
+
+
+## showAdmin
+rebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+
+  function showDenied(message){
+    document.body.classList.remove('az-admin-access-ok');
+    let box = document.getElementById('azAdminAccessDenied');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'azAdminAccessDenied';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+      document.body.appendChild(box);
+    }
+    const msg = document.getElementById('azAdminAccessMessage');
+    if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+  }
+
+  function showAdmin(){
+    document.body.classList.add('az-admin-access-ok');
+    const box = document.getElementById('azAdminAccessDenied');
+    if(box) box.remove();
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email = String(user.email || '').toLowerCase();
+    if(email === ADMIN_EMAIL) return true;
+
+    const candidates = [
+      'zedan91',
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || ''
+    ].filter(Boolean).map(x => String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap = await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x = snap.data() || {};
+        const role = String(x.role || '').toLowerCase();
+        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
+        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  showDenied('Checking admin access...');
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      showDenied('Please login as admin first.');
+      return;
+    }
+
+    const ok = await isAdmin(user);
+    if(ok) showAdmin();
+    else showDenied('Access denied. Admin account required.');
+  });
+})();
+
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+document.addEventListener('click', e=>{
+  const editBtn = e.target.closest('[data-edit-commission]');
+  if(editBtn) editCommissionRecord(editBtn.getAttribute('data-edit-commission'));
+  const delBtn = e.target.closest('[data-delete-commission]');
+  if(delBtn) deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));
+});
+
+</script>
+
+
+
+<style id="az-admin-static-button-style">
+.azAdminDashboardBtn.admin-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  paddin
+
+
+## showDenied
+initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azAdminAccessGuard) return;
+  window.__azAdminAccessGuard = true;
+
+  const firebaseConfig = {
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+
+  function showDenied(message){
+    document.body.classList.remove('az-admin-access-ok');
+    let box = document.getElementById('azAdminAccessDenied');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'azAdminAccessDenied';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+      document.body.appendChild(box);
+    }
+    const msg = document.getElementById('azAdminAccessMessage');
+    if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+  }
+
+  function showAdmin(){
+    document.body.classList.add('az-admin-access-ok');
+    const box = document.getElementById('azAdminAccessDenied');
+    if(box) box.remove();
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email = String(user.email || '').toLowerCase();
+    if(email === ADMIN_EMAIL) return true;
+
+    const candidates = [
+      'zedan91',
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || ''
+    ].filter(Boolean).map(x => String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap = await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x = snap.data() || {};
+        const role = String(x.role || '').toLowerCase();
+        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
+        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  showDenied('Checking admin access...');
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      showDenied('Please login as admin first.');
+      return;
+    }
+
+    const ok = await isAdmin(user);
+    if(ok) showAdmin();
+    else showDenied('Access denied. Admin account required.');
+  });
+})();
+
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+document.addEventListener('c
+
+
+## onAuthStateChanged
+ding:20px;
+  background:linear-gradient(180deg,#07111f,#050b14);
+  color:#fff;
+  font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;
+}
+#azAdminAccessDenied .box{
+  width:min(460px,92vw);
+  border:1px solid rgba(148,163,184,.25);
+  background:rgba(15,23,42,.92);
+  border-radius:20px;
+  padding:22px;
+  text-align:center;
+  box-shadow:0 20px 70px rgba(0,0,0,.4);
+}
+#azAdminAccessDenied h2{margin:0 0 8px;font-size:24px}
+#azAdminAccessDenied p{color:#cbd5e1}
+#azAdminAccessDenied a{
+  display:inline-flex;
+  margin-top:12px;
+  padding:11px 16px;
+  border-radius:999px;
+  background:#22c55e;
+  color:#052e16;
+  font-weight:900;
+  text-decoration:none;
+}
+body.az-admin-access-ok #azAdminAccessDenied{display:none!important}
+</style>
+<script type="module" id="az-admin-access-guard">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azAdminAccessGuard) return;
+  window.__azAdminAccessGuard = true;
+
+  const firebaseConfig = {
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+
+  function showDenied(message){
+    document.body.classList.remove('az-admin-access-ok');
+    let box = document.getElementById('azAdminAccessDenied');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'azAdminAccessDenied';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+      document.body.appendChild(box);
+    }
+    const msg = document.getElementById('azAdminAccessMessage');
+    if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+  }
+
+  function showAdmin(){
+    document.body.classList.add('az-admin-access-ok');
+    const box = document.getElementById('azAdminAccessDenied');
+    if(box) box.remove();
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email = String(user.email || '').toLowerCase();
+    if(email === ADMIN_EMAIL) return true;
+
+    const candidates = [
+      'zedan91',
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || ''
+    ].filter(Boolean).map(x => String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap = await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x = snap.data() || {};
+        const role = String(x.role || '').toLowerCase();
+        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
+        const
+
+
+## function isAdmin
+alizeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+
+  function showDenied(message){
+    document.body.classList.remove('az-admin-access-ok');
+    let box = document.getElementById('azAdminAccessDenied');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'azAdminAccessDenied';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+      document.body.appendChild(box);
+    }
+    const msg = document.getElementById('azAdminAccessMessage');
+    if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+  }
+
+  function showAdmin(){
+    document.body.classList.add('az-admin-access-ok');
+    const box = document.getElementById('azAdminAccessDenied');
+    if(box) box.remove();
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email = String(user.email || '').toLowerCase();
+    if(email === ADMIN_EMAIL) return true;
+
+    const candidates = [
+      'zedan91',
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || ''
+    ].filter(Boolean).map(x => String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap = await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x = snap.data() || {};
+        const role = String(x.role || '').toLowerCase();
+        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
+        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  showDenied('Checking admin access...');
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      showDenied('Please login as admin first.');
+      return;
+    }
+
+    const ok = await isAdmin(user);
+    if(ok) showAdmin();
+    else showDenied('Access denied. Admin account required.');
+  });
+})();
+
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+document.addEventListener('click', e=>{
+  const editBtn = e.target.closest('[data-edit-commission]');
+  if(editBtn) editCommissionRecord(editBtn.getAttribute('data-edit-commission'));
+  const delBtn = e.target.closest('[data-delete-commission]');
+  if(delBtn) deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));
+});
+
+</script>
+
+
+
+<style id="az-admin-static-button-style">
+.azAdminDashboardBtn.admin-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:18px!important;
+  line-height:1!important;
+}
+body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
+  
+
+
+## ADMIN_EMAIL
+ype="module" id="az-admin-access-guard">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azAdminAccessGuard) return;
+  window.__azAdminAccessGuard = true;
+
+  const firebaseConfig = {
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
+
+  function showDenied(message){
+    document.body.classList.remove('az-admin-access-ok');
+    let box = document.getElementById('azAdminAccessDenied');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'azAdminAccessDenied';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+      document.body.appendChild(box);
+    }
+    const msg = document.getElementById('azAdminAccessMessage');
+    if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+  }
+
+  function showAdmin(){
+    document.body.classList.add('az-admin-access-ok');
+    const box = document.getElementById('azAdminAccessDenied');
+    if(box) box.remove();
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+
+    const email = String(user.email || '').toLowerCase();
+    if(email === ADMIN_EMAIL) return true;
+
+    const candidates = [
+      'zedan91',
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || ''
+    ].filter(Boolean).map(x => String(x).toLowerCase());
+
+    for(const id of candidates){
+      try{
+        const snap = await getDoc(doc(db,'users',id));
+        if(!snap.exists()) continue;
+        const x = snap.data() || {};
+        const role = String(x.role || '').toLowerCase();
+        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
+        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  showDenied('Checking admin access...');
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      showDenied('Please login as admin first.');
+      return;
+    }
+
+    const ok = await isAdmin(user);
+    if(ok) showAdmin();
+    else showDenied('Access denied. Admin account required.');
+  });
+})();
+
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', l
+
+
+## admin-shell
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AZOBSS Admin Dashboard</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+:root{--bg:#07111f;--panel:#111c2d;--panel2:#0d1728;--border:rgba(148,163,184,.25);--text:#f8fafc;--muted:#9fb3d0;--green:#22c55e;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top left,rgba(34,197,94,.12),transparent 34%),linear-gradient(180deg,#07111f,#050b14);color:var(--text);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
+a{color:inherit;text-decoration:none}
+.admin-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;background:rgba(5,10,18,.92);border-right:1px solid var(--border);padding:18px 14px;backdrop-filter:blur(16px)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:950;font-size:22px;margin:4px 8px 22px}
+.brand .logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#22c55e);display:grid;place-items:center}
+.nav{display:grid;gap:7px}
+.nav button,.home-link{border:1px solid transparent;background:transparent;color:#dbeafe;text-align:left;border-radius:14px;padding:12px 13px;font-weight:850;cursor:pointer;font-size:14px;display:flex;gap:10px;align-items:center}
+.nav button:hover,.home-link:hover{background:rgba(30,41,59,.75);border-color:var(--border)}
+.nav button.active{background:linear-gradient(135deg,rgba(34,197,94,.24),rgba(59,130,246,.16));border-color:rgba(34,197,94,.55);color:#fff}
+.side-footer{position:absolute;bottom:16px;left:14px;right:14px;color:var(--muted);font-size:12px}
+.main{padding:22px;min-width:0}
+.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}
+.title h1{margin:0;font-size:30px;line-height:1.1}.title p{margin:6px 0 0;color:var(--muted)}
+.admin-pill{display:flex;align-items:center;gap:9px;background:rgba(15,23,42,.85);border:1px solid var(--border);border-radius:999px;padding:9px 12px;font-weight:850;color:#dbeafe}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.card{background:rgba(15,23,42,.78);border:1px solid var(--border);border-radius:18px;padding:15px;box-shadow:0 18px 45px rgba(0,0,0,.24)}
+.stat-label{font-size:12px;color:var(--muted);font-weight:850;text-transform:uppercase;letter-spacing:.04em}.stat-value{font-size:28px;font-weight:950;margin-top:6px;color:#5cff9d}
+.section{display:none}.section.active{display:block}
+.section h2{margin:0 0 12px;font-size:22px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
+input,select,textarea{background:#050b16;border:1px solid rgba(148,163,184,.28);color:#fff;border-radius:12px;padding:11px 12px;outline:none}
+input,select{hei
+
+
+Syntax before: 0
+[]
+
+Syntax after: 0
+[]
