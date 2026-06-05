@@ -1,4 +1,25 @@
 
+<style id="az-role-dashboard-buttons-visibility-fix">
+.azAdminDashboardBtn.admin-dashboard-btn,
+.azAdminDashboardBtn{
+  display:none!important;
+}
+.azStaffDashboardBtn.staff-dashboard-btn,
+.azStaffDashboardBtn{
+  display:none!important;
+}
+body.az-role-is-admin .azAdminDashboardBtn.admin-dashboard-btn,
+body.az-role-is-admin .azAdminDashboardBtn{
+  display:inline-flex!important;
+}
+body.az-role-is-admin .azStaffDashboardBtn.staff-dashboard-btn,
+body.az-role-is-admin .azStaffDashboardBtn,
+body.az-role-is-stafflike .azStaffDashboardBtn.staff-dashboard-btn,
+body.az-role-is-stafflike .azStaffDashboardBtn{
+  display:inline-flex!important;
+}
+</style>
+
 <style id="az-staff-dashboard-button-style">
 .azStaffDashboardBtn.staff-dashboard-btn{
   display:none!important;
@@ -1360,5 +1381,70 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(cleanHelloText,500);
   setTimeout(cleanHelloText,1500);
   setTimeout(cleanHelloText,3000);
+})();
+</script>
+
+<script id="az-role-dashboard-buttons-visibility-fix">
+(function(){
+  if(window.__azRoleDashboardButtonsVisibilityFix)return;
+  window.__azRoleDashboardButtonsVisibilityFix=true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(var s=0;s<2;s++){
+      var store=s===0?sessionStorage:localStorage;
+      for(var i=0;i<keys.length;i++){
+        try{
+          var raw=store.getItem(keys[i]);
+          if(raw){
+            var obj=JSON.parse(raw);
+            if(obj && typeof obj==='object') return obj;
+          }
+        }catch(e){}
+      }
+    }
+    return {};
+  }
+
+  function roleInfo(){
+    var u=readUser();
+    var role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
+
+    var isAdmin = role==='admin' || username==='zedan91' || email==='zedan91@azobss.local' || email==='zedan9107@gmail.com';
+    var isStaffLike = !isAdmin && (role==='semiadmin' || role==='semi-admin' || role==='staff');
+
+    return {isAdmin:isAdmin,isStaffLike:isStaffLike};
+  }
+
+  function apply(){
+    var r=roleInfo();
+    if(document.body){
+      document.body.classList.toggle('az-role-is-admin', !!r.isAdmin);
+      document.body.classList.toggle('az-role-is-stafflike', !!r.isStaffLike);
+    }
+
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn').forEach(function(btn){
+      btn.hidden = !r.isAdmin;
+      btn.style.display = r.isAdmin ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', r.isAdmin ? 'false' : 'true');
+    });
+
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn').forEach(function(btn){
+      var show = r.isAdmin || r.isStaffLike;
+      btn.hidden = !show;
+      btn.style.display = show ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', show ? 'false' : 'true');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',apply);
+  if(document.readyState!=='loading')apply();
+  window.addEventListener('focus',apply);
+  window.addEventListener('storage',apply);
+  setTimeout(apply,400);
+  setTimeout(apply,1200);
+  setTimeout(apply,3000);
 })();
 </script>
