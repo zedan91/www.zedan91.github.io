@@ -1,0 +1,68 @@
+
+## Firestore writes before
+          await updateDoc(doc(db, SOFTWARE_COLLECTION, existing.docId), azSoftwarePayloadWithOwner({...item, updatedAt: serverTimestamp(), updatedBy: 'json-import'}));
+---
+          await addDoc(collection(db, SOFTWARE_COLLECTION), azSoftwarePayloadWithOwner({...item, createdAt: serverTimestamp(), createdBy: 'json-import'}));
+---
+        await updateDoc(doc(db, SOFTWARE_COLLECTION, item.docId), azSoftwarePayloadWithOwner({imageUrl: finalLogo, logoSource: link, updatedAt: serverTimestamp(), updatedBy: 'logo-regen'}));
+---
+        await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), azSoftwarePayloadWithOwner(azSoftwarePayloadWithOwner({...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'}));
+---
+          await updateDoc(doc(db, SOFTWARE_COLLECTION, existingDynamic.docId), azSoftwarePayloadWithOwner(azSoftwarePayloadWithOwner({...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'}));
+---
+          await addDoc(collection(db, SOFTWARE_COLLECTION), azSoftwarePayloadWithOwner({...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91', replacesProductId: oldEditProductId}));
+---
+        await addDoc(collection(db, SOFTWARE_COLLECTION), azSoftwarePayloadWithOwner({...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91'});
+---
+emote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
+---
+      await setDoc(doc(db, COLLECTION, currentUid), {
+---
+      await addDoc(collection(db,'supportMessages'),{
+---
+        await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});
+---
+      const ref=await addDoc(collection(db,'notifications'),payload);
+
+
+## Submit branch replaced
+YES
+
+
+## Writes after patch
+          await updateDoc(doc(db, SOFTWARE_COLLECTION, existing.docId), azSoftwarePayloadWithOwner({...item, updatedAt: serverTimestamp(), updatedBy: 'json-import'}));
+---
+          await addDoc(collection(db, SOFTWARE_COLLECTION), azSoftwarePayloadWithOwner({...item, createdAt: serverTimestamp(), createdBy: 'json-import'}));
+---
+  async function azSaveSoftwareItemToFirestore(item, options = {}){
+---
+      await updateDoc(doc(db, SOFTWARE_COLLECTION, options.docId), updatePayload);
+---
+    const ref = await addDoc(collection(db, SOFTWARE_COLLECTION), createPayload);
+---
+        await updateDoc(doc(db, SOFTWARE_COLLECTION, item.docId), azSoftwarePayloadWithOwner({imageUrl: finalLogo, logoSource: link, updatedAt: serverTimestamp(), updatedBy: 'logo-regen'}));
+---
+        await azSaveSoftwareItemToFirestore(item, {docId: editingSoftwareDocId});
+---
+          await azSaveSoftwareItemToFirestore(item, {docId: existingDynamic.docId});
+---
+          await azSaveSoftwareItemToFirestore(item, {replacesProductId: oldEditProductId});
+---
+        await azSaveSoftwareItemToFirestore(item);
+---
+emote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
+---
+      await setDoc(doc(db, COLLECTION, currentUid), {
+---
+      await addDoc(collection(db,'supportMessages'),{
+---
+        await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});
+---
+      const ref=await addDoc(collection(db,'notifications'),payload);
+
+
+## Patch counters
+owner function replaced: 1
+force function replaced: 1
+payload function replaced: 1
+syntax errors: 1

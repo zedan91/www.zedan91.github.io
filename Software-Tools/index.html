@@ -3818,13 +3818,35 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   }
 
   function azCurrentSoftwareOwner(){
-    const u=azReadSoftwareCurrentUser();
-    const shown=String(document.querySelector('#userNameText,#userName,.user-name,.username,.user-menu-name')?.textContent||'').replace(/^\s*hello\s*,?\s*/i,'').trim();
-    const uid=String(u.uid||u.userId||u.authUid||u.firebaseUid||localStorage.getItem('azobssUid')||sessionStorage.getItem('azobssUid')||'').trim();
-    const username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||localStorage.getItem('username')||sessionStorage.getItem('username')||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername')||shown||'').toLowerCase().trim();
-    const email=String(u.email||u.authEmail||u.contactEmail||localStorage.getItem('email')||sessionStorage.getItem('email')||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||'').toLowerCase().trim();
-    const role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase().trim();
-    return {uid,username,email,role,permissions:u.permissions||{}};
+    const saved = azReadSoftwareCurrentUser();
+    const authUser = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+    const shown = String(document.querySelector('#userNameText,#userName,.user-name,.username,.user-menu-name')?.textContent || '').replace(/^\s*hello\s*,?\s*/i,'').trim();
+
+    const uid = String(
+      authUser?.uid ||
+      saved.uid || saved.userId || saved.authUid || saved.firebaseUid ||
+      localStorage.getItem('azobssUid') || sessionStorage.getItem('azobssUid') || ''
+    ).trim();
+
+    const email = String(
+      authUser?.email ||
+      saved.email || saved.authEmail || saved.contactEmail ||
+      localStorage.getItem('email') || sessionStorage.getItem('email') ||
+      localStorage.getItem('azobssEmail') || sessionStorage.getItem('azobssEmail') || ''
+    ).toLowerCase().trim();
+
+    const username = String(
+      saved.usernameKey || saved.username || saved.id || saved.name || saved.displayName ||
+      localStorage.getItem('username') || sessionStorage.getItem('username') ||
+      localStorage.getItem('azobssUsername') || sessionStorage.getItem('azobssUsername') ||
+      shown || email.split('@')[0] || ''
+    ).toLowerCase().trim();
+
+    const role = String(
+      saved.role || localStorage.getItem('azobssRole') || sessionStorage.getItem('azobssRole') || ''
+    ).toLowerCase().trim();
+
+    return {uid, username, email, role, permissions: saved.permissions || {}};
   }
 
   function azIsFullSoftwareAdmin(){
@@ -3883,25 +3905,26 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     item.createdByKey = key;
     item.staffOwnerKey = key;
 
-    item.ownerUid = u.uid || item.ownerUid || '';
-    item.createdByUid = u.uid || item.createdByUid || '';
-    item.staffUid = u.uid || item.staffUid || '';
-    item.sellerUid = u.uid || item.sellerUid || '';
+    item.ownerUid = u.uid || '';
+    item.createdByUid = u.uid || '';
+    item.staffUid = u.uid || '';
+    item.sellerUid = u.uid || '';
 
-    item.ownerUsername = u.username || item.ownerUsername || '';
-    item.createdByUsername = u.username || item.createdByUsername || '';
-    item.staffUsername = u.username || item.staffUsername || '';
-    item.sellerUsername = u.username || item.sellerUsername || '';
+    item.ownerUsername = u.username || '';
+    item.createdByUsername = u.username || '';
+    item.staffUsername = u.username || '';
+    item.sellerUsername = u.username || '';
 
-    item.ownerEmail = u.email || item.ownerEmail || '';
-    item.createdByEmail = u.email || item.createdByEmail || '';
-    item.staffEmail = u.email || item.staffEmail || '';
-    item.sellerEmail = u.email || item.sellerEmail || '';
+    item.ownerEmail = u.email || '';
+    item.createdByEmail = u.email || '';
+    item.staffEmail = u.email || '';
+    item.sellerEmail = u.email || '';
 
     item.commissionRate = 70;
     item.ownerShare = 70;
     item.platformShare = 30;
     item.commissionPolicy = '70% owner / 30% AZOBSS';
+
     item.updatedByUid = u.uid || '';
     item.updatedByUsername = u.username || '';
     item.updatedByEmail = u.email || '';
@@ -3913,39 +3936,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
 
   function azSoftwarePayloadWithOwner(payload){
     try{
-      const base = azForceSoftwareOwnerMetadata(azApplySoftwareCommissionOwner({...payload}));
-      // Guarantee these fields are direct top-level fields in the exact object sent to Firestore.
-      const u = azCurrentSoftwareOwner();
-      const key = String(u.uid || u.username || u.email || base.ownerKey || 'unknown-owner').toLowerCase();
-
-      base.ownerKey = key;
-      base.createdByKey = key;
-      base.staffOwnerKey = key;
-
-      if(u.uid){
-        base.ownerUid = u.uid;
-        base.createdByUid = u.uid;
-        base.staffUid = u.uid;
-        base.sellerUid = u.uid;
-      }
-      if(u.username){
-        base.ownerUsername = u.username;
-        base.createdByUsername = u.username;
-        base.staffUsername = u.username;
-        base.sellerUsername = u.username;
-      }
-      if(u.email){
-        base.ownerEmail = u.email;
-        base.createdByEmail = u.email;
-        base.staffEmail = u.email;
-        base.sellerEmail = u.email;
-      }
-
-      base.commissionRate = 70;
-      base.ownerShare = 70;
-      base.platformShare = 30;
-      base.commissionPolicy = '70% owner / 30% AZOBSS';
-      return base;
+      return azForceSoftwareOwnerMetadata(azApplySoftwareCommissionOwner({...payload}));
     }catch(e){
       return payload;
     }
@@ -4356,6 +4347,33 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(paymentLinkInput) paymentLinkInput.required = false;
     if(stripeLinkInput) stripeLinkInput.required = false;
   }
+
+  async function azSaveSoftwareItemToFirestore(item, options = {}){
+    const updatePayload = azSoftwarePayloadWithOwner({
+      ...item,
+      updatedAt: serverTimestamp(),
+      updatedBy: item.updatedByUsername || item.ownerUsername || item.ownerEmail || 'owner'
+    });
+
+    console.log('AZOBSS FINAL SOFTWARE PAYLOAD TO FIRESTORE', updatePayload);
+
+    if(options.docId){
+      await updateDoc(doc(db, SOFTWARE_COLLECTION, options.docId), updatePayload);
+      return {mode:'update', docId:options.docId, payload:updatePayload};
+    }
+
+    const createPayload = azSoftwarePayloadWithOwner({
+      ...item,
+      createdAt: serverTimestamp(),
+      createdBy: item.createdByUsername || item.ownerUsername || item.ownerEmail || 'owner',
+      ...(options.replacesProductId ? {replacesProductId: options.replacesProductId} : {})
+    });
+
+    console.log('AZOBSS FINAL SOFTWARE CREATE PAYLOAD TO FIRESTORE', createPayload);
+    const ref = await addDoc(collection(db, SOFTWARE_COLLECTION), createPayload);
+    return {mode:'create', docId:ref.id, payload:createPayload};
+  }
+
   function openModal(editItem = null){
     form?.reset();
     const item = editItem ? normalizeItem(editItem) : null;
@@ -4665,13 +4683,13 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const oldEditProductId = editingSoftwareProductId ? String(editingSoftwareProductId) : '';
     try{
       if(editingSoftwareDocId){
-        await updateDoc(doc(db, SOFTWARE_COLLECTION, editingSoftwareDocId), azSoftwarePayloadWithOwner({...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'}));
+        await azSaveSoftwareItemToFirestore(item, {docId: editingSoftwareDocId});
       }else if(oldEditProductId){
         const existingDynamic = softwareDynamicItems.find(x => String(x.productId || x.id) === oldEditProductId);
         if(existingDynamic?.docId){
-          await updateDoc(doc(db, SOFTWARE_COLLECTION, existingDynamic.docId), azSoftwarePayloadWithOwner({...item, updatedAt: serverTimestamp(), updatedBy: item.updatedByUsername || item.ownerUsername || 'zedan91'}));
+          await azSaveSoftwareItemToFirestore(item, {docId: existingDynamic.docId});
         }else{
-          await addDoc(collection(db, SOFTWARE_COLLECTION), azSoftwarePayloadWithOwner({...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91', replacesProductId: oldEditProductId}));
+          await azSaveSoftwareItemToFirestore(item, {replacesProductId: oldEditProductId});
         }
         const deleted = getDeletedStaticIds();
         deleted.add(oldEditProductId);
@@ -4685,7 +4703,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         });
         saveDeletedStaticIds(deleted);
       }else{
-        await addDoc(collection(db, SOFTWARE_COLLECTION), azSoftwarePayloadWithOwner({...item, createdAt: serverTimestamp(), createdBy: item.createdByUsername || item.ownerUsername || 'zedan91'}));
+        await azSaveSoftwareItemToFirestore(item);
       }
     }catch(err){
       const saved = loadLocal();
@@ -7495,6 +7513,18 @@ window.azDebugMySoftwareOwner=function(){
     const items=(typeof softwareDynamicItems!=='undefined'?softwareDynamicItems:[]).map(x=>({name:x.name,productId:x.productId,ownerKey:x.ownerKey,ownerUid:x.ownerUid,ownerUsername:x.ownerUsername,ownerEmail:x.ownerEmail,createdByKey:x.createdByKey,createdByUid:x.createdByUid,createdByUsername:x.createdByUsername,createdByEmail:x.createdByEmail,mine:(typeof azIsOwnSoftwareItemStrict==='function')?azIsOwnSoftwareItemStrict(x):false}));
     console.table(items); return {owner,items};
   }catch(e){console.error(e);return null;}
+};
+</script>
+
+
+<script id="az-software-owner-runtime-debug">
+window.azDebugSoftwareOwnerRuntime = function(){
+  try{
+    const owner = (typeof azCurrentSoftwareOwner === 'function') ? azCurrentSoftwareOwner() : {};
+    const authUser = (typeof auth !== 'undefined' && auth && auth.currentUser) ? {uid:auth.currentUser.uid,email:auth.currentUser.email} : null;
+    console.log('AZOBSS SOFTWARE OWNER RUNTIME', {owner, authUser});
+    return {owner, authUser};
+  }catch(e){ console.error(e); return null; }
 };
 </script>
 
