@@ -803,7 +803,7 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
     </section>
 
     <section id="online" class="section">
-      <h2>🟢 Online Logged-In Users <small style="font-size:12px;color:#94a3b8">(active &lt; 5 min)</small></h2>
+      <h2>🟢 Online Logged-In Users <small style="font-size:12px;color:#94a3b8">(same as PA/BM)</small></h2>
       <div class="toolbar"><button class="btn" id="refreshOnline">Refresh Online Users</button></div>
       <div id="onlineList" class="list"></div>
     </section>
@@ -1096,63 +1096,9 @@ async function loadUsers(){
   $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
 }
 
-const AZ_ONLINE_TIMEOUT_MS = 5 * 60 * 1000;
 
-function azToMs(v){
-  if(!v) return 0;
-  if(typeof v === 'number') return v;
-  if(v.seconds) return v.seconds * 1000;
-  const n = Number(v);
-  if(!Number.isNaN(n) && n > 0) return n;
-  const d = Date.parse(v);
-  return Number.isNaN(d) ? 0 : d;
-}
-function azPresenceLastSeenMs(x){
-  return azToMs(x.lastSeenMs || x.lastSeenAtMs || x.seenAtMs || x.updatedAtMs || x.timestampMs || x.lastSeen || x.seenAt || x.updatedAt || x.timestamp || x.createdAt);
-}
-function azIsActuallyOnline(x){
-  const ms = azPresenceLastSeenMs(x);
-  return x.online === true && ms > 0 && (Date.now() - ms) <= AZ_ONLINE_TIMEOUT_MS;
-}
-function azPresenceUser(x){
-  return x.username || x.usernameKey || x.name || x.displayName || x.email || x.uid || 'Unknown';
-}
-function azPresenceEmail(x){
-  return x.email || x.userEmail || x.authEmail || '';
-}
-function azPresenceSeenText(x){
-  const ms = azPresenceLastSeenMs(x);
-  return ms ? new Date(ms).toLocaleString() : '-';
-}
 
-function loadOnline(){ return loadOnlineUsers(); }
-async function loadOnlineUsers(){
-  const box = $('#onlineUsersList') || $('#onlineList') || $('#adminOnlineUsersList');
-  if(!box) return;
-  const snap = await safeGet(query(collection(db,'onlineUsers'), limit(100)));
-  const rows = [];
-  snap?.forEach(d=>{
-    const x = {docId:d.id,...d.data()};
-    if(azIsActuallyOnline(x)) rows.push(x);
-  });
-  rows.sort((a,b)=>azPresenceLastSeenMs(b)-azPresenceLastSeenMs(a));
-  box.innerHTML = rows.map(x=>`<div class="az-admin-mini-record">
-    <span class="az-admin-mini-label az-act-login">🟢 Online</span>
-    <div class="az-admin-mini-main">
-      <div class="az-admin-mini-title">${esc(azPresenceUser(x))}</div>
-      <div class="az-admin-mini-sub">${esc(azPresenceEmail(x))} • Status: online</div>
-    </div>
-    <div class="az-admin-mini-time">${esc(azPresenceSeenText(x))}</div>
-  </div>`).join('') || '<div class="az-admin-mini-record"><div class="az-admin-mini-main"><div class="az-admin-mini-title">No users online now.</div><div class="az-admin-mini-sub">Online timeout: 5 minutes.</div></div></div>';
-}
-async function loadActivity(){
-  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
-  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
-  const lr=[]; logins?.forEach(d=>{const x=d.data();lr.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • Phone: ${esc(x.phone||'-')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
-  const gr=[]; guests?.forEach(d=>{const x=d.data();gr.push(item('Guest',`IP: ${esc(x.ipAddress||'-')} • Page: ${esc(x.page||'/')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
-  $('#loginHistoryList').innerHTML=lr.join('')||'<div class="item">No login history.</div>';
-  $('#guestHistoryList').innerHTML=gr.join('')||'<div class="item">No guest history.</div>';
-}
+
 async function loadSupport(){
   const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
   const rows=[];
@@ -1486,6 +1432,51 @@ function renderAdminActivity(){
   if($('#activityPrevBtn')) $('#activityPrevBtn').disabled = adminActivityPage <= 1;
   if($('#activityNextBtn')) $('#activityNextBtn').disabled = adminActivityPage >= totalPages;
 }
+
+const AZ_ADMIN_ONLINE_COLLECTION = 'onlineUsers';
+const AZ_ADMIN_ONLINE_MAX_IDLE_MS = 10 * 60 * 1000;
+function azAdminToMs(v){
+  if(!v)return 0;
+  if(typeof v==='number')return v;
+  if(v.seconds)return v.seconds*1000;
+  const n=Number(v); if(!Number.isNaN(n)&&n>0)return n;
+  const d=Date.parse(v); return Number.isNaN(d)?0:d;
+}
+function azAdminOnlineSeenMs(x){
+  return azAdminToMs(x.lastSeenMs||x.lastSeenAtMs||x.seenAtMs||x.updatedAtMs||x.timestampMs||x.lastActiveMs||x.lastSeen||x.seenAt||x.updatedAt||x.timestamp||x.createdAt);
+}
+function azAdminOnlineIsActive(x){
+  const status=String(x.status||x.state||'').toLowerCase();
+  const flag=x.online===true||x.isOnline===true||status==='online'||status==='active';
+  if(!flag)return false;
+  const ms=azAdminOnlineSeenMs(x);
+  if(ms && (Date.now()-ms)>AZ_ADMIN_ONLINE_MAX_IDLE_MS)return false;
+  return true;
+}
+function azAdminOnlineName(x){return x.username||x.usernameKey||x.name||x.displayName||x.email||x.userEmail||x.uid||'Unknown';}
+function azAdminOnlineEmail(x){return x.email||x.userEmail||x.authEmail||'';}
+function azAdminOnlineSeenText(x){const ms=azAdminOnlineSeenMs(x);return ms?new Date(ms).toLocaleString():'-';}
+async function loadOnlineUsers(){
+  const box=$('#onlineUsersList')||$('#onlineList')||$('#adminOnlineUsersList');
+  if(!box)return;
+  const rows=[];
+  try{
+    const snap=await safeGet(query(collection(db,AZ_ADMIN_ONLINE_COLLECTION),limit(100)));
+    snap?.forEach(d=>{const x={docId:d.id,...d.data()}; if(azAdminOnlineIsActive(x))rows.push(x);});
+  }catch(e){console.warn('online users load failed',e);}
+  rows.sort((a,b)=>azAdminOnlineSeenMs(b)-azAdminOnlineSeenMs(a));
+  box.classList.add('az-admin-mini-records');
+  box.innerHTML=rows.map(x=>`<div class="az-admin-mini-record">
+    <span class="az-admin-mini-label az-act-login">🟢 Online</span>
+    <div class="az-admin-mini-main">
+      <div class="az-admin-mini-title">${esc(azAdminOnlineName(x))}</div>
+      <div class="az-admin-mini-sub">${esc(azAdminOnlineEmail(x))} • Status: online</div>
+    </div>
+    <div class="az-admin-mini-time">${esc(azAdminOnlineSeenText(x))}</div>
+  </div>`).join('')||'<div class="az-admin-mini-record"><div class="az-admin-mini-main"><div class="az-admin-mini-title">No users online now.</div><div class="az-admin-mini-sub">Mengikut logic PA/BM + anti stale.</div></div></div>';
+}
+function loadOnline(){return loadOnlineUsers();}
+
 async function loadAdminActivity(){
   const collections = [
     ['loginHistory','login'],
