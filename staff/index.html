@@ -73,11 +73,11 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 <div class="cover"><div class="box"><h2>🔐 Staff Only</h2><p id="accessMsg">Checking access...</p><a class="btn green" href="/">Back Home</a></div></div>
 <div class="shell">
 <aside class="side"><div class="brand">🧑‍💼 AZOBSS Staff</div><nav class="nav">
-<button data-tab="overview" class="active">📊 Overview</button><button data-tab="software">💻 Software</button><button data-tab="cad">📐 CAD Tools</button><button data-tab="commission">💸 Commission</button><button data-tab="sales">💳 Sales View</button><a href="/">🏠 Back Home</a>
+<button data-tab="overview" class="active">📊 Overview</button><button data-tab="software">💻 Software</button><button data-tab="cad">📐 CAD Tools</button><button data-tab="sales">💳 Sales View</button><a href="/">🏠 Back Home</a>
 </nav></aside>
 <main class="main">
-<h1>Staff Dashboard</h1><p class="muted">Semi-admin boleh urus software, CAD tools dan komisen ikut permission.</p>
-<section id="overview" class="section active">
+<h1>Staff Dashboard</h1><p class="muted">Semi-admin/staff boleh lihat ringkasan dan sales sendiri. Komisen hanya admin yang urus.</p>
+<section id="overview" class="section active"><div class="card"><b>🔒 Komisen hanya boleh diedit oleh admin.</b><div class="muted">Staff/semiAdmin hanya boleh lihat sales/komisen sendiri jika diberi permission.</div></div>
 <div class="card" id="azStaffCommissionPolicyBox">
   <h2>📢 Commission Policy 70/30</h2>
   <div class="muted">
@@ -101,7 +101,6 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 </div><div class="card"><h2>Permission</h2><pre id="permBox"></pre></div></section>
 <section id="software" class="section"><h2>💻 Software Manager</h2><div class="card"><div class="toolbar"><input id="swTitle" placeholder="Software title"><input id="swPrice" type="number" placeholder="RM"><select id="swType"><option>free</option><option>premium</option><option>affiliate</option></select></div><input id="swUrl" placeholder="URL" style="width:100%"><textarea id="swDesc" placeholder="Description"></textarea><button class="btn green" id="submitSw">Submit Software</button></div><div class="card"><h2>Latest</h2><div id="swList" class="list"></div></div></section>
 <section id="cad" class="section"><h2>📐 CAD Tools Manager</h2><div class="card"><div class="toolbar"><input id="cadTitle" placeholder="CAD/LISP title"><input id="cadPrice" type="number" placeholder="RM"><select id="cadType"><option>lisp</option><option>vlx</option><option>plugin</option><option>template</option></select></div><input id="cadUrl" placeholder="URL" style="width:100%"><textarea id="cadDesc" placeholder="Description"></textarea><button class="btn green" id="submitCad">Submit CAD</button></div><div class="card"><h2>Latest</h2><div id="cadList" class="list"></div></div></section>
-<section id="commission" class="section"><h2>💸 Commission Manager</h2><div class="card"><div class="toolbar"><input id="comUser" placeholder="Username"><input id="comProduct" placeholder="Product"><input id="comAmount" type="number" placeholder="RM"><select id="comStatus"><option>pending</option><option>approved</option><option>paid</option></select></div><textarea id="comNote" placeholder="Note"></textarea><button class="btn green" id="submitCom">Save Commission</button></div><div class="card"><h2>Latest</h2><div id="comList" class="list"></div></div></section>
 <section id="sales" class="section"><h2>💳 Sales View</h2><button class="btn" id="refreshSales">Refresh</button><div id="salesList" class="list"></div></section>
 </main></div>
 <script type="module">
@@ -184,8 +183,8 @@ async function sales(){
  });
  $('#salesList').innerHTML=rows.join('')||'<div class="item">No sales for your products.</div>';
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='commission')loadList('commissionRecords','#comList');if(b.dataset.tab==='sales')sales();}});
-$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#submitCom').onclick=submitCom;$('#refreshSales').onclick=sales;
+document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();}});
+$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;
 onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.');profile=await getProfile(u);if(!profile)return deny('User profile not found.');perms=profile.permissions||{};const role=String(profile.role||'').toLowerCase();if(!(role==='admin'||role==='semiadmin'||role==='staff'||isAdmin(profile)))return deny('Staff role required.');allow();overview();});
 </script>
 <script id="az-remove-hello-label-fix">
