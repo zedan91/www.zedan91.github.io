@@ -1,0 +1,20 @@
+AZOBSS ADMIN STUCK DEEP FIX
+
+Audit focus:
+- Checking admin access gate
+- body az-admin-access-ok class
+- admin-shell visibility
+- isAdmin guard
+
+Fix:
+- Added early unblock script immediately after body open.
+- Added CSS reveal rule for .admin-shell/#adminShell/.shell/main when body has az-admin-access-ok.
+- Patched isAdmin() directly if found:
+  email zedan91@azobss.local / zedan9107@gmail.com
+  or stored role admin / username zedan91.
+- Adds console helpers:
+  azDebugAdminAccess()
+  azForceAdminUnblock()
+
+Syntax before: 0
+Syntax after: 0
