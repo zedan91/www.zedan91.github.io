@@ -330,7 +330,7 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
 .market-search-row{display:none!important;} /* dashboard pages do not need Home search row */
 </style>
 
-</head>
+<style id="az-staff-role-ui-fix">.staff-role-card{min-width:320px!important;max-width:420px!important;padding:18px!important}.staff-role-badges{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.staff-role-badge{padding:6px 10px;border-radius:999px;background:#102033;border:1px solid #22c55e;color:#d1fae5;font-weight:700}.staff-role-actions{display:flex;gap:8px;margin-top:12px}</style></head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -635,7 +635,7 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
         <div class="toolbar">
           <label><input type="checkbox" id="permSoftware"> Manage Software</label>
           <label><input type="checkbox" id="permCAD"> Manage CAD</label>
-          <label><input type="checkbox" id="permCommission"> Manage Commission</label>
+          <label><input type="checkbox" id="permCommission"> </label>
           <label><input type="checkbox" id="permPayments"> View Payments</label>
           <label><input type="checkbox" id="permApprove"> Approve Payment</label>
         </div>
@@ -1112,5 +1112,19 @@ onAuthStateChanged(auth,async user=>{
 })();
 </script>
 
+
+<script id="az-staff-role-enhancer">
+document.addEventListener('DOMContentLoaded',function(){
+setTimeout(function(){
+document.querySelectorAll('.item,.card').forEach(function(card){
+const t=card.textContent||'';
+if(!t.includes('Role:')) return;
+if(card.querySelector('.staff-role-actions')) return;
+card.classList.add('staff-role-card');
+card.innerHTML += '<div class="staff-role-actions"><button class="editStaffRoleBtn">✏️ Edit</button><button class="resetStaffRoleBtn">🗑 Reset Role</button></div>';
+});
+},800);
+});
+</script>
 </body>
 </html>
