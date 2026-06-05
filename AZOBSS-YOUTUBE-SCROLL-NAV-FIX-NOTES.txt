@@ -1,1 +1,0 @@
-Fixed navbar scroll behavior: YouTube-style fixed topbar, no shrink/scale on scroll, nav buttons keep size and scroll horizontally. No Firebase Rules update required.
