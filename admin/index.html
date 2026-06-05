@@ -933,14 +933,63 @@ async function loadPurchases(){
 async function loadStaffRoles(){
   const snap = await safeGet(query(collection(db,'users'),limit(100)));
   const rows = [];
+  const permList = [
+    ['canManageSoftware','💻','Software'],
+    ['canManageCAD','📐','CAD'],
+    ['canViewPayments','💳','View Payments'],
+    ['canApprovePayment','✅','Approve Payment'],
+    ['canEditUsers','👥','Edit Users']
+  ];
+  function roleLabel(r){
+    r=String(r||'user').toLowerCase();
+    if(r==='admin')return 'Admin';
+    if(r==='semiadmin'||r==='semi-admin')return 'Semi Admin';
+    if(r==='staff')return 'Staff';
+    return 'User';
+  }
+  function badgeHtml(perms){
+    perms=perms||{};
+    return '<div class="staff-role-badges">'+permList.map(([key,icon,label])=>{
+      const on=perms[key]===true;
+      return `<span class="staff-role-badge ${on?'':'off'}">${icon} ${on?'✅':'❌'} ${label}</span>`;
+    }).join('')+'</div>';
+  }
   snap?.forEach(d=>{
     const x=d.data()||{};
-    const role=String(x.role||'member');
-    if(!['admin','semiAdmin','semiadmin','staff'].includes(role)) return;
-    rows.push(item(esc(d.id), `Role: ${esc(role)} • Permissions: <pre>${esc(JSON.stringify(x.permissions||{},null,2))}</pre>`));
+    const role=String(x.role||'member').toLowerCase();
+    if(!['admin','semiadmin','semi-admin','staff'].includes(role) && !x.permissions) return;
+    rows.push(`<div class="staff-role-card" data-staff-username="${esc(d.id)}">
+      <div class="staff-role-name">👤 ${esc(d.id)}</div>
+      <div class="staff-role-meta">Role: <b>${esc(roleLabel(role))}</b></div>
+      ${badgeHtml(x.permissions||{})}
+      <div class="staff-role-actions">
+        <button class="staff-role-edit" data-staff-edit="${esc(d.id)}">✏️ Edit</button>
+        <button class="staff-role-reset" data-staff-reset="${esc(d.id)}">↩️ Reset User</button>
+      </div>
+    </div>`);
   });
-  $('#staffRolesList').innerHTML=rows.join('')||'<div class="item">No staff users found.</div>';
+  $('#staffRolesList').classList.add('staff-role-list');
+  $('#staffRolesList').innerHTML=rows.join('')||'<div class="staff-role-card">No staff users found.</div>';
 }
+
+async function resetStaffRoleToUser(username){
+  if(!confirm('Reset role '+username+' kepada user biasa?')) return;
+  await updateDoc(doc(db,'users',username),{role:'user',permissions:{}});
+  await loadStaffRoles();
+}
+function fillStaffRoleForm(username){
+  const card=document.querySelector(`[data-staff-username="${CSS.escape(username)}"]`);
+  const input=$('#staffUsername');
+  if(input) input.value=username;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.addEventListener('click',e=>{
+  const edit=e.target.closest('[data-staff-edit]');
+  if(edit) fillStaffRoleForm(edit.getAttribute('data-staff-edit'));
+  const reset=e.target.closest('[data-staff-reset]');
+  if(reset) resetStaffRoleToUser(reset.getAttribute('data-staff-reset'));
+});
+
 async function saveStaffRole(){
   const username=String($('#staffUsername')?.value||'').trim().toLowerCase();
   if(!username) return alert('Enter username.');
