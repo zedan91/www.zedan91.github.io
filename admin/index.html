@@ -288,8 +288,103 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 })();
 </script>
 
+
+<style id="az-admin-staff-stickybar-style">
+.az-page-stickybar{
+  position:sticky;
+  top:0;
+  z-index:9999;
+  min-height:50px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:6px 18px;
+  background:rgba(3,7,12,.96);
+  border-bottom:1px solid rgba(250,204,21,.45);
+  backdrop-filter:blur(14px);
+}
+.az-page-stickybar .az-logo-link{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  font-weight:950;
+  text-decoration:none;
+  margin-right:10px;
+}
+.az-page-stickybar .az-logo-link img{
+  height:34px;
+  width:auto;
+  max-width:132px;
+  object-fit:contain;
+}
+.az-page-stickybar .az-chip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:34px;
+  padding:0 13px;
+  border-radius:999px;
+  border:1px solid rgba(148,163,184,.35);
+  background:linear-gradient(180deg,#17233a,#0d1728);
+  color:#f8fafc;
+  font-size:13px;
+  font-weight:900;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.az-page-stickybar .az-chip:hover,
+.az-page-stickybar .az-chip.is-active{
+  background:#22c55e;
+  color:#03140a;
+  border-color:#22c55e;
+}
+.az-page-stickybar .az-spacer{flex:1}
+.az-page-stickybar .az-role-pill{
+  height:34px;
+  display:inline-flex;
+  align-items:center;
+  padding:0 12px;
+  border-radius:999px;
+  border:1px solid rgba(34,197,94,.45);
+  color:#d1fae5;
+  font-weight:900;
+  font-size:13px;
+}
+@media(max-width:860px){
+  .az-page-stickybar{
+    overflow-x:auto;
+    padding:6px 10px;
+  }
+  .az-page-stickybar .az-chip{
+    height:32px;
+    padding:0 10px;
+    font-size:12px;
+  }
+  .az-page-stickybar .az-logo-link img{height:30px;max-width:110px}
+}
+</style>
+
+<style id="az-admin-staff-layout-fix">body{margin-top:0!important}.shell,.admin-shell{min-height:calc(100vh - 50px)!important}</style>
 </head>
 <body>
+
+<nav class="az-page-stickybar" id="azPageStickybar">
+  <a class="az-logo-link" href="/">
+    <img src="/assets/img/azobss-logo.png" alt="AZOBSS" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('afterbegin','<span style=&quot;font-size:20px&quot;>AZOBSS</span>')">
+  </a>
+  <a class="az-chip" href="/">Home</a>
+  <a class="az-chip" href="/Software-Tools/">Software</a>
+  <a class="az-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>
+  <a class="az-chip" href="/affiliate-shop/">Affiliate Shop</a>
+  <a class="az-chip" href="/lucky-draw/">Lucky Draw</a>
+  <a class="az-chip" href="/tools/">Mini Web Tools</a>
+  <a class="az-chip is-active" href="/admin/">🛠️ Admin</a>
+  <a class="az-chip" href="/staff/">🧑‍💼 Staff</a>
+  <span class="az-spacer"></span>
+  <span class="az-role-pill" id="azStickyUserName">AZOBSS</span>
+</nav>
+
 <div id="loginCover" class="login-cover">
   <div class="login-box">
     <h2>🔐 AZOBSS Admin Dashboard</h2>
@@ -832,6 +927,36 @@ onAuthStateChanged(auth,async user=>{
   setTimeout(cleanHelloText,500);
   setTimeout(cleanHelloText,1500);
   setTimeout(cleanHelloText,3000);
+})();
+</script>
+
+
+<script id="az-admin-staff-stickybar-script">
+(function(){
+  if(window.__azAdminStaffStickybar)return;
+  window.__azAdminStaffStickybar=true;
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(raw){var obj=JSON.parse(raw); if(obj)return obj;}
+      }catch(e){}
+    }
+    return {};
+  }
+  function cleanHello(s){return String(s||'').replace(/^\s*hello\s*,?\s*/i,'').trim();}
+  function setName(){
+    var u=readUser();
+    var name=cleanHello(u.usernameKey||u.username||u.id||u.name||u.displayName||u.email||'');
+    var el=document.getElementById('azStickyUserName');
+    if(el) el.textContent=name||'AZOBSS';
+  }
+  document.addEventListener('DOMContentLoaded',setName);
+  if(document.readyState!=='loading')setName();
+  window.addEventListener('storage',setName);
+  window.addEventListener('focus',setName);
+  setTimeout(setName,600);
 })();
 </script>
 
