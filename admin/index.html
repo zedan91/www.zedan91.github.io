@@ -732,130 +732,6 @@ body.az-role-is-stafflike .azStaffDashboardBtn{
 .az-reg-save{background:#22c55e;color:#052e16}.az-reg-cancel{background:#334155;color:#fff}
 </style>
 
-
-<style id="az-registered-users-final-ui-style">
-#registeredUsersAdminCard{
-  max-width:920px!important;
-  margin:0 auto!important;
-}
-.az-reg-final-toolbar{
-  display:grid!important;
-  grid-template-columns:minmax(220px,1fr) 240px auto!important;
-  gap:10px!important;
-  align-items:end!important;
-  margin:12px 0 14px!important;
-}
-.az-reg-final-field label{
-  display:block!important;
-  font-size:12px!important;
-  color:#cbd5e1!important;
-  font-weight:950!important;
-  margin-bottom:5px!important;
-}
-.az-reg-final-field input,
-.az-reg-final-field select{
-  width:100%!important;
-  height:38px!important;
-  border-radius:10px!important;
-  border:1px solid rgba(148,163,184,.35)!important;
-  background:#020617!important;
-  color:#fff!important;
-  padding:0 12px!important;
-}
-.az-reg-final-refresh{
-  height:38px!important;
-  border:0!important;
-  border-radius:10px!important;
-  background:#22c55e!important;
-  color:#052e16!important;
-  font-weight:950!important;
-  padding:0 18px!important;
-  cursor:pointer!important;
-}
-.az-reg-final-list{
-  display:grid!important;
-  gap:6px!important;
-}
-.az-reg-final-row{
-  display:grid!important;
-  grid-template-columns:minmax(130px,180px) minmax(0,1fr) minmax(120px,170px) 116px!important;
-  gap:8px!important;
-  align-items:center!important;
-  padding:7px 10px!important;
-  border-radius:9px!important;
-  border:1px solid rgba(148,163,184,.2)!important;
-  background:rgba(15,23,42,.66)!important;
-  min-height:38px!important;
-}
-.az-reg-final-name{
-  color:#22c55e!important;
-  font-weight:950!important;
-  font-size:14px!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-.az-reg-final-info{
-  color:#cbd5e1!important;
-  font-size:11px!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-.az-reg-final-status{
-  font-size:11px!important;
-  font-weight:900!important;
-  white-space:nowrap!important;
-}
-.az-reg-final-status.ok{color:#22c55e!important}
-.az-reg-final-status.off{color:#fb7185!important}
-.az-reg-final-actions{
-  display:flex!important;
-  gap:6px!important;
-  justify-content:flex-end!important;
-}
-.az-reg-final-actions button{
-  border:0!important;
-  border-radius:8px!important;
-  padding:6px 9px!important;
-  font-size:11px!important;
-  font-weight:950!important;
-  cursor:pointer!important;
-}
-.az-reg-final-edit{background:#2563eb!important;color:#fff!important}
-.az-reg-final-delete{background:#ef4444!important;color:#fff!important}
-.az-reg-final-pagination{
-  display:flex!important;
-  gap:8px!important;
-  align-items:center!important;
-  justify-content:center!important;
-  margin-top:10px!important;
-}
-.az-reg-final-pagination button{
-  border:0!important;
-  border-radius:999px!important;
-  background:#1d4ed8!important;
-  color:#fff!important;
-  padding:7px 11px!important;
-  font-weight:950!important;
-}
-.az-reg-final-pagination button:disabled{opacity:.45!important}
-.az-reg-final-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999999;display:none;align-items:center;justify-content:center;padding:18px}
-.az-reg-final-modal.is-open{display:flex}
-.az-reg-final-dialog{width:min(520px,96vw);background:#0f172a;border:1px solid rgba(148,163,184,.35);border-radius:18px;padding:18px;color:#fff}
-.az-reg-final-dialog input,.az-reg-final-dialog select{width:100%;height:38px;margin:5px 0 10px;border-radius:10px;border:1px solid rgba(148,163,184,.35);background:#020617;color:#fff;padding:0 10px}
-.az-reg-final-dialog label{font-size:12px;color:#cbd5e1;font-weight:900}
-.az-reg-final-dialog .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.az-reg-final-dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
-.az-reg-final-dialog button{border:0;border-radius:10px;padding:9px 13px;font-weight:950;cursor:pointer}
-.az-reg-final-save{background:#22c55e;color:#052e16}.az-reg-final-cancel{background:#334155;color:#fff}
-@media(max-width:850px){
-  .az-reg-final-toolbar{grid-template-columns:1fr!important}
-  .az-reg-final-row{grid-template-columns:1fr!important;gap:4px!important}
-  .az-reg-final-actions{justify-content:flex-start!important}
-}
-</style>
-
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -987,35 +863,27 @@ body.az-role-is-stafflike .azStaffDashboardBtn{
 
     <section id="users" class="section">
       <h2>👥 Registered User Records</h2>
-      
-<div class="card" id="registeredUsersAdminCard">
-  <h2>Registered User Records</h2>
-  <div class="az-reg-final-toolbar">
-    <div class="az-reg-final-field">
-      <label>Search user</label>
-      <input id="registeredUsersSearch" placeholder="Search username, phone or email">
-    </div>
-    <div class="az-reg-final-field">
-      <label>Sort by</label>
-      <select id="registeredUsersSort">
-        <option value="newest">Date registered: newest</option>
-        <option value="oldest">Date registered: oldest</option>
-        <option value="az">Username / Email A-Z</option>
-        <option value="online">Online users only</option>
-        <option value="pa">PA Access Allowed</option>
-      </select>
-    </div>
-    <button class="az-reg-final-refresh" id="registeredUsersRefreshBtn" type="button">Search / Refresh</button>
-  </div>
-  <div id="registeredUsersAdminList" class="az-reg-final-list"></div>
-  <div class="az-reg-final-pagination">
-    <button id="registeredUsersPrevBtn" type="button">◀ Prev</button>
-    <span id="registeredUsersPageInfo">Page 1 / 1</span>
-    <button id="registeredUsersNextBtn" type="button">Next ▶</button>
-  </div>
-  <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest users are loaded from Firestore.</p>
-</div>
-</section>
+      <div class="card" id="registeredUsersAdminCard">
+        <h2>Registered User Records</h2>
+        <div class="az-admin-registered-toolbar">
+          <input id="registeredUsersSearch" class="az-admin-registered-search" placeholder="Search username / email / phone...">
+          <button class="btn" id="registeredUsersRefreshBtn" type="button">Refresh</button>
+        </div>
+        <div id="registeredUsersAdminList" class="az-admin-registered-list"></div>
+        <div class="az-admin-reg-pagination">
+          <button id="registeredUsersPrevBtn" type="button">◀ Prev</button>
+          <span id="registeredUsersPageInfo">Page 1 / 1</span>
+          <button id="registeredUsersNextBtn" type="button">Next ▶</button>
+        </div>
+      </div>
+
+      <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest 50 users are loaded.</p>
+      <div class="toolbar">
+        <input id="userSearch" placeholder="Search username, email or phone" style="flex:1;min-width:240px">
+        <button class="btn" id="refreshUsers">Search / Refresh</button>
+      </div>
+      <div id="usersList" class="list"></div>
+    </section>
 
     <section id="online" class="section">
       <h2>🟢 Online Logged-In Users <small style="font-size:12px;color:#94a3b8">(same as PA/BM)</small></h2>
@@ -2162,21 +2030,8 @@ onAuthStateChanged(auth,async user=>{
 </script>
 
 
-<div class="row">
-      <div><label>Role</label><select id="azRegEditRole"><option value="member">member</option><option value="staff">staff</option><option value="semiAdmin">semiAdmin</option><option value="admin">admin</option></select></div>
-      <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
-    </div>
-    <div class="actions">
-      <button class="az-reg-cancel" id="azRegCancelBtn" type="button">Cancel</button>
-      <button class="az-reg-save" id="azRegSaveBtn" type="button">Save</button>
-    </div>
-  </div>
-</div>
-
-
-
-<div class="az-reg-final-modal" id="azRegEditModal">
-  <div class="az-reg-final-dialog">
+<div class="az-reg-modal" id="azRegEditModal">
+  <div class="az-reg-dialog">
     <h2>Edit Registered User</h2>
     <input type="hidden" id="azRegEditDocId">
     <label>Username</label>
@@ -2190,89 +2045,86 @@ onAuthStateChanged(auth,async user=>{
       <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
     </div>
     <div class="actions">
-      <button class="az-reg-final-cancel" id="azRegCancelBtn" type="button">Cancel</button>
-      <button class="az-reg-final-save" id="azRegSaveBtn" type="button">Save</button>
+      <button class="az-reg-cancel" id="azRegCancelBtn" type="button">Cancel</button>
+      <button class="az-reg-save" id="azRegSaveBtn" type="button">Save</button>
     </div>
   </div>
 </div>
 
 
-<script id="az-registered-users-final-actions">
+<script id="az-admin-registered-full-actions-fix">
 (function(){
-if(window.__azRegisteredUsersFinalActions)return;window.__azRegisteredUsersFinalActions=true;
-let cache=[];let page=1;const SIZE=10;
-const $=s=>document.querySelector(s);
-function e(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function toMs(v){if(!v)return 0;if(typeof v==='number')return v;if(v.seconds)return v.seconds*1000;const n=Number(v);if(!Number.isNaN(n)&&n>0)return n;const d=Date.parse(v);return Number.isNaN(d)?0:d}
-function dateOf(x){const t=toMs(x.createdAtMs||x.registeredAtMs||x.updatedAtMs||x.createdAt||x.registeredAt||x.updatedAt);return t?new Date(t).toLocaleString():'-'}
-function nameOf(x){return x.usernameKey||x.username||x.docId||x.id||x.email||'Unknown'}
-function pa(x){return x.paBmAllowed===true||x.paAccessAllowed===true||x.paAllowed===true||x.permissions?.paBmAllowed===true}
-function online(x){return x.online===true||x.isOnline===true||String(x.status||'').toLowerCase()==='online'}
-function filtered(){
-  const q=($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
-  let rows=cache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));
-  const sort=$('#registeredUsersSort')?.value||'newest';
-  if(sort==='az')rows.sort((a,b)=>String(nameOf(a)).localeCompare(String(nameOf(b))));
-  else if(sort==='online')rows=rows.filter(online);
-  else if(sort==='pa')rows=rows.filter(pa);
-  else if(sort==='oldest')rows.sort((a,b)=>toMs(a.createdAtMs||a.registeredAtMs||a.createdAt)-toMs(b.createdAtMs||b.registeredAtMs||b.createdAt));
-  else rows.sort((a,b)=>toMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt)-toMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt));
-  return rows;
+if(window.__azAdminRegisteredFullActionsFix)return;window.__azAdminRegisteredFullActionsFix=true;
+let regCache=[];let regPage=1;const REG_SIZE=10;
+function q(s){return document.querySelector(s)}
+function esc2(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function ms(v){if(!v)return 0;if(typeof v==='number')return v;if(v.seconds)return v.seconds*1000;const n=Number(v);if(!Number.isNaN(n)&&n>0)return n;const d=Date.parse(v);return Number.isNaN(d)?0:d}
+function regDate(x){const t=ms(x.createdAtMs||x.registeredAtMs||x.updatedAtMs||x.createdAt||x.registeredAt||x.updatedAt);return t?new Date(t).toLocaleString():'-'}
+function uname(x){return x.usernameKey||x.username||x.docId||x.id||x.email||'Unknown'}
+function paAllowed(x){return x.paBmAllowed===true||x.paAccessAllowed===true||x.paAllowed===true||x.permissions?.paBmAllowed===true}
+function isOnline(x){return x.online===true||String(x.status||'').toLowerCase()==='online'}
+function sortRows(rows){
+ const v=q('#registeredUsersSort')?.value||'newest';
+ if(/a-z|email/i.test(v))rows.sort((a,b)=>String(uname(a)).localeCompare(String(uname(b))));
+ else if(/online/i.test(v))rows=rows.filter(isOnline);
+ else if(/pa/i.test(v))rows=rows.filter(paAllowed);
+ else if(/old/i.test(v))rows.sort((a,b)=>ms(a.createdAtMs||a.registeredAtMs||a.createdAt)-ms(b.createdAtMs||b.registeredAtMs||b.createdAt));
+ else rows.sort((a,b)=>ms(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt)-ms(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt));
+ return rows;
 }
-function render(){
-  const box=$('#registeredUsersAdminList'); if(!box)return;
-  const rows=filtered();const total=Math.max(1,Math.ceil(rows.length/SIZE));page=Math.min(Math.max(1,page),total);
-  const items=rows.slice((page-1)*SIZE,page*SIZE);
-  box.innerHTML=items.map(x=>{
-    const id=e(x.docId||nameOf(x));const isPa=pa(x);
-    return `<div class="az-reg-final-row">
-      <div class="az-reg-final-name">${e(nameOf(x))}</div>
-      <div class="az-reg-final-info">${e(x.email||x.authEmail||'')} • ${e(x.phoneNumber||x.phone||'')} • Role: ${e(x.role||'member')}</div>
-      <div class="az-reg-final-status ${isPa?'ok':'off'}">${isPa?'PA/BM allowed':'PA/BM off'}<br><span style="color:#94a3b8;font-weight:500">${e(dateOf(x))}</span></div>
-      <div class="az-reg-final-actions"><button class="az-reg-final-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-final-delete" data-reg-delete="${id}">Delete</button></div>
-    </div>`;
-  }).join('')||'<div class="az-reg-final-row"><div class="az-reg-final-name">No users found.</div></div>';
-  if($('#registeredUsersPageInfo'))$('#registeredUsersPageInfo').textContent=`Page ${page} / ${total} • ${rows.length} records`;
-  if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=page<=1;
-  if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=page>=total;
+function renderRegistered(){
+ const box=q('#registeredUsersAdminList')||q('#registeredUsersList')||q('#registeredUsersRecords'); if(!box)return;
+ const search=(q('#registeredUsersSearch')?.value||q('#registeredSearch')?.value||'').toLowerCase().trim();
+ let rows=regCache.filter(x=>!search||JSON.stringify(x).toLowerCase().includes(search));
+ rows=sortRows(rows);
+ const total=Math.max(1,Math.ceil(rows.length/REG_SIZE));regPage=Math.min(Math.max(1,regPage),total);
+ const page=rows.slice((regPage-1)*REG_SIZE,regPage*REG_SIZE);
+ box.innerHTML=page.map(x=>{
+  const id=esc2(x.docId||uname(x)); const pa=paAllowed(x);
+  return `<div class="az-admin-reg-row">
+    <span class="az-admin-reg-badge">👤 User</span>
+    <div><div class="az-admin-reg-title">${esc2(uname(x))}</div><div class="az-admin-reg-sub">${esc2(x.email||x.authEmail||'')} • ${pa?'PA/BM allowed':'PA/BM off'} • ${esc2(x.role||'member')}</div></div>
+    <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
+  </div>`;
+ }).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No users found.</div></div></div>';
+ if(q('#registeredUsersPageInfo'))q('#registeredUsersPageInfo').textContent=`Page ${regPage} / ${total} • ${rows.length} records`;
+ if(q('#registeredUsersPrevBtn'))q('#registeredUsersPrevBtn').disabled=regPage<=1;
+ if(q('#registeredUsersNextBtn'))q('#registeredUsersNextBtn').disabled=regPage>=total;
 }
 window.loadRegisteredUsersAdmin=async function(){
-  cache=[];
-  try{const snap=await safeGet(query(collection(db,'users'),limit(300)));snap?.forEach(d=>cache.push({docId:d.id,usernameKey:d.id,...d.data()}));}catch(err){console.warn('load registered users failed',err)}
-  page=1;render();
+ regCache=[];
+ try{const snap=await safeGet(query(collection(db,'users'),limit(300)));snap?.forEach(d=>regCache.push({docId:d.id,usernameKey:d.id,...d.data()}));}catch(e){console.warn(e)}
+ regPage=1;renderRegistered();
 };
 function openEdit(id){
-  const x=cache.find(r=>String(r.docId)===String(id)||String(nameOf(r))===String(id)); if(!x)return alert('User not found: '+id);
-  $('#azRegEditDocId').value=x.docId||nameOf(x);$('#azRegEditUsername').value=nameOf(x);
-  $('#azRegEditEmail').value=x.email||x.authEmail||'';$('#azRegEditPhone').value=x.phoneNumber||x.phone||'';
-  $('#azRegEditRole').value=x.role||'member';$('#azRegEditPa').value=pa(x)?'true':'false';
-  $('#azRegEditModal').classList.add('is-open');
+ const x=regCache.find(r=>String(r.docId)===String(id)||String(uname(r))===String(id)); if(!x)return;
+ q('#azRegEditDocId').value=x.docId||uname(x);q('#azRegEditUsername').value=uname(x);
+ q('#azRegEditEmail').value=x.email||x.authEmail||'';q('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
+ q('#azRegEditRole').value=x.role||'member';q('#azRegEditPa').value=paAllowed(x)?'true':'false';
+ q('#azRegEditModal').classList.add('is-open');
 }
 async function saveEdit(){
-  const id=$('#azRegEditDocId').value;if(!id)return;
-  const allow=$('#azRegEditPa').value==='true';
-  await updateDoc(doc(db,'users',id),{email:$('#azRegEditEmail').value.trim(),phoneNumber:$('#azRegEditPhone').value.trim(),role:$('#azRegEditRole').value,paBmAllowed:allow,paAccessAllowed:allow,updatedAtMs:Date.now()});
-  $('#azRegEditModal').classList.remove('is-open');await window.loadRegisteredUsersAdmin();
+ const id=q('#azRegEditDocId').value;if(!id)return;
+ await updateDoc(doc(db,'users',id),{email:q('#azRegEditEmail').value.trim(),phoneNumber:q('#azRegEditPhone').value.trim(),role:q('#azRegEditRole').value,paBmAllowed:q('#azRegEditPa').value==='true',paAccessAllowed:q('#azRegEditPa').value==='true',updatedAtMs:Date.now()});
+ q('#azRegEditModal').classList.remove('is-open');await window.loadRegisteredUsersAdmin();
 }
 async function delUser(id){
-  if(!confirm('Delete user '+id+'?'))return;
-  await deleteDoc(doc(db,'users',id));await window.loadRegisteredUsersAdmin();
+ if(!confirm('Delete user '+id+'?'))return;
+ await deleteDoc(doc(db,'users',id));await window.loadRegisteredUsersAdmin();
 }
-document.addEventListener('click',ev=>{
-  const ed=ev.target.closest('[data-reg-edit]');if(ed)return openEdit(ed.getAttribute('data-reg-edit'));
-  const del=ev.target.closest('[data-reg-delete]');if(del)return delUser(del.getAttribute('data-reg-delete'));
+document.addEventListener('click',e=>{
+ const ed=e.target.closest('[data-reg-edit]');if(ed)return openEdit(ed.getAttribute('data-reg-edit'));
+ const del=e.target.closest('[data-reg-delete]');if(del)return delUser(del.getAttribute('data-reg-delete'));
 });
-function bind(){
-  $('#registeredUsersSearch')?.addEventListener('input',()=>{page=1;render()});
-  $('#registeredUsersSort')?.addEventListener('change',()=>{page=1;render()});
-  $('#registeredUsersRefreshBtn')?.addEventListener('click',window.loadRegisteredUsersAdmin);
-  $('#registeredUsersPrevBtn')?.addEventListener('click',()=>{page--;render()});
-  $('#registeredUsersNextBtn')?.addEventListener('click',()=>{page++;render()});
-  $('#azRegCancelBtn')?.addEventListener('click',()=>$('#azRegEditModal').classList.remove('is-open'));
-  $('#azRegSaveBtn')?.addEventListener('click',saveEdit);
-}
-document.addEventListener('DOMContentLoaded',bind);
-if(document.readyState!=='loading')bind();
+document.addEventListener('DOMContentLoaded',()=>{
+ q('#registeredUsersSearch')?.addEventListener('input',()=>{regPage=1;renderRegistered()});
+ q('#registeredUsersSort')?.addEventListener('change',()=>{regPage=1;renderRegistered()});
+ q('#registeredUsersRefreshBtn')?.addEventListener('click',window.loadRegisteredUsersAdmin);
+ q('#registeredUsersPrevBtn')?.addEventListener('click',()=>{regPage--;renderRegistered()});
+ q('#registeredUsersNextBtn')?.addEventListener('click',()=>{regPage++;renderRegistered()});
+ q('#azRegCancelBtn')?.addEventListener('click',()=>q('#azRegEditModal').classList.remove('is-open'));
+ q('#azRegSaveBtn')?.addEventListener('click',saveEdit);
+});
 })();
 </script>
 
