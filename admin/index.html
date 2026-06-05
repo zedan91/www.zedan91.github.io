@@ -330,7 +330,76 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
 .market-search-row{display:none!important;} /* dashboard pages do not need Home search row */
 </style>
 
-<style id="az-staff-role-ui-fix">.staff-role-card{min-width:320px!important;max-width:420px!important;padding:18px!important}.staff-role-badges{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.staff-role-badge{padding:6px 10px;border-radius:999px;background:#102033;border:1px solid #22c55e;color:#d1fae5;font-weight:700}.staff-role-actions{display:flex;gap:8px;margin-top:12px}</style></head>
+
+<style id="az-staff-role-badge-ui">
+.staff-role-list{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:14px!important;
+  align-items:stretch;
+}
+.staff-role-card{
+  width:100%!important;
+  max-width:none!important;
+  padding:18px!important;
+  border:1px solid rgba(148,163,184,.28)!important;
+  border-radius:16px!important;
+  background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(17,31,51,.92))!important;
+  box-shadow:0 12px 25px rgba(0,0,0,.22)!important;
+}
+.staff-role-name{
+  font-size:18px;
+  color:#6ee7b7;
+  font-weight:950;
+  margin-bottom:4px;
+}
+.staff-role-meta{
+  color:#c7d2fe;
+  font-size:13px;
+  margin-bottom:10px;
+}
+.staff-role-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:10px 0 12px;
+}
+.staff-role-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#0b1628;
+  border:1px solid rgba(34,197,94,.45);
+  color:#d1fae5;
+  font-size:12px;
+  font-weight:900;
+}
+.staff-role-badge.off{
+  border-color:rgba(148,163,184,.28);
+  color:#94a3b8;
+  background:#0b1020;
+}
+.staff-role-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.staff-role-actions button{
+  border:0;
+  border-radius:10px;
+  padding:9px 12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.staff-role-edit{background:#2563eb;color:white}
+.staff-role-reset{background:#334155;color:white}
+.staff-role-delete{background:#dc2626;color:white}
+</style>
+
+</head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -635,7 +704,6 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
         <div class="toolbar">
           <label><input type="checkbox" id="permSoftware"> Manage Software</label>
           <label><input type="checkbox" id="permCAD"> Manage CAD</label>
-          <label><input type="checkbox" id="permCommission"> </label>
           <label><input type="checkbox" id="permPayments"> View Payments</label>
           <label><input type="checkbox" id="permApprove"> Approve Payment</label>
         </div>
@@ -877,7 +945,7 @@ async function saveStaffRole(){
   const username=String($('#staffUsername')?.value||'').trim().toLowerCase();
   if(!username) return alert('Enter username.');
   const role=$('#staffRole')?.value||'semiAdmin';
-  const permissions={canManageSoftware:!!$('#permSoftware')?.checked,canManageCAD:!!$('#permCAD')?.checked,canManageCommission:!!$('#permCommission')?.checked,canViewPayments:!!$('#permPayments')?.checked,canApprovePayment:!!$('#permApprove')?.checked,canEditUsers:false};
+  const permissions={canManageSoftware:!!$('#permSoftware')?.checked,canManageCAD:!!$('#permCAD')?.checked,canViewPayments:!!$('#permPayments')?.checked,canApprovePayment:!!$('#permApprove')?.checked,canEditUsers:false};
   await updateDoc(doc(db,'users',username),{role,permissions,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});
   await loadStaffRoles();
   alert('Staff role saved.');
@@ -1113,18 +1181,130 @@ onAuthStateChanged(auth,async user=>{
 </script>
 
 
-<script id="az-staff-role-enhancer">
-document.addEventListener('DOMContentLoaded',function(){
-setTimeout(function(){
-document.querySelectorAll('.item,.card').forEach(function(card){
-const t=card.textContent||'';
-if(!t.includes('Role:')) return;
-if(card.querySelector('.staff-role-actions')) return;
-card.classList.add('staff-role-card');
-card.innerHTML += '<div class="staff-role-actions"><button class="editStaffRoleBtn">✏️ Edit</button><button class="resetStaffRoleBtn">🗑 Reset Role</button></div>';
-});
-},800);
-});
+
+<script id="az-staff-role-firestore-badge-renderer">
+(function(){
+  if(window.__azStaffRoleFirestoreBadgeRenderer)return;
+  window.__azStaffRoleFirestoreBadgeRenderer=true;
+
+  const PERMS=[
+    ['canManageSoftware','💻','Software'],
+    ['canManageCAD','📐','CAD'],
+    ['canViewPayments','💳','View Payments'],
+    ['canApprovePayment','✅','Approve Payment'],
+    ['canEditUsers','👥','Edit Users']
+  ];
+
+  function esc(v){
+    return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function roleLabel(role){
+    const r=String(role||'user').toLowerCase();
+    if(r==='admin')return 'Admin';
+    if(r==='semiadmin'||r==='semi-admin')return 'Semi Admin';
+    if(r==='staff')return 'Staff';
+    return 'User';
+  }
+
+  function badges(perms){
+    perms=perms||{};
+    return '<div class="staff-role-badges">'+PERMS.map(([key,icon,label])=>{
+      const on=perms[key]===true;
+      return `<span class="staff-role-badge ${on?'':'off'}">${icon} ${on?'✅':'❌'} ${label}</span>`;
+    }).join('')+'</div>';
+  }
+
+  function card(username,x){
+    const perms=x.permissions||{};
+    return `<div class="staff-role-card" data-staff-username="${esc(username)}">
+      <div class="staff-role-name">👤 ${esc(username)}</div>
+      <div class="staff-role-meta">Role: <b>${esc(roleLabel(x.role))}</b></div>
+      ${badges(perms)}
+      <div class="staff-role-actions">
+        <button class="staff-role-edit" data-staff-edit="${esc(username)}">✏️ Edit</button>
+        <button class="staff-role-reset" data-staff-reset="${esc(username)}">↩️ Reset User</button>
+      </div>
+    </div>`;
+  }
+
+  function getUsernameFromDoc(doc){
+    const x=doc.data ? doc.data() : doc;
+    return x.usernameKey||x.username||x.id||x.name||doc.id||'unknown';
+  }
+
+  async function renderFromFirestore(){
+    if(typeof db==='undefined'||typeof collection==='undefined'||typeof getDocs==='undefined')return false;
+    const box=document.querySelector('#staffRoleList,#latestStaffUsers,#staffUsersList,#staffRolesList') || findStaffBox();
+    if(!box)return false;
+    try{
+      const snap=await getDocs(collection(db,'users'));
+      const rows=[];
+      snap.forEach(d=>{
+        const x=d.data()||{};
+        const role=String(x.role||'').toLowerCase();
+        if(role==='admin'||role==='semiadmin'||role==='staff'||x.permissions){
+          rows.push(card(getUsernameFromDoc({id:d.id,data:()=>x}),x));
+        }
+      });
+      box.classList.add('staff-role-list');
+      box.innerHTML=rows.join('')||'<div class="staff-role-card">No staff users.</div>';
+      return true;
+    }catch(e){
+      console.warn('staff role badge firestore render failed',e);
+      return false;
+    }
+  }
+
+  function findStaffBox(){
+    const headings=[...document.querySelectorAll('h1,h2,h3')].find(h=>/Latest Staff Users|Staff Users|Staff Roles/i.test(h.textContent||''));
+    if(!headings)return null;
+    let p=headings.parentElement;
+    for(let i=0;i<4&&p;i++,p=p.parentElement){
+      const candidates=[...p.querySelectorAll('div')].filter(d=>d!==p && /Role:|Permissions:|canManage/i.test(d.textContent||''));
+      if(candidates.length)return candidates[0].parentElement||candidates[0];
+    }
+    return null;
+  }
+
+  function fillForm(username){
+    const card=document.querySelector(`[data-staff-username="${CSS.escape(username)}"]`);
+    const input=document.querySelector('input[placeholder*="Username"],#staffRoleUsername,#roleUsername');
+    if(input)input.value=username;
+    const roleText=card?.querySelector('.staff-role-meta')?.textContent||'';
+    const roleSelect=document.querySelector('select#staffRoleSelect,select#roleSelect,select');
+    if(roleSelect){
+      const role=roleText.toLowerCase().includes('semi')?'semiAdmin':roleText.toLowerCase().includes('staff')?'staff':'user';
+      roleSelect.value=role;
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  async function resetRole(username){
+    if(!confirm('Reset role '+username+' kepada user biasa?'))return;
+    if(typeof db==='undefined'||typeof doc==='undefined'||typeof updateDoc==='undefined')return alert('Firestore belum ready.');
+    await updateDoc(doc(db,'users',username),{role:'user',permissions:{}});
+    await renderFromFirestore();
+  }
+
+  document.addEventListener('click',e=>{
+    const edit=e.target.closest('[data-staff-edit]');
+    if(edit)fillForm(edit.getAttribute('data-staff-edit'));
+    const reset=e.target.closest('[data-staff-reset]');
+    if(reset)resetRole(reset.getAttribute('data-staff-reset'));
+  });
+
+  function removeJsonFallback(){
+    document.querySelectorAll('.staff-role-card pre, .staff-role-card code').forEach(el=>el.remove());
+    document.querySelectorAll('.staff-role-card').forEach(el=>{
+      el.innerHTML=el.innerHTML.replace(/\{[\s\S]*?\}/g,'');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{renderFromFirestore().then(ok=>{if(!ok)removeJsonFallback();});},900);});
+  if(document.readyState!=='loading')setTimeout(()=>{renderFromFirestore().then(ok=>{if(!ok)removeJsonFallback();});},900);
+})();
 </script>
+
 </body>
 </html>
