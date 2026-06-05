@@ -127,18 +127,6 @@ import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/fire
   }
 
   async function isAdmin(user){
-    // AZOBSS_DIRECT_ADMIN_ALLOW_PATCH
-    try{
-      const email = String(user?.email || '').toLowerCase();
-      if(email === 'zedan91@azobss.local' || email === 'zedan9107@gmail.com') return true;
-      const storedRaw = sessionStorage.getItem('azobssCurrentUser') || localStorage.getItem('azobssCurrentUser') || sessionStorage.getItem('azobssUser') || localStorage.getItem('azobssUser') || '{}';
-      const stored = JSON.parse(storedRaw || '{}');
-      const role = String(stored.role || sessionStorage.getItem('azobssRole') || localStorage.getItem('azobssRole') || '').toLowerCase();
-      const username = String(stored.usernameKey || stored.username || stored.id || stored.name || sessionStorage.getItem('azobssUsername') || localStorage.getItem('azobssUsername') || '').toLowerCase();
-      const storedEmail = String(stored.email || stored.authEmail || sessionStorage.getItem('azobssEmail') || localStorage.getItem('azobssEmail') || '').toLowerCase();
-      if(role === 'admin' || username === 'zedan91' || storedEmail === 'zedan91@azobss.local' || storedEmail === 'zedan9107@gmail.com') return true;
-    }catch(e){}
-
     if(!user) return false;
 
     const email = String(user.email || '').toLowerCase();
@@ -744,102 +732,8 @@ body.az-role-is-stafflike .azStaffDashboardBtn{
 .az-reg-save{background:#22c55e;color:#052e16}.az-reg-cancel{background:#334155;color:#fff}
 </style>
 
-
-<style id="az-registered-users-safe-final-style">
-#registeredUsersAdminCard{max-width:940px!important;margin:0 auto!important}
-.az-reg-safe-toolbar{display:grid!important;grid-template-columns:minmax(220px,1fr) 250px auto!important;gap:10px!important;align-items:end!important;margin:12px 0 14px!important}
-.az-reg-safe-field label{display:block!important;font-size:12px!important;color:#cbd5e1!important;font-weight:950!important;margin-bottom:5px!important}
-.az-reg-safe-field input,.az-reg-safe-field select{width:100%!important;height:38px!important;border-radius:10px!important;border:1px solid rgba(148,163,184,.35)!important;background:#020617!important;color:#fff!important;padding:0 12px!important}
-.az-reg-safe-refresh{height:38px!important;border:0!important;border-radius:10px!important;background:#22c55e!important;color:#052e16!important;font-weight:950!important;padding:0 18px!important;cursor:pointer!important}
-.az-reg-safe-list{display:grid!important;gap:6px!important}
-.az-reg-safe-row{display:grid!important;grid-template-columns:minmax(130px,180px) minmax(0,1fr) minmax(120px,170px) 116px!important;gap:8px!important;align-items:center!important;padding:7px 10px!important;border-radius:9px!important;border:1px solid rgba(148,163,184,.2)!important;background:rgba(15,23,42,.66)!important;min-height:38px!important}
-.az-reg-safe-name{color:#22c55e!important;font-weight:950!important;font-size:14px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-.az-reg-safe-info{color:#cbd5e1!important;font-size:11px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-.az-reg-safe-status{font-size:11px!important;font-weight:900!important;white-space:nowrap!important}.az-reg-safe-status.ok{color:#22c55e!important}.az-reg-safe-status.off{color:#fb7185!important}
-.az-reg-safe-actions{display:flex!important;gap:6px!important;justify-content:flex-end!important}.az-reg-safe-actions button{border:0!important;border-radius:8px!important;padding:6px 9px!important;font-size:11px!important;font-weight:950!important;cursor:pointer!important}
-.az-reg-safe-edit{background:#2563eb!important;color:#fff!important}.az-reg-safe-delete{background:#ef4444!important;color:#fff!important}
-.az-reg-safe-pagination{display:flex!important;gap:8px!important;align-items:center!important;justify-content:center!important;margin-top:10px!important}
-.az-reg-safe-pagination button{border:0!important;border-radius:999px!important;background:#1d4ed8!important;color:#fff!important;padding:7px 11px!important;font-weight:950!important}.az-reg-safe-pagination button:disabled{opacity:.45!important}
-.az-reg-safe-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999999;display:none;align-items:center;justify-content:center;padding:18px}.az-reg-safe-modal.is-open{display:flex}
-.az-reg-safe-dialog{width:min(520px,96vw);background:#0f172a;border:1px solid rgba(148,163,184,.35);border-radius:18px;padding:18px;color:#fff}.az-reg-safe-dialog input,.az-reg-safe-dialog select{width:100%;height:38px;margin:5px 0 10px;border-radius:10px;border:1px solid rgba(148,163,184,.35);background:#020617;color:#fff;padding:0 10px}
-.az-reg-safe-dialog label{font-size:12px;color:#cbd5e1;font-weight:900}.az-reg-safe-dialog .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.az-reg-safe-dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}.az-reg-safe-dialog button{border:0;border-radius:10px;padding:9px 13px;font-weight:950;cursor:pointer}
-.az-reg-safe-save{background:#22c55e;color:#052e16}.az-reg-safe-cancel{background:#334155;color:#fff}
-@media(max-width:850px){.az-reg-safe-toolbar{grid-template-columns:1fr!important}.az-reg-safe-row{grid-template-columns:1fr!important;gap:4px!important}.az-reg-safe-actions{justify-content:flex-start!important}}
-</style>
-
-
-<style id="az-admin-access-deep-unblock-style">
-body.az-admin-access-ok .admin-shell,
-body.az-admin-access-ok #adminShell,
-body.az-admin-access-ok .shell,
-body.az-admin-access-ok main,
-body.az-admin-access-ok [data-admin-shell]{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-}
-body.az-admin-access-ok #adminAccessGate,
-body.az-admin-access-ok .admin-access-gate,
-body.az-admin-access-ok [data-admin-access-gate],
-body.az-admin-access-ok .access-gate{
-  display:none!important;
-}
-body.az-admin-access-ok{
-  overflow:auto!important;
-}
-</style>
-
-
-<script id="az-dollar-helper-fix">
-const $ = (s) => document.querySelector(s);
-</script>
-
 </head>
 <body data-dashboard-page="admin">
-
-<script id="az-admin-access-early-unblock">
-(function(){
-  function readUser(){
-    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
-    for(var s=0;s<2;s++){
-      var store=s===0?sessionStorage:localStorage;
-      for(var i=0;i<keys.length;i++){
-        try{var raw=store.getItem(keys[i]); if(raw){var obj=JSON.parse(raw); if(obj&&typeof obj==='object')return obj;}}catch(e){}
-      }
-    }
-    return {};
-  }
-  function adminLike(){
-    var u=readUser();
-    var role=String(u.role||sessionStorage.getItem('azobssRole')||localStorage.getItem('azobssRole')||'').toLowerCase();
-    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||sessionStorage.getItem('azobssUsername')||localStorage.getItem('azobssUsername')||'').toLowerCase();
-    var email=String(u.email||u.authEmail||u.contactEmail||sessionStorage.getItem('azobssEmail')||localStorage.getItem('azobssEmail')||'').toLowerCase();
-    return role==='admin'||username==='zedan91'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com';
-  }
-  function reveal(reason){
-    if(!adminLike()) return false;
-    if(document.body){
-      document.body.classList.add('az-admin-access-ok');
-      document.body.classList.remove('az-admin-access-denied');
-    }
-    document.querySelectorAll('#adminAccessGate,.admin-access-gate,[data-admin-access-gate],.access-gate').forEach(function(el){el.style.display='none';el.hidden=true;});
-    document.querySelectorAll('.admin-shell,#adminShell,.shell,[data-admin-shell],main').forEach(function(el){el.style.display='block';el.hidden=false;el.style.visibility='visible';el.style.opacity='1';});
-    console.log('AZOBSS admin early unblock:',reason);
-    return true;
-  }
-  window.azForceAdminUnblock=function(){return reveal('manual');};
-  window.azDebugAdminAccess=function(){
-    var u=readUser();
-    var info={storedUser:u,adminLike:adminLike(),bodyOk:document.body?.classList.contains('az-admin-access-ok'),gates:[...document.querySelectorAll('#adminAccessGate,.admin-access-gate,[data-admin-access-gate],.access-gate')].map(e=>({id:e.id,cls:e.className,text:e.textContent,display:getComputedStyle(e).display})),shells:[...document.querySelectorAll('.admin-shell,#adminShell,.shell,[data-admin-shell],main')].map(e=>({id:e.id,cls:e.className,display:getComputedStyle(e).display,hidden:e.hidden}))};
-    console.log('AZOBSS Admin Access Debug',info);return info;
-  };
-  document.addEventListener('DOMContentLoaded',function(){reveal('dom');setTimeout(function(){reveal('dom-timeout')},500);});
-  setTimeout(function(){reveal('early-500')},500);
-  setTimeout(function(){reveal('early-1500')},1500);
-  setTimeout(function(){reveal('early-3000')},3000);
-})();
-</script>
-
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
@@ -969,10 +863,1184 @@ const $ = (s) => document.querySelector(s);
 
     <section id="users" class="section">
       <h2>👥 Registered User Records</h2>
-      
-<div class="card" id="registeredUsersAdminCard">
-  <h2>Registered User Records</h2>
-  <div class="row">
+      <div class="card" id="registeredUsersAdminCard">
+        <h2>Registered User Records</h2>
+        <div class="az-admin-registered-toolbar">
+          <input id="registeredUsersSearch" class="az-admin-registered-search" placeholder="Search username / email / phone...">
+          <button class="btn" id="registeredUsersRefreshBtn" type="button">Refresh</button>
+        </div>
+        <div id="registeredUsersAdminList" class="az-admin-registered-list"></div>
+        <div class="az-admin-reg-pagination">
+          <button id="registeredUsersPrevBtn" type="button">◀ Prev</button>
+          <span id="registeredUsersPageInfo">Page 1 / 1</span>
+          <button id="registeredUsersNextBtn" type="button">Next ▶</button>
+        </div>
+      </div>
+
+      <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest 50 users are loaded.</p>
+      <div class="toolbar">
+        <input id="userSearch" placeholder="Search username, email or phone" style="flex:1;min-width:240px">
+        <button class="btn" id="refreshUsers">Search / Refresh</button>
+      </div>
+      <div id="usersList" class="list"></div>
+    </section>
+
+    <section id="online" class="section">
+      <h2>🟢 Online Logged-In Users <small style="font-size:12px;color:#94a3b8">(same as PA/BM)</small></h2>
+      <div class="toolbar"><button class="btn" id="refreshOnline">Refresh Online Users</button></div>
+      <div id="onlineList" class="list"></div>
+    </section>
+
+    <section id="activity" class="section">
+      <h2>📈 Activity</h2>
+      <div class="card activity-panel">
+        <div class="az-activity-toolbar">
+          <input id="activitySearch" class="az-activity-search" placeholder="Search username / activity...">
+          <button class="btn" id="activityRefreshBtn" type="button">Refresh</button>
+        </div>
+        <div id="activityList" class="az-activity-list"></div>
+        <div class="az-activity-pagination">
+          <button id="activityPrevBtn" type="button">◀ Prev</button>
+          <span id="activityPageInfo" class="az-activity-page-info">Page 1 / 1</span>
+          <button id="activityNextBtn" type="button">Next ▶</button>
+        </div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Logged-In Users History</h2><div id="loginHistoryList" class="list"></div></div>
+        <div class="card"><h2>Guest Visit History</h2><div id="guestHistoryList" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="support" class="section">
+      <h2>💬 Support Inbox</h2>
+      <p class="tabs-note">Latest 50 support messages. Reply or delete messages here.</p>
+      <div class="toolbar"><button class="btn" id="refreshSupport">Refresh Support</button></div>
+      <div id="supportList" class="list"></div>
+    </section>
+
+    <section id="notifications" class="section">
+      <h2>🔔 Notifications</h2>
+      <div class="card">
+        <h2>Create Announcement</h2>
+        <div class="toolbar">
+          <select id="notifType">
+            <option value="lucky_started">Lucky Draw Started</option>
+            <option value="lucky_ending">Lucky Draw Ending Soon</option>
+            <option value="maintenance">Website Maintenance Tonight</option>
+            <option value="payment_verified">Payment Verified</option>
+            <option value="download_ready">Download Ready</option>
+          </select>
+          <input id="notifTitle" placeholder="Notification title" style="flex:1;min-width:220px">
+        </div>
+        <textarea id="notifBody" placeholder="Notification message"></textarea>
+        <div class="toolbar">
+          <button class="btn green" id="publishNotif">Publish Notification</button>
+          <button class="btn red" id="clearNotif">Clear Notifications</button>
+        </div>
+      </div>
+      <div class="card"><h2>Latest Notifications</h2><div id="notificationsList" class="list"></div></div>
+    </section>
+
+    <section id="purchases" class="section">
+      <h2>💰 Purchase Records</h2>
+      <p class="tabs-note">Latest 50 purchase logs and summaries.</p>
+      <div class="split">
+        <div class="card"><h2>Purchase Logs</h2><div id="purchaseLogsList" class="list"></div></div>
+        <div class="card"><h2>Purchase Summaries</h2><div id="purchaseSummariesList" class="list"></div></div>
+      </div>
+    </section>
+
+
+    <section id="payments" class="section">
+      <h2>💳 Payments & Totals</h2>
+      <p class="tabs-note">Ringkasan total pembelian mengikut kategori: PA/BM, Software dan CAD Tools.</p>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">PA/BM Total RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Software Total RM</div><div id="payTotalSoftware" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">CAD Tools Total RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">All Purchases RM</div><div id="payTotalAll" class="stat-value">0</div></div>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <h2>Payment Status</h2>
+          <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:0">
+            <div class="card"><div class="stat-label">Pending</div><div id="payPendingCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Verified/Paid</div><div id="payPaidCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Total Records</div><div id="payRecordCount" class="stat-value">0</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Quick Filter</h2>
+          <div class="toolbar">
+            <select id="paymentCategoryFilter">
+              <option value="all">All</option>
+              <option value="pabm">PA/BM</option>
+              <option value="software">Software</option>
+              <option value="cad">CAD Tools</option>
+              <option value="pending">Pending Only</option>
+              <option value="paid">Paid/Verified Only</option>
+            </select>
+            <button class="btn" id="refreshPayments">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Latest Payment / Purchase Records</h2>
+        <div id="paymentsList" class="list"></div>
+      </div>
+    </section>
+
+
+    <section id="lucky" class="section">
+      <h2>🎁 Lucky Draw</h2>
+      <div class="card">
+        <p class="tabs-note">Lucky Draw admin controls remain in the existing Lucky Draw page for now.</p>
+        <a class="btn green" href="/lucky-draw/">Open Lucky Draw Admin</a>
+      </div>
+    </section>
+
+
+
+    <section id="commissions" class="section">
+      <h2>💸 Commission Manager</h2>
+      <p class="tabs-note">Admin sahaja boleh tambah, edit dan delete rekod komisen. Staff/semiAdmin hanya boleh lihat komisen sendiri di Staff Dashboard.</p>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">Total Commission RM</div><div id="adminComTotal" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Pending RM</div><div id="adminComPending" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Paid RM</div><div id="adminComPaid" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Records</div><div id="adminComCount" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card">
+        <h2 id="commissionFormTitle">Add / Edit Commission</h2>
+        <input type="hidden" id="commissionEditDocId">
+        <div class="toolbar">
+          <input id="commissionUsername" placeholder="Username / staff owner" style="flex:1;min-width:180px">
+          <input id="commissionProduct" placeholder="Product / sale reference" style="flex:1;min-width:180px">
+          <input id="commissionAmount" type="number" min="0" step="0.01" placeholder="Commission RM">
+          <select id="commissionStatus">
+            <option value="pending">pending</option>
+            <option value="approved">approved</option>
+            <option value="paid">paid</option>
+          </select>
+        </div>
+        <div class="toolbar">
+          <input id="commissionOwnerUid" placeholder="Owner UID optional" style="flex:1;min-width:180px">
+          <input id="commissionOwnerUsername" placeholder="Owner username optional" style="flex:1;min-width:180px">
+          <input id="commissionOwnerEmail" placeholder="Owner email optional" style="flex:1;min-width:180px">
+        </div>
+        <textarea id="commissionNote" placeholder="Note" style="width:100%;min-height:90px"></textarea>
+        <div class="toolbar">
+          <button class="btn green" id="saveCommissionRecord">Save Commission</button>
+          <button class="btn gray" id="resetCommissionForm" type="button">Reset</button>
+          <button class="btn" id="refreshCommissionRecords" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Commission Records</h2>
+        <div id="adminCommissionList" class="list"></div>
+      </div>
+    </section>
+
+
+    <section id="staffroles" class="section">
+      <h2>🧑‍💼 Staff / Semi-Admin Roles</h2>
+      <p class="tabs-note">Set role dan permission staff. Staff boleh akses /staff/ sahaja, bukan admin penuh.</p>
+      <div class="card">
+        <div class="toolbar">
+          <input id="staffUsername" placeholder="Username, contoh: zedanstaff" style="flex:1;min-width:220px">
+          <select id="staffRole"><option value="semiAdmin">semiAdmin</option><option value="staff">staff</option><option value="member">member</option></select>
+          <button class="btn green" id="saveStaffRole">Save Role</button>
+        </div>
+        <div class="toolbar">
+          <label><input type="checkbox" id="permSoftware"> Manage Software</label>
+          <label><input type="checkbox" id="permCAD"> Manage CAD</label>
+          <label><input type="checkbox" id="permPayments"> View Payments</label>
+          <label><input type="checkbox" id="permApprove"> Approve Payment</label>
+        </div>
+      </div>
+      <div class="card"><h2>Latest Staff Users</h2><div id="staffRolesList" class="list"></div></div>
+    </section>
+
+
+    <section id="settings" class="section">
+      <h2>⚙️ Settings</h2>
+      <div class="card">
+        <h2>Signup Gate</h2>
+        <p class="tabs-note">Quick view for settings/signupGate.</p>
+        <div id="settingsBox" class="list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+const firebaseConfig = {"apiKey": "AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8", "authDomain": "azobss.firebaseapp.com", "projectId": "azobss", "storageBucket": "azobss.firebasestorage.app", "messagingSenderId": "159277716405", "appId": "1:159277716405:web:17d8924b6b6380e2b77ffc"};
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const ADMIN_EMAIL='zedan91@azobss.local';
+
+let currentUser=null;
+let adminProfile=null;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function fmtDate(v){
+  try{
+    let d=null;
+    if(v?.toDate)d=v.toDate();
+    else if(typeof v==='number')d=new Date(v);
+    else if(typeof v==='string')d=new Date(v);
+    if(!d||isNaN(d))return '-';
+    return d.toLocaleString('en-MY',{hour12:true});
+  }catch(e){return '-'}
+}
+function toast(msg){alert(msg)}
+function isAdminUser(){
+  const email=String(currentUser?.email||adminProfile?.email||adminProfile?.authEmail||'').toLowerCase();
+  const role=String(adminProfile?.role||'').toLowerCase();
+  const username=String(adminProfile?.username||adminProfile?.usernameKey||adminProfile?.name||'').toLowerCase();
+  return email===ADMIN_EMAIL || role==='admin' || username==='zedan91';
+}
+async function getAdminProfile(user){
+  if(!user)return null;
+  const candidates=['zedan91', user.email?.split('@')[0], user.displayName].filter(Boolean);
+  for(const c of candidates){
+    try{
+      const snap=await getDoc(doc(db,'users',String(c).toLowerCase()));
+      if(snap.exists())return {id:snap.id,...snap.data()};
+    }catch(e){}
+  }
+  return null;
+}
+function item(title,meta='',actions=''){
+  return `<div class="item"><div class="item-row"><div><div class="item-title">${title}</div>${meta?`<div class="item-meta">${meta}</div>`:''}</div><div class="item-actions">${actions}</div></div></div>`;
+}
+async function safeGet(q){
+  try{return await getDocs(q)}catch(e){console.warn('Admin dashboard query failed:',e);return null}
+}
+
+async function loadOverview(){
+  const users=await safeGet(query(collection(db,'users'),limit(50)));
+  const online=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+
+  $('#statUsers').textContent=users?.size??0;
+  $('#statOnline').textContent=online?.size??0;
+  $('#statLogins').textContent=logins?.size??0;
+  $('#statVisits').textContent=guests?.size??0;
+  let openSupportCount=0;
+  support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
+  let pendingPurchaseCount=0;
+  purchases?.forEach(d=>{const x=d.data(); const status=String(x.status||'').toLowerCase(); if(!status || status==='pending' || status==='unpaid' || status==='waiting') pendingPurchaseCount++;});
+  $('#statSupport').textContent=openSupportCount;
+  $('#statNotifications').textContent=notif?.size??0;
+  $('#statPurchases').textContent=pendingPurchaseCount;
+  $('#statGuests').textContent=guests?.size??0;
+
+  const supportRows=[];
+  support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
+  $('#overviewSupport').innerHTML=supportRows.join('')||'<div class="item">No support messages.</div>';
+
+  const activityRows=[];
+  logins?.forEach(d=>{if(activityRows.length<5){const x=d.data();activityRows.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))}});
+  $('#overviewActivity').innerHTML=activityRows.join('')||'<div class="item">No activity.</div>';
+}
+
+async function loadUsers(){
+  const search=($('#userSearch').value||'').toLowerCase().trim();
+  const snap=await safeGet(query(collection(db,'users'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x={id:d.id,...d.data()};
+    const hay=(d.id+' '+(x.email||'')+' '+(x.phone||x.phoneNumber||'')+' '+(x.displayName||x.name||'')).toLowerCase();
+    if(search && !hay.includes(search))return;
+    const allowed=!!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);
+    rows.push(item(
+      esc(d.id),
+      `${esc(x.email||x.authEmail||'-')} • ${allowed?'<span class="ok">PA/BM allowed</span>':'<span class="danger">PA/BM off</span>'} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
+      `<button class="btn gray" data-edit-user="${esc(d.id)}">Toggle PA/BM</button><button class="btn red" data-del-user="${esc(d.id)}">Delete</button>`
+    ));
+  });
+  $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
+}
+
+
+
+
+async function loadSupport(){
+  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x=d.data();
+    rows.push(`<div class="item">
+      <div class="item-row"><div><div class="item-title">${esc(x.subject||'Support Request')}</div><div>${esc(x.message||'')}</div>${x.reply?`<div class="item-meta ok">Reply: ${esc(x.reply)}</div>`:''}<div class="item-meta">${esc(x.email||'')} • ${esc(x.status||'open')} • ${fmtDate(x.createdAtMs||x.createdAt)}</div></div><div class="item-actions"><button class="btn red" data-del-support="${d.id}">Delete</button></div></div>
+      <div class="toolbar"><input id="reply_${d.id}" placeholder="Reply..." style="flex:1"><button class="btn green" data-reply-support="${d.id}">Reply</button></div>
+    </div>`);
+  });
+  $('#supportList').innerHTML=rows.join('')||'<div class="item">No support messages.</div>';
+}
+async function loadNotifications(){
+  let snap=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  if(!snap)snap=await safeGet(query(collection(db,'notifications'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
+  $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
+}
+
+async function loadPayments(){
+  const filter = ($('#paymentCategoryFilter')?.value || 'all').toLowerCase();
+  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(100)));
+  const records = [];
+
+  logs?.forEach(d=>{
+    const x = {id:d.id, ...d.data()};
+    const typeRaw = String(x.productType || x.category || x.source || x.itemType || x.type || '').toLowerCase();
+    const nameRaw = String(x.title || x.name || x.itemName || x.filename || x.itemCode || '').toLowerCase();
+    const hay = typeRaw + ' ' + nameRaw;
+
+    let category = 'Others';
+    if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = 'PA/BM';
+    else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad')) category = 'CAD Tools';
+    else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = 'Software';
+
+    const amount = Number(x.amount || x.total || x.totalAmount || x.price || x.paymentAmount || 0) || 0;
+    const status = String(x.status || x.paymentStatus || '').toLowerCase();
+    const paid = ['paid','verified','success','completed','approved','confirmed'].includes(status);
+    const pending = !paid && (!status || ['pending','unpaid','waiting','manual','review'].includes(status));
+
+    records.push({...x, category, amount, paid, pending});
+  });
+
+  const totals = {pabm:0, software:0, cad:0, all:0, pending:0, paid:0};
+  records.forEach(x=>{
+    totals.all += x.amount;
+    if(x.category === 'PA/BM') totals.pabm += x.amount;
+    if(x.category === 'Software') totals.software += x.amount;
+    if(x.category === 'CAD Tools') totals.cad += x.amount;
+    if(x.pending) totals.pending++;
+    if(x.paid) totals.paid++;
+  });
+
+  if($('#payTotalPABM')) $('#payTotalPABM').textContent = totals.pabm.toFixed(2);
+  if($('#payTotalSoftware')) $('#payTotalSoftware').textContent = totals.software.toFixed(2);
+  if($('#payTotalCAD')) $('#payTotalCAD').textContent = totals.cad.toFixed(2);
+  if($('#payTotalAll')) $('#payTotalAll').textContent = totals.all.toFixed(2);
+  if($('#payPendingCount')) $('#payPendingCount').textContent = totals.pending;
+  if($('#payPaidCount')) $('#payPaidCount').textContent = totals.paid;
+  if($('#payRecordCount')) $('#payRecordCount').textContent = records.length;
+
+  const filtered = records.filter(x=>{
+    if(filter === 'all') return true;
+    if(filter === 'pabm') return x.category === 'PA/BM';
+    if(filter === 'software') return x.category === 'Software';
+    if(filter === 'cad') return x.category === 'CAD Tools';
+    if(filter === 'pending') return x.pending;
+    if(filter === 'paid') return x.paid;
+    return true;
+  }).slice(0,50);
+
+  const rows = filtered.map(x=>{
+    const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
+    const buyer = esc(x.usernameKey || x.username || x.displayName || x.email || '-');
+    const itemName = esc(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productType || 'Purchase');
+    return item(
+      `${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)}`,
+      `${buyer} • ${itemName} • Status: ${statusText} • ${fmtDate(x.createdAtMs||x.createdAt)}`
+    );
+  });
+
+  $('#paymentsList').innerHTML = rows.join('') || '<div class="item">No payment records found.</div>';
+}
+
+async function loadPurchases(){
+  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)));
+  const lr=[]; logs?.forEach(d=>{const x=d.data();lr.push(item(esc(x.usernameKey||x.username||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • ${esc(x.status||'')} • RM${esc(x.amount||x.total||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
+  $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No purchase logs.</div>';
+  $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No purchase summaries.</div>';
+}
+
+async function loadStaffRoles(){
+  const snap = await safeGet(query(collection(db,'users'),limit(100)));
+  const rows = [];
+  const permList = [
+    ['canManageSoftware','💻','Software'],
+    ['canManageCAD','📐','CAD'],
+    ['canViewPayments','💳','View Payments'],
+    ['canApprovePayment','✅','Approve Payment'],
+    ['canEditUsers','👥','Edit Users']
+  ];
+  function roleLabel(r){
+    r=String(r||'user').toLowerCase();
+    if(r==='admin')return 'Admin';
+    if(r==='semiadmin'||r==='semi-admin')return 'Semi Admin';
+    if(r==='staff')return 'Staff';
+    return 'User';
+  }
+  function badgeHtml(perms){
+    perms=perms||{};
+    return '<div class="staff-role-badges">'+permList.map(([key,icon,label])=>{
+      const on=perms[key]===true;
+      return `<span class="staff-role-badge ${on?'':'off'}">${icon} ${on?'✅':'❌'} ${label}</span>`;
+    }).join('')+'</div>';
+  }
+  snap?.forEach(d=>{
+    const x=d.data()||{};
+    const role=String(x.role||'member').toLowerCase();
+    if(!['admin','semiadmin','semi-admin','staff'].includes(role) && !x.permissions) return;
+    rows.push(`<div class="staff-role-card" data-staff-username="${esc(d.id)}">
+      <div class="staff-role-name">👤 ${esc(d.id)}</div>
+      <div class="staff-role-meta">Role: <b>${esc(roleLabel(role))}</b></div>
+      ${badgeHtml(x.permissions||{})}
+      <div class="staff-role-actions">
+        <button class="staff-role-edit" data-staff-edit="${esc(d.id)}">✏️ Edit</button>
+        <button class="staff-role-reset" data-staff-reset="${esc(d.id)}">↩️ Reset User</button>
+      </div>
+    </div>`);
+  });
+  $('#staffRolesList').classList.add('staff-role-list');
+  $('#staffRolesList').innerHTML=rows.join('')||'<div class="staff-role-card">No staff users found.</div>';
+}
+
+async function resetStaffRoleToUser(username){
+  if(!confirm('Reset role '+username+' kepada user biasa?')) return;
+  await updateDoc(doc(db,'users',username),{role:'user',permissions:{}});
+  await loadStaffRoles();
+}
+function fillStaffRoleForm(username){
+  const card=document.querySelector(`[data-staff-username="${CSS.escape(username)}"]`);
+  const input=$('#staffUsername');
+  if(input) input.value=username;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.addEventListener('click',e=>{
+  const edit=e.target.closest('[data-staff-edit]');
+  if(edit) fillStaffRoleForm(edit.getAttribute('data-staff-edit'));
+  const reset=e.target.closest('[data-staff-reset]');
+  if(reset) resetStaffRoleToUser(reset.getAttribute('data-staff-reset'));
+});
+
+async function saveStaffRole(){
+  const username=String($('#staffUsername')?.value||'').trim().toLowerCase();
+  if(!username) return alert('Enter username.');
+  const role=$('#staffRole')?.value||'semiAdmin';
+  const permissions={canManageSoftware:!!$('#permSoftware')?.checked,canManageCAD:!!$('#permCAD')?.checked,canViewPayments:!!$('#permPayments')?.checked,canApprovePayment:!!$('#permApprove')?.checked,canEditUsers:false};
+  await updateDoc(doc(db,'users',username),{role,permissions,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});
+  await loadStaffRoles();
+  alert('Staff role saved.');
+}
+
+
+let adminCommissionCache = [];
+
+function commissionRecordTitle(x){
+  return esc(x.username || x.ownerUsername || x.createdByUsername || x.email || x.ownerEmail || 'Unknown');
+}
+function commissionAmountOf(x){
+  return Number(x.amount || x.commissionAmount || x.totalCommission || 0) || 0;
+}
+function commissionIsPaid(x){
+  const s = String(x.status || '').toLowerCase();
+  return ['paid','verified','success','completed','approved'].includes(s);
+}
+function resetCommissionForm(){
+  $('#commissionEditDocId').value = '';
+  $('#commissionUsername').value = '';
+  $('#commissionProduct').value = '';
+  $('#commissionAmount').value = '';
+  $('#commissionStatus').value = 'pending';
+  $('#commissionOwnerUid').value = '';
+  $('#commissionOwnerUsername').value = '';
+  $('#commissionOwnerEmail').value = '';
+  $('#commissionNote').value = '';
+  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Add / Edit Commission';
+}
+async function loadAdminCommissions(){
+  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(100)));
+  adminCommissionCache = [];
+  let total=0,pending=0,paid=0;
+  snap?.forEach(d=>{
+    const x={docId:d.id,...d.data()};
+    const amt=commissionAmountOf(x);
+    total += amt;
+    if(commissionIsPaid(x)) paid += amt; else pending += amt;
+    adminCommissionCache.push(x);
+  });
+  if($('#adminComTotal')) $('#adminComTotal').textContent = total.toFixed(2);
+  if($('#adminComPending')) $('#adminComPending').textContent = pending.toFixed(2);
+  if($('#adminComPaid')) $('#adminComPaid').textContent = paid.toFixed(2);
+  if($('#adminComCount')) $('#adminComCount').textContent = adminCommissionCache.length;
+
+  const rows = adminCommissionCache.map(x=>{
+    const amt = commissionAmountOf(x).toFixed(2);
+    const owner = commissionRecordTitle(x);
+    const product = esc(x.product || x.productTitle || x.itemName || x.saleRef || '-');
+    const status = esc(x.status || 'pending');
+    return `<div class="item">
+      <div class="item-title">💸 ${owner} • RM${amt}</div>
+      <div class="item-meta">${product} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)}</div>
+      <div class="toolbar" style="margin:6px 0 0">
+        <button class="btn gray" data-edit-commission="${esc(x.docId)}">Edit</button>
+        <button class="btn red" data-delete-commission="${esc(x.docId)}">Delete</button>
+      </div>
+    </div>`;
+  });
+  $('#adminCommissionList').innerHTML = rows.join('') || '<div class="item">No commission records.</div>';
+}
+async function saveCommissionRecord(){
+  const docId = $('#commissionEditDocId')?.value || '';
+  const amount = Number($('#commissionAmount')?.value || 0);
+  const payload = {
+    username: $('#commissionUsername')?.value.trim() || '',
+    product: $('#commissionProduct')?.value.trim() || '',
+    amount,
+    status: $('#commissionStatus')?.value || 'pending',
+    note: $('#commissionNote')?.value.trim() || '',
+    ownerUid: $('#commissionOwnerUid')?.value.trim() || '',
+    ownerUsername: $('#commissionOwnerUsername')?.value.trim() || $('#commissionUsername')?.value.trim() || '',
+    ownerEmail: $('#commissionOwnerEmail')?.value.trim() || '',
+    ownerShare: 70,
+    platformShare: 30,
+    commissionRate: 70,
+    updatedAt: serverTimestamp(),
+    updatedAtMs: Date.now()
+  };
+  if(docId){
+    await updateDoc(doc(db,'commissionRecords',docId), payload);
+  }else{
+    await addDoc(collection(db,'commissionRecords'), {...payload, createdAt: serverTimestamp(), createdAtMs: Date.now(), createdByAdmin: 'admin-dashboard'});
+  }
+  resetCommissionForm();
+  await loadAdminCommissions();
+}
+function editCommissionRecord(docId){
+  const x = adminCommissionCache.find(r=>r.docId===docId);
+  if(!x) return;
+  $('#commissionEditDocId').value = x.docId;
+  $('#commissionUsername').value = x.username || x.ownerUsername || '';
+  $('#commissionProduct').value = x.product || x.productTitle || x.itemName || x.saleRef || '';
+  $('#commissionAmount').value = commissionAmountOf(x);
+  $('#commissionStatus').value = x.status || 'pending';
+  $('#commissionOwnerUid').value = x.ownerUid || '';
+  $('#commissionOwnerUsername').value = x.ownerUsername || x.username || '';
+  $('#commissionOwnerEmail').value = x.ownerEmail || '';
+  $('#commissionNote').value = x.note || '';
+  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Editing Commission';
+}
+async function deleteCommissionRecord(docId){
+  if(!confirm('Delete this commission record?')) return;
+  await deleteDoc(doc(db,'commissionRecords',docId));
+  await loadAdminCommissions();
+}
+
+
+let adminActivityCache = [];
+let adminActivityPage = 1;
+const ADMIN_ACTIVITY_PAGE_SIZE = 10;
+
+function azActivityType(x){
+  const raw = String(x.type || x.event || x.action || x.category || x.collection || '').toLowerCase();
+  const text = String(JSON.stringify(x)).toLowerCase();
+  if(raw.includes('payment') || text.includes('payment') || text.includes('purchase')) return ['💳 Payment','az-act-payment'];
+  if(raw.includes('software') || text.includes('softwaretools') || text.includes('software')) return ['🔵 Software','az-act-software'];
+  if(raw.includes('cad') || text.includes('cadtools') || text.includes('lisp')) return ['🟣 CAD','az-act-cad'];
+  if(raw.includes('commission') || text.includes('commission')) return ['🟡 Commission','az-act-commission'];
+  if(raw.includes('login') || text.includes('login')) return ['🟢 Login','az-act-login'];
+  return ['⚪ Activity','az-act-default'];
+}
+function azActivityUsername(x){
+  return x.username || x.usernameKey || x.ownerUsername || x.createdByUsername || x.email || x.userEmail || x.uid || x.ownerUid || 'Unknown';
+}
+function azActivityTitle(x){
+  return x.title || x.product || x.productTitle || x.itemName || x.action || x.event || x.type || x.message || 'Activity';
+}
+function azActivitySub(x){
+  const parts = [x.status, x.amount ? ('RM'+x.amount) : '', x.productId, x.note].filter(Boolean);
+  return parts.join(' • ') || (x.collection || x.source || '');
+}
+function azActivityTime(x){
+  const ms = Number(x.createdAtMs || x.updatedAtMs || x.timestampMs || x.timeMs || 0);
+  if(ms) return new Date(ms).toLocaleString();
+  try{
+    if(x.createdAt?.seconds) return new Date(x.createdAt.seconds*1000).toLocaleString();
+    if(x.updatedAt?.seconds) return new Date(x.updatedAt.seconds*1000).toLocaleString();
+  }catch(e){}
+  return '';
+}
+function azActivityMatches(x, q){
+  if(!q) return true;
+  return JSON.stringify(x).toLowerCase().includes(q);
+}
+function renderAdminActivity(){
+  const list = $('#activityList') || $('#adminActivityList') || $('#activityRecords');
+  const info = $('#activityPageInfo');
+  if(!list) return;
+  const q = String($('#activitySearch')?.value || '').toLowerCase().trim();
+  const filtered = adminActivityCache.filter(x => azActivityMatches(x,q));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ADMIN_ACTIVITY_PAGE_SIZE));
+  adminActivityPage = Math.min(Math.max(1, adminActivityPage), totalPages);
+  const start = (adminActivityPage - 1) * ADMIN_ACTIVITY_PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + ADMIN_ACTIVITY_PAGE_SIZE);
+
+  list.classList.add('az-activity-list');
+  list.innerHTML = pageItems.map(x=>{
+    const [label, cls] = azActivityType(x);
+    return `<div class="az-activity-row az-admin-mini-record">
+      <span class="az-activity-badge az-admin-mini-label ${cls}">${label}</span>
+      <div class="az-activity-main az-admin-mini-main">
+        <div class="az-activity-title az-admin-mini-title">${esc(azActivityUsername(x))} — ${esc(azActivityTitle(x))}</div>
+        <div class="az-activity-sub az-admin-mini-sub">${esc(azActivitySub(x))}</div>
+      </div>
+      <div class="az-activity-time az-admin-mini-time">${esc(azActivityTime(x))}</div>
+    </div>`;
+  }).join('') || '<div class="az-activity-row az-admin-mini-record"><div class="az-activity-main az-admin-mini-main"><div class="az-activity-title">No activity found.</div></div></div>';
+
+  if(info) info.textContent = `Page ${adminActivityPage} / ${totalPages} • ${filtered.length} records`;
+  if($('#activityPrevBtn')) $('#activityPrevBtn').disabled = adminActivityPage <= 1;
+  if($('#activityNextBtn')) $('#activityNextBtn').disabled = adminActivityPage >= totalPages;
+}
+
+const AZ_ADMIN_ONLINE_COLLECTION = 'onlineUsers';
+const AZ_ADMIN_ONLINE_MAX_IDLE_MS = 10 * 60 * 1000;
+function azAdminToMs(v){
+  if(!v)return 0;
+  if(typeof v==='number')return v;
+  if(v.seconds)return v.seconds*1000;
+  const n=Number(v); if(!Number.isNaN(n)&&n>0)return n;
+  const d=Date.parse(v); return Number.isNaN(d)?0:d;
+}
+function azAdminOnlineSeenMs(x){
+  return azAdminToMs(x.lastSeenMs||x.lastSeenAtMs||x.seenAtMs||x.updatedAtMs||x.timestampMs||x.lastActiveMs||x.lastSeen||x.seenAt||x.updatedAt||x.timestamp||x.createdAt);
+}
+function azAdminOnlineIsActive(x){
+  const status=String(x.status||x.state||'').toLowerCase();
+  const flag=x.online===true||x.isOnline===true||status==='online'||status==='active';
+  if(!flag)return false;
+  const ms=azAdminOnlineSeenMs(x);
+  if(ms && (Date.now()-ms)>AZ_ADMIN_ONLINE_MAX_IDLE_MS)return false;
+  return true;
+}
+function azAdminOnlineName(x){return x.username||x.usernameKey||x.name||x.displayName||x.email||x.userEmail||x.uid||'Unknown';}
+function azAdminOnlineEmail(x){return x.email||x.userEmail||x.authEmail||'';}
+function azAdminOnlineSeenText(x){const ms=azAdminOnlineSeenMs(x);return ms?new Date(ms).toLocaleString():'-';}
+async function loadOnlineUsers(){
+  const box=$('#onlineUsersList')||$('#onlineList')||$('#adminOnlineUsersList');
+  if(!box)return;
+  const rows=[];
+  try{
+    const snap=await safeGet(query(collection(db,AZ_ADMIN_ONLINE_COLLECTION),limit(100)));
+    snap?.forEach(d=>{const x={docId:d.id,...d.data()}; if(azAdminOnlineIsActive(x))rows.push(x);});
+  }catch(e){console.warn('online users load failed',e);}
+  rows.sort((a,b)=>azAdminOnlineSeenMs(b)-azAdminOnlineSeenMs(a));
+  box.classList.add('az-admin-mini-records');
+  box.innerHTML=rows.map(x=>`<div class="az-admin-mini-record">
+    <span class="az-admin-mini-label az-act-login">🟢 Online</span>
+    <div class="az-admin-mini-main">
+      <div class="az-admin-mini-title">${esc(azAdminOnlineName(x))}</div>
+      <div class="az-admin-mini-sub">${esc(azAdminOnlineEmail(x))} • Status: online</div>
+    </div>
+    <div class="az-admin-mini-time">${esc(azAdminOnlineSeenText(x))}</div>
+  </div>`).join('')||'<div class="az-admin-mini-record"><div class="az-admin-mini-main"><div class="az-admin-mini-title">No users online now.</div><div class="az-admin-mini-sub">Mengikut logic PA/BM + anti stale.</div></div></div>';
+}
+function loadOnline(){return loadOnlineUsers();}
+
+
+let adminRegisteredUsersCache=[];
+let adminRegisteredUsersPage=1;
+const ADMIN_REGISTERED_PAGE_SIZE=10;
+function azRegMs(v){
+  if(!v)return 0;
+  if(typeof v==='number')return v;
+  if(v.seconds)return v.seconds*1000;
+  const n=Number(v); if(!Number.isNaN(n)&&n>0)return n;
+  const d=Date.parse(v); return Number.isNaN(d)?0:d;
+}
+function azRegTime(x){
+  const ms=azRegMs(x.createdAtMs||x.registeredAtMs||x.updatedAtMs||x.createdAt||x.registeredAt||x.updatedAt);
+  return ms?new Date(ms).toLocaleString():'-';
+}
+function azRegUser(x){
+  return x.usernameKey||x.username||x.name||x.displayName||x.email||x.uid||'Unknown';
+}
+function azRegSub(x){
+  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', x.role?('Role: '+x.role):''].filter(Boolean).join(' • ');
+}
+function renderRegisteredUsersAdmin(){
+  const box=$('#registeredUsersAdminList'); if(!box)return;
+  const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
+  const rows=adminRegisteredUsersCache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));
+  const totalPages=Math.max(1,Math.ceil(rows.length/ADMIN_REGISTERED_PAGE_SIZE));
+  adminRegisteredUsersPage=Math.min(Math.max(1,adminRegisteredUsersPage),totalPages);
+  const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
+  const page=rows.slice(start,start+ADMIN_REGISTERED_PAGE_SIZE);
+  box.innerHTML=page.map(x=>`<div class="az-admin-reg-row">
+    <span class="az-admin-reg-badge">👤 Registered</span>
+    <div>
+      <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
+      <div class="az-admin-reg-sub">${esc(azRegSub(x))}</div>
+    </div>
+    <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
+  </div>`).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
+  if($('#registeredUsersPageInfo'))$('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} records`;
+  if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
+  if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
+}
+async function loadRegisteredUsersAdmin(){
+  const rows=[];
+  try{
+    const snap=await safeGet(query(collection(db,'users'),limit(200)));
+    snap?.forEach(d=>rows.push({docId:d.id,usernameKey:d.id,...d.data()}));
+  }catch(e){console.warn('registered users load failed',e);}
+  rows.sort((a,b)=>azRegMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt||b.registeredAt||b.updatedAt)-azRegMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt||a.registeredAt||a.updatedAt));
+  adminRegisteredUsersCache=rows;
+  adminRegisteredUsersPage=1;
+  renderRegisteredUsersAdmin();
+}
+
+async function loadAdminActivity(){
+  const collections = [
+    ['loginHistory','login'],
+    ['guestHistory','guest'],
+    ['purchaseLogs','payment'],
+    ['commissionRecords','commission'],
+    ['staffSoftwareSubmissions','software'],
+    ['staffCADSubmissions','cad']
+  ];
+  const rows = [];
+  for(const [col,type] of collections){
+    try{
+      const snap = await safeGet(query(collection(db,col), limit(40)));
+      snap?.forEach(d=>rows.push({docId:d.id, collection:col, type, ...d.data()}));
+    }catch(e){}
+  }
+  rows.sort((a,b)=>Number(b.createdAtMs||b.updatedAtMs||b.createdAt?.seconds*1000||0)-Number(a.createdAtMs||a.updatedAtMs||a.createdAt?.seconds*1000||0));
+  adminActivityCache = rows;
+  adminActivityPage = 1;
+  renderAdminActivity();
+}
+
+async function loadSettings(){
+  const snap=await getDoc(doc(db,'settings','signupGate')).catch(()=>null);
+  if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
+  else $('#settingsBox').innerHTML='<div class="item">No signupGate settings found.</div>';
+}
+async function publishNotification(){
+  const type=$('#notifType').value, title=$('#notifTitle').value.trim(), body=$('#notifBody').value.trim();
+  if(!title&&!body)return toast('Please write notification.');
+  await addDoc(collection(db,'notifications'),{active:true,scope:'all',type,title:title||type,body,createdAtMs:Date.now(),createdAt:serverTimestamp(),createdBy:currentUser?.email||'admin',createdByUid:currentUser?.uid||''});
+  $('#notifTitle').value='';$('#notifBody').value=''; await loadNotifications(); await loadOverview(); toast('Notification published.');
+}
+async function clearNotifications(){
+  if(!confirm('Delete latest notifications?'))return;
+  const snap=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)));
+  const jobs=[]; snap?.forEach(d=>jobs.push(deleteDoc(doc(db,'notifications',d.id))));
+  await Promise.all(jobs); await loadNotifications(); await loadOverview(); toast('Notifications cleared.');
+}
+async function initSection(id){
+  if(id==='overview')return loadOverview();
+  if(id==='users'){ if(typeof loadUsers==='function')loadUsers(); return loadRegisteredUsersAdmin(); }
+  if(id==='online')return loadOnline();
+  if(id==='activity')return loadActivity();
+  if(id==='support')return loadSupport();
+  if(id==='notifications')return loadNotifications();
+  if(id==='purchases')return loadPurchases();
+  if(id==='payments')return loadPayments();
+  if(id==='activity')return loadAdminActivity();
+  if(id==='commissions')return loadAdminCommissions();
+  if(id==='staffroles')return loadStaffRoles();
+  if(id==='settings')return loadSettings();
+}
+document.addEventListener('click',async e=>{
+  const tab=e.target.closest('[data-tab]');
+  if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
+  const edit=e.target.closest('[data-edit-user]');
+  if(edit){const id=edit.dataset.editUser;const ref=doc(db,'users',id);const s=await getDoc(ref);const x=s.data()||{};const now=!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);await updateDoc(ref,{paBmAllowed:now,allowPABM:now,allowPaBm:now,canAccessPaBm:now,showPaBmTab:now,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});await loadUsers();return;}
+  const du=e.target.closest('[data-del-user]');
+  if(du&&confirm('Delete user '+du.dataset.delUser+'?')){await deleteDoc(doc(db,'users',du.dataset.delUser));await loadUsers();await loadOverview();return;}
+  const ds=e.target.closest('[data-del-support]');
+  if(ds&&confirm('Delete support message?')){await deleteDoc(doc(db,'supportMessages',ds.dataset.delSupport));await loadSupport();await loadOverview();return;}
+  const rs=e.target.closest('[data-reply-support]');
+  if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
+  const dn=e.target.closest('[data-del-notif]');
+  if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+});
+$('#refreshUsers').addEventListener('click',loadUsers);
+$('#userSearch').addEventListener('input',()=>setTimeout(loadUsers,80));
+$('#refreshOnline').addEventListener('click',loadOnline);
+$('#refreshSupport').addEventListener('click',loadSupport);
+$('#publishNotif').addEventListener('click',publishNotification);
+$('#clearNotif').addEventListener('click',clearNotifications);
+$('#refreshPayments')?.addEventListener('click',loadPayments);
+$('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
+$('#saveStaffRole')?.addEventListener('click',saveStaffRole);
+
+onAuthStateChanged(auth,async user=>{
+  currentUser=user;
+  if(!user){$('#loginState').textContent='Please login as admin from main website first.';return;}
+  adminProfile=await getAdminProfile(user);
+  if(!isAdminUser()){$('#loginState').textContent='Access denied. Admin only.';return;}
+  $('#loginCover').classList.add('hidden');
+  $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
+  $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
+  await loadOverview();
+});
+</script>
+
+
+
+
+<script id="az-remove-hello-label-fix">
+(function(){
+  if(window.__azRemoveHelloLabelFix)return;
+  window.__azRemoveHelloLabelFix=true;
+
+  function cleanHelloText(){
+    var selectors=[
+      '#userNameText','#userName','.user-name','.username','.user-menu-name',
+      '.profile-name','.profile-label','.az-user-name','.azobss-user-name'
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(function(el){
+      if(!el || !el.textContent) return;
+      var t=el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
+      if(t && t!==el.textContent.trim()) el.textContent=t;
+    });
+
+    document.querySelectorAll('span,div,a,button,strong,b').forEach(function(el){
+      if(!el || !el.childNodes || el.childNodes.length!==1) return;
+      var txt=el.textContent||'';
+      if(/^\s*hello\s*,\s*[\w.@+-]+\s*$/i.test(txt)){
+        el.textContent=txt.replace(/^\s*hello\s*,?\s*/i,'').trim();
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',cleanHelloText);
+  if(document.readyState!=='loading')cleanHelloText();
+  window.addEventListener('storage',cleanHelloText);
+  window.addEventListener('focus',cleanHelloText);
+  setTimeout(cleanHelloText,500);
+  setTimeout(cleanHelloText,1500);
+  setTimeout(cleanHelloText,3000);
+})();
+</script>
+
+
+
+<script src="/assets/js/azobss-global-auth.js"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script>
+<script src="/assets/js/azobss-pro-ui.js"></script>
+
+<script id="az-real-market-stickybar-dashboard-cleanup">
+(function(){
+  function cleanHello(){
+    document.querySelectorAll('#signedInName,#userNameText,#userName,.user-name,.username,.user-menu-name,.profile-name,.az-user-name').forEach(function(el){
+      if(el && el.textContent) el.textContent = el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
+    });
+  }
+  document.addEventListener('DOMContentLoaded',cleanHello);
+  if(document.readyState!=='loading') cleanHello();
+  window.addEventListener('focus',cleanHello);
+  window.addEventListener('storage',cleanHello);
+  setTimeout(cleanHello,500);
+  setTimeout(cleanHello,1500);
+})();
+</script>
+
+
+
+<script id="az-staff-role-firestore-badge-renderer">
+(function(){
+  if(window.__azStaffRoleFirestoreBadgeRenderer)return;
+  window.__azStaffRoleFirestoreBadgeRenderer=true;
+
+  const PERMS=[
+    ['canManageSoftware','💻','Software'],
+    ['canManageCAD','📐','CAD'],
+    ['canViewPayments','💳','View Payments'],
+    ['canApprovePayment','✅','Approve Payment'],
+    ['canEditUsers','👥','Edit Users']
+  ];
+
+  function esc(v){
+    return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function roleLabel(role){
+    const r=String(role||'user').toLowerCase();
+    if(r==='admin')return 'Admin';
+    if(r==='semiadmin'||r==='semi-admin')return 'Semi Admin';
+    if(r==='staff')return 'Staff';
+    return 'User';
+  }
+
+  function badges(perms){
+    perms=perms||{};
+    return '<div class="staff-role-badges">'+PERMS.map(([key,icon,label])=>{
+      const on=perms[key]===true;
+      return `<span class="staff-role-badge ${on?'':'off'}">${icon} ${on?'✅':'❌'} ${label}</span>`;
+    }).join('')+'</div>';
+  }
+
+  function card(username,x){
+    const perms=x.permissions||{};
+    return `<div class="staff-role-card" data-staff-username="${esc(username)}">
+      <div class="staff-role-name">👤 ${esc(username)}</div>
+      <div class="staff-role-meta">Role: <b>${esc(roleLabel(x.role))}</b></div>
+      ${badges(perms)}
+      <div class="staff-role-actions">
+        <button class="staff-role-edit" data-staff-edit="${esc(username)}">✏️ Edit</button>
+        <button class="staff-role-reset" data-staff-reset="${esc(username)}">↩️ Reset User</button>
+      </div>
+    </div>`;
+  }
+
+  function getUsernameFromDoc(doc){
+    const x=doc.data ? doc.data() : doc;
+    return x.usernameKey||x.username||x.id||x.name||doc.id||'unknown';
+  }
+
+  async function renderFromFirestore(){
+    if(typeof db==='undefined'||typeof collection==='undefined'||typeof getDocs==='undefined')return false;
+    const box=document.querySelector('#staffRoleList,#latestStaffUsers,#staffUsersList,#staffRolesList') || findStaffBox();
+    if(!box)return false;
+    try{
+      const snap=await getDocs(collection(db,'users'));
+      const rows=[];
+      snap.forEach(d=>{
+        const x=d.data()||{};
+        const role=String(x.role||'').toLowerCase();
+        if(role==='admin'||role==='semiadmin'||role==='staff'||x.permissions){
+          rows.push(card(getUsernameFromDoc({id:d.id,data:()=>x}),x));
+        }
+      });
+      box.classList.add('staff-role-list');
+      box.innerHTML=rows.join('')||'<div class="staff-role-card">No staff users.</div>';
+      return true;
+    }catch(e){
+      console.warn('staff role badge firestore render failed',e);
+      return false;
+    }
+  }
+
+  function findStaffBox(){
+    const headings=[...document.querySelectorAll('h1,h2,h3')].find(h=>/Latest Staff Users|Staff Users|Staff Roles/i.test(h.textContent||''));
+    if(!headings)return null;
+    let p=headings.parentElement;
+    for(let i=0;i<4&&p;i++,p=p.parentElement){
+      const candidates=[...p.querySelectorAll('div')].filter(d=>d!==p && /Role:|Permissions:|canManage/i.test(d.textContent||''));
+      if(candidates.length)return candidates[0].parentElement||candidates[0];
+    }
+    return null;
+  }
+
+  function fillForm(username){
+    const card=document.querySelector(`[data-staff-username="${CSS.escape(username)}"]`);
+    const input=document.querySelector('input[placeholder*="Username"],#staffRoleUsername,#roleUsername');
+    if(input)input.value=username;
+    const roleText=card?.querySelector('.staff-role-meta')?.textContent||'';
+    const roleSelect=document.querySelector('select#staffRoleSelect,select#roleSelect,select');
+    if(roleSelect){
+      const role=roleText.toLowerCase().includes('semi')?'semiAdmin':roleText.toLowerCase().includes('staff')?'staff':'user';
+      roleSelect.value=role;
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  async function resetRole(username){
+    if(!confirm('Reset role '+username+' kepada user biasa?'))return;
+    if(typeof db==='undefined'||typeof doc==='undefined'||typeof updateDoc==='undefined')return alert('Firestore belum ready.');
+    await updateDoc(doc(db,'users',username),{role:'user',permissions:{}});
+    await renderFromFirestore();
+  }
+
+  document.addEventListener('click',e=>{
+    const edit=e.target.closest('[data-staff-edit]');
+    if(edit)fillForm(edit.getAttribute('data-staff-edit'));
+    const reset=e.target.closest('[data-staff-reset]');
+    if(reset)resetRole(reset.getAttribute('data-staff-reset'));
+  });
+
+  function removeJsonFallback(){
+    document.querySelectorAll('.staff-role-card pre, .staff-role-card code').forEach(el=>el.remove());
+    document.querySelectorAll('.staff-role-card').forEach(el=>{
+      el.innerHTML=el.innerHTML.replace(/\{[\s\S]*?\}/g,'');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{renderFromFirestore().then(ok=>{if(!ok)removeJsonFallback();});},900);});
+  if(document.readyState!=='loading')setTimeout(()=>{renderFromFirestore().then(ok=>{if(!ok)removeJsonFallback();});},900);
+})();
+</script>
+
+
+<script id="az-role-dashboard-buttons-visibility-fix">
+(function(){
+  if(window.__azRoleDashboardButtonsVisibilityFix)return;
+  window.__azRoleDashboardButtonsVisibilityFix=true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(var s=0;s<2;s++){
+      var store=s===0?sessionStorage:localStorage;
+      for(var i=0;i<keys.length;i++){
+        try{
+          var raw=store.getItem(keys[i]);
+          if(raw){
+            var obj=JSON.parse(raw);
+            if(obj && typeof obj==='object') return obj;
+          }
+        }catch(e){}
+      }
+    }
+    return {};
+  }
+
+  function roleInfo(){
+    var u=readUser();
+    var role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
+
+    var isAdmin = role==='admin' || username==='zedan91' || email==='zedan91@azobss.local' || email==='zedan9107@gmail.com';
+    var isStaffLike = !isAdmin && (role==='semiadmin' || role==='semi-admin' || role==='staff');
+
+    return {isAdmin:isAdmin,isStaffLike:isStaffLike};
+  }
+
+  function apply(){
+    var r=roleInfo();
+    if(document.body){
+      document.body.classList.toggle('az-role-is-admin', !!r.isAdmin);
+      document.body.classList.toggle('az-role-is-stafflike', !!r.isStaffLike);
+    }
+
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn').forEach(function(btn){
+      btn.hidden = !r.isAdmin;
+      btn.style.display = r.isAdmin ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', r.isAdmin ? 'false' : 'true');
+    });
+
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn').forEach(function(btn){
+      var show = r.isAdmin || r.isStaffLike;
+      btn.hidden = !show;
+      btn.style.display = show ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', show ? 'false' : 'true');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',apply);
+  if(document.readyState!=='loading')apply();
+  window.addEventListener('focus',apply);
+  window.addEventListener('storage',apply);
+  setTimeout(apply,400);
+  setTimeout(apply,1200);
+  setTimeout(apply,3000);
+})();
+</script>
+
+
+<script id="az-stickybar-icons-action-badge-fix">
+(function(){
+  if(window.__azStickybarIconsActionBadgeFix)return;
+  window.__azStickybarIconsActionBadgeFix=true;
+
+  function readCartCount(){
+    try{
+      var keys=['azobssCart','azShopCart','cart','azobss_cart'];
+      for(var i=0;i<keys.length;i++){
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(!raw)continue;
+        var data=JSON.parse(raw);
+        if(Array.isArray(data))return data.length;
+        if(Array.isArray(data.items))return data.items.reduce(function(n,x){return n+Number(x.qty||x.quantity||1);},0);
+      }
+    }catch(e){}
+    return 0;
+  }
+
+  function updateCartBadge(){
+    var n=readCartCount();
+    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
+      b.textContent=String(n);
+      b.style.display=n>0?'inline-flex':'inline-flex';
+    });
+  }
+
+  function bindButtons(){
+    document.querySelectorAll('[data-az-shop-cart-toggle],a[aria-label="Cart"]').forEach(function(a){
+      if(a.__azCartBound)return;
+      a.__azCartBound=true;
+      a.addEventListener('click',function(e){
+        if(a.getAttribute('href')==='#')e.preventDefault();
+        if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
+        if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
+        var cart=document.querySelector('#azShopCartDrawer,#cartDrawer,.az-shop-cart-drawer,[data-az-shop-cart-drawer]');
+        if(cart){
+          cart.classList.toggle('open');
+          cart.classList.toggle('is-open');
+          cart.hidden=false;
+          return;
+        }
+        window.location.href='/Software-Tools/';
+      });
+    });
+
+    document.querySelectorAll('a[aria-label="Notifications"]').forEach(function(a){
+      a.setAttribute('href','/PA-BM/');
+    });
+
+    document.querySelectorAll('a[aria-label="Likes"]').forEach(function(a){
+      a.setAttribute('href','/likes/');
+    });
+
+    document.querySelectorAll('a[aria-label="Chat"]').forEach(function(a){
+      if(!a.getAttribute('href') || a.getAttribute('href')==='#') a.setAttribute('href','https://alvo.chat/6nZ2');
+      a.setAttribute('target','_blank');
+      a.setAttribute('rel','noopener');
+    });
+  }
+
+  function run(){
+    bindButtons();
+    updateCartBadge();
+  }
+
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.readyState!=='loading')run();
+  window.addEventListener('storage',run);
+  window.addEventListener('focus',run);
+  setInterval(updateCartBadge,1500);
+})();
+</script>
+
+
+<div class="az-reg-modal" id="azRegEditModal">
+  <div class="az-reg-dialog">
+    <h2>Edit Registered User</h2>
+    <input type="hidden" id="azRegEditDocId">
+    <label>Username</label>
+    <input id="azRegEditUsername" readonly>
+    <div class="row">
+      <div><label>Email</label><input id="azRegEditEmail"></div>
+      <div><label>Phone</label><input id="azRegEditPhone"></div>
+    </div>
+    <div class="row">
       <div><label>Role</label><select id="azRegEditRole"><option value="member">member</option><option value="staff">staff</option><option value="semiAdmin">semiAdmin</option><option value="admin">admin</option></select></div>
       <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
     </div>
@@ -984,117 +2052,79 @@ const $ = (s) => document.querySelector(s);
 </div>
 
 
-
-<div class="az-reg-safe-modal" id="azRegEditModal">
-  <div class="az-reg-safe-dialog">
-    <h2>Edit Registered User</h2>
-    <input type="hidden" id="azRegEditDocId">
-    <label>Username</label><input id="azRegEditUsername" readonly>
-    <div class="row"><div><label>Email</label><input id="azRegEditEmail"></div><div><label>Phone</label><input id="azRegEditPhone"></div></div>
-    <div class="row"><div><label>Role</label><select id="azRegEditRole"><option value="member">member</option><option value="staff">staff</option><option value="semiAdmin">semiAdmin</option><option value="admin">admin</option></select></div><div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div></div>
-    <div class="actions"><button class="az-reg-safe-cancel" id="azRegCancelBtn" type="button">Cancel</button><button class="az-reg-safe-save" id="azRegSaveBtn" type="button">Save</button></div>
-  </div>
-</div>
-
-
-<script id="az-registered-users-safe-final-actions">
+<script id="az-admin-registered-full-actions-fix">
 (function(){
-if(window.__azRegisteredUsersSafeFinalActions)return;window.__azRegisteredUsersSafeFinalActions=true;
-let cache=[];let page=1;const SIZE=10;
-const qs=s=>document.querySelector(s);
-function h(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function toMs(v){if(!v)return 0;if(typeof v==='number')return v;if(v.seconds)return v.seconds*1000;const n=Number(v);if(!Number.isNaN(n)&&n>0)return n;const d=Date.parse(v);return Number.isNaN(d)?0:d}
-function nameOf(x){return x.usernameKey||x.username||x.docId||x.id||x.email||'Unknown'}
-function pa(x){return x.paBmAllowed===true||x.paAccessAllowed===true||x.paAllowed===true||x.permissions?.paBmAllowed===true}
-function online(x){return x.online===true||x.isOnline===true||String(x.status||'').toLowerCase()==='online'}
-function dateOf(x){const t=toMs(x.createdAtMs||x.registeredAtMs||x.updatedAtMs||x.createdAt||x.registeredAt||x.updatedAt);return t?new Date(t).toLocaleString():'-'}
-function rows(){const q=(qs('#registeredUsersSearch')?.value||'').toLowerCase().trim();let r=cache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));const s=qs('#registeredUsersSort')?.value||'newest';if(s==='az')r.sort((a,b)=>String(nameOf(a)).localeCompare(String(nameOf(b))));else if(s==='online')r=r.filter(online);else if(s==='pa')r=r.filter(pa);else if(s==='oldest')r.sort((a,b)=>toMs(a.createdAtMs||a.registeredAtMs||a.createdAt)-toMs(b.createdAtMs||b.registeredAtMs||b.createdAt));else r.sort((a,b)=>toMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt)-toMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt));return r}
-function render(){const box=qs('#registeredUsersAdminList');if(!box)return;const r=rows();const total=Math.max(1,Math.ceil(r.length/SIZE));page=Math.min(Math.max(1,page),total);const it=r.slice((page-1)*SIZE,page*SIZE);box.innerHTML=it.map(x=>{const id=h(x.docId||nameOf(x));const ok=pa(x);return `<div class="az-reg-safe-row"><div class="az-reg-safe-name">${h(nameOf(x))}</div><div class="az-reg-safe-info">${h(x.email||x.authEmail||'')} • ${h(x.phoneNumber||x.phone||'')} • Role: ${h(x.role||'member')}</div><div class="az-reg-safe-status ${ok?'ok':'off'}">${ok?'PA/BM allowed':'PA/BM off'}<br><span style="color:#94a3b8;font-weight:500">${h(dateOf(x))}</span></div><div class="az-reg-safe-actions"><button class="az-reg-safe-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-safe-delete" data-reg-delete="${id}">Delete</button></div></div>`}).join('')||'<div class="az-reg-safe-row"><div class="az-reg-safe-name">No users found.</div></div>';if(qs('#registeredUsersPageInfo'))qs('#registeredUsersPageInfo').textContent=`Page ${page} / ${total} • ${r.length} records`;if(qs('#registeredUsersPrevBtn'))qs('#registeredUsersPrevBtn').disabled=page<=1;if(qs('#registeredUsersNextBtn'))qs('#registeredUsersNextBtn').disabled=page>=total}
-window.loadRegisteredUsersAdmin=async function(){cache=[];try{const snap=await safeGet(query(collection(db,'users'),limit(300)));snap?.forEach(d=>cache.push({docId:d.id,usernameKey:d.id,...d.data()}))}catch(e){console.warn('registered users load failed',e)}page=1;render()}
-function openEdit(id){const x=cache.find(r=>String(r.docId)===String(id)||String(nameOf(r))===String(id));if(!x)return alert('User not found: '+id);qs('#azRegEditDocId').value=x.docId||nameOf(x);qs('#azRegEditUsername').value=nameOf(x);qs('#azRegEditEmail').value=x.email||x.authEmail||'';qs('#azRegEditPhone').value=x.phoneNumber||x.phone||'';qs('#azRegEditRole').value=x.role||'member';qs('#azRegEditPa').value=pa(x)?'true':'false';qs('#azRegEditModal').classList.add('is-open')}
-async function saveEdit(){const id=qs('#azRegEditDocId').value;if(!id)return;const allow=qs('#azRegEditPa').value==='true';await updateDoc(doc(db,'users',id),{email:qs('#azRegEditEmail').value.trim(),phoneNumber:qs('#azRegEditPhone').value.trim(),role:qs('#azRegEditRole').value,paBmAllowed:allow,paAccessAllowed:allow,updatedAtMs:Date.now()});qs('#azRegEditModal').classList.remove('is-open');await window.loadRegisteredUsersAdmin()}
-async function delUser(id){if(!confirm('Delete user '+id+'?'))return;await deleteDoc(doc(db,'users',id));await window.loadRegisteredUsersAdmin()}
-document.addEventListener('click',ev=>{const ed=ev.target.closest('[data-reg-edit]');if(ed)return openEdit(ed.getAttribute('data-reg-edit'));const del=ev.target.closest('[data-reg-delete]');if(del)return delUser(del.getAttribute('data-reg-delete'))})
-function bind(){qs('#registeredUsersSearch')?.addEventListener('input',()=>{page=1;render()});qs('#registeredUsersSort')?.addEventListener('change',()=>{page=1;render()});qs('#registeredUsersRefreshBtn')?.addEventListener('click',window.loadRegisteredUsersAdmin);qs('#registeredUsersPrevBtn')?.addEventListener('click',()=>{page--;render()});qs('#registeredUsersNextBtn')?.addEventListener('click',()=>{page++;render()});qs('#azRegCancelBtn')?.addEventListener('click',()=>qs('#azRegEditModal').classList.remove('is-open'));qs('#azRegSaveBtn')?.addEventListener('click',saveEdit)}
-document.addEventListener('DOMContentLoaded',bind);if(document.readyState!=='loading')bind();
-})();
-</script>
-
-
-<script id="az-admin-access-watchdog-fix">
-(function(){
-  if(window.__azAdminAccessWatchdogFix)return;
-  window.__azAdminAccessWatchdogFix=true;
-
-  function readStoredUser(){
-    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
-    for(var s=0;s<2;s++){
-      var store=s===0?sessionStorage:localStorage;
-      for(var i=0;i<keys.length;i++){
-        try{
-          var raw=store.getItem(keys[i]);
-          if(raw){
-            var obj=JSON.parse(raw);
-            if(obj&&typeof obj==='object')return obj;
-          }
-        }catch(e){}
-      }
-    }
-    return {};
-  }
-
-  function isAdminLike(u){
-    u=u||{};
-    var role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase();
-    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername')||'').toLowerCase();
-    var email=String(u.email||u.authEmail||u.contactEmail||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||'').toLowerCase();
-    return role==='admin'||username==='zedan91'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com';
-  }
-
-  function forceShow(reason){
-    document.body.classList.add('az-admin-access-ok');
-    document.body.classList.remove('az-admin-access-denied');
-    var gate=document.getElementById('adminAccessGate')||document.querySelector('.admin-access-gate');
-    if(gate)gate.style.display='none';
-    document.querySelectorAll('.admin-shell,.shell,#adminShell').forEach(function(el){
-      el.style.display='';
-      el.hidden=false;
-    });
-    console.log('AZOBSS admin access watchdog allowed:',reason);
-  }
-
-  function check(){
-    if(document.body.classList.contains('az-admin-access-ok'))return;
-    var u=readStoredUser();
-    if(isAdminLike(u))forceShow('stored-user');
-
-    // If Firebase auth is exposed by module/global scripts, try common globals.
-    try{
-      var fbUser = window.auth?.currentUser || window.firebaseAuth?.currentUser || window.azobssAuth?.currentUser;
-      if(fbUser && isAdminLike({email:fbUser.email,uid:fbUser.uid}))forceShow('firebase-currentUser');
-    }catch(e){}
-  }
-
-  window.azDebugAdminAccess=function(){
-    var u=readStoredUser();
-    var info={
-      storedUser:u,
-      isAdminLike:isAdminLike(u),
-      bodyOk:document.body.classList.contains('az-admin-access-ok'),
-      gateText:(document.getElementById('adminAccessGate')||document.querySelector('.admin-access-gate'))?.textContent||''
-    };
-    console.log('AZOBSS Admin Access Debug',info);
-    return info;
-  };
-
-  document.addEventListener('DOMContentLoaded',check);
-  if(document.readyState!=='loading')check();
-  window.addEventListener('storage',check);
-  window.addEventListener('focus',check);
-  setTimeout(check,500);
-  setTimeout(check,1500);
-  setTimeout(check,3000);
-  setTimeout(check,5000);
+if(window.__azAdminRegisteredFullActionsFix)return;window.__azAdminRegisteredFullActionsFix=true;
+let regCache=[];let regPage=1;const REG_SIZE=10;
+function q(s){return document.querySelector(s)}
+function esc2(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function ms(v){if(!v)return 0;if(typeof v==='number')return v;if(v.seconds)return v.seconds*1000;const n=Number(v);if(!Number.isNaN(n)&&n>0)return n;const d=Date.parse(v);return Number.isNaN(d)?0:d}
+function regDate(x){const t=ms(x.createdAtMs||x.registeredAtMs||x.updatedAtMs||x.createdAt||x.registeredAt||x.updatedAt);return t?new Date(t).toLocaleString():'-'}
+function uname(x){return x.usernameKey||x.username||x.docId||x.id||x.email||'Unknown'}
+function paAllowed(x){return x.paBmAllowed===true||x.paAccessAllowed===true||x.paAllowed===true||x.permissions?.paBmAllowed===true}
+function isOnline(x){return x.online===true||String(x.status||'').toLowerCase()==='online'}
+function sortRows(rows){
+ const v=q('#registeredUsersSort')?.value||'newest';
+ if(/a-z|email/i.test(v))rows.sort((a,b)=>String(uname(a)).localeCompare(String(uname(b))));
+ else if(/online/i.test(v))rows=rows.filter(isOnline);
+ else if(/pa/i.test(v))rows=rows.filter(paAllowed);
+ else if(/old/i.test(v))rows.sort((a,b)=>ms(a.createdAtMs||a.registeredAtMs||a.createdAt)-ms(b.createdAtMs||b.registeredAtMs||b.createdAt));
+ else rows.sort((a,b)=>ms(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt)-ms(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt));
+ return rows;
+}
+function renderRegistered(){
+ const box=q('#registeredUsersAdminList')||q('#registeredUsersList')||q('#registeredUsersRecords'); if(!box)return;
+ const search=(q('#registeredUsersSearch')?.value||q('#registeredSearch')?.value||'').toLowerCase().trim();
+ let rows=regCache.filter(x=>!search||JSON.stringify(x).toLowerCase().includes(search));
+ rows=sortRows(rows);
+ const total=Math.max(1,Math.ceil(rows.length/REG_SIZE));regPage=Math.min(Math.max(1,regPage),total);
+ const page=rows.slice((regPage-1)*REG_SIZE,regPage*REG_SIZE);
+ box.innerHTML=page.map(x=>{
+  const id=esc2(x.docId||uname(x)); const pa=paAllowed(x);
+  return `<div class="az-admin-reg-row">
+    <span class="az-admin-reg-badge">👤 User</span>
+    <div><div class="az-admin-reg-title">${esc2(uname(x))}</div><div class="az-admin-reg-sub">${esc2(x.email||x.authEmail||'')} • ${pa?'PA/BM allowed':'PA/BM off'} • ${esc2(x.role||'member')}</div></div>
+    <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
+  </div>`;
+ }).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No users found.</div></div></div>';
+ if(q('#registeredUsersPageInfo'))q('#registeredUsersPageInfo').textContent=`Page ${regPage} / ${total} • ${rows.length} records`;
+ if(q('#registeredUsersPrevBtn'))q('#registeredUsersPrevBtn').disabled=regPage<=1;
+ if(q('#registeredUsersNextBtn'))q('#registeredUsersNextBtn').disabled=regPage>=total;
+}
+window.loadRegisteredUsersAdmin=async function(){
+ regCache=[];
+ try{const snap=await safeGet(query(collection(db,'users'),limit(300)));snap?.forEach(d=>regCache.push({docId:d.id,usernameKey:d.id,...d.data()}));}catch(e){console.warn(e)}
+ regPage=1;renderRegistered();
+};
+function openEdit(id){
+ const x=regCache.find(r=>String(r.docId)===String(id)||String(uname(r))===String(id)); if(!x)return;
+ q('#azRegEditDocId').value=x.docId||uname(x);q('#azRegEditUsername').value=uname(x);
+ q('#azRegEditEmail').value=x.email||x.authEmail||'';q('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
+ q('#azRegEditRole').value=x.role||'member';q('#azRegEditPa').value=paAllowed(x)?'true':'false';
+ q('#azRegEditModal').classList.add('is-open');
+}
+async function saveEdit(){
+ const id=q('#azRegEditDocId').value;if(!id)return;
+ await updateDoc(doc(db,'users',id),{email:q('#azRegEditEmail').value.trim(),phoneNumber:q('#azRegEditPhone').value.trim(),role:q('#azRegEditRole').value,paBmAllowed:q('#azRegEditPa').value==='true',paAccessAllowed:q('#azRegEditPa').value==='true',updatedAtMs:Date.now()});
+ q('#azRegEditModal').classList.remove('is-open');await window.loadRegisteredUsersAdmin();
+}
+async function delUser(id){
+ if(!confirm('Delete user '+id+'?'))return;
+ await deleteDoc(doc(db,'users',id));await window.loadRegisteredUsersAdmin();
+}
+document.addEventListener('click',e=>{
+ const ed=e.target.closest('[data-reg-edit]');if(ed)return openEdit(ed.getAttribute('data-reg-edit'));
+ const del=e.target.closest('[data-reg-delete]');if(del)return delUser(del.getAttribute('data-reg-delete'));
+});
+document.addEventListener('DOMContentLoaded',()=>{
+ q('#registeredUsersSearch')?.addEventListener('input',()=>{regPage=1;renderRegistered()});
+ q('#registeredUsersSort')?.addEventListener('change',()=>{regPage=1;renderRegistered()});
+ q('#registeredUsersRefreshBtn')?.addEventListener('click',window.loadRegisteredUsersAdmin);
+ q('#registeredUsersPrevBtn')?.addEventListener('click',()=>{regPage--;renderRegistered()});
+ q('#registeredUsersNextBtn')?.addEventListener('click',()=>{regPage++;renderRegistered()});
+ q('#azRegCancelBtn')?.addEventListener('click',()=>q('#azRegEditModal').classList.remove('is-open'));
+ q('#azRegSaveBtn')?.addEventListener('click',saveEdit);
+});
 })();
 </script>
 
