@@ -931,6 +931,52 @@ body.az-role-is-stafflike .azStaffDashboardBtn{
 }
 </style>
 
+
+<style id="azobss-youtube-style-page-scrollbar-v1">
+/* AZOBSS YouTube/Facebook-style page scrollbar: stable width, no layout shrink/jump */
+html{
+  overflow-y:scroll!important;
+  scrollbar-gutter:stable!important;
+  scrollbar-width:thin!important;
+  scrollbar-color:rgba(148,163,184,.62) rgba(15,23,42,.18)!important;
+}
+body{
+  overflow-x:hidden!important;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar{
+  width:12px!important;
+  height:12px!important;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track{
+  background:rgba(15,23,42,.18)!important;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb{
+  background:rgba(148,163,184,.62)!important;
+  border-radius:999px!important;
+  border:3px solid rgba(15,23,42,.18)!important;
+  background-clip:padding-box!important;
+}
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover{
+  background:rgba(203,213,225,.82)!important;
+  border:2px solid rgba(15,23,42,.18)!important;
+}
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner{
+  background:transparent!important;
+}
+/* Keep horizontal chip menus clean like YouTube; only page scrollbar is visible */
+.market-nav,.azobss-nav-scroll,.social-strip,.social-bar,.social-links,.footer-social,.social-icons{
+  -ms-overflow-style:none!important;
+  scrollbar-width:none!important;
+}
+.market-nav::-webkit-scrollbar,.azobss-nav-scroll::-webkit-scrollbar,.social-strip::-webkit-scrollbar,.social-bar::-webkit-scrollbar,.social-links::-webkit-scrollbar,.footer-social::-webkit-scrollbar,.social-icons::-webkit-scrollbar{
+  display:none!important;
+}
+</style>
 </head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">
