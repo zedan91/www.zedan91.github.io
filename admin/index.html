@@ -520,6 +520,146 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
 }
 </style>
 
+
+<style id="az-admin-pabm-record-style">
+/* Compact PA/BM-like record layout for Admin Dashboard */
+.az-admin-mini-records,
+#activityList,
+#adminActivityList,
+#activityRecords,
+#staffRolesList,
+#adminCommissionList{
+  display:grid!important;
+  gap:6px!important;
+}
+.az-admin-mini-record,
+.az-activity-row,
+.staff-role-card,
+#adminCommissionList .item,
+#staffRolesList .item{
+  display:grid!important;
+  grid-template-columns:130px minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:8px!important;
+  padding:7px 10px!important;
+  border-radius:9px!important;
+  border:1px solid rgba(148,163,184,.18)!important;
+  background:rgba(15,23,42,.66)!important;
+  box-shadow:none!important;
+  min-height:38px!important;
+  font-size:12px!important;
+}
+.az-admin-mini-label,
+.az-activity-badge{
+  min-width:0!important;
+  width:auto!important;
+  height:24px!important;
+  padding:0 8px!important;
+  border-radius:999px!important;
+  font-size:11px!important;
+  font-weight:950!important;
+  white-space:nowrap!important;
+}
+.az-admin-mini-main,
+.az-activity-main{
+  min-width:0!important;
+}
+.az-admin-mini-title,
+.az-activity-title,
+.staff-role-name,
+#adminCommissionList .item-title{
+  font-size:13px!important;
+  font-weight:950!important;
+  color:#f8fafc!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  margin:0!important;
+}
+.az-admin-mini-sub,
+.az-activity-sub,
+.staff-role-meta,
+#adminCommissionList .item-meta{
+  font-size:11px!important;
+  color:#94a3b8!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  margin:1px 0 0!important;
+}
+.az-admin-mini-time,
+.az-activity-time{
+  font-size:10px!important;
+  color:#94a3b8!important;
+  white-space:nowrap!important;
+  text-align:right!important;
+}
+.staff-role-badges{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:4px!important;
+  margin:4px 0!important;
+}
+.staff-role-badge{
+  padding:3px 6px!important;
+  font-size:10px!important;
+  border-radius:999px!important;
+}
+.staff-role-actions,
+#adminCommissionList .toolbar{
+  margin:0!important;
+  display:flex!important;
+  gap:5px!important;
+  justify-content:flex-end!important;
+}
+.staff-role-actions button,
+#adminCommissionList .toolbar button{
+  padding:5px 8px!important;
+  border-radius:7px!important;
+  font-size:11px!important;
+}
+.az-activity-toolbar{
+  margin:6px 0 10px!important;
+}
+.az-activity-search{
+  height:34px!important;
+  font-size:12px!important;
+}
+.az-activity-pagination{
+  margin-top:8px!important;
+}
+.az-activity-pagination button{
+  padding:6px 10px!important;
+  font-size:12px!important;
+}
+.az-activity-page-info{
+  font-size:12px!important;
+}
+#activity .card,
+#activities .card,
+.activity-panel.card{
+  padding:10px!important;
+}
+@media(max-width:760px){
+  .az-admin-mini-record,
+  .az-activity-row,
+  .staff-role-card,
+  #adminCommissionList .item,
+  #staffRolesList .item{
+    grid-template-columns:1fr!important;
+    gap:4px!important;
+  }
+  .az-admin-mini-time,
+  .az-activity-time{
+    text-align:left!important;
+  }
+  .staff-role-actions,
+  #adminCommissionList .toolbar{
+    justify-content:flex-start!important;
+  }
+}
+</style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -1288,15 +1428,15 @@ function renderAdminActivity(){
   list.classList.add('az-activity-list');
   list.innerHTML = pageItems.map(x=>{
     const [label, cls] = azActivityType(x);
-    return `<div class="az-activity-row">
-      <span class="az-activity-badge ${cls}">${label}</span>
-      <div class="az-activity-main">
-        <div class="az-activity-title">${esc(azActivityUsername(x))} — ${esc(azActivityTitle(x))}</div>
-        <div class="az-activity-sub">${esc(azActivitySub(x))}</div>
+    return `<div class="az-activity-row az-admin-mini-record">
+      <span class="az-activity-badge az-admin-mini-label ${cls}">${label}</span>
+      <div class="az-activity-main az-admin-mini-main">
+        <div class="az-activity-title az-admin-mini-title">${esc(azActivityUsername(x))} — ${esc(azActivityTitle(x))}</div>
+        <div class="az-activity-sub az-admin-mini-sub">${esc(azActivitySub(x))}</div>
       </div>
-      <div class="az-activity-time">${esc(azActivityTime(x))}</div>
+      <div class="az-activity-time az-admin-mini-time">${esc(azActivityTime(x))}</div>
     </div>`;
-  }).join('') || '<div class="az-activity-row"><div class="az-activity-main"><div class="az-activity-title">No activity found.</div></div></div>';
+  }).join('') || '<div class="az-activity-row az-admin-mini-record"><div class="az-activity-main az-admin-mini-main"><div class="az-activity-title">No activity found.</div></div></div>';
 
   if(info) info.textContent = `Page ${adminActivityPage} / ${totalPages} • ${filtered.length} records`;
   if($('#activityPrevBtn')) $('#activityPrevBtn').disabled = adminActivityPage <= 1;
