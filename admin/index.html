@@ -166,16 +166,6 @@ import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/fire
   });
 })();
 
-$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
-$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
-$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
-document.addEventListener('click', e=>{
-  const editBtn = e.target.closest('[data-edit-commission]');
-  if(editBtn) editCommissionRecord(editBtn.getAttribute('data-edit-commission'));
-  const delBtn = e.target.closest('[data-delete-commission]');
-  if(delBtn) deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));
-});
-
 </script>
 
 
@@ -1581,6 +1571,7 @@ function azRegUser(x){
 function azRegSub(x){
   return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', x.role?('Role: '+x.role):''].filter(Boolean).join(' • ');
 }
+function azRegPaAllowed(x){return x.paBmAllowed===true||x.paAccessAllowed===true||x.allowPABM===true||x.allowPaBm===true||x.canAccessPaBm===true||x.showPaBmTab===true||x.permissions?.paBmAllowed===true;}
 function renderRegisteredUsersAdmin(){
   const box=$('#registeredUsersAdminList'); if(!box)return;
   const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
@@ -1589,17 +1580,55 @@ function renderRegisteredUsersAdmin(){
   adminRegisteredUsersPage=Math.min(Math.max(1,adminRegisteredUsersPage),totalPages);
   const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
   const page=rows.slice(start,start+ADMIN_REGISTERED_PAGE_SIZE);
-  box.innerHTML=page.map(x=>`<div class="az-admin-reg-row">
-    <span class="az-admin-reg-badge">👤 Registered</span>
-    <div>
-      <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
-      <div class="az-admin-reg-sub">${esc(azRegSub(x))}</div>
-    </div>
-    <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
-  </div>`).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
+  box.innerHTML=page.map(x=>{
+    const id=esc(x.docId||azRegUser(x));
+    const pa=azRegPaAllowed(x);
+    return `<div class="az-admin-reg-row">
+      <span class="az-admin-reg-badge">👤 Registered</span>
+      <div>
+        <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
+        <div class="az-admin-reg-sub">${esc(azRegSub(x))} • ${pa?'PA/BM allowed':'PA/BM off'}</div>
+      </div>
+      <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
+      <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
+    </div>`;
+  }).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
   if($('#registeredUsersPageInfo'))$('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} records`;
   if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
   if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
+}
+function openRegisteredEdit(id){
+  const x=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id));
+  if(!x)return toast('User not found.');
+  $('#azRegEditDocId').value=x.docId||azRegUser(x);
+  $('#azRegEditUsername').value=azRegUser(x);
+  $('#azRegEditEmail').value=x.email||x.authEmail||'';
+  $('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
+  $('#azRegEditRole').value=x.role||'member';
+  $('#azRegEditPa').value=azRegPaAllowed(x)?'true':'false';
+  $('#azRegEditModal')?.classList.add('is-open');
+}
+async function saveRegisteredEdit(){
+  const id=$('#azRegEditDocId')?.value||'';
+  if(!id)return;
+  const pa=$('#azRegEditPa')?.value==='true';
+  await updateDoc(doc(db,'users',id),{
+    email:$('#azRegEditEmail')?.value.trim()||'',
+    phoneNumber:$('#azRegEditPhone')?.value.trim()||'',
+    phone:$('#azRegEditPhone')?.value.trim()||'',
+    role:$('#azRegEditRole')?.value||'member',
+    paBmAllowed:pa,paAccessAllowed:pa,allowPABM:pa,allowPaBm:pa,canAccessPaBm:pa,showPaBmTab:pa,
+    updatedAt:serverTimestamp(),updatedAtMs:Date.now(),updatedByAdmin:'admin-dashboard'
+  });
+  $('#azRegEditModal')?.classList.remove('is-open');
+  await loadRegisteredUsersAdmin();
+  if(typeof loadUsers==='function') await loadUsers();
+}
+async function deleteRegisteredUser(id){
+  if(!confirm('Delete user '+id+'?'))return;
+  await deleteDoc(doc(db,'users',id));
+  await loadRegisteredUsersAdmin();
+  await loadOverview();
 }
 async function loadRegisteredUsersAdmin(){
   const rows=[];
@@ -1669,6 +1698,10 @@ async function initSection(id){
 document.addEventListener('click',async e=>{
   const tab=e.target.closest('[data-tab]');
   if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
+  const regEdit=e.target.closest('[data-reg-edit]');
+  if(regEdit){openRegisteredEdit(regEdit.getAttribute('data-reg-edit'));return;}
+  const regDel=e.target.closest('[data-reg-delete]');
+  if(regDel){await deleteRegisteredUser(regDel.getAttribute('data-reg-delete'));return;}
   const edit=e.target.closest('[data-edit-user]');
   if(edit){const id=edit.dataset.editUser;const ref=doc(db,'users',id);const s=await getDoc(ref);const x=s.data()||{};const now=!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);await updateDoc(ref,{paBmAllowed:now,allowPABM:now,allowPaBm:now,canAccessPaBm:now,showPaBmTab:now,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});await loadUsers();return;}
   const du=e.target.closest('[data-del-user]');
@@ -1679,6 +1712,10 @@ document.addEventListener('click',async e=>{
   if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
   const dn=e.target.closest('[data-del-notif]');
   if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+  const editBtn = e.target.closest('[data-edit-commission]');
+  if(editBtn){editCommissionRecord(editBtn.getAttribute('data-edit-commission'));return;}
+  const delBtn = e.target.closest('[data-delete-commission]');
+  if(delBtn){deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));return;}
 });
 $('#refreshUsers').addEventListener('click',loadUsers);
 $('#userSearch').addEventListener('input',()=>setTimeout(loadUsers,80));
@@ -1689,6 +1726,15 @@ $('#clearNotif').addEventListener('click',clearNotifications);
 $('#refreshPayments')?.addEventListener('click',loadPayments);
 $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
 $('#saveStaffRole')?.addEventListener('click',saveStaffRole);
+$('#registeredUsersSearch')?.addEventListener('input',()=>{adminRegisteredUsersPage=1;renderRegisteredUsersAdmin();});
+$('#registeredUsersRefreshBtn')?.addEventListener('click',loadRegisteredUsersAdmin);
+$('#registeredUsersPrevBtn')?.addEventListener('click',()=>{adminRegisteredUsersPage--;renderRegisteredUsersAdmin();});
+$('#registeredUsersNextBtn')?.addEventListener('click',()=>{adminRegisteredUsersPage++;renderRegisteredUsersAdmin();});
+$('#azRegCancelBtn')?.addEventListener('click',()=>$('#azRegEditModal')?.classList.remove('is-open'));
+$('#azRegSaveBtn')?.addEventListener('click',saveRegisteredEdit);
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;
@@ -1742,7 +1788,7 @@ onAuthStateChanged(auth,async user=>{
 
 
 
-<script src="/assets/js/azobss-global-auth.js"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js"></script>
 <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -2052,7 +2098,7 @@ onAuthStateChanged(auth,async user=>{
 </div>
 
 
-<script id="az-admin-registered-full-actions-fix">
+<script id="az-admin-registered-full-actions-fix" type="text/plain" data-disabled="fixed-inside-main-module">
 (function(){
 if(window.__azAdminRegisteredFullActionsFix)return;window.__azAdminRegisteredFullActionsFix=true;
 let regCache=[];let regPage=1;const REG_SIZE=10;
