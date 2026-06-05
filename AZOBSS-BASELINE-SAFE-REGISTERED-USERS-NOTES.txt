@@ -1,0 +1,1 @@
+Used requested baseline. Kept admin guard unchanged. Added Registered Users safe UI/actions. Syntax errors: 0
