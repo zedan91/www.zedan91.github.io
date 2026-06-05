@@ -1630,7 +1630,7 @@ function renderRegisteredUsersAdmin(){
     const id=esc(x.docId||azRegUser(x));
     const pa=azRegPaAllowed(x);
     return `<div class="az-admin-reg-row">
-      <span class="az-admin-reg-badge">👤 Registered</span>
+      
       <div>
         <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
         <div class="az-admin-reg-sub">${esc(azRegSub(x))} • ${pa?'PA/BM allowed':'PA/BM off'}</div>
