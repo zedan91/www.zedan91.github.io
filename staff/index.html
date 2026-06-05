@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>AZOBSS Staff Dashboard</title>
 <style>
-body{margin:0;background:#07111f;color:#fff;font-family:system-ui,Segoe UI,Arial,sans-serif}.shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 50px)}.side{background:#050b14;border-right:1px solid #223;padding:18px}.brand{font-size:22px;font-weight:900;margin-bottom:18px}.nav{display:grid;gap:8px}.nav button,.nav a{padding:12px;border-radius:12px;border:1px solid transparent;background:#101827;color:#dbeafe;text-align:left;text-decoration:none;font-weight:800;cursor:pointer}.nav button.active{background:#14532d;border-color:#22c55e}.main{padding:22px}.section{display:none}.section.active{display:block}.card{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:15px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{font-size:28px;color:#5cff9d;font-weight:900}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}input,select,textarea{background:#020617;border:1px solid #334155;color:#fff;border-radius:10px;padding:10px}textarea{width:100%;min-height:90px}.btn{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer}.green{background:#22c55e;color:#052e16}.list{display:grid;gap:8px}.item{background:#111827;border:1px solid #334155;border-radius:12px;padding:10px}.muted{color:#94a3b8;font-size:13px}.cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:99999}.box{background:#0f172a;border:1px solid #334155;border-radius:18px;padding:24px;text-align:center;width:min(440px,92vw)}body.staff-ok .cover{display:none}body:not(.staff-ok) .shell{display:none}@media(max-width:800px){.shell{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.side{position:relative}}
+body{margin:0;background:#07111f;color:#fff;font-family:system-ui,Segoe UI,Arial,sans-serif}.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}.side{background:#050b14;border-right:1px solid #223;padding:18px}.brand{font-size:22px;font-weight:900;margin-bottom:18px}.nav{display:grid;gap:8px}.nav button,.nav a{padding:12px;border-radius:12px;border:1px solid transparent;background:#101827;color:#dbeafe;text-align:left;text-decoration:none;font-weight:800;cursor:pointer}.nav button.active{background:#14532d;border-color:#22c55e}.main{padding:22px}.section{display:none}.section.active{display:block}.card{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:15px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{font-size:28px;color:#5cff9d;font-weight:900}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}input,select,textarea{background:#020617;border:1px solid #334155;color:#fff;border-radius:10px;padding:10px}textarea{width:100%;min-height:90px}.btn{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer}.green{background:#22c55e;color:#052e16}.list{display:grid;gap:8px}.item{background:#111827;border:1px solid #334155;border-radius:12px;padding:10px}.muted{color:#94a3b8;font-size:13px}.cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:99999}.box{background:#0f172a;border:1px solid #334155;border-radius:18px;padding:24px;text-align:center;width:min(440px,92vw)}body.staff-ok .cover{display:none}body:not(.staff-ok) .shell{display:none}@media(max-width:800px){.shell{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.side{position:relative}}
 
 #software,#cad,[data-tab="software"],[data-tab="cad"]{display:none!important}.staff-direct-links{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.staff-direct-links a{background:#14532d;border:1px solid #22c55e;color:#dcfce7;padding:10px 12px;border-radius:12px;font-weight:900;text-decoration:none}
 </style>
@@ -69,100 +69,112 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 </script>
 
 
-<style id="az-admin-staff-stickybar-style">
-.az-page-stickybar{
-  position:sticky;
-  top:0;
-  z-index:9999;
-  min-height:50px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:6px 18px;
-  background:rgba(3,7,12,.96);
-  border-bottom:1px solid rgba(250,204,21,.45);
-  backdrop-filter:blur(14px);
+
+<style id="az-home-stickybar-compat-admin-staff">
+/* Admin/Staff pages use Home stickybar layout. */
+.azAdminDashboardBtn,
+.azStaffDashboardBtn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  border-radius:999px!important;
+  text-decoration:none!important;
+  background:linear-gradient(180deg,#17233a,#0d1728)!important;
+  border:1px solid rgba(148,163,184,.35)!important;
+  color:#f8fafc!important;
 }
-.az-page-stickybar .az-logo-link{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:#fff;
-  font-weight:950;
-  text-decoration:none;
-  margin-right:10px;
+[data-current-page="1"]{
+  background:#22c55e!important;
+  color:#03140a!important;
+  border-color:#22c55e!important;
 }
-.az-page-stickybar .az-logo-link img{
-  height:34px;
-  width:auto;
-  max-width:132px;
-  object-fit:contain;
-}
-.az-page-stickybar .az-chip{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  height:34px;
-  padding:0 13px;
-  border-radius:999px;
-  border:1px solid rgba(148,163,184,.35);
-  background:linear-gradient(180deg,#17233a,#0d1728);
-  color:#f8fafc;
-  font-size:13px;
-  font-weight:900;
-  text-decoration:none;
-  white-space:nowrap;
-}
-.az-page-stickybar .az-chip:hover,
-.az-page-stickybar .az-chip.is-active{
-  background:#22c55e;
-  color:#03140a;
-  border-color:#22c55e;
-}
-.az-page-stickybar .az-spacer{flex:1}
-.az-page-stickybar .az-role-pill{
-  height:34px;
-  display:inline-flex;
-  align-items:center;
-  padding:0 12px;
-  border-radius:999px;
-  border:1px solid rgba(34,197,94,.45);
-  color:#d1fae5;
-  font-weight:900;
-  font-size:13px;
-}
-@media(max-width:860px){
-  .az-page-stickybar{
-    overflow-x:auto;
-    padding:6px 10px;
-  }
-  .az-page-stickybar .az-chip{
-    height:32px;
-    padding:0 10px;
-    font-size:12px;
-  }
-  .az-page-stickybar .az-logo-link img{height:30px;max-width:110px}
-}
+body{padding-top:0!important}
 </style>
+<script id="az-home-stickybar-username-clean">
+(function(){
+  function clean(){
+    document.querySelectorAll('#userNameText,#userName,.user-name,.username,.user-menu-name,.profile-name,.az-user-name').forEach(function(el){
+      if(!el || !el.textContent) return;
+      el.textContent = el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
+    });
+  }
+  document.addEventListener('DOMContentLoaded',clean);
+  if(document.readyState!=='loading') clean();
+  window.addEventListener('focus',clean);
+  setTimeout(clean,700);
+  setTimeout(clean,1800);
+})();
+</script>
 
 </head>
 <body>
+<!-- AZOBSS_HOME_STICKYBAR_START -->
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="/">
+<img alt="AZOBSS" src="images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+<a href="/Software-Tools/">Software</a>
+<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/affiliate-shop/">Affiliate Shop</a>
+<a href="/lucky-draw/">Lucky Draw</a>
+<a href="/tools/">Mini Web Tools</a><a class="azAdminDashboardBtn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azStaffDashboardBtn staff-dashboard-btn" href="/staff/" data-current-page="1" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a></nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button>
+<button class="site-auth-btn" data-auth-open="login" id="siteSignInButton" type="button">Login</button>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name"><span id="signedInName"></span></div>
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
+<div class="user-dropdown-section">Account</div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
+</div>
+<a aria-label="Likes" class="market-icon-btn" href="/likes/">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+</a>
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+</a>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+</a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+</a>
+</div>
+</div>
+<form action="#affiliate" class="market-search-row">
+<label class="market-search-field">
+<svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+<input aria-label="Search for an item" placeholder="Search for an item" type="search"/>
+</label>
+<div aria-label="Location Malaysia" class="market-location-field">
+<span class="market-location-main">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M12 21s7-5.1 7-12a7 7 0 0 0-14 0c0 6.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2"></circle></svg>
+<span>Malaysia</span>
+</span>
+<span class="market-distance">+km <span aria-hidden="true">v</span></span>
+</div>
+<button class="market-search-btn" type="submit">Search</button>
+</form>
+</div>
+</header>
+<!-- AZOBSS_HOME_STICKYBAR_END -->
 
-<nav class="az-page-stickybar" id="azPageStickybar">
-  <a class="az-logo-link" href="/">
-    <img src="/assets/img/azobss-logo.png" alt="AZOBSS" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('afterbegin','<span style=&quot;font-size:20px&quot;>AZOBSS</span>')">
-  </a>
-  <a class="az-chip" href="/">Home</a>
-  <a class="az-chip" href="/Software-Tools/">Software</a>
-  <a class="az-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>
-  <a class="az-chip" href="/affiliate-shop/">Affiliate Shop</a>
-  <a class="az-chip" href="/lucky-draw/">Lucky Draw</a>
-  <a class="az-chip" href="/tools/">Mini Web Tools</a>
-  <a class="az-chip" href="/admin/">🛠️ Admin</a>
-  <a class="az-chip is-active" href="/staff/">🧑‍💼 Staff</a>
-  <span class="az-spacer"></span>
-  <span class="az-role-pill" id="azStickyUserName">AZOBSS</span>
-</nav>
 
 <div class="cover"><div class="box"><h2>🔐 Staff Only</h2><p id="accessMsg">Checking access...</p><a class="btn green" href="/">Back Home</a></div></div>
 <div class="shell">
@@ -316,34 +328,5 @@ onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.'
 })();
 </script>
 
-
-<script id="az-admin-staff-stickybar-script">
-(function(){
-  if(window.__azAdminStaffStickybar)return;
-  window.__azAdminStaffStickybar=true;
-  function readUser(){
-    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
-        if(raw){var obj=JSON.parse(raw); if(obj)return obj;}
-      }catch(e){}
-    }
-    return {};
-  }
-  function cleanHello(s){return String(s||'').replace(/^\s*hello\s*,?\s*/i,'').trim();}
-  function setName(){
-    var u=readUser();
-    var name=cleanHello(u.usernameKey||u.username||u.id||u.name||u.displayName||u.email||'');
-    var el=document.getElementById('azStickyUserName');
-    if(el) el.textContent=name||'AZOBSS';
-  }
-  document.addEventListener('DOMContentLoaded',setName);
-  if(document.readyState!=='loading')setName();
-  window.addEventListener('storage',setName);
-  window.addEventListener('focus',setName);
-  setTimeout(setName,600);
-})();
-</script>
 
 </body></html>
