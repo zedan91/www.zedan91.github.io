@@ -302,178 +302,87 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
 
 <style id="az-admin-staff-layout-fix">body{margin-top:0!important}.shell,.admin-shell{min-height:calc(100vh - 50px)!important}</style>
 
-<style id="az-safe-home-style-dashboardbar">
-:root{
-  --azbar-bg:rgba(3,8,13,.98);
-  --azbar-pill:#101b2f;
-  --azbar-pill2:#17243d;
-  --azbar-border:rgba(148,163,184,.36);
-  --azbar-green:#22c55e;
-  --azbar-text:#f8fafc;
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+<link rel="stylesheet" href="/assets/css/style.css">
+
+<style id="az-real-market-stickybar-dashboard-compat">
+/* Use the exact market-sticky-bar structure from Home/Software/CAD, but protect dashboard layout. */
+body{margin:0;}
+.market-sticky-bar{position:sticky!important;top:0!important;z-index:99999!important;}
+.azAdminDashboardBtn.admin-dashboard-btn,
+.azStaffDashboardBtn.staff-dashboard-btn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  line-height:1!important;
+  font-size:17px!important;
 }
-.az-dashboard-homebar{
-  position:sticky;
-  top:0;
-  z-index:999999;
-  height:50px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:5px 16px;
-  background:var(--azbar-bg);
-  border-bottom:1px solid rgba(234,179,8,.55);
-  box-shadow:0 8px 25px rgba(0,0,0,.25);
-  overflow-x:auto;
-  white-space:nowrap;
-  scrollbar-width:none;
+body[data-dashboard-page="admin"] .azAdminDashboardBtn,
+body[data-dashboard-page="staff"] .azStaffDashboardBtn{
+  background:#22c55e!important;
+  color:#052e16!important;
 }
-.az-dashboard-homebar::-webkit-scrollbar{display:none}
-.az-dashboard-homebar a{
-  text-decoration:none!important;
-}
-.az-dashboard-homebar .az-logo{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  height:36px;
-  padding:0 8px;
-  border-radius:4px;
-  background:#111827;
-  color:#fff!important;
-  font-weight:950;
-  font-size:19px;
-  letter-spacing:.2px;
-}
-.az-dashboard-homebar .az-logo img{
-  height:32px;
-  width:auto;
-  max-width:120px;
-  display:block;
-  object-fit:contain;
-}
-.az-dashboard-homebar .az-chat{
-  width:40px;
-  height:40px;
-  min-width:40px;
-  border-radius:999px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  background:#22c55e;
-  color:#fff!important;
-  font-size:19px;
-  margin-left:8px;
-}
-.az-dashboard-homebar .az-pill{
-  height:34px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:0 14px;
-  border-radius:999px;
-  border:1px solid var(--azbar-border);
-  background:linear-gradient(180deg,var(--azbar-pill2),var(--azbar-pill));
-  color:var(--azbar-text)!important;
-  font-size:14px;
-  font-weight:950;
-  line-height:1;
-}
-.az-dashboard-homebar .az-pill:hover,
-.az-dashboard-homebar .az-pill.az-active{
-  background:var(--azbar-green)!important;
-  border-color:var(--azbar-green)!important;
-  color:#03140a!important;
-}
-.az-dashboard-homebar .az-icon{
-  width:40px;
-  height:40px;
-  min-width:40px;
-  padding:0;
-  border-radius:999px;
-  font-size:18px;
-}
-.az-dashboard-homebar .az-spacer{
-  flex:1 1 auto;
-  min-width:12px;
-}
-.az-dashboard-homebar .az-user{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  height:38px;
-  color:#fff;
-  font-size:14px;
-  font-weight:950;
-}
-.az-dashboard-homebar .az-avatar{
-  width:34px;
-  height:34px;
-  border-radius:999px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  border:1px solid rgba(34,211,238,.6);
-  color:#fff;
-  background:#07111f;
-  font-weight:950;
-}
-.az-dashboard-homebar .az-auth{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-}
-.az-dashboard-homebar .az-auth a{
-  color:#fff!important;
-  font-weight:950;
-  padding:6px 10px;
-  border-radius:9px;
-}
-.az-dashboard-homebar .az-auth a:hover{
-  background:rgba(148,163,184,.18);
-}
-body.az-dashboardbar-has-user .az-dashboard-homebar .az-auth{display:none!important}
-body:not(.az-dashboardbar-has-user) .az-dashboard-homebar .az-user{display:none!important}
-@media(max-width:760px){
-  .az-dashboard-homebar{
-    padding:5px 8px;
-    gap:7px;
-  }
-  .az-dashboard-homebar .az-logo{font-size:16px;max-width:115px}
-  .az-dashboard-homebar .az-pill{
-    height:32px;
-    padding:0 11px;
-    font-size:13px;
-  }
-  .az-dashboard-homebar .az-icon{
-    width:36px;
-    height:36px;
-    min-width:36px;
-  }
-}
+.market-search-row{display:none!important;} /* dashboard pages do not need Home search row */
 </style>
 
 </head>
-<body>
+<body data-dashboard-page="admin">
+<!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="/">
+<img alt="AZOBSS" src="/images/logo-azobss.jpg"/>
+</a>
+<nav aria-label="AZOBSS quick actions" class="market-nav">
+<a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+<a  href="/Software-Tools/">Software</a>
+<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/affiliate-shop/">Affiliate Shop</a>
+<a href="/lucky-draw/">Lucky Draw</a>
+<a href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a></nav>
+<div class="site-auth-actions" id="siteAuthActions">
+<a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
+<a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
+</div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+<div class="user-avatar" id="userAvatar">AZ</div>
+<div class="user-name"><span id="signedInName"></span></div>
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 
-<!-- AZOBSS_SAFE_HOME_STYLE_DASHBOARDBAR_START -->
-<nav class="az-dashboard-homebar" id="azDashboardHomebar">
-  <a class="az-logo" href="/" aria-label="AZOBSS Home">
-    <img src="/assets/img/azobss-logo.png" alt="AZOBSS" onerror="this.remove();this.parentNode.textContent='AZOBSS';">
-  </a>
-  <a class="az-chat" href="/" title="Home">●</a>
-  <a class="az-pill" href="/PA-BM/">PA / BM</a>
-  <a class="az-pill" href="/Software-Tools/">Software</a>
-  <a class="az-pill" href="/CAD-Tools-&-Resources/">CAD Tools</a>
-  <a class="az-pill" href="/affiliate-shop/">Affiliate Shop</a>
-  <a class="az-pill" href="/lucky-draw/">Lucky Draw</a>
-  <a class="az-pill" href="/tools/">Mini Web Tools</a>
-  <a class="az-pill az-icon az-active" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
-  <a class="az-pill az-icon" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
-  <span class="az-spacer"></span>
-  <span class="az-user"><span class="az-avatar" id="azDashbarAvatar">Z</span><span id="azDashbarUserName"></span></span>
-  <span class="az-auth"><a href="#" data-open-register>Register</a><a href="#" data-open-login>Login</a></span>
-</nav>
-<!-- AZOBSS_SAFE_HOME_STYLE_DASHBOARDBAR_END -->
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
+<div class="user-dropdown-section">Account</div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
+</div>
+<a aria-label="Likes" class="market-icon-btn" href="/likes/">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+</a>
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+</a>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+</a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- AZOBSS_REAL_MARKET_STICKYBAR_END -->
 
 
 <div id="loginCover" class="login-cover">
@@ -1173,57 +1082,23 @@ onAuthStateChanged(auth,async user=>{
 
 
 
-<script id="az-safe-home-style-dashboardbar-script">
+<script src="/assets/js/azobss-global-auth.js"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script>
+<script src="/assets/js/azobss-pro-ui.js"></script>
+
+<script id="az-real-market-stickybar-dashboard-cleanup">
 (function(){
-  if(window.__azSafeHomeDashboardbar)return;
-  window.__azSafeHomeDashboardbar=true;
-
-  function readUser(){
-    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
-    for(var s=0;s<2;s++){
-      var store=s===0?sessionStorage:localStorage;
-      for(var i=0;i<keys.length;i++){
-        try{
-          var raw=store.getItem(keys[i]);
-          if(raw){
-            var obj=JSON.parse(raw);
-            if(obj && typeof obj==='object') return obj;
-          }
-        }catch(e){}
-      }
-    }
-    return {};
-  }
-
-  function cleanName(v){
-    return String(v||'').replace(/^\s*hello\s*,?\s*/i,'').trim();
-  }
-
-  function refreshUser(){
-    var u=readUser();
-    var name=cleanName(u.usernameKey||u.username||u.id||u.name||u.displayName||u.email||'');
-    var role=String(u.role||'').toLowerCase();
-    var logged=!!name;
-    document.body.classList.toggle('az-dashboardbar-has-user',logged);
-
-    var nameEl=document.getElementById('azDashbarUserName');
-    if(nameEl) nameEl.textContent=name||'';
-    var av=document.getElementById('azDashbarAvatar');
-    if(av) av.textContent=(name||'Z').slice(0,1).toUpperCase();
-
-    // remove Hello, from any dashboard user text
-    document.querySelectorAll('#userNameText,#userName,.user-name,.username,.user-menu-name,.profile-name,.az-user-name').forEach(function(el){
-      if(el && el.textContent) el.textContent=cleanName(el.textContent);
+  function cleanHello(){
+    document.querySelectorAll('#signedInName,#userNameText,#userName,.user-name,.username,.user-menu-name,.profile-name,.az-user-name').forEach(function(el){
+      if(el && el.textContent) el.textContent = el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
     });
   }
-
-  document.addEventListener('DOMContentLoaded',refreshUser);
-  if(document.readyState!=='loading')refreshUser();
-  window.addEventListener('focus',refreshUser);
-  window.addEventListener('storage',refreshUser);
-  setTimeout(refreshUser,500);
-  setTimeout(refreshUser,1500);
-  setTimeout(refreshUser,3000);
+  document.addEventListener('DOMContentLoaded',cleanHello);
+  if(document.readyState!=='loading') cleanHello();
+  window.addEventListener('focus',cleanHello);
+  window.addEventListener('storage',cleanHello);
+  setTimeout(cleanHello,500);
+  setTimeout(cleanHello,1500);
 })();
 </script>
 
