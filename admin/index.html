@@ -87,7 +87,7 @@ body.az-admin-access-ok #azAdminAccessDenied{display:none!important}
 <script type="module" id="az-admin-access-guard">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 (function(){
   if(window.__azAdminAccessGuard) return;
@@ -165,6 +165,17 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
     else showDenied('Access denied. Admin account required.');
   });
 })();
+
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+document.addEventListener('click', e=>{
+  const editBtn = e.target.closest('[data-edit-commission]');
+  if(editBtn) editCommissionRecord(editBtn.getAttribute('data-edit-commission'));
+  const delBtn = e.target.closest('[data-delete-commission]');
+  if(delBtn) deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));
+});
+
 </script>
 
 
@@ -405,6 +416,7 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
       <button data-tab="notifications">🔔 Notifications</button>
       <button data-tab="purchases">💰 Purchase Records</button>
       <button data-tab="payments">💳 Payments & Totals</button>
+      <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="lucky">🎁 Lucky Draw</button>
       <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings">⚙️ Settings</button>
@@ -563,6 +575,51 @@ body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
       <div class="card">
         <p class="tabs-note">Lucky Draw admin controls remain in the existing Lucky Draw page for now.</p>
         <a class="btn green" href="/lucky-draw/">Open Lucky Draw Admin</a>
+      </div>
+    </section>
+
+
+
+    <section id="commissions" class="section">
+      <h2>💸 Commission Manager</h2>
+      <p class="tabs-note">Admin sahaja boleh tambah, edit dan delete rekod komisen. Staff/semiAdmin hanya boleh lihat komisen sendiri di Staff Dashboard.</p>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">Total Commission RM</div><div id="adminComTotal" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Pending RM</div><div id="adminComPending" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Paid RM</div><div id="adminComPaid" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Records</div><div id="adminComCount" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card">
+        <h2 id="commissionFormTitle">Add / Edit Commission</h2>
+        <input type="hidden" id="commissionEditDocId">
+        <div class="toolbar">
+          <input id="commissionUsername" placeholder="Username / staff owner" style="flex:1;min-width:180px">
+          <input id="commissionProduct" placeholder="Product / sale reference" style="flex:1;min-width:180px">
+          <input id="commissionAmount" type="number" min="0" step="0.01" placeholder="Commission RM">
+          <select id="commissionStatus">
+            <option value="pending">pending</option>
+            <option value="approved">approved</option>
+            <option value="paid">paid</option>
+          </select>
+        </div>
+        <div class="toolbar">
+          <input id="commissionOwnerUid" placeholder="Owner UID optional" style="flex:1;min-width:180px">
+          <input id="commissionOwnerUsername" placeholder="Owner username optional" style="flex:1;min-width:180px">
+          <input id="commissionOwnerEmail" placeholder="Owner email optional" style="flex:1;min-width:180px">
+        </div>
+        <textarea id="commissionNote" placeholder="Note" style="width:100%;min-height:90px"></textarea>
+        <div class="toolbar">
+          <button class="btn green" id="saveCommissionRecord">Save Commission</button>
+          <button class="btn gray" id="resetCommissionForm" type="button">Reset</button>
+          <button class="btn" id="refreshCommissionRecords" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Commission Records</h2>
+        <div id="adminCommissionList" class="list"></div>
       </div>
     </section>
 
@@ -827,6 +884,109 @@ async function saveStaffRole(){
   alert('Staff role saved.');
 }
 
+
+let adminCommissionCache = [];
+
+function commissionRecordTitle(x){
+  return esc(x.username || x.ownerUsername || x.createdByUsername || x.email || x.ownerEmail || 'Unknown');
+}
+function commissionAmountOf(x){
+  return Number(x.amount || x.commissionAmount || x.totalCommission || 0) || 0;
+}
+function commissionIsPaid(x){
+  const s = String(x.status || '').toLowerCase();
+  return ['paid','verified','success','completed','approved'].includes(s);
+}
+function resetCommissionForm(){
+  $('#commissionEditDocId').value = '';
+  $('#commissionUsername').value = '';
+  $('#commissionProduct').value = '';
+  $('#commissionAmount').value = '';
+  $('#commissionStatus').value = 'pending';
+  $('#commissionOwnerUid').value = '';
+  $('#commissionOwnerUsername').value = '';
+  $('#commissionOwnerEmail').value = '';
+  $('#commissionNote').value = '';
+  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Add / Edit Commission';
+}
+async function loadAdminCommissions(){
+  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(100)));
+  adminCommissionCache = [];
+  let total=0,pending=0,paid=0;
+  snap?.forEach(d=>{
+    const x={docId:d.id,...d.data()};
+    const amt=commissionAmountOf(x);
+    total += amt;
+    if(commissionIsPaid(x)) paid += amt; else pending += amt;
+    adminCommissionCache.push(x);
+  });
+  if($('#adminComTotal')) $('#adminComTotal').textContent = total.toFixed(2);
+  if($('#adminComPending')) $('#adminComPending').textContent = pending.toFixed(2);
+  if($('#adminComPaid')) $('#adminComPaid').textContent = paid.toFixed(2);
+  if($('#adminComCount')) $('#adminComCount').textContent = adminCommissionCache.length;
+
+  const rows = adminCommissionCache.map(x=>{
+    const amt = commissionAmountOf(x).toFixed(2);
+    const owner = commissionRecordTitle(x);
+    const product = esc(x.product || x.productTitle || x.itemName || x.saleRef || '-');
+    const status = esc(x.status || 'pending');
+    return `<div class="item">
+      <div class="item-title">💸 ${owner} • RM${amt}</div>
+      <div class="item-meta">${product} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)}</div>
+      <div class="toolbar" style="margin:6px 0 0">
+        <button class="btn gray" data-edit-commission="${esc(x.docId)}">Edit</button>
+        <button class="btn red" data-delete-commission="${esc(x.docId)}">Delete</button>
+      </div>
+    </div>`;
+  });
+  $('#adminCommissionList').innerHTML = rows.join('') || '<div class="item">No commission records.</div>';
+}
+async function saveCommissionRecord(){
+  const docId = $('#commissionEditDocId')?.value || '';
+  const amount = Number($('#commissionAmount')?.value || 0);
+  const payload = {
+    username: $('#commissionUsername')?.value.trim() || '',
+    product: $('#commissionProduct')?.value.trim() || '',
+    amount,
+    status: $('#commissionStatus')?.value || 'pending',
+    note: $('#commissionNote')?.value.trim() || '',
+    ownerUid: $('#commissionOwnerUid')?.value.trim() || '',
+    ownerUsername: $('#commissionOwnerUsername')?.value.trim() || $('#commissionUsername')?.value.trim() || '',
+    ownerEmail: $('#commissionOwnerEmail')?.value.trim() || '',
+    ownerShare: 70,
+    platformShare: 30,
+    commissionRate: 70,
+    updatedAt: serverTimestamp(),
+    updatedAtMs: Date.now()
+  };
+  if(docId){
+    await updateDoc(doc(db,'commissionRecords',docId), payload);
+  }else{
+    await addDoc(collection(db,'commissionRecords'), {...payload, createdAt: serverTimestamp(), createdAtMs: Date.now(), createdByAdmin: 'admin-dashboard'});
+  }
+  resetCommissionForm();
+  await loadAdminCommissions();
+}
+function editCommissionRecord(docId){
+  const x = adminCommissionCache.find(r=>r.docId===docId);
+  if(!x) return;
+  $('#commissionEditDocId').value = x.docId;
+  $('#commissionUsername').value = x.username || x.ownerUsername || '';
+  $('#commissionProduct').value = x.product || x.productTitle || x.itemName || x.saleRef || '';
+  $('#commissionAmount').value = commissionAmountOf(x);
+  $('#commissionStatus').value = x.status || 'pending';
+  $('#commissionOwnerUid').value = x.ownerUid || '';
+  $('#commissionOwnerUsername').value = x.ownerUsername || x.username || '';
+  $('#commissionOwnerEmail').value = x.ownerEmail || '';
+  $('#commissionNote').value = x.note || '';
+  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Editing Commission';
+}
+async function deleteCommissionRecord(docId){
+  if(!confirm('Delete this commission record?')) return;
+  await deleteDoc(doc(db,'commissionRecords',docId));
+  await loadAdminCommissions();
+}
+
 async function loadSettings(){
   const snap=await getDoc(doc(db,'settings','signupGate')).catch(()=>null);
   if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
@@ -853,6 +1013,7 @@ async function initSection(id){
   if(id==='notifications')return loadNotifications();
   if(id==='purchases')return loadPurchases();
   if(id==='payments')return loadPayments();
+  if(id==='commissions')return loadAdminCommissions();
   if(id==='staffroles')return loadStaffRoles();
   if(id==='settings')return loadSettings();
 }
