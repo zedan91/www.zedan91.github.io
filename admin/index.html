@@ -399,6 +399,127 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
 .staff-role-delete{background:#dc2626;color:white}
 </style>
 
+
+<style id="az-admin-activity-compact-pagination-style">
+#activity .card,
+#activities .card,
+.activity-panel.card{
+  padding:12px!important;
+}
+.az-activity-toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin:8px 0 12px;
+}
+.az-activity-search{
+  flex:1;
+  min-width:220px;
+  height:38px;
+  border-radius:10px;
+  border:1px solid rgba(148,163,184,.35);
+  background:#020617;
+  color:#fff;
+  padding:0 12px;
+  outline:none;
+}
+.az-activity-list{
+  display:grid!important;
+  gap:6px!important;
+}
+.az-activity-row{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(148,163,184,.20);
+  background:rgba(15,23,42,.72);
+  font-size:13px;
+}
+.az-activity-badge{
+  min-width:86px;
+  height:26px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:0 9px;
+  font-size:12px;
+  font-weight:950;
+  border:1px solid rgba(148,163,184,.25);
+}
+.az-act-login{background:rgba(34,197,94,.15);color:#86efac;border-color:rgba(34,197,94,.35)}
+.az-act-payment{background:rgba(251,146,60,.15);color:#fdba74;border-color:rgba(251,146,60,.35)}
+.az-act-software{background:rgba(59,130,246,.15);color:#93c5fd;border-color:rgba(59,130,246,.35)}
+.az-act-cad{background:rgba(168,85,247,.15);color:#d8b4fe;border-color:rgba(168,85,247,.35)}
+.az-act-commission{background:rgba(234,179,8,.15);color:#fde68a;border-color:rgba(234,179,8,.35)}
+.az-act-default{background:rgba(148,163,184,.13);color:#cbd5e1}
+.az-activity-main{
+  min-width:0;
+}
+.az-activity-title{
+  color:#f8fafc;
+  font-weight:950;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.az-activity-sub{
+  color:#94a3b8;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin-top:2px;
+}
+.az-activity-time{
+  color:#94a3b8;
+  font-size:11px;
+  text-align:right;
+  white-space:nowrap;
+}
+.az-activity-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-top:12px;
+}
+.az-activity-pagination button{
+  border:0;
+  border-radius:999px;
+  padding:8px 13px;
+  background:#1d4ed8;
+  color:white;
+  font-weight:950;
+  cursor:pointer;
+}
+.az-activity-pagination button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.az-activity-page-info{
+  color:#cbd5e1;
+  font-weight:900;
+  font-size:13px;
+}
+@media(max-width:680px){
+  .az-activity-row{
+    grid-template-columns:1fr;
+    gap:5px;
+  }
+  .az-activity-badge{
+    width:max-content;
+  }
+  .az-activity-time{
+    text-align:left;
+  }
+}
+</style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -549,6 +670,18 @@ body[data-dashboard-page="staff"] .azStaffDashboardBtn{
 
     <section id="activity" class="section">
       <h2>📈 Activity</h2>
+      <div class="card activity-panel">
+        <div class="az-activity-toolbar">
+          <input id="activitySearch" class="az-activity-search" placeholder="Search username / activity...">
+          <button class="btn" id="activityRefreshBtn" type="button">Refresh</button>
+        </div>
+        <div id="activityList" class="az-activity-list"></div>
+        <div class="az-activity-pagination">
+          <button id="activityPrevBtn" type="button">◀ Prev</button>
+          <span id="activityPageInfo" class="az-activity-page-info">Page 1 / 1</span>
+          <button id="activityNextBtn" type="button">Next ▶</button>
+        </div>
+      </div>
       <div class="split">
         <div class="card"><h2>Logged-In Users History</h2><div id="loginHistoryList" class="list"></div></div>
         <div class="card"><h2>Guest Visit History</h2><div id="guestHistoryList" class="list"></div></div>
@@ -1103,6 +1236,94 @@ async function deleteCommissionRecord(docId){
   await loadAdminCommissions();
 }
 
+
+let adminActivityCache = [];
+let adminActivityPage = 1;
+const ADMIN_ACTIVITY_PAGE_SIZE = 10;
+
+function azActivityType(x){
+  const raw = String(x.type || x.event || x.action || x.category || x.collection || '').toLowerCase();
+  const text = String(JSON.stringify(x)).toLowerCase();
+  if(raw.includes('payment') || text.includes('payment') || text.includes('purchase')) return ['💳 Payment','az-act-payment'];
+  if(raw.includes('software') || text.includes('softwaretools') || text.includes('software')) return ['🔵 Software','az-act-software'];
+  if(raw.includes('cad') || text.includes('cadtools') || text.includes('lisp')) return ['🟣 CAD','az-act-cad'];
+  if(raw.includes('commission') || text.includes('commission')) return ['🟡 Commission','az-act-commission'];
+  if(raw.includes('login') || text.includes('login')) return ['🟢 Login','az-act-login'];
+  return ['⚪ Activity','az-act-default'];
+}
+function azActivityUsername(x){
+  return x.username || x.usernameKey || x.ownerUsername || x.createdByUsername || x.email || x.userEmail || x.uid || x.ownerUid || 'Unknown';
+}
+function azActivityTitle(x){
+  return x.title || x.product || x.productTitle || x.itemName || x.action || x.event || x.type || x.message || 'Activity';
+}
+function azActivitySub(x){
+  const parts = [x.status, x.amount ? ('RM'+x.amount) : '', x.productId, x.note].filter(Boolean);
+  return parts.join(' • ') || (x.collection || x.source || '');
+}
+function azActivityTime(x){
+  const ms = Number(x.createdAtMs || x.updatedAtMs || x.timestampMs || x.timeMs || 0);
+  if(ms) return new Date(ms).toLocaleString();
+  try{
+    if(x.createdAt?.seconds) return new Date(x.createdAt.seconds*1000).toLocaleString();
+    if(x.updatedAt?.seconds) return new Date(x.updatedAt.seconds*1000).toLocaleString();
+  }catch(e){}
+  return '';
+}
+function azActivityMatches(x, q){
+  if(!q) return true;
+  return JSON.stringify(x).toLowerCase().includes(q);
+}
+function renderAdminActivity(){
+  const list = $('#activityList') || $('#adminActivityList') || $('#activityRecords');
+  const info = $('#activityPageInfo');
+  if(!list) return;
+  const q = String($('#activitySearch')?.value || '').toLowerCase().trim();
+  const filtered = adminActivityCache.filter(x => azActivityMatches(x,q));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ADMIN_ACTIVITY_PAGE_SIZE));
+  adminActivityPage = Math.min(Math.max(1, adminActivityPage), totalPages);
+  const start = (adminActivityPage - 1) * ADMIN_ACTIVITY_PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + ADMIN_ACTIVITY_PAGE_SIZE);
+
+  list.classList.add('az-activity-list');
+  list.innerHTML = pageItems.map(x=>{
+    const [label, cls] = azActivityType(x);
+    return `<div class="az-activity-row">
+      <span class="az-activity-badge ${cls}">${label}</span>
+      <div class="az-activity-main">
+        <div class="az-activity-title">${esc(azActivityUsername(x))} — ${esc(azActivityTitle(x))}</div>
+        <div class="az-activity-sub">${esc(azActivitySub(x))}</div>
+      </div>
+      <div class="az-activity-time">${esc(azActivityTime(x))}</div>
+    </div>`;
+  }).join('') || '<div class="az-activity-row"><div class="az-activity-main"><div class="az-activity-title">No activity found.</div></div></div>';
+
+  if(info) info.textContent = `Page ${adminActivityPage} / ${totalPages} • ${filtered.length} records`;
+  if($('#activityPrevBtn')) $('#activityPrevBtn').disabled = adminActivityPage <= 1;
+  if($('#activityNextBtn')) $('#activityNextBtn').disabled = adminActivityPage >= totalPages;
+}
+async function loadAdminActivity(){
+  const collections = [
+    ['loginHistory','login'],
+    ['guestHistory','guest'],
+    ['purchaseLogs','payment'],
+    ['commissionRecords','commission'],
+    ['staffSoftwareSubmissions','software'],
+    ['staffCADSubmissions','cad']
+  ];
+  const rows = [];
+  for(const [col,type] of collections){
+    try{
+      const snap = await safeGet(query(collection(db,col), limit(40)));
+      snap?.forEach(d=>rows.push({docId:d.id, collection:col, type, ...d.data()}));
+    }catch(e){}
+  }
+  rows.sort((a,b)=>Number(b.createdAtMs||b.updatedAtMs||b.createdAt?.seconds*1000||0)-Number(a.createdAtMs||a.updatedAtMs||a.createdAt?.seconds*1000||0));
+  adminActivityCache = rows;
+  adminActivityPage = 1;
+  renderAdminActivity();
+}
+
 async function loadSettings(){
   const snap=await getDoc(doc(db,'settings','signupGate')).catch(()=>null);
   if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
@@ -1129,6 +1350,7 @@ async function initSection(id){
   if(id==='notifications')return loadNotifications();
   if(id==='purchases')return loadPurchases();
   if(id==='payments')return loadPayments();
+  if(id==='activity')return loadAdminActivity();
   if(id==='commissions')return loadAdminCommissions();
   if(id==='staffroles')return loadStaffRoles();
   if(id==='settings')return loadSettings();
