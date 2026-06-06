@@ -2540,15 +2540,9 @@ function renderAzobssPurchaseDetailPager(key, currentPage, totalItems){
   return `<div class="guest-history-pagination az-purchase-detail-pagination" data-purchase-detail-key="${escHtml(key)}">${azobssBuildCompactPagerHtml(currentPage, totalPages)}</div>`;
 }
 function azobssIsPurchasePaidForDownload(r){
-  try{
-    if(azobssIsPurchaseStatusPaid(r)) return true;
-    const current = getSavedUser() || {};
-    const key = String(current.usernameKey || current.displayName || current.username || r?.usernameKey || '').trim().toLowerCase();
-    const map = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
-    const resetAt = Number((map || {})[key] || 0);
-    const itemMs = purchaseRecordMs ? purchaseRecordMs(r) : Number(r?.createdAtMs || 0);
-    return !!(resetAt && itemMs && itemMs <= resetAt);
-  }catch(e){ return false; }
+  if(azobssIsPurchaseStatusPaid(r)) return true;
+  if(azobssPurchaseHasDownloadReadyUrl(r)) return true;
+  return false;
 }
 
 function azobssCanUncartPurchase(r){
@@ -2854,7 +2848,33 @@ function azobssPurchaseStatus(r){
   return String(r?.status || 'pending').trim().toLowerCase();
 }
 function azobssIsPurchaseStatusPaid(r){
-  return ['paid','success','completed','settled'].includes(azobssPurchaseStatus(r));
+  return ['paid','success','completed','settled','verified','approved']
+    .includes(azobssPurchaseStatus(r));
+}
+
+function azobssPurchaseHasDownloadReadyUrl(r){
+  const url = String(
+    r?.downloadUrl ||
+    r?.secureDownloadLink ||
+    r?.downloadLink ||
+    r?.fileUrl ||
+    r?.url ||
+    ''
+  ).trim();
+  if(!url) return false;
+
+  const max = Number(r?.maxDownloads || r?.downloadLimit || 5) || 5;
+  const used = Number(r?.downloadCount || r?.downloadsUsed || 0) || 0;
+  if(used >= max) return false;
+
+  const rawMs = Number(r?.createdAtMs || r?.paidAtMs || r?.verifiedAtMs || r?.updatedAtMs || 0) || 0;
+  const createdMs = rawMs > 0 ? rawMs : Date.parse(r?.createdAtClient || r?.paidAtClient || r?.verifiedAtClient || r?.updatedAtClient || '');
+  if(createdMs && Number.isFinite(createdMs)){
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    if(Date.now() - createdMs > sevenDays) return false;
+  }
+
+  return true;
 }
 function countablePurchaseRows(rows, usernameKey, resetMap){
   const key = String(usernameKey || '').trim().toLowerCase();
