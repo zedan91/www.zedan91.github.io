@@ -1766,9 +1766,7 @@ body:not(.is-admin) #registeredUsersPanel {
   display: none !important;
 }
 
-    .is-admin #registeredUsersPanel {
-      display: block !important;
-    }
+    .is-admin #registeredUsersPanel{display:none!important;}
 
     .login-panel label {
       color: #e2e8f0;
@@ -1976,13 +1974,7 @@ body:not(.is-admin) #registeredUsersPanel {
     }
 
 /* Force admin live/history panels visible for admin */
-.is-admin #liveUsersPanel,
-.is-admin #loginHistoryPanel,
-.is-admin #guestHistoryPanel {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
+.is-admin #liveUsersPanel,.is-admin #loginHistoryPanel,.is-admin #guestHistoryPanel{display:none!important;visibility:hidden!important;opacity:0!important;}
 
 body:not(.is-admin) #liveUsersPanel,
 body:not(.is-admin) #loginHistoryPanel,
@@ -1991,19 +1983,7 @@ body:not(.is-admin) #guestHistoryPanel {
 }
 
 
-/* AZOBSS FIX: admin registered/live/history panels must show when admin is restored from saved login */
-body.is-admin #registeredUsersPanel,
-body.is-admin #liveUsersPanel,
-body.is-admin #loginHistoryPanel,
-body.is-admin #guestHistoryPanel,
-.is-admin #registeredUsersPanel,
-.is-admin #liveUsersPanel,
-.is-admin #loginHistoryPanel,
-.is-admin #guestHistoryPanel {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
+/* AZOBSS PATCH: admin panels are intentionally hidden on PA-BM; managed in /admin/ */
 
     .live-user-list {
       display: grid;
@@ -3130,7 +3110,7 @@ body.is-admin .affiliate-card-admin-actions{
 .affiliate-detect-row .affiliate-admin-btn{
   height:40px;
   justify-content:center;
-  white-space:nowrap;
+  white-space:normal;
 }
 .affiliate-detect-status{
   display:block;
@@ -3698,7 +3678,7 @@ body:not(.is-admin) .affiliate-card-admin-actions{
 .affiliate-json-actions .compact-btn{
   flex:1;
   min-width:0;
-  white-space:nowrap;
+  white-space:normal;
   font-size:14px;
   padding:10px 12px;
 }
@@ -4002,7 +3982,7 @@ body.is-admin .lucky-draw-public-list{
   border:1px dashed rgba(34,197,94,.32);
   border-radius:18px;
   background:radial-gradient(circle at center,rgba(34,197,94,.13),rgba(2,6,23,.45));
-  overflow:hidden;
+  overflow:visible;
   position:relative;
 }
 
@@ -4072,7 +4052,7 @@ body.is-admin .lucky-draw-public-list{
   border:1px solid rgba(34,197,94,.24);
   border-radius:18px;
   background:rgba(2,6,23,.42);
-  overflow:hidden;
+  overflow:visible;
 }
 
 .lucky-draw-prize-preview{
@@ -4383,7 +4363,7 @@ body.is-admin .lucky-draw-prize-admin{
     inset 0 1px 0 rgba(255,255,255,.10),
     0 18px 45px rgba(0,0,0,.25),
     0 0 24px rgba(34,197,94,.10);
-  overflow:hidden;
+  overflow:visible;
   position:relative;
 }
 
@@ -4471,7 +4451,7 @@ body.is-admin .lucky-draw-prize-admin{
 .lucky-draw-confetti{
   position:absolute;
   inset:0;
-  overflow:hidden;
+  overflow:visible;
   pointer-events:none;
   z-index:10;
 }
@@ -6469,7 +6449,7 @@ body.is-admin .lucky-draw-pagination{
   padding:10px;
   box-sizing:border-box;
 
-  overflow:hidden;
+  overflow:visible;
 }
 
 .recent-joins-title{
@@ -6527,9 +6507,9 @@ body.is-admin .lucky-draw-pagination{
   color:#cbd5e1;
   font-size:10px;
   line-height:1.15;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:unset;
 }
 
 .recent-join-empty{
@@ -6861,12 +6841,12 @@ body.pa-bm-page #request .card {
 }
 </style>
 <style id="azobss-pro-navbar-icons-css">
-.market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:nowrap;}
+.market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:normal;}
 .user-upgrade-btn{border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.14);color:#22c55e;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;}
 .market-icon-btn{display:inline-grid;place-items:center;width:28px;height:34px;color:#f8fafc;text-decoration:none;border:0;background:transparent;}
 .market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .market-icon-btn:hover{color:#22c55e;}
-@media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:hidden;text-overflow:ellipsis}}
+@media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:visible;text-overflow:ellipsis}}
 </style>
 
 <style id="azobss-pro-navbar-consistency-v1">
@@ -7939,6 +7919,200 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 }
 </style>
 
+
+
+
+<style id="az-admin-static-button-style">
+.azAdminDashboardBtn.admin-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:18px!important;
+  line-height:1!important;
+}
+body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-admin-static-button-check">
+(function(){
+  if(window.__azAdminStaticButtonCheck) return;
+  window.__azAdminStaticButtonCheck = true;
+
+  function readUser(){
+    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj) return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function isAdmin(){
+    var u = readUser();
+    var role = String(u.role || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
+    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
+    return role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local';
+  }
+
+  function refreshAdminButton(){
+    if(!document.body) return;
+    document.body.classList.toggle('az-admin-safe-ok', isAdmin());
+  }
+
+  document.addEventListener('DOMContentLoaded', refreshAdminButton);
+  if(document.readyState !== 'loading') refreshAdminButton();
+  window.addEventListener('storage', refreshAdminButton);
+  window.addEventListener('focus', refreshAdminButton);
+  setTimeout(refreshAdminButton, 300);
+  setTimeout(refreshAdminButton, 1000);
+  setTimeout(refreshAdminButton, 2500);
+})();
+</script>
+
+
+
+<style id="az-staff-dashboard-button-style">
+.azStaffDashboardBtn.staff-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:17px!important;
+  line-height:1!important;
+}
+body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-staff-dashboard-button-check">
+(function(){
+  if(window.__azStaffDashboardButtonCheck)return;
+  window.__azStaffDashboardButtonCheck=true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj=JSON.parse(raw);
+          if(obj)return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function ok(){
+    var u=readUser();
+    var role=String(u.role||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
+    return role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91'||email==='zedan91@azobss.local';
+  }
+
+  function refresh(){
+    if(document.body) document.body.classList.toggle('az-staff-safe-ok',ok());
+  }
+
+  document.addEventListener('DOMContentLoaded',refresh);
+  if(document.readyState!=='loading')refresh();
+  window.addEventListener('storage',refresh);
+  window.addEventListener('focus',refresh);
+  setTimeout(refresh,400);
+  setTimeout(refresh,1200);
+  setTimeout(refresh,2500);
+})();
+</script>
+
+
+<style id="az-role-dashboard-buttons-visibility-fix">
+.azAdminDashboardBtn.admin-dashboard-btn,
+.azAdminDashboardBtn{
+  display:none!important;
+}
+.azStaffDashboardBtn.staff-dashboard-btn,
+.azStaffDashboardBtn{
+  display:none!important;
+}
+body.az-role-is-admin .azAdminDashboardBtn.admin-dashboard-btn,
+body.az-role-is-admin .azAdminDashboardBtn{
+  display:inline-flex!important;
+}
+body.az-role-is-admin .azStaffDashboardBtn.staff-dashboard-btn,
+body.az-role-is-admin .azStaffDashboardBtn,
+body.az-role-is-stafflike .azStaffDashboardBtn.staff-dashboard-btn,
+body.az-role-is-stafflike .azStaffDashboardBtn{
+  display:inline-flex!important;
+}
+</style>
+
+
+<style id="azobss-youtube-style-page-scrollbar-v1">
+/* AZOBSS YouTube/Facebook-style page scrollbar: stable width, no layout shrink/jump */
+html{
+  overflow-y:scroll!important;
+  scrollbar-gutter:stable!important;
+  scrollbar-width:thin!important;
+  scrollbar-color:rgba(148,163,184,.62) rgba(15,23,42,.18)!important;
+}
+body{
+  overflow-x:hidden!important;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar{
+  width:12px!important;
+  height:12px!important;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track{
+  background:rgba(15,23,42,.18)!important;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb{
+  background:rgba(148,163,184,.62)!important;
+  border-radius:999px!important;
+  border:3px solid rgba(15,23,42,.18)!important;
+  background-clip:padding-box!important;
+}
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover{
+  background:rgba(203,213,225,.82)!important;
+  border:2px solid rgba(15,23,42,.18)!important;
+}
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner{
+  background:transparent!important;
+}
+/* Keep horizontal chip menus clean like YouTube; only page scrollbar is visible */
+.market-nav,.azobss-nav-scroll,.social-strip,.social-bar,.social-links,.footer-social,.social-icons{
+  -ms-overflow-style:none!important;
+  scrollbar-width:none!important;
+}
+.market-nav::-webkit-scrollbar,.azobss-nav-scroll::-webkit-scrollbar,.social-strip::-webkit-scrollbar,.social-bar::-webkit-scrollbar,.social-links::-webkit-scrollbar,.footer-social::-webkit-scrollbar,.social-icons::-webkit-scrollbar{
+  display:none!important;
+}
+</style>
+
+<style id="azobss-pabm-admin-panels-hide">
+#registeredUsersPanel,#liveUsersPanel,#loginHistoryPanel,#guestHistoryPanel{display:none!important;}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -7951,8 +8125,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 <div class="azobss-nav-scroll" id="azobssNavScroll">
 <a class="azobss-nav-chip" href="/Software-Tools/">Software</a>
 <a class="azobss-nav-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>
-<a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a>
-<a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>
+<a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a><a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>
 <a class="azobss-nav-chip" href="/lucky-draw/">Lucky Draw</a>
 <a class="azobss-nav-chip" href="/PA-BM/#request">Request PA / Info Lot</a>
 <a class="azobss-nav-chip" href="#contact">Contact</a>
@@ -8216,7 +8389,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 <a href="/CAD-Tools-&-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a href="/tools/">Mini Web Tools</a>
+<a href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
 </nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button>
@@ -8225,7 +8398,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 <div class="market-user-tools" id="marketUserTools">
 <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
 <div class="user-avatar" id="userAvatar">AZ</div>
-<div class="user-name">Hello, <span id="signedInName"></span></div>
+<div class="user-name"><span id="signedInName"></span></div>
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
@@ -9446,7 +9619,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
         const data = await res.json();
 
         if(data.ok){
-          btn.innerHTML = '\uD83D\uDE80 Deploy to GitHub <span style="position:absolute;top:-9px;right:-9px;background:#22c55e;color:#052e16;font-size:10px;font-weight:bold;padding:2px 7px;border-radius:999px;white-space:nowrap;">\u2713 Done</span>';
+          btn.innerHTML = '\uD83D\uDE80 Deploy to GitHub <span style="position:absolute;top:-9px;right:-9px;background:#22c55e;color:#052e16;font-size:10px;font-weight:bold;padding:2px 7px;border-radius:999px;white-space:normal;">\u2713 Done</span>';
           alert('\u2705 ' + data.message);
         }else{
           alert('\u274C Deploy gagal:\n' + data.message);
@@ -9948,7 +10121,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
       const downloadUrl = productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''; // always use backend link
 
       const downloadButton = downloadUrl
-        ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download" style="padding:6px 12px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">Add to Cart</button>`
+        ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download" style="padding:6px 12px;font-size:12px;margin:0;display:inline-block;white-space:normal;text-decoration:none;border-radius:8px;">Add to Cart</button>`
         : '-';
 
       return `
@@ -13290,6 +13463,197 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   }
 
   setInterval(addDeleteButtons, 1200);
+})();
+</script>
+
+
+<script id="azobss-affiliate-admin-software-category-runtime">
+(function(){
+  if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
+  window.__azAffiliateAdminSoftwareCategoryRuntime=true;
+
+  function isCategorySelect(sel){
+    if(!sel || sel.tagName!=='SELECT') return false;
+    const text=(sel.textContent||'').toLowerCase();
+    const id=((sel.id||'')+' '+(sel.name||'')+' '+(sel.className||'')).toLowerCase();
+    return id.includes('category') || text.includes('mobile & accessories') || text.includes('computer & accessories');
+  }
+
+  function addSoftwareOption(sel){
+    if(!isCategorySelect(sel)) return;
+    const has=[...sel.options].some(o=>(o.textContent||'').trim().toLowerCase()==='software' || String(o.value||'').toLowerCase()==='software');
+    if(has) return;
+
+    const opt=document.createElement('option');
+    opt.value='software';
+    opt.textContent='Software';
+
+    const mobile=[...sel.options].find(o=>(o.textContent||'').trim().toLowerCase()==='mobile & accessories');
+    if(mobile) sel.insertBefore(opt,mobile);
+    else sel.insertBefore(opt,sel.firstChild);
+  }
+
+  function run(){
+    document.querySelectorAll('select').forEach(addSoftwareOption);
+  }
+
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.readyState!=='loading') run();
+  [300,800,1500,3000].forEach(t=>setTimeout(run,t));
+  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+
+
+
+
+
+
+<script id="az-remove-hello-label-fix">
+(function(){
+  if(window.__azRemoveHelloLabelFix)return;
+  window.__azRemoveHelloLabelFix=true;
+
+  function cleanHelloText(){
+    var selectors=[
+      '#userNameText','#userName','.user-name','.username','.user-menu-name',
+      '.profile-name','.profile-label','.az-user-name','.azobss-user-name'
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(function(el){
+      if(!el || !el.textContent) return;
+      var t=el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
+      if(t && t!==el.textContent.trim()) el.textContent=t;
+    });
+
+    document.querySelectorAll('span,div,a,button,strong,b').forEach(function(el){
+      if(!el || !el.childNodes || el.childNodes.length!==1) return;
+      var txt=el.textContent||'';
+      if(/^\s*hello\s*,\s*[\w.@+-]+\s*$/i.test(txt)){
+        el.textContent=txt.replace(/^\s*hello\s*,?\s*/i,'').trim();
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',cleanHelloText);
+  if(document.readyState!=='loading')cleanHelloText();
+  window.addEventListener('storage',cleanHelloText);
+  window.addEventListener('focus',cleanHelloText);
+  setTimeout(cleanHelloText,500);
+  setTimeout(cleanHelloText,1500);
+  setTimeout(cleanHelloText,3000);
+})();
+</script>
+
+
+<script id="az-role-dashboard-buttons-visibility-fix">
+(function(){
+  if(window.__azRoleDashboardButtonsVisibilityFix)return;
+  window.__azRoleDashboardButtonsVisibilityFix=true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(var s=0;s<2;s++){
+      var store=s===0?sessionStorage:localStorage;
+      for(var i=0;i<keys.length;i++){
+        try{
+          var raw=store.getItem(keys[i]);
+          if(raw){
+            var obj=JSON.parse(raw);
+            if(obj && typeof obj==='object') return obj;
+          }
+        }catch(e){}
+      }
+    }
+    return {};
+  }
+
+  function roleInfo(){
+    var u=readUser();
+    var role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
+
+    var isAdmin = role==='admin' || username==='zedan91' || email==='zedan91@azobss.local' || email==='zedan9107@gmail.com';
+    var isStaffLike = !isAdmin && (role==='semiadmin' || role==='semi-admin' || role==='staff');
+
+    return {isAdmin:isAdmin,isStaffLike:isStaffLike};
+  }
+
+  function apply(){
+    var r=roleInfo();
+    if(document.body){
+      document.body.classList.toggle('az-role-is-admin', !!r.isAdmin);
+      document.body.classList.toggle('az-role-is-stafflike', !!r.isStaffLike);
+    }
+
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn').forEach(function(btn){
+      btn.hidden = !r.isAdmin;
+      btn.style.display = r.isAdmin ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', r.isAdmin ? 'false' : 'true');
+    });
+
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn').forEach(function(btn){
+      var show = r.isAdmin || r.isStaffLike;
+      btn.hidden = !show;
+      btn.style.display = show ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', show ? 'false' : 'true');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',apply);
+  if(document.readyState!=='loading')apply();
+  window.addEventListener('focus',apply);
+  window.addEventListener('storage',apply);
+  setTimeout(apply,400);
+  setTimeout(apply,1200);
+  setTimeout(apply,3000);
+})();
+</script>
+
+
+<!-- AZOBSS FINAL PATCH: Hide admin user/history panels only on PA-BM page. Admin Dashboard remains unchanged. -->
+<style id="azobss-pabm-hide-admin-panels-final">
+body #registeredUsersPanel,
+body #liveUsersPanel,
+body #loginHistoryPanel,
+body #guestHistoryPanel{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+</style>
+<script id="azobss-pabm-hide-admin-panels-final">
+(function(){
+  var ids = ["registeredUsersPanel","liveUsersPanel","loginHistoryPanel","guestHistoryPanel"];
+  function hidePanels(){
+    ids.forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.setProperty("display","none","important");
+      el.style.setProperty("visibility","hidden","important");
+      el.style.setProperty("opacity","0","important");
+      el.style.setProperty("height","0","important");
+      el.style.setProperty("min-height","0","important");
+      el.style.setProperty("max-height","0","important");
+      el.style.setProperty("margin","0","important");
+      el.style.setProperty("padding","0","important");
+      el.style.setProperty("border","0","important");
+      el.style.setProperty("overflow","hidden","important");
+    });
+  }
+  hidePanels();
+  document.addEventListener("DOMContentLoaded", hidePanels);
+  window.addEventListener("load", hidePanels);
+  setTimeout(hidePanels, 250);
+  setTimeout(hidePanels, 1000);
 })();
 </script>
 

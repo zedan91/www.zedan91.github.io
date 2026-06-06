@@ -1,0 +1,22 @@
+AZOBSS MY SOFTWARE ACTUAL FILTER FIX
+
+Audit finding:
+- Button My Software toggled selectedSoftwareOwnerFilter.
+- But applySoftwareFilters() did NOT filter dynamic software by owner.
+- So all dynamic software still appeared.
+
+Fixed:
+- Added actual filter:
+  if(selectedSoftwareOwnerFilter === 'mine') {
+    dynamic = dynamic.filter(item => azIsOwnSoftwareItemStrict(item));
+  }
+
+- Static/default cards are hidden when My Software is active.
+- Strict owner matching uses only:
+  ownerUid / createdByUid / staffUid / sellerUid
+  ownerUsername / createdByUsername / staffUsername / sellerUsername
+  ownerEmail / createdByEmail / staffEmail / sellerEmail
+
+Verification:
+- applySoftwareFilters contains strict filter: True
+- Syntax errors: 0

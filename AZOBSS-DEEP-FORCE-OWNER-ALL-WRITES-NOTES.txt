@@ -1,0 +1,22 @@
+AZOBSS DEEP FORCE OWNER ALL WRITES
+
+User confirmed Firestore document still had no owner fields.
+
+This patch:
+- Adds azSoftwarePayloadWithOwner(payload)
+- Wraps all Software Tools Firestore addDoc/updateDoc payloads with owner metadata.
+- Forces local fallback to store owner metadata too.
+- Console logs:
+  AZOBSS FORCE OWNER PAYLOAD
+- Save status now shows ownerKey.
+
+After deploy:
+1. Hard refresh / clear cache.
+2. Login semiAdmin/staff.
+3. Add a brand new software e.g. TEST OWNER FINAL.
+4. Open DevTools console and confirm AZOBSS FORCE OWNER PAYLOAD shows ownerKey.
+5. Check Firestore newest doc.
+
+If Firestore still lacks fields, browser is not loading the deployed patched file or another JS file outside this HTML is handling the save.
+
+Syntax errors: 1

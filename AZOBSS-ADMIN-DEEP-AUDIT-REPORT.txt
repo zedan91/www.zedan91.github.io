@@ -1,0 +1,494 @@
+
+## Summary checks
+{
+  "syntax_errors": 0,
+  "tabs": [
+    "overview",
+    "users",
+    "online",
+    "activity",
+    "support",
+    "notifications",
+    "purchases",
+    "payments",
+    "commissions",
+    "lucky",
+    "staffroles",
+    "settings",
+    "users",
+    "online",
+    "support",
+    "notifications",
+    "purchases",
+    "activity"
+  ],
+  "sections": [
+    "overview",
+    "users",
+    "online",
+    "activity",
+    "support",
+    "notifications",
+    "purchases",
+    "payments",
+    "lucky",
+    "commissions",
+    "staffroles",
+    "settings"
+  ],
+  "tabs_without_section": [],
+  "sections_without_tab": [],
+  "has_staff_roles_badge_renderer": true,
+  "has_staff_roles_old_json": true,
+  "has_manage_commission": false,
+  "has_commission_manager": true,
+  "has_owner_tracking_note": true,
+  "has_market_stickybar": true,
+  "has_global_assets": true,
+  "has_tab_click_handler": true,
+  "has_safeGet": true,
+  "imports_deleteDoc": true,
+  "admin_auth_email": true
+}
+
+
+## Snippet: function loadStaffRoles
+wait safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)));
+  const lr=[]; logs?.forEach(d=>{const x=d.data();lr.push(item(esc(x.usernameKey||x.username||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • ${esc(x.status||'')} • RM${esc(x.amount||x.total||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
+  $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No purchase logs.</div>';
+  $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No purchase summaries.</div>';
+}
+
+async function loadStaffRoles(){
+  const snap = await safeGet(query(collection(db,'users'),limit(100)));
+  const rows = [];
+  snap?.forEach(d=>{
+    const x=d.data()||{};
+    const role=String(x.role||'member');
+    if(!['admin','semiAdmin','semiadmin','staff'].includes(role)) return;
+    rows.push(item(esc(d.id), `Role: ${esc(role)} • Permissions: <pre>${esc(JSON.stringify(x.permissions||{},null,2))}</pre>`));
+  });
+  $('#staffRolesList').innerHTML=rows.join('')||'<div class="item">No staff users found.</div>';
+}
+async function saveStaffRole(){
+  const username=String($('#staffUsername')?.value||'').trim().toLowerCase();
+  if(!username) return alert('Enter username.');
+  const role=$('#staffRole')?.value||'semiAdmin';
+  const permissions={canManageSoftware:!!$('#permSoftware')?.checked,canManageCAD:!!$('#permCAD')?.checked,canViewPayments:!!$('#permPayments')?.checked,canApprovePayment:!!$('#permApprove')?.checked,canEditUsers:false};
+  await updateDoc(doc(db,'users',username),{role,permissions,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});
+  await loadStaffRoles();
+  alert('Staff role saved.');
+}
+
+
+let adminCommissionCache = [];
+
+function commissionRecordTitle(x){
+  return esc(x.username || x.ownerUsername || x.createdByUsername || x.email || x.ownerEmail || 'Unknown');
+}
+function commissionAmountOf(x){
+  return Number(x.amount || x.commissionAmount || x.totalCommission || 0) || 0;
+}
+function commissionIsPaid(x){
+  const s = String(x.status || '').toLowerCase();
+  return ['paid','verified','success','completed','approved'].includes(s);
+}
+function resetCommissionForm(){
+  $('#commissionEditDocId').value = '';
+  $('#commissionUsername').value = '';
+  $('#commissionProduct').value = '';
+  $('#commissionAmount').value = '';
+  $('#commissionStatus').value = 'pending';
+  $('#commissionOwnerUid').value = '';
+  $('#commissionOwnerUsername').value = '';
+  $('#commissionOwnerEmail').value = '';
+  $('#commissionNote').value = '';
+  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Add / Edit Commission';
+}
+async function loadAdminCommissions(){
+  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','de
+
+
+## Snippet: function loadAdminCommissions
+l || x.ownerEmail || 'Unknown');
+}
+function commissionAmountOf(x){
+  return Number(x.amount || x.commissionAmount || x.totalCommission || 0) || 0;
+}
+function commissionIsPaid(x){
+  const s = String(x.status || '').toLowerCase();
+  return ['paid','verified','success','completed','approved'].includes(s);
+}
+function resetCommissionForm(){
+  $('#commissionEditDocId').value = '';
+  $('#commissionUsername').value = '';
+  $('#commissionProduct').value = '';
+  $('#commissionAmount').value = '';
+  $('#commissionStatus').value = 'pending';
+  $('#commissionOwnerUid').value = '';
+  $('#commissionOwnerUsername').value = '';
+  $('#commissionOwnerEmail').value = '';
+  $('#commissionNote').value = '';
+  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Add / Edit Commission';
+}
+async function loadAdminCommissions(){
+  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(100)));
+  adminCommissionCache = [];
+  let total=0,pending=0,paid=0;
+  snap?.forEach(d=>{
+    const x={docId:d.id,...d.data()};
+    const amt=commissionAmountOf(x);
+    total += amt;
+    if(commissionIsPaid(x)) paid += amt; else pending += amt;
+    adminCommissionCache.push(x);
+  });
+  if($('#adminComTotal')) $('#adminComTotal').textContent = total.toFixed(2);
+  if($('#adminComPending')) $('#adminComPending').textContent = pending.toFixed(2);
+  if($('#adminComPaid')) $('#adminComPaid').textContent = paid.toFixed(2);
+  if($('#adminComCount')) $('#adminComCount').textContent = adminCommissionCache.length;
+
+  const rows = adminCommissionCache.map(x=>{
+    const amt = commissionAmountOf(x).toFixed(2);
+    const owner = commissionRecordTitle(x);
+    const product = esc(x.product || x.productTitle || x.itemName || x.saleRef || '-');
+    const status = esc(x.status || 'pending');
+    return `<div class="item">
+      <div class="item-title">💸 ${owner} • RM${amt}</div>
+      <div class="item-meta">${product} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)}</div>
+      <div class="toolbar" style="margin:6px 0 0">
+        <button class="btn gray" data-edit-commission="${esc(x.docId)}">Edit</button>
+        <button class="btn red" data-delete-commission="${esc(x.docId)}">Delete</button>
+      </div>
+    </div>`;
+  });
+  $('#adminCommissionList').innerHTML = rows.join('') || '<div class="item">No commission records.</div>';
+}
+async function saveCommissionRecord(){
+  const docId = $('#commissionEditDocId')?.value || '';
+  const amount = Number($('#commissionAmount')?.value || 0);
+  const payload = {
+    username: $('#commissionUsername')?.value.trim() || '',
+    product: $('#commissionProduct')?.value.trim() || '',
+    amount,
+    status: $('#commissionStatus')?.value || 'pending',
+    note: $('#commissionNote')?.value.trim() || '',
+    ownerUid: $('#commissionOwnerUid')?.value.trim() || '',
+    ownerUsername: $('#commissionOwnerUsername')?.value.trim() || $('#commissionUsername')?.value.trim() || '',
+    ownerEmail: $('#comm
+
+
+## Snippet: function loadPayments
+upport="${d.id}">Reply</button></div>
+    </div>`);
+  });
+  $('#supportList').innerHTML=rows.join('')||'<div class="item">No support messages.</div>';
+}
+async function loadNotifications(){
+  let snap=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  if(!snap)snap=await safeGet(query(collection(db,'notifications'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
+  $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
+}
+
+async function loadPayments(){
+  const filter = ($('#paymentCategoryFilter')?.value || 'all').toLowerCase();
+  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(100)));
+  const records = [];
+
+  logs?.forEach(d=>{
+    const x = {id:d.id, ...d.data()};
+    const typeRaw = String(x.productType || x.category || x.source || x.itemType || x.type || '').toLowerCase();
+    const nameRaw = String(x.title || x.name || x.itemName || x.filename || x.itemCode || '').toLowerCase();
+    const hay = typeRaw + ' ' + nameRaw;
+
+    let category = 'Others';
+    if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = 'PA/BM';
+    else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad')) category = 'CAD Tools';
+    else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = 'Software';
+
+    const amount = Number(x.amount || x.total || x.totalAmount || x.price || x.paymentAmount || 0) || 0;
+    const status = String(x.status || x.paymentStatus || '').toLowerCase();
+    const paid = ['paid','verified','success','completed','approved','confirmed'].includes(status);
+    const pending = !paid && (!status || ['pending','unpaid','waiting','manual','review'].includes(status));
+
+    records.push({...x, category, amount, paid, pending});
+  });
+
+  const totals = {pabm:0, software:0, cad:0, all:0, pending:0, paid:0};
+  records.forEach(x=>{
+    totals.all += x.amount;
+    if(x.category === 'PA/BM') totals.pabm += x.amount;
+    if(x.category === 'Software') totals.software += x.amount;
+    if(x.category === 'CAD Tools') totals.cad += x.amount;
+    if(x.pending) totals.pending++;
+    if(x.paid) totals.paid++;
+  });
+
+  if($('#payTotalPABM')) $('#payTotalPABM').textContent = totals.pabm.toFixed(2);
+  if($('#payTotalSoftware')) $('#payTotalSoftware').textContent = totals.software.toFixed(2);
+  if($('#payTotalCAD')) $('#payTotalCAD').textContent = totals.cad.toFixed(2);
+  if($('#payTotalAll')) $('#payTotalAll').textContent = totals.all.toFixed(2);
+  if($('#payPendingCount')) $('#payPendingCount').textContent = totals.pending;
+ 
+
+
+## Snippet: document.addEventListener('click'
+l || '').toLowerCase();
+        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  showDenied('Checking admin access...');
+
+  onAuthStateChanged(auth, async user => {
+    if(!user){
+      showDenied('Please login as admin first.');
+      return;
+    }
+
+    const ok = await isAdmin(user);
+    if(ok) showAdmin();
+    else showDenied('Access denied. Admin account required.');
+  });
+})();
+
+$('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
+$('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
+$('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+document.addEventListener('click', e=>{
+  const editBtn = e.target.closest('[data-edit-commission]');
+  if(editBtn) editCommissionRecord(editBtn.getAttribute('data-edit-commission'));
+  const delBtn = e.target.closest('[data-delete-commission]');
+  if(delBtn) deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));
+});
+
+</script>
+
+
+
+<style id="az-admin-static-button-style">
+.azAdminDashboardBtn.admin-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:18px!important;
+  line-height:1!important;
+}
+body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-admin-static-button-check">
+(function(){
+  if(window.__azAdminStaticButtonCheck) return;
+  window.__azAdminStaticButtonCheck = true;
+
+  function readUser(){
+    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj) return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function isAdmin(){
+    var u = readUser();
+    var role = String(u.role || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
+    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
+    return role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local';
+  }
+
+  function refreshAdminButton(){
+    if(!document.body) return;
+    document.body.classList.toggle('az-admin-safe-ok', isAdmin());
+  }
+
+  document.addEventListener('DOMContentLoaded', refreshAdminButton);
+  if(document.readyState !== 'loading') refreshAdminButton();
+  window.addEventListener('storage', refreshAdminButton);
+  window.addEventListener('focus', refreshAdminButton);
+  setTimeout(refreshAdminButton, 300);
+  setTimeout(refreshAdminButton, 
+
+
+## Snippet: data-tab
+<path d="M10 21h4"></path></svg>
+</a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- AZOBSS_REAL_MARKET_STICKYBAR_END -->
+
+
+<div id="loginCover" class="login-cover">
+  <div class="login-box">
+    <h2>🔐 AZOBSS Admin Dashboard</h2>
+    <p id="loginState">Checking admin access...</p>
+    <a class="btn green" href="/">Back to AZOBSS</a>
+  </div>
+</div>
+
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
+    <nav class="nav">
+      <button data-tab="overview" class="active">📊 Overview</button>
+      <button data-tab="users">👥 Users</button>
+      <button data-tab="online">🟢 Online Users</button>
+      <button data-tab="activity">📈 Activity</button>
+      <button data-tab="support">💬 Support Inbox</button>
+      <button data-tab="notifications">🔔 Notifications</button>
+      <button data-tab="purchases">💰 Purchase Records</button>
+      <button data-tab="payments">💳 Payments & Totals</button>
+      <button data-tab="commissions">💸 Commission Manager</button>
+      <button data-tab="lucky">🎁 Lucky Draw</button>
+      <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
+      <button data-tab="settings">⚙️ Settings</button>
+      <a class="home-link" href="/">🏠 Back Home</a>
+    </nav>
+    <div class="side-footer">Admin-only module. Loads are limited to reduce Firestore quota.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title">
+        <h1>Admin Dashboard</h1>
+        <p>Monitor users, activity, support, notifications and purchases in one clean place.</p>
+      </div>
+      <div class="admin-pill"><span id="adminAvatar">Z</span><span id="adminName">Admin</span></div>
+    </div>
+
+    <section id="overview" class="section active">
+
+<div class="card" id="ownerTrackingMigrationNote">
+  <h2>🔐 Owner Tracking Migration Note</h2>
+  <p class="tabs-note">
+    Item Software/CAD lama yang diimport sebelum sistem owner tracking mungkin tiada
+    <b>ownerKey / ownerUid / ownerUsername</b>. Item lama perlu admin edit & save semula
+    atau assign owner supaya My Software / My CAD Tools / Sales / Commission boleh tapis dengan tepat.
+  </p>
+</div>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">Total Users</div><div id="statUsers" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
+        <div class="card"><
+
+
+## Snippet: az-staff-role-firestore-badge-renderer
+t type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script>
+<script src="/assets/js/azobss-pro-ui.js"></script>
+
+<script id="az-real-market-stickybar-dashboard-cleanup">
+(function(){
+  function cleanHello(){
+    document.querySelectorAll('#signedInName,#userNameText,#userName,.user-name,.username,.user-menu-name,.profile-name,.az-user-name').forEach(function(el){
+      if(el && el.textContent) el.textContent = el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
+    });
+  }
+  document.addEventListener('DOMContentLoaded',cleanHello);
+  if(document.readyState!=='loading') cleanHello();
+  window.addEventListener('focus',cleanHello);
+  window.addEventListener('storage',cleanHello);
+  setTimeout(cleanHello,500);
+  setTimeout(cleanHello,1500);
+})();
+</script>
+
+
+
+<script id="az-staff-role-firestore-badge-renderer">
+(function(){
+  if(window.__azStaffRoleFirestoreBadgeRenderer)return;
+  window.__azStaffRoleFirestoreBadgeRenderer=true;
+
+  const PERMS=[
+    ['canManageSoftware','💻','Software'],
+    ['canManageCAD','📐','CAD'],
+    ['canViewPayments','💳','View Payments'],
+    ['canApprovePayment','✅','Approve Payment'],
+    ['canEditUsers','👥','Edit Users']
+  ];
+
+  function esc(v){
+    return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function roleLabel(role){
+    const r=String(role||'user').toLowerCase();
+    if(r==='admin')return 'Admin';
+    if(r==='semiadmin'||r==='semi-admin')return 'Semi Admin';
+    if(r==='staff')return 'Staff';
+    return 'User';
+  }
+
+  function badges(perms){
+    perms=perms||{};
+    return '<div class="staff-role-badges">'+PERMS.map(([key,icon,label])=>{
+      const on=perms[key]===true;
+      return `<span class="staff-role-badge ${on?'':'off'}">${icon} ${on?'✅':'❌'} ${label}</span>`;
+    }).join('')+'</div>';
+  }
+
+  function card(username,x){
+    const perms=x.permissions||{};
+    return `<div class="staff-role-card" data-staff-username="${esc(username)}">
+      <div class="staff-role-name">👤 ${esc(username)}</div>
+      <div class="staff-role-meta">Role: <b>${esc(roleLabel(x.role))}</b></div>
+      ${badges(perms)}
+      <div class="staff-role-actions">
+        <button class="staff-role-edit" data-staff-edit="${esc(username)}">✏️ Edit</button>
+        <button class="staff-role-reset" data-staff-reset="${esc(username)}">↩️ Reset User</button>
+      </div>
+    </div>`;
+  }
+
+  function getUsernameFromDoc(doc){
+    const x=doc.data ? doc.data() : doc;
+    return x.usernameKey||x.username||x.id||x.name||doc.id||'unknown';
+  }
+
+  async function renderFromFirestore(){
+    if(typeof db==='undefined'||typeof collection==='undefined'||typeof getDocs==='undefined')return false;
+    const box=document.querySelector('#staffRoleList,#latestStaffUsers,#staffUsersList,#staffRolesList') || findStaffBox();
+    if(!box)return false;
+    try{
+      const snap=await getDocs(collection(db,'users'));
+      const rows=[];
+      snap.forEach(d=>{
+        const x=d.d
+
+
+## Issues found
+- Renderer lama Staff Roles masih ada JSON.stringify/Permissions. Badge renderer ada, tapi cara paling bersih ialah patch loadStaffRoles asal.
+
+
+## Patch applied
+changed=True
+patched syntax errors=0
+[]

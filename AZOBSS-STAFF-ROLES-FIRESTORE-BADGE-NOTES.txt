@@ -1,0 +1,12 @@
+AZOBSS STAFF ROLES FIRESTORE BADGE PATCH
+
+Changed:
+- Replaced temporary JSON-looking display with Firestore badge renderer.
+- Reads users collection and renders staff/semiAdmin/admin cards.
+- Permissions shown as badges:
+  Software, CAD, View Payments, Approve Payment, Edit Users.
+- Manage Commission removed from staff/semiAdmin UI.
+- Added Edit and Reset User buttons.
+- Bigger responsive staff role cards.
+
+Syntax errors: 1

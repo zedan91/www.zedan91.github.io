@@ -1,0 +1,18 @@
+AZOBSS RESULT_CODE_HUNG FIX
+
+Fixed:
+- Removed admin icon MutationObserver / DOM-loop scripts.
+- Removed duplicate static admin icon buttons.
+- Added one safe no-loop admin icon script:
+  - creates exactly one #azAdminStrictIconLink after Mini Web Tools
+  - no MutationObserver
+  - limited retries only
+  - hides for guest/user
+  - shows for admin using azobssCurrentUser role/admin/id zedan91
+- Did not edit login/auth flow.
+
+Removed script/style counts:
+{'az-admin-icon-recheck-after-login-fix': 22, 'az-admin-icon-strict-check': 22, 'az-admin-icon-strict-style': 22}
+
+Syntax check on index/admin/PA-BM after patch:
+0 errors

@@ -1,0 +1,13 @@
+AZOBSS STAFF ICON HOME + REMOVE HELLO PATCH
+
+Fixed:
+- Staff dashboard icon 🧑‍💼 inserted into Home sticky bar too.
+- Staff icon visible for role admin / semiAdmin / staff.
+- Removed visible "Hello," prefix from username labels.
+- Added runtime cleanup for labels that scripts rewrite after login.
+
+Verify:
+{'index.html': {'staff_btn_count': 4, 'admin_btn_count': 4, 'hello_count': 0}, 'Software-Tools/index.html': {'staff_btn_count': 3, 'admin_btn_count': 3, 'hello_count': 0}, 'PA-BM/index.html': {'staff_btn_count': 4, 'admin_btn_count': 4, 'hello_count': 0}}
+
+Syntax errors:
+0

@@ -1,0 +1,45 @@
+AZOBSS BASELINE 3 FIX PATCH
+
+Baseline used:
+AZOBSS-ADMIN-DASHBOARD-V3-FORCE-ICON-FIX_20260603_210436_20260604_061812.zip
+
+Fixed only:
+1. mobile syntax error:
+   'mobile':'Software','Mobile & Accessories'
+   -> 'mobile':'Mobile & Accessories'
+
+2. Replaced getFirestoreMs( with firestoreMs(
+
+3. Tightened admin icon visibility:
+   - Removed loose detection based on body text like "zedan91" / "admin dashboard"
+   - Admin icon is hidden by default
+   - Shows only when saved user is admin:
+     role=admin OR username=zedan91 OR email=zedan91@azobss.local OR existing admin class
+
+Syntax check after patch:
+0 errors
+
+Files changed:
+index.html
+affiliate-shop/index.html
+CAD-Tools-&-Resources/index.html
+docs/autocad-lisp.html
+docs/index.html
+docs/pa-downloader.html
+docs/pc-services.html
+docs/php-backend.html
+likes/index.html
+lucky-draw/index.html
+PA-BM/index.html
+Software-Tools/index.html
+tools/BMI-Calculator.html
+tools/Currency-Converter.html
+tools/index.html
+tools/Internet-Speed-Converter.html
+tools/PC-Bottleneck-Checker.html
+tools/PSU-Calculator.html
+tools/RAM-Usage-Checker.html
+tools/SSD-Speed-Checker-guide.html
+tools/Windows-Command-Generator.html
+admin/index.html
+assets/js/azobss-global-auth.js
