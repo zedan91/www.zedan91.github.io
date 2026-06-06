@@ -106,7 +106,3 @@ exports.cleanupUnverifiedUsers = onSchedule(
     });
   }
 );
-
-
-
-

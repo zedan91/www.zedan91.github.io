@@ -1264,7 +1264,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`AZOBSS Lucky Draw Backend running on port ${PORT}`);
 });
-
-
-
-
