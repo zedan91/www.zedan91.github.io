@@ -183,7 +183,7 @@
       const bmJenis = row.jenis || (row.product === 'SBM' ? '2' : '1');
       const bmDownloadUrl = bmId ? buildBenchmarkDownloadUrl(bmId, bmJenis) : ''; // always use backend link
       const downloadButton = bmDownloadUrl
-        ? `<a class="small-action-btn blue bm-download-btn bm-record-download" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl: bmDownloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" download="${esc(benchmarkDownloadFilename(row))}" style="text-decoration:none;display:inline-block;padding:6px 10px;font-size:12px;white-space:nowrap;" href="${esc(bmDownloadUrl)}">⬇ Download</a>`
+        ? `<a class="small-action-btn blue bm-download-btn bm-record-download" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl: bmDownloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" download="${esc(benchmarkDownloadFilename(row))}" style="text-decoration:none;display:inline-block;padding:6px 10px;font-size:12px;white-space:normal;" href="${esc(bmDownloadUrl)}">⬇ Download</a>`
         : '<span style="color:#94a3b8;">-</span>';
       return `
         <tr>

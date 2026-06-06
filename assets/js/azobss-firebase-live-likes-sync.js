@@ -203,7 +203,7 @@ function addStyle() {
 .auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
 .auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
 .phone-input-row{display:grid;grid-template-columns:minmax(118px,auto) 1fr;gap:8px;align-items:center;}
-.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:normal;}
 .country-code-button::after{content:'⌄';margin-left:7px;font-size:13px;color:#cbd5e1;}
 .country-combo{position:relative;}
 .country-code-menu{position:absolute;left:0;top:calc(100% + 8px);width:260px;max-width:calc(100vw - 44px);padding:8px;border:1px solid rgba(211,223,240,.32);border-radius:12px;background:#081326;box-shadow:0 18px 45px rgba(0,0,0,.45);display:none;z-index:10020;}
@@ -4000,7 +4000,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       .az-like-card-title{font-weight:950;color:#fff;font-size:16px;}
       .az-like-card-meta{font-size:12px;color:#93c5fd;font-weight:800;margin-top:6px;}
       .az-like-card-url{font-size:12px;color:#86efac;word-break:break-all;margin-top:8px;}
-      .az-like-unlike-btn{border:0;border-radius:999px;background:#ef4444;color:#fff;font-weight:950;padding:9px 14px;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,.22);white-space:nowrap;}
+      .az-like-unlike-btn{border:0;border-radius:999px;background:#ef4444;color:#fff;font-weight:950;padding:9px 14px;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,.22);white-space:normal;}
       .az-like-unlike-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
       .az-like-unlike-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
       .az-like-empty{border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:18px;color:#cbd5e1;}
