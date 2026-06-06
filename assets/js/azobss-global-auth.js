@@ -210,7 +210,7 @@ function addStyle() {
 .auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
 .auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
 .phone-input-row{display:grid;grid-template-columns:minmax(118px,auto) 1fr;gap:8px;align-items:center;}
-.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:normal;}
+.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:nowrap;}
 .country-code-button::after{content:'⌄';margin-left:7px;font-size:13px;color:#cbd5e1;}
 .country-combo{position:relative;}
 .country-code-menu{position:absolute;left:0;top:calc(100% + 8px);width:260px;max-width:calc(100vw - 44px);padding:8px;border:1px solid rgba(211,223,240,.32);border-radius:12px;background:#081326;box-shadow:0 18px 45px rgba(0,0,0,.45);display:none;z-index:10020;}
@@ -1166,27 +1166,7 @@ function isFalseyPaBmValue(value){
   const text = String(value ?? '').trim().toLowerCase();
   return ['false','no','n','0','off','disabled','disable','hide'].includes(text);
 }
-function hasAdminPaBmOverride(user){
-  const u = user || {};
-  return u.adminPaBmOverride === true || String(u.paBmManagedBy || '').toLowerCase() === 'admin';
-}
-function getAdminPaBmAllowed(user){
-  const u = user || {};
-  if(!hasAdminPaBmOverride(u)) return null;
-  const keys = [
-    'adminPaBmAllowed','paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
-    'allowPaBmTab','paBmTabAllowed','paBmTab','showPaBmTab','canAccessPaBm',
-    'paAccess','pa_bm_access','pa_bm_allowed','allow_pa_bm'
-  ];
-  for(const key of keys){
-    if(isTruthyPaBmValue(u[key])) return true;
-    if(isFalseyPaBmValue(u[key])) return false;
-  }
-  return false;
-}
 function getPaBmFlagAllowed(user){
-  const adminAllowed = getAdminPaBmAllowed(user);
-  if(adminAllowed !== null) return adminAllowed === true;
   const u = user || {};
   const keys = [
     'paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
@@ -1221,15 +1201,6 @@ function getPaBmPayloadFromCode(code){
   return buildPaBmAccessPayload(allowed, normalizedCode);
 }
 function mergePaBmAccessPreserve(existing={}, incomingCode=''){
-  const adminAllowed = getAdminPaBmAllowed(existing);
-  if(adminAllowed !== null){
-    return {
-      ...buildPaBmAccessPayload(adminAllowed, adminAllowed ? (incomingCode || existing.inviteCode || existing.memberCode || AZOBSS_PA_MEMBER_CODE) : ''),
-      adminPaBmOverride: true,
-      adminPaBmAllowed: adminAllowed,
-      paBmManagedBy: 'admin'
-    };
-  }
   const code = normalizePaMemberCode(
     incomingCode || existing.inviteCode || existing.inviteCodeUsed || existing.invitedByCode ||
     existing.memberCode || existing.paMemberCode || existing.accessCode || existing.signupCode || ''
@@ -1256,8 +1227,6 @@ function getPaMemberCodes(user){
 function hasPaBmTabAccess(user){
   if (!user) return false;
   if (isAzobssAdmin(user)) return true;
-  const adminAllowed = getAdminPaBmAllowed(user);
-  if(adminAllowed !== null) return adminAllowed === true;
   if (getPaBmFlagAllowed(user)) return true;
   return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
@@ -1526,8 +1495,8 @@ function mergeDuplicateUserRecords(existing, incoming){
     if(u?.email || u?.authEmail) s += 3;
     return s;
   };
-  const existingMs = firestoreMs(existing.updatedAt || existing.createdAt || existing.createdAtClient || existing.updatedAtClient);
-  const incomingMs = firestoreMs(incoming.updatedAt || incoming.createdAt || incoming.createdAtClient || incoming.updatedAtClient);
+  const existingMs = getFirestoreMs(existing.updatedAt || existing.createdAt || existing.createdAtClient || existing.updatedAtClient);
+  const incomingMs = getFirestoreMs(incoming.updatedAt || incoming.createdAt || incoming.createdAtClient || incoming.updatedAtClient);
   const base = incomingMs >= existingMs ? { ...existing, ...incoming } : { ...incoming, ...existing };
   const preferred = pickScore(incoming) >= pickScore(existing) ? incoming : existing;
   base.id = normalizeUsername(preferred.id || preferred.usernameKey || preferred.username || preferred.name || base.id || '');
@@ -1598,32 +1567,18 @@ async function saveAdminUserEdit(){
     phoneNumber: adminFinalPhone,
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
     role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
-    inviteCode: code,
-    inviteCodeUsed: code,
     invitedByCode: code,
     memberCode: code,
     paMemberCode: code,
-    accessCode: code,
-    signupCode: code,
-    member_code: code,
-    referralCode: code,
-    adminPaBmOverride: true,
-    adminPaBmAllowed: allowPaAccess,
-    paBmManagedBy: 'admin',
     paBmAccess: allowPaAccess,
     paBmAllowed: allowPaAccess,
     allowPABM: allowPaAccess,
     allowPaBm: allowPaAccess,
-    allowPabm: allowPaAccess,
     allowPaBmTab: allowPaAccess,
     paBmTabAllowed: allowPaAccess,
-    paBmTab: allowPaAccess,
     showPaBmTab: allowPaAccess,
     canAccessPaBm: allowPaAccess,
     paAccess: allowPaAccess ? 'yes' : 'no',
-    pa_bm_access: allowPaAccess ? 'yes' : 'no',
-    pa_bm_allowed: allowPaAccess,
-    allow_pa_bm: allowPaAccess,
     updatedAt: serverTimestamp(),
     updatedAtClient: new Date().toISOString(),
     updatedByAdmin: getSavedUser()?.usernameKey || 'admin'
@@ -1879,8 +1834,6 @@ function registeredUserHasPaAccess(user){
   if(!user) return false;
   const role = String(user.role || 'member').toLowerCase();
   if(role === 'admin') return true;
-  const adminAllowed = getAdminPaBmAllowed(user);
-  if(adminAllowed !== null) return adminAllowed === true;
   if(getPaBmFlagAllowed(user)) return true;
   return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }

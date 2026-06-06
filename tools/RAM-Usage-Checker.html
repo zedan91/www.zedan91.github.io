@@ -88,12 +88,12 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 </style>
 
 <style id="azobss-pro-navbar-icons-css">
-.market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:normal;}
+.market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:nowrap;}
 .user-upgrade-btn{border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.14);color:#22c55e;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;}
 .market-icon-btn{display:inline-grid;place-items:center;width:28px;height:34px;color:#f8fafc;text-decoration:none;border:0;background:transparent;}
 .market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .market-icon-btn:hover{color:#22c55e;}
-@media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:visible;text-overflow:ellipsis}}
+@media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:hidden;text-overflow:ellipsis}}
 </style>
 
 <style id="azobss-pro-navbar-consistency-v1">
@@ -458,12 +458,12 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .az-shop-cart-close{border:0;background:rgba(255,255,255,.08);color:#fff;width:34px;height:34px;border-radius:10px;font-size:22px;cursor:pointer;}
 .az-shop-cart-empty{color:#cbd5e1;padding:14px;border:1px dashed rgba(148,163,184,.35);border-radius:12px;text-align:center;}
 .az-shop-cart-item{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(148,163,184,.25);}
-.az-shop-cart-thumb{width:54px;height:54px;border-radius:10px;background:#fff;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#0f172a;font-weight:900;overflow:visible;}
+.az-shop-cart-thumb{width:54px;height:54px;border-radius:10px;background:#fff;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#0f172a;font-weight:900;overflow:hidden;}
 .az-shop-cart-title{font-weight:900;line-height:1.2;margin-bottom:3px;}
 .az-shop-cart-meta{font-size:12px;color:#94a3b8;}
 .az-shop-cart-price{font-size:13px;color:#4ade80;font-weight:900;margin-top:4px;}
 .az-shop-cart-actions{display:flex;align-items:center;gap:6px;}
-.az-shop-cart-qty{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.35);border-radius:9px;overflow:visible;height:32px;}
+.az-shop-cart-qty{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.35);border-radius:9px;overflow:hidden;height:32px;}
 .az-shop-cart-qty button,.az-shop-cart-remove{border:0;background:rgba(255,255,255,.08);color:#fff;height:32px;min-width:30px;cursor:pointer;font-weight:900;}
 .az-shop-cart-qty span{min-width:28px;text-align:center;font-weight:800;}
 .az-shop-cart-remove{border-radius:9px;color:#fecaca;font-size:16px;}
@@ -647,196 +647,6 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 }
 </style>
 
-
-
-
-<style id="az-admin-static-button-style">
-.azAdminDashboardBtn.admin-dashboard-btn{
-  display:none!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:42px!important;
-  height:42px!important;
-  min-width:42px!important;
-  padding:0!important;
-  border-radius:999px!important;
-  font-size:18px!important;
-  line-height:1!important;
-}
-body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
-  display:inline-flex!important;
-}
-</style>
-<script id="az-admin-static-button-check">
-(function(){
-  if(window.__azAdminStaticButtonCheck) return;
-  window.__azAdminStaticButtonCheck = true;
-
-  function readUser(){
-    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
-        if(raw){
-          var obj = JSON.parse(raw);
-          if(obj) return obj;
-        }
-      }catch(e){}
-    }
-    return {};
-  }
-
-  function isAdmin(){
-    var u = readUser();
-    var role = String(u.role || '').toLowerCase();
-    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
-    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
-    return role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local';
-  }
-
-  function refreshAdminButton(){
-    if(!document.body) return;
-    document.body.classList.toggle('az-admin-safe-ok', isAdmin());
-  }
-
-  document.addEventListener('DOMContentLoaded', refreshAdminButton);
-  if(document.readyState !== 'loading') refreshAdminButton();
-  window.addEventListener('storage', refreshAdminButton);
-  window.addEventListener('focus', refreshAdminButton);
-  setTimeout(refreshAdminButton, 300);
-  setTimeout(refreshAdminButton, 1000);
-  setTimeout(refreshAdminButton, 2500);
-})();
-</script>
-
-
-
-<style id="az-staff-dashboard-button-style">
-.azStaffDashboardBtn.staff-dashboard-btn{
-  display:none!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:42px!important;
-  height:42px!important;
-  min-width:42px!important;
-  padding:0!important;
-  border-radius:999px!important;
-  font-size:17px!important;
-  line-height:1!important;
-}
-body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
-  display:inline-flex!important;
-}
-</style>
-<script id="az-staff-dashboard-button-check">
-(function(){
-  if(window.__azStaffDashboardButtonCheck)return;
-  window.__azStaffDashboardButtonCheck=true;
-
-  function readUser(){
-    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
-        if(raw){
-          var obj=JSON.parse(raw);
-          if(obj)return obj;
-        }
-      }catch(e){}
-    }
-    return {};
-  }
-
-  function ok(){
-    var u=readUser();
-    var role=String(u.role||'').toLowerCase();
-    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
-    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
-    return role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91'||email==='zedan91@azobss.local';
-  }
-
-  function refresh(){
-    if(document.body) document.body.classList.toggle('az-staff-safe-ok',ok());
-  }
-
-  document.addEventListener('DOMContentLoaded',refresh);
-  if(document.readyState!=='loading')refresh();
-  window.addEventListener('storage',refresh);
-  window.addEventListener('focus',refresh);
-  setTimeout(refresh,400);
-  setTimeout(refresh,1200);
-  setTimeout(refresh,2500);
-})();
-</script>
-
-
-<style id="az-role-dashboard-buttons-visibility-fix">
-.azAdminDashboardBtn.admin-dashboard-btn,
-.azAdminDashboardBtn{
-  display:none!important;
-}
-.azStaffDashboardBtn.staff-dashboard-btn,
-.azStaffDashboardBtn{
-  display:none!important;
-}
-body.az-role-is-admin .azAdminDashboardBtn.admin-dashboard-btn,
-body.az-role-is-admin .azAdminDashboardBtn{
-  display:inline-flex!important;
-}
-body.az-role-is-admin .azStaffDashboardBtn.staff-dashboard-btn,
-body.az-role-is-admin .azStaffDashboardBtn,
-body.az-role-is-stafflike .azStaffDashboardBtn.staff-dashboard-btn,
-body.az-role-is-stafflike .azStaffDashboardBtn{
-  display:inline-flex!important;
-}
-</style>
-
-
-<style id="azobss-youtube-style-page-scrollbar-v1">
-/* AZOBSS YouTube/Facebook-style page scrollbar: stable width, no layout shrink/jump */
-html{
-  overflow-y:scroll!important;
-  scrollbar-gutter:stable!important;
-  scrollbar-width:thin!important;
-  scrollbar-color:rgba(148,163,184,.62) rgba(15,23,42,.18)!important;
-}
-body{
-  overflow-x:hidden!important;
-}
-html::-webkit-scrollbar,
-body::-webkit-scrollbar{
-  width:12px!important;
-  height:12px!important;
-}
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track{
-  background:rgba(15,23,42,.18)!important;
-}
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb{
-  background:rgba(148,163,184,.62)!important;
-  border-radius:999px!important;
-  border:3px solid rgba(15,23,42,.18)!important;
-  background-clip:padding-box!important;
-}
-html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover{
-  background:rgba(203,213,225,.82)!important;
-  border:2px solid rgba(15,23,42,.18)!important;
-}
-html::-webkit-scrollbar-corner,
-body::-webkit-scrollbar-corner{
-  background:transparent!important;
-}
-/* Keep horizontal chip menus clean like YouTube; only page scrollbar is visible */
-.market-nav,.azobss-nav-scroll,.social-strip,.social-bar,.social-links,.footer-social,.social-icons{
-  -ms-overflow-style:none!important;
-  scrollbar-width:none!important;
-}
-.market-nav::-webkit-scrollbar,.azobss-nav-scroll::-webkit-scrollbar,.social-strip::-webkit-scrollbar,.social-bar::-webkit-scrollbar,.social-links::-webkit-scrollbar,.footer-social::-webkit-scrollbar,.social-icons::-webkit-scrollbar{
-  display:none!important;
-}
-</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -852,7 +662,8 @@ body::-webkit-scrollbar-corner{
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a  href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a></nav>
+<a  href="/tools/">Mini Web Tools</a>
+</nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
@@ -860,7 +671,7 @@ body::-webkit-scrollbar-corner{
 <div class="market-user-tools" id="marketUserTools">
 <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
 <div class="user-avatar" id="userAvatar">AZ</div>
-<div class="user-name"><span id="signedInName"></span></div>
+<div class="user-name">Hello, <span id="signedInName"></span></div>
 <button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
@@ -1279,7 +1090,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
       const rows=[];
       snap.forEach(d=>{
         const x=d.data();
-        rows.push(`<div class="azobss-lite-item" data-support-id="${d.id}" data-support-uid="${esc(x.uid||'')}"><strong>${esc(x.subject||'Support Request')}</strong><div>${esc(x.message||'')}</div>${x.reply?`<div class="azobss-lite-reply"><b>Admin Reply:</b><br>${esc(x.reply)}</div>`:''}<div class="azobss-lite-meta">${esc(x.status||'open')} • ${esc(x.email||'')}</div>${adminNow()?`<div class="azobss-lite-row" style="margin-top:8px"><input class="azobss-lite-input" id="reply_${d.id}" placeholder="Reply..." style="margin:0;flex:1"><button class="azobss-lite-btn secondary" data-reply-id="${d.id}" type="button">Reply</button></div>`:''}</div>`);
+        rows.push(`<div class="azobss-lite-item"><strong>${esc(x.subject||'Support Request')}</strong><div>${esc(x.message||'')}</div>${x.reply?`<div class="azobss-lite-reply"><b>Admin Reply:</b><br>${esc(x.reply)}</div>`:''}<div class="azobss-lite-meta">${esc(x.status||'open')} • ${esc(x.email||'')}</div>${adminNow()?`<div class="azobss-lite-row" style="margin-top:8px"><input class="azobss-lite-input" id="reply_${d.id}" placeholder="Reply..." style="margin:0;flex:1"><button class="azobss-lite-btn secondary" data-reply-id="${d.id}" type="button">Reply</button></div>`:''}</div>`);
       });
       box.innerHTML=rows.join('')||'<div class="azobss-lite-item">No support messages.</div>';
       box.querySelectorAll('[data-reply-id]').forEach(btn=>btn.addEventListener('click',async()=>{
@@ -1850,264 +1661,6 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   });
 
   window.azobssCloseTopbarPanels=function(){closeBell();closeChat();closeCart();};
-})();
-</script>
-
-
-
-<script type="module" id="azobss-support-delete-message-user-admin-final">
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-
-(function(){
-  if(window.__azSupportDeleteMessageUserAdminFinal) return;
-  window.__azSupportDeleteMessageUserAdminFinal = true;
-
-  const firebaseConfig = {
-    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
-    authDomain:'azobss.firebaseapp.com',
-    projectId:'azobss',
-    storageBucket:'azobss.firebasestorage.app',
-    messagingSenderId:'159277716405',
-    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
-  };
-
-  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  function isAdmin(){
-    return document.body.classList.contains('azobss-support-admin')
-      || String(auth.currentUser?.email||'').toLowerCase()==='zedan91@azobss.local'
-      || (document.body.innerText||'').toLowerCase().includes('hello, zedan91');
-  }
-
-  function canDeleteItem(item){
-    if(isAdmin()) return true;
-    const uid = String(auth.currentUser?.uid || '');
-    const owner = String(item?.dataset?.supportUid || '');
-    return !!uid && !!owner && uid === owner;
-  }
-
-  function toast(msg){
-    if(window.azShowToast) window.azShowToast(msg);
-    else if(window.showToast) window.showToast(msg);
-    else alert(msg);
-  }
-
-  function addDeleteButtons(){
-    const uid = String(auth.currentUser?.uid || '');
-    if(!uid && !isAdmin()) return;
-
-    document.querySelectorAll('#azSupportList .azobss-lite-item').forEach(item=>{
-      if(item.querySelector('.az-support-delete-one')) return;
-
-      const id = item.dataset.supportId || item.querySelector('[data-reply-id]')?.dataset?.replyId;
-      if(!id) return;
-      if(!canDeleteItem(item)) return;
-
-      item.style.position = 'relative';
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'az-support-delete-one';
-      btn.dataset.supportDeleteId = id;
-      btn.innerHTML = '×';
-      btn.title = 'Delete message';
-      btn.setAttribute('aria-label','Delete message');
-      btn.style.cssText = 'position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:999px;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.16);color:#fecaca;font-size:18px;font-weight:900;line-height:22px;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center;';
-
-      btn.addEventListener('click', async function(e){
-        e.preventDefault();
-        e.stopPropagation();
-
-        if(!canDeleteItem(item)){
-          alert('You can only delete your own support message.');
-          return;
-        }
-
-        const ok = confirm('Delete this support message?');
-        if(!ok) return;
-
-        try{
-          await deleteDoc(doc(db,'supportMessages',id));
-          item.remove();
-          toast('Support message deleted.');
-          if(typeof window.azobssLoadSupportMessages === 'function'){
-            setTimeout(window.azobssLoadSupportMessages, 300);
-          }
-          if(typeof window.azUpdateChatBadge === 'function'){
-            setTimeout(window.azUpdateChatBadge, 600);
-          }
-        }catch(err){
-          console.error('AZOBSS delete support message failed:', err);
-          alert('Delete failed: ' + (err.message || err.code || err));
-        }
-      });
-
-      item.appendChild(btn);
-    });
-  }
-
-  const mo = new MutationObserver(addDeleteButtons);
-  document.addEventListener('DOMContentLoaded',()=>{
-    addDeleteButtons();
-    const list=document.getElementById('azSupportList');
-    if(list) mo.observe(list,{childList:true,subtree:true});
-  });
-  if(document.readyState !== 'loading'){
-    addDeleteButtons();
-    const list=document.getElementById('azSupportList');
-    if(list) mo.observe(list,{childList:true,subtree:true});
-  }
-
-  setInterval(addDeleteButtons, 1200);
-})();
-</script>
-
-
-<script id="azobss-affiliate-admin-software-category-runtime">
-(function(){
-  if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
-  window.__azAffiliateAdminSoftwareCategoryRuntime=true;
-
-  function isCategorySelect(sel){
-    if(!sel || sel.tagName!=='SELECT') return false;
-    const text=(sel.textContent||'').toLowerCase();
-    const id=((sel.id||'')+' '+(sel.name||'')+' '+(sel.className||'')).toLowerCase();
-    return id.includes('category') || text.includes('mobile & accessories') || text.includes('computer & accessories');
-  }
-
-  function addSoftwareOption(sel){
-    if(!isCategorySelect(sel)) return;
-    const has=[...sel.options].some(o=>(o.textContent||'').trim().toLowerCase()==='software' || String(o.value||'').toLowerCase()==='software');
-    if(has) return;
-
-    const opt=document.createElement('option');
-    opt.value='software';
-    opt.textContent='Software';
-
-    const mobile=[...sel.options].find(o=>(o.textContent||'').trim().toLowerCase()==='mobile & accessories');
-    if(mobile) sel.insertBefore(opt,mobile);
-    else sel.insertBefore(opt,sel.firstChild);
-  }
-
-  function run(){
-    document.querySelectorAll('select').forEach(addSoftwareOption);
-  }
-
-  document.addEventListener('DOMContentLoaded',run);
-  if(document.readyState!=='loading') run();
-  [300,800,1500,3000].forEach(t=>setTimeout(run,t));
-  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-
-
-
-
-
-
-
-<script id="az-remove-hello-label-fix">
-(function(){
-  if(window.__azRemoveHelloLabelFix)return;
-  window.__azRemoveHelloLabelFix=true;
-
-  function cleanHelloText(){
-    var selectors=[
-      '#userNameText','#userName','.user-name','.username','.user-menu-name',
-      '.profile-name','.profile-label','.az-user-name','.azobss-user-name'
-    ];
-    document.querySelectorAll(selectors.join(',')).forEach(function(el){
-      if(!el || !el.textContent) return;
-      var t=el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
-      if(t && t!==el.textContent.trim()) el.textContent=t;
-    });
-
-    document.querySelectorAll('span,div,a,button,strong,b').forEach(function(el){
-      if(!el || !el.childNodes || el.childNodes.length!==1) return;
-      var txt=el.textContent||'';
-      if(/^\s*hello\s*,\s*[\w.@+-]+\s*$/i.test(txt)){
-        el.textContent=txt.replace(/^\s*hello\s*,?\s*/i,'').trim();
-      }
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',cleanHelloText);
-  if(document.readyState!=='loading')cleanHelloText();
-  window.addEventListener('storage',cleanHelloText);
-  window.addEventListener('focus',cleanHelloText);
-  setTimeout(cleanHelloText,500);
-  setTimeout(cleanHelloText,1500);
-  setTimeout(cleanHelloText,3000);
-})();
-</script>
-
-
-<script id="az-role-dashboard-buttons-visibility-fix">
-(function(){
-  if(window.__azRoleDashboardButtonsVisibilityFix)return;
-  window.__azRoleDashboardButtonsVisibilityFix=true;
-
-  function readUser(){
-    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
-    for(var s=0;s<2;s++){
-      var store=s===0?sessionStorage:localStorage;
-      for(var i=0;i<keys.length;i++){
-        try{
-          var raw=store.getItem(keys[i]);
-          if(raw){
-            var obj=JSON.parse(raw);
-            if(obj && typeof obj==='object') return obj;
-          }
-        }catch(e){}
-      }
-    }
-    return {};
-  }
-
-  function roleInfo(){
-    var u=readUser();
-    var role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase();
-    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
-    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
-
-    var isAdmin = role==='admin' || username==='zedan91' || email==='zedan91@azobss.local' || email==='zedan9107@gmail.com';
-    var isStaffLike = !isAdmin && (role==='semiadmin' || role==='semi-admin' || role==='staff');
-
-    return {isAdmin:isAdmin,isStaffLike:isStaffLike};
-  }
-
-  function apply(){
-    var r=roleInfo();
-    if(document.body){
-      document.body.classList.toggle('az-role-is-admin', !!r.isAdmin);
-      document.body.classList.toggle('az-role-is-stafflike', !!r.isStaffLike);
-    }
-
-    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn').forEach(function(btn){
-      btn.hidden = !r.isAdmin;
-      btn.style.display = r.isAdmin ? 'inline-flex' : 'none';
-      btn.setAttribute('aria-hidden', r.isAdmin ? 'false' : 'true');
-    });
-
-    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn').forEach(function(btn){
-      var show = r.isAdmin || r.isStaffLike;
-      btn.hidden = !show;
-      btn.style.display = show ? 'inline-flex' : 'none';
-      btn.setAttribute('aria-hidden', show ? 'false' : 'true');
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',apply);
-  if(document.readyState!=='loading')apply();
-  window.addEventListener('focus',apply);
-  window.addEventListener('storage',apply);
-  setTimeout(apply,400);
-  setTimeout(apply,1200);
-  setTimeout(apply,3000);
 })();
 </script>
 
