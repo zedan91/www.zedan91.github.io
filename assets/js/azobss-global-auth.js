@@ -424,6 +424,30 @@ window.__AZOBSS_MAIN_AUTH_HANDLER_ACTIVE__ = true;
 function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
 function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
 
+/* AZOBSS FIX: Never create duplicate username from email prefix when an existing profile owns the email. */
+async function findExistingUsernameByEmail(email){
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  if(!normalizedEmail || typeof getDocs !== 'function' || typeof collection !== 'function' || typeof query !== 'function' || typeof where !== 'function') return '';
+  try{
+    const qs = await getDocs(query(collection(db, 'users'), where('email', '==', normalizedEmail)));
+    if(!qs.empty){
+      const d = qs.docs[0];
+      const data = d.data() || {};
+      return normalizeUsername(data.usernameKey || data.username || data.name || d.id || '');
+    }
+  }catch(e){ console.warn('AZOBSS email owner lookup skipped:', e); }
+  try{
+    const qs = await getDocs(query(collection(db, 'users'), where('authEmail', '==', normalizedEmail)));
+    if(!qs.empty){
+      const d = qs.docs[0];
+      const data = d.data() || {};
+      return normalizeUsername(data.usernameKey || data.username || data.name || d.id || '');
+    }
+  }catch(e){ console.warn('AZOBSS authEmail owner lookup skipped:', e); }
+  return '';
+}
+
+
 function renderAzobssRecaptchaWidgets(){
   const api = window.grecaptcha;
   if(!api || typeof api.render !== 'function') return;
