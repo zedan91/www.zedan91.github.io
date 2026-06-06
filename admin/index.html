@@ -1152,6 +1152,22 @@ display:none !important;
   </main>
 </div>
 
+
+<script id="azobss-admin-online-count-source-fix">
+(function(){
+  if(window.__azAdminOnlineCountSourceFix) return;
+  window.__azAdminOnlineCountSourceFix = true;
+  window.azAdminRealOnlineCount = 0;
+  window.azSetRealOnlineCount = function(n){
+    n = Number(n || 0);
+    if(!Number.isFinite(n) || n < 0) n = 0;
+    window.azAdminRealOnlineCount = n;
+    var el = document.getElementById('statOnline');
+    if(el) el.textContent = String(n);
+  };
+})();
+</script>
+
 <script type="module">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
@@ -1213,7 +1229,7 @@ async function loadOverview(){
   const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
 
   $('#statUsers').textContent=users?.size??0;
-  $('#statOnline').textContent=online?.size??0;
+  $('#statOnline').textContent=String(window.azAdminRealOnlineCount || 0);
   $('#statLogins').textContent=logins?.size??0;
   $('#statVisits').textContent=guests?.size??0;
   let openSupportCount=0;
@@ -1232,6 +1248,9 @@ async function loadOverview(){
   const activityRows=[];
   logins?.forEach(d=>{if(activityRows.length<5){const x=d.data();activityRows.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))}});
   $('#overviewActivity').innerHTML=activityRows.join('')||'<div class="item">No activity.</div>';
+
+  try{ if(window.azSetRealOnlineCount) window.azSetRealOnlineCount(window.azAdminRealOnlineCount || 0); }catch(e){}
+
 }
 
 async function loadUsers(){ return; }
@@ -1611,6 +1630,23 @@ async function loadOnlineUsers(){
     </div>
     <div class="az-admin-mini-time">${esc(azAdminOnlineSeenText(x))}</div>
   </div>`).join('')||'<div class="az-admin-mini-record"><div class="az-admin-mini-main"><div class="az-admin-mini-title">No users online now.</div><div class="az-admin-mini-sub">Mengikut logic PA/BM + anti stale.</div></div></div>';
+
+  try{
+    const renderedRows = Array.from((box && box.children) || []);
+    const onlineKeys = new Set();
+    renderedRows.forEach(row=>{
+      const t = String(row.textContent || '').trim();
+      if(!t || /no users|no online/i.test(t)) return;
+      if(/\bguest\b/i.test(t)) return;
+      if(!/\bonline\b/i.test(t) && !/status:\s*online/i.test(t)) return;
+      const strong = row.querySelector('strong');
+      const email = t.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+      const key = String((strong && strong.textContent) || (email && email[0]) || t).trim().toLowerCase();
+      if(key && key !== 'guest') onlineKeys.add(key);
+    });
+    if(window.azSetRealOnlineCount) window.azSetRealOnlineCount(onlineKeys.size);
+  }catch(e){}
+
 }
 function loadOnline(){return loadOnlineUsers();}
 
@@ -2226,5 +2262,6 @@ onAuthStateChanged(auth,async user=>{
 
 
 <script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>
+
 </body>
 </html>
