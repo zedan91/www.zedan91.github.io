@@ -2245,6 +2245,7 @@ onAuthStateChanged(auth,async user=>{
     var count = getOnlineCountFromOnlineTab();
 
     [
+      '#statOnline',
       '#overviewOnlineUsers',
       '#onlineUsersCount',
       '#onlineUsersTotal',
@@ -2290,6 +2291,53 @@ onAuthStateChanged(auth,async user=>{
       }).observe(target, {childList:true, subtree:true, characterData:true});
     }catch(e){}
     updateOverviewOnlineCount();
+  });
+})();
+</script>
+
+
+<script id="azobss-stat-online-id-final-fix">
+(function(){
+  if(window.__azobssStatOnlineIdFinalFix) return;
+  window.__azobssStatOnlineIdFinalFix = true;
+
+  function getText(el){ return String(el && el.textContent || '').trim(); }
+
+  function countOnlineUsers(){
+    var list = document.getElementById('onlineUsersList') ||
+               document.getElementById('liveUsersList') ||
+               document.querySelector('.live-user-list');
+    if(!list) return 0;
+
+    var keys = new Set();
+    Array.from(list.children || []).forEach(function(row){
+      var t = getText(row);
+      if(!t || /guest/i.test(t) || /no users|no online/i.test(t)) return;
+      if(!/online/i.test(t)) return;
+      var strong = row.querySelector('strong');
+      var email = t.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+      var key = String((strong && strong.textContent) || (email && email[0]) || t).trim().toLowerCase();
+      if(key && key !== 'guest') keys.add(key);
+    });
+    return keys.size;
+  }
+
+  function syncStatOnline(){
+    var el = document.getElementById('statOnline');
+    if(!el) return;
+    el.textContent = String(countOnlineUsers());
+  }
+
+  document.addEventListener('DOMContentLoaded', syncStatOnline);
+  window.addEventListener('load', syncStatOnline);
+  setInterval(syncStatOnline, 3000);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var target = document.getElementById('onlineUsersList') || document.getElementById('liveUsersList');
+    if(!target) return;
+    try{
+      new MutationObserver(syncStatOnline).observe(target, {childList:true, subtree:true, characterData:true});
+    }catch(e){}
   });
 })();
 </script>
