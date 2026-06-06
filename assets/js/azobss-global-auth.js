@@ -1166,7 +1166,27 @@ function isFalseyPaBmValue(value){
   const text = String(value ?? '').trim().toLowerCase();
   return ['false','no','n','0','off','disabled','disable','hide'].includes(text);
 }
+function hasAdminPaBmOverride(user){
+  const u = user || {};
+  return u.adminPaBmOverride === true || String(u.paBmManagedBy || '').toLowerCase() === 'admin';
+}
+function getAdminPaBmAllowed(user){
+  const u = user || {};
+  if(!hasAdminPaBmOverride(u)) return null;
+  const keys = [
+    'adminPaBmAllowed','paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
+    'allowPaBmTab','paBmTabAllowed','paBmTab','showPaBmTab','canAccessPaBm',
+    'paAccess','pa_bm_access','pa_bm_allowed','allow_pa_bm'
+  ];
+  for(const key of keys){
+    if(isTruthyPaBmValue(u[key])) return true;
+    if(isFalseyPaBmValue(u[key])) return false;
+  }
+  return false;
+}
 function getPaBmFlagAllowed(user){
+  const adminAllowed = getAdminPaBmAllowed(user);
+  if(adminAllowed !== null) return adminAllowed === true;
   const u = user || {};
   const keys = [
     'paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
@@ -1201,6 +1221,15 @@ function getPaBmPayloadFromCode(code){
   return buildPaBmAccessPayload(allowed, normalizedCode);
 }
 function mergePaBmAccessPreserve(existing={}, incomingCode=''){
+  const adminAllowed = getAdminPaBmAllowed(existing);
+  if(adminAllowed !== null){
+    return {
+      ...buildPaBmAccessPayload(adminAllowed, adminAllowed ? (incomingCode || existing.inviteCode || existing.memberCode || AZOBSS_PA_MEMBER_CODE) : ''),
+      adminPaBmOverride: true,
+      adminPaBmAllowed: adminAllowed,
+      paBmManagedBy: 'admin'
+    };
+  }
   const code = normalizePaMemberCode(
     incomingCode || existing.inviteCode || existing.inviteCodeUsed || existing.invitedByCode ||
     existing.memberCode || existing.paMemberCode || existing.accessCode || existing.signupCode || ''
@@ -1227,6 +1256,8 @@ function getPaMemberCodes(user){
 function hasPaBmTabAccess(user){
   if (!user) return false;
   if (isAzobssAdmin(user)) return true;
+  const adminAllowed = getAdminPaBmAllowed(user);
+  if(adminAllowed !== null) return adminAllowed === true;
   if (getPaBmFlagAllowed(user)) return true;
   return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
@@ -1567,18 +1598,32 @@ async function saveAdminUserEdit(){
     phoneNumber: adminFinalPhone,
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
     role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
+    inviteCode: code,
+    inviteCodeUsed: code,
     invitedByCode: code,
     memberCode: code,
     paMemberCode: code,
+    accessCode: code,
+    signupCode: code,
+    member_code: code,
+    referralCode: code,
+    adminPaBmOverride: true,
+    adminPaBmAllowed: allowPaAccess,
+    paBmManagedBy: 'admin',
     paBmAccess: allowPaAccess,
     paBmAllowed: allowPaAccess,
     allowPABM: allowPaAccess,
     allowPaBm: allowPaAccess,
+    allowPabm: allowPaAccess,
     allowPaBmTab: allowPaAccess,
     paBmTabAllowed: allowPaAccess,
+    paBmTab: allowPaAccess,
     showPaBmTab: allowPaAccess,
     canAccessPaBm: allowPaAccess,
     paAccess: allowPaAccess ? 'yes' : 'no',
+    pa_bm_access: allowPaAccess ? 'yes' : 'no',
+    pa_bm_allowed: allowPaAccess,
+    allow_pa_bm: allowPaAccess,
     updatedAt: serverTimestamp(),
     updatedAtClient: new Date().toISOString(),
     updatedByAdmin: getSavedUser()?.usernameKey || 'admin'
@@ -1834,6 +1879,8 @@ function registeredUserHasPaAccess(user){
   if(!user) return false;
   const role = String(user.role || 'member').toLowerCase();
   if(role === 'admin') return true;
+  const adminAllowed = getAdminPaBmAllowed(user);
+  if(adminAllowed !== null) return adminAllowed === true;
   if(getPaBmFlagAllowed(user)) return true;
   return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
