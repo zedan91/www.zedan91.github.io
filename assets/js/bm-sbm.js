@@ -86,15 +86,12 @@
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 1000);
       if (statusEl) statusEl.textContent = `Downloaded as ${filename}`;
     } catch (error) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      if (statusEl) statusEl.textContent = `Download opened. If browser still shows ID name, backend must allow file rename/CORS.`;
+      console.error('BM/SBM silent download failed:', error);
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Download sedang disediakan. Sila cuba semula sebentar lagi.';
+      }
+      alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
     }
   }
 
@@ -412,3 +409,7 @@
   updateOpenEbizLink();
   renderCart();
 })();
+
+
+
+

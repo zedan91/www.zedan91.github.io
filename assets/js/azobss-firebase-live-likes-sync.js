@@ -2404,12 +2404,21 @@ function azobssPurchaseDownloadPayload(r){
     }));
   }catch(e){ return ''; }
 }
-async function azobssClientControlledDownload(encodedPayload){
+async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
+  try{
+    const ev = clickEvent || (window.event || null);
+    if(ev){
+      if(typeof ev.preventDefault === 'function') ev.preventDefault();
+      if(typeof ev.stopPropagation === 'function') ev.stopPropagation();
+      if(typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
+    }
+  }catch(e){}
   let r = {};
   try{ r = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ r = {}; }
 
-  const link = (window.event && window.event.currentTarget) ? window.event.currentTarget : null;
+  const link = linkEl || (clickEvent && clickEvent.currentTarget) || (window.event && window.event.currentTarget) || null;
   const originalText = link ? link.textContent : '';
+  if(link && link.dataset && link.dataset.busy === '1') return false;
   const used = azobssPurchaseDownloadCount(r);
   const max = azobssPurchaseDownloadMax(r);
   const expiresAtMs = azobssPurchaseDownloadExpiresAtMs(r);
@@ -2438,6 +2447,9 @@ async function azobssClientControlledDownload(encodedPayload){
       link.textContent = 'Preparing Download...';
       link.style.pointerEvents = 'none';
       link.setAttribute('aria-busy', 'true');
+      link.setAttribute('href', '#');
+      link.removeAttribute('download');
+      link.removeAttribute('target');
     }
 
     const response = await fetch(directUrl, {
@@ -2505,6 +2517,17 @@ function azobssPurchaseDownloadMetaHtml(r){
   return `<div class="az-download-meta">Downloads: <strong>${used}/${max}</strong><br>Tempoh sah: <strong>${days} hari</strong></div>`;
 }
 
+
+function azobssShortStateNameForPurchaseMobile(state){
+  const raw = String(state || '').trim();
+  const s = raw.toUpperCase().replace(/\s+/g,' ');
+  if(!raw) return '-';
+  if(s.includes('KUALA LUMPUR')) return 'W.P Kuala Lumpur';
+  if(s.includes('PUTRAJAYA')) return 'W.P Putrajaya';
+  if(s.includes('LABUAN')) return 'W.P Labuan';
+  return raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/\bWp\b/g,'W.P').replace(/\bW\.p\b/g,'W.P');
+}
+
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
   const amount = Number(r.amount || 0);
@@ -2515,23 +2538,42 @@ function purchaseDetailRowHtml(r){
   const allowed = azobssPurchaseDownloadAllowed(r);
   const expired = paid && azobssPurchaseDownloadExpired(r);
   const limitReached = paid && azobssPurchaseDownloadLimitReached(r);
-  const downloadMeta = azobssPurchaseDownloadMetaHtml(r);
+  const used = azobssPurchaseDownloadCount(r);
+  const max = azobssPurchaseDownloadMax(r);
+  const days = azobssPurchaseDownloadRemainingDays(r);
   let actionHtml = '';
+  const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<a class="user-pa-download" href="${escHtml(paidDownloadUrl)}" download="${escHtml(paidDownloadName)}" onclick="return window.azobssClientControlledDownload ? window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}') : true;">Download</a></div>`;
+    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>${dlMetaHtml}</div>`;
   }else if(paid){
-    const reason = limitReached ? 'Had download telah digunakan' : (expired ? 'Tempoh download telah tamat' : 'Expired');
-    actionHtml = `<div class="user-pa-download-wrap">${downloadMeta}<span class="user-pa-download is-locked">${escHtml(reason)}</span></div>`;
+    const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
+    actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}</div>`;
   }else{
-    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked">Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Uncart</button>` : ''}</div>`;
+    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
   }
+  const idx = (window.__azPurchaseRowIndex = (window.__azPurchaseRowIndex||0)+1);
   return `
-    <div class="user-pa-item purchase-detail-row compact-purchase-row">
-      <div class="purchase-main"><span>Item:</span> <strong>${escHtml(item)}</strong></div>
-      <div class="purchase-info"><span>Negeri:</span> <strong>${escHtml(r.negeri || '-')}</strong> <span class="purchase-dot">•</span> <span>RM${escHtml(amount || '')}</span></div>
-      <div class="purchase-date"><span>Date/Time:</span> <strong>${escHtml(formatPurchaseDate(r))}</strong></div>
-      ${actionHtml}
+    <div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-row">
+      <div class="col-no">${idx}</div>
+      <div class="col-item"><strong>${escHtml(item)}</strong></div>
+      <div class="col-state"><strong>${escHtml(azobssShortStateNameForPurchaseMobile(r.negeri || r.state || '-'))}</strong></div>
+      <div class="col-price">RM${escHtml(amount || '')}</div>
+      <div class="col-date">${escHtml(formatPurchaseDate(r))}</div>
+      <div class="col-exp" title="Tempoh">🕒 <strong>${escHtml(String(days))} hari</strong></div>
+      <div class="col-action">${actionHtml}</div>
     </div>`;
+}
+
+function azobssPurchaseTableHeaderHtml(){
+  return `<div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-header">
+    <div class="col-no">#</div>
+    <div class="col-item">Item</div>
+    <div class="col-state">📍 Negeri</div>
+    <div class="col-price">RM Harga</div>
+    <div class="col-date">📅 Tarikh / Masa</div>
+    <div class="col-exp">🕒 Tempoh</div>
+    <div class="col-action">Tindakan</div>
+  </div>`;
 }
 
 function applyPurchaseSort(records, sort){
@@ -3115,8 +3157,8 @@ async function renderAzobssPurchaseRecords(){
     const totalPages = Math.max(1, Math.ceil(detailRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
     azobssUserPurchasePage = clampPage(azobssUserPurchasePage, totalPages);
     const visibleRecords = detailRecords.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
-    if(userList){
-      userList.innerHTML = visibleRecords.map(purchaseDetailRowHtml).join('') || '<div class="purchase-summary-item">No PA purchase list yet.</div>';
+    if(userList){ window.__azPurchaseRowIndex=(azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE;
+      userList.innerHTML = visibleRecords.length ? (azobssPurchaseTableHeaderHtml() + visibleRecords.map(purchaseDetailRowHtml).join('')) : '<div class="purchase-summary-item">No PA purchase list yet.</div>';
     }
     const onUserPage = page => {
       azobssUserPurchasePage = page;
@@ -4315,3 +4357,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     setTimeout(()=>{ injectLikeButtons(); renderLikesPage(false); }, 200);
   });
 })();
+
+
+
+
