@@ -8138,7 +8138,11 @@ display:none !important;
 }
 </style>
 
-<style>#registeredUsersPanel{display:none !important;}</style></head>
+<style>#registeredUsersPanel{display:none !important;}</style>
+<style id='az-safe-hide-registered-users'>
+#registeredUsersPanel{display:none !important;}
+</style>
+</head>
 <body class="pa-bm-page" id="top" data-az-page="pabm">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
 <div class="azobss-topbar-inner">
@@ -13636,47 +13640,6 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 })();
 </script>
 
-
-<!-- AZOBSS PATCH: hide Registered User Records only on PA-BM page, admin unaffected -->
-<style id="az-pabm-hide-registered-users-final-fix">
-html body[data-az-page="pabm"] #registeredUsersPanel,
-html body[data-az-page="pabm"] .registered-users-panel,
-html body[data-az-page="pabm"] [data-section="registered-users"],
-html body[data-az-page="pabm"] section:has(#registeredUsersPanel),
-html body[data-az-page="pabm"] div:has(> #registeredUsersPanel){
-  display: none !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-}
-</style>
-<script id="az-pabm-hide-registered-users-runtime-fix">
-(function(){
-  if (!/\/PA-BM\/?$/i.test(location.pathname) && !/\/PA-BM\//i.test(location.pathname)) return;
-  function hideRegisteredUsersPanel(){
-    var panel = document.getElementById('registeredUsersPanel');
-    if (panel) {
-      panel.style.setProperty('display','none','important');
-      panel.style.setProperty('visibility','hidden','important');
-      panel.style.setProperty('height','0','important');
-      panel.style.setProperty('min-height','0','important');
-      panel.style.setProperty('max-height','0','important');
-      panel.style.setProperty('margin','0','important');
-      panel.style.setProperty('padding','0','important');
-      panel.style.setProperty('overflow','hidden','important');
-    }
-  }
-  hideRegisteredUsersPanel();
-  document.addEventListener('DOMContentLoaded', hideRegisteredUsersPanel);
-  window.addEventListener('load', hideRegisteredUsersPanel);
-  setTimeout(hideRegisteredUsersPanel, 300);
-  setTimeout(hideRegisteredUsersPanel, 1200);
-})();
-</script>
 
 </body>
 </html>
