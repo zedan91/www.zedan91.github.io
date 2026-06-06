@@ -1620,7 +1620,7 @@ function azRegSub(x){
 function azRegPaAllowed(x){
   const managed = x?.adminPaBmOverride === true || String(x?.paBmManagedBy || '').toLowerCase() === 'admin';
   if(managed){
-    return x.adminPaBmAllowed===true || x.paBmAllowed===true || x.paBmAccess===true || String(x.paAccess||'').toLowerCase()==='yes';
+    return x.adminPaBmAllowed === true;
   }
   return x.paBmAllowed===true||x.paAccessAllowed===true||x.allowPABM===true||x.allowPaBm===true||x.canAccessPaBm===true||x.showPaBmTab===true||x.permissions?.paBmAllowed===true;
 }
@@ -1686,12 +1686,46 @@ async function saveRegisteredEdit(){
   const id=$('#azRegEditDocId')?.value||'';
   if(!id)return;
   const pa=$('#azRegEditPa')?.value==='true';
+  const code = pa ? 'ZX6186' : '';
   await updateDoc(doc(db,'users',id),{
     email:$('#azRegEditEmail')?.value.trim()||'',
     phoneNumber:$('#azRegEditPhone')?.value.trim()||'',
     phone:$('#azRegEditPhone')?.value.trim()||'',
     role:$('#azRegEditRole')?.value||'member',
-    paBmAllowed:pa,paAccessAllowed:pa,allowPABM:pa,allowPaBm:pa,canAccessPaBm:pa,showPaBmTab:pa,
+
+    // Admin Dashboard is the source of truth for PA/BM access.
+    adminPaBmOverride:true,
+    adminPaBmAllowed:pa,
+    paBmManagedBy:'admin',
+
+    // Keep every old PA/BM flag aligned so no old script can turn it back on.
+    paBmAllowed:pa,
+    paAccessAllowed:pa,
+    paBmAccess:pa,
+    allowPABM:pa,
+    allowPaBm:pa,
+    allowPabm:pa,
+    allowPaBmTab:pa,
+    paBmTabAllowed:pa,
+    paBmTab:pa,
+    canAccessPaBm:pa,
+    showPaBmTab:pa,
+    paAccess:pa?'yes':'no',
+    pa_bm_access:pa?'yes':'no',
+    pa_bm_allowed:pa,
+    allow_pa_bm:pa,
+
+    // Clear old invite/code fields when OFF; otherwise old code makes it Allowed again.
+    inviteCode:code,
+    inviteCodeUsed:code,
+    invitedByCode:code,
+    memberCode:code,
+    paMemberCode:code,
+    accessCode:code,
+    signupCode:code,
+    member_code:code,
+    referralCode:code,
+
     updatedAt:serverTimestamp(),updatedAtMs:Date.now(),updatedByAdmin:'admin-dashboard'
   });
   $('#azRegEditModal')?.classList.remove('is-open');
