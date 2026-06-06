@@ -1766,9 +1766,7 @@ body:not(.is-admin) #registeredUsersPanel {
   display: none !important;
 }
 
-    .is-admin #registeredUsersPanel {
-      display: block !important;
-    }
+    .is-admin #registeredUsersPanel{display:none!important;}
 
     .login-panel label {
       color: #e2e8f0;
@@ -1976,13 +1974,7 @@ body:not(.is-admin) #registeredUsersPanel {
     }
 
 /* Force admin live/history panels visible for admin */
-.is-admin #liveUsersPanel,
-.is-admin #loginHistoryPanel,
-.is-admin #guestHistoryPanel {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
+.is-admin #liveUsersPanel,.is-admin #loginHistoryPanel,.is-admin #guestHistoryPanel{display:none!important;visibility:hidden!important;opacity:0!important;}
 
 body:not(.is-admin) #liveUsersPanel,
 body:not(.is-admin) #loginHistoryPanel,
@@ -1991,19 +1983,7 @@ body:not(.is-admin) #guestHistoryPanel {
 }
 
 
-/* AZOBSS FIX: admin registered/live/history panels must show when admin is restored from saved login */
-body.is-admin #registeredUsersPanel,
-body.is-admin #liveUsersPanel,
-body.is-admin #loginHistoryPanel,
-body.is-admin #guestHistoryPanel,
-.is-admin #registeredUsersPanel,
-.is-admin #liveUsersPanel,
-.is-admin #loginHistoryPanel,
-.is-admin #guestHistoryPanel {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
+/* AZOBSS PATCH: admin panels are intentionally hidden on PA-BM; managed in /admin/ */
 
     .live-user-list {
       display: grid;
@@ -13628,6 +13608,52 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,400);
   setTimeout(apply,1200);
   setTimeout(apply,3000);
+})();
+</script>
+
+
+<!-- AZOBSS FINAL PATCH: Hide admin user/history panels only on PA-BM page. Admin Dashboard remains unchanged. -->
+<style id="azobss-pabm-hide-admin-panels-final">
+body #registeredUsersPanel,
+body #liveUsersPanel,
+body #loginHistoryPanel,
+body #guestHistoryPanel{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+</style>
+<script id="azobss-pabm-hide-admin-panels-final">
+(function(){
+  var ids = ["registeredUsersPanel","liveUsersPanel","loginHistoryPanel","guestHistoryPanel"];
+  function hidePanels(){
+    ids.forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.setProperty("display","none","important");
+      el.style.setProperty("visibility","hidden","important");
+      el.style.setProperty("opacity","0","important");
+      el.style.setProperty("height","0","important");
+      el.style.setProperty("min-height","0","important");
+      el.style.setProperty("max-height","0","important");
+      el.style.setProperty("margin","0","important");
+      el.style.setProperty("padding","0","important");
+      el.style.setProperty("border","0","important");
+      el.style.setProperty("overflow","hidden","important");
+    });
+  }
+  hidePanels();
+  document.addEventListener("DOMContentLoaded", hidePanels);
+  window.addEventListener("load", hidePanels);
+  setTimeout(hidePanels, 250);
+  setTimeout(hidePanels, 1000);
 })();
 </script>
 
