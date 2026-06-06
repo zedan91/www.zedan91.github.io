@@ -1220,17 +1220,6 @@ async function safeGet(q){
 }
 
 async function loadOverview(){
-  try{
-    if(!window.__azOverviewLoadingOnlineUsers && typeof loadOnlineUsers === 'function'){
-      window.__azOverviewLoadingOnlineUsers = true;
-      await loadOnlineUsers();
-      window.__azOverviewLoadingOnlineUsers = false;
-    }
-  }catch(e){
-    window.__azOverviewLoadingOnlineUsers = false;
-    console.warn('Overview online users preload skipped:', e);
-  }
-
   const users=await safeGet(query(collection(db,'users'),limit(50)));
   const online=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
   const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
@@ -1801,7 +1790,6 @@ async function deleteRegisteredUser(id){
   if(!confirm('Delete user '+id+'?'))return;
   await deleteDoc(doc(db,'users',id));
   await loadRegisteredUsersAdmin();
-  if(typeof loadOnlineUsers === 'function') await loadOnlineUsers();
   await loadOverview();
 }
 async function loadRegisteredUsersAdmin(){
