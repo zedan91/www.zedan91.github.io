@@ -2218,6 +2218,8 @@ onAuthStateChanged(auth,async user=>{
 
   function getOnlineCountFromOnlineTab(){
     var list = document.getElementById('onlineUsersList') ||
+               document.getElementById('onlineList') ||
+               document.getElementById('adminOnlineUsersList') ||
                document.getElementById('liveUsersList') ||
                document.querySelector('[data-admin-online-users-list]') ||
                document.querySelector('.online-user-list') ||
@@ -2283,7 +2285,7 @@ onAuthStateChanged(auth,async user=>{
   setInterval(updateOverviewOnlineCount, 5000);
 
   document.addEventListener('DOMContentLoaded', function(){
-    var target = document.getElementById('onlineUsersList') || document.getElementById('liveUsersList') || document.body;
+    var target = document.getElementById('onlineUsersList') || document.getElementById('onlineList') || document.getElementById('adminOnlineUsersList') || document.getElementById('liveUsersList') || document.body;
     try{
       new MutationObserver(function(){
         clearTimeout(window.__azAdminOverviewOnlineCountTimer);
@@ -2305,6 +2307,8 @@ onAuthStateChanged(auth,async user=>{
 
   function countOnlineUsers(){
     var list = document.getElementById('onlineUsersList') ||
+               document.getElementById('onlineList') ||
+               document.getElementById('adminOnlineUsersList') ||
                document.getElementById('liveUsersList') ||
                document.querySelector('.live-user-list');
     if(!list) return 0;
