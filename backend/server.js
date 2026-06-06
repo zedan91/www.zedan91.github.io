@@ -23,6 +23,31 @@ const ADMIN_KEY = process.env.ADMIN_KEY || "change-this-admin-key";
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
+
+function azobssNum(v, fallback){
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+function azobssExpiryHoursFromOrder(order){
+  const direct = azobssNum(order && (order.expiryHours || order.linkExpiryHours || order.downloadExpiryHours), 0);
+  if(direct) return direct;
+  const days = azobssNum(order && (order.expiryDays || order.linkExpiryDays || order.downloadExpiryDays), 0);
+  if(days) return days * 24;
+  const text = String(order && (order.linkExpiry || order.expiry || order.expiryLabel || '') || '').toLowerCase();
+  const m = text.match(/(\d+(?:\.\d+)?)\s*(day|days|hari|hour|hours|jam)/i);
+  if(m){
+    const value = Number(m[1]);
+    const unit = String(m[2] || '').toLowerCase();
+    if(Number.isFinite(value) && value > 0){
+      return /hour|jam/.test(unit) ? value : value * 24;
+    }
+  }
+  return 24;
+}
+function azobssDownloadLimitFromOrder(order){
+  return azobssNum(order && (order.downloadLimit || order.maxDownloads || order.maxDownload || order.download_limit), 1);
+}
+
 app.use(express.json());
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || "*").split(",").map((v) => v.trim()).filter(Boolean);
 
@@ -255,7 +280,7 @@ function makePremiumDownloadForOrder(order) {
   if (order.downloadToken) return order;
   const token = makePremiumId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
-  const maxDownload = 1; // secure digital delivery: expire after first download
+  const maxDownload = azobssDownloadLimitFromOrder(order); // secure digital delivery: expire after first download
   const expiryHours = Math.max(0, Math.min(24 * 30, Number(order.expiryHours ?? 24)));
   const expiresAtMs = expiryHours === 0 ? now + (100 * 365 * 24 * 60 * 60 * 1000) : now + expiryHours * 60 * 60 * 1000;
   savePremiumToken({

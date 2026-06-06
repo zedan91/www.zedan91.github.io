@@ -1,4 +1,29 @@
 
+function azobssNum(v, fallback){
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+function azobssExpiryHoursFromOrder(order){
+  const direct = azobssNum(order && (order.expiryHours || order.linkExpiryHours || order.downloadExpiryHours), 0);
+  if(direct) return direct;
+  const days = azobssNum(order && (order.expiryDays || order.linkExpiryDays || order.downloadExpiryDays), 0);
+  if(days) return days * 24;
+  const text = String(order && (order.linkExpiry || order.expiry || order.expiryLabel || '') || '').toLowerCase();
+  const m = text.match(/(\d+(?:\.\d+)?)\s*(day|days|hari|hour|hours|jam)/i);
+  if(m){
+    const value = Number(m[1]);
+    const unit = String(m[2] || '').toLowerCase();
+    if(Number.isFinite(value) && value > 0){
+      return /hour|jam/.test(unit) ? value : value * 24;
+    }
+  }
+  return 24;
+}
+function azobssDownloadLimitFromOrder(order){
+  return azobssNum(order && (order.downloadLimit || order.maxDownloads || order.maxDownload || order.download_limit), 1);
+}
+
+
 // Allow PA/BM download proxy to fetch JUPEM resources even when the remote SSL chain is incomplete on Render/Node.
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED || "0";
 

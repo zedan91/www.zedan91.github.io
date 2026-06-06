@@ -3284,7 +3284,8 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
     const body=document.getElementById('azNotificationBody').value.trim();
     if(!title && !body){alert('Please write notification title or message.');return;}
     try{
-      const payload={active:true,scope:'all',type,title:title||type.replaceAll('_',' '),body,createdAtMs:Date.now(),createdAt:serverTimestamp(),createdBy:currentUser?.email||'admin',createdByUid:currentUser?.uid||''};
+      const payload={
+        ...((window.azNormalizePremiumOrderSettings && window.azNormalizePremiumOrderSettings(item || product || selectedItem || softwareItem || cadItem)) || {}),active:true,scope:'all',type,title:title||type.replaceAll('_',' '),body,createdAtMs:Date.now(),createdAt:serverTimestamp(),createdBy:currentUser?.email||'admin',createdByUid:currentUser?.uid||''};
       const ref=await addDoc(collection(db,'notifications'),payload);
       console.log('AZOBSS CLEAN notification published OK:',ref.id,payload);
       toast('Notification published.');
@@ -4261,6 +4262,35 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,400);
   setTimeout(apply,1200);
   setTimeout(apply,3000);
+})();
+</script>
+
+
+<script id="azobss-premium-order-settings-helper">
+(function(){
+  if(window.__azPremiumOrderSettingsHelper) return;
+  window.__azPremiumOrderSettingsHelper = true;
+  window.azNormalizePremiumOrderSettings = function(item){
+    item = item || {};
+    const n = (v, f)=>{ const x = Number(v); return Number.isFinite(x) && x > 0 ? x : f; };
+    let expiryHours = n(item.expiryHours || item.linkExpiryHours || item.downloadExpiryHours, 0);
+    if(!expiryHours){
+      const days = n(item.expiryDays || item.linkExpiryDays || item.downloadExpiryDays, 0);
+      if(days) expiryHours = days * 24;
+    }
+    if(!expiryHours){
+      const text = String(item.linkExpiry || item.expiry || '').toLowerCase();
+      const m = text.match(/(\d+(?:\.\d+)?)\s*(day|days|hari|hour|hours|jam)/i);
+      if(m){
+        const value = Number(m[1]);
+        const unit = String(m[2] || '').toLowerCase();
+        expiryHours = /hour|jam/.test(unit) ? value : value * 24;
+      }
+    }
+    if(!expiryHours) expiryHours = 24;
+    const downloadLimit = n(item.downloadLimit || item.maxDownloads || item.maxDownload || item.download_limit, 1);
+    return { expiryHours, expiryDays: Math.ceil(expiryHours/24), downloadLimit, maxDownloads: downloadLimit, maxDownload: downloadLimit };
+  };
 })();
 </script>
 
