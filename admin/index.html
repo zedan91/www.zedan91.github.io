@@ -43,6 +43,11 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 .login-box{width:min(430px,92vw);background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:20px;padding:22px;text-align:center}
 @media(max-width:980px){.admin-shell{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.side-footer{position:static;margin-top:15px}.grid{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
 @media(max-width:560px){.main{padding:14px}.grid{grid-template-columns:1fr}.nav{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
+
+.az-admin-registered-sort{background:#07111f;color:#eaf2ff;border:1px solid rgba(148,163,184,.35);border-radius:10px;padding:11px 14px;min-width:220px;font-weight:700;outline:none}
+.az-admin-registered-sort:focus{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.15)}
+@media(max-width:720px){.az-admin-registered-toolbar{flex-direction:column;align-items:stretch}.az-admin-registered-search,.az-admin-registered-sort,#registeredUsersRefreshBtn{width:100%;min-width:0}}
+
 </style>
 
 <style id="az-admin-access-guard-style">
@@ -913,6 +918,17 @@ display:none !important;
         <h2>Registered User Records</h2>
         <div class="az-admin-registered-toolbar">
           <input id="registeredUsersSearch" class="az-admin-registered-search" placeholder="Search username / email / phone...">
+          <select id="registeredUsersSort" class="az-admin-registered-sort" title="Sort By">
+            <option value="newest" selected>Date registered: newest</option>
+            <option value="oldest">Date registered: oldest</option>
+            <option value="az">Username / Email A-Z</option>
+            <option value="online">Online users only</option>
+            <option value="pabm">PA Access Allowed</option>
+            <option value="role-admin">Role: admin</option>
+            <option value="role-semiadmin">Role: semiadmin</option>
+            <option value="role-staff">Role: staff</option>
+            <option value="role-member">Role: member</option>
+          </select>
           <button class="btn" id="registeredUsersRefreshBtn" type="button">Refresh</button>
         </div>
         <div id="registeredUsersAdminList" class="az-admin-registered-list"></div>
@@ -922,13 +938,6 @@ display:none !important;
           <button id="registeredUsersNextBtn" type="button">Next ▶</button>
         </div>
       </div>
-
-      <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest 50 users are loaded.</p>
-      <div class="toolbar">
-        <input id="userSearch" placeholder="Search username, email or phone" style="flex:1;min-width:240px">
-        <button class="btn" id="refreshUsers">Search / Refresh</button>
-      </div>
-      <div id="usersList" class="list"></div>
     </section>
 
     <section id="online" class="section">
@@ -1207,26 +1216,7 @@ async function loadOverview(){
   $('#overviewActivity').innerHTML=activityRows.join('')||'<div class="item">No activity.</div>';
 }
 
-async function loadUsers(){
-  const search=($('#userSearch').value||'').toLowerCase().trim();
-  const snap=await safeGet(query(collection(db,'users'),limit(50)));
-  const rows=[];
-  snap?.forEach(d=>{
-    const x={id:d.id,...d.data()};
-    const hay=(d.id+' '+(x.email||'')+' '+(x.phone||x.phoneNumber||'')+' '+(x.displayName||x.name||'')).toLowerCase();
-    if(search && !hay.includes(search))return;
-    const allowed=!!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);
-    rows.push(item(
-      esc(d.id),
-      `${esc(x.email||x.authEmail||'-')} • ${allowed?'<span class="ok">PA/BM allowed</span>':'<span class="danger">PA/BM off</span>'} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
-      `<button class="btn gray" data-edit-user="${esc(d.id)}">Toggle PA/BM</button><button class="btn red" data-del-user="${esc(d.id)}">Delete</button>`
-    ));
-  });
-  $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
-}
-
-
-
+async function loadUsers(){ return; }
 
 async function loadSupport(){
   const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
@@ -1628,10 +1618,32 @@ function azRegSub(x){
   return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', x.role?('Role: '+x.role):''].filter(Boolean).join(' • ');
 }
 function azRegPaAllowed(x){return x.paBmAllowed===true||x.paAccessAllowed===true||x.allowPABM===true||x.allowPaBm===true||x.canAccessPaBm===true||x.showPaBmTab===true||x.permissions?.paBmAllowed===true;}
+function azRegRole(x){return String(x.role||'member').trim().toLowerCase().replace(/[^a-z]/g,'');}
+function azRegNameEmail(x){return String((azRegUser(x)||'')+' '+(x.email||x.authEmail||'')).toLowerCase();}
+function azRegIsOnline(x){
+  const online = x.online===true || x.isOnline===true || x.loggedIn===true || String(x.status||'').toLowerCase()==='online';
+  const seen = azRegMs(x.lastSeenAtMs||x.lastActiveAtMs||x.lastLoginAtMs||x.updatedAtMs||x.lastSeenAt||x.lastActiveAt||x.updatedAt);
+  return online || (seen && (Date.now()-seen) < 10*60*1000);
+}
+function azRegDateValue(x){return azRegMs(x.createdAtMs||x.registeredAtMs||x.createdAt||x.registeredAt||x.updatedAtMs||x.updatedAt);}
+function azRegSortFilter(rows){
+  const mode=String($('#registeredUsersSort')?.value||'newest').toLowerCase();
+  let out=[...rows];
+  if(mode==='online') out=out.filter(azRegIsOnline);
+  else if(mode==='pabm') out=out.filter(azRegPaAllowed);
+  else if(mode.startsWith('role-')){
+    const want=mode.replace('role-','');
+    out=out.filter(x=>azRegRole(x)===want);
+  }
+  if(mode==='oldest') out.sort((a,b)=>azRegDateValue(a)-azRegDateValue(b));
+  else if(mode==='az') out.sort((a,b)=>azRegNameEmail(a).localeCompare(azRegNameEmail(b)));
+  else out.sort((a,b)=>azRegDateValue(b)-azRegDateValue(a));
+  return out;
+}
 function renderRegisteredUsersAdmin(){
   const box=$('#registeredUsersAdminList'); if(!box)return;
   const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
-  const rows=adminRegisteredUsersCache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));
+  const rows=azRegSortFilter(adminRegisteredUsersCache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q)));
   const totalPages=Math.max(1,Math.ceil(rows.length/ADMIN_REGISTERED_PAGE_SIZE));
   adminRegisteredUsersPage=Math.min(Math.max(1,adminRegisteredUsersPage),totalPages);
   const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
@@ -1678,7 +1690,7 @@ async function saveRegisteredEdit(){
   });
   $('#azRegEditModal')?.classList.remove('is-open');
   await loadRegisteredUsersAdmin();
-  if(typeof loadUsers==='function') await loadUsers();
+
 }
 async function deleteRegisteredUser(id){
   if(!confirm('Delete user '+id+'?'))return;
@@ -1739,7 +1751,7 @@ async function clearNotifications(){
 }
 async function initSection(id){
   if(id==='overview')return loadOverview();
-  if(id==='users'){ if(typeof loadUsers==='function')loadUsers(); return loadRegisteredUsersAdmin(); }
+  if(id==='users'){ return loadRegisteredUsersAdmin(); }
   if(id==='online')return loadOnline();
   if(id==='activity')return loadActivity();
   if(id==='support')return loadSupport();
@@ -1759,9 +1771,9 @@ document.addEventListener('click',async e=>{
   const regDel=e.target.closest('[data-reg-delete]');
   if(regDel){await deleteRegisteredUser(regDel.getAttribute('data-reg-delete'));return;}
   const edit=e.target.closest('[data-edit-user]');
-  if(edit){const id=edit.dataset.editUser;const ref=doc(db,'users',id);const s=await getDoc(ref);const x=s.data()||{};const now=!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);await updateDoc(ref,{paBmAllowed:now,allowPABM:now,allowPaBm:now,canAccessPaBm:now,showPaBmTab:now,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});await loadUsers();return;}
+  if(edit){return;}
   const du=e.target.closest('[data-del-user]');
-  if(du&&confirm('Delete user '+du.dataset.delUser+'?')){await deleteDoc(doc(db,'users',du.dataset.delUser));await loadUsers();await loadOverview();return;}
+  if(du){return;}
   const ds=e.target.closest('[data-del-support]');
   if(ds&&confirm('Delete support message?')){await deleteDoc(doc(db,'supportMessages',ds.dataset.delSupport));await loadSupport();await loadOverview();return;}
   const rs=e.target.closest('[data-reply-support]');
@@ -1773,8 +1785,8 @@ document.addEventListener('click',async e=>{
   const delBtn = e.target.closest('[data-delete-commission]');
   if(delBtn){deleteCommissionRecord(delBtn.getAttribute('data-delete-commission'));return;}
 });
-$('#refreshUsers').addEventListener('click',loadUsers);
-$('#userSearch').addEventListener('input',()=>setTimeout(loadUsers,80));
+
+
 $('#refreshOnline').addEventListener('click',loadOnline);
 $('#refreshSupport').addEventListener('click',loadSupport);
 $('#publishNotif').addEventListener('click',publishNotification);
@@ -1783,6 +1795,7 @@ $('#refreshPayments')?.addEventListener('click',loadPayments);
 $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
 $('#saveStaffRole')?.addEventListener('click',saveStaffRole);
 $('#registeredUsersSearch')?.addEventListener('input',()=>{adminRegisteredUsersPage=1;renderRegisteredUsersAdmin();});
+$('#registeredUsersSort')?.addEventListener('change',()=>{adminRegisteredUsersPage=1;renderRegisteredUsersAdmin();});
 $('#registeredUsersRefreshBtn')?.addEventListener('click',loadRegisteredUsersAdmin);
 $('#registeredUsersPrevBtn')?.addEventListener('click',()=>{adminRegisteredUsersPage--;renderRegisteredUsersAdmin();});
 $('#registeredUsersNextBtn')?.addEventListener('click',()=>{adminRegisteredUsersPage++;renderRegisteredUsersAdmin();});
@@ -2153,82 +2166,6 @@ onAuthStateChanged(auth,async user=>{
   </div>
 </div>
 
-
-<script id="az-admin-registered-full-actions-fix" type="text/plain" data-disabled="fixed-inside-main-module">
-(function(){
-if(window.__azAdminRegisteredFullActionsFix)return;window.__azAdminRegisteredFullActionsFix=true;
-let regCache=[];let regPage=1;const REG_SIZE=10;
-function q(s){return document.querySelector(s)}
-function esc2(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function ms(v){if(!v)return 0;if(typeof v==='number')return v;if(v.seconds)return v.seconds*1000;const n=Number(v);if(!Number.isNaN(n)&&n>0)return n;const d=Date.parse(v);return Number.isNaN(d)?0:d}
-function regDate(x){const t=ms(x.createdAtMs||x.registeredAtMs||x.updatedAtMs||x.createdAt||x.registeredAt||x.updatedAt);return t?new Date(t).toLocaleString():'-'}
-function uname(x){return x.usernameKey||x.username||x.docId||x.id||x.email||'Unknown'}
-function paAllowed(x){return x.paBmAllowed===true||x.paAccessAllowed===true||x.paAllowed===true||x.permissions?.paBmAllowed===true}
-function isOnline(x){return x.online===true||String(x.status||'').toLowerCase()==='online'}
-function sortRows(rows){
- const v=q('#registeredUsersSort')?.value||'newest';
- if(/a-z|email/i.test(v))rows.sort((a,b)=>String(uname(a)).localeCompare(String(uname(b))));
- else if(/online/i.test(v))rows=rows.filter(isOnline);
- else if(/pa/i.test(v))rows=rows.filter(paAllowed);
- else if(/old/i.test(v))rows.sort((a,b)=>ms(a.createdAtMs||a.registeredAtMs||a.createdAt)-ms(b.createdAtMs||b.registeredAtMs||b.createdAt));
- else rows.sort((a,b)=>ms(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt)-ms(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt));
- return rows;
-}
-function renderRegistered(){
- const box=q('#registeredUsersAdminList')||q('#registeredUsersList')||q('#registeredUsersRecords'); if(!box)return;
- const search=(q('#registeredUsersSearch')?.value||q('#registeredSearch')?.value||'').toLowerCase().trim();
- let rows=regCache.filter(x=>!search||JSON.stringify(x).toLowerCase().includes(search));
- rows=sortRows(rows);
- const total=Math.max(1,Math.ceil(rows.length/REG_SIZE));regPage=Math.min(Math.max(1,regPage),total);
- const page=rows.slice((regPage-1)*REG_SIZE,regPage*REG_SIZE);
- box.innerHTML=page.map(x=>{
-  const id=esc2(x.docId||uname(x)); const pa=paAllowed(x);
-  return `<div class="az-admin-reg-row">
-    <span class="az-admin-reg-badge">👤 User</span>
-    <div><div class="az-admin-reg-title">${esc2(uname(x))}</div><div class="az-admin-reg-sub">${esc2(x.email||x.authEmail||'')} • ${pa?'PA/BM allowed':'PA/BM off'} • ${esc2(x.role||'member')}</div></div>
-    <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
-  </div>`;
- }).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No users found.</div></div></div>';
- if(q('#registeredUsersPageInfo'))q('#registeredUsersPageInfo').textContent=`Page ${regPage} / ${total} • ${rows.length} records`;
- if(q('#registeredUsersPrevBtn'))q('#registeredUsersPrevBtn').disabled=regPage<=1;
- if(q('#registeredUsersNextBtn'))q('#registeredUsersNextBtn').disabled=regPage>=total;
-}
-window.loadRegisteredUsersAdmin=async function(){
- regCache=[];
- try{const snap=await safeGet(query(collection(db,'users'),limit(300)));snap?.forEach(d=>regCache.push({docId:d.id,usernameKey:d.id,...d.data()}));}catch(e){console.warn(e)}
- regPage=1;renderRegistered();
-};
-function openEdit(id){
- const x=regCache.find(r=>String(r.docId)===String(id)||String(uname(r))===String(id)); if(!x)return;
- q('#azRegEditDocId').value=x.docId||uname(x);q('#azRegEditUsername').value=uname(x);
- q('#azRegEditEmail').value=x.email||x.authEmail||'';q('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
- q('#azRegEditRole').value=x.role||'member';q('#azRegEditPa').value=paAllowed(x)?'true':'false';
- q('#azRegEditModal').classList.add('is-open');
-}
-async function saveEdit(){
- const id=q('#azRegEditDocId').value;if(!id)return;
- await updateDoc(doc(db,'users',id),{email:q('#azRegEditEmail').value.trim(),phoneNumber:q('#azRegEditPhone').value.trim(),role:q('#azRegEditRole').value,paBmAllowed:q('#azRegEditPa').value==='true',paAccessAllowed:q('#azRegEditPa').value==='true',updatedAtMs:Date.now()});
- q('#azRegEditModal').classList.remove('is-open');await window.loadRegisteredUsersAdmin();
-}
-async function delUser(id){
- if(!confirm('Delete user '+id+'?'))return;
- await deleteDoc(doc(db,'users',id));await window.loadRegisteredUsersAdmin();
-}
-document.addEventListener('click',e=>{
- const ed=e.target.closest('[data-reg-edit]');if(ed)return openEdit(ed.getAttribute('data-reg-edit'));
- const del=e.target.closest('[data-reg-delete]');if(del)return delUser(del.getAttribute('data-reg-delete'));
-});
-document.addEventListener('DOMContentLoaded',()=>{
- q('#registeredUsersSearch')?.addEventListener('input',()=>{regPage=1;renderRegistered()});
- q('#registeredUsersSort')?.addEventListener('change',()=>{regPage=1;renderRegistered()});
- q('#registeredUsersRefreshBtn')?.addEventListener('click',window.loadRegisteredUsersAdmin);
- q('#registeredUsersPrevBtn')?.addEventListener('click',()=>{regPage--;renderRegistered()});
- q('#registeredUsersNextBtn')?.addEventListener('click',()=>{regPage++;renderRegistered()});
- q('#azRegCancelBtn')?.addEventListener('click',()=>q('#azRegEditModal').classList.remove('is-open'));
- q('#azRegSaveBtn')?.addEventListener('click',saveEdit);
-});
-})();
-</script>
 
 <script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>
 </body>
