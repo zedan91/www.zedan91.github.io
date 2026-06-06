@@ -8129,18 +8129,8 @@ body::-webkit-scrollbar-corner{
   display:none!important;
 }
 </style>
-
-<style>
-#registeredUsersSection,
-.registered-users-section,
-[data-section="registered-users"]{
-display:none !important;
-}
-</style>
-
-<style>#registeredUsersPanel{display:none !important;}</style>
 </head>
-<body class="pa-bm-page" id="top" data-az-page="pabm">
+<body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
 <div class="azobss-topbar-inner">
 <a aria-label="AZOBSS Home" class="azobss-topbar-brand" href="/">
@@ -13634,24 +13624,6 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,400);
   setTimeout(apply,1200);
   setTimeout(apply,3000);
-})();
-</script>
-
-
-
-<style id="az-pabm-hide-registered-users-only">
-#registeredUsersPanel{display:none!important;}
-</style>
-<script id="az-pabm-hide-registered-users-only">
-(function(){
-  function hideOnlyRegisteredUsersPanel(){
-    var el = document.getElementById('registeredUsersPanel');
-    if (!el) return;
-    el.style.setProperty('display', 'none', 'important');
-  }
-  hideOnlyRegisteredUsersPanel();
-  document.addEventListener('DOMContentLoaded', hideOnlyRegisteredUsersPanel);
-  window.addEventListener('load', hideOnlyRegisteredUsersPanel);
 })();
 </script>
 
