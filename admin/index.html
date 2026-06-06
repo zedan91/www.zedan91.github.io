@@ -2208,5 +2208,91 @@ onAuthStateChanged(auth,async user=>{
 
 
 <script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>
+
+<script id="azobss-admin-overview-online-count-fix">
+(function(){
+  if(window.__azAdminOverviewOnlineCountFix) return;
+  window.__azAdminOverviewOnlineCountFix = true;
+
+  function txt(el){ return String(el && el.textContent || '').trim(); }
+
+  function getOnlineCountFromOnlineTab(){
+    var list = document.getElementById('onlineUsersList') ||
+               document.getElementById('liveUsersList') ||
+               document.querySelector('[data-admin-online-users-list]') ||
+               document.querySelector('.online-user-list') ||
+               document.querySelector('.live-user-list');
+
+    if(!list) return 0;
+
+    var keys = new Set();
+    Array.from(list.children || []).forEach(function(row){
+      var t = txt(row);
+      if(!t || /no users|no online/i.test(t)) return;
+      if(/\bguest\b/i.test(t)) return;
+      if(!/\bonline\b/i.test(t)) return;
+
+      var strong = row.querySelector('strong');
+      var emailMatch = t.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+      var key = String((strong && strong.textContent) || (emailMatch && emailMatch[0]) || t).trim().toLowerCase();
+      if(key && key !== 'guest') keys.add(key);
+    });
+
+    return keys.size;
+  }
+
+  function updateOverviewOnlineCount(){
+    var count = getOnlineCountFromOnlineTab();
+
+    [
+      '#overviewOnlineUsers',
+      '#onlineUsersCount',
+      '#onlineUsersTotal',
+      '#adminOnlineUsersCount',
+      '#adminOnlineCount',
+      '[data-overview-online-users]',
+      '[data-admin-online-count]'
+    ].forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(el){
+        el.textContent = String(count);
+      });
+    });
+
+    document.querySelectorAll('.overview-card,.stat-card,.admin-stat,.card,.summary-card').forEach(function(card){
+      var label = txt(card);
+      if(!/online\s+users/i.test(label)) return;
+      if(/online\s+logged-in\s+users/i.test(label)) return;
+      var number = card.querySelector('strong,.value,.count,.stat-value,h3,h2');
+      if(number) number.textContent = String(count);
+    });
+
+    document.body.dataset.azAdminOnlineCount = String(count);
+  }
+
+  document.addEventListener('DOMContentLoaded', updateOverviewOnlineCount);
+  window.addEventListener('load', updateOverviewOnlineCount);
+
+  document.addEventListener('click', function(e){
+    if(e.target && /refresh online users/i.test(txt(e.target))) {
+      setTimeout(updateOverviewOnlineCount, 500);
+      setTimeout(updateOverviewOnlineCount, 1500);
+    }
+  });
+
+  setInterval(updateOverviewOnlineCount, 5000);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var target = document.getElementById('onlineUsersList') || document.getElementById('liveUsersList') || document.body;
+    try{
+      new MutationObserver(function(){
+        clearTimeout(window.__azAdminOverviewOnlineCountTimer);
+        window.__azAdminOverviewOnlineCountTimer = setTimeout(updateOverviewOnlineCount, 150);
+      }).observe(target, {childList:true, subtree:true, characterData:true});
+    }catch(e){}
+    updateOverviewOnlineCount();
+  });
+})();
+</script>
+
 </body>
 </html>
