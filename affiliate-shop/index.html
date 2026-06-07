@@ -1037,6 +1037,24 @@ body[data-role="admin"] [aria-label="WhatsApp"]{
 }
 </style>
 
+
+<style id="azobss-hide-admin-staff-buttons-for-admin-only">
+body.is-admin .azAdminDashboardBtn,
+body.is-admin .admin-dashboard-btn,
+body.is-admin .azStaffDashboardBtn,
+body.is-admin .staff-dashboard-btn,
+body.az-role-is-admin .azAdminDashboardBtn,
+body.az-role-is-admin .admin-dashboard-btn,
+body.az-role-is-admin .azStaffDashboardBtn,
+body.az-role-is-admin .staff-dashboard-btn,
+body[data-role="admin"] .azAdminDashboardBtn,
+body[data-role="admin"] .admin-dashboard-btn,
+body[data-role="admin"] .azStaffDashboardBtn,
+body[data-role="admin"] .staff-dashboard-btn{
+  display:none!important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
