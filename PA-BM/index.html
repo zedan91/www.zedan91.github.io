@@ -8438,6 +8438,59 @@ body::-webkit-scrollbar-corner{
 </form>
 </div>
 </header>
+
+<script id="azobss-cart-badge-quick-after-header-fix">
+(function(){
+  if(window.__azobssCartBadgeQuickAfterHeaderFix) return;
+  window.__azobssCartBadgeQuickAfterHeaderFix = true;
+
+  function countCart(){
+    try{
+      var keys=[
+        window.__azobssCurrentCartKey,
+        'azobss_shop_cart_guest_v1',
+        'azobssCart',
+        'azShopCart',
+        'cart',
+        'azobss_cart'
+      ].filter(Boolean);
+
+      for(var i=0;i<keys.length;i++){
+        var raw=localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(!raw) continue;
+        var data=JSON.parse(raw);
+        if(Array.isArray(data)){
+          return data.reduce(function(n,x){ return n + Number((x && (x.qty||x.quantity)) || 1); },0);
+        }
+        if(Array.isArray(data.items)){
+          return data.items.reduce(function(n,x){ return n + Number((x && (x.qty||x.quantity)) || 1); },0);
+        }
+      }
+    }catch(e){}
+    return 0;
+  }
+
+  function apply(){
+    var n=countCart();
+    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
+      b.textContent=String(n);
+      if(n>0){
+        b.classList.add('is-show');
+        b.style.display='inline-flex';
+      }else{
+        b.classList.remove('is-show');
+        b.style.display='none';
+      }
+    });
+  }
+
+  apply();
+  setTimeout(apply,60);
+  setTimeout(apply,180);
+  window.addEventListener('storage',apply);
+  window.addEventListener('focus',apply);
+})();
+</script>
 <div class="admin-online-summary" hidden="" id="adminOnlineSummary">
 <div class="admin-online-chip">
 <span>Guests</span>
