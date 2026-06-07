@@ -902,11 +902,11 @@ function normalizeUserMenu() {
   if (!dropdown) return;
   dropdown.innerHTML = `
     <div class="user-dropdown-section">Buying</div>
-    <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
-    <a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My purchases</a>
+    <a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
     <div class="user-dropdown-section">Account</div>
-    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
-    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
+    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
+    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log out</button>`;
 }
 
 function normalizePath(pathname) {
