@@ -843,6 +843,92 @@ body::-webkit-scrollbar-corner{
 
 </style>
 
+
+<style id="azobss-tools-profile-dropdown-spacing-match-fix">
+/* Tools pages: keep profile dropdown spacing consistent */
+#userMenu{
+  position:relative!important;
+}
+#userDropdown{
+  position:absolute!important;
+  top:calc(100% + 10px)!important;
+  right:0!important;
+  left:auto!important;
+  width:220px!important;
+  min-width:220px!important;
+  max-width:calc(100vw - 16px)!important;
+  padding:8px!important;
+  border-radius:14px!important;
+  background:#08111f!important;
+  border:1px solid rgba(148,163,184,.28)!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.58)!important;
+  z-index:100001!important;
+  transform:none!important;
+  gap:0!important;
+}
+#userMenu.is-open #userDropdown,
+#userMenu[aria-expanded="true"] #userDropdown{
+  display:block!important;
+}
+#userDropdown .user-dropdown-item,
+#userDropdown a.user-dropdown-item,
+#userDropdown button.user-dropdown-item{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  min-height:38px!important;
+  height:38px!important;
+  margin:0!important;
+  padding:10px!important;
+  border:0!important;
+  outline:0!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  color:#e5e7eb!important;
+  box-shadow:none!important;
+  text-decoration:none!important;
+  text-align:left!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  font-family:inherit!important;
+  line-height:1.15!important;
+  cursor:pointer!important;
+}
+#userDropdown .user-dropdown-item + .user-dropdown-item{
+  margin-top:0!important;
+}
+#userDropdown .user-dropdown-item:hover,
+#userDropdown a.user-dropdown-item:hover,
+#userDropdown button.user-dropdown-item:hover{
+  background:rgba(30,41,59,.9)!important;
+  color:#fff!important;
+}
+@media (max-width:520px){
+  #userDropdown{
+    position:fixed!important;
+    top:92px!important;
+    right:8px!important;
+    left:auto!important;
+    width:210px!important;
+    min-width:210px!important;
+    max-width:calc(100vw - 16px)!important;
+    max-height:68vh!important;
+    overflow-y:auto!important;
+  }
+  #userDropdown .user-dropdown-item{
+    padding:9px 10px!important;
+    font-size:13px!important;
+    min-height:36px!important;
+    height:36px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
