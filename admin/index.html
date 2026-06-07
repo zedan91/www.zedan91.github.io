@@ -1233,16 +1233,54 @@ async function loadOverview(){
 
   const users=await safeGet(query(collection(db,'users'),limit(50)));
   const online=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
-  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
-  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(200)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(200)));
   const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
   const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
   const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
 
+  function azAdminOverviewMs(x){
+    if(!x) return 0;
+    if(typeof x === 'number') return x;
+    if(typeof x === 'string'){
+      const n = Date.parse(x);
+      return Number.isNaN(n) ? 0 : n;
+    }
+    if(x && typeof x.toDate === 'function'){
+      const d = x.toDate();
+      return d && !Number.isNaN(d.getTime()) ? d.getTime() : 0;
+    }
+    return 0;
+  }
+  function azAdminOverviewTodayCount(snap){
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const end = start + 24 * 60 * 60 * 1000;
+    let count = 0;
+    snap?.forEach(d=>{
+      const x = d.data ? d.data() : d;
+      const ms = azAdminOverviewMs(x.createdAtMs || x.timeMs || x.updatedAtMs || x.createdAt || x.time || x.updatedAt);
+      if(ms >= start && ms < end) count++;
+    });
+    return count;
+  }
+  function azAdminOverviewMonthCount(snap){
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const end = new Date(now.getFullYear(), now.getMonth()+1, 1).getTime();
+    let count = 0;
+    snap?.forEach(d=>{
+      const x = d.data ? d.data() : d;
+      const ms = azAdminOverviewMs(x.createdAtMs || x.timeMs || x.updatedAtMs || x.createdAt || x.time || x.updatedAt);
+      if(ms >= start && ms < end) count++;
+    });
+    return count;
+  }
+
   $('#statUsers').textContent=users?.size??0;
   $('#statOnline').textContent=String(window.azAdminRealOnlineCount || 0);
-  $('#statLogins').textContent=logins?.size??0;
-  $('#statVisits').textContent=guests?.size??0;
+  $('#statLogins').textContent=azAdminOverviewTodayCount(logins);
+  $('#statVisits').textContent=azAdminOverviewTodayCount(guests);
   let openSupportCount=0;
   support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
   let pendingPurchaseCount=0;
@@ -1250,7 +1288,7 @@ async function loadOverview(){
   $('#statSupport').textContent=openSupportCount;
   $('#statNotifications').textContent=notif?.size??0;
   $('#statPurchases').textContent=pendingPurchaseCount;
-  $('#statGuests').textContent=guests?.size??0;
+  $('#statGuests').textContent=azAdminOverviewMonthCount(guests);
 
   const supportRows=[];
   support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
