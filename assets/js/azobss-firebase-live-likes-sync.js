@@ -901,12 +901,12 @@ function normalizeUserMenu() {
   const dropdown = $('userDropdown');
   if (!dropdown) return;
   dropdown.innerHTML = `
-    <div class="user-dropdown-section">Buying</div>
-    <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
-    <a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
-    <div class="user-dropdown-section">Account</div>
-    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
-    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
+    
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
+    <a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+    
+    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
+    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log Out</button>`;
 }
 
 function normalizePath(pathname) {
