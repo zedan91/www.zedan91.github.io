@@ -8439,14 +8439,30 @@ body::-webkit-scrollbar-corner{
 </div>
 </header>
 
+
 <script id="azobss-cart-badge-quick-after-header-fix">
 (function(){
   if(window.__azobssCartBadgeQuickAfterHeaderFix) return;
   window.__azobssCartBadgeQuickAfterHeaderFix = true;
 
-  function countCart(){
+  function countRaw(raw){
+    if(!raw) return 0;
     try{
-      var keys=[
+      var data=JSON.parse(raw);
+      if(Array.isArray(data)){
+        return data.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
+      }
+      if(Array.isArray(data.items)){
+        return data.items.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
+      }
+    }catch(e){}
+    return 0;
+  }
+
+  function countCart(){
+    var best=0;
+    try{
+      var fixed=[
         window.__azobssCurrentCartKey,
         'azobss_shop_cart_guest_v1',
         'azobssCart',
@@ -8455,19 +8471,20 @@ body::-webkit-scrollbar-corner{
         'azobss_cart'
       ].filter(Boolean);
 
-      for(var i=0;i<keys.length;i++){
-        var raw=localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
-        if(!raw) continue;
-        var data=JSON.parse(raw);
-        if(Array.isArray(data)){
-          return data.reduce(function(n,x){ return n + Number((x && (x.qty||x.quantity)) || 1); },0);
-        }
-        if(Array.isArray(data.items)){
-          return data.items.reduce(function(n,x){ return n + Number((x && (x.qty||x.quantity)) || 1); },0);
+      fixed.forEach(function(k){
+        best=Math.max(best,countRaw(localStorage.getItem(k)||sessionStorage.getItem(k)));
+      });
+
+      // Important for logged-in user before Firebase Auth finishes:
+      // scan saved user cart keys directly.
+      for(var i=0;i<localStorage.length;i++){
+        var key=localStorage.key(i)||'';
+        if(/^azobss_shop_cart_user_.+_v1$/.test(key)){
+          best=Math.max(best,countRaw(localStorage.getItem(key)));
         }
       }
     }catch(e){}
-    return 0;
+    return best;
   }
 
   function apply(){
@@ -8485,10 +8502,12 @@ body::-webkit-scrollbar-corner{
   }
 
   apply();
-  setTimeout(apply,60);
-  setTimeout(apply,180);
+  setTimeout(apply,30);
+  setTimeout(apply,100);
+  setTimeout(apply,250);
   window.addEventListener('storage',apply);
   window.addEventListener('focus',apply);
+  window.addEventListener('azobss-shop-cart-updated',apply);
 })();
 </script>
 <div class="admin-online-summary" hidden="" id="adminOnlineSummary">
