@@ -1,3 +1,55 @@
+<style id="azobss-profile-dropdown-compact-fix">
+
+/* AZOBSS PROFILE DROPDOWN COMPACT FIX */
+.profile-dropdown .menu-heading,
+.profile-dropdown .dropdown-heading,
+.profile-dropdown .profile-menu-heading,
+.profile-dropdown .profile-section-title,
+.profile-menu .menu-heading,
+.profile-menu .dropdown-heading,
+.profile-menu .profile-menu-heading,
+.profile-menu .profile-section-title,
+.user-menu .menu-heading,
+.user-menu .dropdown-heading,
+.user-menu .profile-menu-heading,
+.user-menu .profile-section-title,
+.azobss-profile-menu .menu-heading,
+.azobss-profile-menu .dropdown-heading,
+.azobss-profile-menu .profile-menu-heading,
+.azobss-profile-menu .profile-section-title{
+  display:none!important;
+}
+.profile-dropdown a,
+.profile-dropdown button,
+.profile-menu a,
+.profile-menu button,
+.user-menu a,
+.user-menu button,
+.account-menu a,
+.account-menu button,
+.azobss-profile-menu a,
+.azobss-profile-menu button,
+.az-profile-menu a,
+.az-profile-menu button{
+  min-height:34px!important;
+  padding:8px 12px!important;
+  gap:8px!important;
+  border-radius:9px!important;
+  display:flex!important;
+  align-items:center!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+.profile-dropdown,
+.profile-menu,
+.user-menu,
+.account-menu,
+.azobss-profile-menu,
+.az-profile-menu{
+  padding:8px!important;
+}
+
+</style>
 
 // AZOBSS: Load Google reCAPTCHA in explicit mode so multiple widgets inside the auth modal can be tracked reliably.
 window.__AZOBSS_RECAPTCHA_WIDGETS__ = window.__AZOBSS_RECAPTCHA_WIDGETS__ || [];
@@ -352,7 +404,7 @@ function injectModal() {
       </label>
       <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
       <p class="request-error" id="siteSignupError"></p>
-      <button class="btn signup" type="submit">Create Account</button>
+      <button class="btn signup" type="submit">Create </button>
       <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
     </form>
   </div>
@@ -1006,12 +1058,12 @@ function normalizeUserMenu() {
   const dropdown = $('userDropdown');
   if (!dropdown) return;
   dropdown.innerHTML = `
-    <div class="user-dropdown-section">Buying</div>
-    <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
-    <a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
-    <div class="user-dropdown-section">Account</div>
-    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
-    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
+    
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
+    <a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+    
+    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
+    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log Out</button>`;
 }
 
 function bindUserDropdownActions() {
@@ -3726,7 +3778,7 @@ function bindAuth() {
         err.textContent='⏳ Please wait... Setting up your AZOBSS account...';
       }
       if(submitButton){
-        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Create Account';
+        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Create ';
         submitButton.textContent = '⏳ Please wait...';
       }
       // Give the browser one frame to paint the Please wait message before Firebase starts.
@@ -3854,10 +3906,10 @@ function bindAuth() {
       syncHeader(null);
       if(err){
         err.style.color='#62e6a5';
-        err.textContent = '✅ Account created! Please check your Gmail and verify your account before login.';
+        err.textContent = '✅  created! Please check your Gmail and verify your account before login.';
       }
       if(submitButton){
-        submitButton.textContent = submitButton.dataset.originalText || 'Create Account';
+        submitButton.textContent = submitButton.dataset.originalText || 'Create ';
       }
       try{ $('siteSignUpForm')?.reset(); resetAzobssCaptcha($('siteSignUpForm')); }catch(_){}
       // STOP here after signup success. Do not auto-switch/open the login section.
@@ -3878,7 +3930,7 @@ function bindAuth() {
       window.__AZOBSS_SIGNUP_BUSY__ = false;
       if(submitButton){
         submitButton.disabled = false;
-        submitButton.textContent = submitButton.dataset.originalText || 'Create Account';
+        submitButton.textContent = submitButton.dataset.originalText || 'Create ';
       }
     }
   });

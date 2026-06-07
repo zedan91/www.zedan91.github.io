@@ -4322,3 +4322,53 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-line{display:flex!importa
 body.is-admin #purchaseSummaryList .az-purchase-detail-line span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef4444!important;color:#fff!important;border:0!important;border-radius:7px!important;height:24px!important;padding:0 9px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;flex:0 0 auto!important;}
 @media(max-width:900px){body.is-admin #purchaseSummaryList .az-purchase-mini-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important;flex-wrap:wrap!important;}}
+
+
+/* AZOBSS PROFILE DROPDOWN COMPACT FIX */
+.profile-dropdown .menu-heading,
+.profile-dropdown .dropdown-heading,
+.profile-dropdown .profile-menu-heading,
+.profile-dropdown .profile-section-title,
+.profile-menu .menu-heading,
+.profile-menu .dropdown-heading,
+.profile-menu .profile-menu-heading,
+.profile-menu .profile-section-title,
+.user-menu .menu-heading,
+.user-menu .dropdown-heading,
+.user-menu .profile-menu-heading,
+.user-menu .profile-section-title,
+.azobss-profile-menu .menu-heading,
+.azobss-profile-menu .dropdown-heading,
+.azobss-profile-menu .profile-menu-heading,
+.azobss-profile-menu .profile-section-title{
+  display:none!important;
+}
+.profile-dropdown a,
+.profile-dropdown button,
+.profile-menu a,
+.profile-menu button,
+.user-menu a,
+.user-menu button,
+.account-menu a,
+.account-menu button,
+.azobss-profile-menu a,
+.azobss-profile-menu button,
+.az-profile-menu a,
+.az-profile-menu button{
+  min-height:34px!important;
+  padding:8px 12px!important;
+  gap:8px!important;
+  border-radius:9px!important;
+  display:flex!important;
+  align-items:center!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+.profile-dropdown,
+.profile-menu,
+.user-menu,
+.account-menu,
+.azobss-profile-menu,
+.az-profile-menu{
+  padding:8px!important;
+}
