@@ -1843,12 +1843,20 @@ html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
 })();
 </script>
 
-<style id="azobss-admin-chat-spacing-match-bell-final">
-/* Admin: make Chat/Support icon spacing match Bell/Notification */
-body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"],
-body.is-admin .market-user-tools a[aria-label="Chat"],
-body.az-role-is-admin .market-user-tools a[aria-label="Chat"],
-body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
+
+<style id="azobss-admin-chat-use-normal-icon-flow-fix">
+/* Admin Chat icon: use normal market-icon-btn flow like normal user pages */
+body[data-dashboard-page="admin"] .market-user-tools{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"]{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  position:relative!important;
+  flex:0 0 auto!important;
   width:32px!important;
   min-width:32px!important;
   max-width:32px!important;
@@ -1857,46 +1865,49 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   max-height:32px!important;
   padding:0!important;
   margin:0!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
+  border:0!important;
+  background:transparent!important;
+  color:#f8fafc!important;
+  text-decoration:none!important;
   visibility:visible!important;
   opacity:1!important;
   pointer-events:auto!important;
   overflow:visible!important;
+  transform:none!important;
 }
-body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg,
-body.is-admin .market-user-tools a[aria-label="Chat"] svg,
-body.az-role-is-admin .market-user-tools a[aria-label="Chat"] svg,
-body[data-role="admin"] .market-user-tools a[aria-label="Chat"] svg{
+body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   width:23px!important;
   height:23px!important;
+  display:block!important;
+  margin:0!important;
 }
 </style>
 
 
-<script id="azobss-admin-chat-spacing-match-bell-final-script">
+<script id="azobss-admin-chat-use-normal-icon-flow-fix-script">
 (function(){
-  if(window.__azobssAdminChatSpacingMatchBellFinal) return;
-  window.__azobssAdminChatSpacingMatchBellFinal = true;
-
-  function isAdminNow(){
-    try{
-      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
-      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
-      if(document.body.getAttribute('data-role')==='admin') return true;
-      var signed=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
-      var uname=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
-      if(signed==='zedan91' || uname.indexOf('zedan91')!==-1) return true;
-    }catch(e){}
-    return false;
-  }
+  if(window.__azobssAdminChatUseNormalIconFlowFix) return;
+  window.__azobssAdminChatUseNormalIconFlowFix = true;
 
   function apply(){
-    if(!isAdminNow()) return;
+    if(document.body.getAttribute('data-dashboard-page') !== 'admin'
+      && !document.body.classList.contains('is-admin')
+      && !document.body.classList.contains('az-role-is-admin')) return;
+
+    var tools=document.querySelector('.market-user-tools');
+    if(tools){
+      tools.style.setProperty('display','flex','important');
+      tools.style.setProperty('align-items','center','important');
+      tools.style.setProperty('gap','8px','important');
+    }
+
     document.querySelectorAll('.market-user-tools a[aria-label="Chat"]').forEach(function(el){
+      el.classList.add('market-icon-btn');
       el.style.setProperty('display','inline-flex','important');
-      el.style.setProperty('visibility','visible','important');
+      el.style.setProperty('align-items','center','important');
+      el.style.setProperty('justify-content','center','important');
+      el.style.setProperty('position','relative','important');
+      el.style.setProperty('flex','0 0 auto','important');
       el.style.setProperty('width','32px','important');
       el.style.setProperty('min-width','32px','important');
       el.style.setProperty('max-width','32px','important');
@@ -1905,15 +1916,22 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"] svg{
       el.style.setProperty('max-height','32px','important');
       el.style.setProperty('padding','0','important');
       el.style.setProperty('margin','0','important');
+      el.style.setProperty('border','0','important');
+      el.style.setProperty('background','transparent','important');
+      el.style.setProperty('visibility','visible','important');
       el.style.setProperty('opacity','1','important');
       el.style.setProperty('pointer-events','auto','important');
       el.style.setProperty('overflow','visible','important');
+      el.style.setProperty('transform','none','important');
       el.removeAttribute('aria-hidden');
       el.tabIndex=0;
+
       var svg=el.querySelector('svg');
       if(svg){
         svg.style.setProperty('width','23px','important');
         svg.style.setProperty('height','23px','important');
+        svg.style.setProperty('display','block','important');
+        svg.style.setProperty('margin','0','important');
       }
     });
   }
@@ -1923,5 +1941,6 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"] svg{
   window.addEventListener('focus',apply);
   setTimeout(apply,200);
   setTimeout(apply,800);
+  setTimeout(apply,1500);
 })();
 </script>
