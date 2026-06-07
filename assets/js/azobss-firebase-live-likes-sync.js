@@ -972,7 +972,7 @@ function injectProfileSettingsModal() {
         </div>
       </label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
-      <p class="profile-settings-note">This updates your profile in Firebase and keeps it saved after reopening the browser.</p>
+      
       <div class="profile-password-box" aria-label="Reset Password">
         <p class="profile-password-title">Reset Password</p>
         <p class="profile-password-help">For security, enter your current password first, then set a new password.</p>
