@@ -2302,79 +2302,6 @@ onAuthStateChanged(auth,async user=>{
   setTimeout(apply,3000);
 })();
 </script>
-
-
-<script id="az-stickybar-icons-action-badge-fix">
-(function(){
-  if(window.__azStickybarIconsActionBadgeFix)return;
-  window.__azStickybarIconsActionBadgeFix=true;
-
-  function readCartCount(){
-    try{
-      var keys=['azobssCart','azShopCart','cart','azobss_cart'];
-      for(var i=0;i<keys.length;i++){
-        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
-        if(!raw)continue;
-        var data=JSON.parse(raw);
-        if(Array.isArray(data))return data.length;
-        if(Array.isArray(data.items))return data.items.reduce(function(n,x){return n+Number(x.qty||x.quantity||1);},0);
-      }
-    }catch(e){}
-    return 0;
-  }
-
-  function updateCartBadge(){
-    var n=readCartCount();
-    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
-      b.textContent=String(n);
-      b.style.display=n>0?'inline-flex':'inline-flex';
-    });
-  }
-
-  function bindButtons(){
-    document.querySelectorAll('[data-az-shop-cart-toggle],a[aria-label="Cart"]').forEach(function(a){
-      if(a.__azCartBound)return;
-      a.__azCartBound=true;
-      a.addEventListener('click',function(e){
-        if(a.getAttribute('href')==='#')e.preventDefault();
-        if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
-        if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
-        var cart=document.querySelector('#azShopCartDrawer,#cartDrawer,.az-shop-cart-drawer,[data-az-shop-cart-drawer]');
-        if(cart){
-          cart.classList.toggle('open');
-          cart.classList.toggle('is-open');
-          cart.hidden=false;
-          return;
-        }
-        window.location.href='/Software-Tools/';
-      });
-    });
-
-    document.querySelectorAll('a[aria-label="Notifications"]').forEach(function(a){
-      if(!a.dataset.azGlobalBellPatched){a.setAttribute('href','#');}
-    });
-
-    document.querySelectorAll('a[aria-label="Likes"]').forEach(function(a){
-      a.setAttribute('href','/likes/');
-    });
-
-    
-  }
-
-  function run(){
-    bindButtons();
-    updateCartBadge();
-  }
-
-  document.addEventListener('DOMContentLoaded',run);
-  if(document.readyState!=='loading')run();
-  window.addEventListener('storage',run);
-  window.addEventListener('focus',run);
-  setInterval(updateCartBadge,1500);
-})();
-</script>
-
-
 <div class="az-reg-modal" id="azRegEditModal">
   <div class="az-reg-dialog">
     <h2>Edit Registered User</h2>
@@ -2996,6 +2923,20 @@ import { getFirestore, collection, getDocs, query, orderBy, limit } from 'https:
   }, true);
 })();
 </script>
+
+
+<style id="azobss-admin-staff-cart-badge-flicker-stop">
+body[data-dashboard-page="admin"] .az-shop-cart-badge,
+body[data-dashboard-page="staff"] .az-shop-cart-badge{
+  transition:none!important;
+  animation:none!important;
+  will-change:auto!important;
+}
+body[data-dashboard-page="admin"] .az-shop-cart-badge.is-show,
+body[data-dashboard-page="staff"] .az-shop-cart-badge.is-show{
+  display:inline-flex!important;
+}
+</style>
 
 </body>
 </html>
