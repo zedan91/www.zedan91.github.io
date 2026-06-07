@@ -219,8 +219,7 @@ body::-webkit-scrollbar-corner{
 </a>
 <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/"><span class="az-notification-badge" data-az-notification-badge>0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
-<a aria-label="Chat" class="market-icon-btn" href="#" data-az-open-support="1">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+<a aria-label="Chat" class="market-icon-btn" href="#" data-az-open-support="1"><span class="az-message-badge" data-az-message-badge>0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
 </a>
 </div>
 </div>
@@ -1111,6 +1110,129 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   document.addEventListener('click', e=>{
     const bell=e.target.closest('a[aria-label="Notifications"]');
     if(!bell) return;
+    setTimeout(refreshBadge, 800);
+  }, true);
+})();
+</script>
+
+
+<style id="azobss-admin-staff-message-badge-visible-fix">
+body[data-dashboard-page="admin"] a[aria-label="Chat"],
+body[data-dashboard-page="staff"] a[aria-label="Chat"]{
+  position:relative!important;
+}
+body[data-dashboard-page="admin"] [data-az-message-badge],
+body[data-dashboard-page="staff"] [data-az-message-badge],
+body[data-dashboard-page="admin"] .az-message-badge,
+body[data-dashboard-page="staff"] .az-message-badge{
+  position:absolute!important;
+  top:-6px!important;
+  right:-7px!important;
+  min-width:18px!important;
+  height:18px!important;
+  padding:0 5px!important;
+  border-radius:999px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:#22c55e!important;
+  color:#fff!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  line-height:18px!important;
+  box-shadow:0 0 0 2px rgba(2,6,23,.95)!important;
+  z-index:20!important;
+  pointer-events:none!important;
+}
+body[data-dashboard-page="admin"] [data-az-message-badge].is-visible,
+body[data-dashboard-page="staff"] [data-az-message-badge].is-visible{
+  display:inline-flex!important;
+}
+</style>
+
+
+<script type="module" id="azobss-admin-staff-message-badge-firestore-fix">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getFirestore, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+(function(){
+  if(window.__azobssAdminStaffMessageBadgeFirestoreFix) return;
+  window.__azobssAdminStaffMessageBadgeFirestoreFix = true;
+
+  const firebaseConfig={
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+  const db=getFirestore(app);
+
+  function ensureBadge(){
+    const chat=document.querySelector('a[aria-label="Chat"]');
+    if(!chat) return null;
+    chat.setAttribute('href','#');
+    chat.removeAttribute('target');
+    chat.removeAttribute('rel');
+    chat.style.position='relative';
+
+    let badge=chat.querySelector('[data-az-message-badge]');
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='az-message-badge';
+      badge.setAttribute('data-az-message-badge','1');
+      badge.textContent='0';
+      chat.insertBefore(badge, chat.firstChild);
+    }
+    return badge;
+  }
+
+  function setBadge(n){
+    const badge=ensureBadge();
+    if(!badge) return;
+    n=Number(n||0);
+    if(!Number.isFinite(n) || n<0) n=0;
+    badge.textContent=n>99?'99+':String(n);
+    badge.classList.toggle('is-visible', n>0);
+    badge.style.display=n>0?'inline-flex':'none';
+  }
+
+  function isUnreadSupportMessage(x){
+    const status=String(x.status||'open').toLowerCase();
+    const reply=String(x.reply||x.adminReply||x.response||'').trim();
+    const readByAdmin = x.readByAdmin === true || x.adminRead === true || x.isRead === true;
+    if(status === 'closed' || status === 'done' || status === 'resolved') return false;
+    if(!reply) return true;
+    return !readByAdmin && (status === 'open' || status === 'pending' || status === 'new');
+  }
+
+  async function refreshBadge(){
+    try{
+      const snap=await getDocs(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(99)));
+      let count=0;
+      snap.forEach(d=>{
+        const x=d.data()||{};
+        if(isUnreadSupportMessage(x)) count++;
+      });
+      setBadge(count);
+    }catch(err){
+      console.warn('AZOBSS message badge failed:',err);
+      setBadge(0);
+    }
+  }
+
+  window.azobssRefreshMessageBadge = refreshBadge;
+
+  document.addEventListener('DOMContentLoaded',()=>{ ensureBadge(); refreshBadge(); });
+  window.addEventListener('load',()=>{ ensureBadge(); refreshBadge(); });
+  window.addEventListener('focus', refreshBadge);
+  if(document.readyState!=='loading'){ ensureBadge(); refreshBadge(); }
+
+  document.addEventListener('click', e=>{
+    const chat=e.target.closest('a[aria-label="Chat"]');
+    if(!chat) return;
     setTimeout(refreshBadge, 800);
   }, true);
 })();
