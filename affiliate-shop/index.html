@@ -2870,6 +2870,77 @@ html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
 })();
 </script>
 
+
+<style id="azobss-hide-whatsapp-anchor-admin-only-final">
+/* Admin only: hide the whole WhatsApp anchor, not only the green circle span */
+body.is-admin .market-nav a[href*="alvo.chat"],
+body.az-role-is-admin .market-nav a[href*="alvo.chat"],
+body[data-role="admin"] .market-nav a[href*="alvo.chat"],
+body[data-dashboard-page="admin"] .market-nav a[href*="alvo.chat"],
+body.is-admin .market-nav a:has(.nav-whatsapp-circle),
+body.az-role-is-admin .market-nav a:has(.nav-whatsapp-circle),
+body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle),
+body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle){
+  display:none!important;
+  visibility:hidden!important;
+  width:0!important;
+  min-width:0!important;
+  height:0!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+}
+</style>
+
+
+<script id="azobss-hide-whatsapp-anchor-admin-only-final-script">
+(function(){
+  if(window.__azobssHideWhatsappAnchorAdminOnlyFinal) return;
+  window.__azobssHideWhatsappAnchorAdminOnlyFinal = true;
+
+  function isAdminNow(){
+    try{
+      if(document.body.getAttribute('data-dashboard-page') === 'admin') return true;
+      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
+      if(document.body.getAttribute('data-role') === 'admin') return true;
+      var name = String((document.querySelector('#signedInName')||{}).textContent || '').trim().toLowerCase();
+      if(name === 'zedan91') return true;
+    }catch(e){}
+    return false;
+  }
+
+  function apply(){
+    if(!isAdminNow()) return;
+    document.querySelectorAll('.market-nav a[href*="alvo.chat"], .market-nav a').forEach(function(a){
+      if(!a.matches('a[href*="alvo.chat"]') && !a.querySelector('.nav-whatsapp-circle')) return;
+      a.style.setProperty('display','none','important');
+      a.style.setProperty('visibility','hidden','important');
+      a.style.setProperty('width','0','important');
+      a.style.setProperty('min-width','0','important');
+      a.style.setProperty('height','0','important');
+      a.style.setProperty('min-height','0','important');
+      a.style.setProperty('padding','0','important');
+      a.style.setProperty('margin','0','important');
+      a.style.setProperty('border','0','important');
+      a.style.setProperty('overflow','hidden','important');
+      a.style.setProperty('pointer-events','none','important');
+      a.setAttribute('aria-hidden','true');
+      a.tabIndex = -1;
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', apply);
+  if(document.readyState !== 'loading') apply();
+  window.addEventListener('focus', apply);
+  setTimeout(apply,300);
+  setTimeout(apply,900);
+  setTimeout(apply,1800);
+})();
+</script>
+
 </body>
 </html>
 
