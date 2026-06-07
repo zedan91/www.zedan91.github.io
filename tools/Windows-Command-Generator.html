@@ -165,7 +165,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
   .market-main-row{gap:6px!important;}
   .market-brand{flex-basis:138px!important;width:138px!important;min-width:138px!important;max-width:138px!important;height:36px!important;}
   .market-nav a,.market-nav button{height:36px!important;min-height:36px!important;padding:0 11px!important;font-size:13px!important;}
-  .market-nav a:has(.nav-whatsapp-circle){width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:32px!important;min-width:32px!important;max-width:32px!important;height:32px!important;}
   .market-icon-btn{width:26px!important;}
 }
 </style>
@@ -1008,10 +1008,10 @@ body.az-role-is-admin .market-user-tools a[aria-label="Chat"],
 body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   display:inline-flex!important;
   visibility:visible!important;
-  width:40px!important;
-  min-width:40px!important;
-  height:40px!important;
-  min-height:40px!important;
+  width:32px!important;
+  min-width:32px!important;
+  height:32px!important;
+  min-height:32px!important;
   padding:0!important;
   margin:0!important;
   opacity:1!important;
@@ -2538,10 +2538,10 @@ html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
     document.querySelectorAll('.market-user-tools a[aria-label="Chat"]').forEach(function(el){
       el.style.setProperty('display','inline-flex','important');
       el.style.setProperty('visibility','visible','important');
-      el.style.setProperty('width','40px','important');
-      el.style.setProperty('min-width','40px','important');
-      el.style.setProperty('height','40px','important');
-      el.style.setProperty('min-height','40px','important');
+      el.style.setProperty('width','32px','important');
+      el.style.setProperty('min-width','32px','important');
+      el.style.setProperty('height','32px','important');
+      el.style.setProperty('min-height','32px','important');
       el.style.setProperty('padding','0','important');
       el.style.setProperty('margin','0','important');
       el.style.setProperty('opacity','1','important');
@@ -2573,6 +2573,90 @@ html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
   setTimeout(apply,200);
   setTimeout(apply,700);
   setTimeout(apply,1500);
+})();
+</script>
+
+
+<style id="azobss-admin-chat-spacing-match-bell-final">
+/* Admin: make Chat/Support icon spacing match Bell/Notification */
+body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"],
+body.is-admin .market-user-tools a[aria-label="Chat"],
+body.az-role-is-admin .market-user-tools a[aria-label="Chat"],
+body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
+  width:32px!important;
+  min-width:32px!important;
+  max-width:32px!important;
+  height:32px!important;
+  min-height:32px!important;
+  max-height:32px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  overflow:visible!important;
+}
+body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg,
+body.is-admin .market-user-tools a[aria-label="Chat"] svg,
+body.az-role-is-admin .market-user-tools a[aria-label="Chat"] svg,
+body[data-role="admin"] .market-user-tools a[aria-label="Chat"] svg{
+  width:23px!important;
+  height:23px!important;
+}
+</style>
+
+
+<script id="azobss-admin-chat-spacing-match-bell-final-script">
+(function(){
+  if(window.__azobssAdminChatSpacingMatchBellFinal) return;
+  window.__azobssAdminChatSpacingMatchBellFinal = true;
+
+  function isAdminNow(){
+    try{
+      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
+      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
+      if(document.body.getAttribute('data-role')==='admin') return true;
+      var signed=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
+      var uname=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
+      if(signed==='zedan91' || uname.indexOf('zedan91')!==-1) return true;
+    }catch(e){}
+    return false;
+  }
+
+  function apply(){
+    if(!isAdminNow()) return;
+    document.querySelectorAll('.market-user-tools a[aria-label="Chat"]').forEach(function(el){
+      el.style.setProperty('display','inline-flex','important');
+      el.style.setProperty('visibility','visible','important');
+      el.style.setProperty('width','32px','important');
+      el.style.setProperty('min-width','32px','important');
+      el.style.setProperty('max-width','32px','important');
+      el.style.setProperty('height','32px','important');
+      el.style.setProperty('min-height','32px','important');
+      el.style.setProperty('max-height','32px','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('opacity','1','important');
+      el.style.setProperty('pointer-events','auto','important');
+      el.style.setProperty('overflow','visible','important');
+      el.removeAttribute('aria-hidden');
+      el.tabIndex=0;
+      var svg=el.querySelector('svg');
+      if(svg){
+        svg.style.setProperty('width','23px','important');
+        svg.style.setProperty('height','23px','important');
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',apply);
+  if(document.readyState!=='loading') apply();
+  window.addEventListener('focus',apply);
+  setTimeout(apply,200);
+  setTimeout(apply,800);
 })();
 </script>
 
