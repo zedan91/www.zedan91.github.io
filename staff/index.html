@@ -872,65 +872,6 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 })();
 </script>
 
-<script id="azobss-admin-staff-chat-direct-support-trigger">
-(function(){
-  if(window.__azobssAdminStaffChatDirectSupportTrigger) return;
-  window.__azobssAdminStaffChatDirectSupportTrigger = true;
-
-  function openAzSupport(){
-    var modal = document.getElementById('azSupportModal');
-    if(modal){
-      modal.classList.add('is-open');
-      modal.removeAttribute('hidden');
-      modal.hidden = false;
-      return true;
-    }
-
-    if(typeof window.azobssLoadSupportMessages === 'function'){
-      try{ window.azobssLoadSupportMessages(); }catch(e){}
-    }
-
-    // If modal script has not created the modal yet, wait a moment then try again.
-    setTimeout(function(){
-      var m = document.getElementById('azSupportModal');
-      if(m){
-        m.classList.add('is-open');
-        m.removeAttribute('hidden');
-        m.hidden = false;
-      }
-    }, 150);
-
-    return false;
-  }
-
-  function bindChat(){
-    document.querySelectorAll('a[aria-label="Chat"], .market-icon-btn[aria-label="Chat"]').forEach(function(a){
-      a.setAttribute('href', '#');
-      a.removeAttribute('target');
-      a.removeAttribute('rel');
-      a.dataset.azSupportChatDirect = '1';
-
-      if(a.dataset.azSupportChatBound === '1') return;
-      a.dataset.azSupportChatBound = '1';
-
-      a.addEventListener('click', function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        openAzSupport();
-      }, true);
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', bindChat);
-  window.addEventListener('load', bindChat);
-  if(document.readyState !== 'loading') bindChat();
-  setTimeout(bindChat, 500);
-  setTimeout(bindChat, 1500);
-})();
-</script>
-
-
 <style id="azobss-admin-staff-support-popup-position-fix">
 /* Admin/Staff only: make Contact Admin / Support behave like top-right panel, not center modal */
 body[data-dashboard-page="admin"] #azSupportModal,
@@ -989,5 +930,77 @@ body[data-dashboard-page="staff"] #azSupportModal .azobss-lite-textarea{
   }
 }
 </style>
+
+
+<script id="azobss-admin-staff-chat-toggle-support-popup-fix">
+(function(){
+  if(window.__azobssAdminStaffChatToggleSupportPopupFix) return;
+  window.__azobssAdminStaffChatToggleSupportPopupFix = true;
+
+  function getModal(){
+    return document.getElementById('azSupportModal');
+  }
+
+  function isOpen(modal){
+    return !!(modal && modal.classList.contains('is-open'));
+  }
+
+  function openModal(modal){
+    if(!modal) return false;
+    modal.classList.add('is-open');
+    modal.removeAttribute('hidden');
+    modal.hidden = false;
+    if(typeof window.azobssLoadSupportMessages === 'function'){
+      try{ window.azobssLoadSupportMessages(); }catch(e){}
+    }
+    return true;
+  }
+
+  function closeModal(modal){
+    if(!modal) return false;
+    modal.classList.remove('is-open','open','active');
+    return true;
+  }
+
+  function toggleSupport(){
+    var modal = getModal();
+    if(modal){
+      if(isOpen(modal)) return closeModal(modal);
+      return openModal(modal);
+    }
+
+    setTimeout(function(){
+      var m = getModal();
+      if(m) openModal(m);
+    }, 150);
+
+    return false;
+  }
+
+  function bindChat(){
+    document.querySelectorAll('a[aria-label="Chat"], .market-icon-btn[aria-label="Chat"]').forEach(function(a){
+      a.setAttribute('href','#');
+      a.removeAttribute('target');
+      a.removeAttribute('rel');
+
+      if(a.dataset.azSupportChatToggleBound === '1') return;
+      a.dataset.azSupportChatToggleBound = '1';
+
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        toggleSupport();
+      }, true);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', bindChat);
+  window.addEventListener('load', bindChat);
+  if(document.readyState !== 'loading') bindChat();
+  setTimeout(bindChat, 500);
+  setTimeout(bindChat, 1500);
+})();
+</script>
 
 </body></html>
