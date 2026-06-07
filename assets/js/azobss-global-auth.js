@@ -1,4 +1,14 @@
 
+/* AZOBSS Firestore Safe Mode 036 */
+(function(){
+  if(window.__azobssFirestoreSafeModeGlobal036) return;
+  window.__azobssFirestoreSafeModeGlobal036 = true;
+  window.AZOBSS_FIRESTORE_SAFE_MODE = true;
+  window.AZOBSS_BADGE_REFRESH_MIN_MS = window.AZOBSS_BADGE_REFRESH_MIN_MS || 60000;
+  window.AZOBSS_STATS_REFRESH_MIN_MS = window.AZOBSS_STATS_REFRESH_MIN_MS || 120000;
+})();
+
+
 // AZOBSS: Load Google reCAPTCHA in explicit mode so multiple widgets inside the auth modal can be tracked reliably.
 window.__AZOBSS_RECAPTCHA_WIDGETS__ = window.__AZOBSS_RECAPTCHA_WIDGETS__ || [];
 window.azobssRecaptchaReady = function(){

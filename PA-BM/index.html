@@ -8279,6 +8279,53 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 }
 </style>
 
+
+<script id="azobss-firestore-safe-mode-036">
+(function(){
+  if(window.__azobssFirestoreSafeMode036) return;
+  window.__azobssFirestoreSafeMode036 = true;
+
+  // Global safe mode: reduce repeated Firestore reads caused by stacked page patches.
+  // This does NOT disable login/cart/payment. It mainly throttles repeated badge/stat refreshes.
+  window.AZOBSS_FIRESTORE_SAFE_MODE = true;
+  window.AZOBSS_BADGE_REFRESH_MIN_MS = 60000;   // notification/message/cart badge refresh max once per minute
+  window.AZOBSS_STATS_REFRESH_MIN_MS = 120000;  // admin/staff stats max once per 2 minutes
+
+  var last = Object.create(null);
+  window.azobssSafeRun = function(key, minMs, fn){
+    try{
+      var now = Date.now();
+      minMs = Number(minMs || 60000);
+      if(last[key] && (now - last[key] < minMs)) return;
+      last[key] = now;
+      if(typeof fn === 'function') return fn();
+    }catch(e){}
+  };
+
+  function patchTimers(){
+    try{
+      if(window.__azobssSafeModeTimersPatched) return;
+      window.__azobssSafeModeTimersPatched = true;
+      var nativeSetInterval = window.setInterval;
+      window.setInterval = function(fn, delay){
+        try{
+          var s = String(fn || '');
+          var d = Number(delay || 0);
+          if(d > 0 && d < 30000 && (
+            /notification|support|message|badge|online|presence|cart|like|purchase|user/i.test(s)
+          )){
+            delay = 60000;
+          }
+        }catch(e){}
+        return nativeSetInterval.apply(this, arguments);
+      };
+    }catch(e){}
+  }
+
+  patchTimers();
+})();
+</script>
+
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -13153,7 +13200,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge,15000);
+  setInterval(updateBadge, 60000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();
@@ -13861,89 +13908,6 @@ body #userDropdown button.user-dropdown-item:hover{
   }
 }
 </style>
-
-
-<script id="azobss-pabm-cart-badge-count-fix">
-(function(){
-  if(window.__azobssPabmCartBadgeCountFix) return;
-  window.__azobssPabmCartBadgeCountFix = true;
-
-  function countRaw(raw){
-    if(!raw) return 0;
-    try{
-      var data=JSON.parse(raw);
-      if(Array.isArray(data)){
-        return data.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
-      }
-      if(Array.isArray(data.items)){
-        return data.items.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
-      }
-    }catch(e){}
-    return 0;
-  }
-
-  function countCart(){
-    var best=0;
-    try{
-      var keys=[
-        window.__azobssCurrentCartKey,
-        'azobss_shop_cart_guest_v1',
-        'azobssCart',
-        'azShopCart',
-        'cart',
-        'azobss_cart'
-      ].filter(Boolean);
-      keys.forEach(function(k){
-        best=Math.max(best,countRaw(localStorage.getItem(k)||sessionStorage.getItem(k)));
-      });
-      for(var i=0;i<localStorage.length;i++){
-        var key=localStorage.key(i)||'';
-        if(/^azobss_shop_cart_user_.+_v1$/.test(key)){
-          best=Math.max(best,countRaw(localStorage.getItem(key)));
-        }
-      }
-    }catch(e){}
-    return best;
-  }
-
-  function update(){
-    var n=countCart();
-    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
-      b.textContent=n>99?'99+':String(n);
-      if(n>0){
-        b.classList.add('is-show');
-        b.style.display='inline-flex';
-      }else{
-        b.classList.remove('is-show');
-        b.style.display='none';
-      }
-    });
-  }
-
-  function bindCart(){
-    document.querySelectorAll('a[aria-label="Cart"][data-az-shop-cart-toggle]').forEach(function(a){
-      if(a.dataset.azPabmCartBound==='1') return;
-      a.dataset.azPabmCartBound='1';
-      a.addEventListener('click',function(e){
-        e.preventDefault();
-        if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
-        if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
-        window.location.href='/Software-Tools/';
-      });
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',function(){bindCart();update();});
-  if(document.readyState!=='loading'){bindCart();update();}
-  window.addEventListener('storage',update);
-  window.addEventListener('focus',update);
-  window.addEventListener('azobss-shop-cart-updated',update);
-  setTimeout(update,300);
-  setTimeout(update,1200);
-})();
-</script>
-
-
 
 
 <script id="azobss-admin-whatsapp-clean-updater">
