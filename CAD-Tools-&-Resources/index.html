@@ -1900,6 +1900,73 @@ body::-webkit-scrollbar-corner{
   display:none!important;
 }
 </style>
+<style id="azobss-menu-ui-standard-fix">
+
+/* AZOBSS GLOBAL MENU ICON + DROPDOWN UI STANDARD FIX */
+.azobss-menu-icon,
+.az-menu-icon,
+.profile-menu-icon{
+  display:inline-flex!important;
+  width:1.35em!important;
+  min-width:1.35em!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin-right:7px!important;
+  line-height:1!important;
+}
+.profile-dropdown a,
+.profile-dropdown button,
+.profile-menu a,
+.profile-menu button,
+.user-menu a,
+.user-menu button,
+.account-menu a,
+.account-menu button,
+.azobss-profile-menu a,
+.azobss-profile-menu button,
+.az-profile-menu a,
+.az-profile-menu button{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:36px!important;
+  padding:9px 14px!important;
+  border-radius:10px!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+}
+.profile-dropdown a:hover,
+.profile-dropdown button:hover,
+.profile-menu a:hover,
+.profile-menu button:hover,
+.user-menu a:hover,
+.user-menu button:hover,
+.account-menu a:hover,
+.account-menu button:hover,
+.azobss-profile-menu a:hover,
+.azobss-profile-menu button:hover,
+.az-profile-menu a:hover,
+.az-profile-menu button:hover{
+  background:rgba(37,99,235,.18)!important;
+}
+.sidebar a,
+.sidebar button,
+.admin-sidebar a,
+.admin-sidebar button,
+.staff-sidebar a,
+.staff-sidebar button,
+.admin-nav a,
+.admin-nav button,
+.staff-nav a,
+.staff-nav button{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+}
+
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1910,12 +1977,12 @@ body::-webkit-scrollbar-corner{
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
 <a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
-<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
-<a href="/Software-Tools/">Software</a>
-<a  href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
-<a href="/affiliate-shop/">Affiliate Shop</a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">📄 PA / BM</a>
+<a href="/Software-Tools/">💻 Software</a>
+<a  href="/CAD-Tools-&amp;-Resources/">📐 CAD Tools</a>
+<a href="/affiliate-shop/">🛒 Affiliate Shop</a>
 <a href="/lucky-draw/">🎁 Lucky Draw</a>
-<a href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a></nav>
+<a href="/tools/">🛠️ Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="🛠️ Admin Dashboard" aria-label="🛠️ Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="👨‍💼 Staff Dashboard" aria-label="👨‍💼 Staff Dashboard">🧑‍💼</a></nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
@@ -1932,14 +1999,14 @@ body::-webkit-scrollbar-corner{
 <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log out</button></div>
 </div>
-<a aria-label="Likes" class="market-icon-btn" href="/likes/">
+<a aria-label="❤️ Likes" class="market-icon-btn" href="/likes/">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 </a>
 <a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
 <span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
-<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
+<a aria-label="🔔 Notifications" class="market-icon-btn" href="/PA-BM/#request">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
@@ -2842,7 +2909,7 @@ return;
   const getCartKey = () => window.__azobssCurrentCartKey || 'azobss_shop_cart_guest_v1';
   const isShopPage = () => /\/(Software-Tools|CAD-Tools-&-Resources)\/?/i.test(location.pathname) || document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.cad-card-grid,.cad-tools-shop');
   const isCADPage = () => /CAD-Tools-&-Resources/i.test(location.pathname) || !!document.querySelector('.cad-tools-shop,.cad-card-grid');
-  const sourceName = () => isCADPage() ? 'CAD Tools' : 'Software';
+  const sourceName = () => isCADPage() ? '📐 CAD Tools' : '💻 Software';
   const escText = s => String(s||'').replace(/\s+/g,' ').trim();
   const readCart = () => { try { return JSON.parse(localStorage.getItem(getCartKey())||'[]').filter(Boolean); } catch(e){ return []; } };
   const moneyText = (card) => {
@@ -3324,7 +3391,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
     if(iconEls.length>=2){
       const chat=iconEls[iconEls.length-1], bell=iconEls[iconEls.length-2];
       if(bell && bell.dataset.azCleanBell!=='1'){
-        bell.dataset.azCleanBell='1'; bell.title='Notifications';
+        bell.dataset.azCleanBell='1'; bell.title='🔔 Notifications';
         bell.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal('azBellModal');loadNotifications();},true);
       }
       if(chat && chat.dataset.azCleanChat!=='1'){
@@ -3378,7 +3445,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   const SEEN_KEY = 'azobss_notifications_seen_at_v2';
 
   function getBell(){
-    let bell = document.querySelector('[title="Notifications"][data-az-clean-bell="1"],[title="Notifications"]');
+    let bell = document.querySelector('[title="🔔 Notifications"][data-az-clean-bell="1"],[title="🔔 Notifications"]');
     if(bell) return bell;
 
     const candidates=[...document.querySelectorAll('header button,header a,.topbar button,.topbar a,.floating-nav button,.floating-nav a,.market-icon-btn,.nav-icon,.icon-btn,[role="button"]')].filter(el=>{
@@ -3741,7 +3808,7 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   function cartPanel(){return qs('.az-shop-cart-panel,#azShopCartPanel,#shopCartPanel,[data-az-shop-cart-panel]');}
 
   function isBellBtn(el){
-    return !!(el && el.closest && el.closest('[title="Notifications"],[aria-label="Notifications"]'));
+    return !!(el && el.closest && el.closest('[title="🔔 Notifications"],[aria-label="🔔 Notifications"]'));
   }
 
   function isChatBtn(el){
@@ -3971,7 +4038,7 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
     const opt=document.createElement('option');
     opt.value='software';
-    opt.textContent='Software';
+    opt.textContent='💻 Software';
 
     const mobile=[...sel.options].find(o=>(o.textContent||'').trim().toLowerCase()==='mobile & accessories');
     if(mobile) sel.insertBefore(opt,mobile);
