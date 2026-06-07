@@ -997,12 +997,14 @@ body[data-dashboard-page="staff"] #azSupportModal .azobss-lite-textarea{
 </script>
 
 
-<style id="azobss-admin-staff-notification-badge-visible-fix">
-/* Admin/Staff only: show notification badge on bell icon */
+
+<style id="azobss-admin-staff-notification-badge-strong-visible-fix">
 body[data-dashboard-page="admin"] a[aria-label="Notifications"],
 body[data-dashboard-page="staff"] a[aria-label="Notifications"]{
   position:relative!important;
 }
+body[data-dashboard-page="admin"] [data-az-notification-badge],
+body[data-dashboard-page="staff"] [data-az-notification-badge],
 body[data-dashboard-page="admin"] .az-notification-badge,
 body[data-dashboard-page="staff"] .az-notification-badge{
   position:absolute!important;
@@ -1012,7 +1014,6 @@ body[data-dashboard-page="staff"] .az-notification-badge{
   height:18px!important;
   padding:0 5px!important;
   border-radius:999px!important;
-  display:none!important;
   align-items:center!important;
   justify-content:center!important;
   background:#ef4444!important;
@@ -1021,91 +1022,96 @@ body[data-dashboard-page="staff"] .az-notification-badge{
   font-weight:900!important;
   line-height:18px!important;
   box-shadow:0 0 0 2px rgba(2,6,23,.95)!important;
-  z-index:5!important;
+  z-index:20!important;
+  pointer-events:none!important;
 }
-body[data-dashboard-page="admin"] .az-notification-badge.is-visible,
-body[data-dashboard-page="staff"] .az-notification-badge.is-visible{
+body[data-dashboard-page="admin"] [data-az-notification-badge].is-visible,
+body[data-dashboard-page="staff"] [data-az-notification-badge].is-visible{
   display:inline-flex!important;
 }
 </style>
 
 
-<script id="azobss-admin-staff-notification-badge-count-fix">
+<script type="module" id="azobss-admin-staff-notification-badge-firestore-fix">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
 (function(){
-  if(window.__azAdminStaffNotificationBadgeFix) return;
-  window.__azAdminStaffNotificationBadgeFix = true;
+  if(window.__azobssAdminStaffNotifBadgeFirestoreFix) return;
+  window.__azobssAdminStaffNotifBadgeFirestoreFix = true;
+
+  const firebaseConfig={
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
+
+  const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+  const db=getFirestore(app);
 
   function ensureBadge(){
-    var bell = document.querySelector('a[aria-label="Notifications"]');
+    const bell=document.querySelector('a[aria-label="Notifications"]');
     if(!bell) return null;
-    var badge = bell.querySelector('.az-notification-badge');
+    bell.setAttribute('href','#');
+    bell.removeAttribute('target');
+    bell.removeAttribute('rel');
+    bell.style.position='relative';
+
+    let badge=bell.querySelector('[data-az-notification-badge]');
     if(!badge){
-      badge = document.createElement('span');
-      badge.className = 'az-notification-badge';
+      badge=document.createElement('span');
+      badge.className='az-notification-badge';
       badge.setAttribute('data-az-notification-badge','1');
-      badge.textContent = '0';
-      bell.insertBefore(badge, bell.firstChild);
+      bell.insertBefore(badge,bell.firstChild);
     }
     return badge;
   }
 
   function setBadge(n){
-    var badge = ensureBadge();
+    const badge=ensureBadge();
     if(!badge) return;
-    n = Number(n || 0);
-    if(!Number.isFinite(n) || n < 0) n = 0;
-    badge.textContent = n > 99 ? '99+' : String(n);
-    badge.classList.toggle('is-visible', n > 0);
+    n=Number(n||0);
+    if(!Number.isFinite(n) || n<0) n=0;
+    badge.textContent=n>99?'99+':String(n);
+    badge.classList.toggle('is-visible', n>0);
+    badge.style.display=n>0?'inline-flex':'none';
   }
 
   async function refreshBadge(){
     try{
-      if(window.firebase && window.firebase.firestore){
-        return;
+      let snap;
+      try{
+        snap=await getDocs(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(99)));
+      }catch(e){
+        snap=await getDocs(query(collection(db,'notifications'),limit(99)));
       }
-    }catch(e){}
-
-    // Prefer existing notification list count after Mini Web notification script loads.
-    var list = document.getElementById('azNotificationList') || document.getElementById('notificationsList');
-    if(list){
-      var items = Array.from(list.children || []).filter(function(x){
-        var t = String(x.textContent || '').trim();
-        return t && !/no notifications|unable to load/i.test(t);
+      let count=0;
+      snap.forEach(d=>{
+        const x=d.data()||{};
+        if(x.active===false) return;
+        count++;
       });
-      if(items.length) setBadge(items.length);
+      setBadge(count);
+    }catch(err){
+      console.warn('AZOBSS notification badge failed:',err);
+      setBadge(0);
     }
   }
 
-  // Hook Mini Web support notification loader if it exists.
-  function hook(){
-    if(typeof window.azobssLoadNotifications === 'function' && !window.__azNotifBadgeLoadHooked){
-      window.__azNotifBadgeLoadHooked = true;
-      var old = window.azobssLoadNotifications;
-      window.azobssLoadNotifications = async function(){
-        var r = await old.apply(this, arguments);
-        setTimeout(refreshBadge, 200);
-        return r;
-      };
-    }
-  }
+  window.azobssRefreshNotificationBadge = refreshBadge;
 
-  document.addEventListener('DOMContentLoaded', function(){
-    ensureBadge();
-    hook();
-    setTimeout(refreshBadge, 500);
-    setTimeout(refreshBadge, 1500);
-  });
-  window.addEventListener('load', function(){
-    ensureBadge();
-    hook();
-    setTimeout(refreshBadge, 500);
-  });
+  document.addEventListener('DOMContentLoaded',()=>{ ensureBadge(); refreshBadge(); });
+  window.addEventListener('load',()=>{ ensureBadge(); refreshBadge(); });
+  window.addEventListener('focus', refreshBadge);
+  if(document.readyState!=='loading'){ ensureBadge(); refreshBadge(); }
 
-  // Bell click: hide after user opens notifications, matching normal read/clear behavior visually.
-  document.addEventListener('click', function(e){
-    var bell = e.target.closest('a[aria-label="Notifications"]');
+  document.addEventListener('click', e=>{
+    const bell=e.target.closest('a[aria-label="Notifications"]');
     if(!bell) return;
-    setTimeout(function(){ setBadge(0); }, 400);
+    setTimeout(refreshBadge, 800);
   }, true);
 })();
 </script>
