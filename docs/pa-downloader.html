@@ -1,20 +1,20 @@
 
-<style id="azobss-admin-whatsapp-span-clean-hide-final">
-html.azobss-admin-cache .nav-whatsapp-circle,
-html.azobss-admin-cache a:has(.nav-whatsapp-circle),
-html.azobss-admin-cache a[href*="alvo.chat"],
-body[data-dashboard-page="admin"] .nav-whatsapp-circle,
-body[data-dashboard-page="admin"] a:has(.nav-whatsapp-circle),
-body[data-dashboard-page="admin"] a[href*="alvo.chat"],
-body.is-admin .nav-whatsapp-circle,
-body.is-admin a:has(.nav-whatsapp-circle),
-body.is-admin a[href*="alvo.chat"],
-body.az-role-is-admin .nav-whatsapp-circle,
-body.az-role-is-admin a:has(.nav-whatsapp-circle),
-body.az-role-is-admin a[href*="alvo.chat"],
-body[data-role="admin"] .nav-whatsapp-circle,
-body[data-role="admin"] a:has(.nav-whatsapp-circle),
-body[data-role="admin"] a[href*="alvo.chat"]{
+<style id="azobss-hide-whatsapp-admin-only-safe-final">
+html.azobss-admin-cache .market-nav .nav-whatsapp-circle,
+html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
+html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
+body[data-dashboard-page="admin"] .market-nav .nav-whatsapp-circle,
+body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle),
+body[data-dashboard-page="admin"] .market-nav a[href*="alvo.chat"],
+body.is-admin .market-nav .nav-whatsapp-circle,
+body.is-admin .market-nav a:has(.nav-whatsapp-circle),
+body.is-admin .market-nav a[href*="alvo.chat"],
+body.az-role-is-admin .market-nav .nav-whatsapp-circle,
+body.az-role-is-admin .market-nav a:has(.nav-whatsapp-circle),
+body.az-role-is-admin .market-nav a[href*="alvo.chat"],
+body[data-role="admin"] .market-nav .nav-whatsapp-circle,
+body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle),
+body[data-role="admin"] .market-nav a[href*="alvo.chat"]{
   display:none!important;
   visibility:hidden!important;
   width:0!important;
@@ -30,6 +30,24 @@ body[data-role="admin"] a[href*="alvo.chat"]{
   overflow:hidden!important;
   pointer-events:none!important;
   opacity:0!important;
+}
+
+/* Make sure admin Chat/Support icon in right tools is never hidden by WhatsApp rules */
+body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"],
+body.is-admin .market-user-tools a[aria-label="Chat"],
+body.az-role-is-admin .market-user-tools a[aria-label="Chat"],
+body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
+  display:inline-flex!important;
+  visibility:visible!important;
+  width:40px!important;
+  min-width:40px!important;
+  height:40px!important;
+  min-height:40px!important;
+  padding:0!important;
+  margin:0!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  overflow:visible!important;
 }
 </style>
 
@@ -1756,10 +1774,11 @@ html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
 })();
 </script>
 
-<script id="azobss-admin-whatsapp-span-clean-hide-final-script">
+
+<script id="azobss-hide-whatsapp-admin-only-safe-final-script">
 (function(){
-  if(window.__azobssAdminWhatsappSpanCleanHideFinal) return;
-  window.__azobssAdminWhatsappSpanCleanHideFinal = true;
+  if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
+  window.__azobssHideWhatsappAdminOnlySafeFinal = true;
 
   function adminNow(){
     try{
@@ -1793,14 +1812,36 @@ html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
     el.tabIndex=-1;
   }
 
+  function showChat(){
+    document.querySelectorAll('.market-user-tools a[aria-label="Chat"]').forEach(function(el){
+      el.style.setProperty('display','inline-flex','important');
+      el.style.setProperty('visibility','visible','important');
+      el.style.setProperty('width','40px','important');
+      el.style.setProperty('min-width','40px','important');
+      el.style.setProperty('height','40px','important');
+      el.style.setProperty('min-height','40px','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('opacity','1','important');
+      el.style.setProperty('pointer-events','auto','important');
+      el.style.setProperty('overflow','visible','important');
+      el.removeAttribute('aria-hidden');
+      el.tabIndex=0;
+    });
+  }
+
   function apply(){
     if(!adminNow()) return;
     try{ localStorage.setItem('azobss_admin_role_cache','1'); }catch(e){}
     document.documentElement.classList.add('azobss-admin-cache');
-    document.querySelectorAll('.nav-whatsapp-circle, a[href*="alvo.chat"]').forEach(hideEl);
-    document.querySelectorAll('a').forEach(function(a){
+
+    // IMPORTANT: hide only WhatsApp inside left .market-nav, not Chat icon inside .market-user-tools
+    document.querySelectorAll('.market-nav .nav-whatsapp-circle, .market-nav a[href*="alvo.chat"]').forEach(hideEl);
+    document.querySelectorAll('.market-nav a').forEach(function(a){
       if(a.querySelector('.nav-whatsapp-circle')) hideEl(a);
     });
+
+    showChat();
   }
 
   document.addEventListener('DOMContentLoaded',apply);
