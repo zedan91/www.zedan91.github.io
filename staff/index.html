@@ -1116,6 +1116,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
 </script>
 
 
+
 <style id="azobss-admin-staff-message-badge-visible-fix">
 body[data-dashboard-page="admin"] a[aria-label="Chat"],
 body[data-dashboard-page="staff"] a[aria-label="Chat"]{
@@ -1126,19 +1127,20 @@ body[data-dashboard-page="staff"] [data-az-message-badge],
 body[data-dashboard-page="admin"] .az-message-badge,
 body[data-dashboard-page="staff"] .az-message-badge{
   position:absolute!important;
-  top:-6px!important;
-  right:-7px!important;
-  min-width:18px!important;
-  height:18px!important;
-  padding:0 5px!important;
+  top:-5px!important;
+  right:-5px!important;
+  min-width:16px!important;
+  height:16px!important;
+  padding:0 4px!important;
   border-radius:999px!important;
+  background:#ef4444!important;
+  color:#fff!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  line-height:16px!important;
+  display:none!important;
   align-items:center!important;
   justify-content:center!important;
-  background:#22c55e!important;
-  color:#fff!important;
-  font-size:11px!important;
-  font-weight:900!important;
-  line-height:18px!important;
   box-shadow:0 0 0 2px rgba(2,6,23,.95)!important;
   z-index:20!important;
   pointer-events:none!important;
@@ -1148,6 +1150,7 @@ body[data-dashboard-page="staff"] [data-az-message-badge].is-visible{
   display:inline-flex!important;
 }
 </style>
+
 
 
 <script type="module" id="azobss-admin-staff-message-badge-firestore-fix">
