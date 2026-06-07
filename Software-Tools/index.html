@@ -3120,6 +3120,18 @@ body::-webkit-scrollbar-corner{
 
 </style>
 
+
+<style id="azobss-hide-whatsapp-admin-only">
+body.is-admin .nav-whatsapp-circle,
+body.az-role-is-admin .nav-whatsapp-circle,
+body[data-role="admin"] .nav-whatsapp-circle,
+body.is-admin [aria-label="WhatsApp"],
+body.az-role-is-admin [aria-label="WhatsApp"],
+body[data-role="admin"] [aria-label="WhatsApp"]{
+  display:none!important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
