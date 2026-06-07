@@ -847,10 +847,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
         bell.dataset.azCleanBell='1'; bell.title='Notifications';
         bell.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal('azBellModal');loadNotifications();},true);
       }
-      if(chat && chat.dataset.azCleanChat!=='1'){
-        chat.dataset.azCleanChat='1'; chat.title='Contact Admin / Support';
-        chat.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal('azSupportModal');loadSupport();},true);
-      }
+      if(false && chat && chat.dataset.azCleanChat!=='1'){}
     }
   }
 
@@ -932,74 +929,71 @@ body[data-dashboard-page="staff"] #azSupportModal .azobss-lite-textarea{
 </style>
 
 
-<script id="azobss-admin-staff-chat-toggle-support-popup-fix">
-(function(){
-  if(window.__azobssAdminStaffChatToggleSupportPopupFix) return;
-  window.__azobssAdminStaffChatToggleSupportPopupFix = true;
 
-  function getModal(){
+<script id="azobss-admin-staff-chat-toggle-final-fix">
+(function(){
+  if(window.__azobssAdminStaffChatToggleFinalFix) return;
+  window.__azobssAdminStaffChatToggleFinalFix = true;
+
+  function modal(){
     return document.getElementById('azSupportModal');
   }
 
-  function isOpen(modal){
-    return !!(modal && modal.classList.contains('is-open'));
+  function setClosed(m){
+    if(!m) return;
+    m.classList.remove('is-open','open','active');
+    m.hidden = false;
+    m.removeAttribute('hidden');
   }
 
-  function openModal(modal){
-    if(!modal) return false;
-    modal.classList.add('is-open');
-    modal.removeAttribute('hidden');
-    modal.hidden = false;
+  function setOpen(m){
+    if(!m) return;
+    m.classList.add('is-open');
+    m.hidden = false;
+    m.removeAttribute('hidden');
     if(typeof window.azobssLoadSupportMessages === 'function'){
       try{ window.azobssLoadSupportMessages(); }catch(e){}
     }
-    return true;
   }
 
-  function closeModal(modal){
-    if(!modal) return false;
-    modal.classList.remove('is-open','open','active');
-    return true;
-  }
-
-  function toggleSupport(){
-    var modal = getModal();
-    if(modal){
-      if(isOpen(modal)) return closeModal(modal);
-      return openModal(modal);
+  function toggle(){
+    var m = modal();
+    if(!m){
+      setTimeout(function(){
+        var mm = modal();
+        if(mm) setOpen(mm);
+      }, 120);
+      return;
     }
-
-    setTimeout(function(){
-      var m = getModal();
-      if(m) openModal(m);
-    }, 150);
-
-    return false;
+    if(m.classList.contains('is-open')) setClosed(m);
+    else setOpen(m);
   }
 
-  function bindChat(){
+  function bind(){
     document.querySelectorAll('a[aria-label="Chat"], .market-icon-btn[aria-label="Chat"]').forEach(function(a){
       a.setAttribute('href','#');
       a.removeAttribute('target');
       a.removeAttribute('rel');
+      a.removeAttribute('data-az-open-support');
 
-      if(a.dataset.azSupportChatToggleBound === '1') return;
-      a.dataset.azSupportChatToggleBound = '1';
+      if(a.dataset.azSupportToggleFinalBound === '1') return;
+      a.dataset.azSupportToggleFinalBound = '1';
 
       a.addEventListener('click', function(e){
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
-        toggleSupport();
+        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+        toggle();
+        return false;
       }, true);
     });
   }
 
-  document.addEventListener('DOMContentLoaded', bindChat);
-  window.addEventListener('load', bindChat);
-  if(document.readyState !== 'loading') bindChat();
-  setTimeout(bindChat, 500);
-  setTimeout(bindChat, 1500);
+  document.addEventListener('DOMContentLoaded', bind);
+  window.addEventListener('load', bind);
+  if(document.readyState !== 'loading') bind();
+  setTimeout(bind, 300);
+  setTimeout(bind, 1000);
 })();
 </script>
 
