@@ -546,12 +546,13 @@ onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.'
 
 <script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>
 
-<style id="azobss-staff-dropdown-final-miniweb-match">
-/* STAFF ONLY: force profile dropdown to match Mini Web Tools exactly */
-body #userMenu{
+
+<style id="azobss-staff-dropdown-zero-spacing-final">
+/* STAFF ONLY: exact Mini Web dropdown, no extra spacing */
+body[data-dashboard-page="staff"] #userMenu{
   position:relative!important;
 }
-body #userMenu #userDropdown{
+body[data-dashboard-page="staff"] #userMenu #userDropdown{
   display:none!important;
   position:absolute!important;
   top:calc(100% + 10px)!important;
@@ -567,25 +568,29 @@ body #userMenu #userDropdown{
   box-shadow:0 18px 50px rgba(0,0,0,.58)!important;
   z-index:100001!important;
   transform:none!important;
+  gap:0!important;
 }
-body #userMenu.is-open #userDropdown,
-body #userMenu[aria-expanded="true"] #userDropdown,
-body #userDropdown.is-open{
+body[data-dashboard-page="staff"] #userMenu.is-open #userDropdown,
+body[data-dashboard-page="staff"] #userMenu[aria-expanded="true"] #userDropdown,
+body[data-dashboard-page="staff"] #userDropdown.is-open{
   display:block!important;
 }
-body #userDropdown .user-dropdown-item,
-body #userDropdown a.user-dropdown-item,
-body #userDropdown button.user-dropdown-item{
+body[data-dashboard-page="staff"] #userDropdown .user-dropdown-item,
+body[data-dashboard-page="staff"] #userDropdown a.user-dropdown-item,
+body[data-dashboard-page="staff"] #userDropdown button.user-dropdown-item{
   appearance:none!important;
   -webkit-appearance:none!important;
+  box-sizing:border-box!important;
   width:100%!important;
   display:flex!important;
   align-items:center!important;
   justify-content:flex-start!important;
   gap:10px!important;
   min-height:38px!important;
-  height:auto!important;
+  height:38px!important;
   margin:0!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
   padding:10px!important;
   border:0!important;
   outline:0!important;
@@ -598,19 +603,22 @@ body #userDropdown button.user-dropdown-item{
   text-align:left!important;
   font-size:13px!important;
   font-weight:800!important;
-  font-family:Arial,sans-serif!important;
+  font-family:inherit!important;
   line-height:1.15!important;
   cursor:pointer!important;
 }
-body #userDropdown .user-dropdown-item:hover,
-body #userDropdown a.user-dropdown-item:hover,
-body #userDropdown button.user-dropdown-item:hover{
+body[data-dashboard-page="staff"] #userDropdown .user-dropdown-item + .user-dropdown-item{
+  margin-top:0!important;
+}
+body[data-dashboard-page="staff"] #userDropdown .user-dropdown-item:hover,
+body[data-dashboard-page="staff"] #userDropdown a.user-dropdown-item:hover,
+body[data-dashboard-page="staff"] #userDropdown button.user-dropdown-item:hover{
   background:rgba(30,41,59,.9)!important;
   background-color:rgba(30,41,59,.9)!important;
   color:#fff!important;
 }
 @media (max-width:520px){
-  body #userMenu #userDropdown{
+  body[data-dashboard-page="staff"] #userMenu #userDropdown{
     position:fixed!important;
     top:92px!important;
     right:8px!important;
@@ -622,14 +630,17 @@ body #userDropdown button.user-dropdown-item:hover{
     overflow-y:auto!important;
     border-radius:14px!important;
   }
-  body #userDropdown .user-dropdown-item{
+  body[data-dashboard-page="staff"] #userDropdown .user-dropdown-item,
+  body[data-dashboard-page="staff"] #userDropdown a.user-dropdown-item,
+  body[data-dashboard-page="staff"] #userDropdown button.user-dropdown-item{
     padding:9px 10px!important;
     font-size:13px!important;
     min-height:36px!important;
+    height:36px!important;
   }
 }
 @media (max-width:380px){
-  body #userMenu #userDropdown{
+  body[data-dashboard-page="staff"] #userMenu #userDropdown{
     top:88px!important;
     right:6px!important;
     width:196px!important;
