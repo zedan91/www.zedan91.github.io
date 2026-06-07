@@ -930,22 +930,18 @@ body::-webkit-scrollbar-corner{
 </style>
 
 
-<style id="azobss-hide-whatsapp-admin-only">
-body.is-admin .nav-whatsapp-circle,
-body.az-role-is-admin .nav-whatsapp-circle,
-body[data-role="admin"] .nav-whatsapp-circle,
-body.is-admin [aria-label="WhatsApp"],
-body.az-role-is-admin [aria-label="WhatsApp"],
-body[data-role="admin"] [aria-label="WhatsApp"]{
-  display:none!important;
-}
-</style>
 
-
-
-<style id="azobss-admin-whatsapp-no-flash-css">
+<style id="azobss-admin-whatsapp-clean-hide-css">
 html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
-html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle){
+html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
+body[data-dashboard-page="admin"] .market-nav a[href*="alvo.chat"],
+body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle),
+body.is-admin .market-nav a[href*="alvo.chat"],
+body.is-admin .market-nav a:has(.nav-whatsapp-circle),
+body.az-role-is-admin .market-nav a[href*="alvo.chat"],
+body.az-role-is-admin .market-nav a:has(.nav-whatsapp-circle),
+body[data-role="admin"] .market-nav a[href*="alvo.chat"],
+body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle){
   display:none!important;
   visibility:hidden!important;
   width:0!important;
@@ -957,9 +953,10 @@ html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle){
   border:0!important;
   overflow:hidden!important;
   pointer-events:none!important;
+  opacity:0!important;
 }
 </style>
-<script id="azobss-admin-whatsapp-no-flash-early">
+<script id="azobss-admin-whatsapp-clean-early">
 (function(){
   try{
     if(localStorage.getItem('azobss_admin_role_cache')==='1'){
@@ -2360,50 +2357,26 @@ html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
 </script>
 
 
-<style id="azobss-hide-whatsapp-anchor-admin-only-final">
-/* Admin only: hide the whole WhatsApp anchor, not only the green circle span */
-body.is-admin .market-nav a[href*="alvo.chat"],
-body.az-role-is-admin .market-nav a[href*="alvo.chat"],
-body[data-role="admin"] .market-nav a[href*="alvo.chat"],
-body[data-dashboard-page="admin"] .market-nav a[href*="alvo.chat"],
-body.is-admin .market-nav a:has(.nav-whatsapp-circle),
-body.az-role-is-admin .market-nav a:has(.nav-whatsapp-circle),
-body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle),
-body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle){
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-}
-</style>
 
-
-<script id="azobss-hide-whatsapp-anchor-admin-only-final-script">
+<script id="azobss-admin-whatsapp-clean-updater">
 (function(){
-  if(window.__azobssHideWhatsappAnchorAdminOnlyFinal) return;
-  window.__azobssHideWhatsappAnchorAdminOnlyFinal = true;
+  if(window.__azobssAdminWhatsappCleanUpdater) return;
+  window.__azobssAdminWhatsappCleanUpdater = true;
 
-  function isAdminNow(){
+  function adminNow(){
     try{
-      if(document.body.getAttribute('data-dashboard-page') === 'admin') return true;
+      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
       if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
-      if(document.body.getAttribute('data-role') === 'admin') return true;
-      var name = String((document.querySelector('#signedInName')||{}).textContent || '').trim().toLowerCase();
-      if(name === 'zedan91') return true;
+      if(document.body.getAttribute('data-role')==='admin') return true;
+      var signed=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
+      var uname=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
+      if(signed==='zedan91' || uname.indexOf('zedan91')!==-1) return true;
     }catch(e){}
     return false;
   }
 
-  function apply(){
-    if(!isAdminNow()) return;
-    document.querySelectorAll('.market-nav a[href*="alvo.chat"], .market-nav a').forEach(function(a){
+  function hideWhatsapp(){
+    document.querySelectorAll('.market-nav a').forEach(function(a){
       if(!a.matches('a[href*="alvo.chat"]') && !a.querySelector('.nav-whatsapp-circle')) return;
       a.style.setProperty('display','none','important');
       a.style.setProperty('visibility','hidden','important');
@@ -2416,37 +2389,10 @@ body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle){
       a.style.setProperty('border','0','important');
       a.style.setProperty('overflow','hidden','important');
       a.style.setProperty('pointer-events','none','important');
+      a.style.setProperty('opacity','0','important');
       a.setAttribute('aria-hidden','true');
-      a.tabIndex = -1;
+      a.tabIndex=-1;
     });
-  }
-
-  document.addEventListener('DOMContentLoaded', apply);
-  if(document.readyState !== 'loading') apply();
-  window.addEventListener('focus', apply);
-  setTimeout(apply,300);
-  setTimeout(apply,900);
-  setTimeout(apply,1800);
-})();
-</script>
-
-
-<script id="azobss-admin-whatsapp-no-flash-cache-updater">
-(function(){
-  if(window.__azobssAdminWhatsappNoFlashCacheUpdater) return;
-  window.__azobssAdminWhatsappNoFlashCacheUpdater = true;
-
-  function adminNow(){
-    try{
-      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
-      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
-      if(document.body.getAttribute('data-role')==='admin') return true;
-      var name=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
-      if(name==='zedan91') return true;
-      var userName=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
-      if(userName.indexOf('zedan91')!==-1) return true;
-    }catch(e){}
-    return false;
   }
 
   function apply(){
@@ -2454,25 +2400,11 @@ body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle){
       if(adminNow()){
         localStorage.setItem('azobss_admin_role_cache','1');
         document.documentElement.classList.add('azobss-admin-cache');
-        document.querySelectorAll('.market-nav a[href*="alvo.chat"], .market-nav a').forEach(function(a){
-          if(!a.matches('a[href*="alvo.chat"]') && !a.querySelector('.nav-whatsapp-circle')) return;
-          a.style.setProperty('display','none','important');
-          a.style.setProperty('visibility','hidden','important');
-          a.style.setProperty('width','0','important');
-          a.style.setProperty('min-width','0','important');
-          a.style.setProperty('height','0','important');
-          a.style.setProperty('min-height','0','important');
-          a.style.setProperty('padding','0','important');
-          a.style.setProperty('margin','0','important');
-          a.style.setProperty('border','0','important');
-          a.style.setProperty('overflow','hidden','important');
-          a.style.setProperty('pointer-events','none','important');
-        });
+        hideWhatsapp();
       }else{
-        // Do not clear cache immediately on first paint because role text may not be ready.
         setTimeout(function(){
           if(!adminNow()){
-            try{ localStorage.removeItem('azobss_admin_role_cache'); }catch(e){}
+            localStorage.removeItem('azobss_admin_role_cache');
             document.documentElement.classList.remove('azobss-admin-cache');
           }
         },2500);
@@ -2483,7 +2415,7 @@ body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle){
   document.addEventListener('DOMContentLoaded',apply);
   if(document.readyState!=='loading') apply();
   window.addEventListener('focus',apply);
-  setTimeout(apply,150);
+  setTimeout(apply,120);
   setTimeout(apply,500);
   setTimeout(apply,1200);
 })();
