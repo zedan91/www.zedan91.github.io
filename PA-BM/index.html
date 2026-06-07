@@ -8440,57 +8440,34 @@ body::-webkit-scrollbar-corner{
 </header>
 
 
-<script id="azobss-cart-badge-quick-after-header-fix">
+
+<script type="module" id="azobss-cart-badge-firestore-fast-loader-fix">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
 (function(){
-  if(window.__azobssCartBadgeQuickAfterHeaderFix) return;
-  window.__azobssCartBadgeQuickAfterHeaderFix = true;
+  if(window.__azobssCartBadgeFirestoreFastLoaderFix) return;
+  window.__azobssCartBadgeFirestoreFastLoaderFix = true;
 
-  function countRaw(raw){
-    if(!raw) return 0;
-    try{
-      var data=JSON.parse(raw);
-      if(Array.isArray(data)){
-        return data.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
-      }
-      if(Array.isArray(data.items)){
-        return data.items.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
-      }
-    }catch(e){}
-    return 0;
-  }
+  const firebaseConfig={
+    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+    authDomain:'azobss.firebaseapp.com',
+    projectId:'azobss',
+    storageBucket:'azobss.firebasestorage.app',
+    messagingSenderId:'159277716405',
+    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+  };
 
-  function countCart(){
-    var best=0;
-    try{
-      var fixed=[
-        window.__azobssCurrentCartKey,
-        'azobss_shop_cart_guest_v1',
-        'azobssCart',
-        'azShopCart',
-        'cart',
-        'azobss_cart'
-      ].filter(Boolean);
+  const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+  const auth=getAuth(app);
+  const db=getFirestore(app);
 
-      fixed.forEach(function(k){
-        best=Math.max(best,countRaw(localStorage.getItem(k)||sessionStorage.getItem(k)));
-      });
-
-      // Important for logged-in user before Firebase Auth finishes:
-      // scan saved user cart keys directly.
-      for(var i=0;i<localStorage.length;i++){
-        var key=localStorage.key(i)||'';
-        if(/^azobss_shop_cart_user_.+_v1$/.test(key)){
-          best=Math.max(best,countRaw(localStorage.getItem(key)));
-        }
-      }
-    }catch(e){}
-    return best;
-  }
-
-  function apply(){
-    var n=countCart();
+  function setBadge(n){
+    n=Number(n||0);
+    if(!Number.isFinite(n)||n<0) n=0;
     document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
-      b.textContent=String(n);
+      b.textContent=n>99?'99+':String(n);
       if(n>0){
         b.classList.add('is-show');
         b.style.display='inline-flex';
@@ -8501,13 +8478,69 @@ body::-webkit-scrollbar-corner{
     });
   }
 
-  apply();
-  setTimeout(apply,30);
-  setTimeout(apply,100);
-  setTimeout(apply,250);
-  window.addEventListener('storage',apply);
-  window.addEventListener('focus',apply);
-  window.addEventListener('azobss-shop-cart-updated',apply);
+  function countLocalByKey(key){
+    if(!key) return 0;
+    try{
+      const raw=localStorage.getItem(key)||sessionStorage.getItem(key);
+      if(!raw) return 0;
+      const data=JSON.parse(raw);
+      if(Array.isArray(data)) return data.reduce((n,x)=>n+Number((x&&(x.qty||x.quantity))||1),0);
+      if(Array.isArray(data.items)) return data.items.reduce((n,x)=>n+Number((x&&(x.qty||x.quantity))||1),0);
+    }catch(e){}
+    return 0;
+  }
+
+  async function loadCloudCart(user){
+    if(!user||!user.uid){
+      const guest=countLocalByKey('azobss_shop_cart_guest_v1');
+      setBadge(guest);
+      return;
+    }
+
+    const userKey='azobss_shop_cart_user_'+user.uid+'_v1';
+    window.__azobssCurrentCartKey=userKey;
+
+    // show local user cart immediately, then overwrite with cloud if available
+    const localCount=countLocalByKey(userKey);
+    if(localCount>0) setBadge(localCount);
+
+    try{
+      const snap=await getDoc(doc(db,'carts',user.uid));
+      if(snap.exists()){
+        const data=snap.data()||{};
+        let n=Number(data.totalQty||0);
+        if(!n && Array.isArray(data.items)){
+          n=data.items.reduce((s,i)=>s+Number((i&&(i.qty||i.quantity))||1),0);
+        }
+        setBadge(n);
+        try{
+          if(Array.isArray(data.items)){
+            localStorage.setItem(userKey, JSON.stringify(data.items));
+          }
+        }catch(e){}
+      }else{
+        setBadge(localCount);
+      }
+    }catch(err){
+      console.warn('AZOBSS fast cart badge cloud load skipped:',err);
+      setBadge(localCount);
+    }
+  }
+
+  onAuthStateChanged(auth, user => {
+    loadCloudCart(user);
+  });
+
+  window.addEventListener('azobss-shop-cart-updated',()=>{
+    const key=window.__azobssCurrentCartKey || 'azobss_shop_cart_guest_v1';
+    setBadge(countLocalByKey(key));
+  });
+
+  // harmless local fallback for first paint
+  setBadge(Math.max(
+    countLocalByKey(window.__azobssCurrentCartKey),
+    countLocalByKey('azobss_shop_cart_guest_v1')
+  ));
 })();
 </script>
 <div class="admin-online-summary" hidden="" id="adminOnlineSummary">
