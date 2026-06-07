@@ -8997,6 +8997,43 @@ body::-webkit-scrollbar-corner{
 </style>
 </head>
 <body id="top">
+<script id="azobss-early-badge-restore-fast-fix">
+(function(){
+ try{
+   function setBadge(sel,key){
+     var v=localStorage.getItem(key)||sessionStorage.getItem(key);
+     if(v===null||v==='') return;
+     document.querySelectorAll(sel).forEach(function(b){
+       b.textContent=String(v);
+       if(Number(v)>0){
+         b.classList.add('is-show','is-visible');
+         b.style.display='inline-flex';
+       }
+     });
+   }
+   setBadge('[data-az-shop-cart-badge],.az-shop-cart-badge','azobss_last_cart_badge');
+   setBadge('[data-az-notification-badge],.az-notification-badge','azobss_last_notification_badge');
+   setBadge('[data-az-message-badge],.az-message-badge','azobss_last_message_badge');
+ }catch(e){}
+})();
+</script>
+<script id="azobss-badge-cache-save-fast-fix">
+(function(){
+ function save(){
+   try{
+     var c=document.querySelector('[data-az-shop-cart-badge],.az-shop-cart-badge');
+     if(c) localStorage.setItem('azobss_last_cart_badge',c.textContent.trim());
+     var n=document.querySelector('[data-az-notification-badge],.az-notification-badge');
+     if(n) localStorage.setItem('azobss_last_notification_badge',n.textContent.trim());
+     var m=document.querySelector('[data-az-message-badge],.az-message-badge');
+     if(m) localStorage.setItem('azobss_last_message_badge',m.textContent.trim());
+   }catch(e){}
+ }
+ setInterval(save,1000);
+ window.addEventListener('beforeunload',save);
+})();
+</script>
+
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
 <div class="azobss-topbar-inner">
 <a aria-label="AZOBSS Home" class="azobss-topbar-brand" href="/">
