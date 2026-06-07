@@ -2627,5 +2627,64 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<script id="azobss-admin-staff-chat-direct-support-trigger">
+(function(){
+  if(window.__azobssAdminStaffChatDirectSupportTrigger) return;
+  window.__azobssAdminStaffChatDirectSupportTrigger = true;
+
+  function openAzSupport(){
+    var modal = document.getElementById('azSupportModal');
+    if(modal){
+      modal.classList.add('is-open');
+      modal.removeAttribute('hidden');
+      modal.hidden = false;
+      return true;
+    }
+
+    if(typeof window.azobssLoadSupportMessages === 'function'){
+      try{ window.azobssLoadSupportMessages(); }catch(e){}
+    }
+
+    // If modal script has not created the modal yet, wait a moment then try again.
+    setTimeout(function(){
+      var m = document.getElementById('azSupportModal');
+      if(m){
+        m.classList.add('is-open');
+        m.removeAttribute('hidden');
+        m.hidden = false;
+      }
+    }, 150);
+
+    return false;
+  }
+
+  function bindChat(){
+    document.querySelectorAll('a[aria-label="Chat"], .market-icon-btn[aria-label="Chat"]').forEach(function(a){
+      a.setAttribute('href', '#');
+      a.removeAttribute('target');
+      a.removeAttribute('rel');
+      a.dataset.azSupportChatDirect = '1';
+
+      if(a.dataset.azSupportChatBound === '1') return;
+      a.dataset.azSupportChatBound = '1';
+
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        openAzSupport();
+      }, true);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', bindChat);
+  window.addEventListener('load', bindChat);
+  if(document.readyState !== 'loading') bindChat();
+  setTimeout(bindChat, 500);
+  setTimeout(bindChat, 1500);
+})();
+</script>
+
 </body>
 </html>
