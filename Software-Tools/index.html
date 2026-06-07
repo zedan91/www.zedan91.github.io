@@ -3338,6 +3338,64 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 }
 </style>
 
+
+<style id="azobss-market-nav-clean-structure-034">
+.market-nav{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  column-gap:6px!important;
+}
+.market-nav > a,
+.market-nav > button{
+  flex:0 0 auto!important;
+  margin:0!important;
+  transform:none!important;
+}
+.market-nav .azAdminDashboardBtn,
+.market-nav .azStaffDashboardBtn{
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  line-height:1!important;
+}
+.market-nav .nav-whatsapp-link{
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:0!important;
+  background:transparent!important;
+}
+.market-nav .nav-whatsapp-circle{
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3349,13 +3407,14 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 <nav aria-label="AZOBSS quick actions" class="market-nav">
 <a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
 <a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
-<a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
-<a  href="/Software-Tools/">Software</a>
+<a class="market-nav-active is-active" href="/Software-Tools/">Software</a>
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a href="/tools/">Mini Web Tools</a></nav>
+<a href="/tools/">Mini Web Tools</a>
+</nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
