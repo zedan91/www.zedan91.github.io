@@ -175,6 +175,58 @@ body::-webkit-scrollbar-corner{
 }
 </style>
 
+
+<style id="azobss-admin-staff-user-dropdown-css-match-miniweb">
+/* Match Mini Web Tools profile dropdown in Admin/Staff only */
+#userDropdown{
+  display:none;
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  min-width:220px;
+  padding:10px;
+  border:1px solid rgba(148,163,184,.25);
+  border-radius:14px;
+  background:#071020;
+  box-shadow:0 18px 45px rgba(0,0,0,.45);
+  z-index:9999;
+}
+#userMenu.is-open #userDropdown,
+#userMenu[aria-expanded="true"] #userDropdown{
+  display:block!important;
+}
+#userDropdown .user-dropdown-item,
+#userDropdown a.user-dropdown-item,
+#userDropdown button.user-dropdown-item{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  width:100%!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:9px 10px!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  color:#f8fafc!important;
+  box-shadow:none!important;
+  text-decoration:none!important;
+  text-align:left!important;
+  font:inherit!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+  cursor:pointer!important;
+}
+#userDropdown .user-dropdown-item:hover,
+#userDropdown a.user-dropdown-item:hover,
+#userDropdown button.user-dropdown-item:hover{
+  background:rgba(37,99,235,.18)!important;
+  color:#ffffff!important;
+}
+</style>
+
 </head>
 <body data-dashboard-page="staff">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
