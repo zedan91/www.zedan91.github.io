@@ -89,7 +89,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 
 <style id="azobss-pro-navbar-icons-css">
 .market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:normal;}
-
+.user-upgrade-btn{border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.14);color:#22c55e;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;}
 .market-icon-btn{display:inline-grid;place-items:center;width:28px;height:34px;color:#f8fafc;text-decoration:none;border:0;background:transparent;}
 .market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .market-icon-btn:hover{color:#22c55e;}
@@ -851,7 +851,7 @@ body::-webkit-scrollbar-corner{
 <a href="/Software-Tools/">Software</a>
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
-<a href="/lucky-draw/">🎁 Lucky Draw</a>
+<a href="/lucky-draw/">Lucky Draw</a>
 <a  href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a></nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
@@ -861,13 +861,13 @@ body::-webkit-scrollbar-corner{
 <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
-
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
-<a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My purchases</a>
-<a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
 <div class="user-dropdown-section">Account</div>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log out</button></div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
 </div>
 <a aria-label="Likes" class="market-icon-btn" href="/likes/">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
@@ -895,7 +895,7 @@ body::-webkit-scrollbar-corner{
 <div><label>Height</label><input id="height" step="any" type="number" value="154"/></div>
 <div><label>Age</label><input id="age" type="number" value="35"/></div>
 <div><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
-<div><label>📈 Activity</label><select id="activity"><option value="1.2">Low / little exercise</option><option value="1.375">Light exercise</option><option value="1.55">Moderate exercise</option><option value="1.725">Heavy exercise</option></select></div>
+<div><label>Activity</label><select id="activity"><option value="1.2">Low / little exercise</option><option value="1.375">Light exercise</option><option value="1.55">Moderate exercise</option><option value="1.725">Heavy exercise</option></select></div>
 </div><div class="result" id="result"></div></div>
 <div class="card"><h2>BMI Category Guide</h2><table class="table"><tr><th>BMI</th><th>Category</th></tr><tr><td>Below 18.5</td><td>Underweight</td></tr><tr><td>18.5 - 24.9</td><td>Normal</td></tr><tr><td>25.0 - 29.9</td><td>Overweight</td></tr><tr><td>30.0 and above</td><td>Obese</td></tr></table><p class="muted small">BMI is a general guide only. Muscle mass, body frame and health condition can affect interpretation.</p></div>
 </div>

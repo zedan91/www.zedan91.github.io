@@ -6842,7 +6842,7 @@ body.pa-bm-page #request .card {
 </style>
 <style id="azobss-pro-navbar-icons-css">
 .market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:normal;}
-
+.user-upgrade-btn{border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.14);color:#22c55e;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;}
 .market-icon-btn{display:inline-grid;place-items:center;width:28px;height:34px;color:#f8fafc;text-decoration:none;border:0;background:transparent;}
 .market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .market-icon-btn:hover{color:#22c55e;}
@@ -8126,7 +8126,7 @@ body::-webkit-scrollbar-corner{
 <a class="azobss-nav-chip" href="/Software-Tools/">Software</a>
 <a class="azobss-nav-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>
 <a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a><a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>
-<a class="azobss-nav-chip" href="/lucky-draw/">🎁 Lucky Draw</a>
+<a class="azobss-nav-chip" href="/lucky-draw/">Lucky Draw</a>
 <a class="azobss-nav-chip" href="/PA-BM/#request">Request PA / Info Lot</a>
 <a class="azobss-nav-chip" href="#contact">Contact</a>
 </div>
@@ -8388,7 +8388,7 @@ body::-webkit-scrollbar-corner{
 <a href="/Software-Tools/">Software</a>
 <a href="/CAD-Tools-&-Resources/">CAD Tools</a>
 <a href="/affiliate-shop/">Affiliate Shop</a>
-<a href="/lucky-draw/">🎁 Lucky Draw</a>
+<a href="/lucky-draw/">Lucky Draw</a>
 <a href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
 </nav>
 <div class="site-auth-actions" id="siteAuthActions">
@@ -8399,13 +8399,13 @@ body::-webkit-scrollbar-corner{
 <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
-
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
-<a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My purchases</a>
-<a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
 <div class="user-dropdown-section">Account</div>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log out</button></div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
 </div>
 <a aria-label="Likes" class="market-icon-btn" href="/likes/">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
@@ -8443,7 +8443,7 @@ body::-webkit-scrollbar-corner{
 <strong id="onlineGuestCount">0</strong>
 </div>
 <div class="admin-online-chip">
-<span>👥 Users</span>
+<span>Users</span>
 <strong id="onlineUserCount">0</strong>
 </div>
 </div>
@@ -8708,7 +8708,7 @@ body::-webkit-scrollbar-corner{
 <div class="admin-purchase-panel" id="adminPurchasePanel">
 <div class="purchase-panel-layout">
 <div>
-<h3 id="purchasePanelTitle">🧾 Purchase Records</h3>
+<h3 id="purchasePanelTitle">Purchase Records</h3>
 <p class="request-note" id="purchasePanelNote">
               Price: RM5 for 1 PA.
             </p>
@@ -8858,7 +8858,7 @@ body::-webkit-scrollbar-corner{
 </div>
 <div class="section" id="luckyDraw">
 <div class="lucky-draw-card" style="max-width:700px;text-align:center">
-<span class="lucky-draw-kicker">🎁 Lucky Draw</span>
+<span class="lucky-draw-kicker">Lucky Draw</span>
 <h2>Monthly Lucky Draw</h2>
 <p>Join our monthly lucky draw and stand a chance to win prizes.</p>
 <a class="btn orange" href="/lucky-draw/">Join Now</a>

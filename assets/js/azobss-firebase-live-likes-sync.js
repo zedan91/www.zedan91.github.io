@@ -902,11 +902,11 @@ function normalizeUserMenu() {
   if (!dropdown) return;
   dropdown.innerHTML = `
     <div class="user-dropdown-section">Buying</div>
-    <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My purchases</a>
-    <a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+    <a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
     <div class="user-dropdown-section">Account</div>
-    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
-    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log out</button>`;
+    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">Settings</button>
+    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">Log out</button>`;
 }
 
 function normalizePath(pathname) {
@@ -3777,7 +3777,7 @@ body{padding-top:58px!important;}
 .market-icon-btn svg{width:23px!important;height:23px!important;stroke:currentColor!important;fill:none!important;stroke-width:2.2!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
 .market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
 .market-icon-btn.is-likes-active svg path{fill:#ff4d6d!important;stroke:#ff4d6d!important;}
-
+.user-upgrade-btn{margin-left:4px!important;border:1px solid rgba(34,197,94,.45)!important;border-radius:999px!important;background:rgba(34,197,94,.14)!important;color:#22c55e!important;font-weight:900!important;padding:3px 8px!important;font-size:11px!important;cursor:pointer!important;}
 @media(max-width:980px){
   body{padding-top:92px!important;}
   .market-main-row{height:auto!important;min-height:48px!important;flex-wrap:wrap!important;align-content:center!important;padding:5px 0!important;}

@@ -801,73 +801,6 @@ display:none !important;
 }
 </style>
 
-<style id="azobss-menu-ui-standard-fix">
-
-/* AZOBSS GLOBAL MENU ICON + DROPDOWN UI STANDARD FIX */
-.azobss-menu-icon,
-.az-menu-icon,
-.profile-menu-icon{
-  display:inline-flex!important;
-  width:1.35em!important;
-  min-width:1.35em!important;
-  align-items:center!important;
-  justify-content:center!important;
-  margin-right:7px!important;
-  line-height:1!important;
-}
-.profile-dropdown a,
-.profile-dropdown button,
-.profile-menu a,
-.profile-menu button,
-.user-menu a,
-.user-menu button,
-.account-menu a,
-.account-menu button,
-.azobss-profile-menu a,
-.azobss-profile-menu button,
-.az-profile-menu a,
-.az-profile-menu button{
-  display:flex!important;
-  align-items:center!important;
-  gap:8px!important;
-  min-height:36px!important;
-  padding:9px 14px!important;
-  border-radius:10px!important;
-  font-weight:800!important;
-  line-height:1.15!important;
-  text-align:left!important;
-  white-space:nowrap!important;
-}
-.profile-dropdown a:hover,
-.profile-dropdown button:hover,
-.profile-menu a:hover,
-.profile-menu button:hover,
-.user-menu a:hover,
-.user-menu button:hover,
-.account-menu a:hover,
-.account-menu button:hover,
-.azobss-profile-menu a:hover,
-.azobss-profile-menu button:hover,
-.az-profile-menu a:hover,
-.az-profile-menu button:hover{
-  background:rgba(37,99,235,.18)!important;
-}
-.sidebar a,
-.sidebar button,
-.admin-sidebar a,
-.admin-sidebar button,
-.staff-sidebar a,
-.staff-sidebar button,
-.admin-nav a,
-.admin-nav button,
-.staff-nav a,
-.staff-nav button{
-  display:flex!important;
-  align-items:center!important;
-  gap:9px!important;
-}
-
-</style>
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -879,12 +812,12 @@ display:none !important;
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
 <a href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
-<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">📄 PA / BM</a>
-<a  href="/Software-Tools/">💻 Software</a>
-<a href="/CAD-Tools-&amp;-Resources/">📐 CAD Tools</a>
-<a href="/affiliate-shop/">🛒 Affiliate Shop</a>
-<a href="/lucky-draw/">🎁 Lucky Draw</a>
-<a href="/tools/">🛠️ Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="🛠️ Admin Dashboard" aria-label="🛠️ Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="👨‍💼 Staff Dashboard" aria-label="👨‍💼 Staff Dashboard">🧑‍💼</a></nav>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+<a  href="/Software-Tools/">Software</a>
+<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/affiliate-shop/">Affiliate Shop</a>
+<a href="/lucky-draw/">Lucky Draw</a>
+<a href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a></nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
 <a class="site-auth-btn" data-auth-open="login" href="#" id="siteSignInButton">Login</a>
@@ -893,22 +826,22 @@ display:none !important;
 <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
-
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
-<a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My purchases</a>
-<a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
 <div class="user-dropdown-section">Account</div>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log out</button></div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
 </div>
-<a aria-label="❤️ Likes" class="market-icon-btn" href="/likes/">
+<a aria-label="Likes" class="market-icon-btn" href="/likes/">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
 </a>
 <a aria-label="Cart" data-az-shop-cart-toggle class="market-icon-btn" href="#" data-az-shop-cart-toggle>
 <span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
-<a aria-label="🔔 Notifications" class="market-icon-btn" href="/PA-BM/">
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
@@ -938,9 +871,9 @@ display:none !important;
       <button data-tab="activity">📈 Activity</button>
       <button data-tab="support">💬 Support Inbox</button>
       <button data-tab="notifications">🔔 Notifications</button>
-      <button data-tab="purchases">🧾 Purchase Records</button>
+      <button data-tab="purchases">💰 Purchase Records</button>
       <button data-tab="payments">💳 Payments & Totals</button>
-      <button data-tab="commissions">💰 Commission Manager</button>
+      <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="lucky">🎁 Lucky Draw</button>
       <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings">⚙️ Settings</button>
@@ -952,7 +885,7 @@ display:none !important;
   <main class="main">
     <div class="topbar">
       <div class="title">
-        <h1>🛠️ Admin Dashboard</h1>
+        <h1>Admin Dashboard</h1>
         <p>Monitor users, activity, support, notifications and purchases in one clean place.</p>
       </div>
       <div class="admin-pill"><span id="adminAvatar">Z</span><span id="adminName">Admin</span></div>
@@ -971,7 +904,7 @@ display:none !important;
 
       <div class="grid">
         <div class="card"><div class="stat-label">Total Users</div><div id="statUsers" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">🟢 Online Users</div><div id="statOnline" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div>
@@ -1082,7 +1015,7 @@ display:none !important;
     </section>
 
     <section id="purchases" class="section">
-      <h2>🧾 Purchase Records</h2>
+      <h2>💰 Purchase Records</h2>
       <p class="tabs-note">Latest 50 purchase logs and summaries.</p>
       <div class="split">
         <div class="card"><h2>Purchase Logs</h2><div id="purchaseLogsList" class="list"></div></div>
@@ -1116,9 +1049,9 @@ display:none !important;
           <div class="toolbar">
             <select id="paymentCategoryFilter">
               <option value="all">All</option>
-              <option value="pabm">📄 PA/BM</option>
-              <option value="software">💻 Software</option>
-              <option value="cad">📐 CAD Tools</option>
+              <option value="pabm">PA/BM</option>
+              <option value="software">Software</option>
+              <option value="cad">CAD Tools</option>
               <option value="pending">Pending Only</option>
               <option value="paid">Paid/Verified Only</option>
             </select>
@@ -1145,7 +1078,7 @@ display:none !important;
 
 
     <section id="commissions" class="section">
-      <h2>💰 Commission Manager</h2>
+      <h2>💸 Commission Manager</h2>
       <p class="tabs-note">Admin sahaja boleh tambah, edit dan delete rekod komisen. Staff/semiAdmin hanya boleh lihat komisen sendiri di Staff Dashboard.</p>
 
       <div class="grid">
@@ -1365,9 +1298,9 @@ async function loadPayments(){
     const hay = typeRaw + ' ' + nameRaw;
 
     let category = 'Others';
-    if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = '📄 PA/BM';
-    else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad')) category = '📐 CAD Tools';
-    else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = '💻 Software';
+    if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = 'PA/BM';
+    else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad')) category = 'CAD Tools';
+    else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = 'Software';
 
     const amount = Number(x.amount || x.total || x.totalAmount || x.price || x.paymentAmount || 0) || 0;
     const status = String(x.status || x.paymentStatus || '').toLowerCase();
@@ -1380,9 +1313,9 @@ async function loadPayments(){
   const totals = {pabm:0, software:0, cad:0, all:0, pending:0, paid:0};
   records.forEach(x=>{
     totals.all += x.amount;
-    if(x.category === '📄 PA/BM') totals.pabm += x.amount;
-    if(x.category === '💻 Software') totals.software += x.amount;
-    if(x.category === '📐 CAD Tools') totals.cad += x.amount;
+    if(x.category === 'PA/BM') totals.pabm += x.amount;
+    if(x.category === 'Software') totals.software += x.amount;
+    if(x.category === 'CAD Tools') totals.cad += x.amount;
     if(x.pending) totals.pending++;
     if(x.paid) totals.paid++;
   });
@@ -1397,9 +1330,9 @@ async function loadPayments(){
 
   const filtered = records.filter(x=>{
     if(filter === 'all') return true;
-    if(filter === 'pabm') return x.category === '📄 PA/BM';
-    if(filter === 'software') return x.category === '💻 Software';
-    if(filter === 'cad') return x.category === '📐 CAD Tools';
+    if(filter === 'pabm') return x.category === 'PA/BM';
+    if(filter === 'software') return x.category === 'Software';
+    if(filter === 'cad') return x.category === 'CAD Tools';
     if(filter === 'pending') return x.pending;
     if(filter === 'paid') return x.paid;
     return true;
@@ -1431,7 +1364,7 @@ async function loadStaffRoles(){
   const snap = await safeGet(query(collection(db,'users'),limit(100)));
   const rows = [];
   const permList = [
-    ['canManageSoftware','💻','💻 Software'],
+    ['canManageSoftware','💻','Software'],
     ['canManageCAD','📐','CAD'],
     ['canViewPayments','💳','View Payments'],
     ['canApprovePayment','✅','Approve Payment'],
@@ -1609,17 +1542,17 @@ function azActivityType(x){
   const raw = String(x.type || x.event || x.action || x.category || x.collection || '').toLowerCase();
   const text = String(JSON.stringify(x)).toLowerCase();
   if(raw.includes('payment') || text.includes('payment') || text.includes('purchase')) return ['💳 Payment','az-act-payment'];
-  if(raw.includes('software') || text.includes('softwaretools') || text.includes('software')) return ['💻 Software','az-act-software'];
+  if(raw.includes('software') || text.includes('softwaretools') || text.includes('software')) return ['🔵 Software','az-act-software'];
   if(raw.includes('cad') || text.includes('cadtools') || text.includes('lisp')) return ['🟣 CAD','az-act-cad'];
   if(raw.includes('commission') || text.includes('commission')) return ['🟡 Commission','az-act-commission'];
   if(raw.includes('login') || text.includes('login')) return ['🟢 Login','az-act-login'];
-  return ['📈 Activity','az-act-default'];
+  return ['⚪ Activity','az-act-default'];
 }
 function azActivityUsername(x){
   return x.username || x.usernameKey || x.ownerUsername || x.createdByUsername || x.email || x.userEmail || x.uid || x.ownerUid || 'Unknown';
 }
 function azActivityTitle(x){
-  return x.title || x.product || x.productTitle || x.itemName || x.action || x.event || x.type || x.message || '📈 Activity';
+  return x.title || x.product || x.productTitle || x.itemName || x.action || x.event || x.type || x.message || 'Activity';
 }
 function azActivitySub(x){
   const parts = [x.status, x.amount ? ('RM'+x.amount) : '', x.productId, x.note].filter(Boolean);
@@ -2058,7 +1991,7 @@ onAuthStateChanged(auth,async user=>{
   window.__azStaffRoleFirestoreBadgeRenderer=true;
 
   const PERMS=[
-    ['canManageSoftware','💻','💻 Software'],
+    ['canManageSoftware','💻','Software'],
     ['canManageCAD','📐','CAD'],
     ['canViewPayments','💳','View Payments'],
     ['canApprovePayment','✅','Approve Payment'],
@@ -2289,11 +2222,11 @@ onAuthStateChanged(auth,async user=>{
       });
     });
 
-    document.querySelectorAll('a[aria-label="🔔 Notifications"]').forEach(function(a){
+    document.querySelectorAll('a[aria-label="Notifications"]').forEach(function(a){
       if(!a.dataset.azGlobalBellPatched){a.setAttribute('href','#');}
     });
 
-    document.querySelectorAll('a[aria-label="❤️ Likes"]').forEach(function(a){
+    document.querySelectorAll('a[aria-label="Likes"]').forEach(function(a){
       a.setAttribute('href','/likes/');
     });
 
