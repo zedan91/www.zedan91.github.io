@@ -313,15 +313,7 @@ html {
       text-align: right;
     }
 
-    .user-upgrade-btn {
-      border: 0;
-      border-radius: 999px;
-      background: #f97316;
-      color: white;
-      padding: 7px 10px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+    
 
     .phone-input-row {
       display: grid;
