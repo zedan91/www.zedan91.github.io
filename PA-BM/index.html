@@ -8113,7 +8113,6 @@ body::-webkit-scrollbar-corner{
 <style id="azobss-pabm-admin-panels-hide">
 #registeredUsersPanel,#liveUsersPanel,#loginHistoryPanel,#guestHistoryPanel{display:none!important;}
 </style>
-
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8438,111 +8437,6 @@ body::-webkit-scrollbar-corner{
 </form>
 </div>
 </header>
-
-
-
-<script type="module" id="azobss-cart-badge-firestore-fast-loader-fix">
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-
-(function(){
-  if(window.__azobssCartBadgeFirestoreFastLoaderFix) return;
-  window.__azobssCartBadgeFirestoreFastLoaderFix = true;
-
-  const firebaseConfig={
-    apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
-    authDomain:'azobss.firebaseapp.com',
-    projectId:'azobss',
-    storageBucket:'azobss.firebasestorage.app',
-    messagingSenderId:'159277716405',
-    appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
-  };
-
-  const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
-  const auth=getAuth(app);
-  const db=getFirestore(app);
-
-  function setBadge(n){
-    n=Number(n||0);
-    if(!Number.isFinite(n)||n<0) n=0;
-    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
-      b.textContent=n>99?'99+':String(n);
-      if(n>0){
-        b.classList.add('is-show');
-        b.style.display='inline-flex';
-      }else{
-        b.classList.remove('is-show');
-        b.style.display='none';
-      }
-    });
-  }
-
-  function countLocalByKey(key){
-    if(!key) return 0;
-    try{
-      const raw=localStorage.getItem(key)||sessionStorage.getItem(key);
-      if(!raw) return 0;
-      const data=JSON.parse(raw);
-      if(Array.isArray(data)) return data.reduce((n,x)=>n+Number((x&&(x.qty||x.quantity))||1),0);
-      if(Array.isArray(data.items)) return data.items.reduce((n,x)=>n+Number((x&&(x.qty||x.quantity))||1),0);
-    }catch(e){}
-    return 0;
-  }
-
-  async function loadCloudCart(user){
-    if(!user||!user.uid){
-      const guest=countLocalByKey('azobss_shop_cart_guest_v1');
-      setBadge(guest);
-      return;
-    }
-
-    const userKey='azobss_shop_cart_user_'+user.uid+'_v1';
-    window.__azobssCurrentCartKey=userKey;
-
-    // show local user cart immediately, then overwrite with cloud if available
-    const localCount=countLocalByKey(userKey);
-    if(localCount>0) setBadge(localCount);
-
-    try{
-      const snap=await getDoc(doc(db,'carts',user.uid));
-      if(snap.exists()){
-        const data=snap.data()||{};
-        let n=Number(data.totalQty||0);
-        if(!n && Array.isArray(data.items)){
-          n=data.items.reduce((s,i)=>s+Number((i&&(i.qty||i.quantity))||1),0);
-        }
-        setBadge(n);
-        try{
-          if(Array.isArray(data.items)){
-            localStorage.setItem(userKey, JSON.stringify(data.items));
-          }
-        }catch(e){}
-      }else{
-        setBadge(localCount);
-      }
-    }catch(err){
-      console.warn('AZOBSS fast cart badge cloud load skipped:',err);
-      setBadge(localCount);
-    }
-  }
-
-  onAuthStateChanged(auth, user => {
-    loadCloudCart(user);
-  });
-
-  window.addEventListener('azobss-shop-cart-updated',()=>{
-    const key=window.__azobssCurrentCartKey || 'azobss_shop_cart_guest_v1';
-    setBadge(countLocalByKey(key));
-  });
-
-  // harmless local fallback for first paint
-  setBadge(Math.max(
-    countLocalByKey(window.__azobssCurrentCartKey),
-    countLocalByKey('azobss_shop_cart_guest_v1')
-  ));
-})();
-</script>
 <div class="admin-online-summary" hidden="" id="adminOnlineSummary">
 <div class="admin-online-chip">
 <span>Guests</span>
@@ -11969,6 +11863,97 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+
+<script id="azobss-pa-bm-cart-badge-restore-fix">
+(function(){
+  if(window.__azobssPaBmCartBadgeRestoreFix) return;
+  window.__azobssPaBmCartBadgeRestoreFix = true;
+
+  function isPaBmItem(x){
+    var type = String((x && (x.productType || x.product || x.type)) || '').trim().toUpperCase();
+    return type === 'PA' || type === 'BM' || type === 'SBM' || type.indexOf('BM') >= 0;
+  }
+
+  function isPendingCartItem(x){
+    var status = String((x && x.status) || 'pending').trim().toLowerCase();
+    if(status === 'paid' || status === 'success' || status === 'completed' || status === 'settled' || status === 'verified' || status === 'approved') return false;
+    if(status === 'cancelled' || status === 'canceled' || status === 'deleted' || status === 'removed') return false;
+    return true;
+  }
+
+  function setCartBadge(n){
+    n = Number(n || 0);
+    if(!Number.isFinite(n) || n < 0) n = 0;
+    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
+      b.textContent = n > 99 ? '99+' : String(n);
+      if(n > 0){
+        b.classList.add('is-show');
+        b.style.display = 'inline-flex';
+      }else{
+        b.classList.remove('is-show');
+        b.style.display = 'none';
+      }
+    });
+  }
+
+  async function refreshPaBmCartBadge(){
+    try{
+      var rows = [];
+      if(typeof window.azobssLoadPurchaseRecords === 'function'){
+        rows = await window.azobssLoadPurchaseRecords();
+      }else{
+        // fallback from cached rows if global loader is not ready yet
+        try{
+          var raw = localStorage.getItem('azobssPurchaseRecords') || localStorage.getItem('azobss_purchase_records') || '';
+          rows = raw ? JSON.parse(raw) : [];
+        }catch(e){ rows = []; }
+      }
+      if(!Array.isArray(rows)) rows = [];
+      var count = rows.filter(function(x){ return isPaBmItem(x) && isPendingCartItem(x); }).length;
+      setCartBadge(count);
+      return count;
+    }catch(err){
+      console.warn('AZOBSS PA/BM cart badge refresh skipped:', err);
+      return 0;
+    }
+  }
+
+  window.azobssRefreshPaBmCartBadge = refreshPaBmCartBadge;
+
+  window.addEventListener('azobssPurchaseRecorded', function(){
+    setTimeout(refreshPaBmCartBadge, 100);
+    setTimeout(refreshPaBmCartBadge, 500);
+  });
+
+  window.addEventListener('azobss:purchases-updated', function(){
+    setTimeout(refreshPaBmCartBadge, 100);
+  });
+
+  window.addEventListener('storage', function(){
+    setTimeout(refreshPaBmCartBadge, 150);
+  });
+
+  document.addEventListener('click', function(e){
+    if(e.target.closest('#downloadTifButton,[data-benchmark-record],[data-remove-benchmark-cart],.user-pa-uncart-btn')){
+      setTimeout(refreshPaBmCartBadge, 450);
+      setTimeout(refreshPaBmCartBadge, 1200);
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(refreshPaBmCartBadge, 300);
+    setTimeout(refreshPaBmCartBadge, 900);
+    setTimeout(refreshPaBmCartBadge, 1800);
+  });
+
+  if(document.readyState !== 'loading'){
+    setTimeout(refreshPaBmCartBadge, 300);
+    setTimeout(refreshPaBmCartBadge, 900);
+    setTimeout(refreshPaBmCartBadge, 1800);
+  }
+})();
+</script>
+
 
 <script>
 (function(){
