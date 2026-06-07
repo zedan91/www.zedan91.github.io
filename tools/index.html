@@ -2382,6 +2382,80 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 })();
 </script>
 
+
+<style id="azobss-admin-hide-dashboard-buttons-final-override">
+/* Final override: admin must NOT see Admin/Staff dashboard stickybar buttons */
+html body.is-admin .market-sticky-bar .azAdminDashboardBtn,
+html body.is-admin .market-sticky-bar .admin-dashboard-btn,
+html body.is-admin .market-sticky-bar .azStaffDashboardBtn,
+html body.is-admin .market-sticky-bar .staff-dashboard-btn,
+html body.az-role-is-admin .market-sticky-bar .azAdminDashboardBtn,
+html body.az-role-is-admin .market-sticky-bar .admin-dashboard-btn,
+html body.az-role-is-admin .market-sticky-bar .azStaffDashboardBtn,
+html body.az-role-is-admin .market-sticky-bar .staff-dashboard-btn,
+html body[data-role="admin"] .market-sticky-bar .azAdminDashboardBtn,
+html body[data-role="admin"] .market-sticky-bar .admin-dashboard-btn,
+html body[data-role="admin"] .market-sticky-bar .azStaffDashboardBtn,
+html body[data-role="admin"] .market-sticky-bar .staff-dashboard-btn{
+  display:none!important;
+  visibility:hidden!important;
+  width:0!important;
+  min-width:0!important;
+  height:0!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+}
+</style>
+
+
+<script id="azobss-admin-hide-dashboard-buttons-final-script">
+(function(){
+  if(window.__azobssAdminHideDashboardButtonsFinalScript) return;
+  window.__azobssAdminHideDashboardButtonsFinalScript = true;
+
+  function isAdminNow(){
+    try{
+      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
+      if(document.body.getAttribute('data-role') === 'admin') return true;
+      var name = String((document.querySelector('#signedInName')||{}).textContent || '').trim().toLowerCase();
+      if(name === 'zedan91') return true;
+      var bodyText = String(document.body.innerText || '').toLowerCase();
+      if(bodyText.indexOf('hello, zedan91') !== -1) return true;
+    }catch(e){}
+    return false;
+  }
+
+  function apply(){
+    if(!isAdminNow()) return;
+    document.querySelectorAll('.market-sticky-bar .azAdminDashboardBtn,.market-sticky-bar .admin-dashboard-btn,.market-sticky-bar .azStaffDashboardBtn,.market-sticky-bar .staff-dashboard-btn').forEach(function(el){
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('width','0','important');
+      el.style.setProperty('min-width','0','important');
+      el.style.setProperty('height','0','important');
+      el.style.setProperty('min-height','0','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('border','0','important');
+      el.style.setProperty('overflow','hidden','important');
+      el.setAttribute('aria-hidden','true');
+      el.tabIndex = -1;
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', apply);
+  if(document.readyState !== 'loading') apply();
+  window.addEventListener('focus', apply);
+  setTimeout(apply,300);
+  setTimeout(apply,900);
+  setTimeout(apply,1800);
+})();
+</script>
+
 </body></html>
 
 
