@@ -1,14 +1,4 @@
 
-/* AZOBSS Firestore Safe Mode 036 */
-(function(){
-  if(window.__azobssFirestoreSafeModeGlobal036) return;
-  window.__azobssFirestoreSafeModeGlobal036 = true;
-  window.AZOBSS_FIRESTORE_SAFE_MODE = true;
-  window.AZOBSS_BADGE_REFRESH_MIN_MS = window.AZOBSS_BADGE_REFRESH_MIN_MS || 60000;
-  window.AZOBSS_STATS_REFRESH_MIN_MS = window.AZOBSS_STATS_REFRESH_MIN_MS || 120000;
-})();
-
-
 
 function getAzobssPhoneDialForInput(input){
   try {
