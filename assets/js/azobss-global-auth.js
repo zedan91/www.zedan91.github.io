@@ -1,3 +1,4 @@
+window.__azobssSafeRealEmail047='';
 /* AZOBSS Firestore quota safe mode 044 */
 window.AZOBSS_FIRESTORE_SAFE_MODE=true;
 window.AZOBSS_BADGE_REFRESH_MIN_MS=window.AZOBSS_BADGE_REFRESH_MIN_MS||60000;
@@ -3629,6 +3630,7 @@ function bindAuth() {
         profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'member'};
       }
       const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
+      const realEmail = (typeof realEmail!=='undefined' ? realEmail : window.__azobssSafeRealEmail047 || '');
       const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
       if(!authUser.emailVerified && !isOwnerBypass){
         await signOut(auth);
