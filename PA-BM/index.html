@@ -8095,113 +8095,189 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 </style>
 
 
-<style id="azobss-pabm-shop-cart-css-041">
-.market-icon-btn{position:relative;}
-.az-shop-cart-badge{position:absolute;right:-7px;top:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);display:none;}
-.az-shop-cart-badge.is-show{display:inline-block;}
-.az-shop-cart-panel{position:fixed;top:78px;right:18px;width:min(390px,calc(100vw - 28px));max-height:72vh;overflow:auto;background:rgba(7,12,20,.98);border:1px solid rgba(148,163,184,.35);border-radius:18px;box-shadow:0 22px 60px rgba(0,0,0,.45);z-index:999999;color:#fff;padding:16px;display:none;backdrop-filter:blur(14px);}
-.az-shop-cart-panel.is-open{display:block;}
-.az-shop-cart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-.az-shop-cart-head h3{margin:0;font-size:20px;font-weight:950;}
-.az-shop-cart-close{border:0;background:rgba(255,255,255,.08);color:#fff;width:34px;height:34px;border-radius:10px;font-size:22px;cursor:pointer;}
-.az-shop-cart-empty{color:#cbd5e1;padding:14px;border:1px dashed rgba(148,163,184,.35);border-radius:12px;text-align:center;}
-.az-shop-cart-item{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(148,163,184,.25);}
-.az-shop-cart-thumb{width:54px;height:54px;border-radius:10px;background:#fff;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#0f172a;font-weight:900;overflow:visible;}
-.az-shop-cart-title{font-weight:900;line-height:1.2;margin-bottom:3px;}
-.az-shop-cart-meta{font-size:12px;color:#94a3b8;}
-.az-shop-cart-price{font-size:13px;color:#4ade80;font-weight:900;margin-top:4px;}
-.az-shop-cart-actions{display:flex;align-items:center;gap:6px;}
-.az-shop-cart-qty{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.35);border-radius:9px;overflow:visible;height:32px;}
-.az-shop-cart-qty button,.az-shop-cart-remove{border:0;background:rgba(255,255,255,.08);color:#fff;height:32px;min-width:30px;cursor:pointer;font-weight:900;}
-.az-shop-cart-qty span{min-width:28px;text-align:center;font-weight:800;}
-.az-shop-cart-remove{border-radius:9px;color:#fecaca;font-size:16px;}
-.az-shop-cart-total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:950;margin:14px 0 12px;}
-.az-shop-cart-total strong{color:#4ade80;}
-.az-shop-cart-checkout{width:100%;border:0;border-radius:12px;background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#fff;font-weight:950;padding:12px 14px;cursor:pointer;font-size:15px;}
-.az-shop-cart-note{font-size:12px;color:#94a3b8;margin-top:9px;line-height:1.45;}
-@media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
-
-.commission-policy-card{
-display:none;
-margin:12px 0;
-padding:14px 18px;
-border:1px solid #22c55e;
-border-radius:16px;
-background:linear-gradient(135deg,#0f172a,#13233f);
-color:#fff;
-box-shadow:0 0 12px rgba(34,197,94,.25);
-font-size:14px;
-line-height:1.6;
+<style id="azobss-whatsapp-nav-link-align-fix">
+.market-nav .nav-whatsapp-link{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  min-width:42px!important;
+  max-width:42px!important;
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  vertical-align:middle!important;
+  flex:0 0 auto!important;
 }
-.commission-policy-card .title{font-weight:800;color:#facc15;margin-bottom:8px}
-.commission-policy-card .row{margin:4px 0}
+.market-nav .nav-whatsapp-link .nav-whatsapp-circle{
+  width:38px!important;
+  min-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  flex:0 0 auto!important;
+}
 </style>
 
-<script id="azobss-firestore-quota-safe-mode-044">
-(function(){
-  if(window.__azobssFirestoreQuotaSafeMode044) return;
-  window.__azobssFirestoreQuotaSafeMode044 = true;
 
-  window.AZOBSS_FIRESTORE_SAFE_MODE = true;
-  window.AZOBSS_BADGE_REFRESH_MIN_MS = 60000;
-  window.AZOBSS_ADMIN_STATS_REFRESH_MIN_MS = 180000;
-  window.AZOBSS_PRESENCE_REFRESH_MIN_MS = 120000;
-
-  var lastRun = Object.create(null);
-  window.azobssQuotaSafeRun = function(key, minMs, fn){
-    try{
-      var now = Date.now();
-      minMs = Number(minMs || 60000);
-      if(lastRun[key] && (now - lastRun[key]) < minMs) return;
-      lastRun[key] = now;
-      if(typeof fn === 'function') return fn();
-    }catch(e){}
-  };
-
-  // Patch short polling created by older page patches.
-  if(!window.__azobssQuotaSafeSetIntervalPatched044){
-    window.__azobssQuotaSafeSetIntervalPatched044 = true;
-    var nativeSetInterval = window.setInterval;
-    window.setInterval = function(fn, delay){
-      try{
-        var s = String(fn || '');
-        var d = Number(delay || 0);
-        if(d > 0 && d < 60000 && /(notification|support|message|badge|bell|cart|online|presence|guest|history|user|admin|staff)/i.test(s)){
-          delay = /admin|staff|online|presence|guest|history|user/i.test(s) ? 180000 : 60000;
-        }
-      }catch(e){}
-      return nativeSetInterval.apply(this, arguments);
-    };
-  }
-})();
-</script>
+<style id="azobss-nav-tight-spacing-fix-031">
+.market-nav{
+  gap:4px !important;
+}
+.market-nav .azStaffDashboardBtn{
+  margin-right:0 !important;
+}
+.market-nav .nav-whatsapp-link{
+  margin-left:0 !important;
+  margin-right:0 !important;
+  width:38px !important;
+  min-width:38px !important;
+}
+.market-nav > a,
+.market-nav .azobss-nav-chip{
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+</style>
 
 
-<script id="azobss-role-hardening-045">
-(function(){
- if(window.__azobssRoleHardening045)return;
- window.__azobssRoleHardening045=true;
+<style id="azobss-staff-whatsapp-tight-gap-fix-032">
+/* (032) Tighten Staff Dashboard -> WhatsApp -> PA/BM spacing only */
+.market-nav{
+  display:flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  column-gap:4px!important;
+}
 
- function hide(sel){document.querySelectorAll(sel).forEach(el=>el.style.display='none');}
+.market-nav .azStaffDashboardBtn,
+.market-nav .staff-dashboard-btn{
+  flex:0 0 34px!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:999px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+  transform:none!important;
+  gap:0!important;
+}
 
- function apply(){
-   var isAdmin=!!(window.isAdmin===true || window.currentUserRole==='admin');
-   var isStaff=!!(window.isStaff===true || window.currentUserRole==='staff');
+.market-nav .azStaffDashboardBtn + .nav-whatsapp-link,
+.market-nav .staff-dashboard-btn + .nav-whatsapp-link{
+  margin-left:0!important;
+}
 
-   if(isAdmin){
-      hide('[data-staff-dashboard], .staff-dashboard-btn');
-   }else if(isStaff){
-      hide('[data-admin-dashboard], .admin-dashboard-btn');
-   }else{
-      hide('[data-admin-dashboard], .admin-dashboard-btn');
-      hide('[data-staff-dashboard], .staff-dashboard-btn');
-   }
- }
- document.addEventListener('DOMContentLoaded',apply);
- setTimeout(apply,500);
- setTimeout(apply,2000);
-})();
-</script>
+.market-nav .nav-whatsapp-link{
+  flex:0 0 38px!important;
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  transform:none!important;
+}
+
+.market-nav .nav-whatsapp-link + .nav-pa-bm-link,
+.market-nav .nav-whatsapp-link + a[href="/PA-BM/"]{
+  margin-left:0!important;
+}
+
+.market-nav .nav-whatsapp-circle{
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  transform:none!important;
+}
+
+.market-nav > a{
+  margin-left:0!important;
+  margin-right:0!important;
+}
+</style>
+
+
+<style id="azobss-market-nav-clean-structure-034">
+.market-nav{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  column-gap:6px!important;
+}
+.market-nav > a,
+.market-nav > button{
+  flex:0 0 auto!important;
+  margin:0!important;
+  transform:none!important;
+}
+.market-nav .azAdminDashboardBtn,
+.market-nav .azStaffDashboardBtn{
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  line-height:1!important;
+}
+.market-nav .nav-whatsapp-link{
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:0!important;
+  background:transparent!important;
+}
+.market-nav .nav-whatsapp-circle{
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+</style>
 
 </head>
 <body class="pa-bm-page" id="top">
@@ -13077,7 +13153,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge, 60000);
+  setInterval(updateBadge,15000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();
@@ -13787,6 +13863,89 @@ body #userDropdown button.user-dropdown-item:hover{
 </style>
 
 
+<script id="azobss-pabm-cart-badge-count-fix">
+(function(){
+  if(window.__azobssPabmCartBadgeCountFix) return;
+  window.__azobssPabmCartBadgeCountFix = true;
+
+  function countRaw(raw){
+    if(!raw) return 0;
+    try{
+      var data=JSON.parse(raw);
+      if(Array.isArray(data)){
+        return data.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
+      }
+      if(Array.isArray(data.items)){
+        return data.items.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
+      }
+    }catch(e){}
+    return 0;
+  }
+
+  function countCart(){
+    var best=0;
+    try{
+      var keys=[
+        window.__azobssCurrentCartKey,
+        'azobss_shop_cart_guest_v1',
+        'azobssCart',
+        'azShopCart',
+        'cart',
+        'azobss_cart'
+      ].filter(Boolean);
+      keys.forEach(function(k){
+        best=Math.max(best,countRaw(localStorage.getItem(k)||sessionStorage.getItem(k)));
+      });
+      for(var i=0;i<localStorage.length;i++){
+        var key=localStorage.key(i)||'';
+        if(/^azobss_shop_cart_user_.+_v1$/.test(key)){
+          best=Math.max(best,countRaw(localStorage.getItem(key)));
+        }
+      }
+    }catch(e){}
+    return best;
+  }
+
+  function update(){
+    var n=countCart();
+    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
+      b.textContent=n>99?'99+':String(n);
+      if(n>0){
+        b.classList.add('is-show');
+        b.style.display='inline-flex';
+      }else{
+        b.classList.remove('is-show');
+        b.style.display='none';
+      }
+    });
+  }
+
+  function bindCart(){
+    document.querySelectorAll('a[aria-label="Cart"][data-az-shop-cart-toggle]').forEach(function(a){
+      if(a.dataset.azPabmCartBound==='1') return;
+      a.dataset.azPabmCartBound='1';
+      a.addEventListener('click',function(e){
+        e.preventDefault();
+        if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
+        if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
+        window.location.href='/Software-Tools/';
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){bindCart();update();});
+  if(document.readyState!=='loading'){bindCart();update();}
+  window.addEventListener('storage',update);
+  window.addEventListener('focus',update);
+  window.addEventListener('azobss-shop-cart-updated',update);
+  setTimeout(update,300);
+  setTimeout(update,1200);
+})();
+</script>
+
+
+
+
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -14035,303 +14194,235 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 </script>
 
 
+<style id="azobss-role-buttons-strict-visibility-035">
+/* (035) Strict role visibility for stickybar Admin/Staff dashboard buttons */
+.market-nav .azAdminDashboardBtn,
+.market-nav .admin-dashboard-btn,
+.market-nav .azStaffDashboardBtn,
+.market-nav .staff-dashboard-btn{
+  display:none!important;
+  visibility:hidden!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:0!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  opacity:0!important;
+}
 
-<style id="azobss-stickybar-deep-clean-036">
-.market-nav{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;column-gap:6px!important}
-.market-nav>a{flex:0 0 auto!important;margin:0!important;box-sizing:border-box!important;transform:none!important}
-.market-nav .azAdminDashboardBtn,.market-nav .admin-dashboard-btn,.market-nav .azStaffDashboardBtn,.market-nav .staff-dashboard-btn{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;height:0!important;min-height:0!important;max-height:0!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important;pointer-events:none!important;opacity:0!important}
-body.az-role-is-admin .market-nav .azAdminDashboardBtn,body.az-role-is-admin .market-nav .admin-dashboard-btn,body.is-admin .market-nav .azAdminDashboardBtn,body.is-admin .market-nav .admin-dashboard-btn,body[data-role="admin"] .market-nav .azAdminDashboardBtn,body[data-role="admin"] .market-nav .admin-dashboard-btn,body[data-dashboard-page="admin"] .market-nav .azAdminDashboardBtn,body[data-dashboard-page="admin"] .market-nav .admin-dashboard-btn{display:inline-flex!important;visibility:visible!important;width:34px!important;min-width:34px!important;max-width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;padding:0!important;margin:0!important;border:1px solid rgba(148,163,184,.35)!important;border-radius:999px!important;align-items:center!important;justify-content:center!important;overflow:visible!important;pointer-events:auto!important;opacity:1!important}
-body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .azStaffDashboardBtn,body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .staff-dashboard-btn,body[data-role="staff"] .market-nav .azStaffDashboardBtn,body[data-role="staff"] .market-nav .staff-dashboard-btn,body[data-dashboard-page="staff"] .market-nav .azStaffDashboardBtn,body[data-dashboard-page="staff"] .market-nav .staff-dashboard-btn{display:inline-flex!important;visibility:visible!important;width:34px!important;min-width:34px!important;max-width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;padding:0!important;margin:0!important;border:1px solid rgba(148,163,184,.35)!important;border-radius:999px!important;align-items:center!important;justify-content:center!important;overflow:visible!important;pointer-events:auto!important;opacity:1!important}
-body.az-role-is-admin .market-nav .azStaffDashboardBtn,body.az-role-is-admin .market-nav .staff-dashboard-btn,body.is-admin .market-nav .azStaffDashboardBtn,body.is-admin .market-nav .staff-dashboard-btn,body[data-role="admin"] .market-nav .azStaffDashboardBtn,body[data-role="admin"] .market-nav .staff-dashboard-btn,body[data-dashboard-page="admin"] .market-nav .azStaffDashboardBtn,body[data-dashboard-page="admin"] .market-nav .staff-dashboard-btn{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;height:0!important;min-height:0!important;max-height:0!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important;pointer-events:none!important;opacity:0!important}
-.market-nav .nav-whatsapp-link{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;min-width:38px!important;max-width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;text-decoration:none!important;flex:0 0 38px!important}
-.market-nav .nav-whatsapp-circle{width:38px!important;min-width:38px!important;max-width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
-body.az-role-is-admin .market-nav .nav-whatsapp-link,body.az-role-is-admin .market-nav .nav-whatsapp-circle,body.is-admin .market-nav .nav-whatsapp-link,body.is-admin .market-nav .nav-whatsapp-circle,body[data-role="admin"] .market-nav .nav-whatsapp-link,body[data-role="admin"] .market-nav .nav-whatsapp-circle,body[data-dashboard-page="admin"] .market-nav .nav-whatsapp-link,body[data-dashboard-page="admin"] .market-nav .nav-whatsapp-circle{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;height:0!important;min-height:0!important;max-height:0!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important;pointer-events:none!important;opacity:0!important}
+/* Admin sees Admin Dashboard only */
+body.az-role-is-admin .market-nav .azAdminDashboardBtn,
+body.az-role-is-admin .market-nav .admin-dashboard-btn,
+body.is-admin .market-nav .azAdminDashboardBtn,
+body.is-admin .market-nav .admin-dashboard-btn,
+body[data-role="admin"] .market-nav .azAdminDashboardBtn,
+body[data-role="admin"] .market-nav .admin-dashboard-btn,
+body[data-dashboard-page="admin"] .market-nav .azAdminDashboardBtn,
+body[data-dashboard-page="admin"] .market-nav .admin-dashboard-btn{
+  display:inline-flex!important;
+  visibility:visible!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  border:1px solid rgba(148,163,184,.35)!important;
+  overflow:visible!important;
+  pointer-events:auto!important;
+  opacity:1!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+}
+
+/* Staff sees Staff Dashboard only. Do NOT use az-staff-safe-ok because admin pages may also have it. */
+body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .azStaffDashboardBtn,
+body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .staff-dashboard-btn,
+body[data-role="staff"] .market-nav .azStaffDashboardBtn,
+body[data-role="staff"] .market-nav .staff-dashboard-btn,
+body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .azStaffDashboardBtn,
+body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .staff-dashboard-btn{
+  display:inline-flex!important;
+  visibility:visible!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  border:1px solid rgba(148,163,184,.35)!important;
+  overflow:visible!important;
+  pointer-events:auto!important;
+  opacity:1!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+}
+
+/* Admin must never see Staff Dashboard, even if old scripts add staff-safe class */
+body.az-role-is-admin .market-nav .azStaffDashboardBtn,
+body.az-role-is-admin .market-nav .staff-dashboard-btn,
+body.is-admin .market-nav .azStaffDashboardBtn,
+body.is-admin .market-nav .staff-dashboard-btn,
+body[data-role="admin"] .market-nav .azStaffDashboardBtn,
+body[data-role="admin"] .market-nav .staff-dashboard-btn,
+body[data-dashboard-page="admin"] .market-nav .azStaffDashboardBtn,
+body[data-dashboard-page="admin"] .market-nav .staff-dashboard-btn{
+  display:none!important;
+  visibility:hidden!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:0!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  opacity:0!important;
+}
+
+.market-nav{
+  gap:6px!important;
+  column-gap:6px!important;
+}
 </style>
 
 
-<script id="azobss-stickybar-deep-clean-036-script">
-(function(){if(window.__azobssStickybarDeepClean036)return;window.__azobssStickybarDeepClean036=true;
-function l(v){return String(v||'').trim().toLowerCase()}
-function user(){var k=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','azobss_user_profile','azobssProfile','currentUser','userProfile'];for(var i=0;i<k.length;i++){try{var r=localStorage.getItem(k[i])||sessionStorage.getItem(k[i]);if(r){var o=JSON.parse(r);if(o)return o}}catch(e){}}return{}}
-function role(){var b=document.body,p=b.getAttribute('data-dashboard-page')||'';if(p==='admin')return'admin';if(p==='staff')return'staff';var s=l((document.querySelector('#signedInName')||{}).textContent),n=l((document.querySelector('.user-name')||{}).textContent);if(s==='zedan91'||n==='zedan91'||n.indexOf('zedan91')!==-1)return'admin';var u=user(),r=l(u.role||u.userRole||u.accountRole||u.type),un=l(u.usernameKey||u.username||u.id||u.name||u.displayName),em=l(u.email||u.authEmail);if(un==='zedan91'||em==='zedan91@azobss.local')return'admin';var st=(r==='staff'||r==='semiadmin'||r==='semi-admin'||r==='semi_admin'||r==='seller'||r==='editor'||u.isStaff===true||u.staff===true||u.staffDashboard===true||u.canAccessStaffDashboard===true);return st?'staff':'none'}
-function hide(e){e.style.cssText+=';display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;height:0!important;min-height:0!important;max-height:0!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important;pointer-events:none!important;opacity:0!important';e.setAttribute('aria-hidden','true');e.tabIndex=-1}
-function show(e,px){e.style.cssText+=';display:inline-flex!important;visibility:visible!important;width:'+px+'px!important;min-width:'+px+'px!important;max-width:'+px+'px!important;height:'+px+'px!important;min-height:'+px+'px!important;max-height:'+px+'px!important;padding:0!important;margin:0!important;opacity:1!important;pointer-events:auto!important;overflow:visible!important;align-items:center!important;justify-content:center!important';e.removeAttribute('aria-hidden');e.tabIndex=0}
-function apply(){var r=role();document.body.classList.toggle('az-role-is-admin',r==='admin');document.body.classList.toggle('is-admin',r==='admin');document.body.classList.toggle('az-role-is-stafflike',r==='staff');document.body.setAttribute('data-az-current-role',r);document.querySelectorAll('.market-nav .azAdminDashboardBtn,.market-nav .admin-dashboard-btn').forEach(function(e){r==='admin'?show(e,34):hide(e)});document.querySelectorAll('.market-nav .azStaffDashboardBtn,.market-nav .staff-dashboard-btn').forEach(function(e){r==='staff'?show(e,34):hide(e)});document.querySelectorAll('.market-nav .nav-whatsapp-link,.market-nav .nav-whatsapp-circle').forEach(function(e){r==='admin'?hide(e):show(e,38)})}
-document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='loading')apply();window.addEventListener('focus',apply);window.addEventListener('storage',apply);setTimeout(apply,100);setTimeout(apply,500);setTimeout(apply,1200);
-})();
-</script>
-<script type="module" id="azobss-pabm-cart-auth-key-sync-043">
-/* AZOBSS cart persistence:
-   - Guest buyers: localStorage only.
-   - Logged-in Firebase users: localStorage + Firestore sync.
-*/
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-
+<script id="azobss-role-buttons-strict-visibility-035-script">
 (function(){
-  if(window.__azobssCartFirestoreSyncReady) return;
-  window.__azobssCartFirestoreSyncReady = true;
+  if(window.__azobssRoleButtonsStrictVisibility035) return;
+  window.__azobssRoleButtonsStrictVisibility035 = true;
 
-  let CART_KEY = 'azobss_shop_cart_guest_v1';
-  window.__azobssCurrentCartKey = CART_KEY;
-  const metaKey = () => CART_KEY + '_meta';
-  const COLLECTION = 'userCarts';
-  const firebaseConfig = {
-    apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
-    authDomain: 'azobss.firebaseapp.com',
-    projectId: 'azobss',
-    storageBucket: 'azobss.firebasestorage.app',
-    messagingSenderId: '159277716405',
-    appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
-  };
-
-  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  let currentUid = '';
-  let syncTimer = null;
-  let loadingFromCloud = false;
-  let cloudPulling = false;
-  let cloudReady = false;
-
-  try{
-    // Remove old shared cart key so logged-in cart cannot leak into guest view.
-    if(localStorage.getItem('azobss_shop_cart_v1') !== null){
-      localStorage.removeItem('azobss_shop_cart_v1');
-      localStorage.removeItem('azobss_shop_cart_v1_meta');
+  function readStoredUser(){
+    var keys=[
+      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
+      'azobss_user_profile','azobssProfile','currentUser','userProfile'
+    ];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(!raw) continue;
+        var obj=JSON.parse(raw);
+        if(obj && typeof obj === 'object') return obj;
+      }catch(e){}
     }
-  }catch(e){}
-
-  function readCart(){
-    try{
-      const parsed = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-    }catch(e){ return []; }
+    return {};
   }
 
-  function saveCart(items){
-    localStorage.setItem(CART_KEY, JSON.stringify(Array.isArray(items) ? items.filter(Boolean) : []));
-    window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+  function lower(v){ return String(v || '').trim().toLowerCase(); }
+
+  function detectRole(){
+    var body=document.body;
+    var page=body.getAttribute('data-dashboard-page') || '';
+    if(page === 'admin') return 'admin';
+    if(page === 'staff') return 'staff';
+
+    var signed=lower((document.querySelector('#signedInName')||{}).textContent);
+    var unameText=lower((document.querySelector('.user-name')||{}).textContent);
+
+    if(signed === 'zedan91' || unameText === 'zedan91' || unameText.indexOf('zedan91') !== -1) return 'admin';
+
+    var u=readStoredUser();
+    var role=lower(u.role || u.userRole || u.accountRole || u.type);
+    var username=lower(u.usernameKey || u.username || u.id || u.name || u.displayName);
+    var email=lower(u.email || u.authEmail);
+
+    if(username === 'zedan91' || email === 'zedan91@azobss.local') return 'admin';
+
+    var isStaff = (
+      role === 'staff' ||
+      role === 'semiadmin' ||
+      role === 'semi-admin' ||
+      role === 'semi_admin' ||
+      role === 'seller' ||
+      role === 'editor' ||
+      u.isStaff === true ||
+      u.staff === true ||
+      u.staffDashboard === true ||
+      u.canAccessStaffDashboard === true
+    );
+
+    if(isStaff) return 'staff';
+
+    return 'none';
   }
 
-  function localUpdatedAt(){
-    try{
-      const meta = JSON.parse(localStorage.getItem(metaKey()) || '{}');
-      return Number(meta.updatedAt || 0);
-    }catch(e){ return 0; }
-  }
-
-  function markLocalUpdated(){
-    if(loadingFromCloud) return;
-    try{ localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()})); }catch(e){}
-  }
-
-  function itemKey(i){
-    return String(i?.source || '') + '::' + String(i?.id || i?.name || '');
-  }
-
-  function mergeCart(a,b){
-    const map = new Map();
-    [...(Array.isArray(a)?a:[]), ...(Array.isArray(b)?b:[])].filter(Boolean).forEach(item=>{
-      const key = itemKey(item);
-      if(!key || key === '::') return;
-      const old = map.get(key);
-      if(!old) map.set(key, {...item, qty:Number(item.qty||1)});
-      else{
-        const oldQty = Number(old.qty||1);
-        const newQty = Number(item.qty||1);
-        map.set(key, {...old, ...item, qty:Math.max(oldQty, newQty)});
-      }
-    });
-    return Array.from(map.values());
-  }
-
-  async function pushCloud(){
-    if(!currentUid || loadingFromCloud || cloudPulling || !cloudReady) return;
-    const items = readCart();
-    const totalQty = items.reduce((s,i)=>s+Number(i.qty||1),0);
-    try{
-      await setDoc(doc(db, COLLECTION, currentUid), {
-        uid: currentUid,
-        items,
-        totalQty,
-        updatedAtMs: Date.now(),
-        updatedAt: serverTimestamp()
-      }, {merge:true});
-    }catch(err){
-      console.warn('AZOBSS cart Firestore sync skipped:', err);
-    }
-  }
-
-  async function pullCloud(user){
-    currentUid = user?.uid || '';
-    if(!currentUid) return;
-    cloudPulling = true;
-    cloudReady = false;
-    try{
-      const ref = doc(db, COLLECTION, currentUid);
-      const snap = await getDoc(ref);
-      const localItems = readCart();
-      const localTime = localUpdatedAt();
-      if(snap.exists()){
-        const data = snap.data() || {};
-        const now = Date.now();
-        const maxAge = 60*24*60*60*1000;
-        const cloudItems = (Array.isArray(data.items) ? data.items.filter(Boolean) : [])
-          .filter(i => !i.addedAt || (now - Number(i.addedAt)) <= maxAge);
-        const cloudTime = Number(data.updatedAtMs || 0);
-        loadingFromCloud = true;
-        localStorage.setItem(CART_KEY, JSON.stringify(cloudItems));
-        localStorage.setItem(metaKey(), JSON.stringify({updatedAt:cloudTime || Date.now()}));
-        loadingFromCloud = false;
-        cloudReady = true;
-        if(Array.isArray(data.items) && data.items.length !== cloudItems.length){
-          setTimeout(pushCloud, 300);
-        }
-        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-      }else if(localItems.length){
-        cloudReady = true;
-        await pushCloud();
-      }else{
-        loadingFromCloud = true;
-        localStorage.setItem(CART_KEY, JSON.stringify([]));
-        localStorage.setItem(metaKey(), JSON.stringify({updatedAt:Date.now()}));
-        loadingFromCloud = false;
-        cloudReady = true;
-        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-      }
-      if(typeof window.azobssOpenShopCart === 'function'){
-        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-      }
-    }catch(err){
-      console.warn('AZOBSS cart Firestore load skipped:', err);
-    }finally{
-      loadingFromCloud = false;
-      cloudPulling = false;
-    }
-  }
-
-  window.azobssCartDebug=function(){
-    return {uid: currentUid, key: CART_KEY, items: readCart()};
-  };
-  window.addEventListener('azobss-shop-cart-updated', ()=>{
-    markLocalUpdated();
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(pushCloud, 150);
-  });
-
-  onAuthStateChanged(auth, user => {
-    if(user){
-      CART_KEY = 'azobss_shop_cart_user_' + user.uid + '_v1';
-      window.__azobssCurrentCartKey = CART_KEY;
-      pullCloud(user);
-      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+  function setBtn(el, show){
+    if(!el) return;
+    if(show){
+      el.style.setProperty('display','inline-flex','important');
+      el.style.setProperty('visibility','visible','important');
+      el.style.setProperty('width','34px','important');
+      el.style.setProperty('min-width','34px','important');
+      el.style.setProperty('max-width','34px','important');
+      el.style.setProperty('height','34px','important');
+      el.style.setProperty('min-height','34px','important');
+      el.style.setProperty('max-height','34px','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('opacity','1','important');
+      el.style.setProperty('pointer-events','auto','important');
+      el.style.setProperty('overflow','visible','important');
+      el.removeAttribute('aria-hidden');
+      el.tabIndex=0;
     }else{
-      currentUid = '';
-      CART_KEY = 'azobss_shop_cart_guest_v1';
-      window.__azobssCurrentCartKey = CART_KEY;
-      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('width','0','important');
+      el.style.setProperty('min-width','0','important');
+      el.style.setProperty('max-width','0','important');
+      el.style.setProperty('height','0','important');
+      el.style.setProperty('min-height','0','important');
+      el.style.setProperty('max-height','0','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('border','0','important');
+      el.style.setProperty('opacity','0','important');
+      el.style.setProperty('pointer-events','none','important');
+      el.style.setProperty('overflow','hidden','important');
+      el.setAttribute('aria-hidden','true');
+      el.tabIndex=-1;
     }
-  });
-})();
-</script>
-<script id="azobss-pabm-shop-cart-js-041">
-(function(){
-  if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
-  const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
-  const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
-  const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const read=()=>{try{
-const now=Date.now();
-const maxAge=60*24*60*60*1000;
-const items=JSON.parse(localStorage.getItem(getKey())||'[]')
-.filter(Boolean)
-.filter(i=>!(String(i.source||'').toLowerCase()==='software' && !/RM\s*[0-9]/i.test(String(i.price||''))))
-.filter(i=>!i.addedAt || (now-Number(i.addedAt))<=maxAge);
-localStorage.setItem(getKey(),JSON.stringify(items));
-return items;
-}catch(e){return[]}};
-  const save=a=>{localStorage.setItem(getKey(),JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));try{updateBadges();render();}catch(e){}};
-  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  function ensurePanel(){let p=document.getElementById('azShopCartPanel'); if(p)return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
-  
-window.__azobssCartClickLock=window.__azobssCartClickLock||new WeakMap();
-function lockCartButton(btn){
- try{
-   if(!btn) return false;
-   if(window.__azobssCartClickLock.get(btn)) return true;
-   window.__azobssCartClickLock.set(btn,true);
-   setTimeout(()=>window.__azobssCartClickLock.delete(btn),400);
- }catch(e){}
- return false;
-}
-function updateBadges(){const total=read().reduce((s,i)=>s+Number(i.qty||1),0); document.querySelectorAll('[data-az-shop-cart-badge]').forEach(b=>{b.textContent=total; b.classList.toggle('is-show',total>0);});}
-  function render(){const p=ensurePanel(), body=p.querySelector('#azShopCartBody'), items=read(); const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0); p.querySelector('h3').textContent='My Cart ('+totalQty+')'; if(!items.length){body.innerHTML='<div class="az-shop-cart-empty">Cart is empty.<br><small>This cart is only for Software and CAD Tools.</small></div>'; updateBadges(); return;} const total=items.reduce((s,i)=>s+moneyVal(i.price)*Number(i.qty||1),0); body.innerHTML=items.map((i,idx)=>`<div class="az-shop-cart-item"><div class="az-shop-cart-thumb">${i.image?`<img src="${esc(i.image)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc((i.name||'?').slice(0,1))}</div><div><div class="az-shop-cart-title">${esc(i.name)}</div><div class="az-shop-cart-meta">${esc(i.category||i.source||'Software/CAD Tools')}</div><div class="az-shop-cart-price">${esc(i.price||'RM0')}</div></div><div class="az-shop-cart-actions"><span class="az-shop-cart-qty"><button type="button" data-az-cart-minus="${idx}">−</button><span>${Number(i.qty||1)}</span><button type="button" data-az-cart-plus="${idx}">+</button></span><button type="button" class="az-shop-cart-remove" data-az-cart-remove="${idx}" title="Remove">🗑</button></div></div>`).join('')+`<div class="az-shop-cart-total"><span>Total</span><strong>${fmt(total)}</strong></div><button class="az-shop-cart-checkout" type="button" data-az-cart-checkout>Go to Cart Checkout</button><div class="az-shop-cart-note">Note: Your cart items will be saved for up to 2 months before being automatically reset.</div>`; updateBadges();}
-  function openPanel(){render(); ensurePanel().classList.add('is-open');}
-  function closePanel(){ensurePanel().classList.remove('is-open');}
-  function add(item){const items=read().slice(0,100); const id=String(item.id||item.name||Date.now()); const src=String(item.source||''); const found=items.find(x=>String(x.id)===id && String(x.source||'')===src); if(found) found.qty=Number(found.qty||1)+1; else { if(items.length>=100){ if(window.azShowToast) window.azShowToast('Cart limit reached: maximum 100 items.'); else alert('Cart limit reached: maximum 100 items.'); return; } items.push({...item,id,source:src,qty:1,addedAt:Date.now()}); } save(items.slice(0,100)); render(); updateBadges(); openPanel(); setTimeout(()=>{render();updateBadges();window.dispatchEvent(new Event('azobss-shop-cart-updated'));},60);}
-  window.azobssAddShopCart=add; window.azobssOpenShopCart=openPanel; window.azobssShopCartItems=read; window.azobssRefreshShopCart=function(){try{render();updateBadges();}catch(e){}};
-  document.addEventListener('click',function(e){
-    const toggle=e.target.closest('[data-az-shop-cart-toggle]'); if(toggle){e.preventDefault(); const p=ensurePanel(); p.classList.contains('is-open')?closePanel():openPanel(); return;}
-    if(e.target.closest('.az-shop-cart-close')){closePanel();return;}
-    const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=read(); a.splice(Number(rem.dataset.azCartRemove),1); save(a); render(); return;}
-    const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=read(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; save(a); render(); return;}
-    const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=read(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} save(a); render(); return;}
-    if(e.target.closest('[data-az-cart-checkout]')){
-const items=read();
-if(!items.length)return;
-const totalAmount=items.reduce((s,i)=>s+((parseFloat(String(i.price||0).replace(/[^0-9.]/g,''))||0)*Number(i.qty||1)),0);
-const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0);
-const firstItem=items[0]||{};
-const checkoutItem={
-id:'CART-CHECKOUT',
-name:`${totalQty} Item(s)`,
-price:`RM${totalAmount.toFixed(2)}`,
-qty:totalQty,
-cartItems:items,
-isCartCheckout:true,
-downloadLink:firstItem.downloadLink||firstItem.secureDownloadLink||firstItem.premiumDownloadFileLink||'',
-secureDownloadLink:firstItem.secureDownloadLink||firstItem.downloadLink||firstItem.premiumDownloadFileLink||'',
-premiumDownloadFileLink:firstItem.premiumDownloadFileLink||firstItem.secureDownloadLink||firstItem.downloadLink||''
-};
-if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(checkoutItem); closePanel();}
-else if(items[0].pageUrl){location.href=items[0].pageUrl;}
-else {alert('Open the Software Tools or CAD Tools page to checkout this item.');}
-return;
-}
-  });
-  // AZOBSS fix: Buy Now is no longer hijacked by cart. Only .az-card-cart-btn adds items to this cart.
-  window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
-})();
-</script>
-<script id="azobss-pabm-cart-click-final-041">
-(function(){
- if(window.__azobssPabmCartClickFinal041)return;window.__azobssPabmCartClickFinal041=true;
- function openCart(){try{if(typeof window.azobssOpenShopCart==='function'){window.azobssOpenShopCart();return true;}}catch(e){console.warn('PA/BM cart open error:',e)}return false;}
- document.addEventListener('click',function(e){var btn=e.target.closest('a[aria-label="Cart"][data-az-shop-cart-toggle]');if(!btn)return;e.preventDefault();e.stopPropagation();if(openCart())return;setTimeout(openCart,150);},true);
- window.azobssPabmCartDebug041=function(){return{azobssOpenShopCart:typeof window.azobssOpenShopCart,panel:document.getElementById('azShopCartPanel')||document.querySelector('.az-shop-cart-panel'),badge:document.querySelector('[data-az-shop-cart-badge]')?document.querySelector('[data-az-shop-cart-badge]').textContent:null};};
-})();
-</script>
-
-<script id="azobss-pabm-cart-key-refresh-043">
-(function(){
-  if(window.__azobssPabmCartKeyRefresh043) return;
-  window.__azobssPabmCartKeyRefresh043 = true;
-
-  function refresh(){
-    try{
-      if(typeof window.azobssRefreshShopCart === 'function') window.azobssRefreshShopCart();
-      window.dispatchEvent(new Event('azobss-shop-cart-updated'));
-    }catch(e){}
   }
 
-  window.addEventListener('focus', refresh);
-  window.addEventListener('storage', refresh);
-  setTimeout(refresh,500);
-  setTimeout(refresh,1500);
-  setTimeout(refresh,3000);
+  function apply(){
+    var role=detectRole();
+
+    document.body.classList.toggle('az-role-is-admin', role === 'admin');
+    document.body.classList.toggle('is-admin', role === 'admin');
+    document.body.classList.toggle('az-role-is-stafflike', role === 'staff');
+
+    document.querySelectorAll('.market-nav .azAdminDashboardBtn,.market-nav .admin-dashboard-btn').forEach(function(el){
+      setBtn(el, role === 'admin');
+    });
+
+    document.querySelectorAll('.market-nav .azStaffDashboardBtn,.market-nav .staff-dashboard-btn').forEach(function(el){
+      setBtn(el, role === 'staff');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',apply);
+  if(document.readyState !== 'loading') apply();
+  window.addEventListener('focus',apply);
+  window.addEventListener('storage',apply);
+  setTimeout(apply,100);
+  setTimeout(apply,500);
+  setTimeout(apply,1200);
+  setTimeout(apply,2500);
 })();
 </script>
 

@@ -1,9 +1,3 @@
-/* AZOBSS Firestore quota safe mode 044 */
-window.AZOBSS_FIRESTORE_SAFE_MODE=true;
-window.AZOBSS_BADGE_REFRESH_MIN_MS=window.AZOBSS_BADGE_REFRESH_MIN_MS||60000;
-window.AZOBSS_ADMIN_STATS_REFRESH_MIN_MS=window.AZOBSS_ADMIN_STATS_REFRESH_MIN_MS||180000;
-window.AZOBSS_PRESENCE_REFRESH_MIN_MS=window.AZOBSS_PRESENCE_REFRESH_MIN_MS||120000;
-
 // AZOBSS global cart + notification dropdown for pages that use fallback stickybar (admin/staff/etc)
 (function(){
   if(window.__azobssCartBellGlobalBoot) return;
@@ -79,7 +73,7 @@ window.AZOBSS_PRESENCE_REFRESH_MIN_MS=window.AZOBSS_PRESENCE_REFRESH_MIN_MS||120
     }, true);
     window.addEventListener('storage',()=>{updateCartBadge();updateBellBadge();});
     window.addEventListener('azobss-shop-cart-updated',()=>{renderCart();updateCartBadge();});
-    setInterval(updateCartBadge, 60000);
+    setInterval(updateCartBadge,1500);
   }
   document.addEventListener('DOMContentLoaded',bind); if(document.readyState!=='loading') bind();
 })();
