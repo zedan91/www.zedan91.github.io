@@ -8095,7 +8095,7 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 </style>
 
 
-<style id="azobss-pabm-shop-cart-css-039">
+<style id="azobss-pabm-shop-cart-css-041">
 .market-icon-btn{position:relative;}
 .az-shop-cart-badge{position:absolute;right:-7px;top:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);display:none;}
 .az-shop-cart-badge.is-show{display:inline-block;}
@@ -13720,93 +13720,6 @@ body #userDropdown button.user-dropdown-item:hover{
 </style>
 
 
-<script id="azobss-pabm-cart-badge-count-fix">
-(function(){
-  if(window.__azobssPabmCartBadgeCountFix) return;
-  window.__azobssPabmCartBadgeCountFix = true;
-
-  function countRaw(raw){
-    if(!raw) return 0;
-    try{
-      var data=JSON.parse(raw);
-      if(Array.isArray(data)){
-        return data.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
-      }
-      if(Array.isArray(data.items)){
-        return data.items.reduce(function(n,x){return n+Number((x&&(x.qty||x.quantity))||1);},0);
-      }
-    }catch(e){}
-    return 0;
-  }
-
-  function countCart(){
-    var best=0;
-    try{
-      var keys=[
-        window.__azobssCurrentCartKey,
-        'azobss_shop_cart_guest_v1',
-        'azobssCart',
-        'azShopCart',
-        'cart',
-        'azobss_cart'
-      ].filter(Boolean);
-      keys.forEach(function(k){
-        best=Math.max(best,countRaw(localStorage.getItem(k)||sessionStorage.getItem(k)));
-      });
-      for(var i=0;i<localStorage.length;i++){
-        var key=localStorage.key(i)||'';
-        if(/^azobss_shop_cart_user_.+_v1$/.test(key)){
-          best=Math.max(best,countRaw(localStorage.getItem(key)));
-        }
-      }
-    }catch(e){}
-    return best;
-  }
-
-  function update(){
-    var n=countCart();
-    document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(function(b){
-      b.textContent=n>99?'99+':String(n);
-      if(n>0){
-        b.classList.add('is-show');
-        b.style.display='inline-flex';
-      }else{
-        b.classList.remove('is-show');
-        b.style.display='none';
-      }
-    });
-  }
-
-  function bindCart(){
-    document.querySelectorAll('a[aria-label="Cart"][data-az-shop-cart-toggle]').forEach(function(a){
-      if(a.dataset.azPabmCartBound==='1') return;
-      a.dataset.azPabmCartBound='1';
-      a.addEventListener('click',function(e){
-        e.preventDefault();
-        if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
-        if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
-        setTimeout(function(){
-          if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
-          if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
-          document.dispatchEvent(new CustomEvent('azobss-open-cart-request'));
-        },120);
-      });
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',function(){bindCart();update();});
-  if(document.readyState!=='loading'){bindCart();update();}
-  window.addEventListener('storage',update);
-  window.addEventListener('focus',update);
-  window.addEventListener('azobss-shop-cart-updated',update);
-  setTimeout(update,300);
-  setTimeout(update,1200);
-})();
-</script>
-
-
-
-
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -14080,47 +13993,81 @@ function apply(){var r=role();document.body.classList.toggle('az-role-is-admin',
 document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='loading')apply();window.addEventListener('focus',apply);window.addEventListener('storage',apply);setTimeout(apply,100);setTimeout(apply,500);setTimeout(apply,1200);
 })();
 </script>
-
-<script src="/assets/js/azobss-cart-bell-global.js"></script>
-<script id="azobss-pabm-cart-global-bridge-040">
+<script id="azobss-pabm-shop-cart-js-041">
 (function(){
-  if(window.__azobssPabmCartGlobalBridge040) return;
-  window.__azobssPabmCartGlobalBridge040 = true;
-
-  function openCart(){
-    try{
-      if(typeof window.azobssOpenShopCart === 'function'){ window.azobssOpenShopCart(); return true; }
-      if(typeof window.azShopOpenCart === 'function'){ window.azShopOpenCart(); return true; }
-      if(typeof window.azShopCartToggle === 'function'){ window.azShopCartToggle(); return true; }
-    }catch(e){ console.warn('PA/BM cart open failed', e); }
-    return false;
-  }
-
-  function retryOpen(){
-    if(openCart()) return;
-    var n=0, t=setInterval(function(){
-      n++;
-      if(openCart() || n>=12) clearInterval(t);
-    },150);
-  }
-
-  document.addEventListener('azobss-pabm-cart-open-request', retryOpen);
-  document.addEventListener('click', function(e){
-    var btn=e.target.closest('a[aria-label="Cart"][data-az-shop-cart-toggle]');
-    if(!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    retryOpen();
-  }, true);
-
-  window.azobssPabmCartDebug040=function(){
-    return {
-      azobssOpenShopCart:typeof window.azobssOpenShopCart,
-      azShopOpenCart:typeof window.azShopOpenCart,
-      azShopCartToggle:typeof window.azShopCartToggle,
-      panel:document.getElementById('azShopCartPanel') || document.querySelector('.az-shop-cart-panel')
-    };
-  };
+  if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
+  const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
+  const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
+  const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const read=()=>{try{
+const now=Date.now();
+const maxAge=60*24*60*60*1000;
+const items=JSON.parse(localStorage.getItem(getKey())||'[]')
+.filter(Boolean)
+.filter(i=>!(String(i.source||'').toLowerCase()==='software' && !/RM\s*[0-9]/i.test(String(i.price||''))))
+.filter(i=>!i.addedAt || (now-Number(i.addedAt))<=maxAge);
+localStorage.setItem(getKey(),JSON.stringify(items));
+return items;
+}catch(e){return[]}};
+  const save=a=>{localStorage.setItem(getKey(),JSON.stringify(a));window.dispatchEvent(new Event('azobss-shop-cart-updated'));try{updateBadges();render();}catch(e){}};
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function ensurePanel(){let p=document.getElementById('azShopCartPanel'); if(p)return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
+  
+window.__azobssCartClickLock=window.__azobssCartClickLock||new WeakMap();
+function lockCartButton(btn){
+ try{
+   if(!btn) return false;
+   if(window.__azobssCartClickLock.get(btn)) return true;
+   window.__azobssCartClickLock.set(btn,true);
+   setTimeout(()=>window.__azobssCartClickLock.delete(btn),400);
+ }catch(e){}
+ return false;
+}
+function updateBadges(){const total=read().reduce((s,i)=>s+Number(i.qty||1),0); document.querySelectorAll('[data-az-shop-cart-badge]').forEach(b=>{b.textContent=total; b.classList.toggle('is-show',total>0);});}
+  function render(){const p=ensurePanel(), body=p.querySelector('#azShopCartBody'), items=read(); const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0); p.querySelector('h3').textContent='My Cart ('+totalQty+')'; if(!items.length){body.innerHTML='<div class="az-shop-cart-empty">Cart is empty.<br><small>This cart is only for Software and CAD Tools.</small></div>'; updateBadges(); return;} const total=items.reduce((s,i)=>s+moneyVal(i.price)*Number(i.qty||1),0); body.innerHTML=items.map((i,idx)=>`<div class="az-shop-cart-item"><div class="az-shop-cart-thumb">${i.image?`<img src="${esc(i.image)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc((i.name||'?').slice(0,1))}</div><div><div class="az-shop-cart-title">${esc(i.name)}</div><div class="az-shop-cart-meta">${esc(i.category||i.source||'Software/CAD Tools')}</div><div class="az-shop-cart-price">${esc(i.price||'RM0')}</div></div><div class="az-shop-cart-actions"><span class="az-shop-cart-qty"><button type="button" data-az-cart-minus="${idx}">−</button><span>${Number(i.qty||1)}</span><button type="button" data-az-cart-plus="${idx}">+</button></span><button type="button" class="az-shop-cart-remove" data-az-cart-remove="${idx}" title="Remove">🗑</button></div></div>`).join('')+`<div class="az-shop-cart-total"><span>Total</span><strong>${fmt(total)}</strong></div><button class="az-shop-cart-checkout" type="button" data-az-cart-checkout>Go to Cart Checkout</button><div class="az-shop-cart-note">Note: Your cart items will be saved for up to 2 months before being automatically reset.</div>`; updateBadges();}
+  function openPanel(){render(); ensurePanel().classList.add('is-open');}
+  function closePanel(){ensurePanel().classList.remove('is-open');}
+  function add(item){const items=read().slice(0,100); const id=String(item.id||item.name||Date.now()); const src=String(item.source||''); const found=items.find(x=>String(x.id)===id && String(x.source||'')===src); if(found) found.qty=Number(found.qty||1)+1; else { if(items.length>=100){ if(window.azShowToast) window.azShowToast('Cart limit reached: maximum 100 items.'); else alert('Cart limit reached: maximum 100 items.'); return; } items.push({...item,id,source:src,qty:1,addedAt:Date.now()}); } save(items.slice(0,100)); render(); updateBadges(); openPanel(); setTimeout(()=>{render();updateBadges();window.dispatchEvent(new Event('azobss-shop-cart-updated'));},60);}
+  window.azobssAddShopCart=add; window.azobssOpenShopCart=openPanel; window.azobssShopCartItems=read; window.azobssRefreshShopCart=function(){try{render();updateBadges();}catch(e){}};
+  document.addEventListener('click',function(e){
+    const toggle=e.target.closest('[data-az-shop-cart-toggle]'); if(toggle){e.preventDefault(); const p=ensurePanel(); p.classList.contains('is-open')?closePanel():openPanel(); return;}
+    if(e.target.closest('.az-shop-cart-close')){closePanel();return;}
+    const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=read(); a.splice(Number(rem.dataset.azCartRemove),1); save(a); render(); return;}
+    const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=read(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; save(a); render(); return;}
+    const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=read(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} save(a); render(); return;}
+    if(e.target.closest('[data-az-cart-checkout]')){
+const items=read();
+if(!items.length)return;
+const totalAmount=items.reduce((s,i)=>s+((parseFloat(String(i.price||0).replace(/[^0-9.]/g,''))||0)*Number(i.qty||1)),0);
+const totalQty=items.reduce((s,i)=>s+Number(i.qty||1),0);
+const firstItem=items[0]||{};
+const checkoutItem={
+id:'CART-CHECKOUT',
+name:`${totalQty} Item(s)`,
+price:`RM${totalAmount.toFixed(2)}`,
+qty:totalQty,
+cartItems:items,
+isCartCheckout:true,
+downloadLink:firstItem.downloadLink||firstItem.secureDownloadLink||firstItem.premiumDownloadFileLink||'',
+secureDownloadLink:firstItem.secureDownloadLink||firstItem.downloadLink||firstItem.premiumDownloadFileLink||'',
+premiumDownloadFileLink:firstItem.premiumDownloadFileLink||firstItem.secureDownloadLink||firstItem.downloadLink||''
+};
+if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(checkoutItem); closePanel();}
+else if(items[0].pageUrl){location.href=items[0].pageUrl;}
+else {alert('Open the Software Tools or CAD Tools page to checkout this item.');}
+return;
+}
+  });
+  // AZOBSS fix: Buy Now is no longer hijacked by cart. Only .az-card-cart-btn adds items to this cart.
+  window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
+})();
+</script>
+<script id="azobss-pabm-cart-click-final-041">
+(function(){
+ if(window.__azobssPabmCartClickFinal041)return;window.__azobssPabmCartClickFinal041=true;
+ function openCart(){try{if(typeof window.azobssOpenShopCart==='function'){window.azobssOpenShopCart();return true;}}catch(e){console.warn('PA/BM cart open error:',e)}return false;}
+ document.addEventListener('click',function(e){var btn=e.target.closest('a[aria-label="Cart"][data-az-shop-cart-toggle]');if(!btn)return;e.preventDefault();e.stopPropagation();if(openCart())return;setTimeout(openCart,150);},true);
+ window.azobssPabmCartDebug041=function(){return{azobssOpenShopCart:typeof window.azobssOpenShopCart,panel:document.getElementById('azShopCartPanel')||document.querySelector('.az-shop-cart-panel'),badge:document.querySelector('[data-az-shop-cart-badge]')?document.querySelector('[data-az-shop-cart-badge]').textContent:null};};
 })();
 </script>
 </body>
