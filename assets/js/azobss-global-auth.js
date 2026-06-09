@@ -1504,7 +1504,7 @@ const AZOBSS_REAL_ONLINE_MS = 180000; // only show users seen within the last 3 
 let azobssPresenceHeartbeatTimer = null;
 
 
-async function (typeof azobssCleanupCollection==='function' ? azobssCleanupCollection : function(){return Promise.resolve();})(collectionName){
+async function azobssCleanupCollection(collectionName){
  try{
  const snap=await getDocs(query(collection(db,collectionName),orderBy("createdAt","desc")));
  if(snap.size<=25) return;
