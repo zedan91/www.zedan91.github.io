@@ -13744,7 +13744,11 @@ body #userDropdown button.user-dropdown-item:hover{
         e.preventDefault();
         if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
         if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
-        window.location.href='/Software-Tools/';
+        setTimeout(function(){
+          if(typeof window.azShopOpenCart==='function') return window.azShopOpenCart();
+          if(typeof window.azShopCartToggle==='function') return window.azShopCartToggle();
+          document.dispatchEvent(new CustomEvent('azobss-open-cart-request'));
+        },120);
       });
     });
   }
@@ -14033,6 +14037,45 @@ function hide(e){e.style.cssText+=';display:none!important;visibility:hidden!imp
 function show(e,px){e.style.cssText+=';display:inline-flex!important;visibility:visible!important;width:'+px+'px!important;min-width:'+px+'px!important;max-width:'+px+'px!important;height:'+px+'px!important;min-height:'+px+'px!important;max-height:'+px+'px!important;padding:0!important;margin:0!important;opacity:1!important;pointer-events:auto!important;overflow:visible!important;align-items:center!important;justify-content:center!important';e.removeAttribute('aria-hidden');e.tabIndex=0}
 function apply(){var r=role();document.body.classList.toggle('az-role-is-admin',r==='admin');document.body.classList.toggle('is-admin',r==='admin');document.body.classList.toggle('az-role-is-stafflike',r==='staff');document.body.setAttribute('data-az-current-role',r);document.querySelectorAll('.market-nav .azAdminDashboardBtn,.market-nav .admin-dashboard-btn').forEach(function(e){r==='admin'?show(e,34):hide(e)});document.querySelectorAll('.market-nav .azStaffDashboardBtn,.market-nav .staff-dashboard-btn').forEach(function(e){r==='staff'?show(e,34):hide(e)});document.querySelectorAll('.market-nav .nav-whatsapp-link,.market-nav .nav-whatsapp-circle').forEach(function(e){r==='admin'?hide(e):show(e,38)})}
 document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='loading')apply();window.addEventListener('focus',apply);window.addEventListener('storage',apply);setTimeout(apply,100);setTimeout(apply,500);setTimeout(apply,1200);
+})();
+</script>
+
+
+<script id="azobss-pabm-cart-no-redirect-bridge-037">
+(function(){
+  if(window.__azobssPabmCartNoRedirectBridge037) return;
+  window.__azobssPabmCartNoRedirectBridge037 = true;
+
+  function openCartSafely(){
+    if(typeof window.azShopOpenCart === 'function'){
+      window.azShopOpenCart();
+      return true;
+    }
+    if(typeof window.azShopCartToggle === 'function'){
+      window.azShopCartToggle();
+      return true;
+    }
+    return false;
+  }
+
+  document.addEventListener('azobss-open-cart-request', function(){
+    var tries = 0;
+    var timer = setInterval(function(){
+      tries++;
+      if(openCartSafely() || tries >= 10){
+        clearInterval(timer);
+      }
+    }, 150);
+  });
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('a[aria-label="Cart"][data-az-shop-cart-toggle]');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(openCartSafely()) return;
+    document.dispatchEvent(new CustomEvent('azobss-open-cart-request'));
+  }, true);
 })();
 </script>
 
