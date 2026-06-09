@@ -8943,6 +8943,46 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 </style>
 
 
+
+<script id="azobss-firestore-quota-safe-mode-044">
+(function(){
+  if(window.__azobssFirestoreQuotaSafeMode044) return;
+  window.__azobssFirestoreQuotaSafeMode044 = true;
+
+  window.AZOBSS_FIRESTORE_SAFE_MODE = true;
+  window.AZOBSS_BADGE_REFRESH_MIN_MS = 60000;
+  window.AZOBSS_ADMIN_STATS_REFRESH_MIN_MS = 180000;
+  window.AZOBSS_PRESENCE_REFRESH_MIN_MS = 120000;
+
+  var lastRun = Object.create(null);
+  window.azobssQuotaSafeRun = function(key, minMs, fn){
+    try{
+      var now = Date.now();
+      minMs = Number(minMs || 60000);
+      if(lastRun[key] && (now - lastRun[key]) < minMs) return;
+      lastRun[key] = now;
+      if(typeof fn === 'function') return fn();
+    }catch(e){}
+  };
+
+  // Patch short polling created by older page patches.
+  if(!window.__azobssQuotaSafeSetIntervalPatched044){
+    window.__azobssQuotaSafeSetIntervalPatched044 = true;
+    var nativeSetInterval = window.setInterval;
+    window.setInterval = function(fn, delay){
+      try{
+        var s = String(fn || '');
+        var d = Number(delay || 0);
+        if(d > 0 && d < 60000 && /(notification|support|message|badge|bell|cart|online|presence|guest|history|user|admin|staff)/i.test(s)){
+          delay = /admin|staff|online|presence|guest|history|user/i.test(s) ? 180000 : 60000;
+        }
+      }catch(e){}
+      return nativeSetInterval.apply(this, arguments);
+    };
+  }
+})();
+</script>
+
 </head>
 <body id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14443,7 +14483,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge,15000);
+  setInterval(updateBadge, 60000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();
