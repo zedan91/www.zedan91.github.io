@@ -1063,53 +1063,6 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 }
 </style>
 
-
-<script id="azobss-firestore-safe-mode-036">
-(function(){
-  if(window.__azobssFirestoreSafeMode036) return;
-  window.__azobssFirestoreSafeMode036 = true;
-
-  // Global safe mode: reduce repeated Firestore reads caused by stacked page patches.
-  // This does NOT disable login/cart/payment. It mainly throttles repeated badge/stat refreshes.
-  window.AZOBSS_FIRESTORE_SAFE_MODE = true;
-  window.AZOBSS_BADGE_REFRESH_MIN_MS = 60000;   // notification/message/cart badge refresh max once per minute
-  window.AZOBSS_STATS_REFRESH_MIN_MS = 120000;  // admin/staff stats max once per 2 minutes
-
-  var last = Object.create(null);
-  window.azobssSafeRun = function(key, minMs, fn){
-    try{
-      var now = Date.now();
-      minMs = Number(minMs || 60000);
-      if(last[key] && (now - last[key] < minMs)) return;
-      last[key] = now;
-      if(typeof fn === 'function') return fn();
-    }catch(e){}
-  };
-
-  function patchTimers(){
-    try{
-      if(window.__azobssSafeModeTimersPatched) return;
-      window.__azobssSafeModeTimersPatched = true;
-      var nativeSetInterval = window.setInterval;
-      window.setInterval = function(fn, delay){
-        try{
-          var s = String(fn || '');
-          var d = Number(delay || 0);
-          if(d > 0 && d < 30000 && (
-            /notification|support|message|badge|online|presence|cart|like|purchase|user/i.test(s)
-          )){
-            delay = 60000;
-          }
-        }catch(e){}
-        return nativeSetInterval.apply(this, arguments);
-      };
-    }catch(e){}
-  }
-
-  patchTimers();
-})();
-</script>
-
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1768,7 +1721,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge, 60000);
+  setInterval(updateBadge,15000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();
