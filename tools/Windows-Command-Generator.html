@@ -919,6 +919,33 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 })();
 </script>
 
+
+<script id="azobss-role-hardening-045">
+(function(){
+ if(window.__azobssRoleHardening045)return;
+ window.__azobssRoleHardening045=true;
+
+ function hide(sel){document.querySelectorAll(sel).forEach(el=>el.style.display='none');}
+
+ function apply(){
+   var isAdmin=!!(window.isAdmin===true || window.currentUserRole==='admin');
+   var isStaff=!!(window.isStaff===true || window.currentUserRole==='staff');
+
+   if(isAdmin){
+      hide('[data-staff-dashboard], .staff-dashboard-btn');
+   }else if(isStaff){
+      hide('[data-admin-dashboard], .admin-dashboard-btn');
+   }else{
+      hide('[data-admin-dashboard], .admin-dashboard-btn');
+      hide('[data-staff-dashboard], .staff-dashboard-btn');
+   }
+ }
+ document.addEventListener('DOMContentLoaded',apply);
+ setTimeout(apply,500);
+ setTimeout(apply,2000);
+})();
+</script>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
