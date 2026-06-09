@@ -1306,4 +1306,21 @@ document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='lo
 })();
 </script>
 
+
+<script id="azobss-admin-staff-badge-restore-046">
+(function(){
+ if(window.__azBadgeRestore046)return;
+ window.__azBadgeRestore046=true;
+ function ensure(){
+   document.querySelectorAll('[data-support-badge],.support-badge,#supportBadge').forEach(b=>{
+      b.style.display='inline-block';
+   });
+   document.querySelectorAll('[data-bell-badge],.bell-badge,#azBellBadge,#azBellUnreadBadge').forEach(b=>{
+      b.style.display='inline-block';
+   });
+ }
+ document.addEventListener('DOMContentLoaded',ensure);
+ setInterval(ensure,5000);
+})();
+</script>
 </body></html>
