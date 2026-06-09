@@ -1414,4 +1414,117 @@ document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='lo
 })();
 </script>
 
+
+<script id="azobss-admin-staff-badge-force-final-053">
+(function(){
+  if(window.__azobssAdminStaffBadgeForceFinal053) return;
+  window.__azobssAdminStaffBadgeForceFinal053 = true;
+
+  function num(v){
+    var n = Number(v || 0);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+  }
+
+  function readArray(keys){
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(!raw) continue;
+        var arr = JSON.parse(raw);
+        if(Array.isArray(arr)) return arr;
+      }catch(e){}
+    }
+    return [];
+  }
+
+  function countNotif(){
+    var cached = readArray([
+      'azobss_notifications_cache',
+      'azobss_notifications',
+      'notifications_cache',
+      'az_notifications_cache'
+    ]);
+    var seen = Number(localStorage.getItem('azobss_notifications_seen_at_v2') || localStorage.getItem('az_notifications_seen_at') || 0);
+    if(cached.length){
+      return cached.filter(function(x){
+        var t = Number(x.createdAtMs || x.createdAt || x.timeMs || x.timestamp || 0);
+        if(!t) return true;
+        return t > seen;
+      }).length;
+    }
+    return num(localStorage.getItem('azobss_notification_badge_count') || localStorage.getItem('azBellUnreadCount'));
+  }
+
+  function countSupport(){
+    var cached = readArray([
+      'azobss_support_cache',
+      'azobss_support_messages_cache',
+      'supportMessages_cache',
+      'az_support_cache'
+    ]);
+    var seen = Number(localStorage.getItem('azobss_support_seen_at_v2') || localStorage.getItem('az_support_seen_at') || 0);
+    if(cached.length){
+      return cached.filter(function(x){
+        if(x.deleted || x.archived) return false;
+        var replied = String(x.status || x.replyStatus || '').toLowerCase();
+        if(replied === 'closed') return false;
+        var t = Number(x.createdAtMs || x.createdAt || x.timeMs || x.timestamp || 0);
+        if(!t) return true;
+        return t > seen;
+      }).length;
+    }
+    return num(localStorage.getItem('azobss_support_badge_count') || localStorage.getItem('azSupportUnreadCount'));
+  }
+
+  function makeBadge(parent, id, cls){
+    var b = parent.querySelector('#'+id) || parent.querySelector('.'+cls);
+    if(!b){
+      b = document.createElement('span');
+      b.id = id;
+      b.className = cls + ' az-force-badge-053 is-show';
+      parent.style.position = parent.style.position || 'relative';
+      parent.appendChild(b);
+    }
+    return b;
+  }
+
+  function paintBadge(b, n){
+    n = num(n);
+    b.textContent = String(n);
+    b.classList.add('is-show');
+    b.style.cssText += ';display:inline-flex!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:-7px!important;right:-7px!important;min-width:18px!important;height:18px!important;padding:0 5px!important;border-radius:999px!important;background:#ef4444!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:18px!important;align-items:center!important;justify-content:center!important;text-align:center!important;z-index:999999!important;';
+    if(n <= 0){
+      b.textContent = '0';
+      b.style.display = 'inline-flex';
+    }
+  }
+
+  function apply(){
+    var notif = countNotif();
+    var support = countSupport();
+
+    document.querySelectorAll('a[aria-label="Notifications"],button[aria-label="Notifications"],.market-icon-btn[title*="Notification"],.market-icon-btn[title*="notification"]').forEach(function(btn){
+      var b = makeBadge(btn, 'azBellUnreadBadge', 'az-bell-badge');
+      paintBadge(b, notif);
+    });
+
+    document.querySelectorAll('a[aria-label="Chat"],button[aria-label="Chat"],a[aria-label="Support"],button[aria-label="Support"],.market-icon-btn[title*="Support"],.market-icon-btn[title*="Chat"]').forEach(function(btn){
+      var b = makeBadge(btn, 'supportBadge', 'az-support-badge');
+      paintBadge(b, support);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', apply);
+  if(document.readyState !== 'loading') apply();
+  window.addEventListener('focus', apply);
+  window.addEventListener('storage', apply);
+  window.addEventListener('azobss-notification-updated', apply);
+  window.addEventListener('azobss-support-updated', apply);
+  setTimeout(apply, 150);
+  setTimeout(apply, 800);
+  setTimeout(apply, 2000);
+  setInterval(apply, 60000);
+})();
+</script>
+
 </body></html>
