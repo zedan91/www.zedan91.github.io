@@ -13996,7 +13996,13 @@ document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='lo
 <script id="azobss-pabm-shop-cart-js-041">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
-  const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
+  const getKey=()=>{
+  try{
+    const u=(window.currentUser&&window.currentUser.username)||localStorage.getItem('az_username');
+    if(u) return 'azobss_shop_cart_'+u;
+  }catch(e){}
+  return window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
+};
   const moneyVal=v=>{const n=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/);return n?Number(n[0]):0;};
   const fmt=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
   const read=()=>{try{
