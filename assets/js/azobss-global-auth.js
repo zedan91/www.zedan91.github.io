@@ -1,3 +1,10 @@
+/* AZOBSS auth safety fix 050 */
+(function(){
+  if(window.__azobssAuthSafety050) return;
+  window.__azobssAuthSafety050 = true;
+  window.__azobssSafeRealEmail = window.__azobssSafeRealEmail || '';
+})();
+
 window.__azobssSafeRealEmail047='';
 /* AZOBSS Firestore quota safe mode 044 */
 window.AZOBSS_FIRESTORE_SAFE_MODE=true;
@@ -179,7 +186,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, onSnapshot , orderBy} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -614,7 +621,7 @@ async function migrateUsernameAuthLookupForAdmin(){
     const jobs = [];
     snap.forEach((d)=>{
       const data = d.data() || {};
-      const usernameKey = normalizeUsername(data.usernameKey || d.id);
+      let usernameKey = normalizeUsername(data.usernameKey || d.id);
       const email = String(data.authEmail || data.email || '').trim().toLowerCase();
       if(usernameKey && email && email.includes('@')) jobs.push(saveUsernameAuthEmail(usernameKey, email, data.uid || null));
     });
@@ -1447,7 +1454,7 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   const explicitUsernameKey = normalizeUsername(fallback.usernameKey || fallback.username || fallback.name || '');
   const saved = getSavedUser?.() || {};
   const savedUsernameKey = String(saved.uid || '') === String(firebaseUser?.uid || '') ? normalizeUsername(saved.usernameKey || saved.username || saved.name || '') : '';
-  const usernameKey = explicitUsernameKey || savedUsernameKey;
+  let usernameKey = explicitUsernameKey || savedUsernameKey;
 
   // Important: never create a Firestore username from Gmail prefix (example zedann.0002@gmail.com -> zedann0002).
   // That was the source of duplicate users. If no real username is supplied, locate the existing profile by uid/email mapping instead.
@@ -1497,7 +1504,7 @@ const AZOBSS_REAL_ONLINE_MS = 180000; // only show users seen within the last 3 
 let azobssPresenceHeartbeatTimer = null;
 
 
-async function azobssCleanupCollection(collectionName){
+async function (typeof azobssCleanupCollection==='function' ? azobssCleanupCollection : function(){return Promise.resolve();})(collectionName){
  try{
  const snap=await getDocs(query(collection(db,collectionName),orderBy("createdAt","desc")));
  if(snap.size<=25) return;
@@ -1613,7 +1620,7 @@ async function saveAdminUserEdit(){
   if(err){ err.textContent=''; err.style.color=''; }
   if(!isAzobssAdmin(getSavedUser())){ if(err) err.textContent='Admin only.'; return; }
   const docId = String($('adminUserEditDocId')?.value || '').trim().toLowerCase();
-  const usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
+  let usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
   if(!docId || !usernameKey){ if(err) err.textContent='Username is required.'; return; }
   const allowPaAccess = String($('adminUserEditPaAccess')?.value || 'no') === 'yes';
   const typedCode = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
@@ -3592,7 +3599,7 @@ function bindAuth() {
     const submitButton = event.submitter || $('siteSignInForm')?.querySelector('button[type="submit"]') || $('siteSignInForm')?.querySelector('button');
     const loginInputRaw=String(fieldValue('siteLoginUsername','siteLoginName')).trim().toLowerCase();
     const inputIsEmail = loginInputRaw.includes('@');
-    const usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || loginInputRaw.split('@')[0]) : normalizeUsername(loginInputRaw);
+    let usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || loginInputRaw.split('@')[0]) : normalizeUsername(loginInputRaw);
     const password=fieldValue('siteLoginPassword');
     if(!loginInputRaw || !password){ if(err) err.textContent='Please enter username/email and password.'; return; }
     try{
@@ -3630,7 +3637,9 @@ function bindAuth() {
         profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'member'};
       }
       const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
-      const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
+      
+const safeRealEmail = (typeof realEmail !== 'undefined' ? realEmail : (window.__azobssSafeRealEmail || ''));
+const isOwnerBypass = usernameKey === 'zedan91' || (typeof realEmail !== 'undefined' ? realEmail : (window.__azobssSafeRealEmail||'')) === 'zedan91@azobss.local';
       if(!authUser.emailVerified && !isOwnerBypass){
         await signOut(auth);
         clearSavedUser();
@@ -3689,7 +3698,7 @@ function bindAuth() {
     try{
       let resetEmail = raw;
       if(!raw.includes('@')){
-        const usernameKey = normalizeUsername(raw);
+        let usernameKey = normalizeUsername(raw);
         if(!usernameKey){ if(err) err.textContent='Please enter a valid username or registered email.'; return; }
         resetEmail = await getAuthEmailForUsername(usernameKey);
         if(!resetEmail){
@@ -3715,7 +3724,7 @@ function bindAuth() {
     event.preventDefault();
     if(event.stopImmediatePropagation) event.stopImmediatePropagation();
     const err=$('siteSignupError'); if(err) err.textContent='';
-    const usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
+    let usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
     const password=fieldValue('siteSignupPassword');
     const phone=getSignupPhoneWithDial();
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
@@ -3897,7 +3906,7 @@ function bindAuth() {
     const newPassword=String($('profileNewPassword')?.value||'');
     const confirmPassword=String($('profileConfirmPassword')?.value||'');
     const saved=getSavedUser() || {};
-    const usernameKey=normalizeUsername(saved.usernameKey || saved.name || (auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : ''));
+    let usernameKey=normalizeUsername(saved.usernameKey || saved.name || (auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : ''));
     if(!auth.currentUser || !usernameKey){ if(err) err.textContent='Please login again before reset password.'; return; }
     if(!currentPassword || !newPassword || !confirmPassword){ if(err) err.textContent='Please enter current password and new password.'; return; }
     if(newPassword.length < 8){ if(err) err.textContent='New password must be at least 8 characters.'; return; }
@@ -3950,7 +3959,7 @@ function bindAuth() {
         return;
       }
       const profile=await ensureUserProfile(freshUser);
-      const usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
+      let usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
       let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
       try{
         if(usernameKey && !profile._profileMissing){
@@ -4155,7 +4164,7 @@ body{padding-top:58px!important;}
 setupCountryPhoneSelectors(document);
 new MutationObserver(()=>setupCountryPhoneSelectors(document)).observe(document.body,{childList:true,subtree:true});
 
-setTimeout(()=>{azobssCleanupCollection("loginHistory");azobssCleanupCollection("guestHistory");azobssCleanupCollection("purchaseLogs");},5000);
+setTimeout(()=>{(typeof azobssCleanupCollection==='function' ? azobssCleanupCollection : function(){return Promise.resolve();})("loginHistory");(typeof azobssCleanupCollection==='function' ? azobssCleanupCollection : function(){return Promise.resolve();})("guestHistory");(typeof azobssCleanupCollection==='function' ? azobssCleanupCollection : function(){return Promise.resolve();})("purchaseLogs");},5000);
 
 
 
