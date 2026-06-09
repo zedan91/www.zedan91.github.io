@@ -1323,4 +1323,95 @@ document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='lo
  setInterval(ensure,5000);
 })();
 </script>
+
+<script id="azobss-admin-staff-badge-updater-052">
+(function(){
+  if(window.__azobssAdminStaffBadgeUpdater052) return;
+  window.__azobssAdminStaffBadgeUpdater052 = true;
+
+  function setBadge(selectors, count){
+    count = Math.max(0, Number(count || 0));
+    selectors.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(b){
+        b.textContent = String(count);
+        b.classList.toggle('is-show', count > 0);
+        b.style.display = count > 0 ? 'inline-block' : 'none';
+      });
+    });
+  }
+
+  function getCacheCount(key, seenKey){
+    try{
+      var rows = JSON.parse(localStorage.getItem(key) || '[]');
+      if(!Array.isArray(rows)) return 0;
+      var seen = Number(localStorage.getItem(seenKey) || 0);
+      return rows.filter(function(x){
+        var t = Number(x.createdAtMs || x.createdAt || x.timeMs || 0);
+        if(!t) return true;
+        return t > seen;
+      }).length;
+    }catch(e){ return 0; }
+  }
+
+  async function loadFirebaseCount(collectionName){
+    try{
+      var db = window.__azFirebaseDb;
+      var f = window.__azFirestoreFns || {};
+      if(!db || !f.collection || !f.getDocs) return null;
+
+      var ref = f.collection(db, collectionName);
+      var q = ref;
+      if(f.query && f.orderBy && f.limit){
+        q = f.query(ref, f.orderBy('createdAtMs','desc'), f.limit(30));
+      }
+      var snap = await f.getDocs(q);
+      var rows = [];
+      snap.forEach(function(d){ rows.push(d.data ? (d.data() || {}) : {}); });
+      return rows.length;
+    }catch(e){
+      console.warn('AZOBSS badge count failed:', collectionName, e && e.message ? e.message : e);
+      return null;
+    }
+  }
+
+  async function updateBadges(){
+    var notif = getCacheCount('azobss_notifications_cache','azobss_notifications_seen_at_v2');
+    var support = getCacheCount('azobss_support_cache','azobss_support_seen_at_v2');
+
+    var liveNotif = await loadFirebaseCount('notifications');
+    if(typeof liveNotif === 'number') notif = liveNotif;
+
+    var liveSupport = await loadFirebaseCount('supportMessages');
+    if(typeof liveSupport === 'number') support = liveSupport;
+
+    setBadge([
+      '#azBellUnreadBadge',
+      '[data-az-bell-badge]',
+      '.az-bell-badge',
+      'a[aria-label="Notifications"] .az-topbar-badge',
+      'a[aria-label="Notifications"] .market-badge'
+    ], notif);
+
+    setBadge([
+      '#supportBadge',
+      '#azSupportUnreadBadge',
+      '[data-az-support-badge]',
+      '.az-support-badge',
+      'a[aria-label="Chat"] .az-topbar-badge',
+      'a[aria-label="Chat"] .market-badge'
+    ], support);
+  }
+
+  document.addEventListener('DOMContentLoaded', updateBadges);
+  if(document.readyState !== 'loading') updateBadges();
+  window.addEventListener('focus', updateBadges);
+  window.addEventListener('storage', updateBadges);
+  window.addEventListener('azobss-notification-updated', updateBadges);
+  window.addEventListener('azobss-support-updated', updateBadges);
+  setTimeout(updateBadges, 1000);
+  setTimeout(updateBadges, 3500);
+  setInterval(updateBadges, 60000);
+})();
+</script>
+
 </body></html>
