@@ -1063,6 +1063,77 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 }
 </style>
 
+
+<style id="azobss-role-hardening-041-css">
+/* (041) Role Hardening - dashboard button visibility */
+.azAdminDashboardBtn,
+.admin-dashboard-btn,
+a[href="/admin/"].azobss-nav-chip,
+a[href="/admin/"].market-nav-active,
+.market-nav a[href="/admin/"],
+.azStaffDashboardBtn,
+.staff-dashboard-btn,
+a[href="/staff/"].azobss-nav-chip,
+a[href="/staff/"].market-nav-active,
+.market-nav a[href="/staff/"]{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+body.az-role-is-admin .azAdminDashboardBtn,
+body.az-role-is-admin .admin-dashboard-btn,
+body.az-role-is-admin .market-nav a[href="/admin/"]{
+  display:inline-flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+
+body.az-role-is-staff:not(.az-role-is-admin) .azStaffDashboardBtn,
+body.az-role-is-staff:not(.az-role-is-admin) .staff-dashboard-btn,
+body.az-role-is-staff:not(.az-role-is-admin) .market-nav a[href="/staff/"]{
+  display:inline-flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+
+body.az-role-is-admin .azStaffDashboardBtn,
+body.az-role-is-admin .staff-dashboard-btn,
+body.az-role-is-admin .market-nav a[href="/staff/"],
+body.az-role-is-staff .azAdminDashboardBtn,
+body.az-role-is-staff .admin-dashboard-btn,
+body.az-role-is-staff .market-nav a[href="/admin/"]{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+#azRoleDenyOverlay041{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  background:rgba(2,6,23,.94)!important;
+  color:#fff!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif!important;
+  padding:24px!important;
+}
+#azRoleDenyOverlay041 .box{
+  max-width:440px;
+  border:1px solid rgba(148,163,184,.35);
+  border-radius:18px;
+  background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.92));
+  padding:24px;
+  box-shadow:0 22px 80px rgba(0,0,0,.45);
+}
+#azRoleDenyOverlay041 h2{margin:0 0 10px;font-size:22px}
+#azRoleDenyOverlay041 p{margin:0 0 16px;color:#cbd5e1}
+#azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2524,235 +2595,169 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 </script>
 
 
-<style id="azobss-role-buttons-strict-visibility-035">
-/* (035) Strict role visibility for stickybar Admin/Staff dashboard buttons */
-.market-nav .azAdminDashboardBtn,
-.market-nav .admin-dashboard-btn,
-.market-nav .azStaffDashboardBtn,
-.market-nav .staff-dashboard-btn{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
 
-/* Admin sees Admin Dashboard only */
-body.az-role-is-admin .market-nav .azAdminDashboardBtn,
-body.az-role-is-admin .market-nav .admin-dashboard-btn,
-body.is-admin .market-nav .azAdminDashboardBtn,
-body.is-admin .market-nav .admin-dashboard-btn,
-body[data-role="admin"] .market-nav .azAdminDashboardBtn,
-body[data-role="admin"] .market-nav .admin-dashboard-btn,
-body[data-dashboard-page="admin"] .market-nav .azAdminDashboardBtn,
-body[data-dashboard-page="admin"] .market-nav .admin-dashboard-btn{
-  display:inline-flex!important;
-  visibility:visible!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border:1px solid rgba(148,163,184,.35)!important;
-  overflow:visible!important;
-  pointer-events:auto!important;
-  opacity:1!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-}
-
-/* Staff sees Staff Dashboard only. Do NOT use az-staff-safe-ok because admin pages may also have it. */
-body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .azStaffDashboardBtn,
-body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .staff-dashboard-btn,
-body[data-role="staff"] .market-nav .azStaffDashboardBtn,
-body[data-role="staff"] .market-nav .staff-dashboard-btn,
-body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .azStaffDashboardBtn,
-body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .staff-dashboard-btn{
-  display:inline-flex!important;
-  visibility:visible!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border:1px solid rgba(148,163,184,.35)!important;
-  overflow:visible!important;
-  pointer-events:auto!important;
-  opacity:1!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-}
-
-/* Admin must never see Staff Dashboard, even if old scripts add staff-safe class */
-body.az-role-is-admin .market-nav .azStaffDashboardBtn,
-body.az-role-is-admin .market-nav .staff-dashboard-btn,
-body.is-admin .market-nav .azStaffDashboardBtn,
-body.is-admin .market-nav .staff-dashboard-btn,
-body[data-role="admin"] .market-nav .azStaffDashboardBtn,
-body[data-role="admin"] .market-nav .staff-dashboard-btn,
-body[data-dashboard-page="admin"] .market-nav .azStaffDashboardBtn,
-body[data-dashboard-page="admin"] .market-nav .staff-dashboard-btn{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
-
-.market-nav{
-  gap:6px!important;
-  column-gap:6px!important;
-}
-</style>
-
-
-<script id="azobss-role-buttons-strict-visibility-035-script">
+<script id="azobss-role-hardening-041-js">
 (function(){
-  if(window.__azobssRoleButtonsStrictVisibility035) return;
-  window.__azobssRoleButtonsStrictVisibility035 = true;
-
-  function readStoredUser(){
-    var keys=[
-      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
-      'azobss_user_profile','azobssProfile','currentUser','userProfile'
-    ];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw=localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
-        if(!raw) continue;
-        var obj=JSON.parse(raw);
-        if(obj && typeof obj === 'object') return obj;
-      }catch(e){}
-    }
-    return {};
-  }
+  if(window.__azobssRoleHardening041) return;
+  window.__azobssRoleHardening041 = true;
 
   function lower(v){ return String(v || '').trim().toLowerCase(); }
 
+  function readStoredObjects(){
+    var out = [];
+    var keys = [
+      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
+      'azobss_user_profile','azobssProfile','currentUser','userProfile',
+      'azobss_auth_user','azobssLoginUser','azobss_logged_user'
+    ];
+    keys.forEach(function(k){
+      try{
+        var raw = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if(!raw) return;
+        try{
+          var obj = JSON.parse(raw);
+          if(obj && typeof obj === 'object') out.push(obj);
+        }catch(e){
+          out.push({username:raw, raw:raw});
+        }
+      }catch(e){}
+    });
+    return out;
+  }
+
   function detectRole(){
-    var body=document.body;
-    var page=body.getAttribute('data-dashboard-page') || '';
-    if(page === 'admin') return 'admin';
-    if(page === 'staff') return 'staff';
+    var adminNames = ['zedan91'];
+    var adminEmails = ['zedan9107@gmail.com','zedan91@azobss.local'];
 
-    var signed=lower((document.querySelector('#signedInName')||{}).textContent);
-    var unameText=lower((document.querySelector('.user-name')||{}).textContent);
+    var visibleName = lower((document.querySelector('#signedInName') || {}).textContent);
+    var userNameBox = lower((document.querySelector('.user-name') || {}).textContent);
 
-    if(signed === 'zedan91' || unameText === 'zedan91' || unameText.indexOf('zedan91') !== -1) return 'admin';
+    if(adminNames.indexOf(visibleName) !== -1 || adminNames.indexOf(userNameBox) !== -1 || userNameBox.indexOf('zedan91') !== -1){
+      return 'admin';
+    }
 
-    var u=readStoredUser();
-    var role=lower(u.role || u.userRole || u.accountRole || u.type);
-    var username=lower(u.usernameKey || u.username || u.id || u.name || u.displayName);
-    var email=lower(u.email || u.authEmail);
+    var objs = readStoredObjects();
+    for(var i=0;i<objs.length;i++){
+      var u = objs[i] || {};
+      var role = lower(u.role || u.userRole || u.accountRole || u.type || u.accessRole);
+      var username = lower(u.usernameKey || u.username || u.userName || u.id || u.name || u.displayName || u.raw);
+      var email = lower(u.email || u.authEmail || u.realEmail || u.userEmail);
 
-    if(username === 'zedan91' || email === 'zedan91@azobss.local') return 'admin';
+      if(adminNames.indexOf(username) !== -1 || adminEmails.indexOf(email) !== -1){
+        return 'admin';
+      }
 
-    var isStaff = (
-      role === 'staff' ||
-      role === 'semiadmin' ||
-      role === 'semi-admin' ||
-      role === 'semi_admin' ||
-      role === 'seller' ||
-      role === 'editor' ||
-      u.isStaff === true ||
-      u.staff === true ||
-      u.staffDashboard === true ||
-      u.canAccessStaffDashboard === true
-    );
+      if(role === 'admin' || u.isAdmin === true || u.admin === true || u.owner === true){
+        return 'admin';
+      }
 
-    if(isStaff) return 'staff';
+      if(
+        role === 'staff' || role === 'semiadmin' || role === 'semi-admin' ||
+        role === 'semi_admin' || role === 'seller' || role === 'editor' ||
+        u.isStaff === true || u.staff === true || u.staffDashboard === true ||
+        u.canAccessStaffDashboard === true || u.canAddSoftware === true
+      ){
+        return 'staff';
+      }
+    }
+
+    try{
+      if(localStorage.getItem('azobss_admin_role_cache') === '1') return 'admin';
+      if(localStorage.getItem('azobss_staff_role_cache') === '1') return 'staff';
+    }catch(e){}
 
     return 'none';
   }
 
-  function setBtn(el, show){
-    if(!el) return;
-    if(show){
-      el.style.setProperty('display','inline-flex','important');
-      el.style.setProperty('visibility','visible','important');
-      el.style.setProperty('width','34px','important');
-      el.style.setProperty('min-width','34px','important');
-      el.style.setProperty('max-width','34px','important');
-      el.style.setProperty('height','34px','important');
-      el.style.setProperty('min-height','34px','important');
-      el.style.setProperty('max-height','34px','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('opacity','1','important');
-      el.style.setProperty('pointer-events','auto','important');
-      el.style.setProperty('overflow','visible','important');
-      el.removeAttribute('aria-hidden');
-      el.tabIndex=0;
-    }else{
-      el.style.setProperty('display','none','important');
-      el.style.setProperty('visibility','hidden','important');
-      el.style.setProperty('width','0','important');
-      el.style.setProperty('min-width','0','important');
-      el.style.setProperty('max-width','0','important');
-      el.style.setProperty('height','0','important');
-      el.style.setProperty('min-height','0','important');
-      el.style.setProperty('max-height','0','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('border','0','important');
-      el.style.setProperty('opacity','0','important');
-      el.style.setProperty('pointer-events','none','important');
-      el.style.setProperty('overflow','hidden','important');
-      el.setAttribute('aria-hidden','true');
-      el.tabIndex=-1;
-    }
-  }
-
-  function apply(){
-    var role=detectRole();
-
+  function setRoleClass(role){
     document.body.classList.toggle('az-role-is-admin', role === 'admin');
     document.body.classList.toggle('is-admin', role === 'admin');
+    document.body.classList.toggle('az-role-is-staff', role === 'staff');
     document.body.classList.toggle('az-role-is-stafflike', role === 'staff');
-
-    document.querySelectorAll('.market-nav .azAdminDashboardBtn,.market-nav .admin-dashboard-btn').forEach(function(el){
-      setBtn(el, role === 'admin');
-    });
-
-    document.querySelectorAll('.market-nav .azStaffDashboardBtn,.market-nav .staff-dashboard-btn').forEach(function(el){
-      setBtn(el, role === 'staff');
-    });
+    document.body.setAttribute('data-az-current-role', role);
   }
 
-  document.addEventListener('DOMContentLoaded',apply);
-  if(document.readyState !== 'loading') apply();
-  window.addEventListener('focus',apply);
-  window.addEventListener('storage',apply);
-  setTimeout(apply,100);
-  setTimeout(apply,500);
-  setTimeout(apply,1200);
-  setTimeout(apply,2500);
+  function hardHide(el){
+    if(!el) return;
+    el.style.setProperty('display','none','important');
+    el.style.setProperty('visibility','hidden','important');
+    el.style.setProperty('pointer-events','none','important');
+    el.setAttribute('aria-hidden','true');
+    el.tabIndex = -1;
+  }
+
+  function hardShow(el){
+    if(!el) return;
+    el.style.setProperty('display','inline-flex','important');
+    el.style.setProperty('visibility','visible','important');
+    el.style.setProperty('pointer-events','auto','important');
+    el.removeAttribute('aria-hidden');
+    el.tabIndex = 0;
+  }
+
+  function applyButtons(){
+    var role = detectRole();
+    setRoleClass(role);
+
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn,.market-nav a[href="/admin/"],a[href="/admin/"].azobss-nav-chip').forEach(function(el){
+      role === 'admin' ? hardShow(el) : hardHide(el);
+    });
+
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn,.market-nav a[href="/staff/"],a[href="/staff/"].azobss-nav-chip').forEach(function(el){
+      role === 'staff' ? hardShow(el) : hardHide(el);
+    });
+
+    return role;
+  }
+
+  function showDenied(required, role){
+    if(document.getElementById('azRoleDenyOverlay041')) return;
+    var div = document.createElement('div');
+    div.id = 'azRoleDenyOverlay041';
+    div.innerHTML = '<div class="box"><h2>Access Restricted</h2><p>This page is for '+required+' only.<br>Current role: '+role+'</p><a href="/">Go to Home</a></div>';
+    document.body.appendChild(div);
+    setTimeout(function(){ location.href = '/'; }, 1800);
+  }
+
+  function guardPage(){
+    var path = location.pathname.toLowerCase();
+    var required = '';
+    if(path === '/admin/' || path === '/admin/index.html') required = 'admin';
+    if(path === '/staff/' || path === '/staff/index.html') required = 'staff';
+    if(!required) return;
+
+    var role = applyButtons();
+
+    if(role === required) return;
+
+    // Allow a short delay for auth UI/localStorage to initialize before blocking.
+    var tries = 0;
+    var timer = setInterval(function(){
+      tries++;
+      role = applyButtons();
+      if(role === required){
+        clearInterval(timer);
+        return;
+      }
+      if(tries >= 8){
+        clearInterval(timer);
+        showDenied(required, role);
+      }
+    }, 350);
+  }
+
+  function run(){
+    applyButtons();
+    guardPage();
+  }
+
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState !== 'loading') run();
+  window.addEventListener('storage', run);
+  window.addEventListener('focus', run);
+  setTimeout(run, 300);
+  setTimeout(run, 1200);
+  setTimeout(run, 2500);
 })();
 </script>
 
