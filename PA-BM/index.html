@@ -10814,7 +10814,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   window.addEventListener('load', restoreAllAdminPanels);
   window.addEventListener('storage', restoreAllAdminPanels);
   setTimeout(restoreAllAdminPanels, 300);
-  setTimeout(restoreAllAdminPanels, 1200);
+  setTimeout(restoreAllAdminPanels, 30000);
   setTimeout(restoreAllAdminPanels, 2500);
 })();
 </script>
@@ -10939,7 +10939,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   }
   document.addEventListener('DOMContentLoaded',bind);
   window.addEventListener('load',bind);
-  setTimeout(bind,300);setTimeout(bind,1200);setTimeout(bind,2500);
+  setTimeout(bind,300);setTimeout(bind,30000);setTimeout(bind,2500);
 })();
 </script>
 <script>
@@ -12205,7 +12205,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     window.addEventListener('azobss:purchases-updated', updatePaymentTotalText);
     setTimeout(updatePaymentTotalText, 400);
-    setTimeout(updatePaymentTotalText, 1200);
+    setTimeout(updatePaymentTotalText, 30000);
   });
 })();
 </script>
@@ -12513,7 +12513,7 @@ body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef
     keepPopupVisible();
     setTimeout(keepPopupVisible, 400);
     setTimeout(refreshPurchaseList, 800);
-    setTimeout(scrollLatest, 1200);
+    setTimeout(scrollLatest, 30000);
     setTimeout(scrollLatest, 2500);
   }
 
@@ -13254,7 +13254,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
     const bell=getBell();
     if(bell && (e.target===bell || bell.contains(e.target))){
       markSeen();
-      setTimeout(updateBadge,1200);
+      setTimeout(updateBadge,30000);
     }
   },true);
 
@@ -13265,7 +13265,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge,15000);
+  setInterval(updateBadge,60000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();
@@ -13395,7 +13395,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
    const chat=getChat();
    if(chat && (e.target===chat || chat.contains(e.target))){
       markSeen();
-      setTimeout(update,1200);
+      setTimeout(update,30000);
    }
  },true);
 
@@ -13406,7 +13406,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  if(document.readyState!=='loading') setTimeout(update,1500);
  setTimeout(update,3000);
  setTimeout(update,6000);
- setInterval(update,15000);
+ setInterval(update,60000);
 })();
 </script>
 
@@ -13742,7 +13742,7 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
     if(list) mo.observe(list,{childList:true,subtree:true});
   }
 
-  setInterval(addDeleteButtons, 1200);
+  setInterval(addDeleteButtons, 30000);
 })();
 </script>
 
@@ -14034,7 +14034,7 @@ body #userDropdown button.user-dropdown-item:hover{
   window.addEventListener('focus',apply);
   setTimeout(apply,120);
   setTimeout(apply,500);
-  setTimeout(apply,1200);
+  setTimeout(apply,30000);
 })();
 </script>
 
@@ -14641,7 +14641,7 @@ return;
   window.addEventListener('storage', run);
   window.addEventListener('focus', run);
   setTimeout(run, 300);
-  setTimeout(run, 1200);
+  setTimeout(run, 30000);
   setTimeout(run, 2500);
 })();
 </script>
