@@ -1868,4 +1868,117 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
  setTimeout(apply,300);setTimeout(apply,1500);setTimeout(apply,3500);
 })();
 </script>
+<script id="azobss-staff-chat-badge-attach-final-045">
+(function(){
+  if(window.__azobssStaffChatBadgeAttachFinal045) return;
+  window.__azobssStaffChatBadgeAttachFinal045 = true;
+
+  function readCount(){
+    try{
+      var direct = Number(
+        localStorage.getItem('azobss_support_badge_count') ||
+        localStorage.getItem('azSupportUnreadCount') ||
+        sessionStorage.getItem('azobss_support_badge_count') ||
+        0
+      );
+      if(Number.isFinite(direct) && direct > 0) return direct;
+    }catch(e){}
+
+    try{
+      var keys = ['azobss_support_cache','azobss_support_messages_cache','supportMessages_cache','az_support_cache'];
+      var rows = [];
+      for(var i=0;i<keys.length;i++){
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(!raw) continue;
+        var arr = JSON.parse(raw);
+        if(Array.isArray(arr)){ rows = arr; break; }
+      }
+      var seen = Math.max(
+        Number(localStorage.getItem('azobss_support_seen_at_v2') || 0),
+        Number(localStorage.getItem('az_support_seen_at') || 0)
+      );
+      return rows.filter(function(x){
+        if(!x || x.deleted || x.archived) return false;
+        var st = String(x.status || x.replyStatus || '').toLowerCase();
+        if(st === 'closed') return false;
+        var t = Number(x.createdAtMs || x.createdAt || x.timeMs || x.timestamp || 0);
+        return !t || t > seen;
+      }).length;
+    }catch(e){}
+    return 0;
+  }
+
+  function findChatButton(){
+    var selectors = [
+      'a[aria-label="Chat"]',
+      'button[aria-label="Chat"]',
+      'a[aria-label="Support"]',
+      'button[aria-label="Support"]',
+      'a[title*="Chat"]',
+      'button[title*="Chat"]',
+      'a[title*="Support"]',
+      'button[title*="Support"]',
+      '.market-icon-btn[data-az-support-toggle]',
+      '.market-icon-btn[data-az-message-toggle]',
+      '.market-icon-btn[data-az-chat-toggle]',
+      '.nav-chat-btn',
+      '.support-chat-btn',
+      '.az-support-btn'
+    ];
+    for(var i=0;i<selectors.length;i++){
+      var el = document.querySelector(selectors[i]);
+      if(el) return el;
+    }
+
+    // Fallback: staff stickybar chat icon is usually the last icon button after bell/cart.
+    var icons = Array.from(document.querySelectorAll('.market-user-tools .market-icon-btn, .site-auth-actions .market-icon-btn, a.market-icon-btn, button.market-icon-btn'));
+    if(icons.length){
+      for(var j=icons.length-1;j>=0;j--){
+        var h = (icons[j].getAttribute('href') || '').toLowerCase();
+        var t = (icons[j].getAttribute('title') || icons[j].getAttribute('aria-label') || icons[j].textContent || '').toLowerCase();
+        if(t.indexOf('cart') !== -1 || t.indexOf('notification') !== -1 || t.indexOf('bell') !== -1 || t.indexOf('like') !== -1) continue;
+        if(h === '#' || h.indexOf('support') !== -1 || h.indexOf('message') !== -1 || h.indexOf('chat') !== -1) return icons[j];
+      }
+      return icons[icons.length-1];
+    }
+    return null;
+  }
+
+  function ensureBadge(btn){
+    if(!btn) return null;
+    btn.style.setProperty('position','relative','important');
+    var b = btn.querySelector('#supportBadge') || btn.querySelector('#azSupportUnreadBadge') || btn.querySelector('.az-support-badge') || btn.querySelector('[data-az-support-badge]');
+    if(!b){
+      b = document.createElement('span');
+      b.id = 'supportBadge';
+      b.className = 'az-support-badge is-show';
+      b.setAttribute('data-az-support-badge','1');
+      btn.appendChild(b);
+    }
+    return b;
+  }
+
+  function paint(){
+    var n = Math.max(0, Number(readCount() || 0));
+    var btn = findChatButton();
+    var b = ensureBadge(btn);
+    if(!b) return;
+
+    b.textContent = String(n);
+    b.classList.toggle('is-show', n > 0);
+    b.style.cssText += ';position:absolute!important;top:-7px!important;right:-7px!important;min-width:18px!important;height:18px!important;padding:0 5px!important;border-radius:999px!important;background:#ef4444!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:18px!important;display:' + (n > 0 ? 'inline-flex' : 'none') + '!important;align-items:center!important;justify-content:center!important;text-align:center!important;z-index:999999!important;box-shadow:0 0 0 2px rgba(15,23,42,.95)!important;';
+  }
+
+  document.addEventListener('DOMContentLoaded', paint);
+  if(document.readyState !== 'loading') paint();
+  window.addEventListener('focus', paint);
+  window.addEventListener('storage', paint);
+  window.addEventListener('azobss-support-updated', paint);
+  setTimeout(paint, 100);
+  setTimeout(paint, 600);
+  setTimeout(paint, 1600);
+  setTimeout(paint, 3500);
+  setInterval(paint, 30000);
+})();
+</script>
 </body></html>
