@@ -1844,4 +1844,28 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
+<script id="azobss-staff-message-badge-permission-safe-044">
+(function(){
+ if(window.__azobssStaffMessageBadgePermissionSafe044)return;window.__azobssStaffMessageBadgePermissionSafe044=true;
+ function setSupportBadge(n){
+   n=Math.max(0,Number(n||0));
+   ['#supportBadge','#azSupportUnreadBadge','[data-az-support-badge]','.az-support-badge','a[aria-label="Chat"] .az-topbar-badge','a[aria-label="Chat"] .market-badge','button[aria-label="Chat"] .az-topbar-badge','button[aria-label="Chat"] .market-badge'].forEach(function(sel){
+     document.querySelectorAll(sel).forEach(function(b){b.textContent=String(n);b.classList.toggle('is-show',n>0);b.style.display=n>0?'inline-flex':'none';});
+   });
+ }
+ function countCache(){
+   try{
+     var keys=['azobss_support_cache','azobss_support_messages_cache','supportMessages_cache','az_support_cache'],rows=[];
+     for(var i=0;i<keys.length;i++){var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);if(!raw)continue;var arr=JSON.parse(raw);if(Array.isArray(arr)){rows=arr;break;}}
+     var seen=Math.max(Number(localStorage.getItem('azobss_support_seen_at_v2')||0),Number(localStorage.getItem('az_support_seen_at')||0));
+     return rows.filter(function(x){if(!x||x.deleted||x.archived)return false;var st=String(x.status||x.replyStatus||'').toLowerCase();if(st==='closed')return false;var t=Number(x.createdAtMs||x.createdAt||x.timeMs||x.timestamp||0);return !t||t>seen;}).length;
+   }catch(e){return 0;}
+ }
+ function apply(){setSupportBadge(countCache());}
+ window.addEventListener('unhandledrejection',function(ev){try{var msg=String((ev.reason&&(ev.reason.message||ev.reason.code))||ev.reason||'');if(/permission|insufficient|missing/i.test(msg)){if(ev.preventDefault)ev.preventDefault();apply();}}catch(e){}});
+ document.addEventListener('DOMContentLoaded',apply);if(document.readyState!=='loading')apply();
+ window.addEventListener('focus',apply);window.addEventListener('storage',apply);window.addEventListener('azobss-support-updated',apply);
+ setTimeout(apply,300);setTimeout(apply,1500);setTimeout(apply,3500);
+})();
+</script>
 </body></html>
