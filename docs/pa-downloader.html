@@ -1,272 +1,4 @@
 
-<style id="azobss-market-nav-clean-structure-034">
-.market-nav{
-  display:flex!important;
-  align-items:center!important;
-  gap:6px!important;
-  column-gap:6px!important;
-}
-.market-nav > a,
-.market-nav > button{
-  flex:0 0 auto!important;
-  margin:0!important;
-  transform:none!important;
-}
-.market-nav .azAdminDashboardBtn,
-.market-nav .azStaffDashboardBtn{
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-  line-height:1!important;
-}
-.market-nav .nav-whatsapp-link{
-  width:38px!important;
-  min-width:38px!important;
-  max-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  max-height:38px!important;
-  padding:0!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border:0!important;
-  background:transparent!important;
-}
-.market-nav .nav-whatsapp-circle{
-  width:38px!important;
-  min-width:38px!important;
-  max-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  max-height:38px!important;
-  margin:0!important;
-  padding:0!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-</style>
-
-<style id="azobss-staff-whatsapp-tight-gap-fix-032">
-/* (032) Tighten Staff Dashboard -> WhatsApp -> PA/BM spacing only */
-.market-nav{
-  display:flex!important;
-  align-items:center!important;
-  gap:4px!important;
-  column-gap:4px!important;
-}
-
-.market-nav .azStaffDashboardBtn,
-.market-nav .staff-dashboard-btn{
-  flex:0 0 34px!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border-radius:999px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  line-height:1!important;
-  transform:none!important;
-  gap:0!important;
-}
-
-.market-nav .azStaffDashboardBtn + .nav-whatsapp-link,
-.market-nav .staff-dashboard-btn + .nav-whatsapp-link{
-  margin-left:0!important;
-}
-
-.market-nav .nav-whatsapp-link{
-  flex:0 0 38px!important;
-  width:38px!important;
-  min-width:38px!important;
-  max-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  max-height:38px!important;
-  padding:0!important;
-  margin:0!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  transform:none!important;
-}
-
-.market-nav .nav-whatsapp-link + .nav-pa-bm-link,
-.market-nav .nav-whatsapp-link + a[href="/PA-BM/"]{
-  margin-left:0!important;
-}
-
-.market-nav .nav-whatsapp-circle{
-  width:38px!important;
-  min-width:38px!important;
-  max-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  max-height:38px!important;
-  margin:0!important;
-  padding:0!important;
-  transform:none!important;
-}
-
-.market-nav > a{
-  margin-left:0!important;
-  margin-right:0!important;
-}
-</style>
-
-<style id="azobss-nav-tight-spacing-fix-031">
-.market-nav{
-  gap:4px !important;
-}
-.market-nav .azStaffDashboardBtn{
-  margin-right:0 !important;
-}
-.market-nav .nav-whatsapp-link{
-  margin-left:0 !important;
-  margin-right:0 !important;
-  width:38px !important;
-  min-width:38px !important;
-}
-.market-nav > a,
-.market-nav .azobss-nav-chip{
-  margin-left:0 !important;
-  margin-right:0 !important;
-}
-</style>
-
-<style id="azobss-whatsapp-nav-link-align-fix">
-.market-nav .nav-whatsapp-link{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:42px!important;
-  min-width:42px!important;
-  max-width:42px!important;
-  height:42px!important;
-  min-height:42px!important;
-  max-height:42px!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  line-height:1!important;
-  text-decoration:none!important;
-  vertical-align:middle!important;
-  flex:0 0 auto!important;
-}
-.market-nav .nav-whatsapp-link .nav-whatsapp-circle{
-  width:38px!important;
-  min-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  margin:0!important;
-  flex:0 0 auto!important;
-}
-</style>
-
-<style id="azobss-hide-whatsapp-admin-only-safe-final">
-html.azobss-admin-cache .market-nav .nav-whatsapp-circle,
-html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
-html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
-body[data-dashboard-page="admin"] .market-nav .nav-whatsapp-circle,
-body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle),
-body[data-dashboard-page="admin"] .market-nav a[href*="alvo.chat"],
-body.is-admin .market-nav .nav-whatsapp-circle,
-body.is-admin .market-nav a:has(.nav-whatsapp-circle),
-body.is-admin .market-nav a[href*="alvo.chat"],
-body.az-role-is-admin .market-nav .nav-whatsapp-circle,
-body.az-role-is-admin .market-nav a:has(.nav-whatsapp-circle),
-body.az-role-is-admin .market-nav a[href*="alvo.chat"],
-body[data-role="admin"] .market-nav .nav-whatsapp-circle,
-body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle),
-body[data-role="admin"] .market-nav a[href*="alvo.chat"]{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  outline:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
-
-/* Make sure admin Chat/Support icon in right tools is never hidden by WhatsApp rules */
-body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"],
-body.is-admin .market-user-tools a[aria-label="Chat"],
-body.az-role-is-admin .market-user-tools a[aria-label="Chat"],
-body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
-  display:inline-flex!important;
-  visibility:visible!important;
-  width:32px!important;
-  min-width:32px!important;
-  height:32px!important;
-  min-height:32px!important;
-  padding:0!important;
-  margin:0!important;
-  opacity:1!important;
-  pointer-events:auto!important;
-  overflow:visible!important;
-}
-</style>
-
-<style id="azobss-admin-whatsapp-clean-hide-css">
-html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
-html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
-body[data-dashboard-page="admin"] .market-nav a[href*="alvo.chat"],
-body[data-dashboard-page="admin"] .market-nav a:has(.nav-whatsapp-circle),
-body.is-admin .market-nav a[href*="alvo.chat"],
-body.is-admin .market-nav a:has(.nav-whatsapp-circle),
-body.az-role-is-admin .market-nav a[href*="alvo.chat"],
-body.az-role-is-admin .market-nav a:has(.nav-whatsapp-circle),
-body[data-role="admin"] .market-nav a[href*="alvo.chat"],
-body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle){
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
-</style>
-<script id="azobss-admin-whatsapp-clean-early">
-(function(){
-  try{
-    if(localStorage.getItem('azobss_admin_role_cache')==='1'){
-      document.documentElement.classList.add('azobss-admin-cache');
-    }
-  }catch(e){}
-})();
-</script>
-
 <style id="azobss-youtube-style-page-scrollbar-v1">
 /* AZOBSS YouTube/Facebook-style page scrollbar: stable width, no layout shrink/jump */
 html{
@@ -312,6 +44,144 @@ body::-webkit-scrollbar-corner{
   display:none!important;
 }
 </style>
+
+<style id="az-role-dashboard-buttons-visibility-fix">
+.azAdminDashboardBtn.admin-dashboard-btn,
+.azAdminDashboardBtn{
+  display:none!important;
+}
+.azStaffDashboardBtn.staff-dashboard-btn,
+.azStaffDashboardBtn{
+  display:none!important;
+}
+body.az-role-is-admin .azAdminDashboardBtn.admin-dashboard-btn,
+body.az-role-is-admin .azAdminDashboardBtn{
+  display:inline-flex!important;
+}
+body.az-role-is-admin .azStaffDashboardBtn.staff-dashboard-btn,
+body.az-role-is-admin .azStaffDashboardBtn,
+body.az-role-is-stafflike .azStaffDashboardBtn.staff-dashboard-btn,
+body.az-role-is-stafflike .azStaffDashboardBtn{
+  display:inline-flex!important;
+}
+</style>
+
+<style id="az-staff-dashboard-button-style">
+.azStaffDashboardBtn.staff-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:17px!important;
+  line-height:1!important;
+}
+body.az-staff-safe-ok .azStaffDashboardBtn.staff-dashboard-btn{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-staff-dashboard-button-check">
+(function(){
+  if(window.__azStaffDashboardButtonCheck)return;
+  window.__azStaffDashboardButtonCheck=true;
+
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i])||sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj=JSON.parse(raw);
+          if(obj)return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function ok(){
+    var u=readUser();
+    var role=String(u.role||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
+    return role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91'||email==='zedan91@azobss.local';
+  }
+
+  function refresh(){
+    if(document.body) document.body.classList.toggle('az-staff-safe-ok',ok());
+  }
+
+  document.addEventListener('DOMContentLoaded',refresh);
+  if(document.readyState!=='loading')refresh();
+  window.addEventListener('storage',refresh);
+  window.addEventListener('focus',refresh);
+  setTimeout(refresh,400);
+  setTimeout(refresh,1200);
+  setTimeout(refresh,2500);
+})();
+</script>
+
+<style id="az-admin-static-button-style">
+.azAdminDashboardBtn.admin-dashboard-btn{
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  font-size:18px!important;
+  line-height:1!important;
+}
+body.az-admin-safe-ok .azAdminDashboardBtn.admin-dashboard-btn{
+  display:inline-flex!important;
+}
+</style>
+<script id="az-admin-static-button-check">
+(function(){
+  if(window.__azAdminStaticButtonCheck) return;
+  window.__azAdminStaticButtonCheck = true;
+
+  function readUser(){
+    var keys = ['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj) return obj;
+        }
+      }catch(e){}
+    }
+    return {};
+  }
+
+  function isAdmin(){
+    var u = readUser();
+    var role = String(u.role || '').toLowerCase();
+    var username = String(u.usernameKey || u.username || u.id || u.name || u.displayName || '').toLowerCase();
+    var email = String(u.email || u.authEmail || u.contactEmail || '').toLowerCase();
+    return role === 'admin' || username === 'zedan91' || email === 'zedan91@azobss.local';
+  }
+
+  function refreshAdminButton(){
+    if(!document.body) return;
+    document.body.classList.toggle('az-admin-safe-ok', isAdmin());
+  }
+
+  document.addEventListener('DOMContentLoaded', refreshAdminButton);
+  if(document.readyState !== 'loading') refreshAdminButton();
+  window.addEventListener('storage', refreshAdminButton);
+  window.addEventListener('focus', refreshAdminButton);
+  setTimeout(refreshAdminButton, 300);
+  setTimeout(refreshAdminButton, 1000);
+  setTimeout(refreshAdminButton, 2500);
+})();
+</script>
 
 <style id="azobss-support-notification-panel-style">
 /* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
@@ -632,7 +502,7 @@ body{padding-top:58px!important;}
   .market-main-row{gap:6px!important;}
   .market-brand{flex-basis:138px!important;width:138px!important;min-width:138px!important;max-width:138px!important;height:36px!important;}
   .market-nav a,.market-nav button{height:36px!important;min-height:36px!important;padding:0 11px!important;font-size:13px!important;}
-  .market-nav a:has(.nav-whatsapp-circle){width:32px!important;min-width:32px!important;max-width:32px!important;height:32px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;}
   .market-icon-btn{width:26px!important;}
 }
 </style>
@@ -1574,479 +1444,67 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 })();
 </script>
 
-<script id="azobss-admin-whatsapp-clean-updater">
+<script id="az-role-dashboard-buttons-visibility-fix">
 (function(){
-  if(window.__azobssAdminWhatsappCleanUpdater) return;
-  window.__azobssAdminWhatsappCleanUpdater = true;
+  if(window.__azRoleDashboardButtonsVisibilityFix)return;
+  window.__azRoleDashboardButtonsVisibilityFix=true;
 
-  function adminNow(){
-    try{
-      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
-      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
-      if(document.body.getAttribute('data-role')==='admin') return true;
-      var signed=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
-      var uname=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
-      if(signed==='zedan91' || uname.indexOf('zedan91')!==-1) return true;
-    }catch(e){}
-    return false;
-  }
-
-  function hideWhatsapp(){
-    document.querySelectorAll('.market-nav a').forEach(function(a){
-      if(!a.matches('a[href*="alvo.chat"]') && !a.querySelector('.nav-whatsapp-circle')) return;
-      a.style.setProperty('display','none','important');
-      a.style.setProperty('visibility','hidden','important');
-      a.style.setProperty('width','0','important');
-      a.style.setProperty('min-width','0','important');
-      a.style.setProperty('height','0','important');
-      a.style.setProperty('min-height','0','important');
-      a.style.setProperty('padding','0','important');
-      a.style.setProperty('margin','0','important');
-      a.style.setProperty('border','0','important');
-      a.style.setProperty('overflow','hidden','important');
-      a.style.setProperty('pointer-events','none','important');
-      a.style.setProperty('opacity','0','important');
-      a.setAttribute('aria-hidden','true');
-      a.tabIndex=-1;
-    });
-  }
-
-  function apply(){
-    try{
-      if(adminNow()){
-        localStorage.setItem('azobss_admin_role_cache','1');
-        document.documentElement.classList.add('azobss-admin-cache');
-        hideWhatsapp();
-      }else{
-        setTimeout(function(){
-          if(!adminNow()){
-            localStorage.removeItem('azobss_admin_role_cache');
-            document.documentElement.classList.remove('azobss-admin-cache');
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(var s=0;s<2;s++){
+      var store=s===0?sessionStorage:localStorage;
+      for(var i=0;i<keys.length;i++){
+        try{
+          var raw=store.getItem(keys[i]);
+          if(raw){
+            var obj=JSON.parse(raw);
+            if(obj && typeof obj==='object') return obj;
           }
-        },2500);
+        }catch(e){}
       }
-    }catch(e){}
-  }
-
-  document.addEventListener('DOMContentLoaded',apply);
-  if(document.readyState!=='loading') apply();
-  window.addEventListener('focus',apply);
-  setTimeout(apply,120);
-  setTimeout(apply,500);
-  setTimeout(apply,1200);
-})();
-</script>
-
-
-<script id="azobss-hide-whatsapp-admin-only-safe-final-script">
-(function(){
-  if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
-  window.__azobssHideWhatsappAdminOnlySafeFinal = true;
-
-  function adminNow(){
-    try{
-      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
-      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
-      if(document.body.getAttribute('data-role')==='admin') return true;
-      var signed=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
-      var uname=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
-      if(signed==='zedan91' || uname.indexOf('zedan91')!==-1) return true;
-    }catch(e){}
-    return false;
-  }
-
-  function hideEl(el){
-    el.style.setProperty('display','none','important');
-    el.style.setProperty('visibility','hidden','important');
-    el.style.setProperty('width','0','important');
-    el.style.setProperty('min-width','0','important');
-    el.style.setProperty('max-width','0','important');
-    el.style.setProperty('height','0','important');
-    el.style.setProperty('min-height','0','important');
-    el.style.setProperty('max-height','0','important');
-    el.style.setProperty('padding','0','important');
-    el.style.setProperty('margin','0','important');
-    el.style.setProperty('border','0','important');
-    el.style.setProperty('outline','0','important');
-    el.style.setProperty('overflow','hidden','important');
-    el.style.setProperty('pointer-events','none','important');
-    el.style.setProperty('opacity','0','important');
-    el.setAttribute('aria-hidden','true');
-    el.tabIndex=-1;
-  }
-
-  function showChat(){
-    document.querySelectorAll('.market-user-tools a[aria-label="Chat"]').forEach(function(el){
-      el.style.setProperty('display','inline-flex','important');
-      el.style.setProperty('visibility','visible','important');
-      el.style.setProperty('width','32px','important');
-      el.style.setProperty('min-width','32px','important');
-      el.style.setProperty('height','32px','important');
-      el.style.setProperty('min-height','32px','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('opacity','1','important');
-      el.style.setProperty('pointer-events','auto','important');
-      el.style.setProperty('overflow','visible','important');
-      el.removeAttribute('aria-hidden');
-      el.tabIndex=0;
-    });
-  }
-
-  function apply(){
-    if(!adminNow()) return;
-    try{ localStorage.setItem('azobss_admin_role_cache','1'); }catch(e){}
-    document.documentElement.classList.add('azobss-admin-cache');
-
-    // IMPORTANT: hide only WhatsApp inside left .market-nav, not Chat icon inside .market-user-tools
-    document.querySelectorAll('.market-nav .nav-whatsapp-circle, .market-nav a[href*="alvo.chat"]').forEach(hideEl);
-    document.querySelectorAll('.market-nav a').forEach(function(a){
-      if(a.querySelector('.nav-whatsapp-circle')) hideEl(a);
-    });
-
-    showChat();
-  }
-
-  document.addEventListener('DOMContentLoaded',apply);
-  if(document.readyState!=='loading') apply();
-  window.addEventListener('focus',apply);
-  setTimeout(apply,50);
-  setTimeout(apply,200);
-  setTimeout(apply,700);
-  setTimeout(apply,1500);
-})();
-</script>
-
-
-<style id="azobss-admin-chat-use-normal-icon-flow-fix">
-/* Admin Chat icon: use normal market-icon-btn flow like normal user pages */
-body[data-dashboard-page="admin"] .market-user-tools{
-  display:flex!important;
-  align-items:center!important;
-  gap:8px!important;
-}
-body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"]{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  position:relative!important;
-  flex:0 0 auto!important;
-  width:32px!important;
-  min-width:32px!important;
-  max-width:32px!important;
-  height:32px!important;
-  min-height:32px!important;
-  max-height:32px!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  background:transparent!important;
-  color:#f8fafc!important;
-  text-decoration:none!important;
-  visibility:visible!important;
-  opacity:1!important;
-  pointer-events:auto!important;
-  overflow:visible!important;
-  transform:none!important;
-}
-body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
-  width:23px!important;
-  height:23px!important;
-  display:block!important;
-  margin:0!important;
-}
-</style>
-
-
-<script id="azobss-admin-chat-use-normal-icon-flow-fix-script">
-(function(){
-  if(window.__azobssAdminChatUseNormalIconFlowFix) return;
-  window.__azobssAdminChatUseNormalIconFlowFix = true;
-
-  function apply(){
-    if(document.body.getAttribute('data-dashboard-page') !== 'admin'
-      && !document.body.classList.contains('is-admin')
-      && !document.body.classList.contains('az-role-is-admin')) return;
-
-    var tools=document.querySelector('.market-user-tools');
-    if(tools){
-      tools.style.setProperty('display','flex','important');
-      tools.style.setProperty('align-items','center','important');
-      tools.style.setProperty('gap','8px','important');
-    }
-
-    document.querySelectorAll('.market-user-tools a[aria-label="Chat"]').forEach(function(el){
-      el.classList.add('market-icon-btn');
-      el.style.setProperty('display','inline-flex','important');
-      el.style.setProperty('align-items','center','important');
-      el.style.setProperty('justify-content','center','important');
-      el.style.setProperty('position','relative','important');
-      el.style.setProperty('flex','0 0 auto','important');
-      el.style.setProperty('width','32px','important');
-      el.style.setProperty('min-width','32px','important');
-      el.style.setProperty('max-width','32px','important');
-      el.style.setProperty('height','32px','important');
-      el.style.setProperty('min-height','32px','important');
-      el.style.setProperty('max-height','32px','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('border','0','important');
-      el.style.setProperty('background','transparent','important');
-      el.style.setProperty('visibility','visible','important');
-      el.style.setProperty('opacity','1','important');
-      el.style.setProperty('pointer-events','auto','important');
-      el.style.setProperty('overflow','visible','important');
-      el.style.setProperty('transform','none','important');
-      el.removeAttribute('aria-hidden');
-      el.tabIndex=0;
-
-      var svg=el.querySelector('svg');
-      if(svg){
-        svg.style.setProperty('width','23px','important');
-        svg.style.setProperty('height','23px','important');
-        svg.style.setProperty('display','block','important');
-        svg.style.setProperty('margin','0','important');
-      }
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',apply);
-  if(document.readyState!=='loading') apply();
-  window.addEventListener('focus',apply);
-  setTimeout(apply,200);
-  setTimeout(apply,800);
-  setTimeout(apply,1500);
-})();
-</script>
-
-<style id="azobss-role-buttons-strict-visibility-035">
-/* (035) Strict role visibility for stickybar Admin/Staff dashboard buttons */
-.market-nav .azAdminDashboardBtn,
-.market-nav .admin-dashboard-btn,
-.market-nav .azStaffDashboardBtn,
-.market-nav .staff-dashboard-btn{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
-
-/* Admin sees Admin Dashboard only */
-body.az-role-is-admin .market-nav .azAdminDashboardBtn,
-body.az-role-is-admin .market-nav .admin-dashboard-btn,
-body.is-admin .market-nav .azAdminDashboardBtn,
-body.is-admin .market-nav .admin-dashboard-btn,
-body[data-role="admin"] .market-nav .azAdminDashboardBtn,
-body[data-role="admin"] .market-nav .admin-dashboard-btn,
-body[data-dashboard-page="admin"] .market-nav .azAdminDashboardBtn,
-body[data-dashboard-page="admin"] .market-nav .admin-dashboard-btn{
-  display:inline-flex!important;
-  visibility:visible!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border:1px solid rgba(148,163,184,.35)!important;
-  overflow:visible!important;
-  pointer-events:auto!important;
-  opacity:1!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-}
-
-/* Staff sees Staff Dashboard only. Do NOT use az-staff-safe-ok because admin pages may also have it. */
-body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .azStaffDashboardBtn,
-body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .staff-dashboard-btn,
-body[data-role="staff"] .market-nav .azStaffDashboardBtn,
-body[data-role="staff"] .market-nav .staff-dashboard-btn,
-body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .azStaffDashboardBtn,
-body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .staff-dashboard-btn{
-  display:inline-flex!important;
-  visibility:visible!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border:1px solid rgba(148,163,184,.35)!important;
-  overflow:visible!important;
-  pointer-events:auto!important;
-  opacity:1!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-}
-
-/* Admin must never see Staff Dashboard, even if old scripts add staff-safe class */
-body.az-role-is-admin .market-nav .azStaffDashboardBtn,
-body.az-role-is-admin .market-nav .staff-dashboard-btn,
-body.is-admin .market-nav .azStaffDashboardBtn,
-body.is-admin .market-nav .staff-dashboard-btn,
-body[data-role="admin"] .market-nav .azStaffDashboardBtn,
-body[data-role="admin"] .market-nav .staff-dashboard-btn,
-body[data-dashboard-page="admin"] .market-nav .azStaffDashboardBtn,
-body[data-dashboard-page="admin"] .market-nav .staff-dashboard-btn{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
-
-.market-nav{
-  gap:6px!important;
-  column-gap:6px!important;
-}
-</style>
-
-
-<script id="azobss-role-buttons-strict-visibility-035-script">
-(function(){
-  if(window.__azobssRoleButtonsStrictVisibility035) return;
-  window.__azobssRoleButtonsStrictVisibility035 = true;
-
-  function readStoredUser(){
-    var keys=[
-      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
-      'azobss_user_profile','azobssProfile','currentUser','userProfile'
-    ];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw=localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
-        if(!raw) continue;
-        var obj=JSON.parse(raw);
-        if(obj && typeof obj === 'object') return obj;
-      }catch(e){}
     }
     return {};
   }
 
-  function lower(v){ return String(v || '').trim().toLowerCase(); }
+  function roleInfo(){
+    var u=readUser();
+    var role=String(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||'').toLowerCase();
+    var username=String(u.usernameKey||u.username||u.id||u.name||u.displayName||'').toLowerCase();
+    var email=String(u.email||u.authEmail||u.contactEmail||'').toLowerCase();
 
-  function detectRole(){
-    var body=document.body;
-    var page=body.getAttribute('data-dashboard-page') || '';
-    if(page === 'admin') return 'admin';
-    if(page === 'staff') return 'staff';
+    var isAdmin = role==='admin' || username==='zedan91' || email==='zedan91@azobss.local' || email==='zedan9107@gmail.com';
+    var isStaffLike = !isAdmin && (role==='semiadmin' || role==='semi-admin' || role==='staff');
 
-    var signed=lower((document.querySelector('#signedInName')||{}).textContent);
-    var unameText=lower((document.querySelector('.user-name')||{}).textContent);
-
-    if(signed === 'zedan91' || unameText === 'zedan91' || unameText.indexOf('zedan91') !== -1) return 'admin';
-
-    var u=readStoredUser();
-    var role=lower(u.role || u.userRole || u.accountRole || u.type);
-    var username=lower(u.usernameKey || u.username || u.id || u.name || u.displayName);
-    var email=lower(u.email || u.authEmail);
-
-    if(username === 'zedan91' || email === 'zedan91@azobss.local') return 'admin';
-
-    var isStaff = (
-      role === 'staff' ||
-      role === 'semiadmin' ||
-      role === 'semi-admin' ||
-      role === 'semi_admin' ||
-      role === 'seller' ||
-      role === 'editor' ||
-      u.isStaff === true ||
-      u.staff === true ||
-      u.staffDashboard === true ||
-      u.canAccessStaffDashboard === true
-    );
-
-    if(isStaff) return 'staff';
-
-    return 'none';
-  }
-
-  function setBtn(el, show){
-    if(!el) return;
-    if(show){
-      el.style.setProperty('display','inline-flex','important');
-      el.style.setProperty('visibility','visible','important');
-      el.style.setProperty('width','34px','important');
-      el.style.setProperty('min-width','34px','important');
-      el.style.setProperty('max-width','34px','important');
-      el.style.setProperty('height','34px','important');
-      el.style.setProperty('min-height','34px','important');
-      el.style.setProperty('max-height','34px','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('opacity','1','important');
-      el.style.setProperty('pointer-events','auto','important');
-      el.style.setProperty('overflow','visible','important');
-      el.removeAttribute('aria-hidden');
-      el.tabIndex=0;
-    }else{
-      el.style.setProperty('display','none','important');
-      el.style.setProperty('visibility','hidden','important');
-      el.style.setProperty('width','0','important');
-      el.style.setProperty('min-width','0','important');
-      el.style.setProperty('max-width','0','important');
-      el.style.setProperty('height','0','important');
-      el.style.setProperty('min-height','0','important');
-      el.style.setProperty('max-height','0','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('border','0','important');
-      el.style.setProperty('opacity','0','important');
-      el.style.setProperty('pointer-events','none','important');
-      el.style.setProperty('overflow','hidden','important');
-      el.setAttribute('aria-hidden','true');
-      el.tabIndex=-1;
-    }
+    return {isAdmin:isAdmin,isStaffLike:isStaffLike};
   }
 
   function apply(){
-    var role=detectRole();
+    var r=roleInfo();
+    if(document.body){
+      document.body.classList.toggle('az-role-is-admin', !!r.isAdmin);
+      document.body.classList.toggle('az-role-is-stafflike', !!r.isStaffLike);
+    }
 
-    document.body.classList.toggle('az-role-is-admin', role === 'admin');
-    document.body.classList.toggle('is-admin', role === 'admin');
-    document.body.classList.toggle('az-role-is-stafflike', role === 'staff');
-
-    document.querySelectorAll('.market-nav .azAdminDashboardBtn,.market-nav .admin-dashboard-btn').forEach(function(el){
-      setBtn(el, role === 'admin');
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn').forEach(function(btn){
+      btn.hidden = !r.isAdmin;
+      btn.style.display = r.isAdmin ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', r.isAdmin ? 'false' : 'true');
     });
 
-    document.querySelectorAll('.market-nav .azStaffDashboardBtn,.market-nav .staff-dashboard-btn').forEach(function(el){
-      setBtn(el, role === 'staff');
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn').forEach(function(btn){
+      var show = r.isAdmin || r.isStaffLike;
+      btn.hidden = !show;
+      btn.style.display = show ? 'inline-flex' : 'none';
+      btn.setAttribute('aria-hidden', show ? 'false' : 'true');
     });
   }
 
   document.addEventListener('DOMContentLoaded',apply);
-  if(document.readyState !== 'loading') apply();
+  if(document.readyState!=='loading')apply();
   window.addEventListener('focus',apply);
   window.addEventListener('storage',apply);
-  setTimeout(apply,100);
-  setTimeout(apply,500);
+  setTimeout(apply,400);
   setTimeout(apply,1200);
-  setTimeout(apply,2500);
+  setTimeout(apply,3000);
 })();
 </script>
