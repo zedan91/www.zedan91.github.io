@@ -14407,7 +14407,6 @@ return;
           '<div class="az-pa-total-row"><div class="az-pa-total">Payment Total: <b data-az-pa-total>RM5</b></div></div>' +
           '<div class="az-pa-actions">' +
             '<a class="az-pa-btn az-pa-download" target="_blank" rel="noopener">Download PA</a>' +
-            '<button type="button" class="az-pa-btn az-pa-copy">Copy Link</button>' +
           '</div>' +
           '<div class="az-pa-note">Akaun: Ahmad Zaidan Bin Omar · No. Akaun: 162405194110</div>' +
         '</div>' +
@@ -14435,23 +14434,11 @@ return;
 
       var totalEl = box.querySelector('[data-az-pa-total]');
       var dl = box.querySelector('.az-pa-download');
-      var copy = box.querySelector('.az-pa-copy');
       var img = box.querySelector('.az-pa-qr');
 
       if(totalEl) totalEl.textContent = money(getTotal());
       if(dl) dl.href = directUrl;
       if(img) img.src = QR_SRC;
-      if(copy){
-        copy.onclick = function(){
-          try{
-            navigator.clipboard.writeText(directUrl);
-            copy.textContent = 'Copied';
-            setTimeout(function(){ copy.textContent = 'Copy Link'; }, 1400);
-          }catch(e){
-            prompt('Copy link:', directUrl);
-          }
-        };
-      }
 
       // Hide old technical boxes/messages.
       ['azJupemFallbackBox','azJupemQrFallbackPayment066','azJupemQrFallbackPayment067','azJupemFallbackStatusNote062'].forEach(function(id){
