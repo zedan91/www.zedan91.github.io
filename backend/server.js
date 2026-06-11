@@ -1135,13 +1135,28 @@ function cleanPaState(value) {
   return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9 ._\-]/g, " ").replace(/\s+/g, " ");
 }
 
-async function fetchJupemFile(targetUrl) {
-  return fetch(targetUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-      "Accept": "image/tiff,image/*,application/pdf,application/octet-stream,*/*"
-    }
-  });
+async function fetchJupemFile(targetUrl, options = {}) {
+  const timeoutMs = Number(options.timeoutMs || process.env.JUPEM_FETCH_TIMEOUT_MS || 20000);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error(`JUPEM fetch timeout after ${timeoutMs}ms`)), timeoutMs);
+  try {
+    return await fetch(targetUrl, {
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": process.env.JUPEM_USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept": "image/tiff,image/*,application/pdf,application/octet-stream,text/html;q=0.8,*/*;q=0.7",
+        "Accept-Language": "ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Referer": "https://ebiz.jupem.gov.my/",
+        "Origin": "https://ebiz.jupem.gov.my",
+        "Connection": "close"
+      }
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
@@ -1192,14 +1207,15 @@ app.get("/api/check-pa", async (req, res) => {
     if (!negeri) return res.status(400).json({ ok: false, error: "Missing negeri" });
 
     const fileName = `PA${noPA}.TIF`;
-    const candidates = [
+    const candidates = Array.from(new Set([
       `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`,
       `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`,
-      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName.toLowerCase())}&negeri=${encodeURIComponent(negeri)}`
-    ];
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?NoPA=${encodeURIComponent(fileName)}&Negeri=${encodeURIComponent(negeri)}`
+    ]));
 
     for (const jupemUrl of candidates) {
-      const response = await fetchJupemFile(jupemUrl);
+      console.log("[AZOBSS PA] Fetching single PA URL:", jupemUrl);
+    const response = await fetchJupemFile(jupemUrl);
       if (!response.ok) continue;
       const buffer = Buffer.from(await response.arrayBuffer());
       const firstText = buffer.slice(0, 180).toString("utf8").toLowerCase();

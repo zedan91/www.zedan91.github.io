@@ -1086,15 +1086,30 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback) {
   return rows.slice(0, 60);
 }
 
-async function fetchJupem(jupemUrl) {
-  return await fetch(jupemUrl, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-      "Accept": "image/tiff,image/*,*/*",
-      "Referer": "https://ebiz.jupem.gov.my/"
-    }
-  });
+async function fetchJupem(jupemUrl, options = {}) {
+  const timeoutMs = Number(options.timeoutMs || process.env.JUPEM_FETCH_TIMEOUT_MS || 20000);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error(`JUPEM fetch timeout after ${timeoutMs}ms`)), timeoutMs);
+
+  try {
+    const response = await fetch(jupemUrl, {
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": process.env.JUPEM_USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept": "image/tiff,image/*,application/pdf,application/octet-stream,text/html;q=0.8,*/*;q=0.7",
+        "Accept-Language": "ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Referer": "https://ebiz.jupem.gov.my/",
+        "Origin": "https://ebiz.jupem.gov.my",
+        "Connection": "close"
+      }
+    });
+    return response;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 
@@ -1102,46 +1117,74 @@ async function fetchPelanAkuiCandidates(noPA, negeri) {
   const cleanPA = String(noPA || "")
     .trim()
     .replace(/\.tif$/i, "")
-    .replace(/^PA/i, "");
+    .replace(/^PA/i, "")
+    .replace(/[^0-9]/g, "");
 
+  const stateUpper = String(negeri || "").trim().toUpperCase();
   const paUpper = `PA${cleanPA}.TIF`;
-  const paLower = `PA${cleanPA}.tif`;
-  const paRaw = `PA${cleanPA}`;
-  const stateUpper = String(negeri || "").toUpperCase();
-  const stateTitle = stateUpper.charAt(0) + stateUpper.slice(1).toLowerCase();
 
-  const candidates = [
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paLower)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paRaw)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateTitle)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?NoPA=${encodeURIComponent(paUpper)}&Negeri=${encodeURIComponent(stateUpper)}`
-  ];
+  function paUrl(noKey, negeriKey, paValue, negeriValue) {
+    const params = new URLSearchParams();
+    params.set(noKey, paValue);
+    params.set(negeriKey, negeriValue);
+    return `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?${params.toString()}`;
+  }
+
+  // Correct working format first. Keep list short and de-duplicated to avoid spam.
+  const candidates = Array.from(new Set([
+    paUrl("noPa", "negeri", paUpper, stateUpper),
+    paUrl("noPA", "negeri", paUpper, stateUpper),
+    paUrl("NoPA", "Negeri", paUpper, stateUpper)
+  ]));
 
   let lastResult = null;
+  const attempts = [];
 
   for (const url of candidates) {
+    const startMs = Date.now();
     try {
-      console.log("Fetching PA candidate:", url);
-      const response = await fetchJupem(url);
+      console.log("[AZOBSS PA] Fetching PA candidate:", url);
+      const response = await fetchJupem(url, { timeoutMs: 20000 });
+      const contentType = response.headers.get("content-type") || "";
       const buffer = Buffer.from(await response.arrayBuffer());
-      const firstText = buffer.slice(0, 200).toString("utf8").toLowerCase();
-      const looksHTML = firstText.includes("<html") || firstText.includes("<!doctype") || firstText.includes("not found");
+      const firstText = buffer.slice(0, 260).toString("utf8").toLowerCase();
+      const looksHTML = firstText.includes("<html") || firstText.includes("<!doctype") || firstText.includes("not found") || firstText.includes("ralat") || firstText.includes("error");
       const validFile = response.ok && buffer.length > 100 && !looksHTML;
 
-      lastResult = { response, buffer, url, firstText, validFile };
+      const attempt = {
+        url,
+        ok: response.ok,
+        status: response.status,
+        contentType,
+        bytes: buffer.length,
+        ms: Date.now() - startMs,
+        looksHTML,
+        validFile
+      };
+      attempts.push(attempt);
+      console.log("[AZOBSS PA] Candidate result:", JSON.stringify(attempt));
+
+      lastResult = { response, buffer, url, firstText, validFile, attempts };
 
       if (validFile) {
         return lastResult;
       }
     } catch (err) {
-      console.error("PA candidate failed:", url, err && err.message ? err.message : err);
-      lastResult = { response: null, buffer: Buffer.alloc(0), url, firstText: "", validFile: false, error: err };
+      const attempt = {
+        url,
+        ok: false,
+        status: 0,
+        bytes: 0,
+        ms: Date.now() - startMs,
+        error: err && (err.name || err.code || err.message) ? `${err.name || err.code || "Error"}: ${err.message || err.code || err}` : String(err)
+      };
+      attempts.push(attempt);
+      console.error("[AZOBSS PA] Candidate failed:", JSON.stringify(attempt));
+      lastResult = { response: null, buffer: Buffer.alloc(0), url, firstText: "", validFile: false, error: err, attempts };
     }
   }
 
-  return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
+  return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false, attempts };
 }
 
 
