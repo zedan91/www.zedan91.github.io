@@ -219,7 +219,7 @@
     const premium = typeSelect?.value === 'premium';
     if(priceInput && (!priceInput.value || /^(free|rm0)$/i.test(priceInput.value.trim()))) priceInput.value = premium ? 'RM10' : 'FREE';
     if(buttonInput && (!buttonInput.value || /^(download now|buy now|open)$/i.test(buttonInput.value.trim()))) buttonInput.value = premium ? 'Buy Now' : 'Download Now';
-    if(iconInput && !iconInput.value.trim()) iconInput.value = premium ? 'AZ' : 'FREE';
+    if(iconInput && !iconInput.value.trim()) iconInput.value = premium ? '🛒' : 'FREE';
     if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : '';
     if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none';
     if(downloadLinkInput) downloadLinkInput.required = !premium;

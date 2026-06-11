@@ -196,7 +196,3 @@
 
   window.azobssRefreshAffiliateProducts = initAffiliateFinal;
 })();
-
-
-
-

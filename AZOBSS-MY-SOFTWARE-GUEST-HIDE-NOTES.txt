@@ -1,9 +1,0 @@
-AZOBSS MY SOFTWARE GUEST HIDE FIX
-
-Fixed:
-- My Software button is display:none by default.
-- Guest/member cannot see My Software.
-- Full admin cannot see My Software; admin uses Software by Account dropdown.
-- semiAdmin/staff with canManageSoftware=true can see My Software.
-
-Syntax errors: 0

@@ -1,10 +1,11 @@
 services:
   - type: web
-    name: azobss-backend
+    name: azobss-lucky-draw-backend
     env: node
     plan: free
-    buildCommand: bash render-build.sh
-    startCommand: node deploy-server.js
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: ADMIN_KEY
         sync: false
