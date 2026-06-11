@@ -453,6 +453,41 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
+<style id="azobss-staff-message-badge-visible-final-047-css">
+/* Staff real chat badge: keep visible even when count is 0 */
+a[aria-label="Chat"],
+button[aria-label="Chat"],
+a[data-az-open-support],
+button[data-az-open-support]{
+  position:relative!important;
+}
+a[aria-label="Chat"] [data-az-message-badge],
+button[aria-label="Chat"] [data-az-message-badge],
+a[data-az-open-support] [data-az-message-badge],
+button[data-az-open-support] [data-az-message-badge],
+.az-message-badge[data-az-message-badge]{
+  position:absolute!important;
+  top:-7px!important;
+  right:-7px!important;
+  min-width:18px!important;
+  height:18px!important;
+  padding:0 5px!important;
+  border-radius:999px!important;
+  background:#ef4444!important;
+  color:#fff!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  line-height:18px!important;
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  z-index:999999!important;
+  box-shadow:0 0 0 2px rgba(15,23,42,.95)!important;
+}
+</style>
 </head>
 <body data-dashboard-page="staff">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -1988,6 +2023,84 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     return {
       count: readCount(),
       badges: badgeEls().map(function(b){return {text:b.textContent, cls:b.className, display:getComputedStyle(b).display, html:b.outerHTML};}),
+      chat: document.querySelector('a[aria-label="Chat"]') ? document.querySelector('a[aria-label="Chat"]').outerHTML : null
+    };
+  };
+})();
+</script>
+<script id="azobss-staff-message-badge-visible-final-047-js">
+(function(){
+  if(window.__azobssStaffMessageBadgeVisibleFinal047) return;
+  window.__azobssStaffMessageBadgeVisibleFinal047 = true;
+
+  function getMessageBadge(){
+    var chat = document.querySelector('a[aria-label="Chat"][data-az-open-support], a[aria-label="Chat"], button[aria-label="Chat"], a[data-az-open-support], button[data-az-open-support]');
+    if(!chat) return null;
+    chat.style.setProperty('position','relative','important');
+
+    var b = chat.querySelector('[data-az-message-badge], .az-message-badge');
+    if(!b){
+      b = document.createElement('span');
+      b.className = 'az-message-badge';
+      b.setAttribute('data-az-message-badge','1');
+      chat.appendChild(b);
+    }
+    return b;
+  }
+
+  function getExistingNumber(){
+    var b = document.querySelector('[data-az-message-badge], .az-message-badge');
+    var n = Number(String((b && b.textContent) || '').trim());
+    if(Number.isFinite(n) && n >= 0) return n;
+
+    var keys = [
+      'azobss_message_badge_count',
+      'azobss_support_badge_count',
+      'azSupportUnreadCount',
+      'azMessageUnreadCount',
+      'supportBadgeCount',
+      'messageBadgeCount'
+    ];
+    for(var i=0;i<keys.length;i++){
+      try{
+        n = Number(localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]) || 0);
+        if(Number.isFinite(n) && n >= 0) return n;
+      }catch(e){}
+    }
+    return 0;
+  }
+
+  function force(){
+    var b = getMessageBadge();
+    if(!b) return;
+    var n = getExistingNumber();
+    b.textContent = String(n);
+    b.classList.add('is-show');
+    b.style.cssText += ';position:absolute!important;top:-7px!important;right:-7px!important;min-width:18px!important;height:18px!important;padding:0 5px!important;border-radius:999px!important;background:#ef4444!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:18px!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;justify-content:center!important;text-align:center!important;z-index:999999!important;box-shadow:0 0 0 2px rgba(15,23,42,.95)!important;';
+  }
+
+  document.addEventListener('DOMContentLoaded', force);
+  if(document.readyState !== 'loading') force();
+  window.addEventListener('focus', force);
+  window.addEventListener('storage', force);
+  window.addEventListener('azobss-support-updated', force);
+  window.addEventListener('azobss-message-updated', force);
+  setTimeout(force,50);
+  setTimeout(force,300);
+  setTimeout(force,900);
+  setTimeout(force,1800);
+  setTimeout(force,4000);
+  setInterval(force,30000);
+
+  window.azobssStaffMessageBadgeDebug047 = function(){
+    var b = getMessageBadge();
+    return {
+      badgeExists: !!b,
+      text: b ? b.textContent : null,
+      display: b ? getComputedStyle(b).display : null,
+      visibility: b ? getComputedStyle(b).visibility : null,
+      opacity: b ? getComputedStyle(b).opacity : null,
+      html: b ? b.outerHTML : null,
       chat: document.querySelector('a[aria-label="Chat"]') ? document.querySelector('a[aria-label="Chat"]').outerHTML : null
     };
   };
