@@ -7979,6 +7979,58 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
+<style id="azobss-jupem-direct-fallback-ui-061-css">
+#azJupemFallbackBox{
+  margin:14px auto 0;
+  max-width:760px;
+  border:1px solid rgba(251,191,36,.45);
+  background:rgba(120,53,15,.28);
+  color:#fde68a;
+  border-radius:14px;
+  padding:14px 16px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+  display:none;
+}
+#azJupemFallbackBox.is-show{display:block!important;}
+#azJupemFallbackBox .az-jupem-title{
+  font-weight:900;
+  font-size:15px;
+  margin-bottom:6px;
+}
+#azJupemFallbackBox .az-jupem-msg{
+  font-size:13px;
+  color:#fff7ed;
+  line-height:1.45;
+  margin-bottom:10px;
+}
+#azJupemFallbackBox .az-jupem-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+#azJupemFallbackBox .az-jupem-btn{
+  appearance:none;
+  border:1px solid rgba(250,204,21,.55);
+  background:#1d4ed8;
+  color:#fff;
+  font-weight:900;
+  border-radius:10px;
+  padding:9px 13px;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+#azJupemFallbackBox .az-jupem-copy{
+  background:#111827;
+}
+#azJupemFallbackBox code{
+  word-break:break-all;
+  color:#bfdbfe;
+  font-size:12px;
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14198,46 +14250,74 @@ return;
 })();
 </script>
 
-<script id="azobss-jupem-direct-browser-fallback-060">
+<script id="azobss-jupem-direct-fallback-ui-061-js">
 (function(){
-  if(window.__azobssJupemDirectBrowserFallback060) return;
-  window.__azobssJupemDirectBrowserFallback060 = true;
+  if(window.__azobssJupemDirectFallback061) return;
+  window.__azobssJupemDirectFallback061 = true;
 
-  window.azobssHandleJupemDirectFallback060 = function(payload){
+  function ensureBox(){
+    var box = document.getElementById('azJupemFallbackBox');
+    if(box) return box;
+
+    box = document.createElement('div');
+    box.id = 'azJupemFallbackBox';
+    box.innerHTML =
+      '<div class="az-jupem-title">⚠️ Render tidak boleh akses JUPEM</div>' +
+      '<div class="az-jupem-msg">Server Render gagal fetch fail dari eBiz JUPEM. Ini biasanya sebab IP cloud/server disekat. Gunakan link direct di bawah melalui browser kamu.</div>' +
+      '<div class="az-jupem-url"><code></code></div>' +
+      '<div class="az-jupem-actions" style="margin-top:10px">' +
+        '<a class="az-jupem-btn az-jupem-open" target="_blank" rel="noopener">Open Direct JUPEM Link</a>' +
+        '<button type="button" class="az-jupem-btn az-jupem-copy">Copy Link</button>' +
+      '</div>';
+
+    var target =
+      document.querySelector('.pa-card, .pa-panel, .azobss-pa-panel, main, .container, body') || document.body;
+
+    if(target === document.body){
+      document.body.insertBefore(box, document.body.firstChild);
+    }else{
+      target.insertAdjacentElement('afterbegin', box);
+    }
+    return box;
+  }
+
+  function showFallback(payload){
     try{
       if(!payload || !payload.directUrl) return false;
-      var msg = payload.message || 'Render server cannot reach JUPEM. Opening direct JUPEM link in browser.';
-      try{ console.warn('[AZOBSS JUPEM fallback]', payload); }catch(e){}
-      try{
-        if(typeof Swal !== 'undefined'){
-          Swal.fire({
-            icon:'info',
-            title:'Open Direct JUPEM Link',
-            text: msg,
-            confirmButtonText:'Open Link'
-          }).then(function(){ window.open(payload.directUrl, '_blank', 'noopener'); });
-          return true;
-        }
-      }catch(e){}
-      alert(msg);
-      window.open(payload.directUrl, '_blank', 'noopener');
+      var box = ensureBox();
+      var url = payload.directUrl;
+      box.classList.add('is-show');
+      var code = box.querySelector('code');
+      var open = box.querySelector('.az-jupem-open');
+      var copy = box.querySelector('.az-jupem-copy');
+      if(code) code.textContent = url;
+      if(open) open.href = url;
+      if(copy){
+        copy.onclick = function(){
+          try{
+            navigator.clipboard.writeText(url);
+            copy.textContent = 'Copied';
+            setTimeout(function(){ copy.textContent = 'Copy Link'; }, 1500);
+          }catch(e){
+            prompt('Copy this JUPEM link:', url);
+          }
+        };
+      }
+      try{ box.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
+      try{ console.warn('[AZOBSS JUPEM direct fallback 061]', payload); }catch(e){}
       return true;
     }catch(e){
+      console.warn('AZOBSS fallback UI failed', e);
       return false;
     }
-  };
+  }
 
-  // Patch fetch response consumers gently: if a PA/BM download endpoint returns JSON directUrl,
-  // expose it to existing catch blocks without changing payment/download logic.
+  window.azobssShowJupemDirectFallback061 = showFallback;
+
   window.addEventListener('azobss-jupem-direct-fallback', function(ev){
-    try{ window.azobssHandleJupemDirectFallback060(ev.detail); }catch(e){}
+    showFallback(ev.detail);
   });
-})();
-</script>
-<script id="azobss-jupem-fetch-fallback-interceptor-060">
-(function(){
-  if(window.__azobssJupemFetchFallbackInterceptor060) return;
-  window.__azobssJupemFetchFallbackInterceptor060 = true;
+
   if(!window.fetch) return;
   var originalFetch = window.fetch.bind(window);
 
@@ -14245,19 +14325,44 @@ return;
     var res = await originalFetch(input, init);
     try{
       var url = String(typeof input === 'string' ? input : (input && input.url) || '');
-      if(/\/api\/(?:pa-bm-download|pa-pdf|check-pa)/i.test(url)){
+      if(/\/api\/(?:pa-bm-download|pa-pdf|check-pa|pa)(?:\?|$|\/)/i.test(url)){
         var ct = String(res.headers && res.headers.get ? res.headers.get('content-type') || '' : '').toLowerCase();
+
         if(ct.indexOf('application/json') !== -1){
-          var clone = res.clone();
-          clone.json().then(function(payload){
-            if(payload && payload.directUrl && (payload.blockedByServer || payload.serverFetchFailed)){
-              window.dispatchEvent(new CustomEvent('azobss-jupem-direct-fallback', { detail: payload }));
+          var payload = null;
+          try{ payload = await res.clone().json(); }catch(e){}
+          if(payload && payload.directUrl && (payload.blockedByServer || payload.serverFetchFailed)){
+            showFallback(payload);
+
+            // For PA existence check only: prevent UI from saying "tiada dalam simpanan".
+            // Return ok:true clone to existing check flow so Add to Cart is not blocked by Render network issue.
+            if(/\/api\/(?:check-pa|pa)(?:\?|$)/i.test(url)){
+              var okPayload = Object.assign({}, payload, {
+                ok: true,
+                fallbackOnly: true,
+                availableViaDirectUrl: true,
+                note: 'Available only through direct JUPEM browser link because Render cannot fetch JUPEM.'
+              });
+              return new Response(JSON.stringify(okPayload), {
+                status: 200,
+                statusText: 'OK',
+                headers: {'Content-Type':'application/json'}
+              });
             }
-          }).catch(function(){});
+          }
         }
       }
     }catch(e){}
     return res;
+  };
+
+  // Manual debug/test
+  window.azobssJupemFallbackDebug061 = function(payload){
+    return showFallback(payload || {
+      directUrl:'https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=PA2131.TIF&negeri=JOHOR',
+      blockedByServer:true,
+      serverFetchFailed:true
+    });
   };
 })();
 </script>
