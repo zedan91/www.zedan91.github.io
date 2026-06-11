@@ -1,0 +1,13 @@
+AZOBSS DASHBOARD BUTTON ROLE VISIBILITY FIX
+
+Fixed:
+- Admin Dashboard 🛠️ visible ONLY for admin.
+- Staff Dashboard 🧑‍💼 visible for admin, semiAdmin, semi-admin, staff.
+- semiAdmin/staff no longer see Admin Dashboard button.
+- Guest/member see neither button.
+
+Patched HTML:
+['index.html', 'affiliate-shop/index.html', 'CAD-Tools-&-Resources/index.html', 'docs/autocad-lisp.html', 'docs/index.html', 'docs/pa-downloader.html', 'docs/pc-services.html', 'docs/php-backend.html', 'likes/index.html', 'lucky-draw/index.html', 'PA-BM/index.html', 'Software-Tools/index.html', 'tools/BMI-Calculator.html', 'tools/Currency-Converter.html', 'tools/index.html', 'tools/Internet-Speed-Converter.html', 'tools/PC-Bottleneck-Checker.html', 'tools/PSU-Calculator.html', 'tools/RAM-Usage-Checker.html', 'tools/SSD-Speed-Checker-guide.html', 'tools/Windows-Command-Generator.html', 'admin/index.html', 'staff/index.html']
+
+Syntax errors:
+0

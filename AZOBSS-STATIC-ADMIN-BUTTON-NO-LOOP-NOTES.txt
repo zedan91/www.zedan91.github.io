@@ -1,0 +1,43 @@
+AZOBSS STATIC ADMIN DASHBOARD BUTTON PATCH
+
+Changed:
+- Static button inserted directly after Mini Web Tools:
+  <a id="azAdminStrictIconLink" class="azobss-nav-chip admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+
+Show/hide:
+- Hidden by default.
+- Visible only when local/session saved user is admin:
+  role=admin OR id/username=zedan91 OR email=zedan91@azobss.local.
+
+Removed:
+- Dynamic admin icon scripts that create/move button.
+- No MutationObserver.
+- No createElement / appendChild / insertAdjacentElement in admin button script.
+- No login/auth flow changes.
+
+Inserted files:
+index.html
+affiliate-shop/index.html
+CAD-Tools-&-Resources/index.html
+likes/index.html
+lucky-draw/index.html
+PA-BM/index.html
+Software-Tools/index.html
+tools/BMI-Calculator.html
+tools/Currency-Converter.html
+tools/index.html
+tools/Internet-Speed-Converter.html
+tools/PC-Bottleneck-Checker.html
+tools/PSU-Calculator.html
+tools/RAM-Usage-Checker.html
+tools/SSD-Speed-Checker-guide.html
+tools/Windows-Command-Generator.html
+
+Removed counts:
+{'az-admin-dashboard-safe-no-loop': 22, 'az-admin-dashboard-safe-style': 22}
+
+Syntax check:
+0 errors
+
+Verification:
+{'index.html': {'admin_id_count': 1, 'snippet': '>\n<a class="azobss-nav-chip" href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>\n<a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a><a id="azAdminStrictIconLink" class="azobss-nav-chip admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>\n<a class="azobss-nav-chip" href="/lucky-draw/">Lucky Draw</a>\n<a'}, 'PA-BM/index.html': {'admin_id_count': 1, 'snippet': 'e</a>\n<a class="azobss-nav-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>\n<a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a><a id="azAdminStrictIconLink" class="azobss-nav-chip admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a><a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>\n<a class="azobss-nav-chip" href="/lucky-draw/">Lucky Draw</a>\n<a'}}

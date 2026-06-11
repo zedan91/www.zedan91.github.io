@@ -1,0 +1,15 @@
+AZOBSS PA/BM purchaseLogs verification fix
+
+Dibuat:
+- purchaseLogs akan disimpan dengan firestoreId dalam users/{username}.purchaseRecords backup.
+- Backend /api/pa-bm-download kini boleh migrate rekod lama dari users/{username}.purchaseRecords ke purchaseLogs jika purchaseLogs kosong.
+- Download limit 5 kali / 7 hari kekal dikawal backend.
+- Jika masih keluar Firebase Admin error, tambah env Firebase Admin di Render:
+  FIREBASE_SERVICE_ACCOUNT_JSON
+  atau FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY
+
+Selepas deploy:
+1. Deploy website.
+2. Deploy backend Render.
+3. Paste Firebase Rules file jika belum update.
+4. Pastikan Render Environment Firebase Admin lengkap.

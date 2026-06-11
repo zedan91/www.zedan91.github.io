@@ -743,7 +743,7 @@
         const data = await res.json();
 
         if(data.ok){
-          btn.innerHTML = '\uD83D\uDE80 Deploy to GitHub <span style="position:absolute;top:-9px;right:-9px;background:#22c55e;color:#052e16;font-size:10px;font-weight:bold;padding:2px 7px;border-radius:999px;white-space:nowrap;">\u2713 Done</span>';
+          btn.innerHTML = '\uD83D\uDE80 Deploy to GitHub <span style="position:absolute;top:-9px;right:-9px;background:#22c55e;color:#052e16;font-size:10px;font-weight:bold;padding:2px 7px;border-radius:999px;white-space:normal;">\u2713 Done</span>';
           alert('\u2705 ' + data.message);
         }else{
           alert('\u274C Deploy gagal:\n' + data.message);
@@ -789,3 +789,7 @@
     init();
   }
 })();
+
+
+
+

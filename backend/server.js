@@ -9,6 +9,8 @@ import cron from "node-cron";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import sharp from "sharp";
+import PDFDocument from "pdfkit";
 
 dotenv.config();
 
@@ -21,6 +23,31 @@ const ADMIN_KEY = process.env.ADMIN_KEY || "change-this-admin-key";
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
+
+function azobssNum(v, fallback){
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+function azobssExpiryHoursFromOrder(order){
+  const direct = azobssNum(order && (order.expiryHours || order.linkExpiryHours || order.downloadExpiryHours), 0);
+  if(direct) return direct;
+  const days = azobssNum(order && (order.expiryDays || order.linkExpiryDays || order.downloadExpiryDays), 0);
+  if(days) return days * 24;
+  const text = String(order && (order.linkExpiry || order.expiry || order.expiryLabel || '') || '').toLowerCase();
+  const m = text.match(/(\d+(?:\.\d+)?)\s*(day|days|hari|hour|hours|jam)/i);
+  if(m){
+    const value = Number(m[1]);
+    const unit = String(m[2] || '').toLowerCase();
+    if(Number.isFinite(value) && value > 0){
+      return /hour|jam/.test(unit) ? value : value * 24;
+    }
+  }
+  return 24;
+}
+function azobssDownloadLimitFromOrder(order){
+  return azobssNum(order && (order.downloadLimit || order.maxDownloads || order.maxDownload || order.download_limit), 1);
+}
+
 app.use(express.json());
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || "*").split(",").map((v) => v.trim()).filter(Boolean);
 
@@ -253,7 +280,7 @@ function makePremiumDownloadForOrder(order) {
   if (order.downloadToken) return order;
   const token = makePremiumId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
-  const maxDownload = 1; // secure digital delivery: expire after first download
+  const maxDownload = azobssDownloadLimitFromOrder(order); // secure digital delivery: expire after first download
   const expiryHours = Math.max(0, Math.min(24 * 30, Number(order.expiryHours ?? 24)));
   const expiresAtMs = expiryHours === 0 ? now + (100 * 365 * 24 * 60 * 60 * 1000) : now + expiryHours * 60 * 60 * 1000;
   savePremiumToken({
@@ -426,6 +453,66 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "AZOBSS Lucky Draw Backend", time: new Date().toISOString() });
 });
 
+
+
+
+app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
+  try {
+    if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
+      return res.status(500).json({ ok:false, error:"ToyyibPay env belum diset. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." });
+    }
+    const data = req.body || {};
+    const user = getPremiumUser(data);
+    const usernameKey = cleanPremiumText(data.usernameKey || user.username || "", 80).toLowerCase();
+    const rawItems = Array.isArray(data.items) ? data.items : [];
+    const items = rawItems.map((item) => ({
+      id: cleanPremiumText(item.id || "", 120),
+      productType: cleanPremiumText(item.productType || "PA", 20).toUpperCase(),
+      itemCode: cleanPremiumText(item.itemCode || "", 80),
+      negeri: cleanPremiumText(item.negeri || "", 80),
+      amount: Math.max(0, Math.round(Number(item.amount || 0))),
+      createdAtMs: Number(item.createdAtMs || 0) || 0
+    })).filter((item) => item.itemCode && (item.amount === 3 || item.amount === 5));
+    if (!items.length) return res.status(400).json({ ok:false, error:"Tiada rekod PA/BM yang sah untuk dibayar." });
+    const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+    const amountSen = totalAmount * 100;
+    const orderId = makePremiumId("pabm");
+    const apiBase = publicBaseUrl(req);
+    const returnUrl = TOYYIB_RETURN_URL || `${frontendBaseUrl(req)}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
+    const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
+    const billPayload = {
+      userSecretKey: TOYYIB_SECRET_KEY,
+      categoryCode: TOYYIB_CATEGORY_CODE,
+      billName: toyyibClean("AZOBSS PA BM", 30),
+      billDescription: toyyibClean(`AZOBSS PA/BM Payment - ${items.length} unit - RM${totalAmount}`, 100),
+      billPriceSetting: 1,
+      billPayorInfo: 1,
+      billAmount: amountSen,
+      billReturnUrl: returnUrl,
+      billCallbackUrl: callbackUrl,
+      billExternalReferenceNo: orderId,
+      billTo: toyyibClean(user.username || usernameKey || user.email || "AZOBSS Customer", 30),
+      billEmail: toyyibClean(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
+      billPhone: toyyibClean(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
+      billSplitPayment: 0,
+      billSplitPaymentArgs: "",
+      billPaymentChannel: 0,
+      billContentEmail: `Thank you for your AZOBSS PA/BM payment. Total: RM${totalAmount}.`,
+      billChargeToCustomer: 1,
+      billExpiryDays: 3,
+      enableDuitNowQR: 1,
+      chargeDuitNowQR: 0
+    };
+    const apiResult = await toyyibPost("createBill", billPayload);
+    const billCode = Array.isArray(apiResult) ? (apiResult[0]?.BillCode || apiResult[0]?.billCode) : apiResult?.BillCode;
+    if (!billCode) return res.status(502).json({ ok:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult });
+    const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+    upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName:`PA/BM Purchase Records (${items.length} unit)`, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, unit:items.length });
+  } catch (err) {
+    res.status(500).json({ ok:false, error: err.message || "Failed create PA/BM ToyyibPay bill" });
+  }
+});
 
 app.post("/api/toyyib/create-bill", async (req, res) => {
   try {
@@ -1036,6 +1123,163 @@ cron.schedule("* * * * *", async () => {
 
 
 
+
+// =========================
+// PA PDF CONVERTER HELPERS
+// =========================
+function cleanPaNumber(value) {
+  return String(value || "").trim().toUpperCase().replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
+}
+
+function cleanPaState(value) {
+  return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9 ._\-]/g, " ").replace(/\s+/g, " ");
+}
+
+async function fetchJupemFile(targetUrl) {
+  return fetch(targetUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+      "Accept": "image/tiff,image/*,application/pdf,application/octet-stream,*/*"
+    }
+  });
+}
+
+async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
+  const pages = [];
+  const meta = await sharp(tifBuffer, { pages: -1, limitInputPixels: false }).metadata();
+  const pageCount = Math.max(1, Number(meta.pages || 1));
+
+  for (let i = 0; i < pageCount; i++) {
+    const pngBuffer = await sharp(tifBuffer, { page: i, limitInputPixels: false })
+      .rotate()
+      .png()
+      .toBuffer();
+    const imgMeta = await sharp(pngBuffer).metadata();
+    pages.push({
+      buffer: pngBuffer,
+      width: Math.max(1, Number(imgMeta.width || meta.width || 595)),
+      height: Math.max(1, Number(imgMeta.height || meta.height || 842))
+    });
+  }
+
+  return await new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      autoFirstPage: false,
+      margin: 0,
+      info: { Title: safeName || "PA PDF", Creator: "AZOBSS PA Converter" }
+    });
+    const chunks = [];
+    doc.on("data", chunk => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    pages.forEach(page => {
+      doc.addPage({ size: [page.width, page.height], margin: 0 });
+      doc.image(page.buffer, 0, 0, { width: page.width, height: page.height });
+    });
+
+    doc.end();
+  });
+}
+
+
+app.get("/api/check-pa", async (req, res) => {
+  try {
+    const noPA = cleanPaNumber(req.query.noPA || req.query.pa || req.query.noPa);
+    const negeri = cleanPaState(req.query.negeri || req.query.state);
+
+    if (!noPA) return res.status(400).json({ ok: false, error: "Missing noPA" });
+    if (!negeri) return res.status(400).json({ ok: false, error: "Missing negeri" });
+
+    const fileName = `PA${noPA}.TIF`;
+    const candidates = [
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`,
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`,
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName.toLowerCase())}&negeri=${encodeURIComponent(negeri)}`
+    ];
+
+    for (const jupemUrl of candidates) {
+      const response = await fetchJupemFile(jupemUrl);
+      if (!response.ok) continue;
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const firstText = buffer.slice(0, 180).toString("utf8").toLowerCase();
+      if (buffer.length > 100 && !firstText.includes("<html") && !firstText.includes("<!doctype")) {
+        return res.json({ ok: true, noPA: fileName, negeri, size: buffer.length });
+      }
+    }
+
+    return res.status(404).json({ ok: false, error: "PA not found" });
+  } catch (error) {
+    console.error("PA check failed:", error);
+    res.status(500).json({ ok: false, error: "PA check failed" });
+  }
+});
+
+app.get("/api/pa-pdf", async (req, res) => {
+  try {
+    const noPA = cleanPaNumber(req.query.noPA || req.query.pa || req.query.noPa);
+    const negeri = cleanPaState(req.query.negeri || req.query.state);
+
+    if (!noPA) return res.status(400).json({ ok: false, error: "Missing noPA" });
+    if (!negeri) return res.status(400).json({ ok: false, error: "Missing negeri" });
+
+    const fileName = `PA${noPA}.TIF`;
+    const safeName = `PA${noPA}`.replace(/[^A-Z0-9_-]/gi, "");
+    const jupemUrl = `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
+
+    const response = await fetchJupemFile(jupemUrl);
+    if (!response.ok) return res.status(404).json({ ok: false, error: "PA not found" });
+
+    const tifBuffer = Buffer.from(await response.arrayBuffer());
+    const firstText = tifBuffer.slice(0, 180).toString("utf8").toLowerCase();
+
+    if (!tifBuffer.length || firstText.includes("<html") || firstText.includes("<!doctype")) {
+      return res.status(404).json({ ok: false, error: "Invalid PA file" });
+    }
+
+    const pdfBuffer = await convertTifBufferToPdfBuffer(tifBuffer, safeName);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pdf"`);
+    res.setHeader("Cache-Control", "no-store");
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("PA PDF conversion failed:", error);
+    res.status(500).json({ ok: false, error: "PA PDF conversion failed" });
+  }
+});
+
+app.get("/api/download-stesen-tanda-aras", async (req, res) => {
+  try {
+    const productId = String(req.query.productId || req.query.id || "").trim().replace(/[^0-9]/g, "");
+    const jenis = String(req.query.jenis || "1").trim() === "2" ? "2" : "1";
+    if (!productId) return res.status(400).json({ ok: false, error: "Missing productId" });
+
+    const jupemUrl = `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunStesenTandaAras/${encodeURIComponent(productId)}?jenis=${encodeURIComponent(jenis)}`;
+    const response = await fetchJupemFile(jupemUrl);
+    if (!response.ok) return res.status(404).json({ ok: false, error: "BM/SBM not found" });
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const firstText = buffer.slice(0, 180).toString("utf8").toLowerCase();
+    if (!buffer.length || firstText.includes("<html") || firstText.includes("<!doctype")) {
+      return res.status(404).json({ ok: false, error: "Invalid BM/SBM file" });
+    }
+
+    const contentType = response.headers.get("content-type") || "application/octet-stream";
+    const safePrefix = jenis === "2" ? "SBM" : "BM";
+    const ext = contentType.includes("pdf") ? "pdf" : (contentType.includes("zip") ? "zip" : "dat");
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", `attachment; filename="${safePrefix}-${productId}.${ext}"`);
+    res.setHeader("Cache-Control", "no-store");
+    res.send(buffer);
+  } catch (error) {
+    console.error("BM/SBM download failed:", error);
+    res.status(500).json({ ok: false, error: "BM/SBM download failed" });
+  }
+});
+
+
 // Legacy /api/create-toyyib-bill removed. Use /api/toyyib/create-bill.
 
 app.use((err, req, res, next) => {
@@ -1045,3 +1289,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`AZOBSS Lucky Draw Backend running on port ${PORT}`);
 });
+
+
+
+

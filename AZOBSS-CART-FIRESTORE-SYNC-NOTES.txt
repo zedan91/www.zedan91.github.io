@@ -1,0 +1,20 @@
+AZOBSS CART FIRESTORE SYNC FIX
+
+Guest buyers:
+- Cart kekal dalam localStorage sahaja.
+- Jika clear site data/cache penuh, cart guest memang akan hilang.
+
+Logged-in Firebase users:
+- Cart disimpan dalam Firestore collection: userCarts/{uid}
+- Cart akan sync balik selepas browser ditutup/dibuka semula atau login semula.
+
+FIREBASE RULES BARU PERLU UPDATE:
+Tambahkan rules ini dalam service cloud.firestore match /databases/{database}/documents {
+
+  match /userCarts/{uid} {
+    allow read, create, update, delete: if request.auth != null
+      && request.auth.uid == uid
+      && (request.method == 'delete' || request.resource.data.uid == request.auth.uid);
+  }
+
+}

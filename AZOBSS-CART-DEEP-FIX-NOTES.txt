@@ -1,0 +1,19 @@
+AZOBSS CART DEEP FIX
+
+Fixes:
+1. Old shared key azobss_shop_cart_v1 removed from active cart UI.
+2. Guest cart uses azobss_shop_cart_guest_v1 only.
+3. Logged-in cart uses azobss_shop_cart_user_{uid}_v1 only.
+4. Logout switches UI back to guest cart and will not show logged-in user's cart.
+5. Login reloads cart from Firestore userCarts/{uid}. If browser cache/site data was cleared, logged-in cart should come back after login as long as Firestore rules were published and previous cart successfully synced.
+
+Firebase Rules:
+No new rule needed beyond userCarts/{uid} that was already provided.
+
+Testing:
+- Deploy.
+- Hard refresh.
+- Guest add item A.
+- Login, add item B, wait 2 seconds.
+- Logout: should show guest item A only.
+- Clear cache/site data, open site, login: should restore item B from Firestore.

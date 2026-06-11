@@ -1,0 +1,23 @@
+AZOBSS ADMIN/STAFF STICKYBAR PATCH
+
+Added sticky bar to:
+- /admin/
+- /staff/
+
+Sticky bar links:
+- Home
+- Software
+- CAD Tools
+- Affiliate Shop
+- Lucky Draw
+- Mini Web Tools
+- Admin
+- Staff
+
+Also:
+- Shows current username without Hello prefix.
+- Mobile horizontal scroll friendly.
+- Syntax errors: 0
+
+Patched:
+['admin/index.html', 'staff/index.html']

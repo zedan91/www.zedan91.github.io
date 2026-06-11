@@ -46,6 +46,21 @@
     const baseName = benchmarkSafeFilename(`${productType}-${code}`) || 'BM-SBM-download';
     return baseName.toLowerCase().endsWith('.pdf') ? baseName : `${baseName}.pdf`;
   }
+  function benchmarkCartLabel(item){
+    item = item || {};
+    const type = String(item.productType || item.product || (String(item.jenis || '1') === '2' ? 'SBM' : 'BM')).trim().toUpperCase();
+    const code = String(item.itemCode || item.stationNo || item.stesen || item.productId || item.id || '').trim().toUpperCase();
+    return [type, code].filter(Boolean).join(' ') || 'Item';
+  }
+
+  function benchmarkCartAddedText(item){
+    return benchmarkCartLabel(item) + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.";
+  }
+
+  function benchmarkCartAlreadyText(item){
+    return benchmarkCartLabel(item) + ' sudah ada dalam cart.';
+  }
+
 
   async function triggerBenchmarkDownload(anchor){
     const url = anchor.getAttribute('href');
@@ -71,15 +86,12 @@
       setTimeout(function(){ URL.revokeObjectURL(objectUrl); }, 1000);
       if (statusEl) statusEl.textContent = `Downloaded as ${filename}`;
     } catch (error) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      if (statusEl) statusEl.textContent = `Download opened. If browser still shows ID name, backend must allow file rename/CORS.`;
+      console.error('BM/SBM silent download failed:', error);
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Download sedang disediakan. Sila cuba semula sebentar lagi.';
+      }
+      alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
     }
   }
 
@@ -154,7 +166,7 @@
     renderCart();
     if (statusEl) {
       statusEl.style.display = 'block';
-      statusEl.textContent = exists ? 'Item already in benchmark cart.' : 'Benchmark item added to cart.';
+      statusEl.textContent = exists ? benchmarkCartAlreadyText(item) : benchmarkCartAddedText(item);
     }
   }
 
@@ -171,7 +183,7 @@
       const bmJenis = row.jenis || (row.product === 'SBM' ? '2' : '1');
       const bmDownloadUrl = bmId ? buildBenchmarkDownloadUrl(bmId, bmJenis) : ''; // always use backend link
       const downloadButton = bmDownloadUrl
-        ? `<a class="small-action-btn blue bm-download-btn bm-record-download" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl: bmDownloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" download="${esc(benchmarkDownloadFilename(row))}" style="text-decoration:none;display:inline-block;padding:6px 10px;font-size:12px;white-space:nowrap;" href="${esc(bmDownloadUrl)}">⬇ Download</a>`
+        ? `<a class="small-action-btn blue bm-download-btn bm-record-download" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl: bmDownloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" download="${esc(benchmarkDownloadFilename(row))}" style="text-decoration:none;display:inline-block;padding:6px 10px;font-size:12px;white-space:normal;" href="${esc(bmDownloadUrl)}">⬇ Download</a>`
         : '<span style="color:#94a3b8;">-</span>';
       return `
         <tr>
@@ -314,18 +326,48 @@
     const benchmarkDownload = event.target.closest('[data-benchmark-record]');
     if (benchmarkDownload) {
       event.preventDefault();
-      if (typeof window.azobssRecordPurchase === 'function') {
+
+      (async function(){
         try {
           const payload = JSON.parse(decodeURIComponent(benchmarkDownload.dataset.benchmarkRecord || '{}'));
-          window.azobssRecordPurchase(payload).catch(function(error){
-            if (statusEl) {
-              statusEl.style.display = 'block';
-              statusEl.textContent = error.message || 'Failed to save BM/SBM purchase record.';
+          let successMessage = benchmarkCartAddedText(payload);
+
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = successMessage;
+          }
+
+          if (typeof window.azobssRecordPurchase === 'function') {
+            const savedRecord = await window.azobssRecordPurchase(payload);
+            if (savedRecord && savedRecord.__azobssAlreadyInCart) {
+              successMessage = benchmarkCartAlreadyText(payload);
             }
+          }
+
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = successMessage;
+          }
+
+          if (typeof window.azobssRenderPurchaseRecords === 'function') {
+            setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 350);
+          }
+
+          [120, 450, 900, 1400].forEach(function(delayMs){
+            setTimeout(function(){
+              if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.textContent = successMessage;
+              }
+            }, delayMs);
           });
-        } catch (error) {}
-      }
-      triggerBenchmarkDownload(benchmarkDownload);
+        } catch (error) {
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = error.message || 'BM/SBM item failed to add to cart.';
+          }
+        }
+      })();
       return;
     }
     const addButton = event.target.closest('[data-add-benchmark]');
@@ -367,3 +409,7 @@
   updateOpenEbizLink();
   renderCart();
 })();
+
+
+
+

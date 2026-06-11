@@ -1,0 +1,21 @@
+AZOBSS STAFF FIRESTORE RULES ADDON
+
+Add/merge these collections into your Firestore Rules:
+
+match /staffSoftwareSubmissions/{id} {
+  allow read: if request.auth != null;
+  allow create: if request.auth != null;
+  allow update, delete: if request.auth != null && request.auth.token.email == "zedan91@azobss.local";
+}
+
+match /staffCADSubmissions/{id} {
+  allow read: if request.auth != null;
+  allow create: if request.auth != null;
+  allow update, delete: if request.auth != null && request.auth.token.email == "zedan91@azobss.local";
+}
+
+match /commissionRecords/{id} {
+  allow read: if request.auth != null;
+  allow create: if request.auth != null;
+  allow update, delete: if request.auth != null && request.auth.token.email == "zedan91@azobss.local";
+}

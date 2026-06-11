@@ -1,3 +1,32 @@
+
+function azobssNum(v, fallback){
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+function azobssExpiryHoursFromOrder(order){
+  const direct = azobssNum(order && (order.expiryHours || order.linkExpiryHours || order.downloadExpiryHours), 0);
+  if(direct) return direct;
+  const days = azobssNum(order && (order.expiryDays || order.linkExpiryDays || order.downloadExpiryDays), 0);
+  if(days) return days * 24;
+  const text = String(order && (order.linkExpiry || order.expiry || order.expiryLabel || '') || '').toLowerCase();
+  const m = text.match(/(\d+(?:\.\d+)?)\s*(day|days|hari|hour|hours|jam)/i);
+  if(m){
+    const value = Number(m[1]);
+    const unit = String(m[2] || '').toLowerCase();
+    if(Number.isFinite(value) && value > 0){
+      return /hour|jam/.test(unit) ? value : value * 24;
+    }
+  }
+  return 24;
+}
+function azobssDownloadLimitFromOrder(order){
+  return azobssNum(order && (order.downloadLimit || order.maxDownloads || order.maxDownload || order.download_limit), 1);
+}
+
+
+// Allow PA/BM download proxy to fetch JUPEM resources even when the remote SSL chain is incomplete on Render/Node.
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED || "0";
+
 // AZOBSS Render Backend Server
 // Supports: website hosting + affiliate online sync + JUPEM PA hold system
 
@@ -8,6 +37,112 @@ const url = require("url");
 const crypto = require("crypto");
 let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
+let sharp = null;
+let PDFDocument = null;
+
+function azobssLoadBackendModule(moduleName) {
+  const candidates = [
+    moduleName,
+    path.join(__dirname, "node_modules", moduleName),
+    path.join(__dirname, "backend", "node_modules", moduleName)
+  ];
+
+  const errors = [];
+  for (const candidate of candidates) {
+    try {
+      return require(candidate);
+    } catch (err) {
+      errors.push(candidate + " => " + (err && err.message ? err.message.split("\n")[0] : String(err)));
+    }
+  }
+
+  console.warn("AZOBSS module load failed for " + moduleName + ":", errors);
+  return null;
+}
+
+function azobssEnsurePdfDependencies() {
+  sharp = azobssLoadBackendModule("sharp");
+  PDFDocument = azobssLoadBackendModule("pdfkit");
+
+  if (sharp && PDFDocument) return;
+
+  // Render Free sometimes reuses an old build/cache or skips native optional packages.
+  // Runtime self-heal installs only when the PDF converter dependencies are missing.
+  if (process.env.AZOBSS_DISABLE_RUNTIME_NPM === "1") return;
+
+  try {
+    const childProcess = require("child_process");
+    console.warn("AZOBSS PDF deps missing. Running one-time runtime install for sharp/pdfkit...");
+    childProcess.execSync(
+      "npm install --no-audit --no-fund --include=optional sharp@0.32.6 pdfkit@0.15.0",
+      { cwd: __dirname, stdio: "inherit", env: Object.assign({}, process.env, { npm_config_registry: "https://registry.npmjs.org/" }) }
+    );
+  } catch (installErr) {
+    console.error("AZOBSS runtime install for PDF deps failed:", installErr && installErr.message ? installErr.message : installErr);
+  }
+
+  sharp = azobssLoadBackendModule("sharp");
+  PDFDocument = azobssLoadBackendModule("pdfkit");
+}
+
+azobssEnsurePdfDependencies();
+
+console.log("PDF converter dependencies:", {
+  sharp: !!sharp,
+  pdfkit: !!PDFDocument,
+  rootNodeModules: fs.existsSync(path.join(__dirname, "node_modules")),
+  backendNodeModules: fs.existsSync(path.join(__dirname, "backend", "node_modules")),
+  nodeVersion: process.version
+});
+
+async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
+  if (!sharp || !PDFDocument) {
+    const missing = !sharp && !PDFDocument ? "sharp and pdfkit" : (!sharp ? "sharp" : "pdfkit");
+    throw new Error("PDF converter dependency missing: " + missing);
+  }
+
+  const pages = [];
+  const meta = await sharp(tifBuffer, { pages: -1 }).metadata();
+  const pageCount = Math.max(1, Number(meta.pages || 1));
+
+  for (let i = 0; i < pageCount; i++) {
+    const imageBuffer = await sharp(tifBuffer, { page: i, limitInputPixels: false })
+      .rotate()
+      .png()
+      .toBuffer();
+    const imgMeta = await sharp(imageBuffer).metadata();
+    pages.push({
+      buffer: imageBuffer,
+      width: Math.max(1, Number(imgMeta.width || meta.width || 595)),
+      height: Math.max(1, Number(imgMeta.height || meta.height || 842))
+    });
+  }
+
+  return await new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      autoFirstPage: false,
+      margin: 0,
+      info: {
+        Title: safeName || "PA PDF",
+        Creator: "AZOBSS PA Converter"
+      }
+    });
+    const chunks = [];
+    doc.on("data", chunk => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    for (const page of pages) {
+      const width = page.width;
+      const height = page.height;
+      doc.addPage({ size: [width, height], margin: 0 });
+      doc.image(page.buffer, 0, 0, { width, height });
+    }
+
+    doc.end();
+  });
+}
+
 const TOYYIB_SECRET_KEY=process.env.TOYYIB_SECRET_KEY;
 const TOYYIB_CATEGORY_CODE=process.env.TOYYIB_CATEGORY_CODE;
 
@@ -127,6 +262,13 @@ function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
 async function maybeSendDownloadEmail(order, req) {
   try {
     let current = order || {};
+
+    // PA/BM purchases are downloaded from Latest Purchase List with controlled 5x/7-day access.
+    // Do not run Premium Software email/token logic for PA/BM; it creates misleading NO_DOWNLOAD_LINK logs.
+    if (isPaBmPremiumOrder(current)) {
+      console.log("AZOBSS PA/BM email skipped: download is managed inside Latest Purchase List", JSON.stringify({ orderId: current.orderId || "", billCode: current.billCode || "" }).slice(0, 500));
+      return upsertPremiumOrder({ ...current, emailSkippedForPaBm: true, emailError: null });
+    }
     const email = cleanPremiumText(current?.user?.email || current?.buyerEmail || current?.email || current?.billEmail || "", 180);
     const realDownloadLink = cleanPremiumUrl(
       current.downloadLink ||
@@ -226,8 +368,11 @@ async function refreshToyyibOrder(order, req) {
     const paid = !!(tx && String(tx.billpaymentStatus || tx.billStatus || tx.status || "") === "1");
     if (!paid) return order;
     let paidOrder = upsertPremiumOrder({ ...order, status: "paid", paymentMethod: "toyyibpay", paymentReference: tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno || order.paymentReference || "", toyyibTransaction: tx, paidAt: new Date().toISOString() });
-    paidOrder = makeDownloadForOrder(paidOrder);
-    await maybeSendDownloadEmail(paidOrder, req);
+    try { await azobssUpdatePaBmPurchaseLogsForOrder(paidOrder, "paid", { paymentReference: paidOrder.paymentReference, toyyibTransaction: tx }); } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
+    if (!isPaBmPremiumOrder(paidOrder)) {
+      paidOrder = makeDownloadForOrder(paidOrder);
+      await maybeSendDownloadEmail(paidOrder, req);
+    }
     return findPremiumOrderByAny({ orderId: paidOrder.orderId }) || paidOrder;
   } catch (e) {
     console.error("ToyyibPay refresh failed:", e.message);
@@ -298,12 +443,6 @@ function getRatingVoterIdFromBody(req, body) {
   const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
   return "ip_" + crypto.createHash("sha256").update(ip).digest("hex").slice(0, 24);
 }
-
-let sharp = null;
-let PDFDocument = null;
-try { sharp = require("sharp"); } catch {}
-try { PDFDocument = require("pdfkit"); } catch {}
-
 let firebaseAdmin = null;
 try {
   firebaseAdmin = require("firebase-admin");
@@ -312,8 +451,50 @@ try {
 }
 
 let firebaseAdminReady = false;
+let firebaseAdminInitError = "";
+function azobssNormalizePrivateKey(value) {
+  return String(value || "")
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\\n/g, "\n")
+    .replace(/\n/g, "\n")
+    .trim();
+}
+function azobssParseFirebaseServiceAccount() {
+  const jsonText = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+    || process.env.FIREBASE_SERVICE_ACCOUNT
+    || process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+    || "";
+
+  if (jsonText) {
+    const parsed = JSON.parse(jsonText);
+    if (parsed.private_key) parsed.private_key = azobssNormalizePrivateKey(parsed.private_key);
+    return parsed;
+  }
+
+  const projectId = process.env.FIREBASE_PROJECT_ID
+    || process.env.GCLOUD_PROJECT
+    || process.env.GOOGLE_CLOUD_PROJECT
+    || "";
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || "";
+  const privateKey = azobssNormalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY || "");
+
+  if (projectId && clientEmail && privateKey) {
+    return {
+      type: "service_account",
+      project_id: projectId,
+      client_email: clientEmail,
+      private_key: privateKey
+    };
+  }
+
+  return null;
+}
 function initFirebaseAdmin() {
-  if (!firebaseAdmin || firebaseAdminReady) return firebaseAdminReady;
+  if (!firebaseAdmin) {
+    firebaseAdminInitError = "firebase-admin package is not installed.";
+    return false;
+  }
+  if (firebaseAdminReady) return true;
 
   try {
     if (firebaseAdmin.apps && firebaseAdmin.apps.length) {
@@ -321,13 +502,13 @@ function initFirebaseAdmin() {
       return true;
     }
 
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "";
-    if (serviceAccountJson) {
-      const serviceAccount = JSON.parse(serviceAccountJson);
+    const serviceAccount = azobssParseFirebaseServiceAccount();
+    if (serviceAccount) {
       firebaseAdmin.initializeApp({
         credential: firebaseAdmin.credential.cert(serviceAccount)
       });
       firebaseAdminReady = true;
+      console.log("Firebase Admin ready: service account configured.");
       return true;
     }
 
@@ -336,13 +517,237 @@ function initFirebaseAdmin() {
         credential: firebaseAdmin.credential.applicationDefault()
       });
       firebaseAdminReady = true;
+      console.log("Firebase Admin ready: application default credentials.");
       return true;
     }
+
+    firebaseAdminInitError = "Missing Firebase Admin env. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY.";
   } catch (error) {
-    console.error("Firebase Admin init failed:", error.message);
+    firebaseAdminInitError = error && (error.stack || error.message || String(error)) || "Unknown Firebase Admin init error.";
+    console.error("Firebase Admin init failed:", firebaseAdminInitError);
   }
 
   return false;
+}
+
+
+const AZOBSS_PA_BM_MAX_DOWNLOADS = 5;
+const AZOBSS_PA_BM_VALID_MS = 7 * 24 * 60 * 60 * 1000;
+function azobssPaidStatus(value) {
+  return ["paid", "success", "completed", "settled"].includes(String(value || "").trim().toLowerCase());
+}
+function azobssPaBmRecordType(record) {
+  return String(record && (record.productType || record.product || record.type) || "").trim().toUpperCase();
+}
+function azobssPaBmRecordCode(record) {
+  return String(record && (record.itemCode || record.pa || record.noPA || record.stesen || record.stationNo || record.code) || "").trim().toUpperCase();
+}
+function azobssFirestoreMs(value) {
+  if (!value) return 0;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Date.parse(value) || 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value._seconds === "number") return value._seconds * 1000;
+  return 0;
+}
+function azobssRecordPaidAtMs(record) {
+  return Number(record.paidAtMs || 0)
+    || azobssFirestoreMs(record.paidAt)
+    || azobssFirestoreMs(record.paidAtClient)
+    || azobssFirestoreMs(record.updatedAt)
+    || Number(record.createdAtMs || 0)
+    || azobssFirestoreMs(record.createdAtClient)
+    || azobssFirestoreMs(record.createdAt)
+    || Date.now();
+}
+function azobssRecordMaxDownloads(record) {
+  const max = Number(record.maxDownloads || record.maxDownload || 0);
+  return max > 0 ? max : AZOBSS_PA_BM_MAX_DOWNLOADS;
+}
+function azobssRecordDownloadCount(record) {
+  return Math.max(0, Number(record.downloadCount || record.usedCount || 0));
+}
+function azobssRecordExpiresAtMs(record) {
+  const explicit = Number(record.downloadExpiresAtMs || record.expiresAtMs || 0)
+    || azobssFirestoreMs(record.downloadExpiresAtClient)
+    || azobssFirestoreMs(record.expiresAt);
+  return explicit || (azobssRecordPaidAtMs(record) + AZOBSS_PA_BM_VALID_MS);
+}
+async function azobssGetPurchaseRecord(recordId) {
+  if (!initFirebaseAdmin()) {
+    throw new Error("Firebase Admin is not configured on backend. " + (firebaseAdminInitError || ""));
+  }
+
+  const db = firebaseAdmin.firestore();
+  const id = String(recordId || "").trim();
+  const ref = db.collection("purchaseLogs").doc(id);
+
+  if (!id) return { ref, record: null };
+
+  // 1) Normal path: purchaseLogs/{recordId}
+  const snap = await ref.get();
+  if (snap.exists) {
+    return { ref, record: Object.assign({ firestoreId: snap.id }, snap.data() || {}) };
+  }
+
+  // 2) Compatibility path:
+  // Older AZOBSS builds saved paid/pending PA-BM records inside users/{username}.purchaseRecords
+  // but did not always create purchaseLogs. If Download button sends that embedded id,
+  // migrate it into purchaseLogs automatically so 5x/7-day limit can work.
+  let found = null;
+  let foundUser = null;
+
+  const usersSnap = await db.collection("users").get();
+  usersSnap.forEach((userDoc) => {
+    if (found) return;
+    const userData = userDoc.data() || {};
+    const records = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+    for (const r of records) {
+      if (!r) continue;
+      const ids = [
+        r.firestoreId,
+        r.purchaseLogId,
+        r.id,
+        r.recordId,
+        r.localId
+      ].filter(Boolean).map(v => String(v));
+      if (ids.includes(id)) {
+        found = Object.assign({}, r);
+        foundUser = Object.assign({ firestoreUserId: userDoc.id }, userData);
+        break;
+      }
+    }
+  });
+
+  if (!found) {
+    console.warn("PA/BM purchase record not found in purchaseLogs or embedded users.purchaseRecords:", id);
+    return { ref, record: null };
+  }
+
+  const createdAtMs = Number(found.createdAtMs || 0)
+    || azobssFirestoreMs(found.createdAtClient)
+    || azobssFirestoreMs(found.createdAt)
+    || Date.now();
+
+  const resetAtMs = Number(foundUser && foundUser.purchaseTotalResetAtMs || 0)
+    || azobssFirestoreMs(foundUser && foundUser.purchaseTotalResetAtClient);
+
+  const status = azobssPaidStatus(found.status)
+    ? String(found.status || "paid").toLowerCase()
+    : (resetAtMs && createdAtMs && createdAtMs <= resetAtMs ? "paid" : String(found.status || "pending").toLowerCase());
+
+  const paidAtMs = Number(found.paidAtMs || 0)
+    || azobssFirestoreMs(found.paidAtClient)
+    || azobssFirestoreMs(found.paidAt)
+    || (status === "paid" ? (resetAtMs || Date.now()) : 0);
+
+  const migrated = Object.assign({}, found, {
+    firestoreId: id,
+    id: found.id || id,
+    uid: String(found.uid || (foundUser && foundUser.uid) || ""),
+    usernameKey: String(found.usernameKey || (foundUser && (foundUser.usernameKey || foundUser.firestoreUserId)) || "").trim().toLowerCase(),
+    displayName: String(found.displayName || (foundUser && (foundUser.displayName || foundUser.usernameKey || foundUser.firestoreUserId)) || ""),
+    phone: String(found.phone || found.phoneNumber || (foundUser && (foundUser.phone || foundUser.phoneNumber)) || ""),
+    email: String(found.email || (foundUser && foundUser.email) || ""),
+    status,
+    createdAtMs,
+    createdAtClient: found.createdAtClient || new Date(createdAtMs).toISOString(),
+    paidAtMs: paidAtMs || undefined,
+    paidAtClient: paidAtMs ? new Date(paidAtMs).toISOString() : undefined,
+    downloadCount: Math.max(0, Number(found.downloadCount || found.usedCount || 0)),
+    maxDownloads: azobssRecordMaxDownloads(found),
+    downloadExpiresAtMs: Number(found.downloadExpiresAtMs || found.expiresAtMs || 0)
+      || azobssFirestoreMs(found.downloadExpiresAtClient)
+      || azobssFirestoreMs(found.expiresAt)
+      || (paidAtMs ? paidAtMs + AZOBSS_PA_BM_VALID_MS : undefined),
+    updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+    migratedFromEmbeddedPurchaseRecords: true
+  });
+
+  Object.keys(migrated).forEach((key) => {
+    if (migrated[key] === undefined) delete migrated[key];
+  });
+
+  await ref.set(migrated, { merge: true });
+  console.log("PA/BM embedded purchase record migrated to purchaseLogs:", id);
+
+  return { ref, record: Object.assign({ firestoreId: id }, migrated) };
+}
+
+async function azobssIncrementPurchaseDownload(ref, record, nowMs) {
+  const used = azobssRecordDownloadCount(record);
+  const max = azobssRecordMaxDownloads(record);
+  await ref.set({
+    downloadCount: used + 1,
+    maxDownloads: max,
+    downloadExpiresAtMs: azobssRecordExpiresAtMs(record),
+    downloadExpiresAtClient: new Date(azobssRecordExpiresAtMs(record)).toISOString(),
+    lastDownloadedAtMs: nowMs,
+    lastDownloadedAtClient: new Date(nowMs).toISOString(),
+    updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+}
+
+
+async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", extra = {}) {
+  if (!order || !Array.isArray(order.paBmItems) || !order.paBmItems.length) return { ok: false, updated: 0, reason: "no_pa_bm_items" };
+  if (!initFirebaseAdmin()) {
+    console.warn("PA/BM purchaseLogs update skipped: Firebase Admin not configured.", firebaseAdminInitError || "");
+    return { ok: false, updated: 0, reason: "firebase_admin_not_configured" };
+  }
+
+  const db = firebaseAdmin.firestore();
+  const nowMs = Number(extra.nowMs || Date.now());
+  const paidAtMs = Number(extra.paidAtMs || nowMs);
+  const paid = azobssPaidStatus(status);
+  const baseUpdate = {
+    paymentOrderId: String(order.orderId || ""),
+    orderId: String(order.orderId || ""),
+    billCode: String(order.billCode || ""),
+    paymentUrl: String(order.paymentUrl || ""),
+    paymentMethod: "toyyibpay",
+    updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (status) baseUpdate.status = String(status).toLowerCase();
+  if (paid) {
+    baseUpdate.paidAtMs = paidAtMs;
+    baseUpdate.paidAtClient = new Date(paidAtMs).toISOString();
+    baseUpdate.downloadCount = 0;
+    baseUpdate.maxDownloads = AZOBSS_PA_BM_MAX_DOWNLOADS;
+    baseUpdate.downloadExpiresAtMs = paidAtMs + AZOBSS_PA_BM_VALID_MS;
+    baseUpdate.downloadExpiresAtClient = new Date(paidAtMs + AZOBSS_PA_BM_VALID_MS).toISOString();
+  }
+  if (extra.paymentReference) baseUpdate.paymentReference = String(extra.paymentReference || "");
+  if (extra.toyyibCallback) baseUpdate.toyyibCallback = extra.toyyibCallback;
+  if (extra.toyyibTransaction) baseUpdate.toyyibTransaction = extra.toyyibTransaction;
+
+  let updated = 0;
+  for (const item of order.paBmItems) {
+    const id = String(item && (item.id || item.firestoreId || item.purchaseLogId || item.recordId) || "").trim();
+    if (!id || id.startsWith("local-")) continue;
+    const update = {
+      ...baseUpdate,
+      productType: String(item.productType || item.product || "").toUpperCase() || undefined,
+      itemCode: String(item.itemCode || item.code || "").toUpperCase() || undefined,
+      negeri: String(item.negeri || item.state || "") || undefined,
+      amount: Number(item.amount || 0) || undefined
+    };
+    Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
+    try {
+      await db.collection("purchaseLogs").doc(id).set(update, { merge: true });
+      updated += 1;
+    } catch (error) {
+      console.error("PA/BM purchaseLogs item update failed:", id, error && (error.stack || error.message || error));
+    }
+  }
+
+  console.log("PA/BM purchaseLogs order sync:", JSON.stringify({ orderId: order.orderId || "", billCode: order.billCode || "", status, updated }).slice(0, 500));
+  return { ok: updated > 0, updated };
+}
+
+function azobssPaBmDownloadError(res, status, message) {
+  return send(res, status, JSON.stringify({ ok: false, error: message }, null, 2), "application/json");
 }
 
 function buildUserEmail(usernameKey) {
@@ -493,13 +898,37 @@ function readBody(req) {
 function parseRequestBody(raw = "") {
   const text = String(raw || "").trim();
   if (!text) return {};
+
+  // JSON body
   try { return JSON.parse(text); } catch (_) {}
+
+  // ToyyibPay sometimes posts callback as multipart/form-data.
+  // The old URLSearchParams parser treated the whole multipart body as one key,
+  // causing billCode/orderId/status to be empty and showing "order not found".
+  if (/Content-Disposition:\s*form-data/i.test(text)) {
+    const out = {};
+    const nameRegex = /name="([^"]+)"\s*\r?\n\r?\n([\s\S]*?)(?=\r?\n--[^\r\n]+|$)/gi;
+    let match;
+    while ((match = nameRegex.exec(text))) {
+      const key = String(match[1] || "").trim();
+      let value = String(match[2] || "");
+      value = value.replace(/\r?\n$/g, "").trim();
+      if (key) out[key] = value;
+    }
+    if (Object.keys(out).length) return out;
+  }
+
+  // URL encoded body / querystring style body
   const out = {};
   try {
     const params = new URLSearchParams(text);
     for (const [key, value] of params.entries()) out[key] = value;
   } catch (_) {}
   return out;
+}
+
+function isPaBmPremiumOrder(order = {}) {
+  return !!(order && (Array.isArray(order.paBmItems) && order.paBmItems.length || String(order.productId || "") === "pa-bm-purchase-records"));
 }
 
 function toyyibStatusIsPaid(data = {}) {
@@ -667,6 +1096,54 @@ async function fetchJupem(jupemUrl) {
     }
   });
 }
+
+
+async function fetchPelanAkuiCandidates(noPA, negeri) {
+  const cleanPA = String(noPA || "")
+    .trim()
+    .replace(/\.tif$/i, "")
+    .replace(/^PA/i, "");
+
+  const paUpper = `PA${cleanPA}.TIF`;
+  const paLower = `PA${cleanPA}.tif`;
+  const paRaw = `PA${cleanPA}`;
+  const stateUpper = String(negeri || "").toUpperCase();
+  const stateTitle = stateUpper.charAt(0) + stateUpper.slice(1).toLowerCase();
+
+  const candidates = [
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paLower)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paRaw)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateTitle)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?NoPA=${encodeURIComponent(paUpper)}&Negeri=${encodeURIComponent(stateUpper)}`
+  ];
+
+  let lastResult = null;
+
+  for (const url of candidates) {
+    try {
+      console.log("Fetching PA candidate:", url);
+      const response = await fetchJupem(url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const firstText = buffer.slice(0, 200).toString("utf8").toLowerCase();
+      const looksHTML = firstText.includes("<html") || firstText.includes("<!doctype") || firstText.includes("not found");
+      const validFile = response.ok && buffer.length > 100 && !looksHTML;
+
+      lastResult = { response, buffer, url, firstText, validFile };
+
+      if (validFile) {
+        return lastResult;
+      }
+    } catch (err) {
+      console.error("PA candidate failed:", url, err && err.message ? err.message : err);
+      lastResult = { response: null, buffer: Buffer.alloc(0), url, firstText: "", validFile: false, error: err };
+    }
+  }
+
+  return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
+}
+
 
 
 
@@ -1238,6 +1715,77 @@ async function handler(req, res) {
     // =========================
     // TOYYIBPAY DYNAMIC PAYMENT ROUTES (Render deploy-server.js)
     // =========================
+
+
+    if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST") {
+      let data = {};
+      try { data = parseRequestBody(await readBody(req)); }
+      catch (e) { return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Invalid request body" }), "application/json"); }
+      try {
+        if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
+          return send(res, 500, JSON.stringify({ ok:false, success:false, error:"ToyyibPay env belum lengkap. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." }, null, 2), "application/json");
+        }
+        const user = getPremiumUser(data);
+        const usernameKey = cleanPremiumText(data.usernameKey || user.username || "", 80).toLowerCase();
+        const uid = cleanPremiumText(data.uid || user.uid || "", 120);
+        const rawItems = Array.isArray(data.items) ? data.items : [];
+        const items = rawItems.map((item) => ({
+          id: cleanPremiumText(item.id || "", 120),
+          productType: cleanPremiumText(item.productType || "PA", 20).toUpperCase(),
+          itemCode: cleanPremiumText(item.itemCode || "", 80),
+          negeri: cleanPremiumText(item.negeri || "", 80),
+          amount: Math.max(0, Math.round(Number(item.amount || 0))),
+          createdAtMs: Number(item.createdAtMs || 0) || 0
+        })).filter((item) => item.itemCode && (item.amount === 3 || item.amount === 5));
+        if (!items.length) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Tiada rekod PA/BM yang sah untuk dibayar." }, null, 2), "application/json");
+        const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+        if (totalAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Total bayaran tidak sah." }, null, 2), "application/json");
+        const amountSen = totalAmount * 100;
+        const orderId = makeId("pabm");
+        const apiBase = publicBaseUrlFromReq(req);
+        const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
+        const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
+        const productName = `PA/BM Purchase Records (${items.length} unit)`;
+        const billPayload = {
+          userSecretKey: TOYYIB_SECRET_KEY,
+          categoryCode: TOYYIB_CATEGORY_CODE,
+          billName: cleanForToyyib("AZOBSS PA BM", 30),
+          billDescription: cleanForToyyib(`AZOBSS PA/BM Payment - ${items.length} unit - RM${totalAmount}`, 100),
+          billPriceSetting: 1,
+          billPayorInfo: 1,
+          billAmount: amountSen,
+          billReturnUrl: returnUrl,
+          billCallbackUrl: callbackUrl,
+          billExternalReferenceNo: orderId,
+          billTo: cleanForToyyib(user.username || usernameKey || user.email || "AZOBSS Customer", 30),
+          billEmail: cleanForToyyib(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
+          billPhone: cleanForToyyib(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
+          billSplitPayment: 0,
+          billSplitPaymentArgs: "",
+          billPaymentChannel: 0,
+          billContentEmail: `Thank you for your AZOBSS PA/BM payment. Total: RM${totalAmount}.`,
+          billChargeToCustomer: 1,
+          billExpiryDays: 3,
+          enableDuitNowQR: 1,
+          chargeDuitNowQR: 0
+        };
+        const apiResult = await postToyyib("createBill", billPayload);
+        const billCode = Array.isArray(apiResult) ? (apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode)) : (apiResult && apiResult.BillCode);
+        if (!billCode) {
+          const detail = Array.isArray(apiResult) ? (apiResult[0] || {}) : apiResult;
+          const msg = (detail && (detail.msg || detail.Message || detail.error || detail.Error || detail.status)) || "ToyyibPay tidak return BillCode.";
+          return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
+        }
+        const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+        try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
+        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, unit:items.length, status:"pending" }, null, 2), "application/json");
+      } catch (e) {
+        console.error("Create PA/BM ToyyibPay bill failed:", e.message);
+        return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create PA/BM ToyyibPay bill" }, null, 2), "application/json");
+      }
+    }
+
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "GET") {
       return send(res, 405, JSON.stringify({ ok:false, error:"Use POST for this endpoint." }, null, 2), "application/json");
     }
@@ -1341,6 +1889,7 @@ async function handler(req, res) {
 
       const billCode = getToyyibBillCode(data);
       const orderId = getToyyibOrderId(data);
+      console.log("ToyyibPay callback parsed:", JSON.stringify({ orderId, billCode, status: data.status || data.status_id || "", transaction_id: data.transaction_id || "" }).slice(0, 500));
       let order = findPremiumOrderByAny({ orderId, billCode });
 
       if (!order) {
@@ -1357,15 +1906,23 @@ async function handler(req, res) {
           toyyibCallback: data,
           paidAt: new Date().toISOString()
         });
-        order = makeDownloadForOrder(order);
-        await maybeSendDownloadEmail(order, req);
+        try { await azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference: order.paymentReference, toyyibCallback: data }); } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
+        if (!isPaBmPremiumOrder(order)) {
+          order = makeDownloadForOrder(order);
+          await maybeSendDownloadEmail(order, req);
+        } else {
+          order = upsertPremiumOrder({ ...order, emailSkippedForPaBm: true, emailError: null });
+        }
         const latest = findPremiumOrderByAny({ orderId: order.orderId }) || order;
-        console.log("ToyyibPay callback processed paid:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
-        return send(res, 200, JSON.stringify({ ok:true, status:"paid", emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
+        console.log("ToyyibPay callback processed paid:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, isPaBm: isPaBmPremiumOrder(latest), emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
+        return send(res, 200, JSON.stringify({ ok:true, status:"paid", paBmUpdated: isPaBmPremiumOrder(latest), emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
       }
 
       order = await refreshToyyibOrder(order, req);
-      if (order.status === "paid") return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+      if (order.status === "paid") {
+        try { await azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference: order.paymentReference }); } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
+        return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+      }
       return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false }), "application/json");
     }
 
@@ -1777,8 +2334,14 @@ async function handler(req, res) {
         { recursive: true }
       );
 
+      const paCleanForFile =
+        String(noPA || "")
+          .trim()
+          .replace(/\.TIF$/i, "")
+          .replace(/^PA/i, "");
+
       const fileName =
-        `${noPA}.TIF`;
+        `PA${paCleanForFile}.TIF`;
 
       const jupemUrl =
 `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
@@ -1835,7 +2398,7 @@ async function handler(req, res) {
       }
 
       const tempName =
-`${noPA}.tif`;
+`PA${paCleanForFile}.tif`;
 
       const tempPath =
         path.join(
@@ -1946,8 +2509,153 @@ if (
   return;
 }
 
+
 // =========================
-// JUPEM PA PDF CONVERTER
+// JUPEM PA EXISTENCE CHECK (NO PDF CONVERT)
+// =========================
+
+if (
+  (pathname === "/api/check-pa" || pathname === "/api/pa") &&
+  req.method === "GET"
+) {
+  const noPA = cleanPA(parsed.query.noPA || parsed.query.pa || parsed.query.noPa);
+  const negeri = cleanState(parsed.query.negeri || parsed.query.state);
+
+  if (!noPA) {
+    return send(res, 400, JSON.stringify({ ok: false, error: "Missing noPA" }), "application/json");
+  }
+  if (!negeri) {
+    return send(res, 400, JSON.stringify({ ok: false, error: "Missing negeri" }), "application/json");
+  }
+
+  try {
+    const result = await fetchPelanAkuiCandidates(noPA, negeri);
+    if (!result || !result.validFile) {
+      return send(res, 404, JSON.stringify({ ok: false, error: "PA not found" }), "application/json");
+    }
+
+    return send(res, 200, JSON.stringify({
+      ok: true,
+      noPA: `PA${String(noPA || "").replace(/^PA/i, "").replace(/\.TIF$/i, "")}.TIF`,
+      negeri,
+      size: result.buffer ? result.buffer.length : 0
+    }), "application/json");
+  } catch (error) {
+    console.error("PA check failed:", error && (error.stack || error.message || error));
+    return send(res, 500, JSON.stringify({ ok: false, error: "PA check failed" }), "application/json");
+  }
+}
+
+
+// =========================
+// PA/BM CONTROLLED DOWNLOAD (5 DOWNLOADS / 7 DAYS)
+// =========================
+
+if (pathname === "/api/pa-bm-download" && req.method === "GET") {
+  const recordId = String(parsed.query.recordId || "").trim();
+  if (!recordId) return azobssPaBmDownloadError(res, 400, "Missing recordId");
+
+  let ref, record;
+  try {
+    const result = await azobssGetPurchaseRecord(recordId);
+    ref = result.ref;
+    record = result.record;
+  } catch (error) {
+    console.error("PA/BM controlled download Firebase error:", error && (error.stack || error.message || error));
+    return azobssPaBmDownloadError(res, 500, "Download verification failed.");
+  }
+
+  if (!record) return azobssPaBmDownloadError(res, 404, "Purchase record not found.");
+  if (!azobssPaidStatus(record.status)) return azobssPaBmDownloadError(res, 403, "Payment is still pending.");
+
+  const nowMs = Date.now();
+  const expiresAtMs = azobssRecordExpiresAtMs(record);
+  const used = azobssRecordDownloadCount(record);
+  const max = azobssRecordMaxDownloads(record);
+
+  if (nowMs > expiresAtMs) return azobssPaBmDownloadError(res, 403, "Tempoh download telah tamat.");
+  if (used >= max) return azobssPaBmDownloadError(res, 403, "Had download telah digunakan.");
+
+  const type = azobssPaBmRecordType(record);
+  const code = azobssPaBmRecordCode(record);
+
+  if (type === "PA") {
+    const itemCode = String(code || "").replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
+    const negeri = cleanState(record.negeri || record.state || "");
+    if (!itemCode || !negeri) return azobssPaBmDownloadError(res, 400, "Invalid PA record.");
+
+    const paResult = await fetchPelanAkuiCandidates("PA" + itemCode + ".TIF", negeri);
+    if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
+      return azobssPaBmDownloadError(res, 404, "PA not found.");
+    }
+
+    const safeName = ("PA" + itemCode).replace(/[^A-Z0-9_-]/gi, "");
+    let pdfBuffer;
+    try {
+      pdfBuffer = await convertTifBufferToPdfBuffer(paResult.buffer, safeName);
+    } catch (convertError) {
+      console.error("PA controlled PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
+      return azobssPaBmDownloadError(res, 500, "PA PDF conversion failed.");
+    }
+
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Expose-Headers": "Content-Disposition"
+    });
+    res.end(pdfBuffer);
+    return;
+  }
+
+  const downloadUrl = String(record.downloadUrl || record.url || "").trim();
+  if (!downloadUrl) return azobssPaBmDownloadError(res, 400, "Download URL missing.");
+
+  // Proxy BM/SBM through AZOBSS backend so users never see the Render cold-start page
+  // or the raw onrender.com / JUPEM endpoint. This also ensures the 5x/7-day counter
+  // only increases after a real file is successfully prepared.
+  let bmResponse;
+  try {
+    bmResponse = await fetchJupem(downloadUrl);
+  } catch (fetchError) {
+    console.error("BM/SBM controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+    return azobssPaBmDownloadError(res, 502, "Fail sedang disediakan. Sila cuba semula sebentar lagi.");
+  }
+
+  if (!bmResponse || !bmResponse.ok) {
+    return azobssPaBmDownloadError(res, 404, "BM/SBM not found.");
+  }
+
+  const bmBuffer = Buffer.from(await bmResponse.arrayBuffer());
+  const bmFirstText = bmBuffer.slice(0, 160).toString("utf8").toLowerCase();
+  if (!bmBuffer.length || bmFirstText.includes("<html")) {
+    return azobssPaBmDownloadError(res, 404, "Invalid BM/SBM file.");
+  }
+
+  try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+
+  const contentType = bmResponse.headers.get("content-type") || "application/octet-stream";
+  const productType = String(record.productType || record.product || type || "BM").trim().toUpperCase();
+  const safeCode = String(code || record.itemCode || record.stesen || "download").replace(/[^A-Z0-9_-]/gi, "-");
+  const ext = contentType.includes("pdf") ? "pdf" : (contentType.includes("zip") ? "zip" : (contentType.includes("tif") ? "tif" : "dat"));
+  const safePrefix = productType === "SBM" ? "SBM" : "BM";
+
+  res.writeHead(200, {
+    "Content-Type": contentType,
+    "Content-Disposition": `attachment; filename="${safePrefix}-${safeCode}.${ext}"`,
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Expose-Headers": "Content-Disposition"
+  });
+  res.end(bmBuffer);
+  return;
+}
+
+// =========================
+// JUPEM PA DIRECT DOWNLOAD (NO SHARP)
 // =========================
 
 if (
@@ -1985,21 +2693,17 @@ if (
     );
   }
 
-  const fileName =
-    `${noPA}.TIF`;
+  const paCleanForFile =
+    String(noPA || "")
+      .trim()
+      .replace(/\.TIF$/i, "")
+      .replace(/^PA/i, "");
 
-  const jupemUrl =
-`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
+  // Use the same multi-candidate PA fetcher as the check/cart flow.
+  // This prevents false "PA not found" caused by noPa/noPA casing or state formatting.
+  const paResult = await fetchPelanAkuiCandidates(noPA, negeri);
 
-  console.log(
-    "Fetching PDF:",
-    jupemUrl
-  );
-
-  const response =
-    await fetchJupem(jupemUrl);
-
-  if (!response.ok) {
+  if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
     return send(
       res,
       404,
@@ -2011,86 +2715,36 @@ if (
     );
   }
 
-  const tifBuffer =
-    Buffer.from(
-      await response.arrayBuffer()
-    );
+  const tifBuffer = paResult.buffer;
 
-  const firstText =
-    tifBuffer
-      .slice(0, 120)
-      .toString("utf8")
-      .toLowerCase();
+  const safeName =
+    `PA${paCleanForFile}`.replace(/[^A-Z0-9_-]/gi, "");
 
-  if (
-    !tifBuffer.length ||
-    firstText.includes("<html")
-  ) {
+  let pdfBuffer;
+  try {
+    pdfBuffer = await convertTifBufferToPdfBuffer(tifBuffer, safeName);
+  } catch (convertError) {
+    console.error("PA PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
     return send(
       res,
-      404,
+      500,
       JSON.stringify({
         ok: false,
-        error: "Invalid PA file"
+        error: "PA PDF conversion failed. Please make sure sharp and pdfkit are installed on the backend."
       }),
       "application/json"
     );
   }
 
-  const pngBuffer =
-    await sharp(tifBuffer)
-      .png()
-      .toBuffer();
-
-  const meta =
-    await sharp(pngBuffer)
-      .metadata();
-
-  const doc =
-    new PDFDocument({
-      autoFirstPage: false,
-      margin: 0
-    });
-
-  const chunks = [];
-
-  doc.on("data", chunk => chunks.push(chunk));
-
-  doc.on("end", () => {
-    const pdfBuffer =
-      Buffer.concat(chunks);
-
-const safeName =
-      `${noPA}`.replace(/[^A-Z0-9_-]/gi, "");
-
-    res.writeHead(200, {
-      "Content-Type": "application/pdf",
-      "Content-Disposition":
-        `attachment; filename="${safeName}.pdf"`,
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*"
-    });
-
-    res.end(pdfBuffer);
+  res.writeHead(200, {
+    "Content-Type": "application/pdf",
+    "Content-Disposition":
+      `attachment; filename="${safeName}.pdf"`,
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*"
   });
 
-  doc.addPage({
-    size: [meta.width, meta.height],
-    margin: 0
-  });
-
-  doc.image(
-    pngBuffer,
-    0,
-    0,
-    {
-      width: meta.width,
-      height: meta.height
-    }
-  );
-
-  doc.end();
-
+  res.end(pdfBuffer);
   return;
 }
 
@@ -2430,3 +3084,6 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("");
 
 });
+
+
+

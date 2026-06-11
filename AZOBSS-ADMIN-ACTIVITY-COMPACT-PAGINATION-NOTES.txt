@@ -1,0 +1,15 @@
+AZOBSS ADMIN ACTIVITY COMPACT + PAGINATION PATCH
+
+Implemented:
+- Activity card UI made smaller/compact.
+- Added Activity search field.
+- Added pagination: 10 records/page.
+- Added Prev / Next.
+- Added colored badges:
+  Login, Payment, Software, CAD, Commission, Activity.
+- Activity aggregates:
+  loginHistory, guestHistory, purchaseLogs, commissionRecords,
+  staffSoftwareSubmissions, staffCADSubmissions.
+- Dashboard stickybar kept unchanged.
+
+Syntax errors: 0

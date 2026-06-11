@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -e
-npm install
-# Chromium is installed by package.json postinstall. This fallback is safe if Render uses this build file.
-npx playwright install chromium
+npm config set registry https://registry.npmjs.org/
+npm install --include=optional --no-audit --no-fund
+node -e "console.log('pdfkit:', require.resolve('pdfkit')); console.log('sharp:', require.resolve('sharp'))"

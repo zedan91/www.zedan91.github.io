@@ -1,0 +1,11 @@
+AZOBSS SOFTWARE ADMIN OWNER FILTER PATCH
+
+Changed:
+- My Software button now appears ONLY for semiAdmin/staff.
+- Full admin no longer sees My Software button.
+- Full admin gets dropdown:
+  Software by Account: All / owner accounts
+- Admin can filter software by staff/semiAdmin owner account.
+- Filter uses ownerUid/createdByUid/staffUid/sellerUid and owner username/email fields.
+
+Syntax errors: 0

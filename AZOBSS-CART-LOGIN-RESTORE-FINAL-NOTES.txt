@@ -1,0 +1,20 @@
+AZOBSS CART LOGIN FIRESTORE RESTORE FINAL FIX
+
+Root cause found:
+- Firestore had saved userCarts/{uid}, so save was working.
+- The restore script had a JavaScript error: CART_KEY was used before declaration.
+- Because of that, the Firebase sync module could stop before onAuthStateChanged/pullCloud ran.
+
+Fix:
+- Declare let CART_KEY before using it.
+- Cart UI reads active guest/user key.
+- On login, cloud userCarts/{uid} is loaded into localStorage and UI refreshes.
+- Firestore data is source of truth when it exists.
+
+Debug:
+Open browser console after login and run:
+  azobssCartDebug()
+It should show:
+  uid: "your uid"
+  key: "azobss_shop_cart_user_<uid>_v1"
+  items: [...]

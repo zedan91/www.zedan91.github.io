@@ -313,15 +313,7 @@ html {
       text-align: right;
     }
 
-    .user-upgrade-btn {
-      border: 0;
-      border-radius: 999px;
-      background: #f97316;
-      color: white;
-      padding: 7px 10px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+    
 
     .phone-input-row {
       display: grid;
@@ -4307,3 +4299,18 @@ body.is-admin #purchaseSummaryList .az-purchase-reset-btn{
 
 /* v29 clean fixes */
 .service-card::before,.service-card::after,.home-service-card::before,.home-service-card::after,.category-card::before,.category-card::after{animation:none!important;filter:none!important;box-shadow:none!important;}
+
+/* AZOBSS admin PA/BM purchase delete tools */
+body.is-admin #purchaseSummaryList .az-purchase-mini-actions{width:260px!important;min-width:260px!important;max-width:260px!important;gap:5px!important;}
+body.is-admin #purchaseSummaryList .az-purchase-show-btn,
+body.is-admin #purchaseSummaryList .az-purchase-reset-btn,
+body.is-admin #purchaseSummaryList .az-purchase-pending-btn,
+body.is-admin #purchaseSummaryList .az-purchase-delete-all-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:28px!important;min-height:28px!important;border:0!important;border-radius:8px!important;padding:0 9px!important;margin:0!important;font-size:11px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important;box-sizing:border-box!important;color:#fff!important;cursor:pointer!important;box-shadow:0 2px 0 rgba(0,0,0,.45)!important;}
+body.is-admin #purchaseSummaryList .az-purchase-show-btn{background:#2563eb!important;}
+body.is-admin #purchaseSummaryList .az-purchase-pending-btn{background:#f97316!important;}
+body.is-admin #purchaseSummaryList .az-purchase-reset-btn{background:#64748b!important;}
+body.is-admin #purchaseSummaryList .az-purchase-delete-all-btn{background:#ef4444!important;}
+body.is-admin #purchaseSummaryList .az-purchase-detail-line{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;border-bottom:1px solid rgba(148,163,184,.16)!important;padding:3px 0!important;}
+body.is-admin #purchaseSummaryList .az-purchase-detail-line span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+body.is-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef4444!important;color:#fff!important;border:0!important;border-radius:7px!important;height:24px!important;padding:0 9px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;flex:0 0 auto!important;}
+@media(max-width:900px){body.is-admin #purchaseSummaryList .az-purchase-mini-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important;flex-wrap:wrap!important;}}
