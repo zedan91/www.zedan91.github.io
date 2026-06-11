@@ -8031,6 +8031,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   font-size:12px;
 }
 </style>
+<style id="azobss-jupem-fallback-status-062-css">
+.azobss-jupem-fallback-status,
+.pa-status.azobss-jupem-fallback-status,
+#paStatus.azobss-jupem-fallback-status,
+[data-pa-status].azobss-jupem-fallback-status{
+  border-color:rgba(251,191,36,.7)!important;
+  background:rgba(120,53,15,.32)!important;
+  color:#fde68a!important;
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14363,6 +14373,150 @@ return;
       blockedByServer:true,
       serverFetchFailed:true
     });
+  };
+})();
+</script>
+<script id="azobss-jupem-fallback-status-062-js">
+(function(){
+  if(window.__azobssJupemFallbackStatus062) return;
+  window.__azobssJupemFallbackStatus062 = true;
+
+  function statusCandidates(){
+    return Array.from(document.querySelectorAll(
+      '#paStatus, #pa-status, .pa-status, [data-pa-status], .pa-result, .pa-message, .az-pa-status'
+    ));
+  }
+
+  function looksPaMissing(el){
+    var t = String(el && el.textContent || '').toLowerCase();
+    return /pa\s+tiada|tiada\s+dalam\s+simpanan|not\s+found|pa\s+not\s+found/.test(t);
+  }
+
+  function setFallbackStatus(payload){
+    try{
+      payload = payload || window.__azobssLastJupemFallbackPayload061 || window.__azobssLastJupemFallbackPayload062 || null;
+      if(!payload || !payload.directUrl) return false;
+      window.__azobssLastJupemFallbackPayload062 = payload;
+
+      var msg = 'Render tidak boleh akses JUPEM. Sila guna direct link di atas. PA mungkin masih boleh dibuka melalui browser kamu.';
+      var found = false;
+
+      statusCandidates().forEach(function(el){
+        if(!el) return;
+        if(looksPaMissing(el) || el.offsetParent !== null || /pa/i.test(String(el.textContent || ''))){
+          el.textContent = msg;
+          el.classList.add('azobss-jupem-fallback-status');
+          el.style.setProperty('display','block','important');
+          found = true;
+        }
+      });
+
+      if(!found){
+        var form = document.querySelector('#azJupemFallbackBox') || document.querySelector('.pa-card, .pa-panel, .azobss-pa-panel, main, .container');
+        if(form){
+          var note = document.getElementById('azJupemFallbackStatusNote062');
+          if(!note){
+            note = document.createElement('div');
+            note.id = 'azJupemFallbackStatusNote062';
+            note.className = 'azobss-jupem-fallback-status';
+            note.style.cssText = 'margin:12px 0;padding:12px;border-radius:12px;border:1px solid rgba(251,191,36,.7);background:rgba(120,53,15,.32);color:#fde68a;font-weight:800;text-align:center;';
+            if(form.id === 'azJupemFallbackBox') form.insertAdjacentElement('afterend', note);
+            else form.insertAdjacentElement('afterbegin', note);
+          }
+          note.textContent = msg;
+        }
+      }
+
+      // Let existing Add to Cart flow know this is fallback-available, not "missing".
+      window.__azobssPaAvailableViaDirectJupem = true;
+      window.__azobssPaDirectJupemUrl = payload.directUrl;
+      return true;
+    }catch(e){
+      console.warn('AZOBSS fallback status 062 failed', e);
+      return false;
+    }
+  }
+
+  window.azobssSetJupemFallbackStatus062 = setFallbackStatus;
+
+  window.addEventListener('azobss-jupem-direct-fallback', function(ev){
+    setTimeout(function(){ setFallbackStatus(ev.detail); }, 50);
+    setTimeout(function(){ setFallbackStatus(ev.detail); }, 500);
+    setTimeout(function(){ setFallbackStatus(ev.detail); }, 1500);
+  });
+
+  // Watch DOM because older PA check code may rewrite status after our fallback event.
+  var mo = new MutationObserver(function(){
+    var p = window.__azobssLastJupemFallbackPayload062 || window.__azobssLastJupemFallbackPayload061;
+    if(!p || !p.directUrl) return;
+    var need = statusCandidates().some(looksPaMissing);
+    if(need) setFallbackStatus(p);
+  });
+  try{ mo.observe(document.documentElement, {childList:true, subtree:true, characterData:true}); }catch(e){}
+
+  // Patch 061 show function to remember payload and apply status after showing box.
+  var oldShow = window.azobssShowJupemDirectFallback061;
+  if(typeof oldShow === 'function' && !oldShow.__azobss062Wrapped){
+    var wrapped = function(payload){
+      window.__azobssLastJupemFallbackPayload061 = payload;
+      var r = oldShow(payload);
+      setTimeout(function(){ setFallbackStatus(payload); }, 80);
+      setTimeout(function(){ setFallbackStatus(payload); }, 700);
+      return r;
+    };
+    wrapped.__azobss062Wrapped = true;
+    window.azobssShowJupemDirectFallback061 = wrapped;
+  }
+
+  // Intercept fetch fallback again, later than 061, so check-pa returns ok:true and status is updated.
+  if(window.fetch && !window.__azobssJupemFallbackStatusFetch062){
+    window.__azobssJupemFallbackStatusFetch062 = true;
+    var prevFetch = window.fetch.bind(window);
+    window.fetch = async function(input, init){
+      var res = await prevFetch(input, init);
+      try{
+        var url = String(typeof input === 'string' ? input : (input && input.url) || '');
+        if(/\/api\/(?:pa-bm-download|pa-pdf|check-pa|pa)(?:\?|$|\/)/i.test(url)){
+          var ct = String(res.headers && res.headers.get ? res.headers.get('content-type') || '' : '').toLowerCase();
+          if(ct.indexOf('application/json') !== -1){
+            var payload = null;
+            try{ payload = await res.clone().json(); }catch(e){}
+            if(payload && payload.directUrl && (payload.blockedByServer || payload.serverFetchFailed)){
+              window.__azobssLastJupemFallbackPayload062 = payload;
+              setTimeout(function(){ setFallbackStatus(payload); }, 80);
+              window.dispatchEvent(new CustomEvent('azobss-jupem-direct-fallback', { detail: payload }));
+
+              if(/\/api\/(?:check-pa|pa)(?:\?|$)/i.test(url)){
+                var okPayload = Object.assign({}, payload, {
+                  ok: true,
+                  exists: true,
+                  found: true,
+                  fallbackOnly: true,
+                  availableViaDirectUrl: true,
+                  note: 'Render cannot fetch JUPEM, but direct browser fallback is available.'
+                });
+                return new Response(JSON.stringify(okPayload), {
+                  status: 200,
+                  statusText: 'OK',
+                  headers: {'Content-Type':'application/json'}
+                });
+              }
+            }
+          }
+        }
+      }catch(e){}
+      return res;
+    };
+  }
+
+  window.azobssJupemFallbackDebug062 = function(){
+    var payload = {
+      directUrl:'https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=PA2135.TIF&negeri=JOHOR',
+      blockedByServer:true,
+      serverFetchFailed:true
+    };
+    window.dispatchEvent(new CustomEvent('azobss-jupem-direct-fallback', {detail:payload}));
+    return setFallbackStatus(payload);
   };
 })();
 </script>
