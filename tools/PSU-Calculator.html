@@ -87,157 +87,6 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
 </style>
 
-<style id="azobss-pro-navbar-icons-css">
-.market-user-tools{display:flex;align-items:center;gap:12px;margin-left:auto;white-space:normal;}
-
-.market-icon-btn{display:inline-grid;place-items:center;width:28px;height:34px;color:#f8fafc;text-decoration:none;border:0;background:transparent;}
-.market-icon-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
-.market-icon-btn:hover{color:#22c55e;}
-@media (max-width: 760px){.market-user-tools{gap:8px}.market-icon-btn{width:24px}.market-icon-btn svg{width:21px;height:21px}.user-name{max-width:98px;overflow:visible;text-overflow:ellipsis}}
-</style>
-
-<style id="azobss-pro-navbar-consistency-v1">
-/* AZOBSS PRO GLOBAL NAVBAR CONSISTENCY */
-.market-sticky-bar{
-  position:sticky!important;top:0!important;z-index:9999!important;
-  width:100%!important;background:#050607!important;border-bottom:1px solid #b6891d!important;
-  box-sizing:border-box!important;min-height:50px!important;
-}
-.market-bar-inner{
-  width:100%!important;max-width:none!important;margin:0!important;padding:5px 8px!important;box-sizing:border-box!important;
-}
-.market-main-row{
-  display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:38px!important;
-  flex-wrap:nowrap!important;white-space:nowrap!important;
-}
-.market-brand{
-  flex:0 0 154px!important;width:154px!important;height:38px!important;min-width:154px!important;max-width:154px!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;
-  border-radius:999px!important;background:#0f172a!important;border:1px solid rgba(148,163,184,.35)!important;
-  margin:0!important;padding:0!important;box-sizing:border-box!important;text-decoration:none!important;
-}
-.market-brand img{
-  display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;margin:0!important;padding:0!important;
-}
-.market-nav{
-  display:flex!important;align-items:center!important;gap:7px!important;flex:1 1 auto!important;min-width:0!important;overflow-x:auto!important;
-  scrollbar-width:none!important;white-space:nowrap!important;
-}
-.market-nav::-webkit-scrollbar{display:none!important;}
-.market-nav a,.market-nav button{
-  height:38px!important;min-height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  border-radius:999px!important;padding:0 14px!important;line-height:1!important;box-sizing:border-box!important;
-  background:#111827!important;border:1px solid rgba(148,163,184,.45)!important;color:#fff!important;text-decoration:none!important;
-  font-size:14px!important;font-weight:800!important;box-shadow:inset 0 -1px 0 rgba(255,255,255,.08)!important;
-}
-.market-nav a.active,.market-nav a[aria-current="page"],.market-nav a.is-active{
-  background:#22c55e!important;color:#06120b!important;border-color:#16a34a!important;
-}
-.market-nav a:has(.nav-whatsapp-circle){
-  flex:0 0 44px!important;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;
-  padding:0!important;border-radius:999px!important;background:#22c55e!important;border:2px solid rgba(255,255,255,.16)!important;
-}
-.nav-whatsapp-circle{
-  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;
-}
-.nav-whatsapp-circle::before{content:"\1F4AC"!important;font-size:18px!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-.site-auth-actions,.market-user-tools{
-  display:flex!important;align-items:center!important;gap:10px!important;flex:0 0 auto!important;margin-left:auto!important;white-space:nowrap!important;
-}
-.user-menu{height:38px!important;display:inline-flex!important;align-items:center!important;gap:8px!important;}
-.user-avatar{
-  width:26px!important;height:26px!important;min-width:26px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  font-size:11px!important;line-height:1!important;
-}
-.user-name{font-size:14px!important;font-weight:800!important;line-height:1!important;color:#fff!important;}
-.market-icon-btn{
-  width:28px!important;height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  color:#fff!important;background:transparent!important;border:0!important;padding:0!important;margin:0!important;
-}
-.market-icon-btn svg{width:24px!important;height:24px!important;stroke:currentColor!important;fill:none!important;stroke-width:2!important;}
-.market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
-.site-auth-btn{
-  height:34px!important;border-radius:999px!important;padding:0 13px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  font-size:14px!important;font-weight:800!important;line-height:1!important;
-}
-@media(max-width:780px){
-  .market-main-row{gap:6px!important;}
-  .market-brand{flex-basis:138px!important;width:138px!important;min-width:138px!important;max-width:138px!important;height:36px!important;}
-  .market-nav a,.market-nav button{height:36px!important;min-height:36px!important;padding:0 11px!important;font-size:13px!important;}
-  .market-nav a:has(.nav-whatsapp-circle){width:32px!important;min-width:32px!important;max-width:32px!important;height:32px!important;}
-  .market-icon-btn{width:26px!important;}
-}
-</style>
-
-<style id="azobss-navbar-responsive-final-v2">
-/* AZOBSS final responsive navbar override */
-html,body{overflow-x:hidden!important;}
-body{padding-top:58px!important;}
-.market-sticky-bar{
-  position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;
-  min-height:49px!important;height:auto!important;z-index:5000!important;
-  background:#050807!important;border-bottom:1px solid rgba(234,179,8,.55)!important;
-  overflow:visible!important;box-sizing:border-box!important;
-}
-.market-bar-inner{width:100%!important;max-width:none!important;margin:0!important;padding:0 8px!important;box-sizing:border-box!important;}
-.market-main-row{
-  display:flex!important;align-items:center!important;gap:7px!important;min-height:48px!important;height:48px!important;
-  flex-wrap:nowrap!important;overflow:visible!important;width:100%!important;box-sizing:border-box!important;
-}
-.market-brand{
-  flex:0 0 auto!important;width:154px!important;max-width:154px!important;height:38px!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  padding:0!important;border-radius:999px!important;overflow:hidden!important;
-}
-.market-brand img{width:100%!important;height:100%!important;object-fit:contain!important;display:block!important;}
-.market-nav{
-  flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:center!important;gap:7px!important;
-  white-space:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;
-  -webkit-overflow-scrolling:touch!important;padding:0 2px!important;
-}
-.market-nav::-webkit-scrollbar{display:none!important;}
-.market-nav a,.market-nav button{
-  flex:0 0 auto!important;height:34px!important;min-height:34px!important;max-height:34px!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  padding:0 12px!important;border-radius:999px!important;box-sizing:border-box!important;
-  font-size:13px!important;font-weight:900!important;line-height:1!important;text-decoration:none!important;white-space:nowrap!important;
-}
-.market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;}
-.nav-whatsapp-circle{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;}
-.market-user-tools{
-  flex:0 0 auto!important;display:flex!important;align-items:center!important;gap:11px!important;margin-left:auto!important;
-  min-width:max-content!important;white-space:nowrap!important;overflow:visible!important;
-}
-.user-menu{height:34px!important;display:inline-flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important;}
-.user-avatar{width:28px!important;height:28px!important;min-width:28px!important;font-size:12px!important;}
-.user-name{font-size:14px!important;line-height:1!important;white-space:nowrap!important;max-width:140px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.market-icon-btn{width:24px!important;height:34px!important;min-width:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;flex:0 0 auto!important;}
-.market-icon-btn svg{width:23px!important;height:23px!important;stroke-width:2.2!important;}
-.site-auth-actions{position:static!important;display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important;flex:0 0 auto!important;z-index:auto!important;}
-.site-auth-btn{height:34px!important;min-height:34px!important;padding:0 12px!important;font-size:13px!important;line-height:1!important;border-radius:999px!important;}
-@media(max-width:980px){
-  body{padding-top:92px!important;}
-  .market-main-row{height:auto!important;min-height:48px!important;flex-wrap:wrap!important;align-content:center!important;padding:5px 0!important;}
-  .market-brand{width:132px!important;max-width:132px!important;height:34px!important;}
-  .market-user-tools{margin-left:auto!important;gap:9px!important;}
-  .user-name{max-width:115px!important;font-size:13px!important;}
-  .market-nav{order:3!important;flex:0 0 100%!important;width:100%!important;padding:4px 0 2px!important;}
-  .market-nav a,.market-nav button{height:32px!important;min-height:32px!important;padding:0 10px!important;font-size:12px!important;}
-  .market-nav a:has(.nav-whatsapp-circle){width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;}
-  .nav-whatsapp-circle{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;}
-}
-@media(max-width:560px){
-  body{padding-top:96px!important;}
-  .market-bar-inner{padding:0 6px!important;}
-  .market-brand{width:120px!important;max-width:120px!important;height:32px!important;}
-  .market-user-tools{gap:7px!important;}
-  .user-name{display:none!important;}
-  .market-icon-btn{width:22px!important;min-width:22px!important;}
-  .market-icon-btn svg{width:21px!important;height:21px!important;}
-  .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
-}
-</style>
 <link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
 
 <style id="azobss-pa-bm-access-lock-final">
@@ -246,87 +95,6 @@ body{padding-top:58px!important;}
 .market-nav .nav-pa-bm-link.is-hidden,
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-</style>
-
-<style id="azobss-final-mobile-account-dropdown-fix">
-
-/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */
-.market-sticky-bar,
-.market-bar-inner,
-.market-main-row,
-.market-user-tools,
-.user-menu{
-  overflow:visible !important;
-}
-.user-menu{
-  position:relative !important;
-  z-index:100000 !important;
-}
-.user-menu .user-dropdown,
-#userDropdown{
-  position:absolute !important;
-  top:calc(100% + 10px) !important;
-  right:0 !important;
-  left:auto !important;
-  width:220px !important;
-  min-width:220px !important;
-  max-width:calc(100vw - 16px) !important;
-  padding:8px !important;
-  border-radius:14px !important;
-  background:#08111f !important;
-  border:1px solid rgba(148,163,184,.28) !important;
-  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;
-  z-index:100001 !important;
-  transform:none !important;
-}
-.user-menu:not(.is-open) .user-dropdown{display:none !important;}
-.user-menu.is-open .user-dropdown{display:block !important;}
-.user-dropdown-section{
-  padding:7px 10px 4px !important;
-  font-size:11px !important;
-  line-height:1.1 !important;
-}
-.user-dropdown-item{
-  min-height:38px !important;
-  padding:9px 10px !important;
-  font-size:13px !important;
-  line-height:1.15 !important;
-  border-radius:10px !important;
-}
-@media (max-width:768px){
-  .user-menu .user-dropdown,
-  #userDropdown{
-    position:fixed !important;
-    top:92px !important;
-    right:8px !important;
-    left:auto !important;
-    width:210px !important;
-    min-width:210px !important;
-    max-width:calc(100vw - 16px) !important;
-    max-height:68vh !important;
-    overflow-y:auto !important;
-    border-radius:14px !important;
-  }
-  .user-dropdown-section{
-    padding:7px 10px 4px !important;
-    font-size:10.5px !important;
-  }
-  .user-dropdown-item{
-    padding:9px 10px !important;
-    font-size:13px !important;
-    min-height:36px !important;
-  }
-}
-@media (max-width:420px){
-  .user-menu .user-dropdown,
-  #userDropdown{
-    top:88px !important;
-    right:6px !important;
-    width:196px !important;
-    min-width:196px !important;
-  }
-}
-
 </style>
 
 <style id="azobss-admin-compact-pagination-fix">
@@ -650,58 +418,6 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 
 
 
-<style id="azobss-youtube-style-page-scrollbar-v1">
-/* AZOBSS YouTube/Facebook-style page scrollbar: stable width, no layout shrink/jump */
-html{
-  overflow-y:scroll!important;
-  scrollbar-gutter:stable!important;
-  scrollbar-width:thin!important;
-  scrollbar-color:rgba(148,163,184,.62) rgba(15,23,42,.18)!important;
-}
-body{
-  overflow-x:hidden!important;
-}
-html::-webkit-scrollbar,
-body::-webkit-scrollbar{
-  width:12px!important;
-  height:12px!important;
-}
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track{
-  background:rgba(15,23,42,.18)!important;
-}
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb{
-  background:rgba(148,163,184,.62)!important;
-  border-radius:999px!important;
-  border:3px solid rgba(15,23,42,.18)!important;
-  background-clip:padding-box!important;
-}
-html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover{
-  background:rgba(203,213,225,.82)!important;
-  border:2px solid rgba(15,23,42,.18)!important;
-}
-html::-webkit-scrollbar-corner,
-body::-webkit-scrollbar-corner{
-  background:transparent!important;
-}
-/* Keep horizontal chip menus clean like YouTube; only page scrollbar is visible */
-.market-nav,.azobss-nav-scroll,.social-strip,.social-bar,.social-links,.footer-social,.social-icons{
-  -ms-overflow-style:none!important;
-  scrollbar-width:none!important;
-}
-.market-nav::-webkit-scrollbar,.azobss-nav-scroll::-webkit-scrollbar,.social-strip::-webkit-scrollbar,.social-bar::-webkit-scrollbar,.social-links::-webkit-scrollbar,.footer-social::-webkit-scrollbar,.social-icons::-webkit-scrollbar{
-  display:none!important;
-}
-</style>
-
-<style id="azobss-remove-navbar-upgrade-button-final">
-#userUpgradeButton,
-
-</style>
-
-
 <style id="azobss-tools-profile-dropdown-spacing-match-fix">
 /* Tools pages: keep profile dropdown spacing consistent */
 #userMenu{
@@ -879,133 +595,6 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
 </style>
 
 
-<style id="azobss-whatsapp-nav-link-align-fix">
-.market-nav .nav-whatsapp-link{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:42px!important;
-  min-width:42px!important;
-  max-width:42px!important;
-  height:42px!important;
-  min-height:42px!important;
-  max-height:42px!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  line-height:1!important;
-  text-decoration:none!important;
-  vertical-align:middle!important;
-  flex:0 0 auto!important;
-}
-.market-nav .nav-whatsapp-link .nav-whatsapp-circle{
-  width:38px!important;
-  min-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  margin:0!important;
-  flex:0 0 auto!important;
-}
-</style>
-
-
-<style id="azobss-nav-tight-spacing-fix-031">
-.market-nav{
-  gap:4px !important;
-}
-.market-nav .azStaffDashboardBtn{
-  margin-right:0 !important;
-}
-.market-nav .nav-whatsapp-link{
-  margin-left:0 !important;
-  margin-right:0 !important;
-  width:38px !important;
-  min-width:38px !important;
-}
-.market-nav > a,
-.market-nav .azobss-nav-chip{
-  margin-left:0 !important;
-  margin-right:0 !important;
-}
-</style>
-
-
-<style id="azobss-staff-whatsapp-tight-gap-fix-032">
-/* (032) Tighten Staff Dashboard -> WhatsApp -> PA/BM spacing only */
-.market-nav{
-  display:flex!important;
-  align-items:center!important;
-  gap:4px!important;
-  column-gap:4px!important;
-}
-
-.market-nav .azStaffDashboardBtn,
-.market-nav .staff-dashboard-btn{
-  flex:0 0 34px!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border-radius:999px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  line-height:1!important;
-  transform:none!important;
-  gap:0!important;
-}
-
-.market-nav .azStaffDashboardBtn + .nav-whatsapp-link,
-.market-nav .staff-dashboard-btn + .nav-whatsapp-link{
-  margin-left:0!important;
-}
-
-.market-nav .nav-whatsapp-link{
-  flex:0 0 38px!important;
-  width:38px!important;
-  min-width:38px!important;
-  max-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  max-height:38px!important;
-  padding:0!important;
-  margin:0!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  transform:none!important;
-}
-
-.market-nav .nav-whatsapp-link + .nav-pa-bm-link,
-.market-nav .nav-whatsapp-link + a[href="/PA-BM/"]{
-  margin-left:0!important;
-}
-
-.market-nav .nav-whatsapp-circle{
-  width:38px!important;
-  min-width:38px!important;
-  max-width:38px!important;
-  height:38px!important;
-  min-height:38px!important;
-  max-height:38px!important;
-  margin:0!important;
-  padding:0!important;
-  transform:none!important;
-}
-
-.market-nav > a{
-  margin-left:0!important;
-  margin-right:0!important;
-}
-</style>
-
-
 <style id="azobss-market-nav-clean-structure-034">
 .market-nav{
   display:flex!important;
@@ -1061,6 +650,77 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   align-items:center!important;
   justify-content:center!important;
 }
+</style>
+
+
+<style id="azobss-role-hardening-041-css">
+/* (041) Role Hardening - dashboard button visibility */
+.azAdminDashboardBtn,
+.admin-dashboard-btn,
+a[href="/admin/"].azobss-nav-chip,
+a[href="/admin/"].market-nav-active,
+.market-nav a[href="/admin/"],
+.azStaffDashboardBtn,
+.staff-dashboard-btn,
+a[href="/staff/"].azobss-nav-chip,
+a[href="/staff/"].market-nav-active,
+.market-nav a[href="/staff/"]{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+body.az-role-is-admin .azAdminDashboardBtn,
+body.az-role-is-admin .admin-dashboard-btn,
+body.az-role-is-admin .market-nav a[href="/admin/"]{
+  display:inline-flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+
+body.az-role-is-staff:not(.az-role-is-admin) .azStaffDashboardBtn,
+body.az-role-is-staff:not(.az-role-is-admin) .staff-dashboard-btn,
+body.az-role-is-staff:not(.az-role-is-admin) .market-nav a[href="/staff/"]{
+  display:inline-flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+
+body.az-role-is-admin .azStaffDashboardBtn,
+body.az-role-is-admin .staff-dashboard-btn,
+body.az-role-is-admin .market-nav a[href="/staff/"],
+body.az-role-is-staff .azAdminDashboardBtn,
+body.az-role-is-staff .admin-dashboard-btn,
+body.az-role-is-staff .market-nav a[href="/admin/"]{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+#azRoleDenyOverlay041{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  background:rgba(2,6,23,.94)!important;
+  color:#fff!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif!important;
+  padding:24px!important;
+}
+#azRoleDenyOverlay041 .box{
+  max-width:440px;
+  border:1px solid rgba(148,163,184,.35);
+  border-radius:18px;
+  background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.92));
+  padding:24px;
+  box-shadow:0 22px 80px rgba(0,0,0,.45);
+}
+#azRoleDenyOverlay041 h2{margin:0 0 10px;font-size:22px}
+#azRoleDenyOverlay041 p{margin:0 0 16px;color:#cbd5e1}
+#azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
 </head>
@@ -1716,7 +1376,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge,15000);
+  setInterval(updateBadge,60000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();
@@ -2241,42 +1901,6 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 
 
-<script id="az-remove-hello-label-fix">
-(function(){
-  if(window.__azRemoveHelloLabelFix)return;
-  window.__azRemoveHelloLabelFix=true;
-
-  function cleanHelloText(){
-    var selectors=[
-      '#userNameText','#userName','.user-name','.username','.user-menu-name',
-      '.profile-name','.profile-label','.az-user-name','.azobss-user-name'
-    ];
-    document.querySelectorAll(selectors.join(',')).forEach(function(el){
-      if(!el || !el.textContent) return;
-      var t=el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
-      if(t && t!==el.textContent.trim()) el.textContent=t;
-    });
-
-    document.querySelectorAll('span,div,a,button,strong,b').forEach(function(el){
-      if(!el || !el.childNodes || el.childNodes.length!==1) return;
-      var txt=el.textContent||'';
-      if(/^\s*hello\s*,\s*[\w.@+-]+\s*$/i.test(txt)){
-        el.textContent=txt.replace(/^\s*hello\s*,?\s*/i,'').trim();
-      }
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',cleanHelloText);
-  if(document.readyState!=='loading')cleanHelloText();
-  window.addEventListener('storage',cleanHelloText);
-  window.addEventListener('focus',cleanHelloText);
-  setTimeout(cleanHelloText,500);
-  setTimeout(cleanHelloText,1500);
-  setTimeout(cleanHelloText,3000);
-})();
-</script>
-
-
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -2525,235 +2149,169 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 </script>
 
 
-<style id="azobss-role-buttons-strict-visibility-035">
-/* (035) Strict role visibility for stickybar Admin/Staff dashboard buttons */
-.market-nav .azAdminDashboardBtn,
-.market-nav .admin-dashboard-btn,
-.market-nav .azStaffDashboardBtn,
-.market-nav .staff-dashboard-btn{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
 
-/* Admin sees Admin Dashboard only */
-body.az-role-is-admin .market-nav .azAdminDashboardBtn,
-body.az-role-is-admin .market-nav .admin-dashboard-btn,
-body.is-admin .market-nav .azAdminDashboardBtn,
-body.is-admin .market-nav .admin-dashboard-btn,
-body[data-role="admin"] .market-nav .azAdminDashboardBtn,
-body[data-role="admin"] .market-nav .admin-dashboard-btn,
-body[data-dashboard-page="admin"] .market-nav .azAdminDashboardBtn,
-body[data-dashboard-page="admin"] .market-nav .admin-dashboard-btn{
-  display:inline-flex!important;
-  visibility:visible!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border:1px solid rgba(148,163,184,.35)!important;
-  overflow:visible!important;
-  pointer-events:auto!important;
-  opacity:1!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-}
-
-/* Staff sees Staff Dashboard only. Do NOT use az-staff-safe-ok because admin pages may also have it. */
-body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .azStaffDashboardBtn,
-body.az-role-is-stafflike:not(.az-role-is-admin):not(.is-admin) .market-nav .staff-dashboard-btn,
-body[data-role="staff"] .market-nav .azStaffDashboardBtn,
-body[data-role="staff"] .market-nav .staff-dashboard-btn,
-body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .azStaffDashboardBtn,
-body[data-dashboard-page="staff"]:not([data-dashboard-page="admin"]) .market-nav .staff-dashboard-btn{
-  display:inline-flex!important;
-  visibility:visible!important;
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border:1px solid rgba(148,163,184,.35)!important;
-  overflow:visible!important;
-  pointer-events:auto!important;
-  opacity:1!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-}
-
-/* Admin must never see Staff Dashboard, even if old scripts add staff-safe class */
-body.az-role-is-admin .market-nav .azStaffDashboardBtn,
-body.az-role-is-admin .market-nav .staff-dashboard-btn,
-body.is-admin .market-nav .azStaffDashboardBtn,
-body.is-admin .market-nav .staff-dashboard-btn,
-body[data-role="admin"] .market-nav .azStaffDashboardBtn,
-body[data-role="admin"] .market-nav .staff-dashboard-btn,
-body[data-dashboard-page="admin"] .market-nav .azStaffDashboardBtn,
-body[data-dashboard-page="admin"] .market-nav .staff-dashboard-btn{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  pointer-events:none!important;
-  opacity:0!important;
-}
-
-.market-nav{
-  gap:6px!important;
-  column-gap:6px!important;
-}
-</style>
-
-
-<script id="azobss-role-buttons-strict-visibility-035-script">
+<script id="azobss-role-hardening-041-js">
 (function(){
-  if(window.__azobssRoleButtonsStrictVisibility035) return;
-  window.__azobssRoleButtonsStrictVisibility035 = true;
-
-  function readStoredUser(){
-    var keys=[
-      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
-      'azobss_user_profile','azobssProfile','currentUser','userProfile'
-    ];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var raw=localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
-        if(!raw) continue;
-        var obj=JSON.parse(raw);
-        if(obj && typeof obj === 'object') return obj;
-      }catch(e){}
-    }
-    return {};
-  }
+  if(window.__azobssRoleHardening041) return;
+  window.__azobssRoleHardening041 = true;
 
   function lower(v){ return String(v || '').trim().toLowerCase(); }
 
+  function readStoredObjects(){
+    var out = [];
+    var keys = [
+      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
+      'azobss_user_profile','azobssProfile','currentUser','userProfile',
+      'azobss_auth_user','azobssLoginUser','azobss_logged_user'
+    ];
+    keys.forEach(function(k){
+      try{
+        var raw = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if(!raw) return;
+        try{
+          var obj = JSON.parse(raw);
+          if(obj && typeof obj === 'object') out.push(obj);
+        }catch(e){
+          out.push({username:raw, raw:raw});
+        }
+      }catch(e){}
+    });
+    return out;
+  }
+
   function detectRole(){
-    var body=document.body;
-    var page=body.getAttribute('data-dashboard-page') || '';
-    if(page === 'admin') return 'admin';
-    if(page === 'staff') return 'staff';
+    var adminNames = ['zedan91'];
+    var adminEmails = ['zedan9107@gmail.com','zedan91@azobss.local'];
 
-    var signed=lower((document.querySelector('#signedInName')||{}).textContent);
-    var unameText=lower((document.querySelector('.user-name')||{}).textContent);
+    var visibleName = lower((document.querySelector('#signedInName') || {}).textContent);
+    var userNameBox = lower((document.querySelector('.user-name') || {}).textContent);
 
-    if(signed === 'zedan91' || unameText === 'zedan91' || unameText.indexOf('zedan91') !== -1) return 'admin';
+    if(adminNames.indexOf(visibleName) !== -1 || adminNames.indexOf(userNameBox) !== -1 || userNameBox.indexOf('zedan91') !== -1){
+      return 'admin';
+    }
 
-    var u=readStoredUser();
-    var role=lower(u.role || u.userRole || u.accountRole || u.type);
-    var username=lower(u.usernameKey || u.username || u.id || u.name || u.displayName);
-    var email=lower(u.email || u.authEmail);
+    var objs = readStoredObjects();
+    for(var i=0;i<objs.length;i++){
+      var u = objs[i] || {};
+      var role = lower(u.role || u.userRole || u.accountRole || u.type || u.accessRole);
+      var username = lower(u.usernameKey || u.username || u.userName || u.id || u.name || u.displayName || u.raw);
+      var email = lower(u.email || u.authEmail || u.realEmail || u.userEmail);
 
-    if(username === 'zedan91' || email === 'zedan91@azobss.local') return 'admin';
+      if(adminNames.indexOf(username) !== -1 || adminEmails.indexOf(email) !== -1){
+        return 'admin';
+      }
 
-    var isStaff = (
-      role === 'staff' ||
-      role === 'semiadmin' ||
-      role === 'semi-admin' ||
-      role === 'semi_admin' ||
-      role === 'seller' ||
-      role === 'editor' ||
-      u.isStaff === true ||
-      u.staff === true ||
-      u.staffDashboard === true ||
-      u.canAccessStaffDashboard === true
-    );
+      if(role === 'admin' || u.isAdmin === true || u.admin === true || u.owner === true){
+        return 'admin';
+      }
 
-    if(isStaff) return 'staff';
+      if(
+        role === 'staff' || role === 'semiadmin' || role === 'semi-admin' ||
+        role === 'semi_admin' || role === 'seller' || role === 'editor' ||
+        u.isStaff === true || u.staff === true || u.staffDashboard === true ||
+        u.canAccessStaffDashboard === true || u.canAddSoftware === true
+      ){
+        return 'staff';
+      }
+    }
+
+    try{
+      if(localStorage.getItem('azobss_admin_role_cache') === '1') return 'admin';
+      if(localStorage.getItem('azobss_staff_role_cache') === '1') return 'staff';
+    }catch(e){}
 
     return 'none';
   }
 
-  function setBtn(el, show){
-    if(!el) return;
-    if(show){
-      el.style.setProperty('display','inline-flex','important');
-      el.style.setProperty('visibility','visible','important');
-      el.style.setProperty('width','34px','important');
-      el.style.setProperty('min-width','34px','important');
-      el.style.setProperty('max-width','34px','important');
-      el.style.setProperty('height','34px','important');
-      el.style.setProperty('min-height','34px','important');
-      el.style.setProperty('max-height','34px','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('opacity','1','important');
-      el.style.setProperty('pointer-events','auto','important');
-      el.style.setProperty('overflow','visible','important');
-      el.removeAttribute('aria-hidden');
-      el.tabIndex=0;
-    }else{
-      el.style.setProperty('display','none','important');
-      el.style.setProperty('visibility','hidden','important');
-      el.style.setProperty('width','0','important');
-      el.style.setProperty('min-width','0','important');
-      el.style.setProperty('max-width','0','important');
-      el.style.setProperty('height','0','important');
-      el.style.setProperty('min-height','0','important');
-      el.style.setProperty('max-height','0','important');
-      el.style.setProperty('padding','0','important');
-      el.style.setProperty('margin','0','important');
-      el.style.setProperty('border','0','important');
-      el.style.setProperty('opacity','0','important');
-      el.style.setProperty('pointer-events','none','important');
-      el.style.setProperty('overflow','hidden','important');
-      el.setAttribute('aria-hidden','true');
-      el.tabIndex=-1;
-    }
-  }
-
-  function apply(){
-    var role=detectRole();
-
+  function setRoleClass(role){
     document.body.classList.toggle('az-role-is-admin', role === 'admin');
     document.body.classList.toggle('is-admin', role === 'admin');
+    document.body.classList.toggle('az-role-is-staff', role === 'staff');
     document.body.classList.toggle('az-role-is-stafflike', role === 'staff');
-
-    document.querySelectorAll('.market-nav .azAdminDashboardBtn,.market-nav .admin-dashboard-btn').forEach(function(el){
-      setBtn(el, role === 'admin');
-    });
-
-    document.querySelectorAll('.market-nav .azStaffDashboardBtn,.market-nav .staff-dashboard-btn').forEach(function(el){
-      setBtn(el, role === 'staff');
-    });
+    document.body.setAttribute('data-az-current-role', role);
   }
 
-  document.addEventListener('DOMContentLoaded',apply);
-  if(document.readyState !== 'loading') apply();
-  window.addEventListener('focus',apply);
-  window.addEventListener('storage',apply);
-  setTimeout(apply,100);
-  setTimeout(apply,500);
-  setTimeout(apply,1200);
-  setTimeout(apply,2500);
+  function hardHide(el){
+    if(!el) return;
+    el.style.setProperty('display','none','important');
+    el.style.setProperty('visibility','hidden','important');
+    el.style.setProperty('pointer-events','none','important');
+    el.setAttribute('aria-hidden','true');
+    el.tabIndex = -1;
+  }
+
+  function hardShow(el){
+    if(!el) return;
+    el.style.setProperty('display','inline-flex','important');
+    el.style.setProperty('visibility','visible','important');
+    el.style.setProperty('pointer-events','auto','important');
+    el.removeAttribute('aria-hidden');
+    el.tabIndex = 0;
+  }
+
+  function applyButtons(){
+    var role = detectRole();
+    setRoleClass(role);
+
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn,.market-nav a[href="/admin/"],a[href="/admin/"].azobss-nav-chip').forEach(function(el){
+      role === 'admin' ? hardShow(el) : hardHide(el);
+    });
+
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn,.market-nav a[href="/staff/"],a[href="/staff/"].azobss-nav-chip').forEach(function(el){
+      role === 'staff' ? hardShow(el) : hardHide(el);
+    });
+
+    return role;
+  }
+
+  function showDenied(required, role){
+    if(document.getElementById('azRoleDenyOverlay041')) return;
+    var div = document.createElement('div');
+    div.id = 'azRoleDenyOverlay041';
+    div.innerHTML = '<div class="box"><h2>Access Restricted</h2><p>This page is for '+required+' only.<br>Current role: '+role+'</p><a href="/">Go to Home</a></div>';
+    document.body.appendChild(div);
+    setTimeout(function(){ location.href = '/'; }, 1800);
+  }
+
+  function guardPage(){
+    var path = location.pathname.toLowerCase();
+    var required = '';
+    if(path === '/admin/' || path === '/admin/index.html') required = 'admin';
+    if(path === '/staff/' || path === '/staff/index.html') required = 'staff';
+    if(!required) return;
+
+    var role = applyButtons();
+
+    if(role === required) return;
+
+    // Allow a short delay for auth UI/localStorage to initialize before blocking.
+    var tries = 0;
+    var timer = setInterval(function(){
+      tries++;
+      role = applyButtons();
+      if(role === required){
+        clearInterval(timer);
+        return;
+      }
+      if(tries >= 8){
+        clearInterval(timer);
+        showDenied(required, role);
+      }
+    }, 350);
+  }
+
+  function run(){
+    applyButtons();
+    guardPage();
+  }
+
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState !== 'loading') run();
+  window.addEventListener('storage', run);
+  window.addEventListener('focus', run);
+  setTimeout(run, 300);
+  setTimeout(run, 1200);
+  setTimeout(run, 2500);
 })();
 </script>
 
