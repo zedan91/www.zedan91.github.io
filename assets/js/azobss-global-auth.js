@@ -968,18 +968,6 @@ async function azobssLogoutOnce(){
       el.setAttribute('aria-expanded','false');
     });
     clearUser(true);
-    try{
-      [
-        'azobssCurrentUser','azobssUser','azobssProfile','azobss_auth_user',
-        'azobssLoggedIn','azobss_admin_role_cache','azobss_staff_role_cache'
-      ].forEach(k=>{
-        try{ localStorage.removeItem(k); }catch(e){}
-        try{ sessionStorage.removeItem(k); }catch(e){}
-      });
-      try{ window.azCurrentUser = undefined; }catch(e){}
-      try{ window.dispatchEvent(new Event('storage')); }catch(e){}
-      try{ window.dispatchEvent(new Event('azobss-auth-changed')); }catch(e){}
-    }catch(e){}
     syncHeader(null);
     // Do not let storage/admin render loops run during logout. Redirect once, quickly.
     const redirectTimer = setTimeout(()=>{ window.location.replace('/'); }, 120);

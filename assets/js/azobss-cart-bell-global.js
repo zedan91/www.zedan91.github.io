@@ -69,7 +69,7 @@
       const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=readCart(); a.splice(Number(rem.dataset.azCartRemove),1); saveCart(a); return;}
       const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=readCart(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; saveCart(a); return;}
       const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=readCart(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} saveCart(a); return;}
-      if(e.target.closest('[data-az-cart-checkout]')){const items=readCart(); if(items[0]?.pageUrl) location.href=items[0].pageUrl; else return false; return;}
+      if(e.target.closest('[data-az-cart-checkout]')){const items=readCart(); if(items[0]?.pageUrl) location.href=items[0].pageUrl; else location.href='/Software-Tools/'; return;}
     }, true);
     window.addEventListener('storage',()=>{updateCartBadge();updateBellBadge();});
     window.addEventListener('azobss-shop-cart-updated',()=>{renderCart();updateCartBadge();});
