@@ -7993,6 +7993,35 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   color:#fbbf24!important;font-weight:900!important;font-size:11px!important;white-space:nowrap!important;
 }
 </style>
+<style id="azobss-pabm-strict-pending-status-075-css">
+/* 075: strict pending/payment-status guard */
+.azobss-strict-pending-075 .user-pa-download:not(.azobss-strict-pending-label-075),
+.azobss-strict-pending-075 a.user-pa-download:not(.azobss-strict-pending-label-075),
+.azobss-strict-pending-075 button.user-pa-download:not(.azobss-strict-pending-label-075),
+.azobss-strict-hide-download-075{
+  display:none!important;
+  pointer-events:none!important;
+  visibility:hidden!important;
+}
+.azobss-strict-pending-label-075{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:24px!important;
+  padding:0 10px!important;
+  border-radius:999px!important;
+  background:rgba(245,158,11,.18)!important;
+  border:1px solid rgba(245,158,11,.72)!important;
+  color:#fbbf24!important;
+  font-weight:900!important;
+  font-size:11px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.azobss-strict-paid-075 .azobss-strict-pending-label-075{
+  display:none!important;
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14278,6 +14307,190 @@ return;
     guard();
     return Array.from(document.querySelectorAll('.azobss-row-pending-payment-074')).map(function(row){
       return {text:row.innerText,hiddenDownloads:row.querySelectorAll('.azobss-pending-download-guard').length,pendingLabels:row.querySelectorAll('.azobss-pending-payment-label-074').length};
+    });
+  };
+})();
+</script>
+<script id="azobss-pabm-strict-pending-status-075-js">
+(function(){
+  if(window.__azobssPabmStrictPendingStatus075) return;
+  window.__azobssPabmStrictPendingStatus075 = true;
+
+  var PAID_RE = /\b(paid|verified|complete|completed|success|successful|approved|download\s*ready|payment\s*verified)\b/i;
+  var PENDING_RE = /\b(pending|pending\s*payment|unpaid|belum\s*bayar|menunggu\s*bayaran|awaiting|processing|created|new|open)\b/i;
+
+  function decodeLoose(s){
+    s = String(s || "");
+    var out = s;
+    try{ out = decodeURIComponent(out); }catch(e){}
+    try{ out = out.replace(/&quot;/g,'"').replace(/&#34;/g,'"').replace(/&amp;/g,'&'); }catch(e){}
+    return out;
+  }
+
+  function rowPayloadText(row){
+    if(!row) return "";
+    var parts = [];
+    parts.push(row.innerText || "");
+    parts.push(row.textContent || "");
+    parts.push(row.className || "");
+    parts.push(row.getAttribute && (row.getAttribute("data-status") || ""));
+    parts.push(row.getAttribute && (row.getAttribute("data-payment-status") || ""));
+    parts.push(row.getAttribute && (row.getAttribute("data-paid") || ""));
+    parts.push(row.getAttribute && (row.getAttribute("data-verified") || ""));
+    parts.push(row.outerHTML || "");
+    return decodeLoose(parts.join("\n")).toLowerCase();
+  }
+
+  function hasExplicitPaid(row){
+    var raw = rowPayloadText(row);
+
+    if(/"paid"\s*:\s*true|'paid'\s*:\s*true|paid\s*:\s*true|paid%22%3atrue/i.test(raw)) return true;
+    if(/"verified"\s*:\s*true|'verified'\s*:\s*true|verified\s*:\s*true|verified%22%3atrue/i.test(raw)) return true;
+    if(/"status"\s*:\s*"(paid|verified|complete|completed|success|successful|approved)"/i.test(raw)) return true;
+    if(/"paymentstatus"\s*:\s*"(paid|verified|complete|completed|success|successful|approved)"/i.test(raw)) return true;
+    if(/status%22%3a%22(paid|verified|complete|completed|success|successful|approved)/i.test(raw)) return true;
+    if(/paymentstatus%22%3a%22(paid|verified|complete|completed|success|successful|approved)/i.test(raw)) return true;
+
+    // Visible download count alone is not enough, but visible PA row with Download Ready text is okay.
+    if(PAID_RE.test(raw) && !hasExplicitPending(row)) return true;
+    return false;
+  }
+
+  function hasExplicitPending(row){
+    var raw = rowPayloadText(row);
+
+    if(/"paid"\s*:\s*false|'paid'\s*:\s*false|paid\s*:\s*false|paid%22%3afalse/i.test(raw)) return true;
+    if(/"verified"\s*:\s*false|'verified'\s*:\s*false|verified\s*:\s*false|verified%22%3afalse/i.test(raw)) return true;
+    if(/"status"\s*:\s*"(pending|unpaid|created|new|open|processing)"/i.test(raw)) return true;
+    if(/"paymentstatus"\s*:\s*"(pending|unpaid|created|new|open|processing)"/i.test(raw)) return true;
+    if(/status%22%3a%22(pending|unpaid|created|new|open|processing)/i.test(raw)) return true;
+    if(/paymentstatus%22%3a%22(pending|unpaid|created|new|open|processing)/i.test(raw)) return true;
+    if(PENDING_RE.test(raw)) return true;
+
+    return false;
+  }
+
+  function rowHasDownloadUrl(row){
+    if(!row) return false;
+    var html = rowPayloadText(row);
+    return /downloadurl|download-url|securedownload|token=|\/api\/pa-bm-download|\/api\/pa-pdf|data-download-url|href=/.test(html);
+  }
+
+  function shouldBePending(row){
+    if(!row) return false;
+
+    // Paid/verified wins only if explicit.
+    if(hasExplicitPaid(row)) return false;
+
+    // Pending signals always pending, even if stale downloadUrl exists.
+    if(hasExplicitPending(row)) return true;
+
+    // If row has a Download button + 0/5 or no paid proof, be conservative.
+    var raw = rowPayloadText(row);
+    if(rowHasDownloadUrl(row) && /0\s*\/\s*5|pending|is-pending-status|locked/.test(raw) && !hasExplicitPaid(row)) return true;
+
+    return false;
+  }
+
+  function ensureLabel(actionBox){
+    if(!actionBox) return null;
+    var label = actionBox.querySelector('.azobss-strict-pending-label-075');
+    if(!label){
+      label = document.createElement('span');
+      label.className = 'azobss-strict-pending-label-075 user-pa-download is-locked is-pending-status';
+      label.textContent = 'Pending Payment';
+      actionBox.insertBefore(label, actionBox.firstChild);
+    }
+    return label;
+  }
+
+  function hideDownloads(row){
+    row.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.azobss-strict-pending-label-075),a[data-download-url],button[data-download-url]').forEach(function(btn){
+      if(btn.classList.contains('azobss-strict-pending-label-075')) return;
+      var text = String(btn.textContent || '').toLowerCase();
+      if(/download/.test(text) || btn.hasAttribute('data-download-url') || btn.getAttribute('href') || btn.classList.contains('user-pa-download')){
+        btn.classList.add('azobss-strict-hide-download-075','is-pending-status');
+        btn.setAttribute('aria-disabled','true');
+        btn.setAttribute('tabindex','-1');
+        btn.removeAttribute('href');
+        btn.removeAttribute('data-download-url');
+        btn.removeAttribute('download');
+        btn.onclick = function(ev){
+          if(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+            if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+          }
+          return false;
+        };
+      }
+    });
+  }
+
+  function markPaid(row){
+    row.classList.remove('azobss-strict-pending-075');
+    row.classList.add('azobss-strict-paid-075');
+    row.querySelectorAll('.azobss-strict-pending-label-075').forEach(function(x){ x.remove(); });
+  }
+
+  function processRow(row){
+    if(!row) return;
+    if(shouldBePending(row)){
+      row.classList.add('azobss-strict-pending-075');
+      row.classList.remove('azobss-strict-paid-075');
+      var actionBox = row.querySelector('.col-action,.user-pa-pending-action,.user-pa-action-with-count') || row;
+      hideDownloads(row);
+      ensureLabel(actionBox);
+    }else if(hasExplicitPaid(row)){
+      markPaid(row);
+    }
+  }
+
+  function guard(){
+    document.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]').forEach(processRow);
+  }
+
+  document.addEventListener('click', function(ev){
+    var target = ev.target && ev.target.closest ? ev.target.closest('.user-pa-download,a[data-download-url],button[data-download-url]') : null;
+    if(!target) return;
+    var row = target.closest('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]');
+    if(row && shouldBePending(row)){
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      processRow(row);
+      return false;
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', guard);
+  if(document.readyState !== 'loading') guard();
+  window.addEventListener('focus', guard);
+  window.addEventListener('storage', guard);
+  window.addEventListener('azobss-purchase-records-rendered', guard);
+  setTimeout(guard,80);
+  setTimeout(guard,300);
+  setTimeout(guard,800);
+  setTimeout(guard,1600);
+  setTimeout(guard,3200);
+
+  try{
+    var mo = new MutationObserver(function(){ guard(); });
+    mo.observe(document.documentElement, { childList:true, subtree:true, characterData:true });
+  }catch(e){}
+
+  window.azobssStrictPendingStatusDebug075 = function(){
+    guard();
+    return Array.from(document.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]')).map(function(row){
+      return {
+        text: String(row.innerText || '').slice(0,240),
+        shouldBePending: shouldBePending(row),
+        explicitPaid: hasExplicitPaid(row),
+        explicitPending: hasExplicitPending(row),
+        hasDownloadUrl: rowHasDownloadUrl(row),
+        hiddenDownloads: row.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length,
+        pendingLabels: row.querySelectorAll('.azobss-strict-pending-label-075,.azobss-pending-payment-label-074').length
+      };
     });
   };
 })();
