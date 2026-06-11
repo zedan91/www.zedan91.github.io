@@ -14198,6 +14198,69 @@ return;
 })();
 </script>
 
+<script id="azobss-jupem-direct-browser-fallback-060">
+(function(){
+  if(window.__azobssJupemDirectBrowserFallback060) return;
+  window.__azobssJupemDirectBrowserFallback060 = true;
+
+  window.azobssHandleJupemDirectFallback060 = function(payload){
+    try{
+      if(!payload || !payload.directUrl) return false;
+      var msg = payload.message || 'Render server cannot reach JUPEM. Opening direct JUPEM link in browser.';
+      try{ console.warn('[AZOBSS JUPEM fallback]', payload); }catch(e){}
+      try{
+        if(typeof Swal !== 'undefined'){
+          Swal.fire({
+            icon:'info',
+            title:'Open Direct JUPEM Link',
+            text: msg,
+            confirmButtonText:'Open Link'
+          }).then(function(){ window.open(payload.directUrl, '_blank', 'noopener'); });
+          return true;
+        }
+      }catch(e){}
+      alert(msg);
+      window.open(payload.directUrl, '_blank', 'noopener');
+      return true;
+    }catch(e){
+      return false;
+    }
+  };
+
+  // Patch fetch response consumers gently: if a PA/BM download endpoint returns JSON directUrl,
+  // expose it to existing catch blocks without changing payment/download logic.
+  window.addEventListener('azobss-jupem-direct-fallback', function(ev){
+    try{ window.azobssHandleJupemDirectFallback060(ev.detail); }catch(e){}
+  });
+})();
+</script>
+<script id="azobss-jupem-fetch-fallback-interceptor-060">
+(function(){
+  if(window.__azobssJupemFetchFallbackInterceptor060) return;
+  window.__azobssJupemFetchFallbackInterceptor060 = true;
+  if(!window.fetch) return;
+  var originalFetch = window.fetch.bind(window);
+
+  window.fetch = async function(input, init){
+    var res = await originalFetch(input, init);
+    try{
+      var url = String(typeof input === 'string' ? input : (input && input.url) || '');
+      if(/\/api\/(?:pa-bm-download|pa-pdf|check-pa)/i.test(url)){
+        var ct = String(res.headers && res.headers.get ? res.headers.get('content-type') || '' : '').toLowerCase();
+        if(ct.indexOf('application/json') !== -1){
+          var clone = res.clone();
+          clone.json().then(function(payload){
+            if(payload && payload.directUrl && (payload.blockedByServer || payload.serverFetchFailed)){
+              window.dispatchEvent(new CustomEvent('azobss-jupem-direct-fallback', { detail: payload }));
+            }
+          }).catch(function(){});
+        }
+      }
+    }catch(e){}
+    return res;
+  };
+})();
+</script>
 </body>
 </html>
 <script>

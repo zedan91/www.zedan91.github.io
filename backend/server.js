@@ -1159,6 +1159,21 @@ async function fetchJupemFile(targetUrl, options = {}) {
   }
 }
 
+
+function azobssJupemExpressFallbackPayload(result, fallbackUrl, type = "PA") {
+  const directUrl = (result && result.url) || fallbackUrl || "";
+  return {
+    ok: false,
+    error: `${type} cannot be fetched by Render server.`,
+    blockedByServer: true,
+    serverFetchFailed: true,
+    directUrl,
+    openDirectUrl: directUrl,
+    message: "Render server cannot reach JUPEM. Open the direct JUPEM link in browser.",
+    attempts: Array.isArray(result && result.attempts) ? result.attempts.slice(-5) : []
+  };
+}
+
 async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
   const pages = [];
   const meta = await sharp(tifBuffer, { pages: -1, limitInputPixels: false }).metadata();
@@ -1244,7 +1259,7 @@ app.get("/api/pa-pdf", async (req, res) => {
     const jupemUrl = `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`;
 
     const response = await fetchJupemFile(jupemUrl);
-    if (!response.ok) return res.status(404).json({ ok: false, error: "PA not found" });
+    if (!response.ok) return res.status(404).json({ ok: false, error: "PA not found", directUrl: jupemUrl });
 
     const tifBuffer = Buffer.from(await response.arrayBuffer());
     const firstText = tifBuffer.slice(0, 180).toString("utf8").toLowerCase();

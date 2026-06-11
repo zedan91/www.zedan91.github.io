@@ -1113,6 +1113,32 @@ async function fetchJupem(jupemUrl, options = {}) {
 }
 
 
+
+function azobssJupemDirectFallbackPayload(result, fallbackUrl, type = "PA") {
+  const directUrl = (result && result.url) || fallbackUrl || "";
+  const attempts = Array.isArray(result && result.attempts) ? result.attempts.slice(-5) : [];
+  const fetchFailed = attempts.some(a => Number(a.status || 0) === 0 || /fetch failed|timeout|abort/i.test(String(a.error || "")));
+  return {
+    ok: false,
+    error: `${type} cannot be fetched by Render server.`,
+    blockedByServer: true,
+    serverFetchFailed: !!fetchFailed,
+    directUrl,
+    openDirectUrl: directUrl,
+    message: "Render server cannot reach JUPEM. Open the direct JUPEM link in browser.",
+    attempts
+  };
+}
+
+function azobssJupemDirectFallbackError(res, result, fallbackUrl, type = "PA") {
+  return send(
+    res,
+    502,
+    JSON.stringify(azobssJupemDirectFallbackPayload(result, fallbackUrl, type)),
+    "application/json"
+  );
+}
+
 async function fetchPelanAkuiCandidates(noPA, negeri) {
   const cleanPA = String(noPA || "")
     .trim()
@@ -2574,7 +2600,10 @@ if (
   try {
     const result = await fetchPelanAkuiCandidates(noPA, negeri);
     if (!result || !result.validFile) {
-      return send(res, 404, JSON.stringify({ ok: false, error: "PA not found" }), "application/json");
+      if (result && result.attempts && result.attempts.some(a => Number(a.status || 0) === 0 || /fetch failed|timeout|abort/i.test(String(a.error || "")))) {
+        return azobssJupemDirectFallbackError(res, result, result.url, "PA");
+      }
+      return send(res, 404, JSON.stringify({ ok: false, error: "PA not found", attempts: result && result.attempts ? result.attempts : [] }), "application/json");
     }
 
     return send(res, 200, JSON.stringify({
@@ -2629,6 +2658,16 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
     const paResult = await fetchPelanAkuiCandidates("PA" + itemCode + ".TIF", negeri);
     if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
+      const fallbackPayload = azobssJupemDirectFallbackPayload(paResult, paResult && paResult.url, "PA");
+      if (fallbackPayload.serverFetchFailed && fallbackPayload.directUrl) {
+        res.writeHead(502, {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          "Access-Control-Allow-Origin": "*"
+        });
+        res.end(JSON.stringify(fallbackPayload));
+        return;
+      }
       return azobssPaBmDownloadError(res, 404, "PA not found.");
     }
 
@@ -2747,12 +2786,17 @@ if (
   const paResult = await fetchPelanAkuiCandidates(noPA, negeri);
 
   if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
+    const fallbackPayload = azobssJupemDirectFallbackPayload(paResult, paResult && paResult.url, "PA");
+    if (fallbackPayload.serverFetchFailed && fallbackPayload.directUrl) {
+      return send(res, 502, JSON.stringify(fallbackPayload), "application/json");
+    }
     return send(
       res,
       404,
       JSON.stringify({
         ok: false,
-        error: "PA not found"
+        error: "PA not found",
+        attempts: paResult && paResult.attempts ? paResult.attempts : []
       }),
       "application/json"
     );
