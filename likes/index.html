@@ -413,59 +413,6 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 
 
 
-<style id="azobss-youtube-style-page-scrollbar-v1">
-/* AZOBSS YouTube/Facebook-style page scrollbar: stable width, no layout shrink/jump */
-html{
-  overflow-y:scroll!important;
-  scrollbar-gutter:stable!important;
-  scrollbar-width:thin!important;
-  scrollbar-color:rgba(148,163,184,.62) rgba(15,23,42,.18)!important;
-}
-body{
-  overflow-x:hidden!important;
-}
-html::-webkit-scrollbar,
-body::-webkit-scrollbar{
-  width:12px!important;
-  height:12px!important;
-}
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track{
-  background:rgba(15,23,42,.18)!important;
-}
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb{
-  background:rgba(148,163,184,.62)!important;
-  border-radius:999px!important;
-  border:3px solid rgba(15,23,42,.18)!important;
-  background-clip:padding-box!important;
-}
-html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover{
-  background:rgba(203,213,225,.82)!important;
-  border:2px solid rgba(15,23,42,.18)!important;
-}
-html::-webkit-scrollbar-corner,
-body::-webkit-scrollbar-corner{
-  background:transparent!important;
-}
-/* Keep horizontal chip menus clean like YouTube; only page scrollbar is visible */
-.market-nav,.azobss-nav-scroll,.social-strip,.social-bar,.social-links,.footer-social,.social-icons{
-  -ms-overflow-style:none!important;
-  scrollbar-width:none!important;
-}
-.market-nav::-webkit-scrollbar,.azobss-nav-scroll::-webkit-scrollbar,.social-strip::-webkit-scrollbar,.social-bar::-webkit-scrollbar,.social-links::-webkit-scrollbar,.footer-social::-webkit-scrollbar,.social-icons::-webkit-scrollbar{
-  display:none!important;
-}
-</style>
-
-<style id="azobss-remove-navbar-upgrade-button-final">
-#userUpgradeButton,
-
-</style>
-
-
-
 <style id="azobss-admin-whatsapp-clean-hide-css">
 html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -1874,42 +1821,6 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 
 
-
-
-<script id="az-remove-hello-label-fix">
-(function(){
-  if(window.__azRemoveHelloLabelFix)return;
-  window.__azRemoveHelloLabelFix=true;
-
-  function cleanHelloText(){
-    var selectors=[
-      '#userNameText','#userName','.user-name','.username','.user-menu-name',
-      '.profile-name','.profile-label','.az-user-name','.azobss-user-name'
-    ];
-    document.querySelectorAll(selectors.join(',')).forEach(function(el){
-      if(!el || !el.textContent) return;
-      var t=el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
-      if(t && t!==el.textContent.trim()) el.textContent=t;
-    });
-
-    document.querySelectorAll('span,div,a,button,strong,b').forEach(function(el){
-      if(!el || !el.childNodes || el.childNodes.length!==1) return;
-      var txt=el.textContent||'';
-      if(/^\s*hello\s*,\s*[\w.@+-]+\s*$/i.test(txt)){
-        el.textContent=txt.replace(/^\s*hello\s*,?\s*/i,'').trim();
-      }
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',cleanHelloText);
-  if(document.readyState!=='loading')cleanHelloText();
-  window.addEventListener('storage',cleanHelloText);
-  window.addEventListener('focus',cleanHelloText);
-  setTimeout(cleanHelloText,500);
-  setTimeout(cleanHelloText,1500);
-  setTimeout(cleanHelloText,3000);
-})();
-</script>
 
 
 <script id="azobss-admin-whatsapp-clean-updater">
