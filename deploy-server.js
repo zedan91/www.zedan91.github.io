@@ -1,5 +1,3 @@
-import dns from "dns/promises";
-
 function azobssNum(v, fallback){
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : fallback;
@@ -32,6 +30,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORI
 // Supports: website hosting + affiliate online sync + JUPEM PA hold system
 
 const fs = require("fs");
+const dns = require("dns").promises;
 const path = require("path");
 const http = require("http");
 const url = require("url");
