@@ -8041,6 +8041,80 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   color:#fde68a!important;
 }
 </style>
+<style id="azobss-jupem-fallback-qr-payment-066-css">
+#azJupemQrFallbackPayment066{
+  display:none;
+  max-width:760px;
+  margin:14px auto 0;
+  border:1px solid rgba(34,197,94,.45);
+  background:rgba(6,78,59,.28);
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+}
+#azJupemQrFallbackPayment066.is-show{
+  display:block!important;
+}
+#azJupemQrFallbackPayment066 .az-qr-wrap{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 150px;
+  gap:14px;
+  align-items:center;
+}
+#azJupemQrFallbackPayment066 .az-qr-title{
+  font-size:17px;
+  font-weight:950;
+  color:#fef3c7;
+  margin-bottom:7px;
+}
+#azJupemQrFallbackPayment066 .az-qr-desc{
+  color:#e5e7eb;
+  font-size:13px;
+  line-height:1.45;
+  margin-bottom:10px;
+}
+#azJupemQrFallbackPayment066 .az-qr-total{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding:9px 12px;
+  border-radius:12px;
+  border:1px solid rgba(250,204,21,.45);
+  background:rgba(15,23,42,.65);
+  color:#fff;
+  font-size:16px;
+  font-weight:950;
+}
+#azJupemQrFallbackPayment066 .az-qr-total b{
+  color:#fde047;
+}
+#azJupemQrFallbackPayment066 .az-qr-note{
+  color:#bbf7d0;
+  font-size:12px;
+  margin-top:8px;
+}
+#azJupemQrFallbackPayment066 img{
+  width:150px;
+  max-width:100%;
+  border-radius:14px;
+  background:#fff;
+  padding:5px;
+  box-shadow:0 8px 20px rgba(0,0,0,.35);
+}
+@media(max-width:640px){
+  #azJupemQrFallbackPayment066 .az-qr-wrap{
+    grid-template-columns:1fr;
+    text-align:center;
+  }
+  #azJupemQrFallbackPayment066 img{
+    margin:0 auto;
+    width:190px;
+  }
+  #azJupemQrFallbackPayment066 .az-qr-total{
+    justify-content:center;
+  }
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14533,6 +14607,132 @@ return;
     var url = 'https://azobss-backend.onrender.com/api/jupem-diagnostic?noPA=' + encodeURIComponent(noPa) + '&negeri=' + encodeURIComponent(negeri);
     window.open(url, '_blank', 'noopener');
     return url;
+  };
+})();
+</script>
+<script id="azobss-jupem-fallback-qr-payment-066-js">
+(function(){
+  if(window.__azobssJupemFallbackQrPayment066) return;
+  window.__azobssJupemFallbackQrPayment066 = true;
+
+  var QR_SRC = './assets/maybank-qr-fallback.png';
+
+  function money(n){
+    n = Number(n || 0);
+    if(!Number.isFinite(n) || n < 0) n = 0;
+    return 'RM' + n.toFixed(2).replace(/\.00$/, '');
+  }
+
+  function detectTotal(){
+    var candidates = [];
+    try{
+      document.querySelectorAll('*').forEach(function(el){
+        var t = String(el.textContent || '').trim();
+        if(t && /total|jumlah|payment|bayar|rm\s*\d/i.test(t) && t.length < 160){
+          candidates.push(t);
+        }
+      });
+    }catch(e){}
+
+    var best = 0;
+    candidates.forEach(function(t){
+      var m = t.match(/RM\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+      if(m){
+        var v = Number(m[1]);
+        if(Number.isFinite(v) && v > best) best = v;
+      }
+    });
+
+    // PA page item price fallback: RM5 per unit
+    if(!best){
+      var paInput = document.querySelector('#noPA,#noPa,#paNo,#paNumber,input[name="noPA"],input[name="noPa"]');
+      if(paInput && String(paInput.value || '').trim()) best = 5;
+    }
+    return best || 5;
+  }
+
+  function ensureBox(){
+    var box = document.getElementById('azJupemQrFallbackPayment066');
+    if(box) return box;
+
+    box = document.createElement('div');
+    box.id = 'azJupemQrFallbackPayment066';
+    box.innerHTML =
+      '<div class="az-qr-wrap">' +
+        '<div>' +
+          '<div class="az-qr-title">Maybank QR Payment Fallback</div>' +
+          '<div class="az-qr-desc">Backend tidak boleh akses JUPEM. Jika mahu teruskan manual payment, scan QR ini dan rujuk direct JUPEM link di atas.</div>' +
+          '<div class="az-qr-total">Payment Total: <b data-az-qr-total>RM5</b></div>' +
+          '<div class="az-qr-note">Akaun: Ahmad Zaidan Bin Omar · No. Akaun: 162405194110</div>' +
+        '</div>' +
+        '<div><img src="' + QR_SRC + '" alt="Maybank QR Payment Ahmad Zaidan Bin Omar"></div>' +
+      '</div>';
+
+    var fallback = document.getElementById('azJupemFallbackBox');
+    if(fallback){
+      fallback.insertAdjacentElement('afterend', box);
+      return box;
+    }
+
+    var target = document.querySelector('.pa-card, .pa-panel, .azobss-pa-panel, main, .container, body') || document.body;
+    if(target === document.body) document.body.insertBefore(box, document.body.firstChild);
+    else target.insertAdjacentElement('afterbegin', box);
+    return box;
+  }
+
+  function showQr(payload){
+    try{
+      if(payload && !payload.directUrl && !payload.blockedByServer && !payload.serverFetchFailed) return false;
+      var box = ensureBox();
+      var totalEl = box.querySelector('[data-az-qr-total]');
+      if(totalEl) totalEl.textContent = money(detectTotal());
+      box.classList.add('is-show');
+      try{ box.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
+      return true;
+    }catch(e){
+      console.warn('AZOBSS QR fallback 066 failed', e);
+      return false;
+    }
+  }
+
+  window.azobssShowJupemQrFallback066 = showQr;
+
+  window.addEventListener('azobss-jupem-direct-fallback', function(ev){
+    setTimeout(function(){ showQr(ev.detail || {}); }, 80);
+    setTimeout(function(){ showQr(ev.detail || {}); }, 800);
+  });
+
+  // Wrap existing 061/062 fallback showers so QR appears only when backend fails.
+  function wrap(name){
+    var fn = window[name];
+    if(typeof fn === 'function' && !fn.__azobssQrWrapped066){
+      var wrapped = function(payload){
+        var r = fn(payload);
+        if(payload && (payload.directUrl || payload.blockedByServer || payload.serverFetchFailed)){
+          setTimeout(function(){ showQr(payload); }, 100);
+        }
+        return r;
+      };
+      wrapped.__azobssQrWrapped066 = true;
+      window[name] = wrapped;
+    }
+  }
+
+  setTimeout(function(){
+    wrap('azobssShowJupemDirectFallback061');
+    wrap('azobssSetJupemFallbackStatus062');
+  }, 50);
+  setTimeout(function(){
+    wrap('azobssShowJupemDirectFallback061');
+    wrap('azobssSetJupemFallbackStatus062');
+  }, 1200);
+
+  window.azobssJupemQrFallbackDebug066 = function(){
+    return showQr({
+      directUrl:'https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=PA2131.TIF&negeri=JOHOR',
+      blockedByServer:true,
+      serverFetchFailed:true
+    });
   };
 })();
 </script>
