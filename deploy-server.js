@@ -30,7 +30,18 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORI
 // Supports: website hosting + affiliate online sync + JUPEM PA hold system
 
 const fs = require("fs");
-const dns = require("dns").promises;
+const dnsModule = require("dns");
+const dns = dnsModule.promises;
+
+try {
+  if (dnsModule && typeof dnsModule.setDefaultResultOrder === "function") {
+    dnsModule.setDefaultResultOrder("ipv4first");
+    console.log("[AZOBSS JUPEM] DNS result order forced to ipv4first");
+  }
+} catch (e) {
+  console.warn("[AZOBSS JUPEM] Failed to set DNS ipv4first:", e && (e.message || e));
+}
+
 const path = require("path");
 const http = require("http");
 const url = require("url");
@@ -2615,10 +2626,15 @@ if (pathname === "/api/jupem-diagnostic" && req.method === "GET") {
   try {
     const dnsStart = Date.now();
     const addrs = await dns.lookup("ebiz.jupem.gov.my", { all: true });
+    const ipv4 = addrs.filter(a => Number(a.family) === 4).map(a => a.address);
+    const ipv6 = addrs.filter(a => Number(a.family) === 6).map(a => a.address);
     result.checks.dns = {
       ok: true,
       ms: Date.now() - dnsStart,
-      addresses: addrs
+      addresses: addrs,
+      ipv4,
+      ipv6,
+      forcedOrder: "ipv4first"
     };
   } catch (error) {
     result.checks.dns = {
@@ -2655,6 +2671,9 @@ if (pathname === "/api/jupem-diagnostic" && req.method === "GET") {
 
   result.ok = !!(result.checks.paFetch && result.checks.paFetch.ok && result.checks.paFetch.bytes > 100 && !result.checks.paFetch.looksHTML);
   result.totalMs = Date.now() - startedAt;
+  if (!result.ok && result.checks.paFetch && /ETIMEDOUT|fetch failed|timeout|abort/i.test(JSON.stringify(result.checks.paFetch))) {
+    result.diagnosis = "DNS resolves, but Render cannot establish a working connection to JUPEM from this runtime. IPv4-first was forced; if this still fails, JUPEM/route likely blocks Render/cloud outbound traffic.";
+  }
 
   return send(res, 200, JSON.stringify(result, null, 2), "application/json");
 }
