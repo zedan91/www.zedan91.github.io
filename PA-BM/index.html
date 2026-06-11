@@ -14629,64 +14629,69 @@ return;
   };
 })();
 </script>
-<script id="azobss-pabm-jupem-card-qr-fallback-066-js">
+<script id="azobss-pabm-jupem-card-qr-fallback-067-js">
 (function(){
-  if(window.__azobssPabmJupemCardQrFallback066) return;
-  window.__azobssPabmJupemCardQrFallback066 = true;
+  if(window.__azobssPabmJupemCardQrFallback067) return;
+  window.__azobssPabmJupemCardQrFallback067 = true;
 
-  function findPaCard(){
-    var headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,div,section'));
-    var pelan = headings.find(function(el){ return String(el.textContent||'').trim().toLowerCase() === 'pelan akui'; });
-    var card = pelan ? pelan.closest('.card,.pa-card,.azobss-pa-panel,.panel,section,div') : null;
+  var lastUrl = "";
+  var lastUpdateAt = 0;
 
-    if(!card){
-      var input = document.querySelector('input[name="noPA"],input[name="noPa"],#noPA,#paNo,#paNumber');
-      card = input ? input.closest('.card,.pa-card,.azobss-pa-panel,.panel,section,div') : null;
-    }
-    if(!card){
-      var btns = Array.from(document.querySelectorAll('button,a'));
-      var add = btns.find(function(b){ return /add to cart/i.test(String(b.textContent||'')); });
-      card = add ? add.closest('.card,.pa-card,.azobss-pa-panel,.panel,section,div') : null;
-    }
-    return card;
+  function qs(sel){ return document.querySelector(sel); }
+
+  function getNoPa(){
+    var el = qs('input[name="noPA"],input[name="noPa"],#noPA,#paNo,#paNumber');
+    return String((el && el.value) || '2131').replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'') || '2131';
   }
 
-  function directUrlFromForm(payload){
-    if(payload && payload.directUrl) return payload.directUrl;
-    var no = '';
-    var st = '';
-    try{
-      no = (document.querySelector('input[name="noPA"],input[name="noPa"],#noPA,#paNo,#paNumber') || {}).value || '';
-      st = (document.querySelector('select[name="negeri"],#negeri,#paState') || {}).value || '';
-    }catch(e){}
-    no = String(no || '').replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'') || '2131';
-    st = String(st || 'JOHOR').toUpperCase();
-    return 'https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=' + encodeURIComponent('PA' + no + '.TIF') + '&negeri=' + encodeURIComponent(st);
+  function getNegeri(){
+    var el = qs('select[name="negeri"],#negeri,#paState');
+    return String((el && el.value) || 'JOHOR').toUpperCase();
+  }
+
+  function buildDirectUrl(payload){
+    if(payload && payload.directUrl) return String(payload.directUrl);
+    var no = getNoPa();
+    var negeri = getNegeri();
+    return 'https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=' +
+      encodeURIComponent('PA' + no + '.TIF') + '&negeri=' + encodeURIComponent(negeri);
   }
 
   function qrUrl(url){
     return 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=' + encodeURIComponent(url);
   }
 
-  function ensureSideCard(){
+  function findPaCard(){
+    var input = qs('input[name="noPA"],input[name="noPa"],#noPA,#paNo,#paNumber');
+    if(input){
+      var c = input.closest('.card,.pa-card,.azobss-pa-panel,.panel,section,div');
+      if(c) return c;
+    }
+    var add = Array.from(document.querySelectorAll('button,a')).find(function(b){
+      return /add to cart/i.test(String(b.textContent || ''));
+    });
+    return add ? add.closest('.card,.pa-card,.azobss-pa-panel,.panel,section,div') : null;
+  }
+
+  function ensureCard(){
     var card = findPaCard();
     if(!card) return null;
 
     var box = card.querySelector('.az-jupem-card-qr-fallback-066');
     if(box) return box;
 
-    // Wrap current PA card children so fallback can sit on the right without disrupting inputs.
     var layout = card.querySelector(':scope > .az-pabm-pa-card-fallback-layout');
     if(!layout){
       layout = document.createElement('div');
       layout.className = 'az-pabm-pa-card-fallback-layout';
 
       var main = document.createElement('div');
-      main.className = 'az-pabm-pa-main-066';
+      main.className = 'az-pabm-pa-main-067';
 
       while(card.firstChild){
         main.appendChild(card.firstChild);
       }
+
       layout.appendChild(main);
       card.appendChild(layout);
     }
@@ -14695,8 +14700,8 @@ return;
     box.className = 'az-jupem-card-qr-fallback-066';
     box.innerHTML =
       '<div class="az-jupem-side-title">⚠️ Render tidak boleh akses JUPEM</div>' +
-      '<div class="az-jupem-side-note">Guna link direct/QR ini melalui browser kamu jika server Render timeout.</div>' +
-      '<div class="az-jupem-side-qr"><img alt="JUPEM direct QR"></div>' +
+      '<div class="az-jupem-side-note">Scan QR atau buka link direct melalui browser kamu.</div>' +
+      '<div class="az-jupem-side-qr"><img alt="JUPEM direct QR" loading="lazy"></div>' +
       '<div class="az-jupem-side-actions">' +
         '<a class="az-jupem-side-btn open" target="_blank" rel="noopener">Open Direct Link</a>' +
         '<button type="button" class="az-jupem-side-btn copy">Copy Link</button>' +
@@ -14707,18 +14712,27 @@ return;
     return box;
   }
 
-  function show(payload){
-    var url = directUrlFromForm(payload);
-    var box = ensureSideCard();
+  function render(payload){
+    var now = Date.now();
+    if(now - lastUpdateAt < 200) return true;
+    lastUpdateAt = now;
+
+    var url = buildDirectUrl(payload);
+    var box = ensureCard();
     if(!box || !url) return false;
 
     box.classList.add('is-show');
-    var img = box.querySelector('img');
+
+    if(url !== lastUrl){
+      lastUrl = url;
+      var img = box.querySelector('img');
+      if(img) img.src = qrUrl(url);
+    }
+
     var open = box.querySelector('.open');
     var copy = box.querySelector('.copy');
     var code = box.querySelector('code');
 
-    if(img) img.src = qrUrl(url);
     if(open) open.href = url;
     if(code) code.textContent = url;
     if(copy){
@@ -14732,40 +14746,26 @@ return;
         }
       };
     }
+
     return true;
   }
 
-  window.azobssShowJupemCardQrFallback066 = show;
+  window.azobssShowJupemCardQrFallback066 = render;
+  window.azobssShowJupemCardQrFallback067 = render;
 
   window.addEventListener('azobss-jupem-direct-fallback', function(ev){
-    setTimeout(function(){ show(ev.detail); }, 80);
-    setTimeout(function(){ show(ev.detail); }, 700);
+    setTimeout(function(){ render(ev.detail); }, 80);
   });
 
-  // When top fallback box already appears, mirror it into the PA card side box.
-  var mo = new MutationObserver(function(){
-    try{
-      var top = document.getElementById('azJupemFallbackBox');
-      if(top && top.classList.contains('is-show')){
-        var href = (top.querySelector('a[href]') || {}).href || '';
-        if(href) show({directUrl:href});
-      }
-    }catch(e){}
-  });
-  try{ mo.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','href']}); }catch(e){}
-
-  // Update QR when user changes PA/state after fallback shown.
-  document.addEventListener('input', function(){ 
-    var b = document.querySelector('.az-jupem-card-qr-fallback-066.is-show'); 
-    if(b) show({directUrl:directUrlFromForm()}); 
-  }, true);
-  document.addEventListener('change', function(){ 
-    var b = document.querySelector('.az-jupem-card-qr-fallback-066.is-show'); 
-    if(b) show({directUrl:directUrlFromForm()}); 
+  document.addEventListener('change', function(ev){
+    if(ev && ev.target && /noPA|noPa|negeri|paState|paNo|paNumber/i.test(String(ev.target.name || ev.target.id || ''))){
+      var visible = document.querySelector('.az-jupem-card-qr-fallback-066.is-show');
+      if(visible) render();
+    }
   }, true);
 
-  window.azobssJupemCardQrDebug066 = function(){
-    return show({directUrl:directUrlFromForm()});
+  window.azobssJupemCardQrDebug067 = function(){
+    return render({directUrl:buildDirectUrl()});
   };
 })();
 </script>
