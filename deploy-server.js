@@ -1,3 +1,4 @@
+
 function azobssNum(v, fallback){
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : fallback;
@@ -30,18 +31,6 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORI
 // Supports: website hosting + affiliate online sync + JUPEM PA hold system
 
 const fs = require("fs");
-const dnsModule = require("dns");
-const dns = dnsModule.promises;
-
-try {
-  if (dnsModule && typeof dnsModule.setDefaultResultOrder === "function") {
-    dnsModule.setDefaultResultOrder("ipv4first");
-    console.log("[AZOBSS JUPEM] DNS result order forced to ipv4first");
-  }
-} catch (e) {
-  console.warn("[AZOBSS JUPEM] Failed to set DNS ipv4first:", e && (e.message || e));
-}
-
 const path = require("path");
 const http = require("http");
 const url = require("url");
@@ -1097,147 +1086,62 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback) {
   return rows.slice(0, 60);
 }
 
-async function fetchJupem(jupemUrl, options = {}) {
-  const timeoutMs = Number(options.timeoutMs || process.env.JUPEM_FETCH_TIMEOUT_MS || 20000);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new Error(`JUPEM fetch timeout after ${timeoutMs}ms`)), timeoutMs);
-
-  try {
-    const response = await fetch(jupemUrl, {
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "User-Agent": process.env.JUPEM_USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        "Accept": "image/tiff,image/*,application/pdf,application/octet-stream,text/html;q=0.8,*/*;q=0.7",
-        "Accept-Language": "ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-        "Referer": "https://ebiz.jupem.gov.my/",
-        "Origin": "https://ebiz.jupem.gov.my",
-        "Connection": "close"
-      }
-    });
-    return response;
-  } finally {
-    clearTimeout(timer);
-  }
+async function fetchJupem(jupemUrl) {
+  return await fetch(jupemUrl, {
+    redirect: "follow",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+      "Accept": "image/tiff,image/*,*/*",
+      "Referer": "https://ebiz.jupem.gov.my/"
+    }
+  });
 }
 
-
-
-
-function azobssBuildPaDirectUrl(noPA, negeri) {
-  const clean = String(noPA || "")
-    .trim()
-    .replace(/\.tif$/i, "")
-    .replace(/^PA/i, "")
-    .replace(/[^0-9]/g, "");
-  const state = String(negeri || "").trim().toUpperCase().replace(/[^A-Z0-9 ._-]/g, " ").replace(/\s+/g, " ");
-  const pa = `PA${clean}.TIF`;
-  const params = new URLSearchParams();
-  params.set("noPa", pa);
-  params.set("negeri", state);
-  return `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?${params.toString()}`;
-}
-
-function azobssJupemDirectFallbackPayload(result, fallbackUrl, type = "PA") {
-  const directUrl = (result && result.correctDirectUrl) || fallbackUrl || (result && result.url) || "";
-  const attempts = Array.isArray(result && result.attempts) ? result.attempts.slice(-5) : [];
-  const fetchFailed = attempts.some(a => Number(a.status || 0) === 0 || /fetch failed|timeout|abort/i.test(String(a.error || "")));
-  return {
-    ok: false,
-    error: `${type} cannot be fetched by Render server.`,
-    blockedByServer: true,
-    serverFetchFailed: !!fetchFailed,
-    directUrl,
-    openDirectUrl: directUrl,
-    message: "Render server cannot reach JUPEM. Open the direct JUPEM link in browser.",
-    attempts
-  };
-}
-
-function azobssJupemDirectFallbackError(res, result, fallbackUrl, type = "PA") {
-  return send(
-    res,
-    502,
-    JSON.stringify(azobssJupemDirectFallbackPayload(result, fallbackUrl, type)),
-    "application/json"
-  );
-}
 
 async function fetchPelanAkuiCandidates(noPA, negeri) {
   const cleanPA = String(noPA || "")
     .trim()
     .replace(/\.tif$/i, "")
-    .replace(/^PA/i, "")
-    .replace(/[^0-9]/g, "");
+    .replace(/^PA/i, "");
 
-  const stateUpper = String(negeri || "").trim().toUpperCase();
   const paUpper = `PA${cleanPA}.TIF`;
-  const correctDirectUrl = azobssBuildPaDirectUrl(cleanPA, stateUpper);
+  const paLower = `PA${cleanPA}.tif`;
+  const paRaw = `PA${cleanPA}`;
+  const stateUpper = String(negeri || "").toUpperCase();
+  const stateTitle = stateUpper.charAt(0) + stateUpper.slice(1).toLowerCase();
 
-  function paUrl(noKey, negeriKey, paValue, negeriValue) {
-    const params = new URLSearchParams();
-    params.set(noKey, paValue);
-    params.set(negeriKey, negeriValue);
-    return `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?${params.toString()}`;
-  }
-
-  // Correct working format first. Keep list short and de-duplicated to avoid spam.
-  const candidates = Array.from(new Set([
-    correctDirectUrl,
-    paUrl("noPA", "negeri", paUpper, stateUpper),
-    paUrl("NoPA", "Negeri", paUpper, stateUpper)
-  ]));
+  const candidates = [
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paLower)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paRaw)}&negeri=${encodeURIComponent(stateUpper)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateTitle)}`,
+    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?NoPA=${encodeURIComponent(paUpper)}&Negeri=${encodeURIComponent(stateUpper)}`
+  ];
 
   let lastResult = null;
-  const attempts = [];
 
   for (const url of candidates) {
-    const startMs = Date.now();
     try {
-      console.log("[AZOBSS PA] Fetching PA candidate:", url);
-      const response = await fetchJupem(url, { timeoutMs: 20000 });
-      const contentType = response.headers.get("content-type") || "";
+      console.log("Fetching PA candidate:", url);
+      const response = await fetchJupem(url);
       const buffer = Buffer.from(await response.arrayBuffer());
-      const firstText = buffer.slice(0, 260).toString("utf8").toLowerCase();
-      const looksHTML = firstText.includes("<html") || firstText.includes("<!doctype") || firstText.includes("not found") || firstText.includes("ralat") || firstText.includes("error");
+      const firstText = buffer.slice(0, 200).toString("utf8").toLowerCase();
+      const looksHTML = firstText.includes("<html") || firstText.includes("<!doctype") || firstText.includes("not found");
       const validFile = response.ok && buffer.length > 100 && !looksHTML;
 
-      const attempt = {
-        url,
-        ok: response.ok,
-        status: response.status,
-        contentType,
-        bytes: buffer.length,
-        ms: Date.now() - startMs,
-        looksHTML,
-        validFile
-      };
-      attempts.push(attempt);
-      console.log("[AZOBSS PA] Candidate result:", JSON.stringify(attempt));
-
-      lastResult = { response, buffer, url, firstText, validFile, attempts, correctDirectUrl };
+      lastResult = { response, buffer, url, firstText, validFile };
 
       if (validFile) {
         return lastResult;
       }
     } catch (err) {
-      const attempt = {
-        url,
-        ok: false,
-        status: 0,
-        bytes: 0,
-        ms: Date.now() - startMs,
-        error: err && (err.name || err.code || err.message) ? `${err.name || err.code || "Error"}: ${err.message || err.code || err}` : String(err)
-      };
-      attempts.push(attempt);
-      console.error("[AZOBSS PA] Candidate failed:", JSON.stringify(attempt));
-      lastResult = { response: null, buffer: Buffer.alloc(0), url, firstText: "", validFile: false, error: err, attempts, correctDirectUrl };
+      console.error("PA candidate failed:", url, err && err.message ? err.message : err);
+      lastResult = { response: null, buffer: Buffer.alloc(0), url, firstText: "", validFile: false, error: err };
     }
   }
 
-  return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false, attempts, correctDirectUrl };
+  return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
 }
 
 
@@ -2606,78 +2510,6 @@ if (
 }
 
 
-
-// =========================
-// JUPEM NETWORK DIAGNOSTIC
-// =========================
-if (pathname === "/api/jupem-diagnostic" && req.method === "GET") {
-  const noPA = cleanPA(parsed.query.noPA || parsed.query.pa || parsed.query.noPa || "2131");
-  const negeri = cleanState(parsed.query.negeri || parsed.query.state || "JOHOR");
-  const directUrl = azobssBuildPaDirectUrl(noPA, negeri);
-  const startedAt = Date.now();
-  const result = {
-    ok: false,
-    host: "ebiz.jupem.gov.my",
-    directUrl,
-    checks: {},
-    startedAt: new Date(startedAt).toISOString()
-  };
-
-  try {
-    const dnsStart = Date.now();
-    const addrs = await dns.lookup("ebiz.jupem.gov.my", { all: true });
-    const ipv4 = addrs.filter(a => Number(a.family) === 4).map(a => a.address);
-    const ipv6 = addrs.filter(a => Number(a.family) === 6).map(a => a.address);
-    result.checks.dns = {
-      ok: true,
-      ms: Date.now() - dnsStart,
-      addresses: addrs,
-      ipv4,
-      ipv6,
-      forcedOrder: "ipv4first"
-    };
-  } catch (error) {
-    result.checks.dns = {
-      ok: false,
-      error: error && (error.code || error.message) ? `${error.code || "Error"}: ${error.message || error}` : String(error)
-    };
-  }
-
-  try {
-    const fetchStart = Date.now();
-    const response = await fetchJupem(directUrl, { timeoutMs: 20000 });
-    const buf = Buffer.from(await response.arrayBuffer());
-    const firstText = buf.slice(0, 180).toString("utf8").toLowerCase();
-    result.checks.paFetch = {
-      ok: response.ok,
-      status: response.status,
-      statusText: response.statusText,
-      contentType: response.headers.get("content-type") || "",
-      bytes: buf.length,
-      ms: Date.now() - fetchStart,
-      looksHTML: firstText.includes("<html") || firstText.includes("<!doctype"),
-      firstText: firstText.slice(0, 120)
-    };
-  } catch (error) {
-    result.checks.paFetch = {
-      ok: false,
-      ms: Date.now() - startedAt,
-      errorName: error && error.name ? error.name : "",
-      errorCode: error && error.code ? error.code : "",
-      errorMessage: error && error.message ? error.message : String(error),
-      cause: error && error.cause ? String(error.cause && (error.cause.code || error.cause.message || error.cause)) : ""
-    };
-  }
-
-  result.ok = !!(result.checks.paFetch && result.checks.paFetch.ok && result.checks.paFetch.bytes > 100 && !result.checks.paFetch.looksHTML);
-  result.totalMs = Date.now() - startedAt;
-  if (!result.ok && result.checks.paFetch && /ETIMEDOUT|fetch failed|timeout|abort/i.test(JSON.stringify(result.checks.paFetch))) {
-    result.diagnosis = "DNS resolves, but Render cannot establish a working connection to JUPEM from this runtime. IPv4-first was forced; if this still fails, JUPEM/route likely blocks Render/cloud outbound traffic.";
-  }
-
-  return send(res, 200, JSON.stringify(result, null, 2), "application/json");
-}
-
 // =========================
 // JUPEM PA EXISTENCE CHECK (NO PDF CONVERT)
 // =========================
@@ -2699,10 +2531,7 @@ if (
   try {
     const result = await fetchPelanAkuiCandidates(noPA, negeri);
     if (!result || !result.validFile) {
-      if (result && result.attempts && result.attempts.some(a => Number(a.status || 0) === 0 || /fetch failed|timeout|abort/i.test(String(a.error || "")))) {
-        return azobssJupemDirectFallbackError(res, result, azobssBuildPaDirectUrl(noPA, negeri), "PA");
-      }
-      return send(res, 404, JSON.stringify({ ok: false, error: "PA not found", attempts: result && result.attempts ? result.attempts : [] }), "application/json");
+      return send(res, 404, JSON.stringify({ ok: false, error: "PA not found" }), "application/json");
     }
 
     return send(res, 200, JSON.stringify({
@@ -2757,16 +2586,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
     const paResult = await fetchPelanAkuiCandidates("PA" + itemCode + ".TIF", negeri);
     if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
-      const fallbackPayload = azobssJupemDirectFallbackPayload(paResult, azobssBuildPaDirectUrl(itemCode, negeri), "PA");
-      if (fallbackPayload.serverFetchFailed && fallbackPayload.directUrl) {
-        res.writeHead(502, {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-          "Access-Control-Allow-Origin": "*"
-        });
-        res.end(JSON.stringify(fallbackPayload));
-        return;
-      }
       return azobssPaBmDownloadError(res, 404, "PA not found.");
     }
 
@@ -2885,17 +2704,12 @@ if (
   const paResult = await fetchPelanAkuiCandidates(noPA, negeri);
 
   if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
-    const fallbackPayload = azobssJupemDirectFallbackPayload(paResult, azobssBuildPaDirectUrl(noPA, negeri), "PA");
-    if (fallbackPayload.serverFetchFailed && fallbackPayload.directUrl) {
-      return send(res, 502, JSON.stringify(fallbackPayload), "application/json");
-    }
     return send(
       res,
       404,
       JSON.stringify({
         ok: false,
-        error: "PA not found",
-        attempts: paResult && paResult.attempts ? paResult.attempts : []
+        error: "PA not found"
       }),
       "application/json"
     );
