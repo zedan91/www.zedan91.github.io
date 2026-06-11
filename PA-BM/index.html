@@ -14520,6 +14520,22 @@ return;
   };
 })();
 </script>
+<script id="azobss-jupem-diagnostic-link-063">
+(function(){
+  if(window.__azobssJupemDiagnosticLink063) return;
+  window.__azobssJupemDiagnosticLink063 = true;
+
+  window.azobssOpenJupemDiagnostic063 = function(noPa, negeri){
+    noPa = noPa || (document.querySelector('input[name="noPA"], input[name="noPa"], #noPA, #paNo, #paNumber') || {}).value || '';
+    negeri = negeri || (document.querySelector('select[name="negeri"], #negeri, #paState') || {}).value || '';
+    noPa = String(noPa || '').replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'') || '2131';
+    negeri = String(negeri || 'JOHOR').toUpperCase();
+    var url = 'https://azobss-backend.onrender.com/api/jupem-diagnostic?noPA=' + encodeURIComponent(noPa) + '&negeri=' + encodeURIComponent(negeri);
+    window.open(url, '_blank', 'noopener');
+    return url;
+  };
+})();
+</script>
 </body>
 </html>
 <script>
