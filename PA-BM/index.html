@@ -8106,6 +8106,27 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   min-width:112px!important;justify-content:flex-end!important;
 }
 </style>
+<style id="azobss-pabm-download-no-flash-080-css">
+/* 080: prevent Download button flash before pending guard runs */
+#userPaPurchaseList .user-pa-download:not(.azobss-visible-pending-label-078):not(.azobss-download-allowed-080),
+#purchaseSummaryList .user-pa-download:not(.azobss-visible-pending-label-078):not(.azobss-download-allowed-080){
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#userPaPurchaseList .azobss-download-allowed-080,
+#purchaseSummaryList .azobss-download-allowed-080{
+  display:inline-flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+#userPaPurchaseList .azobss-zero-download-pending-078 .azobss-download-allowed-080,
+#purchaseSummaryList .azobss-zero-download-pending-078 .azobss-download-allowed-080{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14799,6 +14820,136 @@ return;
     });
   };
   window.azobssZeroDownloadPendingDebug078 = window.azobssZeroDownloadPendingDebug079;
+})();
+</script>
+<script id="azobss-pabm-download-no-flash-080-js">
+(function(){
+  if(window.__azobssPabmDownloadNoFlash080) return;
+  window.__azobssPabmDownloadNoFlash080 = true;
+
+  var scheduled=false;
+
+  function allText(r){return String((r&&r.innerText)||'')+'\n'+String((r&&r.outerHTML)||'');}
+  function isHeader(r){
+    var t=String((r&&r.innerText)||'').toLowerCase();
+    return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);
+  }
+  function isRow(r){
+    return r&&!isHeader(r)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(allText(r));
+  }
+  function countObj(r){
+    var m=allText(r).match(/(\d+)\s*\/\s*5/);
+    return m?{used:Number(m[1]),raw:m[0]}:null;
+  }
+  function zero(r){var c=countObj(r);return !!(c&&c.used===0);}
+  function nonzero(r){var c=countObj(r);return !!(c&&c.used>0);}
+  function roots(){
+    return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);
+  }
+  function rows(){
+    var out=[];
+    roots().forEach(function(root){
+      root.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]').forEach(function(r){
+        if(isRow(r)) out.push(r);
+      });
+    });
+    return out;
+  }
+  function box(r){return r.querySelector('.col-action,.user-pa-pending-action,.user-pa-action-with-count')||r;}
+  function ensurePending(r){
+    var b=box(r);
+    var s=b.querySelector('.azobss-visible-pending-label-078');
+    if(!s){
+      s=document.createElement('span');
+      s.className='azobss-visible-pending-label-078 azobss-strict-pending-label-075 user-pa-download is-locked is-pending-status';
+      s.textContent='Pending Payment';
+      b.insertBefore(s,b.firstChild);
+    }
+  }
+  function blockDownloads(r){
+    r.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.azobss-visible-pending-label-078),a[data-download-url],button[data-download-url]').forEach(function(btn){
+      if(btn.classList.contains('azobss-visible-pending-label-078')) return;
+      btn.classList.remove('azobss-download-allowed-080');
+      btn.classList.add('azobss-strict-hide-download-075','azobss-pending-download-guard','is-pending-status');
+      btn.setAttribute('aria-disabled','true');
+      btn.setAttribute('tabindex','-1');
+      btn.removeAttribute('href');
+      btn.removeAttribute('data-download-url');
+      btn.onclick=function(ev){
+        if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}
+        return false;
+      };
+    });
+  }
+  function allowDownloads(r){
+    r.classList.remove('azobss-zero-download-pending-078');
+    r.querySelectorAll('.azobss-visible-pending-label-078').forEach(function(x){x.remove();});
+    r.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download').forEach(function(btn){
+      if(btn.classList.contains('azobss-visible-pending-label-078')) return;
+      var t=String(btn.textContent||'').toLowerCase();
+      if(/download/.test(t)||btn.classList.contains('user-pa-download')){
+        btn.classList.add('azobss-download-allowed-080');
+        btn.classList.remove('azobss-strict-hide-download-075','azobss-pending-download-guard','is-pending-status');
+        btn.removeAttribute('aria-disabled');
+        btn.removeAttribute('tabindex');
+      }
+    });
+  }
+  function run(){
+    scheduled=false;
+    rows().forEach(function(r){
+      if(zero(r)){
+        r.classList.add('azobss-zero-download-pending-078','azobss-strict-pending-075');
+        r.classList.remove('azobss-strict-paid-075');
+        blockDownloads(r);
+        ensurePending(r);
+      }else if(nonzero(r)){
+        allowDownloads(r);
+      }
+    });
+  }
+  function guard(){
+    if(scheduled) return;
+    scheduled=true;
+    requestAnimationFrame(run);
+  }
+
+  document.addEventListener('click',function(ev){
+    var target=ev.target&&ev.target.closest?ev.target.closest('.user-pa-download,a[data-download-url],button[data-download-url]'):null;
+    if(!target) return;
+    var r=target.closest('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]');
+    if(r&&zero(r)){
+      ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();
+      guard();return false;
+    }
+  },true);
+
+  document.addEventListener('DOMContentLoaded',guard);
+  if(document.readyState!=='loading')guard();
+  window.addEventListener('focus',guard);
+  window.addEventListener('azobss-purchase-records-rendered',guard);
+  setTimeout(guard,50);setTimeout(guard,200);setTimeout(guard,700);setTimeout(guard,1500);
+  setTimeout(function(){
+    roots().forEach(function(root){
+      try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}
+    });
+  },400);
+
+  window.azobssNoFlashDownloadDebug080=function(){
+    run();
+    return rows().map(function(r,i){
+      var t=String(r.innerText||'').replace(/\s+/g,' ').trim();
+      return {
+        index:i+1,
+        item:(t.match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[t.slice(0,40)])[0],
+        count:countObj(r),
+        isZeroOfFive:zero(r),
+        allowedDownloads:r.querySelectorAll('.azobss-download-allowed-080').length,
+        hiddenDownloads:r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length,
+        pendingLabels:r.querySelectorAll('.azobss-visible-pending-label-078').length
+      };
+    });
+  };
 })();
 </script>
 </body>
