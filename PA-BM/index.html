@@ -8127,6 +8127,70 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   pointer-events:none!important;
 }
 </style>
+<style id="azobss-pabm-pending-label-visible-081-css">
+/* 081: show Pending Payment label clearly for 0/5 rows */
+#userPaPurchaseList .azobss-zero-download-pending-078 .azobss-pending-label-wrap-081,
+#purchaseSummaryList .azobss-zero-download-pending-078 .azobss-pending-label-wrap-081{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:6px!important;
+  white-space:nowrap!important;
+}
+#userPaPurchaseList .azobss-pending-label-081,
+#purchaseSummaryList .azobss-pending-label-081{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:24px!important;
+  padding:0 10px!important;
+  border-radius:999px!important;
+  background:rgba(245,158,11,.20)!important;
+  border:1px solid rgba(245,158,11,.85)!important;
+  color:#fbbf24!important;
+  font-weight:900!important;
+  font-size:11px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#userPaPurchaseList .azobss-zero-download-pending-078 .az-download-count-081,
+#purchaseSummaryList .azobss-zero-download-pending-078 .az-download-count-081,
+#userPaPurchaseList .azobss-zero-download-pending-078 .az-action-download-count,
+#purchaseSummaryList .azobss-zero-download-pending-078 .az-action-download-count,
+#userPaPurchaseList .azobss-zero-download-pending-078 .az-download-count,
+#purchaseSummaryList .azobss-zero-download-pending-078 .az-download-count{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  color:#e5e7eb!important;
+  font-weight:900!important;
+  font-size:11px!important;
+  white-space:nowrap!important;
+}
+#userPaPurchaseList .azobss-zero-download-pending-078 .user-pa-action-with-count,
+#purchaseSummaryList .azobss-zero-download-pending-078 .user-pa-action-with-count,
+#userPaPurchaseList .azobss-zero-download-pending-078 .col-action,
+#purchaseSummaryList .azobss-zero-download-pending-078 .col-action{
+  min-width:150px!important;
+  justify-content:flex-end!important;
+}
+@media(max-width:620px){
+  #userPaPurchaseList .azobss-pending-label-081,
+  #purchaseSummaryList .azobss-pending-label-081{
+    font-size:10px!important;
+    padding:0 7px!important;
+  }
+  #userPaPurchaseList .azobss-zero-download-pending-078 .user-pa-action-with-count,
+  #purchaseSummaryList .azobss-zero-download-pending-078 .user-pa-action-with-count,
+  #userPaPurchaseList .azobss-zero-download-pending-078 .col-action,
+  #purchaseSummaryList .azobss-zero-download-pending-078 .col-action{
+    min-width:118px!important;
+  }
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14947,6 +15011,155 @@ return;
         allowedDownloads:r.querySelectorAll('.azobss-download-allowed-080').length,
         hiddenDownloads:r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length,
         pendingLabels:r.querySelectorAll('.azobss-visible-pending-label-078').length
+      };
+    });
+  };
+})();
+</script>
+<script id="azobss-pabm-pending-label-visible-081-js">
+(function(){
+  if(window.__azobssPabmPendingLabelVisible081) return;
+  window.__azobssPabmPendingLabelVisible081 = true;
+
+  var scheduled=false;
+
+  function allText(r){return String((r&&r.innerText)||'')+'\n'+String((r&&r.outerHTML)||'');}
+  function isHeader(r){
+    var t=String((r&&r.innerText)||'').toLowerCase();
+    return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);
+  }
+  function isRow(r){
+    return r&&!isHeader(r)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(allText(r));
+  }
+  function countObj(r){
+    var m=allText(r).match(/(\d+)\s*\/\s*5/);
+    return m?{used:Number(m[1]),raw:m[0]}:null;
+  }
+  function zero(r){var c=countObj(r);return !!(c&&c.used===0);}
+  function roots(){
+    return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);
+  }
+  function rows(){
+    var out=[];
+    roots().forEach(function(root){
+      root.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]').forEach(function(r){
+        if(isRow(r)) out.push(r);
+      });
+    });
+    return out;
+  }
+  function actionBox(r){return r.querySelector('.col-action,.user-pa-pending-action,.user-pa-action-with-count')||r;}
+
+  function findCountNode(r){
+    var candidates=Array.from(r.querySelectorAll('.az-action-download-count,.az-download-count,.download-count,.user-pa-download-count,span,small,b'));
+    for(var i=0;i<candidates.length;i++){
+      if(/\d+\s*\/\s*5/.test(String(candidates[i].textContent||''))) return candidates[i];
+    }
+    return null;
+  }
+
+  function ensurePendingDisplay(r){
+    var box=actionBox(r);
+    var count=countObj(r);
+    var countText=count?count.raw:'0/5';
+
+    r.classList.add('azobss-zero-download-pending-078','azobss-strict-pending-075');
+
+    // Hide any real download buttons.
+    r.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.azobss-pending-label-081)').forEach(function(btn){
+      if(btn.classList.contains('azobss-pending-label-081')) return;
+      var t=String(btn.textContent||'').toLowerCase();
+      if(/download/.test(t)||btn.getAttribute('href')||btn.hasAttribute('data-download-url')||btn.classList.contains('azobss-download-allowed-080')){
+        btn.classList.remove('azobss-download-allowed-080');
+        btn.classList.add('azobss-strict-hide-download-075','azobss-pending-download-guard','is-pending-status');
+        btn.setAttribute('aria-disabled','true');
+        btn.setAttribute('tabindex','-1');
+        btn.removeAttribute('href');
+        btn.removeAttribute('data-download-url');
+      }
+    });
+
+    // Remove older pending labels to prevent hidden class conflicts.
+    box.querySelectorAll('.azobss-visible-pending-label-078,.azobss-strict-pending-label-075,.azobss-pending-payment-label-074').forEach(function(x){
+      if(!x.classList.contains('azobss-pending-label-081')) x.remove();
+    });
+
+    var wrap=box.querySelector('.azobss-pending-label-wrap-081');
+    if(!wrap){
+      wrap=document.createElement('span');
+      wrap.className='azobss-pending-label-wrap-081';
+      box.insertBefore(wrap,box.firstChild);
+    }
+
+    var label=wrap.querySelector('.azobss-pending-label-081');
+    if(!label){
+      label=document.createElement('span');
+      label.className='azobss-pending-label-081 user-pa-download is-locked is-pending-status';
+      label.textContent='Pending Payment';
+      wrap.appendChild(label);
+    }
+
+    var countEl=wrap.querySelector('.az-download-count-081');
+    if(!countEl){
+      countEl=document.createElement('span');
+      countEl.className='az-download-count-081';
+      wrap.appendChild(countEl);
+    }
+    countEl.textContent='↓ '+countText;
+
+    // Hide duplicate old visible count if outside our wrap.
+    var oldCount=findCountNode(r);
+    if(oldCount && !wrap.contains(oldCount)){
+      oldCount.style.setProperty('display','none','important');
+    }
+  }
+
+  function restoreIfNotZero(r){
+    if(zero(r)) return;
+    var box=actionBox(r);
+    r.classList.remove('azobss-zero-download-pending-078');
+    box.querySelectorAll('.azobss-pending-label-wrap-081,.azobss-pending-label-081').forEach(function(x){x.remove();});
+    r.querySelectorAll('[style]').forEach(function(x){
+      if(/\d+\s*\/\s*5/.test(String(x.textContent||''))) x.style.removeProperty('display');
+    });
+  }
+
+  function run(){
+    scheduled=false;
+    rows().forEach(function(r){
+      if(zero(r)) ensurePendingDisplay(r);
+      else restoreIfNotZero(r);
+    });
+  }
+  function guard(){
+    if(scheduled) return;
+    scheduled=true;
+    requestAnimationFrame(run);
+  }
+
+  document.addEventListener('DOMContentLoaded',guard);
+  if(document.readyState!=='loading') guard();
+  window.addEventListener('focus',guard);
+  window.addEventListener('azobss-purchase-records-rendered',guard);
+  setTimeout(guard,50);setTimeout(guard,250);setTimeout(guard,900);setTimeout(guard,1800);
+  setTimeout(function(){
+    roots().forEach(function(root){
+      try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}
+    });
+  },500);
+
+  window.azobssPendingLabelDebug081=function(){
+    run();
+    return rows().map(function(r,i){
+      var t=String(r.innerText||'').replace(/\s+/g,' ').trim();
+      return {
+        index:i+1,
+        item:(t.match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[t.slice(0,40)])[0],
+        count:countObj(r),
+        isZeroOfFive:zero(r),
+        pendingLabel:r.querySelectorAll('.azobss-pending-label-081').length,
+        allowedDownloads:r.querySelectorAll('.azobss-download-allowed-080').length,
+        hiddenDownloads:r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length
       };
     });
   };
