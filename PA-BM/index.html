@@ -14495,6 +14495,87 @@ return;
   };
 })();
 </script>
+<script id="azobss-pabm-strict-row-filter-076-js">
+(function(){
+  if(window.__azobssPabmStrictRowFilter076) return;
+  window.__azobssPabmStrictRowFilter076 = true;
+
+  function dec(s){s=String(s||"");try{s=decodeURIComponent(s)}catch(e){} return s.replace(/&quot;/g,'"').replace(/&#34;/g,'"').replace(/&amp;/g,'&');}
+  function text(row){return dec((row&&row.innerText||"")+"\n"+(row&&row.outerHTML||"")).toLowerCase();}
+  function isHeader(row){
+    var t=String(row&&row.innerText||row&&row.textContent||"").trim().toLowerCase();
+    if(!t) return true;
+    if(/item\s+negeri\s+rm\s+harga/.test(t)) return true;
+    if(/tarikh\s*\/\s*masa/.test(t) && !/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t)) return true;
+    if(row.querySelector&&row.querySelector('th')) return true;
+    return false;
+  }
+  function isReal(row){
+    if(!row||isHeader(row)) return false;
+    var raw=text(row);
+    return /(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,}|itemcode|downloadurl|purchaseid|recordid|paymentstatus|paid%22|verified%22)/i.test(raw);
+  }
+  function paid(row){
+    var r=text(row);
+    if(/("paid"\s*:\s*true|paid%22%3atrue|"verified"\s*:\s*true|verified%22%3atrue)/i.test(r)) return true;
+    if(/("status"\s*:\s*"(paid|verified|complete|completed|success|successful|approved)"|status%22%3a%22(paid|verified|complete|completed|success|successful|approved))/i.test(r)) return true;
+    if(/\b(payment\s*verified|download\s*ready|successful|paid|verified)\b/i.test(r) && !pending(row)) return true;
+    return false;
+  }
+  function pending(row){
+    var r=text(row);
+    if(/("paid"\s*:\s*false|paid%22%3afalse|"verified"\s*:\s*false|verified%22%3afalse)/i.test(r)) return true;
+    if(/("status"\s*:\s*"(pending|unpaid|created|new|open|processing)"|status%22%3a%22(pending|unpaid|created|new|open|processing))/i.test(r)) return true;
+    if(/\b(pending\s*payment|unpaid|belum\s*bayar|menunggu\s*bayaran|is-pending-status)\b/i.test(r)) return true;
+    return false;
+  }
+  function hasUrl(row){return /(downloadurl|download-url|securedownload|token=|\/api\/pa-bm-download|\/api\/pa-pdf|data-download-url|href=)/i.test(text(row));}
+  function shouldPending(row){
+    if(!isReal(row)) return false;
+    if(paid(row)) return false;
+    if(pending(row)) return true;
+    if(hasUrl(row)&&/(0\s*\/\s*5|pending|locked|is-pending-status)/i.test(text(row))) return true;
+    return false;
+  }
+  function rows(){
+    return Array.from(document.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]')).filter(isReal);
+  }
+  function force(){
+    rows().forEach(function(row){
+      if(!shouldPending(row)) return;
+      row.classList.add('azobss-strict-pending-075'); row.classList.remove('azobss-strict-paid-075');
+      var action=row.querySelector('.col-action,.user-pa-pending-action,.user-pa-action-with-count')||row;
+      row.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.azobss-strict-pending-label-075),a[data-download-url],button[data-download-url]').forEach(function(btn){
+        if(btn.classList.contains('azobss-strict-pending-label-075')) return;
+        var label=String(btn.textContent||'').toLowerCase();
+        if(/download/.test(label)||btn.hasAttribute('data-download-url')||btn.getAttribute('href')||btn.classList.contains('user-pa-download')){
+          btn.classList.add('azobss-strict-hide-download-075','is-pending-status');
+          btn.setAttribute('aria-disabled','true'); btn.setAttribute('tabindex','-1');
+          btn.removeAttribute('href'); btn.removeAttribute('data-download-url'); btn.removeAttribute('download');
+          btn.onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}return false;};
+        }
+      });
+      if(!action.querySelector('.azobss-strict-pending-label-075')){
+        var s=document.createElement('span');
+        s.className='azobss-strict-pending-label-075 user-pa-download is-locked is-pending-status';
+        s.textContent='Pending Payment'; action.insertBefore(s,action.firstChild);
+      }
+    });
+  }
+  window.azobssStrictPendingStatusDebug076=function(){
+    force();
+    return rows().map(function(row,i){
+      var t=String(row.innerText||'').replace(/\s+/g,' ').trim();
+      return {index:i+1,item:(t.match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[t.slice(0,40)])[0],text:t.slice(0,220),shouldBePending:shouldPending(row),explicitPaid:paid(row),explicitPending:pending(row),hasDownloadUrl:hasUrl(row),hiddenDownloads:row.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length,pendingLabels:row.querySelectorAll('.azobss-strict-pending-label-075,.azobss-pending-payment-label-074').length};
+    });
+  };
+  window.azobssStrictPendingStatusDebug075=window.azobssStrictPendingStatusDebug076;
+  document.addEventListener('DOMContentLoaded',force); if(document.readyState!=='loading') force();
+  window.addEventListener('focus',force); window.addEventListener('azobss-purchase-records-rendered',force);
+  setTimeout(force,100); setTimeout(force,600); setTimeout(force,1600);
+  try{new MutationObserver(force).observe(document.documentElement,{childList:true,subtree:true,characterData:true});}catch(e){}
+})();
+</script>
 </body>
 </html>
 <script>
