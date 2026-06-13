@@ -2880,6 +2880,30 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   min-height:0!important;
 }
 </style>
+<style id="azobss-software-all-desc-full-090-css">
+/* 090: full visible descriptions for ALL software cards */
+#softwareList .software-card :is(p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description),
+#softwareList .software-item :is(p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description),
+.software-grid .software-card :is(p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description),
+.software-card :is(.software-desc,.software-description,.card-description,.tool-description,.description,p),
+.software-item :is(.software-desc,.software-description,.card-description,.tool-description,.description,p){
+  display:block!important;
+  -webkit-line-clamp:unset!important;
+  line-clamp:unset!important;
+  -webkit-box-orient:unset!important;
+  max-height:none!important;
+  height:auto!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-card,.software-item{
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -7914,6 +7938,51 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
         overflow:cs.overflow,
         height:Math.round(desc.getBoundingClientRect().height)
       };
+    }).filter(Boolean);
+  };
+})();
+</script>
+<script id="azobss-software-all-desc-full-090-js">
+(function(){
+  if(window.__azobssSoftwareAllDescFull090) return;
+  window.__azobssSoftwareAllDescFull090=true;
+  function isDesc(el){
+    var txt=(el.textContent||'').trim();
+    var cls=(el.className||'')+'';
+    return txt.length>14 && (/desc|description|software-desc|tool-description|card-description/i.test(cls) || (el.tagName&&el.tagName.toLowerCase()==='p' && /software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(txt)));
+  }
+  function clean(){
+    document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]').forEach(function(card){
+      card.style.setProperty('height','auto','important');
+      card.style.setProperty('max-height','none','important');
+      card.style.setProperty('overflow','visible','important');
+      card.querySelectorAll('p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description').forEach(function(el){
+        if(!isDesc(el)) return;
+        ['-webkit-line-clamp','line-clamp','-webkit-box-orient','max-height','height','overflow','text-overflow','white-space'].forEach(function(k){
+          var v={ '-webkit-line-clamp':'unset','line-clamp':'unset','-webkit-box-orient':'unset','max-height':'none','height':'auto','overflow':'visible','text-overflow':'clip','white-space':'normal'}[k];
+          el.style.setProperty(k,v,'important');
+        });
+        el.style.setProperty('display','block','important');
+        el.style.setProperty('overflow-wrap','anywhere','important');
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded',clean);
+  if(document.readyState!=='loading') clean();
+  [100,400,1000,2000].forEach(function(t){setTimeout(clean,t);});
+  window.addEventListener('focus',clean);
+  window.addEventListener('azobss-software-rendered',clean);
+  setTimeout(function(){
+    var root=document.getElementById('softwareList') || document.querySelector('.software-grid');
+    if(root) try{new MutationObserver(function(){requestAnimationFrame(clean);}).observe(root,{childList:true,subtree:true});}catch(e){}
+  },700);
+  window.azobssSoftwareDescDebug090=function(){
+    clean();
+    return Array.from(document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]')).map(function(card,i){
+      var desc=Array.from(card.querySelectorAll('p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description')).find(isDesc);
+      if(!desc) return null;
+      var cs=getComputedStyle(desc);
+      return {index:i+1,text:(desc.textContent||'').trim(),lineClamp:cs.webkitLineClamp||cs.lineClamp,maxHeight:cs.maxHeight,overflow:cs.overflow,height:Math.round(desc.getBoundingClientRect().height)};
     }).filter(Boolean);
   };
 })();
