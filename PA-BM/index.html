@@ -8133,6 +8133,32 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   }
 }
 </style>
+<style id="azobss-pabm-pending-action-simple-088-css">
+.az-pabm-pending-row-086 .col-action{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  min-width:150px!important;width:150px!important;max-width:150px!important;
+  overflow:hidden!important;white-space:nowrap!important;padding:0 6px!important;box-sizing:border-box!important;
+}
+.az-pabm-pending-final-088{
+  display:inline-flex!important;visibility:visible!important;opacity:1!important;
+  align-items:center!important;justify-content:center!important;
+  width:128px!important;min-width:128px!important;max-width:128px!important;height:28px!important;
+  padding:0 8px!important;border-radius:999px!important;background:rgba(245,158,11,.22)!important;
+  border:1px solid rgba(245,158,11,.90)!important;color:#fbbf24!important;font-weight:900!important;
+  font-size:11px!important;line-height:1!important;text-align:center!important;white-space:nowrap!important;
+  box-sizing:border-box!important;position:static!important;transform:none!important;pointer-events:none!important;
+}
+.az-pabm-pending-row-086 .col-action > *:not(.az-pabm-pending-final-088){
+  display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;pointer-events:none!important;
+}
+.az-pabm-pending-row-086 .user-pa-action-with-count,
+.az-pabm-pending-row-086 .az-pabm-pending-action-086{display:none!important;}
+@media(max-width:760px){
+  .az-pabm-pending-row-086 .col-action{min-width:118px!important;width:118px!important;max-width:118px!important;padding:0 4px!important;}
+  .az-pabm-pending-final-088{width:104px!important;min-width:104px!important;max-width:104px!important;font-size:10px!important;padding:0 6px!important;}
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14674,6 +14700,108 @@ return;
         labelLeft:labelBox?Math.round(labelBox.left-rowBox.left):null,
         labelWidth:labelBox?Math.round(labelBox.width):null,
         misplacedLeftovers:row.querySelectorAll('.az-pabm-misplaced-pending-087').length
+      };
+    });
+  };
+})();
+</script>
+<script id="azobss-pabm-pending-action-simple-088-js">
+(function(){
+  if(window.__azobssPabmPendingActionSimple088) return;
+  window.__azobssPabmPendingActionSimple088 = true;
+
+  var scheduled=false;
+
+  function raw(row){return String((row&&row.innerText)||'')+'\n'+String((row&&row.outerHTML)||'');}
+  function isHeader(row){
+    var t=String((row&&row.innerText)||'').toLowerCase();
+    return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);
+  }
+  function isRow(row){
+    return row&&!isHeader(row)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(raw(row));
+  }
+  function roots(){
+    return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);
+  }
+  function pendingRows(){
+    var out=[];
+    roots().forEach(function(root){
+      root.querySelectorAll('.az-pabm-pending-row-086,.azobss-pending-state-084,.azobss-zero-download-pending-078,.azobss-strict-pending-075').forEach(function(row){
+        if(isRow(row)) out.push(row);
+      });
+    });
+    return out;
+  }
+  function actionCell(row){
+    var cell=row.querySelector('.col-action');
+    if(cell) return cell;
+    var children=Array.from(row.children).filter(function(x){return x.nodeType===1;});
+    if(children.length){
+      cell=children[children.length-1];
+      cell.classList.add('col-action');
+      return cell;
+    }
+    cell=document.createElement('div');
+    cell.className='col-action';
+    row.appendChild(cell);
+    return cell;
+  }
+  function simplify(row){
+    row.classList.add('az-pabm-pending-row-086');
+    var cell=actionCell(row);
+    Array.from(cell.children).forEach(function(ch){ ch.remove(); });
+
+    var label=document.createElement('span');
+    label.className='az-pabm-pending-final-088';
+    label.textContent='Pending Payment';
+    cell.appendChild(label);
+
+    row.querySelectorAll('.az-pabm-pending-action-086,.az-pabm-pending-label-086,.azobss-pending-label-wrap-081,.azobss-pending-force-label-083,.user-pa-action-with-count,.az-action-download-count,.az-download-count,.download-count,.az-download-count-081').forEach(function(x){
+      if(cell.contains(x)) return;
+      x.style.setProperty('display','none','important');
+      x.style.setProperty('visibility','hidden','important');
+      x.style.setProperty('width','0','important');
+      x.style.setProperty('min-width','0','important');
+    });
+
+    row.querySelectorAll('a.user-pa-download,button.user-pa-download,a[data-download-url],button[data-download-url]').forEach(function(btn){
+      if(cell.contains(btn)) return;
+      btn.style.setProperty('display','none','important');
+      btn.setAttribute('aria-disabled','true');
+      btn.removeAttribute('href');
+      btn.removeAttribute('data-download-url');
+    });
+  }
+  function run(){
+    scheduled=false;
+    pendingRows().forEach(simplify);
+  }
+  function guard(){
+    if(scheduled) return;
+    scheduled=true;
+    requestAnimationFrame(run);
+  }
+
+  document.addEventListener('DOMContentLoaded',guard);
+  if(document.readyState!=='loading') guard();
+  window.addEventListener('focus',guard);
+  window.addEventListener('azobss-purchase-records-rendered',guard);
+  setTimeout(guard,80);setTimeout(guard,400);setTimeout(guard,1200);setTimeout(guard,2500);
+  setTimeout(function(){roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}});},500);
+
+  window.azobssPendingSimpleDebug088=function(){
+    run();
+    return pendingRows().map(function(row,i){
+      var cell=actionCell(row);
+      var label=cell.querySelector('.az-pabm-pending-final-088');
+      return {
+        index:i+1,
+        item:(String(row.innerText||'').match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[''])[0],
+        actionChildren:cell.children.length,
+        labelText:label?label.textContent:'',
+        labelWidth:label?Math.round(label.getBoundingClientRect().width):0,
+        cellWidth:Math.round(cell.getBoundingClientRect().width),
+        leftoverInCell:Array.from(cell.children).filter(function(x){return !x.classList.contains('az-pabm-pending-final-088');}).length
       };
     });
   };
