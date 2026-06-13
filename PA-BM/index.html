@@ -8159,6 +8159,42 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   .az-pabm-pending-final-088{width:104px!important;min-width:104px!important;max-width:104px!important;font-size:10px!important;padding:0 6px!important;}
 }
 </style>
+<style id="azobss-pabm-zero-count-action-091-css">
+.az-pabm-zero-pending-091 .col-action,
+.az-pabm-zero-pending-091 .user-pa-action-with-count,
+.az-pabm-zero-pending-091 .user-pa-pending-action{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  min-width:150px!important;width:150px!important;max-width:150px!important;
+  overflow:hidden!important;white-space:nowrap!important;padding:0 6px!important;box-sizing:border-box!important;
+}
+.az-pabm-zero-pending-label-091{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:128px!important;min-width:128px!important;max-width:128px!important;height:28px!important;
+  padding:0 8px!important;border-radius:999px!important;background:rgba(245,158,11,.22)!important;
+  border:1px solid rgba(245,158,11,.90)!important;color:#fbbf24!important;font-weight:900!important;
+  font-size:11px!important;line-height:1!important;text-align:center!important;white-space:nowrap!important;
+  box-sizing:border-box!important;pointer-events:none!important;
+}
+.az-pabm-zero-pending-091 .col-action > *:not(.az-pabm-zero-pending-label-091),
+.az-pabm-zero-pending-091 .user-pa-action-with-count > *:not(.az-pabm-zero-pending-label-091),
+.az-pabm-zero-pending-091 .user-pa-pending-action > *:not(.az-pabm-zero-pending-label-091),
+.az-pabm-zero-pending-091 a.user-pa-download,
+.az-pabm-zero-pending-091 button.user-pa-download,
+.az-pabm-zero-pending-091 a[data-download-url],
+.az-pabm-zero-pending-091 button[data-download-url],
+.az-pabm-zero-pending-091 .az-action-download-count,
+.az-pabm-zero-pending-091 .az-download-count,
+.az-pabm-zero-pending-091 .download-count{
+  display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;pointer-events:none!important;
+}
+@media(max-width:760px){
+  .az-pabm-zero-pending-091 .col-action,
+  .az-pabm-zero-pending-091 .user-pa-action-with-count,
+  .az-pabm-zero-pending-091 .user-pa-pending-action{min-width:118px!important;width:118px!important;max-width:118px!important;padding:0 4px!important;}
+  .az-pabm-zero-pending-label-091{width:104px!important;min-width:104px!important;max-width:104px!important;font-size:10px!important;padding:0 6px!important;}
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -14805,6 +14841,27 @@ return;
       };
     });
   };
+})();
+</script>
+<script id="azobss-pabm-zero-count-action-091-js">
+(function(){
+ if(window.__azobssPabmZeroCountAction091)return;window.__azobssPabmZeroCountAction091=true;
+ var scheduled=false;
+ function raw(r){return String((r&&r.innerText)||'')+'\n'+String((r&&r.outerHTML)||'');}
+ function isHeader(r){var t=String((r&&r.innerText)||'').toLowerCase();return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);}
+ function isRow(r){return r&&!isHeader(r)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(raw(r));}
+ function roots(){return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);}
+ function rows(){var a=[];roots().forEach(function(root){root.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id],tr').forEach(function(r){if(isRow(r))a.push(r);});});return a;}
+ function hasZero(r){return /(?:^|\s|>)0\s*\/\s*5(?:\s|<|$)/.test(raw(r));}
+ function hasPos(r){var m=raw(r).match(/(?:^|\s|>)([1-5])\s*\/\s*5(?:\s|<|$)/);return !!m&&Number(m[1])>0;}
+ function pending(r){var s=raw(r).toLowerCase();return !hasPos(r)&&(hasZero(r)||/pending\s*payment|unpaid|belum\s*bayar|menunggu\s*bayaran/.test(s)||/"paid"\s*:\s*false|"verified"\s*:\s*false|paid%22%3afalse|verified%22%3afalse/.test(s));}
+ function action(r){var c=r.querySelector('.col-action,.user-pa-action-with-count,.user-pa-pending-action');if(c)return c;var k=Array.from(r.children).filter(function(x){return x.nodeType===1;});if(k.length){c=k[k.length-1];c.classList.add('col-action');return c;}c=document.createElement('div');c.className='col-action';r.appendChild(c);return c;}
+ function force(r){r.classList.add('az-pabm-zero-pending-091','az-pabm-pending-row-086');var c=action(r);Array.from(c.children).forEach(function(x){x.remove();});var lab=document.createElement('span');lab.className='az-pabm-zero-pending-label-091';lab.textContent='Pending Payment';c.appendChild(lab);r.querySelectorAll('a.user-pa-download,button.user-pa-download,a[data-download-url],button[data-download-url]').forEach(function(b){if(c.contains(b))return;b.style.setProperty('display','none','important');b.style.setProperty('visibility','hidden','important');b.setAttribute('aria-disabled','true');b.setAttribute('tabindex','-1');b.removeAttribute('href');b.removeAttribute('data-download-url');b.onclick=function(e){if(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}return false;});}
+ function run(){scheduled=false;rows().forEach(function(r){if(pending(r))force(r);});}
+ function guard(){if(scheduled)return;scheduled=true;requestAnimationFrame(run);}
+ document.addEventListener('DOMContentLoaded',guard);if(document.readyState!=='loading')guard();window.addEventListener('focus',guard);window.addEventListener('azobss-purchase-records-rendered',guard);[50,200,600,1200,2500].forEach(function(t){setTimeout(guard,t);});
+ setTimeout(function(){roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true,characterData:true});}catch(e){}});},500);
+ window.azobssZeroCountPendingDebug091=function(){run();return rows().map(function(r,i){var c=action(r),lab=c.querySelector('.az-pabm-zero-pending-label-091');return {index:i+1,item:(String(r.innerText||'').match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[''])[0],hasZeroCount:hasZero(r),hasPositiveCount:hasPos(r),shouldForcePending:pending(r),labelText:lab?lab.textContent:'',actionText:(c.innerText||'').trim()};});};
 })();
 </script>
 </body>
