@@ -1,0 +1,818 @@
+
+## Term onlineUsers count 2
+turn {id:snap.id,...snap.data()};
+    }catch(e){}
+  }
+  return null;
+}
+function item(title,meta='',actions=''){
+  return `<div class="item"><div class="item-row"><div><div class="item-title">${title}</div>${meta?`<div class="item-meta">${meta}</div>`:''}</div><div class="item-actions">${actions}</div></div></div>`;
+}
+async function safeGet(q){
+  try{return await getDocs(q)}catch(e){console.warn('Admin dashboard query failed:',e);return null}
+}
+
+async function loadOverview(){
+  const users=await safeGet(query(collection(db,'users'),limit(50)));
+  const online=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+
+  $('#statUsers').textContent=users?.size??0;
+  $('#statOnline').textContent=online?.size??0;
+  $('#statLogins').textContent=logins?.size??0;
+  $('#statVisits').textContent=guests?.size??0;
+  let openSupportCount=0;
+  support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
+  let pendingPurchaseCount=0;
+  purchases?.forEach(d=>{const x=d.data(); const status=String(x.status||'').toLowerCase(); if(!status || status==='pending' || status==='unpaid' || status==='waiting') pendingPurchaseCount++;});
+  $('#statSupport').textContent=openSupportCount;
+  $('#statNotifications').textContent=notif?.size??0;
+  $('#statPurchases').textContent=pendingPurchaseCount;
+  $('#statGuests').textContent=guests?.size??0;
+
+  const supportRows=[];
+  support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||
+---
+owPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);
+    rows.push(item(
+      esc(d.id),
+      `${esc(x.email||x.authEmail||'-')} • ${allowed?'<span class="ok">PA/BM allowed</span>':'<span class="danger">PA/BM off</span>'} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
+      `<button class="btn gray" data-edit-user="${esc(d.id)}">Toggle PA/BM</button><button class="btn red" data-del-user="${esc(d.id)}">Delete</button>`
+    ));
+  });
+  $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
+}
+async function loadOnline(){
+  const snap=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();rows.push(item(esc(x.username||d.id),`${esc(x.email||'')} • Status: <span class="ok">${esc(x.status||'online')}</span> • Seen: ${fmtDate(x.lastSeenMs||x.updatedAtMs||x.updatedAt)}`))});
+  $('#onlineList').innerHTML=rows.join('')||'<div class="item">No online users.</div>';
+}
+async function loadActivity(){
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const lr=[]; logins?.forEach(d=>{const x=d.data();lr.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • Phone: ${esc(x.phone||'-')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const gr=[]; guests?.forEach(d=>{const x=d.data();gr.push(item('Guest',`IP: ${esc(x.ipAddress||'-')} • Page: ${esc(x.page||'/')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  $('#loginHistoryList').innerHTML=lr.join('')||'<div class="item">No login history.</div>';
+  $('#guestHistoryList').innerHTML=gr.join('')||'<div class="item">No guest history.</div>';
+}
+async function loadSupport(){
+  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x=d.data();
+    rows.push(`<div class="item">
+      <div class="item-row"><div><div class="item-title">${esc(x.subject||'Support Request')}</div><div>${esc(x.message||'')}</div>${x.reply?`<div class="item-meta ok">Reply: ${esc(x.reply
+
+
+## Term sitePresence
+NOT FOUND
+
+
+## Term loadOnline count 3
+udes(search))return;
+    const allowed=!!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);
+    rows.push(item(
+      esc(d.id),
+      `${esc(x.email||x.authEmail||'-')} • ${allowed?'<span class="ok">PA/BM allowed</span>':'<span class="danger">PA/BM off</span>'} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
+      `<button class="btn gray" data-edit-user="${esc(d.id)}">Toggle PA/BM</button><button class="btn red" data-del-user="${esc(d.id)}">Delete</button>`
+    ));
+  });
+  $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
+}
+async function loadOnline(){
+  const snap=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();rows.push(item(esc(x.username||d.id),`${esc(x.email||'')} • Status: <span class="ok">${esc(x.status||'online')}</span> • Seen: ${fmtDate(x.lastSeenMs||x.updatedAtMs||x.updatedAt)}`))});
+  $('#onlineList').innerHTML=rows.join('')||'<div class="item">No online users.</div>';
+}
+async function loadActivity(){
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const lr=[]; logins?.forEach(d=>{const x=d.data();lr.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • Phone: ${esc(x.phone||'-')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const gr=[]; guests?.forEach(d=>{const x=d.data();gr.push(item('Guest',`IP: ${esc(x.ipAddress||'-')} • Page: ${esc(x.page||'/')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  $('#loginHistoryList').innerHTML=lr.join('')||'<div class="item">No login history.</div>';
+  $('#guestHistoryList').innerHTML=gr.join('')||'<div class="item">No guest history.</div>';
+}
+async function loadSupport(){
+  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x=d.data();
+    rows.push(`<div class="item">
+      <div class="item-row"><div><div class="item-title">${esc(x.subject||'Support Request')}</div><div>${esc(x.message||'')}<
+---
+ns(); await loadOverview(); toast('Notification published.');
+}
+async function clearNotifications(){
+  if(!confirm('Delete latest notifications?'))return;
+  const snap=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)));
+  const jobs=[]; snap?.forEach(d=>jobs.push(deleteDoc(doc(db,'notifications',d.id))));
+  await Promise.all(jobs); await loadNotifications(); await loadOverview(); toast('Notifications cleared.');
+}
+async function initSection(id){
+  if(id==='overview')return loadOverview();
+  if(id==='users')return loadUsers();
+  if(id==='online')return loadOnline();
+  if(id==='activity')return loadActivity();
+  if(id==='support')return loadSupport();
+  if(id==='notifications')return loadNotifications();
+  if(id==='purchases')return loadPurchases();
+  if(id==='payments')return loadPayments();
+  if(id==='activity')return loadAdminActivity();
+  if(id==='commissions')return loadAdminCommissions();
+  if(id==='staffroles')return loadStaffRoles();
+  if(id==='settings')return loadSettings();
+}
+document.addEventListener('click',async e=>{
+  const tab=e.target.closest('[data-tab]');
+  if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
+  const edit=e.target.closest('[data-edit-user]');
+  if(edit){const id=edit.dataset.editUser;const ref=doc(db,'users',id);const s=await getDoc(ref);const x=s.data()||{};const now=!(x.paBmAllowed||x.allowPABM||x.allowPaBm||x.canAccessPaBm||x.showPaBmTab);await updateDoc(ref,{paBmAllowed:now,allowPABM:now,allowPaBm:now,canAccessPaBm:now,showPaBmTab:now,updatedAt:serverTimestamp(),updatedByAdmin:'admin-dashboard'});await loadUsers();return;}
+  const du=e.target.closest('[data-del-user]');
+  if(du&&confirm('Delete user '+du.dataset.delUser+'?')){await deleteDoc(doc(db,'users',du.dataset.delUser));await loadUsers();await loadOverview();return;}
+  const ds=e.target.closest('[data-del-support]');
+  if(ds&&confirm('Delete support message?')){await deleteDoc(doc(db,'supportMessa
+---
++id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
+  const dn=e.target.closest('[data-del-notif]');
+  if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+});
+$('#refreshUsers').addEventListener('click',loadUsers);
+$('#userSearch').addEventListener('input',()=>setTimeout(loadUsers,80));
+$('#refreshOnline').addEventListener('click',loadOnline);
+$('#refreshSupport').addEventListener('click',loadSupport);
+$('#publishNotif').addEventListener('click',publishNotification);
+$('#clearNotif').addEventListener('click',clearNotifications);
+$('#refreshPayments')?.addEventListener('click',loadPayments);
+$('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
+$('#saveStaffRole')?.addEventListener('click',saveStaffRole);
+
+onAuthStateChanged(auth,async user=>{
+  currentUser=user;
+  if(!user){$('#loginState').textContent='Please login as admin from main website first.';return;}
+  adminProfile=await getAdminProfile(user);
+  if(!isAdminUser()){$('#loginState').textContent='Access denied. Admin only.';return;}
+  $('#loginCover').classList.add('hidden');
+  $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
+  $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
+  await loadOverview();
+});
+</script>
+
+
+
+
+<script id="az-remove-hello-label-fix">
+(function(){
+  if(window.__azRemoveHelloLabelFix)return;
+  window.__azRemoveHelloLabelFix=true;
+
+  function cleanHelloText(){
+    var selectors=[
+      '#userNameText','#userName','.user-name','.username','.user-menu-name',
+      '.profile-name','.profile-label','.az-user-name','.azobss-user-name'
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(function(el){
+      if(!el || !el.textContent) return;
+      var t=el.textContent.replace(/^\s*hello\s*,?\s*/i,'').trim();
+      if(t && t!==el.textContent.trim()) el.textContent=t;
+    });
+
+    document.querySelectorAll('span,div,a,b
+
+
+## Term Online Logged-In Users count 1
+d="overviewActivity" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="users" class="section">
+      <h2>👥 Registered User Records</h2>
+      <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest 50 users are loaded.</p>
+      <div class="toolbar">
+        <input id="userSearch" placeholder="Search username, email or phone" style="flex:1;min-width:240px">
+        <button class="btn" id="refreshUsers">Search / Refresh</button>
+      </div>
+      <div id="usersList" class="list"></div>
+    </section>
+
+    <section id="online" class="section">
+      <h2>🟢 Online Logged-In Users</h2>
+      <div class="toolbar"><button class="btn" id="refreshOnline">Refresh Online Users</button></div>
+      <div id="onlineList" class="list"></div>
+    </section>
+
+    <section id="activity" class="section">
+      <h2>📈 Activity</h2>
+      <div class="card activity-panel">
+        <div class="az-activity-toolbar">
+          <input id="activitySearch" class="az-activity-search" placeholder="Search username / activity...">
+          <button class="btn" id="activityRefreshBtn" type="button">Refresh</button>
+        </div>
+        <div id="activityList" class="az-activity-list"></div>
+        <div class="az-activity-pagination">
+          <button id="activityPrevBtn" type="button">◀ Prev</button>
+          <span id="activityPageInfo" class="az-activity-page-info">Page 1 / 1</span>
+          <button id="activityNextBtn" type="button">Next ▶</button>
+        </div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Logged-In Users History</h2><div id="loginHistoryList" class="list"></div></div>
+        <div class="card"><h2>Guest Visit History</h2><div id="guestHistoryList" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="support" class="section">
+      <h2>💬 Support Inbox</h2>
+      <p class="tabs-note">Latest 50 support messages. Reply or delete messages here.</p>
+      <div class="toolbar"><button class="btn" id="refreshSupport">Refresh Support</button></div>
+      <div id="supportList" class="list"></div>
+    </section>
+
+    <section id="notifications" class="section">
+      <h2>🔔 Notifications</h2>
+      <
+
+
+## Term lastSeen count 1
+n>'} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
+      `<button class="btn gray" data-edit-user="${esc(d.id)}">Toggle PA/BM</button><button class="btn red" data-del-user="${esc(d.id)}">Delete</button>`
+    ));
+  });
+  $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
+}
+async function loadOnline(){
+  const snap=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();rows.push(item(esc(x.username||d.id),`${esc(x.email||'')} • Status: <span class="ok">${esc(x.status||'online')}</span> • Seen: ${fmtDate(x.lastSeenMs||x.updatedAtMs||x.updatedAt)}`))});
+  $('#onlineList').innerHTML=rows.join('')||'<div class="item">No online users.</div>';
+}
+async function loadActivity(){
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const lr=[]; logins?.forEach(d=>{const x=d.data();lr.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • Phone: ${esc(x.phone||'-')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const gr=[]; guests?.forEach(d=>{const x=d.data();gr.push(item('Guest',`IP: ${esc(x.ipAddress||'-')} • Page: ${esc(x.page||'/')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  $('#loginHistoryList').innerHTML=lr.join('')||'<div class="item">No login history.</div>';
+  $('#guestHistoryList').innerHTML=gr.join('')||'<div class="item">No guest history.</div>';
+}
+async function loadSupport(){
+  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x=d.data();
+    rows.push(`<div class="item">
+      <div class="item-row"><div><div class="item-title">${esc(x.subject||'Support Request')}</div><div>${esc(x.message||'')}</div>${x.reply?`<div class="item-meta ok">Reply: ${esc(x.reply)}</div>`:''}<div class="item-meta">${esc(x.email||'')} • ${esc(x.status||'open')} • ${fmtDate(x.createdAtMs||x.createdAt)}</div></div><div class="item-actions"><button class="btn red" data-del-support="${d.id}">Delete</
+
+
+## Term Seen: count 1
+er">PA/BM off</span>'} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
+      `<button class="btn gray" data-edit-user="${esc(d.id)}">Toggle PA/BM</button><button class="btn red" data-del-user="${esc(d.id)}">Delete</button>`
+    ));
+  });
+  $('#usersList').innerHTML=rows.join('')||'<div class="item">No users found.</div>';
+}
+async function loadOnline(){
+  const snap=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{const x=d.data();rows.push(item(esc(x.username||d.id),`${esc(x.email||'')} • Status: <span class="ok">${esc(x.status||'online')}</span> • Seen: ${fmtDate(x.lastSeenMs||x.updatedAtMs||x.updatedAt)}`))});
+  $('#onlineList').innerHTML=rows.join('')||'<div class="item">No online users.</div>';
+}
+async function loadActivity(){
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const lr=[]; logins?.forEach(d=>{const x=d.data();lr.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • Phone: ${esc(x.phone||'-')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const gr=[]; guests?.forEach(d=>{const x=d.data();gr.push(item('Guest',`IP: ${esc(x.ipAddress||'-')} • Page: ${esc(x.page||'/')} • Time: ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  $('#loginHistoryList').innerHTML=lr.join('')||'<div class="item">No login history.</div>';
+  $('#guestHistoryList').innerHTML=gr.join('')||'<div class="item">No guest history.</div>';
+}
+async function loadSupport(){
+  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x=d.data();
+    rows.push(`<div class="item">
+      <div class="item-row"><div><div class="item-title">${esc(x.subject||'Support Request')}</div><div>${esc(x.message||'')}</div>${x.reply?`<div class="item-meta ok">Reply: ${esc(x.reply)}</div>`:''}<div class="item-meta">${esc(x.email||'')} • ${esc(x.status||'open')} • ${fmtDate(x.createdAtMs||x.createdAt)}</div></div><div class="item-actions"><button class="btn red" data-del-support=
+
+
+## Term status count 41
+Name">Admin</span></div>
+    </div>
+
+    <section id="overview" class="section active">
+
+<div class="card" id="ownerTrackingMigrationNote">
+  <h2>🔐 Owner Tracking Migration Note</h2>
+  <p class="tabs-note">
+    Item Software/CAD lama yang diimport sebelum sistem owner tracking mungkin tiada
+    <b>ownerKey / ownerUid / ownerUsername</b>. Item lama perlu admin edit & save semula
+    atau assign owner supaya My Software / My CAD Tools / Sales / Commission boleh tapis dengan tepat.
+  </p>
+</div>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">Total Users</div><div id="statUsers" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h2>Quick Monitor</h2>
+        <div class="toolbar">
+          <button class="btn gray" data-tab="users">👥 Users</button>
+          <button class="btn gray" data-tab="online">🟢 Online Users</button>
+          <button class="btn gray" data-tab="support">💬 Support Inbox</button>
+          <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
+          <button class="btn gray" data-tab="purchases">💰 Purchases</button>
+          <button class="btn gray" data-tab="activity">📈 Activity</button>
+        </div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Late
+---
+    <div class="card"><div class="stat-label">PA/BM Total RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Software Total RM</div><div id="payTotalSoftware" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">CAD Tools Total RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">All Purchases RM</div><div id="payTotalAll" class="stat-value">0</div></div>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <h2>Payment Status</h2>
+          <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:0">
+            <div class="card"><div class="stat-label">Pending</div><div id="payPendingCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Verified/Paid</div><div id="payPaidCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Total Records</div><div id="payRecordCount" class="stat-value">0</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Quick Filter</h2>
+          <div class="toolbar">
+            <select id="paymentCategoryFilter">
+              <option value="all">All</option>
+              <option value="pabm">PA/BM</option>
+              <option value="software">Software</option>
+              <option value="cad">CAD Tools</option>
+              <option value="pending">Pending Only</option>
+              <option value="paid">Paid/Verified Only</option>
+            </select>
+            <button class="btn" id="refreshPayments">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Latest Payment / Purchase Records</h2>
+        <div id="paymentsList" class="list"></div>
+      </div>
+    </section>
+
+
+    <section id="lucky" class="section">
+      <h2>🎁 Lucky Draw</h2>
+      <div class="card">
+        <p class="tabs-note">Lucky Draw admin controls remain in the existing Lucky Draw page for now.</p>
+        <a class="btn green" href="/lucky-draw/">Open Lucky Draw Admin</a>
+      </div>
+    </section>
+
+
+
+
+---
+<div id="adminComCount" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card">
+        <h2 id="commissionFormTitle">Add / Edit Commission</h2>
+        <input type="hidden" id="commissionEditDocId">
+        <div class="toolbar">
+          <input id="commissionUsername" placeholder="Username / staff owner" style="flex:1;min-width:180px">
+          <input id="commissionProduct" placeholder="Product / sale reference" style="flex:1;min-width:180px">
+          <input id="commissionAmount" type="number" min="0" step="0.01" placeholder="Commission RM">
+          <select id="commissionStatus">
+            <option value="pending">pending</option>
+            <option value="approved">approved</option>
+            <option value="paid">paid</option>
+          </select>
+        </div>
+        <div class="toolbar">
+          <input id="commissionOwnerUid" placeholder="Owner UID optional" style="flex:1;min-width:180px">
+          <input id="commissionOwnerUsername" placeholder="Owner username optional" style="flex:1;min-width:180px">
+          <input id="commissionOwnerEmail" placeholder="Owner email optional" style="flex:1;min-width:180px">
+        </div>
+        <textarea id="commissionNote" placeholder="Note" style="width:100%;min-height:90px"></textarea>
+        <div class="toolbar">
+          <button class="btn green" id="saveCommissionRecord">Save Commission</button>
+          <button class="btn gray" id="resetCommissionForm" type="button">Reset</button>
+          <button class="btn" id="refreshCommissionRecords" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Commission Records</h2>
+        <div id="adminCommissionList" class="list"></div>
+      </div>
+    </section>
+
+
+    <section id="staffroles" class="section">
+      <h2>🧑‍💼 Staff / Semi-Admin Roles</h2>
+      <p class="tabs-note">Set role dan permission staff. Staff boleh akses /staff/ sahaja, bukan admin penuh.</p>
+      <div class="card">
+        <div class="toolbar">
+          <input id="staffUsername" placeholder="Username, contoh: zedanstaff" style="flex:1;min-width:220px">
+          <select id="staffRole"><option value="semiAdmin">semiAdmin</opti
+---
+sers'),limit(50)));
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(50)));
+  const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+
+  $('#statUsers').textContent=users?.size??0;
+  $('#statOnline').textContent=online?.size??0;
+  $('#statLogins').textContent=logins?.size??0;
+  $('#statVisits').textContent=guests?.size??0;
+  let openSupportCount=0;
+  support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
+  let pendingPurchaseCount=0;
+  purchases?.forEach(d=>{const x=d.data(); const status=String(x.status||'').toLowerCase(); if(!status || status==='pending' || status==='unpaid' || status==='waiting') pendingPurchaseCount++;});
+  $('#statSupport').textContent=openSupportCount;
+  $('#statNotifications').textContent=notif?.size??0;
+  $('#statPurchases').textContent=pendingPurchaseCount;
+  $('#statGuests').textContent=guests?.size??0;
+
+  const supportRows=[];
+  support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
+  $('#overviewSupport').innerHTML=supportRows.join('')||'<div class="item">No support messages.</div>';
+
+  const activityRows=[];
+  logins?.forEach(d=>{if(activityRows.length<5){const x=d.data();activityRows.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))}});
+  $('#overviewActivity').innerHTML=activityRows.join('')||'<div class="item">No activity.</div>';
+}
+
+async function loadUsers(){
+  const search=($('#userSearch').value||'').toLowerCase().trim();
+  const snap=await safeGet(query(collection(db,'user
+---
+ safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
+  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+
+  $('#statUsers').textContent=users?.size??0;
+  $('#statOnline').textContent=online?.size??0;
+  $('#statLogins').textContent=logins?.size??0;
+  $('#statVisits').textContent=guests?.size??0;
+  let openSupportCount=0;
+  support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
+  let pendingPurchaseCount=0;
+  purchases?.forEach(d=>{const x=d.data(); const status=String(x.status||'').toLowerCase(); if(!status || status==='pending' || status==='unpaid' || status==='waiting') pendingPurchaseCount++;});
+  $('#statSupport').textContent=openSupportCount;
+  $('#statNotifications').textContent=notif?.size??0;
+  $('#statPurchases').textContent=pendingPurchaseCount;
+  $('#statGuests').textContent=guests?.size??0;
+
+  const supportRows=[];
+  support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
+  $('#overviewSupport').innerHTML=supportRows.join('')||'<div class="item">No support messages.</div>';
+
+  const activityRows=[];
+  logins?.forEach(d=>{if(activityRows.length<5){const x=d.data();activityRows.push(item(esc(x.username||x.email||'Login'),`${esc(x.email||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))}});
+  $('#overviewActivity').innerHTML=activityRows.join('')||'<div class="item">No activity.</div>';
+}
+
+async function loadUsers(){
+  const search=($('#userSearch').value||'').toLowerCase().trim();
+  const snap=await safeGet(query(collection(db,'users'),limit(50)));
+  const rows=[];
+  snap?.forEach(d=>{
+    const x={id:d.id,...d.data()};
+    const hay=(d.id+' '+(x.email||'')+' '+(x.phone||x.phoneNumber||'')+' '+(x.displayName||x.name||'')).toLowerCase();
+    if(search && !hay.includes(search))return;
+ 
+
+
+## Term online count 24
+>
+</div>
+</div>
+</div>
+</header>
+<!-- AZOBSS_REAL_MARKET_STICKYBAR_END -->
+
+
+<div id="loginCover" class="login-cover">
+  <div class="login-box">
+    <h2>🔐 AZOBSS Admin Dashboard</h2>
+    <p id="loginState">Checking admin access...</p>
+    <a class="btn green" href="/">Back to AZOBSS</a>
+  </div>
+</div>
+
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
+    <nav class="nav">
+      <button data-tab="overview" class="active">📊 Overview</button>
+      <button data-tab="users">👥 Users</button>
+      <button data-tab="online">🟢 Online Users</button>
+      <button data-tab="activity">📈 Activity</button>
+      <button data-tab="support">💬 Support Inbox</button>
+      <button data-tab="notifications">🔔 Notifications</button>
+      <button data-tab="purchases">💰 Purchase Records</button>
+      <button data-tab="payments">💳 Payments & Totals</button>
+      <button data-tab="commissions">💸 Commission Manager</button>
+      <button data-tab="lucky">🎁 Lucky Draw</button>
+      <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
+      <button data-tab="settings">⚙️ Settings</button>
+      <a class="home-link" href="/">🏠 Back Home</a>
+    </nav>
+    <div class="side-footer">Admin-only module. Loads are limited to reduce Firestore quota.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title">
+        <h1>Admin Dashboard</h1>
+        <p>Monitor users, activity, support, notifications and purchases in one clean place.</p>
+      </div>
+      <div class="admin-pill"><span id="adminAvatar">Z</span><span id="adminName">Admin</span></div>
+    </div>
+
+    <section id="overview" class="section active">
+
+<div class="card" id="ownerTrackingMigrationNote">
+  <h2>🔐 Owner Tracking Migration Note</h2>
+  <p class="tabs-note">
+    Item Software/CAD lama yang diimport sebelum sistem owner tracking mungkin tiada
+    <b>ownerKey / ownerUid / ownerUsername</b>. Item lama perlu admin edit & save semula
+    atau assign owner supaya My Software / My CAD Tools / Sales / Commission boleh tapis dengan tepat.
+  </p>
+</div>
+
+      <div class="grid">
+        <div class="card"><div class="st
+---
+/div>
+</div>
+</header>
+<!-- AZOBSS_REAL_MARKET_STICKYBAR_END -->
+
+
+<div id="loginCover" class="login-cover">
+  <div class="login-box">
+    <h2>🔐 AZOBSS Admin Dashboard</h2>
+    <p id="loginState">Checking admin access...</p>
+    <a class="btn green" href="/">Back to AZOBSS</a>
+  </div>
+</div>
+
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
+    <nav class="nav">
+      <button data-tab="overview" class="active">📊 Overview</button>
+      <button data-tab="users">👥 Users</button>
+      <button data-tab="online">🟢 Online Users</button>
+      <button data-tab="activity">📈 Activity</button>
+      <button data-tab="support">💬 Support Inbox</button>
+      <button data-tab="notifications">🔔 Notifications</button>
+      <button data-tab="purchases">💰 Purchase Records</button>
+      <button data-tab="payments">💳 Payments & Totals</button>
+      <button data-tab="commissions">💸 Commission Manager</button>
+      <button data-tab="lucky">🎁 Lucky Draw</button>
+      <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
+      <button data-tab="settings">⚙️ Settings</button>
+      <a class="home-link" href="/">🏠 Back Home</a>
+    </nav>
+    <div class="side-footer">Admin-only module. Loads are limited to reduce Firestore quota.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title">
+        <h1>Admin Dashboard</h1>
+        <p>Monitor users, activity, support, notifications and purchases in one clean place.</p>
+      </div>
+      <div class="admin-pill"><span id="adminAvatar">Z</span><span id="adminName">Admin</span></div>
+    </div>
+
+    <section id="overview" class="section active">
+
+<div class="card" id="ownerTrackingMigrationNote">
+  <h2>🔐 Owner Tracking Migration Note</h2>
+  <p class="tabs-note">
+    Item Software/CAD lama yang diimport sebelum sistem owner tracking mungkin tiada
+    <b>ownerKey / ownerUid / ownerUsername</b>. Item lama perlu admin edit & save semula
+    atau assign owner supaya My Software / My CAD Tools / Sales / Commission boleh tapis dengan tepat.
+  </p>
+</div>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">
+---
+class="card" id="ownerTrackingMigrationNote">
+  <h2>🔐 Owner Tracking Migration Note</h2>
+  <p class="tabs-note">
+    Item Software/CAD lama yang diimport sebelum sistem owner tracking mungkin tiada
+    <b>ownerKey / ownerUid / ownerUsername</b>. Item lama perlu admin edit & save semula
+    atau assign owner supaya My Software / My CAD Tools / Sales / Commission boleh tapis dengan tepat.
+  </p>
+</div>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">Total Users</div><div id="statUsers" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h2>Quick Monitor</h2>
+        <div class="toolbar">
+          <button class="btn gray" data-tab="users">👥 Users</button>
+          <button class="btn gray" data-tab="online">🟢 Online Users</button>
+          <button class="btn gray" data-tab="support">💬 Support Inbox</button>
+          <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
+          <button class="btn gray" data-tab="purchases">💰 Purchases</button>
+          <button class="btn gray" data-tab="activity">📈 Activity</button>
+        </div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Latest Support</h2><div id="overviewSupport" class="list"></div></div>
+        <div class="card"><
+---
+igrationNote">
+  <h2>🔐 Owner Tracking Migration Note</h2>
+  <p class="tabs-note">
+    Item Software/CAD lama yang diimport sebelum sistem owner tracking mungkin tiada
+    <b>ownerKey / ownerUid / ownerUsername</b>. Item lama perlu admin edit & save semula
+    atau assign owner supaya My Software / My CAD Tools / Sales / Commission boleh tapis dengan tepat.
+  </p>
+</div>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">Total Users</div><div id="statUsers" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h2>Quick Monitor</h2>
+        <div class="toolbar">
+          <button class="btn gray" data-tab="users">👥 Users</button>
+          <button class="btn gray" data-tab="online">🟢 Online Users</button>
+          <button class="btn gray" data-tab="support">💬 Support Inbox</button>
+          <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
+          <button class="btn gray" data-tab="purchases">💰 Purchases</button>
+          <button class="btn gray" data-tab="activity">📈 Activity</button>
+        </div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Latest Support</h2><div id="overviewSupport" class="list"></div></div>
+        <div class="card"><h2>Latest Activity</h2><div id=
+---
+iv class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h2>Quick Monitor</h2>
+        <div class="toolbar">
+          <button class="btn gray" data-tab="users">👥 Users</button>
+          <button class="btn gray" data-tab="online">🟢 Online Users</button>
+          <button class="btn gray" data-tab="support">💬 Support Inbox</button>
+          <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
+          <button class="btn gray" data-tab="purchases">💰 Purchases</button>
+          <button class="btn gray" data-tab="activity">📈 Activity</button>
+        </div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Latest Support</h2><div id="overviewSupport" class="list"></div></div>
+        <div class="card"><h2>Latest Activity</h2><div id="overviewActivity" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="users" class="section">
+      <h2>👥 Registered User Records</h2>
+      <p class="tabs-note">Search, edit PA/BM access, and delete users. Latest 50 users are loaded.</p>
+      <div class="toolbar">
+        <input id="userSearch" placeholder="Search username, email or phone" style="flex:1;min-width:240px">
+        <button class="btn" id="refreshUsers">Search / Refresh</button>
+      </div>
+      <div id="usersList" class="list"></div>
+    </section>
+
+    <section id="online" class="section">
+      <h2>🟢 Online Logged-In Users</h2>
+      <div class="toolbar"><button class="btn" id="refreshOnline">Refresh Online Users</button></div>
+      <div id="onlineList" class="list"></div>
+    </section>
+
+    <section id="activity" class="section">
+      <h2>📈 Activity</h2>
+      <div class="card activity-panel">
+        <div class="az-activity-toolbar">
+          <input id="activitySearch" class="az-activity-search" placeholder="Search username / a
+
+
+## Term logout count 1
+Name"></span></div>
+<button class="user-upgrade-btn" hidden="" id="userUpgradeButton" type="button">Upgrade</button>
+
+<div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><div class="user-dropdown-section">Buying</div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem">My purchases</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">Likes</a>
+<div class="user-dropdown-section">Account</div>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">Settings</button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">Log out</button></div>
+</div>
+<a aria-label="Likes" class="market-icon-btn" href="/likes/">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+</a>
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+</a>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+</a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- AZOBSS_REAL_MARKET_STICKYBAR_END -->
+
+
+<div id="loginCover" class="login-cover">
+  <div class="login-box">
+    <h2>🔐 AZOBSS Admin Dashboard</h2>
+    <p id="loginState">Checking admin access...</p>
+    <a class="btn green" href="/">Back to AZOBSS</a>
+  </div>
+</div>
+
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">A</
+
+
+## Term visibilitychange
+NOT FOUND
+
+
+## Term beforeunload
+NOT FOUND
+
+
+## Term heartbeat
+NOT FOUND
+
+
+## Summary
+{
+  "syntax_errors": 0,
+  "has_onlineUsers_collection": true,
+  "has_sitePresence_collection": false,
+  "has_lastSeen_filter": false,
+  "has_beforeunload_presence": false,
+  "has_visibilitychange_presence": false,
+  "has_heartbeat": false
+}
+
+
+## Patch loadOnlineUsers replaced
+True
+
+
+## Patch result
+{
+  "changed": true,
+  "syntax_after": 0,
+  "errors_after": []
+}

@@ -1,0 +1,15 @@
+AZOBSS Firestore stats setup required
+
+This build uses Firestore 1-document stats bundle:
+settings/softwareStats
+
+You MUST create this document manually in Firebase Console:
+Collection: settings
+Document ID: softwareStats
+Field: items (Map) = {}
+
+Also publish Firestore Rules with match /settings/softwareStats.
+Because the frontend uses anonymous auth fallback for public download/rating, enable:
+Firebase Console > Authentication > Sign-in method > Anonymous > Enable
+
+If Anonymous is not enabled and the visitor is not logged in, Firestore writes will fail and stats will only stay local.

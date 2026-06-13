@@ -1,0 +1,30 @@
+AZOBSS Phone Final Fix
+
+Fix dibuat:
+1. Register phone kini dibaca lebih robust daripada beberapa kemungkinan input ID/name:
+   - siteSignupPhone
+   - signupPhone
+   - registerPhone
+   - input[name="phone"]
+   - input[name="phoneNumber"]
+   - input[type="tel"]
+
+2. Phone disimpan kepada dua field Firestore:
+   - phone
+   - phoneNumber
+
+3. Admin Edit User tidak lagi overwrite phone kepada kosong jika input phone kosong.
+   Ia preserve phone lama daripada Firestore.
+
+4. Profile Settings tidak lagi overwrite phone kepada kosong jika input phone kosong.
+   Ia preserve phone lama.
+
+5. Registered User Records/Admin display baca phone || phoneNumber.
+
+Cara test disyorkan:
+- Delete Auth user test + users/{username} + usernameAuthEmails/{username}
+- Register baru dengan phone
+- Verify email
+- Login
+- Semak Firestore users/{username}: phone dan phoneNumber mesti ada nilai +60...
+- Buka admin records dan edit user: phone mesti muncul.

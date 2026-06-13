@@ -1,0 +1,1 @@
+Fixed: Payment success popup is now hooked after ToyyibPay return auto-verification and after direct complete-purchase success. Payment/email/receipt text was also cleaned to English.

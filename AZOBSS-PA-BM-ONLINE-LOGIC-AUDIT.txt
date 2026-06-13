@@ -1,0 +1,280 @@
+
+## Online Logged-In Users
+nlineOnly">Online users only</option>
+<option value="paAllowed">PA Access Allowed</option>
+<option value="dateNewest" selected>Date registered: newest</option>
+<option value="dateOldest">Date registered: oldest</option>
+</select>
+</label>
+<button class="btn blue" id="refreshUsersButton" type="button">
+            Search / Refresh
+          </button>
+</div>
+<p class="request-error" id="registeredUsersError"></p>
+<div class="purchase-summary-list" id="registeredUsersList">
+<div class="purchase-summary-item">
+            No user records yet.
+          </div>
+</div>
+<div class="guest-history-pagination" id="registeredUsersPagination"></div>
+<div class="admin-live-panel" id="liveUsersPanel">
+<h4>Online Logged-In Users</h4>
+<div class="live-user-list" id="liveUsersList">
+<div class="purchase-summary-item">No users are online right now.</div>
+</div>
+<div class="guest-history-pagination" id="liveUsersPagination"></div>
+</div>
+<div class="admin-live-panel" id="loginHistoryPanel">
+<h4>Logged-In Users History</h4>
+<div class="guest-history-stats">
+<div class="guest-history-stat">
+              Today Logins
+              <strong id="loginHistoryToday">0</strong>
+</div>
+<div class="guest-history-stat">
+              This Month Logins
+              <strong id="loginHistoryMonth">0</strong>
+</div>
+</div>
+<div class="live-user-list" id="loginHistoryList">
+<div class="purchase-summary-item">No login history yet.</div>
+</div>
+<div class="guest-history-pagination" id="loginHistoryPagination"></div>
+</div>
+<div class="admin-live-panel" id="guestHistoryPanel">
+<h4>Guest Visit History</h4>
+<div class="guest-history-stats">
+<div class="guest-history-stat">
+              Today Visits
+              <strong id="guestVisitsToday">0</strong>
+</div>
+<div class="guest-history-stat">
+              This Month Visits
+              <strong id="guestVisitsMonth">0</strong>
+</div>
+</div>
+<div class="live-user-list" id="guestHistoryList">
+<div class="purchase-summary-item">No guest history yet.</div>
+</div>
+<div class="guest-history-pagination" id="guestHistoryPagination"></div>
+</div>
+</div>
+</div>
+<div class="section" id="luckyDraw">
+<div class="lucky-draw-card" style="max-width:700px;text-align:center">
+<span class="lucky-draw-kicker">Lucky Draw</span>
+<h2>Monthly Lucky Draw</h2>
+<p>Join our monthly lucky draw and stand a chance to win prizes.</p>
+<a class="btn orange" href="/lucky-draw/">Join Now</a>
+</div>
+</div>
+<div class="section member-login-section">
+<div class="card member-login-ca
+
+## onlineUsers
+NOT FOUND
+
+## loadOnline
+NOT FOUND
+
+## lastSeen
+NOT FOUND
+
+## seen
+act-purchase-row,
+  .user-pa-item.purchase-detail-row{
+    grid-template-columns:1fr !important;
+    gap:6px !important;
+    padding:10px 12px !important;
+  }
+  .user-pa-download-wrap{
+    justify-content:stretch !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:6px !important;
+  }
+  .az-download-meta{
+    justify-content:center !important;
+    flex-wrap:wrap !important;
+    white-space:normal !important;
+    text-align:left !important;
+  }
+  .user-pa-download{
+    width:100% !important;
+  }
+}
+
+</style>
+<script id="azobss-pa-bm-payment-success-popup-real-fix-script">
+(function(){
+  'use strict';
+  var POPUP_KEY_PREFIX = 'azobss_pa_bm_success_popup_seen_';
+
+  function getReturnKey(){
+    try{
+      var p = new URLSearchParams(window.location.search || '');
+      return p.get('orderId') || p.get('order_id') || p.get('billcode') || p.get('billCode') || p.get('transaction_id') || p.get('payment_id') || 'latest';
+    }catch(e){ return 'latest'; }
+  }
+
+  function scrollToLatestPurchaseList(){
+    var target = document.getElementById('userPaPurchasePanel')
+      || document.getElementById('userPaPurchaseList')
+      || Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,section,div')).find(function(el){
+          return /Latest\s+Purchase\s+List/i.test(el.textContent || '');
+        });
+    if(target){ target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  }
+
+  function ensurePaymentSuccessModal(){
+    var modal = document.getElementById('azobssPaBmPaymentSuccessModal');
+    if(modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'azobssPaBmPaymentSuccessModal';
+    modal.className = 'azobss-payment-success-modal';
+    modal.innerHTML = ''+
+      '<div class="azobss-payment-success-backdrop" data-close="1"></div>'+
+      '<div class="azobss-payment-success-box" role="dialog" aria-modal="true" aria-labelledby="azobssPaymentSuccessTitle">'+
+        '<button type="button" class="azobss-payment-success-close" aria-label="Close">×</button>'+
+        '<div class="azobss-payment-success-icon">✅</div>'+
+        '<h3 id="azobssPaymentSuccessTitle">Pembayaran Berjaya!</h3>'+
+        '<p>Terima kasih atas pembelian anda.</p>'+
+        '<p>Sila muat turun fail anda di bahagian <strong>\'Latest Purchase List\'</strong>.</p>'+
+        '<button type="button" class="azobss-payment-success-go">Go to Latest Purchase List</button>'+
+      '</div>';
+    document.body.appendChild(modal);
+    function clo
+
+## status
+op: 0;
+      padding: 9px 10px;
+      border-color: #ef4444;
+      box-shadow: 0 0 0 1px rgba(239,68,68,0.25);
+      font-size: 13px;
+    }
+
+    .member-upgrade-btn {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 8px;
+      background: #f97316;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .member-upgrade-btn:hover {
+      transform: translateY(-2px);
+      background: #22c55e;
+      box-shadow: 0 10px 22px rgba(34,197,94,0.22);
+    }
+
+    .member-upgrade-label {
+      color: #fecaca;
+      font-size: 12px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+
+    .member-upgrade-status {
+      min-height: 16px;
+      margin: 0;
+      color: #fecaca;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .user-upgrade-btn {
+      border: 0;
+      border-radius: 999px;
+      background: #f97316;
+      color: white;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .phone-input-row {
+      display: grid;
+      grid-template-columns: 118px minmax(0, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .phone-input-row input {
+      margin-top: 0;
+    }
+
+    .auth-modal .phone-input-row {
+      position: relative;
+    }
+
+    .auth-modal .country-combo {
+      position: static;
+    }
+
+    .auth-modal .country-code-menu {
+      left: 0;
+      right: 0;
+      width: 100%;
+      max-height: 190px;
+    }
+
+    .auth-modal .country-menu-options {
+      max-height: 130px;
+    }
+
+    .country-combo {
+      position: relative;
+      min-width: 0;
+    }
+
+    .country-code-search {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .country-code-button {
+      width: 100%;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 118px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #ffffff;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .country-code-button::after {
+      content: '\25BE';
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .country-flag {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .country-code-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 120;
+      display
+
+Preferred collection: onlineUsers
+Syntax errors: 0

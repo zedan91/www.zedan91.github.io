@@ -1,0 +1,14 @@
+AZOBSS STAFF DASHBOARD COMMISSION TAB REMOVED
+
+Changed:
+- Removed Commission tab from /staff/
+- Removed Commission Manager form from /staff/
+- Removed submit commission listener
+- Added note: commission can only be edited by admin
+- Staff/semiAdmin keep Overview and Sales View only
+
+Reason:
+- Staff/semiAdmin should not edit commission.
+- Admin manages commission from admin dashboard.
+
+Syntax errors: 0

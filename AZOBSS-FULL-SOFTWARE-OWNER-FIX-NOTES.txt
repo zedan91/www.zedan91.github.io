@@ -1,0 +1,23 @@
+AZOBSS FULL SOFTWARE OWNER AUDIT + FIX
+
+Bug:
+- Owner field still missing because save path was not safely centralized and owner UID may not be read from Firebase Auth.
+
+Fix:
+- Added Firebase Auth getAuth into Software Tools.
+- azCurrentSoftwareOwner() now reads auth.currentUser.uid/email first.
+- Added central writer azSaveSoftwareItemToFirestore().
+- Submit save branch now calls central writer for add/update/replace.
+- Central writer forces owner metadata directly into addDoc/updateDoc payload.
+- Added console helper: azDebugSoftwareOwnerRuntime()
+
+Test after deploy:
+1. Hard refresh.
+2. Login staff/semiAdmin.
+3. Console: azDebugSoftwareOwnerRuntime()
+   owner.uid must show actual Firebase UID.
+4. Add software TEST OWNER FINAL.
+5. Console should show AZOBSS FINAL SOFTWARE CREATE PAYLOAD TO FIRESTORE.
+6. Firestore new doc should show ownerUid, ownerKey, createdByUid, commissionRate.
+
+Syntax errors: 1

@@ -1,0 +1,9 @@
+AZOBSS ADMIN DASHBOARD STATIC BUTTON PATCH
+
+Changed:
+- Added real static admin dashboard button in sticky bar:
+  <a id="azAdminStrictIconLink" class="az-admin-dashboard-direct-link" href="/admin/">🛠️</a>
+- Inserted after Mini Web Tools.
+- Removed duplicate same-id button before inserting.
+- Did not edit login/auth flow.
+- Existing admin icon script handles hide/show for guest/user/admin.

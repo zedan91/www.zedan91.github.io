@@ -1,0 +1,21 @@
+AZOBSS ADMIN DASHBOARD MODULE V2
+
+Updated:
+- Replaced large green "Admin" button with compact 🛠️ icon.
+- 🛠️ is inserted directly after "Mini Web Tools" when available.
+- Admin icon is admin-only.
+- Added admin badge on 🛠️:
+  - open/unreplied support messages
+  - pending purchase logs
+- Admin Dashboard Overview now includes:
+  - Total Users
+  - Online Users
+  - Today Logins
+  - Today Visits
+  - Unread Messages
+  - Active Notifications
+  - Pending Purchases
+  - Guest Logs
+- Added Quick Monitor buttons in Overview.
+
+No Firebase Rules update needed.

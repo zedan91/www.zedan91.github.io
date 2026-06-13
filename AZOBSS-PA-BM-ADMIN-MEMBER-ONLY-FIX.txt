@@ -1,0 +1,9 @@
+AZOBSS PA/BM Admin + Member Only Fix
+
+Fixed:
+- Guest users cannot see PA/BM tab.
+- Normal users cannot see PA/BM tab.
+- Admin can see PA/BM tab.
+- Members with ZX6186 / allowed PA-BM access can see PA/BM tab.
+- Direct access to /PA-BM/ is protected and redirects unauthorized users to Home.
+- Removed legacy script that forced body.has-pa-access for everyone.
