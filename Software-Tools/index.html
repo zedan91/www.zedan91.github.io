@@ -2839,6 +2839,47 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
+<style id="azobss-software-full-description-089-css">
+/* 089: show full software card description */
+.software-card .software-description,
+.software-card .software-desc,
+.software-card .card-description,
+.software-card .tool-description,
+.software-card .desc,
+.software-card p.description,
+.software-card p,
+.software-item .software-description,
+.software-item .software-desc,
+.software-item .card-description,
+.software-item .tool-description,
+.software-item .desc,
+.software-item p.description,
+.software-item p,
+.az-software-card .software-description,
+.az-software-card .software-desc,
+.az-software-card .card-description,
+.az-software-card .tool-description,
+.az-software-card .desc,
+.az-software-card p.description,
+.az-software-card p{
+  display:block!important;
+  -webkit-line-clamp:unset!important;
+  line-clamp:unset!important;
+  -webkit-box-orient:unset!important;
+  max-height:none!important;
+  height:auto!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+.software-card,
+.software-item,
+.az-software-card{
+  height:auto!important;
+  min-height:0!important;
+}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -7836,6 +7877,47 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
+<script id="azobss-software-full-description-089-js">
+(function(){
+  if(window.__azobssSoftwareFullDescription089) return;
+  window.__azobssSoftwareFullDescription089=true;
+  function clean(){
+    document.querySelectorAll('.software-card,.software-item,.az-software-card,[data-software-id],[data-product-id]').forEach(function(card){
+      card.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.desc,p.description,p').forEach(function(el){
+        var txt=(el.textContent||'').trim();
+        if(txt.length>25 && /windows|software|prayer|daily|interface|surau|office|shop|display|tool/i.test(txt)){
+          el.style.setProperty('-webkit-line-clamp','unset','important');
+          el.style.setProperty('line-clamp','unset','important');
+          el.style.setProperty('max-height','none','important');
+          el.style.setProperty('height','auto','important');
+          el.style.setProperty('overflow','visible','important');
+          el.style.setProperty('white-space','normal','important');
+        }
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded',clean);
+  if(document.readyState!=='loading') clean();
+  setTimeout(clean,200);setTimeout(clean,800);setTimeout(clean,1500);
+  window.addEventListener('focus',clean);
+  window.azobssSoftwareDescDebug089=function(){
+    clean();
+    return Array.from(document.querySelectorAll('.software-card,.software-item,.az-software-card,[data-software-id],[data-product-id]')).map(function(card,i){
+      var desc=card.querySelector('.software-description,.software-desc,.card-description,.tool-description,.desc,p.description,p');
+      if(!desc) return null;
+      var cs=getComputedStyle(desc);
+      return {
+        index:i+1,
+        text:(desc.textContent||'').trim(),
+        lineClamp:cs.webkitLineClamp||cs.lineClamp,
+        maxHeight:cs.maxHeight,
+        overflow:cs.overflow,
+        height:Math.round(desc.getBoundingClientRect().height)
+      };
+    }).filter(Boolean);
+  };
+})();
+</script>
 </body>
 </html>
 
