@@ -8198,6 +8198,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   visibility:hidden!important;
 }
 </style>
+<style id="azobss-pabm-force-pending-text-083-css">
+.azobss-pending-force-label-083{
+  display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+  align-items:center!important;justify-content:center!important;min-height:24px!important;padding:0 10px!important;
+  border-radius:999px!important;background:rgba(245,158,11,.22)!important;border:1px solid rgba(245,158,11,.85)!important;
+  color:#fbbf24!important;font-weight:900!important;font-size:11px!important;line-height:1!important;white-space:nowrap!important;
+}
+.azobss-zero-download-pending-078 .azobss-pending-label-wrap-081{display:inline-flex!important;visibility:visible!important;opacity:1!important;min-width:112px!important;justify-content:flex-end!important;}
+.azobss-zero-download-pending-078 .az-download-count-081{display:none!important;visibility:hidden!important;}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -15185,6 +15195,43 @@ return;
       return {text:w.innerText, hasCount:w.querySelectorAll('.az-download-count-081').length};
     });
   };
+})();
+</script>
+<script id="azobss-pabm-force-pending-text-083-js">
+(function(){
+ if(window.__azobssPabmForcePendingText083)return; window.__azobssPabmForcePendingText083=true;
+ var scheduled=false;
+ function allText(r){return String((r&&r.innerText)||'')+'\n'+String((r&&r.outerHTML)||'');}
+ function isHeader(r){var t=String((r&&r.innerText)||'').toLowerCase();return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);}
+ function isRow(r){return r&&!isHeader(r)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(allText(r));}
+ function zero(r){var m=allText(r).match(/(\d+)\s*\/\s*5/);return !!(m&&Number(m[1])===0);}
+ function roots(){return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);}
+ function rows(){var out=[];roots().forEach(function(root){root.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]').forEach(function(r){if(isRow(r))out.push(r);});});return out;}
+ function box(r){return r.querySelector('.col-action,.user-pa-pending-action,.user-pa-action-with-count')||r;}
+ function force(r){
+   var b=box(r); r.classList.add('azobss-zero-download-pending-078','azobss-strict-pending-075');
+   r.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.azobss-pending-force-label-083),a[data-download-url],button[data-download-url]').forEach(function(btn){
+     if(btn.classList.contains('azobss-pending-force-label-083'))return;
+     var t=String(btn.textContent||'').toLowerCase();
+     if(/download/.test(t)||btn.getAttribute('href')||btn.hasAttribute('data-download-url')||btn.classList.contains('azobss-download-allowed-080')){
+       btn.classList.remove('azobss-download-allowed-080');
+       btn.classList.add('azobss-strict-hide-download-075','azobss-pending-download-guard','is-pending-status');
+       btn.setAttribute('aria-disabled','true');btn.setAttribute('tabindex','-1');btn.removeAttribute('href');btn.removeAttribute('data-download-url');
+     }
+   });
+   b.querySelectorAll('.azobss-visible-pending-label-078,.azobss-strict-pending-label-075,.azobss-pending-payment-label-074,.azobss-pending-label-081,.az-download-count-081').forEach(function(x){if(!x.classList.contains('azobss-pending-force-label-083'))x.remove();});
+   var wrap=b.querySelector('.azobss-pending-label-wrap-081'); if(!wrap){wrap=document.createElement('span');wrap.className='azobss-pending-label-wrap-081';b.insertBefore(wrap,b.firstChild);}
+   var label=wrap.querySelector('.azobss-pending-force-label-083'); if(!label){label=document.createElement('span');label.className='azobss-pending-force-label-083';wrap.appendChild(label);}
+   label.textContent='Pending Payment';
+ }
+ function restore(r){if(zero(r))return;var b=box(r);r.classList.remove('azobss-zero-download-pending-078');b.querySelectorAll('.azobss-pending-label-wrap-081,.azobss-pending-force-label-083').forEach(function(x){x.remove();});}
+ function run(){scheduled=false;rows().forEach(function(r){if(zero(r))force(r);else restore(r);});}
+ function guard(){if(scheduled)return;scheduled=true;requestAnimationFrame(run);}
+ document.addEventListener('DOMContentLoaded',guard); if(document.readyState!=='loading')guard();
+ window.addEventListener('focus',guard); window.addEventListener('azobss-purchase-records-rendered',guard);
+ setTimeout(guard,50);setTimeout(guard,250);setTimeout(guard,900);setTimeout(guard,1800);
+ setTimeout(function(){roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}});},500);
+ window.azobssForcePendingTextDebug083=function(){run();return rows().map(function(r,i){var t=String(r.innerText||'').replace(/\s+/g,' ').trim();return{index:i+1,item:(t.match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[t.slice(0,40)])[0],isZeroOfFive:zero(r),forceLabel:r.querySelectorAll('.azobss-pending-force-label-083').length,forceText:Array.from(r.querySelectorAll('.azobss-pending-force-label-083')).map(function(x){return x.textContent;}),allowedDownloads:r.querySelectorAll('.azobss-download-allowed-080').length,hiddenDownloads:r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length};});};
 })();
 </script>
 </body>
