@@ -8208,6 +8208,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .azobss-zero-download-pending-078 .azobss-pending-label-wrap-081{display:inline-flex!important;visibility:visible!important;opacity:1!important;min-width:112px!important;justify-content:flex-end!important;}
 .azobss-zero-download-pending-078 .az-download-count-081{display:none!important;visibility:hidden!important;}
 </style>
+<style id="azobss-pabm-pending-state-marker-084-css">
+.azobss-pending-state-084 .azobss-pending-force-label-083{display:inline-flex!important;visibility:visible!important;opacity:1!important}
+.azobss-pending-state-084 .user-pa-download:not(.azobss-pending-force-label-083),
+.azobss-pending-state-084 .azobss-download-allowed-080{display:none!important;visibility:hidden!important;pointer-events:none!important}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -15232,6 +15237,42 @@ return;
  setTimeout(guard,50);setTimeout(guard,250);setTimeout(guard,900);setTimeout(guard,1800);
  setTimeout(function(){roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}});},500);
  window.azobssForcePendingTextDebug083=function(){run();return rows().map(function(r,i){var t=String(r.innerText||'').replace(/\s+/g,' ').trim();return{index:i+1,item:(t.match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[t.slice(0,40)])[0],isZeroOfFive:zero(r),forceLabel:r.querySelectorAll('.azobss-pending-force-label-083').length,forceText:Array.from(r.querySelectorAll('.azobss-pending-force-label-083')).map(function(x){return x.textContent;}),allowedDownloads:r.querySelectorAll('.azobss-download-allowed-080').length,hiddenDownloads:r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length};});};
+})();
+</script>
+<script id="azobss-pabm-pending-state-marker-084-js">
+(function(){
+ if(window.__azobssPabmPendingStateMarker084)return;window.__azobssPabmPendingStateMarker084=true;
+ var scheduled=false;
+ function raw(r){return String((r&&r.innerText)||'')+'\n'+String((r&&r.outerHTML)||'');}
+ function isHeader(r){var t=String((r&&r.innerText)||'').toLowerCase();return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);}
+ function isRow(r){return r&&!isHeader(r)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(raw(r));}
+ function count(r){var m=raw(r).match(/(\d+)\s*\/\s*5/);return m?{used:Number(m[1]),raw:m[0]}:null;}
+ function pendingMarks(r){return r.classList.contains('azobss-zero-download-pending-078')||r.classList.contains('azobss-strict-pending-075')||r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard,.azobss-pending-force-label-083').length>0;}
+ function explicitPaid(r){var s=raw(r).toLowerCase();if(/\b[1-5]\s*\/\s*5\b/.test(s))return true;if(/download\s*ready|payment\s*verified|paid|verified|successful/.test(s)&&!/pending|unpaid|paid["']?\s*:\s*false|verified["']?\s*:\s*false/.test(s))return true;return false;}
+ function shouldPending(r){var c=count(r);if(c&&c.used>0)return false;if(c&&c.used===0)return true;if(explicitPaid(r))return false;if(/pending|unpaid|paid["']?\s*:\s*false|verified["']?\s*:\s*false|paid%22%3afalse|verified%22%3afalse/i.test(raw(r)))return true;if(pendingMarks(r))return true;return false;}
+ function roots(){return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);}
+ function rows(){var a=[];roots().forEach(function(root){root.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]').forEach(function(r){if(isRow(r))a.push(r);});});return a;}
+ function box(r){return r.querySelector('.col-action,.user-pa-pending-action,.user-pa-action-with-count')||r;}
+ function force(r){
+   var b=box(r);r.classList.add('azobss-pending-state-084','azobss-zero-download-pending-078','azobss-strict-pending-075');r.classList.remove('azobss-strict-paid-075');
+   r.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.azobss-pending-force-label-083),a[data-download-url],button[data-download-url]').forEach(function(btn){
+     if(btn.classList.contains('azobss-pending-force-label-083'))return;
+     btn.classList.remove('azobss-download-allowed-080');btn.classList.add('azobss-strict-hide-download-075','azobss-pending-download-guard','is-pending-status');
+     btn.setAttribute('aria-disabled','true');btn.setAttribute('tabindex','-1');btn.removeAttribute('href');btn.removeAttribute('data-download-url');btn.removeAttribute('download');
+     btn.onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}return false;};
+   });
+   b.querySelectorAll('.az-download-count-081,.azobss-visible-pending-label-078,.azobss-strict-pending-label-075,.azobss-pending-payment-label-074,.azobss-pending-label-081').forEach(function(x){if(!x.classList.contains('azobss-pending-force-label-083'))x.remove();});
+   var w=b.querySelector('.azobss-pending-label-wrap-081');if(!w){w=document.createElement('span');w.className='azobss-pending-label-wrap-081';b.insertBefore(w,b.firstChild);}
+   var l=w.querySelector('.azobss-pending-force-label-083');if(!l){l=document.createElement('span');l.className='azobss-pending-force-label-083';w.appendChild(l);}
+   l.textContent='Pending Payment';
+ }
+ function restore(r){if(shouldPending(r))return;r.classList.remove('azobss-pending-state-084','azobss-zero-download-pending-078');box(r).querySelectorAll('.azobss-pending-label-wrap-081,.azobss-pending-force-label-083').forEach(function(x){x.remove();});}
+ function run(){scheduled=false;rows().forEach(function(r){if(shouldPending(r))force(r);else restore(r);});}
+ function guard(){if(scheduled)return;scheduled=true;requestAnimationFrame(run);}
+ document.addEventListener('DOMContentLoaded',guard);if(document.readyState!=='loading')guard();window.addEventListener('focus',guard);window.addEventListener('azobss-purchase-records-rendered',guard);
+ setTimeout(guard,50);setTimeout(guard,250);setTimeout(guard,900);setTimeout(guard,1800);
+ setTimeout(function(){roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}});},500);
+ window.azobssPendingStateDebug084=function(){run();return rows().map(function(r,i){var t=String(r.innerText||'').replace(/\s+/g,' ').trim();return{index:i+1,item:(t.match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[t.slice(0,40)])[0],count:count(r),shouldPending:shouldPending(r),explicitPaid:explicitPaid(r),pendingMarks:pendingMarks(r),forceLabel:r.querySelectorAll('.azobss-pending-force-label-083').length,forceText:Array.from(r.querySelectorAll('.azobss-pending-force-label-083')).map(function(x){return x.textContent;}),allowedDownloads:r.querySelectorAll('.azobss-download-allowed-080').length,hiddenDownloads:r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length};});};
 })();
 </script>
 </body>
