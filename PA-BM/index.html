@@ -8191,6 +8191,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   }
 }
 </style>
+<style id="azobss-pabm-pending-no-count-082-css">
+.azobss-zero-download-pending-078 .az-download-count-081,
+.azobss-pending-label-wrap-081 .az-download-count-081{
+  display:none!important;
+  visibility:hidden!important;
+}
+</style>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -15099,13 +15106,7 @@ return;
       wrap.appendChild(label);
     }
 
-    var countEl=wrap.querySelector('.az-download-count-081');
-    if(!countEl){
-      countEl=document.createElement('span');
-      countEl.className='az-download-count-081';
-      wrap.appendChild(countEl);
-    }
-    countEl.textContent='↓ '+countText;
+    wrap.querySelectorAll('.az-download-count-081').forEach(function(x){ x.remove(); });
 
     // Hide duplicate old visible count if outside our wrap.
     var oldCount=findCountNode(r);
@@ -15161,6 +15162,27 @@ return;
         allowedDownloads:r.querySelectorAll('.azobss-download-allowed-080').length,
         hiddenDownloads:r.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard').length
       };
+    });
+  };
+})();
+</script>
+<script id="azobss-pabm-pending-no-count-082-js">
+(function(){
+  if(window.__azobssPabmPendingNoCount082) return;
+  window.__azobssPabmPendingNoCount082 = true;
+  function clean(){
+    document.querySelectorAll('.azobss-zero-download-pending-078 .az-download-count-081, .azobss-pending-label-wrap-081 .az-download-count-081').forEach(function(x){ x.remove(); });
+  }
+  document.addEventListener('DOMContentLoaded', clean);
+  if(document.readyState !== 'loading') clean();
+  window.addEventListener('focus', clean);
+  window.addEventListener('azobss-purchase-records-rendered', clean);
+  setTimeout(clean,80);setTimeout(clean,400);setTimeout(clean,1200);
+  try{new MutationObserver(clean).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  window.azobssPendingNoCountDebug082=function(){
+    clean();
+    return Array.from(document.querySelectorAll('.azobss-pending-label-wrap-081')).map(function(w){
+      return {text:w.innerText, hasCount:w.querySelectorAll('.az-download-count-081').length};
     });
   };
 })();
