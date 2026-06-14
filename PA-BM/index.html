@@ -7979,220 +7979,84 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
-<style id="azobss-pabm-pending-clean-rebuild-086-css">
-/* 086 clean rebuild: one pending UI system only */
-#userPaPurchaseList .az-pabm-pending-row-086 .user-pa-download:not(.az-pabm-pending-label-086),
-#purchaseSummaryList .az-pabm-pending-row-086 .user-pa-download:not(.az-pabm-pending-label-086),
-.az-pabm-pending-row-086 .user-pa-download:not(.az-pabm-pending-label-086),
-.az-pabm-pending-row-086 a[data-download-url],
-.az-pabm-pending-row-086 button[data-download-url]{
-  display:none!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  overflow:hidden!important;
-}
-#userPaPurchaseList .az-pabm-pending-action-086,
-#purchaseSummaryList .az-pabm-pending-action-086,
-.az-pabm-pending-action-086{
-  display:inline-flex!important;
+<style id="azobss-pabm-zero-download-direct-092-css">
+/* 092: direct override. Any row/action with Download + 0/5 becomes Pending Payment only */
+.az-pabm-zero-direct-row-092 .col-action,
+.az-pabm-zero-direct-row-092 .user-pa-download-wrap,
+.az-pabm-zero-direct-row-092 .user-pa-action-with-count,
+.az-pabm-zero-direct-row-092 .user-pa-pending-action{
+  display:flex!important;
   align-items:center!important;
-  justify-content:flex-end!important;
-  gap:8px!important;
-  width:100%!important;
+  justify-content:center!important;
   min-width:150px!important;
+  width:150px!important;
+  max-width:150px!important;
+  padding:0 6px!important;
+  overflow:hidden!important;
   white-space:nowrap!important;
-  overflow:visible!important;
+  box-sizing:border-box!important;
 }
-#userPaPurchaseList .az-pabm-pending-label-086,
-#purchaseSummaryList .az-pabm-pending-label-086,
-.az-pabm-pending-label-086{
+.az-pabm-zero-direct-label-092{
   display:inline-flex!important;
   visibility:visible!important;
   opacity:1!important;
   align-items:center!important;
   justify-content:center!important;
-  min-height:24px!important;
-  padding:7px 11px!important;
+  width:128px!important;
+  min-width:128px!important;
+  max-width:128px!important;
+  height:28px!important;
+  padding:0 8px!important;
   border-radius:999px!important;
-  background:rgba(245,158,11,.20)!important;
-  border:1px solid rgba(245,158,11,.85)!important;
+  background:rgba(245,158,11,.22)!important;
+  border:1px solid rgba(245,158,11,.9)!important;
   color:#fbbf24!important;
   font-weight:900!important;
   font-size:11px!important;
   line-height:1!important;
-  white-space:nowrap!important;
   text-align:center!important;
+  white-space:nowrap!important;
+  pointer-events:none!important;
+  box-sizing:border-box!important;
 }
-.az-pabm-pending-row-086 .az-action-download-count,
-.az-pabm-pending-row-086 .az-download-count,
-.az-pabm-pending-row-086 .download-count,
-.az-pabm-pending-row-086 .az-download-count-081{
+.az-pabm-zero-direct-row-092 .col-action > *:not(.az-pabm-zero-direct-label-092),
+.az-pabm-zero-direct-row-092 .user-pa-download-wrap > *:not(.az-pabm-zero-direct-label-092),
+.az-pabm-zero-direct-row-092 .user-pa-action-with-count > *:not(.az-pabm-zero-direct-label-092),
+.az-pabm-zero-direct-row-092 .user-pa-pending-action > *:not(.az-pabm-zero-direct-label-092),
+.az-pabm-zero-direct-row-092 a.user-pa-download,
+.az-pabm-zero-direct-row-092 button.user-pa-download,
+.az-pabm-zero-direct-row-092 a[data-download-url],
+.az-pabm-zero-direct-row-092 button[data-download-url],
+.az-pabm-zero-direct-row-092 .az-action-download-count,
+.az-pabm-zero-direct-row-092 .az-download-count,
+.az-pabm-zero-direct-row-092 .download-count{
   display:none!important;
   visibility:hidden!important;
   width:0!important;
   min-width:0!important;
   max-width:0!important;
+  margin:0!important;
+  padding:0!important;
   overflow:hidden!important;
-}
-.az-pabm-paid-row-086 .az-pabm-pending-action-086,
-.az-pabm-paid-row-086 .az-pabm-pending-label-086{
-  display:none!important;
-}
-.az-pabm-paid-row-086 .user-pa-download{
-  visibility:visible!important;
-  pointer-events:auto!important;
+  pointer-events:none!important;
 }
 @media(max-width:760px){
-  .az-pabm-pending-action-086{
-    min-width:116px!important;
-    justify-content:flex-end!important;
-    gap:5px!important;
+  .az-pabm-zero-direct-row-092 .col-action,
+  .az-pabm-zero-direct-row-092 .user-pa-download-wrap,
+  .az-pabm-zero-direct-row-092 .user-pa-action-with-count,
+  .az-pabm-zero-direct-row-092 .user-pa-pending-action{
+    min-width:118px!important;
+    width:118px!important;
+    max-width:118px!important;
+    padding:0 4px!important;
   }
-  .az-pabm-pending-label-086{
-    font-size:10px!important;
-    padding:7px 8px!important;
-  }
-}
-</style>
-<style id="azobss-pabm-pending-action-column-087-css">
-/* 087: force Pending Payment inside Tindakan/action column only */
-#userPaPurchaseList .compact-table-row,
-#purchaseSummaryList .compact-table-row,
-#userPaPurchaseList .purchase-detail-row,
-#purchaseSummaryList .purchase-detail-row,
-#userPaPurchaseList .user-pa-item,
-#purchaseSummaryList .user-pa-item{
-  align-items:center!important;
-}
-#userPaPurchaseList .az-pabm-pending-row-086 .col-action,
-#purchaseSummaryList .az-pabm-pending-row-086 .col-action,
-#userPaPurchaseList .az-pabm-pending-row-086 .user-pa-action-with-count,
-#purchaseSummaryList .az-pabm-pending-row-086 .user-pa-action-with-count,
-.az-pabm-pending-row-086 .col-action,
-.az-pabm-pending-row-086 .user-pa-action-with-count{
-  grid-column:auto!important;
-  position:relative!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:8px!important;
-  min-width:190px!important;
-  width:190px!important;
-  max-width:190px!important;
-  overflow:visible!important;
-  white-space:nowrap!important;
-  justify-self:end!important;
-}
-#userPaPurchaseList .az-pabm-pending-action-086,
-#purchaseSummaryList .az-pabm-pending-action-086,
-.az-pabm-pending-action-086{
-  position:static!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:8px!important;
-  min-width:auto!important;
-  width:auto!important;
-  max-width:none!important;
-  overflow:visible!important;
-  white-space:nowrap!important;
-  transform:none!important;
-}
-#userPaPurchaseList .az-pabm-pending-label-086,
-#purchaseSummaryList .az-pabm-pending-label-086,
-.az-pabm-pending-label-086{
-  display:inline-flex!important;
-  visibility:visible!important;
-  opacity:1!important;
-  position:static!important;
-  transform:none!important;
-  min-width:120px!important;
-  max-width:130px!important;
-  justify-content:center!important;
-  flex:0 0 auto!important;
-  z-index:2!important;
-}
-.az-pabm-pending-row-086 .az-pabm-misplaced-pending-087{
-  display:none!important;
-}
-@media(max-width:760px){
-  .az-pabm-pending-row-086 .col-action,
-  .az-pabm-pending-row-086 .user-pa-action-with-count{
-    min-width:132px!important;
-    width:132px!important;
-    max-width:132px!important;
-  }
-  .az-pabm-pending-label-086{
+  .az-pabm-zero-direct-label-092{
+    width:104px!important;
     min-width:104px!important;
-    max-width:112px!important;
+    max-width:104px!important;
     font-size:10px!important;
-    padding:7px 7px!important;
+    padding:0 6px!important;
   }
-}
-</style>
-<style id="azobss-pabm-pending-action-simple-088-css">
-.az-pabm-pending-row-086 .col-action{
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  min-width:150px!important;width:150px!important;max-width:150px!important;
-  overflow:hidden!important;white-space:nowrap!important;padding:0 6px!important;box-sizing:border-box!important;
-}
-.az-pabm-pending-final-088{
-  display:inline-flex!important;visibility:visible!important;opacity:1!important;
-  align-items:center!important;justify-content:center!important;
-  width:128px!important;min-width:128px!important;max-width:128px!important;height:28px!important;
-  padding:0 8px!important;border-radius:999px!important;background:rgba(245,158,11,.22)!important;
-  border:1px solid rgba(245,158,11,.90)!important;color:#fbbf24!important;font-weight:900!important;
-  font-size:11px!important;line-height:1!important;text-align:center!important;white-space:nowrap!important;
-  box-sizing:border-box!important;position:static!important;transform:none!important;pointer-events:none!important;
-}
-.az-pabm-pending-row-086 .col-action > *:not(.az-pabm-pending-final-088){
-  display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;
-  margin:0!important;padding:0!important;overflow:hidden!important;pointer-events:none!important;
-}
-.az-pabm-pending-row-086 .user-pa-action-with-count,
-.az-pabm-pending-row-086 .az-pabm-pending-action-086{display:none!important;}
-@media(max-width:760px){
-  .az-pabm-pending-row-086 .col-action{min-width:118px!important;width:118px!important;max-width:118px!important;padding:0 4px!important;}
-  .az-pabm-pending-final-088{width:104px!important;min-width:104px!important;max-width:104px!important;font-size:10px!important;padding:0 6px!important;}
-}
-</style>
-<style id="azobss-pabm-zero-count-action-091-css">
-.az-pabm-zero-pending-091 .col-action,
-.az-pabm-zero-pending-091 .user-pa-action-with-count,
-.az-pabm-zero-pending-091 .user-pa-pending-action{
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  min-width:150px!important;width:150px!important;max-width:150px!important;
-  overflow:hidden!important;white-space:nowrap!important;padding:0 6px!important;box-sizing:border-box!important;
-}
-.az-pabm-zero-pending-label-091{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  width:128px!important;min-width:128px!important;max-width:128px!important;height:28px!important;
-  padding:0 8px!important;border-radius:999px!important;background:rgba(245,158,11,.22)!important;
-  border:1px solid rgba(245,158,11,.90)!important;color:#fbbf24!important;font-weight:900!important;
-  font-size:11px!important;line-height:1!important;text-align:center!important;white-space:nowrap!important;
-  box-sizing:border-box!important;pointer-events:none!important;
-}
-.az-pabm-zero-pending-091 .col-action > *:not(.az-pabm-zero-pending-label-091),
-.az-pabm-zero-pending-091 .user-pa-action-with-count > *:not(.az-pabm-zero-pending-label-091),
-.az-pabm-zero-pending-091 .user-pa-pending-action > *:not(.az-pabm-zero-pending-label-091),
-.az-pabm-zero-pending-091 a.user-pa-download,
-.az-pabm-zero-pending-091 button.user-pa-download,
-.az-pabm-zero-pending-091 a[data-download-url],
-.az-pabm-zero-pending-091 button[data-download-url],
-.az-pabm-zero-pending-091 .az-action-download-count,
-.az-pabm-zero-pending-091 .az-download-count,
-.az-pabm-zero-pending-091 .download-count{
-  display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;
-  margin:0!important;padding:0!important;overflow:hidden!important;pointer-events:none!important;
-}
-@media(max-width:760px){
-  .az-pabm-zero-pending-091 .col-action,
-  .az-pabm-zero-pending-091 .user-pa-action-with-count,
-  .az-pabm-zero-pending-091 .user-pa-pending-action{min-width:118px!important;width:118px!important;max-width:118px!important;padding:0 4px!important;}
-  .az-pabm-zero-pending-label-091{width:104px!important;min-width:104px!important;max-width:104px!important;font-size:10px!important;padding:0 6px!important;}
 }
 </style>
 </head>
@@ -14414,148 +14278,121 @@ return;
 })();
 </script>
 
-<script id="azobss-pabm-pending-clean-rebuild-086-js">
+<script id="azobss-pabm-zero-download-direct-092-js">
 (function(){
-  if(window.__azobssPabmPendingCleanRebuild086) return;
-  window.__azobssPabmPendingCleanRebuild086 = true;
+  if(window.__azobssPabmZeroDownloadDirect092) return;
+  window.__azobssPabmZeroDownloadDirect092 = true;
 
   var scheduled=false;
+  var intervalId=null;
 
-  function decodeLoose(s){
-    s=String(s||"");
-    try{s=decodeURIComponent(s);}catch(e){}
-    return s.replace(/&quot;/g,'"').replace(/&#34;/g,'"').replace(/&amp;/g,'&');
+  function textOf(el){
+    return String((el&&el.innerText)||'') + '\n' + String((el&&el.textContent)||'') + '\n' + String((el&&el.outerHTML)||'');
   }
-  function raw(row){return decodeLoose(String((row&&row.innerText)||'')+'\n'+String((row&&row.outerHTML)||''));}
-  function isHeader(row){
-    var t=String((row&&row.innerText)||'').toLowerCase();
-    return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);
+  function hasZeroFive(el){
+    return /(?:^|\s|>|↓|↧)0\s*\/\s*5(?:\s|<|$)/i.test(textOf(el));
   }
-  function isRow(row){
-    return row&&!isHeader(row)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(raw(row));
+  function hasPositiveFive(el){
+    return /(?:^|\s|>|↓|↧)[1-5]\s*\/\s*5(?:\s|<|$)/i.test(textOf(el));
   }
-  function countObj(row){
-    var m=raw(row).match(/(\d+)\s*\/\s*5/);
-    return m?{used:Number(m[1]),raw:m[0]}:null;
+  function isPurchaseRow(el){
+    return /(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(textOf(el));
   }
-  function explicitPaid(row){
-    var r=raw(row).toLowerCase();
-    var c=countObj(row);
-    if(c && c.used>0) return true;
-    if(/"paid"\s*:\s*true|paid%22%3atrue|"verified"\s*:\s*true|verified%22%3atrue/.test(r)) return true;
-    if(/"status"\s*:\s*"(paid|verified|complete|completed|success|successful|approved)"|status%22%3a%22(paid|verified|complete|completed|success|successful|approved)/.test(r)) return true;
-    if(/download\s*ready|payment\s*verified/.test(r) && !explicitPending(row)) return true;
-    return false;
+  function findRow(el){
+    var row = el && el.closest && el.closest('.compact-table-row,.compact-purchase-row,.purchase-detail-row,.user-pa-item,tr,[data-purchase-id],[data-record-id]');
+    if(row && isPurchaseRow(row)) return row;
+
+    var cur=el;
+    for(var i=0;i<8 && cur && cur!==document.body;i++,cur=cur.parentElement){
+      if(isPurchaseRow(cur) && (cur.querySelector('.user-pa-download,a[data-download-url],button[data-download-url]') || hasZeroFive(cur))) return cur;
+    }
+    return row || null;
   }
-  function explicitPending(row){
-    var r=raw(row).toLowerCase();
-    var c=countObj(row);
-    if(c && c.used===0) return true;
-    if(/pending\s*payment|unpaid|belum\s*bayar|menunggu\s*bayaran|is-pending-status/.test(r)) return true;
-    if(/"paid"\s*:\s*false|paid%22%3afalse|"verified"\s*:\s*false|verified%22%3afalse/.test(r)) return true;
-    if(/"status"\s*:\s*"(pending|unpaid|created|new|open|processing)"|status%22%3a%22(pending|unpaid|created|new|open|processing)/.test(r)) return true;
-    return false;
-  }
-  function hasBlockedMarker(row){
-    return row.classList.contains('azobss-zero-download-pending-078')||
-           row.classList.contains('azobss-strict-pending-075')||
-           row.classList.contains('azobss-pending-state-084')||
-           row.querySelectorAll('.azobss-strict-hide-download-075,.azobss-pending-download-guard,.azobss-pending-force-label-083,.az-pabm-pending-label-086').length>0;
+  function actionCell(row, btn){
+    var c = row.querySelector('.col-action');
+    if(c) return c;
+
+    if(btn){
+      var cur=btn.parentElement;
+      for(var i=0;i<5 && cur && cur!==row;i++,cur=cur.parentElement){
+        if(hasZeroFive(cur) || cur.classList.contains('user-pa-download-wrap') || cur.classList.contains('user-pa-action-with-count')){
+          cur.classList.add('col-action');
+          return cur;
+        }
+      }
+    }
+
+    c = row.querySelector('.user-pa-download-wrap,.user-pa-action-with-count,.user-pa-pending-action');
+    if(c){
+      c.classList.add('col-action');
+      return c;
+    }
+
+    var kids=Array.from(row.children||[]).filter(function(x){return x.nodeType===1;});
+    if(kids.length){
+      c=kids[kids.length-1];
+      c.classList.add('col-action');
+      return c;
+    }
+
+    c=document.createElement('div');
+    c.className='col-action';
+    row.appendChild(c);
+    return c;
   }
   function shouldPending(row){
-    if(!isRow(row)) return false;
-    if(explicitPaid(row)) return false;
-    if(explicitPending(row)) return true;
-    if(hasBlockedMarker(row)) return true;
-    return false;
+    if(!row) return false;
+    if(hasPositiveFive(row)) return false;
+    if(hasZeroFive(row)) return true;
+    var s=textOf(row).toLowerCase();
+    return /pending\s*payment|unpaid|belum\s*bayar|menunggu\s*bayaran/.test(s) ||
+           /"paid"\s*:\s*false|"verified"\s*:\s*false|paid%22%3afalse|verified%22%3afalse/.test(s);
   }
-  function roots(){
-    return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);
-  }
-  function rows(){
-    var a=[];
-    roots().forEach(function(root){
-      root.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id]').forEach(function(row){
-        if(isRow(row)) a.push(row);
-      });
-    });
-    return a;
-  }
-  function actionBox(row){
-    return row.querySelector('.col-action,.user-pa-pending-action,.user-pa-action-with-count')||row;
-  }
-  function isRemoveButton(el){
-    var s=String((el&&el.outerHTML)||'').toLowerCase();
-    var t=String((el&&el.textContent)||'').toLowerCase();
-    return /remove|uncart|delete|trash|cart-remove|aria-label="remove|title="remove|×|✕|x/.test(s)||/remove|uncart|delete/.test(t);
-  }
-  function preserveRemoveButtons(box, wrap){
-    Array.from(box.querySelectorAll('button,a,span')).forEach(function(el){
-      if(wrap.contains(el)) return;
-      if(isRemoveButton(el)){
-        el.style.removeProperty('display');
-        el.style.removeProperty('visibility');
-        el.style.removeProperty('width');
-        el.style.removeProperty('min-width');
-        wrap.appendChild(el);
-      }
-    });
-  }
-  function hideDownloads(row){
-    row.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.az-pabm-pending-label-086),a[data-download-url],button[data-download-url]').forEach(function(btn){
-      if(btn.classList.contains('az-pabm-pending-label-086')) return;
-      if(isRemoveButton(btn)) return;
-      btn.classList.remove('azobss-download-allowed-080');
-      btn.classList.add('az-pabm-hidden-download-086');
-      btn.setAttribute('aria-disabled','true');
-      btn.setAttribute('tabindex','-1');
-      btn.removeAttribute('href');
-      btn.removeAttribute('data-download-url');
-      btn.removeAttribute('download');
-      btn.style.setProperty('display','none','important');
-      btn.onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}return false;};
-    });
-  }
-  function removeOldPendingUi(box){
-    box.querySelectorAll('.azobss-pending-label-wrap-081,.azobss-pending-force-label-083,.azobss-visible-pending-label-078,.azobss-strict-pending-label-075,.azobss-pending-payment-label-074,.az-download-count-081,.az-action-download-count,.az-download-count,.download-count').forEach(function(el){
-      if(!el.classList.contains('az-pabm-pending-action-086') && !el.classList.contains('az-pabm-pending-label-086')) el.remove();
-    });
-  }
-  function forcePending(row){
-    var box=actionBox(row);
-    row.classList.add('az-pabm-pending-row-086');
+  function replaceAction(row, btn){
+    if(!shouldPending(row)) return false;
+
+    row.classList.add('az-pabm-zero-direct-row-092');
     row.classList.remove('az-pabm-paid-row-086');
 
-    removeOldPendingUi(box);
+    var c=actionCell(row,btn);
+    c.classList.add('col-action');
 
-    var wrap=box.querySelector('.az-pabm-pending-action-086');
-    if(!wrap){
-      wrap=document.createElement('span');
-      wrap.className='az-pabm-pending-action-086';
-      box.insertBefore(wrap,box.firstChild);
-    }
+    // Replace action content fully. This is intentional to stop old Download + 0/5 UI.
+    c.innerHTML = '';
+    var lab=document.createElement('span');
+    lab.className='az-pabm-zero-direct-label-092';
+    lab.textContent='Pending Payment';
+    c.appendChild(lab);
 
-    var label=wrap.querySelector('.az-pabm-pending-label-086');
-    if(!label){
-      label=document.createElement('span');
-      label.className='az-pabm-pending-label-086';
-      wrap.insertBefore(label,wrap.firstChild);
-    }
-    label.textContent='Pending Payment';
-
-    preserveRemoveButtons(box,wrap);
-    hideDownloads(row);
+    row.querySelectorAll('a.user-pa-download,button.user-pa-download,a[data-download-url],button[data-download-url]').forEach(function(b){
+      if(c.contains(b)) return;
+      b.style.setProperty('display','none','important');
+      b.style.setProperty('visibility','hidden','important');
+      b.style.setProperty('pointer-events','none','important');
+      b.setAttribute('aria-disabled','true');
+      b.setAttribute('tabindex','-1');
+      b.removeAttribute('href');
+      b.removeAttribute('data-download-url');
+      b.onclick=function(ev){
+        if(ev){ ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }
+        return false;
+      };
+    });
+    return true;
   }
-  function restorePaid(row){
-    row.classList.remove('az-pabm-pending-row-086');
-    row.classList.add('az-pabm-paid-row-086');
-    actionBox(row).querySelectorAll('.az-pabm-pending-action-086,.az-pabm-pending-label-086').forEach(function(el){el.remove();});
+  function candidates(){
+    var arr=[];
+    document.querySelectorAll('#userPaPurchaseList .user-pa-download,#userPaPurchaseList a[data-download-url],#userPaPurchaseList button[data-download-url],#userPaPurchaseList .compact-table-row,#userPaPurchaseList .compact-purchase-row,#userPaPurchaseList .purchase-detail-row,#userPaPurchaseList .user-pa-item,#purchaseSummaryList .user-pa-download,#purchaseSummaryList a[data-download-url],#purchaseSummaryList button[data-download-url]').forEach(function(el){
+      var row = findRow(el) || (isPurchaseRow(el)?el:null);
+      if(row && arr.indexOf(row)===-1) arr.push(row);
+    });
+    return arr;
   }
   function run(){
     scheduled=false;
-    rows().forEach(function(row){
-      if(shouldPending(row)) forcePending(row);
-      else restorePaid(row);
+    candidates().forEach(function(row){
+      var btn=row.querySelector('.user-pa-download,a[data-download-url],button[data-download-url]');
+      replaceAction(row,btn);
     });
   }
   function guard(){
@@ -14568,300 +14405,52 @@ return;
   if(document.readyState!=='loading') guard();
   window.addEventListener('focus',guard);
   window.addEventListener('azobss-purchase-records-rendered',guard);
-  setTimeout(guard,60);setTimeout(guard,350);setTimeout(guard,1000);setTimeout(guard,2000);
+  [20,80,200,500,1000,1600,2500,4000].forEach(function(t){setTimeout(guard,t);});
+
+  // temporary overwrite loop only for first 20s after page load, to beat late old scripts
+  var stopAt=Date.now()+20000;
+  intervalId=setInterval(function(){
+    guard();
+    if(Date.now()>stopAt) clearInterval(intervalId);
+  },300);
+
   setTimeout(function(){
-    roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}});
+    var root=document.getElementById('userPaPurchaseList') || document.getElementById('purchaseSummaryList');
+    if(root){
+      try{new MutationObserver(guard).observe(root,{childList:true,subtree:true,characterData:true});}catch(e){}
+    }
   },500);
 
-  window.azobssPendingCleanDebug086=function(){
+  document.addEventListener('click',function(ev){
+    var target=ev.target && ev.target.closest && ev.target.closest('.user-pa-download,a[data-download-url],button[data-download-url]');
+    if(!target) return;
+    var row=findRow(target);
+    if(row && shouldPending(row)){
+      replaceAction(row,target);
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      return false;
+    }
+  },true);
+
+  window.azobssZeroDownloadDirectDebug092=function(){
     run();
-    return rows().map(function(row,i){
-      var t=String(row.innerText||'').replace(/\s+/g,' ').trim();
-      var box=actionBox(row);
+    return candidates().map(function(row,i){
+      var cell=actionCell(row,row.querySelector('.user-pa-download,a[data-download-url],button[data-download-url]'));
+      var lab=cell.querySelector('.az-pabm-zero-direct-label-092');
       return {
         index:i+1,
-        item:(t.match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[t.slice(0,40)])[0],
-        count:countObj(row),
+        item:(String(row.innerText||'').match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[''])[0],
+        hasZeroFive:hasZeroFive(row),
+        hasPositiveFive:hasPositiveFive(row),
         shouldPending:shouldPending(row),
-        explicitPaid:explicitPaid(row),
-        explicitPending:explicitPending(row),
-        labelText:Array.from(row.querySelectorAll('.az-pabm-pending-label-086')).map(function(x){return x.textContent;}),
-        pendingWraps:row.querySelectorAll('.az-pabm-pending-action-086').length,
-        hiddenDownloads:row.querySelectorAll('.az-pabm-hidden-download-086').length,
-        removeButtons:Array.from(box.querySelectorAll('button,a,span')).filter(isRemoveButton).length,
-        oldPatchLeftovers:row.querySelectorAll('.azobss-pending-label-wrap-081,.azobss-pending-force-label-083,.azobss-visible-pending-label-078,.azobss-strict-pending-label-075,.azobss-pending-payment-label-074,.az-download-count-081,.az-action-download-count,.az-download-count,.download-count').length
+        labelText:lab?lab.textContent:'',
+        actionText:(cell.innerText||'').trim(),
+        downloadsLeft:row.querySelectorAll('.user-pa-download,a[data-download-url],button[data-download-url]').length
       };
     });
   };
-})();
-</script>
-<script id="azobss-pabm-pending-action-column-087-js">
-(function(){
-  if(window.__azobssPabmPendingActionColumn087) return;
-  window.__azobssPabmPendingActionColumn087 = true;
-
-  var scheduled=false;
-
-  function raw(row){return String((row&&row.innerText)||'')+'\n'+String((row&&row.outerHTML)||'');}
-  function isHeader(row){
-    var t=String((row&&row.innerText)||'').toLowerCase();
-    return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);
-  }
-  function isRow(row){
-    return row&&!isHeader(row)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(raw(row));
-  }
-  function roots(){
-    return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);
-  }
-  function pendingRows(){
-    var out=[];
-    roots().forEach(function(root){
-      root.querySelectorAll('.az-pabm-pending-row-086,.azobss-pending-state-084,.azobss-zero-download-pending-078,.azobss-strict-pending-075').forEach(function(row){
-        if(isRow(row)) out.push(row);
-      });
-    });
-    return out;
-  }
-  function isRemoveButton(el){
-    var s=String((el&&el.outerHTML)||'').toLowerCase();
-    var t=String((el&&el.textContent)||'').toLowerCase();
-    return /remove|uncart|delete|trash|cart-remove|aria-label=["']?remove|title=["']?remove|×|✕/.test(s)||/remove|uncart|delete/.test(t);
-  }
-  function findActionCell(row){
-    var cell=row.querySelector('.col-action,.user-pa-action-with-count,.user-pa-pending-action');
-    if(cell) return cell;
-
-    // Prefer last direct element child as action cell, not the whole row.
-    var children=Array.from(row.children).filter(function(x){return x.nodeType===1;});
-    if(children.length){
-      cell=children[children.length-1];
-      cell.classList.add('col-action');
-      return cell;
-    }
-
-    cell=document.createElement('div');
-    cell.className='col-action';
-    row.appendChild(cell);
-    return cell;
-  }
-  function movePendingUi(row){
-    var action=findActionCell(row);
-
-    // Collect any pending wraps/labels that accidentally landed outside action column.
-    Array.from(row.querySelectorAll('.az-pabm-pending-action-086,.az-pabm-pending-label-086')).forEach(function(el){
-      if(action.contains(el)) return;
-      if(el.classList.contains('az-pabm-pending-label-086')){
-        el.classList.add('az-pabm-misplaced-pending-087');
-      }else{
-        el.remove();
-      }
-    });
-
-    var wrap=action.querySelector('.az-pabm-pending-action-086');
-    if(!wrap){
-      wrap=document.createElement('span');
-      wrap.className='az-pabm-pending-action-086';
-      action.insertBefore(wrap,action.firstChild);
-    }
-
-    var label=wrap.querySelector('.az-pabm-pending-label-086');
-    if(!label){
-      label=document.createElement('span');
-      label.className='az-pabm-pending-label-086';
-      wrap.insertBefore(label,wrap.firstChild);
-    }
-    label.textContent='Pending Payment';
-
-    // Move remove/uncart icon into same action cell after label.
-    Array.from(row.querySelectorAll('button,a,span')).forEach(function(el){
-      if(wrap.contains(el)) return;
-      if(isRemoveButton(el)){
-        el.style.removeProperty('display');
-        el.style.removeProperty('visibility');
-        el.style.removeProperty('width');
-        el.style.removeProperty('min-width');
-        wrap.appendChild(el);
-      }
-    });
-
-    // Hide any old download/count remains inside action cell.
-    action.querySelectorAll('.az-action-download-count,.az-download-count,.download-count,.az-download-count-081').forEach(function(x){x.remove();});
-    action.querySelectorAll('a.user-pa-download,button.user-pa-download,.user-pa-download:not(.az-pabm-pending-label-086),a[data-download-url],button[data-download-url]').forEach(function(btn){
-      if(btn.classList.contains('az-pabm-pending-label-086')) return;
-      if(isRemoveButton(btn)) return;
-      btn.style.setProperty('display','none','important');
-      btn.style.setProperty('visibility','hidden','important');
-      btn.style.setProperty('width','0','important');
-      btn.style.setProperty('min-width','0','important');
-      btn.classList.add('az-pabm-hidden-download-086');
-      btn.removeAttribute('href');
-      btn.removeAttribute('data-download-url');
-    });
-  }
-  function run(){
-    scheduled=false;
-    pendingRows().forEach(movePendingUi);
-  }
-  function guard(){
-    if(scheduled) return;
-    scheduled=true;
-    requestAnimationFrame(run);
-  }
-
-  document.addEventListener('DOMContentLoaded',guard);
-  if(document.readyState!=='loading') guard();
-  window.addEventListener('focus',guard);
-  window.addEventListener('azobss-purchase-records-rendered',guard);
-  setTimeout(guard,80);setTimeout(guard,400);setTimeout(guard,1200);setTimeout(guard,2500);
-  setTimeout(function(){
-    roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}});
-  },500);
-
-  window.azobssPendingActionColumnDebug087=function(){
-    run();
-    return pendingRows().map(function(row,i){
-      var action=findActionCell(row);
-      var label=action.querySelector('.az-pabm-pending-label-086');
-      var rowBox=row.getBoundingClientRect();
-      var actionBox=action.getBoundingClientRect();
-      var labelBox=label?label.getBoundingClientRect():null;
-      return {
-        index:i+1,
-        item:(String(row.innerText||'').match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[''])[0],
-        actionClass:action.className,
-        labelText:label?label.textContent:'',
-        labelInsideAction:!!(label && action.contains(label)),
-        actionLeft:Math.round(actionBox.left-rowBox.left),
-        actionWidth:Math.round(actionBox.width),
-        labelLeft:labelBox?Math.round(labelBox.left-rowBox.left):null,
-        labelWidth:labelBox?Math.round(labelBox.width):null,
-        misplacedLeftovers:row.querySelectorAll('.az-pabm-misplaced-pending-087').length
-      };
-    });
-  };
-})();
-</script>
-<script id="azobss-pabm-pending-action-simple-088-js">
-(function(){
-  if(window.__azobssPabmPendingActionSimple088) return;
-  window.__azobssPabmPendingActionSimple088 = true;
-
-  var scheduled=false;
-
-  function raw(row){return String((row&&row.innerText)||'')+'\n'+String((row&&row.outerHTML)||'');}
-  function isHeader(row){
-    var t=String((row&&row.innerText)||'').toLowerCase();
-    return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);
-  }
-  function isRow(row){
-    return row&&!isHeader(row)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(raw(row));
-  }
-  function roots(){
-    return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);
-  }
-  function pendingRows(){
-    var out=[];
-    roots().forEach(function(root){
-      root.querySelectorAll('.az-pabm-pending-row-086,.azobss-pending-state-084,.azobss-zero-download-pending-078,.azobss-strict-pending-075').forEach(function(row){
-        if(isRow(row)) out.push(row);
-      });
-    });
-    return out;
-  }
-  function actionCell(row){
-    var cell=row.querySelector('.col-action');
-    if(cell) return cell;
-    var children=Array.from(row.children).filter(function(x){return x.nodeType===1;});
-    if(children.length){
-      cell=children[children.length-1];
-      cell.classList.add('col-action');
-      return cell;
-    }
-    cell=document.createElement('div');
-    cell.className='col-action';
-    row.appendChild(cell);
-    return cell;
-  }
-  function simplify(row){
-    row.classList.add('az-pabm-pending-row-086');
-    var cell=actionCell(row);
-    Array.from(cell.children).forEach(function(ch){ ch.remove(); });
-
-    var label=document.createElement('span');
-    label.className='az-pabm-pending-final-088';
-    label.textContent='Pending Payment';
-    cell.appendChild(label);
-
-    row.querySelectorAll('.az-pabm-pending-action-086,.az-pabm-pending-label-086,.azobss-pending-label-wrap-081,.azobss-pending-force-label-083,.user-pa-action-with-count,.az-action-download-count,.az-download-count,.download-count,.az-download-count-081').forEach(function(x){
-      if(cell.contains(x)) return;
-      x.style.setProperty('display','none','important');
-      x.style.setProperty('visibility','hidden','important');
-      x.style.setProperty('width','0','important');
-      x.style.setProperty('min-width','0','important');
-    });
-
-    row.querySelectorAll('a.user-pa-download,button.user-pa-download,a[data-download-url],button[data-download-url]').forEach(function(btn){
-      if(cell.contains(btn)) return;
-      btn.style.setProperty('display','none','important');
-      btn.setAttribute('aria-disabled','true');
-      btn.removeAttribute('href');
-      btn.removeAttribute('data-download-url');
-    });
-  }
-  function run(){
-    scheduled=false;
-    pendingRows().forEach(simplify);
-  }
-  function guard(){
-    if(scheduled) return;
-    scheduled=true;
-    requestAnimationFrame(run);
-  }
-
-  document.addEventListener('DOMContentLoaded',guard);
-  if(document.readyState!=='loading') guard();
-  window.addEventListener('focus',guard);
-  window.addEventListener('azobss-purchase-records-rendered',guard);
-  setTimeout(guard,80);setTimeout(guard,400);setTimeout(guard,1200);setTimeout(guard,2500);
-  setTimeout(function(){roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true});}catch(e){}});},500);
-
-  window.azobssPendingSimpleDebug088=function(){
-    run();
-    return pendingRows().map(function(row,i){
-      var cell=actionCell(row);
-      var label=cell.querySelector('.az-pabm-pending-final-088');
-      return {
-        index:i+1,
-        item:(String(row.innerText||'').match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[''])[0],
-        actionChildren:cell.children.length,
-        labelText:label?label.textContent:'',
-        labelWidth:label?Math.round(label.getBoundingClientRect().width):0,
-        cellWidth:Math.round(cell.getBoundingClientRect().width),
-        leftoverInCell:Array.from(cell.children).filter(function(x){return !x.classList.contains('az-pabm-pending-final-088');}).length
-      };
-    });
-  };
-})();
-</script>
-<script id="azobss-pabm-zero-count-action-091-js">
-(function(){
- if(window.__azobssPabmZeroCountAction091)return;window.__azobssPabmZeroCountAction091=true;
- var scheduled=false;
- function raw(r){return String((r&&r.innerText)||'')+'\n'+String((r&&r.outerHTML)||'');}
- function isHeader(r){var t=String((r&&r.innerText)||'').toLowerCase();return /item\s+negeri\s+rm\s+harga/.test(t)&&!/(pa\s*\d+|bm\s+[bh]\s*\d+|sbm\s+[bh]\s*\d+)/i.test(t);}
- function isRow(r){return r&&!isHeader(r)&&/(pa\s*\d{3,}|bm\s+[bh]\s*\d{3,}|sbm\s+[bh]\s*\d{3,}|[bh]\s*0\d{2,})/i.test(raw(r));}
- function roots(){return [document.getElementById('userPaPurchaseList'),document.getElementById('purchaseSummaryList')].filter(Boolean);}
- function rows(){var a=[];roots().forEach(function(root){root.querySelectorAll('.user-pa-item,.purchase-detail-row,.compact-purchase-row,.compact-table-row,[data-purchase-id],[data-record-id],tr').forEach(function(r){if(isRow(r))a.push(r);});});return a;}
- function hasZero(r){return /(?:^|\s|>)0\s*\/\s*5(?:\s|<|$)/.test(raw(r));}
- function hasPos(r){var m=raw(r).match(/(?:^|\s|>)([1-5])\s*\/\s*5(?:\s|<|$)/);return !!m&&Number(m[1])>0;}
- function pending(r){var s=raw(r).toLowerCase();return !hasPos(r)&&(hasZero(r)||/pending\s*payment|unpaid|belum\s*bayar|menunggu\s*bayaran/.test(s)||/"paid"\s*:\s*false|"verified"\s*:\s*false|paid%22%3afalse|verified%22%3afalse/.test(s));}
- function action(r){var c=r.querySelector('.col-action,.user-pa-action-with-count,.user-pa-pending-action');if(c)return c;var k=Array.from(r.children).filter(function(x){return x.nodeType===1;});if(k.length){c=k[k.length-1];c.classList.add('col-action');return c;}c=document.createElement('div');c.className='col-action';r.appendChild(c);return c;}
- function force(r){r.classList.add('az-pabm-zero-pending-091','az-pabm-pending-row-086');var c=action(r);Array.from(c.children).forEach(function(x){x.remove();});var lab=document.createElement('span');lab.className='az-pabm-zero-pending-label-091';lab.textContent='Pending Payment';c.appendChild(lab);r.querySelectorAll('a.user-pa-download,button.user-pa-download,a[data-download-url],button[data-download-url]').forEach(function(b){if(c.contains(b))return;b.style.setProperty('display','none','important');b.style.setProperty('visibility','hidden','important');b.setAttribute('aria-disabled','true');b.setAttribute('tabindex','-1');b.removeAttribute('href');b.removeAttribute('data-download-url');b.onclick=function(e){if(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}return false;});}
- function run(){scheduled=false;rows().forEach(function(r){if(pending(r))force(r);});}
- function guard(){if(scheduled)return;scheduled=true;requestAnimationFrame(run);}
- document.addEventListener('DOMContentLoaded',guard);if(document.readyState!=='loading')guard();window.addEventListener('focus',guard);window.addEventListener('azobss-purchase-records-rendered',guard);[50,200,600,1200,2500].forEach(function(t){setTimeout(guard,t);});
- setTimeout(function(){roots().forEach(function(root){try{new MutationObserver(guard).observe(root,{childList:true,subtree:true,characterData:true});}catch(e){}});},500);
- window.azobssZeroCountPendingDebug091=function(){run();return rows().map(function(r,i){var c=action(r),lab=c.querySelector('.az-pabm-zero-pending-label-091');return {index:i+1,item:(String(r.innerText||'').match(/\b(PA\s*\d+|BM\s+[BH]\s*\d+|SBM\s+[BH]\s*\d+|[BH]\s*0\d{2,})\b/i)||[''])[0],hasZeroCount:hasZero(r),hasPositiveCount:hasPos(r),shouldForcePending:pending(r),labelText:lab?lab.textContent:'',actionText:(c.innerText||'').trim()};});};
 })();
 </script>
 </body>
