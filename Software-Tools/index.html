@@ -4664,6 +4664,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       const url = toAbsolute(currentProduct.stripeLink || '');
       if(!url){ errorBox.textContent = 'Stripe/payment link is not set for this item.'; return; }
       localStorage.setItem('azobss_last_checkout_page', window.location.href);
+      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = url;
       return;
     }
@@ -4697,6 +4698,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       }
       if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
       if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
+      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
       const fallback = toAbsolute(currentProduct.paymentLink || '');

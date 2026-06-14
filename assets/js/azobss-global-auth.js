@@ -4293,3 +4293,199 @@ document.addEventListener('click',function(e){
 
 
 
+
+/* AZOBSS patch 100/101: My Purchases for Software + CAD only (simple text list).
+   Safe scope: does not change login/register/auth flow and does not touch PA/BM purchase records. */
+(function(){
+  if(window.__azobssMyPurchasesSimpleReady) return;
+  window.__azobssMyPurchasesSimpleReady = true;
+
+  const LOCAL_KEY_PREFIX = 'azobss_shop_purchase_history_';
+
+  function myPurchasesUserKey(){
+    try{
+      const u = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+      const authUid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      return String(authUid || u.uid || u.usernameKey || u.username || u.displayName || 'guest').trim().toLowerCase() || 'guest';
+    }catch(_e){ return 'guest'; }
+  }
+
+  function myPurchasesLocalKey(){
+    return LOCAL_KEY_PREFIX + myPurchasesUserKey();
+  }
+
+  function readMyShopPurchases(){
+    try{
+      const rows = JSON.parse(localStorage.getItem(myPurchasesLocalKey()) || '[]');
+      return Array.isArray(rows) ? rows.filter(Boolean) : [];
+    }catch(_e){ return []; }
+  }
+
+  function writeMyShopPurchases(rows){
+    try{ localStorage.setItem(myPurchasesLocalKey(), JSON.stringify((Array.isArray(rows) ? rows : []).slice(0,250))); }catch(_e){}
+  }
+
+  function cleanMoneyNumber(value){
+    const n = Number(String(value || '').replace(/[^0-9.]/g,''));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatRM(value){
+    const n = Number(value || 0);
+    return 'RM' + (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.00$/,''));
+  }
+
+  function esc(value){
+    return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  }
+
+  function currentShopSource(product){
+    const raw = String(product?.source || product?.category || '').trim();
+    if(/cad/i.test(raw)) return 'CAD Tools';
+    if(/software/i.test(raw)) return 'Software';
+    const path = String(location.pathname || '').toLowerCase();
+    return path.includes('cad-tools') ? 'CAD Tools' : 'Software';
+  }
+
+  function normalizeShopPurchase(product){
+    const p = product || {};
+    const qty = Math.max(1, Number(p.qty || p.quantity || 1) || 1);
+    const unit = cleanMoneyNumber(p.price || p.amount || p.unitPrice || 0);
+    const source = currentShopSource(p);
+    const name = String(p.name || p.title || p.productName || 'Premium Item').trim() || 'Premium Item';
+    const id = String(p.id || p.productId || name).trim();
+    return {
+      id,
+      name,
+      source,
+      qty,
+      unitPrice: unit,
+      priceText: p.price ? String(p.price) : formatRM(unit),
+      totalPrice: unit * qty,
+      orderId: String(p.orderId || p.billCode || p.paymentReference || '').trim(),
+      createdAtMs: Date.now()
+    };
+  }
+
+  function aggregatePurchases(rows){
+    const map = new Map();
+    (rows || []).forEach(row => {
+      const r = normalizeShopPurchase(row);
+      const key = [r.source, r.id || r.name, r.unitPrice].join('::').toLowerCase();
+      const old = map.get(key);
+      if(!old){ map.set(key, r); return; }
+      old.qty += r.qty;
+      old.totalPrice += r.totalPrice;
+      old.createdAtMs = Math.max(Number(old.createdAtMs || 0), Number(r.createdAtMs || 0));
+    });
+    return Array.from(map.values()).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  }
+
+  async function syncMyPurchasesToCloud(rows){
+    try{
+      const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      if(!uid) return;
+      await setDoc(doc(db, 'userCarts', uid), {
+        uid,
+        purchaseHistory: (Array.isArray(rows) ? rows : []).slice(0,250),
+        purchaseHistoryUpdatedAtMs: Date.now(),
+        purchaseHistoryUpdatedAt: serverTimestamp()
+      }, { merge:true });
+    }catch(e){ console.warn('AZOBSS My Purchases cloud sync skipped:', e); }
+  }
+
+  async function pullMyPurchasesFromCloudIfNeeded(){
+    try{
+      const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      if(!uid) return readMyShopPurchases();
+      const snap = await getDoc(doc(db, 'userCarts', uid));
+      if(snap.exists()){
+        const data = snap.data() || {};
+        const cloudRows = Array.isArray(data.purchaseHistory) ? data.purchaseHistory.filter(Boolean) : [];
+        if(cloudRows.length){
+          const localRows = readMyShopPurchases();
+          const merged = [...cloudRows, ...localRows].slice(0,250);
+          writeMyShopPurchases(merged);
+          return merged;
+        }
+      }
+    }catch(e){ console.warn('AZOBSS My Purchases cloud load skipped:', e); }
+    return readMyShopPurchases();
+  }
+
+  window.azobssRecordShopPurchase = async function(product){
+    const record = normalizeShopPurchase(product || {});
+    const rows = readMyShopPurchases();
+    // Avoid exact duplicate order/bill rows, but keep separate purchases if order id is different/empty.
+    if(record.orderId && rows.some(r => String(r.orderId || '') === record.orderId)) return record;
+    rows.unshift(record);
+    writeMyShopPurchases(rows);
+    syncMyPurchasesToCloud(rows);
+    try{ window.dispatchEvent(new Event('azobss-my-purchases-updated')); }catch(_e){}
+    return record;
+  };
+
+  function ensureMyPurchasesModal(){
+    let modal = document.getElementById('azobssMyPurchasesModal');
+    if(modal) return modal;
+    const style = document.createElement('style');
+    style.id = 'azobss-my-purchases-simple-css';
+    style.textContent = `
+      #azobssMyPurchasesModal{position:fixed;inset:0;z-index:9999999;background:rgba(2,6,23,.72);display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(10px)}
+      #azobssMyPurchasesModal.is-open{display:flex}
+      .az-my-purchases-card{width:min(560px,100%);max-height:82vh;overflow:auto;background:#07101f;color:#fff;border:1px solid rgba(148,163,184,.32);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.48);padding:16px}
+      .az-my-purchases-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+      .az-my-purchases-head h3{margin:0;font-size:20px;font-weight:950}
+      .az-my-purchases-close{width:34px;height:34px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer}
+      .az-my-purchases-note{font-size:13px;color:#cbd5e1;margin:0 0 12px;line-height:1.45}
+      .az-my-purchases-list{display:grid;gap:8px}
+      .az-my-purchases-row{display:grid;grid-template-columns:1fr 70px 95px;gap:10px;align-items:center;padding:10px 12px;border:1px solid rgba(148,163,184,.22);border-radius:12px;background:rgba(15,23,42,.72)}
+      .az-my-purchases-row.is-head{background:rgba(30,41,59,.95);color:#cbd5e1;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+      .az-my-purchases-name{min-width:0;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.az-my-purchases-src{display:block;font-size:12px;color:#93c5fd;font-weight:800;margin-top:2px}.az-my-purchases-qty,.az-my-purchases-price{text-align:right;font-weight:900}.az-my-purchases-empty{padding:18px;border:1px dashed rgba(148,163,184,.3);border-radius:12px;text-align:center;color:#cbd5e1}
+      @media(max-width:520px){.az-my-purchases-row{grid-template-columns:1fr 48px 74px;font-size:13px;padding:9px}.az-my-purchases-head h3{font-size:18px}}
+    `;
+    document.head.appendChild(style);
+    modal = document.createElement('div');
+    modal.id = 'azobssMyPurchasesModal';
+    modal.innerHTML = `<div class="az-my-purchases-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesTitle"><div class="az-my-purchases-head"><h3 id="azMyPurchasesTitle">🧾 My Purchases</h3><button type="button" class="az-my-purchases-close" aria-label="Close">×</button></div><p class="az-my-purchases-note">Senarai ringkas pembelian Software dan CAD Tools sahaja. Resit dan link download dihantar melalui email customer.</p><div class="az-my-purchases-list" id="azMyPurchasesList"><div class="az-my-purchases-empty">Loading...</div></div></div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target === modal || e.target.closest('.az-my-purchases-close')) closeMyPurchasesModal(); });
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMyPurchasesModal(); });
+    return modal;
+  }
+
+  function closeMyPurchasesModal(){
+    const modal = document.getElementById('azobssMyPurchasesModal');
+    if(modal) modal.classList.remove('is-open');
+  }
+
+  async function renderMyPurchasesList(){
+    const list = document.getElementById('azMyPurchasesList');
+    if(!list) return;
+    list.innerHTML = '<div class="az-my-purchases-empty">Loading...</div>';
+    const rows = aggregatePurchases(await pullMyPurchasesFromCloudIfNeeded());
+    if(!rows.length){
+      list.innerHTML = '<div class="az-my-purchases-empty">Belum ada rekod pembelian Software / CAD Tools.</div>';
+      return;
+    }
+    list.innerHTML = '<div class="az-my-purchases-row is-head"><div>Nama Barang</div><div class="az-my-purchases-qty">Qty</div><div class="az-my-purchases-price">Harga</div></div>' + rows.map(r => `<div class="az-my-purchases-row"><div class="az-my-purchases-name">${esc(r.name)}<span class="az-my-purchases-src">${esc(r.source)}</span></div><div class="az-my-purchases-qty">${esc(r.qty)}</div><div class="az-my-purchases-price">${esc(formatRM(r.totalPrice || r.unitPrice || 0))}</div></div>`).join('');
+  }
+
+  window.azobssOpenMyPurchases = async function(){
+    const modal = ensureMyPurchasesModal();
+    modal.classList.add('is-open');
+    await renderMyPurchasesList();
+  };
+
+  document.addEventListener('click', function(e){
+    const a = e.target && e.target.closest ? e.target.closest('a.user-dropdown-item[href="/#purchases"], a[href="/#purchases"]') : null;
+    if(!a) return;
+    if(!/my\s+purchases/i.test(a.textContent || '')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try{ document.querySelectorAll('.user-menu.is-open').forEach(el => el.classList.remove('is-open')); }catch(_e){}
+    window.azobssOpenMyPurchases();
+  }, true);
+
+  window.addEventListener('azobss-my-purchases-updated', renderMyPurchasesList);
+})();

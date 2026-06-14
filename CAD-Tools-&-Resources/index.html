@@ -2347,6 +2347,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       const link = toAbsolute(currentProduct.stripeLink || '');
       if(!link){ errorBox.textContent='Stripe/payment link is not set for this item.'; return; }
       localStorage.setItem('azobss_last_checkout_page', window.location.href);
+      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = link;
       return;
     }
@@ -2368,6 +2369,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       }
       if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
       if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
+      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
       const fallback = toAbsolute(currentProduct.paymentLink || '');
@@ -2385,6 +2387,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       const res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
       if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
+      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       const downloadUrl = toAbsolute(data.downloadUrl);
       const receiptUrl = toAbsolute(data.receiptUrl);
       successBox.innerHTML = `<b>Payment Successful ✅</b><br><span>Your temporary download link is active according to the product settings and download limit.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
