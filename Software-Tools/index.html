@@ -2839,70 +2839,50 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
-<style id="azobss-software-full-description-089-css">
-/* 089: show full software card description */
-.software-card .software-description,
-.software-card .software-desc,
-.software-card .card-description,
-.software-card .tool-description,
-.software-card .desc,
-.software-card p.description,
-.software-card p,
-.software-item .software-description,
-.software-item .software-desc,
-.software-item .card-description,
-.software-item .tool-description,
-.software-item .desc,
-.software-item p.description,
-.software-item p,
-.az-software-card .software-description,
-.az-software-card .software-desc,
-.az-software-card .card-description,
-.az-software-card .tool-description,
-.az-software-card .desc,
-.az-software-card p.description,
-.az-software-card p{
-  display:block!important;
-  -webkit-line-clamp:unset!important;
-  line-clamp:unset!important;
-  -webkit-box-orient:unset!important;
-  max-height:none!important;
-  height:auto!important;
-  overflow:visible!important;
-  text-overflow:clip!important;
+<style id="azobss-software-desc-readmore-096-css">
+.azobss-sw-desc-target-096{
+  display:-webkit-box!important;
+  -webkit-line-clamp:4!important;
+  line-clamp:4!important;
+  -webkit-box-orient:vertical!important;
+  max-height:88px!important;
+  min-height:62px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
   white-space:normal!important;
   overflow-wrap:anywhere!important;
 }
-.software-card,
-.software-item,
-.az-software-card{
-  height:auto!important;
-  min-height:0!important;
+.azobss-sw-desc-more-096{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:7px auto 0!important;
+  padding:5px 10px!important;
+  border:1px solid rgba(34,197,94,.45)!important;
+  border-radius:999px!important;
+  background:rgba(34,197,94,.12)!important;
+  color:#86efac!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  cursor:pointer!important;
 }
-</style>
-<style id="azobss-software-all-desc-full-090-css">
-/* 090: full visible descriptions for ALL software cards */
-#softwareList .software-card :is(p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description),
-#softwareList .software-item :is(p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description),
-.software-grid .software-card :is(p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description),
-.software-card :is(.software-desc,.software-description,.card-description,.tool-description,.description,p),
-.software-item :is(.software-desc,.software-description,.card-description,.tool-description,.description,p){
-  display:block!important;
-  -webkit-line-clamp:unset!important;
-  line-clamp:unset!important;
-  -webkit-box-orient:unset!important;
-  max-height:none!important;
-  height:auto!important;
-  overflow:visible!important;
-  text-overflow:clip!important;
-  white-space:normal!important;
-  overflow-wrap:anywhere!important;
+.azobss-sw-desc-modal-096{
+  position:fixed!important; inset:0!important; z-index:999999!important;
+  display:none!important; align-items:center!important; justify-content:center!important;
+  padding:18px!important; background:rgba(2,6,23,.78)!important; backdrop-filter:blur(6px)!important;
 }
-#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-card,.software-item{
-  height:auto!important;
-  max-height:none!important;
-  overflow:visible!important;
+.azobss-sw-desc-modal-096.is-open{display:flex!important;}
+.azobss-sw-desc-box-096{
+  width:min(620px,94vw)!important; max-height:76vh!important; overflow:auto!important;
+  background:#0f172a!important; border:1px solid rgba(34,197,94,.45)!important;
+  border-radius:18px!important; box-shadow:0 20px 60px rgba(0,0,0,.45)!important;
+  padding:20px!important; color:#e5e7eb!important;
 }
+.azobss-sw-desc-head-096{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:12px!important;}
+.azobss-sw-desc-title-096{color:#86efac!important;font-size:18px!important;font-weight:900!important;line-height:1.25!important;}
+.azobss-sw-desc-close-096{width:34px!important;height:34px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.35)!important;background:rgba(15,23,42,.9)!important;color:#fff!important;font-size:18px!important;cursor:pointer!important;}
+.azobss-sw-desc-text-096{font-size:14px!important;line-height:1.65!important;color:#dbeafe!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;}
 </style>
 </head>
 <body>
@@ -7901,88 +7881,77 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
-<script id="azobss-software-full-description-089-js">
+<script id="azobss-software-desc-readmore-096-js">
 (function(){
-  if(window.__azobssSoftwareFullDescription089) return;
-  window.__azobssSoftwareFullDescription089=true;
-  function clean(){
-    document.querySelectorAll('.software-card,.software-item,.az-software-card,[data-software-id],[data-product-id]').forEach(function(card){
-      card.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.desc,p.description,p').forEach(function(el){
-        var txt=(el.textContent||'').trim();
-        if(txt.length>25 && /windows|software|prayer|daily|interface|surau|office|shop|display|tool/i.test(txt)){
-          el.style.setProperty('-webkit-line-clamp','unset','important');
-          el.style.setProperty('line-clamp','unset','important');
-          el.style.setProperty('max-height','none','important');
-          el.style.setProperty('height','auto','important');
-          el.style.setProperty('overflow','visible','important');
-          el.style.setProperty('white-space','normal','important');
-        }
-      });
-    });
+  if(window.__azobssSoftwareDescReadMore096) return;
+  window.__azobssSoftwareDescReadMore096=true;
+
+  function ensureModal(){
+    var m=document.getElementById('azobssSwDescModal096');
+    if(m) return m;
+    m=document.createElement('div');
+    m.id='azobssSwDescModal096';
+    m.className='azobss-sw-desc-modal-096';
+    m.innerHTML='<div class="azobss-sw-desc-box-096"><div class="azobss-sw-desc-head-096"><div class="azobss-sw-desc-title-096"></div><button type="button" class="azobss-sw-desc-close-096">×</button></div><div class="azobss-sw-desc-text-096"></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click',function(ev){if(ev.target===m)m.classList.remove('is-open');});
+    m.querySelector('.azobss-sw-desc-close-096').addEventListener('click',function(){m.classList.remove('is-open');});
+    document.addEventListener('keydown',function(ev){if(ev.key==='Escape')m.classList.remove('is-open');});
+    return m;
   }
-  document.addEventListener('DOMContentLoaded',clean);
-  if(document.readyState!=='loading') clean();
-  setTimeout(clean,200);setTimeout(clean,800);setTimeout(clean,1500);
-  window.addEventListener('focus',clean);
-  window.azobssSoftwareDescDebug089=function(){
-    clean();
-    return Array.from(document.querySelectorAll('.software-card,.software-item,.az-software-card,[data-software-id],[data-product-id]')).map(function(card,i){
-      var desc=card.querySelector('.software-description,.software-desc,.card-description,.tool-description,.desc,p.description,p');
-      if(!desc) return null;
-      var cs=getComputedStyle(desc);
-      return {
-        index:i+1,
-        text:(desc.textContent||'').trim(),
-        lineClamp:cs.webkitLineClamp||cs.lineClamp,
-        maxHeight:cs.maxHeight,
-        overflow:cs.overflow,
-        height:Math.round(desc.getBoundingClientRect().height)
-      };
-    }).filter(Boolean);
-  };
-})();
-</script>
-<script id="azobss-software-all-desc-full-090-js">
-(function(){
-  if(window.__azobssSoftwareAllDescFull090) return;
-  window.__azobssSoftwareAllDescFull090=true;
+  function openModal(title,text){
+    var m=ensureModal();
+    m.querySelector('.azobss-sw-desc-title-096').textContent=title||'Software Description';
+    m.querySelector('.azobss-sw-desc-text-096').textContent=text||'';
+    m.classList.add('is-open');
+  }
+  function title(card){
+    var h=card.querySelector('h1,h2,h3,h4,.software-title,.tool-title,.card-title,.title');
+    return h?(h.textContent||'').trim():'Software Description';
+  }
   function isDesc(el){
-    var txt=(el.textContent||'').trim();
-    var cls=(el.className||'')+'';
-    return txt.length>14 && (/desc|description|software-desc|tool-description|card-description/i.test(cls) || (el.tagName&&el.tagName.toLowerCase()==='p' && /software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(txt)));
+    var t=(el.textContent||'').trim(), c=String(el.className||'');
+    return t.length>55 && (/desc|description|software-desc|tool-description|card-description/i.test(c) || (el.tagName&&el.tagName.toLowerCase()==='p' && /software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(t)));
   }
-  function clean(){
+  function desc(card){
+    return Array.from(card.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.description,.desc,p')).find(isDesc);
+  }
+  function setup(){
     document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]').forEach(function(card){
-      card.style.setProperty('height','auto','important');
-      card.style.setProperty('max-height','none','important');
-      card.style.setProperty('overflow','visible','important');
-      card.querySelectorAll('p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description').forEach(function(el){
-        if(!isDesc(el)) return;
-        ['-webkit-line-clamp','line-clamp','-webkit-box-orient','max-height','height','overflow','text-overflow','white-space'].forEach(function(k){
-          var v={ '-webkit-line-clamp':'unset','line-clamp':'unset','-webkit-box-orient':'unset','max-height':'none','height':'auto','overflow':'visible','text-overflow':'clip','white-space':'normal'}[k];
-          el.style.setProperty(k,v,'important');
-        });
-        el.style.setProperty('display','block','important');
-        el.style.setProperty('overflow-wrap','anywhere','important');
-      });
+      var d=desc(card); if(!d) return;
+      var full=(d.textContent||'').trim();
+      d.classList.add('azobss-sw-desc-target-096');
+      d.style.setProperty('-webkit-line-clamp','4','important');
+      d.style.setProperty('line-clamp','4','important');
+      d.style.setProperty('max-height','88px','important');
+      d.style.setProperty('overflow','hidden','important');
+      var btn=card.querySelector('.azobss-sw-desc-more-096');
+      if(full.length>90 && !btn){
+        btn=document.createElement('button');
+        btn.type='button';
+        btn.className='azobss-sw-desc-more-096';
+        btn.textContent='Read More';
+        btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();openModal(title(card),full);});
+        d.insertAdjacentElement('afterend',btn);
+      }
+      if(full.length<=90 && btn) btn.remove();
     });
   }
-  document.addEventListener('DOMContentLoaded',clean);
-  if(document.readyState!=='loading') clean();
-  [100,400,1000,2000].forEach(function(t){setTimeout(clean,t);});
-  window.addEventListener('focus',clean);
-  window.addEventListener('azobss-software-rendered',clean);
+  document.addEventListener('DOMContentLoaded',setup);
+  if(document.readyState!=='loading') setup();
+  [100,400,1000,2000].forEach(function(t){setTimeout(setup,t);});
+  window.addEventListener('focus',setup);
+  window.addEventListener('azobss-software-rendered',setup);
   setTimeout(function(){
     var root=document.getElementById('softwareList') || document.querySelector('.software-grid');
-    if(root) try{new MutationObserver(function(){requestAnimationFrame(clean);}).observe(root,{childList:true,subtree:true});}catch(e){}
+    if(root) try{new MutationObserver(function(){requestAnimationFrame(setup);}).observe(root,{childList:true,subtree:true});}catch(e){}
   },700);
-  window.azobssSoftwareDescDebug090=function(){
-    clean();
+  window.azobssSoftwareDescReadMoreDebug096=function(){
+    setup();
     return Array.from(document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]')).map(function(card,i){
-      var desc=Array.from(card.querySelectorAll('p,.desc,.description,.software-desc,.software-description,.card-description,.tool-description')).find(isDesc);
-      if(!desc) return null;
-      var cs=getComputedStyle(desc);
-      return {index:i+1,text:(desc.textContent||'').trim(),lineClamp:cs.webkitLineClamp||cs.lineClamp,maxHeight:cs.maxHeight,overflow:cs.overflow,height:Math.round(desc.getBoundingClientRect().height)};
+      var d=desc(card); if(!d) return null;
+      var cs=getComputedStyle(d);
+      return {index:i+1,title:title(card),text:(d.textContent||'').trim(),readMore:!!card.querySelector('.azobss-sw-desc-more-096'),lineClamp:cs.webkitLineClamp||cs.lineClamp,maxHeight:cs.maxHeight,overflow:cs.overflow,height:Math.round(d.getBoundingClientRect().height)};
     }).filter(Boolean);
   };
 })();
