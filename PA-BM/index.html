@@ -8576,7 +8576,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="admin-purchase-panel" id="adminPurchasePanel">
 <div class="purchase-panel-layout">
 <div>
-<h3 id="purchasePanelTitle">Purchase Records</h3>
+<h3 id="purchasePanelTitle">My Purchases</h3>
 <p class="request-note" id="purchasePanelNote">
               Price: RM5 for 1 PA.
             </p>
@@ -8613,8 +8613,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="guest-history-pagination" id="purchaseRecordsPagination"></div>
 <div class="user-pa-purchase-panel" id="userPaPurchasePanel">
-<h4>Latest Purchase List</h4>
-<p class="az-download-limit-note">ℹ️ Button Download boleh digunakan sehingga 5 kali dan akan terhapus secara automatik selepas 7 hari.</p>
+<h4>My Purchases</h4>
+<p class="az-download-limit-note">ℹ️ Resit dan link download telah dihantar ke email pelanggan. My Purchases hanya simpan ringkasan item dan harga.</p>
 <div class="user-pa-tools" id="userPaPurchaseTools">
 <label for="userPaPurchaseSearch">
                   Search PA / BM / SBM / negeri
@@ -10318,7 +10318,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     var title = document.getElementById('purchasePanelTitle');
     if(title){
-      title.textContent = isAdmin ? 'Purchase Records Users' : 'Purchase Records Saya';
+      title.textContent = isAdmin ? 'Purchase Records Users' : 'My Purchases';
     }
 
     var note = document.getElementById('purchasePanelNote');
@@ -14222,6 +14222,32 @@ return;
   };
 })();
 </script>
+
+<style id="azobss-my-purchases-text-only-css">
+/* AZOBSS My Purchases text-only receipt summary */
+#userPaPurchaseList .az-my-purchase-note{
+  margin:0 0 8px!important;padding:9px 12px!important;border-radius:10px!important;border:1px solid rgba(34,197,94,.28)!important;background:rgba(34,197,94,.08)!important;color:#d1fae5!important;font-size:12px!important;font-weight:800!important;line-height:1.35!important;
+}
+#userPaPurchaseList .az-my-purchase-line-card{
+  display:grid!important;grid-template-columns:38px minmax(0,1fr) 120px auto!important;align-items:center!important;gap:8px!important;min-width:0!important;width:100%!important;min-height:48px!important;margin:0 0 7px!important;padding:9px 10px!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:12px!important;background:rgba(15,23,42,.68)!important;box-shadow:none!important;box-sizing:border-box!important;overflow:visible!important;
+}
+#userPaPurchaseList .az-my-purchase-line-card>div{padding:0!important;min-width:0!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.25!important;}
+#userPaPurchaseList .az-my-purchase-no{color:#94a3b8!important;font-size:12px!important;font-weight:900!important;text-align:center!important;}
+#userPaPurchaseList .az-my-purchase-text{display:flex!important;flex-direction:column!important;gap:3px!important;}
+#userPaPurchaseList .az-my-purchase-text strong{color:#facc15!important;font-size:13px!important;font-weight:950!important;}
+#userPaPurchaseList .az-my-purchase-text span{color:#cbd5e1!important;font-size:11px!important;font-weight:700!important;}
+#userPaPurchaseList .az-my-purchase-status{justify-self:end!important;border-radius:999px!important;padding:5px 9px!important;font-size:11px!important;font-weight:900!important;white-space:nowrap!important;}
+#userPaPurchaseList .az-my-purchase-status.is-paid{background:rgba(34,197,94,.16)!important;color:#86efac!important;border:1px solid rgba(34,197,94,.30)!important;}
+#userPaPurchaseList .az-my-purchase-status.is-pending{background:rgba(251,191,36,.13)!important;color:#fde68a!important;border:1px solid rgba(251,191,36,.30)!important;}
+#userPaPurchaseList .az-my-purchase-action{justify-self:end!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;}
+#userPaPurchaseList .az-my-purchase-remove{height:28px!important;min-height:28px!important;padding:0 10px!important;border-radius:8px!important;}
+@media(max-width:760px){
+  #userPaPurchaseList .az-my-purchase-line-card{grid-template-columns:28px minmax(0,1fr)!important;gap:7px!important;padding:9px!important;}
+  #userPaPurchaseList .az-my-purchase-status,#userPaPurchaseList .az-my-purchase-action{grid-column:2!important;justify-self:start!important;margin-top:3px!important;}
+  #userPaPurchaseList .az-my-purchase-text strong{font-size:12px!important;}
+}
+</style>
+
 </body>
 </html>
 <script>
