@@ -2554,9 +2554,30 @@ function renderAzobssPurchaseDetailPager(key, currentPage, totalItems){
   return `<div class="guest-history-pagination az-purchase-detail-pagination" data-purchase-detail-key="${escHtml(key)}">${azobssBuildCompactPagerHtml(currentPage, totalPages)}</div>`;
 }
 function azobssIsPurchasePaidForDownload(r){
-  if(azobssIsPurchaseStatusPaid(r)) return true;
-  if(azobssPurchaseHasDownloadReadyUrl(r)) return true;
-  return false;
+  /*
+    095 strict paid logic:
+    Download must only appear for records that are explicitly paid/verified.
+    Do NOT treat downloadUrl, fileUrl, or user purchaseTotalResetAtMs as paid.
+    Those older fallbacks caused unpaid rows to show "Download 0/5".
+  */
+  try{
+    if(!r) return false;
+    if(azobssIsPurchaseStatusPaid(r)) return true;
+
+    const status = String(r?.status || r?.paymentStatus || r?.payment_status || '').trim().toLowerCase();
+    if(['paid','success','completed','settled','verified','approved'].includes(status)) return true;
+
+    if(r?.paid === true || r?.verified === true || r?.isPaid === true || r?.paymentVerified === true) return true;
+
+    const paidAt = Number(r?.paidAtMs || r?.verifiedAtMs || r?.paymentVerifiedAtMs || 0)
+      || (r?.paidAtClient ? Date.parse(r.paidAtClient) : 0)
+      || (r?.verifiedAtClient ? Date.parse(r.verifiedAtClient) : 0);
+    if(paidAt && Number.isFinite(paidAt)) return true;
+
+    return false;
+  }catch(e){
+    return false;
+  }
 }
 
 function azobssCanUncartPurchase(r){
