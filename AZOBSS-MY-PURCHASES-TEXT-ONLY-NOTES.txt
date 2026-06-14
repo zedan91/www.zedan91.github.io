@@ -1,0 +1,15 @@
+AZOBSS My Purchases text-only patch
+
+Baseline: (097)-AZOBSS-SOFTWARE-DESC-INLINE-MORE-FIX_20260614_115406.zip
+
+Changes:
+1. My Purchases user view now shows a simple purchase summary sentence only:
+   - Beli: <item> (<negeri>) — Harga: RMxx.xx
+   - Date/time is shown as small secondary text.
+2. Download button/link is no longer shown in My Purchases for paid PA/BM records.
+3. Note updated: receipt and download link are sent to customer email.
+4. Pending Payment rows still keep the remove-from-cart button so users can uncart unpaid PA/BM items.
+5. Admin Purchase Records view remains unchanged for management/delete/reset.
+
+Firebase Rules:
+- No Firebase Rules update required for this patch.
