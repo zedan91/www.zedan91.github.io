@@ -81,6 +81,8 @@
     .btn.dark{background:#111827;color:#e5e7eb;border:1px solid rgba(148,163,184,.25)}
     .btn:disabled{opacity:.55;cursor:not-allowed;filter:none}
     .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:8px}
+    .lucky-lang-row{display:flex;justify-content:flex-end;margin-bottom:10px}
+    .lucky-lang-toggle{min-height:34px;padding:0 12px;font-size:13px;border-radius:9px}
     .mini-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
     .mini-status{border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#07101f;padding:11px}
     .mini-status span{display:block;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase}
@@ -762,6 +764,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <section class="lucky-shell">
 <div class="top-grid">
 <div class="panel">
+<div class="lucky-lang-row"><button class="btn dark lucky-lang-toggle" id="luckyLangToggle" type="button">English</button></div>
 <span class="kicker">Lucky Draw</span>
 <h1>Peraduan Lucky Draw User</h1>
 <p>User yang login boleh join Lucky Draw selepas link username share dibuka oleh orang lain.</p>
@@ -931,7 +934,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           hour12:true
         }) + ' Malaysia';
       }catch(e){
-        return 'Auto hujung bulan, 10:00 PM Malaysia';
+        return tr('targetFallback');
       }
     }
     const savedInviteFromUrl = cleanShareUsername(new URLSearchParams(location.search).get('invite') || '');
@@ -956,6 +959,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       shareButton: document.getElementById('shareInviteButton'),
       confirmShareButton: document.getElementById('confirmShareButton'),
       authButton: document.getElementById('luckyDrawAuthButton'),
+      langToggle: document.getElementById('luckyLangToggle'),
       countdown: document.getElementById('countdownText'),
       targetText: document.getElementById('targetText'),
       total: document.getElementById('participantTotal'),
@@ -1028,6 +1032,201 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       return res;
     }
 
+    const luckyDrawI18n = {
+      ms: {
+        langButton: 'English',
+        kicker: 'Lucky Draw',
+        title: 'Peraduan Lucky Draw User',
+        intro: 'User yang login boleh join Lucky Draw selepas link username share dibuka oleh orang lain.',
+        rule1: 'Login dahulu sebelum join Lucky Draw.',
+        rule2: 'Share link username anda; sekurang-kurangnya 1 orang lain perlu buka link itu sebelum boleh join.',
+        rule3: 'Satu device dan satu IP address hanya boleh join sekali untuk bulan ini.',
+        linkLabel: 'Link share username',
+        copyInvite: 'Copy Invite Link',
+        shareWebsite: 'Share Website',
+        checkReferral: 'Check Referral Click',
+        joinLucky: 'Join Lucky Draw',
+        auth: 'Login / Register',
+        usernameShare: 'Username share',
+        shareStatus: 'Status share',
+        notShared: 'Belum share',
+        noteTitle: 'Nota link share Lucky Draw',
+        note1: 'Link share anda perlu dibuka oleh sekurang-kurangnya 1 orang lain sebelum anda boleh join Lucky Draw bulan ini.',
+        note2: 'Buka link sendiri tidak dikira.',
+        note3: 'Klik berulang dari device atau IP yang sama tidak akan dikira banyak kali.',
+        countdownLabel: 'Lucky Draw akan berjalan dalam',
+        targetFallback: 'Auto hujung bulan, 10:00 PM Malaysia',
+        prizeSmall: 'Prize',
+        winnerPending: 'Pemenang belum dipilih',
+        totalParticipants: 'Jumlah peserta join',
+        currentWinner: 'Pemenang bulan ini',
+        winnerNone: 'Belum dipilih',
+        prizeKicker: 'Hadiah Lucky Draw',
+        prizeDefaultTitle: 'Hadiah belum diumumkan',
+        prizeDefaultDesc: 'Admin belum upload hadiah Lucky Draw bulan ini.',
+        adminTitle: 'Edit Hadiah Lucky Draw',
+        adminPrizeTitle: 'Tajuk hadiah',
+        adminPrizeDesc: 'Description hadiah',
+        adminPrizeImage: 'Upload gambar hadiah',
+        savePrize: 'Save Prize',
+        applyJson: 'Apply JSON',
+        downloadJson: 'Download JSON',
+        refresh: 'Refresh',
+        runDraw: 'Run Draw',
+        testSpin: 'Test Spin',
+        resetWinner: 'Reset Winner',
+        resetParticipants: 'Reset Participants',
+        resetJoinMonth: 'Reset Join Bulan Ini',
+        exportParticipants: 'Export Peserta',
+        participantsKicker: 'Peserta Lucky Draw',
+        participantsTitle: 'Senarai peserta bulan ini',
+        loginPlaceholder: 'Login dahulu untuk jana invite link',
+        loginActive: 'Login dahulu untuk aktifkan Lucky Draw.',
+        loginCheck: 'Login dahulu untuk check referral click.',
+        checking: 'Checking referral click...',
+        alreadyJoined: 'Anda sudah join Lucky Draw bulan ini.',
+        referralValid: 'Referral click sudah valid. Button Join Lucky Draw sudah aktif.',
+        referralMissing: 'Share link username kepada orang lain. Join aktif selepas sekurang-kurangnya 1 orang buka link anda.',
+        referralCount: 'Referral click: ',
+        noReferral: 'Belum ada referral click',
+        copyLogin: 'Login dahulu sebelum copy invite link.',
+        copied: 'Link username berjaya disalin. Join aktif selepas orang lain buka link ini.',
+        shareLogin: 'Login dahulu sebelum share link.',
+        shareText: 'Jom join AZOBSS Lucky Draw: ',
+        shareOpened: 'Link sudah dibuka untuk share. Join hanya aktif selepas orang lain buka link anda.',
+        shareCancelled: 'Share dibatalkan. Join belum aktif.',
+        whatsappOpened: 'WhatsApp dibuka. Join hanya aktif selepas orang lain buka link anda.',
+        joinLogin: 'Login dahulu sebelum join Lucky Draw.',
+        joinSuccess: 'Anda berjaya join Lucky Draw bulan ini. Semoga berjaya!',
+        entriesEmpty: 'Belum ada peserta Lucky Draw.',
+        entriesBackendFail: 'Backend peserta belum dapat dibaca.',
+        congrats: 'Tahniah ',
+        exportEmpty: 'Tiada peserta untuk export.',
+        exportDone: 'Export peserta selesai.',
+        resetJoinFail: 'Reset join bulan ini gagal.',
+        resetJoinConfirm: 'Reset join bulan ini? Semua peserta bulan semasa akan dikosongkan dan user boleh join semula.',
+        runDrawConfirm: 'Run Lucky Draw untuk bulan ini? Pemenang akan disimpan.'
+      },
+      en: {
+        langButton: 'BM',
+        kicker: 'Lucky Draw',
+        title: 'User Lucky Draw Contest',
+        intro: 'Logged-in users can join the Lucky Draw after their username share link is opened by another person.',
+        rule1: 'Log in first before joining the Lucky Draw.',
+        rule2: 'Share your username link; at least 1 other person must open the link before you can join.',
+        rule3: 'One device and one IP address can only join once for this month.',
+        linkLabel: 'Username share link',
+        copyInvite: 'Copy Invite Link',
+        shareWebsite: 'Share Website',
+        checkReferral: 'Check Referral Click',
+        joinLucky: 'Join Lucky Draw',
+        auth: 'Login / Register',
+        usernameShare: 'Username share',
+        shareStatus: 'Share status',
+        notShared: 'Not shared yet',
+        noteTitle: 'Lucky Draw share link note',
+        note1: 'Your share link must be opened by at least 1 other person before you can join this month\'s Lucky Draw.',
+        note2: 'Opening your own link does not count.',
+        note3: 'Repeated clicks from the same device or IP address will not be counted multiple times.',
+        countdownLabel: 'Lucky Draw will run in',
+        targetFallback: 'Auto end of month, 10:00 PM Malaysia',
+        prizeSmall: 'Prize',
+        winnerPending: 'Winner has not been selected',
+        totalParticipants: 'Total joined participants',
+        currentWinner: 'This month\'s winner',
+        winnerNone: 'Not selected yet',
+        prizeKicker: 'Lucky Draw Prize',
+        prizeDefaultTitle: 'Prize not announced yet',
+        prizeDefaultDesc: 'This month\'s Lucky Draw prize has not been uploaded yet.',
+        adminTitle: 'Edit Lucky Draw Prize',
+        adminPrizeTitle: 'Prize title',
+        adminPrizeDesc: 'Prize description',
+        adminPrizeImage: 'Upload prize image',
+        savePrize: 'Save Prize',
+        applyJson: 'Apply JSON',
+        downloadJson: 'Download JSON',
+        refresh: 'Refresh',
+        runDraw: 'Run Draw',
+        testSpin: 'Test Spin',
+        resetWinner: 'Reset Winner',
+        resetParticipants: 'Reset Participants',
+        resetJoinMonth: 'Reset Join This Month',
+        exportParticipants: 'Export Participants',
+        participantsKicker: 'Lucky Draw Participants',
+        participantsTitle: 'Participant list for this month',
+        loginPlaceholder: 'Log in first to generate invite link',
+        loginActive: 'Log in first to activate Lucky Draw.',
+        loginCheck: 'Log in first to check referral click.',
+        checking: 'Checking referral click...',
+        alreadyJoined: 'You have already joined this month\'s Lucky Draw.',
+        referralValid: 'Referral click is valid. Join Lucky Draw button is now active.',
+        referralMissing: 'Share your username link with someone else. Join will be active after at least 1 person opens your link.',
+        referralCount: 'Referral click: ',
+        noReferral: 'No referral click yet',
+        copyLogin: 'Log in first before copying the invite link.',
+        copied: 'Username link copied. Join will be active after someone else opens this link.',
+        shareLogin: 'Log in first before sharing the link.',
+        shareText: 'Join AZOBSS Lucky Draw: ',
+        shareOpened: 'Share window opened. Join will only be active after someone else opens your link.',
+        shareCancelled: 'Share cancelled. Join is not active yet.',
+        whatsappOpened: 'WhatsApp opened. Join will only be active after someone else opens your link.',
+        joinLogin: 'Log in first before joining Lucky Draw.',
+        joinSuccess: 'You have successfully joined this month\'s Lucky Draw. Good luck!',
+        entriesEmpty: 'No Lucky Draw participants yet.',
+        entriesBackendFail: 'Participant backend cannot be read yet.',
+        congrats: 'Congratulations ',
+        exportEmpty: 'No participants to export.',
+        exportDone: 'Participants export completed.',
+        resetJoinFail: 'Reset join for this month failed.',
+        resetJoinConfirm: 'Reset joins for this month? All current-month participants will be cleared and users can join again.',
+        runDrawConfirm: 'Run Lucky Draw for this month? The winner will be saved.'
+      }
+    };
+
+    let luckyDrawLang = localStorage.getItem('azobssLuckyDrawLang') === 'en' ? 'en' : 'ms';
+    function tr(key){ return (luckyDrawI18n[luckyDrawLang] && luckyDrawI18n[luckyDrawLang][key]) || luckyDrawI18n.ms[key] || key; }
+    function setText(selector, value){ const el = document.querySelector(selector); if (el) el.textContent = value; }
+    function setTextAll(selector, values){ document.querySelectorAll(selector).forEach((el, index) => { if (values[index]) el.textContent = values[index]; }); }
+    function applyLuckyDrawLanguage(){
+      document.documentElement.setAttribute('data-lucky-lang', luckyDrawLang);
+      if (els.langToggle) els.langToggle.textContent = tr('langButton');
+      setText('.lucky-shell .top-grid .panel > .kicker', tr('kicker'));
+      setText('.lucky-shell .top-grid .panel h1', tr('title'));
+      setText('.lucky-shell .top-grid .panel > p', tr('intro'));
+      setTextAll('.lucky-shell .rules li', [tr('rule1'), tr('rule2'), tr('rule3')]);
+      setText('label[for="inviteLink"]', tr('linkLabel'));
+      if (els.copyButton) els.copyButton.textContent = tr('copyInvite');
+      if (els.shareButton) els.shareButton.textContent = tr('shareWebsite');
+      if (els.joinButton) els.joinButton.textContent = tr('joinLucky');
+      if (els.authButton) els.authButton.textContent = tr('auth');
+      setTextAll('.mini-status span', [tr('usernameShare'), tr('shareStatus')]);
+      setText('#referralInfoNote strong', tr('noteTitle'));
+      setTextAll('#referralInfoNote li', [tr('note1'), tr('note2'), tr('note3')]);
+      setText('.countdown-panel span', tr('countdownLabel'));
+      setText('.spin-box strong', tr('prizeSmall'));
+      setTextAll('.summary-box span', [tr('totalParticipants'), tr('currentWinner')]);
+      setText('.prize-panel .kicker', tr('prizeKicker'));
+      setText('.admin-panel h2', tr('adminTitle'));
+      setText('label[for="prizeTitleInput"]', tr('adminPrizeTitle'));
+      setText('label[for="prizeDescriptionInput"]', tr('adminPrizeDesc'));
+      setText('label[for="prizeImageFile"]', tr('adminPrizeImage'));
+      const titleInput = document.getElementById('prizeTitleInput'); if (titleInput) titleInput.placeholder = tr('adminPrizeTitle');
+      const descInput = document.getElementById('prizeDescriptionInput'); if (descInput) descInput.placeholder = tr('adminPrizeDesc');
+      setText('#savePrizeButton', tr('savePrize'));
+      setText('#applyJsonButton', tr('applyJson'));
+      setText('#downloadJsonButton', tr('downloadJson'));
+      setText('#refreshPrizeButton', tr('refresh'));
+      setText('#runDrawButton', tr('runDraw'));
+      setText('#testSpinButton', tr('testSpin'));
+      setText('#resetWinnerButton', tr('resetWinner'));
+      setText('#resetParticipantsButton', tr('resetParticipants'));
+      setText('#resetJoinMonthButton', tr('resetJoinMonth'));
+      setText('#exportParticipantsButton', tr('exportParticipants'));
+      setText('#refreshEntriesButton', tr('refresh'));
+      setText('.participants .kicker', tr('participantsKicker'));
+      setText('.participants h2', tr('participantsTitle'));
+    }
+
     function setStatus(message, error){
       els.status.textContent = message || '';
       els.status.classList.toggle('error', !!error);
@@ -1089,10 +1288,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     async function refreshReferralStatus(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
-        setStatus('Login dahulu untuk check referral click.', true);
+        setStatus(tr('loginCheck'), true);
         return;
       }
-      setStatus('Checking referral click...');
+      setStatus(tr('checking'));
       await loadReferralStatus(user);
       updateInvitePanel();
     }
@@ -1131,7 +1330,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     function showJoinedStatus(user, message){
       markJoinedLocal(user);
       if (els.joinButton) els.joinButton.disabled = true;
-      setStatus(message || 'Anda sudah join Lucky Draw bulan ini.');
+      setStatus(message || tr('alreadyJoined'));
     }
 
     function showUser(){
@@ -1162,15 +1361,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     function updateInvitePanel(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
-        els.inviteLink.value = 'Login dahulu untuk jana invite link';
+        els.inviteLink.value = tr('loginPlaceholder');
         els.inviteCode.textContent = '-';
-        els.shareStatus.textContent = 'Belum share';
+        els.shareStatus.textContent = tr('notShared');
         els.joinButton.disabled = true;
         if (els.confirmShareButton) {
           els.confirmShareButton.disabled = true;
-          els.confirmShareButton.textContent = 'Saya sudah share';
+          els.confirmShareButton.textContent = tr('checkReferral');
         }
-        setStatus('Login dahulu untuk aktifkan Lucky Draw.', false);
+        setStatus(tr('loginActive'), false);
         return;
       }
 
@@ -1186,15 +1385,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       else { try { localStorage.removeItem(getJoinKey(user)); } catch(e) {} }
       els.inviteLink.value = inviteUrl;
       els.inviteCode.textContent = user.usernameKey;
-      els.shareStatus.textContent = referralReady ? ('Referral click: ' + Math.max(1, referralClickCountCache)) : 'Belum ada referral click';
+      els.shareStatus.textContent = referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral');
       els.joinButton.disabled = joined || !referralReady;
       if (els.confirmShareButton) {
         els.confirmShareButton.disabled = joined;
-        els.confirmShareButton.textContent = 'Check Referral Click';
+        els.confirmShareButton.textContent = tr('checkReferral');
       }
-      if (joined) setStatus('Anda sudah join Lucky Draw bulan ini.');
-      else if (referralReady) setStatus('Referral click sudah valid. Button Join Lucky Draw sudah aktif.');
-      else setStatus('Share link username kepada orang lain. Join aktif selepas sekurang-kurangnya 1 orang buka link anda.');
+      if (joined) setStatus(tr('alreadyJoined'));
+      else if (referralReady) setStatus(tr('referralValid'));
+      else setStatus(tr('referralMissing'));
     }
 
     function tickCountdown(){
@@ -1241,8 +1440,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
     function renderPrize(prize){
       const image = normalizeImagePath(prize.imageUrl || prize.image);
-      const title = prize.title || 'Hadiah belum diumumkan';
-      const desc = prize.description || 'Admin belum upload hadiah Lucky Draw bulan ini.';
+      const title = prize.title || tr('prizeDefaultTitle');
+      const desc = prize.description || tr('prizeDefaultDesc');
       els.prizeImage.src = image;
       els.prizeTitle.textContent = title;
       els.prizeDescription.textContent = desc;
@@ -1267,13 +1466,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         renderParticipants(luckyDrawEntriesCache);
         updateInvitePanel();
       } catch(e) {
-        els.participants.innerHTML = '<div class="empty">Backend peserta belum dapat dibaca.</div>';
+        els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesBackendFail')) + '</div>';
       }
     }
 
     function renderParticipants(rows){
       if (!rows.length) {
-        els.participants.innerHTML = '<div class="empty">Belum ada peserta Lucky Draw.</div>';
+        els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesEmpty')) + '</div>';
         return;
       }
       els.participants.innerHTML = rows.slice(0, 20).map((entry, i) => {
@@ -1288,40 +1487,40 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const res = await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
         const data = await res.json();
         const winner = data && data.winner;
-        const name = winner ? (winner.name || winner.usernameKey || 'Winner') : 'Belum dipilih';
+        const name = winner ? (winner.name || winner.usernameKey || 'Winner') : tr('winnerNone');
         els.winner.textContent = name;
-        els.winnerText.textContent = winner ? 'Tahniah ' + name : 'Pemenang belum dipilih';
+        els.winnerText.textContent = winner ? tr('congrats') + name : tr('winnerPending');
       } catch(e) {}
     }
 
     async function copyInvite(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
-        setStatus('Login dahulu sebelum copy invite link.', true);
+        setStatus(tr('copyLogin'), true);
         return;
       }
       await navigator.clipboard.writeText(els.inviteLink.value);
-      setStatus('Link username berjaya disalin. Join aktif selepas orang lain buka link ini.');
+      setStatus(tr('copied'));
     }
 
     function shareInvite(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
-        setStatus('Login dahulu sebelum share link.', true);
+        setStatus(tr('shareLogin'), true);
         return;
       }
       const inviteUrl = els.inviteLink.value;
-      const text = 'Jom join AZOBSS Lucky Draw: ' + inviteUrl;
+      const text = tr('shareText') + inviteUrl;
       if (navigator.share) {
         navigator.share({title:'AZOBSS Lucky Draw', text, url:inviteUrl}).then(function(){
-          setStatus('Link sudah dibuka untuk share. Join hanya aktif selepas orang lain buka link anda.');
+          setStatus(tr('shareOpened'));
           refreshReferralStatus();
         }).catch(function(){
-          setStatus('Share dibatalkan. Join belum aktif.', true);
+          setStatus(tr('shareCancelled'), true);
         });
       } else {
         window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
-        setStatus('WhatsApp dibuka. Join hanya aktif selepas orang lain buka link anda.');
+        setStatus(tr('whatsappOpened'));
       }
     }
 
@@ -1332,11 +1531,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     async function joinLuckyDraw(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
-        setStatus('Login dahulu sebelum join Lucky Draw.', true);
+        setStatus(tr('joinLogin'), true);
         return;
       }
       if (findCurrentUserEntry(user)) {
-        showJoinedStatus(user, 'Anda sudah join Lucky Draw bulan ini.');
+        showJoinedStatus(user, tr('alreadyJoined'));
         return;
       }
       const referralReady = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
@@ -1373,7 +1572,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) {
           if (isDuplicateJoinError(null, data)) {
-            showJoinedStatus(user, data.error || 'Anda sudah join Lucky Draw bulan ini.');
+            showJoinedStatus(user, data.error || tr('alreadyJoined'));
             await loadEntries();
             return;
           }
@@ -1381,11 +1580,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         }
         markJoinedLocal(user);
         updateInvitePanel();
-        setStatus('Anda berjaya join Lucky Draw bulan ini. Semoga berjaya!');
+        setStatus(tr('joinSuccess'));
         await loadEntries();
       } catch(e) {
         if (isDuplicateJoinError(e, null)) {
-          showJoinedStatus(user, e.message || 'Anda sudah join Lucky Draw bulan ini.');
+          showJoinedStatus(user, e.message || tr('alreadyJoined'));
           return;
         }
         if (els.joinButton) els.joinButton.disabled = false;
@@ -1470,7 +1669,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     async function runLuckyDraw(){
       if (!requireLuckyDrawAdmin()) return;
-      if (!confirm('Run Lucky Draw untuk bulan ini? Pemenang akan disimpan.')) return;
+      if (!confirm(tr('runDrawConfirm'))) return;
       setAdminStatus('Running lucky draw...');
       try {
         const res = await apiFetch('/api/lucky-draw/winner/spin', {
@@ -1523,8 +1722,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const res = await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Reset winner gagal');
-        els.winner.textContent = 'Belum dipilih';
-        els.winnerText.textContent = 'Pemenang belum dipilih';
+        els.winner.textContent = tr('winnerNone');
+        els.winnerText.textContent = tr('winnerPending');
         setAdminStatus('Winner bulan ini sudah direset.');
       } catch(e) {
         setAdminStatus(e.message || 'Reset winner gagal.', true);
@@ -1577,15 +1776,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         updateInvitePanel();
         setAdminStatus('Join bulan ini sudah direset. User yang sudah join boleh join semula jika referral click masih valid.');
       } catch(e) {
-        setAdminStatus(e.message || 'Reset join bulan ini gagal.', true);
+        setAdminStatus(e.message || tr('resetJoinFail'), true);
       }
     }
 
     async function resetLuckyWinnerSilent(){
       try {
         await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
-        els.winner.textContent = 'Belum dipilih';
-        els.winnerText.textContent = 'Pemenang belum dipilih';
+        els.winner.textContent = tr('winnerNone');
+        els.winnerText.textContent = tr('winnerPending');
       } catch(e) {}
     }
 
@@ -1593,7 +1792,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!requireLuckyDrawAdmin()) return;
       const rows = activeLuckyRows();
       if (!rows.length) {
-        setAdminStatus('Tiada peserta untuk export.', true);
+        setAdminStatus(tr('exportEmpty'), true);
         return;
       }
       const headers = ['No','Name','Username','Email','Phone','Invite Code','Invited By','Joined At'];
@@ -1614,9 +1813,18 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       a.download = 'AZOBSS-Lucky-Draw-Participants-' + monthKey() + '.csv';
       a.click();
       URL.revokeObjectURL(a.href);
-      setAdminStatus('Export peserta selesai.');
+      setAdminStatus(tr('exportDone'));
     }
 
+    if (els.langToggle) els.langToggle.addEventListener('click', function(){
+      luckyDrawLang = luckyDrawLang === 'en' ? 'ms' : 'en';
+      localStorage.setItem('azobssLuckyDrawLang', luckyDrawLang);
+      applyLuckyDrawLanguage();
+      updateInvitePanel();
+      tickCountdown();
+      loadWinner();
+      loadEntries();
+    });
     els.copyButton.addEventListener('click', copyInvite);
     els.shareButton.addEventListener('click', shareInvite);
     if (els.confirmShareButton) els.confirmShareButton.addEventListener('click', confirmShareDone);
@@ -1635,6 +1843,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     window.addEventListener('storage', showUser);
 
+    applyLuckyDrawLanguage();
     tickCountdown();
     setInterval(tickCountdown, 1000);
     showUser();
