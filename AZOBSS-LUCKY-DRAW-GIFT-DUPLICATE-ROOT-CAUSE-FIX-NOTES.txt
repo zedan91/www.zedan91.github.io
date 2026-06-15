@@ -1,0 +1,1 @@
+Patch 132: Removed overlapping old Lucky Draw gift scripts from Software/CAD pages. New final script rebuilds only one gift button per top-level paid product card, below the like button, and removes nested/lower duplicate gift buttons continuously. Auto-copy fallback retained.
