@@ -1,0 +1,5 @@
+AZOBSS Lucky Draw patch 137
+- Added Load JSON button in Lucky Draw prize admin panel.
+- Admin can choose a .json file and it will be loaded into Add / edit JSON.
+- Loaded JSON is applied to prize preview first; admin must press Save Prize to publish.
+- Only lucky-draw/index.html was changed.

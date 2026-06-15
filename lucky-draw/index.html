@@ -950,9 +950,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="admin-json">
 <label class="field-label" for="prizeJsonInput">Add / edit JSON</label>
 <textarea id="prizeJsonInput" placeholder='{"title":"Hadiah","description":"Maklumat hadiah","imageUrl":"https://..."}'></textarea>
+<input accept="application/json,.json" id="prizeJsonFileInput" style="display:none" type="file"/>
 </div>
 <div class="admin-actions">
 <button class="btn green" id="savePrizeButton" type="button">Save Prize</button>
+<button class="btn dark" id="loadJsonButton" type="button">Load JSON</button>
 <button class="btn dark" id="applyJsonButton" type="button">Apply JSON</button>
 <button class="btn orange" id="downloadJsonButton" type="button">Download JSON</button>
 <button class="btn dark" id="refreshPrizeButton" type="button">Refresh</button>
@@ -1132,6 +1134,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       prizeDescriptionInput: document.getElementById('prizeDescriptionInput'),
       prizeImageFile: document.getElementById('prizeImageFile'),
       prizeJsonInput: document.getElementById('prizeJsonInput'),
+      prizeJsonFileInput: document.getElementById('prizeJsonFileInput'),
       adminStatus: document.getElementById('adminStatus'),
       winnerHistory: document.getElementById('winnerHistoryList'),
       refreshWinnerHistoryButton: document.getElementById('refreshWinnerHistoryButton'),
@@ -1265,6 +1268,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         adminPrizeDesc: 'Description hadiah',
         adminPrizeImage: 'Upload gambar hadiah',
         savePrize: 'Save Prize',
+        loadJson: 'Load JSON',
         applyJson: 'Apply JSON',
         downloadJson: 'Download JSON',
         refresh: 'Refresh',
@@ -1392,6 +1396,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         adminPrizeDesc: 'Prize description',
         adminPrizeImage: 'Upload prize image',
         savePrize: 'Save Prize',
+        loadJson: 'Load JSON',
         applyJson: 'Apply JSON',
         downloadJson: 'Download JSON',
         refresh: 'Refresh',
@@ -1497,6 +1502,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const titleInput = document.getElementById('prizeTitleInput'); if (titleInput) titleInput.placeholder = tr('adminPrizeTitle');
       const descInput = document.getElementById('prizeDescriptionInput'); if (descInput) descInput.placeholder = tr('adminPrizeDesc');
       setText('#savePrizeButton', tr('savePrize'));
+      setText('#loadJsonButton', tr('loadJson'));
       setText('#applyJsonButton', tr('applyJson'));
       setText('#downloadJsonButton', tr('downloadJson'));
       setText('#refreshPrizeButton', tr('refresh'));
@@ -2167,6 +2173,36 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
     }
 
+    function openPrizeJsonFile(){
+      if (!isAdmin(readUser())) {
+        setAdminStatus('Admin sahaja boleh load JSON.', true);
+        return;
+      }
+      if (!els.prizeJsonFileInput) {
+        setAdminStatus('Input JSON file tidak ditemui.', true);
+        return;
+      }
+      els.prizeJsonFileInput.value = '';
+      els.prizeJsonFileInput.click();
+    }
+
+    async function handlePrizeJsonFile(event){
+      const file = event && event.target && event.target.files ? event.target.files[0] : null;
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('Format JSON mesti object.');
+        }
+        els.prizeJsonInput.value = JSON.stringify(data, null, 2);
+        applyJson();
+        setAdminStatus('JSON berjaya dimuat dari file. Semak preview, kemudian tekan Save Prize untuk publish.');
+      } catch(e) {
+        setAdminStatus('Load JSON gagal: ' + (e.message || e), true);
+      }
+    }
+
     function applyJson(){
       try {
         const data = JSON.parse(els.prizeJsonInput.value || '{}');
@@ -2454,6 +2490,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (els.exportAbuseAuditButton) els.exportAbuseAuditButton.addEventListener('click', exportAbuseAudit);
     document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
+    document.getElementById('loadJsonButton').addEventListener('click', openPrizeJsonFile);
+    if (els.prizeJsonFileInput) els.prizeJsonFileInput.addEventListener('change', handlePrizeJsonFile);
     document.getElementById('applyJsonButton').addEventListener('click', applyJson);
     document.getElementById('downloadJsonButton').addEventListener('click', downloadJson);
     document.getElementById('runDrawButton').addEventListener('click', runLuckyDraw);
