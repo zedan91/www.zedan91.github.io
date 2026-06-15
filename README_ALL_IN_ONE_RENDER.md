@@ -1,1 +1,1 @@
-Deploy this ZIP to apply Lucky Draw desktop share modal fix for paid product gift button.
+Patch 141: prize image uses full-width auto height on desktop; description remains scrollable.

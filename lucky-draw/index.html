@@ -925,6 +925,60 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   }
 }
 </style>
+
+
+<style id="azobss-lucky-draw-prize-full-image-desktop-141">
+/* AZOBSS PATCH 141: Desktop prize image show full photo */
+@media (min-width: 901px){
+  .prize-panel{
+    width:100% !important;
+    max-width:1120px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    grid-template-columns:1fr !important;
+    gap:0 !important;
+  }
+  .prize-panel .prize-image-wrap{
+    width:100% !important;
+    min-height:0 !important;
+    max-height:none !important;
+    height:auto !important;
+    display:block !important;
+    overflow:hidden !important;
+    background:#030817 !important;
+    border-radius:14px 14px 0 0 !important;
+  }
+  .prize-panel .prize-image-wrap img,
+  #prizeImage{
+    display:block !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    padding:0 !important;
+    border:0 !important;
+    background:#030817 !important;
+  }
+  .prize-panel > div:not(.prize-image-wrap){
+    padding:18px 18px 20px !important;
+    width:100% !important;
+  }
+  #prizeDescription.description{
+    max-height:260px !important;
+    overflow-y:auto !important;
+  }
+}
+@media (max-width:900px){
+  .prize-panel .prize-image-wrap img,
+  #prizeImage{
+    object-fit:contain !important;
+    object-position:center center !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
