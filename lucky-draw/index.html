@@ -787,7 +787,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="panel countdown-panel">
 <span>Lucky Draw akan berjalan dalam</span>
 <strong id="countdownText">-- hari --:--:--</strong>
-<small id="targetText">31/05/2026, 10:00 PM Malaysia</small>
+<small id="targetText">Auto hujung bulan, 10:00 PM Malaysia</small>
 </div>
 <div class="panel spin-box">
 <div>
@@ -866,7 +866,50 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     const API_BASE = (localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
     const ADMIN_USERNAME = 'zedan91';
     const MEMBER_PA_CODE = 'ZX6186';
-    const DRAW_TARGET = new Date('2026-05-31T22:00:00+08:00');
+    function getLuckyDrawTargetDate(){
+      const now = new Date();
+      const malaysiaParts = new Intl.DateTimeFormat('en-CA', {
+        timeZone:'Asia/Kuala_Lumpur',
+        year:'numeric',
+        month:'2-digit',
+        day:'2-digit',
+        hour:'2-digit',
+        minute:'2-digit',
+        second:'2-digit',
+        hour12:false
+      }).formatToParts(now).reduce((acc, part) => {
+        if(part.type !== 'literal') acc[part.type] = part.value;
+        return acc;
+      }, {});
+
+      let year = Number(malaysiaParts.year);
+      let month = Number(malaysiaParts.month); // 1-12
+      let target = new Date(Date.UTC(year, month, 0, 14, 0, 0)); // 10:00 PM Malaysia = 14:00 UTC
+
+      if(now.getTime() > target.getTime()){
+        month += 1;
+        if(month > 12){ month = 1; year += 1; }
+        target = new Date(Date.UTC(year, month, 0, 14, 0, 0));
+      }
+
+      return target;
+    }
+
+    function formatLuckyDrawTargetText(date){
+      try{
+        return date.toLocaleString('en-MY', {
+          timeZone:'Asia/Kuala_Lumpur',
+          day:'2-digit',
+          month:'2-digit',
+          year:'numeric',
+          hour:'2-digit',
+          minute:'2-digit',
+          hour12:true
+        }) + ' Malaysia';
+      }catch(e){
+        return 'Auto hujung bulan, 10:00 PM Malaysia';
+      }
+    }
     const savedInviteFromUrl = new URLSearchParams(location.search).get('invite') || '';
     if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', cleanInviteCode(savedInviteFromUrl));
 
@@ -885,6 +928,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       copyButton: document.getElementById('copyInviteButton'),
       shareButton: document.getElementById('shareInviteButton'),
       countdown: document.getElementById('countdownText'),
+      targetText: document.getElementById('targetText'),
       total: document.getElementById('participantTotal'),
       participants: document.getElementById('participantList'),
       winner: document.getElementById('winnerName'),
@@ -1025,15 +1069,21 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
 
     function tickCountdown(){
-      const diff = Math.max(0, DRAW_TARGET - new Date());
+      const target = getLuckyDrawTargetDate();
+      const diff = Math.max(0, target.getTime() - Date.now());
       const days = Math.floor(diff / 86400000);
       const hours = Math.floor(diff / 3600000) % 24;
       const minutes = Math.floor(diff / 60000) % 60;
       const seconds = Math.floor(diff / 1000) % 60;
-      els.countdown.textContent = days + ' hari ' +
-        String(hours).padStart(2,'0') + ':' +
-        String(minutes).padStart(2,'0') + ':' +
-        String(seconds).padStart(2,'0');
+      if(els.countdown){
+        els.countdown.textContent = days + ' hari ' +
+          String(hours).padStart(2,'0') + ':' +
+          String(minutes).padStart(2,'0') + ':' +
+          String(seconds).padStart(2,'0');
+      }
+      if(els.targetText){
+        els.targetText.textContent = formatLuckyDrawTargetText(target);
+      }
     }
 
     async function loadPrize(){
