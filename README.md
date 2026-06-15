@@ -1,1 +1,4 @@
 AZOBSS patch 129: audit confirmed patch 128 did not contain the final gift button script. Added one visible gift button under like button for paid Software/CAD cards only, removed duplicates, and added share popup fallback to auto-copy link.
+
+
+PATCH 130: Lucky Draw gift duplicate hard fix. Removes nested/old gift buttons and keeps one managed button under like button only.
