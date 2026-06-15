@@ -87,6 +87,10 @@
     .mini-status strong{display:block;margin-top:4px;color:#22c55e;font-size:14px}
     .status-note{margin-top:12px;color:#facc15;font-size:13px;min-height:18px}
     .status-note.error{color:#fecaca}
+    .referral-info-note{margin-top:12px;border:1px solid rgba(250,204,21,.28);background:rgba(250,204,21,.07);border-radius:12px;padding:12px 14px;color:#fde68a;font-size:13px;line-height:1.55}
+    .referral-info-note strong{display:block;color:#facc15;margin-bottom:4px;font-size:13px}
+    .referral-info-note ul{margin:6px 0 0;padding-left:18px}
+    .referral-info-note li{margin:3px 0}
 
     .right-stack{display:grid;gap:14px}
     .countdown-panel{border-color:rgba(34,197,94,.36)}
@@ -784,6 +788,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="mini-status-grid">
 <div class="mini-status"><span>Username share</span><strong id="inviteCodeText">-</strong></div>
 <div class="mini-status"><span>Status share</span><strong id="shareStatusText">Belum share</strong></div>
+</div>
+<div class="referral-info-note" id="referralInfoNote">
+<strong>Nota referral Lucky Draw</strong>
+<ul>
+<li>Link share mesti dibuka oleh orang lain, bukan akaun sendiri.</li>
+<li>Klik berulang dari device atau IP yang sama tidak dikira banyak kali.</li>
+<li>Referral click hanya dikira untuk Lucky Draw bulan semasa sahaja.</li>
+</ul>
 </div>
 <div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
 </div>

@@ -1,0 +1,6 @@
+Patch 112 - Lucky Draw referral note only
+
+- Added a clear user note explaining valid referral click rules.
+- Note says the link must be opened by another person, repeated device/IP clicks do not count many times, and clicks count only for current month.
+- Edited lucky-draw page only.
+- No Firebase Rules update required.
