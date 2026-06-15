@@ -71,6 +71,13 @@
     .invite-tools{display:grid;gap:10px;margin-top:16px}
     .field-label{display:block;margin:0 0 6px;color:#dbeafe;font-size:12px;font-weight:900}
     .invite-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+    .share-requirement-text{margin:0;color:#cbd5e1;line-height:1.45;font-size:14px;font-weight:700}
+    .share-requirement-text strong{color:#facc15}
+    .product-share-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+    .product-share-actions .btn{width:100%}
+    .product-share-actions #confirmShareButton{grid-column:span 2}
+    .product-share-actions #joinLuckyDrawButton{grid-column:span 2}
+    .product-share-actions #luckyDrawAuthButton{grid-column:span 2}
     input,textarea{width:100%;border:1px solid rgba(148,163,184,.32);border-radius:10px;background:#060d1c;color:#fff;padding:11px 12px;outline:none}
     textarea{min-height:94px;resize:vertical;line-height:1.45}
     input:focus,textarea:focus{border-color:rgba(34,197,94,.72);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
@@ -747,11 +754,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   .lucky-lang-toggle{min-height:32px!important;font-size:12px!important;padding:0 10px!important;}
   .invite-tools{gap:9px!important;margin-top:12px!important;}
   .invite-row{grid-template-columns:1fr!important;gap:7px!important;}
-  .invite-row input{font-size:12px!important;padding:10px!important;}
-  .invite-row .btn{width:100%!important;}
+  .share-requirement-text{font-size:12.5px!important;line-height:1.42!important;}
   .actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;margin-top:6px!important;}
   .actions .btn{width:100%!important;min-height:38px!important;padding:0 8px!important;font-size:12px!important;white-space:normal!important;line-height:1.15!important;text-align:center!important;}
-  #joinLuckyDrawButton,#luckyDrawAuthButton{grid-column:span 2!important;}
+  .product-share-actions #confirmShareButton,.product-share-actions #joinLuckyDrawButton,.product-share-actions #luckyDrawAuthButton{grid-column:span 2!important;}
   .mini-status-grid{grid-template-columns:1fr 1fr!important;gap:7px!important;margin-top:10px!important;}
   .mini-status{padding:9px!important;border-radius:10px!important;}
   .mini-status span{font-size:10px!important;}
@@ -865,12 +871,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="invite-tools">
 <div>
 <label class="field-label" for="inviteLink">Syarat share produk berbayar</label>
-<div class="invite-row">
-<input id="inviteLink" readonly="" type="text" value="Share produk berbayar Software/CAD untuk aktifkan join"/>
+<input id="inviteLink" readonly="" type="hidden" value="Share produk berbayar Software/CAD untuk aktifkan join"/>
+<p class="share-requirement-text" id="productShareRequirementText">Buka mana-mana produk berbayar Software/CAD dan tekan <strong>🎁 Share for Lucky Draw</strong>. Join aktif selepas link produk itu dibuka oleh orang lain.</p>
+</div>
+<div class="actions product-share-actions">
 <button class="btn" id="copyInviteButton" type="button">Open Software Tools</button>
-</div>
-</div>
-<div class="actions">
 <button class="btn orange" id="shareInviteButton" type="button">Open CAD Tools</button>
 <button class="btn blue" id="confirmShareButton" type="button" disabled>Check Product Share</button>
 <button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
@@ -1109,6 +1114,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       name: document.getElementById('signedInName'),
       paBm: document.getElementById('paBmNavButton'),
       inviteLink: document.getElementById('inviteLink'),
+      productRequirementText: document.getElementById('productShareRequirementText'),
       inviteCode: document.getElementById('inviteCodeText'),
       shareStatus: document.getElementById('shareStatusText'),
       stepLogin: document.getElementById('luckyStepLogin'),
@@ -1314,6 +1320,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         abuseAuditExportEmpty: 'Tiada anti-abuse log untuk export.',
         abuseAuditExportDone: 'Export anti-abuse log selesai.',
         loginPlaceholder: 'Share produk berbayar Software/CAD untuk aktifkan join',
+        productRequirement: 'Buka mana-mana produk berbayar Software/CAD dan tekan <strong>🎁 Share for Lucky Draw</strong>. Join aktif selepas link produk itu dibuka oleh orang lain.',
         loginActive: 'Login dahulu untuk aktifkan Lucky Draw.',
         loginCheck: 'Login dahulu untuk check product share.',
         checking: 'Checking product share...',
@@ -1442,6 +1449,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         abuseAuditExportEmpty: 'No anti-abuse log to export.',
         abuseAuditExportDone: 'Anti-abuse log export completed.',
         loginPlaceholder: 'Share a paid Software/CAD product to unlock join',
+        productRequirement: 'Open any paid Software/CAD product and tap <strong>🎁 Share for Lucky Draw</strong>. Join activates after another person opens that product link.',
         loginActive: 'Log in first to activate Lucky Draw.',
         loginCheck: 'Log in first to check product share.',
         checking: 'Checking product share...',
@@ -1483,6 +1491,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('.lucky-shell .top-grid .panel > p', tr('intro'));
       setTextAll('.lucky-shell .rules li', [tr('rule1'), tr('rule2'), tr('rule3')]);
       setText('label[for="inviteLink"]', tr('linkLabel'));
+      if (els.productRequirementText) els.productRequirementText.innerHTML = tr('productRequirement');
       if (els.copyButton) els.copyButton.textContent = tr('copyInvite');
       if (els.shareButton) els.shareButton.textContent = tr('shareWebsite');
       if (els.joinButton) els.joinButton.textContent = tr('joinLucky');
@@ -1695,7 +1704,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     function updateInvitePanel(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
-        els.inviteLink.value = tr('loginPlaceholder');
+        if (els.inviteLink) els.inviteLink.value = tr('loginPlaceholder');
+        if (els.productRequirementText) els.productRequirementText.innerHTML = tr('productRequirement');
         els.inviteCode.textContent = '-';
         els.shareStatus.textContent = tr('notShared');
         els.joinButton.disabled = true;
@@ -1718,7 +1728,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const joined = backendJoined;
       if (backendJoined) markJoinedLocal(user);
       else { try { localStorage.removeItem(getJoinKey(user)); } catch(e) {} }
-      els.inviteLink.value = luckyDrawLang === 'en' ? 'Open Software/CAD paid product and tap Share for Lucky Draw' : 'Buka produk berbayar Software/CAD dan tekan Share for Lucky Draw';
+      if (els.inviteLink) els.inviteLink.value = luckyDrawLang === 'en' ? 'Open Software/CAD paid product and tap Share for Lucky Draw' : 'Buka produk berbayar Software/CAD dan tekan Share for Lucky Draw';
+      if (els.productRequirementText) els.productRequirementText.innerHTML = tr('productRequirement');
       els.inviteCode.textContent = user.usernameKey;
       els.shareStatus.textContent = referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral');
       els.joinButton.disabled = luckyDrawWinnerSelected || joined || !referralReady;
