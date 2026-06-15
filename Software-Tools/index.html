@@ -8093,6 +8093,144 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 </script>
 
 
+
+
+<style id="azobss-shared-product-filter-147-css">
+.az-shared-product-filter-note{
+  margin:10px 0 14px!important;
+  padding:10px 12px!important;
+  border:1px solid rgba(34,197,94,.35)!important;
+  border-radius:14px!important;
+  background:rgba(15,23,42,.82)!important;
+  color:#e5e7eb!important;
+  font-size:13px!important;
+  line-height:1.45!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  flex-wrap:wrap!important;
+}
+.az-shared-product-filter-note b{color:#86efac!important;}
+.az-shared-product-filter-note button{
+  border:1px solid rgba(148,163,184,.35)!important;
+  background:#111827!important;
+  color:#f8fafc!important;
+  border-radius:999px!important;
+  padding:7px 11px!important;
+  font-weight:800!important;
+  cursor:pointer!important;
+}
+.az-shared-product-hidden{display:none!important;}
+</style>
+<script id="azobss-shared-product-filter-147-js">
+(function(){
+  if(window.__azobssSharedProductFilter147) return;
+  window.__azobssSharedProductFilter147 = true;
+
+  var qs = new URLSearchParams(location.search);
+  var targetRaw = String(qs.get('product') || '').trim();
+  var refRaw = String(qs.get('ref') || '').trim();
+  if(!targetRaw) return;
+
+  var CARD_SELECTOR = '.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  var GRID_CARD_SELECTOR = '#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+
+  function clean(v){return String(v||'').replace(/\s+/g,' ').trim();}
+  function norm(v){return clean(v).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,140);}
+  function normLoose(v){return clean(v).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'').slice(0,140);}
+  var target = norm(targetRaw);
+  var targetLoose = normLoose(targetRaw);
+
+  function topCard(el){
+    var c = el && el.closest ? el.closest(CARD_SELECTOR) : null;
+    if(!c) return null;
+    var p = c.parentElement && c.parentElement.closest(CARD_SELECTOR);
+    return p || c;
+  }
+  function collectCards(){
+    var set = new Set();
+    document.querySelectorAll(GRID_CARD_SELECTOR + ',' + CARD_SELECTOR).forEach(function(el){
+      var c = topCard(el);
+      if(c && !c.closest('#userPaPurchaseList,#benchmarkCartList,.pa-section,.bm-section,#PA-BM')) set.add(c);
+    });
+    return Array.from(set);
+  }
+  function cardTitle(card){
+    return clean((card.querySelector('h3,.software-title,.cad-title,.card-title,[data-product-name],[data-title]')||{}).textContent || card.dataset.name || card.dataset.title || '');
+  }
+  function cardIds(card){
+    var title = cardTitle(card);
+    var vals = [
+      card.dataset.azLuckyProductId,
+      card.dataset.productId,
+      card.dataset.softwareId,
+      card.dataset.cadId,
+      card.dataset.docId,
+      card.dataset.id,
+      card.getAttribute('data-id'),
+      title
+    ].filter(Boolean);
+    return vals;
+  }
+  function isMatch(card){
+    var vals = cardIds(card);
+    for(var i=0;i<vals.length;i++){
+      var a = norm(vals[i]), b = normLoose(vals[i]);
+      if(a && (a === target || a.indexOf(target) !== -1 || target.indexOf(a) !== -1)) return true;
+      if(b && (b === targetLoose || b.indexOf(targetLoose) !== -1 || targetLoose.indexOf(b) !== -1)) return true;
+    }
+    return false;
+  }
+  function putSearchText(match){
+    var text = cardTitle(match) || targetRaw;
+    var input = document.querySelector('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]');
+    if(input){
+      try{input.value = text; input.dispatchEvent(new Event('input',{bubbles:true})); input.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}
+    }
+  }
+  function addNote(match, count){
+    if(document.getElementById('azSharedProductFilterNote147')) return;
+    var anchor = document.querySelector('#softwareDownloadsGrid,#softwareGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop,.products-grid,.cards-grid');
+    if(!anchor) return;
+    var note = document.createElement('div');
+    note.id = 'azSharedProductFilterNote147';
+    note.className = 'az-shared-product-filter-note';
+    var name = match ? (cardTitle(match) || targetRaw) : targetRaw;
+    note.innerHTML = '<span>Anda sedang melihat produk yang dikongsi: <b></b>'+(refRaw ? ' <small style="opacity:.78">daripada '+refRaw.replace(/[<>]/g,'')+'</small>' : '')+'</span><button type="button">Lihat semua produk</button>';
+    note.querySelector('b').textContent = name;
+    note.querySelector('button').addEventListener('click', function(){
+      try{ history.replaceState(null,'',location.pathname); }catch(e){}
+      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){el.classList.remove('az-shared-product-hidden')});
+      note.remove();
+      var input = document.querySelector('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]');
+      if(input){try{input.value=''; input.dispatchEvent(new Event('input',{bubbles:true})); input.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}}
+    });
+    anchor.parentNode.insertBefore(note, anchor);
+  }
+  function applyFilter(){
+    var cards = collectCards();
+    if(!cards.length) return;
+    var matches = cards.filter(isMatch);
+    if(!matches.length) return;
+    cards.forEach(function(card){
+      if(matches.indexOf(card) === -1) card.classList.add('az-shared-product-hidden');
+      else card.classList.remove('az-shared-product-hidden');
+    });
+    putSearchText(matches[0]);
+    addNote(matches[0], matches.length);
+  }
+
+  document.addEventListener('DOMContentLoaded', applyFilter);
+  if(document.readyState !== 'loading') applyFilter();
+  [150,400,900,1600,2600,4200,7000,10000].forEach(function(t){setTimeout(applyFilter,t)});
+  window.addEventListener('azobss-software-rendered', applyFilter);
+  window.addEventListener('azobss-cad-rendered', applyFilter);
+  window.addEventListener('focus', applyFilter);
+  try{new MutationObserver(function(){clearTimeout(window.__azSharedProductFilterTimer147);window.__azSharedProductFilterTimer147=setTimeout(applyFilter,180)}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+})();
+</script>
+
 </body>
 </html>
 
