@@ -1,0 +1,1 @@
+Patch 148: resized and aligned Lucky Draw product share button to match the like button. Uses fallback CSS plus runtime alignment based on the actual like button size/position on Software and CAD cards. No Firebase Rules update required.
