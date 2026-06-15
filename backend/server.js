@@ -404,6 +404,10 @@ function getReferralFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-referrals", `${key}.json`);
 }
 
+function getProductReferralFile(key = monthKey()) {
+  return path.join(DATA_DIR, "lucky-draw-product-referrals", `${key}.json`);
+}
+
 function getAbuseFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-abuse-logs", `${key}.json`);
 }
@@ -463,6 +467,13 @@ function countValidReferralClicks(key, ref) {
   const cleanRef = cleanShareUsername(ref);
   if (!cleanRef) return 0;
   const clicks = readJson(getReferralFile(key), []);
+  return clicks.filter((c) => !c.deleted && c.ref === cleanRef).length;
+}
+
+function countValidProductShareClicks(key, ref) {
+  const cleanRef = cleanShareUsername(ref);
+  if (!cleanRef) return 0;
+  const clicks = readJson(getProductReferralFile(key), []);
   return clicks.filter((c) => !c.deleted && c.ref === cleanRef).length;
 }
 
@@ -1116,6 +1127,62 @@ app.get("/api/prize", (req, res) => {
   }
 });
 
+app.get("/api/lucky-draw/product-referral-status", (req, res) => {
+  const key = req.query.monthKey || monthKey();
+  const ref = cleanShareUsername(req.query.ref);
+  if (!ref) return res.status(400).json({ ok: false, error: "ref required" });
+  const count = countValidProductShareClicks(key, ref);
+  res.json({ ok: true, monthKey: key, ref, count, valid: count >= 1 });
+});
+
+app.post("/api/lucky-draw/product-referral-click", (req, res) => {
+  const key = req.body.monthKey || monthKey();
+  const ref = cleanShareUsername(req.body.ref);
+  const visitorUsernameKey = cleanShareUsername(req.body.visitorUsernameKey);
+  const productId = cleanText(req.body.productId || req.body.product || "", 120).replace(/[^A-Za-z0-9_.:-]/g, "").slice(0, 120);
+  const productName = cleanText(req.body.productName || "", 180);
+  const sourcePage = cleanText(req.body.sourcePage || "", 40).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
+  const deviceFingerprint = cleanText(req.body.deviceFingerprint, 160);
+  const ipAddress = getClientIp(req);
+
+  if (!ref) return res.status(400).json({ ok: false, error: "ref required" });
+  if (!productId) return res.status(400).json({ ok: false, error: "productId required" });
+  if (visitorUsernameKey && visitorUsernameKey === ref) {
+    logLuckyDrawAbuse(key, "SELF_PRODUCT_SHARE_CLICK", { ref, visitorUsernameKey, usernameKey: ref, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: "User opened own paid product share link" });
+    return res.json({ ok: true, ignored: true, reason: "SELF_CLICK", count: countValidProductShareClicks(key, ref) });
+  }
+
+  const file = getProductReferralFile(key);
+  const clicks = readJson(file, []);
+  const active = clicks.filter((c) => !c.deleted && c.ref === ref && c.productId === productId);
+  const sameDevice = deviceFingerprint ? active.find((c) => c.deviceFingerprint && c.deviceFingerprint === deviceFingerprint) : null;
+  const sameIp = ipAddress ? active.find((c) => c.ipAddress && c.ipAddress === ipAddress) : null;
+
+  if (sameDevice || sameIp) {
+    logLuckyDrawAbuse(key, "DUPLICATE_PRODUCT_SHARE_CLICK", { ref, visitorUsernameKey, usernameKey: ref, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: sameDevice ? "Duplicate product share device" : "Duplicate product share IP" });
+    return res.json({ ok: true, duplicate: true, ref, productId, count: countValidProductShareClicks(key, ref) });
+  }
+
+  const click = {
+    id: `${key}_${ref}_${productId}_${Date.now()}`,
+    monthKey: key,
+    ref,
+    productId,
+    productName,
+    sourcePage,
+    visitorUsernameKey,
+    deviceFingerprint,
+    ipAddress,
+    userAgent: cleanText(req.get("user-agent"), 300),
+    clickedAtMs: Date.now(),
+    clickedAt: new Date().toISOString(),
+    deleted: false
+  };
+  clicks.push(click);
+  writeJson(file, clicks);
+  res.json({ ok: true, ref, productId, count: countValidProductShareClicks(key, ref), click });
+});
+
 app.get("/api/lucky-draw/referral-status", (req, res) => {
   const key = req.query.monthKey || monthKey();
   const ref = cleanShareUsername(req.query.ref);
@@ -1214,9 +1281,10 @@ app.post("/api/lucky-draw/entries", (req, res) => {
     return res.status(400).json({ ok: false, error: "Share link username dahulu sebelum join Lucky Draw." });
   }
 
-  const referralCount = countValidReferralClicks(key, usernameKey);
-  if (referralCount < 1) {
-    return res.status(403).json({ ok: false, code: "REFERRAL_REQUIRED", error: "Belum ada referral click valid. Share link username kepada orang lain dahulu.", referralCount });
+  const productShareCount = countValidProductShareClicks(key, usernameKey);
+  const referralCount = productShareCount;
+  if (productShareCount < 1) {
+    return res.status(403).json({ ok: false, code: "PRODUCT_SHARE_REQUIRED", error: "Belum ada klik valid dari link produk berbayar. Share mana-mana Software/CAD berbayar dahulu.", referralCount, productShareCount });
   }
 
   if (!deviceFingerprint) {
@@ -1276,6 +1344,8 @@ app.post("/api/lucky-draw/entries", (req, res) => {
     inviteUrl,
     invitedByCode: cleanShareUsername(req.body.invitedByCode),
     referralCount,
+    productShareCount,
+    productShareRequired: true,
     deviceFingerprint,
     ipAddress,
     userAgent: cleanText(req.get("user-agent"), 300),

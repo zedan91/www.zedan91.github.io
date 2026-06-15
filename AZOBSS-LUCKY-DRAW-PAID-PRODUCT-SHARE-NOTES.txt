@@ -1,0 +1,17 @@
+Patch 125 - Lucky Draw Paid Product Share Requirement
+
+Scope:
+- Lucky Draw only + paid Software/CAD product share button.
+
+Changes:
+- Join Lucky Draw now requires at least 1 valid click from a paid Software/CAD product share link for the current month.
+- Added "Share for Lucky Draw" button to paid Software Tools and paid CAD Tools cards.
+- Product share link format:
+  /Software-Tools/?product=<productId>&ref=<username>&source=software
+  /CAD-Tools-&-Resources/?product=<productId>&ref=<username>&source=cad
+- Visitor opening the paid product share link records a valid product share click.
+- Self-click and duplicate device/IP clicks are not counted.
+- Lucky Draw user status/check now uses product share click status, not normal Lucky Draw invite link.
+- Backend join endpoint blocks join if product share click count is 0.
+
+No Firebase Rules update required.

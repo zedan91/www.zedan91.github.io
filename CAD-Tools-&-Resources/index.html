@@ -4414,6 +4414,87 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
+
+<style id="azobss-lucky-paid-product-share-style">
+.az-lucky-product-share-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(250,204,21,.55);background:linear-gradient(135deg,#facc15,#f97316);color:#111827!important;border-radius:999px;padding:9px 12px;font-weight:950;font-size:12px;text-decoration:none;cursor:pointer;box-shadow:0 10px 22px rgba(249,115,22,.18);margin-top:8px;width:100%;max-width:210px;margin-left:auto;margin-right:auto;}
+.az-lucky-product-share-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
+</style>
+<script id="azobss-lucky-paid-product-share-js">
+(function(){
+  if(window.__azobssLuckyPaidProductShare125)return;window.__azobssLuckyPaidProductShare125=true;
+  const API_BASE=(localStorage.getItem('azobssLuckyDrawBackendUrl')||'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/,'');
+  const SOURCE_PAGE=/CAD-Tools/i.test(location.pathname)?'cad':'software';
+  function esc(v){return String(v||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function parse(raw){try{return raw?JSON.parse(raw):null}catch(e){return null}}
+  function readUser(){return parse(sessionStorage.getItem('azobssCurrentUser'))||parse(localStorage.getItem('azobssCurrentUser'))||parse(sessionStorage.getItem('azobssUser'))||parse(localStorage.getItem('azobssUser'))||{};}
+  function username(u){return String((u&& (u.usernameKey||u.username||u.name))||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);}
+  function monthKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+  function deviceId(){let id=localStorage.getItem('azobssLuckyDrawDeviceId');if(!id){id='dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('azobssLuckyDrawDeviceId',id)}return id;}
+  function fingerprint(){return [deviceId(),navigator.userAgent,navigator.language,screen.width+'x'+screen.height,(Intl.DateTimeFormat().resolvedOptions().timeZone||'')].join('|').slice(0,150);}
+  function productInfo(card, btn){
+    const buy=btn || card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium');
+    const title=(buy&&buy.dataset.productName)||card.querySelector('h3')?.textContent||card.dataset.name||'AZOBSS Product';
+    const id=(buy&&buy.dataset.productId)||card.dataset.productId||card.dataset.cadId||card.dataset.docId||title;
+    return {id:String(id||title).trim().replace(/\s+/g,'-').slice(0,120),name:String(title||'AZOBSS Product').trim()};
+  }
+  function isPremiumCard(card){
+    if(!card)return false;
+    if(card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium'))return true;
+    if(String(card.dataset.type||'').toLowerCase()==='premium')return true;
+    const text=(card.textContent||'').toLowerCase();
+    return /buy now|rm\s*\d|premium/.test(text) && !/free resource|free software/.test(text);
+  }
+  function makeShareUrl(info, ref){
+    const url=new URL(location.origin+location.pathname);
+    url.searchParams.set('product',info.id);
+    url.searchParams.set('ref',ref);
+    url.searchParams.set('source',SOURCE_PAGE);
+    return url.toString();
+  }
+  async function shareProduct(card, event){
+    if(event){event.preventDefault();event.stopPropagation();}
+    const u=readUser();const ref=username(u);
+    if(!ref){alert('Login dahulu sebelum share produk untuk Lucky Draw.');return;}
+    const info=productInfo(card);
+    const url=makeShareUrl(info,ref);
+    const text='AZOBSS '+info.name+' — Share for Lucky Draw: '+url;
+    try{
+      if(navigator.share){await navigator.share({title:'AZOBSS '+info.name,text,url});}
+      else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
+    }catch(e){}
+  }
+  function addButtons(){
+    document.querySelectorAll('.download-card,.software-card,.software-product-card,.cad-card').forEach(function(card){
+      if(card.dataset.azLuckyShareReady==='1')return;
+      if(!isPremiumCard(card))return;
+      const anchor=card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium');
+      if(!anchor)return;
+      card.dataset.azLuckyShareReady='1';
+      const b=document.createElement('button');
+      b.type='button';b.className='az-lucky-product-share-btn';b.textContent='🎁 Share for Lucky Draw';
+      b.addEventListener('click',function(e){shareProduct(card,e)});
+      anchor.insertAdjacentElement('afterend',b);
+    });
+  }
+  async function recordOpen(){
+    const qs=new URLSearchParams(location.search);
+    const productId=String(qs.get('product')||'').trim().slice(0,120);
+    const ref=username({usernameKey:qs.get('ref')||''});
+    if(!productId||!ref)return;
+    const visitor=username(readUser());
+    try{
+      await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});
+      localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}));
+    }catch(e){}
+  }
+  document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest('.download-card,.software-card,.software-product-card,.cad-card');if(card)shareProduct(card,e);},true);
+  function run(){addButtons();}
+  document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();[300,900,1800,3200].forEach(t=>setTimeout(run,t));
+  new MutationObserver(function(){requestAnimationFrame(run)}).observe(document.body,{childList:true,subtree:true});
+  recordOpen();
+})();
+</script>
+
 </body>
 </html>
 
