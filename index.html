@@ -15245,6 +15245,94 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
 
 
+
+
+<style id="azobss-mobile-one-card-row-fix-150">
+/* AZOBSS PATCH 150: Phone Software/CAD cards must be 1 card per row.
+   This prevents two narrow cards from overlapping/cutting content on mobile. */
+@media (max-width: 760px){
+  #softwareGrid,
+  #softwareDownloadsGrid,
+  .downloads-grid,
+  .software-grid,
+  .software-products-grid,
+  .software-list,
+  .cad-card-grid,
+  .cad-grid,
+  .cad-tools-grid,
+  .cad-tools-shop,
+  .products-grid[data-source="software"],
+  .products-grid[data-source="cad"]{
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    justify-items: center !important;
+    align-items: stretch !important;
+  }
+
+  #softwareGrid > *,
+  #softwareDownloadsGrid > *,
+  .downloads-grid > *,
+  .software-grid > *,
+  .software-products-grid > *,
+  .software-list > *,
+  .cad-card-grid > *,
+  .cad-grid > *,
+  .cad-tools-grid > *,
+  .cad-tools-shop > *,
+  .download-card,
+  .software-card,
+  .software-product-card,
+  .cad-card,
+  .cad-item,
+  .cad-resource-card,
+  .cad-tool-card,
+  .resource-card{
+    width: min(100%, 360px) !important;
+    max-width: calc(100vw - 28px) !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .download-card h3,
+  .software-card h3,
+  .software-product-card h3,
+  .cad-card h3,
+  .cad-item h3,
+  .cad-resource-card h3,
+  .cad-tool-card h3,
+  .resource-card h3,
+  .download-card p,
+  .software-card p,
+  .software-product-card p,
+  .cad-card p,
+  .cad-item p,
+  .cad-resource-card p,
+  .cad-tool-card p,
+  .resource-card p{
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  .az-lucky-product-share-btn,
+  .az-paid-share-btn,
+  .az-lucky-floating-share{
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+  }
+}
+</style>
+
 </body>
 </html>
 
