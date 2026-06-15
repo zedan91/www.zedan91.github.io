@@ -803,6 +803,88 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 }
 </style>
 
+<style>
+
+/* =========================================================
+   AZOBSS PATCH 139: Lucky Draw prize image top + scroll desc
+   - Keep prize card compact
+   - Image stays above title/description
+   - Long description scrolls inside the same card
+========================================================= */
+.prize-panel{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  gap:12px !important;
+  align-items:stretch !important;
+  max-height:740px !important;
+  overflow:hidden !important;
+}
+
+.prize-panel .prize-image-wrap{
+  width:100% !important;
+  height:320px !important;
+  min-height:320px !important;
+  max-height:320px !important;
+  overflow:hidden !important;
+}
+
+.prize-panel .prize-image-wrap img,
+#prizeImage{
+  width:100% !important;
+  height:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+
+.prize-panel > div:not(.prize-image-wrap){
+  min-height:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+
+#prizeTitle{
+  flex:0 0 auto !important;
+}
+
+#prizeDescription.description{
+  flex:1 1 auto !important;
+  max-height:300px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding-right:10px !important;
+  margin-top:10px !important;
+  scrollbar-width:thin !important;
+}
+
+#prizeDescription.description::-webkit-scrollbar{
+  width:7px !important;
+}
+#prizeDescription.description::-webkit-scrollbar-thumb{
+  background:rgba(148,163,184,.45) !important;
+  border-radius:999px !important;
+}
+#prizeDescription.description::-webkit-scrollbar-track{
+  background:rgba(15,23,42,.65) !important;
+  border-radius:999px !important;
+}
+
+@media(max-width:760px){
+  .prize-panel{
+    max-height:680px !important;
+  }
+  .prize-panel .prize-image-wrap{
+    height:260px !important;
+    min-height:260px !important;
+    max-height:260px !important;
+  }
+  #prizeDescription.description{
+    max-height:260px !important;
+  }
+}
+</style>
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
