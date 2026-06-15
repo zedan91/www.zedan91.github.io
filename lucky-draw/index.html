@@ -844,6 +844,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <button class="btn orange" id="downloadJsonButton" type="button">Download JSON</button>
 <button class="btn dark" id="refreshPrizeButton" type="button">Refresh</button>
 </div>
+<div class="admin-actions" style="margin-top:12px;border-top:1px solid rgba(148,163,184,.18);padding-top:12px">
+<button class="btn green" id="runDrawButton" type="button">Run Draw</button>
+<button class="btn orange" id="testSpinButton" type="button">Test Spin</button>
+<button class="btn dark" id="resetWinnerButton" type="button">Reset Winner</button>
+<button class="btn dark" id="resetParticipantsButton" type="button">Reset Participants</button>
+<button class="btn dark" id="exportParticipantsButton" type="button">Export Peserta</button>
+</div>
 <div class="status-note" id="adminStatus"></div>
 </div>
 <div class="panel participants">
@@ -912,6 +919,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
     const savedInviteFromUrl = new URLSearchParams(location.search).get('invite') || '';
     if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', cleanInviteCode(savedInviteFromUrl));
+
+    let luckyDrawEntriesCache = [];
 
     const els = {
       auth: document.getElementById('siteAuthActions'),
@@ -1133,8 +1142,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Entries error');
         const rows = Array.isArray(data.entries) ? data.entries : [];
-        els.total.textContent = String(data.total || rows.length || 0);
-        renderParticipants(rows);
+        luckyDrawEntriesCache = rows.filter((entry) => !entry.deleted);
+        els.total.textContent = String(data.total || luckyDrawEntriesCache.length || 0);
+        renderParticipants(luckyDrawEntriesCache);
       } catch(e) {
         els.participants.innerHTML = '<div class="empty">Backend peserta belum dapat dibaca.</div>';
       }
@@ -1298,6 +1308,134 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       URL.revokeObjectURL(a.href);
     }
 
+
+    function requireLuckyDrawAdmin(){
+      if (isAdmin(readUser())) return true;
+      setAdminStatus('Admin sahaja boleh guna fungsi ini.', true);
+      return false;
+    }
+
+    function activeLuckyRows(){
+      return (luckyDrawEntriesCache || []).filter((entry) => entry && !entry.deleted && (entry.name || entry.usernameKey));
+    }
+
+    async function runLuckyDraw(){
+      if (!requireLuckyDrawAdmin()) return;
+      if (!confirm('Run Lucky Draw untuk bulan ini? Pemenang akan disimpan.')) return;
+      setAdminStatus('Running lucky draw...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/winner/spin', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({monthKey:monthKey()})
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Run draw gagal');
+        const winner = data.winner || {};
+        const name = winner.name || winner.usernameKey || 'Winner';
+        els.winner.textContent = name;
+        els.winnerText.textContent = data.alreadySelected ? 'Pemenang sudah dipilih: ' + name : 'Tahniah ' + name;
+        setAdminStatus(data.alreadySelected ? 'Pemenang bulan ini sudah wujud. Reset Winner dahulu jika mahu draw semula.' : 'Pemenang berjaya dipilih dan disimpan.');
+      } catch(e) {
+        setAdminStatus(e.message || 'Run draw gagal.', true);
+      }
+    }
+
+    function testLuckySpin(){
+      if (!requireLuckyDrawAdmin()) return;
+      const rows = activeLuckyRows();
+      if (!rows.length) {
+        setAdminStatus('Tiada peserta untuk test spin.', true);
+        return;
+      }
+      setAdminStatus('Test spin sahaja. Pemenang tidak disimpan.');
+      let step = 0;
+      const maxStep = 24;
+      const spinTimer = setInterval(() => {
+        const pick = rows[Math.floor(Math.random() * rows.length)] || {};
+        const name = pick.name || pick.usernameKey || 'User';
+        els.winnerText.textContent = 'Spinning... ' + name;
+        step += 1;
+        if (step >= maxStep) {
+          clearInterval(spinTimer);
+          const finalPick = rows[Math.floor(Math.random() * rows.length)] || {};
+          const finalName = finalPick.name || finalPick.usernameKey || 'User';
+          els.winnerText.textContent = 'Test sahaja: ' + finalName;
+          setAdminStatus('Test spin selesai. Tiada rekod winner disimpan.');
+        }
+      }, 90);
+    }
+
+    async function resetLuckyWinner(){
+      if (!requireLuckyDrawAdmin()) return;
+      if (!confirm('Reset winner bulan ini?')) return;
+      setAdminStatus('Reset winner...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Reset winner gagal');
+        els.winner.textContent = 'Belum dipilih';
+        els.winnerText.textContent = 'Pemenang belum dipilih';
+        setAdminStatus('Winner bulan ini sudah direset.');
+      } catch(e) {
+        setAdminStatus(e.message || 'Reset winner gagal.', true);
+      }
+    }
+
+    async function resetLuckyParticipants(){
+      if (!requireLuckyDrawAdmin()) return;
+      if (!confirm('Reset semua peserta bulan ini? Tindakan ini akan kosongkan senarai peserta bulan semasa.')) return;
+      setAdminStatus('Reset peserta...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Reset peserta gagal');
+        await resetLuckyWinnerSilent();
+        luckyDrawEntriesCache = [];
+        renderParticipants([]);
+        els.total.textContent = '0';
+        setAdminStatus('Peserta bulan ini sudah direset.');
+      } catch(e) {
+        setAdminStatus(e.message || 'Reset peserta gagal.', true);
+      }
+    }
+
+    async function resetLuckyWinnerSilent(){
+      try {
+        await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
+        els.winner.textContent = 'Belum dipilih';
+        els.winnerText.textContent = 'Pemenang belum dipilih';
+      } catch(e) {}
+    }
+
+    function exportLuckyParticipants(){
+      if (!requireLuckyDrawAdmin()) return;
+      const rows = activeLuckyRows();
+      if (!rows.length) {
+        setAdminStatus('Tiada peserta untuk export.', true);
+        return;
+      }
+      const headers = ['No','Name','Username','Email','Phone','Invite Code','Invited By','Joined At'];
+      const csvRows = [headers].concat(rows.map((entry, index) => [
+        index + 1,
+        entry.name || '',
+        entry.usernameKey || '',
+        entry.contactEmail || '',
+        entry.phone || '',
+        entry.inviteCode || '',
+        entry.invitedByCode || '',
+        entry.joinedAt || ''
+      ]));
+      const csv = csvRows.map((row) => row.map((value) => '"' + String(value).replace(/"/g, '""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'AZOBSS-Lucky-Draw-Participants-' + monthKey() + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setAdminStatus('Export peserta selesai.');
+    }
+
     els.copyButton.addEventListener('click', copyInvite);
     els.shareButton.addEventListener('click', shareInvite);
     els.joinButton.addEventListener('click', joinLuckyDraw);
@@ -1306,6 +1444,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
     document.getElementById('applyJsonButton').addEventListener('click', applyJson);
     document.getElementById('downloadJsonButton').addEventListener('click', downloadJson);
+    document.getElementById('runDrawButton').addEventListener('click', runLuckyDraw);
+    document.getElementById('testSpinButton').addEventListener('click', testLuckySpin);
+    document.getElementById('resetWinnerButton').addEventListener('click', resetLuckyWinner);
+    document.getElementById('resetParticipantsButton').addEventListener('click', resetLuckyParticipants);
+    document.getElementById('exportParticipantsButton').addEventListener('click', exportLuckyParticipants);
 
     window.addEventListener('storage', showUser);
 
