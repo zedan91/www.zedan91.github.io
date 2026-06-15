@@ -1,0 +1,1 @@
+AZOBSS patch 149: Mobile share button size/alignment fix. Share button under like is forced smaller on phone and centered under the like button to avoid covering product image/title. Only Software/CAD Lucky Draw share button touched. No Firebase Rules update required.

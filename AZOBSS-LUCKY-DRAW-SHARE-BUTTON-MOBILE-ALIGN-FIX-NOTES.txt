@@ -1,0 +1,1 @@
+Patch 149: Fix phone UI where share button looked oversized and overlapped product card content. It now uses 34x34 on mobile and aligns by center under the like button.

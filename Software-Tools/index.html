@@ -7932,7 +7932,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 .az-lucky-share-modal-copy-btn{border:0!important;background:transparent!important;color:#e5e7eb!important;cursor:pointer!important;font-size:25px!important;line-height:1!important;padding:2px 4px!important;}
 .az-lucky-share-modal-note{text-align:center!important;color:#a7f3d0!important;font-size:12px!important;margin-top:12px!important;min-height:16px!important;}
 @media(max-width:700px){
-  .az-lucky-product-share-btn{top:62px!important;right:16px!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;font-size:16px!important;}
+  .az-lucky-product-share-btn{top:56px!important;right:16px!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;max-width:34px!important;max-height:34px!important;font-size:15px!important;box-shadow:0 8px 18px rgba(37,99,235,.28)!important;}
+  .az-lucky-product-share-btn .az-lucky-share-icon{width:16px!important;height:16px!important;}
   .az-lucky-share-modal-title{font-size:19px!important}.az-lucky-share-modal-icons{gap:14px!important}.az-lucky-share-modal-icon{width:42px!important;height:42px!important;font-size:22px!important;}
 }
 </style>
@@ -8062,10 +8063,16 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       if(!like) return;
       const cr = card.getBoundingClientRect();
       const lr = like.getBoundingClientRect();
-      const w = Math.max(34, Math.min(42, Math.round(lr.width || 38)));
-      const h = Math.max(34, Math.min(42, Math.round(lr.height || w)));
-      const right = Math.max(8, Math.round(cr.right - lr.right));
-      const top = Math.max(8, Math.round(lr.top - cr.top + h + 8));
+      const isPhone = window.matchMedia && window.matchMedia('(max-width: 700px)').matches;
+      const baseW = Math.round(lr.width || 38);
+      const baseH = Math.round(lr.height || baseW);
+      const w = isPhone ? 34 : Math.max(34, Math.min(42, baseW));
+      const h = isPhone ? 34 : Math.max(34, Math.min(42, baseH));
+      /* Align share button center with like button center. On phone keep it smaller so it does not cover product image/title. */
+      const likeCenterX = lr.left + (lr.width || w) / 2;
+      const right = Math.max(8, Math.round(cr.right - likeCenterX - (w / 2)));
+      const topGap = isPhone ? 4 : 8;
+      const top = Math.max(8, Math.round(lr.top - cr.top + (lr.height || h) + topGap));
       btn.style.setProperty('width', w + 'px', 'important');
       btn.style.setProperty('height', h + 'px', 'important');
       btn.style.setProperty('min-width', w + 'px', 'important');
@@ -8076,7 +8083,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       btn.style.setProperty('top', top + 'px', 'important');
       const svg = btn.querySelector('.az-lucky-share-icon');
       if(svg){
-        const iw = Math.max(16, Math.min(20, Math.round(w * 0.5)));
+        const iw = isPhone ? 16 : Math.max(16, Math.min(20, Math.round(w * 0.5)));
         svg.style.setProperty('width', iw + 'px', 'important');
         svg.style.setProperty('height', iw + 'px', 'important');
       }
