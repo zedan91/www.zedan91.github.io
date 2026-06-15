@@ -1,12 +1,20 @@
-# AZOBSS Lucky Draw Lock Join After Winner
+# AZOBSS Lucky Draw Winner History
 
-Deploy seperti biasa.
+Patch ini sambung daripada baseline 117.
 
-Apa yang berubah:
-1. Frontend Lucky Draw membaca winner bulan semasa.
-2. Jika winner sudah ada, status user akan papar join ditutup.
-3. Button Join Lucky Draw disabled selepas Run Draw.
-4. Backend endpoint /api/lucky-draw/entries juga menolak join baru jika winner bulan semasa sudah wujud.
-5. Admin Reset Winner akan buka semula join bulan itu jika diperlukan.
+## Apa yang ditambah
+1. Lucky Draw ada panel Winner History.
+2. Backend membaca fail winner bulanan dari `lucky-draw-winners`.
+3. Endpoint baru: `/api/lucky-draw/winner-history?limit=24`.
+4. Setiap history memaparkan:
+   - Bulan
+   - Nama winner
+   - Username winner
+   - Jumlah peserta bulan itu
+   - Masa winner dipilih
+5. Run Draw akan refresh Winner History.
+6. Reset Winner akan refresh Winner History.
 
-Firebase Rules: tiada perubahan diperlukan.
+## Nota
+- Firebase Rules tidak perlu update.
+- Deploy seperti biasa ke GitHub/Render.

@@ -1,12 +1,14 @@
-# (117)-AZOBSS-LUCKY-DRAW-LOCK-JOIN-AFTER-WINNER
+# AZOBSS Lucky Draw Winner History
 
 Patch kecil untuk Lucky Draw sahaja.
 
 Perubahan:
-- Jika winner bulan semasa sudah dipilih, Join Lucky Draw akan ditutup untuk bulan itu.
-- Button Join Lucky Draw akan disabled bila winner sudah wujud.
-- Backend juga block direct POST join selepas winner bulan semasa wujud.
-- Reset Winner akan buka semula join jika syarat referral cukup.
+- Tambah panel Winner History / Sejarah pemenang Lucky Draw.
+- Rekod pemenang dipaparkan ikut bulan.
+- Papar bulan, nama winner, username, jumlah peserta dan masa winner dipilih.
+- Backend tambah endpoint `/api/lucky-draw/winner-history`.
+- Bila Run Draw, history auto refresh.
+- Bila Reset Winner, history auto refresh.
+- Fix kecil syntax English text pada Lucky Draw supaya script tidak jem.
 
 Tidak sentuh Login/Register, My Purchases, Software, CAD, atau PA/BM.
-Firebase Rules tidak perlu update.

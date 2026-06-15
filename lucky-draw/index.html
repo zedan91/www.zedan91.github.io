@@ -885,6 +885,18 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="empty">Loading peserta...</div>
 </div>
 </div>
+<div class="panel winner-history-panel">
+<div class="participants-head">
+<div>
+<span class="kicker" id="winnerHistoryKicker">Winner History</span>
+<h2 id="winnerHistoryTitle" style="margin-top:10px">Sejarah pemenang Lucky Draw</h2>
+</div>
+<button class="btn dark" id="refreshWinnerHistoryButton" type="button">Refresh</button>
+</div>
+<div class="participant-list" id="winnerHistoryList">
+<div class="empty">Loading winner history...</div>
+</div>
+</div>
 </section>
 <footer>© 2026 AZOBSS. All rights reserved.</footer>
 </main>
@@ -974,7 +986,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       prizeDescriptionInput: document.getElementById('prizeDescriptionInput'),
       prizeImageFile: document.getElementById('prizeImageFile'),
       prizeJsonInput: document.getElementById('prizeJsonInput'),
-      adminStatus: document.getElementById('adminStatus')
+      adminStatus: document.getElementById('adminStatus'),
+      winnerHistory: document.getElementById('winnerHistoryList'),
+      refreshWinnerHistoryButton: document.getElementById('refreshWinnerHistoryButton')
     };
 
     function parseUser(raw){try{return raw ? JSON.parse(raw) : null;}catch(e){return null;}}
@@ -1081,6 +1095,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         exportParticipants: 'Export Peserta',
         participantsKicker: 'Peserta Lucky Draw',
         participantsTitle: 'Senarai peserta bulan ini',
+        winnerHistoryKicker: 'Winner History',
+        winnerHistoryTitle: 'Sejarah pemenang Lucky Draw',
+        winnerHistoryEmpty: 'Belum ada sejarah pemenang.',
+        winnerHistoryLoadFail: 'Winner history belum dapat dibaca.',
+        winnerHistoryTotal: 'Jumlah peserta',
+        winnerHistorySelectedAt: 'Dipilih pada',
         loginPlaceholder: 'Login dahulu untuk jana invite link',
         loginActive: 'Login dahulu untuk aktifkan Lucky Draw.',
         loginCheck: 'Login dahulu untuk check referral click.',
@@ -1156,6 +1176,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         exportParticipants: 'Export Participants',
         participantsKicker: 'Lucky Draw Participants',
         participantsTitle: 'Participant list for this month',
+        winnerHistoryKicker: 'Winner History',
+        winnerHistoryTitle: 'Lucky Draw winner history',
+        winnerHistoryEmpty: 'No winner history yet.',
+        winnerHistoryLoadFail: 'Winner history could not be loaded yet.',
+        winnerHistoryTotal: 'Total participants',
+        winnerHistorySelectedAt: 'Selected at',
         loginPlaceholder: 'Log in first to generate invite link',
         loginActive: 'Log in first to activate Lucky Draw.',
         loginCheck: 'Log in first to check referral click.',
@@ -1181,7 +1207,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         exportDone: 'Participants export completed.',
         resetJoinFail: 'Reset join for this month failed.',
         resetJoinConfirm: 'Reset joins for this month? All current-month participants will be cleared and users can join again.',
-        drawClosed: 'This month's Lucky Draw is finished. Joining is now closed.',
+        drawClosed: 'This month\'s Lucky Draw is finished. Joining is now closed.',
         runDrawConfirm: 'Run Lucky Draw for this month? The winner will be saved.'
       }
     };
@@ -1228,6 +1254,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('#refreshEntriesButton', tr('refresh'));
       setText('.participants .kicker', tr('participantsKicker'));
       setText('.participants h2', tr('participantsTitle'));
+      setText('#winnerHistoryKicker', tr('winnerHistoryKicker'));
+      setText('#winnerHistoryTitle', tr('winnerHistoryTitle'));
+      setText('#refreshWinnerHistoryButton', tr('refresh'));
     }
 
     function setStatus(message, error){
@@ -1499,6 +1528,56 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       } catch(e) {}
     }
 
+    function formatWinnerDate(value){
+      if (!value) return '-';
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return String(value);
+      try {
+        return d.toLocaleString('en-MY', {
+          timeZone:'Asia/Kuala_Lumpur',
+          day:'2-digit',
+          month:'2-digit',
+          year:'numeric',
+          hour:'2-digit',
+          minute:'2-digit',
+          hour12:true
+        });
+      } catch(e) {
+        return d.toLocaleString();
+      }
+    }
+
+    function renderWinnerHistory(winners){
+      if (!els.winnerHistory) return;
+      const rows = Array.isArray(winners) ? winners.filter(Boolean) : [];
+      if (!rows.length) {
+        els.winnerHistory.innerHTML = '<div class="empty">' + escapeHtml(tr('winnerHistoryEmpty')) + '</div>';
+        return;
+      }
+      els.winnerHistory.innerHTML = rows.map((winner) => {
+        const name = winner.name || winner.usernameKey || 'Winner';
+        const username = winner.usernameKey ? '@' + winner.usernameKey : '';
+        const total = Number(winner.participantTotal || 0);
+        return '<div class="participant-item">' +
+          '<strong>' + escapeHtml(winner.monthName || winner.monthKey || '-') + '</strong>' +
+          '<span>' + escapeHtml(name) + (username ? ' <small>' + escapeHtml(username) + '</small>' : '') + '</span>' +
+          '<small>' + escapeHtml(tr('winnerHistoryTotal')) + ': ' + escapeHtml(total) + ' · ' + escapeHtml(tr('winnerHistorySelectedAt')) + ': ' + escapeHtml(formatWinnerDate(winner.selectedAt)) + '</small>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function loadWinnerHistory(){
+      if (!els.winnerHistory) return;
+      try {
+        const res = await apiFetch('/api/lucky-draw/winner-history?limit=24', {cache:'no-store'});
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Winner history gagal');
+        renderWinnerHistory(data.winners || []);
+      } catch(e) {
+        els.winnerHistory.innerHTML = '<div class="empty">' + escapeHtml(tr('winnerHistoryLoadFail')) + '</div>';
+      }
+    }
+
     async function copyInvite(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
@@ -1697,6 +1776,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         els.winnerText.textContent = data.alreadySelected ? 'Pemenang sudah dipilih: ' + name : 'Tahniah ' + name;
         luckyDrawWinnerSelected = true;
         updateInvitePanel();
+        await loadWinnerHistory();
         setAdminStatus(data.alreadySelected ? 'Pemenang bulan ini sudah wujud. Join bulan ini kekal ditutup. Reset Winner dahulu jika mahu buka semula.' : 'Pemenang berjaya dipilih dan disimpan. Join bulan ini sudah ditutup.');
       } catch(e) {
         setAdminStatus(e.message || 'Run draw gagal.', true);
@@ -1740,6 +1820,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         els.winnerText.textContent = tr('winnerPending');
         luckyDrawWinnerSelected = false;
         updateInvitePanel();
+        await loadWinnerHistory();
         setAdminStatus('Winner bulan ini sudah direset. Join bulan ini dibuka semula jika syarat referral cukup.');
       } catch(e) {
         setAdminStatus(e.message || 'Reset winner gagal.', true);
@@ -1842,12 +1923,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       tickCountdown();
       loadWinner();
       loadEntries();
+      loadWinnerHistory();
     });
     els.copyButton.addEventListener('click', copyInvite);
     els.shareButton.addEventListener('click', shareInvite);
     if (els.confirmShareButton) els.confirmShareButton.addEventListener('click', confirmShareDone);
     els.joinButton.addEventListener('click', joinLuckyDraw);
     document.getElementById('refreshEntriesButton').addEventListener('click', loadEntries);
+    if (els.refreshWinnerHistoryButton) els.refreshWinnerHistoryButton.addEventListener('click', loadWinnerHistory);
     document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
     document.getElementById('applyJsonButton').addEventListener('click', applyJson);
@@ -1870,6 +1953,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     loadPrize();
     loadEntries();
     loadWinner();
+    loadWinnerHistory();
     setInterval(function(){ loadEntries(); loadReferralStatus(readUser()).then(updateInvitePanel); }, 30000);
   </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">

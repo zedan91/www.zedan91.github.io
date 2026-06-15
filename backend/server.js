@@ -415,6 +415,34 @@ function getWinnerFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-winners", `${key}.json`);
 }
 
+function listWinnerHistory() {
+  const dir = path.join(DATA_DIR, "lucky-draw-winners");
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir)
+    .filter((name) => /^\d{4}-\d{2}\.json$/.test(name))
+    .map((name) => {
+      const key = name.replace(/\.json$/, "");
+      const winner = readJson(path.join(dir, name), null);
+      if (!winner) return null;
+      const entries = readJson(getEntriesFile(key), []);
+      const participantTotal = entries.filter((e) => !e.deleted && e.monthKey === key).length;
+      return {
+        monthKey: key,
+        monthName: winner.monthName || monthName(key),
+        usernameKey: winner.usernameKey || "",
+        name: winner.name || winner.usernameKey || "Winner",
+        phone: winner.phone || "",
+        contactEmail: winner.contactEmail || "",
+        selectedAtMs: winner.selectedAtMs || 0,
+        selectedAt: winner.selectedAt || "",
+        selectedBy: winner.selectedBy || "admin",
+        participantTotal: Number(winner.participantTotal || participantTotal || 0)
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => String(b.monthKey).localeCompare(String(a.monthKey)));
+}
+
 function isAdmin(req) {
   const key = req.header("x-admin-key") || req.query.adminKey || "";
   return key && key === ADMIN_KEY;
@@ -1153,6 +1181,11 @@ app.get("/api/lucky-draw/winner", (req, res) => {
   res.json({ ok: true, monthKey: key, winner });
 });
 
+app.get("/api/lucky-draw/winner-history", (req, res) => {
+  const limit = Math.max(1, Math.min(60, Number(req.query.limit || 24)));
+  res.json({ ok: true, winners: listWinnerHistory().slice(0, limit) });
+});
+
 app.post("/api/lucky-draw/winner/spin", (req, res) => {
   const key = req.body.monthKey || req.query.monthKey || monthKey();
   const winnerFile = getWinnerFile(key);
@@ -1171,6 +1204,7 @@ app.post("/api/lucky-draw/winner/spin", (req, res) => {
     phone: winner.phone || "",
     contactEmail: winner.contactEmail || "",
     inviteCode: winner.inviteCode || "",
+    participantTotal: entries.filter((e) => !e.deleted && e.monthKey === key).length,
     selectedAtMs: Date.now(),
     selectedAt: new Date().toISOString()
   };
@@ -1205,6 +1239,7 @@ cron.schedule("* * * * *", async () => {
     monthName: monthName(key),
     usernameKey: winner.usernameKey,
     name: winner.name || winner.usernameKey,
+    participantTotal: entries.filter((e) => !e.deleted && e.monthKey === key).length,
     selectedAtMs: Date.now(),
     selectedAt: new Date().toISOString(),
     selectedBy: "cron"
