@@ -1,1 +1,1 @@
-Deploy this ZIP to apply Lucky Draw gift button duplicate script conflict fix.
+Deploy this ZIP to apply Lucky Draw desktop share modal fix for paid product gift button.

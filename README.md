@@ -1,1 +1,1 @@
-AZOBSS patch 131: Lucky Draw gift button script conflict fixed. Removed overlapping scripts and keeps one gift button under like only.
+AZOBSS patch 133: Lucky Draw desktop gift share modal fix. PC uses custom share dialog with Facebook, Messenger, WhatsApp, X, Email and copy link. Mobile keeps native share.

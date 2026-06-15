@@ -4419,8 +4419,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
 
 
-<style id="azobss-lucky-product-share-single-132-css">
-/* AZOBSS 132: FINAL - only one Lucky Draw gift button, below like button */
+<style id="azobss-lucky-product-share-single-133-css">
+/* AZOBSS 133: desktop custom share modal, mobile native share */
 .download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{position:relative!important;}
 .az-lucky-product-share-btn{
   position:absolute!important;
@@ -4451,13 +4451,34 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 }
 .az-lucky-product-share-btn:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important;}
 .az-lucky-product-share-btn .az-lucky-share-text{display:none!important;}
+.az-lucky-share-modal-backdrop{
+  position:fixed!important;inset:0!important;z-index:999999!important;background:rgba(0,0,0,.55)!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;
+}
+.az-lucky-share-modal{
+  width:min(520px,96vw)!important;background:#111827!important;color:#f9fafb!important;border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:6px!important;box-shadow:0 28px 90px rgba(0,0,0,.55)!important;padding:18px 20px 20px!important;font-family:inherit!important;
+}
+.az-lucky-share-modal-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:18px!important;}
+.az-lucky-share-modal-title{font-size:22px!important;font-weight:700!important;letter-spacing:.01em!important;margin:0!important;}
+.az-lucky-share-modal-close{border:0!important;background:transparent!important;color:#d1d5db!important;font-size:32px!important;line-height:1!important;cursor:pointer!important;padding:0 2px!important;}
+.az-lucky-share-modal-icons{display:flex!important;justify-content:center!important;gap:20px!important;flex-wrap:wrap!important;margin:10px 0 22px!important;}
+.az-lucky-share-modal-icon{width:46px!important;height:46px!important;border-radius:999px!important;border:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#fff!important;font-size:25px!important;font-weight:900!important;text-decoration:none!important;cursor:pointer!important;}
+.az-lucky-share-modal-icon.fb{background:#1877f2!important}.az-lucky-share-modal-icon.ms{background:#fff!important;color:#8b5cf6!important}.az-lucky-share-modal-icon.wa{background:#25d366!important}.az-lucky-share-modal-icon.x{background:#55acee!important}.az-lucky-share-modal-icon.em{background:#2563eb!important}
+.az-lucky-share-modal-copy-label{text-align:center!important;color:#f3f4f6!important;font-size:14px!important;margin:2px 0 14px!important;}
+.az-lucky-share-modal-copy{display:flex!important;align-items:center!important;gap:8px!important;width:min(365px,100%)!important;margin:0 auto!important;background:#374151!important;border-radius:6px!important;padding:8px 10px!important;}
+.az-lucky-share-modal-input{flex:1!important;min-width:0!important;background:transparent!important;border:0!important;outline:0!important;color:#fff!important;font-size:14px!important;font-family:inherit!important;}
+.az-lucky-share-modal-copy-btn{border:0!important;background:transparent!important;color:#e5e7eb!important;cursor:pointer!important;font-size:25px!important;line-height:1!important;padding:2px 4px!important;}
+.az-lucky-share-modal-note{text-align:center!important;color:#a7f3d0!important;font-size:12px!important;margin-top:12px!important;min-height:16px!important;}
 @media(max-width:700px){
   .az-lucky-product-share-btn{top:62px!important;right:18px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;font-size:17px!important;}
+  .az-lucky-share-modal-title{font-size:19px!important}.az-lucky-share-modal-icons{gap:14px!important}.az-lucky-share-modal-icon{width:42px!important;height:42px!important;font-size:22px!important;}
 }
 </style>
-<script id="azobss-lucky-product-share-single-132-js">
+<script id="azobss-lucky-product-share-single-133-js">
 (function(){
-  if(window.__azobssLuckyProductShareSingle132) return;
+  if(window.__azobssLuckyProductShareSingle133) return;
+  window.__azobssLuckyProductShareSingle133 = true;
   window.__azobssLuckyProductShareSingle132 = true;
 
   const API_BASE=(localStorage.getItem('azobssLuckyDrawBackendUrl')||'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/,'');
@@ -4492,20 +4513,62 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     return false;
   }
   function makeShareUrl(info,ref){const url=new URL(location.origin+location.pathname);url.searchParams.set('product',info.id);url.searchParams.set('ref',ref);url.searchParams.set('source',SOURCE_PAGE);return url.toString()}
-  async function copyLink(url){
+  async function copyLink(url, silent){
     let ok=false;
     try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(url);ok=true}}catch(e){}
     if(!ok){try{const ta=document.createElement('textarea');ta.value=url;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();ok=document.execCommand('copy');ta.remove()}catch(e){}}
-    if(ok) alert('Link share Lucky Draw telah auto-copy. Sila paste dan share kepada orang lain.');
-    else prompt('Copy link share Lucky Draw ini:',url);
+    if(!silent){
+      if(ok) alert('Link share Lucky Draw telah auto-copy. Sila paste dan share kepada orang lain.');
+      else prompt('Copy link share Lucky Draw ini:',url);
+    }
+    return ok;
+  }
+  function isMobileNativeShare(){return !!(navigator.share && (window.matchMedia('(pointer: coarse)').matches || window.innerWidth<=760 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)))}
+  function openPopup(url){try{const w=window.open(url,'_blank','noopener,noreferrer,width=720,height=620');return !!w}catch(e){return false}}
+  function openDesktopShareModal(payload){
+    const old=document.querySelector('.az-lucky-share-modal-backdrop'); if(old) old.remove();
+    const url=payload.url, text=payload.text, title=payload.title;
+    const encUrl=encodeURIComponent(url), encText=encodeURIComponent(text), encTitle=encodeURIComponent(title);
+    const links={
+      fb:'https://www.facebook.com/sharer/sharer.php?u='+encUrl,
+      ms:'https://www.messenger.com/t/?link='+encUrl,
+      wa:'https://wa.me/?text='+encodeURIComponent(text+'\n'+url),
+      x:'https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encUrl,
+      em:'mailto:?subject='+encTitle+'&body='+encodeURIComponent(text+'\n\n'+url)
+    };
+    const wrap=document.createElement('div');
+    wrap.className='az-lucky-share-modal-backdrop';
+    wrap.innerHTML='<div class="az-lucky-share-modal" role="dialog" aria-modal="true" aria-label="Share this with your community">'
+      +'<div class="az-lucky-share-modal-head"><h3 class="az-lucky-share-modal-title">Share this with your community</h3><button type="button" class="az-lucky-share-modal-close" aria-label="Close">×</button></div>'
+      +'<div class="az-lucky-share-modal-icons">'
+      +'<button type="button" class="az-lucky-share-modal-icon fb" data-share="fb" title="Facebook">f</button>'
+      +'<button type="button" class="az-lucky-share-modal-icon ms" data-share="ms" title="Messenger">💬</button>'
+      +'<button type="button" class="az-lucky-share-modal-icon wa" data-share="wa" title="WhatsApp">☘</button>'
+      +'<button type="button" class="az-lucky-share-modal-icon x" data-share="x" title="X / Twitter">𝕏</button>'
+      +'<button type="button" class="az-lucky-share-modal-icon em" data-share="em" title="Email">✉</button>'
+      +'</div><div class="az-lucky-share-modal-copy-label">Or copy link</div>'
+      +'<div class="az-lucky-share-modal-copy"><input class="az-lucky-share-modal-input" readonly value=""><button type="button" class="az-lucky-share-modal-copy-btn" title="Copy link">⧉</button></div>'
+      +'<div class="az-lucky-share-modal-note"></div></div>';
+    document.body.appendChild(wrap);
+    const input=wrap.querySelector('.az-lucky-share-modal-input'); input.value=url;
+    const note=wrap.querySelector('.az-lucky-share-modal-note');
+    function close(){wrap.remove()}
+    wrap.querySelector('.az-lucky-share-modal-close').addEventListener('click',close);
+    wrap.addEventListener('click',function(e){if(e.target===wrap)close()});
+    wrap.querySelectorAll('[data-share]').forEach(function(btn){btn.addEventListener('click',async function(){const link=links[btn.dataset.share];const ok=openPopup(link); if(!ok){await copyLink(url,true); note.textContent='Popup blocked. Link sudah auto-copy.';} });});
+    wrap.querySelector('.az-lucky-share-modal-copy-btn').addEventListener('click',async function(){const ok=await copyLink(url,true);note.textContent=ok?'Link copied. Paste dan share kepada orang lain.':'Sila copy link secara manual.';input.focus();input.select();});
+    setTimeout(function(){try{input.focus();input.select()}catch(e){}},80);
   }
   async function shareCard(card,e){
     if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation&&e.stopImmediatePropagation()}
     const ref=username(readUser());
     if(!ref){alert('Login dahulu sebelum share produk untuk Lucky Draw.');return}
-    const info=productInfo(card);const url=makeShareUrl(info,ref);const text='AZOBSS '+info.name+' — Share for Lucky Draw: '+url;
-    try{if(navigator.share){await navigator.share({title:'AZOBSS '+info.name,text,url});return}}catch(err){await copyLink(url);return}
-    await copyLink(url);
+    const info=productInfo(card);const url=makeShareUrl(info,ref);const text='AZOBSS '+info.name+' — Share for Lucky Draw';
+    const payload={title:'AZOBSS '+info.name,text,url};
+    if(isMobileNativeShare()){
+      try{await navigator.share(payload);return}catch(err){await copyLink(url);return}
+    }
+    openDesktopShareModal(payload);
   }
   function topCard(el){
     const c=el.closest(CARD_SELECTOR);
@@ -4551,13 +4614,15 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}))}catch(e){}
   }
   document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest(CARD_SELECTOR);if(card)shareCard(card,e)},true);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){const m=document.querySelector('.az-lucky-share-modal-backdrop');if(m)m.remove();}});
   document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();
   [100,300,700,1200,2200,4000,7000,10000].forEach(function(t){setTimeout(run,t)});
   window.addEventListener('azobss-software-rendered',run);window.addEventListener('azobss-cad-rendered',run);window.addEventListener('focus',run);
-  try{new MutationObserver(function(){clearTimeout(window.__azLuckyShareSingleTimer132);window.__azLuckyShareSingleTimer132=setTimeout(run,120)}).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
+  try{new MutationObserver(function(){clearTimeout(window.__azLuckyShareSingleTimer133);window.__azLuckyShareSingleTimer133=setTimeout(run,120)}).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
   recordOpen();
 })();
 </script>
+
 
 </body>
 </html>
