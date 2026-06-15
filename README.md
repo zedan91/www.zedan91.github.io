@@ -12,3 +12,6 @@ Perubahan:
 - Tidak ubah Login/Register, My Purchases, Software, CAD, atau PA/BM.
 
 Firebase Rules tidak perlu update.
+
+
+Patch 121: Lucky Draw export peserta diperkemas dengan Month, referral valid count, tarikh join MY, device/IP hash, status eligible dan winner flag.

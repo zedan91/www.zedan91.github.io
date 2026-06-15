@@ -105,6 +105,17 @@
     .referral-info-note ul{margin:6px 0 0;padding-left:18px}
     .referral-info-note li{margin:3px 0}
 
+    .referral-audit-panel{margin-top:16px}
+    .referral-audit-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+    .referral-audit-box{border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#07101f;padding:10px}
+    .referral-audit-box span{display:block;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase}
+    .referral-audit-box strong{display:block;margin-top:4px;color:#22c55e;font-size:18px}
+    .referral-audit-list{display:grid;gap:8px}
+    .referral-audit-card{border:1px solid rgba(148,163,184,.18);border-radius:12px;background:#07101f;padding:11px 12px;text-align:left}
+    .referral-audit-card strong{display:block;color:#f8fafc;font-size:14px}
+    .referral-audit-card span{display:block;color:#94a3b8;font-size:12px;margin-top:4px;line-height:1.45}
+    .referral-audit-card small{display:block;color:#facc15;font-size:11px;margin-top:5px;line-height:1.45}
+
     .right-stack{display:grid;gap:14px}
     .countdown-panel{border-color:rgba(34,197,94,.36)}
     .countdown-panel span{display:block;color:#86efac;font-size:11px;font-weight:900;text-transform:uppercase}
@@ -162,7 +173,7 @@
       main{width:min(100% - 16px,1080px);padding-top:14px}
       .lucky-shell{padding:10px}
       .invite-row{grid-template-columns:1fr}
-      .summary-grid,.mini-status-grid,.lucky-join-checklist{grid-template-columns:1fr}
+      .summary-grid,.mini-status-grid,.lucky-join-checklist,.referral-audit-summary{grid-template-columns:1fr}
     }
   
 /* AZOBSS Lucky Draw: hide Login/Register action when user already signed in */
@@ -889,6 +900,29 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="status-note" id="adminStatus"></div>
 </div>
+
+<div class="panel admin-panel referral-audit-panel" id="adminReferralAuditPanel">
+<div class="participants-head">
+<div>
+<span class="kicker" id="referralAuditKicker">Referral Audit</span>
+<h2 id="referralAuditTitle" style="margin-top:10px">Semakan link share bulan ini</h2>
+</div>
+<div class="admin-actions" style="margin-top:0">
+<button class="btn dark" id="refreshReferralAuditButton" type="button">Refresh Audit</button>
+<button class="btn orange" id="exportReferralAuditButton" type="button">Export Audit</button>
+</div>
+</div>
+<div class="referral-audit-summary">
+<div class="referral-audit-box"><span id="referralAuditTotalLabel">Valid click</span><strong id="referralAuditValidTotal">0</strong></div>
+<div class="referral-audit-box"><span id="referralAuditSharerLabel">User dapat click</span><strong id="referralAuditSharerTotal">0</strong></div>
+<div class="referral-audit-box"><span id="referralAuditSelfLabel">Self click</span><strong id="referralAuditSelfTotal">0</strong></div>
+<div class="referral-audit-box"><span id="referralAuditDuplicateLabel">Duplicate blocked</span><strong id="referralAuditDuplicateTotal">0</strong></div>
+</div>
+<div class="participant-list referral-audit-list" id="referralAuditList">
+<div class="empty">Tekan Refresh Audit untuk baca rekod link share.</div>
+</div>
+<div class="status-note" id="referralAuditStatus"></div>
+</div>
 <div class="panel participants">
 <div class="participants-head">
 <div>
@@ -969,8 +1003,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', savedInviteFromUrl);
 
     let luckyDrawEntriesCache = [];
+    let luckyDrawReferralAuditCache = [];
     let referralClickCountCache = 0;
     let luckyDrawWinnerSelected = false;
+    let luckyDrawCurrentWinnerCache = null;
 
     const els = {
       auth: document.getElementById('siteAuthActions'),
@@ -1007,7 +1043,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       prizeJsonInput: document.getElementById('prizeJsonInput'),
       adminStatus: document.getElementById('adminStatus'),
       winnerHistory: document.getElementById('winnerHistoryList'),
-      refreshWinnerHistoryButton: document.getElementById('refreshWinnerHistoryButton')
+      refreshWinnerHistoryButton: document.getElementById('refreshWinnerHistoryButton'),
+      referralAuditList: document.getElementById('referralAuditList'),
+      referralAuditStatus: document.getElementById('referralAuditStatus'),
+      referralAuditValidTotal: document.getElementById('referralAuditValidTotal'),
+      referralAuditSharerTotal: document.getElementById('referralAuditSharerTotal'),
+      referralAuditSelfTotal: document.getElementById('referralAuditSelfTotal'),
+      referralAuditDuplicateTotal: document.getElementById('referralAuditDuplicateTotal'),
+      refreshReferralAuditButton: document.getElementById('refreshReferralAuditButton'),
+      exportReferralAuditButton: document.getElementById('exportReferralAuditButton')
     };
 
     function parseUser(raw){try{return raw ? JSON.parse(raw) : null;}catch(e){return null;}}
@@ -1139,6 +1183,21 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         winnerHistoryLoadFail: 'Winner history belum dapat dibaca.',
         winnerHistoryTotal: 'Jumlah peserta',
         winnerHistorySelectedAt: 'Dipilih pada',
+        referralAuditKicker: 'Referral Audit',
+        referralAuditTitle: 'Semakan link share bulan ini',
+        referralAuditValidTotal: 'Valid click',
+        referralAuditSharerTotal: 'User dapat click',
+        referralAuditSelfTotal: 'Self click',
+        referralAuditDuplicateTotal: 'Duplicate blocked',
+        referralAuditRefresh: 'Refresh Audit',
+        referralAuditExport: 'Export Audit',
+        referralAuditEmpty: 'Belum ada rekod link share bulan ini.',
+        referralAuditFail: 'Referral audit belum dapat dibaca.',
+        referralAuditExportEmpty: 'Tiada referral audit untuk export.',
+        referralAuditExportDone: 'Export referral audit selesai.',
+        referralAuditValid: 'valid',
+        referralAuditIgnored: 'tidak dikira',
+        referralAuditDuplicate: 'duplicate',
         loginPlaceholder: 'Login dahulu untuk jana invite link',
         loginActive: 'Login dahulu untuk aktifkan Lucky Draw.',
         loginCheck: 'Login dahulu untuk check referral click.',
@@ -1239,6 +1298,21 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         winnerHistoryLoadFail: 'Winner history could not be loaded yet.',
         winnerHistoryTotal: 'Total participants',
         winnerHistorySelectedAt: 'Selected at',
+        referralAuditKicker: 'Referral Audit',
+        referralAuditTitle: 'This month share link audit',
+        referralAuditValidTotal: 'Valid clicks',
+        referralAuditSharerTotal: 'Users with clicks',
+        referralAuditSelfTotal: 'Self clicks',
+        referralAuditDuplicateTotal: 'Duplicates blocked',
+        referralAuditRefresh: 'Refresh Audit',
+        referralAuditExport: 'Export Audit',
+        referralAuditEmpty: 'No share link record for this month yet.',
+        referralAuditFail: 'Referral audit could not be loaded yet.',
+        referralAuditExportEmpty: 'No referral audit to export.',
+        referralAuditExportDone: 'Referral audit export completed.',
+        referralAuditValid: 'valid',
+        referralAuditIgnored: 'not counted',
+        referralAuditDuplicate: 'duplicate',
         loginPlaceholder: 'Log in first to generate invite link',
         loginActive: 'Log in first to activate Lucky Draw.',
         loginCheck: 'Log in first to check referral click.',
@@ -1315,6 +1389,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('#winnerHistoryKicker', tr('winnerHistoryKicker'));
       setText('#winnerHistoryTitle', tr('winnerHistoryTitle'));
       setText('#refreshWinnerHistoryButton', tr('refresh'));
+      setText('#referralAuditKicker', tr('referralAuditKicker'));
+      setText('#referralAuditTitle', tr('referralAuditTitle'));
+      setText('#referralAuditTotalLabel', tr('referralAuditValidTotal'));
+      setText('#referralAuditSharerLabel', tr('referralAuditSharerTotal'));
+      setText('#referralAuditSelfLabel', tr('referralAuditSelfTotal'));
+      setText('#referralAuditDuplicateLabel', tr('referralAuditDuplicateTotal'));
+      setText('#refreshReferralAuditButton', tr('referralAuditRefresh'));
+      setText('#exportReferralAuditButton', tr('referralAuditExport'));
     }
 
     function setJoinStep(el, state, label, title, desc){
@@ -1605,6 +1687,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const res = await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
         const data = await res.json();
         const winner = data && data.winner;
+        luckyDrawCurrentWinnerCache = winner || null;
         luckyDrawWinnerSelected = !!winner;
         const name = winner ? (winner.name || winner.usernameKey || 'Winner') : tr('winnerNone');
         els.winner.textContent = name;
@@ -1661,6 +1744,95 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       } catch(e) {
         els.winnerHistory.innerHTML = '<div class="empty">' + escapeHtml(tr('winnerHistoryLoadFail')) + '</div>';
       }
+    }
+
+
+
+    function maskAuditValue(value, left){
+      const text = String(value || '').trim();
+      if (!text) return '-';
+      const keep = Number(left || 6);
+      if (text.length <= keep) return text;
+      return text.slice(0, keep) + '…';
+    }
+
+    function setReferralAuditStatus(message, error){
+      if (!els.referralAuditStatus) return;
+      els.referralAuditStatus.textContent = message || '';
+      els.referralAuditStatus.classList.toggle('error', !!error);
+    }
+
+    function renderReferralAudit(payload){
+      if (!els.referralAuditList) return;
+      const summary = (payload && payload.summary) || {};
+      const rows = Array.isArray(payload && payload.clicks) ? payload.clicks : [];
+      luckyDrawReferralAuditCache = rows;
+      if (els.referralAuditValidTotal) els.referralAuditValidTotal.textContent = String(summary.validClicks || 0);
+      if (els.referralAuditSharerTotal) els.referralAuditSharerTotal.textContent = String(summary.uniqueSharers || 0);
+      if (els.referralAuditSelfTotal) els.referralAuditSelfTotal.textContent = String(summary.selfClicks || 0);
+      if (els.referralAuditDuplicateTotal) els.referralAuditDuplicateTotal.textContent = String(summary.duplicateClicks || 0);
+      if (!rows.length) {
+        els.referralAuditList.innerHTML = '<div class="empty">' + escapeHtml(tr('referralAuditEmpty')) + '</div>';
+        return;
+      }
+      els.referralAuditList.innerHTML = rows.slice(0, 40).map((row, index) => {
+        const valid = !!row.valid;
+        const duplicate = !!row.duplicate;
+        const label = valid ? tr('referralAuditValid') : (duplicate ? tr('referralAuditDuplicate') : tr('referralAuditIgnored'));
+        const time = row.clickedAt ? formatWinnerDate(row.clickedAt) : '-';
+        const visitor = row.visitorUsernameKey ? '@' + row.visitorUsernameKey : 'Guest / visitor';
+        return '<div class="referral-audit-card">' +
+          '<strong>' + (index + 1) + '. @' + escapeHtml(row.ref || '-') + ' — ' + escapeHtml(label) + '</strong>' +
+          '<span>Visitor: ' + escapeHtml(visitor) + ' · Time: ' + escapeHtml(time) + '</span>' +
+          '<small>Device: ' + escapeHtml(maskAuditValue(row.deviceFingerprint, 12)) + ' · IP: ' + escapeHtml(maskAuditValue(row.ipAddress, 8)) + ' · Reason: ' + escapeHtml(row.reason || (valid ? 'VALID_CLICK' : '-')) + '</small>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function loadReferralAudit(){
+      if (!els.referralAuditList) return;
+      if (!requireLuckyDrawAdmin()) return;
+      setReferralAuditStatus('Loading referral audit...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/referral-audit?monthKey=' + encodeURIComponent(monthKey()) + '&limit=80', {cache:'no-store'});
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Referral audit gagal');
+        renderReferralAudit(data);
+        setReferralAuditStatus('Referral audit updated.');
+      } catch(e) {
+        if (els.referralAuditList) els.referralAuditList.innerHTML = '<div class="empty">' + escapeHtml(tr('referralAuditFail')) + '</div>';
+        setReferralAuditStatus(e.message || tr('referralAuditFail'), true);
+      }
+    }
+
+    function exportReferralAudit(){
+      if (!requireLuckyDrawAdmin()) return;
+      const rows = luckyDrawReferralAuditCache || [];
+      if (!rows.length) {
+        setReferralAuditStatus(tr('referralAuditExportEmpty'), true);
+        return;
+      }
+      const headers = ['No','Month','Share Username','Visitor Username','Valid','Duplicate','Reason','Clicked At','Device','IP'];
+      const csvRows = [headers].concat(rows.map((row, index) => [
+        index + 1,
+        row.monthKey || monthKey(),
+        row.ref || '',
+        row.visitorUsernameKey || '',
+        row.valid ? 'YES' : 'NO',
+        row.duplicate ? 'YES' : 'NO',
+        row.reason || '',
+        row.clickedAt || '',
+        row.deviceFingerprint || '',
+        row.ipAddress || ''
+      ]));
+      const csv = csvRows.map((row) => row.map((value) => '"' + String(value).replace(/"/g, '""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'AZOBSS-Lucky-Draw-Referral-Audit-' + monthKey() + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setReferralAuditStatus(tr('referralAuditExportDone'));
     }
 
     async function copyInvite(){
@@ -1904,6 +2076,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         els.winner.textContent = tr('winnerNone');
         els.winnerText.textContent = tr('winnerPending');
         luckyDrawWinnerSelected = false;
+        luckyDrawCurrentWinnerCache = null;
         updateInvitePanel();
         await loadWinnerHistory();
         setAdminStatus('Winner bulan ini sudah direset. Join bulan ini dibuka semula jika syarat referral cukup.');
@@ -1972,6 +2145,32 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       } catch(e) {}
     }
 
+
+    function exportDateMY(value){
+      if (!value) return '';
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return String(value);
+      try {
+        return d.toLocaleString('en-MY', {
+          timeZone:'Asia/Kuala_Lumpur',
+          day:'2-digit',
+          month:'2-digit',
+          year:'numeric',
+          hour:'2-digit',
+          minute:'2-digit',
+          second:'2-digit',
+          hour12:true
+        });
+      } catch(e) { return d.toLocaleString(); }
+    }
+
+    function shortHash(value, keep){
+      const text = String(value || '').trim();
+      if (!text) return '';
+      const size = keep || 12;
+      return text.length > size ? text.slice(0, size) + '...' : text;
+    }
+
     function exportLuckyParticipants(){
       if (!requireLuckyDrawAdmin()) return;
       const rows = activeLuckyRows();
@@ -1979,17 +2178,43 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         setAdminStatus(tr('exportEmpty'), true);
         return;
       }
-      const headers = ['No','Name','Username','Email','Phone','Invite Code','Invited By','Joined At'];
-      const csvRows = [headers].concat(rows.map((entry, index) => [
-        index + 1,
-        entry.name || '',
-        entry.usernameKey || '',
-        entry.contactEmail || '',
-        entry.phone || '',
-        entry.inviteCode || '',
-        entry.invitedByCode || '',
-        entry.joinedAt || ''
-      ]));
+      const winnerUsername = luckyDrawCurrentWinnerCache && luckyDrawCurrentWinnerCache.usernameKey ? String(luckyDrawCurrentWinnerCache.usernameKey).toLowerCase() : '';
+      const headers = [
+        'No',
+        'Month',
+        'Name',
+        'Username',
+        'Email',
+        'Phone',
+        'Referral Valid Count',
+        'Joined Date MY',
+        'Joined At ISO',
+        'Device Hash',
+        'IP Hash',
+        'Eligible Status',
+        'Winner'
+      ];
+      const csvRows = [headers].concat(rows.map((entry, index) => {
+        const username = String(entry.usernameKey || '').toLowerCase();
+        const referralCount = Number(entry.referralCount || 0);
+        const isWinner = winnerUsername && username === winnerUsername;
+        const eligible = referralCount >= 1 && !entry.deleted ? 'ELIGIBLE' : 'NOT_ELIGIBLE';
+        return [
+          index + 1,
+          entry.monthKey || monthKey(),
+          entry.name || '',
+          entry.usernameKey || '',
+          entry.contactEmail || '',
+          entry.phone || '',
+          referralCount,
+          exportDateMY(entry.joinedAt || entry.joinedAtMs),
+          entry.joinedAt || '',
+          shortHash(entry.deviceFingerprint, 16),
+          shortHash(entry.ipAddress, 10),
+          eligible,
+          isWinner ? 'YES' : 'NO'
+        ];
+      }));
       const csv = csvRows.map((row) => row.map((value) => '"' + String(value).replace(/"/g, '""') + '"').join(',')).join('\n');
       const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
       const a = document.createElement('a');
@@ -2016,6 +2241,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     els.joinButton.addEventListener('click', joinLuckyDraw);
     document.getElementById('refreshEntriesButton').addEventListener('click', loadEntries);
     if (els.refreshWinnerHistoryButton) els.refreshWinnerHistoryButton.addEventListener('click', loadWinnerHistory);
+    if (els.refreshReferralAuditButton) els.refreshReferralAuditButton.addEventListener('click', loadReferralAudit);
+    if (els.exportReferralAuditButton) els.exportReferralAuditButton.addEventListener('click', exportReferralAudit);
     document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
     document.getElementById('applyJsonButton').addEventListener('click', applyJson);
@@ -2039,7 +2266,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     loadEntries();
     loadWinner();
     loadWinnerHistory();
-    setInterval(function(){ loadEntries(); loadReferralStatus(readUser()).then(updateInvitePanel); }, 30000);
+    if (isAdmin(readUser())) loadReferralAudit();
+    setInterval(function(){ loadEntries(); loadReferralStatus(readUser()).then(updateInvitePanel); if (isAdmin(readUser())) loadReferralAudit(); }, 30000);
   </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){

@@ -411,6 +411,85 @@ function countValidReferralClicks(key, ref) {
   return clicks.filter((c) => !c.deleted && c.ref === cleanRef).length;
 }
 
+
+function maskAuditText(value, keep = 8) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (text.length <= keep) return text;
+  return `${text.slice(0, keep)}…`;
+}
+
+function buildReferralAudit(key = monthKey()) {
+  const clicks = readJson(getReferralFile(key), []);
+  const active = clicks.filter((c) => !c.deleted && c.monthKey === key);
+  const seenDevice = new Map();
+  const seenIp = new Map();
+  let validClicks = 0;
+  let selfClicks = 0;
+  let duplicateClicks = 0;
+  const uniqueSharers = new Set();
+
+  const rows = active
+    .slice()
+    .sort((a, b) => Number(b.clickedAtMs || 0) - Number(a.clickedAtMs || 0))
+    .map((c) => {
+      const ref = cleanShareUsername(c.ref);
+      const visitorUsernameKey = cleanShareUsername(c.visitorUsernameKey);
+      let reason = "VALID_CLICK";
+      let valid = true;
+      let duplicate = false;
+
+      if (visitorUsernameKey && visitorUsernameKey === ref) {
+        valid = false;
+        reason = "SELF_CLICK";
+        selfClicks += 1;
+      }
+
+      const deviceKey = c.deviceFingerprint ? `${ref}|${c.deviceFingerprint}` : "";
+      const ipKey = c.ipAddress ? `${ref}|${c.ipAddress}` : "";
+      if (valid && ((deviceKey && seenDevice.has(deviceKey)) || (ipKey && seenIp.has(ipKey)))) {
+        valid = false;
+        duplicate = true;
+        reason = "DUPLICATE_DEVICE_OR_IP";
+        duplicateClicks += 1;
+      }
+
+      if (valid) {
+        validClicks += 1;
+        if (ref) uniqueSharers.add(ref);
+      }
+      if (deviceKey && !seenDevice.has(deviceKey)) seenDevice.set(deviceKey, c.id || c.clickedAtMs || true);
+      if (ipKey && !seenIp.has(ipKey)) seenIp.set(ipKey, c.id || c.clickedAtMs || true);
+
+      return {
+        id: c.id || "",
+        monthKey: key,
+        ref,
+        visitorUsernameKey,
+        valid,
+        duplicate,
+        reason,
+        clickedAtMs: Number(c.clickedAtMs || c.clickedAtMs === 0 ? c.clickedAtMs : c.clickedAtMs || 0) || Number(c.clickedAtMs || 0),
+        clickedAt: c.clickedAt || "",
+        deviceFingerprint: maskAuditText(c.deviceFingerprint, 14),
+        ipAddress: maskAuditText(c.ipAddress, 9),
+        userAgent: maskAuditText(c.userAgent, 80)
+      };
+    });
+
+  return {
+    monthKey: key,
+    summary: {
+      totalRecords: active.length,
+      validClicks,
+      uniqueSharers: uniqueSharers.size,
+      selfClicks,
+      duplicateClicks
+    },
+    clicks: rows
+  };
+}
+
 function getWinnerFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-winners", `${key}.json`);
 }
@@ -1028,6 +1107,19 @@ app.post("/api/lucky-draw/referral-click", (req, res) => {
   writeJson(file, clicks);
   const count = clicks.filter((c) => !c.deleted && c.ref === ref).length;
   res.json({ ok: true, ref, count, click });
+});
+
+
+app.get("/api/lucky-draw/referral-audit", requireAdmin, (req, res) => {
+  const key = req.query.monthKey || monthKey();
+  const limit = Math.max(1, Math.min(300, Number(req.query.limit || 120)));
+  const audit = buildReferralAudit(key);
+  res.json({
+    ok: true,
+    monthKey: key,
+    summary: audit.summary,
+    clicks: audit.clicks.slice(0, limit)
+  });
 });
 
 app.get("/api/lucky-draw/entries", (req, res) => {

@@ -1,0 +1,6 @@
+Lucky Draw Step 4 added:
+- Admin Referral Audit panel
+- Refresh Audit button
+- Export Audit CSV button
+- Audit summary: valid clicks, users with clicks, self clicks, duplicates blocked
+- Backend endpoint: /api/lucky-draw/referral-audit
