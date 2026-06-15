@@ -15333,6 +15333,118 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 }
 </style>
 
+
+
+<!-- AZOBSS PATCH 151: HARD mobile one-card-per-row for Software/CAD grids -->
+<style id="azobss-mobile-one-card-row-hard-css">
+@media (max-width: 820px){
+  body.azobss-mobile-one-card-page #softwareGrid,
+  body.azobss-mobile-one-card-page #softwareDownloadsGrid,
+  body.azobss-mobile-one-card-page .downloads-grid,
+  body.azobss-mobile-one-card-page .software-grid,
+  body.azobss-mobile-one-card-page .software-list,
+  body.azobss-mobile-one-card-page .software-products,
+  body.azobss-mobile-one-card-page .products-grid,
+  body.azobss-mobile-one-card-page .cad-grid,
+  body.azobss-mobile-one-card-page .cad-card-grid,
+  body.azobss-mobile-one-card-page .cad-tools-shop,
+  body.azobss-mobile-one-card-page .cad-products,
+  body.azobss-mobile-one-card-page .az-mobile-force-one-card-grid{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-auto-columns:minmax(0,1fr) !important;
+    gap:16px !important;
+    width:100% !important;
+    max-width:100% !important;
+    overflow:visible !important;
+    box-sizing:border-box !important;
+  }
+  body.azobss-mobile-one-card-page .download-card,
+  body.azobss-mobile-one-card-page .software-card,
+  body.azobss-mobile-one-card-page .software-product-card,
+  body.azobss-mobile-one-card-page .cad-card,
+  body.azobss-mobile-one-card-page .cad-item,
+  body.azobss-mobile-one-card-page .cad-resource-card,
+  body.azobss-mobile-one-card-page .cad-tool-card,
+  body.azobss-mobile-one-card-page .resource-card{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    flex:0 0 100% !important;
+    grid-column:1 / -1 !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    box-sizing:border-box !important;
+  }
+  body.azobss-mobile-one-card-page .download-card h3,
+  body.azobss-mobile-one-card-page .software-card h3,
+  body.azobss-mobile-one-card-page .software-product-card h3,
+  body.azobss-mobile-one-card-page .cad-card h3,
+  body.azobss-mobile-one-card-page .cad-item h3,
+  body.azobss-mobile-one-card-page .download-card p,
+  body.azobss-mobile-one-card-page .software-card p,
+  body.azobss-mobile-one-card-page .software-product-card p,
+  body.azobss-mobile-one-card-page .cad-card p,
+  body.azobss-mobile-one-card-page .cad-item p{
+    max-width:100% !important;
+    overflow-wrap:break-word !important;
+  }
+}
+</style>
+<script id="azobss-mobile-one-card-row-hard-js">
+(function(){
+  'use strict';
+  var pageOk = /\/(Software-Tools|CAD-Tools-&-Resources)\/?/i.test(location.pathname);
+  if(!pageOk) return;
+  document.body.classList.add('azobss-mobile-one-card-page');
+  var cardSel = '#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.software-card,.software-product-card,.cad-card-grid .cad-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card,.resource-card';
+  function isMobile(){ return window.matchMedia && window.matchMedia('(max-width: 820px)').matches; }
+  function looksLikeGridParent(parent){
+    if(!parent) return false;
+    var cards = parent.querySelectorAll(':scope > .download-card,:scope > .software-card,:scope > .software-product-card,:scope > .cad-card,:scope > .cad-item,:scope > .cad-resource-card,:scope > .cad-tool-card,:scope > .resource-card');
+    return cards && cards.length >= 1;
+  }
+  function forceOneCard(){
+    if(!isMobile()) return;
+    document.body.classList.add('azobss-mobile-one-card-page');
+    var cards = Array.prototype.slice.call(document.querySelectorAll(cardSel));
+    var parents = new Set();
+    cards.forEach(function(card){
+      if(!card || !card.parentElement) return;
+      // Only force the actual visible product card, not tiny internal rows/buttons.
+      var rect = card.getBoundingClientRect();
+      if(rect.width < 120 || rect.height < 120) return;
+      card.style.setProperty('width','100%','important');
+      card.style.setProperty('max-width','100%','important');
+      card.style.setProperty('min-width','0','important');
+      card.style.setProperty('flex','0 0 100%','important');
+      card.style.setProperty('grid-column','1 / -1','important');
+      card.style.setProperty('box-sizing','border-box','important');
+      parents.add(card.parentElement);
+    });
+    parents.forEach(function(parent){
+      if(!looksLikeGridParent(parent)) return;
+      parent.classList.add('az-mobile-force-one-card-grid');
+      parent.style.setProperty('display','grid','important');
+      parent.style.setProperty('grid-template-columns','minmax(0, 1fr)','important');
+      parent.style.setProperty('grid-auto-columns','minmax(0, 1fr)','important');
+      parent.style.setProperty('gap','16px','important');
+      parent.style.setProperty('width','100%','important');
+      parent.style.setProperty('max-width','100%','important');
+      parent.style.setProperty('overflow','visible','important');
+      parent.style.setProperty('box-sizing','border-box','important');
+    });
+  }
+  function schedule(){ requestAnimationFrame(forceOneCard); setTimeout(forceOneCard,120); setTimeout(forceOneCard,600); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule); else schedule();
+  window.addEventListener('resize', schedule, {passive:true});
+  window.addEventListener('orientationchange', schedule, {passive:true});
+  var mo = new MutationObserver(function(){ schedule(); });
+  mo.observe(document.documentElement, {childList:true, subtree:true});
+  setInterval(forceOneCard, 1800);
+})();
+</script>
+
 </body>
 </html>
 
