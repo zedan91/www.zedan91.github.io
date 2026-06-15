@@ -28,3 +28,9 @@ GitHub Pages tidak menjalankan PHP. Upload fail dalam `php-backend` ke hosting P
 - `docs/` - dokumentasi ringkas AZOBSS.
 - `php-backend/` - fail PHP untuk hosting PHP.
 - `package.json` - metadata project.
+
+
+(107) Lucky Draw share ID flow:
+- Invite link code is shown as ID user share, not hidden.
+- Join Lucky Draw button stays disabled until user shares the link.
+- Share cancellation on Web Share API does not unlock Join.

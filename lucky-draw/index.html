@@ -756,16 +756,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="panel">
 <span class="kicker">Lucky Draw</span>
 <h1>Peraduan Lucky Draw User</h1>
-<p>User yang login boleh join Lucky Draw selepas share website AZOBSS menggunakan invite link masing-masing.</p>
+<p>User yang login boleh join Lucky Draw selepas share website AZOBSS menggunakan link ID user masing-masing.</p>
 <ul class="rules">
 <li>Login dahulu sebelum join Lucky Draw.</li>
-<li>Share invite link anda kepada orang lain.</li>
+<li>Share link anda kepada orang lain sebagai bukti sebelum join.</li>
 <li>Satu device dan satu IP address hanya boleh join sekali untuk bulan ini.</li>
 <li>Admin boleh edit hadiah, gambar, tajuk dan description.</li>
 </ul>
 <div class="invite-tools">
 <div>
-<label class="field-label" for="inviteLink">Login untuk dapatkan invite link</label>
+<label class="field-label" for="inviteLink">Invite link / link share user</label>
 <div class="invite-row">
 <input id="inviteLink" readonly="" type="text" value="Login dahulu untuk jana invite link"/>
 <button class="btn" id="copyInviteButton" type="button">Copy Invite Link</button>
@@ -777,7 +777,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <a class="btn dark" data-auth-open="login" href="#">Login / Register</a>
 </div>
 <div class="mini-status-grid">
-<strong id="inviteCodeText" style="display:none">-</strong>
+<div class="mini-status"><span>ID user share</span><strong id="inviteCodeText">-</strong></div>
 <div class="mini-status"><span>Status share</span><strong id="shareStatusText">Belum share</strong></div>
 </div>
 <div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
@@ -1095,7 +1095,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         els.inviteLink.value = 'Login dahulu untuk jana invite link';
         els.inviteCode.textContent = '-';
         els.shareStatus.textContent = 'Belum share';
-        els.joinButton.disabled = false;
+        els.joinButton.disabled = true;
         setStatus('Login dahulu untuk aktifkan Lucky Draw.', false);
         return;
       }
@@ -1110,10 +1110,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       els.inviteLink.value = inviteUrl;
       els.inviteCode.textContent = user.inviteCode;
       els.shareStatus.textContent = shared ? 'Sudah share' : 'Belum share';
-      els.joinButton.disabled = joined;
+      els.joinButton.disabled = joined || !shared;
       if (joined) setStatus('Anda sudah join Lucky Draw bulan ini.');
-      else if (shared) setStatus('Share sudah direkod. Anda boleh join Lucky Draw.');
-      else setStatus('Share invite link dahulu sebelum join Lucky Draw.');
+      else if (shared) setStatus('Share sudah direkod. Button Join Lucky Draw sudah aktif.');
+      else setStatus('Share link ID user dahulu sebelum join Lucky Draw.');
     }
 
     function tickCountdown(){
@@ -1220,7 +1220,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         return;
       }
       await navigator.clipboard.writeText(els.inviteLink.value);
-      setStatus('Invite link berjaya disalin. Share link ini dahulu sebelum join.');
+      setStatus('Link ID user berjaya disalin. Share link ini dahulu sebelum join.');
     }
 
     function shareInvite(){
@@ -1231,12 +1231,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
       const inviteUrl = els.inviteLink.value;
       const text = 'Jom join AZOBSS Lucky Draw: ' + inviteUrl;
-      localStorage.setItem(getShareKey(user), '1');
-      updateInvitePanel();
+      function markShared(){
+        localStorage.setItem(getShareKey(user), '1');
+        updateInvitePanel();
+      }
       if (navigator.share) {
-        navigator.share({title:'AZOBSS Lucky Draw', text, url:inviteUrl}).catch(function(){});
+        navigator.share({title:'AZOBSS Lucky Draw', text, url:inviteUrl}).then(markShared).catch(function(){
+          setStatus('Share dibatalkan. Button Join belum aktif.', true);
+        });
       } else {
         window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+        markShared();
       }
     }
 
@@ -1251,7 +1256,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         return;
       }
       if (localStorage.getItem(getShareKey(user)) !== '1') {
-        setStatus('Share invite link dahulu sebelum join Lucky Draw.', true);
+        setStatus('Share link ID user dahulu sebelum join Lucky Draw.', true);
         return;
       }
       const usernameKey = normalizeUsername(user.usernameKey || user.name);
