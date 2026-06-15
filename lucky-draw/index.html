@@ -1009,6 +1009,67 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 }
 </style>
 
+<style id="azobss-lucky-draw-prize-mobile-scroll-hint-145">
+/* AZOBSS PATCH 145: Make prize description scroll state obvious on phone */
+#prizeDescScrollHint{
+  display:none;
+  margin-top:8px;
+  font-size:12px;
+  font-weight:800;
+  color:#facc15;
+  letter-spacing:.2px;
+  align-items:center;
+  gap:6px;
+  opacity:.95;
+}
+#prizeDescScrollHint::before{
+  content:'↕';
+  display:inline-grid;
+  place-items:center;
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  border:1px solid rgba(250,204,21,.55);
+  background:rgba(250,204,21,.10);
+  color:#fde047;
+  font-size:12px;
+}
+@media (max-width:900px){
+  #prizeDescription.description{
+    position:relative !important;
+    padding-right:12px !important;
+    scrollbar-width:auto !important;
+    scrollbar-color:#facc15 rgba(15,23,42,.85) !important;
+    -webkit-overflow-scrolling:touch !important;
+    border-right:1px solid rgba(250,204,21,.28) !important;
+  }
+  #prizeDescription.description::-webkit-scrollbar{width:8px!important;}
+  #prizeDescription.description::-webkit-scrollbar-thumb{
+    background:#facc15!important;
+    border-radius:999px!important;
+    border:2px solid rgba(15,23,42,.95)!important;
+  }
+  #prizeDescription.description::-webkit-scrollbar-track{background:rgba(15,23,42,.75)!important;border-radius:999px!important;}
+  #prizeDescScrollHint{display:flex;}
+  .azobss-prize-desc-wrap{
+    position:relative;
+  }
+  .azobss-prize-desc-wrap::after{
+    content:'';
+    position:absolute;
+    left:0;
+    right:14px;
+    bottom:28px;
+    height:36px;
+    pointer-events:none;
+    background:linear-gradient(to bottom, rgba(15,23,42,0), rgba(15,23,42,.96));
+  }
+}
+@media (min-width:901px){
+  #prizeDescScrollHint{display:none!important;}
+}
+</style>
+
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
@@ -1138,7 +1199,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div>
 <span class="kicker">Hadiah Lucky Draw</span>
 <h2 id="prizeTitle" style="margin-top:10px">Hadiah belum diumumkan</h2>
+<div class="azobss-prize-desc-wrap">
 <p class="description" id="prizeDescription">Admin belum upload hadiah Lucky Draw bulan ini.</p>
+<div aria-hidden="true" id="prizeDescScrollHint">Scroll untuk baca semua description</div>
+</div>
 </div>
 </div>
 <div class="panel admin-panel" id="adminPrizePanel">
@@ -1475,6 +1539,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         prizeKicker: 'Hadiah Lucky Draw',
         prizeDefaultTitle: 'Hadiah belum diumumkan',
         prizeDefaultDesc: 'Admin belum upload hadiah Lucky Draw bulan ini.',
+        prizeScrollHint: 'Scroll untuk baca semua description.',
         adminTitle: 'Edit Hadiah Lucky Draw',
         adminPrizeTitle: 'Tajuk hadiah',
         adminPrizeDesc: 'Description hadiah',
@@ -1604,6 +1669,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         prizeKicker: 'Lucky Draw Prize',
         prizeDefaultTitle: 'Prize not announced yet',
         prizeDefaultDesc: 'This month\'s Lucky Draw prize has not been uploaded yet.',
+        prizeScrollHint: 'Scroll to read the full description.',
         adminTitle: 'Edit Lucky Draw Prize',
         adminPrizeTitle: 'Prize title',
         adminPrizeDesc: 'Prize description',
@@ -1687,6 +1753,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     let luckyDrawLang = localStorage.getItem('azobssLuckyDrawLang') === 'en' ? 'en' : 'ms';
     function tr(key){ return (luckyDrawI18n[luckyDrawLang] && luckyDrawI18n[luckyDrawLang][key]) || luckyDrawI18n.ms[key] || key; }
+    function updatePrizeDescScrollHint(){
+      const hint = document.getElementById('prizeDescScrollHint');
+      const desc = document.getElementById('prizeDescription');
+      if (!hint || !desc) return;
+      const isMobile = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+      const canScroll = desc.scrollHeight > desc.clientHeight + 8;
+      hint.style.display = (isMobile && canScroll) ? 'flex' : 'none';
+    }
+
     function setText(selector, value){ const el = document.querySelector(selector); if (el) el.textContent = value; }
     function setTextAll(selector, values){ document.querySelectorAll(selector).forEach((el, index) => { if (values[index]) el.textContent = values[index]; }); }
     function applyLuckyDrawLanguage(){
@@ -1710,6 +1785,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('.spin-box strong', tr('prizeSmall'));
       setTextAll('.summary-box span', [tr('totalParticipants'), tr('currentWinner')]);
       setText('.prize-panel .kicker', tr('prizeKicker'));
+      setText('#prizeDescScrollHint', tr('prizeScrollHint'));
       setText('.admin-panel h2', tr('adminTitle'));
       setText('label[for="prizeTitleInput"]', tr('adminPrizeTitle'));
       setText('label[for="prizeDescriptionInput"]', tr('adminPrizeDesc'));
@@ -2017,6 +2093,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       els.prizeImage.src = image;
       els.prizeTitle.textContent = title;
       els.prizeDescription.innerHTML = linkifyPrizeDescription(desc);
+      setTimeout(updatePrizeDescScrollHint, 60);
       els.prizeTitleInput.value = prize.title || '';
       els.prizeDescriptionInput.value = prize.description || '';
       els.prizeJsonInput.value = JSON.stringify({
@@ -2737,6 +2814,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     document.getElementById('exportParticipantsButton').addEventListener('click', exportLuckyParticipants);
 
     window.addEventListener('storage', showUser);
+    window.addEventListener('resize', updatePrizeDescScrollHint);
 
     applyLuckyDrawLanguage();
     tickCountdown();
@@ -2745,6 +2823,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     recordReferralClickFromUrl();
     loadReferralStatus(readUser()).then(updateInvitePanel);
     loadPrize();
+    setTimeout(updatePrizeDescScrollHint, 500);
     loadEntries();
     loadWinner();
     loadWinnerHistory();
