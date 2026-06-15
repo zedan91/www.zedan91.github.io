@@ -1,0 +1,1 @@
+Patch 136: Fixed PC share modal WhatsApp icon to a more accurate WhatsApp SVG logo on Software Tools and CAD Tools share modal only. No Firebase Rules update required.
