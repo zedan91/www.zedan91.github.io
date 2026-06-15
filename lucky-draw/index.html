@@ -773,6 +773,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="actions">
 <button class="btn orange" id="shareInviteButton" type="button">Share Website</button>
+<button class="btn blue" id="confirmShareButton" type="button" disabled>Saya sudah share</button>
 <button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
 <a class="btn dark" data-auth-open="login" href="#">Login / Register</a>
 </div>
@@ -936,6 +937,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       joinButton: document.getElementById('joinLuckyDrawButton'),
       copyButton: document.getElementById('copyInviteButton'),
       shareButton: document.getElementById('shareInviteButton'),
+      confirmShareButton: document.getElementById('confirmShareButton'),
       countdown: document.getElementById('countdownText'),
       targetText: document.getElementById('targetText'),
       total: document.getElementById('participantTotal'),
@@ -978,6 +980,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
     function getShareKey(user){
       return 'azobssLuckyShare_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
+    }
+    function getPendingShareKey(user){
+      return 'azobssLuckySharePending_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
     }
     function getJoinKey(user){
       return 'azobssLuckyJoin_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
@@ -1096,6 +1101,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         els.inviteCode.textContent = '-';
         els.shareStatus.textContent = 'Belum share';
         els.joinButton.disabled = true;
+        if (els.confirmShareButton) {
+          els.confirmShareButton.disabled = true;
+          els.confirmShareButton.textContent = 'Saya sudah share';
+        }
         setStatus('Login dahulu untuk aktifkan Lucky Draw.', false);
         return;
       }
@@ -1104,15 +1113,21 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!user.inviteCode) user.inviteCode = buildInviteCode(user.usernameKey);
       const inviteUrl = buildInviteUrl(user);
       const shared = localStorage.getItem(getShareKey(user)) === '1';
+      const pendingShared = sessionStorage.getItem(getPendingShareKey(user)) === '1';
       const backendJoined = !!findCurrentUserEntry(user);
       const joined = backendJoined || localStorage.getItem(getJoinKey(user)) === '1';
       if (backendJoined) markJoinedLocal(user);
       els.inviteLink.value = inviteUrl;
       els.inviteCode.textContent = user.inviteCode;
-      els.shareStatus.textContent = shared ? 'Sudah share' : 'Belum share';
+      els.shareStatus.textContent = shared ? 'Sudah share' : (pendingShared ? 'Menunggu pengesahan' : 'Belum share');
       els.joinButton.disabled = joined || !shared;
+      if (els.confirmShareButton) {
+        els.confirmShareButton.disabled = joined || shared || !pendingShared;
+        els.confirmShareButton.textContent = shared ? 'Share confirmed' : 'Saya sudah share';
+      }
       if (joined) setStatus('Anda sudah join Lucky Draw bulan ini.');
       else if (shared) setStatus('Share sudah direkod. Button Join Lucky Draw sudah aktif.');
+      else if (pendingShared) setStatus('Jika share sudah selesai, tekan Saya sudah share untuk aktifkan Join Lucky Draw.');
       else setStatus('Share link ID user dahulu sebelum join Lucky Draw.');
     }
 
@@ -1231,18 +1246,43 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
       const inviteUrl = els.inviteLink.value;
       const text = 'Jom join AZOBSS Lucky Draw: ' + inviteUrl;
-      function markShared(){
-        localStorage.setItem(getShareKey(user), '1');
+      function markSharePending(){
+        try { sessionStorage.setItem(getPendingShareKey(user), '1'); } catch(e) {}
+        updateInvitePanel();
+      }
+      function clearSharePending(){
+        try { sessionStorage.removeItem(getPendingShareKey(user)); } catch(e) {}
         updateInvitePanel();
       }
       if (navigator.share) {
-        navigator.share({title:'AZOBSS Lucky Draw', text, url:inviteUrl}).then(markShared).catch(function(){
+        navigator.share({title:'AZOBSS Lucky Draw', text, url:inviteUrl}).then(function(){
+          // Browser/app share API cannot prove the message was really sent.
+          // Do not activate Join automatically; require user confirmation after returning from share.
+          markSharePending();
+        }).catch(function(){
+          clearSharePending();
           setStatus('Share dibatalkan. Button Join belum aktif.', true);
         });
       } else {
         window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
-        markShared();
+        // External WhatsApp tab cannot confirm send/cancel, so keep Join disabled until user confirms.
+        markSharePending();
       }
+    }
+
+    function confirmShareDone(){
+      const user = readUser();
+      if (!user || !(user.usernameKey || user.name)) {
+        setStatus('Login dahulu sebelum sahkan share.', true);
+        return;
+      }
+      if (sessionStorage.getItem(getPendingShareKey(user)) !== '1') {
+        setStatus('Tekan Share Website dahulu. Jika share dibatalkan, Join tidak akan aktif.', true);
+        return;
+      }
+      localStorage.setItem(getShareKey(user), '1');
+      sessionStorage.removeItem(getPendingShareKey(user));
+      updateInvitePanel();
     }
 
     async function joinLuckyDraw(){
@@ -1499,6 +1539,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     els.copyButton.addEventListener('click', copyInvite);
     els.shareButton.addEventListener('click', shareInvite);
+    if (els.confirmShareButton) els.confirmShareButton.addEventListener('click', confirmShareDone);
     els.joinButton.addEventListener('click', joinLuckyDraw);
     document.getElementById('refreshEntriesButton').addEventListener('click', loadEntries);
     document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
