@@ -1,0 +1,1 @@
+Patch 113: Removed public Lucky Draw rule line: Admin boleh edit hadiah, gambar, tajuk dan description. No other Lucky Draw logic changed.
