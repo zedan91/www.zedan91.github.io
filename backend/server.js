@@ -1034,6 +1034,16 @@ app.post("/api/lucky-draw/entries", (req, res) => {
     return res.status(400).json({ ok: false, error: "Device fingerprint required" });
   }
 
+  const existingWinner = readJson(getWinnerFile(key), null);
+  if (existingWinner) {
+    return res.status(403).json({
+      ok: false,
+      code: "DRAW_CLOSED",
+      error: "Lucky Draw bulan ini sudah selesai. Join telah ditutup.",
+      winner: existingWinner
+    });
+  }
+
   const activeEntries = entries.filter((e) => e.monthKey === key && !e.deleted);
   const uid = cleanText(req.body.uid, 120);
   const sameUser = activeEntries.find((e) => e.usernameKey === usernameKey);

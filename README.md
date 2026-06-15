@@ -1,36 +1,12 @@
-# AZOBSS Docs
+# (117)-AZOBSS-LUCKY-DRAW-LOCK-JOIN-AFTER-WINNER
 
-Website dokumentasi dan landing page untuk AZOBSS.
+Patch kecil untuk Lucky Draw sahaja.
 
-Project ini ialah versi bersih yang menggantikan source Box Developer kepada content AZOBSS:
+Perubahan:
+- Jika winner bulan semasa sudah dipilih, Join Lucky Draw akan ditutup untuk bulan itu.
+- Button Join Lucky Draw akan disabled bila winner sudah wujud.
+- Backend juga block direct POST join selepas winner bulan semasa wujud.
+- Reset Winner akan buka semula join jika syarat referral cukup.
 
-- Branding AZOBSS.
-- Homepage AZOBSS.
-- Content Box dibuang.
-- Struktur documentation untuk servis, PA downloader, AutoCAD LISP, software tools, affiliate, dan backend PHP.
-
-## GitHub Pages
-
-Fail `index.html` boleh terus digunakan di GitHub Pages.
-
-## PHP Backend
-
-Folder `php-backend` disediakan untuk hosting yang menyokong PHP.
-
-GitHub Pages tidak menjalankan PHP. Upload fail dalam `php-backend` ke hosting PHP jika mahu guna fungsi:
-
-- Convert TIF JUPEM kepada PDF.
-- Traffic counter server-side.
-
-## Struktur
-
-- `index.html` - laman utama AZOBSS.
-- `docs/` - dokumentasi ringkas AZOBSS.
-- `php-backend/` - fail PHP untuk hosting PHP.
-- `package.json` - metadata project.
-
-
-(107) Lucky Draw share ID flow:
-- Invite link code is shown as ID user share, not hidden.
-- Join Lucky Draw button stays disabled until user shares the link.
-- Share cancellation on Web Share API does not unlock Join.
+Tidak sentuh Login/Register, My Purchases, Software, CAD, atau PA/BM.
+Firebase Rules tidak perlu update.

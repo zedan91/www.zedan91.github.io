@@ -942,6 +942,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     let luckyDrawEntriesCache = [];
     let referralClickCountCache = 0;
+    let luckyDrawWinnerSelected = false;
 
     const els = {
       auth: document.getElementById('siteAuthActions'),
@@ -1105,6 +1106,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         exportDone: 'Export peserta selesai.',
         resetJoinFail: 'Reset join bulan ini gagal.',
         resetJoinConfirm: 'Reset join bulan ini? Semua peserta bulan semasa akan dikosongkan dan user boleh join semula.',
+        drawClosed: 'Lucky Draw bulan ini sudah selesai. Join telah ditutup.',
         runDrawConfirm: 'Run Lucky Draw untuk bulan ini? Pemenang akan disimpan.'
       },
       en: {
@@ -1179,6 +1181,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         exportDone: 'Participants export completed.',
         resetJoinFail: 'Reset join for this month failed.',
         resetJoinConfirm: 'Reset joins for this month? All current-month participants will be cleared and users can join again.',
+        drawClosed: 'This month's Lucky Draw is finished. Joining is now closed.',
         runDrawConfirm: 'Run Lucky Draw for this month? The winner will be saved.'
       }
     };
@@ -1386,12 +1389,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       els.inviteLink.value = inviteUrl;
       els.inviteCode.textContent = user.usernameKey;
       els.shareStatus.textContent = referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral');
-      els.joinButton.disabled = joined || !referralReady;
+      els.joinButton.disabled = luckyDrawWinnerSelected || joined || !referralReady;
       if (els.confirmShareButton) {
         els.confirmShareButton.disabled = joined;
         els.confirmShareButton.textContent = tr('checkReferral');
       }
-      if (joined) setStatus(tr('alreadyJoined'));
+      if (luckyDrawWinnerSelected) setStatus(tr('drawClosed'));
+      else if (joined) setStatus(tr('alreadyJoined'));
       else if (referralReady) setStatus(tr('referralValid'));
       else setStatus(tr('referralMissing'));
     }
@@ -1487,9 +1491,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const res = await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
         const data = await res.json();
         const winner = data && data.winner;
+        luckyDrawWinnerSelected = !!winner;
         const name = winner ? (winner.name || winner.usernameKey || 'Winner') : tr('winnerNone');
         els.winner.textContent = name;
         els.winnerText.textContent = winner ? tr('congrats') + name : tr('winnerPending');
+        updateInvitePanel();
       } catch(e) {}
     }
 
@@ -1532,6 +1538,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
         setStatus(tr('joinLogin'), true);
+        return;
+      }
+      await loadWinner();
+      if (luckyDrawWinnerSelected) {
+        updateInvitePanel();
+        setStatus(tr('drawClosed'), true);
         return;
       }
       if (findCurrentUserEntry(user)) {
@@ -1683,7 +1695,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const name = winner.name || winner.usernameKey || 'Winner';
         els.winner.textContent = name;
         els.winnerText.textContent = data.alreadySelected ? 'Pemenang sudah dipilih: ' + name : 'Tahniah ' + name;
-        setAdminStatus(data.alreadySelected ? 'Pemenang bulan ini sudah wujud. Reset Winner dahulu jika mahu draw semula.' : 'Pemenang berjaya dipilih dan disimpan.');
+        luckyDrawWinnerSelected = true;
+        updateInvitePanel();
+        setAdminStatus(data.alreadySelected ? 'Pemenang bulan ini sudah wujud. Join bulan ini kekal ditutup. Reset Winner dahulu jika mahu buka semula.' : 'Pemenang berjaya dipilih dan disimpan. Join bulan ini sudah ditutup.');
       } catch(e) {
         setAdminStatus(e.message || 'Run draw gagal.', true);
       }
@@ -1724,7 +1738,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         if (!data.ok) throw new Error(data.error || 'Reset winner gagal');
         els.winner.textContent = tr('winnerNone');
         els.winnerText.textContent = tr('winnerPending');
-        setAdminStatus('Winner bulan ini sudah direset.');
+        luckyDrawWinnerSelected = false;
+        updateInvitePanel();
+        setAdminStatus('Winner bulan ini sudah direset. Join bulan ini dibuka semula jika syarat referral cukup.');
       } catch(e) {
         setAdminStatus(e.message || 'Reset winner gagal.', true);
       }
@@ -1785,6 +1801,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
         els.winner.textContent = tr('winnerNone');
         els.winnerText.textContent = tr('winnerPending');
+        luckyDrawWinnerSelected = false;
+        updateInvitePanel();
       } catch(e) {}
     }
 
