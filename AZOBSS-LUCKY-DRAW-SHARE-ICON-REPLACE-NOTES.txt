@@ -1,0 +1,1 @@
+Patch 146: Replaced Lucky Draw paid product gift icon with standard social share icon. Updated Software/CAD floating share button styling and Lucky Draw instruction text. No Firebase Rules update required.

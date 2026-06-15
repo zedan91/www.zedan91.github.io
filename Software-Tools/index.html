@@ -7887,17 +7887,18 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
-  border:1px solid rgba(250,204,21,.85)!important;
-  background:linear-gradient(135deg,#facc15,#f97316)!important;
-  color:#111827!important;
+  border:1px solid rgba(96,165,250,.88)!important;
+  background:linear-gradient(135deg,#2563eb,#06b6d4)!important;
+  color:#fff!important;
   font-size:18px!important;
   font-weight:950!important;
   line-height:1!important;
-  box-shadow:0 10px 22px rgba(249,115,22,.30)!important;
+  box-shadow:0 10px 22px rgba(37,99,235,.34)!important;
   cursor:pointer!important;
   text-decoration:none!important;
 }
 .az-lucky-product-share-btn:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important;}
+.az-lucky-product-share-btn .az-lucky-share-icon{width:21px!important;height:21px!important;display:block!important;fill:currentColor!important;}
 .az-lucky-product-share-btn .az-lucky-share-text{display:none!important;}
 .az-lucky-share-modal-backdrop{
   position:fixed!important;inset:0!important;z-index:999999!important;background:rgba(0,0,0,.55)!important;
@@ -8062,7 +8063,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     btn.dataset.azLuckyMain='1';
     btn.dataset.azLuckyProductShare='1';
     btn.className='az-lucky-product-share-btn';
-    btn.innerHTML='<span aria-hidden="true">🎁</span><span class="az-lucky-share-text"> Share for Lucky Draw</span>';
+    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share for Lucky Draw</span>';
     btn.title='Share for Lucky Draw';
     btn.setAttribute('aria-label','Share this paid product for Lucky Draw');
     btn.addEventListener('click',function(e){shareCard(card,e)},true);
