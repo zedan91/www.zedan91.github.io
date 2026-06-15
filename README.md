@@ -1,10 +1,21 @@
-(126)-AZOBSS-LUCKY-DRAW-SHARE-BUTTON-VISIBLE-FIX
+AZOBSS Patch 124 - Lucky Draw Anti-Abuse Tambahan
 
-Patch scope: Lucky Draw paid product share button visibility only.
+Baseline: (123)-AZOBSS-LUCKY-DRAW-MOBILE-UI-COMPACT_20260615.zip
 
-Changes:
-- Fixed Share for Lucky Draw button injection on Software Tools premium/paid cards.
-- Fixed Share for Lucky Draw button injection on CAD Tools paid/premium cards.
-- Button no longer depends only on .premium class; it can detect Buy Now/RM/paid text and insert after Buy Now/cart row.
-- No Login/Register, My Purchases, PA/BM logic changes.
-- No Firebase Rules update required.
+Perubahan Lucky Draw sahaja:
+- Tambah Anti-Abuse Log untuk admin.
+- Log self share/self referral click.
+- Log duplicate referral click dari device/IP sama.
+- Log duplicate join attempt ikut username, UID, device dan IP.
+- Tambah endpoint backend /api/lucky-draw/abuse-audit.
+- Tambah panel admin Refresh Log dan Export Log.
+- Betulkan duplicate const inviteCode dalam backend Lucky Draw supaya syntax lebih selamat.
+
+Tidak disentuh:
+- Login/Register
+- My Purchases
+- Software
+- CAD
+- PA/BM
+
+Firebase Rules: tidak perlu update.

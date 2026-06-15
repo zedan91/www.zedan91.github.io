@@ -1,0 +1,1 @@
+Patch 127: Fix Share for Lucky Draw button visibility by adding a floating gift button under the like button on paid Software/CAD cards only. Does not touch Login/Register, My Purchases, PA/BM.
