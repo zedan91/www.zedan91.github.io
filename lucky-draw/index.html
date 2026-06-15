@@ -885,6 +885,46 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   }
 }
 </style>
+
+<style>
+/* =========================================================
+   AZOBSS PATCH 140: Lucky Draw prize card bigger image
+   - Increase prize card size so product photo can be viewed more fully
+   - Keep description scroll inside the card
+========================================================= */
+.prize-panel{
+  max-height:980px !important;
+}
+.prize-panel .prize-image-wrap{
+  height:520px !important;
+  min-height:520px !important;
+  max-height:520px !important;
+  background:#030817 !important;
+}
+.prize-panel .prize-image-wrap img,
+#prizeImage{
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+}
+#prizeDescription.description{
+  max-height:340px !important;
+}
+@media(max-width:760px){
+  .prize-panel{
+    max-height:820px !important;
+  }
+  .prize-panel .prize-image-wrap{
+    height:360px !important;
+    min-height:360px !important;
+    max-height:360px !important;
+  }
+  #prizeDescription.description{
+    max-height:300px !important;
+  }
+}
+</style>
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
@@ -4163,7 +4203,6 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
 </body>
 </html>
-
 
 
 
