@@ -1,1 +1,1 @@
-Deploy this ZIP to apply Lucky Draw desktop share modal fix for paid product gift button.
+Lucky Draw participant/admin list now uses compact pagination, no Show All.

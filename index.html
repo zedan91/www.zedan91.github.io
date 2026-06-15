@@ -6683,6 +6683,28 @@ body.is-admin .lucky-draw-pagination{
     justify-content:center !important;
 }
 
+
+
+/* AZOBSS Lucky Draw pagination hardening: compact pagination for large participant lists */
+.lucky-draw-page-info{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:0 10px;
+  border-radius:10px;
+  border:1px solid rgba(148,163,184,.24);
+  background:rgba(15,23,42,.72);
+  color:#dbeafe;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.lucky-draw-pagination{
+  max-width:100%;
+  overflow-x:auto;
+  scrollbar-width:thin;
+}
 </style>
 <style>
 /* =========================================================
@@ -11561,18 +11583,12 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
 
     if(!pagination) return;
 
-    const pageButtons = Array.from({length: totalPages}, (_, i) => {
-      const page = i + 1;
-      return `<button type="button" class="${page === luckyDrawAdminPage ? 'is-active' : ''}" data-admin-page="${page}">${page}</button>`;
-    }).join('');
-
     pagination.innerHTML = `
       <button type="button" data-admin-page="first" ${luckyDrawAdminPage === 1 ? 'disabled' : ''}>&lt;&lt;</button>
       <button type="button" data-admin-page="prev" ${luckyDrawAdminPage === 1 ? 'disabled' : ''}>Previous</button>
-      ${pageButtons}
+      <span class="lucky-draw-page-info">Page ${luckyDrawAdminPage} / ${totalPages}</span>
       <button type="button" data-admin-page="next" ${luckyDrawAdminPage === totalPages ? 'disabled' : ''}>Next</button>
       <button type="button" data-admin-page="last" ${luckyDrawAdminPage === totalPages ? 'disabled' : ''}>&gt;&gt;</button>
-      <button type="button" data-admin-page="show-all">Show All</button>
     `;
   }
 
@@ -11587,10 +11603,6 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     else if(action === 'prev') luckyDrawAdminPage = Math.max(1, luckyDrawAdminPage - 1);
     else if(action === 'next') luckyDrawAdminPage = Math.min(totalPages, luckyDrawAdminPage + 1);
     else if(action === 'last') luckyDrawAdminPage = totalPages;
-    else if(action === 'show-all'){
-      renderLuckyDrawAdminTable(luckyDrawAdminRows.slice(0, luckyDrawAdminRows.length));
-      return;
-    }
     else{
       luckyDrawAdminPage = Number(action) || 1;
     }
@@ -11651,18 +11663,12 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
 
     if(!pagination) return;
 
-    const pageButtons = Array.from({length: totalPages}, (_, i) => {
-      const page = i + 1;
-      return `<button type="button" class="${page === luckyDrawPublicPage ? 'is-active' : ''}" data-lucky-page="${page}">${page}</button>`;
-    }).join('');
-
     pagination.innerHTML = `
       <button type="button" data-lucky-page="first" ${luckyDrawPublicPage === 1 ? 'disabled' : ''}>&lt;&lt;</button>
       <button type="button" data-lucky-page="prev" ${luckyDrawPublicPage === 1 ? 'disabled' : ''}>Previous</button>
-      ${pageButtons}
+      <span class="lucky-draw-page-info">Page ${luckyDrawPublicPage} / ${totalPages}</span>
       <button type="button" data-lucky-page="next" ${luckyDrawPublicPage === totalPages ? 'disabled' : ''}>Next</button>
       <button type="button" data-lucky-page="last" ${luckyDrawPublicPage === totalPages ? 'disabled' : ''}>&gt;&gt;</button>
-      <button type="button" data-lucky-page="show-all">Show All</button>
     `;
   }
 
@@ -11677,27 +11683,6 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
     else if(action === 'prev') luckyDrawPublicPage = Math.max(1, luckyDrawPublicPage - 1);
     else if(action === 'next') luckyDrawPublicPage = Math.min(totalPages, luckyDrawPublicPage + 1);
     else if(action === 'last') luckyDrawPublicPage = totalPages;
-    else if(action === 'show-all'){
-      const publicList = document.getElementById('luckyDrawPublicList');
-      const pagination = document.getElementById('luckyDrawPagination');
-      if(publicList){
-        publicList.innerHTML = luckyDrawPublicRows.length
-          ? luckyDrawPublicRows.map((entry, i) => `
-              <div class="lucky-draw-participant-card" data-backend-entry-id="${escapeLuckyDrawText(entry.id || '')}">
-                <div>
-                  <strong>${i + 1}. ${escapeLuckyDrawText(entry.name || entry.usernameKey || 'User')}</strong>
-                  <span>${escapeLuckyDrawText(formatLuckyDrawJoinDate(entry.joinedAt || entry.createdAt || entry.updatedAt))}</span>
-                </div>
-                <button class="lucky-draw-remove-participant-btn" type="button" data-backend-action="remove-public">Buang</button>
-              </div>
-            `).join('')
-          : '<div class="lucky-draw-empty">Belum ada peserta Lucky Draw.</div>';
-      }
-      if(pagination){
-        pagination.querySelectorAll('button').forEach((b) => b.classList.remove('is-active'));
-      }
-      return;
-    }
     else{
       luckyDrawPublicPage = Number(action) || 1;
     }
