@@ -1,0 +1,23 @@
+Patch 109 - Lucky Draw username referral guard
+
+Based on: (108)-AZOBSS-LUCKY-DRAW-SHARE-CANCEL-GUARD_20260615.zip
+Scope: Lucky Draw only.
+
+Changes:
+- Invite link now uses username: /lucky-draw/?invite=<username>
+- Removed ZX/member-code style invite generation for Lucky Draw share link.
+- Join Lucky Draw stays disabled until at least 1 valid referral click is recorded by backend.
+- Added backend endpoints:
+  GET  /api/lucky-draw/referral-status?monthKey=YYYY-MM&ref=username
+  POST /api/lucky-draw/referral-click
+- When another user/visitor opens ?invite=username, backend records the referral click.
+- Self-click from same logged-in username is ignored.
+- Duplicate referral clicks from same device/IP are not counted again.
+- Backend also blocks join when referralCount < 1.
+
+Not changed:
+- Login/Register
+- My Purchases
+- Software Tools
+- CAD Tools
+- PA/BM

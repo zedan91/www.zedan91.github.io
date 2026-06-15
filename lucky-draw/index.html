@@ -756,16 +756,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="panel">
 <span class="kicker">Lucky Draw</span>
 <h1>Peraduan Lucky Draw User</h1>
-<p>User yang login boleh join Lucky Draw selepas share website AZOBSS menggunakan link ID user masing-masing.</p>
+<p>User yang login boleh join Lucky Draw selepas link username share dibuka oleh orang lain.</p>
 <ul class="rules">
 <li>Login dahulu sebelum join Lucky Draw.</li>
-<li>Share link anda kepada orang lain sebagai bukti sebelum join.</li>
+<li>Share link username anda; sekurang-kurangnya 1 orang lain perlu buka link itu sebelum boleh join.</li>
 <li>Satu device dan satu IP address hanya boleh join sekali untuk bulan ini.</li>
 <li>Admin boleh edit hadiah, gambar, tajuk dan description.</li>
 </ul>
 <div class="invite-tools">
 <div>
-<label class="field-label" for="inviteLink">Invite link / link share user</label>
+<label class="field-label" for="inviteLink">Link share username</label>
 <div class="invite-row">
 <input id="inviteLink" readonly="" type="text" value="Login dahulu untuk jana invite link"/>
 <button class="btn" id="copyInviteButton" type="button">Copy Invite Link</button>
@@ -773,12 +773,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="actions">
 <button class="btn orange" id="shareInviteButton" type="button">Share Website</button>
-<button class="btn blue" id="confirmShareButton" type="button" disabled>Saya sudah share</button>
+<button class="btn blue" id="confirmShareButton" type="button" disabled>Check Referral Click</button>
 <button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
 <a class="btn dark" data-auth-open="login" href="#">Login / Register</a>
 </div>
 <div class="mini-status-grid">
-<div class="mini-status"><span>ID user share</span><strong id="inviteCodeText">-</strong></div>
+<div class="mini-status"><span>Username share</span><strong id="inviteCodeText">-</strong></div>
 <div class="mini-status"><span>Status share</span><strong id="shareStatusText">Belum share</strong></div>
 </div>
 <div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
@@ -918,10 +918,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         return 'Auto hujung bulan, 10:00 PM Malaysia';
       }
     }
-    const savedInviteFromUrl = new URLSearchParams(location.search).get('invite') || '';
-    if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', cleanInviteCode(savedInviteFromUrl));
+    const savedInviteFromUrl = cleanShareUsername(new URLSearchParams(location.search).get('invite') || '');
+    if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', savedInviteFromUrl);
 
     let luckyDrawEntriesCache = [];
+    let referralClickCountCache = 0;
 
     const els = {
       auth: document.getElementById('siteAuthActions'),
@@ -970,26 +971,28 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     function cleanInviteCode(value){
       return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24);
     }
+    function cleanShareUsername(value){
+      return normalizeUsername(value).slice(0, 40);
+    }
     function buildInviteCode(usernameKey){
-      const clean = normalizeUsername(usernameKey || 'user').toUpperCase();
-      return 'AZ' + clean.slice(0, 10) + String(clean.length + 91).slice(-2);
+      return cleanShareUsername(usernameKey || 'user');
     }
     function monthKey(){
       const d = new Date();
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     }
     function getShareKey(user){
-      return 'azobssLuckyShare_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
+      return 'azobssLuckyReferralReady_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
     }
     function getPendingShareKey(user){
-      return 'azobssLuckySharePending_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
+      return 'azobssLuckyReferralCheck_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
     }
     function getJoinKey(user){
       return 'azobssLuckyJoin_' + monthKey() + '_' + (user && user.usernameKey || 'guest');
     }
     function buildInviteUrl(user){
-      const code = cleanInviteCode(user && user.inviteCode ? user.inviteCode : buildInviteCode(user && user.usernameKey));
-      return location.origin + '/lucky-draw/?invite=' + encodeURIComponent(code);
+      const username = cleanShareUsername(user && (user.usernameKey || user.name || user.inviteCode));
+      return location.origin + '/lucky-draw/?invite=' + encodeURIComponent(username);
     }
     function isAdmin(user){
       const key = normalizeUsername(user && (user.usernameKey || user.name));
@@ -1034,16 +1037,59 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       ].join('|').slice(0, 150);
     }
 
+    async function recordReferralClickFromUrl(){
+      if (!savedInviteFromUrl) return;
+      try {
+        await apiFetch('/api/lucky-draw/referral-click', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            monthKey: monthKey(),
+            ref: savedInviteFromUrl,
+            visitorUsernameKey: cleanShareUsername((readUser() || {}).usernameKey || (readUser() || {}).name || ''),
+            deviceFingerprint: getDeviceFingerprint()
+          })
+        });
+      } catch(e) {}
+    }
+
+    async function loadReferralStatus(user){
+      if (!user || !(user.usernameKey || user.name)) return 0;
+      const username = cleanShareUsername(user.usernameKey || user.name);
+      try {
+        const res = await apiFetch('/api/lucky-draw/referral-status?monthKey=' + encodeURIComponent(monthKey()) + '&ref=' + encodeURIComponent(username));
+        const data = await res.json().catch(() => ({}));
+        referralClickCountCache = Number(data.count || 0);
+        if (referralClickCountCache > 0) {
+          localStorage.setItem(getShareKey(user), '1');
+        }
+        return referralClickCountCache;
+      } catch(e) {
+        return referralClickCountCache || 0;
+      }
+    }
+
+    async function refreshReferralStatus(){
+      const user = readUser();
+      if (!user || !(user.usernameKey || user.name)) {
+        setStatus('Login dahulu untuk check referral click.', true);
+        return;
+      }
+      setStatus('Checking referral click...');
+      await loadReferralStatus(user);
+      updateInvitePanel();
+    }
+
     function findCurrentUserEntry(user){
       if (!user) return null;
       const usernameKey = normalizeUsername(user.usernameKey || user.name);
       const uid = String(user.uid || '').trim();
-      const inviteCode = cleanInviteCode(user.inviteCode || buildInviteCode(usernameKey));
+      const inviteCode = cleanShareUsername(user.inviteCode || buildInviteCode(usernameKey));
       return (luckyDrawEntriesCache || []).find((entry) => {
         if (!entry || entry.deleted) return false;
         const entryUser = normalizeUsername(entry.usernameKey || entry.name);
         const entryUid = String(entry.uid || '').trim();
-        const entryInvite = cleanInviteCode(entry.inviteCode || '');
+        const entryInvite = cleanShareUsername(entry.inviteCode || '');
         return (usernameKey && entryUser === usernameKey) ||
           (uid && entryUid && entryUid === uid) ||
           (inviteCode && entryInvite && entryInvite === inviteCode);
@@ -1110,25 +1156,23 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
 
       if (!user.usernameKey) user.usernameKey = normalizeUsername(user.name);
-      if (!user.inviteCode) user.inviteCode = buildInviteCode(user.usernameKey);
+      user.inviteCode = buildInviteCode(user.usernameKey);
       const inviteUrl = buildInviteUrl(user);
-      const shared = localStorage.getItem(getShareKey(user)) === '1';
-      const pendingShared = sessionStorage.getItem(getPendingShareKey(user)) === '1';
+      const referralReady = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
       const backendJoined = !!findCurrentUserEntry(user);
       const joined = backendJoined || localStorage.getItem(getJoinKey(user)) === '1';
       if (backendJoined) markJoinedLocal(user);
       els.inviteLink.value = inviteUrl;
-      els.inviteCode.textContent = user.inviteCode;
-      els.shareStatus.textContent = shared ? 'Sudah share' : (pendingShared ? 'Menunggu pengesahan' : 'Belum share');
-      els.joinButton.disabled = joined || !shared;
+      els.inviteCode.textContent = user.usernameKey;
+      els.shareStatus.textContent = referralReady ? ('Referral click: ' + Math.max(1, referralClickCountCache)) : 'Belum ada referral click';
+      els.joinButton.disabled = joined || !referralReady;
       if (els.confirmShareButton) {
-        els.confirmShareButton.disabled = joined || shared || !pendingShared;
-        els.confirmShareButton.textContent = shared ? 'Share confirmed' : 'Saya sudah share';
+        els.confirmShareButton.disabled = joined;
+        els.confirmShareButton.textContent = 'Check Referral Click';
       }
       if (joined) setStatus('Anda sudah join Lucky Draw bulan ini.');
-      else if (shared) setStatus('Share sudah direkod. Button Join Lucky Draw sudah aktif.');
-      else if (pendingShared) setStatus('Jika share sudah selesai, tekan Saya sudah share untuk aktifkan Join Lucky Draw.');
-      else setStatus('Share link ID user dahulu sebelum join Lucky Draw.');
+      else if (referralReady) setStatus('Referral click sudah valid. Button Join Lucky Draw sudah aktif.');
+      else setStatus('Share link username kepada orang lain. Join aktif selepas sekurang-kurangnya 1 orang buka link anda.');
     }
 
     function tickCountdown(){
@@ -1235,54 +1279,32 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         return;
       }
       await navigator.clipboard.writeText(els.inviteLink.value);
-      setStatus('Link ID user berjaya disalin. Share link ini dahulu sebelum join.');
+      setStatus('Link username berjaya disalin. Join aktif selepas orang lain buka link ini.');
     }
 
     function shareInvite(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
-        setStatus('Login dahulu sebelum share invite link.', true);
+        setStatus('Login dahulu sebelum share link.', true);
         return;
       }
       const inviteUrl = els.inviteLink.value;
       const text = 'Jom join AZOBSS Lucky Draw: ' + inviteUrl;
-      function markSharePending(){
-        try { sessionStorage.setItem(getPendingShareKey(user), '1'); } catch(e) {}
-        updateInvitePanel();
-      }
-      function clearSharePending(){
-        try { sessionStorage.removeItem(getPendingShareKey(user)); } catch(e) {}
-        updateInvitePanel();
-      }
       if (navigator.share) {
         navigator.share({title:'AZOBSS Lucky Draw', text, url:inviteUrl}).then(function(){
-          // Browser/app share API cannot prove the message was really sent.
-          // Do not activate Join automatically; require user confirmation after returning from share.
-          markSharePending();
+          setStatus('Link sudah dibuka untuk share. Join hanya aktif selepas orang lain buka link anda.');
+          refreshReferralStatus();
         }).catch(function(){
-          clearSharePending();
-          setStatus('Share dibatalkan. Button Join belum aktif.', true);
+          setStatus('Share dibatalkan. Join belum aktif.', true);
         });
       } else {
         window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
-        // External WhatsApp tab cannot confirm send/cancel, so keep Join disabled until user confirms.
-        markSharePending();
+        setStatus('WhatsApp dibuka. Join hanya aktif selepas orang lain buka link anda.');
       }
     }
 
     function confirmShareDone(){
-      const user = readUser();
-      if (!user || !(user.usernameKey || user.name)) {
-        setStatus('Login dahulu sebelum sahkan share.', true);
-        return;
-      }
-      if (sessionStorage.getItem(getPendingShareKey(user)) !== '1') {
-        setStatus('Tekan Share Website dahulu. Jika share dibatalkan, Join tidak akan aktif.', true);
-        return;
-      }
-      localStorage.setItem(getShareKey(user), '1');
-      sessionStorage.removeItem(getPendingShareKey(user));
-      updateInvitePanel();
+      refreshReferralStatus();
     }
 
     async function joinLuckyDraw(){
@@ -1295,12 +1317,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         showJoinedStatus(user, 'Anda sudah join Lucky Draw bulan ini.');
         return;
       }
-      if (localStorage.getItem(getShareKey(user)) !== '1') {
-        setStatus('Share link ID user dahulu sebelum join Lucky Draw.', true);
+      const referralReady = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
+      if (!referralReady) {
+        await loadReferralStatus(user);
+      }
+      if (!(localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0)) {
+        setStatus('Belum ada referral click valid. Share link username kepada orang lain dahulu.', true);
         return;
       }
       const usernameKey = normalizeUsername(user.usernameKey || user.name);
-      const inviteCode = cleanInviteCode(user.inviteCode || buildInviteCode(usernameKey));
+      const inviteCode = cleanShareUsername(usernameKey);
       const payload = {
         monthKey: monthKey(),
         usernameKey,
@@ -1310,7 +1336,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         contactEmail: user.contactEmail || user.email || '',
         inviteCode,
         inviteUrl: buildInviteUrl({usernameKey, inviteCode}),
-        invitedByCode: cleanInviteCode(localStorage.getItem('azobssLuckyDrawLastInvite') || user.invitedByCode || ''),
+        invitedByCode: cleanShareUsername(localStorage.getItem('azobssLuckyDrawLastInvite') || user.invitedByCode || ''),
         shareConfirmed: true,
         deviceFingerprint: getDeviceFingerprint()
       };
@@ -1557,10 +1583,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     tickCountdown();
     setInterval(tickCountdown, 1000);
     showUser();
+    recordReferralClickFromUrl();
+    loadReferralStatus(readUser()).then(updateInvitePanel);
     loadPrize();
     loadEntries();
     loadWinner();
-    setInterval(loadEntries, 30000);
+    setInterval(function(){ loadEntries(); loadReferralStatus(readUser()).then(updateInvitePanel); }, 30000);
   </script>
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){

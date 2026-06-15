@@ -360,6 +360,10 @@ function cleanText(value, max = 200) {
   return String(value || "").trim().slice(0, max);
 }
 
+function cleanShareUsername(value, max = 40) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, max);
+}
+
 function getClientIp(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
   return forwarded || req.ip || req.socket?.remoteAddress || "";
@@ -394,6 +398,17 @@ function getPrizeFile(key = monthKey()) {
 
 function getEntriesFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-entries", `${key}.json`);
+}
+
+function getReferralFile(key = monthKey()) {
+  return path.join(DATA_DIR, "lucky-draw-referrals", `${key}.json`);
+}
+
+function countValidReferralClicks(key, ref) {
+  const cleanRef = cleanShareUsername(ref);
+  if (!cleanRef) return 0;
+  const clicks = readJson(getReferralFile(key), []);
+  return clicks.filter((c) => !c.deleted && c.ref === cleanRef).length;
 }
 
 function getWinnerFile(key = monthKey()) {
@@ -939,6 +954,54 @@ app.get("/api/prize", (req, res) => {
   }
 });
 
+app.get("/api/lucky-draw/referral-status", (req, res) => {
+  const key = req.query.monthKey || monthKey();
+  const ref = cleanShareUsername(req.query.ref);
+  if (!ref) return res.status(400).json({ ok: false, error: "ref required" });
+  const count = countValidReferralClicks(key, ref);
+  res.json({ ok: true, monthKey: key, ref, count, valid: count >= 1 });
+});
+
+app.post("/api/lucky-draw/referral-click", (req, res) => {
+  const key = req.body.monthKey || monthKey();
+  const ref = cleanShareUsername(req.body.ref);
+  const visitorUsernameKey = cleanShareUsername(req.body.visitorUsernameKey);
+  const deviceFingerprint = cleanText(req.body.deviceFingerprint, 160);
+  const ipAddress = getClientIp(req);
+
+  if (!ref) return res.status(400).json({ ok: false, error: "ref required" });
+  if (visitorUsernameKey && visitorUsernameKey === ref) {
+    return res.json({ ok: true, ignored: true, reason: "SELF_CLICK", count: countValidReferralClicks(key, ref) });
+  }
+
+  const file = getReferralFile(key);
+  const clicks = readJson(file, []);
+  const active = clicks.filter((c) => !c.deleted && c.ref === ref);
+  const sameDevice = deviceFingerprint ? active.find((c) => c.deviceFingerprint && c.deviceFingerprint === deviceFingerprint) : null;
+  const sameIp = ipAddress ? active.find((c) => c.ipAddress && c.ipAddress === ipAddress) : null;
+
+  if (sameDevice || sameIp) {
+    return res.json({ ok: true, duplicate: true, ref, count: active.length });
+  }
+
+  const click = {
+    id: `${key}_${ref}_${Date.now()}`,
+    monthKey: key,
+    ref,
+    visitorUsernameKey,
+    deviceFingerprint,
+    ipAddress,
+    userAgent: cleanText(req.get("user-agent"), 300),
+    clickedAtMs: Date.now(),
+    clickedAt: new Date().toISOString(),
+    deleted: false
+  };
+  clicks.push(click);
+  writeJson(file, clicks);
+  const count = clicks.filter((c) => !c.deleted && c.ref === ref).length;
+  res.json({ ok: true, ref, count, click });
+});
+
 app.get("/api/lucky-draw/entries", (req, res) => {
   const key = req.query.monthKey || monthKey();
   const entries = readJson(getEntriesFile(key), []);
@@ -952,14 +1015,19 @@ app.post("/api/lucky-draw/entries", (req, res) => {
   const entries = readJson(file, []);
   const usernameKey = cleanText(req.body.usernameKey, 80).toLowerCase();
   if (!usernameKey) return res.status(400).json({ ok: false, error: "usernameKey required" });
-  const inviteCode = cleanText(req.body.inviteCode, 40).toUpperCase();
+  const inviteCode = cleanShareUsername(req.body.inviteCode || usernameKey);
   const inviteUrl = cleanText(req.body.inviteUrl, 500);
   const shareConfirmed = req.body.shareConfirmed === true || req.body.shareConfirmed === "true" || req.body.shareConfirmed === "1";
   const deviceFingerprint = cleanText(req.body.deviceFingerprint, 160);
   const ipAddress = getClientIp(req);
 
   if (!inviteCode || !inviteUrl || !shareConfirmed) {
-    return res.status(400).json({ ok: false, error: "Share invite link dahulu sebelum join Lucky Draw." });
+    return res.status(400).json({ ok: false, error: "Share link username dahulu sebelum join Lucky Draw." });
+  }
+
+  const referralCount = countValidReferralClicks(key, usernameKey);
+  if (referralCount < 1) {
+    return res.status(403).json({ ok: false, code: "REFERRAL_REQUIRED", error: "Belum ada referral click valid. Share link username kepada orang lain dahulu.", referralCount });
   }
 
   if (!deviceFingerprint) {
@@ -1003,7 +1071,8 @@ app.post("/api/lucky-draw/entries", (req, res) => {
     contactEmail: cleanText(req.body.contactEmail, 180),
     inviteCode,
     inviteUrl,
-    invitedByCode: cleanText(req.body.invitedByCode, 40).toUpperCase(),
+    invitedByCode: cleanShareUsername(req.body.invitedByCode),
+    referralCount,
     deviceFingerprint,
     ipAddress,
     userAgent: cleanText(req.get("user-agent"), 300),
