@@ -1,3 +1,1 @@
-Patch 124: Lucky Draw Anti-Abuse Tambahan.
-
-Deploy seperti biasa. Tiada perubahan Firebase Rules.
+Patch 126: Fix visible Share for Lucky Draw button on paid Software/CAD product cards.

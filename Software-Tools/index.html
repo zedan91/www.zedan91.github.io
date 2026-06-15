@@ -7879,18 +7879,30 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   function monthKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
   function deviceId(){let id=localStorage.getItem('azobssLuckyDrawDeviceId');if(!id){id='dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('azobssLuckyDrawDeviceId',id)}return id;}
   function fingerprint(){return [deviceId(),navigator.userAgent,navigator.language,screen.width+'x'+screen.height,(Intl.DateTimeFormat().resolvedOptions().timeZone||'')].join('|').slice(0,150);}
+  function findPrimaryAction(card){
+    if(!card) return null;
+    const direct = card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium');
+    if(direct) return direct;
+    const actions = Array.from(card.querySelectorAll('a,button')).filter(el => !el.classList.contains('az-lucky-product-share-btn') && !el.classList.contains('az-card-cart-btn'));
+    return actions.find(el => /buy\s*now|rm\s*\d|premium/i.test(el.textContent || '')) ||
+           card.querySelector('a.download-btn,.download-btn,.cad-action-btn,a[href],button') ||
+           null;
+  }
   function productInfo(card, btn){
-    const buy=btn || card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium');
-    const title=(buy&&buy.dataset.productName)||card.querySelector('h3')?.textContent||card.dataset.name||'AZOBSS Product';
-    const id=(buy&&buy.dataset.productId)||card.dataset.productId||card.dataset.cadId||card.dataset.docId||title;
+    const buy=btn || findPrimaryAction(card);
+    const title=(buy&&buy.dataset.productName)||card.querySelector('h3,.software-title,.cad-title,.card-title,[data-product-name],[data-title]')?.textContent||card.dataset.name||card.dataset.title||'AZOBSS Product';
+    const id=(buy&&buy.dataset.productId)||card.dataset.productId||card.dataset.cadId||card.dataset.docId||card.dataset.id||title;
     return {id:String(id||title).trim().replace(/\s+/g,'-').slice(0,120),name:String(title||'AZOBSS Product').trim()};
   }
   function isPremiumCard(card){
     if(!card)return false;
     if(card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium'))return true;
-    if(String(card.dataset.type||'').toLowerCase()==='premium')return true;
+    const type=String(card.dataset.type||card.getAttribute('data-type')||'').toLowerCase();
+    if(/premium|paid|berbayar/.test(type))return true;
+    if(/free|percuma/.test(type))return false;
     const text=(card.textContent||'').toLowerCase();
-    return /buy now|rm\s*\d|premium/.test(text) && !/free resource|free software/.test(text);
+    if(/free resource|free software|download now|free|percuma/.test(text) && !/buy now|rm\s*\d|premium|berbayar/.test(text))return false;
+    return /buy\s*now|rm\s*\d|premium|berbayar/.test(text);
   }
   function makeShareUrl(info, ref){
     const url=new URL(location.origin+location.pathname);
@@ -7912,16 +7924,18 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     }catch(e){}
   }
   function addButtons(){
-    document.querySelectorAll('.download-card,.software-card,.software-product-card,.cad-card').forEach(function(card){
-      if(card.dataset.azLuckyShareReady==='1')return;
+    document.querySelectorAll('.download-card,.software-card,.software-product-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card').forEach(function(card){
       if(!isPremiumCard(card))return;
-      const anchor=card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium');
-      if(!anchor)return;
-      card.dataset.azLuckyShareReady='1';
+      if(card.querySelector(':scope > .az-lucky-product-share-btn, .az-lucky-product-share-btn')){card.dataset.azLuckyShareReady='1';return;}
+      const anchor=findPrimaryAction(card);
       const b=document.createElement('button');
       b.type='button';b.className='az-lucky-product-share-btn';b.textContent='🎁 Share for Lucky Draw';
       b.addEventListener('click',function(e){shareProduct(card,e)});
-      anchor.insertAdjacentElement('afterend',b);
+      const row=card.querySelector(':scope > .az-software-buy-cart-row') || card.querySelector(':scope > .az-card-cart-slot');
+      if(row && row.parentElement===card) row.insertAdjacentElement('afterend',b);
+      else if(anchor && anchor.parentElement && card.contains(anchor)) anchor.insertAdjacentElement('afterend',b);
+      else card.appendChild(b);
+      card.dataset.azLuckyShareReady='1';
     });
   }
   async function recordOpen(){
@@ -7937,8 +7951,9 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   }
   document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest('.download-card,.software-card,.software-product-card,.cad-card');if(card)shareProduct(card,e);},true);
   function run(){addButtons();}
-  document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();[300,900,1800,3200].forEach(t=>setTimeout(run,t));
-  new MutationObserver(function(){requestAnimationFrame(run)}).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();[150,300,700,1200,2200,4000,6500].forEach(t=>setTimeout(run,t));
+  function watch(){ if(document.body){ new MutationObserver(function(){requestAnimationFrame(run)}).observe(document.body,{childList:true,subtree:true}); } }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',watch); else watch();
   recordOpen();
 })();
 </script>
