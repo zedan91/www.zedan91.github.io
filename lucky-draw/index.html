@@ -87,6 +87,17 @@
     .mini-status{border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#07101f;padding:11px}
     .mini-status span{display:block;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase}
     .mini-status strong{display:block;margin-top:4px;color:#22c55e;font-size:14px}
+    .lucky-join-checklist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+    .lucky-join-step{border:1px solid rgba(148,163,184,.18);border-radius:12px;background:rgba(15,23,42,.68);padding:10px 11px;min-height:74px}
+    .lucky-join-step span{display:block;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+    .lucky-join-step strong{display:block;margin-top:4px;color:#e5e7eb;font-size:13px;line-height:1.25}
+    .lucky-join-step small{display:block;margin-top:4px;color:#94a3b8;font-size:11px;line-height:1.25}
+    .lucky-join-step.ok{border-color:rgba(34,197,94,.45);background:rgba(22,101,52,.15)}
+    .lucky-join-step.ok strong{color:#86efac}
+    .lucky-join-step.warn{border-color:rgba(250,204,21,.38);background:rgba(113,63,18,.18)}
+    .lucky-join-step.warn strong{color:#fde68a}
+    .lucky-join-step.closed{border-color:rgba(248,113,113,.40);background:rgba(127,29,29,.20)}
+    .lucky-join-step.closed strong{color:#fecaca}
     .status-note{margin-top:12px;color:#facc15;font-size:13px;min-height:18px}
     .status-note.error{color:#fecaca}
     .referral-info-note{margin-top:12px;border:1px solid rgba(250,204,21,.28);background:rgba(250,204,21,.07);border-radius:12px;padding:12px 14px;color:#fde68a;font-size:13px;line-height:1.55}
@@ -151,7 +162,7 @@
       main{width:min(100% - 16px,1080px);padding-top:14px}
       .lucky-shell{padding:10px}
       .invite-row{grid-template-columns:1fr}
-      .summary-grid,.mini-status-grid{grid-template-columns:1fr}
+      .summary-grid,.mini-status-grid,.lucky-join-checklist{grid-template-columns:1fr}
     }
   
 /* AZOBSS Lucky Draw: hide Login/Register action when user already signed in */
@@ -791,6 +802,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="mini-status"><span>Username share</span><strong id="inviteCodeText">-</strong></div>
 <div class="mini-status"><span>Status share</span><strong id="shareStatusText">Belum share</strong></div>
 </div>
+<div class="lucky-join-checklist" id="luckyJoinChecklist">
+<div class="lucky-join-step warn" id="luckyStepLogin"><span>Status 1</span><strong>Login dahulu</strong><small>Akaun diperlukan untuk join.</small></div>
+<div class="lucky-join-step warn" id="luckyStepReferral"><span>Status 2</span><strong>Belum cukup syarat</strong><small>Link perlu dibuka oleh orang lain.</small></div>
+<div class="lucky-join-step warn" id="luckyStepJoin"><span>Status 3</span><strong>Belum boleh join</strong><small>Button Join akan aktif selepas syarat lengkap.</small></div>
+</div>
 <div class="referral-info-note" id="referralInfoNote">
 <strong>Nota link share Lucky Draw</strong>
 <ul>
@@ -966,6 +982,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       inviteLink: document.getElementById('inviteLink'),
       inviteCode: document.getElementById('inviteCodeText'),
       shareStatus: document.getElementById('shareStatusText'),
+      stepLogin: document.getElementById('luckyStepLogin'),
+      stepReferral: document.getElementById('luckyStepReferral'),
+      stepJoin: document.getElementById('luckyStepJoin'),
       status: document.getElementById('joinStatus'),
       joinButton: document.getElementById('joinLuckyDrawButton'),
       copyButton: document.getElementById('copyInviteButton'),
@@ -1065,6 +1084,25 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         usernameShare: 'Username share',
         shareStatus: 'Status share',
         notShared: 'Belum share',
+        status1: 'Status 1',
+        status2: 'Status 2',
+        status3: 'Status 3',
+        loginOkTitle: 'Sudah login',
+        loginOkDesc: 'Akaun anda aktif untuk Lucky Draw.',
+        loginNeedTitle: 'Login dahulu',
+        loginNeedDesc: 'Akaun diperlukan untuk join.',
+        referralOkTitle: 'Syarat share lengkap',
+        referralOkDesc: 'Link anda sudah dibuka oleh orang lain.',
+        referralNeedTitle: 'Belum cukup syarat',
+        referralNeedDesc: 'Link perlu dibuka oleh orang lain.',
+        joinedTitle: 'Sudah join',
+        joinedDesc: 'Penyertaan bulan ini sudah direkod.',
+        joinReadyTitle: 'Boleh join sekarang',
+        joinReadyDesc: 'Tekan Join Lucky Draw untuk masuk senarai.',
+        joinNeedTitle: 'Belum boleh join',
+        joinNeedDesc: 'Button Join akan aktif selepas syarat lengkap.',
+        drawClosedTitle: 'Draw bulan ini selesai',
+        drawClosedDesc: 'Penyertaan baru telah ditutup.',
         noteTitle: 'Nota link share Lucky Draw',
         note1: 'Link share anda perlu dibuka oleh sekurang-kurangnya 1 orang lain sebelum anda boleh join Lucky Draw bulan ini.',
         note2: 'Buka link sendiri tidak dikira.',
@@ -1146,6 +1184,25 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         usernameShare: 'Username share',
         shareStatus: 'Share status',
         notShared: 'Not shared yet',
+        status1: 'Status 1',
+        status2: 'Status 2',
+        status3: 'Status 3',
+        loginOkTitle: 'Logged in',
+        loginOkDesc: 'Your account is active for Lucky Draw.',
+        loginNeedTitle: 'Log in first',
+        loginNeedDesc: 'An account is required to join.',
+        referralOkTitle: 'Share requirement complete',
+        referralOkDesc: 'Your link has been opened by another person.',
+        referralNeedTitle: 'Requirement not met',
+        referralNeedDesc: 'Your link must be opened by another person.',
+        joinedTitle: 'Already joined',
+        joinedDesc: 'Your entry for this month has been recorded.',
+        joinReadyTitle: 'Ready to join',
+        joinReadyDesc: 'Click Join Lucky Draw to enter the list.',
+        joinNeedTitle: 'Not ready to join',
+        joinNeedDesc: 'The Join button will activate after the requirement is complete.',
+        drawClosedTitle: 'This month draw is complete',
+        drawClosedDesc: 'New entries are now closed.',
         noteTitle: 'Lucky Draw share link note',
         note1: 'Your share link must be opened by at least 1 other person before you can join this month\'s Lucky Draw.',
         note2: 'Opening your own link does not count.',
@@ -1229,6 +1286,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (els.joinButton) els.joinButton.textContent = tr('joinLucky');
       if (els.authButton) els.authButton.textContent = tr('auth');
       setTextAll('.mini-status span', [tr('usernameShare'), tr('shareStatus')]);
+      updateJoinChecklist(readUser(), referralClickCountCache > 0 || (readUser() && localStorage.getItem(getShareKey(readUser())) === '1'), !!findCurrentUserEntry(readUser()));
       setText('#referralInfoNote strong', tr('noteTitle'));
       setTextAll('#referralInfoNote li', [tr('note1'), tr('note2'), tr('note3')]);
       setText('.countdown-panel span', tr('countdownLabel'));
@@ -1259,6 +1317,31 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('#refreshWinnerHistoryButton', tr('refresh'));
     }
 
+    function setJoinStep(el, state, label, title, desc){
+      if (!el) return;
+      el.classList.remove('ok','warn','closed');
+      el.classList.add(state || 'warn');
+      const span = el.querySelector('span');
+      const strong = el.querySelector('strong');
+      const small = el.querySelector('small');
+      if (span) span.textContent = label || '';
+      if (strong) strong.textContent = title || '';
+      if (small) small.textContent = desc || '';
+    }
+    function updateJoinChecklist(user, referralReady, joined){
+      const loggedIn = !!(user && (user.usernameKey || user.name));
+      setJoinStep(els.stepLogin, loggedIn ? 'ok' : 'warn', tr('status1'), loggedIn ? tr('loginOkTitle') : tr('loginNeedTitle'), loggedIn ? tr('loginOkDesc') : tr('loginNeedDesc'));
+      setJoinStep(els.stepReferral, referralReady ? 'ok' : 'warn', tr('status2'), referralReady ? tr('referralOkTitle') : tr('referralNeedTitle'), referralReady ? tr('referralOkDesc') : tr('referralNeedDesc'));
+      if (luckyDrawWinnerSelected) {
+        setJoinStep(els.stepJoin, 'closed', tr('status3'), tr('drawClosedTitle'), tr('drawClosedDesc'));
+      } else if (joined) {
+        setJoinStep(els.stepJoin, 'ok', tr('status3'), tr('joinedTitle'), tr('joinedDesc'));
+      } else if (loggedIn && referralReady) {
+        setJoinStep(els.stepJoin, 'ok', tr('status3'), tr('joinReadyTitle'), tr('joinReadyDesc'));
+      } else {
+        setJoinStep(els.stepJoin, 'warn', tr('status3'), tr('joinNeedTitle'), tr('joinNeedDesc'));
+      }
+    }
     function setStatus(message, error){
       els.status.textContent = message || '';
       els.status.classList.toggle('error', !!error);
@@ -1401,6 +1484,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           els.confirmShareButton.disabled = true;
           els.confirmShareButton.textContent = tr('checkReferral');
         }
+        updateJoinChecklist(null, false, false);
         setStatus(tr('loginActive'), false);
         return;
       }
@@ -1419,6 +1503,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       els.inviteCode.textContent = user.usernameKey;
       els.shareStatus.textContent = referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral');
       els.joinButton.disabled = luckyDrawWinnerSelected || joined || !referralReady;
+      updateJoinChecklist(user, referralReady, joined);
       if (els.confirmShareButton) {
         els.confirmShareButton.disabled = joined;
         els.confirmShareButton.textContent = tr('checkReferral');

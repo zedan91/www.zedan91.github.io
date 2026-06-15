@@ -1,20 +1,14 @@
-# AZOBSS Lucky Draw Winner History
+# AZOBSS Lucky Draw Clear User Status
 
-Patch ini sambung daripada baseline 117.
+Patch ini hanya kemaskan paparan status user Lucky Draw.
 
-## Apa yang ditambah
-1. Lucky Draw ada panel Winner History.
-2. Backend membaca fail winner bulanan dari `lucky-draw-winners`.
-3. Endpoint baru: `/api/lucky-draw/winner-history?limit=24`.
-4. Setiap history memaparkan:
-   - Bulan
-   - Nama winner
-   - Username winner
-   - Jumlah peserta bulan itu
-   - Masa winner dipilih
-5. Run Draw akan refresh Winner History.
-6. Reset Winner akan refresh Winner History.
+Selepas deploy:
+1. Buka /lucky-draw/
+2. Login user biasa.
+3. Semak status 3 langkah:
+   - Login
+   - Syarat share link
+   - Join Lucky Draw
+4. Tekan English/BM untuk pastikan status ikut bahasa.
 
-## Nota
-- Firebase Rules tidak perlu update.
-- Deploy seperti biasa ke GitHub/Render.
+Firebase Rules tidak perlu update.
