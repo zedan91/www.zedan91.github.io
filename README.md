@@ -1,17 +1,21 @@
-# AZOBSS Lucky Draw Clear User Status
+AZOBSS Patch 124 - Lucky Draw Anti-Abuse Tambahan
 
-Patch kecil untuk Lucky Draw sahaja.
+Baseline: (123)-AZOBSS-LUCKY-DRAW-MOBILE-UI-COMPACT_20260615.zip
 
-Perubahan:
-- Tambah status 3 langkah di panel Lucky Draw:
-  1. Login status
-  2. Share/referral status
-  3. Join status
-- User boleh nampak jelas sama ada belum cukup syarat, sudah boleh join, sudah join, atau draw bulan ini sudah selesai.
-- Status ikut BM/English toggle.
-- Tidak ubah Login/Register, My Purchases, Software, CAD, atau PA/BM.
+Perubahan Lucky Draw sahaja:
+- Tambah Anti-Abuse Log untuk admin.
+- Log self share/self referral click.
+- Log duplicate referral click dari device/IP sama.
+- Log duplicate join attempt ikut username, UID, device dan IP.
+- Tambah endpoint backend /api/lucky-draw/abuse-audit.
+- Tambah panel admin Refresh Log dan Export Log.
+- Betulkan duplicate const inviteCode dalam backend Lucky Draw supaya syntax lebih selamat.
 
-Firebase Rules tidak perlu update.
+Tidak disentuh:
+- Login/Register
+- My Purchases
+- Software
+- CAD
+- PA/BM
 
-
-Patch 121: Lucky Draw export peserta diperkemas dengan Month, referral valid count, tarikh join MY, device/IP hash, status eligible dan winner flag.
+Firebase Rules: tidak perlu update.

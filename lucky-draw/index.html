@@ -173,7 +173,7 @@
       main{width:min(100% - 16px,1080px);padding-top:14px}
       .lucky-shell{padding:10px}
       .invite-row{grid-template-columns:1fr}
-      .summary-grid,.mini-status-grid,.lucky-join-checklist,.referral-audit-summary{grid-template-columns:1fr}
+      .summary-grid,.mini-status-grid,.lucky-join-checklist,.referral-audit-summary,.abuse-audit-summary{grid-template-columns:1fr}
     }
   
 /* AZOBSS Lucky Draw: hide Login/Register action when user already signed in */
@@ -780,19 +780,19 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   .admin-grid{grid-template-columns:1fr!important;gap:9px!important;}
   .admin-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;}
   .admin-actions .btn{min-height:36px!important;font-size:12px!important;white-space:normal!important;line-height:1.15!important;padding:0 8px!important;}
-  .referral-audit-summary{grid-template-columns:1fr 1fr!important;gap:7px!important;}
-  .referral-audit-box{padding:8px!important;}
-  .referral-audit-box span{font-size:10px!important;}
-  .referral-audit-box strong{font-size:16px!important;}
+  .referral-audit-summary,.abuse-audit-summary{grid-template-columns:1fr 1fr!important;gap:7px!important;}
+  .referral-audit-box,.abuse-audit-box{padding:8px!important;}
+  .referral-audit-box span,.abuse-audit-box span{font-size:10px!important;}
+  .referral-audit-box strong,.abuse-audit-box strong{font-size:16px!important;}
   .participant-list{gap:7px!important;}
-  .participant-card,.referral-audit-card{padding:9px 10px!important;border-radius:10px!important;font-size:12px!important;}
-  .winner-history-panel,.referral-audit-panel,.participants{margin-top:10px!important;}
+  .participant-card,.referral-audit-card,.abuse-audit-card{padding:9px 10px!important;border-radius:10px!important;font-size:12px!important;}
+  .winner-history-panel,.referral-audit-panel,.abuse-audit-panel,.participants{margin-top:10px!important;}
   footer{font-size:12px!important;padding-bottom:18px!important;}
 }
 @media (max-width: 420px){
   .actions,.admin-actions{grid-template-columns:1fr!important;}
   #joinLuckyDrawButton,#luckyDrawAuthButton{grid-column:auto!important;}
-  .mini-status-grid,.summary-grid,.referral-audit-summary{grid-template-columns:1fr!important;}
+  .mini-status-grid,.summary-grid,.referral-audit-summary,.abuse-audit-summary{grid-template-columns:1fr!important;}
   .market-brand{width:128px!important;}
 }
 </style>
@@ -990,6 +990,29 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="status-note" id="referralAuditStatus"></div>
 </div>
+
+<div class="panel admin-panel abuse-audit-panel" id="adminAbuseAuditPanel">
+<div class="participants-head">
+<div>
+<span class="kicker" id="abuseAuditKicker">Anti-Abuse Log</span>
+<h2 id="abuseAuditTitle" style="margin-top:10px">Log percubaan mencurigakan bulan ini</h2>
+</div>
+<div class="admin-actions" style="margin-top:0">
+<button class="btn dark" id="refreshAbuseAuditButton" type="button">Refresh Log</button>
+<button class="btn orange" id="exportAbuseAuditButton" type="button">Export Log</button>
+</div>
+</div>
+<div class="abuse-audit-summary">
+<div class="abuse-audit-box"><span id="abuseAuditTotalLabel">Jumlah log</span><strong id="abuseAuditTotal">0</strong></div>
+<div class="abuse-audit-box"><span id="abuseAuditSelfLabel">Self share</span><strong id="abuseAuditSelfTotal">0</strong></div>
+<div class="abuse-audit-box"><span id="abuseAuditDuplicateClickLabel">Duplicate click</span><strong id="abuseAuditDuplicateClickTotal">0</strong></div>
+<div class="abuse-audit-box"><span id="abuseAuditDuplicateJoinLabel">Duplicate join</span><strong id="abuseAuditDuplicateJoinTotal">0</strong></div>
+</div>
+<div class="participant-list abuse-audit-list" id="abuseAuditList">
+<div class="empty">Tekan Refresh Log untuk baca rekod anti-abuse.</div>
+</div>
+<div class="status-note" id="abuseAuditStatus"></div>
+</div>
 <div class="panel participants">
 <div class="participants-head">
 <div>
@@ -1071,6 +1094,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     let luckyDrawEntriesCache = [];
     let luckyDrawReferralAuditCache = [];
+    let luckyDrawAbuseAuditCache = [];
     let referralClickCountCache = 0;
     let luckyDrawWinnerSelected = false;
     let luckyDrawCurrentWinnerCache = null;
@@ -1118,7 +1142,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       referralAuditSelfTotal: document.getElementById('referralAuditSelfTotal'),
       referralAuditDuplicateTotal: document.getElementById('referralAuditDuplicateTotal'),
       refreshReferralAuditButton: document.getElementById('refreshReferralAuditButton'),
-      exportReferralAuditButton: document.getElementById('exportReferralAuditButton')
+      exportReferralAuditButton: document.getElementById('exportReferralAuditButton'),
+      abuseAuditList: document.getElementById('abuseAuditList'),
+      abuseAuditStatus: document.getElementById('abuseAuditStatus'),
+      abuseAuditTotal: document.getElementById('abuseAuditTotal'),
+      abuseAuditSelfTotal: document.getElementById('abuseAuditSelfTotal'),
+      abuseAuditDuplicateClickTotal: document.getElementById('abuseAuditDuplicateClickTotal'),
+      abuseAuditDuplicateJoinTotal: document.getElementById('abuseAuditDuplicateJoinTotal'),
+      refreshAbuseAuditButton: document.getElementById('refreshAbuseAuditButton'),
+      exportAbuseAuditButton: document.getElementById('exportAbuseAuditButton')
     };
 
     function parseUser(raw){try{return raw ? JSON.parse(raw) : null;}catch(e){return null;}}
@@ -1265,6 +1297,18 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         referralAuditValid: 'valid',
         referralAuditIgnored: 'tidak dikira',
         referralAuditDuplicate: 'duplicate',
+        abuseAuditKicker: 'Anti-Abuse Log',
+        abuseAuditTitle: 'Log percubaan mencurigakan bulan ini',
+        abuseAuditTotal: 'Jumlah log',
+        abuseAuditSelfTotal: 'Self share',
+        abuseAuditDuplicateClickTotal: 'Duplicate click',
+        abuseAuditDuplicateJoinTotal: 'Duplicate join',
+        abuseAuditRefresh: 'Refresh Log',
+        abuseAuditExport: 'Export Log',
+        abuseAuditEmpty: 'Belum ada log mencurigakan bulan ini.',
+        abuseAuditFail: 'Anti-abuse log belum dapat dibaca.',
+        abuseAuditExportEmpty: 'Tiada anti-abuse log untuk export.',
+        abuseAuditExportDone: 'Export anti-abuse log selesai.',
         loginPlaceholder: 'Login dahulu untuk jana invite link',
         loginActive: 'Login dahulu untuk aktifkan Lucky Draw.',
         loginCheck: 'Login dahulu untuk check referral click.',
@@ -1380,6 +1424,18 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         referralAuditValid: 'valid',
         referralAuditIgnored: 'not counted',
         referralAuditDuplicate: 'duplicate',
+        abuseAuditKicker: 'Anti-Abuse Log',
+        abuseAuditTitle: 'This month suspicious attempt log',
+        abuseAuditTotal: 'Total logs',
+        abuseAuditSelfTotal: 'Self share',
+        abuseAuditDuplicateClickTotal: 'Duplicate click',
+        abuseAuditDuplicateJoinTotal: 'Duplicate join',
+        abuseAuditRefresh: 'Refresh Log',
+        abuseAuditExport: 'Export Log',
+        abuseAuditEmpty: 'No suspicious log for this month yet.',
+        abuseAuditFail: 'Anti-abuse log could not be loaded yet.',
+        abuseAuditExportEmpty: 'No anti-abuse log to export.',
+        abuseAuditExportDone: 'Anti-abuse log export completed.',
         loginPlaceholder: 'Log in first to generate invite link',
         loginActive: 'Log in first to activate Lucky Draw.',
         loginCheck: 'Log in first to check referral click.',
@@ -1464,6 +1520,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('#referralAuditDuplicateLabel', tr('referralAuditDuplicateTotal'));
       setText('#refreshReferralAuditButton', tr('referralAuditRefresh'));
       setText('#exportReferralAuditButton', tr('referralAuditExport'));
+      setText('#abuseAuditKicker', tr('abuseAuditKicker'));
+      setText('#abuseAuditTitle', tr('abuseAuditTitle'));
+      setText('#abuseAuditTotalLabel', tr('abuseAuditTotal'));
+      setText('#abuseAuditSelfLabel', tr('abuseAuditSelfTotal'));
+      setText('#abuseAuditDuplicateClickLabel', tr('abuseAuditDuplicateClickTotal'));
+      setText('#abuseAuditDuplicateJoinLabel', tr('abuseAuditDuplicateJoinTotal'));
+      setText('#refreshAbuseAuditButton', tr('abuseAuditRefresh'));
+      setText('#exportAbuseAuditButton', tr('abuseAuditExport'));
     }
 
     function setJoinStep(el, state, label, title, desc){
@@ -1902,6 +1966,85 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setReferralAuditStatus(tr('referralAuditExportDone'));
     }
 
+    function setAbuseAuditStatus(message, error){
+      if (!els.abuseAuditStatus) return;
+      els.abuseAuditStatus.textContent = message || '';
+      els.abuseAuditStatus.classList.toggle('error', !!error);
+    }
+
+    function renderAbuseAudit(payload){
+      if (!els.abuseAuditList) return;
+      const summary = (payload && payload.summary) || {};
+      const byType = summary.byType || {};
+      const rows = Array.isArray(payload && payload.logs) ? payload.logs : [];
+      luckyDrawAbuseAuditCache = rows;
+      const duplicateJoin = Object.keys(byType).filter(k => k.indexOf('DUPLICATE_JOIN') === 0).reduce((n,k) => n + Number(byType[k] || 0), 0);
+      if (els.abuseAuditTotal) els.abuseAuditTotal.textContent = String(summary.total || 0);
+      if (els.abuseAuditSelfTotal) els.abuseAuditSelfTotal.textContent = String(byType.SELF_REFERRAL_CLICK || 0);
+      if (els.abuseAuditDuplicateClickTotal) els.abuseAuditDuplicateClickTotal.textContent = String(byType.DUPLICATE_REFERRAL_CLICK || 0);
+      if (els.abuseAuditDuplicateJoinTotal) els.abuseAuditDuplicateJoinTotal.textContent = String(duplicateJoin);
+      if (!rows.length) {
+        els.abuseAuditList.innerHTML = '<div class="empty">' + escapeHtml(tr('abuseAuditEmpty')) + '</div>';
+        return;
+      }
+      els.abuseAuditList.innerHTML = rows.slice(0, 40).map((row, index) => {
+        const time = row.createdAt ? formatWinnerDate(row.createdAt) : '-';
+        const target = row.ref ? '@' + row.ref : (row.usernameKey ? '@' + row.usernameKey : '-');
+        const visitor = row.visitorUsernameKey ? '@' + row.visitorUsernameKey : 'Guest / visitor';
+        return '<div class="abuse-audit-card">' +
+          '<strong>' + (index + 1) + '. ' + escapeHtml(row.type || '-') + ' — ' + escapeHtml(target) + '</strong>' +
+          '<span>Visitor/User: ' + escapeHtml(visitor) + ' · Time: ' + escapeHtml(time) + '</span>' +
+          '<small>Device: ' + escapeHtml(maskAuditValue(row.deviceFingerprint, 12)) + ' · IP: ' + escapeHtml(maskAuditValue(row.ipAddress, 8)) + ' · Reason: ' + escapeHtml(row.reason || '-') + '</small>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function loadAbuseAudit(){
+      if (!els.abuseAuditList) return;
+      if (!requireLuckyDrawAdmin()) return;
+      setAbuseAuditStatus('Loading anti-abuse log...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/abuse-audit?monthKey=' + encodeURIComponent(monthKey()) + '&limit=120', {cache:'no-store'});
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Anti-abuse log gagal');
+        renderAbuseAudit(data);
+        setAbuseAuditStatus('Anti-abuse log updated.');
+      } catch(e) {
+        if (els.abuseAuditList) els.abuseAuditList.innerHTML = '<div class="empty">' + escapeHtml(tr('abuseAuditFail')) + '</div>';
+        setAbuseAuditStatus(e.message || tr('abuseAuditFail'), true);
+      }
+    }
+
+    function exportAbuseAudit(){
+      if (!requireLuckyDrawAdmin()) return;
+      const rows = luckyDrawAbuseAuditCache || [];
+      if (!rows.length) {
+        setAbuseAuditStatus(tr('abuseAuditExportEmpty'), true);
+        return;
+      }
+      const headers = ['No','Month','Type','Share Username','Username','Visitor Username','Reason','Created At','Device','IP'];
+      const csvRows = [headers].concat(rows.map((row, index) => [
+        index + 1,
+        row.monthKey || monthKey(),
+        row.type || '',
+        row.ref || '',
+        row.usernameKey || '',
+        row.visitorUsernameKey || '',
+        row.reason || '',
+        row.createdAt || '',
+        row.deviceFingerprint || '',
+        row.ipAddress || ''
+      ]));
+      const csv = csvRows.map((row) => row.map((value) => '"' + String(value).replace(/"/g, '""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'AZOBSS-Lucky-Draw-Anti-Abuse-Log-' + monthKey() + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setAbuseAuditStatus(tr('abuseAuditExportDone'));
+    }
+
     async function copyInvite(){
       const user = readUser();
       if (!user || !(user.usernameKey || user.name)) {
@@ -2319,6 +2462,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (els.refreshWinnerHistoryButton) els.refreshWinnerHistoryButton.addEventListener('click', loadWinnerHistory);
     if (els.refreshReferralAuditButton) els.refreshReferralAuditButton.addEventListener('click', loadReferralAudit);
     if (els.exportReferralAuditButton) els.exportReferralAuditButton.addEventListener('click', exportReferralAudit);
+    if (els.refreshAbuseAuditButton) els.refreshAbuseAuditButton.addEventListener('click', loadAbuseAudit);
+    if (els.exportAbuseAuditButton) els.exportAbuseAuditButton.addEventListener('click', exportAbuseAudit);
     document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
     document.getElementById('applyJsonButton').addEventListener('click', applyJson);

@@ -404,6 +404,61 @@ function getReferralFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-referrals", `${key}.json`);
 }
 
+function getAbuseFile(key = monthKey()) {
+  return path.join(DATA_DIR, "lucky-draw-abuse-logs", `${key}.json`);
+}
+
+function logLuckyDrawAbuse(key, type, details = {}) {
+  try {
+    const file = getAbuseFile(key);
+    const rows = readJson(file, []);
+    rows.push({
+      id: `${key}_${type}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      monthKey: key,
+      type: cleanText(type, 80),
+      ref: cleanShareUsername(details.ref),
+      usernameKey: cleanShareUsername(details.usernameKey),
+      visitorUsernameKey: cleanShareUsername(details.visitorUsernameKey),
+      reason: cleanText(details.reason, 180),
+      deviceFingerprint: cleanText(details.deviceFingerprint, 160),
+      ipAddress: cleanText(details.ipAddress, 80),
+      userAgent: cleanText(details.userAgent, 300),
+      createdAtMs: Date.now(),
+      createdAt: new Date().toISOString(),
+      deleted: false
+    });
+    writeJson(file, rows.slice(-1000));
+  } catch (err) {
+    console.warn("Lucky Draw abuse log failed:", err && err.message ? err.message : err);
+  }
+}
+
+function buildLuckyDrawAbuseAudit(key = monthKey()) {
+  const rows = readJson(getAbuseFile(key), []).filter((r) => !r.deleted && r.monthKey === key);
+  const byType = {};
+  for (const row of rows) byType[row.type] = (byType[row.type] || 0) + 1;
+  return {
+    monthKey: key,
+    summary: { total: rows.length, byType },
+    logs: rows
+      .slice()
+      .sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0))
+      .map((r) => ({
+        id: r.id || "",
+        monthKey: key,
+        type: r.type || "",
+        ref: r.ref || "",
+        usernameKey: r.usernameKey || "",
+        visitorUsernameKey: r.visitorUsernameKey || "",
+        reason: r.reason || "",
+        createdAt: r.createdAt || "",
+        deviceFingerprint: maskAuditText(r.deviceFingerprint, 14),
+        ipAddress: maskAuditText(r.ipAddress, 9),
+        userAgent: maskAuditText(r.userAgent, 80)
+      }))
+  };
+}
+
 function countValidReferralClicks(key, ref) {
   const cleanRef = cleanShareUsername(ref);
   if (!cleanRef) return 0;
@@ -1078,6 +1133,7 @@ app.post("/api/lucky-draw/referral-click", (req, res) => {
 
   if (!ref) return res.status(400).json({ ok: false, error: "ref required" });
   if (visitorUsernameKey && visitorUsernameKey === ref) {
+    logLuckyDrawAbuse(key, "SELF_REFERRAL_CLICK", { ref, visitorUsernameKey, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: "User opened own share link" });
     return res.json({ ok: true, ignored: true, reason: "SELF_CLICK", count: countValidReferralClicks(key, ref) });
   }
 
@@ -1088,6 +1144,7 @@ app.post("/api/lucky-draw/referral-click", (req, res) => {
   const sameIp = ipAddress ? active.find((c) => c.ipAddress && c.ipAddress === ipAddress) : null;
 
   if (sameDevice || sameIp) {
+    logLuckyDrawAbuse(key, "DUPLICATE_REFERRAL_CLICK", { ref, visitorUsernameKey, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: sameDevice ? "Duplicate device" : "Duplicate IP" });
     return res.json({ ok: true, duplicate: true, ref, count: active.length });
   }
 
@@ -1119,6 +1176,18 @@ app.get("/api/lucky-draw/referral-audit", requireAdmin, (req, res) => {
     monthKey: key,
     summary: audit.summary,
     clicks: audit.clicks.slice(0, limit)
+  });
+});
+
+app.get("/api/lucky-draw/abuse-audit", requireAdmin, (req, res) => {
+  const key = req.query.monthKey || monthKey();
+  const limit = Math.max(1, Math.min(300, Number(req.query.limit || 120)));
+  const audit = buildLuckyDrawAbuseAudit(key);
+  res.json({
+    ok: true,
+    monthKey: key,
+    summary: audit.summary,
+    logs: audit.logs.slice(0, limit)
   });
 });
 
@@ -1168,11 +1237,13 @@ app.post("/api/lucky-draw/entries", (req, res) => {
   const uid = cleanText(req.body.uid, 120);
   const sameUser = activeEntries.find((e) => e.usernameKey === usernameKey);
   if (sameUser) {
+    logLuckyDrawAbuse(key, "DUPLICATE_JOIN_USER", { usernameKey, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: "Username already joined this month" });
     return res.status(409).json({ ok: false, code: "DUPLICATE_USER", error: "Username ini sudah join Lucky Draw bulan ini.", entry: sameUser });
   }
 
   const sameUid = uid ? activeEntries.find((e) => e.uid && e.uid === uid) : null;
   if (sameUid) {
+    logLuckyDrawAbuse(key, "DUPLICATE_JOIN_UID", { usernameKey, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: "UID already joined this month" });
     return res.status(409).json({ ok: false, code: "DUPLICATE_UID", error: "Akaun ini sudah join Lucky Draw bulan ini.", entry: sameUid });
   }
 
@@ -1183,11 +1254,13 @@ app.post("/api/lucky-draw/entries", (req, res) => {
 
   const sameDevice = activeEntries.find((e) => e.deviceFingerprint && e.deviceFingerprint === deviceFingerprint);
   if (sameDevice) {
+    logLuckyDrawAbuse(key, "DUPLICATE_JOIN_DEVICE", { usernameKey, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: "Device already used to join this month" });
     return res.status(409).json({ ok: false, code: "DUPLICATE_DEVICE", error: "Device ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameDevice });
   }
 
   const sameIp = activeEntries.find((e) => e.ipAddress && ipAddress && e.ipAddress === ipAddress);
   if (sameIp) {
+    logLuckyDrawAbuse(key, "DUPLICATE_JOIN_IP", { usernameKey, deviceFingerprint, ipAddress, userAgent: req.get("user-agent"), reason: "IP already used to join this month" });
     return res.status(409).json({ ok: false, code: "DUPLICATE_IP", error: "IP address ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameIp });
   }
 
