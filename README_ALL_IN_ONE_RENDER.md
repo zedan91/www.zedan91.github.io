@@ -1,3 +1,1 @@
-Patch 124: Lucky Draw Anti-Abuse Tambahan.
-
-Deploy seperti biasa. Tiada perubahan Firebase Rules.
+Deploy this ZIP to apply Lucky Draw gift button visible fix.
