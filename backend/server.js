@@ -967,26 +967,37 @@ app.post("/api/lucky-draw/entries", (req, res) => {
   }
 
   const activeEntries = entries.filter((e) => e.monthKey === key && !e.deleted);
+  const uid = cleanText(req.body.uid, 120);
   const sameUser = activeEntries.find((e) => e.usernameKey === usernameKey);
   if (sameUser) {
-    return res.status(409).json({ ok: false, error: "Username ini sudah join Lucky Draw bulan ini.", entry: sameUser });
+    return res.status(409).json({ ok: false, code: "DUPLICATE_USER", error: "Username ini sudah join Lucky Draw bulan ini.", entry: sameUser });
+  }
+
+  const sameUid = uid ? activeEntries.find((e) => e.uid && e.uid === uid) : null;
+  if (sameUid) {
+    return res.status(409).json({ ok: false, code: "DUPLICATE_UID", error: "Akaun ini sudah join Lucky Draw bulan ini.", entry: sameUid });
+  }
+
+  const sameInviteCode = inviteCode ? activeEntries.find((e) => e.inviteCode && e.inviteCode === inviteCode) : null;
+  if (sameInviteCode) {
+    return res.status(409).json({ ok: false, code: "DUPLICATE_INVITE_CODE", error: "Invite code ini sudah join Lucky Draw bulan ini.", entry: sameInviteCode });
   }
 
   const sameDevice = activeEntries.find((e) => e.deviceFingerprint && e.deviceFingerprint === deviceFingerprint);
   if (sameDevice) {
-    return res.status(409).json({ ok: false, error: "Device ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameDevice });
+    return res.status(409).json({ ok: false, code: "DUPLICATE_DEVICE", error: "Device ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameDevice });
   }
 
   const sameIp = activeEntries.find((e) => e.ipAddress && ipAddress && e.ipAddress === ipAddress);
   if (sameIp) {
-    return res.status(409).json({ ok: false, error: "IP address ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameIp });
+    return res.status(409).json({ ok: false, code: "DUPLICATE_IP", error: "IP address ini sudah digunakan untuk join Lucky Draw bulan ini.", entry: sameIp });
   }
 
   const entry = {
     id: `${key}_${usernameKey}`,
     monthKey: key,
     usernameKey,
-    uid: cleanText(req.body.uid, 120),
+    uid,
     name: cleanText(req.body.name, 160) || usernameKey,
     phone: cleanText(req.body.phone, 60),
     contactEmail: cleanText(req.body.contactEmail, 180),

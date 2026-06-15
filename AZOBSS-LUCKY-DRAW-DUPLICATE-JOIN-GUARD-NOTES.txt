@@ -1,0 +1,1 @@
+Patch 105: Lucky Draw duplicate join guard. Frontend checks backend entry cache for current user before enabling Join, disables double-click submit, handles backend duplicate responses as already-joined instead of showing hard error. Backend duplicate checks now include uid and inviteCode, with explicit duplicate codes. Only Lucky Draw page/backend touched.
