@@ -982,6 +982,33 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 }
 </style>
 
+
+
+<style id="azobss-lucky-draw-prize-desc-taller-143">
+/* AZOBSS PATCH 143: Make Lucky Draw prize card taller so more description is visible */
+@media (min-width: 901px){
+  .prize-panel{
+    max-height:none !important;
+    overflow:visible !important;
+  }
+  .prize-panel > div:not(.prize-image-wrap){
+    min-height:520px !important;
+    overflow:hidden !important;
+  }
+  #prizeDescription.description{
+    max-height:520px !important;
+    min-height:360px !important;
+    overflow-y:auto !important;
+    padding-right:14px !important;
+  }
+}
+@media (max-width:900px){
+  #prizeDescription.description{
+    max-height:360px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
