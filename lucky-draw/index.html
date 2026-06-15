@@ -2033,8 +2033,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         els.winnerText.textContent = data.alreadySelected ? 'Pemenang sudah dipilih: ' + name : 'Tahniah ' + name;
         luckyDrawWinnerSelected = true;
         updateInvitePanel();
+        if (!data.alreadySelected) {
+          try {
+            if (typeof window.azobssPublishLuckyDrawWinnerNotification === 'function') {
+              await window.azobssPublishLuckyDrawWinnerNotification(winner);
+            }
+          } catch(notificationError) {
+            console.warn('AZOBSS Lucky Draw winner notification skipped:', notificationError);
+          }
+        }
         await loadWinnerHistory();
-        setAdminStatus(data.alreadySelected ? 'Pemenang bulan ini sudah wujud. Join bulan ini kekal ditutup. Reset Winner dahulu jika mahu buka semula.' : 'Pemenang berjaya dipilih dan disimpan. Join bulan ini sudah ditutup.');
+        setAdminStatus(data.alreadySelected ? 'Pemenang bulan ini sudah wujud. Join bulan ini kekal ditutup. Reset Winner dahulu jika mahu buka semula.' : 'Pemenang berjaya dipilih, notifikasi dipublish, dan join bulan ini sudah ditutup.');
       } catch(e) {
         setAdminStatus(e.message || 'Run draw gagal.', true);
       }
@@ -2597,6 +2606,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
         <select id="azNotificationType" class="azobss-lite-select">
           <option value="lucky_started">Lucky Draw Started</option>
           <option value="lucky_ending">Lucky Draw Ending Soon</option>
+          <option value="lucky_winner">Lucky Draw Winner Announced</option>
           <option value="maintenance">Website Maintenance Tonight</option>
           <option value="payment_verified">Payment Verified</option>
           <option value="download_ready">Download Ready</option>
@@ -2677,6 +2687,34 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
       loadNotifications(); if(window.azobssUpdateBellBadge) setTimeout(window.azobssUpdateBellBadge,800);
     }catch(err){console.error('AZOBSS notification publish failed:',err);alert('Notification publish failed: '+(err.message||err.code||err));}
   }
+
+  window.azobssPublishLuckyDrawWinnerNotification = async function(winner){
+    if(!adminNow()) throw new Error('Admin only');
+    const name=String((winner && (winner.name || winner.usernameKey)) || 'Winner').trim();
+    const username=String((winner && winner.usernameKey) || '').trim();
+    const month=String((winner && (winner.monthName || winner.monthKey)) || '').trim();
+    const participantTotal=Number((winner && winner.participantTotal) || 0);
+    const title='🎉 Lucky Draw Winner Announced';
+    const body='Tahniah ' + name + (username ? ' (@' + username + ')' : '') + ' dipilih sebagai pemenang Lucky Draw' + (month ? ' untuk ' + month : '') + '. Jumlah peserta: ' + participantTotal + '.';
+    const payload={
+      active:true,
+      scope:'all',
+      type:'lucky_winner',
+      title,
+      body,
+      monthKey:(winner && winner.monthKey) || '',
+      winnerUsername:username,
+      winnerName:name,
+      participantTotal,
+      createdAtMs:Date.now(),
+      createdAt:serverTimestamp(),
+      createdBy:currentUser?.email||'admin',
+      createdByUid:currentUser?.uid||''
+    };
+    await addDoc(collection(db,'notifications'),payload);
+    try{ if(window.azobssUpdateBellBadge) setTimeout(window.azobssUpdateBellBadge,800); }catch(e){}
+    return payload;
+  };
 
   async function loadNotifications(){
     const box=document.getElementById('azNotificationList');

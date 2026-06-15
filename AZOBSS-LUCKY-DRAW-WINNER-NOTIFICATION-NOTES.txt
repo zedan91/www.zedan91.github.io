@@ -1,0 +1,1 @@
+Patch 122: Lucky Draw winner notification. When admin runs draw and a new winner is selected, the page publishes a global notification to Firestore notifications collection. Existing winner reruns do not duplicate notification. No other modules changed.
