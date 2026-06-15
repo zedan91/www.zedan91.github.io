@@ -7863,230 +7863,133 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
-<style id="azobss-lucky-paid-product-share-style">
-.az-lucky-product-share-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(250,204,21,.55);background:linear-gradient(135deg,#facc15,#f97316);color:#111827!important;border-radius:999px;padding:9px 12px;font-weight:950;font-size:12px;text-decoration:none;cursor:pointer;box-shadow:0 10px 22px rgba(249,115,22,.18);margin-top:8px;width:100%;max-width:210px;margin-left:auto;margin-right:auto;}
-.az-lucky-product-share-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
-</style>
-<script id="azobss-lucky-paid-product-share-js">
-(function(){
-  if(window.__azobssLuckyPaidProductShare125)return;window.__azobssLuckyPaidProductShare125=true;
-  const API_BASE=(localStorage.getItem('azobssLuckyDrawBackendUrl')||'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/,'');
-  const SOURCE_PAGE=/CAD-Tools/i.test(location.pathname)?'cad':'software';
-  function esc(v){return String(v||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
-  function parse(raw){try{return raw?JSON.parse(raw):null}catch(e){return null}}
-  function readUser(){return parse(sessionStorage.getItem('azobssCurrentUser'))||parse(localStorage.getItem('azobssCurrentUser'))||parse(sessionStorage.getItem('azobssUser'))||parse(localStorage.getItem('azobssUser'))||{};}
-  function username(u){return String((u&& (u.usernameKey||u.username||u.name))||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);}
-  function monthKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
-  function deviceId(){let id=localStorage.getItem('azobssLuckyDrawDeviceId');if(!id){id='dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('azobssLuckyDrawDeviceId',id)}return id;}
-  function fingerprint(){return [deviceId(),navigator.userAgent,navigator.language,screen.width+'x'+screen.height,(Intl.DateTimeFormat().resolvedOptions().timeZone||'')].join('|').slice(0,150);}
-  function findPrimaryAction(card){
-    if(!card) return null;
-    const direct = card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium');
-    if(direct) return direct;
-    const actions = Array.from(card.querySelectorAll('a,button')).filter(el => !el.classList.contains('az-lucky-product-share-btn') && !el.classList.contains('az-card-cart-btn'));
-    return actions.find(el => /buy\s*now|rm\s*\d|premium/i.test(el.textContent || '')) ||
-           card.querySelector('a.download-btn,.download-btn,.cad-action-btn,a[href],button') ||
-           null;
-  }
-  function productInfo(card, btn){
-    const buy=btn || findPrimaryAction(card);
-    const title=(buy&&buy.dataset.productName)||card.querySelector('h3,.software-title,.cad-title,.card-title,[data-product-name],[data-title]')?.textContent||card.dataset.name||card.dataset.title||'AZOBSS Product';
-    const id=(buy&&buy.dataset.productId)||card.dataset.productId||card.dataset.cadId||card.dataset.docId||card.dataset.id||title;
-    return {id:String(id||title).trim().replace(/\s+/g,'-').slice(0,120),name:String(title||'AZOBSS Product').trim()};
-  }
-  function isPremiumCard(card){
-    if(!card)return false;
-    if(card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium'))return true;
-    const type=String(card.dataset.type||card.getAttribute('data-type')||'').toLowerCase();
-    if(/premium|paid|berbayar/.test(type))return true;
-    if(/free|percuma/.test(type))return false;
-    const text=(card.textContent||'').toLowerCase();
-    if(/free resource|free software|download now|free|percuma/.test(text) && !/buy now|rm\s*\d|premium|berbayar/.test(text))return false;
-    return /buy\s*now|rm\s*\d|premium|berbayar/.test(text);
-  }
-  function makeShareUrl(info, ref){
-    const url=new URL(location.origin+location.pathname);
-    url.searchParams.set('product',info.id);
-    url.searchParams.set('ref',ref);
-    url.searchParams.set('source',SOURCE_PAGE);
-    return url.toString();
-  }
-  async function copyLuckyShareLink(url){
-    let ok=false;
-    try{
-      if(navigator.clipboard && window.isSecureContext){
-        await navigator.clipboard.writeText(url);
-        ok=true;
-      }
-    }catch(e){}
-    if(!ok){
-      try{
-        const ta=document.createElement('textarea');
-        ta.value=url;
-        ta.setAttribute('readonly','');
-        ta.style.position='fixed';
-        ta.style.left='-9999px';
-        ta.style.top='0';
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        ok=document.execCommand('copy');
-        ta.remove();
-      }catch(e){}
-    }
-    if(ok) alert('Link share Lucky Draw telah auto-copy. Sila paste dan share kepada orang lain.');
-    else prompt('Copy link share Lucky Draw ini:', url);
-    return ok;
-  }
-  async function shareProduct(card, event){
-    if(event){event.preventDefault();event.stopPropagation();}
-    const u=readUser();const ref=username(u);
-    if(!ref){alert('Login dahulu sebelum share produk untuk Lucky Draw.');return;}
-    const info=productInfo(card);
-    const url=makeShareUrl(info,ref);
-    const text='AZOBSS '+info.name+' — Share for Lucky Draw: '+url;
-    try{
-      if(navigator.share){
-        await navigator.share({title:'AZOBSS '+info.name,text,url});
-        return;
-      }
-      await copyLuckyShareLink(url);
-      try{ window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener'); }catch(e){}
-    }catch(e){
-      await copyLuckyShareLink(url);
-    }
-  }
-  function addButtons(){
-    document.querySelectorAll('.download-card,.software-card,.software-product-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card').forEach(function(card){
-      if(!isPremiumCard(card))return;
-      if(card.querySelector(':scope > .az-lucky-product-share-btn, .az-lucky-product-share-btn')){card.dataset.azLuckyShareReady='1';return;}
-      const anchor=findPrimaryAction(card);
-      const b=document.createElement('button');
-      b.type='button';b.className='az-lucky-product-share-btn';b.textContent='🎁 Share for Lucky Draw';
-      b.addEventListener('click',function(e){shareProduct(card,e)});
-      const row=card.querySelector(':scope > .az-software-buy-cart-row') || card.querySelector(':scope > .az-card-cart-slot');
-      if(row && row.parentElement===card) row.insertAdjacentElement('afterend',b);
-      else if(anchor && anchor.parentElement && card.contains(anchor)) anchor.insertAdjacentElement('afterend',b);
-      else card.appendChild(b);
-      card.dataset.azLuckyShareReady='1';
-    });
-  }
-  async function recordOpen(){
-    const qs=new URLSearchParams(location.search);
-    const productId=String(qs.get('product')||'').trim().slice(0,120);
-    const ref=username({usernameKey:qs.get('ref')||''});
-    if(!productId||!ref)return;
-    const visitor=username(readUser());
-    try{
-      await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});
-      localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}));
-    }catch(e){}
-  }
-  document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest('.download-card,.software-card,.software-product-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card');if(card)shareProduct(card,e);},true);
-  function run(){addButtons();}
-  document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();[150,300,700,1200,2200,4000,6500].forEach(t=>setTimeout(run,t));
-  function watch(){ if(document.body){ new MutationObserver(function(){requestAnimationFrame(run)}).observe(document.body,{childList:true,subtree:true}); } }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',watch); else watch();
-  recordOpen();
-})();
-</script>
 
-
-
-<style id="azobss-lucky-share-floating-under-like-fix-127">
-/* AZOBSS Lucky Draw share button visible under like button on paid Software/CAD cards only */
-.download-card,.software-card,.software-product-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{position:relative!important;}
-/* Keep only the floating gift button; remove old lower full-width gift button */
-.download-card > .az-lucky-product-share-btn:not(.az-lucky-under-like),
-.software-card > .az-lucky-product-share-btn:not(.az-lucky-under-like),
-.software-product-card > .az-lucky-product-share-btn:not(.az-lucky-under-like),
-.cad-card > .az-lucky-product-share-btn:not(.az-lucky-under-like),
-.cad-item > .az-lucky-product-share-btn:not(.az-lucky-under-like),
-.cad-resource-card > .az-lucky-product-share-btn:not(.az-lucky-under-like),
-.cad-tool-card > .az-lucky-product-share-btn:not(.az-lucky-under-like){display:none!important;}
-.az-lucky-product-share-btn.az-lucky-under-like{
+<style id="azobss-lucky-product-share-single-131-css">
+/* AZOBSS 131: one gift button only, fixed under like button */
+.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{position:relative!important;}
+.az-lucky-product-share-btn{
   position:absolute!important;
-  top:58px!important;
+  top:60px!important;
   right:18px!important;
-  z-index:8!important;
-  width:42px!important;
-  height:42px!important;
-  min-width:42px!important;
-  min-height:42px!important;
-  max-width:42px!important;
+  z-index:20!important;
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  min-height:40px!important;
+  max-width:40px!important;
   padding:0!important;
   margin:0!important;
   border-radius:999px!important;
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
-  border:1px solid rgba(250,204,21,.72)!important;
+  border:1px solid rgba(250,204,21,.78)!important;
   background:linear-gradient(135deg,#facc15,#f97316)!important;
   color:#111827!important;
   font-size:18px!important;
   font-weight:950!important;
   line-height:1!important;
-  box-shadow:0 10px 22px rgba(249,115,22,.25)!important;
+  box-shadow:0 10px 22px rgba(249,115,22,.28)!important;
   cursor:pointer!important;
+  text-decoration:none!important;
 }
-.az-lucky-product-share-btn.az-lucky-under-like:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important;}
-.az-lucky-product-share-btn.az-lucky-under-like .az-lucky-share-text{display:none!important;}
+.az-lucky-product-share-btn:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important;}
+.az-lucky-product-share-btn .az-lucky-share-text{display:none!important;}
 @media(max-width:700px){
-  .az-lucky-product-share-btn.az-lucky-under-like{top:58px!important;right:18px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;font-size:17px!important;}
+  .az-lucky-product-share-btn{top:60px!important;right:18px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;font-size:17px!important;}
 }
 </style>
-<script id="azobss-lucky-share-floating-under-like-fix-127">
+
+<script id="azobss-lucky-product-share-single-131-js">
 (function(){
-  if(window.__azobssLuckyShareFloatingFix127) return;
-  window.__azobssLuckyShareFloatingFix127 = true;
-  function isShopPage(){ return /\/Software-Tools\/|\/CAD-Tools-&-Resources\//i.test(location.pathname); }
+  if(window.__azobssLuckyProductShareSingle131) return;
+  window.__azobssLuckyProductShareSingle131 = true;
+  const API_BASE=(localStorage.getItem('azobssLuckyDrawBackendUrl')||'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/,'');
+  const SOURCE_PAGE=/CAD-Tools/i.test(location.pathname)?'cad':'software';
+  const CARD_SELECTOR='.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card,[data-product-id],[data-software-id],[data-cad-id]';
+  function isShopPage(){return /\/Software-Tools\/|\/CAD-Tools-&-Resources\//i.test(location.pathname);}
+  function parse(raw){try{return raw?JSON.parse(raw):null}catch(e){return null}}
+  function readUser(){return parse(sessionStorage.getItem('azobssCurrentUser'))||parse(localStorage.getItem('azobssCurrentUser'))||parse(sessionStorage.getItem('azobssUser'))||parse(localStorage.getItem('azobssUser'))||{};}
+  function username(u){return String((u&&(u.usernameKey||u.username||u.name))||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);}
+  function monthKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+  function deviceId(){let id=localStorage.getItem('azobssLuckyDrawDeviceId');if(!id){id='dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('azobssLuckyDrawDeviceId',id)}return id;}
+  function fingerprint(){return [deviceId(),navigator.userAgent,navigator.language,(screen.width||0)+'x'+(screen.height||0),(Intl.DateTimeFormat().resolvedOptions().timeZone||'')].join('|').slice(0,180);}
+  function normId(v){return String(v||'AZOBSS-PRODUCT').trim().replace(/\s+/g,'-').replace(/[^a-zA-Z0-9_-]/g,'-').replace(/-+/g,'-').slice(0,120)||'AZOBSS-PRODUCT';}
+  function productInfo(card){
+    const holder=card.querySelector('[data-product-id],[data-software-id],[data-cad-id]');
+    const title=(card.querySelector('h3,.software-title,.cad-title,.card-title,[data-product-name],[data-title]')?.textContent||card.dataset.name||card.dataset.title||'AZOBSS Product').trim();
+    const id=card.dataset.productId||card.dataset.softwareId||card.dataset.cadId||card.dataset.docId||card.dataset.id||holder?.dataset?.productId||holder?.dataset?.softwareId||holder?.dataset?.cadId||title;
+    return {id:normId(id),name:title||'AZOBSS Product'};
+  }
   function isPaidCard(card){
     if(!card) return false;
-    const type = String(card.dataset.type || card.getAttribute('data-type') || '').toLowerCase();
-    const txt = String(card.textContent || '').toLowerCase();
-    const hasPremiumBuy = !!card.querySelector('[data-azobss-premium-buy="1"], .download-btn.premium, .cad-action-btn.premium');
-    const hasBuyNow = /buy\s*now|rm\s*\d|premium|berbayar/.test(txt);
-    const isFreeOnly = /download\s*now|free software|free resource|percuma/.test(txt) && !hasBuyNow && !hasPremiumBuy;
-    if(/premium|paid|berbayar/.test(type) || hasPremiumBuy || hasBuyNow) return true;
-    if(/free|percuma/.test(type) || isFreeOnly) return false;
+    if(card.closest('#userPaPurchaseList,#benchmarkCartList,.pa-section,.bm-section,#PA-BM,[data-pa],[data-bm]')) return false;
+    const type=String(card.dataset.type||card.getAttribute('data-type')||'').toLowerCase();
+    const txt=String(card.textContent||'').toLowerCase();
+    const hasPremiumBuy=!!card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.cad-action-btn.premium');
+    const hasPrice=/\brm\s*\d+/i.test(txt);
+    const hasBuy=/buy\s*now|premium|berbayar/i.test(txt);
+    const freeOnly=/download\s*now|free software|free resource|\bfree\b|percuma/i.test(txt) && !hasPrice && !hasBuy && !hasPremiumBuy;
+    if(/premium|paid|berbayar/.test(type) || hasPremiumBuy || hasPrice || hasBuy) return true;
+    if(/free|percuma/.test(type) || freeOnly) return false;
     return false;
   }
-  function productId(card){
-    const btn = card.querySelector('[data-product-id], [data-software-id], [data-cad-id]');
-    const raw = card.dataset.productId || card.dataset.softwareId || card.dataset.cadId || card.dataset.docId || btn?.dataset?.productId || btn?.dataset?.softwareId || btn?.dataset?.cadId || (card.querySelector('h3,.software-title,.cad-title')?.textContent || 'AZOBSS-PRODUCT');
-    const id = String(raw || 'AZOBSS-PRODUCT').trim().replace(/\s+/g,'-').replace(/[^a-zA-Z0-9_-]/g,'-').replace(/-+/g,'-').slice(0,120);
-    return id || 'AZOBSS-PRODUCT';
+  function makeShareUrl(info,ref){const url=new URL(location.origin+location.pathname);url.searchParams.set('product',info.id);url.searchParams.set('ref',ref);url.searchParams.set('source',SOURCE_PAGE);return url.toString();}
+  async function copyLink(url){
+    let ok=false;
+    try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(url);ok=true;}}catch(e){}
+    if(!ok){try{const ta=document.createElement('textarea');ta.value=url;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();ok=document.execCommand('copy');ta.remove();}catch(e){}}
+    if(ok) alert('Link share Lucky Draw telah auto-copy. Sila paste dan share kepada orang lain.');
+    else prompt('Copy link share Lucky Draw ini:',url);
   }
-  function ensureButton(card){
-    if(!card || card.closest('#userPaPurchaseList,#benchmarkCartList,.pa-section,.bm-section,#PA-BM,[data-pa],[data-bm]')) return;
-    card.querySelectorAll(':scope > .az-lucky-product-share-btn:not(.az-lucky-under-like)').forEach(function(b){b.remove();});
-    if(!isPaidCard(card)){
-      card.querySelectorAll(':scope > .az-lucky-product-share-btn.az-lucky-under-like').forEach(function(b){b.remove();});
-      return;
+  async function shareCard(card,e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    const ref=username(readUser());
+    if(!ref){alert('Login dahulu sebelum share produk untuk Lucky Draw.');return;}
+    const info=productInfo(card);const url=makeShareUrl(info,ref);const text='AZOBSS '+info.name+' — Share for Lucky Draw: '+url;
+    try{if(navigator.share){await navigator.share({title:'AZOBSS '+info.name,text,url});return;}}
+    catch(err){await copyLink(url);return;}
+    await copyLink(url);
+  }
+  function cleanCard(card){
+    const buttons=Array.from(card.querySelectorAll('.az-lucky-product-share-btn'));
+    let main=null;
+    buttons.forEach(function(b){
+      const isMain=b.parentElement===card && b.dataset.azLuckyMain==='1';
+      if(isMain && !main) main=b; else b.remove();
+    });
+    return main;
+  }
+  function ensureCard(card){
+    if(!card) return;
+    let main=cleanCard(card);
+    if(!isPaidCard(card)){ if(main) main.remove(); return; }
+    if(!main){
+      main=document.createElement('button');
+      main.type='button';
+      main.dataset.azLuckyMain='1';
+      main.className='az-lucky-product-share-btn';
+      main.innerHTML='<span aria-hidden="true">🎁</span><span class="az-lucky-share-text"> Share for Lucky Draw</span>';
+      main.title='Share for Lucky Draw';
+      main.setAttribute('aria-label','Share this paid product for Lucky Draw');
+      card.appendChild(main);
     }
-    let btn = card.querySelector(':scope > .az-lucky-product-share-btn.az-lucky-under-like');
-    if(!btn){
-      btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'az-lucky-product-share-btn az-lucky-under-like';
-      btn.innerHTML = '<span aria-hidden="true">🎁</span><span class="az-lucky-share-text"> Share for Lucky Draw</span>';
-      btn.title = 'Share for Lucky Draw';
-      btn.setAttribute('aria-label','Share this paid product for Lucky Draw');
-      card.appendChild(btn);
-    }
-    card.dataset.azLuckyProductId = productId(card);
-    card.dataset.azLuckyShareReady = '1';
+    card.dataset.azLuckyProductId=productInfo(card).id;
+    card.dataset.azLuckyShareReady='1';
   }
-  function run(){
-    if(!isShopPage()) return;
-    document.querySelectorAll('#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.download-card,.software-card,.software-product-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card,[data-admin-software="1"],[data-product-id]').forEach(ensureButton);
+  function run(){if(!isShopPage()) return;document.querySelectorAll(CARD_SELECTOR).forEach(ensureCard);}
+  async function recordOpen(){
+    const qs=new URLSearchParams(location.search);const productId=String(qs.get('product')||'').trim().slice(0,120);const ref=username({usernameKey:qs.get('ref')||''});
+    if(!productId||!ref) return;
+    const visitor=username(readUser());
+    try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}));}catch(e){}
   }
-  document.addEventListener('DOMContentLoaded', run);
-  if(document.readyState !== 'loading') run();
-  [100,300,700,1200,2200,4000,7000].forEach(function(t){setTimeout(run,t);});
-  window.addEventListener('azobss-software-rendered', run);
-  window.addEventListener('azobss-cad-rendered', run);
-  try{ new MutationObserver(function(){clearTimeout(window.__azLuckyFloatingFixTimer127); window.__azLuckyFloatingFixTimer127=setTimeout(run,80);}).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+  document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest(CARD_SELECTOR);if(card)shareCard(card,e);},true);
+  document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();
+  [80,200,500,1000,2000,4000,7000].forEach(function(t){setTimeout(run,t)});
+  window.addEventListener('azobss-software-rendered',run);window.addEventListener('azobss-cad-rendered',run);
+  try{new MutationObserver(function(){clearTimeout(window.__azLuckyShareSingleTimer131);window.__azLuckyShareSingleTimer131=setTimeout(run,100);}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  recordOpen();
 })();
 </script>
 

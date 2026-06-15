@@ -1,0 +1,1 @@
+Patch 131: Removed old paid-product share script and old under-like script from Software/CAD pages, then added one final managed gift button script. It removes nested/lower duplicate buttons and keeps one button under the like button only.
