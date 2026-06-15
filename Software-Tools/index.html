@@ -2923,8 +2923,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .azobss-gif-preview-link{position:relative;cursor:pointer;user-select:none;}
 .azobss-gif-preview-link::after{content:'Hover / tap to preview';position:absolute;left:50%;bottom:calc(100% + 7px);transform:translateX(-50%);white-space:nowrap;font-size:10px;line-height:1;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.92);color:#cbd5e1;border-radius:999px;padding:5px 8px;opacity:0;pointer-events:none;transition:opacity .15s ease;}
 .azobss-gif-preview-link:hover::after,.azobss-gif-preview-link:focus-visible::after{opacity:1;}
-#azobssGifHoverPreview154{position:fixed;z-index:999999;display:none;width:min(320px,78vw);max-height:min(240px,45vh);border:1px solid rgba(34,197,94,.42);border-radius:14px;background:rgba(2,6,23,.96);box-shadow:0 18px 45px rgba(0,0,0,.45);padding:8px;pointer-events:none;}
-#azobssGifHoverPreview154 img{display:block;width:100%;height:auto;max-height:calc(min(240px,45vh) - 16px);object-fit:contain;border-radius:10px;background:#020617;}
+#azobssGifHoverPreview154{position:fixed;z-index:999999;display:none;width:min(60vw,920px);max-height:min(78vh,760px);border:1px solid rgba(34,197,94,.42);border-radius:18px;background:rgba(2,6,23,.96);box-shadow:0 22px 70px rgba(0,0,0,.55);padding:10px;pointer-events:none;}
+#azobssGifHoverPreview154 img{display:block;width:100%;height:auto;max-height:calc(min(78vh,760px) - 20px);object-fit:contain;border-radius:14px;background:#020617;}
+@media(max-width:700px){#azobssGifHoverPreview154{width:92vw;max-height:74vh;padding:8px;}#azobssGifHoverPreview154 img{max-height:calc(74vh - 16px);}}
 @media (hover:none){.azobss-gif-preview-link::after{content:'Tap to preview';}}
 </style>
 </head>
@@ -3848,7 +3849,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
       ${mediaHtml}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
@@ -8486,6 +8487,86 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       setTimeout(hide, 2500);
     }
   }, true);
+})();
+</script>
+
+
+
+<style id="azobss-preview-float-155-css">
+.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{position:relative!important;}
+.software-media-links:has(.azobss-gif-preview-link),.cad-media-links:has(.azobss-gif-preview-link){display:none!important;}
+.azobss-gif-preview-link.azobss-preview-float-155{
+  position:absolute!important;
+  z-index:36!important;
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;max-width:38px!important;max-height:38px!important;
+  border-radius:999px!important;padding:0!important;margin:0!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  border:1px solid rgba(52,211,153,.88)!important;
+  background:linear-gradient(135deg,#0f766e,#22c55e)!important;
+  color:#ecfdf5!important;text-decoration:none!important;
+  box-shadow:0 10px 22px rgba(16,185,129,.28)!important;
+  font-size:0!important;line-height:1!important;cursor:pointer!important;user-select:none!important;
+}
+.azobss-gif-preview-link.azobss-preview-float-155:hover{filter:brightness(1.08)!important;transform:translateY(-1px)!important;}
+.azobss-gif-preview-link.azobss-preview-float-155 svg{width:19px!important;height:19px!important;display:block!important;fill:currentColor!important;}
+.azobss-gif-preview-link.azobss-preview-float-155::after{content:'Preview';bottom:auto!important;top:50%!important;left:auto!important;right:calc(100% + 8px)!important;transform:translateY(-50%)!important;}
+@media(max-width:700px){
+  .azobss-gif-preview-link.azobss-preview-float-155{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;max-width:34px!important;max-height:34px!important;}
+  .azobss-gif-preview-link.azobss-preview-float-155 svg{width:16px!important;height:16px!important;}
+  .azobss-gif-preview-link.azobss-preview-float-155::after{display:none!important;}
+}
+</style>
+<script id="azobss-preview-float-155-js">
+(function(){
+  'use strict';
+  if(window.__azobssPreviewFloat155) return;
+  window.__azobssPreviewFloat155 = true;
+  var CARD_SELECTOR='.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  var GRID_SELECTOR='#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  function topCard(el){var c=el&&el.closest?el.closest(CARD_SELECTOR):null;if(!c)return null;var p=c.parentElement&&c.parentElement.closest(CARD_SELECTOR);return p||c;}
+  function collect(){var set=new Set();document.querySelectorAll(GRID_SELECTOR+','+CARD_SELECTOR).forEach(function(el){var c=topCard(el);if(c&&!c.closest('#userPaPurchaseList,#benchmarkCartList,.pa-section,.bm-section,#PA-BM'))set.add(c);});return Array.from(set);}
+  function isPaid(card){var t=String(card.dataset.type||card.getAttribute('data-type')||'').toLowerCase();var txt=(card.textContent||'').toLowerCase();return t==='premium'||txt.indexOf('buy now')>-1||/rm\s*\d/i.test(txt)||txt.indexOf('premium software')>-1||txt.indexOf('premium cad')>-1;}
+  function getGif(card){
+    var old=card.querySelector('.azobss-gif-preview-link:not(.azobss-preview-float-155)');
+    var src=card.dataset.gifUrl||card.getAttribute('data-gif-url')||(old&&(old.getAttribute('data-gif-preview')||old.getAttribute('href')))||'';
+    if(old){var wrap=old.closest('.software-media-links,.cad-media-links'); if(wrap) wrap.remove(); else old.remove();}
+    return String(src||'').trim();
+  }
+  function anchor(card, paid){
+    if(paid){var sh=card.querySelector(':scope > .az-lucky-product-share-btn'); if(sh) return sh;}
+    return card.querySelector(':scope > .az-like-btn,:scope > .like-btn,:scope > .item-like-btn,:scope > button[class*="like"],:scope > [class*="like"]');
+  }
+  function align(card, btn, base){
+    try{
+      var cr=card.getBoundingClientRect(), br=base.getBoundingClientRect();
+      var phone=window.matchMedia&&window.matchMedia('(max-width:700px)').matches;
+      var w=phone?34:Math.max(34,Math.min(42,Math.round(br.width||38)));
+      var h=phone?34:Math.max(34,Math.min(42,Math.round(br.height||w)));
+      var cx=br.left+(br.width||w)/2;
+      var right=Math.max(8,Math.round(cr.right-cx-(w/2)));
+      var top=Math.max(8,Math.round(br.top-cr.top+(br.height||h)+(phone?4:8)));
+      btn.style.setProperty('width',w+'px','important');btn.style.setProperty('height',h+'px','important');
+      btn.style.setProperty('min-width',w+'px','important');btn.style.setProperty('min-height',h+'px','important');
+      btn.style.setProperty('max-width',w+'px','important');btn.style.setProperty('max-height',h+'px','important');
+      btn.style.setProperty('right',right+'px','important');btn.style.setProperty('top',top+'px','important');
+    }catch(e){}
+  }
+  function ensure(card){
+    var src=getGif(card);
+    var existing=card.querySelector(':scope > .azobss-preview-float-155');
+    if(!src){if(existing)existing.remove();return;}
+    var paid=isPaid(card);
+    var base=anchor(card,paid)||anchor(card,false);
+    if(!base) return;
+    var btn=existing;
+    if(!btn){btn=document.createElement('a');btn.className='azobss-gif-preview-link azobss-preview-float-155';btn.target='_blank';btn.rel='noopener';btn.title='Preview';btn.setAttribute('aria-label','Preview GIF demo');btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';card.appendChild(btn);} 
+    btn.href=src;btn.setAttribute('data-gif-preview',src);align(card,btn,base);setTimeout(function(){align(card,btn,base)},80);
+  }
+  function run(){collect().forEach(ensure);}
+  document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();
+  [100,300,700,1200,2200,4000,7000,10000].forEach(function(t){setTimeout(run,t)});
+  window.addEventListener('azobss-software-rendered',run);window.addEventListener('azobss-cad-rendered',run);window.addEventListener('resize',run);window.addEventListener('focus',run);
+  try{new MutationObserver(function(){clearTimeout(window.__azPreviewFloatTimer155);window.__azPreviewFloatTimer155=setTimeout(run,140)}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
 })();
 </script>
 
