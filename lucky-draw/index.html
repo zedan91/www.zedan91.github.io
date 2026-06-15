@@ -142,6 +142,9 @@
     .prize-image-wrap{border:1px solid rgba(148,163,184,.2);border-radius:14px;background:#030817;display:grid;place-items:center;overflow:visible;min-height:320px}
     .prize-image-wrap img{width:100%;height:100%;object-fit:contain;display:block}
     .description{white-space:pre-wrap;color:#cbd5e1;line-height:1.55}
+
+    #prizeDescription a{color:#60a5fa;text-decoration:underline;text-underline-offset:3px;word-break:break-all}
+    #prizeDescription a:hover{color:#93c5fd}
     .admin-panel{display:none;margin-top:16px;border-color:rgba(249,115,22,.45)}
     body.is-admin .admin-panel{display:block}
     .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1962,13 +1965,31 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (value.startsWith('../')) return value;
       return '../' + value.replace(/^\/+/, '');
     }
+
+    function escapeHtml(value){
+      return String(value || '').replace(/[&<>"']/g, function(ch){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);
+      });
+    }
+    function linkifyPrizeDescription(value){
+      const escaped = escapeHtml(value || '');
+      return escaped.replace(/(https?:\/\/[^\s<]+)/gi, function(rawUrl){
+        let url = rawUrl;
+        let tail = '';
+        while(/[),.;!?]$/.test(url)){
+          tail = url.slice(-1) + tail;
+          url = url.slice(0, -1);
+        }
+        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + tail;
+      });
+    }
     function renderPrize(prize){
       const image = normalizeImagePath(prize.imageUrl || prize.image);
       const title = prize.title || tr('prizeDefaultTitle');
       const desc = prize.description || tr('prizeDefaultDesc');
       els.prizeImage.src = image;
       els.prizeTitle.textContent = title;
-      els.prizeDescription.textContent = desc;
+      els.prizeDescription.innerHTML = linkifyPrizeDescription(desc);
       els.prizeTitleInput.value = prize.title || '';
       els.prizeDescriptionInput.value = prize.description || '';
       els.prizeJsonInput.value = JSON.stringify({
