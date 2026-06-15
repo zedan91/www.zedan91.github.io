@@ -147,7 +147,11 @@
       .invite-row{grid-template-columns:1fr}
       .summary-grid,.mini-status-grid{grid-template-columns:1fr}
     }
-  </style>
+  
+/* AZOBSS Lucky Draw: hide Login/Register action when user already signed in */
+body.is-authenticated #luckyDrawAuthButton{display:none!important;}
+
+</style>
 
 <link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
 
@@ -775,7 +779,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <button class="btn orange" id="shareInviteButton" type="button">Share Website</button>
 <button class="btn blue" id="confirmShareButton" type="button" disabled>Check Referral Click</button>
 <button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
-<a class="btn dark" data-auth-open="login" href="#">Login / Register</a>
+<a class="btn dark" data-auth-open="login" href="#" id="luckyDrawAuthButton">Login / Register</a>
 </div>
 <div class="mini-status-grid">
 <div class="mini-status"><span>Username share</span><strong id="inviteCodeText">-</strong></div>
@@ -939,6 +943,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       copyButton: document.getElementById('copyInviteButton'),
       shareButton: document.getElementById('shareInviteButton'),
       confirmShareButton: document.getElementById('confirmShareButton'),
+      authButton: document.getElementById('luckyDrawAuthButton'),
       countdown: document.getElementById('countdownText'),
       targetText: document.getElementById('targetText'),
       total: document.getElementById('participantTotal'),
@@ -1132,10 +1137,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         document.body.classList.add('is-authenticated');
         if (els.auth) els.auth.style.display = 'none';
         if (els.tools) els.tools.style.display = 'flex';
+        if (els.authButton) els.authButton.style.display = 'none';
       } else {
         document.body.classList.remove('is-authenticated');
         if (els.auth) els.auth.style.display = 'flex';
         if (els.tools) els.tools.style.display = 'none';
+        if (els.authButton) els.authButton.style.display = '';
       }
       updateInvitePanel();
     }

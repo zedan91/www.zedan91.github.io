@@ -1,0 +1,6 @@
+AZOBSS Lucky Draw hide Login/Register button for signed-in users
+
+- Only lucky-draw/index.html changed.
+- Login / Register action inside Lucky Draw panel is hidden when body has is-authenticated.
+- showUser also explicitly hides/shows luckyDrawAuthButton based on signed-in state.
+- No login/register function, My Purchases, Software, CAD, or PA/BM logic changed.
