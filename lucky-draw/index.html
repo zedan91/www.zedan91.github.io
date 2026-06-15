@@ -854,6 +854,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <button class="btn orange" id="testSpinButton" type="button">Test Spin</button>
 <button class="btn dark" id="resetWinnerButton" type="button">Reset Winner</button>
 <button class="btn dark" id="resetParticipantsButton" type="button">Reset Participants</button>
+<button class="btn orange" id="resetJoinMonthButton" type="button">Reset Join Bulan Ini</button>
 <button class="btn dark" id="exportParticipantsButton" type="button">Export Peserta</button>
 </div>
 <div class="status-note" id="adminStatus"></div>
@@ -1167,8 +1168,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const inviteUrl = buildInviteUrl(user);
       const referralReady = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
       const backendJoined = !!findCurrentUserEntry(user);
-      const joined = backendJoined || localStorage.getItem(getJoinKey(user)) === '1';
+      // Backend peserta adalah sumber utama. LocalStorage tidak lagi mengunci join
+      // supaya admin boleh reset penyertaan bulan semasa dan user boleh join semula.
+      const joined = backendJoined;
       if (backendJoined) markJoinedLocal(user);
+      else { try { localStorage.removeItem(getJoinKey(user)); } catch(e) {} }
       els.inviteLink.value = inviteUrl;
       els.inviteCode.textContent = user.usernameKey;
       els.shareStatus.textContent = referralReady ? ('Referral click: ' + Math.max(1, referralClickCountCache)) : 'Belum ada referral click';
@@ -1528,9 +1532,41 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         luckyDrawEntriesCache = [];
         renderParticipants([]);
         els.total.textContent = '0';
+        clearCurrentBrowserJoinLock();
+        updateInvitePanel();
         setAdminStatus('Peserta bulan ini sudah direset.');
       } catch(e) {
         setAdminStatus(e.message || 'Reset peserta gagal.', true);
+      }
+    }
+
+
+    function clearCurrentBrowserJoinLock(){
+      try {
+        const keyPrefix = 'azobssLuckyJoin_' + monthKey() + '_';
+        Object.keys(localStorage).forEach((key) => {
+          if (key.indexOf(keyPrefix) === 0) localStorage.removeItem(key);
+        });
+      } catch(e) {}
+    }
+
+    async function resetJoinThisMonth(){
+      if (!requireLuckyDrawAdmin()) return;
+      if (!confirm('Reset join bulan ini? Semua user yang sudah join akan dianggap belum join dan boleh join semula bulan yang sama.')) return;
+      setAdminStatus('Reset join bulan ini...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Reset join bulan ini gagal');
+        luckyDrawEntriesCache = [];
+        renderParticipants([]);
+        els.total.textContent = '0';
+        clearCurrentBrowserJoinLock();
+        await loadReferralStatus(readUser());
+        updateInvitePanel();
+        setAdminStatus('Join bulan ini sudah direset. User yang sudah join boleh join semula jika referral click masih valid.');
+      } catch(e) {
+        setAdminStatus(e.message || 'Reset join bulan ini gagal.', true);
       }
     }
 
@@ -1583,6 +1619,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     document.getElementById('testSpinButton').addEventListener('click', testLuckySpin);
     document.getElementById('resetWinnerButton').addEventListener('click', resetLuckyWinner);
     document.getElementById('resetParticipantsButton').addEventListener('click', resetLuckyParticipants);
+    document.getElementById('resetJoinMonthButton').addEventListener('click', resetJoinThisMonth);
     document.getElementById('exportParticipantsButton').addEventListener('click', exportLuckyParticipants);
 
     window.addEventListener('storage', showUser);
