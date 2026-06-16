@@ -131,6 +131,20 @@
     .spin-box{min-height:150px;display:grid;place-items:center;border:1px solid rgba(34,197,94,.25);border-radius:12px;background:radial-gradient(circle at center,rgba(34,197,94,.14),#050914 62%)}
     .spin-box strong{color:#facc15;font-size:30px}
     .spin-box span{display:block;color:#e5e7eb;font-weight:900;margin-top:8px}
+    .draw-summary-panel{min-height:0;display:block;place-items:initial;text-align:left;padding:18px;background:linear-gradient(180deg,rgba(15,23,42,.88),rgba(3,7,18,.96));}
+    .draw-summary-panel .kicker{display:inline-flex;margin-bottom:8px;color:#facc15}
+    .draw-summary-panel strong#drawSummaryTitle{display:block;color:#f8fafc;font-size:20px;line-height:1.25;margin:0 0 12px}
+    .draw-summary-list{display:grid;gap:8px}
+    .draw-summary-row{display:grid;grid-template-columns:minmax(110px,.65fr) minmax(0,1fr);gap:10px;align-items:start;border:1px solid rgba(148,163,184,.16);border-radius:10px;background:rgba(2,6,23,.58);padding:9px 10px}
+    .draw-summary-row span{display:block;color:#94a3b8;font-size:11px;font-weight:900;text-transform:uppercase;margin:0}
+    .draw-summary-row b{display:block;color:#22c55e;font-size:13px;line-height:1.35;word-break:break-word}
+    .draw-summary-row:nth-child(3) b{color:#facc15}
+    .draw-summary-latest{margin-top:12px;border:1px dashed rgba(250,204,21,.30);border-radius:10px;background:rgba(250,204,21,.06);padding:10px}
+    .draw-summary-latest span{display:block;color:#facc15;font-size:11px;font-weight:900;text-transform:uppercase;margin:0 0 6px}
+    #drawSummaryLatest{color:#e5e7eb;font-size:13px;line-height:1.5}
+    #drawSummaryLatest div{display:flex;gap:7px;align-items:baseline;padding:2px 0}
+    #drawSummaryLatest small{color:#94a3b8;font-size:11px}
+    .draw-summary-winner{display:block;margin-top:10px;color:#cbd5e1!important;font-size:12px;font-weight:800!important;line-height:1.4}
 
     .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
     .summary-box{border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#07101f;padding:14px}
@@ -1174,11 +1188,20 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <strong id="countdownText">-- hari --:--:--</strong>
 <small id="targetText">Auto hujung bulan, 10:00 PM Malaysia</small>
 </div>
-<div class="panel spin-box">
-<div>
-<strong>Prize</strong>
-<span id="winnerText">Pemenang belum dipilih</span>
+<div class="panel spin-box draw-summary-panel">
+<span class="kicker" id="drawSummaryKicker">Ringkasan</span>
+<strong id="drawSummaryTitle">Ringkasan Lucky Draw bulan ini</strong>
+<div class="draw-summary-list">
+  <div class="draw-summary-row"><span id="drawSummaryParticipantsLabel">Peserta join</span><b id="drawSummaryParticipants">0</b></div>
+  <div class="draw-summary-row"><span id="drawSummaryShareLabel">Product share anda</span><b id="drawSummaryShares">0</b></div>
+  <div class="draw-summary-row"><span id="drawSummaryPrizeLabel">Hadiah</span><b id="drawSummaryPrize">Belum diumumkan</b></div>
+  <div class="draw-summary-row"><span id="drawSummaryStatusLabel">Status</span><b id="drawSummaryStatus">Dibuka</b></div>
 </div>
+<div class="draw-summary-latest">
+  <span id="drawSummaryLatestLabel">Peserta terbaru</span>
+  <div id="drawSummaryLatest">Belum ada peserta.</div>
+</div>
+<span id="winnerText" class="draw-summary-winner">Pemenang belum dipilih</span>
 </div>
 </div>
 </div>
@@ -1409,6 +1432,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       participants: document.getElementById('participantList'),
       winner: document.getElementById('winnerName'),
       winnerText: document.getElementById('winnerText'),
+      drawSummaryTitle: document.getElementById('drawSummaryTitle'),
+      drawSummaryParticipantsLabel: document.getElementById('drawSummaryParticipantsLabel'),
+      drawSummaryShareLabel: document.getElementById('drawSummaryShareLabel'),
+      drawSummaryPrizeLabel: document.getElementById('drawSummaryPrizeLabel'),
+      drawSummaryStatusLabel: document.getElementById('drawSummaryStatusLabel'),
+      drawSummaryLatestLabel: document.getElementById('drawSummaryLatestLabel'),
+      drawSummaryParticipants: document.getElementById('drawSummaryParticipants'),
+      drawSummaryShares: document.getElementById('drawSummaryShares'),
+      drawSummaryPrize: document.getElementById('drawSummaryPrize'),
+      drawSummaryStatus: document.getElementById('drawSummaryStatus'),
+      drawSummaryLatest: document.getElementById('drawSummaryLatest'),
       prizeImage: document.getElementById('prizeImage'),
       prizeTitle: document.getElementById('prizeTitle'),
       prizeDescription: document.getElementById('prizeDescription'),
@@ -1542,6 +1576,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         winnerPending: 'Pemenang belum dipilih',
         totalParticipants: 'Jumlah peserta join',
         currentWinner: 'Pemenang bulan ini',
+        summaryTitle: 'Ringkasan Lucky Draw bulan ini',
+        summaryParticipants: 'Peserta join',
+        summaryProductShare: 'Product share anda',
+        summaryPrize: 'Hadiah',
+        summaryStatus: 'Status',
+        summaryLatest: 'Peserta terbaru',
+        summaryOpen: 'Dibuka sehingga hujung bulan, 10:00 malam',
+        summaryClosed: 'Draw bulan ini sudah selesai',
+        summaryNoParticipants: 'Belum ada peserta.',
         winnerNone: 'Belum dipilih',
         prizeKicker: 'Hadiah Lucky Draw',
         prizeDefaultTitle: 'Hadiah belum diumumkan',
@@ -1675,6 +1718,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         winnerPending: 'Winner has not been selected',
         totalParticipants: 'Total joined participants',
         currentWinner: 'This month\'s winner',
+        summaryTitle: 'This month Lucky Draw summary',
+        summaryParticipants: 'Joined participants',
+        summaryProductShare: 'Your product share',
+        summaryPrize: 'Prize',
+        summaryStatus: 'Status',
+        summaryLatest: 'Latest participants',
+        summaryOpen: 'Open until month end, 10:00 PM',
+        summaryClosed: 'This month draw is complete',
+        summaryNoParticipants: 'No participants yet.',
         winnerNone: 'Not selected yet',
         prizeKicker: 'Lucky Draw Prize',
         prizeDefaultTitle: 'Prize not announced yet',
@@ -1795,7 +1847,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('#referralInfoNote strong', tr('noteTitle'));
       setTextAll('#referralInfoNote li', [tr('note1'), tr('note2'), tr('note3')]);
       setText('.countdown-panel span', tr('countdownLabel'));
-      setText('.spin-box strong', tr('prizeSmall'));
+      setText('#drawSummaryTitle', tr('summaryTitle'));
+      setText('#drawSummaryParticipantsLabel', tr('summaryParticipants'));
+      setText('#drawSummaryShareLabel', tr('summaryProductShare'));
+      setText('#drawSummaryPrizeLabel', tr('summaryPrize'));
+      setText('#drawSummaryStatusLabel', tr('summaryStatus'));
+      setText('#drawSummaryLatestLabel', tr('summaryLatest'));
+      updateLuckyDrawSummary();
       setTextAll('.summary-box span', [tr('totalParticipants'), tr('currentWinner')]);
       setText('.prize-panel .kicker', tr('prizeKicker'));
       setText('#prizeDescScrollHint', tr('prizeScrollHint'));
@@ -1936,6 +1994,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setStatus(tr('checking'));
       await loadReferralStatus(user);
       updateInvitePanel();
+      updateLuckyDrawSummary();
     }
 
     function findCurrentUserEntry(user){
@@ -2041,6 +2100,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       else if (joined) setStatus(tr('alreadyJoined'));
       else if (referralReady) setStatus(tr('referralValid'));
       else setStatus(tr('referralMissing'));
+      updateLuckyDrawSummary();
     }
 
     function tickCountdown(){
@@ -2103,6 +2163,28 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + tail;
       });
     }
+    function updateLuckyDrawSummary(){
+      try{
+        const rows = (luckyDrawEntriesCache || []).filter(entry => entry && !entry.deleted);
+        if (els.drawSummaryParticipants) els.drawSummaryParticipants.textContent = String(rows.length || Number((els.total && els.total.textContent) || 0) || 0);
+        if (els.drawSummaryShares) els.drawSummaryShares.textContent = String(referralClickCountCache || 0);
+        if (els.drawSummaryPrize) els.drawSummaryPrize.textContent = (els.prizeTitle && els.prizeTitle.textContent) || tr('prizeDefaultTitle');
+        if (els.drawSummaryStatus) els.drawSummaryStatus.textContent = luckyDrawWinnerSelected ? tr('summaryClosed') : tr('summaryOpen');
+        if (els.drawSummaryLatest) {
+          const latest = rows.slice().sort((a,b) => new Date(b.joinedAt || 0).getTime() - new Date(a.joinedAt || 0).getTime()).slice(0,5);
+          if (!latest.length) {
+            els.drawSummaryLatest.textContent = tr('summaryNoParticipants');
+          } else {
+            els.drawSummaryLatest.innerHTML = latest.map((entry, i) => {
+              const name = escapeHtml(entry.name || entry.usernameKey || 'User');
+              const joined = entry.joinedAt ? new Date(entry.joinedAt).toLocaleString('en-MY', {timeZone:'Asia/Kuala_Lumpur', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '-';
+              return '<div><b>' + (i + 1) + '. ' + name + '</b><small>' + escapeHtml(joined) + '</small></div>';
+            }).join('');
+          }
+        }
+      }catch(e){}
+    }
+
     function renderPrize(prize){
       const image = normalizeImagePath(prize.imageUrl || prize.image);
       const title = prize.title || tr('prizeDefaultTitle');
@@ -2111,6 +2193,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       els.prizeTitle.textContent = title;
       els.prizeDescription.innerHTML = linkifyPrizeDescription(desc);
       setTimeout(updatePrizeDescScrollHint, 60);
+      updateLuckyDrawSummary();
       els.prizeTitleInput.value = prize.title || '';
       els.prizeDescriptionInput.value = prize.description || '';
       if (els.prizeImageUrlInput) els.prizeImageUrlInput.value = prize.imageUrl || prize.image || '';
@@ -2132,6 +2215,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         luckyDrawEntriesCache = rows.filter((entry) => !entry.deleted);
         els.total.textContent = String(data.total || luckyDrawEntriesCache.length || 0);
         renderParticipants(luckyDrawEntriesCache);
+        updateLuckyDrawSummary();
         updateInvitePanel();
       } catch(e) {
         els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesBackendFail')) + '</div>';
@@ -2160,6 +2244,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const name = winner ? (winner.name || winner.usernameKey || 'Winner') : tr('winnerNone');
         els.winner.textContent = name;
         els.winnerText.textContent = winner ? tr('congrats') + name : tr('winnerPending');
+        updateLuckyDrawSummary();
         updateInvitePanel();
       } catch(e) {}
     }
