@@ -1119,6 +1119,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   .prize-carousel-counter{right:10px;bottom:10px;font-size:11px;}
 }
 </style>
+
+<style id="azobss-lucky-draw-carousel-arrow-visible-166">
+/* AZOBSS PATCH 166: keep carousel arrows visible when multiple prize images exist */
+.prize-carousel-shell:not(.single) .prize-carousel-btn{display:flex!important;align-items:center!important;justify-content:center!important;z-index:30!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;}
+.prize-carousel-shell:not(.single) .prize-carousel-counter{display:inline-flex!important;z-index:31!important;opacity:1!important;visibility:visible!important;}
+</style>
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
@@ -2219,6 +2225,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = await res.json();
         if (data && data.ok && data.prize) {
           renderPrize(data.prize);
+          mergePublicFolderPrizeFallback(data.prize);
           return;
         }
       } catch(e) {}
@@ -2234,8 +2241,66 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const value = String(image || '').trim();
       if (!value) return '/lucky-draw/prize-placeholder.svg';
       if (/^https?:\/\//i.test(value) || value.startsWith('data:image/')) return value;
+      if (value.startsWith('/')) return value;
       if (value.startsWith('../')) return value;
-      return '../' + value.replace(/^\/+/, '');
+      // giveaway-prize.json lives in /lucky-draw/. Relative names like hadiah1.jpg
+      // must point to /lucky-draw/hadiah1.jpg, not /hadiah1.jpg.
+      return '/lucky-draw/' + value.replace(/^\/+/, '');
+    }
+
+    function prizeImageExists(url){
+      return new Promise(resolve => {
+        if (!url) return resolve(false);
+        if (/^data:image\//i.test(url)) return resolve(true);
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url + (url.includes('?') ? '&' : '?') + 'azv=' + Date.now();
+      });
+    }
+
+    async function getPublicFolderPrizeImages(jsonData){
+      const candidates = [];
+      const add = (v) => {
+        if (Array.isArray(v)) return v.forEach(add);
+        String(v || '').split(/[
+,]+/).forEach(x => {
+          const raw = x.trim();
+          if (raw) candidates.push(normalizeImagePath(raw));
+        });
+      };
+      add(jsonData && (jsonData.imageUrls || jsonData.images || []));
+      add(jsonData && (jsonData.imageUrl || jsonData.image || ''));
+      const exts = ['jpg','jpeg','png','webp','gif'];
+      for (let i = 1; i <= 20; i++) exts.forEach(ext => candidates.push('/lucky-draw/hadiah' + i + '.' + ext));
+      const unique = [];
+      const seen = new Set();
+      for (const item of candidates) {
+        const key = String(item || '').trim();
+        if (!key || seen.has(key) || key.includes('prize-placeholder')) continue;
+        seen.add(key);
+        if (await prizeImageExists(key)) unique.push(key);
+      }
+      return unique;
+    }
+
+    async function mergePublicFolderPrizeFallback(currentPrize){
+      try {
+        const res = await fetch('/lucky-draw/giveaway-prize.json?azv=' + Date.now(), {cache:'no-store'});
+        if (!res.ok) return;
+        const jsonData = await res.json();
+        const folderImages = await getPublicFolderPrizeImages(jsonData || {});
+        const currentImages = getPrizeImages(currentPrize || {}).filter(v => !String(v).includes('prize-placeholder'));
+        if (folderImages.length > currentImages.length) {
+          renderPrize(Object.assign({}, currentPrize || {}, jsonData || {}, {
+            imageUrl: folderImages[0] || '',
+            image: folderImages[0] || '',
+            imageUrls: folderImages,
+            images: folderImages,
+            imageStorage: 'public-folder-direct-fallback'
+          }));
+        }
+      } catch(e) {}
     }
 
     function escapeHtml(value){

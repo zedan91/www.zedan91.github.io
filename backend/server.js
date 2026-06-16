@@ -688,6 +688,16 @@ function resolvePublicUrl(baseUrl, value) {
   try { return new URL(raw, baseUrl).toString(); } catch(e) { return ""; }
 }
 
+function resolveLuckyDrawPublicImageUrl(baseUrl, value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("data:image/")) return raw;
+  if (raw.startsWith("/")) return resolvePublicUrl(baseUrl, raw);
+  // Prize JSON is stored in /lucky-draw/giveaway-prize.json, so relative image names
+  // such as hadiah1.jpg must resolve to /lucky-draw/hadiah1.jpg, not /hadiah1.jpg.
+  return resolvePublicUrl(baseUrl, "/lucky-draw/" + raw.replace(/^\/+/, ""));
+}
+
 function uniqueList(list) {
   const out = [];
   const seen = new Set();
@@ -1168,7 +1178,13 @@ async function syncLuckyDrawPrizeFromPublicFolder(options = {}) {
     }
   }
 
-  const sourceUrls = uniqueList(rawImageValues.map(v => resolvePublicUrl(baseUrl, v)).filter(Boolean));
+  const normalizedRawUrls = [];
+  for (const raw of rawImageValues) {
+    const url = resolveLuckyDrawPublicImageUrl(baseUrl, raw);
+    if (url && await imageUrlExists(url)) normalizedRawUrls.push(url);
+  }
+
+  const sourceUrls = uniqueList(normalizedRawUrls.map(v => resolvePublicUrl(baseUrl, v)).filter(Boolean));
   if (!sourceUrls.length) {
     return { ok:false, notFound:true, error:"Tiada gambar folder dijumpai.", jsonFound, sourceJsonUrl: jsonUrl, sourceImageUrls: [] };
   }
