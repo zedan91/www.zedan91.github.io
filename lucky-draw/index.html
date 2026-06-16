@@ -1448,6 +1448,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     let luckyDrawEntriesCache = [];
     let prizeCarouselImages = [];
     let prizeCarouselIndex = 0;
+    let prizeImageValidationSeq = 0;
     let luckyDrawReferralAuditCache = [];
     let luckyDrawAbuseAuditCache = [];
     let referralClickCountCache = 0;
@@ -2368,13 +2369,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (els.prizeImage) {
         els.prizeImage.onerror = function(){
           try {
-            if (!prizeCarouselImages || prizeCarouselImages.length <= 1) {
-              this.onerror = null;
-              this.src = '/lucky-draw/prize-placeholder.svg';
-              return;
-            }
             const failed = prizeCarouselImages.splice(prizeCarouselIndex, 1)[0];
             console.warn('AZOBSS Lucky Draw prize image failed, skipped:', failed);
+            if (!prizeCarouselImages.length) {
+              prizeCarouselImages = ['/lucky-draw/prize-placeholder.svg'];
+              prizeCarouselIndex = 0;
+            }
             if (prizeCarouselIndex >= prizeCarouselImages.length) prizeCarouselIndex = 0;
             updatePrizeCarousel();
           } catch(e) {
@@ -2388,6 +2388,30 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (els.prizeCarouselShell) els.prizeCarouselShell.classList.toggle('single', prizeCarouselImages.length <= 1);
     }
 
+    async function validateAndSetPrizeImages(images){
+      const seq = ++prizeImageValidationSeq;
+      const list = (images || []).map(v => String(v || '').trim()).filter(v => v && !v.includes('prize-placeholder'));
+      if (!list.length) return;
+      const valid = [];
+      for (const url of list) {
+        if (seq !== prizeImageValidationSeq) return;
+        try {
+          if (await prizeImageExists(url)) valid.push(url);
+        } catch(e) {}
+      }
+      if (seq !== prizeImageValidationSeq) return;
+      if (valid.length) {
+        prizeCarouselImages = valid;
+        if (prizeCarouselIndex >= valid.length) prizeCarouselIndex = 0;
+        if (prizeCarouselIndex < 0) prizeCarouselIndex = 0;
+        updatePrizeCarousel();
+      } else {
+        prizeCarouselImages = ['/lucky-draw/prize-placeholder.svg'];
+        prizeCarouselIndex = 0;
+        updatePrizeCarousel();
+      }
+    }
+
     function movePrizeImage(step){
       prizeCarouselIndex += step;
       updatePrizeCarousel();
@@ -2397,9 +2421,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const images = getPrizeImages(prize || {});
       const title = prize.title || tr('prizeDefaultTitle');
       const desc = prize.description || tr('prizeDefaultDesc');
+      prizeImageValidationSeq += 1;
       prizeCarouselImages = images;
       prizeCarouselIndex = 0;
       updatePrizeCarousel();
+      validateAndSetPrizeImages(images);
       els.prizeTitle.textContent = title;
       els.prizeDescription.innerHTML = linkifyPrizeDescription(desc);
       setTimeout(updatePrizeDescScrollHint, 60);
