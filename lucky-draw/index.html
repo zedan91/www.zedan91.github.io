@@ -145,6 +145,14 @@
     #drawSummaryLatest div{display:flex;gap:7px;align-items:baseline;padding:2px 0}
     #drawSummaryLatest small{color:#94a3b8;font-size:11px}
     .draw-summary-winner{display:block;margin-top:10px;color:#cbd5e1!important;font-size:12px;font-weight:800!important;line-height:1.4}
+    .draw-winner-rollbox{margin-top:10px;border:1px solid rgba(34,197,94,.28);border-radius:12px;background:radial-gradient(circle at top,rgba(34,197,94,.13),rgba(2,6,23,.82) 70%);padding:12px;text-align:center;overflow:hidden}
+    .draw-winner-rollbox .roll-label{display:block;color:#facc15;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin:0 0 7px}
+    .draw-winner-rollbox .roll-name{display:block;color:#22c55e;font-size:22px;font-weight:950;line-height:1.15;text-shadow:0 0 18px rgba(34,197,94,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .draw-winner-rollbox .roll-note{display:block;color:#94a3b8;font-size:11px;font-weight:800;margin-top:6px}
+    .draw-winner-rollbox.is-final{border-color:rgba(250,204,21,.45);background:radial-gradient(circle at top,rgba(250,204,21,.12),rgba(2,6,23,.9) 72%)}
+    .draw-winner-rollbox.is-final .roll-name{color:#facc15;text-shadow:0 0 20px rgba(250,204,21,.32)}
+    .draw-winner-rollbox.is-test{border-color:rgba(59,130,246,.36)}
+    .draw-winner-rollbox.is-test .roll-name{color:#60a5fa;text-shadow:0 0 18px rgba(59,130,246,.34)}
 
     .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
     .summary-box{border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#07101f;padding:14px}
@@ -1404,6 +1412,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     let referralClickCountCache = 0;
     let luckyDrawWinnerSelected = false;
     let luckyDrawCurrentWinnerCache = null;
+    let luckyDrawRollingTimer = null;
+    let luckyDrawRollingActive = false;
 
     const els = {
       auth: document.getElementById('siteAuthActions'),
@@ -2243,7 +2253,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         luckyDrawWinnerSelected = !!winner;
         const name = winner ? (winner.name || winner.usernameKey || 'Winner') : tr('winnerNone');
         els.winner.textContent = name;
-        els.winnerText.textContent = winner ? tr('congrats') + name : tr('winnerPending');
+        if (!luckyDrawRollingActive) {
+          if (winner) finishWinnerRolling(name, {test:false});
+          else els.winnerText.textContent = tr('winnerPending');
+        }
         updateLuckyDrawSummary();
         updateInvitePanel();
       } catch(e) {}
@@ -2670,10 +2683,64 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       return (luckyDrawEntriesCache || []).filter((entry) => entry && !entry.deleted && (entry.name || entry.usernameKey));
     }
 
+    function setWinnerRollBox(title, name, note, mode){
+      if (!els.winnerText) return;
+      const safeTitle = escapeHtml(title || '');
+      const safeName = escapeHtml(name || '-');
+      const safeNote = escapeHtml(note || '');
+      const extra = mode ? ' ' + String(mode).replace(/[^a-z0-9_-]/gi, '') : '';
+      els.winnerText.innerHTML = '<span class="draw-winner-rollbox' + extra + '">' +
+        '<span class="roll-label">' + safeTitle + '</span>' +
+        '<span class="roll-name">' + safeName + '</span>' +
+        (safeNote ? '<span class="roll-note">' + safeNote + '</span>' : '') +
+      '</span>';
+    }
+
+    function getSpinNamePool(finalName){
+      const rows = activeLuckyRows();
+      const names = rows.map((entry) => entry.name || entry.usernameKey || '').filter(Boolean);
+      if (finalName && !names.includes(finalName)) names.push(finalName);
+      return names.length ? names : [finalName || 'User'];
+    }
+
+    function startWinnerRolling(options){
+      const opt = options || {};
+      const names = getSpinNamePool(opt.finalName);
+      const title = opt.test ? tr('testRollingTitle') : tr('rollingTitle');
+      const note = opt.test ? tr('testRollingNote') : tr('rollingNote');
+      let index = 0;
+      clearWinnerRolling(false);
+      luckyDrawRollingActive = true;
+      setWinnerRollBox(title, names[0], note, opt.test ? 'is-test' : '');
+      luckyDrawRollingTimer = setInterval(() => {
+        index = (index + 1) % names.length;
+        setWinnerRollBox(title, names[index], note, opt.test ? 'is-test' : '');
+      }, opt.speed || 90);
+    }
+
+    function clearWinnerRolling(resetActive){
+      if (luckyDrawRollingTimer) {
+        clearInterval(luckyDrawRollingTimer);
+        luckyDrawRollingTimer = null;
+      }
+      if (resetActive !== false) luckyDrawRollingActive = false;
+    }
+
+    function finishWinnerRolling(finalName, options){
+      const opt = options || {};
+      const title = opt.test ? tr('testWinnerPrefix') : tr('winnerFinalTitle');
+      const note = opt.test ? tr('testRollingNote') : tr('winnerFinalNote');
+      clearWinnerRolling(true);
+      setWinnerRollBox(title, finalName || 'User', note, opt.test ? 'is-test' : 'is-final');
+    }
+
     async function runLuckyDraw(){
       if (!requireLuckyDrawAdmin()) return;
       if (!confirm(tr('runDrawConfirm'))) return;
+      const rows = activeLuckyRows();
+      if (rows.length) startWinnerRolling({test:false});
       setAdminStatus('Running lucky draw...');
+      const startedAt = Date.now();
       try {
         const res = await apiFetch('/api/lucky-draw/winner/spin', {
           method:'POST',
@@ -2684,8 +2751,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         if (!data.ok) throw new Error(data.error || 'Run draw gagal');
         const winner = data.winner || {};
         const name = winner.name || winner.usernameKey || 'Winner';
+        const remaining = Math.max(0, 1800 - (Date.now() - startedAt));
+        await new Promise(resolve => setTimeout(resolve, remaining));
         els.winner.textContent = name;
-        els.winnerText.textContent = data.alreadySelected ? 'Pemenang sudah dipilih: ' + name : 'Tahniah ' + name;
+        finishWinnerRolling(name, {test:false});
         luckyDrawWinnerSelected = true;
         updateInvitePanel();
         if (!data.alreadySelected) {
@@ -2700,6 +2769,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         await loadWinnerHistory();
         setAdminStatus(data.alreadySelected ? 'Pemenang bulan ini sudah wujud. Join bulan ini kekal ditutup. Reset Winner dahulu jika mahu buka semula.' : 'Pemenang berjaya dipilih, notifikasi dipublish, dan join bulan ini sudah ditutup.');
       } catch(e) {
+        clearWinnerRolling(true);
+        if (!luckyDrawCurrentWinnerCache) els.winnerText.textContent = tr('winnerPending');
         setAdminStatus(e.message || 'Run draw gagal.', true);
       }
     }
@@ -2712,21 +2783,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         return;
       }
       setAdminStatus('Test spin sahaja. Pemenang tidak disimpan.');
-      let step = 0;
-      const maxStep = 24;
-      const spinTimer = setInterval(() => {
-        const pick = rows[Math.floor(Math.random() * rows.length)] || {};
-        const name = pick.name || pick.usernameKey || 'User';
-        els.winnerText.textContent = 'Spinning... ' + name;
-        step += 1;
-        if (step >= maxStep) {
-          clearInterval(spinTimer);
-          const finalPick = rows[Math.floor(Math.random() * rows.length)] || {};
-          const finalName = finalPick.name || finalPick.usernameKey || 'User';
-          els.winnerText.textContent = 'Test sahaja: ' + finalName;
-          setAdminStatus('Test spin selesai. Tiada rekod winner disimpan.');
-        }
-      }, 90);
+      startWinnerRolling({test:true, speed:80});
+      setTimeout(() => {
+        const finalPick = rows[Math.floor(Math.random() * rows.length)] || {};
+        const finalName = finalPick.name || finalPick.usernameKey || 'User';
+        finishWinnerRolling(finalName, {test:true});
+        setAdminStatus('Test spin selesai. Tiada rekod winner disimpan.');
+      }, 2200);
     }
 
     async function resetLuckyWinner(){
@@ -2737,7 +2800,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const res = await apiFetch('/api/lucky-draw/winner?monthKey=' + encodeURIComponent(monthKey()), {method:'DELETE'});
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Reset winner gagal');
+        clearWinnerRolling(true);
         els.winner.textContent = tr('winnerNone');
+        if (els.winnerText) els.winnerText.textContent = tr('winnerPending');
         els.winnerText.textContent = tr('winnerPending');
         luckyDrawWinnerSelected = false;
         luckyDrawCurrentWinnerCache = null;
