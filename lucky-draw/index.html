@@ -2263,8 +2263,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const candidates = [];
       const add = (v) => {
         if (Array.isArray(v)) return v.forEach(add);
-        String(v || '').split(/[
-,]+/).forEach(x => {
+        String(v || '').split(/[\r\n,]+/).forEach(x => {
           const raw = x.trim();
           if (raw) candidates.push(normalizeImagePath(raw));
         });
