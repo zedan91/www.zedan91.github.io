@@ -1,0 +1,15 @@
+AZOBSS Lucky Draw Auto Folder Sync
+
+Patch 163:
+- Lucky Draw prize now auto-syncs from public folder files when the Lucky Draw page loads.
+- It checks /lucky-draw/giveaway-prize.json and hadiah1.jpg, hadiah2.jpg, etc.
+- If files are deployed/public, backend uploads/saves them to persistent storage automatically.
+- Manual Sync Folder Prize button remains as a backup.
+
+Required live files:
+/lucky-draw/giveaway-prize.json
+/lucky-draw/hadiah1.jpg
+/lucky-draw/hadiah2.jpg (optional)
+...
+
+Note: Browser cannot read local Windows path directly. Files must be extracted/deployed to the public website first.

@@ -2215,7 +2215,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     async function loadPrize(){
       try {
-        const res = await apiFetch('/api/lucky-draw/prize?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+        const res = await apiFetch('/api/lucky-draw/prize?autoFolderSync=1&monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
         const data = await res.json();
         if (data && data.ok && data.prize) {
           renderPrize(data.prize);
