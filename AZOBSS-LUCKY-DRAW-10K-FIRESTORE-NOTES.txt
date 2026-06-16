@@ -1,0 +1,26 @@
+AZOBSS Lucky Draw 10K Participants Firestore Patch
+
+Purpose:
+- Make Lucky Draw participant storage safer for large contests such as 10,000 participants.
+- Avoid frontend loading all participants every time the Lucky Draw page opens.
+- Keep participant list safe from GitHub ZIP extraction and safer than Render local JSON storage.
+
+What changed:
+1. Backend now supports optional Firestore storage for Lucky Draw participants and winners.
+2. Default remains JSON storage unless you enable Firestore with env variables.
+3. Participant list endpoint now uses pagination by default: latest 20 only.
+4. Export Participants uses a backend CSV endpoint so admin can still export all records.
+5. Winner draw still chooses from all active participants on the backend.
+
+Recommended Render env for Firestore mode:
+LUCKY_DRAW_STORAGE=firestore
+FIREBASE_SERVICE_ACCOUNT_JSON={paste Firebase service account JSON here}
+
+Alternative:
+FIREBASE_SERVICE_ACCOUNT_BASE64={base64 encoded service account JSON}
+
+Notes:
+- Firestore Rules are not required for these backend Admin SDK writes because Render uses Firebase Admin credentials.
+- Keep service account JSON private. Do not commit it to GitHub.
+- If Firestore env is not set, backend falls back to existing JSON file storage.
+- Product share/referral logs still use the existing backend storage in this patch.

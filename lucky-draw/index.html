@@ -2448,7 +2448,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     async function loadEntries(){
       try {
-        const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+        const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(monthKey()) + '&limit=20&page=1', {cache:'no-store'});
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Entries error');
         const rows = Array.isArray(data.entries) ? data.entries : [];
@@ -3192,58 +3192,27 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       return text.length > size ? text.slice(0, size) + '...' : text;
     }
 
-    function exportLuckyParticipants(){
+    async function exportLuckyParticipants(){
       if (!requireLuckyDrawAdmin()) return;
-      const rows = activeLuckyRows();
-      if (!rows.length) {
-        setAdminStatus(tr('exportEmpty'), true);
-        return;
+      setAdminStatus('Export peserta penuh dari backend...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/entries/export?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+        if (!res.ok) {
+          let msg = 'Export peserta gagal.';
+          try { const data = await res.json(); msg = data.error || msg; } catch(e) {}
+          throw new Error(msg);
+        }
+        const blob = await res.blob();
+        if (!blob || !blob.size) throw new Error(tr('exportEmpty'));
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'AZOBSS-Lucky-Draw-Participants-' + monthKey() + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        setAdminStatus(tr('exportDone'));
+      } catch(e) {
+        setAdminStatus(e.message || 'Export peserta gagal.', true);
       }
-      const winnerUsername = luckyDrawCurrentWinnerCache && luckyDrawCurrentWinnerCache.usernameKey ? String(luckyDrawCurrentWinnerCache.usernameKey).toLowerCase() : '';
-      const headers = [
-        'No',
-        'Month',
-        'Name',
-        'Username',
-        'Email',
-        'Phone',
-        'Referral Valid Count',
-        'Joined Date MY',
-        'Joined At ISO',
-        'Device Hash',
-        'IP Hash',
-        'Eligible Status',
-        'Winner'
-      ];
-      const csvRows = [headers].concat(rows.map((entry, index) => {
-        const username = String(entry.usernameKey || '').toLowerCase();
-        const referralCount = Number(entry.referralCount || 0);
-        const isWinner = winnerUsername && username === winnerUsername;
-        const eligible = referralCount >= 1 && !entry.deleted ? 'ELIGIBLE' : 'NOT_ELIGIBLE';
-        return [
-          index + 1,
-          entry.monthKey || monthKey(),
-          entry.name || '',
-          entry.usernameKey || '',
-          entry.contactEmail || '',
-          entry.phone || '',
-          referralCount,
-          exportDateMY(entry.joinedAt || entry.joinedAtMs),
-          entry.joinedAt || '',
-          shortHash(entry.deviceFingerprint, 16),
-          shortHash(entry.ipAddress, 10),
-          eligible,
-          isWinner ? 'YES' : 'NO'
-        ];
-      }));
-      const csv = csvRows.map((row) => row.map((value) => '"' + String(value).replace(/"/g, '""') + '"').join(',')).join('\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'AZOBSS-Lucky-Draw-Participants-' + monthKey() + '.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
-      setAdminStatus(tr('exportDone'));
     }
 
     if (els.langToggle) els.langToggle.addEventListener('click', function(){
