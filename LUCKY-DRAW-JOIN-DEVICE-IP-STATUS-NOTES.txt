@@ -1,0 +1,6 @@
+Patch 159 - Lucky Draw join status fix
+
+- Product share valid message no longer appears as final success if the same device/IP has already joined this month.
+- Backend product-referral-status now returns eligibility blocker: ALREADY_JOINED, DUPLICATE_DEVICE, or DUPLICATE_IP.
+- Frontend disables Join Lucky Draw and shows a clear device/IP/account message when not eligible.
+- Duplicate device/IP join errors are shown as errors, not as "already joined" success.

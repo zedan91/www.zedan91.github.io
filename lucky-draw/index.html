@@ -1410,6 +1410,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     let luckyDrawReferralAuditCache = [];
     let luckyDrawAbuseAuditCache = [];
     let referralClickCountCache = 0;
+    let luckyDrawJoinBlockCache = null;
     let luckyDrawWinnerSelected = false;
     let luckyDrawCurrentWinnerCache = null;
     let luckyDrawRollingTimer = null;
@@ -1660,6 +1661,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         checking: 'Checking product share...',
         alreadyJoined: 'Anda sudah join Lucky Draw bulan ini.',
         referralValid: 'Klik produk berbayar sudah valid. Button Join Lucky Draw sudah aktif.',
+        joinBlockedDevice: 'Syarat share produk sudah valid, tetapi device ini sudah digunakan untuk join Lucky Draw bulan ini.',
+        joinBlockedIp: 'Syarat share produk sudah valid, tetapi IP address ini sudah digunakan untuk join Lucky Draw bulan ini.',
+        joinBlockedAccount: 'Akaun ini sudah join Lucky Draw bulan ini.',
+        joinBlockedGeneric: 'Syarat share produk sudah valid, tetapi anda belum boleh join bulan ini.',
         referralMissing: 'Share link username kepada orang lain. Join aktif selepas sekurang-kurangnya 1 orang buka link anda.',
         referralCount: 'Valid product click: ',
         noReferral: 'Belum ada klik produk valid',
@@ -1802,6 +1807,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         checking: 'Checking product share...',
         alreadyJoined: 'You have already joined this month\'s Lucky Draw.',
         referralValid: 'Paid product click is valid. Join Lucky Draw button is now active.',
+        joinBlockedDevice: 'Paid product share is valid, but this device has already been used to join this month.',
+        joinBlockedIp: 'Paid product share is valid, but this IP address has already been used to join this month.',
+        joinBlockedAccount: 'This account has already joined the Lucky Draw this month.',
+        joinBlockedGeneric: 'Paid product share is valid, but you cannot join this month.',
         referralMissing: 'Share any paid Software/CAD product. Join will be active after at least 1 person opens your product link.',
         referralCount: 'Valid product click: ',
         noReferral: 'No valid product click yet',
@@ -1941,6 +1950,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       els.status.textContent = message || '';
       els.status.classList.toggle('error', !!error);
     }
+    function getJoinBlockMessage(block){
+      const code = String((block && block.code) || '').toUpperCase();
+      const reason = String((block && block.reason) || '').trim();
+      if (code === 'ALREADY_JOINED' || code === 'DUPLICATE_USER' || code === 'DUPLICATE_UID') return tr('joinBlockedAccount');
+      if (code === 'DUPLICATE_DEVICE') return tr('joinBlockedDevice');
+      if (code === 'DUPLICATE_IP') return tr('joinBlockedIp');
+      return reason || tr('joinBlockedGeneric');
+    }
     function setAdminStatus(message, error){
       els.adminStatus.textContent = message || '';
       els.adminStatus.classList.toggle('error', !!error);
@@ -1983,11 +2000,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!user || !(user.usernameKey || user.name)) return 0;
       const username = cleanShareUsername(user.usernameKey || user.name);
       try {
-        const res = await apiFetch('/api/lucky-draw/product-referral-status?monthKey=' + encodeURIComponent(monthKey()) + '&ref=' + encodeURIComponent(username));
+        const query = '/api/lucky-draw/product-referral-status?monthKey=' + encodeURIComponent(monthKey()) +
+          '&ref=' + encodeURIComponent(username) +
+          '&deviceFingerprint=' + encodeURIComponent(getDeviceFingerprint());
+        const res = await apiFetch(query);
         const data = await res.json().catch(() => ({}));
         referralClickCountCache = Number(data.count || 0);
-        if (referralClickCountCache > 0) {
+        luckyDrawJoinBlockCache = data && data.blockCode ? { code: data.blockCode, reason: data.blockReason || '' } : null;
+        if (referralClickCountCache > 0 && !luckyDrawJoinBlockCache) {
           localStorage.setItem(getShareKey(user), '1');
+        } else if (luckyDrawJoinBlockCache) {
+          localStorage.removeItem(getShareKey(user));
         }
         return referralClickCountCache;
       } catch(e) {
@@ -2089,7 +2112,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!user.usernameKey) user.usernameKey = normalizeUsername(user.name);
       user.inviteCode = buildInviteCode(user.usernameKey);
       const inviteUrl = buildInviteUrl(user);
-      const referralReady = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
+      const referralReadyRaw = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
+      const joinBlocked = !!luckyDrawJoinBlockCache;
+      const referralReady = referralReadyRaw && !joinBlocked;
       const backendJoined = !!findCurrentUserEntry(user);
       // Backend peserta adalah sumber utama. LocalStorage tidak lagi mengunci join
       // supaya admin boleh reset penyertaan bulan semasa dan user boleh join semula.
@@ -2099,8 +2124,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (els.inviteLink) els.inviteLink.value = luckyDrawLang === 'en' ? 'Open Software/CAD paid product and tap the Share for Lucky Draw button' : 'Buka produk berbayar Software/CAD dan tekan button Share for Lucky Draw';
       if (els.productRequirementText) els.productRequirementText.innerHTML = tr('productRequirement');
       els.inviteCode.textContent = user.usernameKey;
-      els.shareStatus.textContent = referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral');
-      els.joinButton.disabled = luckyDrawWinnerSelected || joined || !referralReady;
+      els.shareStatus.textContent = joinBlocked ? getJoinBlockMessage(luckyDrawJoinBlockCache) : (referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral'));
+      els.joinButton.disabled = luckyDrawWinnerSelected || joined || joinBlocked || !referralReady;
       updateJoinChecklist(user, referralReady, joined);
       if (els.confirmShareButton) {
         els.confirmShareButton.disabled = joined;
@@ -2108,6 +2133,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
       if (luckyDrawWinnerSelected) setStatus(tr('drawClosed'));
       else if (joined) setStatus(tr('alreadyJoined'));
+      else if (joinBlocked) setStatus(getJoinBlockMessage(luckyDrawJoinBlockCache), true);
       else if (referralReady) setStatus(tr('referralValid'));
       else setStatus(tr('referralMissing'));
       updateLuckyDrawSummary();
@@ -2522,6 +2548,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!referralReady) {
         await loadReferralStatus(user);
       }
+      if (luckyDrawJoinBlockCache) {
+        updateInvitePanel();
+        setStatus(getJoinBlockMessage(luckyDrawJoinBlockCache), true);
+        return;
+      }
       if (!(localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0)) {
         setStatus('Belum ada klik valid dari link produk berbayar. Share mana-mana Software/CAD berbayar dahulu.', true);
         return;
@@ -2553,6 +2584,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) {
           if (isDuplicateJoinError(null, data)) {
+            const code = String(data && data.code || '').toUpperCase();
+            if (code === 'DUPLICATE_DEVICE' || code === 'DUPLICATE_IP') {
+              luckyDrawJoinBlockCache = { code, reason: data.error || '' };
+              updateInvitePanel();
+              setStatus(getJoinBlockMessage(luckyDrawJoinBlockCache), true);
+              return;
+            }
             showJoinedStatus(user, data.error || tr('alreadyJoined'));
             await loadEntries();
             return;
@@ -2565,7 +2603,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         await loadEntries();
       } catch(e) {
         if (isDuplicateJoinError(e, null)) {
-          showJoinedStatus(user, e.message || tr('alreadyJoined'));
+          setStatus(e.message || tr('joinBlockedGeneric'), true);
           return;
         }
         if (els.joinButton) els.joinButton.disabled = false;

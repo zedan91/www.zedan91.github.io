@@ -1170,9 +1170,40 @@ app.get("/api/prize", (req, res) => {
 app.get("/api/lucky-draw/product-referral-status", (req, res) => {
   const key = req.query.monthKey || monthKey();
   const ref = cleanShareUsername(req.query.ref);
+  const deviceFingerprint = cleanText(req.query.deviceFingerprint || "", 160);
+  const ipAddress = getClientIp(req);
   if (!ref) return res.status(400).json({ ok: false, error: "ref required" });
+
   const count = countValidProductShareClicks(key, ref);
-  res.json({ ok: true, monthKey: key, ref, count, valid: count >= 1 });
+  const entries = readJson(getEntriesFile(key), []);
+  const activeEntries = entries.filter((e) => e.monthKey === key && !e.deleted);
+  const sameUser = activeEntries.find((e) => e.usernameKey === ref);
+  const sameDevice = deviceFingerprint ? activeEntries.find((e) => e.deviceFingerprint && e.deviceFingerprint === deviceFingerprint) : null;
+  const sameIp = ipAddress ? activeEntries.find((e) => e.ipAddress && e.ipAddress === ipAddress) : null;
+
+  let blockCode = "";
+  let blockReason = "";
+  if (sameUser) {
+    blockCode = "ALREADY_JOINED";
+    blockReason = "Akaun ini sudah join Lucky Draw bulan ini.";
+  } else if (sameDevice) {
+    blockCode = "DUPLICATE_DEVICE";
+    blockReason = "Device ini sudah digunakan untuk join Lucky Draw bulan ini.";
+  } else if (sameIp) {
+    blockCode = "DUPLICATE_IP";
+    blockReason = "IP address ini sudah digunakan untuk join Lucky Draw bulan ini.";
+  }
+
+  res.json({
+    ok: true,
+    monthKey: key,
+    ref,
+    count,
+    valid: count >= 1,
+    eligible: count >= 1 && !blockCode,
+    blockCode,
+    blockReason
+  });
 });
 
 app.post("/api/lucky-draw/product-referral-click", (req, res) => {
