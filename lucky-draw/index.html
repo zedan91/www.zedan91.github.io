@@ -2215,7 +2215,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
     async function loadPrize(){
       try {
-        const res = await apiFetch('/api/lucky-draw/prize?autoFolderSync=1&monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+        const res = await apiFetch('/api/lucky-draw/prize?autoFolderSync=1&monthKey=' + encodeURIComponent(monthKey()) + '&baseUrl=' + encodeURIComponent(location.origin) + '&_=' + Date.now(), {cache:'no-store'});
         const data = await res.json();
         if (data && data.ok && data.prize) {
           renderPrize(data.prize);
@@ -2301,7 +2301,25 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!prizeCarouselImages.length) prizeCarouselImages = ['/lucky-draw/prize-placeholder.svg'];
       if (prizeCarouselIndex < 0) prizeCarouselIndex = prizeCarouselImages.length - 1;
       if (prizeCarouselIndex >= prizeCarouselImages.length) prizeCarouselIndex = 0;
-      if (els.prizeImage) els.prizeImage.src = prizeCarouselImages[prizeCarouselIndex];
+      if (els.prizeImage) {
+        els.prizeImage.onerror = function(){
+          try {
+            if (!prizeCarouselImages || prizeCarouselImages.length <= 1) {
+              this.onerror = null;
+              this.src = '/lucky-draw/prize-placeholder.svg';
+              return;
+            }
+            const failed = prizeCarouselImages.splice(prizeCarouselIndex, 1)[0];
+            console.warn('AZOBSS Lucky Draw prize image failed, skipped:', failed);
+            if (prizeCarouselIndex >= prizeCarouselImages.length) prizeCarouselIndex = 0;
+            updatePrizeCarousel();
+          } catch(e) {
+            this.onerror = null;
+            this.src = '/lucky-draw/prize-placeholder.svg';
+          }
+        };
+        els.prizeImage.src = prizeCarouselImages[prizeCarouselIndex];
+      }
       if (els.prizeImageCounter) els.prizeImageCounter.textContent = (prizeCarouselIndex + 1) + ' / ' + prizeCarouselImages.length;
       if (els.prizeCarouselShell) els.prizeCarouselShell.classList.toggle('single', prizeCarouselImages.length <= 1);
     }

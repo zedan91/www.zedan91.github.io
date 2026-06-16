@@ -1229,9 +1229,18 @@ app.get("/api/lucky-draw/prize", async (req, res) => {
   const wantsAutoSync = String(req.query.autoFolderSync || req.query.autoSync || "") === "1";
   if (wantsAutoSync) {
     try {
+      let frontendOrigin = "";
+      try {
+        const originHeader = req.get("origin") || "";
+        if (originHeader) frontendOrigin = originHeader;
+        else {
+          const refererHeader = req.get("referer") || "";
+          if (refererHeader) frontendOrigin = new URL(refererHeader).origin;
+        }
+      } catch(e) {}
       autoSyncResult = await syncLuckyDrawPrizeFromPublicFolder({
         monthKey: key,
-        baseUrl: req.query.baseUrl || PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`,
+        baseUrl: req.query.baseUrl || PUBLIC_BASE_URL || frontendOrigin || `${req.protocol}://${req.get("host")}`,
         updatedBy: "auto-folder-sync"
       });
     } catch (err) {
