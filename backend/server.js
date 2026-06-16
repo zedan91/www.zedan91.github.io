@@ -1084,33 +1084,61 @@ app.get("/api/lucky-draw/prize", (req, res) => {
   res.json({ ok: true, prize, monthName: monthName(key) });
 });
 
-app.post("/api/lucky-draw/prize", requireAdmin, upload.single("image"), async (req, res) => {
+app.post("/api/lucky-draw/prize", requireAdmin, upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 10 }]), async (req, res) => {
   try {
     const key = req.body.monthKey || monthKey();
     const previous = readJson(getPrizeFile(key), {});
     const manualImageUrl = cleanText(req.body.imageUrl, 1200);
-    let imageUrl = manualImageUrl || previous.imageUrl || previous.image || "";
-    let imageStorage = previous.imageStorage || (imageUrl ? "url" : "");
+    let manualImageUrls = [];
+    try {
+      const raw = req.body.imageUrls;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) manualImageUrls = parsed.map(v => cleanText(v, 1200)).filter(Boolean);
+      }
+    } catch(e) {
+      manualImageUrls = String(req.body.imageUrls || "").split(/[\n,]+/).map(v => cleanText(v, 1200)).filter(Boolean);
+    }
+    if (manualImageUrl && !manualImageUrls.includes(manualImageUrl)) manualImageUrls.unshift(manualImageUrl);
 
-    if (req.file) {
-      const persistentUrl = await uploadLuckyPrizeImagePersistent(req.file);
-      if (persistentUrl) {
-        imageUrl = persistentUrl;
-        imageStorage = "cloudinary";
-        // Local temp upload is no longer needed once Cloudinary has the image.
-        try { fs.unlinkSync(req.file.path); } catch(e) {}
-      } else {
-        imageUrl = `${PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`}/uploads/lucky-draw/${req.file.filename}`;
-        imageStorage = "backend-upload";
+    const previousUrls = Array.isArray(previous.imageUrls) ? previous.imageUrls.filter(Boolean) : [];
+    if (!previousUrls.length && (previous.imageUrl || previous.image)) previousUrls.push(previous.imageUrl || previous.image);
+
+    let imageUrls = manualImageUrls.length ? manualImageUrls.slice() : previousUrls.slice();
+    let imageStorage = previous.imageStorage || (imageUrls.length ? "url" : "");
+
+    const uploadFiles = [];
+    if (req.files) {
+      if (Array.isArray(req.files.image)) uploadFiles.push(...req.files.image);
+      if (Array.isArray(req.files.images)) uploadFiles.push(...req.files.images);
+    }
+
+    if (uploadFiles.length) {
+      const uploadedUrls = [];
+      for (const file of uploadFiles.slice(0, 10)) {
+        const persistentUrl = await uploadLuckyPrizeImagePersistent(file);
+        if (persistentUrl) {
+          uploadedUrls.push(persistentUrl);
+          try { fs.unlinkSync(file.path); } catch(e) {}
+        } else {
+          uploadedUrls.push(`${PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`}/uploads/lucky-draw/${file.filename}`);
+        }
+      }
+      if (uploadedUrls.length) {
+        imageUrls = uploadedUrls;
+        imageStorage = uploadedUrls.some(u => /res\.cloudinary\.com/i.test(u)) ? "cloudinary" : "backend-upload";
       }
     }
 
+    const imageUrl = imageUrls[0] || "";
     const prize = {
       monthKey: key,
       title: req.body.title || previous.title || "Hadiah Lucky Draw",
       description: req.body.description || previous.description || "",
       imageUrl,
       image: imageUrl,
+      imageUrls,
+      images: imageUrls,
       imageStorage,
       updatedAt: new Date().toISOString(),
       updatedBy: req.body.updatedBy || "admin"
@@ -1151,6 +1179,8 @@ app.get("/api/prize", (req, res) => {
     // Support both field names.
     if (!prize.imageUrl && prize.image) prize.imageUrl = prize.image;
     if (!prize.image && prize.imageUrl) prize.image = prize.imageUrl;
+    if (!Array.isArray(prize.imageUrls)) prize.imageUrls = [prize.imageUrl || prize.image].filter(Boolean);
+    if (!Array.isArray(prize.images)) prize.images = prize.imageUrls;
 
     res.json({
       ok: true,

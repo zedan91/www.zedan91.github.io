@@ -1092,6 +1092,33 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 }
 </style>
 
+
+<style id="azobss-lucky-draw-prize-carousel-161">
+/* AZOBSS PATCH 161: Lucky Draw multiple prize image carousel */
+.prize-carousel-shell{position:relative;width:100%;}
+.prize-carousel-shell .prize-image-wrap{width:100%;}
+.prize-carousel-btn{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  width:42px;height:42px;border-radius:999px;border:1px solid rgba(148,163,184,.35);
+  background:rgba(15,23,42,.82);color:#fff;font-size:24px;font-weight:900;
+  display:grid;place-items:center;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.35);
+}
+.prize-carousel-btn:hover{background:rgba(37,99,235,.92);border-color:rgba(96,165,250,.75);}
+.prize-carousel-btn.prev{left:12px;}
+.prize-carousel-btn.next{right:12px;}
+.prize-carousel-counter{
+  position:absolute;right:14px;bottom:12px;z-index:6;
+  padding:5px 10px;border-radius:999px;background:rgba(2,6,23,.72);
+  border:1px solid rgba(148,163,184,.28);color:#e5e7eb;font-size:12px;font-weight:800;
+}
+.prize-carousel-shell.single .prize-carousel-btn,.prize-carousel-shell.single .prize-carousel-counter{display:none!important;}
+@media(max-width:720px){
+  .prize-carousel-btn{width:36px;height:36px;font-size:20px;}
+  .prize-carousel-btn.prev{left:8px;}
+  .prize-carousel-btn.next{right:8px;}
+  .prize-carousel-counter{right:10px;bottom:10px;font-size:11px;}
+}
+</style>
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
@@ -1224,8 +1251,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 </div>
 <div class="panel prize-panel">
+<div class="prize-carousel-shell single" id="prizeCarouselShell">
+<button aria-label="Gambar sebelum" class="prize-carousel-btn prev" id="prizePrevButton" type="button">‹</button>
 <div class="prize-image-wrap">
 <img alt="Lucky Draw Prize" id="prizeImage" onerror="this.onerror=null;this.src='/lucky-draw/Multi cooker Philips.jpg';" src="/lucky-draw/prize-placeholder.svg"/>
+</div>
+<button aria-label="Gambar seterusnya" class="prize-carousel-btn next" id="prizeNextButton" type="button">›</button>
+<span class="prize-carousel-counter" id="prizeImageCounter">1 / 1</span>
 </div>
 <div>
 <span class="kicker">Hadiah Lucky Draw</span>
@@ -1246,12 +1278,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div>
 <label class="field-label" for="prizeImageFile">Gambar hadiah</label>
-<input accept="image/*" class="file-input" id="prizeImageFile" type="file"/>
+<input accept="image/*" class="file-input" id="prizeImageFile" multiple type="file"/>
 </div>
 <div>
 <label class="field-label" for="prizeImageUrlInput">URL gambar kekal</label>
 <input id="prizeImageUrlInput" placeholder="https://..." type="url"/>
-<small class="status-note" style="display:block;margin-top:6px">Untuk long term, guna URL gambar dari Cloudinary/Firebase Storage/CDN.</small>
+<small class="status-note" style="display:block;margin-top:6px">Untuk banyak gambar, pilih beberapa file atau isi beberapa URL dipisah koma/baris baru.</small>
 </div>
 </div>
 <div style="margin-top:12px">
@@ -1407,6 +1439,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', savedInviteFromUrl);
 
     let luckyDrawEntriesCache = [];
+    let prizeCarouselImages = [];
+    let prizeCarouselIndex = 0;
     let luckyDrawReferralAuditCache = [];
     let luckyDrawAbuseAuditCache = [];
     let referralClickCountCache = 0;
@@ -1455,6 +1489,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       drawSummaryStatus: document.getElementById('drawSummaryStatus'),
       drawSummaryLatest: document.getElementById('drawSummaryLatest'),
       prizeImage: document.getElementById('prizeImage'),
+      prizeCarouselShell: document.getElementById('prizeCarouselShell'),
+      prizePrevButton: document.getElementById('prizePrevButton'),
+      prizeNextButton: document.getElementById('prizeNextButton'),
+      prizeImageCounter: document.getElementById('prizeImageCounter'),
       prizeTitle: document.getElementById('prizeTitle'),
       prizeDescription: document.getElementById('prizeDescription'),
       prizeTitleInput: document.getElementById('prizeTitleInput'),
@@ -2235,23 +2273,63 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }catch(e){}
     }
 
+    function splitPrizeImageUrls(value){
+      if (Array.isArray(value)) return value.map(v => String(v || '').trim()).filter(Boolean);
+      return String(value || '').split(/[\n,]+/).map(v => v.trim()).filter(Boolean);
+    }
+
+    function getPrizeImages(prize){
+      const images = [];
+      splitPrizeImageUrls(prize.imageUrls || prize.images).forEach(v => images.push(v));
+      splitPrizeImageUrls(prize.imageUrl || prize.image).forEach(v => images.push(v));
+      const clean = [];
+      const seen = new Set();
+      images.forEach(v => {
+        const key = String(v || '').trim();
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        clean.push(normalizeImagePath(key));
+      });
+      return clean.length ? clean : ['/lucky-draw/prize-placeholder.svg'];
+    }
+
+    function updatePrizeCarousel(){
+      if (!prizeCarouselImages.length) prizeCarouselImages = ['/lucky-draw/prize-placeholder.svg'];
+      if (prizeCarouselIndex < 0) prizeCarouselIndex = prizeCarouselImages.length - 1;
+      if (prizeCarouselIndex >= prizeCarouselImages.length) prizeCarouselIndex = 0;
+      if (els.prizeImage) els.prizeImage.src = prizeCarouselImages[prizeCarouselIndex];
+      if (els.prizeImageCounter) els.prizeImageCounter.textContent = (prizeCarouselIndex + 1) + ' / ' + prizeCarouselImages.length;
+      if (els.prizeCarouselShell) els.prizeCarouselShell.classList.toggle('single', prizeCarouselImages.length <= 1);
+    }
+
+    function movePrizeImage(step){
+      prizeCarouselIndex += step;
+      updatePrizeCarousel();
+    }
+
     function renderPrize(prize){
-      const image = normalizeImagePath(prize.imageUrl || prize.image);
+      const images = getPrizeImages(prize || {});
       const title = prize.title || tr('prizeDefaultTitle');
       const desc = prize.description || tr('prizeDefaultDesc');
-      els.prizeImage.src = image;
+      prizeCarouselImages = images;
+      prizeCarouselIndex = 0;
+      updatePrizeCarousel();
       els.prizeTitle.textContent = title;
       els.prizeDescription.innerHTML = linkifyPrizeDescription(desc);
       setTimeout(updatePrizeDescScrollHint, 60);
       updateLuckyDrawSummary();
       els.prizeTitleInput.value = prize.title || '';
       els.prizeDescriptionInput.value = prize.description || '';
-      if (els.prizeImageUrlInput) els.prizeImageUrlInput.value = prize.imageUrl || prize.image || '';
+      const urlList = splitPrizeImageUrls(prize.imageUrls || prize.images || []);
+      const singleUrl = prize.imageUrl || prize.image || '';
+      if (!urlList.length && singleUrl) urlList.push(singleUrl);
+      if (els.prizeImageUrlInput) els.prizeImageUrlInput.value = urlList.join('\n');
       els.prizeJsonInput.value = JSON.stringify({
         monthKey: prize.monthKey || monthKey(),
         title,
         description: desc,
-        imageUrl: prize.imageUrl || prize.image || '',
+        imageUrl: urlList[0] || '',
+        imageUrls: urlList,
         imageStorage: prize.imageStorage || ''
       }, null, 2);
     }
@@ -2635,15 +2713,20 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       form.append('title', els.prizeTitleInput.value.trim());
       form.append('description', els.prizeDescriptionInput.value.trim());
       if (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) {
-        form.append('imageUrl', els.prizeImageUrlInput.value.trim());
+        const urls = splitPrizeImageUrls(els.prizeImageUrlInput.value.trim());
+        if (urls.length) {
+          form.append('imageUrl', urls[0]);
+          form.append('imageUrls', JSON.stringify(urls));
+        }
       }
       form.append('updatedBy', normalizeUsername(readUser().usernameKey || readUser().name));
       try {
         const parsed = JSON.parse(els.prizeJsonInput.value || '{}');
+        if (parsed.imageUrls || parsed.images) form.append('imageUrls', JSON.stringify(splitPrizeImageUrls(parsed.imageUrls || parsed.images)));
         if (parsed.imageUrl || parsed.image) form.append('imageUrl', parsed.imageUrl || parsed.image);
       } catch(e) {}
-      if (els.prizeImageFile.files && els.prizeImageFile.files[0]) {
-        form.append('image', els.prizeImageFile.files[0]);
+      if (els.prizeImageFile.files && els.prizeImageFile.files.length) {
+        Array.from(els.prizeImageFile.files).slice(0, 10).forEach(file => form.append('images', file));
       }
       setAdminStatus('Saving hadiah...');
       try {
@@ -2692,11 +2775,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = JSON.parse(els.prizeJsonInput.value || '{}');
         if (data.title !== undefined) els.prizeTitleInput.value = data.title;
         if (data.description !== undefined) els.prizeDescriptionInput.value = data.description;
-        if (els.prizeImageUrlInput && (data.imageUrl !== undefined || data.image !== undefined)) els.prizeImageUrlInput.value = data.imageUrl || data.image || '';
+        if (els.prizeImageUrlInput && (data.imageUrls !== undefined || data.images !== undefined || data.imageUrl !== undefined || data.image !== undefined)) {
+          const urls = splitPrizeImageUrls(data.imageUrls || data.images || []);
+          if (!urls.length && (data.imageUrl || data.image)) urls.push(data.imageUrl || data.image);
+          els.prizeImageUrlInput.value = urls.join('\n');
+        }
         renderPrize({
           title: els.prizeTitleInput.value,
           description: els.prizeDescriptionInput.value,
-          imageUrl: (els.prizeImageUrlInput && els.prizeImageUrlInput.value) || data.imageUrl || data.image || ''
+          imageUrls: splitPrizeImageUrls((els.prizeImageUrlInput && els.prizeImageUrlInput.value) || data.imageUrls || data.images || data.imageUrl || data.image || ''),
+          imageUrl: splitPrizeImageUrls((els.prizeImageUrlInput && els.prizeImageUrlInput.value) || data.imageUrls || data.images || data.imageUrl || data.image || '')[0] || ''
         });
         setAdminStatus('JSON diaplikasi ke preview. Tekan Save Prize untuk publish.');
       } catch(e) {
@@ -2709,9 +2797,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         monthKey: monthKey(),
         title: els.prizeTitleInput.value.trim(),
         description: els.prizeDescriptionInput.value.trim(),
+        imageUrls: (() => {
+          if (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) return splitPrizeImageUrls(els.prizeImageUrlInput.value.trim());
+          try { const data = JSON.parse(els.prizeJsonInput.value || '{}'); return splitPrizeImageUrls(data.imageUrls || data.images || data.imageUrl || data.image || ''); }
+          catch(e) { return []; }
+        })(),
         imageUrl: (() => {
-          if (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) return els.prizeImageUrlInput.value.trim();
-          try { const data = JSON.parse(els.prizeJsonInput.value || '{}'); return data.imageUrl || data.image || ''; }
+          const urls = (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) ? splitPrizeImageUrls(els.prizeImageUrlInput.value.trim()) : [];
+          if (urls[0]) return urls[0];
+          try { const data = JSON.parse(els.prizeJsonInput.value || '{}'); return splitPrizeImageUrls(data.imageUrls || data.images || data.imageUrl || data.image || '')[0] || ''; }
           catch(e) { return ''; }
         })(),
         updatedAt: new Date().toISOString()
@@ -3027,6 +3121,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (els.refreshAbuseAuditButton) els.refreshAbuseAuditButton.addEventListener('click', loadAbuseAudit);
     if (els.exportAbuseAuditButton) els.exportAbuseAuditButton.addEventListener('click', exportAbuseAudit);
     document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
+    if (els.prizePrevButton) els.prizePrevButton.addEventListener('click', function(){ movePrizeImage(-1); });
+    if (els.prizeNextButton) els.prizeNextButton.addEventListener('click', function(){ movePrizeImage(1); });
     const syncPrizeButton = document.getElementById('syncPrizeButton'); if (syncPrizeButton) syncPrizeButton.addEventListener('click', async () => { setAdminStatus('Sync hadiah dari backend...'); await loadPrize(); setAdminStatus('Hadiah terkini sudah sync dari backend.'); });
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
     document.getElementById('loadJsonButton').addEventListener('click', openPrizeJsonFile);
