@@ -1298,6 +1298,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="admin-actions">
 <button class="btn green" id="savePrizeButton" type="button">Save Prize</button>
 <button class="btn dark" id="syncPrizeButton" type="button">Sync from Backend</button>
+<button class="btn blue" id="syncFolderPrizeButton" type="button">Sync Folder Prize</button>
 <button class="btn dark" id="loadJsonButton" type="button">Load Prize JSON</button>
 <button class="btn dark" id="applyJsonButton" type="button">Apply JSON</button>
 <button class="btn orange" id="downloadJsonButton" type="button">Export Prize JSON</button>
@@ -1654,6 +1655,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         adminPrizeImageUrlHint: 'Untuk long term, guna URL gambar dari Cloudinary/Firebase Storage/CDN.',
         savePrize: 'Save Prize',
         syncBackend: 'Sync from Backend',
+        syncFolderPrize: 'Sync Folder Prize',
         loadJson: 'Load Prize JSON',
         applyJson: 'Apply JSON',
         downloadJson: 'Export Prize JSON',
@@ -1807,6 +1809,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         adminPrizeImageUrlHint: 'For long term, use an image URL from Cloudinary/Firebase Storage/CDN.',
         savePrize: 'Save Prize',
         syncBackend: 'Sync from Backend',
+        syncFolderPrize: 'Sync Folder Prize',
         loadJson: 'Load Prize JSON',
         applyJson: 'Apply JSON',
         downloadJson: 'Export Prize JSON',
@@ -1939,6 +1942,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const descInput = document.getElementById('prizeDescriptionInput'); if (descInput) descInput.placeholder = tr('adminPrizeDesc');
       setText('#savePrizeButton', tr('savePrize'));
       setText('#syncPrizeButton', tr('syncBackend'));
+      setText('#syncFolderPrizeButton', tr('syncFolderPrize'));
       setText('#loadJsonButton', tr('loadJson'));
       setText('#applyJsonButton', tr('applyJson'));
       setText('#downloadJsonButton', tr('downloadJson'));
@@ -2703,6 +2707,40 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
     }
 
+    async function syncPrizeFromFolder(){
+      if (!isAdmin(readUser())) {
+        setAdminStatus('Admin sahaja boleh sync folder hadiah.', true);
+        return;
+      }
+      const baseUrl = location.origin;
+      setAdminStatus('Sedang scan /lucky-draw/giveaway-prize.json dan hadiah1.jpg, hadiah2.jpg...');
+      try {
+        const res = await apiFetch('/api/lucky-draw/prize/sync-folder', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            monthKey: monthKey(),
+            baseUrl,
+            prizeJsonPath: '/lucky-draw/giveaway-prize.json',
+            imagePrefix: '/lucky-draw/hadiah',
+            maxImages: 20,
+            updatedBy: normalizeUsername(readUser().usernameKey || readUser().name)
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Sync folder gagal');
+        renderPrize(data.prize || {});
+        if (els.prizeTitleInput) els.prizeTitleInput.value = (data.prize && data.prize.title) || '';
+        if (els.prizeDescriptionInput) els.prizeDescriptionInput.value = (data.prize && data.prize.description) || '';
+        if (els.prizeImageUrlInput) els.prizeImageUrlInput.value = splitPrizeImageUrls((data.prize && (data.prize.imageUrls || data.prize.images || data.prize.imageUrl || data.prize.image)) || '').join('\n');
+        if (els.prizeJsonInput) els.prizeJsonInput.value = JSON.stringify(data.prize || {}, null, 2);
+        const count = Array.isArray(data.syncedImages) ? data.syncedImages.length : 0;
+        setAdminStatus('Sync folder berjaya. ' + count + ' gambar disimpan ke storage/backend.');
+      } catch(e) {
+        setAdminStatus((e && e.message) ? e.message : 'Sync folder gagal.', true);
+      }
+    }
+
     async function savePrize(){
       if (!isAdmin(readUser())) {
         setAdminStatus('Admin sahaja boleh save hadiah.', true);
@@ -3124,6 +3162,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (els.prizePrevButton) els.prizePrevButton.addEventListener('click', function(){ movePrizeImage(-1); });
     if (els.prizeNextButton) els.prizeNextButton.addEventListener('click', function(){ movePrizeImage(1); });
     const syncPrizeButton = document.getElementById('syncPrizeButton'); if (syncPrizeButton) syncPrizeButton.addEventListener('click', async () => { setAdminStatus('Sync hadiah dari backend...'); await loadPrize(); setAdminStatus('Hadiah terkini sudah sync dari backend.'); });
+    const syncFolderPrizeButton = document.getElementById('syncFolderPrizeButton'); if (syncFolderPrizeButton) syncFolderPrizeButton.addEventListener('click', syncPrizeFromFolder);
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
     document.getElementById('loadJsonButton').addEventListener('click', openPrizeJsonFile);
     if (els.prizeJsonFileInput) els.prizeJsonFileInput.addEventListener('change', handlePrizeJsonFile);

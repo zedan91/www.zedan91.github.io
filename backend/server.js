@@ -651,6 +651,63 @@ async function uploadLuckyPrizeImagePersistent(file) {
   }
 }
 
+
+async function uploadLuckyPrizeRemoteUrlPersistent(remoteUrl, fallbackName) {
+  const cloudName = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+  const uploadPreset = String(process.env.CLOUDINARY_UPLOAD_PRESET || "").trim();
+  if (!remoteUrl || !cloudName || !uploadPreset) return null;
+  try {
+    const response = await fetch(remoteUrl, { method: "GET" });
+    if (!response.ok) throw new Error(`Fetch image failed: ${response.status}`);
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    if (!/^image\//i.test(contentType)) throw new Error("Remote file is not an image");
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (!buffer.length) throw new Error("Remote image is empty");
+    const form = new FormData();
+    const urlName = (() => {
+      try { return path.basename(new URL(remoteUrl).pathname) || fallbackName || "lucky-draw-prize.jpg"; }
+      catch(e) { return fallbackName || "lucky-draw-prize.jpg"; }
+    })();
+    form.append("file", new Blob([buffer], { type: contentType }), urlName);
+    form.append("upload_preset", uploadPreset);
+    form.append("folder", process.env.CLOUDINARY_FOLDER || "azobss/lucky-draw");
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`;
+    const uploadRes = await fetch(endpoint, { method: "POST", body: form });
+    const data = await uploadRes.json().catch(() => ({}));
+    if (!uploadRes.ok || !data.secure_url) throw new Error(data.error?.message || "Cloudinary remote upload failed");
+    return data.secure_url;
+  } catch (err) {
+    console.warn("AZOBSS Cloudinary remote prize upload failed:", err.message || err);
+    return null;
+  }
+}
+
+function resolvePublicUrl(baseUrl, value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try { return new URL(raw, baseUrl).toString(); } catch(e) { return ""; }
+}
+
+function uniqueList(list) {
+  const out = [];
+  const seen = new Set();
+  for (const item of list || []) {
+    const v = String(item || "").trim();
+    if (!v || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
+async function imageUrlExists(url) {
+  try {
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) return false;
+    const type = res.headers.get("content-type") || "";
+    return /^image\//i.test(type);
+  } catch(e) { return false; }
+}
 app.get("/", (req, res) => {
   res.json({
     ok: true,
@@ -1070,6 +1127,74 @@ app.post("/api/software-stats/admin-set", requireAdmin, (req, res) => {
   }
   writeSoftwareStats(stats);
   res.json({ ok: true, stats });
+});
+
+
+app.post("/api/lucky-draw/prize/sync-folder", requireAdmin, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const key = cleanText(body.monthKey || monthKey(), 32) || monthKey();
+    const baseUrl = String(body.baseUrl || PUBLIC_BASE_URL || "").trim();
+    if (!baseUrl) return res.status(400).json({ ok:false, error:"baseUrl tidak ditemui." });
+    const previous = readJson(getPrizeFile(key), {});
+    const jsonUrl = resolvePublicUrl(baseUrl, body.prizeJsonPath || "/lucky-draw/giveaway-prize.json");
+    let jsonData = {};
+    try {
+      const jsonRes = await fetch(jsonUrl, { method:"GET" });
+      if (jsonRes.ok) jsonData = await jsonRes.json();
+    } catch(e) {
+      jsonData = {};
+    }
+
+    const rawImageValues = [];
+    const addRaw = (v) => {
+      if (Array.isArray(v)) v.forEach(addRaw);
+      else if (typeof v === "string") String(v).split(/[\n,]+/).forEach(x => { if (x.trim()) rawImageValues.push(x.trim()); });
+    };
+    addRaw(jsonData.imageUrls || jsonData.images || []);
+    addRaw(jsonData.imageUrl || jsonData.image || "");
+
+    const prefix = String(body.imagePrefix || "/lucky-draw/hadiah").trim();
+    const maxImages = Math.min(50, Math.max(1, Number(body.maxImages || 20) || 20));
+    const exts = ["jpg", "jpeg", "png", "webp", "gif"];
+    for (let i = 1; i <= maxImages; i++) {
+      for (const ext of exts) {
+        const candidate = resolvePublicUrl(baseUrl, `${prefix}${i}.${ext}`);
+        if (candidate && await imageUrlExists(candidate)) rawImageValues.push(candidate);
+      }
+    }
+
+    const sourceUrls = uniqueList(rawImageValues.map(v => resolvePublicUrl(baseUrl, v)).filter(Boolean));
+    const syncedImages = [];
+    for (let i = 0; i < sourceUrls.length && syncedImages.length < 10; i++) {
+      const sourceUrl = sourceUrls[i];
+      const uploaded = await uploadLuckyPrizeRemoteUrlPersistent(sourceUrl, `hadiah${i+1}.jpg`);
+      syncedImages.push(uploaded || sourceUrl);
+    }
+
+    if (!syncedImages.length) {
+      return res.status(404).json({ ok:false, error:"Tiada gambar dijumpai. Letak hadiah1.jpg, hadiah2.jpg atau imageUrls dalam lucky-draw/giveaway-prize.json kemudian deploy dahulu." });
+    }
+
+    const prize = {
+      monthKey: key,
+      title: cleanText(jsonData.title || previous.title || "Hadiah Lucky Draw", 300),
+      description: cleanText(jsonData.description || previous.description || "", 8000),
+      imageUrl: syncedImages[0] || "",
+      image: syncedImages[0] || "",
+      imageUrls: syncedImages,
+      images: syncedImages,
+      imageStorage: syncedImages.some(u => /res\.cloudinary\.com/i.test(u)) ? "cloudinary-sync-folder" : "public-folder-url",
+      updatedAt: new Date().toISOString(),
+      updatedBy: cleanText(body.updatedBy || "admin", 80),
+      sourceJsonUrl: jsonUrl,
+      sourceImageUrls: sourceUrls
+    };
+    writeJson(getPrizeFile(key), prize);
+    res.json({ ok:true, prize, syncedImages, sourceImageUrls: sourceUrls });
+  } catch (err) {
+    res.status(500).json({ ok:false, error: err.message || "Sync folder prize failed" });
+  }
 });
 
 app.get("/api/lucky-draw/prize", (req, res) => {

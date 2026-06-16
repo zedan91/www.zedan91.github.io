@@ -1,0 +1,12 @@
+AZOBSS Lucky Draw Folder Sync Patch 162
+
+Tambah Sync Folder Prize.
+
+Cara guna:
+1. Letak fail dalam folder project: lucky-draw/giveaway-prize.json
+2. Letak gambar: lucky-draw/hadiah1.jpg, hadiah2.jpg, hadiah3.jpg dan seterusnya.
+3. Deploy / push website dahulu supaya fail boleh dibuka melalui https://www.azobss.com/lucky-draw/hadiah1.jpg
+4. Buka Admin Lucky Draw dan tekan Sync Folder Prize.
+5. Backend akan baca giveaway-prize.json, scan hadiah1.jpg..hadiah20.*, upload ke Cloudinary jika env Cloudinary ada, kemudian simpan prize ke backend.
+
+Nota: website live tidak boleh baca terus path Windows C:\Users\... kerana browser security. Sync dibuat selepas fail berada dalam folder /lucky-draw dan sudah deploy/public.
