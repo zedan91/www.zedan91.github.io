@@ -629,6 +629,28 @@ const upload = multer({
   }
 });
 
+
+async function uploadLuckyPrizeImagePersistent(file) {
+  const cloudName = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+  const uploadPreset = String(process.env.CLOUDINARY_UPLOAD_PRESET || "").trim();
+  if (!file || !cloudName || !uploadPreset) return null;
+  try {
+    const buffer = fs.readFileSync(file.path);
+    const form = new FormData();
+    form.append("file", new Blob([buffer], { type: file.mimetype || "image/jpeg" }), file.originalname || file.filename || "lucky-draw-prize.jpg");
+    form.append("upload_preset", uploadPreset);
+    form.append("folder", process.env.CLOUDINARY_FOLDER || "azobss/lucky-draw");
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`;
+    const response = await fetch(endpoint, { method: "POST", body: form });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.secure_url) throw new Error(data.error?.message || "Cloudinary upload failed");
+    return data.secure_url;
+  } catch (err) {
+    console.warn("AZOBSS Cloudinary prize upload failed:", err.message || err);
+    return null;
+  }
+}
+
 app.get("/", (req, res) => {
   res.json({
     ok: true,
@@ -1062,25 +1084,43 @@ app.get("/api/lucky-draw/prize", (req, res) => {
   res.json({ ok: true, prize, monthName: monthName(key) });
 });
 
-app.post("/api/lucky-draw/prize", requireAdmin, upload.single("image"), (req, res) => {
-  const key = req.body.monthKey || monthKey();
-  const previous = readJson(getPrizeFile(key), {});
-  const imageUrl = req.file
-    ? `${PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`}/uploads/lucky-draw/${req.file.filename}`
-    : (cleanText(req.body.imageUrl, 600) || previous.imageUrl || previous.image || "");
+app.post("/api/lucky-draw/prize", requireAdmin, upload.single("image"), async (req, res) => {
+  try {
+    const key = req.body.monthKey || monthKey();
+    const previous = readJson(getPrizeFile(key), {});
+    const manualImageUrl = cleanText(req.body.imageUrl, 1200);
+    let imageUrl = manualImageUrl || previous.imageUrl || previous.image || "";
+    let imageStorage = previous.imageStorage || (imageUrl ? "url" : "");
 
-  const prize = {
-    monthKey: key,
-    title: req.body.title || previous.title || "Hadiah Lucky Draw",
-    description: req.body.description || previous.description || "",
-    imageUrl,
-    image: imageUrl,
-    updatedAt: new Date().toISOString(),
-    updatedBy: req.body.updatedBy || "admin"
-  };
+    if (req.file) {
+      const persistentUrl = await uploadLuckyPrizeImagePersistent(req.file);
+      if (persistentUrl) {
+        imageUrl = persistentUrl;
+        imageStorage = "cloudinary";
+        // Local temp upload is no longer needed once Cloudinary has the image.
+        try { fs.unlinkSync(req.file.path); } catch(e) {}
+      } else {
+        imageUrl = `${PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`}/uploads/lucky-draw/${req.file.filename}`;
+        imageStorage = "backend-upload";
+      }
+    }
 
-  writeJson(getPrizeFile(key), prize);
-  res.json({ ok: true, prize });
+    const prize = {
+      monthKey: key,
+      title: req.body.title || previous.title || "Hadiah Lucky Draw",
+      description: req.body.description || previous.description || "",
+      imageUrl,
+      image: imageUrl,
+      imageStorage,
+      updatedAt: new Date().toISOString(),
+      updatedBy: req.body.updatedBy || "admin"
+    };
+
+    writeJson(getPrizeFile(key), prize);
+    res.json({ ok: true, prize, persistentImage: imageStorage === "cloudinary" || imageStorage === "url" });
+  } catch (err) {
+    res.status(500).json({ ok:false, error: err.message || "Save prize failed" });
+  }
 });
 
 

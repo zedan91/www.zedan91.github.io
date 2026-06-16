@@ -1217,6 +1217,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <label class="field-label" for="prizeImageFile">Gambar hadiah</label>
 <input accept="image/*" class="file-input" id="prizeImageFile" type="file"/>
 </div>
+<div>
+<label class="field-label" for="prizeImageUrlInput">URL gambar kekal</label>
+<input id="prizeImageUrlInput" placeholder="https://..." type="url"/>
+<small class="status-note" style="display:block;margin-top:6px">Untuk long term, guna URL gambar dari Cloudinary/Firebase Storage/CDN.</small>
+</div>
 </div>
 <div style="margin-top:12px">
 <label class="field-label" for="prizeDescriptionInput">Description</label>
@@ -1229,9 +1234,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="admin-actions">
 <button class="btn green" id="savePrizeButton" type="button">Save Prize</button>
-<button class="btn dark" id="loadJsonButton" type="button">Load JSON</button>
+<button class="btn dark" id="syncPrizeButton" type="button">Sync from Backend</button>
+<button class="btn dark" id="loadJsonButton" type="button">Load Prize JSON</button>
 <button class="btn dark" id="applyJsonButton" type="button">Apply JSON</button>
-<button class="btn orange" id="downloadJsonButton" type="button">Download JSON</button>
+<button class="btn orange" id="downloadJsonButton" type="button">Export Prize JSON</button>
 <button class="btn dark" id="refreshPrizeButton" type="button">Refresh</button>
 </div>
 <div class="admin-actions" style="margin-top:12px;border-top:1px solid rgba(148,163,184,.18);padding-top:12px">
@@ -1409,6 +1415,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       prizeTitleInput: document.getElementById('prizeTitleInput'),
       prizeDescriptionInput: document.getElementById('prizeDescriptionInput'),
       prizeImageFile: document.getElementById('prizeImageFile'),
+      prizeImageUrlInput: document.getElementById('prizeImageUrlInput'),
       prizeJsonInput: document.getElementById('prizeJsonInput'),
       prizeJsonFileInput: document.getElementById('prizeJsonFileInput'),
       adminStatus: document.getElementById('adminStatus'),
@@ -1544,10 +1551,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         adminPrizeTitle: 'Tajuk hadiah',
         adminPrizeDesc: 'Description hadiah',
         adminPrizeImage: 'Upload gambar hadiah',
+        adminPrizeImageUrl: 'URL gambar kekal',
+        adminPrizeImageUrlHint: 'Untuk long term, guna URL gambar dari Cloudinary/Firebase Storage/CDN.',
         savePrize: 'Save Prize',
-        loadJson: 'Load JSON',
+        syncBackend: 'Sync from Backend',
+        loadJson: 'Load Prize JSON',
         applyJson: 'Apply JSON',
-        downloadJson: 'Download JSON',
+        downloadJson: 'Export Prize JSON',
         refresh: 'Refresh',
         runDraw: 'Run Draw',
         testSpin: 'Test Spin',
@@ -1674,10 +1684,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         adminPrizeTitle: 'Prize title',
         adminPrizeDesc: 'Prize description',
         adminPrizeImage: 'Upload prize image',
+        adminPrizeImageUrl: 'Persistent image URL',
+        adminPrizeImageUrlHint: 'For long term, use an image URL from Cloudinary/Firebase Storage/CDN.',
         savePrize: 'Save Prize',
-        loadJson: 'Load JSON',
+        syncBackend: 'Sync from Backend',
+        loadJson: 'Load Prize JSON',
         applyJson: 'Apply JSON',
-        downloadJson: 'Download JSON',
+        downloadJson: 'Export Prize JSON',
         refresh: 'Refresh',
         runDraw: 'Run Draw',
         testSpin: 'Test Spin',
@@ -1790,9 +1803,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('label[for="prizeTitleInput"]', tr('adminPrizeTitle'));
       setText('label[for="prizeDescriptionInput"]', tr('adminPrizeDesc'));
       setText('label[for="prizeImageFile"]', tr('adminPrizeImage'));
+      setText('label[for="prizeImageUrlInput"]', tr('adminPrizeImageUrl'));
+      const imageUrlHint = document.querySelector('label[for="prizeImageUrlInput"] + input + small'); if (imageUrlHint) imageUrlHint.textContent = tr('adminPrizeImageUrlHint');
       const titleInput = document.getElementById('prizeTitleInput'); if (titleInput) titleInput.placeholder = tr('adminPrizeTitle');
+      const imageUrlInput = document.getElementById('prizeImageUrlInput'); if (imageUrlInput) imageUrlInput.placeholder = 'https://...';
       const descInput = document.getElementById('prizeDescriptionInput'); if (descInput) descInput.placeholder = tr('adminPrizeDesc');
       setText('#savePrizeButton', tr('savePrize'));
+      setText('#syncPrizeButton', tr('syncBackend'));
       setText('#loadJsonButton', tr('loadJson'));
       setText('#applyJsonButton', tr('applyJson'));
       setText('#downloadJsonButton', tr('downloadJson'));
@@ -2096,11 +2113,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setTimeout(updatePrizeDescScrollHint, 60);
       els.prizeTitleInput.value = prize.title || '';
       els.prizeDescriptionInput.value = prize.description || '';
+      if (els.prizeImageUrlInput) els.prizeImageUrlInput.value = prize.imageUrl || prize.image || '';
       els.prizeJsonInput.value = JSON.stringify({
         monthKey: prize.monthKey || monthKey(),
         title,
         description: desc,
-        imageUrl: prize.imageUrl || prize.image || ''
+        imageUrl: prize.imageUrl || prize.image || '',
+        imageStorage: prize.imageStorage || ''
       }, null, 2);
     }
 
@@ -2465,6 +2484,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       form.append('monthKey', monthKey());
       form.append('title', els.prizeTitleInput.value.trim());
       form.append('description', els.prizeDescriptionInput.value.trim());
+      if (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) {
+        form.append('imageUrl', els.prizeImageUrlInput.value.trim());
+      }
       form.append('updatedBy', normalizeUsername(readUser().usernameKey || readUser().name));
       try {
         const parsed = JSON.parse(els.prizeJsonInput.value || '{}');
@@ -2520,10 +2542,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = JSON.parse(els.prizeJsonInput.value || '{}');
         if (data.title !== undefined) els.prizeTitleInput.value = data.title;
         if (data.description !== undefined) els.prizeDescriptionInput.value = data.description;
+        if (els.prizeImageUrlInput && (data.imageUrl !== undefined || data.image !== undefined)) els.prizeImageUrlInput.value = data.imageUrl || data.image || '';
         renderPrize({
           title: els.prizeTitleInput.value,
           description: els.prizeDescriptionInput.value,
-          imageUrl: data.imageUrl || data.image || ''
+          imageUrl: (els.prizeImageUrlInput && els.prizeImageUrlInput.value) || data.imageUrl || data.image || ''
         });
         setAdminStatus('JSON diaplikasi ke preview. Tekan Save Prize untuk publish.');
       } catch(e) {
@@ -2537,6 +2560,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         title: els.prizeTitleInput.value.trim(),
         description: els.prizeDescriptionInput.value.trim(),
         imageUrl: (() => {
+          if (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) return els.prizeImageUrlInput.value.trim();
           try { const data = JSON.parse(els.prizeJsonInput.value || '{}'); return data.imageUrl || data.image || ''; }
           catch(e) { return ''; }
         })(),
@@ -2801,6 +2825,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (els.refreshAbuseAuditButton) els.refreshAbuseAuditButton.addEventListener('click', loadAbuseAudit);
     if (els.exportAbuseAuditButton) els.exportAbuseAuditButton.addEventListener('click', exportAbuseAudit);
     document.getElementById('refreshPrizeButton').addEventListener('click', loadPrize);
+    const syncPrizeButton = document.getElementById('syncPrizeButton'); if (syncPrizeButton) syncPrizeButton.addEventListener('click', async () => { setAdminStatus('Sync hadiah dari backend...'); await loadPrize(); setAdminStatus('Hadiah terkini sudah sync dari backend.'); });
     document.getElementById('savePrizeButton').addEventListener('click', savePrize);
     document.getElementById('loadJsonButton').addEventListener('click', openPrizeJsonFile);
     if (els.prizeJsonFileInput) els.prizeJsonFileInput.addEventListener('change', handlePrizeJsonFile);
