@@ -1,0 +1,1 @@
+Patch 165: Lucky Draw folder image sync now saves up to maxImages (default 20) instead of stopping at 10. It scans /lucky-draw/hadiah1.jpg through /lucky-draw/hadiah20.* after deploy. Only files that actually exist publicly will be included.

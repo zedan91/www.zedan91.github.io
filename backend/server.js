@@ -1180,7 +1180,10 @@ async function syncLuckyDrawPrizeFromPublicFolder(options = {}) {
   }
 
   const syncedImages = [];
-  for (let i = 0; i < sourceUrls.length && syncedImages.length < 10; i++) {
+  // Sync up to maxImages (default 20). Previous patches accidentally capped the final saved images at 10,
+  // so folder scans could find hadiah1..hadiah20 but only part of them were saved to the prize carousel.
+  const saveLimit = Math.min(50, Math.max(1, maxImages || 20));
+  for (let i = 0; i < sourceUrls.length && syncedImages.length < saveLimit; i++) {
     const sourceUrl = sourceUrls[i];
     const uploaded = await uploadLuckyPrizeRemoteUrlPersistent(sourceUrl, `hadiah${i+1}.jpg`);
     syncedImages.push(uploaded || sourceUrl);
