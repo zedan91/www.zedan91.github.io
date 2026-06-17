@@ -394,6 +394,35 @@ function azReceiptTokenOk(order = {}, supplied = "") {
   try { return crypto.timingSafeEqual(Buffer.from(String(supplied)), Buffer.from(expected)); } catch (_) { return String(supplied) === expected; }
 }
 
+
+function azMaskEmail(value = "") {
+  const email = String(value || "").trim();
+  const at = email.indexOf("@");
+  if (at <= 1) return email ? "***" : "";
+  const name = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  return name.slice(0, 2) + "***@" + domain;
+}
+function azMaskToken(value = "") {
+  const t = String(value || "").trim();
+  if (!t) return "";
+  if (t.length <= 8) return "***";
+  return t.slice(0, 4) + "…" + t.slice(-4);
+}
+function azSafeUrlInfo(value = "") {
+  try {
+    const u = new URL(String(value || ""));
+    return { host: u.host, pathname: u.pathname ? u.pathname.slice(0, 80) : "" };
+  } catch (_) {
+    return { host: "", pathname: "" };
+  }
+}
+function azVerifyToyyibCallbackEnabled() {
+  // Default ON: callback cannot mark an order paid unless ToyyibPay API also confirms it.
+  // Emergency bypass only if ToyyibPay verification endpoint is down: AZOBSS_VERIFY_TOYYIB_CALLBACK=0
+  return String(process.env.AZOBSS_VERIFY_TOYYIB_CALLBACK || "1") !== "0";
+}
+
 function cleanForToyyib(value, max = 100) {
   return String(value || "").replace(/[^a-zA-Z0-9 _.,@+\-()]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
@@ -510,8 +539,8 @@ async function maybeSendDownloadEmail(order, req) {
       ""
     );
 
-    console.log("AZOBSS EMAIL TARGET:", email || "NO_EMAIL");
-    console.log("AZOBSS DOWNLOAD LINK:", realDownloadLink || "NO_DOWNLOAD_LINK");
+    console.log("AZOBSS EMAIL TARGET:", email ? azMaskEmail(email) : "NO_EMAIL");
+    console.log("AZOBSS DOWNLOAD LINK:", realDownloadLink ? azSafeUrlInfo(realDownloadLink) : "NO_DOWNLOAD_LINK");
     console.log("AZOBSS MAIL READY:", mailReady() ? "YES" : "NO", JSON.stringify({
       brevoApi: brevoApiReady(),
       nodemailer: !!nodemailer,
@@ -534,7 +563,7 @@ async function maybeSendDownloadEmail(order, req) {
     const base = publicBaseUrlFromReq(req);
     const downloadUrl = `${base}/api/premium/download/${encodeURIComponent(current.downloadToken)}`;
     const receiptUrl = azReceiptUrl(base, current);
-    console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:current.orderId,email,downloadToken:current.downloadToken,downloadLink:realDownloadLink}).slice(0,800));
+    console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:current.orderId,email:azMaskEmail(email),downloadToken:azMaskToken(current.downloadToken),downloadTarget:azSafeUrlInfo(realDownloadLink)}).slice(0,800));
 
     const subject = `AZOBSS Download Ready - ${cleanPremiumText(current.productName || "Digital Product", 80)}`;
     const html = buildAzobssDownloadEmail(current, downloadUrl, receiptUrl);
@@ -549,9 +578,9 @@ This link opens a confirmation page first. Download count is only used after you
 
     let sendInfo = null;
     if (brevoApiReady()) {
-      console.log("AZOBSS BREVO API SEND START", JSON.stringify({ orderId: current.orderId, email, from: process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "" }).slice(0,500));
+      console.log("AZOBSS BREVO API SEND START", JSON.stringify({ orderId: current.orderId, email:azMaskEmail(email), from: process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "" }).slice(0,500));
       sendInfo = await sendBrevoApiEmail({ to: email, subject, html, text });
-      console.log("AZOBSS BREVO API SENT OK", JSON.stringify({ orderId: current.orderId, email, response: sendInfo }).slice(0,800));
+      console.log("AZOBSS BREVO API SENT OK", JSON.stringify({ orderId: current.orderId, email:azMaskEmail(email), response: sendInfo }).slice(0,800));
     } else {
       const transporter = makeMailer();
       console.log("AZOBSS SMTP CONFIG", JSON.stringify({
@@ -571,10 +600,10 @@ This link opens a confirmation page first. Download count is only used after you
         html,
         text
       });
-      console.log("AZOBSS SMTP EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email, messageId: sendInfo && sendInfo.messageId || null }).slice(0,500));
+      console.log("AZOBSS SMTP EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email:azMaskEmail(email), messageId: sendInfo && sendInfo.messageId || null }).slice(0,500));
     }
 
-    console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email, via: brevoApiReady() ? "brevo-api" : "smtp" }).slice(0,500));
+    console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email:azMaskEmail(email), via: brevoApiReady() ? "brevo-api" : "smtp" }).slice(0,500));
     return upsertPremiumOrder({ ...current, emailSentAt: new Date().toISOString(), emailTo: email, emailError: null });
   } catch (e) {
     console.error("AZOBSS email send failed:", e && (e.stack || e.message || e));
@@ -2419,7 +2448,7 @@ async function handler(req, res) {
         const raw = await readBody(req);
         data = { ...data, ...parseRequestBody(raw) };
       }
-      console.log("ToyyibPay callback received:", JSON.stringify(data).slice(0, 1500));
+      console.log("ToyyibPay callback received:", JSON.stringify({ keys:Object.keys(data || {}).slice(0,20), billCode:getToyyibBillCode(data), orderId:getToyyibOrderId(data), status:data.status || data.status_id || data.billpaymentStatus || "" }).slice(0, 800));
 
       const billCode = getToyyibBillCode(data);
       const orderId = getToyyibOrderId(data);
@@ -2432,13 +2461,25 @@ async function handler(req, res) {
       }
 
       if (toyyibStatusIsPaid(data)) {
+        if (azVerifyToyyibCallbackEnabled()) {
+          const verifiedOrder = await refreshToyyibOrder(order, req);
+          const latestVerified = findPremiumOrderByAny({ orderId: verifiedOrder.orderId }) || verifiedOrder;
+          if (latestVerified && latestVerified.status === "paid") {
+            console.log("ToyyibPay callback verified paid:", JSON.stringify({ orderId: latestVerified.orderId, billCode: latestVerified.billCode, isPaBm: isPaBmPremiumOrder(latestVerified), emailSentAt: latestVerified.emailSentAt || null, emailError: latestVerified.emailError || null }).slice(0, 1000));
+            return send(res, 200, JSON.stringify({ ok:true, status:"paid", verified:true, paBmUpdated: isPaBmPremiumOrder(latestVerified), emailSent: !!latestVerified.emailSentAt, emailError: latestVerified.emailError || null }), "application/json");
+          }
+          console.warn("ToyyibPay callback claimed paid but API verification not paid yet:", JSON.stringify({ orderId: order.orderId, billCode: order.billCode }).slice(0, 500));
+          return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false, verification:"pending" }), "application/json");
+        }
+
         order = upsertPremiumOrder({
           ...order,
           status: "paid",
           paymentMethod: "toyyibpay",
           paymentReference: data.transaction_id || data.billpaymentInvoiceNo || data.refno || data.order_id || order.paymentReference || "",
           toyyibCallback: data,
-          paidAt: new Date().toISOString()
+          paidAt: new Date().toISOString(),
+          callbackTrustBypass: true
         });
         try { await azFinalizeCommissionForOrder(order); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference: order.paymentReference, toyyibCallback: data }); } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
@@ -2449,8 +2490,8 @@ async function handler(req, res) {
           order = upsertPremiumOrder({ ...order, emailSkippedForPaBm: true, emailError: null });
         }
         const latest = findPremiumOrderByAny({ orderId: order.orderId }) || order;
-        console.log("ToyyibPay callback processed paid:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, isPaBm: isPaBmPremiumOrder(latest), emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
-        return send(res, 200, JSON.stringify({ ok:true, status:"paid", paBmUpdated: isPaBmPremiumOrder(latest), emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
+        console.log("ToyyibPay callback processed paid with trust bypass:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, isPaBm: isPaBmPremiumOrder(latest), emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
+        return send(res, 200, JSON.stringify({ ok:true, status:"paid", verified:false, trustBypass:true, paBmUpdated: isPaBmPremiumOrder(latest), emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
       }
 
       order = await refreshToyyibOrder(order, req);
