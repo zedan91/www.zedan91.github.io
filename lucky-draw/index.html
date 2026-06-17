@@ -1446,6 +1446,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', savedInviteFromUrl);
 
     let luckyDrawEntriesCache = [];
+    let luckyDrawEntriesTotalCache = 0;
+    let luckyDrawEntriesOffsetCache = 0;
     let prizeCarouselImages = [];
     let prizeCarouselIndex = 0;
     let prizeImageValidationSeq = 0;
@@ -2323,19 +2325,21 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     function updateLuckyDrawSummary(){
       try{
         const rows = (luckyDrawEntriesCache || []).filter(entry => entry && !entry.deleted);
-        if (els.drawSummaryParticipants) els.drawSummaryParticipants.textContent = String(rows.length || Number((els.total && els.total.textContent) || 0) || 0);
+        const totalCount = luckyDrawEntriesTotalCache || Number((els.total && els.total.textContent) || 0) || rows.length || 0;
+        if (els.drawSummaryParticipants) els.drawSummaryParticipants.textContent = String(totalCount);
         if (els.drawSummaryShares) els.drawSummaryShares.textContent = String(referralClickCountCache || 0);
         if (els.drawSummaryPrize) els.drawSummaryPrize.textContent = (els.prizeTitle && els.prizeTitle.textContent) || tr('prizeDefaultTitle');
         if (els.drawSummaryStatus) els.drawSummaryStatus.textContent = luckyDrawWinnerSelected ? tr('summaryClosed') : tr('summaryOpen');
         if (els.drawSummaryLatest) {
-          const latest = rows.slice().sort((a,b) => new Date(b.joinedAt || 0).getTime() - new Date(a.joinedAt || 0).getTime()).slice(0,5);
+          const latest = rows.slice().sort((a,b) => Number(b.joinedAtMs || 0) - Number(a.joinedAtMs || 0) || new Date(b.joinedAt || 0).getTime() - new Date(a.joinedAt || 0).getTime()).slice(0,5);
           if (!latest.length) {
             els.drawSummaryLatest.textContent = tr('summaryNoParticipants');
           } else {
             els.drawSummaryLatest.innerHTML = latest.map((entry, i) => {
               const name = escapeHtml(entry.name || entry.usernameKey || 'User');
               const joined = entry.joinedAt ? new Date(entry.joinedAt).toLocaleString('en-MY', {timeZone:'Asia/Kuala_Lumpur', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '-';
-              return '<div><b>' + (i + 1) + '. ' + name + '</b><small>' + escapeHtml(joined) + '</small></div>';
+              const participantNo = Math.max(1, totalCount - i);
+              return '<div><b>' + participantNo + '. ' + name + '</b><small>' + escapeHtml(joined) + '</small></div>';
             }).join('');
           }
         }
@@ -2453,8 +2457,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         if (!data.ok) throw new Error(data.error || 'Entries error');
         const rows = Array.isArray(data.entries) ? data.entries : [];
         luckyDrawEntriesCache = rows.filter((entry) => !entry.deleted);
-        els.total.textContent = String(data.total || luckyDrawEntriesCache.length || 0);
-        renderParticipants(luckyDrawEntriesCache);
+        luckyDrawEntriesTotalCache = Number(data.total || luckyDrawEntriesCache.length || 0);
+        luckyDrawEntriesOffsetCache = Number(data.offset || 0);
+        els.total.textContent = String(luckyDrawEntriesTotalCache);
+        renderParticipants(luckyDrawEntriesCache, luckyDrawEntriesTotalCache, luckyDrawEntriesOffsetCache);
         updateLuckyDrawSummary();
         updateInvitePanel();
       } catch(e) {
@@ -2462,15 +2468,19 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
     }
 
-    function renderParticipants(rows){
+    function renderParticipants(rows, totalCount, offset){
       if (!rows.length) {
         els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesEmpty')) + '</div>';
         return;
       }
-      els.participants.innerHTML = rows.slice(0, 20).map((entry, i) => {
+      const total = Number(totalCount || luckyDrawEntriesTotalCache || rows.length || 0);
+      const startOffset = Number(offset || luckyDrawEntriesOffsetCache || 0);
+      const orderedRows = rows.slice(0, 20).sort((a,b) => Number(b.joinedAtMs || 0) - Number(a.joinedAtMs || 0) || new Date(b.joinedAt || 0).getTime() - new Date(a.joinedAt || 0).getTime());
+      els.participants.innerHTML = orderedRows.map((entry, i) => {
         const name = escapeHtml(entry.name || entry.usernameKey || 'User');
         const joined = entry.joinedAt ? new Date(entry.joinedAt).toLocaleString('en-MY') : '-';
-        return '<div class="participant-card"><div><strong>' + (i + 1) + '. ' + name + '</strong><span>' + escapeHtml(joined) + '</span></div></div>';
+        const participantNo = Math.max(1, total - startOffset - i);
+        return '<div class="participant-card"><div><strong>' + participantNo + '. ' + name + '</strong><span>' + escapeHtml(joined) + '</span></div></div>';
       }).join('');
     }
 
@@ -3116,6 +3126,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         if (!data.ok) throw new Error(data.error || 'Reset peserta gagal');
         await resetLuckyWinnerSilent();
         luckyDrawEntriesCache = [];
+        luckyDrawEntriesTotalCache = 0;
+        luckyDrawEntriesOffsetCache = 0;
         renderParticipants([]);
         els.total.textContent = '0';
         clearCurrentBrowserJoinLock();
@@ -3145,6 +3157,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Reset join bulan ini gagal');
         luckyDrawEntriesCache = [];
+        luckyDrawEntriesTotalCache = 0;
+        luckyDrawEntriesOffsetCache = 0;
         renderParticipants([]);
         els.total.textContent = '0';
         clearCurrentBrowserJoinLock();
