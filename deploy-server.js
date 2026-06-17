@@ -2059,11 +2059,53 @@ async function handler(req, res) {
         let firestoreOk = false;
         let sampleCount = 0;
         let error = "";
+        const wantRecords = String(parsed.query.records || parsed.query.list || '') === '1';
+        const maxRecords = Math.max(1, Math.min(300, Number(parsed.query.limit || 100) || 100));
+        let records = [];
         if (db) {
           try {
-            const snap = await db.collection('commissionRecords').limit(1).get();
+            const snap = wantRecords
+              ? await db.collection('commissionRecords').orderBy('createdAtMs', 'desc').limit(maxRecords).get()
+              : await db.collection('commissionRecords').limit(1).get();
             firestoreOk = true;
             sampleCount = snap.size;
+            if (wantRecords) {
+              snap.forEach(doc => {
+                const x = doc.data() || {};
+                const safeReferral = x.shareReferral && typeof x.shareReferral === 'object' ? {
+                  username: cleanPremiumText(x.shareReferral.username || x.shareReferral.ref || '', 80),
+                  ref: cleanPremiumText(x.shareReferral.ref || x.shareReferral.username || '', 80),
+                  productId: cleanPremiumText(x.shareReferral.productId || '', 160),
+                  sourcePage: cleanPremiumText(x.shareReferral.sourcePage || '', 40),
+                  source: cleanPremiumText(x.shareReferral.source || '', 60)
+                } : null;
+                records.push({
+                  docId: doc.id,
+                  orderId: cleanPremiumText(x.orderId || '', 140),
+                  billCode: cleanPremiumText(x.billCode || '', 100),
+                  productId: cleanPremiumText(x.productId || '', 160),
+                  productName: cleanPremiumText(x.productName || x.product || x.title || '', 180),
+                  username: azCommissionUsername(x.username || x.ownerUsername || ''),
+                  ownerUsername: azCommissionUsername(x.ownerUsername || x.username || ''),
+                  commissionType: cleanPremiumText(x.commissionType || '', 80),
+                  commissionRate: Number(x.commissionRate || x.rate || 0) || 0,
+                  rate: Number(x.rate || x.commissionRate || 0) || 0,
+                  saleAmount: Number(x.saleAmount || 0) || 0,
+                  saleAmountText: cleanPremiumText(x.saleAmountText || '', 40),
+                  commissionAmount: Number(x.commissionAmount || x.amount || 0) || 0,
+                  amount: Number(x.amount || x.commissionAmount || 0) || 0,
+                  amountText: cleanPremiumText(x.amountText || '', 40),
+                  status: cleanPremiumText(x.status || '', 40),
+                  payoutStatus: cleanPremiumText(x.payoutStatus || '', 40),
+                  paymentStatus: cleanPremiumText(x.paymentStatus || '', 40),
+                  sourcePage: cleanPremiumText(x.sourcePage || (safeReferral && safeReferral.sourcePage) || '', 40),
+                  note: cleanPremiumText(x.note || '', 260),
+                  createdAt: cleanPremiumText(x.createdAt || '', 80),
+                  createdAtMs: Number(x.createdAtMs || 0) || 0,
+                  shareReferral: safeReferral
+                });
+              });
+            }
           } catch (err) {
             error = err && err.message ? err.message : String(err);
           }
@@ -2071,6 +2113,32 @@ async function handler(req, res) {
           error = firebaseAdminInitError || "Firebase Admin not configured.";
         }
         const localRows = readPremiumJson(COMMISSION_RECORDS_FILE, []);
+        if (wantRecords && !records.length && Array.isArray(localRows)) {
+          records = localRows.slice(0, maxRecords).map((x, i) => ({
+            docId: cleanPremiumText(x.docId || x.id || `local_${i}`, 120),
+            orderId: cleanPremiumText(x.orderId || '', 140),
+            billCode: cleanPremiumText(x.billCode || '', 100),
+            productId: cleanPremiumText(x.productId || '', 160),
+            productName: cleanPremiumText(x.productName || x.product || x.title || '', 180),
+            username: azCommissionUsername(x.username || x.ownerUsername || ''),
+            ownerUsername: azCommissionUsername(x.ownerUsername || x.username || ''),
+            commissionType: cleanPremiumText(x.commissionType || '', 80),
+            commissionRate: Number(x.commissionRate || x.rate || 0) || 0,
+            rate: Number(x.rate || x.commissionRate || 0) || 0,
+            saleAmount: Number(x.saleAmount || 0) || 0,
+            commissionAmount: Number(x.commissionAmount || x.amount || 0) || 0,
+            amount: Number(x.amount || x.commissionAmount || 0) || 0,
+            amountText: cleanPremiumText(x.amountText || '', 40),
+            status: cleanPremiumText(x.status || '', 40),
+            payoutStatus: cleanPremiumText(x.payoutStatus || '', 40),
+            paymentStatus: cleanPremiumText(x.paymentStatus || '', 40),
+            sourcePage: cleanPremiumText(x.sourcePage || '', 40),
+            note: cleanPremiumText(x.note || '', 260),
+            createdAt: cleanPremiumText(x.createdAt || '', 80),
+            createdAtMs: Number(x.createdAtMs || 0) || 0,
+            shareReferral: x.shareReferral || null
+          }));
+        }
         return send(res, 200, JSON.stringify({
           ok: true,
           firestoreConfigured: !!(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_APPLICATION_CREDENTIALS),
@@ -2078,6 +2146,8 @@ async function handler(req, res) {
           firestoreSampleCount: sampleCount,
           localJsonCount: Array.isArray(localRows) ? localRows.length : 0,
           envHasServiceAccountJson: !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+          recordsReturned: records.length,
+          records: wantRecords ? records : undefined,
           error
         }, null, 2), "application/json");
       } catch (err) {

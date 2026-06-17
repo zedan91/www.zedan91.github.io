@@ -1,0 +1,6 @@
+Patch 176: Staff Dashboard tambah paparan Share Link Commission.
+- Tambah tab Share Link.
+- Tambah card Share Link Commission di Overview.
+- Staff dashboard baca commissionRecords direct, fallback backend /api/commission/status?records=1 jika Firestore frontend block.
+- deploy-server.js status endpoint boleh return sanitized commission records untuk dashboard.
+- Tiada Firebase Rules baru diperlukan.
