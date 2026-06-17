@@ -968,6 +968,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <button data-tab="payments">💳 Payments & Totals</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="auditlogs">🧾 Audit Logs</button>
+      <button data-tab="exports">📦 Backup / Export</button>
       <button data-tab="lucky">🎁 Lucky Draw</button>
       <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings">⚙️ Settings</button>
@@ -1016,6 +1017,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           <button class="btn gray" data-tab="purchases">💰 Purchases</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
           <button class="btn gray" data-tab="auditlogs">🧾 Audit Logs</button>
+          <button class="btn gray" data-tab="exports">📦 Export</button>
         </div>
       </div>
       <div class="split">
@@ -1241,6 +1243,48 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     </section>
 
 
+    <section id="exports" class="section">
+      <h2>📦 Backup / Export Reports</h2>
+      <p class="tabs-note">Admin-only safe export for accounting, commission review and monthly backup. Download tokens and secret values are masked in reports.</p>
+      <div class="grid">
+        <div class="card"><div class="stat-label">Available Reports</div><div class="stat-value">6</div></div>
+        <div class="card"><div class="stat-label">Formats</div><div class="stat-value">CSV/JSON</div></div>
+        <div class="card"><div class="stat-label">Protection</div><div class="stat-value">Admin</div></div>
+      </div>
+      <div class="card">
+        <h2>Download Report</h2>
+        <div class="toolbar">
+          <select id="adminExportType">
+            <option value="premiumOrders">Premium Orders</option>
+            <option value="commissionRecords">Commission Records</option>
+            <option value="purchaseLogs">PA/BM Purchase Logs</option>
+            <option value="softwareStats">Software Stats</option>
+            <option value="adminAuditLogs">Admin Audit Logs</option>
+            <option value="premiumDownloadTokens">Premium Download Tokens (masked)</option>
+          </select>
+          <select id="adminExportFormat">
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+          </select>
+          <input id="adminExportLimit" type="number" min="1" max="5000" value="500" title="Maximum records" style="width:120px">
+          <button class="btn green" id="downloadAdminExport" type="button">Download Selected</button>
+          <button class="btn gray" id="downloadAdminExportAll" type="button">Download All JSON</button>
+        </div>
+        <div id="adminExportNotice" class="tabs-note">Choose a report, then download. All export requests are recorded in Audit Logs.</div>
+      </div>
+      <div class="card">
+        <h2>Included Reports</h2>
+        <div class="list">
+          <div class="item"><div class="item-title">Premium Orders</div><div class="item-meta">Software/CAD paid orders, receipt status, email status and payment reference.</div></div>
+          <div class="item"><div class="item-title">Commission Records</div><div class="item-meta">Owner/share-link commission, payout status, sale amount and commission amount.</div></div>
+          <div class="item"><div class="item-title">PA/BM Purchase Logs</div><div class="item-meta">PA/BM purchases and payment status from Firestore.</div></div>
+          <div class="item"><div class="item-title">Software Stats</div><div class="item-meta">Downloads, likes and rating totals.</div></div>
+          <div class="item"><div class="item-title">Admin Audit Logs</div><div class="item-meta">Protected admin actions, payout updates and export activity.</div></div>
+        </div>
+      </div>
+    </section>
+
+
     <section id="staffroles" class="section">
       <h2>🧑‍💼 Staff / Semi-Admin Roles</h2>
       <p class="tabs-note">Set role dan permission staff. Staff boleh akses /staff/ sahaja, bukan admin penuh.</p>
@@ -1345,6 +1389,53 @@ async function azAdminFetchJson(url,options={}){
   }
   if(!res.ok) throw new Error(azAdminApiErrorMessage(res.status,data));
   return data;
+}
+async function azAdminFetchBlob(url,options={}){
+  const baseHeaders=options.headers||{};
+  let authHeaders=await azAdminAuthHeaders(false);
+  let res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+  if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
+    authHeaders=await azAdminAuthHeaders(true);
+    res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+  }
+  if(!res.ok){
+    const text=await res.text().catch(()=>'');
+    let data={};
+    try{data=JSON.parse(text)}catch(_){data={error:text||'Request failed.'}}
+    throw new Error(azAdminApiErrorMessage(res.status,data));
+  }
+  return {blob:await res.blob(), filename:azFilenameFromDisposition(res.headers.get('content-disposition'))};
+}
+function azFilenameFromDisposition(header){
+  const h=String(header||'');
+  const m=h.match(/filename=\"?([^\";]+)\"?/i);
+  return m?m[1]:'';
+}
+function azSaveBlob(blob,filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename||('azobss-export-'+new Date().toISOString().slice(0,10));
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1200);
+}
+async function downloadAdminExport(all=false){
+  const notice=$('#adminExportNotice');
+  const type=all?'all':($('#adminExportType')?.value||'premiumOrders');
+  const format=all?'json':($('#adminExportFormat')?.value||'csv');
+  const limit=Math.max(1,Math.min(5000,Number($('#adminExportLimit')?.value||500)||500));
+  if(notice) notice.textContent='Preparing export...';
+  try{
+    const url=AZOBSS_BACKEND_API+'/api/admin/export?type='+encodeURIComponent(type)+'&format='+encodeURIComponent(format)+'&limit='+encodeURIComponent(limit);
+    const result=await azAdminFetchBlob(url,{cache:'no-store'});
+    const fallback='azobss-'+type+'-export-'+new Date().toISOString().slice(0,10)+'.'+(format==='csv'?'csv':'json');
+    azSaveBlob(result.blob,result.filename||fallback);
+    if(notice) notice.textContent='Export downloaded: '+(result.filename||fallback);
+  }catch(e){
+    if(notice) notice.textContent=e?.message||'Export failed.';
+    toast(e?.message||'Export failed.');
+  }
 }
 async function azAdminLogAction(action,targetType,targetId,details={},status='success'){
   try{
@@ -2193,6 +2284,7 @@ async function initSection(id){
   if(id==='activity')return loadAdminActivity();
   if(id==='commissions')return loadAdminCommissions();
   if(id==='auditlogs')return loadAdminAuditLogs();
+  if(id==='exports'){ const n=$('#adminExportNotice'); if(n) n.textContent='Choose a report, then download. All export requests are recorded in Audit Logs.'; return; }
   if(id==='staffroles')return loadStaffRoles();
   if(id==='settings')return loadSettings();
 }
@@ -2242,6 +2334,8 @@ $('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
 $('#commissionPayoutFilter')?.addEventListener('change', renderAdminCommissions);
 $('#exportCommissionCsv')?.addEventListener('click', exportCommissionCsv);
 $('#refreshAuditLogs')?.addEventListener('click', loadAdminAuditLogs);
+$('#downloadAdminExport')?.addEventListener('click', ()=>downloadAdminExport(false));
+$('#downloadAdminExportAll')?.addEventListener('click', ()=>downloadAdminExport(true));
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;

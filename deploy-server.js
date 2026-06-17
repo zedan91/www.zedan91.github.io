@@ -603,6 +603,164 @@ function azAuditLogPublicRow(x = {}, docId = "") {
 }
 
 
+const AZOBSS_ADMIN_EXPORT_TYPES = {
+  premiumOrders: { label: "Premium Orders", firestore: "premiumOrders" },
+  premiumDownloadTokens: { label: "Premium Download Tokens", firestore: "premiumDownloadTokens" },
+  commissionRecords: { label: "Commission Records", firestore: "commissionRecords" },
+  purchaseLogs: { label: "PA/BM Purchase Logs", firestore: "purchaseLogs" },
+  softwareStats: { label: "Software Stats", firestore: "softwareStats" },
+  adminAuditLogs: { label: "Admin Audit Logs", firestore: "adminAuditLogs" }
+};
+function azExportTypeKey(value = "") {
+  const key = String(value || "").trim();
+  if (key === "all") return "all";
+  return AZOBSS_ADMIN_EXPORT_TYPES[key] ? key : "";
+}
+function azExportSafeText(value, max = 500) {
+  return String(value ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, max);
+}
+function azExportAmount(value) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
+}
+function azExportSafePremiumOrder(x = {}, docId = "") {
+  const user = x.user && typeof x.user === "object" ? x.user : {};
+  return {
+    docId: azExportSafeText(docId || x.docId || x.id || "", 160),
+    orderId: azExportSafeText(x.orderId || "", 160),
+    billCode: azExportSafeText(x.billCode || x.billcode || "", 120),
+    status: azExportSafeText(x.status || "", 60),
+    paymentMethod: azExportSafeText(x.paymentMethod || "", 80),
+    paymentReference: azExportSafeText(x.paymentReference || "", 160),
+    productId: azExportSafeText(x.productId || (x.product && x.product.productId) || "", 180),
+    productName: azExportSafeText(x.productName || x.productTitle || (x.product && (x.product.productName || x.product.name || x.product.title)) || "", 220),
+    category: azExportSafeText(x.category || x.productCategory || "", 80),
+    amount: azExportSafeText(x.amount || x.amountText || "", 80),
+    amountSen: Number(x.amountSen || 0) || 0,
+    saleAmount: azExportAmount(x.saleAmount || (Number(x.amountSen || 0) ? Number(x.amountSen || 0) / 100 : 0)),
+    username: azExportSafeText(user.username || x.username || x.usernameKey || "", 100),
+    email: azExportSafeText(user.email || x.email || x.buyerEmail || "", 180),
+    phone: azExportSafeText(user.phone || x.phone || "", 80),
+    downloadTokenMasked: azMaskToken(x.downloadToken || ""),
+    tokenExpiresAt: Number(x.tokenExpiresAt || 0) || 0,
+    maxDownload: Number(x.maxDownload || x.downloadLimit || 0) || 0,
+    usedCount: Number(x.usedCount || 0) || 0,
+    receiptTokenRequired: x.receiptTokenRequired === true || String(x.receiptTokenRequired || "") === "1",
+    emailSentAt: azExportSafeText(x.emailSentAt || "", 120),
+    emailError: azExportSafeText(x.emailError || "", 260),
+    commissionCheckedAt: azExportSafeText(x.commissionCheckedAt || "", 120),
+    createdAt: azExportSafeText(x.createdAt || "", 120),
+    createdAtMs: Number(x.createdAtMs || 0) || 0,
+    paidAt: azExportSafeText(x.paidAt || "", 120),
+    updatedAt: azExportSafeText(x.updatedAt || "", 120)
+  };
+}
+function azExportSafePremiumToken(x = {}, docId = "") {
+  return {
+    docId: azExportSafeText(docId || x.docId || x.id || "", 160),
+    tokenMasked: azMaskToken(x.token || x.downloadToken || ""),
+    orderId: azExportSafeText(x.orderId || "", 160),
+    billCode: azExportSafeText(x.billCode || "", 120),
+    productName: azExportSafeText(x.productName || "", 220),
+    downloadUrlHost: azSafeUrlInfo(x.downloadUrl || x.fileUrl || x.downloadLink || "").host,
+    downloadUrlPath: azSafeUrlInfo(x.downloadUrl || x.fileUrl || x.downloadLink || "").pathname,
+    usedCount: Number(x.usedCount || 0) || 0,
+    maxDownload: Number(x.maxDownload || x.downloadLimit || 0) || 0,
+    expiresAt: Number(x.expiresAt || 0) || 0,
+    createdAt: azExportSafeText(x.createdAt || "", 120),
+    createdAtMs: Number(x.createdAtMs || 0) || 0
+  };
+}
+function azExportSafePurchaseLog(x = {}, docId = "") {
+  return {
+    docId: azExportSafeText(docId || x.docId || x.id || "", 160),
+    username: azExportSafeText(x.username || x.usernameKey || "", 100),
+    uid: azExportSafeText(x.uid || "", 160),
+    email: azExportSafeText(x.email || x.buyerEmail || "", 180),
+    productType: azExportSafeText(x.productType || x.type || "", 60),
+    itemCode: azExportSafeText(x.itemCode || x.noPa || x.noBm || "", 120),
+    negeri: azExportSafeText(x.negeri || "", 80),
+    amount: azExportAmount(x.amount || x.price || 0),
+    status: azExportSafeText(x.status || "", 60),
+    orderId: azExportSafeText(x.orderId || "", 160),
+    billCode: azExportSafeText(x.billCode || "", 120),
+    paymentReference: azExportSafeText(x.paymentReference || "", 160),
+    createdAt: azExportSafeText(x.createdAt || "", 120),
+    createdAtMs: Number(x.createdAtMs || 0) || 0,
+    updatedAt: azExportSafeText(x.updatedAt || "", 120),
+    paidAt: azExportSafeText(x.paidAt || "", 120)
+  };
+}
+function azExportSafeSoftwareStats(stats = {}) {
+  const rows = [];
+  Object.entries(stats || {}).forEach(([productId, value]) => {
+    const x = normalizeSoftwareStats(value || {});
+    rows.push({ productId: cleanSoftwareId(productId), downloads: x.downloads, likes: x.likes, ratingAverage: x.ratingAverage, ratingVotes: x.ratingVotes, ratingTotal: x.ratingTotal, updatedAt: azExportSafeText(value && value.updatedAt || "", 120) });
+  });
+  rows.sort((a,b)=>String(a.productId).localeCompare(String(b.productId)));
+  return rows;
+}
+function azExportSafeRow(type, row = {}, docId = "") {
+  if (type === "premiumOrders") return azExportSafePremiumOrder(row, docId);
+  if (type === "premiumDownloadTokens") return azExportSafePremiumToken(row, docId);
+  if (type === "commissionRecords") return azCommissionSafeRecord(row, docId);
+  if (type === "purchaseLogs") return azExportSafePurchaseLog(row, docId);
+  if (type === "adminAuditLogs") return azAuditLogPublicRow(row, docId);
+  return azJsonSafe(row);
+}
+async function azExportFirestoreRows(collectionName, maxRows = 500) {
+  const db = getAzobssBackendDb();
+  if (!db) return { firestoreOk:false, rows:[], error:"Firebase Admin not configured" };
+  try {
+    let snap;
+    try { snap = await db.collection(collectionName).orderBy("createdAtMs", "desc").limit(maxRows).get(); }
+    catch (_) { snap = await db.collection(collectionName).limit(maxRows).get(); }
+    const rows = [];
+    snap.forEach(doc => rows.push({ docId: doc.id, ...(doc.data() || {}) }));
+    return { firestoreOk:true, rows, error:"" };
+  } catch (err) {
+    return { firestoreOk:false, rows:[], error: err && err.message ? err.message : String(err) };
+  }
+}
+async function azLoadAdminExportRows(type, maxRows = 500) {
+  const limitRows = Math.max(1, Math.min(5000, Number(maxRows || 500) || 500));
+  if (type === "softwareStats") {
+    const fsRows = await azExportFirestoreRows("softwareStats", limitRows);
+    if (fsRows.rows.length) return { rows: fsRows.rows.map(x => azJsonSafe(x)).slice(0, limitRows), firestoreOk: fsRows.firestoreOk, source:"firestore", error: fsRows.error || "" };
+    return { rows: azExportSafeSoftwareStats(readSoftwareStats()).slice(0, limitRows), firestoreOk:false, source:"local-json", error: fsRows.error || "" };
+  }
+  const cfg = AZOBSS_ADMIN_EXPORT_TYPES[type];
+  if (!cfg) return { rows:[], firestoreOk:false, source:"none", error:"Unsupported export type" };
+  const fsRows = await azExportFirestoreRows(cfg.firestore, limitRows);
+  if (fsRows.rows.length) return { rows: fsRows.rows.slice(0, limitRows).map(x => azExportSafeRow(type, x, x.docId)), firestoreOk: fsRows.firestoreOk, source:"firestore", error: fsRows.error || "" };
+  let local = [];
+  if (type === "premiumOrders") local = readPremiumOrders();
+  else if (type === "premiumDownloadTokens") local = readPremiumJson(PREMIUM_TOKENS_FILE, []);
+  else if (type === "commissionRecords") local = readPremiumJson(COMMISSION_RECORDS_FILE, []);
+  else if (type === "adminAuditLogs") local = azReadLocalAuditLogs();
+  const rows = Array.isArray(local) ? local.slice(0, limitRows).map((x,i)=>azExportSafeRow(type, x, x.docId || x.id || `local_${i}`)) : [];
+  return { rows, firestoreOk:false, source: rows.length ? "local-json" : "empty", error: fsRows.error || "" };
+}
+function azFlattenForCsv(obj = {}, prefix = "", out = {}) {
+  Object.entries(obj || {}).forEach(([key, value]) => {
+    const name = prefix ? `${prefix}.${key}` : key;
+    if (value && typeof value === "object" && !Array.isArray(value)) azFlattenForCsv(value, name, out);
+    else out[name] = Array.isArray(value) ? JSON.stringify(value) : value;
+  });
+  return out;
+}
+function azRowsToCsv(rows = []) {
+  const flat = rows.map(r => azFlattenForCsv(r));
+  const headers = Array.from(new Set(flat.flatMap(r => Object.keys(r))));
+  const escCsv = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  return [headers.join(",")].concat(flat.map(r => headers.map(h => escCsv(r[h])).join(","))).join("\n");
+}
+function azExportFileName(type, format) {
+  const d = new Date().toISOString().slice(0,10);
+  return `azobss-${type}-export-${d}.${format === "csv" ? "csv" : "json"}`;
+}
+
+
 function azMaskEmail(value = "") {
   const email = String(value || "").trim();
   const at = email.indexOf("@");
@@ -2588,6 +2746,7 @@ async function handler(req, res) {
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-admin-set", 10, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/export" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-export", 30, 10 * 60 * 1000)) return;
 
 
     // =========================
@@ -2841,6 +3000,40 @@ async function handler(req, res) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
     }
+
+    if (pathname === "/api/admin/export" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to export reports." }, null, 2), "application/json");
+        }
+        const type = azExportTypeKey(parsed.query.type || "");
+        const format = String(parsed.query.format || "json").toLowerCase() === "csv" ? "csv" : "json";
+        const maxRows = Math.max(1, Math.min(5000, Number(parsed.query.limit || 500) || 500));
+        if (!type) return send(res, 400, JSON.stringify({ ok:false, error:"Unsupported export type." }, null, 2), "application/json");
+        if (type === "all") {
+          const all = {};
+          const meta = {};
+          for (const key of Object.keys(AZOBSS_ADMIN_EXPORT_TYPES)) {
+            const result = await azLoadAdminExportRows(key, maxRows);
+            all[key] = result.rows;
+            meta[key] = { count: result.rows.length, source: result.source, firestoreOk: result.firestoreOk, error: result.error || "" };
+          }
+          azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_export_download", "allReports", "all", { type:"all", format:"json", limit:maxRows, meta }, "success"), "Admin export audit log failed");
+          return send(res, 200, JSON.stringify({ ok:true, exportedAt:new Date().toISOString(), type:"all", meta, data:all }, null, 2), "application/json", { "Content-Disposition": `attachment; filename="${azExportFileName("all", "json")}"` });
+        }
+        const result = await azLoadAdminExportRows(type, maxRows);
+        const filename = azExportFileName(type, format);
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_export_download", type, type, { type, format, limit:maxRows, count:result.rows.length, source:result.source, firestoreOk:result.firestoreOk }, "success"), "Admin export audit log failed");
+        if (format === "csv") {
+          return send(res, 200, azRowsToCsv(result.rows), "text/csv; charset=utf-8", { "Content-Disposition": `attachment; filename="${filename}"` });
+        }
+        return send(res, 200, JSON.stringify({ ok:true, exportedAt:new Date().toISOString(), type, label:AZOBSS_ADMIN_EXPORT_TYPES[type].label, count:result.rows.length, source:result.source, firestoreOk:result.firestoreOk, error:result.error || "", records:result.rows }, null, 2), "application/json", { "Content-Disposition": `attachment; filename="${filename}"` });
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
 
     if (pathname === "/api/commission/status" && req.method === "GET") {
       try {

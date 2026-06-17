@@ -1,0 +1,26 @@
+AZOBSS PATCH 191 - ADMIN BACKUP / EXPORT REPORTS
+
+Baseline: (190)-AZOBSS-COMMISSION-PAYOUT-WORKFLOW-FIX_20260617.zip
+Output:   (191)-AZOBSS-ADMIN-BACKUP-EXPORT-REPORTS-FIX_20260617.zip
+
+Changes:
+1. Added Admin Dashboard tab: Backup / Export.
+2. Added protected backend export API: GET /api/admin/export.
+3. Export types:
+   - premiumOrders
+   - commissionRecords
+   - purchaseLogs
+   - softwareStats
+   - adminAuditLogs
+   - premiumDownloadTokens (masked)
+   - all (JSON bundle)
+4. Export formats:
+   - CSV
+   - JSON
+5. Export endpoint requires admin Firebase ID token or admin API secret.
+6. Export endpoint is rate-limited.
+7. Export action is logged to adminAuditLogs.
+8. Sensitive token fields are masked in export reports.
+
+No Firebase Rules update required.
+No new Render ENV required.
