@@ -2233,7 +2233,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       ${metaHtml}
       <p>${esc(clean.description)}</p>
       ${gifHtml}
-      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-premium-download-file-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-premium-download-file-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" data-owner-uid="${esc(clean.ownerUid || clean.createdByUid || clean.staffUid || clean.sellerUid || '')}" data-owner-username="${esc(clean.ownerUsername || clean.createdByUsername || clean.staffUsername || clean.sellerUsername || '')}" data-owner-email="${esc(clean.ownerEmail || clean.createdByEmail || clean.staffEmail || clean.sellerEmail || '')}" data-owner-key="${esc(clean.ownerKey || clean.createdByKey || clean.staffOwnerKey || clean.sellerKey || '')}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
       ${adminEdit}
     </article>`;
   }
@@ -2417,6 +2417,28 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'bank'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
+
+  function azStaffShareReferralForProduct(product){
+    try{
+      const id = String(product?.id || product?.productId || '').trim();
+      const qs = new URLSearchParams(location.search);
+      const urlProduct = String(qs.get('product') || '').trim();
+      const urlRef = String(qs.get('ref') || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+      if(urlRef && (!urlProduct || !id || urlProduct === id)){
+        const r={username:urlRef, productId:id || urlProduct, sourcePage:(/CAD-Tools/i.test(location.pathname)?'CAD Tools':'Software'), openedAt:new Date().toISOString(), source:'url-ref'};
+        try{localStorage.setItem('azobssStaffShareReferral_'+(id||urlProduct), JSON.stringify(r));}catch(_e){}
+        return r;
+      }
+      if(id){
+        const raw = localStorage.getItem('azobssStaffShareReferral_'+id) || sessionStorage.getItem('azobssStaffShareReferral_'+id) || '';
+        if(raw) return JSON.parse(raw);
+      }
+      const last = JSON.parse(localStorage.getItem('azobssLuckyLastProductShareOpen') || 'null');
+      if(last && last.ref && (!id || !last.productId || last.productId === id)) return {username:last.ref, productId:id || last.productId, sourcePage:last.sourcePage || '', openedAt:last.at || '', source:'last-product-open'};
+    }catch(_e){}
+    return null;
+  }
+
   openPaymentBtn?.addEventListener('click', async ()=>{
     errorBox.textContent=''; successBox.classList.remove('is-open');
     if(!requireBuyerEmail()) return;
@@ -2438,7 +2460,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       localStorage.setItem('azobss_last_checkout_page', returnUrl);
       const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',returnUrl})
+        body:JSON.stringify({product:{...currentProduct,staffReferral:azStaffShareReferralForProduct(currentProduct),premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},staffReferral:azStaffShareReferralForProduct(currentProduct),premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',returnUrl})
       });
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
       if(!res.ok || !data.ok || !data.paymentUrl){
@@ -2478,7 +2500,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
     if(!trigger)return;
     e.preventDefault();
-    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',stripeLink:trigger.dataset.stripeLink||'',secureDownloadLink:trigger.dataset.downloadLink||trigger.dataset.premiumDownloadFileLink||'',premiumDownloadFileLink:trigger.dataset.premiumDownloadFileLink||trigger.dataset.downloadLink||'',privateDownloadLink:trigger.dataset.premiumDownloadFileLink||trigger.dataset.downloadLink||'',downloadLink:trigger.dataset.downloadLink||trigger.dataset.premiumDownloadFileLink||''};
+    const product = {id:trigger.dataset.productId||'',name:trigger.dataset.productName||'Premium Item',price:trigger.dataset.productPrice||'RM0',paymentLink:trigger.dataset.paymentLink||'',stripeLink:trigger.dataset.stripeLink||'',secureDownloadLink:trigger.dataset.downloadLink||trigger.dataset.premiumDownloadFileLink||'',premiumDownloadFileLink:trigger.dataset.premiumDownloadFileLink||trigger.dataset.downloadLink||'',privateDownloadLink:trigger.dataset.premiumDownloadFileLink||trigger.dataset.downloadLink||'',downloadLink:trigger.dataset.downloadLink||trigger.dataset.premiumDownloadFileLink||'',ownerUid:trigger.dataset.ownerUid||'',ownerUsername:trigger.dataset.ownerUsername||'',ownerEmail:trigger.dataset.ownerEmail||'',ownerKey:trigger.dataset.ownerKey||''};
     open(product);
   });
 })();
@@ -4745,7 +4767,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     const qs=new URLSearchParams(location.search);const productId=String(qs.get('product')||'').trim().slice(0,120);const ref=username({usernameKey:qs.get('ref')||''});
     if(!productId||!ref) return;
     const visitor=username(readUser());
-    try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}))}catch(e){}
+    try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}));try{localStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));sessionStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));}catch(_e){}}catch(e){}
   }
   document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest(CARD_SELECTOR);if(card)shareCard(card,e)},true);
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){const m=document.querySelector('.az-lucky-share-modal-backdrop');if(m)m.remove();}});

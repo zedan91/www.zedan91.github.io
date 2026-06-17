@@ -3857,7 +3857,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Video</a></div>` : ''}
       ${productIdMeta}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>
       ${adminEdit}
     </div>`;
   }
@@ -4731,6 +4731,28 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     btn.addEventListener('click',()=>setActiveMethod(btn.dataset.method));
   });
 
+
+  function azStaffShareReferralForProduct(product){
+    try{
+      const id = String(product?.id || product?.productId || '').trim();
+      const qs = new URLSearchParams(location.search);
+      const urlProduct = String(qs.get('product') || '').trim();
+      const urlRef = String(qs.get('ref') || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+      if(urlRef && (!urlProduct || !id || urlProduct === id)){
+        const r={username:urlRef, productId:id || urlProduct, sourcePage:(/CAD-Tools/i.test(location.pathname)?'CAD Tools':'Software'), openedAt:new Date().toISOString(), source:'url-ref'};
+        try{localStorage.setItem('azobssStaffShareReferral_'+(id||urlProduct), JSON.stringify(r));}catch(_e){}
+        return r;
+      }
+      if(id){
+        const raw = localStorage.getItem('azobssStaffShareReferral_'+id) || sessionStorage.getItem('azobssStaffShareReferral_'+id) || '';
+        if(raw) return JSON.parse(raw);
+      }
+      const last = JSON.parse(localStorage.getItem('azobssLuckyLastProductShareOpen') || 'null');
+      if(last && last.ref && (!id || !last.productId || last.productId === id)) return {username:last.ref, productId:id || last.productId, sourcePage:last.sourcePage || '', openedAt:last.at || '', source:'last-product-open'};
+    }catch(_e){}
+    return null;
+  }
+
   openPaymentBtn?.addEventListener('click', async ()=>{
     errorBox.textContent = '';
     successBox.classList.remove('is-open');
@@ -4758,7 +4780,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          product: {...currentProduct, premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink, secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink, downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink},
+          product: {...currentProduct, staffReferral: azStaffShareReferralForProduct(currentProduct), premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink, secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink, downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink},
+          staffReferral: azStaffShareReferralForProduct(currentProduct),
           premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
           secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
           downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink,
@@ -4822,7 +4845,11 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       privateDownloadLink: trigger.dataset.premiumDownloadFileLink || trigger.dataset.downloadLink || '',
       downloadLink: trigger.dataset.downloadLink || trigger.dataset.premiumDownloadFileLink || '',
       downloadLimit: Number(trigger.dataset.downloadLimit || 3),
-      expiryHours: Number(trigger.dataset.expiryHours ?? 24)
+      expiryHours: Number(trigger.dataset.expiryHours ?? 24),
+      ownerUid: trigger.dataset.ownerUid || '',
+      ownerUsername: trigger.dataset.ownerUsername || '',
+      ownerEmail: trigger.dataset.ownerEmail || '',
+      ownerKey: trigger.dataset.ownerKey || ''
     };
     open(product);
   });
@@ -8193,7 +8220,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     const qs=new URLSearchParams(location.search);const productId=String(qs.get('product')||'').trim().slice(0,120);const ref=username({usernameKey:qs.get('ref')||''});
     if(!productId||!ref) return;
     const visitor=username(readUser());
-    try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}))}catch(e){}
+    try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}));try{localStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));sessionStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));}catch(_e){}}catch(e){}
   }
   document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest(CARD_SELECTOR);if(card)shareCard(card,e)},true);
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){const m=document.querySelector('.az-lucky-share-modal-backdrop');if(m)m.remove();}});

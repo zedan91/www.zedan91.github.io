@@ -1,0 +1,29 @@
+AZOBSS Staff Share Commission Patch (171)
+
+Purpose:
+- Adds commission tracking for staff/semi-admin who share paid Software/CAD product links.
+- Existing owner commission remains:
+  * Staff owner sells own product: owner 70% / AZOBSS 30%.
+- New share-link policy:
+  * Staff shares admin/AZOBSS product: sharer 20% / AZOBSS 80%.
+  * Staff shares another staff-owned product: owner 60% / sharer 10% / AZOBSS 30%.
+  * Owner shares own product: no double commission; owner remains 70%.
+
+Files changed:
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+- backend/server.js
+
+How it works:
+- Product share links keep using ?product=PRODUCT_ID&ref=username.
+- When a buyer opens a shared link, the ref is stored locally for that product.
+- When payment bill is created, Software/CAD sends staffReferral + product owner metadata to backend.
+- When payment is verified/paid, backend creates commissionRecords.
+
+Important Render requirement for automatic Firestore commission:
+- Add Firebase service account env to azobss-backend if commissionRecords should be written directly to Firestore:
+  FIREBASE_SERVICE_ACCOUNT_JSON={service account JSON}
+- If this env is not set, backend will fallback to backend/data/commission-records.json only.
+
+Firestore Rules:
+- No new Firestore Rules are required when backend writes via Firebase Admin SDK.
