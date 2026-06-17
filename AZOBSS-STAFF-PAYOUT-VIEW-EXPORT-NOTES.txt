@@ -1,0 +1,12 @@
+AZOBSS PATCH 194 - Staff Payout View + Export
+
+Changes:
+- Added Staff Dashboard tab: My Payout.
+- Staff can filter own commission records by payout status: pending, approved, paid, rejected.
+- Staff can view payout summary totals by status.
+- Staff can export visible payout records to CSV.
+- Uses existing protected commission fallback API with Firebase ID token when Firestore direct read is blocked.
+- Admin still manages payout status from Admin Dashboard; staff view is read-only.
+
+No Firebase Rules update required.
+No new Render ENV required.
