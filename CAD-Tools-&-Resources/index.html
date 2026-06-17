@@ -2409,7 +2409,49 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     syncBuyerEmailField();
   });
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
-  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">A temporary download link will be generated after payment verification.</div>`; updateInstruction();}
+  function isAdminSession(){
+    const u=storedUser()||{};
+    const email=String(u.email||u.realEmail||u.authEmail||'').toLowerCase();
+    const role=String(u.role||'').toLowerCase();
+    const username=String(u.username||u.usernameKey||u.name||u.id||'').toLowerCase();
+    return role==='admin' || username==='zedan91' || email==='zedan91@azobss.local' || email==='zedan9107@gmail.com';
+  }
+  async function azobssFirebaseAuthHeader(forceRefresh=false){
+    try{
+      const [{getApps, initializeApp}, {getAuth}] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js')
+      ]);
+      const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
+      const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+      const auth=getAuth(app);
+      const user=auth.currentUser;
+      if(!user || typeof user.getIdToken!=='function') return {};
+      const token=await user.getIdToken(!!forceRefresh);
+      return token?{Authorization:'Bearer '+token}:{};
+    }catch(_e){return {};}
+  }
+  function azobssFriendlyApiError(status,data,fallback){
+    const raw=String(data?.error||data?.message||fallback||'Request failed.');
+    if(status===401) return 'Session expired. Please login again, then retry.';
+    if(status===403){
+      if(raw.toLowerCase().includes('complete-purchase')) return 'Admin permission required. Manual complete purchase is locked for security. For normal buyers, complete ToyyibPay/FPX and wait for automatic verification/email.';
+      return 'Admin permission required. Please login with an authorised admin account.';
+    }
+    if(status===429){
+      const wait=data?.retryAfter?` Please wait ${data.retryAfter} seconds.`:' Please wait a while.';
+      return 'Too many attempts.'+wait;
+    }
+    if(String(data?.verification||'').toLowerCase()==='pending') return 'Payment verification is still pending. Please wait a moment and check again.';
+    return raw;
+  }
+  function refreshManualCompleteVisibility(){
+    if(!completeBtn) return;
+    const admin=isAdminSession();
+    completeBtn.style.display=admin?'':'none';
+    completeBtn.textContent=admin?'Admin Complete Purchase':'Submit Proof';
+  }
+  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); refreshManualCompleteVisibility(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">A temporary download link will be generated after payment verification.</div>`; updateInstruction();}
   window.azobssOpenPremiumPay = open;
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
   function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; return 'dynamic-toyyibpay'; }
@@ -2484,9 +2526,15 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const email = buyerEmail();
     completeBtn.disabled=true; completeBtn.textContent='Processing...';
     try{
-      const res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
-      const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
-      if(!res.ok || !data.ok) throw new Error(data.error || 'Payment verification failed');
+      let authHeaders=await azobssFirebaseAuthHeader(false);
+      let res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json',...authHeaders},body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
+      let data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+      if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
+        authHeaders=await azobssFirebaseAuthHeader(true);
+        res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json',...authHeaders},body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
+        data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+      }
+      if(!res.ok || !data.ok) throw new Error(azobssFriendlyApiError(res.status,data,'Payment verification failed'));
       try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       const downloadUrl = toAbsolute(data.downloadUrl);
       const receiptUrl = toAbsolute(data.receiptUrl);
@@ -2494,7 +2542,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       successBox.classList.add('is-open');
       if(window.showAzobssPaymentSuccessPopup) window.showAzobssPaymentSuccessPopup({receiptUrl: receiptUrl});
     }catch(err){errorBox.textContent=err.message || 'Failed to process payment.';}
-    finally{completeBtn.disabled=false; completeBtn.textContent='Submit Proof';}
+    finally{completeBtn.disabled=false; refreshManualCompleteVisibility();}
   });
   document.addEventListener('click', e=>{
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');

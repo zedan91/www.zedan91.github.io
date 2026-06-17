@@ -1288,6 +1288,36 @@ function fmtDate(v){
   }catch(e){return '-'}
 }
 function toast(msg){alert(msg)}
+let adminApiNotice = '';
+function azAdminApiErrorMessage(status,data,fallback){
+  const raw=String(data?.error||data?.message||fallback||'Request failed.');
+  if(status===401) return 'Session expired. Please login again, then retry.';
+  if(status===403) return 'Admin permission required. Please login with an authorised admin account.';
+  if(status===429) return 'Too many attempts. '+(data?.retryAfter?('Please wait '+data.retryAfter+' seconds.'):'Please wait a while.');
+  if(String(data?.verification||'').toLowerCase()==='pending') return 'Payment verification is still pending. Please wait a moment and check again.';
+  return raw;
+}
+async function azAdminAuthHeaders(forceRefresh=false){
+  try{
+    const u=currentUser||auth.currentUser;
+    if(!u || typeof u.getIdToken!=='function') return {};
+    const token=await u.getIdToken(!!forceRefresh);
+    return token?{Authorization:'Bearer '+token}:{};
+  }catch(_e){return {};}
+}
+async function azAdminFetchJson(url,options={}){
+  const baseHeaders=options.headers||{};
+  let authHeaders=await azAdminAuthHeaders(false);
+  let res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+  let data=await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+  if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
+    authHeaders=await azAdminAuthHeaders(true);
+    res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+    data=await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+  }
+  if(!res.ok) throw new Error(azAdminApiErrorMessage(res.status,data));
+  return data;
+}
 function isAdminUser(){
   const email=String(currentUser?.email||adminProfile?.email||adminProfile?.authEmail||'').toLowerCase();
   const role=String(adminProfile?.role||'').toLowerCase();
@@ -1578,13 +1608,15 @@ function commissionIsPaid(x){
   return ['paid','settled','released','verified','success','completed','approved'].includes(s);
 }
 async function fetchAdminCommissionsFromApi(){
+  adminApiNotice = '';
   try{
-    const token=currentUser && typeof currentUser.getIdToken==='function' ? await currentUser.getIdToken() : '';
-    const r=await fetch(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=300',{cache:'no-store',headers:token?{Authorization:'Bearer '+token}:{}});
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok){ console.warn('Admin commission API fallback rejected',j); return []; }
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=300',{cache:'no-store'});
     return Array.isArray(j.records)?j.records:[];
-  }catch(e){ console.warn('Admin commission API fallback failed',e); return []; }
+  }catch(e){
+    adminApiNotice = e?.message || 'Commission backend API fallback failed.';
+    console.warn('Admin commission API fallback failed',e);
+    return [];
+  }
 }
 function resetCommissionForm(){
   $('#commissionEditDocId').value = '';
@@ -1642,7 +1674,8 @@ async function loadAdminCommissions(){
       </div>
     </div>`;
   });
-  $('#adminCommissionList').innerHTML = rows.join('') || '<div class="item">No commission records.</div>';
+  const notice = adminApiNotice ? `<div class="item"><div class="item-title">⚠️ Backend API notice</div><div class="item-meta">${esc(adminApiNotice)}</div></div>` : '';
+  $('#adminCommissionList').innerHTML = rows.join('') || notice || '<div class="item">No commission records.</div>';
 }
 async function saveCommissionRecord(){
   const docId = $('#commissionEditDocId')?.value || '';

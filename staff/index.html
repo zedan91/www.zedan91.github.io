@@ -372,7 +372,11 @@ const cfg={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.f
 const app=getApps().length?getApps()[0]:initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ADMIN='zedan91@azobss.local';
 const AZOBSS_BACKEND_API='https://azobss-backend.onrender.com';
 let user=null,profile=null,perms={}; const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+let staffApiNotice='';
 function deny(m){document.body.classList.remove('staff-ok');$('#accessMsg').textContent=m} function allow(){document.body.classList.add('staff-ok')} function isAdmin(p){return String(p?.role||'').toLowerCase()==='admin'||String(p?.email||p?.authEmail||'').toLowerCase()===ADMIN||String(p?.id||p?.usernameKey||p?.username||'').toLowerCase()==='zedan91'} function can(k){return isAdmin(profile)||!!perms[k]} 
+function azStaffApiErrorMessage(status,data,fallback){const raw=String(data?.error||data?.message||fallback||'Request failed.');if(status===401)return 'Session expired. Please login again, then retry.';if(status===403)return 'Staff/Admin permission required for this backend API.';if(status===429)return 'Too many attempts. '+(data?.retryAfter?('Please wait '+data.retryAfter+' seconds.'):'Please wait a while.');if(String(data?.verification||'').toLowerCase()==='pending')return 'Payment verification is still pending. Please wait a moment and check again.';return raw;}
+async function azStaffAuthHeaders(forceRefresh=false){try{const u=user||auth.currentUser;if(!u||typeof u.getIdToken!=='function')return{};const token=await u.getIdToken(!!forceRefresh);return token?{Authorization:'Bearer '+token}:{}}catch(_e){return{};}}
+async function azStaffFetchJson(url,options={}){const baseHeaders=options.headers||{};let authHeaders=await azStaffAuthHeaders(false);let r=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});let j=await r.json().catch(()=>({ok:false,error:'Invalid backend response'}));if((r.status===401||r.status===403)&&Object.keys(authHeaders).length){authHeaders=await azStaffAuthHeaders(true);r=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});j=await r.json().catch(()=>({ok:false,error:'Invalid backend response'}));}if(!r.ok)throw new Error(azStaffApiErrorMessage(r.status,j));return j;}
 function currentOwnerKeys(){
   const username=String(profile?.usernameKey||profile?.username||profile?.id||profile?.name||user?.displayName||'').toLowerCase();
   const email=String(profile?.email||profile?.authEmail||user?.email||'').toLowerCase();
@@ -420,13 +424,11 @@ function isMyShareCommissionRecord(x){
   return vals.includes(me.username) || vals.includes(me.email) || vals.includes(me.uid.toLowerCase());
 }
 async function fetchCommissionRecordsFromApi(){
+  staffApiNotice='';
   try{
-    const token=user && typeof user.getIdToken==='function' ? await user.getIdToken() : '';
-    const r=await fetch(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=200',{cache:'no-store',headers:token?{Authorization:'Bearer '+token}:{}});
-    const j=await r.json();
-    if(!r.ok){console.warn('Commission API fallback rejected',j);return []}
+    const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=200',{cache:'no-store'});
     return Array.isArray(j.records)?j.records:[];
-  }catch(e){console.warn('Commission API fallback failed',e);return []}
+  }catch(e){staffApiNotice=e?.message||'Commission backend API fallback failed.';console.warn('Commission API fallback failed',e);return []}
 }
 async function getCommissionRecords(){
   const rows=[]; const seen=new Set();
@@ -493,7 +495,8 @@ async function shareCom(){
    const refUrl=(x.productId&& (x.username||x.shareReferral?.username||x.shareReferral?.ref)) ? (location.origin+(String(x.sourcePage||'Software').toLowerCase().includes('cad')?'/CAD-Tools-&-Resources/':'/Software-Tools/')+'?product='+encodeURIComponent(x.productId)+'&ref='+encodeURIComponent(x.username||x.shareReferral?.username||x.shareReferral?.ref)) : '';
    return `<div class="item"><b>🔗 ${product}</b><div class="muted"><span class="az-share-badge green">Sharer: ${ref}</span><span class="az-share-badge gold">Rate ${rate}%</span><span class="az-share-badge">Commission RM${com.toFixed(2)}</span><span class="az-share-badge">Sale RM${sale.toFixed(2)}</span><span class="az-share-badge">${st}</span></div><div class="muted">${esc(type)} • ${order} • ${source}</div>${refUrl?`<div class="muted az-mini-link">${esc(refUrl)}</div>`:''}<div class="muted">${esc(x.note||'')}</div></div>`;
  }).join('');
- $('#shareComList').innerHTML=html || '<div class="item">No share link commission records yet.<div class="muted">Jika Firebase Rules block bacaan frontend, dashboard akan cuba baca melalui backend API. Pastikan payment callback sudah paid dan commissionRecords sudah wujud.</div></div>';
+ const notice=staffApiNotice?`<div class="item"><b>⚠️ Backend API notice</b><div class="muted">${esc(staffApiNotice)}</div></div>`:'';
+ $('#shareComList').innerHTML=html || notice || '<div class="item">No share link commission records yet.<div class="muted">If frontend Firestore read is blocked, this dashboard will try backend API with your Firebase login token. Make sure payment callback is paid and commissionRecords exists.</div></div>';
 }
 async function sales(){
  if(!can('canViewPayments'))return alert('No permission');
