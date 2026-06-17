@@ -2396,6 +2396,11 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
+    if (pathname === "/api/software-stats" && req.method === "GET" && azRateLimitOrSend(req, res, "software-stats-read", 240, 60 * 1000)) return;
+    if (pathname === "/api/software-stats/download" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-download", 60, 10 * 60 * 1000)) return;
+    if (pathname === "/api/software-stats/like" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-like", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/software-stats/rate" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-rate", 40, 10 * 60 * 1000)) return;
+    if (pathname === "/api/software-stats/admin-set" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-admin-set", 10, 10 * 60 * 1000)) return;
 
 
     // =========================
@@ -2748,6 +2753,7 @@ async function handler(req, res) {
 
     // =========================
     // SOFTWARE STATS BACKEND SYNC
+    // Public read/increment endpoints are rate-limited. Admin-set is protected by admin Firebase token/API secret.
     // =========================
     if (pathname === "/api/software-stats" && req.method === "GET") {
       const normalized = softwareStatsPayload(readSoftwareStats());
@@ -2756,11 +2762,14 @@ async function handler(req, res) {
     }
 
     if (pathname === "/api/software-stats/download" && req.method === "POST") {
-      const body = JSON.parse((await readBody(req)) || "{}");
+      let body = {};
+      try { body = JSON.parse((await readBody(req)) || "{}"); }
+      catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
       const key = cleanSoftwareId(body.productId || body.id || body.name);
+      if (!key) return send(res, 400, JSON.stringify({ ok:false, error:"Missing productId" }, null, 2), "application/json");
       const stats = readSoftwareStats();
       const item = normalizeSoftwareStats(stats[key] || {});
-      item.downloads += 1;
+      item.downloads = Math.min(9999999, Math.max(0, Math.round(Number(item.downloads || 0))) + 1);
       item.updatedAt = new Date().toISOString();
       stats[key] = item;
       writeSoftwareStats(stats);
@@ -2768,12 +2777,15 @@ async function handler(req, res) {
     }
 
     if (pathname === "/api/software-stats/like" && req.method === "POST") {
-      const body = JSON.parse((await readBody(req)) || "{}");
+      let body = {};
+      try { body = JSON.parse((await readBody(req)) || "{}"); }
+      catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
       const key = cleanSoftwareId(body.productId || body.id || body.name);
+      if (!key) return send(res, 400, JSON.stringify({ ok:false, error:"Missing productId" }, null, 2), "application/json");
       const delta = Number(body.delta || 1) < 0 ? -1 : 1;
       const stats = readSoftwareStats();
       const item = normalizeSoftwareStats(stats[key] || {});
-      item.likes = Math.max(0, item.likes + delta);
+      item.likes = Math.min(9999999, Math.max(0, Math.round(Number(item.likes || 0)) + delta));
       item.updatedAt = new Date().toISOString();
       stats[key] = item;
       writeSoftwareStats(stats);
@@ -2781,10 +2793,13 @@ async function handler(req, res) {
     }
 
     if (pathname === "/api/software-stats/rate" && req.method === "POST") {
-      const body = JSON.parse((await readBody(req)) || "{}");
+      let body = {};
+      try { body = JSON.parse((await readBody(req)) || "{}"); }
+      catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
       const rating = Math.round(Number(body.rating || 0));
-      if (rating < 1 || rating > 5) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid rating" }), "application/json");
+      if (rating < 1 || rating > 5) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid rating" }, null, 2), "application/json");
       const key = cleanSoftwareId(body.productId || body.id || body.name);
+      if (!key) return send(res, 400, JSON.stringify({ ok:false, error:"Missing productId" }, null, 2), "application/json");
       const stats = readSoftwareStats();
       const item = normalizeSoftwareStats(stats[key] || {});
       item.ratings = item.ratings && typeof item.ratings === "object" ? item.ratings : { "1":0,"2":0,"3":0,"4":0,"5":0 };
@@ -2793,7 +2808,7 @@ async function handler(req, res) {
       const voterId = getRatingVoterIdFromBody(req, body);
       const previous = Math.max(0, Math.min(5, Math.round(Number(item.ratedBy[voterId] || 0))));
       if (previous >= 1 && previous <= 5) item.ratings[String(previous)] = Math.max(0, item.ratings[String(previous)] - 1);
-      item.ratings[String(rating)] += 1;
+      item.ratings[String(rating)] = Math.min(9999999, Math.max(0, Math.round(Number(item.ratings[String(rating)] || 0))) + 1);
       item.ratedBy[voterId] = rating;
       const updated = normalizeSoftwareStats(item);
       updated.updatedAt = new Date().toISOString();
@@ -2803,23 +2818,37 @@ async function handler(req, res) {
     }
 
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST") {
-      const body = JSON.parse((await readBody(req)) || "{}");
-      const stats = readSoftwareStats();
-      const items = Array.isArray(body.items) ? body.items : [];
-      for (const raw of items) {
-        const key = cleanSoftwareId(raw.productId || raw.id || raw.name);
-        stats[key] = normalizeSoftwareStats({
-          downloads: raw.downloads,
-          likes: raw.likes,
-          ratings: raw.ratings,
-          ratingAverage: raw.ratingAverage ?? raw.rating,
-          ratingVotes: raw.ratingVotes ?? raw.votes,
-          ratingTotal: raw.ratingTotal
-        });
-        stats[key].updatedAt = new Date().toISOString();
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to update software stats." }, null, 2), "application/json");
+        }
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const stats = readSoftwareStats();
+        const items = Array.isArray(body.items) ? body.items.slice(0, 500) : [];
+        let updatedCount = 0;
+        for (const raw of items) {
+          const key = cleanSoftwareId(raw.productId || raw.id || raw.name);
+          if (!key) continue;
+          stats[key] = normalizeSoftwareStats({
+            downloads: Math.max(0, Math.min(9999999, Math.round(Number(raw.downloads || 0)))),
+            likes: Math.max(0, Math.min(9999999, Math.round(Number(raw.likes || 0)))),
+            ratings: raw.ratings,
+            ratingAverage: Math.max(0, Math.min(5, Number(raw.ratingAverage ?? raw.rating ?? 0))),
+            ratingVotes: Math.max(0, Math.min(9999999, Math.round(Number(raw.ratingVotes ?? raw.votes ?? 0)))),
+            ratingTotal: Math.max(0, Math.min(49999995, Number(raw.ratingTotal || 0)))
+          });
+          stats[key].updatedAt = new Date().toISOString();
+          stats[key].updatedBy = cleanPremiumText(adminIdentity.username || adminIdentity.email || adminIdentity.uid || "admin", 120);
+          updatedCount += 1;
+        }
+        writeSoftwareStats(stats);
+        return send(res, 200, JSON.stringify({ ok: true, updatedCount, stats }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
-      writeSoftwareStats(stats);
-      return send(res, 200, JSON.stringify({ ok: true, stats }, null, 2), "application/json");
     }
 
     // =========================
