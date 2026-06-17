@@ -523,6 +523,26 @@ async function maybeSendDownloadEmail(order, req) {
   try {
     let current = order || {};
 
+    // Idempotency guard: ToyyibPay can call callback more than once and users can also press verify/status.
+    // Avoid duplicate Brevo/SMTP emails while still allowing retry if a previous send failed.
+    try {
+      const latestLocal = findPremiumOrderByAny({ orderId: current.orderId, billCode: current.billCode }) || null;
+      if (latestLocal) current = { ...current, ...latestLocal };
+      if (!current.emailSentAt && current.orderId) {
+        const latestPersistent = await azFindPremiumOrderPersistent({ orderId: current.orderId, billCode: current.billCode });
+        if (latestPersistent) current = { ...current, ...latestPersistent };
+      }
+    } catch (_emailGuardLookupError) {}
+    if (current.emailSentAt) return current;
+    const sendStartedMs = Date.parse(current.emailSendStartedAt || "") || 0;
+    if (sendStartedMs && (Date.now() - sendStartedMs) < 2 * 60 * 1000 && !current.emailError) {
+      console.log("AZOBSS email send skipped: already in progress", JSON.stringify({ orderId: current.orderId || "", startedAt: current.emailSendStartedAt || "" }).slice(0, 500));
+      return current;
+    }
+    if (current.orderId || current.billCode) {
+      current = upsertPremiumOrder({ ...current, emailSendStartedAt: new Date().toISOString(), emailSendAttemptCount: Number(current.emailSendAttemptCount || 0) + 1 });
+    }
+
     // PA/BM purchases are downloaded from Latest Purchase List with controlled 5x/7-day access.
     // Do not run Premium Software email/token logic for PA/BM; it creates misleading NO_DOWNLOAD_LINK logs.
     if (isPaBmPremiumOrder(current)) {
@@ -604,10 +624,10 @@ This link opens a confirmation page first. Download count is only used after you
     }
 
     console.log("AZOBSS EMAIL SENT OK", JSON.stringify({ orderId: current.orderId, email:azMaskEmail(email), via: brevoApiReady() ? "brevo-api" : "smtp" }).slice(0,500));
-    return upsertPremiumOrder({ ...current, emailSentAt: new Date().toISOString(), emailTo: email, emailError: null });
+    return upsertPremiumOrder({ ...current, emailSentAt: new Date().toISOString(), emailTo: email, emailError: null, emailSendStartedAt: "", lastEmailProvider: brevoApiReady() ? "brevo-api" : "smtp" });
   } catch (e) {
     console.error("AZOBSS email send failed:", e && (e.stack || e.message || e));
-    return upsertPremiumOrder({ ...(order || {}), emailError: e.message || String(e), emailErrorAt: new Date().toISOString() });
+    return upsertPremiumOrder({ ...(order || {}), emailError: e.message || String(e), emailErrorAt: new Date().toISOString(), emailSendStartedAt: "" });
   }
 }
 function makeDownloadForOrder(order) {
@@ -620,6 +640,82 @@ function makeDownloadForOrder(order) {
   savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload: 1 });
   return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload: 1, receiptTokenRequired: order.receiptTokenRequired === false ? false : true, receiptTokenVersion: order.receiptTokenVersion || 2 });
 }
+
+const AZOBSS_ORDER_FINALIZE_LOCKS = new Map();
+async function azWithOrderFinalizeLock(order, task) {
+  const key = cleanPremiumText((order && (order.orderId || order.billCode)) || makeId("order"), 180);
+  const previous = AZOBSS_ORDER_FINALIZE_LOCKS.get(key) || Promise.resolve();
+  let release;
+  const current = new Promise(resolve => { release = resolve; });
+  const chained = previous.then(() => current).catch(() => current);
+  AZOBSS_ORDER_FINALIZE_LOCKS.set(key, chained);
+  try {
+    await previous.catch(() => {});
+    return await task();
+  } finally {
+    release();
+    setTimeout(() => {
+      if (AZOBSS_ORDER_FINALIZE_LOCKS.get(key) === chained) AZOBSS_ORDER_FINALIZE_LOCKS.delete(key);
+    }, 1000).unref?.();
+  }
+}
+async function azReloadPremiumOrder(order = {}) {
+  let latest = order || {};
+  try {
+    const local = findPremiumOrderByAny({ orderId: latest.orderId, billCode: latest.billCode });
+    if (local) latest = { ...latest, ...local };
+  } catch (_localReloadError) {}
+  try {
+    const persistent = await azFindPremiumOrderPersistent({ orderId: latest.orderId, billCode: latest.billCode });
+    if (persistent) latest = { ...latest, ...persistent };
+  } catch (_persistentReloadError) {}
+  return latest;
+}
+async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
+  if (!order) return order;
+  return azWithOrderFinalizeLock(order, async () => {
+    const tx = opts.toyyibTransaction || opts.tx || order.toyyibTransaction || null;
+    const callbackData = opts.toyyibCallback || order.toyyibCallback || null;
+    let latest = await azReloadPremiumOrder(order);
+    const nowIso = new Date().toISOString();
+    const paidAt = latest.paidAt || opts.paidAt || nowIso;
+    const paymentReference = opts.paymentReference || (tx && (tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno)) || latest.paymentReference || "";
+    latest = upsertPremiumOrder({
+      ...latest,
+      status: "paid",
+      paymentMethod: "toyyibpay",
+      paymentReference,
+      toyyibTransaction: tx || latest.toyyibTransaction || undefined,
+      toyyibCallback: callbackData || latest.toyyibCallback || undefined,
+      paidAt,
+      paidFinalizedAt: latest.paidFinalizedAt || nowIso,
+      callbackTrustBypass: opts.callbackTrustBypass || latest.callbackTrustBypass || false
+    });
+
+    if (!latest.commissionCheckedAt) {
+      try { await azFinalizeCommissionForOrder(latest); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
+      latest = findPremiumOrderByAny({ orderId: latest.orderId, billCode: latest.billCode }) || latest;
+    }
+
+    if (!latest.paBmPaidSyncedAt) {
+      try {
+        const syncResult = await azobssUpdatePaBmPurchaseLogsForOrder(latest, "paid", { paymentReference: latest.paymentReference, toyyibTransaction: tx, toyyibCallback: callbackData });
+        if (syncResult && syncResult.ok) latest = upsertPremiumOrder({ ...latest, paBmPaidSyncedAt: new Date().toISOString(), paBmPaidSyncedCount: syncResult.updated || 0 });
+      } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
+    }
+
+    if (!isPaBmPremiumOrder(latest)) {
+      if (!latest.downloadToken) latest = makeDownloadForOrder(latest);
+      if (!latest.emailSentAt) {
+        await maybeSendDownloadEmail(latest, req);
+        latest = findPremiumOrderByAny({ orderId: latest.orderId, billCode: latest.billCode }) || latest;
+      }
+    } else if (!latest.emailSkippedForPaBm) {
+      latest = upsertPremiumOrder({ ...latest, emailSkippedForPaBm: true, emailError: null });
+    }
+    return findPremiumOrderByAny({ orderId: latest.orderId, billCode: latest.billCode }) || latest;
+  });
+}
 async function refreshToyyibOrder(order, req) {
   if (!order || !order.billCode) return order;
   try {
@@ -627,14 +723,7 @@ async function refreshToyyibOrder(order, req) {
     const tx = Array.isArray(result) ? result[0] : null;
     const paid = !!(tx && String(tx.billpaymentStatus || tx.billStatus || tx.status || "") === "1");
     if (!paid) return order;
-    let paidOrder = upsertPremiumOrder({ ...order, status: "paid", paymentMethod: "toyyibpay", paymentReference: tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno || order.paymentReference || "", toyyibTransaction: tx, paidAt: new Date().toISOString() });
-    try { await azFinalizeCommissionForOrder(paidOrder); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
-    try { await azobssUpdatePaBmPurchaseLogsForOrder(paidOrder, "paid", { paymentReference: paidOrder.paymentReference, toyyibTransaction: tx }); } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
-    if (!isPaBmPremiumOrder(paidOrder)) {
-      paidOrder = makeDownloadForOrder(paidOrder);
-      await maybeSendDownloadEmail(paidOrder, req);
-    }
-    return findPremiumOrderByAny({ orderId: paidOrder.orderId }) || paidOrder;
+    return await azFinalizePaidOrderOnce(order, req, { toyyibTransaction: tx, paymentReference: tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno || order.paymentReference || "" });
   } catch (e) {
     console.error("ToyyibPay refresh failed:", e.message);
     return order;
@@ -2472,33 +2561,19 @@ async function handler(req, res) {
           return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false, verification:"pending" }), "application/json");
         }
 
-        order = upsertPremiumOrder({
-          ...order,
-          status: "paid",
-          paymentMethod: "toyyibpay",
+        order = await azFinalizePaidOrderOnce(order, req, {
           paymentReference: data.transaction_id || data.billpaymentInvoiceNo || data.refno || data.order_id || order.paymentReference || "",
           toyyibCallback: data,
-          paidAt: new Date().toISOString(),
           callbackTrustBypass: true
         });
-        try { await azFinalizeCommissionForOrder(order); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
-        try { await azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference: order.paymentReference, toyyibCallback: data }); } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
-        if (!isPaBmPremiumOrder(order)) {
-          order = makeDownloadForOrder(order);
-          await maybeSendDownloadEmail(order, req);
-        } else {
-          order = upsertPremiumOrder({ ...order, emailSkippedForPaBm: true, emailError: null });
-        }
-        const latest = findPremiumOrderByAny({ orderId: order.orderId }) || order;
+        const latest = findPremiumOrderByAny({ orderId: order.orderId, billCode: order.billCode }) || order;
         console.log("ToyyibPay callback processed paid with trust bypass:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, isPaBm: isPaBmPremiumOrder(latest), emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
         return send(res, 200, JSON.stringify({ ok:true, status:"paid", verified:false, trustBypass:true, paBmUpdated: isPaBmPremiumOrder(latest), emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
       }
 
       order = await refreshToyyibOrder(order, req);
       if (order.status === "paid") {
-        try { await azFinalizeCommissionForOrder(order); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
-        try { await azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference: order.paymentReference }); } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
-        return send(res, 200, JSON.stringify({ ok:true, status:"paid" }), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, status:"paid", finalized:true, emailSent: !!order.emailSentAt, emailError: order.emailError || null }), "application/json");
       }
       return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false }), "application/json");
     }

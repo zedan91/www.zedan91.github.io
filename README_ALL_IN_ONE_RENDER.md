@@ -1,8 +1,6 @@
-# Render note
+# Render Notes - AZOBSS 184
 
-For Software/CAD commission, env must be set on `azobss-backend`, because payment success is processed by that service.
+Deploy normally to the existing azobss-backend service.
 
-Required:
-FIREBASE_SERVICE_ACCOUNT_JSON={full Firebase service account JSON}
-
-Then Save, rebuild and deploy.
+No new mandatory Environment Variables.
+No new Firebase collections need to be created manually.
