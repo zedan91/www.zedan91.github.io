@@ -15445,6 +15445,139 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
+<!-- AZOBSS ADMIN TEST PURCHASE RM1 BUTTON PATCH -->
+<style id="azobss-admin-test-purchase-rm1-style">
+body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
+#softwareGrid .download-card .software-card-admin-actions .software-card-test-buy-btn,
+.download-card .software-card-admin-actions[data-azobss-admin-actions-restored="1"] .software-card-test-buy-btn,
+.download-card .software-card-admin-actions .software-card-test-buy-btn{
+  width:42px!important;
+  height:30px!important;
+  min-width:42px!important;
+  min-height:30px!important;
+  padding:0 6px!important;
+  border-radius:12px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:11px!important;
+  font-weight:950!important;
+  letter-spacing:.2px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  border:2px solid #facc15!important;
+  color:#fef3c7!important;
+  background:linear-gradient(135deg,rgba(120,53,15,.92),rgba(217,119,6,.90))!important;
+  box-shadow:0 8px 18px rgba(245,158,11,.24), inset 0 1px 0 rgba(255,255,255,.18)!important;
+  backdrop-filter:blur(7px)!important;
+  text-decoration:none!important;
+}
+#softwareGrid .download-card .software-card-admin-actions .software-card-test-buy-btn:hover,
+.download-card .software-card-admin-actions .software-card-test-buy-btn:hover{
+  transform:translateY(-1px)!important;
+  filter:brightness(1.08)!important;
+}
+</style>
+<script id="azobss-admin-test-purchase-rm1-script">
+(function(){
+  if(window.__azobssAdminTestPurchaseRm1Patch) return;
+  window.__azobssAdminTestPurchaseRm1Patch = true;
+
+  function escAttr(v){
+    return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function isAdminBody(){
+    if(document.body && document.body.classList.contains('is-admin')) return true;
+    var text = String(document.body ? document.body.innerText : '').toLowerCase();
+    return /hello,\s*zedan91/.test(text) || /hello\s+zedan91/.test(text);
+  }
+  function cardId(card){
+    if(!card) return '';
+    var id = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
+    if(!id){
+      var btn = card.querySelector('[data-product-id],[data-software-id],[data-doc-id]');
+      id = btn ? (btn.getAttribute('data-product-id') || btn.getAttribute('data-software-id') || btn.getAttribute('data-doc-id') || '') : '';
+    }
+    if(!id){
+      var title = (card.querySelector('h3,.software-title')||{}).textContent || 'STATIC';
+      id = 'AZSW-' + String(title).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    }
+    card.setAttribute('data-product-id', id);
+    return id;
+  }
+  function ensureButtons(){
+    if(!isAdminBody()) return;
+    document.querySelectorAll('#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.download-card[data-admin-software="1"]').forEach(function(card){
+      var wrap = card.querySelector('.software-card-admin-actions');
+      if(!wrap) return;
+      var id = cardId(card);
+      if(!id) return;
+      if(wrap.querySelector('.software-card-test-buy-btn')) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'software-card-test-buy-btn';
+      btn.setAttribute('data-software-test-buy', id);
+      btn.setAttribute('title','Admin test purchase RM1');
+      btn.setAttribute('aria-label','Admin test purchase RM1');
+      btn.innerHTML = 'RM1';
+      var idBtn = wrap.querySelector('.software-card-id-btn');
+      if(idBtn && idBtn.nextSibling) wrap.insertBefore(btn, idBtn.nextSibling);
+      else wrap.appendChild(btn);
+    });
+  }
+  function textClean(s){return String(s||'').replace(/\s+/g,' ').trim();}
+  function buildTestProduct(card){
+    var buy = card.querySelector('[data-azobss-premium-buy="1"], .download-btn, a[href], button[data-product-id]');
+    var id = cardId(card);
+    var name = textClean((card.querySelector('h3,.software-title')||{}).textContent) || (buy && buy.dataset.productName) || 'Software Item';
+    var originalPrice = (buy && (buy.dataset.productPrice || buy.getAttribute('data-product-price'))) || '';
+    var downloadLink = buy ? (buy.dataset.downloadLink || buy.dataset.premiumDownloadFileLink || buy.getAttribute('href') || '') : '';
+    return {
+      id: id,
+      productId: id,
+      name: name + ' (Admin Test RM1)',
+      price: 'RM1',
+      originalPrice: originalPrice,
+      isAdminTestPurchase: true,
+      source: 'Software',
+      category: 'Software',
+      paymentLink: buy ? (buy.dataset.paymentLink || '') : '',
+      stripeLink: buy ? (buy.dataset.stripeLink || '') : '',
+      secureDownloadLink: downloadLink,
+      premiumDownloadFileLink: downloadLink,
+      privateDownloadLink: downloadLink,
+      downloadLink: downloadLink,
+      downloadLimit: Number((buy && buy.dataset.downloadLimit) || 3),
+      expiryHours: Number((buy && buy.dataset.expiryHours) || 24),
+      ownerUid: buy ? (buy.dataset.ownerUid || '') : '',
+      ownerUsername: buy ? (buy.dataset.ownerUsername || '') : '',
+      ownerEmail: buy ? (buy.dataset.ownerEmail || '') : '',
+      ownerKey: buy ? (buy.dataset.ownerKey || '') : ''
+    };
+  }
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.software-card-test-buy-btn');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(!isAdminBody()) return;
+    var card = btn.closest('.download-card,.software-card,.software-product-card');
+    if(!card) return;
+    var product = buildTestProduct(card);
+    if(typeof window.azobssOpenPremiumPay === 'function'){
+      window.azobssOpenPremiumPay(product);
+    }else{
+      alert('Payment modal is not ready yet. Please wait a moment and try again.');
+    }
+  }, true);
+  function schedule(){ clearTimeout(window.__azobssAdminTestPurchaseRm1Timer); window.__azobssAdminTestPurchaseRm1Timer = setTimeout(ensureButtons,80); }
+  document.addEventListener('DOMContentLoaded', function(){ ensureButtons(); [200,700,1500,3000,6000].forEach(function(t){setTimeout(ensureButtons,t);}); });
+  if(document.readyState !== 'loading'){ ensureButtons(); [200,700,1500,3000,6000].forEach(function(t){setTimeout(ensureButtons,t);}); }
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+
 </body>
 </html>
 
