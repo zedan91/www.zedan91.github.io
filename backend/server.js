@@ -220,16 +220,34 @@ function azProductOwnerFrom(product = {}, order = {}){
   const isAdminOwner = !ownerUsername || adminNames.has(ownerUsername) || /admin/i.test(ownerRole);
   return { ownerUsername, ownerUid, ownerEmail, ownerKey, ownerRole, isAdminOwner };
 }
+function azReferralFromUrl(value = '', product = {}, order = {}){
+  try{
+    const rawUrl = String(value || '').trim();
+    if(!rawUrl) return null;
+    const u = /^https?:\/\//i.test(rawUrl) ? new URL(rawUrl) : new URL(rawUrl, 'https://www.azobss.com');
+    const ref = azCommissionUsername(u.searchParams.get('ref') || u.searchParams.get('staff') || u.searchParams.get('staffRef') || u.searchParams.get('affiliate') || '');
+    if(!ref) return null;
+    return {
+      username: ref,
+      productId: cleanPremiumText(u.searchParams.get('product') || product.id || product.productId || order.productId || '', 160),
+      sourcePage: /cad-tools/i.test(u.pathname) ? 'CAD Tools' : 'Software',
+      openedAt: '',
+      source: 'return-url-ref'
+    };
+  }catch(_e){ return null; }
+}
 function azReferralFrom(data = {}, product = {}, order = {}){
   const raw = data.staffReferral || data.staffRef || data.ref || product.staffReferral || product.staffRef || product.ref || order.staffReferral || order.shareReferral || {};
-  if (typeof raw === 'string') return { username: azCommissionUsername(raw), source: 'link' };
-  return {
+  if (typeof raw === 'string') return { username: azCommissionUsername(raw), productId: cleanPremiumText(product.id || order.productId || '', 160), source: 'link' };
+  const normalized = {
     username: azCommissionUsername(raw.username || raw.ref || raw.staffUsername || raw.usernameKey || ''),
-    productId: cleanPremiumText(raw.productId || product.id || order.productId || '', 160),
+    productId: cleanPremiumText(raw.productId || product.id || product.productId || order.productId || '', 160),
     sourcePage: cleanPremiumText(raw.sourcePage || raw.source || '', 40),
     openedAt: cleanPremiumText(raw.openedAt || raw.at || '', 80),
     source: cleanPremiumText(raw.source || 'share-link', 60)
   };
+  if(normalized.username) return normalized;
+  return azReferralFromUrl(data.returnUrl || data.pageUrl || data.sourceUrl || product.pageUrl || order.returnUrl || order.pageUrl || order.sourceUrl || '', product, order) || normalized;
 }
 function azBuildCommissionLines(order = {}){
   const product = order.product || {};
@@ -317,6 +335,21 @@ async function azSaveCommissionLinesForOrder(order = {}){
     console.warn('AZOBSS commission record failed:', err && err.message ? err.message : err);
     return { ok:false, error:err && err.message ? err.message : String(err) };
   }
+}
+
+async function azFinalizeCommissionForOrder(order = {}){
+  const result = await azSaveCommissionLinesForOrder(order);
+  try{
+    if(order && (order.orderId || order.billCode)){
+      upsertPremiumOrder({
+        ...order,
+        commissionResult: result,
+        commissionCheckedAt: new Date().toISOString(),
+        commissionStorage: result && result.storage ? result.storage : ''
+      });
+    }
+  }catch(_e){}
+  return result;
 }
 function savePremiumOrder(order) { const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []); orders.unshift(order); writePremiumJson(PREMIUM_ORDERS_FILE, orders.slice(0, 200)); }
 function savePremiumToken(tokenData) { const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []); const now = Date.now(); const active = tokens.filter(t => Number(t.expiresAt || 0) > now && Number(t.usedCount || 0) < Number(t.maxDownload || 3)); active.unshift(tokenData); writePremiumJson(PREMIUM_TOKENS_FILE, active.slice(0, 200)); }
@@ -486,7 +519,7 @@ async function refreshToyyibOrderStatus(order) {
         paidAt: new Date().toISOString()
       });
       const withDownload = makePremiumDownloadForOrder(paid);
-      await azSaveCommissionLinesForOrder(withDownload);
+      await azFinalizeCommissionForOrder(withDownload);
       await sendDownloadEmailForOrder(withDownload);
       return withDownload;
     }
@@ -1030,8 +1063,10 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
       paymentUrl,
       user,
       product: { ...product, id: productId, name: productName, price: amountText },
-      shareReferral: azReferralFrom(data, product, { productId }),
+      staffReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
+      shareReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
       productOwner: azProductOwnerFrom(product, { productId }),
+      returnUrl: cleanPremiumUrl(data.returnUrl || data.pageUrl || ''),
       downloadLink,
       maxDownload: requestedLimit,
       expiryHours: requestedExpiryHours,
@@ -1048,7 +1083,7 @@ app.get("/api/toyyib/order/:orderId", async (req, res) => {
   let order = findPremiumOrderByAny({ orderId: req.params.orderId });
   if (!order) return res.status(404).json({ ok:false, error:"Order not found" });
   if (order.status !== "paid") order = await refreshToyyibOrderStatus(order);
-  if (order.status === "paid") { await azSaveCommissionLinesForOrder(order); return res.json(toyyibPaidResponse(order, req)); }
+  if (order.status === "paid") { await azFinalizeCommissionForOrder(order); return res.json(toyyibPaidResponse(order, req)); }
   res.json({ ok:true, paid:false, orderId: order.orderId, status: order.status || "pending", billCode: order.billCode, paymentUrl: order.paymentUrl });
 });
 
@@ -1072,7 +1107,7 @@ app.get("/api/verify-payment", async (req, res) => {
     // If local order exists, refresh from ToyyibPay and return download info if paid.
     if (order) {
       if (order.status !== "paid") order = await refreshToyyibOrderStatus(order);
-      if (order.status === "paid") { await azSaveCommissionLinesForOrder(order); return res.json(toyyibPaidResponse(order, req)); }
+      if (order.status === "paid") { await azFinalizeCommissionForOrder(order); return res.json(toyyibPaidResponse(order, req)); }
       return res.json({
         ok: true,
         paid: false,
@@ -1131,7 +1166,7 @@ app.post("/api/toyyib-callback", async (req, res) => {
     order = upsertPremiumOrder(update);
     if (order.status === "paid") {
       const withDownload = makePremiumDownloadForOrder(order);
-      await azSaveCommissionLinesForOrder(withDownload);
+      await azFinalizeCommissionForOrder(withDownload);
       await sendDownloadEmailForOrder(withDownload, req);
     }
     res.send("OK");
@@ -1146,7 +1181,11 @@ app.get("/api/toyyib/return", async (req, res) => {
   let order = findPremiumOrderByAny({ orderId, billCode });
   if (order && order.status !== "paid") order = await refreshToyyibOrderStatus(order);
   const paid = order?.status === "paid";
-  if (paid) order = await sendDownloadEmailForOrder(makePremiumDownloadForOrder(order), req);
+  if (paid) {
+    order = makePremiumDownloadForOrder(order);
+    await azFinalizeCommissionForOrder(order);
+    order = await sendDownloadEmailForOrder(order, req);
+  }
   const base = publicBaseUrl(req);
   const front = frontendBaseUrl(req);
   const downloadUrl = paid && order.downloadToken ? `${base}/api/premium/download/${encodeURIComponent(order.downloadToken)}` : "";
@@ -1176,9 +1215,54 @@ app.post("/api/premium/complete-purchase", async (req, res) => {
   const order = { orderId, productId, productName, amount, status:"paid", paymentMethod, paymentReference, user, product:{...product,id:productId,name:productName,price:amount}, shareReferral:azReferralFrom(data, product, {productId}), productOwner:azProductOwnerFrom(product, {productId}), createdAt:new Date(now).toISOString(), paidAt:new Date(now).toISOString(), downloadToken:token, tokenExpiresAt:new Date(expiresAtMs).toISOString(), maxDownload:requestedLimit };
   savePremiumOrder(order);
   savePremiumToken({ token, orderId, productId, productName, user, downloadLink, createdAt:now, expiresAt:expiresAtMs, usedCount:0, maxDownload:requestedLimit });
-  await azSaveCommissionLinesForOrder(order);
+  await azFinalizeCommissionForOrder(order);
   await sendDownloadEmailForOrder(order, req);
   res.json({ ok:true, orderId, status:"paid", message:"Purchase completed. A temporary download link has been generated and an email will be sent if SMTP is enabled.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:requestedLimit });
+});
+
+
+app.get("/api/commission/status", async (req, res) => {
+  try {
+    const db = getAzobssBackendDb();
+    let firestoreOk = false;
+    let sampleCount = 0;
+    let error = "";
+    if (db) {
+      try {
+        const snap = await db.collection('commissionRecords').limit(1).get();
+        firestoreOk = true;
+        sampleCount = snap.size;
+      } catch (err) {
+        error = err && err.message ? err.message : String(err);
+      }
+    }
+    const localCount = Array.isArray(readPremiumJson(COMMISSION_RECORDS_FILE, [])) ? readPremiumJson(COMMISSION_RECORDS_FILE, []).length : 0;
+    res.json({
+      ok: true,
+      firestoreConfigured: !!(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.FIREBASE_PROJECT_ID),
+      firestoreOk,
+      firestoreSampleCount: sampleCount,
+      localJsonCount: localCount,
+      envHasServiceAccountJson: !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+      error
+    });
+  } catch (err) {
+    res.status(500).json({ ok:false, error: err && err.message ? err.message : String(err) });
+  }
+});
+
+app.post("/api/commission/retry-order", async (req, res) => {
+  try {
+    const orderId = cleanPremiumText(req.body?.orderId || req.query.orderId || '', 140);
+    const billCode = cleanPremiumText(req.body?.billCode || req.query.billCode || '', 100);
+    const order = findPremiumOrderByAny({ orderId, billCode });
+    if (!order) return res.status(404).json({ ok:false, error:'Order not found' });
+    if (order.status !== 'paid') return res.status(400).json({ ok:false, error:'Order is not paid', status: order.status || 'unknown' });
+    const result = await azFinalizeCommissionForOrder(order);
+    res.json({ ok:true, orderId: order.orderId, billCode: order.billCode, commission: result, referral: azReferralFrom({}, order.product || {}, order), owner: azProductOwnerFrom(order.product || {}, order) });
+  } catch (err) {
+    res.status(500).json({ ok:false, error: err && err.message ? err.message : String(err) });
+  }
 });
 
 app.get("/api/premium/download/:token", (req, res) => {
