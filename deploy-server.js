@@ -882,6 +882,157 @@ async function azBuildAdminSystemHealth(req, identity = {}) {
 }
 
 
+
+
+function azMaintenanceStatusPaid(x = {}) {
+  const s = String(x.status || x.paymentStatus || x.billpaymentStatus || x.toyyibStatus || "").toLowerCase();
+  return ["paid", "success", "completed", "settled", "verified", "1"].includes(s) || String(x.paid || "").toLowerCase() === "true";
+}
+function azMaintenanceHasDownloadTarget(x = {}) {
+  return !!cleanPremiumUrl(x.downloadLink || x.premiumDownloadFileLink || x.secureDownloadLink || x.privateDownloadLink || x.downloadUrl || "");
+}
+function azMaintenanceTokenExpired(x = {}, now = Date.now()) {
+  const expires = Number(x.expiresAtMs || x.expiresAt || x.expireAtMs || x.expiredAtMs || 0) || 0;
+  if (!expires) return false;
+  if (String(x.status || "").toLowerCase() === "expired") return false;
+  return expires <= now;
+}
+function azMaintenancePublicIssue(type, severity, label, count, note = "") {
+  return { type, severity, label, count:Number(count||0), note:azAuditSafeText(note, 260) };
+}
+async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
+  const started = Date.now();
+  const db = getAzobssBackendDb();
+  const limitRows = Math.max(50, Math.min(1000, Number(options.limit || 500) || 500));
+  const now = Date.now();
+  const result = {
+    ok:true,
+    generatedAt:new Date(now).toISOString(),
+    firestoreConfigured:!!db,
+    scanned:{ premiumOrders:0, premiumDownloadTokens:0, commissionRecords:0 },
+    issues:[],
+    actions:[
+      { action:"repair-paid-order-tokens", label:"Repair paid orders missing download token", safe:true },
+      { action:"repair-receipt-flags", label:"Add receipt-token requirement to paid premium orders", safe:true },
+      { action:"expire-old-download-tokens", label:"Mark expired download tokens as expired", safe:true },
+      { action:"repair-commission-payout-status", label:"Set missing commission payout status to pending", safe:true }
+    ],
+    samples:{ paidOrdersMissingToken:[], paidOrdersMissingReceiptFlag:[], expiredDownloadTokens:[], commissionMissingPayoutStatus:[] },
+    warnings:[],
+    latencyMs:0
+  };
+  if (!db) {
+    result.ok = false;
+    result.warnings.push("Firebase Admin is not configured. Maintenance scan can only run when FIREBASE_SERVICE_ACCOUNT_JSON is configured.");
+    result.latencyMs = Date.now() - started;
+    return result;
+  }
+  try {
+    const ordersSnap = await db.collection("premiumOrders").limit(limitRows).get();
+    ordersSnap.forEach(docSnap => {
+      const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+      result.scanned.premiumOrders += 1;
+      const paid = azMaintenanceStatusPaid(x);
+      if (paid && !x.downloadToken && azMaintenanceHasDownloadTarget(x)) {
+        result.samples.paidOrdersMissingToken.push({ id:docSnap.id, orderId:cleanPremiumText(x.orderId || docSnap.id, 160), productName:cleanPremiumText(x.productName || "", 120), email:azMaskEmail(x.buyerEmail || x.email || (x.user && x.user.email) || "") });
+      }
+      if (paid && x.receiptTokenRequired !== true && String(x.receiptTokenRequired || "") !== "1") {
+        result.samples.paidOrdersMissingReceiptFlag.push({ id:docSnap.id, orderId:cleanPremiumText(x.orderId || docSnap.id, 160), productName:cleanPremiumText(x.productName || "", 120) });
+      }
+    });
+  } catch (err) {
+    result.warnings.push("premiumOrders scan failed: " + (err && err.message ? err.message : String(err)));
+  }
+  try {
+    const tokensSnap = await db.collection("premiumDownloadTokens").limit(limitRows).get();
+    tokensSnap.forEach(docSnap => {
+      const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+      result.scanned.premiumDownloadTokens += 1;
+      if (azMaintenanceTokenExpired(x, now)) {
+        result.samples.expiredDownloadTokens.push({ id:docSnap.id, token:azMaskToken(x.token || docSnap.id), orderId:cleanPremiumText(x.orderId || "", 160), expiresAt:cleanPremiumText(x.expiresAt || x.expiresAtMs || "", 80) });
+      }
+    });
+  } catch (err) {
+    result.warnings.push("premiumDownloadTokens scan failed: " + (err && err.message ? err.message : String(err)));
+  }
+  try {
+    const comSnap = await db.collection("commissionRecords").limit(limitRows).get();
+    comSnap.forEach(docSnap => {
+      const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+      result.scanned.commissionRecords += 1;
+      if (!azCommissionPayoutStatus(x.payoutStatus || x.status)) {
+        result.samples.commissionMissingPayoutStatus.push({ id:docSnap.id, orderId:cleanPremiumText(x.orderId || "", 160), productName:cleanPremiumText(x.productName || "", 120), amountText:cleanPremiumText(x.amountText || x.commissionAmountText || "", 40) });
+      }
+    });
+  } catch (err) {
+    result.warnings.push("commissionRecords scan failed: " + (err && err.message ? err.message : String(err)));
+  }
+  result.issues = [
+    azMaintenancePublicIssue("paidOrdersMissingToken", "high", "Paid orders missing download token", result.samples.paidOrdersMissingToken.length, "Can stop customer download/email recovery."),
+    azMaintenancePublicIssue("paidOrdersMissingReceiptFlag", "medium", "Paid orders missing receipt token requirement", result.samples.paidOrdersMissingReceiptFlag.length, "Hardens old/new premium receipt privacy."),
+    azMaintenancePublicIssue("expiredDownloadTokens", "low", "Expired download tokens not marked expired", result.samples.expiredDownloadTokens.length, "Keeps token collection cleaner."),
+    azMaintenancePublicIssue("commissionMissingPayoutStatus", "medium", "Commission records missing payout status", result.samples.commissionMissingPayoutStatus.length, "Keeps payout workflow consistent.")
+  ];
+  result.latencyMs = Date.now() - started;
+  return result;
+}
+async function azAdminMaintenanceRun(req, identity = {}, action = "", options = {}) {
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, error:"Firebase Admin is not configured." };
+  const started = Date.now();
+  const now = Date.now();
+  const limitRows = Math.max(10, Math.min(500, Number(options.limit || 200) || 200));
+  const out = { ok:true, action:cleanPremiumText(action, 80), processed:0, changed:0, skipped:0, errors:[], samples:[], generatedAt:new Date(now).toISOString(), latencyMs:0 };
+  const addSample = (x) => { if (out.samples.length < 20) out.samples.push(x); };
+  try {
+    if (action === "repair-receipt-flags") {
+      const snap = await db.collection("premiumOrders").limit(limitRows).get();
+      for (const docSnap of snap.docs) {
+        out.processed += 1;
+        const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+        if (!azMaintenanceStatusPaid(x) || x.receiptTokenRequired === true || String(x.receiptTokenRequired || "") === "1") { out.skipped += 1; continue; }
+        await docSnap.ref.set({ receiptTokenRequired:true, receiptTokenVersion:2, maintenanceUpdatedAt:new Date().toISOString(), maintenanceUpdatedAtMs:Date.now() }, { merge:true });
+        out.changed += 1; addSample({ orderId:cleanPremiumText(x.orderId || docSnap.id, 160), change:"receiptTokenRequired=true" });
+      }
+    } else if (action === "expire-old-download-tokens") {
+      const snap = await db.collection("premiumDownloadTokens").limit(limitRows).get();
+      for (const docSnap of snap.docs) {
+        out.processed += 1;
+        const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+        if (!azMaintenanceTokenExpired(x, now)) { out.skipped += 1; continue; }
+        await docSnap.ref.set({ status:"expired", expiredAt:new Date(now).toISOString(), expiredAtMs:now, maintenanceUpdatedAt:new Date().toISOString(), maintenanceUpdatedAtMs:Date.now() }, { merge:true });
+        out.changed += 1; addSample({ token:azMaskToken(x.token || docSnap.id), orderId:cleanPremiumText(x.orderId || "", 160), change:"status=expired" });
+      }
+    } else if (action === "repair-commission-payout-status") {
+      const snap = await db.collection("commissionRecords").limit(limitRows).get();
+      for (const docSnap of snap.docs) {
+        out.processed += 1;
+        const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+        if (azCommissionPayoutStatus(x.payoutStatus || x.status)) { out.skipped += 1; continue; }
+        await docSnap.ref.set({ payoutStatus:"pending", status:"pending", payoutUpdatedAt:new Date().toISOString(), payoutUpdatedAtMs:Date.now(), payoutUpdatedByUid:cleanPremiumText(identity.uid || "", 140), payoutUpdatedByUsername:cleanPremiumText(identity.username || "admin", 80), payoutUpdatedByAuthMethod:cleanPremiumText(identity.authMethod || "firebase", 40) }, { merge:true });
+        out.changed += 1; addSample({ id:docSnap.id, orderId:cleanPremiumText(x.orderId || "", 160), change:"payoutStatus=pending" });
+      }
+    } else if (action === "repair-paid-order-tokens") {
+      const snap = await db.collection("premiumOrders").limit(limitRows).get();
+      for (const docSnap of snap.docs) {
+        out.processed += 1;
+        const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+        if (!azMaintenanceStatusPaid(x) || x.downloadToken || !azMaintenanceHasDownloadTarget(x)) { out.skipped += 1; continue; }
+        const order = { ...x, orderId:cleanPremiumText(x.orderId || docSnap.id, 160), status:x.status || "paid", paidAt:x.paidAt || new Date().toISOString(), receiptTokenRequired:true, receiptTokenVersion:2 };
+        const repaired = makeDownloadForOrder(order);
+        await docSnap.ref.set(azJsonSafe({ ...repaired, maintenanceUpdatedAt:new Date().toISOString(), maintenanceUpdatedAtMs:Date.now() }), { merge:true });
+        out.changed += 1; addSample({ orderId:cleanPremiumText(repaired.orderId || docSnap.id, 160), token:azMaskToken(repaired.downloadToken || ""), change:"downloadToken created" });
+      }
+    } else {
+      return { ok:false, error:"Unknown maintenance action." };
+    }
+  } catch (err) {
+    out.ok = false;
+    out.errors.push(err && err.message ? err.message : String(err));
+  }
+  out.latencyMs = Date.now() - started;
+  return out;
+}
 function azMaskEmail(value = "") {
   const email = String(value || "").trim();
   const at = email.indexOf("@");
@@ -2869,6 +3020,8 @@ async function handler(req, res) {
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/export" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-export", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/maintenance-scan" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-maintenance-scan", 40, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/maintenance-run" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-maintenance-run", 10, 10 * 60 * 1000)) return;
 
 
     // =========================
@@ -3166,6 +3319,38 @@ async function handler(req, res) {
         const health = await azBuildAdminSystemHealth(req, adminIdentity);
         azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_system_health_check", "system", "backend", { status: health.status, missingRequired: health.missingRequired, collectionErrors: health.firebase.collectionErrors, latencyMs: health.latencyMs }, "success"), "Admin system health audit log failed");
         return send(res, 200, JSON.stringify(health, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+
+    if (pathname === "/api/admin/maintenance-scan" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to scan maintenance status." }, null, 2), "application/json");
+        }
+        const scan = await azAdminMaintenanceScan(req, adminIdentity, { limit: parsed.query.limit || 500 });
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_maintenance_scan", "system", "maintenance", { issues: scan.issues, warnings: scan.warnings, latencyMs: scan.latencyMs }, "success"), "Admin maintenance scan audit log failed");
+        return send(res, 200, JSON.stringify(scan, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/maintenance-run" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to run maintenance." }, null, 2), "application/json");
+        }
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+        const action = cleanPremiumText(body.action || parsed.query.action || "", 90);
+        const result = await azAdminMaintenanceRun(req, adminIdentity, action, { limit: body.limit || parsed.query.limit || 200 });
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_maintenance_run", "system", action || "maintenance", { action, changed: result.changed, processed: result.processed, skipped: result.skipped, ok: result.ok, errors: result.errors }, result.ok ? "success" : "error"), "Admin maintenance run audit log failed");
+        return send(res, result.ok ? 200 : 400, JSON.stringify(result, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }

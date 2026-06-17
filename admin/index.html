@@ -970,6 +970,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <button data-tab="auditlogs">🧾 Audit Logs</button>
       <button data-tab="exports">📦 Backup / Export</button>
       <button data-tab="systemhealth">🩺 System Health</button>
+      <button data-tab="maintenance">🧰 Maintenance</button>
       <button data-tab="lucky">🎁 Lucky Draw</button>
       <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings">⚙️ Settings</button>
@@ -1188,6 +1189,39 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <div class="split">
         <div class="card"><h2>Firestore Collections</h2><div id="systemHealthCollections" class="list"></div></div>
         <div class="card"><h2>Local Fallback Files</h2><div id="systemHealthFiles" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="maintenance" class="section">
+      <h2>🧰 Maintenance / Repair</h2>
+      <div class="card">
+        <h2>Safe Backend Maintenance</h2>
+        <p class="tabs-note">Admin-only tools to scan and repair common backend data issues after payment/security hardening. Run Scan first, then choose one repair action only when needed.</p>
+        <div class="toolbar">
+          <button class="btn" id="refreshMaintenanceScan" type="button">Scan Maintenance Status</button>
+          <select id="maintenanceAction" style="min-width:280px">
+            <option value="repair-paid-order-tokens">Repair paid orders missing download token</option>
+            <option value="repair-receipt-flags">Add receipt-token requirement to paid orders</option>
+            <option value="expire-old-download-tokens">Mark expired download tokens as expired</option>
+            <option value="repair-commission-payout-status">Set missing commission payout status to pending</option>
+          </select>
+          <button class="btn amber" id="runMaintenanceAction" type="button">Run Selected Repair</button>
+        </div>
+        <div id="maintenanceNotice" class="tabs-note">Press scan to check current maintenance status.</div>
+      </div>
+      <div class="grid">
+        <div class="card"><div class="stat-label">Paid Missing Token</div><div id="maintMissingToken" class="stat-value">-</div></div>
+        <div class="card"><div class="stat-label">Receipt Flags Missing</div><div id="maintReceiptFlag" class="stat-value">-</div></div>
+        <div class="card"><div class="stat-label">Expired Tokens</div><div id="maintExpiredTokens" class="stat-value">-</div></div>
+        <div class="card"><div class="stat-label">Commission Status Missing</div><div id="maintCommissionStatus" class="stat-value">-</div></div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Issues</h2><div id="maintenanceIssueList" class="list"></div></div>
+        <div class="card"><h2>Last Repair Result</h2><div id="maintenanceResultList" class="list"></div></div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>Scan Samples</h2><div id="maintenanceSampleList" class="list"></div></div>
+        <div class="card"><h2>Warnings</h2><div id="maintenanceWarningList" class="list"></div></div>
       </div>
     </section>
 
@@ -1558,6 +1592,73 @@ async function loadSystemHealth(){
   }catch(e){
     if(notice) notice.textContent=e?.message||'System health check failed.';
     ['systemHealthEnvList','systemHealthRuntime','systemHealthCollections','systemHealthFiles'].forEach(id=>{const el=$('#'+id); if(el) el.innerHTML=`<div class="item"><div class="item-title">⚠️ Health check error</div><div class="item-meta">${esc(e?.message||e)}</div></div>`;});
+  }
+}
+
+
+function azMaintIssueCount(j,type){
+  const issues=Array.isArray(j?.issues)?j.issues:[];
+  const row=issues.find(x=>x.type===type);
+  return Number(row?.count||0)||0;
+}
+function azMaintSeverityClass(sev){
+  const s=String(sev||'').toLowerCase();
+  if(s==='high')return 'danger';
+  if(s==='medium')return 'warn';
+  return 'ok';
+}
+function azMaintSamplesHtml(samples){
+  const groups=samples&&typeof samples==='object'?samples:{};
+  const rows=[];
+  Object.entries(groups).forEach(([key,list])=>{
+    if(!Array.isArray(list)||!list.length)return;
+    rows.push(`<div class="item"><div class="item-title">${esc(key)} (${list.length})</div><div class="item-meta">${list.slice(0,8).map(x=>esc(Object.entries(x||{}).map(([k,v])=>`${k}: ${v}`).join(' • '))).join('<br>')}</div></div>`);
+  });
+  return rows.join('')||'<div class="item"><div class="item-title ok">No sample issues found.</div><div class="item-meta">Maintenance scan did not find repairable sample rows.</div></div>';
+}
+async function loadMaintenanceScan(){
+  const notice=$('#maintenanceNotice');
+  if(notice) notice.textContent='Scanning backend maintenance status...';
+  ['maintMissingToken','maintReceiptFlag','maintExpiredTokens','maintCommissionStatus'].forEach(id=>{const el=$('#'+id); if(el) el.textContent='...';});
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/maintenance-scan',{cache:'no-store'});
+    if($('#maintMissingToken')) $('#maintMissingToken').textContent=String(azMaintIssueCount(j,'paidOrdersMissingToken'));
+    if($('#maintReceiptFlag')) $('#maintReceiptFlag').textContent=String(azMaintIssueCount(j,'paidOrdersMissingReceiptFlag'));
+    if($('#maintExpiredTokens')) $('#maintExpiredTokens').textContent=String(azMaintIssueCount(j,'expiredDownloadTokens'));
+    if($('#maintCommissionStatus')) $('#maintCommissionStatus').textContent=String(azMaintIssueCount(j,'commissionMissingPayoutStatus'));
+    if(notice) notice.textContent='Last scanned: '+fmtDate(j.generatedAt)+' • latency: '+esc(j.latencyMs||0)+'ms';
+    const issues=Array.isArray(j.issues)?j.issues:[];
+    if($('#maintenanceIssueList')) $('#maintenanceIssueList').innerHTML=issues.map(x=>item(`<span class="${azMaintSeverityClass(x.severity)}">${esc((x.severity||'info').toUpperCase())}</span> ${esc(x.label||x.type)}`,`Count: ${esc(x.count||0)}${x.note?' • '+esc(x.note):''}`)).join('')||'<div class="item">No issues data.</div>';
+    if($('#maintenanceSampleList')) $('#maintenanceSampleList').innerHTML=azMaintSamplesHtml(j.samples||{});
+    const warnings=Array.isArray(j.warnings)?j.warnings:[];
+    if($('#maintenanceWarningList')) $('#maintenanceWarningList').innerHTML=warnings.map(w=>item('<span class="warn">Warning</span>',esc(w))).join('')||'<div class="item"><div class="item-title ok">No warnings.</div></div>';
+  }catch(e){
+    if(notice) notice.textContent=e?.message||'Maintenance scan failed.';
+    ['maintenanceIssueList','maintenanceSampleList','maintenanceWarningList'].forEach(id=>{const el=$('#'+id); if(el) el.innerHTML=`<div class="item"><div class="item-title danger">Maintenance error</div><div class="item-meta">${esc(e?.message||e)}</div></div>`;});
+  }
+}
+async function runMaintenanceAction(){
+  const action=$('#maintenanceAction')?.value||'';
+  if(!action)return toast('Please choose maintenance action first.');
+  if(!confirm('Run this maintenance repair now?\n\n'+action+'\n\nThis will write changes to Firestore where needed.'))return;
+  const notice=$('#maintenanceNotice');
+  if(notice) notice.textContent='Running maintenance action: '+action+' ...';
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/maintenance-run',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action,limit:200})
+    });
+    if($('#maintenanceResultList')) $('#maintenanceResultList').innerHTML=[
+      item(j.ok?'<span class="ok">Repair completed</span>':'<span class="danger">Repair failed</span>',`Action: ${esc(j.action||action)} • processed: ${esc(j.processed||0)} • changed: ${esc(j.changed||0)} • skipped: ${esc(j.skipped||0)} • latency: ${esc(j.latencyMs||0)}ms`),
+      ...(Array.isArray(j.samples)?j.samples.slice(0,10).map(x=>item('Changed row',esc(Object.entries(x||{}).map(([k,v])=>`${k}: ${v}`).join(' • ')))):[]),
+      ...(Array.isArray(j.errors)?j.errors.slice(0,5).map(x=>item('<span class="danger">Error</span>',esc(x))):[])
+    ].join('');
+    if(notice) notice.textContent='Maintenance finished. Changed '+(j.changed||0)+' row(s). Scan refreshed.';
+    await loadMaintenanceScan();
+  }catch(e){
+    if(notice) notice.textContent=e?.message||'Maintenance repair failed.';
+    if($('#maintenanceResultList')) $('#maintenanceResultList').innerHTML=`<div class="item"><div class="item-title danger">Repair failed</div><div class="item-meta">${esc(e?.message||e)}</div></div>`;
   }
 }
 
@@ -2376,6 +2477,7 @@ async function initSection(id){
   if(id==='auditlogs')return loadAdminAuditLogs();
   if(id==='exports'){ const n=$('#adminExportNotice'); if(n) n.textContent='Choose a report, then download. All export requests are recorded in Audit Logs.'; return; }
   if(id==='systemhealth')return loadSystemHealth();
+  if(id==='maintenance')return loadMaintenanceScan();
   if(id==='staffroles')return loadStaffRoles();
   if(id==='settings')return loadSettings();
 }
@@ -2428,6 +2530,8 @@ $('#refreshAuditLogs')?.addEventListener('click', loadAdminAuditLogs);
 $('#downloadAdminExport')?.addEventListener('click', ()=>downloadAdminExport(false));
 $('#downloadAdminExportAll')?.addEventListener('click', ()=>downloadAdminExport(true));
 $('#refreshSystemHealth')?.addEventListener('click', loadSystemHealth);
+$('#refreshMaintenanceScan')?.addEventListener('click', loadMaintenanceScan);
+$('#runMaintenanceAction')?.addEventListener('click', runMaintenanceAction);
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;
