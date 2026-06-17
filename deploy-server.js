@@ -1550,6 +1550,85 @@ function upsertPremiumOrder(order) {
 function findPremiumOrderByAny(ref = {}) {
   return readPremiumOrders().find(o => (ref.orderId && o.orderId === ref.orderId) || (ref.billCode && o.billCode === ref.billCode) || (ref.billcode && o.billCode === ref.billcode)) || null;
 }
+async function findPremiumOrderByAnyDeep(ref = {}) {
+  const local = findPremiumOrderByAny(ref);
+  if (local) return local;
+  try {
+    const persistent = await azFindPremiumOrderPersistent(ref);
+    if (persistent) {
+      const hydrated = { ...persistent, orderId: persistent.orderId || ref.orderId || "", billCode: persistent.billCode || ref.billCode || ref.billcode || "" };
+      try { upsertPremiumOrder(hydrated); } catch (_) {}
+      return hydrated;
+    }
+  } catch (err) {
+    console.warn("Premium order Firestore lookup failed:", err && (err.message || err));
+  }
+  return null;
+}
+function azToyyibResultCandidates(result) {
+  const out = [];
+  const push = (x) => {
+    if (!x) return;
+    if (Array.isArray(x)) return x.forEach(push);
+    if (typeof x === "object") out.push(x);
+  };
+  push(result);
+  if (result && typeof result === "object" && !Array.isArray(result)) {
+    ["data", "result", "results", "transactions", "transaction", "bill", "response"].forEach((key) => push(result[key]));
+  }
+  return out;
+}
+function azToyyibPaidStatusValue(value) {
+  const v = String(value ?? "").trim().toLowerCase();
+  return v === "1" || v === "paid" || v === "success" || v === "successful" || v === "completed" || v === "settled";
+}
+function azToyyibTxPaid(tx = {}) {
+  if (!tx || typeof tx !== "object") return false;
+  const fields = [
+    tx.billpaymentStatus, tx.billPaymentStatus, tx.billpayment_status, tx.billStatus,
+    tx.status, tx.status_id, tx.paymentStatus, tx.payment_status, tx.transaction_status,
+    tx.transactionStatus, tx.transaction_status_id, tx.paid, tx.success
+  ];
+  return fields.some(azToyyibPaidStatusValue);
+}
+function azToyyibTxBillCode(tx = {}) {
+  return cleanPremiumText(tx.billCode || tx.billcode || tx.BillCode || tx.bill_code || tx.refno || tx.billcode_id || "", 100);
+}
+function azToyyibTxReference(tx = {}, fallback = "") {
+  return cleanPremiumText(tx.billpaymentInvoiceNo || tx.transaction_id || tx.transactionId || tx.refno || tx.referenceNo || tx.payment_reference || fallback || "", 180);
+}
+async function azVerifyToyyibPaidTransaction(order = {}) {
+  const billCode = cleanPremiumText(order.billCode || order.billcode || "", 100);
+  if (!billCode) return { paid:false, reason:"missing_bill_code" };
+  const payloads = [
+    { billCode, userSecretKey: TOYYIB_SECRET_KEY || "" },
+    { billcode: billCode, userSecretKey: TOYYIB_SECRET_KEY || "" },
+    { billCode },
+    { billcode: billCode }
+  ];
+  const seen = new Set();
+  let lastReason = "not_paid";
+  for (const payload of payloads) {
+    const sig = JSON.stringify(payload);
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    try {
+      const result = await postToyyib("getBillTransactions", payload);
+      const candidates = azToyyibResultCandidates(result);
+      for (const tx of candidates) {
+        const txBillCode = azToyyibTxBillCode(tx);
+        const sameBill = !txBillCode || txBillCode === billCode;
+        if (sameBill && azToyyibTxPaid(tx)) {
+          return { paid:true, tx, paymentReference:azToyyibTxReference(tx, order.paymentReference || ""), payloadUsed:Object.keys(payload).join(",") };
+        }
+      }
+      if (!candidates.length) lastReason = "empty_transactions";
+    } catch (err) {
+      lastReason = err && err.message ? err.message : String(err);
+    }
+  }
+  return { paid:false, reason:lastReason };
+}
 function getBrevoApiKey() {
   return String(process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || "").trim();
 }
@@ -1812,13 +1891,17 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
 async function refreshToyyibOrder(order, req) {
   if (!order || !order.billCode) return order;
   try {
-    const result = await postToyyib("getBillTransactions", { billCode: order.billCode });
-    const tx = Array.isArray(result) ? result[0] : null;
-    const paid = !!(tx && String(tx.billpaymentStatus || tx.billStatus || tx.status || "") === "1");
-    if (!paid) return order;
-    return await azFinalizePaidOrderOnce(order, req, { toyyibTransaction: tx, paymentReference: tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno || order.paymentReference || "" });
+    const verify = await azVerifyToyyibPaidTransaction(order);
+    if (!verify || !verify.paid) {
+      console.warn("ToyyibPay refresh not paid yet:", JSON.stringify({ orderId: order.orderId || "", billCode: order.billCode || "", reason: verify && verify.reason || "not_paid" }).slice(0, 500));
+      return order;
+    }
+    return await azFinalizePaidOrderOnce(order, req, {
+      toyyibTransaction: verify.tx,
+      paymentReference: verify.paymentReference || order.paymentReference || ""
+    });
   } catch (e) {
-    console.error("ToyyibPay refresh failed:", e.message);
+    console.error("ToyyibPay refresh failed:", e && (e.message || e));
     return order;
   }
 }
@@ -2165,10 +2248,40 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
   if (extra.toyyibCallback) baseUpdate.toyyibCallback = extra.toyyibCallback;
   if (extra.toyyibTransaction) baseUpdate.toyyibTransaction = extra.toyyibTransaction;
 
+  const findPurchaseLogRefs = async (item) => {
+    const id = String(item && (item.id || item.firestoreId || item.purchaseLogId || item.recordId) || "").trim();
+    if (id && !id.startsWith("local-")) return [db.collection("purchaseLogs").doc(id)];
+
+    const itemCode = String(item && (item.itemCode || item.code) || "").trim().toUpperCase();
+    if (!itemCode) return [];
+    const productType = String(item && (item.productType || item.product) || "").trim().toUpperCase();
+    const negeri = String(item && (item.negeri || item.state) || "").trim().toUpperCase();
+    const uid = String(order.user && order.user.uid || order.uid || "").trim();
+    const usernameKey = String(order.user && (order.user.username || order.user.usernameKey) || order.usernameKey || "").trim().toLowerCase();
+    try {
+      const snap = await db.collection("purchaseLogs").where("itemCode", "==", itemCode).limit(30).get();
+      const matches = [];
+      snap.forEach((docSnap) => {
+        const x = docSnap.data() || {};
+        const xType = String(x.productType || x.product || "").trim().toUpperCase();
+        const xNegeri = String(x.negeri || x.state || "").trim().toUpperCase();
+        const xUid = String(x.uid || "").trim();
+        const xUsername = String(x.usernameKey || x.username || "").trim().toLowerCase();
+        const userOk = (uid && xUid === uid) || (usernameKey && xUsername === usernameKey) || (!uid && !usernameKey);
+        const typeOk = !productType || !xType || xType === productType;
+        const negeriOk = !negeri || !xNegeri || xNegeri === negeri;
+        if (userOk && typeOk && negeriOk) matches.push(docSnap.ref);
+      });
+      return matches.slice(0, 1);
+    } catch (err) {
+      console.warn("PA/BM purchaseLogs fallback lookup failed:", err && (err.message || err));
+      return [];
+    }
+  };
+
   let updated = 0;
   for (const item of order.paBmItems) {
-    const id = String(item && (item.id || item.firestoreId || item.purchaseLogId || item.recordId) || "").trim();
-    if (!id || id.startsWith("local-")) continue;
+    const refs = await findPurchaseLogRefs(item);
     const update = {
       ...baseUpdate,
       productType: String(item.productType || item.product || "").toUpperCase() || undefined,
@@ -2177,11 +2290,17 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
       amount: Number(item.amount || 0) || undefined
     };
     Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
-    try {
-      await db.collection("purchaseLogs").doc(id).set(update, { merge: true });
-      updated += 1;
-    } catch (error) {
-      console.error("PA/BM purchaseLogs item update failed:", id, error && (error.stack || error.message || error));
+    if (!refs.length) {
+      console.warn("PA/BM purchaseLogs item not matched for sync:", JSON.stringify({ orderId: order.orderId || "", itemCode:update.itemCode || "", productType:update.productType || "", negeri:update.negeri || "" }).slice(0, 500));
+      continue;
+    }
+    for (const ref of refs) {
+      try {
+        await ref.set(update, { merge: true });
+        updated += 1;
+      } catch (error) {
+        console.error("PA/BM purchaseLogs item update failed:", ref.id, error && (error.stack || error.message || error));
+      }
     }
   }
 
@@ -3558,6 +3677,7 @@ async function handler(req, res) {
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
         const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+        try { await azPersistPremiumOrder(paBmOrder); } catch (persistError) { console.warn("PA/BM premium order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
         return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, unit:items.length, status:"pending" }, null, 2), "application/json");
       } catch (e) {
@@ -3637,12 +3757,21 @@ async function handler(req, res) {
     }
 
     if (pathname === "/api/verify-payment" && req.method === "GET") {
-      const billCode = cleanPremiumText(parsed.query.billCode || parsed.query.billcode || "", 80);
-      const orderId = cleanPremiumText(parsed.query.orderId || parsed.query.order_id || "", 120);
-      let order = findPremiumOrderByAny({ orderId, billCode });
+      const billCode = cleanPremiumText(parsed.query.billCode || parsed.query.billcode || "", 100);
+      const orderId = cleanPremiumText(parsed.query.orderId || parsed.query.order_id || "", 160);
+      let order = await findPremiumOrderByAnyDeep({ orderId, billCode });
       if (!order) return send(res, 404, JSON.stringify({ ok:false, paid:false, status:"order_not_found", error:"Order not found" }, null, 2), "application/json");
       if (order.status !== "paid") order = await refreshToyyibOrder(order, req);
+      order = await findPremiumOrderByAnyDeep({ orderId: order.orderId || orderId, billCode: order.billCode || billCode }) || order;
       if (order.status === "paid") {
+        if (isPaBmPremiumOrder(order)) {
+          return send(res, 200, JSON.stringify({
+            ok:true, success:true, paid:true, paBm:true, paBmUpdated:true,
+            orderId:order.orderId, status:order.status, billCode:order.billCode,
+            updatedCount:Number(order.paBmPaidSyncedCount || 0),
+            paymentReference:order.paymentReference || ""
+          }, null, 2), "application/json");
+        }
         order = makeDownloadForOrder(order);
         if (!order.emailSentAt) order = await maybeSendDownloadEmail(order, req);
         return send(res, 200, JSON.stringify({ ...paidPayload(order, req), emailSent: !!order.emailSentAt, emailError: order.emailError || null, emailTo: order.emailTo || order.user?.email || order.email || null }, null, 2), "application/json");
@@ -3661,7 +3790,7 @@ async function handler(req, res) {
       const billCode = getToyyibBillCode(data);
       const orderId = getToyyibOrderId(data);
       console.log("ToyyibPay callback parsed:", JSON.stringify({ orderId, billCode, status: data.status || data.status_id || "", transaction_id: data.transaction_id || "" }).slice(0, 500));
-      let order = findPremiumOrderByAny({ orderId, billCode });
+      let order = await findPremiumOrderByAnyDeep({ orderId, billCode });
 
       if (!order) {
         console.warn("ToyyibPay callback order not found:", JSON.stringify({ orderId, billCode }).slice(0, 500));
@@ -3671,7 +3800,7 @@ async function handler(req, res) {
       if (toyyibStatusIsPaid(data)) {
         if (azVerifyToyyibCallbackEnabled()) {
           const verifiedOrder = await refreshToyyibOrder(order, req);
-          const latestVerified = findPremiumOrderByAny({ orderId: verifiedOrder.orderId }) || verifiedOrder;
+          const latestVerified = await findPremiumOrderByAnyDeep({ orderId: verifiedOrder.orderId, billCode: verifiedOrder.billCode }) || verifiedOrder;
           if (latestVerified && latestVerified.status === "paid") {
             console.log("ToyyibPay callback verified paid:", JSON.stringify({ orderId: latestVerified.orderId, billCode: latestVerified.billCode, isPaBm: isPaBmPremiumOrder(latestVerified), emailSentAt: latestVerified.emailSentAt || null, emailError: latestVerified.emailError || null }).slice(0, 1000));
             return send(res, 200, JSON.stringify({ ok:true, status:"paid", verified:true, paBmUpdated: isPaBmPremiumOrder(latestVerified), emailSent: !!latestVerified.emailSentAt, emailError: latestVerified.emailError || null }), "application/json");
@@ -3685,7 +3814,7 @@ async function handler(req, res) {
           toyyibCallback: data,
           callbackTrustBypass: true
         });
-        const latest = findPremiumOrderByAny({ orderId: order.orderId, billCode: order.billCode }) || order;
+        const latest = await findPremiumOrderByAnyDeep({ orderId: order.orderId, billCode: order.billCode }) || order;
         console.log("ToyyibPay callback processed paid with trust bypass:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, isPaBm: isPaBmPremiumOrder(latest), emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
         return send(res, 200, JSON.stringify({ ok:true, status:"paid", verified:false, trustBypass:true, paBmUpdated: isPaBmPremiumOrder(latest), emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
       }

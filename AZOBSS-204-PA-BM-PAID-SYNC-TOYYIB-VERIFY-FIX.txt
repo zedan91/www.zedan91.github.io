@@ -1,0 +1,12 @@
+AZOBSS 204 - PA/BM paid sync ToyyibPay verify fix
+
+- /api/verify-payment now searches local premium-orders.json and Firestore premiumOrders.
+- ToyyibPay getBillTransactions verification is more tolerant: billCode/billcode, userSecretKey, nested response arrays/objects, multiple paid status fields.
+- PA/BM verify response no longer creates premium download token; it returns paBm=true and updates purchaseLogs.
+- PA/BM order is persisted to Firestore before redirect to ToyyibPay.
+- ToyyibPay callback also restores order from Firestore if Render local JSON is lost.
+- purchaseLogs paid sync can fallback-match by user + itemCode + productType + state if firestoreId is missing/local.
+- Frontend stores billCode in sessionStorage and verifies using both orderId + billCode after ToyyibPay return.
+
+No Firebase Rules changes required.
+No new Render ENV required.

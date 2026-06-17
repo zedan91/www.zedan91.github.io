@@ -2836,7 +2836,8 @@ async function azobssCheckPaBmToyyibReturn(){
   const status = document.getElementById('paBmToyyibStatus');
   const params = new URLSearchParams(window.location.search || '');
   const orderId = params.get('orderId') || params.get('order_id') || sessionStorage.getItem('azobss_pa_bm_pending_order_id') || '';
-  const paymentReturn = params.get('payment') === 'return' || !!params.get('status_id') || !!params.get('billcode') || !!params.get('billCode');
+  const billCode = params.get('billCode') || params.get('billcode') || params.get('BillCode') || sessionStorage.getItem('azobss_pa_bm_pending_bill_code') || '';
+  const paymentReturn = params.get('payment') === 'return' || !!params.get('status_id') || !!params.get('billcode') || !!params.get('billCode') || !!orderId || !!billCode;
   if(!paymentReturn) return;
 
   // Selepas balik dari ToyyibPay, refresh list beberapa kali kerana auth/Firestore callback kadang lambat.
@@ -2847,27 +2848,30 @@ async function azobssCheckPaBmToyyibReturn(){
     }, ms);
   });
 
-  if(!orderId){
+  if(!orderId && !billCode){
     if(status) status.textContent = 'Payment returned. Refreshing purchase list...';
     return;
   }
-  if(sessionStorage.getItem('azobss_pa_bm_paid_reset_' + orderId) === '1'){
+  const paidResetKey = orderId || billCode;
+  if(sessionStorage.getItem('azobss_pa_bm_paid_reset_' + paidResetKey) === '1'){
     try{ azobssSchedulePurchaseRecordsRefresh('already verified return'); }catch(e){}
     return;
   }
   try{
     if(status) status.textContent = 'Checking payment status...';
-    const res = await fetch(azobssGetBackendBaseUrl() + '/api/verify-payment?orderId=' + encodeURIComponent(orderId), { cache:'no-store' });
+    const verifyUrl = azobssGetBackendBaseUrl() + '/api/verify-payment?orderId=' + encodeURIComponent(orderId || '') + '&billCode=' + encodeURIComponent(billCode || '');
+    const res = await fetch(verifyUrl, { cache:'no-store' });
     const data = await res.json().catch(()=>({}));
     if(data && (data.paid || data.status === 'paid' || data.status === 'success')){
       await azobssResetCurrentPurchaseTotalAfterPaid(orderId);
-      sessionStorage.setItem('azobss_pa_bm_paid_reset_' + orderId, '1');
+      sessionStorage.setItem('azobss_pa_bm_paid_reset_' + paidResetKey, '1');
       sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+      sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
       if(status) status.textContent = 'Pembayaran berjaya. Senarai pembelian dikemaskini.';
       azobssShowPaBmPaymentSuccessPopup();
       [500, 1500, 3000].forEach(ms => setTimeout(() => azobssSchedulePurchaseRecordsRefresh('paid verify retry'), ms));
     }else if(status){
-      status.textContent = 'Payment pending. Sistem sedang sync semula...';
+      status.textContent = 'Payment pending. System is syncing again...';
       setTimeout(azobssCheckPaBmToyyibReturn, 3500);
     }
   }catch(e){
@@ -2902,6 +2906,7 @@ async function azobssPayPaBmToyyib(){
     const data = await res.json().catch(()=>({}));
     if(!res.ok || !data.ok) throw new Error(data.error || 'Gagal create payment bill.');
     if(data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
+    if(data.billCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', String(data.billCode));
     if(status) status.textContent = 'Redirect to payment page...';
     window.location.href = data.paymentUrl || data.url || data.redirectUrl;
   }catch(error){
