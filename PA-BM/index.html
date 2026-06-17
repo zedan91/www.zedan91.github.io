@@ -9889,11 +9889,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       productType: item.product || (String(item.jenis || '1') === '2' ? 'SBM' : 'BM'),
       itemCode: item.stationNo || item.stesen || item.productId || item.id || '',
       stationNo: item.stationNo || item.stesen || '',
+      productId: item.productId || item.id || '',
+      jenis: String(item.jenis || (item.product === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
       negeri: item.negeri || '',
       daerah: item.daerah || '',
       bandar: item.bandar || '',
+      huraian: item.huraian || '',
       amount: 3,
-      url: item.downloadUrl || ''
+      url: item.downloadUrl || '',
+      downloadUrl: item.downloadUrl || '',
+      azobssCartValidated: true,
+      azobssCartValidatedBy: 'local-stesen-tanda-aras-json'
     }));
   }
 
@@ -10183,14 +10189,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           }
         }
 
-        [120, 450, 900, 1400].forEach(function(delayMs){
-          setTimeout(function(){
-            if (statusEl) {
-              statusEl.style.display = 'block';
-              statusEl.textContent = successMessage;
-            }
-          }, delayMs);
-        });
+        // Keep the final success message stable while Firestore/UI refresh happens.
+        // Previous code referenced an undefined successMessage and could overwrite the real result.
       } catch (error) {
         if (statusEl) {
           statusEl.style.display = 'block';
@@ -11512,7 +11512,9 @@ document.addEventListener('DOMContentLoaded', function(){
           negeri: document.getElementById('negeri') ? document.getElementById('negeri').value : '',
           amount: 5,
           url: url,
-          filename: 'PA' + number + '.pdf'
+          filename: 'PA' + number + '.pdf',
+          azobssCartValidated: true,
+          azobssCartValidatedBy: 'pa-check-before-cart'
         });
       }
       if (paStatus) paStatus.textContent = (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
@@ -11664,16 +11666,19 @@ document.addEventListener('DOMContentLoaded', function(){
     setMessage('loading', 'Menambah PA ke cart...');
 
     try{
-      // Semak PA melalui endpoint ringan /api/check-pa dahulu.
-      // Ini elak guna converter PDF sebagai check, yang boleh beri false-not-found bila proses convert lambat/gagal.
-      var checkUrl = built.url.replace('/api/pa-pdf', '/api/check-pa');
-      var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
-      if(!checkResponse.ok){
-        throw new Error('Maaf, PA ' + built.number + ' tiada dalam simpanan.');
-      }
-      var checkData = await checkResponse.json().catch(function(){ return null; });
-      if(!checkData || checkData.ok !== true){
-        throw new Error('Maaf, PA ' + built.number + ' tiada dalam simpanan.');
+      // Lightweight PA check only. Do not block add-to-cart when JUPEM/Render check is slow,
+      // because actual paid download is still verified by backend controlled download.
+      var paCheckOk = false;
+      var paCheckNote = '';
+      try{
+        var checkUrl = built.url.replace('/api/pa-pdf', '/api/check-pa');
+        var checkResponse = await fetch(checkUrl, { cache: 'no-store' });
+        var checkData = await checkResponse.json().catch(function(){ return null; });
+        paCheckOk = !!(checkResponse && checkResponse.ok && checkData && checkData.ok === true);
+        if(!paCheckOk) paCheckNote = 'PA check is temporarily unavailable. The file will be verified again after payment.';
+      }catch(checkError){
+        paCheckNote = 'PA check is temporarily unavailable. The file will be verified again after payment.';
+        console.warn('AZOBSS PA cart check skipped:', checkError);
       }
 
       var paSavedRecord = null;
@@ -11684,7 +11689,9 @@ document.addEventListener('DOMContentLoaded', function(){
           negeri: built.negeri,
           amount: 5,
           url: built.url,
-          filename: 'PA' + built.number + '.pdf'
+          filename: 'PA' + built.number + '.pdf',
+          azobssCartValidated: true,
+          azobssCartValidatedBy: paCheckOk ? 'pa-check-before-cart' : 'pa-soft-cart-check'
         });
       }
       if(typeof window.azobssRenderPurchaseRecords === 'function'){
@@ -11692,7 +11699,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }
       setMessage('success', (paSavedRecord && paSavedRecord.__azobssAlreadyInCart)
         ? '✔ PA ' + built.number + ' sudah ada dalam cart.'
-        : '✔ PA ' + built.number + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar.");
+        : '✔ PA ' + built.number + " berjaya ditambah ke cart. Sila tekan 'Proceed to Payment' untuk bayar." + (paCheckNote ? ' ' + paCheckNote : ''));
     }catch(error){
       setMessage('error', error && error.message ? error.message : 'Maaf, PA ' + built.number + ' tiada dalam simpanan.');
     }finally{

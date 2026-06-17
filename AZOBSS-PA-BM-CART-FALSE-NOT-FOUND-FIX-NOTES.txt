@@ -1,0 +1,16 @@
+AZOBSS PATCH 203 - PA/BM/SBM Cart False Not Found Fix
+
+Problem:
+- PA and BM/SBM could show "tiada dalam simpanan" while adding to cart even when the data exists.
+- Root cause: add-to-cart path was doing real file fetch/convert verification through /api/pa-pdf or /api/download-stesen-tanda-aras before saving the cart record.
+- This can fail because of Render cold start, JUPEM temporary response, TLS/proxy timing, or PDF/TIF conversion, even though the record itself is valid.
+
+Fix:
+- Cart add now uses lightweight/cart-safe validation.
+- BM/SBM rows from stesen-tanda-aras-records.json are treated as cart-valid and real file verification is deferred until paid controlled download.
+- PA still attempts /api/check-pa, but temporary check failure no longer blocks add-to-cart. Real PA is still verified at controlled paid download.
+- Removed undefined successMessage overwrite in BM/SBM click handler.
+- Kept Firestore purchase save and paid download verification unchanged.
+
+Firebase Rules: no update required.
+Render ENV: no new required env.

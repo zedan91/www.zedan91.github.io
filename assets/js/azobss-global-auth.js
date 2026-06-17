@@ -2211,7 +2211,7 @@ function purchaseRecordUser(user){
 function normalizePurchasePayload(payload){
   const userInfo = purchaseRecordUser();
   const type = String(payload?.productType || payload?.product || payload?.type || 'PA').trim().toUpperCase();
-  const code = String(payload?.itemCode || payload?.code || payload?.station || payload?.pa || payload?.noPA || '').trim().toUpperCase();
+  const code = String(payload?.itemCode || payload?.code || payload?.station || payload?.stationNo || payload?.stesen || payload?.pa || payload?.noPA || payload?.productId || payload?.id || '').trim().toUpperCase();
   const negeri = String(payload?.negeri || payload?.state || payload?.stateName || '').trim();
   const amount = Number(payload?.amount || payload?.price || (type === 'PA' ? 5 : 3));
   const now = new Date();
@@ -2219,11 +2219,19 @@ function normalizePurchasePayload(payload){
     id: 'local-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8),
     productType: type,
     itemCode: code,
+    stationNo: String(payload?.stationNo || payload?.stesen || payload?.station || '').trim().toUpperCase(),
+    productId: String(payload?.productId || payload?.id || '').trim(),
+    jenis: String(payload?.jenis || (type === 'SBM' ? '2' : '1')).trim() === '2' ? '2' : '1',
+    daerah: String(payload?.daerah || '').trim(),
+    bandar: String(payload?.bandar || '').trim(),
+    huraian: String(payload?.huraian || '').trim(),
     negeri,
     amount: Number.isFinite(amount) ? amount : (type === 'PA' ? 5 : 3),
     status: String(payload?.status || 'pending').trim().toLowerCase(),
     downloadUrl: String(payload?.downloadUrl || payload?.url || ''),
     filename: String(payload?.filename || ''),
+    azobssCartValidated: payload?.azobssCartValidated === true || payload?.cartValidated === true || payload?.skipFileVerify === true,
+    azobssCartValidatedBy: String(payload?.azobssCartValidatedBy || payload?.cartValidatedBy || '').trim(),
     uid: userInfo.uid,
     usernameKey: userInfo.usernameKey,
     displayName: userInfo.displayName,
@@ -2300,28 +2308,45 @@ async function azobssVerifyPurchaseFileExists(record){
   const type = String(record && record.productType || '').trim().toUpperCase();
   const url = String(record && record.downloadUrl || '').trim();
   if(!/^PA$|^BM|^SBM/.test(type)) return true;
+
+  // Cart should never download/convert the real file just to add an item.
+  // PA and BM/SBM files are re-validated by the backend after payment via the controlled download route.
+  // This prevents false "tiada dalam simpanan" caused by Render cold-start, JUPEM temporary errors,
+  // or PDF/TIF conversion timing while the user is only adding to cart.
+  if(record && record.azobssCartValidated){
+    return true;
+  }
+
+  // BM/SBM rows already come from /stesen-tanda-aras-records.json on this page.
+  // If a row has productId/stationNo or a backend download URL, treat it as cart-valid and defer real file fetch until paid download.
+  if(type === 'BM' || type === 'SBM'){
+    const hasLocalRow = !!(record.productId || record.stationNo || record.itemCode || /\/api\/download-stesen-tanda-aras/i.test(url));
+    if(hasLocalRow) return true;
+    throw new Error('BM/SBM tiada dalam simpanan');
+  }
+
+  // For PA, use the lightweight check endpoint where possible. Do not call /api/pa-pdf here.
+  if(type === 'PA'){
+    const code = String(record.itemCode || '').replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+    const negeri = String(record.negeri || '').trim();
+    if(!code || !negeri) throw new Error('PA tiada dalam simpanan');
+    try{
+      const checkUrl = 'https://azobss-backend.onrender.com/api/check-pa?noPA=' + encodeURIComponent('PA' + code + '.TIF') + '&negeri=' + encodeURIComponent(negeri);
+      const response = await fetch(checkUrl, { cache: 'no-store' });
+      if(response && response.ok){
+        const data = await response.json().catch(function(){ return null; });
+        if(data && data.ok === true) return true;
+      }
+    }catch(error){
+      console.warn('AZOBSS PA cart lightweight check skipped:', error);
+    }
+    // Do not block cart on a temporary JUPEM/check endpoint issue.
+    // Actual paid download will still verify the PA file from JUPEM.
+    return true;
+  }
+
   if(!url){
     throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
-  }
-  let response;
-  try{
-    response = await fetch(url, { cache: 'no-store' });
-  }catch(error){
-    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
-  }
-  if(!response || !response.ok){
-    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
-  }
-  const contentType = String(response.headers && response.headers.get('content-type') || '').toLowerCase();
-  const blob = await response.blob();
-  if(!blob || !blob.size){
-    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
-  }
-  if(/text|json|html/.test(contentType)){
-    const text = (await blob.text()).slice(0, 800).toLowerCase();
-    if(/not found|tiada|invalid|error|failed|cannot|no such|404/.test(text)){
-      throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
-    }
   }
   return true;
 }
