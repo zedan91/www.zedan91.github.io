@@ -2961,57 +2961,244 @@ async function fetchJupem(jupemUrl) {
     redirect: "follow",
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-      "Accept": "image/tiff,image/*,*/*",
+      "Accept": "application/pdf,image/tiff,image/*,application/octet-stream,*/*",
       "Referer": "https://ebiz.jupem.gov.my/"
     }
   }));
 }
 
+// =========================
+// PA/BM JUPEM DOWNLOAD RESOLVER
+// Fixes false "PA/BM not found" during paid download by:
+// 1) avoiding backend self-fetch loops,
+// 2) rebuilding BM/SBM URL from local stesen JSON,
+// 3) trying PA variants with and without spacing.
+// =========================
 
-async function fetchPelanAkuiCandidates(noPA, negeri) {
-  const cleanPA = String(noPA || "")
-    .trim()
-    .replace(/\.tif$/i, "")
-    .replace(/^PA/i, "");
+let azobssStesenRecordsCache = null;
+let azobssStesenRecordsMtime = 0;
 
-  const paUpper = `PA${cleanPA}.TIF`;
-  const paLower = `PA${cleanPA}.tif`;
-  const paRaw = `PA${cleanPA}`;
-  const stateUpper = String(negeri || "").toUpperCase();
-  const stateTitle = stateUpper.charAt(0) + stateUpper.slice(1).toLowerCase();
+function azobssReadStesenRecords() {
+  const fp = path.join(__dirname, "stesen-tanda-aras-records.json");
+  try {
+    const st = fs.existsSync(fp) ? fs.statSync(fp) : null;
+    if (!st) return [];
+    if (azobssStesenRecordsCache && azobssStesenRecordsMtime === st.mtimeMs) return azobssStesenRecordsCache;
+    const parsed = JSON.parse(fs.readFileSync(fp, "utf8"));
+    azobssStesenRecordsCache = Array.isArray(parsed) ? parsed : [];
+    azobssStesenRecordsMtime = st.mtimeMs;
+    return azobssStesenRecordsCache;
+  } catch (err) {
+    console.warn("AZOBSS stesen records read failed:", err && (err.message || err));
+    return azobssStesenRecordsCache || [];
+  }
+}
 
-  const candidates = [
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paLower)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paRaw)}&negeri=${encodeURIComponent(stateUpper)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(paUpper)}&negeri=${encodeURIComponent(stateTitle)}`,
-    `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?NoPA=${encodeURIComponent(paUpper)}&Negeri=${encodeURIComponent(stateUpper)}`
-  ];
+function azobssUnique(values) {
+  const out = [];
+  const seen = new Set();
+  (values || []).forEach((value) => {
+    const v = String(value || "").trim();
+    if (!v) return;
+    const key = v.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(v);
+  });
+  return out;
+}
 
-  let lastResult = null;
+function azobssStationKey(value) {
+  return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
 
-  for (const url of candidates) {
-    try {
-      console.log("Fetching PA candidate:", url);
-      const response = await fetchJupem(url);
-      const buffer = Buffer.from(await response.arrayBuffer());
-      const firstText = buffer.slice(0, 200).toString("utf8").toLowerCase();
-      const looksHTML = firstText.includes("<html") || firstText.includes("<!doctype") || firstText.includes("not found");
-      const validFile = response.ok && buffer.length > 100 && !looksHTML;
+function azobssDirectBmUrl(productId, jenis) {
+  const pid = String(productId || "").replace(/[^0-9]/g, "");
+  if (!pid) return "";
+  const j = String(jenis || "1").trim() === "2" ? "2" : "1";
+  return `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunStesenTandaAras/${encodeURIComponent(pid)}?jenis=${encodeURIComponent(j)}`;
+}
 
-      lastResult = { response, buffer, url, firstText, validFile };
+function azobssExtractBmUrlInfo(rawUrl) {
+  const info = { productId: "", jenis: "" };
+  const value = String(rawUrl || "").trim();
+  if (!value) return info;
+  try {
+    const u = new URL(value, "https://azobss.com");
+    info.productId = String(u.searchParams.get("productId") || u.searchParams.get("id") || "").replace(/[^0-9]/g, "");
+    info.jenis = String(u.searchParams.get("jenis") || "").trim();
+    const pathMatch = u.pathname.match(/MuatTurunStesenTandaAras\/(\d+)/i);
+    if (!info.productId && pathMatch) info.productId = pathMatch[1];
+  } catch (_err) {}
+  return info;
+}
 
-      if (validFile) {
-        return lastResult;
-      }
-    } catch (err) {
-      console.error("PA candidate failed:", url, err && err.message ? err.message : err);
-      lastResult = { response: null, buffer: Buffer.alloc(0), url, firstText: "", validFile: false, error: err };
-    }
+function azobssFindStesenRecordForPurchase(record) {
+  const rows = azobssReadStesenRecords();
+  if (!rows.length) return null;
+
+  const urls = [record && record.downloadUrl, record && record.url].filter(Boolean);
+  const urlInfo = urls.map(azobssExtractBmUrlInfo).find(x => x && x.productId) || {};
+  const wantedProductId = String((record && (record.productId || record.id)) || urlInfo.productId || "").replace(/[^0-9]/g, "");
+  const wantedJenis = String((record && record.jenis) || urlInfo.jenis || ((String(record && (record.productType || record.product) || "").toUpperCase() === "SBM") ? "2" : "1")).trim() === "2" ? "2" : "1";
+  const wantedStation = azobssStationKey(record && (record.itemCode || record.stationNo || record.stesen || record.code));
+  const wantedState = String(record && (record.negeri || record.state) || "").trim().toUpperCase();
+
+  if (wantedProductId) {
+    const exact = rows.find(r => String(r.productId || r.id || "").replace(/[^0-9]/g, "") === wantedProductId && String(r.jenis || wantedJenis) === wantedJenis);
+    if (exact) return exact;
   }
 
+  if (wantedStation) {
+    return rows.find((r) => {
+      const stationOk = azobssStationKey(r.stesen || r.stationNo || r.itemCode || r.code) === wantedStation;
+      const stateOk = !wantedState || String(r.negeri || r.state || "").trim().toUpperCase() === wantedState;
+      const jenisOk = !wantedJenis || String(r.jenis || wantedJenis) === wantedJenis;
+      return stationOk && stateOk && jenisOk;
+    }) || null;
+  }
+
+  return null;
+}
+
+function azobssLooksHtmlOrJsonError(buffer) {
+  const firstText = Buffer.from(buffer || Buffer.alloc(0)).slice(0, 240).toString("utf8").trim().toLowerCase();
+  return !buffer || !buffer.length ||
+    firstText.includes("<html") ||
+    firstText.includes("<!doctype") ||
+    firstText.includes("not found") ||
+    firstText.includes("tiada dalam simpanan") ||
+    firstText.includes("object moved") ||
+    (firstText.startsWith("{") && (firstText.includes('"ok":false') || firstText.includes('"error"')));
+}
+
+async function azobssFetchValidFileCandidates(candidates, label) {
+  let lastResult = null;
+  for (const candidate of azobssUnique(candidates)) {
+    try {
+      const response = await fetchJupem(candidate);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const firstText = buffer.slice(0, 240).toString("utf8").toLowerCase();
+      const validFile = !!(response && response.ok && buffer.length > 80 && !azobssLooksHtmlOrJsonError(buffer));
+      lastResult = { response, buffer, url: candidate, firstText, validFile };
+      if (validFile) return lastResult;
+      console.warn("AZOBSS paid download candidate invalid:", JSON.stringify({ label, status: response && response.status, url: candidate, head: firstText.slice(0, 80) }).slice(0, 500));
+    } catch (err) {
+      console.warn("AZOBSS paid download candidate failed:", label, candidate, err && (err.message || err));
+      lastResult = { response: null, buffer: Buffer.alloc(0), url: candidate, firstText: "", validFile: false, error: err };
+    }
+  }
   return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
+}
+
+function azobssBuildBmDownloadCandidates(record) {
+  const local = azobssFindStesenRecordForPurchase(record) || {};
+  const rawUrls = azobssUnique([
+    record && record.downloadUrl,
+    record && record.url,
+    local.downloadUrl,
+    local.url
+  ]);
+  const candidates = [];
+
+  rawUrls.forEach((raw) => {
+    const info = azobssExtractBmUrlInfo(raw);
+    if (info.productId) candidates.push(azobssDirectBmUrl(info.productId, info.jenis || local.jenis || record.jenis));
+    if (/^https?:\/\//i.test(String(raw || "")) && !/azobss-backend\.onrender\.com|www\.azobss\.com|azobss\.com/i.test(String(raw || ""))) {
+      candidates.push(raw);
+    }
+  });
+
+  const productIds = azobssUnique([
+    record && record.productId,
+    record && record.id,
+    local.productId,
+    local.id,
+    (azobssExtractBmUrlInfo(record && record.downloadUrl) || {}).productId
+  ]);
+  productIds.forEach((pid) => candidates.push(azobssDirectBmUrl(pid, record && record.jenis || local.jenis)));
+
+  return azobssUnique(candidates);
+}
+
+async function azobssFetchBenchmarkRecordFile(record) {
+  const candidates = azobssBuildBmDownloadCandidates(record);
+  return await azobssFetchValidFileCandidates(candidates, "BM/SBM");
+}
+
+function azobssExtractNoPaFromUrl(rawUrl) {
+  const value = String(rawUrl || "").trim();
+  if (!value) return "";
+  try {
+    const u = new URL(value, "https://azobss.com");
+    return String(u.searchParams.get("noPA") || u.searchParams.get("noPa") || u.searchParams.get("NoPA") || "").trim();
+  } catch (_err) {
+    return "";
+  }
+}
+
+function azobssPaNameVariants(noPA) {
+  const raw = String(noPA || "").trim().replace(/\.tif$/i, "").replace(/^PA/i, "").trim();
+  const digits = raw.replace(/[^0-9]/g, "");
+  const compactRaw = raw.replace(/\s+/g, "");
+  const baseNoSpace = digits ? `PA${digits}` : (compactRaw ? `PA${compactRaw}` : "");
+  const baseWithSpace = digits ? `PA ${digits}` : (raw ? `PA ${raw}` : "");
+  return azobssUnique([
+    baseNoSpace && `${baseNoSpace}.TIF`,
+    baseNoSpace && `${baseNoSpace}.tif`,
+    baseNoSpace,
+    baseWithSpace && `${baseWithSpace}.TIF`,
+    baseWithSpace && `${baseWithSpace}.tif`,
+    baseWithSpace,
+    raw && `PA${raw}.TIF`,
+    raw && `PA${raw}.tif`
+  ].filter(Boolean));
+}
+
+function azobssStateVariants(negeri) {
+  const raw = String(negeri || "").trim();
+  const upper = raw.toUpperCase();
+  const title = upper ? upper.charAt(0) + upper.slice(1).toLowerCase() : "";
+  return azobssUnique([upper, title, raw]);
+}
+
+async function fetchPelanAkuiCandidates(noPA, negeri) {
+  const paVariants = azobssPaNameVariants(noPA);
+  const stateVariants = azobssStateVariants(negeri);
+  const paramNames = ["noPa", "noPA", "NoPA"];
+  const stateParamNames = ["negeri", "Negeri"];
+  const candidates = [];
+
+  paVariants.forEach((paName) => {
+    stateVariants.forEach((stateName) => {
+      paramNames.forEach((paParam) => {
+        stateParamNames.forEach((stateParam) => {
+          candidates.push(`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?${paParam}=${encodeURIComponent(paName)}&${stateParam}=${encodeURIComponent(stateName)}`);
+        });
+      });
+    });
+  });
+
+  return await azobssFetchValidFileCandidates(candidates, "PA");
+}
+
+async function azobssFetchPaRecordFile(record, itemCode, negeri) {
+  const inputs = azobssUnique([
+    azobssExtractNoPaFromUrl(record && record.downloadUrl),
+    azobssExtractNoPaFromUrl(record && record.url),
+    record && record.noPA,
+    record && record.noPa,
+    record && record.pa,
+    record && record.itemCode,
+    itemCode && `PA${itemCode}.TIF`,
+    itemCode && `PA ${itemCode}.TIF`
+  ]);
+  let last = null;
+  for (const input of inputs) {
+    last = await fetchPelanAkuiCandidates(input, negeri);
+    if (last && last.validFile) return last;
+  }
+  return last || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
 }
 
 
@@ -4960,28 +5147,18 @@ if (
 
   console.log("Fetching BM/SBM:", jupemUrl);
 
-  const response = await fetchJupem(jupemUrl);
-
-  if (!response.ok) {
+  const bmResult = await azobssFetchValidFileCandidates([jupemUrl], "BM/SBM direct");
+  if (!bmResult || !bmResult.validFile || !bmResult.buffer || !bmResult.buffer.length) {
     return send(
       res,
-      404,
-      JSON.stringify({ ok: false, error: "BM/SBM not found" }),
+      502,
+      JSON.stringify({ ok: false, error: "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment." }),
       "application/json"
     );
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer());
-  const firstText = buffer.slice(0, 160).toString("utf8").toLowerCase();
-
-  if (!buffer.length || firstText.includes("<html")) {
-    return send(
-      res,
-      404,
-      JSON.stringify({ ok: false, error: "Invalid BM/SBM file" }),
-      "application/json"
-    );
-  }
+  const response = bmResult.response;
+  const buffer = bmResult.buffer;
 
   const contentType = response.headers.get("content-type") || "application/octet-stream";
   const safePrefix = jenis === "2" ? "SBM" : "BM";
@@ -5071,9 +5248,9 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     const negeri = cleanState(record.negeri || record.state || "");
     if (!itemCode || !negeri) return azobssPaBmDownloadError(res, 400, "Invalid PA record.");
 
-    const paResult = await fetchPelanAkuiCandidates("PA" + itemCode + ".TIF", negeri);
+    const paResult = await azobssFetchPaRecordFile(record, itemCode, negeri);
     if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
-      return azobssPaBmDownloadError(res, 404, "PA not found.");
+      return azobssPaBmDownloadError(res, 502, "PA file is temporarily unavailable from JUPEM. Please try again in a moment.");
     }
 
     const safeName = ("PA" + itemCode).replace(/[^A-Z0-9_-]/gi, "");
@@ -5096,29 +5273,22 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     return;
   }
 
-  const downloadUrl = String(record.downloadUrl || record.url || "").trim();
-  if (!downloadUrl) return azobssPaBmDownloadError(res, 400, "Download URL missing.");
-
-  // Proxy BM/SBM through AZOBSS backend so users never see the Render cold-start page
-  // or the raw onrender.com / JUPEM endpoint. This also ensures the 5x/7-day counter
-  // only increases after a real file is successfully prepared.
-  let bmResponse;
+  // Rebuild BM/SBM candidates from the paid record + local stesen JSON.
+  // Do not fetch the AZOBSS backend URL from inside the same backend; convert it to the real JUPEM URL.
+  let bmResult;
   try {
-    bmResponse = await fetchJupem(downloadUrl);
+    bmResult = await azobssFetchBenchmarkRecordFile(record);
   } catch (fetchError) {
     console.error("BM/SBM controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
-    return azobssPaBmDownloadError(res, 502, "Fail sedang disediakan. Sila cuba semula sebentar lagi.");
+    return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
-  if (!bmResponse || !bmResponse.ok) {
-    return azobssPaBmDownloadError(res, 404, "BM/SBM not found.");
+  if (!bmResult || !bmResult.validFile || !bmResult.buffer || !bmResult.buffer.length) {
+    return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
-  const bmBuffer = Buffer.from(await bmResponse.arrayBuffer());
-  const bmFirstText = bmBuffer.slice(0, 160).toString("utf8").toLowerCase();
-  if (!bmBuffer.length || bmFirstText.includes("<html")) {
-    return azobssPaBmDownloadError(res, 404, "Invalid BM/SBM file.");
-  }
+  const bmResponse = bmResult.response;
+  const bmBuffer = bmResult.buffer;
 
   try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
 

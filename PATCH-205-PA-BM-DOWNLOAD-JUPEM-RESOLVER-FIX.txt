@@ -1,0 +1,17 @@
+# AZOBSS PA/BM Paid Download JUPEM Resolver Fix
+
+Patch 205 fixes false "PA not found" / "BM/SBM not found" after successful ToyyibPay payment.
+
+Main fixes:
+- Controlled PA/BM download no longer fetches AZOBSS backend URL from inside the same backend.
+- BM/SBM download URL is rebuilt directly from local stesen-tanda-aras-records.json/productId/jenis.
+- BM/SBM fallback can match by station code + negeri.
+- PA download tries more JUPEM filename variants:
+  - PA2131.TIF
+  - PA2131.tif
+  - PA2131
+  - PA 2131.TIF
+  - PA 2131.tif
+  - PA 2131
+- Download count still only increments after a real file is successfully prepared.
+- If JUPEM is temporarily unavailable, backend returns 502 "temporarily unavailable" instead of false not found.
