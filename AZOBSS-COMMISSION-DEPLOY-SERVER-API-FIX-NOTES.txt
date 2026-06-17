@@ -1,0 +1,24 @@
+AZOBSS Commission Deploy Server API Fix
+Date: 2026-06-17
+
+Fix applied:
+- Added /api/commission/status into deploy-server.js (the Render start file).
+- Added /api/commission/retry-order into deploy-server.js.
+- Added commissionRecords Firestore save logic into deploy-server.js.
+- Added local fallback file commission-records.json if Firebase Admin is not configured.
+- Added commission finalize calls when ToyyibPay status becomes paid.
+- Preserved product owner/share referral fields on premium ToyyibPay orders.
+
+Important:
+- package.json and render.yaml start the backend using deploy-server.js, not backend/server.js.
+- Previous ZIP already had the routes in backend/server.js, but Render would not use them unless startCommand changed.
+- This patch keeps startCommand unchanged and patches deploy-server.js directly.
+
+Tested:
+- node --check deploy-server.js = OK
+- node --check backend/server.js = OK
+- Local GET /api/commission/status = OK JSON response
+
+Firebase Rules:
+- No Firebase Rules update required when backend uses Firebase Admin SDK.
+- Render env still needs FIREBASE_SERVICE_ACCOUNT_JSON or equivalent Firebase Admin credentials for Firestore write.
