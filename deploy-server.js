@@ -1329,16 +1329,66 @@ function buildReceiptHtml(order) {
 // AUTO DELETE FILE > 30 DAYS
 const FILE_EXPIRE_MS =
   30 * 24 * 60 * 60 * 1000;
-  
-function send(res, status, body, type = "text/plain; charset=utf-8") {
 
-  res.writeHead(status, {
-    "Content-Type": type,
+// AZOBSS security hardening: optional stricter CORS + common browser security headers.
+const AZOBSS_CORS_ORIGIN = String(process.env.AZOBSS_CORS_ORIGIN || "*").trim() || "*";
+function azCorsOrigin() { return AZOBSS_CORS_ORIGIN; }
+function azSecurityHeaders(extra = {}) {
+  return Object.assign({
     "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": azCorsOrigin(),
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-key, x-api-key, x-azobss-api-key"
-  });
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-key, x-api-key, x-azobss-api-key",
+    "Access-Control-Max-Age": "600",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+  }, extra || {});
+}
+
+const AZOBSS_RATE_BUCKETS = new Map();
+function azClientIp(req) {
+  const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return fwd || String(req.socket && req.socket.remoteAddress || "unknown");
+}
+function azRateLimit(req, name, maxHits, windowMs) {
+  if (String(process.env.AZOBSS_DISABLE_RATE_LIMIT || "") === "1") return { ok:true, remaining:maxHits };
+  const now = Date.now();
+  const ip = azClientIp(req);
+  const key = `${name}:${ip}`;
+  let bucket = AZOBSS_RATE_BUCKETS.get(key);
+  if (!bucket || bucket.resetAt <= now) bucket = { count:0, resetAt: now + windowMs };
+  bucket.count += 1;
+  AZOBSS_RATE_BUCKETS.set(key, bucket);
+
+  // Lightweight cleanup so long-running Render instance does not keep old IP buckets forever.
+  if (AZOBSS_RATE_BUCKETS.size > 2000) {
+    for (const [k, v] of AZOBSS_RATE_BUCKETS.entries()) {
+      if (!v || v.resetAt <= now) AZOBSS_RATE_BUCKETS.delete(k);
+      if (AZOBSS_RATE_BUCKETS.size <= 1500) break;
+    }
+  }
+
+  const remaining = Math.max(0, maxHits - bucket.count);
+  if (bucket.count > maxHits) {
+    const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
+    return { ok:false, retryAfter, remaining:0 };
+  }
+  return { ok:true, retryAfter:0, remaining };
+}
+function azRateLimitOrSend(req, res, name, maxHits, windowMs) {
+  const r = azRateLimit(req, name, maxHits, windowMs);
+  if (r.ok) return false;
+  send(res, 429, JSON.stringify({ ok:false, error:"Too many requests. Please try again later.", retryAfter:r.retryAfter }, null, 2), "application/json", { "Retry-After": String(r.retryAfter) });
+  return true;
+}
+  
+function send(res, status, body, type = "text/plain; charset=utf-8", extraHeaders = {}) {
+
+  res.writeHead(status, azSecurityHeaders(Object.assign({
+    "Content-Type": type
+  }, extraHeaders || {})));
 
   res.end(body);
 }
@@ -2181,6 +2231,16 @@ async function handler(req, res) {
     if (req.method === "OPTIONS") {
       return send(res, 204, "");
     }
+
+    // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
+    // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
+    if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-pa-bm-bill", 10, 5 * 60 * 1000)) return;
+    if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
+    if (pathname === "/api/commission/status" && req.method === "GET" && parsed.query && parsed.query.records && azRateLimitOrSend(req, res, "commission-records", 60, 60 * 1000)) return;
+    if (pathname === "/api/commission/retry-order" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-retry", 10, 10 * 60 * 1000)) return;
+    if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
+    if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
+    if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
 
 
     // =========================
@@ -3104,12 +3164,10 @@ if (
   const safePrefix = jenis === "2" ? "SBM" : "BM";
   const ext = contentType.includes("pdf") ? "pdf" : (contentType.includes("zip") ? "zip" : "dat");
 
-  res.writeHead(200, {
+  res.writeHead(200, azSecurityHeaders({
     "Content-Type": contentType,
-    "Content-Disposition": `attachment; filename="${safePrefix}-${productId}.${ext}"`,
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*"
-  });
+    "Content-Disposition": `attachment; filename="${safePrefix}-${productId}.${ext}"`
+  }));
 
   res.end(buffer);
   return;
@@ -3206,13 +3264,11 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
     try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
 
-    res.writeHead(200, {
+    res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*",
       "Access-Control-Expose-Headers": "Content-Disposition"
-    });
+    }));
     res.end(pdfBuffer);
     return;
   }
@@ -3249,13 +3305,11 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   const ext = contentType.includes("pdf") ? "pdf" : (contentType.includes("zip") ? "zip" : (contentType.includes("tif") ? "tif" : "dat"));
   const safePrefix = productType === "SBM" ? "SBM" : "BM";
 
-  res.writeHead(200, {
+  res.writeHead(200, azSecurityHeaders({
     "Content-Type": contentType,
     "Content-Disposition": `attachment; filename="${safePrefix}-${safeCode}.${ext}"`,
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*",
     "Access-Control-Expose-Headers": "Content-Disposition"
-  });
+  }));
   res.end(bmBuffer);
   return;
 }
@@ -3342,13 +3396,11 @@ if (
     );
   }
 
-  res.writeHead(200, {
+  res.writeHead(200, azSecurityHeaders({
     "Content-Type": "application/pdf",
     "Content-Disposition":
-      `attachment; filename="${safeName}.pdf"`,
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*"
-  });
+      `attachment; filename="${safeName}.pdf"`
+  }));
 
   res.end(pdfBuffer);
   return;
@@ -3399,13 +3451,11 @@ const filePath =
     );
   }
 
-  res.writeHead(200, {
+  res.writeHead(200, azSecurityHeaders({
     "Content-Type": "image/tiff",
     "Content-Disposition":
-      `attachment; filename="${fileName}"`,
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*"
-  });
+      `attachment; filename="${fileName}"`
+  }));
 
   fs.createReadStream(filePath)
     .pipe(res);
@@ -3514,14 +3564,14 @@ const filePath =
       try { await azUpdatePremiumTokenPersistent(token, { usedCount: nextUsed, lastUsedAt: Date.now(), lastMethod: "POST" }); } catch (err) { console.warn("Premium token Firestore update failed:", err && (err.message || err)); }
       const target = saved.downloadLink || saved.premiumDownloadFileLink || "";
       if (/^https?:\/\//i.test(target)) {
-        res.writeHead(303, { Location: target, "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" });
+        res.writeHead(303, azSecurityHeaders({ Location: target }));
         res.end();
         return;
       }
       if (target.startsWith("/")) {
         const filePath = safePath(target);
         if (!filePath || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return send(res, 404, "File not found");
-        res.writeHead(200, { "Content-Type": mimeType(filePath), "Content-Disposition": `attachment; filename="${path.basename(filePath)}"`, "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" });
+        res.writeHead(200, azSecurityHeaders({ "Content-Type": mimeType(filePath), "Content-Disposition": `attachment; filename="${path.basename(filePath)}"` }));
         fs.createReadStream(filePath).pipe(res);
         return;
       }
@@ -3701,7 +3751,7 @@ const server = http.createServer((req, res) => {
   Promise.resolve(handler(req, res)).catch((error) => {
     console.error("Unhandled request error:", error && (error.stack || error.message) || error);
     if (!res.headersSent) {
-      res.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+      res.writeHead(500, azSecurityHeaders({ "Content-Type": "application/json" }));
       res.end(JSON.stringify({ ok: false, error: "Internal server error" }));
     } else {
       try { res.end(); } catch (_) {}
