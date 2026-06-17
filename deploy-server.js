@@ -24,8 +24,8 @@ function azobssDownloadLimitFromOrder(order){
 }
 
 
-// Allow PA/BM download proxy to fetch JUPEM resources even when the remote SSL chain is incomplete on Render/Node.
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED || "0";
+// JUPEM SSL bypass is now scoped only to JUPEM fetch requests.
+// Do not set NODE_TLS_REJECT_UNAUTHORIZED globally because it weakens all HTTPS calls.
 
 // AZOBSS Render Backend Server
 // Supports: website hosting + affiliate online sync + JUPEM PA hold system
@@ -35,6 +35,27 @@ const path = require("path");
 const http = require("http");
 const url = require("url");
 const crypto = require("crypto");
+
+let azJupemInsecureDispatcher = null;
+function azGetJupemDispatcher() {
+  if (String(process.env.AZOBSS_STRICT_JUPEM_TLS || "") === "1") return null;
+  if (azJupemInsecureDispatcher) return azJupemInsecureDispatcher;
+  try {
+    const { Agent } = require("undici");
+    azJupemInsecureDispatcher = new Agent({ connect: { rejectUnauthorized: false } });
+    return azJupemInsecureDispatcher;
+  } catch (err) {
+    console.warn("AZOBSS JUPEM scoped TLS dispatcher unavailable:", err && (err.message || err));
+    return null;
+  }
+}
+function azJupemFetchOptions(options = {}) {
+  const out = Object.assign({}, options);
+  const dispatcher = azGetJupemDispatcher();
+  if (dispatcher) out.dispatcher = dispatcher;
+  return out;
+}
+
 let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
 let sharp = null;
@@ -306,6 +327,54 @@ function azRequestHasCommissionSecret(req, parsed) {
   } catch (_) {
     return token === AZOBSS_COMMISSION_API_SECRET;
   }
+}
+async function azCommissionIdentityFromRequest(req) {
+  try {
+    if (!initFirebaseAdmin() || !firebaseAdmin || !firebaseAdmin.auth) return null;
+    const h = String(req.headers.authorization || "");
+    const token = h.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return null;
+    const decoded = await firebaseAdmin.auth().verifyIdToken(token);
+    const db = getAzobssBackendDb();
+    const identity = {
+      uid: String(decoded.uid || ""),
+      email: String(decoded.email || "").toLowerCase(),
+      username: "",
+      role: "",
+      isAdmin: false
+    };
+    if (db && identity.uid) {
+      try {
+        const qs = await db.collection("users").where("uid", "==", identity.uid).limit(1).get();
+        qs.forEach(doc => {
+          const x = doc.data() || {};
+          identity.username = String(x.usernameKey || x.username || doc.id || "").toLowerCase();
+          identity.role = String(x.role || "").toLowerCase();
+          identity.email = String(x.email || x.authEmail || identity.email || "").toLowerCase();
+        });
+      } catch (err) {
+        console.warn("Commission identity profile lookup failed:", err && (err.message || err));
+      }
+    }
+    identity.isAdmin = identity.role === "admin" || identity.username === "zedan91" || identity.email === "zedan91@azobss.local" || identity.email === "zedan9107@gmail.com";
+    return identity;
+  } catch (err) {
+    console.warn("Commission Firebase token verify failed:", err && (err.message || err));
+    return null;
+  }
+}
+function azCommissionRecordBelongsToIdentity(x = {}, identity = {}) {
+  if (!identity || !identity.uid) return false;
+  if (identity.isAdmin) return true;
+  const needles = [identity.uid, identity.email, identity.username].map(v => String(v || "").toLowerCase()).filter(Boolean);
+  if (!needles.length) return false;
+  const vals = [
+    x.uid, x.createdByUid, x.ownerUid, x.staffUid, x.sellerUid, x.memberUid, x.sharerUid,
+    x.username, x.usernameKey, x.createdByUsername, x.ownerUsername, x.staffUsername, x.sellerUsername, x.sharerUsername,
+    x.email, x.createdByEmail, x.ownerEmail, x.staffEmail, x.sellerEmail, x.sharerEmail,
+    x.shareReferral && x.shareReferral.username, x.shareReferral && x.shareReferral.ref, x.shareReferral && x.shareReferral.staffUsername
+  ].map(v => String(v || "").toLowerCase()).filter(Boolean);
+  return needles.some(n => vals.includes(n));
 }
 function azMakeReceiptToken(order = {}) {
   const secret = String(process.env.AZOBSS_RECEIPT_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "azobss-receipt-fallback-secret");
@@ -1489,14 +1558,14 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback) {
 }
 
 async function fetchJupem(jupemUrl) {
-  return await fetch(jupemUrl, {
+  return await fetch(jupemUrl, azJupemFetchOptions({
     redirect: "follow",
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
       "Accept": "image/tiff,image/*,*/*",
       "Referer": "https://ebiz.jupem.gov.my/"
     }
-  });
+  }));
 }
 
 
@@ -2330,8 +2399,10 @@ async function handler(req, res) {
         let sampleCount = 0;
         let error = "";
         const wantRecords = String(parsed.query.records || parsed.query.list || '') === '1';
-        if (wantRecords && !azRequestHasCommissionSecret(req, parsed)) {
-          return send(res, 403, JSON.stringify({ ok:false, error:"Commission records are protected. Use /api/commission/status for health check only." }, null, 2), "application/json");
+        const hasCommissionSecret = wantRecords && azRequestHasCommissionSecret(req, parsed);
+        const commissionIdentity = wantRecords && !hasCommissionSecret ? await azCommissionIdentityFromRequest(req) : null;
+        if (wantRecords && !hasCommissionSecret && !commissionIdentity) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Commission records are protected. Use Firebase login token or admin API secret." }, null, 2), "application/json");
         }
         const maxRecords = Math.max(1, Math.min(300, Number(parsed.query.limit || 100) || 100));
         let records = [];
@@ -2345,6 +2416,7 @@ async function handler(req, res) {
             if (wantRecords) {
               snap.forEach(doc => {
                 const x = doc.data() || {};
+                if (wantRecords && !hasCommissionSecret && !azCommissionRecordBelongsToIdentity(x, commissionIdentity)) return;
                 const safeReferral = x.shareReferral && typeof x.shareReferral === 'object' ? {
                   username: cleanPremiumText(x.shareReferral.username || x.shareReferral.ref || '', 80),
                   ref: cleanPremiumText(x.shareReferral.ref || x.shareReferral.username || '', 80),
@@ -2767,14 +2839,14 @@ async function handler(req, res) {
       for (const targetUrl of candidates) {
         try {
           console.log("Benchmark search:", targetUrl);
-          const response = await fetch(targetUrl, {
+          const response = await fetch(targetUrl, azJupemFetchOptions({
             redirect: "follow",
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
               "Referer": "https://ebiz.jupem.gov.my/Produk/StesenTandaAras"
             }
-          });
+          }));
 
           if (!response.ok) {
             lastError = `HTTP ${response.status}`;

@@ -1,0 +1,25 @@
+AZOBSS Next Hardening Fix (179)
+
+1. Scoped JUPEM TLS bypass
+- Removed global NODE_TLS_REJECT_UNAUTHORIZED=0.
+- Added scoped Undici dispatcher only for JUPEM fetch requests.
+- Other HTTPS calls such as ToyyibPay, Brevo, Firebase remain normal TLS verified.
+- Set AZOBSS_STRICT_JUPEM_TLS=1 if JUPEM SSL becomes fully valid and bypass is no longer needed.
+
+2. Staff commission fallback fixed after API lock
+- Staff dashboard now sends Firebase ID token to /api/commission/status?records=1.
+- Backend verifies Firebase token with Firebase Admin SDK.
+- Non-admin staff only receive commission records matching their uid/email/username/ref.
+- Admin can view all records.
+- Secret key access remains supported for backend/admin tools.
+
+3. Runtime npm install reduced
+- render.yaml now sets AZOBSS_DISABLE_RUNTIME_NPM=1 because render-build.sh already installs sharp/pdfkit.
+- This reduces cold start risk and avoids npm install during live request/runtime.
+
+4. BM/SBM duplicate database reduced
+- Removed duplicate data/stesen-tanda-aras-records.json.
+- Root /stesen-tanda-aras-records.json is the single source.
+- BM/SBM scripts now fetch root path first with fallback.
+
+No Firebase Rules update required.

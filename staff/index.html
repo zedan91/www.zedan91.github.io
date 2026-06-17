@@ -421,8 +421,10 @@ function isMyShareCommissionRecord(x){
 }
 async function fetchCommissionRecordsFromApi(){
   try{
-    const r=await fetch(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=200',{cache:'no-store'});
+    const token=user && typeof user.getIdToken==='function' ? await user.getIdToken() : '';
+    const r=await fetch(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=200',{cache:'no-store',headers:token?{Authorization:'Bearer '+token}:{}});
     const j=await r.json();
+    if(!r.ok){console.warn('Commission API fallback rejected',j);return []}
     return Array.isArray(j.records)?j.records:[];
   }catch(e){console.warn('Commission API fallback failed',e);return []}
 }

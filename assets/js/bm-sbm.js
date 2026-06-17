@@ -222,9 +222,17 @@
 
   async function loadBenchmarkDb(){
     if (benchmarkDbCache) return benchmarkDbCache;
-    const response = await fetch('data/stesen-tanda-aras-records.json', { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error('Database BM/SBM tidak dijumpai. Pastikan data/stesen-tanda-aras-records.json ada dalam GitHub.');
+    const urls=['/stesen-tanda-aras-records.json','stesen-tanda-aras-records.json','data/stesen-tanda-aras-records.json'];
+    let response=null,lastUrl='';
+    for(const u of urls){
+      lastUrl=u;
+      try{
+        response = await fetch(u, { cache: 'no-store' });
+        if(response.ok) break;
+      }catch(_e){ response=null; }
+    }
+    if (!response || !response.ok) {
+      throw new Error('Database BM/SBM tidak dijumpai. Pastikan /stesen-tanda-aras-records.json ada dalam GitHub root. Last: '+lastUrl);
     }
     const data = await response.json();
     if (!Array.isArray(data)) {
@@ -316,7 +324,7 @@
     } catch (error) {
       renderResults([]);
       if (errorEl) errorEl.textContent = error.message || 'BM/SBM search failed.';
-      if (statusEl) statusEl.textContent = 'Search gagal. Pastikan data/stesen-tanda-aras-records.json ada dalam GitHub.';
+      if (statusEl) statusEl.textContent = 'Search gagal. Pastikan /stesen-tanda-aras-records.json ada dalam GitHub root.';
     } finally {
       if (searchBtn) searchBtn.disabled = false;
     }
