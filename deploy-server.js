@@ -761,6 +761,127 @@ function azExportFileName(type, format) {
 }
 
 
+const AZOBSS_SYSTEM_HEALTH_COLLECTIONS = [
+  "users",
+  "premiumOrders",
+  "premiumDownloadTokens",
+  "commissionRecords",
+  "purchaseLogs",
+  "softwareStats",
+  "adminAuditLogs",
+  "notifications",
+  "supportMessages"
+];
+const AZOBSS_SYSTEM_HEALTH_FILES = [
+  "premium-orders.json",
+  "premium-download-tokens.json",
+  "commission-records.json",
+  "software-stats.json",
+  "admin-audit-logs.json",
+  "stesen-tanda-aras-records.json"
+];
+function azHealthEnvFlag(name, recommended = false, note = "") {
+  const raw = process.env[name];
+  const present = raw !== undefined && String(raw).trim() !== "";
+  return {
+    name,
+    present,
+    recommended: !!recommended,
+    value: present && !/SECRET|KEY|TOKEN|PASSWORD|SERVICE_ACCOUNT/i.test(name) ? String(raw).slice(0, 180) : (present ? "configured" : ""),
+    note: azAuditSafeText(note || "", 220)
+  };
+}
+function azHealthFileRow(filename) {
+  const safeName = path.basename(String(filename || ""));
+  const fp = path.join(__dirname, safeName);
+  try {
+    const st = fs.existsSync(fp) ? fs.statSync(fp) : null;
+    return { file: safeName, exists: !!st, sizeBytes: st ? st.size : 0, modifiedAt: st ? st.mtime.toISOString() : "" };
+  } catch (err) {
+    return { file: safeName, exists: false, sizeBytes: 0, modifiedAt: "", error: err && err.message ? err.message : String(err) };
+  }
+}
+async function azHealthFirestoreCollectionRow(db, name) {
+  const row = { name, ok: false, sampleCount: 0, latestCreatedAt: "", latestCreatedAtMs: 0, error: "" };
+  if (!db) { row.error = "Firebase Admin not configured"; return row; }
+  try {
+    let snap;
+    try { snap = await db.collection(name).orderBy("createdAtMs", "desc").limit(1).get(); }
+    catch (_) { snap = await db.collection(name).limit(1).get(); }
+    row.ok = true;
+    row.sampleCount = snap.size;
+    snap.forEach(docSnap => {
+      const x = docSnap.data() || {};
+      row.latestCreatedAt = azAuditSafeText(x.createdAt || x.updatedAt || x.paidAt || "", 90);
+      row.latestCreatedAtMs = Number(x.createdAtMs || x.updatedAtMs || x.paidAtMs || 0) || 0;
+    });
+  } catch (err) {
+    row.error = err && err.message ? err.message : String(err);
+  }
+  return row;
+}
+async function azBuildAdminSystemHealth(req, identity = {}) {
+  const started = Date.now();
+  const db = getAzobssBackendDb();
+  const env = [
+    azHealthEnvFlag("FIREBASE_SERVICE_ACCOUNT_JSON", true, "Required for backend Firestore read/write."),
+    azHealthEnvFlag("TOYYIBPAY_SECRET_KEY", true, "Required for ToyyibPay bill/payment verification."),
+    azHealthEnvFlag("TOYYIBPAY_CATEGORY_CODE", true, "Required for ToyyibPay bill creation."),
+    azHealthEnvFlag("BREVO_API_KEY", true, "Required for premium download/receipt email sending."),
+    azHealthEnvFlag("AZOBSS_FROM_EMAIL", true, "Recommended sender email for customer emails."),
+    azHealthEnvFlag("AZOBSS_CORS_ORIGIN", false, "Recommended production value: https://www.azobss.com"),
+    azHealthEnvFlag("AZOBSS_ADMIN_API_SECRET", false, "Optional backup admin API secret."),
+    azHealthEnvFlag("AZOBSS_COMMISSION_API_SECRET", false, "Optional backup commission/admin API secret."),
+    azHealthEnvFlag("AZOBSS_REQUIRE_RECEIPT_TOKEN", false, "Optional strict receipt token mode."),
+    azHealthEnvFlag("AZOBSS_VERIFY_TOYYIB_CALLBACK", false, "Default ON. Set 0 only for emergency ToyyibPay verification bypass."),
+    azHealthEnvFlag("AZOBSS_DISABLE_RATE_LIMIT", false, "Emergency only. Keep unset for production."),
+    azHealthEnvFlag("AZOBSS_DISABLE_RUNTIME_NPM", false, "Recommended ON after Render build dependencies are stable.")
+  ];
+  const collections = [];
+  if (db) {
+    for (const col of AZOBSS_SYSTEM_HEALTH_COLLECTIONS) {
+      collections.push(await azHealthFirestoreCollectionRow(db, col));
+    }
+  } else {
+    for (const col of AZOBSS_SYSTEM_HEALTH_COLLECTIONS) collections.push({ name: col, ok:false, sampleCount:0, error: firebaseAdminInitError || "Firebase Admin not configured" });
+  }
+  const missingRequired = env.filter(x => x.recommended && !x.present).map(x => x.name);
+  const collectionErrors = collections.filter(x => !x.ok && x.error).map(x => x.name);
+  const processInfo = {
+    nodeVersion: process.version,
+    platform: process.platform,
+    uptimeSeconds: Math.round(process.uptime()),
+    memoryMB: Math.round((process.memoryUsage().rss || 0) / 1024 / 1024),
+    pid: process.pid,
+    disableRuntimeNpm: String(process.env.AZOBSS_DISABLE_RUNTIME_NPM || "") === "1",
+    rateLimitDisabled: String(process.env.AZOBSS_DISABLE_RATE_LIMIT || "") === "1",
+    toyyibCallbackVerifyEnabled: azVerifyToyyibCallbackEnabled(),
+    receiptStrictAllOrders: String(process.env.AZOBSS_REQUIRE_RECEIPT_TOKEN || "") === "1",
+    corsOrigin: azCorsOrigin()
+  };
+  let status = "ok";
+  if (missingRequired.length || !db) status = "critical";
+  else if (collectionErrors.length) status = "warning";
+  return {
+    ok: status !== "critical",
+    status,
+    generatedAt: new Date().toISOString(),
+    latencyMs: Date.now() - started,
+    admin: azAuditIdentitySafe(identity || {}),
+    firebase: {
+      configured: !!db,
+      initError: db ? "" : azAuditSafeText(firebaseAdminInitError || "Firebase Admin not configured", 260),
+      collectionErrors
+    },
+    env,
+    missingRequired,
+    process: processInfo,
+    files: AZOBSS_SYSTEM_HEALTH_FILES.map(azHealthFileRow),
+    collections
+  };
+}
+
+
 function azMaskEmail(value = "") {
   const email = String(value || "").trim();
   const at = email.indexOf("@");
@@ -2747,6 +2868,7 @@ async function handler(req, res) {
     if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/export" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-export", 30, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
 
 
     // =========================
@@ -3029,6 +3151,21 @@ async function handler(req, res) {
           return send(res, 200, azRowsToCsv(result.rows), "text/csv; charset=utf-8", { "Content-Disposition": `attachment; filename="${filename}"` });
         }
         return send(res, 200, JSON.stringify({ ok:true, exportedAt:new Date().toISOString(), type, label:AZOBSS_ADMIN_EXPORT_TYPES[type].label, count:result.rows.length, source:result.source, firestoreOk:result.firestoreOk, error:result.error || "", records:result.rows }, null, 2), "application/json", { "Content-Disposition": `attachment; filename="${filename}"` });
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+
+    if (pathname === "/api/admin/system-health" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to view system health." }, null, 2), "application/json");
+        }
+        const health = await azBuildAdminSystemHealth(req, adminIdentity);
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_system_health_check", "system", "backend", { status: health.status, missingRequired: health.missingRequired, collectionErrors: health.firebase.collectionErrors, latencyMs: health.latencyMs }, "success"), "Admin system health audit log failed");
+        return send(res, 200, JSON.stringify(health, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
