@@ -1,0 +1,39 @@
+AZOBSS Priority Hardening Patch (178)
+
+Applied on top of baseline (177):
+1. Backend price validation for Software/CAD premium payments.
+   - Browser/frontend price is ignored for normal purchase.
+   - Backend resolves trusted price/download link from Firestore product collections or local product export fallback.
+   - Admin RM1 test purchase remains allowed only for configured admin usernames/emails.
+
+2. Premium download confirmation upgraded.
+   - GET link from email only shows confirmation page.
+   - Real download starts only via POST form button.
+   - Email scanners/prefetch should not consume download quota.
+
+3. Commission records API hardening.
+   - /api/commission/status remains public health check.
+   - records=1/list=1 requires AZOBSS_COMMISSION_API_SECRET or AZOBSS_ADMIN_API_SECRET via x-azobss-api-key / Authorization Bearer / query key.
+
+4. Commission fields standardized for future reports.
+   - saleAmount / saleAmountText
+   - commissionAmount
+   - azobssShareAmount / azobssShareRate
+   - ownerShareAmount
+   - sharerShareAmount
+
+5. Staff dashboard labels improved.
+   - AZOBSS Share / Owner Share are no longer hard-coded as 30%/70%.
+   - Dashboard calculates dynamic share based on commissionType where available.
+
+6. Receipt privacy improved.
+   - New receipt links include rt receipt token.
+   - Existing old receipt links still work unless AZOBSS_REQUIRE_RECEIPT_TOKEN=1 is enabled.
+
+No Firebase Rules update required for this patch.
+Optional Render env for stronger protection:
+- AZOBSS_COMMISSION_API_SECRET=your-long-secret
+- AZOBSS_ADMIN_API_SECRET=your-long-secret
+- AZOBSS_REQUIRE_RECEIPT_TOKEN=1
+- AZOBSS_ADMIN_TEST_USERNAMES=zedan91,zedan0001
+- AZOBSS_ADMIN_TEST_EMAILS=zedan91@azobss.local,zedan9107@gmail.com

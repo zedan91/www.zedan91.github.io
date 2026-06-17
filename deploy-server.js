@@ -165,6 +165,163 @@ function parseAmountToSen(value) {
   return Math.round(n * 100);
 }
 
+
+// AZOBSS priority hardening: never trust Software/CAD price or download URL from the browser.
+// Normal purchase price/file is resolved by backend from Firestore/local product list.
+const AZOBSS_LOCAL_SOFTWARE_EXPORT = path.join(__dirname, "azobss-software-tools-export (5).json");
+const AZOBSS_ADMIN_TEST_USERNAMES = String(process.env.AZOBSS_ADMIN_TEST_USERNAMES || "zedan91,zedan0001").toLowerCase().split(",").map(s => s.trim()).filter(Boolean);
+const AZOBSS_ADMIN_TEST_EMAILS = String(process.env.AZOBSS_ADMIN_TEST_EMAILS || "zedan91@azobss.local,zedan9107@gmail.com").toLowerCase().split(",").map(s => s.trim()).filter(Boolean);
+const AZOBSS_COMMISSION_API_SECRET = String(process.env.AZOBSS_COMMISSION_API_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || "").trim();
+
+function azProductKey(v){ return String(v || "").trim().toLowerCase(); }
+function azProductIdFromAny(product = {}, data = {}) {
+  return cleanPremiumText(product.productId || product.id || product.sku || data.productId || data.id || "", 180);
+}
+function azIsAdminTestUser(user = {}, data = {}, product = {}) {
+  const username = azProductKey(user.username || data.username || data.usernameKey || data.user?.username || data.user?.usernameKey || product.ownerUsername || "");
+  const email = azProductKey(user.email || data.email || data.buyerEmail || data.user?.email || "");
+  return (username && AZOBSS_ADMIN_TEST_USERNAMES.includes(username)) || (email && AZOBSS_ADMIN_TEST_EMAILS.includes(email));
+}
+function azIsAdminTestPurchase(data = {}, product = {}) {
+  const flag = product.isAdminTestPurchase === true || data.isAdminTestPurchase === true || String(product.adminTestPurchase || data.adminTestPurchase || "") === "1";
+  const priceSen = parseAmountToSen(product.price || data.amount || data.price || "");
+  return flag && priceSen === 100;
+}
+function azProductIsPremium(item = {}) {
+  const type = String(item.type || item.productType || item.statusType || "").toLowerCase();
+  const priceSen = parseAmountToSen(item.price || item.amount || item.productPrice || "");
+  return type.includes("premium") || priceSen > 0;
+}
+function azNormalizeTrustedProduct(item = {}, source = "trusted") {
+  const id = cleanPremiumText(item.productId || item.id || item.sku || item.docId || "", 180);
+  const name = cleanPremiumText(item.name || item.title || item.productName || "AZOBSS Digital Product", 160);
+  const price = cleanPremiumText(item.price || item.amount || item.productPrice || "", 40);
+  const downloadLink = cleanPremiumUrl(item.secureDownloadLink || item.premiumDownloadFileLink || item.privateDownloadLink || item.downloadLink || item.fileUrl || "");
+  return {
+    ...item,
+    id,
+    productId: id,
+    name,
+    productName: name,
+    price,
+    source: item.source || source,
+    secureDownloadLink: cleanPremiumUrl(item.secureDownloadLink || item.premiumDownloadFileLink || item.privateDownloadLink || item.downloadLink || item.fileUrl || ""),
+    premiumDownloadFileLink: cleanPremiumUrl(item.premiumDownloadFileLink || item.secureDownloadLink || item.privateDownloadLink || item.downloadLink || item.fileUrl || ""),
+    privateDownloadLink: cleanPremiumUrl(item.privateDownloadLink || item.secureDownloadLink || item.premiumDownloadFileLink || item.downloadLink || item.fileUrl || ""),
+    downloadLink,
+    downloadLimit: Number(item.downloadLimit || item.maxDownload || item.maxDownloads || 1) || 1,
+    expiryHours: Number(item.expiryHours ?? item.linkExpiryHours ?? item.downloadExpiryHours ?? 24) || 24
+  };
+}
+function azFindLocalSoftwareProduct(productId = "") {
+  const key = azProductKey(productId);
+  if (!key || !fs.existsSync(AZOBSS_LOCAL_SOFTWARE_EXPORT)) return null;
+  try {
+    const raw = JSON.parse(fs.readFileSync(AZOBSS_LOCAL_SOFTWARE_EXPORT, "utf8"));
+    const items = Array.isArray(raw) ? raw : (Array.isArray(raw.items) ? raw.items : (Array.isArray(raw.softwareTools) ? raw.softwareTools : []));
+    const found = items.find(item => [item.productId, item.id, item.sku, item.name].map(azProductKey).includes(key));
+    return found ? azNormalizeTrustedProduct(found, "local-software-export") : null;
+  } catch (err) {
+    console.warn("AZOBSS local product lookup failed:", err && (err.message || err));
+    return null;
+  }
+}
+async function azFindFirestoreProduct(productId = "") {
+  const key = azProductKey(productId);
+  if (!key) return null;
+  const db = getAzobssBackendDb();
+  if (!db) return null;
+  const collections = ["softwareTools", "cadTools", "cadToolsResources", "staffSoftwareSubmissions", "staffCADSubmissions"];
+  for (const col of collections) {
+    try {
+      const docSnap = await db.collection(col).doc(productId).get();
+      if (docSnap.exists) return azNormalizeTrustedProduct({ docId: docSnap.id, ...(docSnap.data() || {}) }, "firestore:" + col);
+    } catch (_) {}
+    for (const field of ["productId", "id", "sku"]) {
+      try {
+        const qs = await db.collection(col).where(field, "==", productId).limit(1).get();
+        if (!qs.empty) {
+          const doc = qs.docs[0];
+          return azNormalizeTrustedProduct({ docId: doc.id, ...(doc.data() || {}) }, "firestore:" + col);
+        }
+      } catch (_) {}
+    }
+  }
+  return null;
+}
+async function azResolveTrustedPremiumProduct(data = {}, req = null) {
+  const clientProduct = data.product || {};
+  const user = getPremiumUser(data);
+  const productId = azProductIdFromAny(clientProduct, data);
+  if (!productId) {
+    throw new Error("Missing productId. Backend price validation requires productId.");
+  }
+
+  let trusted = await azFindFirestoreProduct(productId);
+  if (!trusted) trusted = azFindLocalSoftwareProduct(productId);
+
+  // Admin-only RM1 test purchase: keep real product metadata/file if found, but lock test amount to RM1.
+  if (azIsAdminTestPurchase(data, clientProduct)) {
+    if (!azIsAdminTestUser(user, data, clientProduct)) {
+      throw new Error("Admin test purchase RM1 is not allowed for this account.");
+    }
+    const base = trusted || azNormalizeTrustedProduct(clientProduct, "admin-test-client-metadata");
+    const testDownload = cleanPremiumUrl(base.secureDownloadLink || base.premiumDownloadFileLink || base.privateDownloadLink || base.downloadLink || clientProduct.secureDownloadLink || clientProduct.premiumDownloadFileLink || clientProduct.privateDownloadLink || clientProduct.downloadLink || data.downloadLink || "");
+    if (!testDownload) throw new Error("Download link belum diset untuk produk ini.");
+    return {
+      product: { ...base, id: productId, productId, name: cleanPremiumText((base.name || clientProduct.name || "AZOBSS Digital Product") + " (Admin Test RM1)", 160), price: "RM1", isAdminTestPurchase: true, secureDownloadLink: testDownload, premiumDownloadFileLink: testDownload, privateDownloadLink: testDownload, downloadLink: testDownload },
+      amountText: "RM1",
+      amountSen: 100,
+      downloadLink: testDownload,
+      trustedSource: base.source || "admin-test",
+      isAdminTestPurchase: true
+    };
+  }
+
+  if (!trusted) {
+    throw new Error("Product not found on backend. Please sync Software/CAD product to Firestore or backend product list before accepting payment.");
+  }
+  if (!azProductIsPremium(trusted)) {
+    throw new Error("Product is not marked as premium on backend.");
+  }
+  const amountSen = parseAmountToSen(trusted.price || trusted.amount || "");
+  if (!amountSen) throw new Error("Backend product price is invalid.");
+  const downloadLink = cleanPremiumUrl(trusted.secureDownloadLink || trusted.premiumDownloadFileLink || trusted.privateDownloadLink || trusted.downloadLink || trusted.fileUrl || "");
+  if (!downloadLink) throw new Error("Download link belum diset untuk produk ini.");
+  return {
+    product: trusted,
+    amountText: cleanPremiumText(trusted.price || `RM${(amountSen/100).toFixed(2)}`, 40),
+    amountSen,
+    downloadLink,
+    trustedSource: trusted.source || "backend",
+    isAdminTestPurchase: false
+  };
+}
+function azRequestHasCommissionSecret(req, parsed) {
+  if (!AZOBSS_COMMISSION_API_SECRET) return false;
+  const h = req.headers["x-azobss-api-key"] || req.headers["x-api-key"] || req.headers.authorization || "";
+  const token = String(h).replace(/^Bearer\s+/i, "").trim() || String(parsed.query.key || parsed.query.secret || "").trim();
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(AZOBSS_COMMISSION_API_SECRET));
+  } catch (_) {
+    return token === AZOBSS_COMMISSION_API_SECRET;
+  }
+}
+function azMakeReceiptToken(order = {}) {
+  const secret = String(process.env.AZOBSS_RECEIPT_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "azobss-receipt-fallback-secret");
+  const base = `${order.orderId || ""}|${order.billCode || ""}|${order.createdAt || ""}|${order.amountSen || ""}`;
+  return crypto.createHmac("sha256", secret).update(base).digest("hex").slice(0, 24);
+}
+function azReceiptUrl(base, order = {}) {
+  const orderId = encodeURIComponent(order.orderId || "");
+  return `${base}/api/premium/receipt/${orderId}?rt=${encodeURIComponent(azMakeReceiptToken(order))}`;
+}
+function azReceiptTokenOk(order = {}, supplied = "") {
+  const expected = azMakeReceiptToken(order);
+  if (!supplied) return process.env.AZOBSS_REQUIRE_RECEIPT_TOKEN === "1" ? false : true;
+  try { return crypto.timingSafeEqual(Buffer.from(String(supplied)), Buffer.from(expected)); } catch (_) { return String(supplied) === expected; }
+}
+
 function cleanForToyyib(value, max = 100) {
   return String(value || "").replace(/[^a-zA-Z0-9 _.,@+\-()]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
@@ -304,7 +461,7 @@ async function maybeSendDownloadEmail(order, req) {
 
     const base = publicBaseUrlFromReq(req);
     const downloadUrl = `${base}/api/premium/download/${encodeURIComponent(current.downloadToken)}`;
-    const receiptUrl = `${base}/api/premium/receipt/${encodeURIComponent(current.orderId)}`;
+    const receiptUrl = azReceiptUrl(base, current);
     console.log("AZOBSS SENDING DOWNLOAD EMAIL", JSON.stringify({orderId:current.orderId,email,downloadToken:current.downloadToken,downloadLink:realDownloadLink}).slice(0,800));
 
     const subject = `AZOBSS Download Ready - ${cleanPremiumText(current.productName || "Digital Product", 80)}`;
@@ -385,7 +542,7 @@ async function refreshToyyibOrder(order, req) {
 function paidPayload(order, req) {
   const base = publicBaseUrlFromReq(req);
   const o = makeDownloadForOrder(order);
-  return { ok: true, success: true, paid: true, orderId: o.orderId, status: o.status, downloadUrl: `${base}/api/premium/download/${encodeURIComponent(o.downloadToken)}`, receiptUrl: `${base}/api/premium/receipt/${encodeURIComponent(o.orderId)}`, expiresAt: o.tokenExpiresAt, maxDownload: 1 };
+  return { ok: true, success: true, paid: true, orderId: o.orderId, status: o.status, downloadUrl: `${base}/api/premium/download/${encodeURIComponent(o.downloadToken)}`, receiptUrl: azReceiptUrl(base, o), expiresAt: o.tokenExpiresAt, maxDownload: 1 };
 }
 
 // =========================
@@ -999,7 +1156,14 @@ function azBuildCommissionLines(order = {}){
   function add(kind, username, uid, email, rate, note){
     if(!username || !rate) return;
     const amount = Math.round((saleAmount * rate / 100) * 100) / 100;
-    lines.push({ ...base, commissionType: kind, username, uid: uid || '', ownerUid: uid || '', ownerUsername: username, ownerEmail: email || '', commissionRate: rate, rate, commissionAmount: amount, amount, amountText: azCommissionAmountText(amount), note, shareReferral: referral, productOwner: owner });
+    const azRate = Math.max(0, 100 - Number(rate || 0));
+    const azobssShareAmount = Math.round((saleAmount * azRate / 100) * 100) / 100;
+    const line = { ...base, commissionType: kind, username, uid: uid || '', ownerUid: uid || '', ownerUsername: username, ownerEmail: email || '', commissionRate: rate, rate, commissionAmount: amount, amount, amountText: azCommissionAmountText(amount), azobssShareRate: azRate, azobssShareAmount, azobssShareText: azCommissionAmountText(azobssShareAmount), ownerShareAmount: 0, sharerShareAmount: 0, note, shareReferral: referral, productOwner: owner };
+    if (String(kind).includes('share')) line.sharerShareAmount = amount;
+    else line.ownerShareAmount = amount;
+    if (kind === 'owner_sale_split') { line.ownerShareAmount = amount; line.azobssShareRate = 30; line.azobssShareAmount = Math.round((saleAmount * 0.30) * 100) / 100; line.azobssShareText = azCommissionAmountText(line.azobssShareAmount); }
+    if (kind === 'share_referral') { line.sharerShareAmount = amount; line.azobssShareRate = 30; line.azobssShareAmount = Math.round((saleAmount * 0.30) * 100) / 100; line.azobssShareText = azCommissionAmountText(line.azobssShareAmount); }
+    lines.push(line);
   }
   if (hasStaffOwner && validSharer) {
     add('owner_sale_split', ownerName, owner.ownerUid, owner.ownerEmail, 60, 'Produk staff terjual melalui share link staff lain. Owner 60%, sharer 10%, AZOBSS 30%.');
@@ -2037,25 +2201,16 @@ async function handler(req, res) {
         if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
           return send(res, 500, JSON.stringify({ ok:false, success:false, error:"ToyyibPay env belum lengkap. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." }, null, 2), "application/json");
         }
-        const product = data.product || {};
-        const productName = cleanPremiumText(product.name || data.productName || data.title || "AZOBSS Digital Product", 160);
-        const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), 160);
-        const amountText = cleanPremiumText(product.price || data.amount || data.price || "", 40);
-        const amountSen = parseAmountToSen(amountText);
-        const downloadLink = cleanPremiumUrl(
-          product.secureDownloadLink ||
-          product.premiumDownloadFileLink ||
-          product.privateDownloadLink ||
-          product.downloadLink ||
-          data.secureDownloadLink ||
-          data.premiumDownloadFileLink ||
-          data.privateDownloadLink ||
-          data.downloadLink ||
-          data.fileUrl ||
-          ""
-        );
+        const requestedProduct = data.product || {};
+        const trustedResolved = await azResolveTrustedPremiumProduct(data, req);
+        const product = trustedResolved.product || {};
+        const productName = cleanPremiumText(product.name || product.productName || data.productName || data.title || "AZOBSS Digital Product", 160);
+        const productId = cleanPremiumText(product.productId || product.id || data.productId || requestedProduct.productId || requestedProduct.id || productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), 160);
+        const amountText = cleanPremiumText(trustedResolved.amountText || product.price || "", 40);
+        const amountSen = Number(trustedResolved.amountSen || parseAmountToSen(amountText));
+        const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || "");
         const user = getPremiumUser(data);
-        if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing product name or valid amount." }, null, 2), "application/json");
+        if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing backend product name or valid backend amount." }, null, 2), "application/json");
         if (!downloadLink) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Download link belum diset untuk produk ini." }, null, 2), "application/json");
         const orderId = makeId("tp");
         const apiBase = publicBaseUrlFromReq(req);
@@ -2095,7 +2250,7 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, name:productName, price:amountText }, shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, maxDownload:1, expiryHours:24, createdAt:new Date().toISOString() });
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText }, trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, maxDownload:1, expiryHours:24, createdAt:new Date().toISOString() });
         return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
@@ -2175,6 +2330,9 @@ async function handler(req, res) {
         let sampleCount = 0;
         let error = "";
         const wantRecords = String(parsed.query.records || parsed.query.list || '') === '1';
+        if (wantRecords && !azRequestHasCommissionSecret(req, parsed)) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Commission records are protected. Use /api/commission/status for health check only." }, null, 2), "application/json");
+        }
         const maxRecords = Math.max(1, Math.min(300, Number(parsed.query.limit || 100) || 100));
         let records = [];
         if (db) {
@@ -2210,6 +2368,10 @@ async function handler(req, res) {
                   commissionAmount: Number(x.commissionAmount || x.amount || 0) || 0,
                   amount: Number(x.amount || x.commissionAmount || 0) || 0,
                   amountText: cleanPremiumText(x.amountText || '', 40),
+                  azobssShareAmount: Number(x.azobssShareAmount || 0) || 0,
+                  azobssShareRate: Number(x.azobssShareRate || 0) || 0,
+                  ownerShareAmount: Number(x.ownerShareAmount || 0) || 0,
+                  sharerShareAmount: Number(x.sharerShareAmount || 0) || 0,
                   status: cleanPremiumText(x.status || '', 40),
                   payoutStatus: cleanPremiumText(x.payoutStatus || '', 40),
                   paymentStatus: cleanPremiumText(x.paymentStatus || '', 40),
@@ -2244,6 +2406,10 @@ async function handler(req, res) {
             commissionAmount: Number(x.commissionAmount || x.amount || 0) || 0,
             amount: Number(x.amount || x.commissionAmount || 0) || 0,
             amountText: cleanPremiumText(x.amountText || '', 40),
+            azobssShareAmount: Number(x.azobssShareAmount || 0) || 0,
+            azobssShareRate: Number(x.azobssShareRate || 0) || 0,
+            ownerShareAmount: Number(x.ownerShareAmount || 0) || 0,
+            sharerShareAmount: Number(x.sharerShareAmount || 0) || 0,
             status: cleanPremiumText(x.status || '', 40),
             payoutStatus: cleanPremiumText(x.payoutStatus || '', 40),
             paymentStatus: cleanPremiumText(x.paymentStatus || '', 40),
@@ -3177,11 +3343,14 @@ const filePath =
       try { data = JSON.parse(await readBody(req) || "{}"); }
       catch (error) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid JSON" }), "application/json"); }
 
-      const product = data.product || {};
-      const productName = cleanPremiumText(product.name || data.productName, 160);
-      const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
-      const amount = cleanPremiumText(product.price || data.amount || data.price, 40);
-      const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
+      const requestedProduct = data.product || {};
+      const trustedResolved = await azResolveTrustedPremiumProduct(data, req);
+      const product = trustedResolved.product || {};
+      const productName = cleanPremiumText(product.name || product.productName || data.productName, 160);
+      const productId = cleanPremiumText(product.productId || product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
+      const amount = cleanPremiumText(trustedResolved.amountText || product.price || "", 40);
+      const amountSen = Number(trustedResolved.amountSen || parseAmountToSen(amount));
+      const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || "");
       const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);
       const paymentReference = cleanPremiumText(data.paymentReference || data.reference || "", 200);
       const requestedLimit = Math.max(1, Math.min(20, Number(product.downloadLimit || data.downloadLimit || product.maxDownload || 3)));
@@ -3189,8 +3358,8 @@ const filePath =
       const expiresAtMs = requestedExpiryHours === 0 ? Date.now() + (100 * 365 * 24 * 60 * 60 * 1000) : Date.now() + requestedExpiryHours * 60 * 60 * 1000;
       const user = getPremiumUser(data);
 
-      if (!productName || !amount) {
-        return send(res, 400, JSON.stringify({ ok:false, error:"Missing product name or amount" }), "application/json");
+      if (!productName || !amount || !amountSen) {
+        return send(res, 400, JSON.stringify({ ok:false, error:"Missing backend product name or backend amount" }), "application/json");
       }
       if (!downloadLink) {
         return send(res, 400, JSON.stringify({ ok:false, error:"Download link belum diset untuk produk ini. Sila hubungi admin." }), "application/json");
@@ -3204,11 +3373,17 @@ const filePath =
         productId,
         productName,
         amount,
+        amountSen,
+        saleAmount: Number(amountSen)/100,
+        saleAmountText: amount,
         status: "paid",
         paymentMethod,
         paymentReference,
         user,
-        product:{ ...product, id:productId, name:productName, price:amount },
+        product:{ ...product, id:productId, productId, name:productName, price:amount },
+        trustedProductSource: trustedResolved.trustedSource || "backend",
+        isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase,
+        clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40),
         shareReferral:azReferralFrom(data, product, {productId}),
         productOwner:azProductOwnerFrom(product, {productId}),
         createdAt: new Date(now).toISOString(),
@@ -3238,13 +3413,13 @@ const filePath =
         status: "paid",
         message: "Purchase completed. A temporary download link has been generated.",
         downloadUrl: `/api/premium/download/${encodeURIComponent(token)}`,
-        receiptUrl: `/api/premium/receipt/${encodeURIComponent(orderId)}`,
+        receiptUrl: `/api/premium/receipt/${encodeURIComponent(orderId)}?rt=${encodeURIComponent(azMakeReceiptToken(order))}`,
         expiresAt: order.tokenExpiresAt,
         maxDownload: requestedLimit
       }, null, 2), "application/json");
     }
 
-    if (pathname.startsWith("/api/premium/download/") && req.method === "GET") {
+    if (pathname.startsWith("/api/premium/download/") && req.method === "POST") {
       const token = decodeURIComponent(path.basename(pathname));
       let saved = findPremiumToken(token);
       if (!saved) {
@@ -3253,24 +3428,12 @@ const filePath =
       if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
         return send(res, 403, "Download link expired or already used too many times.");
       }
-
-      // Gmail/Google Safe Browsing and email scanners can prefetch links.
-      // First page is a safe confirmation gate and does NOT consume download count.
-      const confirmed = String(parsed.query.confirm || parsed.query.start || "") === "1";
-      if (!confirmed) {
-        const order = findPremiumOrderByAny({ orderId: saved.orderId }) || await azFindPremiumOrderPersistent({ orderId: saved.orderId }) || {};
-        const expires = saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-";
-        const startUrl = `/api/premium/download/${encodeURIComponent(token)}?confirm=1`;
-        const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}a.btn{display:inline-block;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800}.muted{color:#94a3b8}.warn{color:#fbbf24}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Klik butang di bawah untuk mula download sebenar. Paparan ini tidak menggunakan kuota download.</p><p><a class="btn" href="${startUrl}">Start Download</a></p><p class="warn">Download count hanya dikira selepas butang Start Download ditekan.</p><p class="muted">Expires: ${expires}</p></div></body></html>`;
-        return send(res, 200, html, "text/html; charset=utf-8");
-      }
-
       const nextUsed = Number(saved.usedCount || 0) + 1;
-      updatePremiumToken(token, t => ({ ...t, usedCount: nextUsed, lastUsedAt: Date.now() }));
-      try { await azUpdatePremiumTokenPersistent(token, { usedCount: nextUsed, lastUsedAt: Date.now() }); } catch (err) { console.warn("Premium token Firestore update failed:", err && (err.message || err)); }
+      updatePremiumToken(token, t => ({ ...t, usedCount: nextUsed, lastUsedAt: Date.now(), lastMethod: "POST" }));
+      try { await azUpdatePremiumTokenPersistent(token, { usedCount: nextUsed, lastUsedAt: Date.now(), lastMethod: "POST" }); } catch (err) { console.warn("Premium token Firestore update failed:", err && (err.message || err)); }
       const target = saved.downloadLink || saved.premiumDownloadFileLink || "";
       if (/^https?:\/\//i.test(target)) {
-        res.writeHead(302, { Location: target, "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" });
+        res.writeHead(303, { Location: target, "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" });
         res.end();
         return;
       }
@@ -3284,10 +3447,31 @@ const filePath =
       return send(res, 404, "Invalid download link");
     }
 
+    if (pathname.startsWith("/api/premium/download/") && req.method === "GET") {
+      const token = decodeURIComponent(path.basename(pathname));
+      let saved = findPremiumToken(token);
+      if (!saved) {
+        try { saved = await azFindPremiumTokenPersistent(token); } catch (err) { console.warn("Premium token Firestore lookup failed:", err && (err.message || err)); }
+      }
+      if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
+        return send(res, 403, "Download link expired or already used too many times.");
+      }
+
+      // Email scanners/prefetchers use GET. GET now always shows a safe gate and never consumes quota.
+      // The real download only starts after a human presses the POST form button.
+      const order = findPremiumOrderByAny({ orderId: saved.orderId }) || await azFindPremiumOrderPersistent({ orderId: saved.orderId }) || {};
+      const expires = saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-";
+      const actionUrl = `/api/premium/download/${encodeURIComponent(token)}`;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Klik butang di bawah untuk mula download sebenar. Paparan ini tidak menggunakan kuota download.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download count hanya dikira selepas butang Start Download ditekan.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email preview tidak akan consume token. Download sebenar guna POST confirmation.</p></div></body></html>`;
+      return send(res, 200, html, "text/html; charset=utf-8");
+    }
+
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET") {
       const orderId = decodeURIComponent(path.basename(pathname));
       const order = await azFindReceiptOrder(orderId);
       if (!order) return send(res, 404, "Receipt not found");
+      const rt = cleanPremiumText(parsed.query.rt || parsed.query.token || "", 80);
+      if (!azReceiptTokenOk(order, rt)) return send(res, 403, "Receipt token required or invalid.");
       return send(res, 200, buildReceiptHtml(order), "text/html; charset=utf-8");
     }
 
