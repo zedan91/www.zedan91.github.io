@@ -1278,6 +1278,18 @@ function azMaintenanceOldNotificationPrunable(x = {}, now = Date.now()) {
   const t = azMaintenanceRowAgeMs(x);
   return !!t && t <= now - (days * 24 * 60 * 60 * 1000);
 }
+function azMaintenanceDestructiveAction(action = "") {
+  const a = String(action || "").trim().toLowerCase();
+  return a === "prune-expired-download-tokens" || a === "prune-old-audit-logs" || a === "prune-old-notifications";
+}
+function azMaintenanceConfirmPhrase() {
+  return "CONFIRM CLEANUP";
+}
+function azMaintenanceDestructiveConfirmOk(body = {}) {
+  if (String(process.env.AZOBSS_MAINTENANCE_SKIP_CONFIRM || "") === "1") return true;
+  const phrase = azMaintenanceConfirmPhrase();
+  return String(body.confirmText || body.confirmPhrase || "").trim() === phrase;
+}
 async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
   const started = Date.now();
   const db = getAzobssBackendDb();
@@ -1299,9 +1311,9 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
       { action:"repair-receipt-flags", label:"Add receipt-token requirement to paid premium orders", safe:true },
       { action:"expire-old-download-tokens", label:"Mark expired download tokens as expired", safe:true },
       { action:"repair-commission-payout-status", label:"Set missing commission payout status to pending", safe:true },
-      { action:"prune-expired-download-tokens", label:"Delete expired download tokens older than retention", safe:true, destructive:true },
-      { action:"prune-old-audit-logs", label:"Delete audit logs older than retention", safe:true, destructive:true },
-      { action:"prune-old-notifications", label:"Delete notifications older than retention", safe:true, destructive:true }
+      { action:"prune-expired-download-tokens", label:"Delete expired download tokens older than retention", safe:true, destructive:true, confirmPhrase:azMaintenanceConfirmPhrase() },
+      { action:"prune-old-audit-logs", label:"Delete audit logs older than retention", safe:true, destructive:true, confirmPhrase:azMaintenanceConfirmPhrase() },
+      { action:"prune-old-notifications", label:"Delete notifications older than retention", safe:true, destructive:true, confirmPhrase:azMaintenanceConfirmPhrase() }
     ],
     samples:{ paidOrdersMissingToken:[], paidOrdersMissingReceiptFlag:[], expiredDownloadTokens:[], commissionMissingPayoutStatus:[], prunableExpiredDownloadTokens:[], oldAuditLogs:[], oldNotifications:[] },
     warnings:[],
@@ -1398,7 +1410,7 @@ async function azAdminMaintenanceRun(req, identity = {}, action = "", options = 
   const started = Date.now();
   const now = Date.now();
   const limitRows = Math.max(10, Math.min(500, Number(options.limit || 200) || 200));
-  const out = { ok:true, action:cleanPremiumText(action, 80), processed:0, changed:0, skipped:0, errors:[], samples:[], generatedAt:new Date(now).toISOString(), latencyMs:0 };
+  const out = { ok:true, action:cleanPremiumText(action, 80), destructive:azMaintenanceDestructiveAction(action), processed:0, changed:0, skipped:0, errors:[], samples:[], generatedAt:new Date(now).toISOString(), latencyMs:0 };
   const addSample = (x) => { if (out.samples.length < 20) out.samples.push(x); };
   try {
     if (action === "repair-receipt-flags") {
@@ -3804,6 +3816,9 @@ async function handler(req, res) {
         let body = {};
         try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
         const action = cleanPremiumText(body.action || parsed.query.action || "", 90);
+        if (azMaintenanceDestructiveAction(action) && !azMaintenanceDestructiveConfirmOk(body)) {
+          return send(res, 400, JSON.stringify({ ok:false, error:`Destructive cleanup requires confirmation phrase: ${azMaintenanceConfirmPhrase()}`, destructive:true, confirmPhrase:azMaintenanceConfirmPhrase() }, null, 2), "application/json");
+        }
         const result = await azAdminMaintenanceRun(req, adminIdentity, action, { limit: body.limit || parsed.query.limit || 200 });
         azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_maintenance_run", "system", action || "maintenance", { action, changed: result.changed, processed: result.processed, skipped: result.skipped, ok: result.ok, errors: result.errors }, result.ok ? "success" : "error"), "Admin maintenance run audit log failed");
         return send(res, result.ok ? 200 : 400, JSON.stringify(result, null, 2), "application/json");

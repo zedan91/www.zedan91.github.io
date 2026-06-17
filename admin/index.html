@@ -1212,6 +1212,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         </div>
         <div id="maintenanceNotice" class="tabs-note">Press scan to check current maintenance status.</div>
         <div id="maintenanceRetentionNote" class="tabs-note">Retention cleanup uses safe defaults: download tokens 90 days, audit logs 365 days, notifications 180 days.</div>
+        <div class="tabs-note"><b>Safety:</b> cleanup actions that delete old rows require typing <code>CONFIRM CLEANUP</code>.</div>
       </div>
       <div class="grid">
         <div class="card"><div class="stat-label">Paid Missing Token</div><div id="maintMissingToken" class="stat-value">-</div></div>
@@ -1684,20 +1685,28 @@ async function runMaintenanceAction(){
   const action=$('#maintenanceAction')?.value||'';
   if(!action)return toast('Please choose maintenance action first.');
   const isPrune=String(action||'').startsWith('prune-');
+  let confirmText='';
   const msg=isPrune
     ? 'Run this retention cleanup now?\n\n'+action+'\n\nThis may DELETE old Firestore rows that are already outside retention. Export backup first if needed.'
     : 'Run this maintenance repair now?\n\n'+action+'\n\nThis will write changes to Firestore where needed.';
   if(!confirm(msg))return;
+  if(isPrune){
+    confirmText=prompt('Type CONFIRM CLEANUP to continue this destructive cleanup action.','')||'';
+    if(confirmText.trim()!=='CONFIRM CLEANUP'){
+      toast('Cleanup cancelled. Confirmation phrase did not match.');
+      return;
+    }
+  }
   const notice=$('#maintenanceNotice');
   if(notice) notice.textContent='Running maintenance action: '+action+' ...';
   try{
     const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/maintenance-run',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action,limit:200})
+      body:JSON.stringify({action,limit:200,confirmText})
     });
     if($('#maintenanceResultList')) $('#maintenanceResultList').innerHTML=[
-      item(j.ok?'<span class="ok">Repair completed</span>':'<span class="danger">Repair failed</span>',`Action: ${esc(j.action||action)} • processed: ${esc(j.processed||0)} • changed: ${esc(j.changed||0)} • skipped: ${esc(j.skipped||0)} • latency: ${esc(j.latencyMs||0)}ms`),
+      item(j.ok?'<span class="ok">Maintenance completed</span>':'<span class="danger">Maintenance failed</span>',`Action: ${esc(j.action||action)}${j.destructive?' • destructive cleanup':''} • processed: ${esc(j.processed||0)} • changed: ${esc(j.changed||0)} • skipped: ${esc(j.skipped||0)} • latency: ${esc(j.latencyMs||0)}ms`),
       ...(Array.isArray(j.samples)?j.samples.slice(0,10).map(x=>item('Changed row',esc(Object.entries(x||{}).map(([k,v])=>`${k}: ${v}`).join(' • ')))):[]),
       ...(Array.isArray(j.errors)?j.errors.slice(0,5).map(x=>item('<span class="danger">Error</span>',esc(x))):[])
     ].join('');
