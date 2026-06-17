@@ -2114,7 +2114,7 @@ async function updatePayoutRequestStatus(requestId,status){
   if(!confirm('Update payout request to '+String(status).toUpperCase()+'?')) return;
   let payoutReference='', payoutMethod='', adminNote='';
   if(status==='paid'){
-    payoutReference=prompt('Payment/reference number (optional):','')||'';
+    payoutReference=prompt('Payment/reference number / transfer reference (recommended):','')||'';
     payoutMethod=prompt('Payout method (optional):','bank transfer')||'';
   }
   if(status==='rejected') adminNote=prompt('Reason / note for rejection (optional):','')||'';
@@ -2133,7 +2133,7 @@ async function updateCommissionPayoutStatus(docId,status){
   let payoutMethod='';
   let payoutNote='';
   if(status==='paid'){
-    payoutReference = prompt('Payment/reference number (optional):','') || '';
+    payoutReference = prompt('Payment/reference number / transfer reference (recommended):','') || '';
     payoutMethod = prompt('Payout method (optional, e.g. bank transfer):','') || '';
   }
   if(status==='rejected') payoutNote = prompt('Reason / note for rejection (optional):','') || '';

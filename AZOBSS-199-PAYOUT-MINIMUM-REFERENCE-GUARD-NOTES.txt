@@ -1,0 +1,17 @@
+AZOBSS 199 - Payout Minimum + Reference Guard
+
+Changes:
+- Added optional payout minimum/maximum validation for staff payout requests.
+- Staff payout API now returns payout config to frontend.
+- Staff dashboard shows payout rule notice and blocks too-small requests before submit.
+- Admin payout request final-status guard prevents reopening paid/cancelled requests by accident.
+- Optional reference enforcement can require transfer reference before Mark Paid.
+
+Optional Render ENV:
+- AZOBSS_PAYOUT_MIN_AMOUNT_RM=1.00
+- AZOBSS_PAYOUT_MAX_AMOUNT_RM=0
+- AZOBSS_PAYOUT_REQUIRE_PAID_REFERENCE=1
+- AZOBSS_PAYOUT_ALLOW_REOPEN_FINAL=1
+
+No Firebase Rules update required.
+No mandatory Render ENV.

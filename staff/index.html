@@ -490,12 +490,19 @@ function downloadTextFile(name,body,type='text/csv;charset=utf-8'){
  const blob=new Blob([body],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);
 }
 let lastPayoutRows=[];
+let payoutConfig={minAmount:0.01,minAmountText:'RM0.01',maxAmount:0,maxAmountText:''};
+function payoutConfigNotice(){
+ const bits=[];
+ if(payoutConfig?.minAmountText) bits.push('Minimum request: '+payoutConfig.minAmountText);
+ if(payoutConfig?.maxAmountText) bits.push('Maximum per request: '+payoutConfig.maxAmountText);
+ return bits.join(' • ');
+}
 async function payoutView(){
  const rows=visibleCommissionRows(await getCommissionRecords());
  const filter=String($('#payoutFilter')?.value||'all').toLowerCase();
  const sum={pending:0,approved:0,paid:0,rejected:0,total:0};
  rows.forEach(x=>{const st=payoutStatusOf(x); const amt=commissionAmountOf(x); sum.total+=amt; if(sum[st]!==undefined)sum[st]+=amt; else sum.pending+=amt;});
- if($('#payoutSummary')) $('#payoutSummary').innerHTML=['pending','approved','paid','rejected'].map(k=>`<div class="mini"><b>${k.toUpperCase()}</b><span>RM${sum[k].toFixed(2)}</span></div>`).join('');
+ if($('#payoutSummary')) $('#payoutSummary').innerHTML=['pending','approved','paid','rejected'].map(k=>`<div class="mini"><b>${k.toUpperCase()}</b><span>RM${sum[k].toFixed(2)}</span></div>`).join('') + (payoutConfigNotice()?`<div class="mini"><b>RULE</b><span>${esc(payoutConfigNotice())}</span></div>`:'');
  const filtered=rows.filter(x=>filter==='all'||payoutStatusOf(x)===filter);
  lastPayoutRows=filtered;
  const html=filtered.map(x=>{
@@ -559,7 +566,11 @@ async function submitPayoutRequest(){
    const eligible=approvedPayoutAmount();
    const amount=Number($('#payoutRequestAmount')?.value||0)||eligible;
    if(!eligible){ if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent='No approved unpaid commission available for payout request yet.'; return; }
-   if(!confirm('Submit payout request for RM'+Math.min(amount,eligible).toFixed(2)+'?')) return;
+   const finalAmount=Math.min(amount,eligible);
+   const minAmount=Number(payoutConfig?.minAmount||0.01)||0.01;
+   if(finalAmount + 0.0001 < minAmount){ if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent='Minimum payout request is '+(payoutConfig?.minAmountText||('RM'+minAmount.toFixed(2)))+'.'; return; }
+   if(payoutConfig?.maxAmount && finalAmount - 0.0001 > Number(payoutConfig.maxAmount)){ if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent='Maximum payout request is '+payoutConfig.maxAmountText+'.'; return; }
+   if(!confirm('Submit payout request for RM'+finalAmount.toFixed(2)+'?')) return;
    const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount,note:$('#payoutRequestNote')?.value.trim()||''})});
    if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent='Payout request submitted: '+(j.request?.amountText||'');
    await Promise.all([loadPayoutRequests(), payoutView()]);
@@ -573,6 +584,8 @@ function payoutTimelineHtml(r){
 async function loadPayoutRequests(){
  try{
    const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-requests',{cache:'no-store'});
+   payoutConfig=j.config||payoutConfig||{};
+   if($('#payoutRequestNotice') && payoutConfigNotice() && !$('#payoutRequestNotice').textContent) $('#payoutRequestNotice').textContent=payoutConfigNotice();
    const rows=Array.isArray(j.requests)?j.requests:[];
    if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=rows.map(r=>{
      const st=String(r.status||'requested').toLowerCase();

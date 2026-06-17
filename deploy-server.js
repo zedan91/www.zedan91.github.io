@@ -622,6 +622,35 @@ function azPayoutRequestStatus(value) {
   if (['requested','reviewing','approved','paid','rejected','cancelled'].includes(s)) return s;
   return '';
 }
+
+function azPayoutMinAmountRm() {
+  const raw = process.env.AZOBSS_PAYOUT_MIN_AMOUNT_RM || process.env.AZOBSS_PAYOUT_MIN_RM || "0.01";
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0.01;
+}
+function azPayoutMaxAmountRm() {
+  const raw = process.env.AZOBSS_PAYOUT_MAX_AMOUNT_RM || process.env.AZOBSS_PAYOUT_MAX_RM || "";
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0;
+}
+function azPayoutRequirePaidReference() {
+  return String(process.env.AZOBSS_PAYOUT_REQUIRE_PAID_REFERENCE || "").trim() === "1";
+}
+function azPayoutAllowReopenFinal() {
+  return String(process.env.AZOBSS_PAYOUT_ALLOW_REOPEN_FINAL || "").trim() === "1";
+}
+function azPayoutConfigPublic() {
+  const minAmount = azPayoutMinAmountRm();
+  const maxAmount = azPayoutMaxAmountRm();
+  return {
+    minAmount,
+    minAmountText: `RM${minAmount.toFixed(2)}`,
+    maxAmount,
+    maxAmountText: maxAmount ? `RM${maxAmount.toFixed(2)}` : "",
+    requirePaidReference: azPayoutRequirePaidReference(),
+    finalStatusGuard: !azPayoutAllowReopenFinal()
+  };
+}
 function azPayoutTimelineEvent(type, actor = {}, note = '', extra = {}) {
   const now = Date.now();
   return {
@@ -3702,7 +3731,7 @@ async function handler(req, res) {
           if (azPayoutRequestBelongsToIdentity(x, identity)) rows.push(azPayoutRequestSafe(x, doc.id, false));
         });
         rows.sort((a,b)=>(Number(b.createdAtMs||0)-Number(a.createdAtMs||0)));
-        return send(res, 200, JSON.stringify({ ok:true, requests: rows.slice(0, maxRows) }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, requests: rows.slice(0, maxRows), config: azPayoutConfigPublic() }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
@@ -3816,7 +3845,15 @@ async function handler(req, res) {
           amount += v;
         }
         amount = Math.round(amount * 100) / 100;
+        const minPayoutAmount = azPayoutMinAmountRm();
+        const maxPayoutAmount = azPayoutMaxAmountRm();
         if (!selected.length || amount <= 0) return send(res, 400, JSON.stringify({ ok:false, error:"No valid commission records were selected for payout." }, null, 2), "application/json");
+        if (amount + 0.0001 < minPayoutAmount) {
+          return send(res, 400, JSON.stringify({ ok:false, error:`Minimum payout request amount is RM${minPayoutAmount.toFixed(2)}.`, eligibleAmount: Math.round(eligibleAmount * 100) / 100, minAmount:minPayoutAmount }, null, 2), "application/json");
+        }
+        if (maxPayoutAmount > 0 && amount - 0.0001 > maxPayoutAmount) {
+          return send(res, 400, JSON.stringify({ ok:false, error:`Maximum payout request amount is RM${maxPayoutAmount.toFixed(2)} per request.`, eligibleAmount: Math.round(eligibleAmount * 100) / 100, maxAmount:maxPayoutAmount }, null, 2), "application/json");
+        }
         const now = Date.now();
         const requestId = makeId("payreq");
         const docIds = selected.map(x => cleanPremiumText(x.docId || x.id || '', 160)).filter(Boolean);
@@ -3828,6 +3865,8 @@ async function handler(req, res) {
           amount,
           amountText: `RM${amount.toFixed(2)}`,
           eligibleAmount: Math.round(eligibleAmount * 100) / 100,
+          minPayoutAmount,
+          maxPayoutAmount,
           recordCount: docIds.length,
           commissionDocIds: docIds,
           status: 'requested',
@@ -3887,6 +3926,13 @@ async function handler(req, res) {
         const snap = await ref.get();
         if (!snap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Payout request not found." }, null, 2), "application/json");
         const old = snap.data() || {};
+        const oldStatus = String(old.status || 'requested').toLowerCase();
+        if (['paid', 'cancelled'].includes(oldStatus) && oldStatus !== status && !azPayoutAllowReopenFinal()) {
+          return send(res, 409, JSON.stringify({ ok:false, error:`Payout request is already ${oldStatus}. Set AZOBSS_PAYOUT_ALLOW_REOPEN_FINAL=1 only if you intentionally need to reopen final requests.`, status: oldStatus }, null, 2), "application/json");
+        }
+        if (status === 'paid' && azPayoutRequirePaidReference() && !cleanPremiumText(body.payoutReference || body.reference || '', 160)) {
+          return send(res, 400, JSON.stringify({ ok:false, error:'Payment/reference number is required before marking payout as paid.' }, null, 2), "application/json");
+        }
         const patch = azPayoutRequestPatch({ ...body, status }, adminIdentity);
         patch.timeline = azPayoutAppendTimeline(old, azPayoutTimelineEvent('status_update', adminIdentity, `Admin updated payout request to ${status}.`, { status }));
         const batch = db.batch();
