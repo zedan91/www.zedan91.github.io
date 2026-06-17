@@ -1,13 +1,11 @@
-# (173)-AZOBSS Commission Firestore Retry Fix
+# AZOBSS Patch 195 - Staff Payout Profile + Request Workflow
 
-Patch focus:
-- Fix staff/share commission not appearing after payment success.
-- Add commission retry on ToyyibPay return route.
-- Store returnUrl/ref info in premium order so share ref can still be detected later.
-- Add backend endpoints for commission diagnostics:
-  - GET /api/commission/status
-  - POST /api/commission/retry-order
+Changes:
+- Staff Dashboard adds payout profile form.
+- Staff can submit payout request for approved unpaid commission.
+- Admin Dashboard Commission Manager shows payout requests.
+- Admin can review / approve / mark paid / reject payout requests.
+- Backend protected APIs added for staff payout and admin payout request workflow.
+- Export report includes payout requests and staff payout profiles with masked sensitive values.
 
-No Firebase Rules update required when using backend Admin SDK.
-Required Render env on azobss-backend:
-- FIREBASE_SERVICE_ACCOUNT_JSON
+No Firebase Rules update required. No required Render ENV added.

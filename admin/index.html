@@ -1289,6 +1289,25 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         </div>
         <div id="adminCommissionList" class="list"></div>
       </div>
+
+      <div class="card">
+        <h2>📨 Payout Requests</h2>
+        <p class="tabs-note">Staff payout requests are backend-protected. Marking a request as Paid can also mark the related commission records as paid.</p>
+        <div class="toolbar">
+          <select id="payoutRequestFilter">
+            <option value="all">All request status</option>
+            <option value="requested">Requested</option>
+            <option value="reviewing">Reviewing</option>
+            <option value="approved">Approved</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="btn" id="refreshPayoutRequestsAdmin" type="button">Refresh Requests</button>
+        </div>
+        <div id="adminPayoutRequestSummary" class="tabs-note"></div>
+        <div id="adminPayoutRequestList" class="list"></div>
+      </div>
     </section>
 
 
@@ -1309,7 +1328,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <h2>📦 Backup / Export Reports</h2>
       <p class="tabs-note">Admin-only safe export for accounting, commission review and monthly backup. Download tokens and secret values are masked in reports.</p>
       <div class="grid">
-        <div class="card"><div class="stat-label">Available Reports</div><div class="stat-value">6</div></div>
+        <div class="card"><div class="stat-label">Available Reports</div><div class="stat-value">8</div></div>
         <div class="card"><div class="stat-label">Formats</div><div class="stat-value">CSV/JSON</div></div>
         <div class="card"><div class="stat-label">Protection</div><div class="stat-value">Admin</div></div>
       </div>
@@ -1323,6 +1342,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
             <option value="softwareStats">Software Stats</option>
             <option value="adminAuditLogs">Admin Audit Logs</option>
             <option value="premiumDownloadTokens">Premium Download Tokens (masked)</option>
+            <option value="payoutRequests">Payout Requests</option>
+            <option value="staffPayoutProfiles">Staff Payout Profiles (masked)</option>
           </select>
           <select id="adminExportFormat">
             <option value="csv">CSV</option>
@@ -2052,6 +2073,53 @@ async function loadAdminCommissions(){
   }
   renderAdminCommissions();
 }
+
+let adminPayoutRequestCache=[];
+function payoutRequestStatusBadge(status){
+  const s=String(status||'requested').toLowerCase();
+  if(s==='paid') return '✅ paid';
+  if(s==='approved') return '🟦 approved';
+  if(s==='rejected') return '⛔ rejected';
+  if(s==='cancelled') return '🚫 cancelled';
+  if(s==='reviewing') return '🔎 reviewing';
+  return '📨 requested';
+}
+async function loadAdminPayoutRequests(){
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-requests?limit=120',{cache:'no-store'});
+    adminPayoutRequestCache=Array.isArray(j.requests)?j.requests:[];
+    renderAdminPayoutRequests();
+  }catch(e){
+    if($('#adminPayoutRequestList')) $('#adminPayoutRequestList').innerHTML='<div class="item">'+esc(e?.message||'Failed to load payout requests.')+'</div>';
+  }
+}
+function renderAdminPayoutRequests(){
+  const filter=String($('#payoutRequestFilter')?.value||'all').toLowerCase();
+  const rows=adminPayoutRequestCache.filter(r=>filter==='all'||String(r.status||'requested').toLowerCase()===filter);
+  const sum=adminPayoutRequestCache.reduce((a,r)=>{const st=String(r.status||'requested').toLowerCase();a.total+=Number(r.amount||0)||0;a.count++;a[st]=(a[st]||0)+(Number(r.amount||0)||0);return a;},{total:0,count:0});
+  if($('#adminPayoutRequestSummary')) $('#adminPayoutRequestSummary').textContent=`Requests: ${sum.count} • Total RM${sum.total.toFixed(2)} • Requested RM${(sum.requested||0).toFixed(2)} • Approved RM${(sum.approved||0).toFixed(2)} • Paid RM${(sum.paid||0).toFixed(2)}`;
+  if($('#adminPayoutRequestList')) $('#adminPayoutRequestList').innerHTML=rows.map(r=>{
+    const p=r.profile||{};
+    const account=[p.payoutMethod,p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • ');
+    return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${esc(r.docId||r.requestId)}">Review</button><button class="btn" data-payout-request-status="approved" data-payout-request-id="${esc(r.docId||r.requestId)}">Approve</button><button class="btn green" data-payout-request-status="paid" data-payout-request-id="${esc(r.docId||r.requestId)}">Mark Paid</button><button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${esc(r.docId||r.requestId)}">Reject</button></div></div>`;
+  }).join('') || '<div class="item">No payout requests.</div>';
+}
+async function updatePayoutRequestStatus(requestId,status){
+  if(!requestId) return toast('Missing payout request ID.');
+  if(!confirm('Update payout request to '+String(status).toUpperCase()+'?')) return;
+  let payoutReference='', payoutMethod='', adminNote='';
+  if(status==='paid'){
+    payoutReference=prompt('Payment/reference number (optional):','')||'';
+    payoutMethod=prompt('Payout method (optional):','bank transfer')||'';
+  }
+  if(status==='rejected') adminNote=prompt('Reason / note for rejection (optional):','')||'';
+  if(status==='approved'||status==='reviewing') adminNote=prompt('Admin note (optional):','')||'';
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-request-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId,status,payoutReference,payoutMethod,adminNote})});
+    toast('Payout request updated: '+(j.status||status));
+    await Promise.all([loadAdminPayoutRequests(), loadAdminCommissions()]);
+  }catch(e){ toast(e?.message||'Failed to update payout request.'); }
+}
 async function updateCommissionPayoutStatus(docId,status){
   if(!docId) return toast('Missing commission record ID.');
   const label=String(status||'').toUpperCase();
@@ -2473,7 +2541,7 @@ async function initSection(id){
   if(id==='purchases')return loadPurchases();
   if(id==='payments')return loadPayments();
   if(id==='activity')return loadAdminActivity();
-  if(id==='commissions')return loadAdminCommissions();
+  if(id==='commissions')return Promise.all([loadAdminCommissions(),loadAdminPayoutRequests()]);
   if(id==='auditlogs')return loadAdminAuditLogs();
   if(id==='exports'){ const n=$('#adminExportNotice'); if(n) n.textContent='Choose a report, then download. All export requests are recorded in Audit Logs.'; return; }
   if(id==='systemhealth')return loadSystemHealth();
@@ -2498,6 +2566,8 @@ document.addEventListener('click',async e=>{
   if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
   const dn=e.target.closest('[data-del-notif]');
   if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+  const payoutReqBtn = e.target.closest('[data-payout-request-status]');
+  if(payoutReqBtn){await updatePayoutRequestStatus(payoutReqBtn.getAttribute('data-payout-request-id'), payoutReqBtn.getAttribute('data-payout-request-status'));return;}
   const payoutBtn = e.target.closest('[data-commission-payout]');
   if(payoutBtn){await updateCommissionPayoutStatus(payoutBtn.getAttribute('data-commission-doc'), payoutBtn.getAttribute('data-commission-payout'));return;}
   const editBtn = e.target.closest('[data-edit-commission]');
@@ -2525,6 +2595,8 @@ $('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
 $('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
 $('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
 $('#commissionPayoutFilter')?.addEventListener('change', renderAdminCommissions);
+$('#payoutRequestFilter')?.addEventListener('change', renderAdminPayoutRequests);
+$('#refreshPayoutRequestsAdmin')?.addEventListener('click', loadAdminPayoutRequests);
 $('#exportCommissionCsv')?.addEventListener('click', exportCommissionCsv);
 $('#refreshAuditLogs')?.addEventListener('click', loadAdminAuditLogs);
 $('#downloadAdminExport')?.addEventListener('click', ()=>downloadAdminExport(false));

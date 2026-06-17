@@ -485,6 +485,143 @@ function azCommissionSafeRecord(x = {}, docId = "") {
     shareReferral: safeReferral
   };
 }
+
+
+// =========================
+// STAFF PAYOUT PROFILE / REQUEST HELPERS
+// Backend-only writes so no Firebase Rules update is required.
+// =========================
+function maskEmail(value) {
+  const s = String(value || '').trim();
+  if (!s || !s.includes('@')) return s ? 'configured' : '';
+  const [name, domain] = s.split('@');
+  return (name.slice(0, 2) || '*') + '***@' + (domain || '');
+}
+function azPayoutCleanAccountNo(value) {
+  return cleanPremiumText(String(value || '').replace(/[^0-9A-Za-z+\-\s]/g, '').replace(/\s+/g, ' ').trim(), 80);
+}
+function azPayoutMaskAccount(value) {
+  const s = String(value || '').trim();
+  if (!s) return '';
+  const compact = s.replace(/\s+/g, '');
+  if (compact.length <= 4) return '••••';
+  return '•••• ' + compact.slice(-4);
+}
+function azPayoutIdentityDocId(identity = {}) {
+  return cleanPremiumText(identity.uid || identity.username || identity.email || 'unknown', 140).replace(/[\\/#?\[\]]/g, '_') || 'unknown';
+}
+function azPayoutProfileFromBody(body = {}, identity = {}) {
+  const now = Date.now();
+  const methodRaw = String(body.payoutMethod || body.method || 'bank').trim().toLowerCase();
+  const allowed = ['bank','duitnow','tng','ewallet','paypal','cash','other'];
+  const method = allowed.includes(methodRaw) ? methodRaw : 'bank';
+  const profile = {
+    uid: cleanPremiumText(identity.uid || '', 140),
+    username: cleanPremiumText(identity.username || '', 80),
+    email: cleanPremiumText(identity.email || '', 160),
+    payoutMethod: method,
+    bankName: cleanPremiumText(body.bankName || body.bank || '', 120),
+    accountName: cleanPremiumText(body.accountName || body.name || '', 140),
+    accountNo: azPayoutCleanAccountNo(body.accountNo || body.accountNumber || ''),
+    duitNowId: cleanPremiumText(body.duitNowId || body.duitnow || '', 120),
+    ewalletName: cleanPremiumText(body.ewalletName || body.walletName || '', 120),
+    payoutPhone: cleanPremiumText(body.payoutPhone || body.phone || '', 60),
+    payoutEmail: cleanPremiumText(body.payoutEmail || body.email || identity.email || '', 160),
+    note: cleanPremiumText(body.note || '', 300),
+    updatedAt: new Date(now).toISOString(),
+    updatedAtMs: now
+  };
+  if (!profile.accountName) throw new Error('Account holder name is required.');
+  if (profile.payoutMethod === 'bank' && (!profile.bankName || !profile.accountNo)) throw new Error('Bank name and account number are required for bank payout.');
+  if (profile.payoutMethod === 'duitnow' && !profile.duitNowId && !profile.payoutPhone) throw new Error('DuitNow ID or phone number is required.');
+  if ((profile.payoutMethod === 'tng' || profile.payoutMethod === 'ewallet') && !profile.payoutPhone && !profile.payoutEmail) throw new Error('Phone or email is required for eWallet payout.');
+  return profile;
+}
+function azPayoutProfilePublic(x = {}, adminView = false) {
+  return {
+    uid: cleanPremiumText(x.uid || '', 140),
+    username: cleanPremiumText(x.username || '', 80),
+    email: adminView ? cleanPremiumText(x.email || '', 160) : maskEmail(x.email || ''),
+    payoutMethod: cleanPremiumText(x.payoutMethod || '', 40),
+    bankName: cleanPremiumText(x.bankName || '', 120),
+    accountName: cleanPremiumText(x.accountName || '', 140),
+    accountNo: adminView ? cleanPremiumText(x.accountNo || '', 80) : '',
+    accountNoMasked: azPayoutMaskAccount(x.accountNo || ''),
+    duitNowId: adminView ? cleanPremiumText(x.duitNowId || '', 120) : (x.duitNowId ? 'configured' : ''),
+    ewalletName: cleanPremiumText(x.ewalletName || '', 120),
+    payoutPhone: adminView ? cleanPremiumText(x.payoutPhone || '', 60) : (x.payoutPhone ? azPayoutMaskAccount(x.payoutPhone) : ''),
+    payoutEmail: adminView ? cleanPremiumText(x.payoutEmail || '', 160) : maskEmail(x.payoutEmail || ''),
+    note: cleanPremiumText(x.note || '', 300),
+    updatedAt: cleanPremiumText(x.updatedAt || '', 80),
+    updatedAtMs: Number(x.updatedAtMs || 0) || 0
+  };
+}
+async function azGetStaffPayoutProfile(identity = {}, adminView = false) {
+  const db = getAzobssBackendDb();
+  if (!db) return null;
+  const id = azPayoutIdentityDocId(identity);
+  const doc = await db.collection('staffPayoutProfiles').doc(id).get();
+  if (!doc.exists) return null;
+  return azPayoutProfilePublic(doc.data() || {}, adminView);
+}
+async function azGetCommissionRowsForIdentity(identity = {}, maxRows = 500) {
+  const db = getAzobssBackendDb();
+  const rows = [];
+  if (db) {
+    const snap = await db.collection('commissionRecords').orderBy('createdAtMs', 'desc').limit(Math.max(1, Math.min(800, maxRows))).get();
+    snap.forEach(doc => {
+      const x = doc.data() || {};
+      if (azCommissionRecordBelongsToIdentity(x, identity)) rows.push({ docId: doc.id, ...x });
+    });
+    return rows;
+  }
+  const localRows = readPremiumJson(COMMISSION_RECORDS_FILE, []);
+  if (Array.isArray(localRows)) {
+    localRows.forEach((x, i) => { if (azCommissionRecordBelongsToIdentity(x, identity)) rows.push({ docId: x.docId || x.id || `local_${i}`, ...x }); });
+  }
+  return rows.slice(0, maxRows);
+}
+function azPayoutStatusBucketValue(x = {}) {
+  const s = String(x.payoutStatus || x.status || '').toLowerCase();
+  if (['paid','settled','released'].includes(s)) return 'paid';
+  if (s === 'approved') return 'approved';
+  if (['rejected','cancelled','void'].includes(s)) return 'rejected';
+  return 'pending';
+}
+function azCommissionAmountValue(x = {}) {
+  return Math.max(0, Number(x.commissionAmount || x.amount || x.totalCommission || 0) || 0);
+}
+function azPayoutRequestSafe(x = {}, docId = '', adminView = false) {
+  const profile = x.profileSnapshot || x.profile || {};
+  return {
+    docId: cleanPremiumText(docId || x.docId || x.id || '', 140),
+    requestId: cleanPremiumText(x.requestId || docId || '', 140),
+    uid: cleanPremiumText(x.uid || '', 140),
+    username: cleanPremiumText(x.username || '', 80),
+    email: adminView ? cleanPremiumText(x.email || '', 160) : maskEmail(x.email || ''),
+    amount: Number(x.amount || 0) || 0,
+    amountText: `RM${(Number(x.amount || 0) || 0).toFixed(2)}`,
+    eligibleAmount: Number(x.eligibleAmount || 0) || 0,
+    recordCount: Number(x.recordCount || 0) || 0,
+    commissionDocIds: Array.isArray(x.commissionDocIds) ? x.commissionDocIds.map(v => cleanPremiumText(v, 140)).slice(0, 100) : [],
+    status: cleanPremiumText(x.status || 'requested', 40),
+    note: cleanPremiumText(x.note || '', 500),
+    adminNote: cleanPremiumText(x.adminNote || '', 500),
+    payoutReference: cleanPremiumText(x.payoutReference || '', 160),
+    payoutMethod: cleanPremiumText(x.payoutMethod || '', 80),
+    profile: azPayoutProfilePublic(profile, adminView),
+    createdAt: cleanPremiumText(x.createdAt || '', 80),
+    createdAtMs: Number(x.createdAtMs || 0) || 0,
+    updatedAt: cleanPremiumText(x.updatedAt || '', 80),
+    updatedAtMs: Number(x.updatedAtMs || 0) || 0
+  };
+}
+function azPayoutRequestStatus(value) {
+  const s = String(value || '').trim().toLowerCase();
+  if (['requested','reviewing','approved','paid','rejected','cancelled'].includes(s)) return s;
+  return '';
+}
+
 function azMakeReceiptToken(order = {}) {
   const secret = String(process.env.AZOBSS_RECEIPT_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "azobss-receipt-fallback-secret");
   const base = `${order.orderId || ""}|${order.billCode || ""}|${order.createdAt || ""}|${order.amountSen || ""}`;
@@ -609,7 +746,9 @@ const AZOBSS_ADMIN_EXPORT_TYPES = {
   commissionRecords: { label: "Commission Records", firestore: "commissionRecords" },
   purchaseLogs: { label: "PA/BM Purchase Logs", firestore: "purchaseLogs" },
   softwareStats: { label: "Software Stats", firestore: "softwareStats" },
-  adminAuditLogs: { label: "Admin Audit Logs", firestore: "adminAuditLogs" }
+  adminAuditLogs: { label: "Admin Audit Logs", firestore: "adminAuditLogs" },
+  payoutRequests: { label: "Payout Requests", firestore: "payoutRequests" },
+  staffPayoutProfiles: { label: "Staff Payout Profiles", firestore: "staffPayoutProfiles" }
 };
 function azExportTypeKey(value = "") {
   const key = String(value || "").trim();
@@ -706,6 +845,8 @@ function azExportSafeRow(type, row = {}, docId = "") {
   if (type === "commissionRecords") return azCommissionSafeRecord(row, docId);
   if (type === "purchaseLogs") return azExportSafePurchaseLog(row, docId);
   if (type === "adminAuditLogs") return azAuditLogPublicRow(row, docId);
+  if (type === "payoutRequests") return azPayoutRequestSafe(row, docId, false);
+  if (type === "staffPayoutProfiles") return azPayoutProfilePublic(row, false);
   return azJsonSafe(row);
 }
 async function azExportFirestoreRows(collectionName, maxRows = 500) {
@@ -3022,6 +3163,10 @@ async function handler(req, res) {
     if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/maintenance-scan" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-maintenance-scan", 40, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/maintenance-run" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-maintenance-run", 10, 10 * 60 * 1000)) return;
+    if ((pathname === "/api/staff/payout-profile" || pathname === "/api/staff/payout-requests") && req.method === "GET" && azRateLimitOrSend(req, res, "staff-payout-read", 80, 10 * 60 * 1000)) return;
+    if ((pathname === "/api/staff/payout-profile" || pathname === "/api/staff/payout-request") && req.method === "POST" && azRateLimitOrSend(req, res, "staff-payout-write", 20, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/payout-requests" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-payout-requests-read", 60, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/payout-request-status" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payout-request-status", 30, 10 * 60 * 1000)) return;
 
 
     // =========================

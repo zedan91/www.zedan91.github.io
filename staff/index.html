@@ -363,7 +363,7 @@ button[data-az-open-support] [data-az-message-badge].is-show{
 <section id="cad" class="section"><h2>📐 CAD Tools Manager</h2><div class="card"><div class="toolbar"><input id="cadTitle" placeholder="CAD/LISP title"><input id="cadPrice" type="number" placeholder="RM"><select id="cadType"><option>lisp</option><option>vlx</option><option>plugin</option><option>template</option></select></div><input id="cadUrl" placeholder="URL" style="width:100%"><textarea id="cadDesc" placeholder="Description"></textarea><button class="btn green" id="submitCad">Submit CAD</button></div><div class="card"><h2>Latest</h2><div id="cadList" class="list"></div></div></section>
 <section id="sales" class="section"><h2>💳 Sales View</h2><button class="btn" id="refreshSales">Refresh</button><div id="salesList" class="list"></div></section>
 <section id="share" class="section"><h2>🔗 Share Link Commission</h2><div class="card az-share-note"><b>Share link punya paparan</b><div class="muted">Senarai ini baca rekod <b>commissionRecords</b> jenis share/referral. Ia termasuk share produk admin/AZOBSS 20%, share produk staff lain 10%, dan owner split jika berkaitan.</div><div class="muted">Buka produk berbayar → tekan button Share for Lucky Draw → link mengandungi <code>?product=ID&amp;ref=username</code>.</div></div><button class="btn" id="refreshShareCom">Refresh Share Link Records</button><div id="shareComList" class="list"></div></section>
-<section id="payout" class="section"><h2>💸 My Payout</h2><div class="card az-share-note"><b>Commission payout view</b><div class="muted">This page shows your own commission records by payout status. Admin can still manage payout approval from Admin Dashboard.</div></div><div class="card"><div class="az-payout-tools"><select id="payoutFilter"><option value="all">All payout status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><button class="btn" id="refreshPayout">Refresh Payout</button><button class="btn green" id="exportPayoutCsv">Export My CSV</button></div><div id="payoutSummary" class="az-payout-summary"></div></div><div id="payoutList" class="list"></div></section>
+<section id="payout" class="section"><h2>💸 My Payout</h2><div class="card az-share-note"><b>Commission payout view</b><div class="muted">This page shows your own commission records by payout status. Admin can still manage payout approval from Admin Dashboard.</div><div class="muted">New: save payout details and submit a payout request after commission is approved.</div></div><div class="card"><div class="az-payout-tools"><select id="payoutFilter"><option value="all">All payout status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><button class="btn" id="refreshPayout">Refresh Payout</button><button class="btn green" id="exportPayoutCsv">Export My CSV</button></div><div id="payoutSummary" class="az-payout-summary"></div></div><div class="card"><h2>🏦 Payout Profile</h2><div class="muted">Save your payout details once. Account number is only shown as masked after save.</div><div class="toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><input id="payoutBankName" placeholder="Bank name / wallet name" style="flex:1;min-width:180px"><input id="payoutAccountName" placeholder="Account holder name" style="flex:1;min-width:180px"></div><div class="toolbar"><input id="payoutAccountNo" placeholder="Account no / DuitNow ID / wallet phone" style="flex:1;min-width:220px"><input id="payoutPhone" placeholder="Phone optional" style="flex:1;min-width:160px"><input id="payoutEmail" placeholder="Payout email optional" style="flex:1;min-width:180px"></div><textarea id="payoutProfileNote" placeholder="Payout note optional" style="width:100%;min-height:70px"></textarea><div class="toolbar"><button class="btn green" id="savePayoutProfile" type="button">Save Payout Profile</button><button class="btn" id="loadPayoutProfile" type="button">Reload Profile</button><span id="payoutProfileNotice" class="muted"></span></div></div><div class="card"><h2>📨 Request Payout</h2><div class="muted">You can request payout for approved unpaid commission. Admin will review and mark it as paid after transfer.</div><div class="toolbar"><input id="payoutRequestAmount" type="number" min="0" step="0.01" placeholder="Amount RM, leave blank for all approved" style="min-width:230px"><input id="payoutRequestNote" placeholder="Request note optional" style="flex:1;min-width:220px"><button class="btn green" id="submitPayoutRequest" type="button">Submit Payout Request</button><button class="btn" id="refreshPayoutRequests" type="button">Refresh Requests</button></div><div id="payoutRequestNotice" class="muted"></div><div id="payoutRequestList" class="list"></div></div><div id="payoutList" class="list"></div></section>
 </main></div>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
@@ -517,6 +517,63 @@ function exportPayoutCsv(){
  downloadTextFile('azobss-my-payout-'+new Date().toISOString().slice(0,10)+'.csv',body);
 }
 
+async function loadPayoutProfile(){
+ try{
+   const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-profile',{cache:'no-store'});
+   const p=j.profile||{};
+   if($('#payoutMethod')) $('#payoutMethod').value=p.payoutMethod||'bank';
+   if($('#payoutBankName')) $('#payoutBankName').value=p.bankName||p.ewalletName||'';
+   if($('#payoutAccountName')) $('#payoutAccountName').value=p.accountName||'';
+   if($('#payoutAccountNo')) $('#payoutAccountNo').placeholder=p.accountNoMasked?('Saved: '+p.accountNoMasked+' — enter again to update'):'Account no / DuitNow ID / wallet phone';
+   if($('#payoutPhone')) $('#payoutPhone').value='';
+   if($('#payoutEmail')) $('#payoutEmail').value=p.payoutEmail&&p.payoutEmail.includes('*')?'':(p.payoutEmail||'');
+   if($('#payoutProfileNote')) $('#payoutProfileNote').value=p.note||'';
+   if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=p.updatedAt?('Profile saved: '+new Date(p.updatedAt).toLocaleString()):'No payout profile saved yet.';
+ }catch(e){ if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=e?.message||'Failed to load payout profile.'; }
+}
+async function savePayoutProfile(){
+ try{
+   const method=$('#payoutMethod')?.value||'bank';
+   const payload={
+     payoutMethod:method,
+     bankName:$('#payoutBankName')?.value.trim()||'',
+     ewalletName:$('#payoutBankName')?.value.trim()||'',
+     accountName:$('#payoutAccountName')?.value.trim()||'',
+     accountNo:$('#payoutAccountNo')?.value.trim()||'',
+     duitNowId:method==='duitnow'?($('#payoutAccountNo')?.value.trim()||''):'',
+     payoutPhone:$('#payoutPhone')?.value.trim()||((method==='tng'||method==='ewallet')?($('#payoutAccountNo')?.value.trim()||''):''),
+     payoutEmail:$('#payoutEmail')?.value.trim()||'',
+     note:$('#payoutProfileNote')?.value.trim()||''
+   };
+   const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+   if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent='Payout profile saved.';
+   if($('#payoutAccountNo')) { $('#payoutAccountNo').value=''; $('#payoutAccountNo').placeholder=j.profile?.accountNoMasked?('Saved: '+j.profile.accountNoMasked+' — enter again to update'):'Saved.'; }
+ }catch(e){ if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=e?.message||'Failed to save payout profile.'; }
+}
+function approvedPayoutAmount(){
+ const rows=(lastPayoutRows&&lastPayoutRows.length?lastPayoutRows:[]).filter(x=>payoutStatusOf(x)==='approved' && (!x.payoutRequestId || ['rejected','cancelled'].includes(String(x.payoutRequestStatus||'').toLowerCase())));
+ return rows.reduce((sum,x)=>sum+commissionAmountOf(x),0);
+}
+async function submitPayoutRequest(){
+ try{
+   const eligible=approvedPayoutAmount();
+   const amount=Number($('#payoutRequestAmount')?.value||0)||eligible;
+   if(!eligible){ if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent='No approved unpaid commission available for payout request yet.'; return; }
+   if(!confirm('Submit payout request for RM'+Math.min(amount,eligible).toFixed(2)+'?')) return;
+   const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount,note:$('#payoutRequestNote')?.value.trim()||''})});
+   if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent='Payout request submitted: '+(j.request?.amountText||'');
+   await Promise.all([loadPayoutRequests(), payoutView()]);
+ }catch(e){ if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent=e?.message||'Failed to submit payout request.'; }
+}
+async function loadPayoutRequests(){
+ try{
+   const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-requests',{cache:'no-store'});
+   const rows=Array.isArray(j.requests)?j.requests:[];
+   if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=rows.map(r=>`<div class="item"><b>📨 ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${esc(r.status||'requested')}</b><div class="muted">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?new Date(r.createdAt).toLocaleString():'')}</div><div class="muted">${esc(r.note||'')}</div>${r.adminNote?`<div class="muted">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="muted">Reference: ${esc(r.payoutReference)}</div>`:''}</div>`).join('') || '<div class="item">No payout requests yet.</div>';
+ }catch(e){ if($('#payoutRequestList')) $('#payoutRequestList').innerHTML='<div class="item">'+esc(e?.message||'Failed to load payout requests.')+'</div>'; }
+}
+async function payoutTools(){ await Promise.all([payoutView(), loadPayoutProfile(), loadPayoutRequests()]); }
+
 async function shareCom(){
  const rows=await getCommissionRecords();
  const visible=rows.filter(x=>isShareCommissionRecord(x)&&(isAdmin(profile)||isMyShareCommissionRecord(x)));
@@ -546,8 +603,8 @@ async function sales(){
  });
  $('#salesList').innerHTML=rows.join('')||'<div class="item">No sales for your products.</div>';
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutView();}});
-$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
+$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
 onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.');profile=await getProfile(u);if(!profile)return deny('User profile not found.');perms=profile.permissions||{};const role=String(profile.role||'').toLowerCase();if(!(role==='admin'||role==='semiadmin'||role==='staff'||isAdmin(profile)))return deny('Staff role required.');allow();overview();});
 </script>
 <script type="module" src="/assets/js/azobss-global-auth.js"></script>

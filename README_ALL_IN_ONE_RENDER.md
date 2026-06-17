@@ -1,8 +1,9 @@
-# Render note
+# Render Deploy Notes
 
-For Software/CAD commission, env must be set on `azobss-backend`, because payment success is processed by that service.
+Deploy this ZIP as normal to the existing azobss-backend/GitHub Pages flow.
 
-Required:
-FIREBASE_SERVICE_ACCOUNT_JSON={full Firebase service account JSON}
-
-Then Save, rebuild and deploy.
+No new Render service is required.
+No new mandatory Environment Variable is required.
+Firestore collections are created automatically by backend Firebase Admin SDK:
+- staffPayoutProfiles
+- payoutRequests
