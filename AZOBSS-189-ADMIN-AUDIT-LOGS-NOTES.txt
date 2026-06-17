@@ -1,0 +1,43 @@
+AZOBSS PATCH 189 - Admin Audit Logs
+
+Baseline: (188)-AZOBSS-FRONTEND-API-AUTH-COMPATIBILITY-FIX_20260617.zip
+
+Changes:
+1. Added backend-protected Admin Audit Log API:
+   - GET  /api/admin/audit-logs
+   - POST /api/admin/audit-log
+   Both require Firebase admin ID token or AZOBSS_ADMIN_API_SECRET / AZOBSS_COMMISSION_API_SECRET.
+
+2. Added audit storage:
+   - Firestore collection: adminAuditLogs
+   - Local fallback: admin-audit-logs.json
+   Collection is created automatically by backend when logs are written.
+
+3. Backend now logs sensitive admin/backend actions:
+   - manual_complete_purchase
+   - commission_retry_order
+   - software_stats_admin_set
+
+4. Admin Dashboard now includes a new tab:
+   - 🧾 Audit Logs
+
+5. Admin Dashboard direct Firestore actions now send audit notes to backend:
+   - commission_record_create
+   - commission_record_update
+   - commission_record_delete
+   - notification_publish
+   - notification_clear_latest
+
+6. Sensitive fields are masked/redacted:
+   - token
+   - secret
+   - password
+   - private key
+   - Authorization header
+   - full email
+
+Firebase Rules:
+- No new Firebase Rules are required because backend writes adminAuditLogs using Firebase Admin SDK.
+
+Render ENV:
+- No new mandatory ENV is required.

@@ -967,6 +967,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <button data-tab="purchases">💰 Purchase Records</button>
       <button data-tab="payments">💳 Payments & Totals</button>
       <button data-tab="commissions">💸 Commission Manager</button>
+      <button data-tab="auditlogs">🧾 Audit Logs</button>
       <button data-tab="lucky">🎁 Lucky Draw</button>
       <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings">⚙️ Settings</button>
@@ -1014,6 +1015,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
           <button class="btn gray" data-tab="purchases">💰 Purchases</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
+          <button class="btn gray" data-tab="auditlogs">🧾 Audit Logs</button>
         </div>
       </div>
       <div class="split">
@@ -1213,6 +1215,19 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     </section>
 
 
+    <section id="auditlogs" class="section">
+      <h2>🧾 Admin Audit Logs</h2>
+      <p class="tabs-note">Backend-protected admin actions and important dashboard changes. Sensitive values such as token, secret, password and full email are masked.</p>
+      <div class="card">
+        <div class="toolbar">
+          <button class="btn" id="refreshAuditLogs" type="button">Refresh Audit Logs</button>
+          <span id="auditLogsNotice" class="tabs-note"></span>
+        </div>
+        <div id="adminAuditLogsList" class="list"></div>
+      </div>
+    </section>
+
+
     <section id="staffroles" class="section">
       <h2>🧑‍💼 Staff / Semi-Admin Roles</h2>
       <p class="tabs-note">Set role dan permission staff. Staff boleh akses /staff/ sahaja, bukan admin penuh.</p>
@@ -1317,6 +1332,40 @@ async function azAdminFetchJson(url,options={}){
   }
   if(!res.ok) throw new Error(azAdminApiErrorMessage(res.status,data));
   return data;
+}
+async function azAdminLogAction(action,targetType,targetId,details={},status='success'){
+  try{
+    await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/audit-log',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action,targetType,targetId,details,status})
+    });
+  }catch(e){console.warn('Admin audit log skipped',e?.message||e);}
+}
+async function loadAdminAuditLogs(){
+  const list=$('#adminAuditLogsList');
+  const notice=$('#auditLogsNotice');
+  if(list) list.innerHTML='<div class="item">Loading audit logs...</div>';
+  if(notice) notice.textContent='';
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/audit-logs?limit=120',{cache:'no-store'});
+    const rows=Array.isArray(j.records)?j.records:[];
+    if(notice) notice.textContent = j.firestoreOk ? 'Firestore audit log loaded.' : 'Using local audit fallback / Firestore unavailable.';
+    if(!rows.length){ if(list) list.innerHTML='<div class="item">No audit logs yet.</div>'; return; }
+    if(list) list.innerHTML=rows.map(x=>{
+      const admin=x.admin||{};
+      const who=esc(admin.username||admin.email||admin.authMethod||'admin');
+      const details=x.details ? esc(JSON.stringify(x.details)).slice(0,420) : '';
+      return `<div class="item">
+        <div class="item-title">🧾 ${esc(x.action||'admin_action')} • ${esc(x.status||'success')}</div>
+        <div class="item-meta">${esc(x.targetType||'-')} ${x.targetId?('• '+esc(x.targetId)) : ''} • ${who} • ${fmtDate(x.createdAtMs||x.createdAt)}</div>
+        ${details?`<div class="item-meta" style="margin-top:4px;word-break:break-word">${details}</div>`:''}
+      </div>`;
+    }).join('');
+  }catch(e){
+    if(notice) notice.textContent=e?.message||'Failed to load audit logs.';
+    if(list) list.innerHTML=`<div class="item"><div class="item-title">⚠️ Audit log error</div><div class="item-meta">${esc(e?.message||e)}</div></div>`;
+  }
 }
 function isAdminUser(){
   const email=String(currentUser?.email||adminProfile?.email||adminProfile?.authEmail||'').toLowerCase();
@@ -1697,8 +1746,10 @@ async function saveCommissionRecord(){
   };
   if(docId){
     await updateDoc(doc(db,'commissionRecords',docId), payload);
+    azAdminLogAction('commission_record_update','commissionRecords',docId,{username:payload.username, product:payload.product, amount:payload.amount, status:payload.status});
   }else{
-    await addDoc(collection(db,'commissionRecords'), {...payload, createdAt: serverTimestamp(), createdAtMs: Date.now(), createdByAdmin: 'admin-dashboard'});
+    const added=await addDoc(collection(db,'commissionRecords'), {...payload, createdAt: serverTimestamp(), createdAtMs: Date.now(), createdByAdmin: 'admin-dashboard'});
+    azAdminLogAction('commission_record_create','commissionRecords',added.id,{username:payload.username, product:payload.product, amount:payload.amount, status:payload.status});
   }
   resetCommissionForm();
   await loadAdminCommissions();
@@ -1720,6 +1771,7 @@ function editCommissionRecord(docId){
 async function deleteCommissionRecord(docId){
   if(!confirm('Delete this commission record?')) return;
   await deleteDoc(doc(db,'commissionRecords',docId));
+  azAdminLogAction('commission_record_delete','commissionRecords',docId,{});
   await loadAdminCommissions();
 }
 
@@ -2037,13 +2089,14 @@ async function publishNotification(){
   const type=$('#notifType').value, title=$('#notifTitle').value.trim(), body=$('#notifBody').value.trim();
   if(!title&&!body)return toast('Please write notification.');
   await addDoc(collection(db,'notifications'),{active:true,scope:'all',type,title:title||type,body,createdAtMs:Date.now(),createdAt:serverTimestamp(),createdBy:currentUser?.email||'admin',createdByUid:currentUser?.uid||''});
+  azAdminLogAction('notification_publish','notifications','latest',{type,title:title||type});
   $('#notifTitle').value='';$('#notifBody').value=''; await loadNotifications(); await loadOverview(); toast('Notification published.');
 }
 async function clearNotifications(){
   if(!confirm('Delete latest notifications?'))return;
   const snap=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)));
   const jobs=[]; snap?.forEach(d=>jobs.push(deleteDoc(doc(db,'notifications',d.id))));
-  await Promise.all(jobs); await loadNotifications(); await loadOverview(); toast('Notifications cleared.');
+  await Promise.all(jobs); azAdminLogAction('notification_clear_latest','notifications','latest',{count:jobs.length}); await loadNotifications(); await loadOverview(); toast('Notifications cleared.');
 }
 async function initSection(id){
   if(id==='overview')return loadOverview();
@@ -2056,6 +2109,7 @@ async function initSection(id){
   if(id==='payments')return loadPayments();
   if(id==='activity')return loadAdminActivity();
   if(id==='commissions')return loadAdminCommissions();
+  if(id==='auditlogs')return loadAdminAuditLogs();
   if(id==='staffroles')return loadStaffRoles();
   if(id==='settings')return loadSettings();
 }
@@ -2100,6 +2154,7 @@ $('#azRegSaveBtn')?.addEventListener('click',saveRegisteredEdit);
 $('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
 $('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
 $('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+$('#refreshAuditLogs')?.addEventListener('click', loadAdminAuditLogs);
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;

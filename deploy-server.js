@@ -419,6 +419,105 @@ function azReceiptTokenOk(order = {}, supplied = "") {
 }
 
 
+const AZOBSS_ADMIN_AUDIT_FILE = path.join(__dirname, "admin-audit-logs.json");
+function azAuditSafeText(value, max = 260) {
+  return String(value ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, max);
+}
+function azAuditRedactValue(key, value) {
+  const k = String(key || "").toLowerCase();
+  if (/token|secret|password|private|key|authorization|api/i.test(k)) return "***redacted***";
+  if (/email/i.test(k)) return azMaskEmail(value);
+  if (typeof value === "string") return azAuditSafeText(value, 260);
+  if (typeof value === "number" || typeof value === "boolean" || value === null) return value;
+  return value;
+}
+function azAuditSanitizeDetails(details = {}, depth = 0) {
+  if (!details || typeof details !== "object" || depth > 2) return {};
+  if (Array.isArray(details)) return details.slice(0, 30).map((v, i) => azAuditRedactValue(String(i), v));
+  const out = {};
+  Object.entries(details).slice(0, 50).forEach(([key, value]) => {
+    const k = azAuditSafeText(key, 80);
+    if (!k) return;
+    if (value && typeof value === "object" && !Array.isArray(value)) out[k] = azAuditSanitizeDetails(value, depth + 1);
+    else out[k] = azAuditRedactValue(k, value);
+  });
+  return out;
+}
+function azReadLocalAuditLogs() {
+  try {
+    if (!fs.existsSync(AZOBSS_ADMIN_AUDIT_FILE)) return [];
+    const rows = JSON.parse(fs.readFileSync(AZOBSS_ADMIN_AUDIT_FILE, "utf8"));
+    return Array.isArray(rows) ? rows : [];
+  } catch (_) { return []; }
+}
+function azWriteLocalAuditLog(row) {
+  try {
+    const rows = azReadLocalAuditLogs();
+    rows.unshift(row);
+    fs.writeFileSync(AZOBSS_ADMIN_AUDIT_FILE, JSON.stringify(rows.slice(0, 500), null, 2), "utf8");
+  } catch (err) {
+    console.warn("AZOBSS local audit log write failed:", err && (err.message || err));
+  }
+}
+function azAuditIdentitySafe(identity = {}) {
+  return {
+    uid: azAuditSafeText(identity.uid || "", 120),
+    username: azAuditSafeText(identity.username || "", 80),
+    email: identity.email ? azMaskEmail(identity.email) : "",
+    role: azAuditSafeText(identity.role || (identity.isAdmin ? "admin" : ""), 40),
+    authMethod: azAuditSafeText(identity.authMethod || "firebase", 40),
+    isAdmin: !!identity.isAdmin
+  };
+}
+async function azWriteAdminAuditLog(req, identity = {}, action = "admin_action", targetType = "general", targetId = "", details = {}, status = "success") {
+  const now = Date.now();
+  const row = {
+    id: makeId("aud"),
+    action: azAuditSafeText(action, 100),
+    targetType: azAuditSafeText(targetType, 80),
+    targetId: azAuditSafeText(targetId, 180),
+    status: azAuditSafeText(status || "success", 40),
+    details: azAuditSanitizeDetails(details || {}),
+    admin: azAuditIdentitySafe(identity || {}),
+    ipHash: crypto.createHash("sha256").update(azClientIp(req) || "unknown").digest("hex").slice(0, 24),
+    userAgent: azAuditSafeText(req && req.headers && req.headers["user-agent"] || "", 180),
+    createdAt: new Date(now).toISOString(),
+    createdAtMs: now
+  };
+  let firestoreOk = false;
+  try {
+    const db = getAzobssBackendDb();
+    if (db) {
+      await db.collection("adminAuditLogs").doc(row.id).set(azJsonSafe(row), { merge: true });
+      firestoreOk = true;
+    }
+  } catch (err) {
+    console.warn("AZOBSS Firestore audit log write failed:", err && (err.message || err));
+  }
+  if (!firestoreOk) azWriteLocalAuditLog(row);
+  return { ok: true, firestoreOk, id: row.id };
+}
+function azAuditLogPublicRow(x = {}, docId = "") {
+  const admin = x.admin && typeof x.admin === "object" ? x.admin : {};
+  return {
+    id: azAuditSafeText(docId || x.id || "", 120),
+    action: azAuditSafeText(x.action || "", 100),
+    targetType: azAuditSafeText(x.targetType || "", 80),
+    targetId: azAuditSafeText(x.targetId || "", 180),
+    status: azAuditSafeText(x.status || "", 40),
+    details: azAuditSanitizeDetails(x.details || {}),
+    admin: {
+      username: azAuditSafeText(admin.username || "", 80),
+      email: azAuditSafeText(admin.email || "", 120),
+      role: azAuditSafeText(admin.role || "", 40),
+      authMethod: azAuditSafeText(admin.authMethod || "", 40)
+    },
+    createdAt: azAuditSafeText(x.createdAt || "", 80),
+    createdAtMs: Number(x.createdAtMs || 0) || 0
+  };
+}
+
+
 function azMaskEmail(value = "") {
   const email = String(value || "").trim();
   const at = email.indexOf("@");
@@ -2401,6 +2500,8 @@ async function handler(req, res) {
     if (pathname === "/api/software-stats/like" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-like", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats/rate" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-rate", 40, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-admin-set", 10, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
+    if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
 
 
     // =========================
@@ -2610,6 +2711,51 @@ async function handler(req, res) {
 
 
 
+    if (pathname === "/api/admin/audit-logs" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to view audit logs." }, null, 2), "application/json");
+        }
+        const maxRows = Math.max(1, Math.min(200, Number(parsed.query.limit || 100) || 100));
+        const rows = [];
+        let firestoreOk = false;
+        let error = "";
+        const db = getAzobssBackendDb();
+        if (db) {
+          try {
+            const snap = await db.collection("adminAuditLogs").orderBy("createdAtMs", "desc").limit(maxRows).get();
+            firestoreOk = true;
+            snap.forEach(doc => rows.push(azAuditLogPublicRow(doc.data() || {}, doc.id)));
+          } catch (err) {
+            error = err && err.message ? err.message : String(err);
+          }
+        }
+        if (!rows.length) {
+          azReadLocalAuditLogs().slice(0, maxRows).forEach((x, i) => rows.push(azAuditLogPublicRow(x, x.id || `local_${i}`)));
+        }
+        return send(res, 200, JSON.stringify({ ok:true, firestoreOk, count:rows.length, records:rows, error }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/audit-log" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to write audit log." }, null, 2), "application/json");
+        }
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const saved = await azWriteAdminAuditLog(req, adminIdentity, body.action || "admin_frontend_action", body.targetType || "frontend", body.targetId || "", body.details || {}, body.status || "success");
+        return send(res, 200, JSON.stringify({ ok:true, audit:saved }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
     if (pathname === "/api/commission/status" && req.method === "GET") {
       try {
         const db = getAzobssBackendDb();
@@ -2745,6 +2891,7 @@ async function handler(req, res) {
         if (!order) return send(res, 404, JSON.stringify({ ok:false, error:'Order not found' }, null, 2), "application/json");
         if (order.status !== 'paid') return send(res, 400, JSON.stringify({ ok:false, error:'Order is not paid', status: order.status || 'unknown' }, null, 2), "application/json");
         const result = await azFinalizeCommissionForOrder(order);
+        azFireAndForget(azWriteAdminAuditLog(req, commissionIdentity, "commission_retry_order", "premiumOrder", order.orderId || order.billCode || "", { orderId: order.orderId || "", billCode: order.billCode || "", productName: order.productName || "", result }, "success"), "Commission retry audit log failed");
         return send(res, 200, JSON.stringify({ ok:true, orderId: order.orderId, billCode: order.billCode, commission: result, referral: azReferralFrom({}, order.product || {}, order), owner: azProductOwnerFrom(order.product || {}, order) }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
@@ -2845,6 +2992,7 @@ async function handler(req, res) {
           updatedCount += 1;
         }
         writeSoftwareStats(stats);
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "software_stats_admin_set", "softwareStats", "bulk", { updatedCount, productIds: items.map(x => cleanSoftwareId(x.productId || x.id || x.name)).filter(Boolean).slice(0, 50) }, "success"), "Software stats admin-set audit log failed");
         return send(res, 200, JSON.stringify({ ok: true, updatedCount, stats }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
@@ -3731,6 +3879,7 @@ const filePath =
         usedCount: 0,
         maxDownload: requestedLimit
       });
+      azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "manual_complete_purchase", "premiumOrder", orderId, { orderId, productId, productName, saleAmount: order.saleAmount, paymentMethod, paymentReference, trustedProductSource: order.trustedProductSource, isAdminTestPurchase: order.isAdminTestPurchase }, "success"), "Manual complete purchase audit log failed");
 
       return send(res, 200, JSON.stringify({
         ok: true,
