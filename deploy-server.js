@@ -622,6 +622,64 @@ function azPayoutRequestStatus(value) {
   return '';
 }
 
+function azPayoutRequestBelongsToIdentity(x = {}, identity = {}) {
+  if (!identity || !identity.uid) return false;
+  if (identity.isAdmin) return true;
+  const needles = [identity.uid, identity.email, identity.username].map(v => String(v || '').toLowerCase()).filter(Boolean);
+  if (!needles.length) return false;
+  const vals = [
+    x.uid, x.staffUid, x.ownerUid, x.requestByUid, x.createdByUid,
+    x.username, x.staffUsername, x.ownerUsername, x.requestByUsername, x.createdByUsername,
+    x.email, x.staffEmail, x.ownerEmail, x.requestByEmail, x.createdByEmail
+  ].map(v => String(v || '').toLowerCase()).filter(Boolean);
+  return needles.some(n => vals.includes(n));
+}
+function azPayoutRequestPatch(body = {}, identity = {}) {
+  const now = Date.now();
+  const status = azPayoutRequestStatus(body.status || body.payoutRequestStatus || '');
+  if (!status) throw new Error('Invalid payout request status.');
+  const patch = {
+    status,
+    adminNote: cleanPremiumText(body.adminNote || body.note || '', 500),
+    payoutReference: cleanPremiumText(body.payoutReference || body.reference || '', 160),
+    payoutMethod: cleanPremiumText(body.payoutMethod || body.method || '', 80),
+    updatedAt: new Date(now).toISOString(),
+    updatedAtMs: now,
+    updatedByUid: cleanPremiumText(identity.uid || '', 140),
+    updatedByUsername: cleanPremiumText(identity.username || '', 80),
+    updatedByRole: cleanPremiumText(identity.role || (identity.isAdmin ? 'admin' : ''), 40)
+  };
+  if (status === 'reviewing') { patch.reviewedAt = patch.updatedAt; patch.reviewedAtMs = now; }
+  if (status === 'approved') { patch.approvedAt = patch.updatedAt; patch.approvedAtMs = now; }
+  if (status === 'paid') { patch.paidAt = patch.updatedAt; patch.paidAtMs = now; }
+  if (status === 'rejected') { patch.rejectedAt = patch.updatedAt; patch.rejectedAtMs = now; }
+  if (status === 'cancelled') { patch.cancelledAt = patch.updatedAt; patch.cancelledAtMs = now; }
+  return patch;
+}
+function azCommissionPatchForPayoutRequest(status, body = {}, identity = {}) {
+  const now = Date.now();
+  const patch = {
+    payoutRequestStatus: status,
+    payoutRequestUpdatedAt: new Date(now).toISOString(),
+    payoutRequestUpdatedAtMs: now,
+    payoutRequestUpdatedByUid: cleanPremiumText(identity.uid || '', 140),
+    payoutRequestUpdatedByUsername: cleanPremiumText(identity.username || '', 80)
+  };
+  if (status === 'paid') {
+    patch.status = 'paid';
+    patch.payoutStatus = 'paid';
+    patch.payoutPaidAt = patch.payoutRequestUpdatedAt;
+    patch.payoutPaidAtMs = now;
+    patch.payoutUpdatedAt = patch.payoutRequestUpdatedAt;
+    patch.payoutUpdatedAtMs = now;
+    patch.payoutReference = cleanPremiumText(body.payoutReference || body.reference || '', 160);
+    patch.payoutMethod = cleanPremiumText(body.payoutMethod || body.method || '', 80);
+    patch.payoutUpdatedByUid = cleanPremiumText(identity.uid || '', 140);
+    patch.payoutUpdatedByUsername = cleanPremiumText(identity.username || '', 80);
+  }
+  return patch;
+}
+
 function azMakeReceiptToken(order = {}) {
   const secret = String(process.env.AZOBSS_RECEIPT_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "azobss-receipt-fallback-secret");
   const base = `${order.orderId || ""}|${order.billCode || ""}|${order.createdAt || ""}|${order.amountSen || ""}`;
@@ -3501,6 +3559,192 @@ async function handler(req, res) {
       }
     }
 
+
+
+    // =========================
+    // STAFF / ADMIN PAYOUT REQUEST ROUTES
+    // These routes were rate-limited earlier; this block wires the actual protected backend handlers.
+    // =========================
+    if (pathname === "/api/staff/payout-profile" && req.method === "GET") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        const profile = await azGetStaffPayoutProfile(identity, false);
+        return send(res, 200, JSON.stringify({ ok:true, profile: profile || null }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/staff/payout-profile" && req.method === "POST") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const docId = azPayoutIdentityDocId(identity);
+        const ref = db.collection("staffPayoutProfiles").doc(docId);
+        const oldSnap = await ref.get();
+        const oldData = oldSnap.exists ? (oldSnap.data() || {}) : {};
+        const mergedBody = { ...body };
+        if (!String(mergedBody.accountNo || '').trim() && oldData.accountNo) mergedBody.accountNo = oldData.accountNo;
+        if (!String(mergedBody.duitNowId || '').trim() && oldData.duitNowId) mergedBody.duitNowId = oldData.duitNowId;
+        if (!String(mergedBody.payoutPhone || '').trim() && oldData.payoutPhone) mergedBody.payoutPhone = oldData.payoutPhone;
+        if (!String(mergedBody.payoutEmail || '').trim() && oldData.payoutEmail) mergedBody.payoutEmail = oldData.payoutEmail;
+        const profile = azPayoutProfileFromBody(mergedBody, identity);
+        const now = Date.now();
+        const saveRow = { ...oldData, ...profile, docId, createdAt: oldData.createdAt || new Date(now).toISOString(), createdAtMs: oldData.createdAtMs || now };
+        await ref.set(azJsonSafe(saveRow), { merge:true });
+        azFireAndForget(azWriteAdminAuditLog(req, identity, "staff_payout_profile_save", "staffPayoutProfiles", docId, { username: identity.username || '', method: profile.payoutMethod || '', bankName: profile.bankName || profile.ewalletName || '' }, "success"), "Staff payout profile audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, profile: azPayoutProfilePublic(saveRow, false) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/staff/payout-requests" && req.method === "GET") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        const maxRows = Math.max(1, Math.min(200, Number(parsed.query.limit || 100) || 100));
+        let snap;
+        try { snap = await db.collection("payoutRequests").orderBy("createdAtMs", "desc").limit(Math.max(maxRows, 200)).get(); }
+        catch (_) { snap = await db.collection("payoutRequests").limit(Math.max(maxRows, 200)).get(); }
+        const rows = [];
+        snap.forEach(doc => {
+          const x = doc.data() || {};
+          if (azPayoutRequestBelongsToIdentity(x, identity)) rows.push(azPayoutRequestSafe(x, doc.id, false));
+        });
+        rows.sort((a,b)=>(Number(b.createdAtMs||0)-Number(a.createdAtMs||0)));
+        return send(res, 200, JSON.stringify({ ok:true, requests: rows.slice(0, maxRows) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/staff/payout-request" && req.method === "POST") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const profileId = azPayoutIdentityDocId(identity);
+        const profileSnap = await db.collection("staffPayoutProfiles").doc(profileId).get();
+        if (!profileSnap.exists) return send(res, 400, JSON.stringify({ ok:false, error:"Please save your payout profile before submitting a payout request." }, null, 2), "application/json");
+        const profileSnapshot = azPayoutProfilePublic(profileSnap.data() || {}, true);
+        const rows = (await azGetCommissionRowsForIdentity(identity, 800))
+          .filter(x => azPayoutStatusBucketValue(x) === 'approved')
+          .filter(x => !x.payoutRequestId || ['rejected','cancelled'].includes(String(x.payoutRequestStatus || '').toLowerCase()))
+          .filter(x => cleanPremiumText(x.docId || x.id || '', 160));
+        const eligibleAmount = rows.reduce((sum, x) => sum + azCommissionAmountValue(x), 0);
+        if (eligibleAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, error:"No approved unpaid commission is available for payout request." }, null, 2), "application/json");
+        const requested = Math.max(0, Number(body.amount || 0) || 0);
+        const target = requested > 0 ? Math.min(requested, eligibleAmount) : eligibleAmount;
+        let amount = 0;
+        const selected = [];
+        rows.sort((a,b)=>(Number(a.createdAtMs||0)-Number(b.createdAtMs||0)));
+        for (const row of rows) {
+          if (amount >= target && selected.length) break;
+          const v = azCommissionAmountValue(row);
+          if (v <= 0) continue;
+          selected.push(row);
+          amount += v;
+        }
+        amount = Math.round(amount * 100) / 100;
+        if (!selected.length || amount <= 0) return send(res, 400, JSON.stringify({ ok:false, error:"No valid commission records were selected for payout." }, null, 2), "application/json");
+        const now = Date.now();
+        const requestId = makeId("payreq");
+        const docIds = selected.map(x => cleanPremiumText(x.docId || x.id || '', 160)).filter(Boolean);
+        const requestRow = {
+          requestId,
+          uid: cleanPremiumText(identity.uid || '', 140),
+          username: cleanPremiumText(identity.username || '', 80),
+          email: cleanPremiumText(identity.email || '', 160),
+          amount,
+          amountText: `RM${amount.toFixed(2)}`,
+          eligibleAmount: Math.round(eligibleAmount * 100) / 100,
+          recordCount: docIds.length,
+          commissionDocIds: docIds,
+          status: 'requested',
+          note: cleanPremiumText(body.note || '', 500),
+          profileSnapshot,
+          createdAt: new Date(now).toISOString(),
+          createdAtMs: now,
+          updatedAt: new Date(now).toISOString(),
+          updatedAtMs: now
+        };
+        const batch = db.batch();
+        batch.set(db.collection("payoutRequests").doc(requestId), azJsonSafe(requestRow), { merge:true });
+        docIds.forEach(id => batch.set(db.collection("commissionRecords").doc(id), azJsonSafe({ payoutRequestId: requestId, payoutRequestStatus: 'requested', payoutRequestedAt: requestRow.createdAt, payoutRequestedAtMs: now }), { merge:true }));
+        await batch.commit();
+        azFireAndForget(azWriteAdminAuditLog(req, identity, "staff_payout_request_submit", "payoutRequests", requestId, { amount, recordCount: docIds.length, username: identity.username || '' }, "success"), "Staff payout request audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, request: azPayoutRequestSafe(requestRow, requestId, false) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/payout-requests" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to view payout requests." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        const maxRows = Math.max(1, Math.min(300, Number(parsed.query.limit || 120) || 120));
+        let snap;
+        try { snap = await db.collection("payoutRequests").orderBy("createdAtMs", "desc").limit(maxRows).get(); }
+        catch (_) { snap = await db.collection("payoutRequests").limit(maxRows).get(); }
+        const rows = [];
+        snap.forEach(doc => rows.push(azPayoutRequestSafe(doc.data() || {}, doc.id, true)));
+        rows.sort((a,b)=>(Number(b.createdAtMs||0)-Number(a.createdAtMs||0)));
+        return send(res, 200, JSON.stringify({ ok:true, requests: rows }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/payout-request-status" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to update payout request." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const requestId = cleanPremiumText(body.requestId || body.docId || body.id || '', 160);
+        if (!requestId) return send(res, 400, JSON.stringify({ ok:false, error:"Missing payout request ID." }, null, 2), "application/json");
+        const status = azPayoutRequestStatus(body.status || body.payoutRequestStatus || '');
+        if (!status) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid payout request status." }, null, 2), "application/json");
+        const ref = db.collection("payoutRequests").doc(requestId);
+        const snap = await ref.get();
+        if (!snap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Payout request not found." }, null, 2), "application/json");
+        const old = snap.data() || {};
+        const patch = azPayoutRequestPatch({ ...body, status }, adminIdentity);
+        const batch = db.batch();
+        batch.set(ref, azJsonSafe(patch), { merge:true });
+        const docIds = Array.isArray(old.commissionDocIds) ? old.commissionDocIds.map(v => cleanPremiumText(v, 160)).filter(Boolean) : [];
+        const cpatch = azCommissionPatchForPayoutRequest(status, body, adminIdentity);
+        docIds.forEach(id => batch.set(db.collection("commissionRecords").doc(id), azJsonSafe(cpatch), { merge:true }));
+        await batch.commit();
+        const updatedSnap = await ref.get();
+        const updated = updatedSnap.exists ? (updatedSnap.data() || { ...old, ...patch }) : { ...old, ...patch };
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payout_request_status_update", "payoutRequests", requestId, { requestId, status, amount: old.amount || 0, recordCount: docIds.length, payoutReference: patch.payoutReference || '', payoutMethod: patch.payoutMethod || '' }, "success"), "Admin payout request audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, status, updatedCommissionRecords: docIds.length, request: azPayoutRequestSafe(updated, requestId, true) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
 
     if (pathname === "/api/commission/status" && req.method === "GET") {
       try {
