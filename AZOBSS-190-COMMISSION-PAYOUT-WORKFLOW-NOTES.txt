@@ -1,0 +1,40 @@
+AZOBSS (190) Commission Payout Workflow Fix
+
+Based on baseline:
+(189)-AZOBSS-ADMIN-AUDIT-LOGS-FIX_20260617.zip
+
+Added:
+1. Backend protected commission payout endpoint:
+   POST /api/commission/payout-status
+
+2. Endpoint protection:
+   - Firebase admin ID token, or
+   - AZOBSS_ADMIN_API_SECRET / AZOBSS_COMMISSION_API_SECRET
+
+3. Rate limit for payout update endpoint.
+
+4. Firestore update fields:
+   - payoutStatus: pending / approved / paid / rejected
+   - status mirror for backward compatibility
+   - payoutNote
+   - payoutReference
+   - payoutMethod
+   - payoutUpdatedAt / payoutUpdatedAtMs
+   - payoutApprovedAt / payoutPaidAt / payoutRejectedAt when relevant
+   - payoutUpdatedByUid / payoutUpdatedByUsername / payoutUpdatedByRole
+
+5. Admin Dashboard Commission Manager:
+   - Approved RM stat card
+   - Rejected RM stat card
+   - payout status filter
+   - Approve button
+   - Mark Paid button
+   - Reject button
+   - Pending button
+   - Export CSV button
+
+6. Audit log:
+   - action: commission_payout_status_update
+
+No Firebase Rules update required because backend uses Firebase Admin SDK for payout updates.
+No new required Render ENV.

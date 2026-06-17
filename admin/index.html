@@ -1178,7 +1178,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <div class="grid">
         <div class="card"><div class="stat-label">Total Commission RM</div><div id="adminComTotal" class="stat-value">0.00</div></div>
         <div class="card"><div class="stat-label">Pending RM</div><div id="adminComPending" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Approved RM</div><div id="adminComApproved" class="stat-value">0.00</div></div>
         <div class="card"><div class="stat-label">Paid RM</div><div id="adminComPaid" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Rejected RM</div><div id="adminComRejected" class="stat-value">0.00</div></div>
         <div class="card"><div class="stat-label">Records</div><div id="adminComCount" class="stat-value">0</div></div>
       </div>
 
@@ -1193,6 +1195,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
             <option value="pending">pending</option>
             <option value="approved">approved</option>
             <option value="paid">paid</option>
+            <option value="rejected">rejected</option>
           </select>
         </div>
         <div class="toolbar">
@@ -1210,6 +1213,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
       <div class="card">
         <h2>Commission Records</h2>
+        <div class="toolbar">
+          <select id="commissionPayoutFilter">
+            <option value="all">All payout status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button class="btn gray" id="exportCommissionCsv" type="button">Export CSV</button>
+        </div>
         <div id="adminCommissionList" class="list"></div>
       </div>
     </section>
@@ -1652,9 +1665,22 @@ function commissionAmountOf(x){
 function commissionSaleAmountOf(x){
   return Number(x.saleAmount || x.orderAmount || x.totalSale || 0) || 0;
 }
-function commissionIsPaid(x){
-  const s = String(x.payoutStatus || x.status || '').toLowerCase();
-  return ['paid','settled','released','verified','success','completed','approved'].includes(s);
+function commissionPayoutStatus(x){
+  return String(x.payoutStatus || x.status || 'pending').toLowerCase() || 'pending';
+}
+function commissionStatusBucket(x){
+  const s = commissionPayoutStatus(x);
+  if(['paid','settled','released'].includes(s)) return 'paid';
+  if(['approved'].includes(s)) return 'approved';
+  if(['rejected','cancelled','void'].includes(s)) return 'rejected';
+  return 'pending';
+}
+function commissionStatusBadge(status){
+  const s=String(status||'pending').toLowerCase();
+  if(s==='paid') return '✅ paid';
+  if(s==='approved') return '🟦 approved';
+  if(s==='rejected') return '⛔ rejected';
+  return '⏳ pending';
 }
 async function fetchAdminCommissionsFromApi(){
   adminApiNotice = '';
@@ -1679,8 +1705,55 @@ function resetCommissionForm(){
   $('#commissionNote').value = '';
   if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Add / Edit Commission';
 }
+function renderAdminCommissions(){
+  let total=0,pending=0,approved=0,paid=0,rejected=0;
+  adminCommissionCache.forEach(x=>{
+    const amt=commissionAmountOf(x);
+    total += amt;
+    const bucket=commissionStatusBucket(x);
+    if(bucket==='paid') paid += amt;
+    else if(bucket==='approved') approved += amt;
+    else if(bucket==='rejected') rejected += amt;
+    else pending += amt;
+  });
+  if($('#adminComTotal')) $('#adminComTotal').textContent = total.toFixed(2);
+  if($('#adminComPending')) $('#adminComPending').textContent = pending.toFixed(2);
+  if($('#adminComApproved')) $('#adminComApproved').textContent = approved.toFixed(2);
+  if($('#adminComPaid')) $('#adminComPaid').textContent = paid.toFixed(2);
+  if($('#adminComRejected')) $('#adminComRejected').textContent = rejected.toFixed(2);
+  if($('#adminComCount')) $('#adminComCount').textContent = adminCommissionCache.length;
+
+  const filter=String($('#commissionPayoutFilter')?.value||'all').toLowerCase();
+  const filtered=adminCommissionCache.filter(x=>filter==='all'||commissionStatusBucket(x)===filter);
+  const rows = filtered.map(x=>{
+    const amt = commissionAmountOf(x).toFixed(2);
+    const sale = commissionSaleAmountOf(x);
+    const owner = commissionRecordTitle(x);
+    const product = esc(x.productName || x.product || x.productTitle || x.itemName || x.saleRef || '-');
+    const statusRaw = commissionPayoutStatus(x);
+    const status = esc(statusRaw || 'pending');
+    const type = esc(x.commissionType || x.type || 'commission');
+    const source = esc(x._source || '');
+    const docId = esc(x.docId || '');
+    const payoutMeta = [x.payoutReference?('Ref: '+esc(x.payoutReference)):'', x.payoutMethod?('Method: '+esc(x.payoutMethod)):'', x.payoutNote?('Note: '+esc(x.payoutNote)):''].filter(Boolean).join(' • ');
+    return `<div class="item">
+      <div class="item-title">💸 ${owner} • Commission RM${amt} • ${commissionStatusBadge(statusRaw)}</div>
+      <div class="item-meta">${product} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • ${type} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)} ${source?('• '+source):''}${payoutMeta?(' • '+payoutMeta):''}</div>
+      <div class="toolbar" style="margin:6px 0 0">
+        <button class="btn" data-commission-payout="approved" data-commission-doc="${docId}">Approve</button>
+        <button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}">Mark Paid</button>
+        <button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}">Reject</button>
+        <button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}">Pending</button>
+        <button class="btn gray" data-edit-commission="${docId}">Edit</button>
+        <button class="btn red" data-delete-commission="${docId}">Delete</button>
+      </div>
+    </div>`;
+  });
+  const notice = adminApiNotice ? `<div class="item"><div class="item-title">⚠️ Backend API notice</div><div class="item-meta">${esc(adminApiNotice)}</div></div>` : '';
+  $('#adminCommissionList').innerHTML = rows.join('') || notice || '<div class="item">No commission records.</div>';
+}
 async function loadAdminCommissions(){
-  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(150)));
+  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(200)));
   adminCommissionCache = [];
   const seen=new Set();
   snap?.forEach(d=>{
@@ -1695,36 +1768,45 @@ async function loadAdminCommissions(){
       if(!seen.has(key)){seen.add(key);adminCommissionCache.push({...x,_source:'backend-api'});}
     });
   }
-  let total=0,pending=0,paid=0;
-  adminCommissionCache.forEach(x=>{
-    const amt=commissionAmountOf(x);
-    total += amt;
-    if(commissionIsPaid(x)) paid += amt; else pending += amt;
-  });
-  if($('#adminComTotal')) $('#adminComTotal').textContent = total.toFixed(2);
-  if($('#adminComPending')) $('#adminComPending').textContent = pending.toFixed(2);
-  if($('#adminComPaid')) $('#adminComPaid').textContent = paid.toFixed(2);
-  if($('#adminComCount')) $('#adminComCount').textContent = adminCommissionCache.length;
-
-  const rows = adminCommissionCache.map(x=>{
-    const amt = commissionAmountOf(x).toFixed(2);
-    const sale = commissionSaleAmountOf(x);
-    const owner = commissionRecordTitle(x);
-    const product = esc(x.productName || x.product || x.productTitle || x.itemName || x.saleRef || '-');
-    const status = esc(x.payoutStatus || x.status || 'pending');
-    const type = esc(x.commissionType || x.type || 'commission');
-    const source = esc(x._source || '');
-    return `<div class="item">
-      <div class="item-title">💸 ${owner} • Commission RM${amt}</div>
-      <div class="item-meta">${product} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • ${type} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)} ${source?('• '+source):''}</div>
-      <div class="toolbar" style="margin:6px 0 0">
-        <button class="btn gray" data-edit-commission="${esc(x.docId)}">Edit</button>
-        <button class="btn red" data-delete-commission="${esc(x.docId)}">Delete</button>
-      </div>
-    </div>`;
-  });
-  const notice = adminApiNotice ? `<div class="item"><div class="item-title">⚠️ Backend API notice</div><div class="item-meta">${esc(adminApiNotice)}</div></div>` : '';
-  $('#adminCommissionList').innerHTML = rows.join('') || notice || '<div class="item">No commission records.</div>';
+  renderAdminCommissions();
+}
+async function updateCommissionPayoutStatus(docId,status){
+  if(!docId) return toast('Missing commission record ID.');
+  const label=String(status||'').toUpperCase();
+  if(!confirm('Update this commission payout status to '+label+'?')) return;
+  let payoutReference='';
+  let payoutMethod='';
+  let payoutNote='';
+  if(status==='paid'){
+    payoutReference = prompt('Payment/reference number (optional):','') || '';
+    payoutMethod = prompt('Payout method (optional, e.g. bank transfer):','') || '';
+  }
+  if(status==='rejected') payoutNote = prompt('Reason / note for rejection (optional):','') || '';
+  if(status==='approved') payoutNote = prompt('Approval note (optional):','') || '';
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/payout-status',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({docId,payoutStatus:status,payoutReference,payoutMethod,payoutNote})
+    });
+    toast('Commission payout updated: '+(j.payoutStatus||status));
+    await loadAdminCommissions();
+  }catch(e){
+    toast(e?.message || 'Failed to update commission payout status.');
+  }
+}
+function exportCommissionCsv(){
+  const rows=adminCommissionCache.map(x=>({
+    docId:x.docId||'', orderId:x.orderId||'', billCode:x.billCode||'', username:x.username||x.ownerUsername||'', product:x.productName||x.product||'', commissionType:x.commissionType||'', saleAmount:commissionSaleAmountOf(x), commissionAmount:commissionAmountOf(x), payoutStatus:commissionPayoutStatus(x), payoutReference:x.payoutReference||'', payoutMethod:x.payoutMethod||'', payoutNote:x.payoutNote||'', createdAt:x.createdAt||x.createdAtMs||''
+  }));
+  const headers=['docId','orderId','billCode','username','product','commissionType','saleAmount','commissionAmount','payoutStatus','payoutReference','payoutMethod','payoutNote','createdAt'];
+  const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>'"'+String(r[h]??'').replace(/"/g,'""')+'"').join(','))).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='azobss-commission-records-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function saveCommissionRecord(){
   const docId = $('#commissionEditDocId')?.value || '';
@@ -1734,6 +1816,7 @@ async function saveCommissionRecord(){
     product: $('#commissionProduct')?.value.trim() || '',
     amount,
     status: $('#commissionStatus')?.value || 'pending',
+    payoutStatus: $('#commissionStatus')?.value || 'pending',
     note: $('#commissionNote')?.value.trim() || '',
     ownerUid: $('#commissionOwnerUid')?.value.trim() || '',
     ownerUsername: $('#commissionOwnerUsername')?.value.trim() || $('#commissionUsername')?.value.trim() || '',
@@ -1761,7 +1844,7 @@ function editCommissionRecord(docId){
   $('#commissionUsername').value = x.username || x.ownerUsername || '';
   $('#commissionProduct').value = x.productName || x.product || x.productTitle || x.itemName || x.saleRef || '';
   $('#commissionAmount').value = commissionAmountOf(x);
-  $('#commissionStatus').value = x.status || 'pending';
+  $('#commissionStatus').value = x.payoutStatus || x.status || 'pending';
   $('#commissionOwnerUid').value = x.ownerUid || '';
   $('#commissionOwnerUsername').value = x.ownerUsername || x.username || '';
   $('#commissionOwnerEmail').value = x.ownerEmail || '';
@@ -2130,6 +2213,8 @@ document.addEventListener('click',async e=>{
   if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
   const dn=e.target.closest('[data-del-notif]');
   if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+  const payoutBtn = e.target.closest('[data-commission-payout]');
+  if(payoutBtn){await updateCommissionPayoutStatus(payoutBtn.getAttribute('data-commission-doc'), payoutBtn.getAttribute('data-commission-payout'));return;}
   const editBtn = e.target.closest('[data-edit-commission]');
   if(editBtn){editCommissionRecord(editBtn.getAttribute('data-edit-commission'));return;}
   const delBtn = e.target.closest('[data-delete-commission]');
@@ -2154,6 +2239,8 @@ $('#azRegSaveBtn')?.addEventListener('click',saveRegisteredEdit);
 $('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
 $('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
 $('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
+$('#commissionPayoutFilter')?.addEventListener('change', renderAdminCommissions);
+$('#exportCommissionCsv')?.addEventListener('click', exportCommissionCsv);
 $('#refreshAuditLogs')?.addEventListener('click', loadAdminAuditLogs);
 
 onAuthStateChanged(auth,async user=>{

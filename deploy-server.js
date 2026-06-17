@@ -400,6 +400,91 @@ function azCommissionRecordBelongsToIdentity(x = {}, identity = {}) {
   ].map(v => String(v || "").toLowerCase()).filter(Boolean);
   return needles.some(n => vals.includes(n));
 }
+function azCommissionPayoutStatus(value) {
+  const s = String(value || "").trim().toLowerCase();
+  if (["pending", "approved", "paid", "rejected"].includes(s)) return s;
+  return "";
+}
+function azCommissionPayoutPatch(body = {}, identity = {}) {
+  const now = Date.now();
+  const status = azCommissionPayoutStatus(body.payoutStatus || body.status);
+  if (!status) throw new Error("Invalid payout status. Use pending, approved, paid or rejected.");
+  const patch = {
+    payoutStatus: status,
+    status,
+    payoutNote: cleanPremiumText(body.payoutNote || body.note || "", 500),
+    payoutReference: cleanPremiumText(body.payoutReference || body.reference || "", 160),
+    payoutMethod: cleanPremiumText(body.payoutMethod || body.method || "", 80),
+    payoutUpdatedAt: new Date(now).toISOString(),
+    payoutUpdatedAtMs: now,
+    payoutUpdatedByUid: cleanPremiumText(identity.uid || "", 140),
+    payoutUpdatedByUsername: cleanPremiumText(identity.username || "", 80),
+    payoutUpdatedByRole: cleanPremiumText(identity.role || (identity.isAdmin ? "admin" : ""), 40),
+    payoutUpdatedByAuthMethod: cleanPremiumText(identity.authMethod || "firebase", 40)
+  };
+  if (status === "approved") {
+    patch.payoutApprovedAt = patch.payoutUpdatedAt;
+    patch.payoutApprovedAtMs = now;
+    patch.payoutApprovedBy = patch.payoutUpdatedByUsername || patch.payoutUpdatedByUid || "admin";
+  }
+  if (status === "paid") {
+    patch.payoutPaidAt = patch.payoutUpdatedAt;
+    patch.payoutPaidAtMs = now;
+    patch.payoutPaidBy = patch.payoutUpdatedByUsername || patch.payoutUpdatedByUid || "admin";
+  }
+  if (status === "rejected") {
+    patch.payoutRejectedAt = patch.payoutUpdatedAt;
+    patch.payoutRejectedAtMs = now;
+    patch.payoutRejectedBy = patch.payoutUpdatedByUsername || patch.payoutUpdatedByUid || "admin";
+  }
+  Object.keys(patch).forEach(k => { if (patch[k] === "") delete patch[k]; });
+  return patch;
+}
+function azCommissionSafeRecord(x = {}, docId = "") {
+  const safeReferral = x.shareReferral && typeof x.shareReferral === "object" ? {
+    username: cleanPremiumText(x.shareReferral.username || x.shareReferral.ref || "", 80),
+    ref: cleanPremiumText(x.shareReferral.ref || x.shareReferral.username || "", 80),
+    productId: cleanPremiumText(x.shareReferral.productId || "", 160),
+    sourcePage: cleanPremiumText(x.shareReferral.sourcePage || "", 40),
+    source: cleanPremiumText(x.shareReferral.source || "", 60)
+  } : null;
+  return {
+    docId: cleanPremiumText(docId || x.docId || x.id || "", 120),
+    orderId: cleanPremiumText(x.orderId || "", 140),
+    billCode: cleanPremiumText(x.billCode || "", 100),
+    productId: cleanPremiumText(x.productId || "", 160),
+    productName: cleanPremiumText(x.productName || x.product || x.title || "", 180),
+    username: azCommissionUsername(x.username || x.ownerUsername || ""),
+    ownerUsername: azCommissionUsername(x.ownerUsername || x.username || ""),
+    commissionType: cleanPremiumText(x.commissionType || "", 80),
+    commissionRate: Number(x.commissionRate || x.rate || 0) || 0,
+    rate: Number(x.rate || x.commissionRate || 0) || 0,
+    saleAmount: Number(x.saleAmount || 0) || 0,
+    saleAmountText: cleanPremiumText(x.saleAmountText || "", 40),
+    commissionAmount: Number(x.commissionAmount || x.amount || 0) || 0,
+    amount: Number(x.amount || x.commissionAmount || 0) || 0,
+    amountText: cleanPremiumText(x.amountText || "", 40),
+    azobssShareAmount: Number(x.azobssShareAmount || 0) || 0,
+    azobssShareRate: Number(x.azobssShareRate || 0) || 0,
+    ownerShareAmount: Number(x.ownerShareAmount || 0) || 0,
+    sharerShareAmount: Number(x.sharerShareAmount || 0) || 0,
+    status: cleanPremiumText(x.status || "", 40),
+    payoutStatus: cleanPremiumText(x.payoutStatus || x.status || "", 40),
+    payoutNote: cleanPremiumText(x.payoutNote || "", 260),
+    payoutReference: cleanPremiumText(x.payoutReference || "", 160),
+    payoutMethod: cleanPremiumText(x.payoutMethod || "", 80),
+    payoutUpdatedAt: cleanPremiumText(x.payoutUpdatedAt || "", 80),
+    payoutApprovedAt: cleanPremiumText(x.payoutApprovedAt || "", 80),
+    payoutPaidAt: cleanPremiumText(x.payoutPaidAt || "", 80),
+    payoutRejectedAt: cleanPremiumText(x.payoutRejectedAt || "", 80),
+    paymentStatus: cleanPremiumText(x.paymentStatus || "", 40),
+    sourcePage: cleanPremiumText(x.sourcePage || (safeReferral && safeReferral.sourcePage) || "", 40),
+    note: cleanPremiumText(x.note || "", 260),
+    createdAt: cleanPremiumText(x.createdAt || "", 80),
+    createdAtMs: Number(x.createdAtMs || 0) || 0,
+    shareReferral: safeReferral
+  };
+}
 function azMakeReceiptToken(order = {}) {
   const secret = String(process.env.AZOBSS_RECEIPT_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "azobss-receipt-fallback-secret");
   const base = `${order.orderId || ""}|${order.billCode || ""}|${order.createdAt || ""}|${order.amountSen || ""}`;
@@ -2492,6 +2577,7 @@ async function handler(req, res) {
     if (pathname === "/api/premium/complete-purchase" && req.method === "POST" && azRateLimitOrSend(req, res, "premium-complete-purchase", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/status" && req.method === "GET" && parsed.query && parsed.query.records && azRateLimitOrSend(req, res, "commission-records", 60, 60 * 1000)) return;
     if (pathname === "/api/commission/retry-order" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-retry", 10, 10 * 60 * 1000)) return;
+    if (pathname === "/api/commission/payout-status" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-payout-status", 30, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
@@ -2781,42 +2867,7 @@ async function handler(req, res) {
               snap.forEach(doc => {
                 const x = doc.data() || {};
                 if (wantRecords && !hasCommissionSecret && !azCommissionRecordBelongsToIdentity(x, commissionIdentity)) return;
-                const safeReferral = x.shareReferral && typeof x.shareReferral === 'object' ? {
-                  username: cleanPremiumText(x.shareReferral.username || x.shareReferral.ref || '', 80),
-                  ref: cleanPremiumText(x.shareReferral.ref || x.shareReferral.username || '', 80),
-                  productId: cleanPremiumText(x.shareReferral.productId || '', 160),
-                  sourcePage: cleanPremiumText(x.shareReferral.sourcePage || '', 40),
-                  source: cleanPremiumText(x.shareReferral.source || '', 60)
-                } : null;
-                records.push({
-                  docId: doc.id,
-                  orderId: cleanPremiumText(x.orderId || '', 140),
-                  billCode: cleanPremiumText(x.billCode || '', 100),
-                  productId: cleanPremiumText(x.productId || '', 160),
-                  productName: cleanPremiumText(x.productName || x.product || x.title || '', 180),
-                  username: azCommissionUsername(x.username || x.ownerUsername || ''),
-                  ownerUsername: azCommissionUsername(x.ownerUsername || x.username || ''),
-                  commissionType: cleanPremiumText(x.commissionType || '', 80),
-                  commissionRate: Number(x.commissionRate || x.rate || 0) || 0,
-                  rate: Number(x.rate || x.commissionRate || 0) || 0,
-                  saleAmount: Number(x.saleAmount || 0) || 0,
-                  saleAmountText: cleanPremiumText(x.saleAmountText || '', 40),
-                  commissionAmount: Number(x.commissionAmount || x.amount || 0) || 0,
-                  amount: Number(x.amount || x.commissionAmount || 0) || 0,
-                  amountText: cleanPremiumText(x.amountText || '', 40),
-                  azobssShareAmount: Number(x.azobssShareAmount || 0) || 0,
-                  azobssShareRate: Number(x.azobssShareRate || 0) || 0,
-                  ownerShareAmount: Number(x.ownerShareAmount || 0) || 0,
-                  sharerShareAmount: Number(x.sharerShareAmount || 0) || 0,
-                  status: cleanPremiumText(x.status || '', 40),
-                  payoutStatus: cleanPremiumText(x.payoutStatus || '', 40),
-                  paymentStatus: cleanPremiumText(x.paymentStatus || '', 40),
-                  sourcePage: cleanPremiumText(x.sourcePage || (safeReferral && safeReferral.sourcePage) || '', 40),
-                  note: cleanPremiumText(x.note || '', 260),
-                  createdAt: cleanPremiumText(x.createdAt || '', 80),
-                  createdAtMs: Number(x.createdAtMs || 0) || 0,
-                  shareReferral: safeReferral
-                });
+                records.push(azCommissionSafeRecord(x, doc.id));
               });
             }
           } catch (err) {
@@ -2828,34 +2879,7 @@ async function handler(req, res) {
         const localRows = readPremiumJson(COMMISSION_RECORDS_FILE, []);
         if (wantRecords && !records.length && Array.isArray(localRows)) {
           const visibleLocalRows = hasCommissionSecret ? localRows : localRows.filter(x => azCommissionRecordBelongsToIdentity(x, commissionIdentity));
-          records = visibleLocalRows.slice(0, maxRecords).map((x, i) => ({
-            docId: cleanPremiumText(x.docId || x.id || `local_${i}`, 120),
-            orderId: cleanPremiumText(x.orderId || '', 140),
-            billCode: cleanPremiumText(x.billCode || '', 100),
-            productId: cleanPremiumText(x.productId || '', 160),
-            productName: cleanPremiumText(x.productName || x.product || x.title || '', 180),
-            username: azCommissionUsername(x.username || x.ownerUsername || ''),
-            ownerUsername: azCommissionUsername(x.ownerUsername || x.username || ''),
-            commissionType: cleanPremiumText(x.commissionType || '', 80),
-            commissionRate: Number(x.commissionRate || x.rate || 0) || 0,
-            rate: Number(x.rate || x.commissionRate || 0) || 0,
-            saleAmount: Number(x.saleAmount || 0) || 0,
-            commissionAmount: Number(x.commissionAmount || x.amount || 0) || 0,
-            amount: Number(x.amount || x.commissionAmount || 0) || 0,
-            amountText: cleanPremiumText(x.amountText || '', 40),
-            azobssShareAmount: Number(x.azobssShareAmount || 0) || 0,
-            azobssShareRate: Number(x.azobssShareRate || 0) || 0,
-            ownerShareAmount: Number(x.ownerShareAmount || 0) || 0,
-            sharerShareAmount: Number(x.sharerShareAmount || 0) || 0,
-            status: cleanPremiumText(x.status || '', 40),
-            payoutStatus: cleanPremiumText(x.payoutStatus || '', 40),
-            paymentStatus: cleanPremiumText(x.paymentStatus || '', 40),
-            sourcePage: cleanPremiumText(x.sourcePage || '', 40),
-            note: cleanPremiumText(x.note || '', 260),
-            createdAt: cleanPremiumText(x.createdAt || '', 80),
-            createdAtMs: Number(x.createdAtMs || 0) || 0,
-            shareReferral: x.shareReferral || null
-          }));
+          records = visibleLocalRows.slice(0, maxRecords).map((x, i) => azCommissionSafeRecord(x, x.docId || x.id || `local_${i}`));
         }
         return send(res, 200, JSON.stringify({
           ok: true,
@@ -2893,6 +2917,50 @@ async function handler(req, res) {
         const result = await azFinalizeCommissionForOrder(order);
         azFireAndForget(azWriteAdminAuditLog(req, commissionIdentity, "commission_retry_order", "premiumOrder", order.orderId || order.billCode || "", { orderId: order.orderId || "", billCode: order.billCode || "", productName: order.productName || "", result }, "success"), "Commission retry audit log failed");
         return send(res, 200, JSON.stringify({ ok:true, orderId: order.orderId, billCode: order.billCode, commission: result, referral: azReferralFrom({}, order.product || {}, order), owner: azProductOwnerFrom(order.product || {}, order) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+
+    if (pathname === "/api/commission/payout-status" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to update commission payout status." }, null, 2), "application/json");
+        }
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const ids = []
+          .concat(body.docIds || [])
+          .concat(body.docId || body.id || [])
+          .map(v => cleanPremiumText(v, 160))
+          .filter(Boolean)
+          .filter((v, i, arr) => arr.indexOf(v) === i);
+        if (!ids.length) return send(res, 400, JSON.stringify({ ok:false, error:"Missing commission docId/docIds." }, null, 2), "application/json");
+        const patch = azCommissionPayoutPatch(body, adminIdentity);
+        let updated = 0;
+        let storage = "";
+        const db = getAzobssBackendDb();
+        if (db) {
+          storage = "firestore";
+          for (const id of ids) {
+            await db.collection("commissionRecords").doc(id).set(azJsonSafe(patch), { merge:true });
+            updated += 1;
+          }
+        } else {
+          storage = "json";
+          const all = readPremiumJson(COMMISSION_RECORDS_FILE, []);
+          if (!Array.isArray(all)) return send(res, 500, JSON.stringify({ ok:false, error:"Commission JSON fallback is not available." }, null, 2), "application/json");
+          for (const row of all) {
+            const rowId = cleanPremiumText(row.docId || row.id || `${row.orderId || ""}_${row.commissionType || ""}_${row.username || ""}`, 160);
+            if (ids.includes(rowId)) { Object.assign(row, patch); updated += 1; }
+          }
+          writePremiumJson(COMMISSION_RECORDS_FILE, all.slice(0, 5000));
+        }
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "commission_payout_status_update", "commissionRecords", ids.join(",").slice(0, 180), { docIds: ids, payoutStatus: patch.payoutStatus, payoutReference: patch.payoutReference || "", payoutMethod: patch.payoutMethod || "", updated, storage }, "success"), "Commission payout audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, updated, storage, payoutStatus: patch.payoutStatus }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
