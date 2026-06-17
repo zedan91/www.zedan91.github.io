@@ -3223,6 +3223,7 @@ async function handler(req, res) {
     if (pathname === "/api/admin/maintenance-run" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-maintenance-run", 10, 10 * 60 * 1000)) return;
     if ((pathname === "/api/staff/payout-profile" || pathname === "/api/staff/payout-requests") && req.method === "GET" && azRateLimitOrSend(req, res, "staff-payout-read", 80, 10 * 60 * 1000)) return;
     if ((pathname === "/api/staff/payout-profile" || pathname === "/api/staff/payout-request") && req.method === "POST" && azRateLimitOrSend(req, res, "staff-payout-write", 20, 10 * 60 * 1000)) return;
+    if (pathname === "/api/staff/payout-request-cancel" && req.method === "POST" && azRateLimitOrSend(req, res, "staff-payout-cancel", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/payout-requests" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-payout-requests-read", 60, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/payout-request-status" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payout-request-status", 30, 10 * 60 * 1000)) return;
 
@@ -3629,6 +3630,57 @@ async function handler(req, res) {
       }
     }
 
+    if (pathname === "/api/staff/payout-request-cancel" && req.method === "POST") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const requestId = cleanPremiumText(body.requestId || body.docId || body.id || "", 160);
+        if (!requestId) return send(res, 400, JSON.stringify({ ok:false, error:"Missing payout request ID." }, null, 2), "application/json");
+        const ref = db.collection("payoutRequests").doc(requestId);
+        const snap = await ref.get();
+        if (!snap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Payout request not found." }, null, 2), "application/json");
+        const old = snap.data() || {};
+        if (!azPayoutRequestBelongsToIdentity(old, identity)) return send(res, 403, JSON.stringify({ ok:false, error:"You can only cancel your own payout request." }, null, 2), "application/json");
+        const oldStatus = String(old.status || "requested").toLowerCase();
+        if (!["requested", "reviewing"].includes(oldStatus)) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Only requested/reviewing payout requests can be cancelled by staff.", status: oldStatus }, null, 2), "application/json");
+        }
+        const now = Date.now();
+        const patch = {
+          status: "cancelled",
+          adminNote: cleanPremiumText(body.note || old.adminNote || "Cancelled by staff.", 500),
+          cancelledAt: new Date(now).toISOString(),
+          cancelledAtMs: now,
+          updatedAt: new Date(now).toISOString(),
+          updatedAtMs: now,
+          cancelledByUid: cleanPremiumText(identity.uid || "", 140),
+          cancelledByUsername: cleanPremiumText(identity.username || "", 80),
+          updatedByUid: cleanPremiumText(identity.uid || "", 140),
+          updatedByUsername: cleanPremiumText(identity.username || "", 80),
+          updatedByRole: cleanPremiumText(identity.role || "staff", 40)
+        };
+        const docIds = Array.isArray(old.commissionDocIds) ? old.commissionDocIds.map(v => cleanPremiumText(v, 160)).filter(Boolean) : [];
+        const batch = db.batch();
+        batch.set(ref, azJsonSafe(patch), { merge:true });
+        const cpatch = azCommissionPatchForPayoutRequest("cancelled", body, identity);
+        cpatch.payoutRequestCancelledAt = patch.cancelledAt;
+        cpatch.payoutRequestCancelledAtMs = now;
+        docIds.forEach(id => batch.set(db.collection("commissionRecords").doc(id), azJsonSafe(cpatch), { merge:true }));
+        await batch.commit();
+        const updatedSnap = await ref.get();
+        const updated = updatedSnap.exists ? (updatedSnap.data() || { ...old, ...patch }) : { ...old, ...patch };
+        azFireAndForget(azWriteAdminAuditLog(req, identity, "staff_payout_request_cancel", "payoutRequests", requestId, { requestId, oldStatus, recordCount: docIds.length, amount: old.amount || 0 }, "success"), "Staff payout request cancel audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, request: azPayoutRequestSafe(updated, requestId, false), updatedCommissionRecords: docIds.length }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
     if (pathname === "/api/staff/payout-request" && req.method === "POST") {
       try {
         const identity = await azCommissionIdentityFromRequest(req);
@@ -3641,6 +3693,30 @@ async function handler(req, res) {
         const profileId = azPayoutIdentityDocId(identity);
         const profileSnap = await db.collection("staffPayoutProfiles").doc(profileId).get();
         if (!profileSnap.exists) return send(res, 400, JSON.stringify({ ok:false, error:"Please save your payout profile before submitting a payout request." }, null, 2), "application/json");
+        // Duplicate guard: staff should not accidentally submit a second active payout request
+        // for the same approved commission records while an earlier request is still being reviewed.
+        try {
+          let activeSnap;
+          try { activeSnap = await db.collection("payoutRequests").orderBy("createdAtMs", "desc").limit(200).get(); }
+          catch (_) { activeSnap = await db.collection("payoutRequests").limit(200).get(); }
+          let activeRequest = null;
+          activeSnap.forEach(doc => {
+            if (activeRequest) return;
+            const x = doc.data() || {};
+            const st = String(x.status || "requested").toLowerCase();
+            if (!azPayoutRequestBelongsToIdentity(x, identity)) return;
+            if (["requested", "reviewing", "approved"].includes(st)) activeRequest = { docId: doc.id, ...x };
+          });
+          if (activeRequest) {
+            return send(res, 409, JSON.stringify({
+              ok:false,
+              error:"You already have an active payout request. Please wait for admin action or cancel the request first.",
+              activeRequest: azPayoutRequestSafe(activeRequest, activeRequest.docId, false)
+            }, null, 2), "application/json");
+          }
+        } catch (guardErr) {
+          console.warn("AZOBSS payout duplicate guard warning:", guardErr && (guardErr.message || guardErr));
+        }
         const profileSnapshot = azPayoutProfilePublic(profileSnap.data() || {}, true);
         const rows = (await azGetCommissionRowsForIdentity(identity, 800))
           .filter(x => azPayoutStatusBucketValue(x) === 'approved')

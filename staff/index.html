@@ -569,8 +569,21 @@ async function loadPayoutRequests(){
  try{
    const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-requests',{cache:'no-store'});
    const rows=Array.isArray(j.requests)?j.requests:[];
-   if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=rows.map(r=>`<div class="item"><b>📨 ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${esc(r.status||'requested')}</b><div class="muted">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?new Date(r.createdAt).toLocaleString():'')}</div><div class="muted">${esc(r.note||'')}</div>${r.adminNote?`<div class="muted">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="muted">Reference: ${esc(r.payoutReference)}</div>`:''}</div>`).join('') || '<div class="item">No payout requests yet.</div>';
+   if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=rows.map(r=>{
+     const st=String(r.status||'requested').toLowerCase();
+     const canCancel=['requested','reviewing'].includes(st);
+     return `<div class="item"><b>📨 ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${esc(st)}</b><div class="muted">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?new Date(r.createdAt).toLocaleString():'')}</div><div class="muted">${esc(r.note||'')}</div>${r.adminNote?`<div class="muted">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="muted">Reference: ${esc(r.payoutReference)}</div>`:''}${canCancel?`<div class="toolbar"><button class="btn danger" type="button" data-cancel-payout-request="${esc(r.requestId||r.docId||'')}">Cancel Request</button></div>`:''}</div>`;
+   }).join('') || '<div class="item">No payout requests yet.</div>';
  }catch(e){ if($('#payoutRequestList')) $('#payoutRequestList').innerHTML='<div class="item">'+esc(e?.message||'Failed to load payout requests.')+'</div>'; }
+}
+async function cancelPayoutRequest(requestId){
+ try{
+   if(!requestId) return;
+   if(!confirm('Cancel this payout request? The selected commission records can be requested again later.')) return;
+   const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-request-cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})});
+   if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent='Payout request cancelled.';
+   await Promise.all([loadPayoutRequests(), payoutView()]);
+ }catch(e){ if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent=e?.message||'Failed to cancel payout request.'; }
 }
 async function payoutTools(){ await Promise.all([payoutView(), loadPayoutProfile(), loadPayoutRequests()]); }
 
@@ -603,7 +616,7 @@ async function sales(){
  });
  $('#salesList').innerHTML=rows.join('')||'<div class="item">No sales for your products.</div>';
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
+document.addEventListener('click',e=>{const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
 $('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
 onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.');profile=await getProfile(u);if(!profile)return deny('User profile not found.');perms=profile.permissions||{};const role=String(profile.role||'').toLowerCase();if(!(role==='admin'||role==='semiadmin'||role==='staff'||isAdmin(profile)))return deny('Staff role required.');allow();overview();});
 </script>
