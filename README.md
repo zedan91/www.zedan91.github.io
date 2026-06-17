@@ -1,7 +1,13 @@
-# AZOBSS Build 184
+# (173)-AZOBSS Commission Firestore Retry Fix
 
-Base: (183)-AZOBSS-TOYYIBPAY-CALLBACK-VERIFY-LOG-SAFE-FIX_20260617.zip
+Patch focus:
+- Fix staff/share commission not appearing after payment success.
+- Add commission retry on ToyyibPay return route.
+- Store returnUrl/ref info in premium order so share ref can still be detected later.
+- Add backend endpoints for commission diagnostics:
+  - GET /api/commission/status
+  - POST /api/commission/retry-order
 
-Patch 184 adds paid-order idempotency guards for ToyyibPay callback/verify flow. It prevents duplicate finalize, duplicate commission sync, duplicate PA/BM paid sync, and duplicate download email when callback + verify endpoint run close together.
-
-No Firebase Rules update required.
+No Firebase Rules update required when using backend Admin SDK.
+Required Render env on azobss-backend:
+- FIREBASE_SERVICE_ACCOUNT_JSON

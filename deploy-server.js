@@ -193,6 +193,7 @@ const AZOBSS_LOCAL_SOFTWARE_EXPORT = path.join(__dirname, "azobss-software-tools
 const AZOBSS_ADMIN_TEST_USERNAMES = String(process.env.AZOBSS_ADMIN_TEST_USERNAMES || "zedan91,zedan0001").toLowerCase().split(",").map(s => s.trim()).filter(Boolean);
 const AZOBSS_ADMIN_TEST_EMAILS = String(process.env.AZOBSS_ADMIN_TEST_EMAILS || "zedan91@azobss.local,zedan9107@gmail.com").toLowerCase().split(",").map(s => s.trim()).filter(Boolean);
 const AZOBSS_COMMISSION_API_SECRET = String(process.env.AZOBSS_COMMISSION_API_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || "").trim();
+const AZOBSS_ADMIN_API_SECRET = String(process.env.AZOBSS_ADMIN_API_SECRET || "").trim();
 
 function azProductKey(v){ return String(v || "").trim().toLowerCase(); }
 function azProductIdFromAny(product = {}, data = {}) {
@@ -328,6 +329,17 @@ function azRequestHasCommissionSecret(req, parsed) {
     return token === AZOBSS_COMMISSION_API_SECRET;
   }
 }
+function azRequestHasAdminSecret(req, parsed) {
+  const secret = AZOBSS_ADMIN_API_SECRET || AZOBSS_COMMISSION_API_SECRET;
+  if (!secret) return false;
+  const h = req.headers["x-admin-key"] || req.headers["x-azobss-api-key"] || req.headers["x-api-key"] || req.headers.authorization || "";
+  const token = String(h).replace(/^Bearer\s+/i, "").trim() || String(parsed.query.adminKey || parsed.query.key || parsed.query.secret || "").trim();
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(secret));
+  } catch (_) {
+    return token === secret;
+  }
+}
 async function azCommissionIdentityFromRequest(req) {
   try {
     if (!initFirebaseAdmin() || !firebaseAdmin || !firebaseAdmin.auth) return null;
@@ -362,6 +374,18 @@ async function azCommissionIdentityFromRequest(req) {
     console.warn("Commission Firebase token verify failed:", err && (err.message || err));
     return null;
   }
+}
+async function azAdminIdentityFromRequest(req, parsed) {
+  if (azRequestHasAdminSecret(req, parsed)) {
+    return { uid: "api-secret", email: "", username: "api-secret", role: "admin", isAdmin: true, authMethod: "api-secret" };
+  }
+  const identity = await azCommissionIdentityFromRequest(req);
+  if (identity && identity.isAdmin) return Object.assign({ authMethod: "firebase" }, identity);
+  return null;
+}
+function azAdminBypassEnabled() {
+  // Emergency only. Keep unset in production. This reopens the old public manual completion endpoint.
+  return String(process.env.AZOBSS_ALLOW_PUBLIC_COMPLETE_PURCHASE || "") === "1";
 }
 function azCommissionRecordBelongsToIdentity(x = {}, identity = {}) {
   if (!identity || !identity.uid) return false;
@@ -2366,6 +2390,7 @@ async function handler(req, res) {
     // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
     if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-pa-bm-bill", 10, 5 * 60 * 1000)) return;
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
+    if (pathname === "/api/premium/complete-purchase" && req.method === "POST" && azRateLimitOrSend(req, res, "premium-complete-purchase", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/status" && req.method === "GET" && parsed.query && parsed.query.records && azRateLimitOrSend(req, res, "commission-records", 60, 60 * 1000)) return;
     if (pathname === "/api/commission/retry-order" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-retry", 10, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
@@ -3602,6 +3627,11 @@ const filePath =
       try { data = JSON.parse(await readBody(req) || "{}"); }
       catch (error) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid JSON" }), "application/json"); }
 
+      const adminIdentity = azAdminBypassEnabled() ? { isAdmin:true, uid:"public-bypass", username:"public-bypass", authMethod:"env-bypass" } : await azAdminIdentityFromRequest(req, parsed);
+      if (!adminIdentity || !adminIdentity.isAdmin) {
+        return send(res, 403, JSON.stringify({ ok:false, error:"Manual complete-purchase is admin protected. Use Firebase admin login token or AZOBSS_ADMIN_API_SECRET." }, null, 2), "application/json");
+      }
+
       const requestedProduct = data.product || {};
       const trustedResolved = await azResolveTrustedPremiumProduct(data, req);
       const product = trustedResolved.product || {};
@@ -3649,7 +3679,14 @@ const filePath =
         paidAt: new Date(now).toISOString(),
         downloadToken: token,
         tokenExpiresAt: new Date(expiresAtMs).toISOString(),
-        maxDownload: requestedLimit
+        maxDownload: requestedLimit,
+        completedByUid: cleanPremiumText(adminIdentity.uid || "", 120),
+        completedByUsername: cleanPremiumText(adminIdentity.username || "", 80),
+        completedByRole: cleanPremiumText(adminIdentity.role || "admin", 40),
+        completedByAuthMethod: cleanPremiumText(adminIdentity.authMethod || "firebase", 40),
+        completedAt: new Date(now).toISOString(),
+        receiptTokenRequired: true,
+        receiptTokenVersion: 2
       };
       savePremiumOrder(order);
       await azFinalizeCommissionForOrder(order);
@@ -3721,7 +3758,7 @@ const filePath =
       const order = findPremiumOrderByAny({ orderId: saved.orderId }) || await azFindPremiumOrderPersistent({ orderId: saved.orderId }) || {};
       const expires = saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-";
       const actionUrl = `/api/premium/download/${encodeURIComponent(token)}`;
-      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Klik butang di bawah untuk mula download sebenar. Paparan ini tidak menggunakan kuota download.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download count hanya dikira selepas butang Start Download ditekan.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email preview tidak akan consume token. Download sebenar guna POST confirmation.</p></div></body></html>`;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Click the button below to start the actual download. This preview page does not use your download quota.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download count is only used after you press Start Download.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email previews will not consume the token. The actual download uses POST confirmation.</p></div></body></html>`;
       return send(res, 200, html, "text/html; charset=utf-8");
     }
 
