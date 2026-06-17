@@ -613,13 +613,91 @@ function azPayoutRequestSafe(x = {}, docId = '', adminView = false) {
     createdAt: cleanPremiumText(x.createdAt || '', 80),
     createdAtMs: Number(x.createdAtMs || 0) || 0,
     updatedAt: cleanPremiumText(x.updatedAt || '', 80),
-    updatedAtMs: Number(x.updatedAtMs || 0) || 0
+    updatedAtMs: Number(x.updatedAtMs || 0) || 0,
+    timeline: azPayoutTimelineSafe(x.timeline || x.events || [], adminView)
   };
 }
 function azPayoutRequestStatus(value) {
   const s = String(value || '').trim().toLowerCase();
   if (['requested','reviewing','approved','paid','rejected','cancelled'].includes(s)) return s;
   return '';
+}
+function azPayoutTimelineEvent(type, actor = {}, note = '', extra = {}) {
+  const now = Date.now();
+  return {
+    type: cleanPremiumText(type || 'update', 60),
+    note: cleanPremiumText(note || '', 360),
+    status: cleanPremiumText(extra.status || '', 40),
+    actorUid: cleanPremiumText(actor.uid || '', 140),
+    actorUsername: cleanPremiumText(actor.username || '', 80),
+    actorRole: cleanPremiumText(actor.role || (actor.isAdmin ? 'admin' : 'staff'), 40),
+    actorEmailMasked: maskEmail(actor.email || ''),
+    createdAt: new Date(now).toISOString(),
+    createdAtMs: now
+  };
+}
+function azPayoutTimelineSafe(list = [], adminView = false) {
+  if (!Array.isArray(list)) return [];
+  return list.slice(-30).map(x => ({
+    type: cleanPremiumText(x && x.type || 'update', 60),
+    status: cleanPremiumText(x && x.status || '', 40),
+    note: cleanPremiumText(x && x.note || '', 360),
+    actorUsername: cleanPremiumText(x && x.actorUsername || '', 80),
+    actorRole: cleanPremiumText(x && x.actorRole || '', 40),
+    actorEmailMasked: cleanPremiumText(x && x.actorEmailMasked || '', 160),
+    createdAt: cleanPremiumText(x && x.createdAt || '', 80),
+    createdAtMs: Number(x && x.createdAtMs || 0) || 0
+  }));
+}
+function azPayoutAppendTimeline(oldRequest = {}, event = {}) {
+  const prev = Array.isArray(oldRequest.timeline) ? oldRequest.timeline : (Array.isArray(oldRequest.events) ? oldRequest.events : []);
+  return [...prev.slice(-24), event].filter(Boolean);
+}
+function azPayoutAdminNotifyEmails() {
+  return String(process.env.AZOBSS_ADMIN_NOTIFY_EMAILS || process.env.AZOBSS_PAYOUT_ADMIN_EMAILS || '')
+    .split(/[;,]/).map(x => x.trim()).filter(x => x && x.includes('@')).slice(0, 5);
+}
+async function azMaybeSendPayoutEmail({ to, subject, html, text, requestId, kind }) {
+  const recipients = Array.isArray(to) ? to : [to];
+  if (!mailReady()) return { ok:false, skipped:'mail-not-ready' };
+  const sent = [];
+  for (const email of recipients.map(x => cleanPremiumText(x, 180)).filter(x => x && x.includes('@'))) {
+    try {
+      if (brevoApiReady()) await sendBrevoApiEmail({ to: email, subject, html, text });
+      else {
+        const transporter = makeMailer();
+        if (!transporter) throw new Error('SMTP not configured');
+        await transporter.sendMail({ from: process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER, to: email, subject, html, text });
+      }
+      sent.push(maskEmail(email));
+    } catch (err) {
+      console.warn('AZOBSS payout email failed:', JSON.stringify({ requestId, kind, email: maskEmail(email), error: err && (err.message || err) }).slice(0, 700));
+    }
+  }
+  return { ok: sent.length > 0, sent };
+}
+async function azNotifyPayoutSubmitted(req, requestRow = {}, identity = {}) {
+  const adminEmails = azPayoutAdminNotifyEmails();
+  if (!adminEmails.length) return { ok:false, skipped:'no-admin-notify-emails' };
+  const base = publicBaseUrlFromReq(req);
+  const subject = `AZOBSS Payout Request - ${requestRow.amountText || ('RM' + Number(requestRow.amount || 0).toFixed(2))}`;
+  const body = `A staff payout request has been submitted.\n\nStaff: ${requestRow.username || requestRow.email || '-'}\nAmount: ${requestRow.amountText || requestRow.amount || '-'}\nRecords: ${requestRow.recordCount || 0}\nRequest ID: ${requestRow.requestId || '-'}\n\nOpen Admin Dashboard: ${base}/admin/`;
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.5"><h2>AZOBSS Payout Request</h2><p>A staff payout request has been submitted.</p><p><b>Staff:</b> ${cleanPremiumText(requestRow.username || requestRow.email || '-', 160)}<br><b>Amount:</b> ${cleanPremiumText(requestRow.amountText || ('RM' + Number(requestRow.amount || 0).toFixed(2)), 40)}<br><b>Records:</b> ${Number(requestRow.recordCount || 0) || 0}<br><b>Request ID:</b> ${cleanPremiumText(requestRow.requestId || '-', 120)}</p><p><a href="${base}/admin/">Open Admin Dashboard</a></p></div>`;
+  return azMaybeSendPayoutEmail({ to: adminEmails, subject, html, text: body, requestId: requestRow.requestId, kind:'payout-submitted-admin' });
+}
+async function azNotifyPayoutStatusToStaff(req, requestRow = {}, status = '', patch = {}) {
+  const email = cleanPremiumText(requestRow.email || (requestRow.profileSnapshot && requestRow.profileSnapshot.payoutEmail) || '', 180);
+  if (!email || !email.includes('@')) return { ok:false, skipped:'no-staff-email' };
+  const label = String(status || requestRow.status || '').toUpperCase();
+  const base = publicBaseUrlFromReq(req);
+  const amountText = requestRow.amountText || ('RM' + Number(requestRow.amount || 0).toFixed(2));
+  const note = cleanPremiumText(patch.adminNote || requestRow.adminNote || '', 500);
+  const ref = cleanPremiumText(patch.payoutReference || requestRow.payoutReference || '', 160);
+  const method = cleanPremiumText(patch.payoutMethod || requestRow.payoutMethod || '', 80);
+  const subject = `AZOBSS Payout ${label} - ${amountText}`;
+  const body = `Your AZOBSS payout request status has been updated.\n\nStatus: ${label}\nAmount: ${amountText}\nRequest ID: ${requestRow.requestId || ''}\n${ref ? `Reference: ${ref}\n` : ''}${method ? `Method: ${method}\n` : ''}${note ? `Admin note: ${note}\n` : ''}\nOpen Staff Dashboard: ${base}/staff/`;
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.5"><h2>AZOBSS Payout ${label}</h2><p>Your payout request status has been updated.</p><p><b>Status:</b> ${label}<br><b>Amount:</b> ${cleanPremiumText(amountText, 40)}<br><b>Request ID:</b> ${cleanPremiumText(requestRow.requestId || '', 120)}${ref?`<br><b>Reference:</b> ${ref}`:''}${method?`<br><b>Method:</b> ${method}`:''}${note?`<br><b>Admin note:</b> ${note}`:''}</p><p><a href="${base}/staff/">Open Staff Dashboard</a></p></div>`;
+  return azMaybeSendPayoutEmail({ to: email, subject, html, text: body, requestId: requestRow.requestId, kind:'payout-status-staff' });
 }
 
 function azPayoutRequestBelongsToIdentity(x = {}, identity = {}) {
@@ -3662,7 +3740,8 @@ async function handler(req, res) {
           cancelledByUsername: cleanPremiumText(identity.username || "", 80),
           updatedByUid: cleanPremiumText(identity.uid || "", 140),
           updatedByUsername: cleanPremiumText(identity.username || "", 80),
-          updatedByRole: cleanPremiumText(identity.role || "staff", 40)
+          updatedByRole: cleanPremiumText(identity.role || "staff", 40),
+          timeline: azPayoutAppendTimeline(old, azPayoutTimelineEvent('cancelled', identity, 'Payout request cancelled by staff.', { status:'cancelled' }))
         };
         const docIds = Array.isArray(old.commissionDocIds) ? old.commissionDocIds.map(v => cleanPremiumText(v, 160)).filter(Boolean) : [];
         const batch = db.batch();
@@ -3757,13 +3836,15 @@ async function handler(req, res) {
           createdAt: new Date(now).toISOString(),
           createdAtMs: now,
           updatedAt: new Date(now).toISOString(),
-          updatedAtMs: now
+          updatedAtMs: now,
+          timeline: [azPayoutTimelineEvent('requested', identity, 'Payout request submitted by staff.', { status:'requested' })]
         };
         const batch = db.batch();
         batch.set(db.collection("payoutRequests").doc(requestId), azJsonSafe(requestRow), { merge:true });
         docIds.forEach(id => batch.set(db.collection("commissionRecords").doc(id), azJsonSafe({ payoutRequestId: requestId, payoutRequestStatus: 'requested', payoutRequestedAt: requestRow.createdAt, payoutRequestedAtMs: now }), { merge:true }));
         await batch.commit();
         azFireAndForget(azWriteAdminAuditLog(req, identity, "staff_payout_request_submit", "payoutRequests", requestId, { amount, recordCount: docIds.length, username: identity.username || '' }, "success"), "Staff payout request audit log failed");
+        azFireAndForget(azNotifyPayoutSubmitted(req, requestRow, identity), "Staff payout admin notification failed");
         return send(res, 200, JSON.stringify({ ok:true, request: azPayoutRequestSafe(requestRow, requestId, false) }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
@@ -3807,6 +3888,7 @@ async function handler(req, res) {
         if (!snap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Payout request not found." }, null, 2), "application/json");
         const old = snap.data() || {};
         const patch = azPayoutRequestPatch({ ...body, status }, adminIdentity);
+        patch.timeline = azPayoutAppendTimeline(old, azPayoutTimelineEvent('status_update', adminIdentity, `Admin updated payout request to ${status}.`, { status }));
         const batch = db.batch();
         batch.set(ref, azJsonSafe(patch), { merge:true });
         const docIds = Array.isArray(old.commissionDocIds) ? old.commissionDocIds.map(v => cleanPremiumText(v, 160)).filter(Boolean) : [];
@@ -3816,6 +3898,7 @@ async function handler(req, res) {
         const updatedSnap = await ref.get();
         const updated = updatedSnap.exists ? (updatedSnap.data() || { ...old, ...patch }) : { ...old, ...patch };
         azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payout_request_status_update", "payoutRequests", requestId, { requestId, status, amount: old.amount || 0, recordCount: docIds.length, payoutReference: patch.payoutReference || '', payoutMethod: patch.payoutMethod || '' }, "success"), "Admin payout request audit log failed");
+        azFireAndForget(azNotifyPayoutStatusToStaff(req, { ...old, ...updated, requestId }, status, patch), "Staff payout status email failed");
         return send(res, 200, JSON.stringify({ ok:true, status, updatedCommissionRecords: docIds.length, request: azPayoutRequestSafe(updated, requestId, true) }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");

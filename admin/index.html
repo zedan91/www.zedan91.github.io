@@ -2075,6 +2075,11 @@ async function loadAdminCommissions(){
 }
 
 let adminPayoutRequestCache=[];
+function adminPayoutTimelineHtml(r){
+ const rows=Array.isArray(r?.timeline)?r.timeline.slice(-6):[];
+ if(!rows.length) return '';
+ return `<div class="item-meta" style="margin-top:8px"><b>Timeline:</b>${rows.map(x=>`<div>• ${esc(x.status||x.type||'update')} — ${esc(x.note||'')} ${x.actorUsername?`by ${esc(x.actorUsername)}`:''} ${x.createdAt?`(${esc(fmtDate(x.createdAtMs||x.createdAt))})`:''}</div>`).join('')}</div>`;
+}
 function payoutRequestStatusBadge(status){
   const s=String(status||'requested').toLowerCase();
   if(s==='paid') return '✅ paid';
@@ -2101,7 +2106,7 @@ function renderAdminPayoutRequests(){
   if($('#adminPayoutRequestList')) $('#adminPayoutRequestList').innerHTML=rows.map(r=>{
     const p=r.profile||{};
     const account=[p.payoutMethod,p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • ');
-    return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${esc(r.docId||r.requestId)}">Review</button><button class="btn" data-payout-request-status="approved" data-payout-request-id="${esc(r.docId||r.requestId)}">Approve</button><button class="btn green" data-payout-request-status="paid" data-payout-request-id="${esc(r.docId||r.requestId)}">Mark Paid</button><button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${esc(r.docId||r.requestId)}">Reject</button></div></div>`;
+    return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${esc(r.docId||r.requestId)}">Review</button><button class="btn" data-payout-request-status="approved" data-payout-request-id="${esc(r.docId||r.requestId)}">Approve</button><button class="btn green" data-payout-request-status="paid" data-payout-request-id="${esc(r.docId||r.requestId)}">Mark Paid</button><button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${esc(r.docId||r.requestId)}">Reject</button></div></div>`;
   }).join('') || '<div class="item">No payout requests.</div>';
 }
 async function updatePayoutRequestStatus(requestId,status){

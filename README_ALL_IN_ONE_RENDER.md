@@ -1,8 +1,7 @@
-# Render note
+# AZOBSS Render Notes - 198
 
-For Software/CAD commission, env must be set on `azobss-backend`, because payment success is processed by that service.
+No required ENV changes.
+Optional for payout request admin email alert:
+AZOBSS_ADMIN_NOTIFY_EMAILS=zedan9107@gmail.com
 
-Required:
-FIREBASE_SERVICE_ACCOUNT_JSON={full Firebase service account JSON}
-
-Then Save, rebuild and deploy.
+Do not set this if you do not want email alerts; dashboard timeline still works.

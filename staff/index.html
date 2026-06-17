@@ -565,6 +565,11 @@ async function submitPayoutRequest(){
    await Promise.all([loadPayoutRequests(), payoutView()]);
  }catch(e){ if($('#payoutRequestNotice')) $('#payoutRequestNotice').textContent=e?.message||'Failed to submit payout request.'; }
 }
+function payoutTimelineHtml(r){
+ const rows=Array.isArray(r?.timeline)?r.timeline.slice(-6):[];
+ if(!rows.length) return '';
+ return `<div class="muted" style="margin-top:8px"><b>Timeline:</b>${rows.map(x=>`<div>• ${esc(x.status||x.type||'update')} — ${esc(x.note||'')} ${x.createdAt?`<span class="muted">(${esc(new Date(x.createdAt).toLocaleString())})</span>`:''}</div>`).join('')}</div>`;
+}
 async function loadPayoutRequests(){
  try{
    const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-requests',{cache:'no-store'});
@@ -572,7 +577,7 @@ async function loadPayoutRequests(){
    if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=rows.map(r=>{
      const st=String(r.status||'requested').toLowerCase();
      const canCancel=['requested','reviewing'].includes(st);
-     return `<div class="item"><b>📨 ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${esc(st)}</b><div class="muted">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?new Date(r.createdAt).toLocaleString():'')}</div><div class="muted">${esc(r.note||'')}</div>${r.adminNote?`<div class="muted">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="muted">Reference: ${esc(r.payoutReference)}</div>`:''}${canCancel?`<div class="toolbar"><button class="btn danger" type="button" data-cancel-payout-request="${esc(r.requestId||r.docId||'')}">Cancel Request</button></div>`:''}</div>`;
+     return `<div class="item"><b>📨 ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${esc(st)}</b><div class="muted">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?new Date(r.createdAt).toLocaleString():'')}</div><div class="muted">${esc(r.note||'')}</div>${r.adminNote?`<div class="muted">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="muted">Reference: ${esc(r.payoutReference)}</div>`:''}${payoutTimelineHtml(r)}${canCancel?`<div class="toolbar"><button class="btn danger" type="button" data-cancel-payout-request="${esc(r.requestId||r.docId||'')}">Cancel Request</button></div>`:''}</div>`;
    }).join('') || '<div class="item">No payout requests yet.</div>';
  }catch(e){ if($('#payoutRequestList')) $('#payoutRequestList').innerHTML='<div class="item">'+esc(e?.message||'Failed to load payout requests.')+'</div>'; }
 }
