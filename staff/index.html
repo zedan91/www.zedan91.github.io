@@ -326,10 +326,10 @@ button[data-az-open-support] [data-az-message-badge].is-show{
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_END -->
 
 
-<div class="cover"><div class="box"><h2>🔐 Staff Only</h2><p id="accessMsg">Checking access...</p><a class="btn green" href="/">Back Home</a></div></div>
+<div class="cover"><div class="box"><h2>🔐 Staff Only</h2><p id="accessMsg">Checking access...</p></div></div>
 <div class="shell">
 <aside class="side"><div class="brand">🧑‍💼 AZOBSS Staff</div><nav class="nav">
-<button data-tab="overview" class="active">📊 Overview</button><button data-tab="software">💻 Software</button><button data-tab="cad">📐 CAD Tools</button><button data-tab="sales">💳 Sales View</button><a href="/">🏠 Back Home</a>
+<button data-tab="overview" class="active">📊 Overview</button><button data-tab="software">💻 Software</button><button data-tab="cad">📐 CAD Tools</button><button data-tab="sales">💳 Sales View</button>
 </nav></aside>
 <main class="main">
 <h1>Staff Dashboard</h1><p class="muted">Semi-admin/staff boleh lihat ringkasan dan sales sendiri. Komisen hanya admin yang urus.</p>
@@ -1408,7 +1408,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(document.getElementById('azRoleDenyOverlay041')) return;
     var div = document.createElement('div');
     div.id = 'azRoleDenyOverlay041';
-    div.innerHTML = '<div class="box"><h2>Access Restricted</h2><p>This page is for '+required+' only.<br>Current role: '+role+'</p><a href="/">Go to Home</a></div>';
+    div.innerHTML = '<div class="box"><h2>Access Restricted</h2><p>This page is for '+required+' only.<br>Current role: '+role+'</p></div>';
     document.body.appendChild(div);
     setTimeout(function(){ location.href = '/'; }, 1800);
   }

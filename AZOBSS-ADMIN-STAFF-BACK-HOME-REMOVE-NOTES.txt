@@ -1,0 +1,1 @@
+Patch 172: Removed unnecessary Back Home / Back to AZOBSS buttons from admin and staff dashboards only. No functional payment, Lucky Draw, Software/CAD, PA/BM, or backend logic changed.

@@ -118,7 +118,7 @@ import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/fire
     if(!box){
       box = document.createElement('div');
       box.id = 'azAdminAccessDenied';
-      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p></div>';
       document.body.appendChild(box);
     }
     const msg = document.getElementById('azAdminAccessMessage');
@@ -951,7 +951,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <div class="login-box">
     <h2>🔐 AZOBSS Admin Dashboard</h2>
     <p id="loginState">Checking admin access...</p>
-    <a class="btn green" href="/">Back to AZOBSS</a>
   </div>
 </div>
 
@@ -971,7 +970,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <button data-tab="lucky">🎁 Lucky Draw</button>
       <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings">⚙️ Settings</button>
-      <a class="home-link" href="/">🏠 Back Home</a>
     </nav>
     <div class="side-footer">Admin-only module. Loads are limited to reduce Firestore quota.</div>
   </aside>
@@ -3223,7 +3221,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(document.getElementById('azRoleDenyOverlay041')) return;
     var div = document.createElement('div');
     div.id = 'azRoleDenyOverlay041';
-    div.innerHTML = '<div class="box"><h2>Access Restricted</h2><p>This page is for '+required+' only.<br>Current role: '+role+'</p><a href="/">Go to Home</a></div>';
+    div.innerHTML = '<div class="box"><h2>Access Restricted</h2><p>This page is for '+required+' only.<br>Current role: '+role+'</p></div>';
     document.body.appendChild(div);
     setTimeout(function(){ location.href = '/'; }, 1800);
   }
