@@ -192,7 +192,9 @@ function upsertPremiumOrder(order) {
   if (idx >= 0) orders[idx] = { ...orders[idx], ...order, updatedAt: new Date().toISOString() };
   else orders.unshift({ ...order, updatedAt: new Date().toISOString() });
   writePremiumOrders(orders);
-  return idx >= 0 ? orders[idx] : orders[0];
+  const saved = idx >= 0 ? orders[idx] : orders[0];
+  azFireAndForget(azPersistPremiumOrder(saved), "AZOBSS premium order Firestore persist failed:");
+  return saved;
 }
 function findPremiumOrderByAny(ref = {}) {
   return readPremiumOrders().find(o => (ref.orderId && o.orderId === ref.orderId) || (ref.billCode && o.billCode === ref.billCode) || (ref.billcode && o.billCode === ref.billcode)) || null;
@@ -257,7 +259,7 @@ async function sendBrevoApiEmail({ to, subject, html, text }) {
 }
 function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
-  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will redirect to your Premium Download File Link after verification.</p><p style="color:#b45309"><b>Important:</b> This link will automatically expire after the first download. If it is not used, the link will expire on ${expires}.</p><p><a href="${receiptUrl}">View receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download count is only used after you press Start Download.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download count is only used after you press Start Download. If it is not used, the link will expire on ${expires}.</p><p><a href="${receiptUrl}">View receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
 }
 async function maybeSendDownloadEmail(order, req) {
   try {
@@ -314,7 +316,7 @@ Order ID: ${current.orderId}
 Download: ${downloadUrl}
 Receipt: ${receiptUrl}
 
-This link will automatically expire after the first download.`;
+This link opens a confirmation page first. Download count is only used after you press Start Download.`;
 
     let sendInfo = null;
     if (brevoApiReady()) {
@@ -816,6 +818,118 @@ function getAzobssBackendDb() {
   if (!initFirebaseAdmin()) return null;
   return firebaseAdmin.firestore();
 }
+
+function azJsonSafe(value) {
+  try { return JSON.parse(JSON.stringify(value || {})); } catch (_e) { return value || {}; }
+}
+function azFireAndForget(promise, label) {
+  try {
+    if (promise && typeof promise.catch === "function") promise.catch(err => console.warn(label || "AZOBSS async task failed:", err && (err.message || err)));
+  } catch (err) {
+    console.warn(label || "AZOBSS async task setup failed:", err && (err.message || err));
+  }
+}
+async function azPersistPremiumOrder(order = {}) {
+  if (!order || !order.orderId) return { ok:false, reason:"missing-order-id" };
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, reason:"firebase-not-ready" };
+  const safe = azJsonSafe({ ...order, updatedAt: new Date().toISOString() });
+  await db.collection("premiumOrders").doc(String(order.orderId)).set(safe, { merge:true });
+  return { ok:true };
+}
+async function azFindPremiumOrderPersistent(ref = {}) {
+  const db = getAzobssBackendDb();
+  if (!db) return null;
+  const orderId = cleanPremiumText(ref.orderId || "", 160);
+  const billCode = cleanPremiumText(ref.billCode || ref.billcode || "", 120);
+  if (orderId) {
+    const snap = await db.collection("premiumOrders").doc(orderId).get();
+    if (snap.exists) return snap.data() || null;
+  }
+  if (billCode) {
+    const q = await db.collection("premiumOrders").where("billCode", "==", billCode).limit(1).get();
+    if (!q.empty) return q.docs[0].data() || null;
+  }
+  return null;
+}
+async function azPersistPremiumToken(tokenData = {}) {
+  if (!tokenData || !tokenData.token) return { ok:false, reason:"missing-token" };
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, reason:"firebase-not-ready" };
+  const safe = azJsonSafe({ ...tokenData, updatedAt: new Date().toISOString() });
+  await db.collection("premiumDownloadTokens").doc(String(tokenData.token)).set(safe, { merge:true });
+  return { ok:true };
+}
+async function azFindPremiumTokenPersistent(token) {
+  const db = getAzobssBackendDb();
+  if (!db || !token) return null;
+  const snap = await db.collection("premiumDownloadTokens").doc(String(token)).get();
+  return snap.exists ? (snap.data() || null) : null;
+}
+async function azUpdatePremiumTokenPersistent(token, patch = {}) {
+  const db = getAzobssBackendDb();
+  if (!db || !token) return null;
+  const ref = db.collection("premiumDownloadTokens").doc(String(token));
+  const snap = await ref.get();
+  if (!snap.exists) return null;
+  const next = { ...(snap.data() || {}), ...(patch || {}), updatedAt: new Date().toISOString() };
+  await ref.set(azJsonSafe(next), { merge:true });
+  return next;
+}
+async function azFindReceiptOrder(orderId) {
+  const cleanId = cleanPremiumText(orderId || "", 160);
+  if (!cleanId) return null;
+  let order = findPremiumOrderByAny({ orderId: cleanId });
+  if (order) return order;
+  try { order = await azFindPremiumOrderPersistent({ orderId: cleanId }); } catch (err) { console.warn("Receipt premiumOrders lookup failed:", err && (err.message || err)); }
+  if (order) return order;
+
+  // Fallback: rebuild a receipt from commissionRecords so receipt remains available even after Render restarts.
+  try {
+    const db = getAzobssBackendDb();
+    if (db) {
+      const q = await db.collection("commissionRecords").where("orderId", "==", cleanId).limit(5).get();
+      if (!q.empty) {
+        const rows = q.docs.map(d => d.data() || {});
+        const x = rows[0] || {};
+        const saleAmount = Number(x.saleAmount || 0) || Number(x.amount || 0) || 0;
+        return {
+          orderId: cleanId,
+          status: x.paymentStatus || "paid",
+          productName: x.productName || "AZOBSS Digital Product",
+          amount: x.saleAmountText || (saleAmount ? azCommissionAmountText(saleAmount) : x.amountText || "-"),
+          paymentMethod: x.paymentMethod || "toyyibpay",
+          paymentReference: x.paymentReference || x.billCode || "-",
+          billCode: x.billCode || "",
+          user: { username: x.buyerUsername || "-", email: x.buyerEmail || "-" },
+          paidAt: x.createdAt || new Date(Number(x.createdAtMs || Date.now())).toISOString(),
+          createdAt: x.createdAt || new Date(Number(x.createdAtMs || Date.now())).toISOString(),
+          receiptFromCommission: true
+        };
+      }
+    }
+  } catch (err) { console.warn("Receipt commissionRecords lookup failed:", err && (err.message || err)); }
+
+  const localRows = readPremiumJson(COMMISSION_RECORDS_FILE, []);
+  const x = Array.isArray(localRows) ? localRows.find(r => String(r.orderId || "") === cleanId) : null;
+  if (x) {
+    const saleAmount = Number(x.saleAmount || 0) || Number(x.amount || 0) || 0;
+    return {
+      orderId: cleanId,
+      status: x.paymentStatus || "paid",
+      productName: x.productName || "AZOBSS Digital Product",
+      amount: x.saleAmountText || (saleAmount ? azCommissionAmountText(saleAmount) : x.amountText || "-"),
+      paymentMethod: x.paymentMethod || "toyyibpay",
+      paymentReference: x.paymentReference || x.billCode || "-",
+      billCode: x.billCode || "",
+      user: { username: x.buyerUsername || "-", email: x.buyerEmail || "-" },
+      paidAt: x.createdAt || new Date(Number(x.createdAtMs || Date.now())).toISOString(),
+      createdAt: x.createdAt || new Date(Number(x.createdAtMs || Date.now())).toISOString(),
+      receiptFromCommission: true
+    };
+  }
+  return null;
+}
 function azCommissionUsername(v){ return String(v || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 80); }
 function azCommissionMoney(v){ const m = String(v || '').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]{1,2})?/); return m ? Number(m[0]) : 0; }
 function azCommissionAmountText(n){ return 'RM' + Number(n || 0).toFixed(2); }
@@ -944,6 +1058,7 @@ function savePremiumToken(tokenData) {
   const active = tokens.filter(t => Number(t.expiresAt || 0) > now && Number(t.usedCount || 0) < Number(t.maxDownload || 3));
   active.unshift(tokenData);
   writePremiumJson(PREMIUM_TOKENS_FILE, active.slice(0, 200));
+  azFireAndForget(azPersistPremiumToken(tokenData), "AZOBSS premium token Firestore persist failed:");
 }
 
 function findPremiumToken(token) {
@@ -3131,12 +3246,29 @@ const filePath =
 
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET") {
       const token = decodeURIComponent(path.basename(pathname));
-      const saved = findPremiumToken(token);
-      if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 3)) {
+      let saved = findPremiumToken(token);
+      if (!saved) {
+        try { saved = await azFindPremiumTokenPersistent(token); } catch (err) { console.warn("Premium token Firestore lookup failed:", err && (err.message || err)); }
+      }
+      if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
         return send(res, 403, "Download link expired or already used too many times.");
       }
-      updatePremiumToken(token, t => ({ ...t, usedCount: Number(t.usedCount || 0) + 1, lastUsedAt: Date.now() }));
-      const target = saved.downloadLink;
+
+      // Gmail/Google Safe Browsing and email scanners can prefetch links.
+      // First page is a safe confirmation gate and does NOT consume download count.
+      const confirmed = String(parsed.query.confirm || parsed.query.start || "") === "1";
+      if (!confirmed) {
+        const order = findPremiumOrderByAny({ orderId: saved.orderId }) || await azFindPremiumOrderPersistent({ orderId: saved.orderId }) || {};
+        const expires = saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-";
+        const startUrl = `/api/premium/download/${encodeURIComponent(token)}?confirm=1`;
+        const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}a.btn{display:inline-block;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800}.muted{color:#94a3b8}.warn{color:#fbbf24}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Klik butang di bawah untuk mula download sebenar. Paparan ini tidak menggunakan kuota download.</p><p><a class="btn" href="${startUrl}">Start Download</a></p><p class="warn">Download count hanya dikira selepas butang Start Download ditekan.</p><p class="muted">Expires: ${expires}</p></div></body></html>`;
+        return send(res, 200, html, "text/html; charset=utf-8");
+      }
+
+      const nextUsed = Number(saved.usedCount || 0) + 1;
+      updatePremiumToken(token, t => ({ ...t, usedCount: nextUsed, lastUsedAt: Date.now() }));
+      try { await azUpdatePremiumTokenPersistent(token, { usedCount: nextUsed, lastUsedAt: Date.now() }); } catch (err) { console.warn("Premium token Firestore update failed:", err && (err.message || err)); }
+      const target = saved.downloadLink || saved.premiumDownloadFileLink || "";
       if (/^https?:\/\//i.test(target)) {
         res.writeHead(302, { Location: target, "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" });
         res.end();
@@ -3154,8 +3286,7 @@ const filePath =
 
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET") {
       const orderId = decodeURIComponent(path.basename(pathname));
-      const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []);
-      const order = orders.find(o => o.orderId === orderId);
+      const order = await azFindReceiptOrder(orderId);
       if (!order) return send(res, 404, "Receipt not found");
       return send(res, 200, buildReceiptHtml(order), "text/html; charset=utf-8");
     }
