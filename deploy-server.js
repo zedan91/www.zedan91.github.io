@@ -387,7 +387,10 @@ function azReceiptUrl(base, order = {}) {
 }
 function azReceiptTokenOk(order = {}, supplied = "") {
   const expected = azMakeReceiptToken(order);
-  if (!supplied) return process.env.AZOBSS_REQUIRE_RECEIPT_TOKEN === "1" ? false : true;
+  // New premium orders created after hardening require receipt token by default.
+  // Old historical orders/fallback commission receipts can still be opened unless AZOBSS_REQUIRE_RECEIPT_TOKEN=1.
+  const requireForThisOrder = process.env.AZOBSS_REQUIRE_RECEIPT_TOKEN === "1" || order.receiptTokenRequired === true || String(order.receiptTokenRequired || "") === "1";
+  if (!supplied) return requireForThisOrder ? false : true;
   try { return crypto.timingSafeEqual(Buffer.from(String(supplied)), Buffer.from(expected)); } catch (_) { return String(supplied) === expected; }
 }
 
@@ -586,7 +589,7 @@ function makeDownloadForOrder(order) {
   const expiresAtMs = now + expiryHours * 60 * 60 * 1000;
   const realDownloadLink = cleanPremiumUrl(order.downloadLink || order.premiumDownloadFileLink || order.secureDownloadLink || order.privateDownloadLink || order.downloadUrl || "");
   savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload: 1 });
-  return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload: 1 });
+  return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload: 1, receiptTokenRequired: order.receiptTokenRequired === false ? false : true, receiptTokenVersion: order.receiptTokenVersion || 2 });
 }
 async function refreshToyyibOrder(order, req) {
   if (!order || !order.billCode) return order;
@@ -1345,6 +1348,15 @@ function azSecurityHeaders(extra = {}) {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
   }, extra || {});
+}
+function azStaticCacheHeaders(filePath = "") {
+  const ext = path.extname(String(filePath || "")).toLowerCase();
+  // HTML must stay fresh because AZOBSS pages are patched often. Static assets can be cached briefly for speed.
+  if ([".html", ".htm", ""].includes(ext)) return { "Cache-Control": "no-store" };
+  if ([".js", ".css", ".json"].includes(ext)) return { "Cache-Control": "public, max-age=300, must-revalidate" };
+  if ([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico", ".woff", ".woff2", ".ttf", ".eot"].includes(ext)) return { "Cache-Control": "public, max-age=86400" };
+  if ([".zip", ".exe", ".msi", ".pdf", ".tif", ".tiff"].includes(ext)) return { "Cache-Control": "private, no-store" };
+  return { "Cache-Control": "public, max-age=300, must-revalidate" };
 }
 
 const AZOBSS_RATE_BUCKETS = new Map();
@@ -2379,7 +2391,7 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText }, trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, maxDownload:1, expiryHours:24, createdAt:new Date().toISOString() });
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText }, trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, maxDownload:1, expiryHours:24, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
         return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
@@ -3651,7 +3663,8 @@ const filePath =
       res,
       200,
       data,
-      mimeType(filePath)
+      mimeType(filePath),
+      azStaticCacheHeaders(filePath)
     );
 
   } catch (err) {
