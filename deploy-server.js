@@ -1337,7 +1337,7 @@ function send(res, status, body, type = "text/plain; charset=utf-8") {
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, x-admin-key"
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-key, x-api-key, x-azobss-api-key"
   });
 
   res.end(body);
@@ -2463,7 +2463,8 @@ async function handler(req, res) {
         }
         const localRows = readPremiumJson(COMMISSION_RECORDS_FILE, []);
         if (wantRecords && !records.length && Array.isArray(localRows)) {
-          records = localRows.slice(0, maxRecords).map((x, i) => ({
+          const visibleLocalRows = hasCommissionSecret ? localRows : localRows.filter(x => azCommissionRecordBelongsToIdentity(x, commissionIdentity));
+          records = visibleLocalRows.slice(0, maxRecords).map((x, i) => ({
             docId: cleanPremiumText(x.docId || x.id || `local_${i}`, 120),
             orderId: cleanPremiumText(x.orderId || '', 140),
             billCode: cleanPremiumText(x.billCode || '', 100),
@@ -2510,11 +2511,19 @@ async function handler(req, res) {
 
     if (pathname === "/api/commission/retry-order" && req.method === "POST") {
       try {
+        const hasCommissionSecret = azRequestHasCommissionSecret(req, parsed);
+        const commissionIdentity = hasCommissionSecret ? { isAdmin:true, uid:'api-secret' } : await azCommissionIdentityFromRequest(req);
+        if (!hasCommissionSecret && (!commissionIdentity || !commissionIdentity.isAdmin)) {
+          return send(res, 403, JSON.stringify({ ok:false, error:'Admin authorization required to retry commission generation.' }, null, 2), "application/json");
+        }
         const raw = await readBody(req);
         const body = parseRequestBody(raw);
         const orderId = cleanPremiumText(body.orderId || parsed.query.orderId || '', 140);
         const billCode = cleanPremiumText(body.billCode || parsed.query.billCode || '', 100);
-        const order = findPremiumOrderByAny({ orderId, billCode });
+        let order = findPremiumOrderByAny({ orderId, billCode });
+        if (!order) {
+          try { order = await azFindPremiumOrderPersistent({ orderId, billCode }); } catch (err) { console.warn('Commission retry persistent order lookup failed:', err && (err.message || err)); }
+        }
         if (!order) return send(res, 404, JSON.stringify({ ok:false, error:'Order not found' }, null, 2), "application/json");
         if (order.status !== 'paid') return send(res, 400, JSON.stringify({ ok:false, error:'Order is not paid', status: order.status || 'unknown' }, null, 2), "application/json");
         const result = await azFinalizeCommissionForOrder(order);

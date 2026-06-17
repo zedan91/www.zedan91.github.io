@@ -1,0 +1,29 @@
+AZOBSS NEXT HARDENING - ADMIN COMMISSION FALLBACK + API PROTECTION
+
+Baseline: (179)-AZOBSS-NEXT-HARDENING-SCOPE-TLS-STAFF-API-FIX_20260617.zip
+Output:   (180)-AZOBSS-ADMIN-COMMISSION-FALLBACK-API-PROTECT-FIX_20260617.zip
+
+Changes:
+1. Added Authorization header to deploy-server CORS allowlist.
+   - Needed for Staff/Admin Dashboard fallback API that sends Firebase ID token.
+
+2. Protected /api/commission/retry-order.
+   - Now requires admin Firebase ID token or AZOBSS_COMMISSION_API_SECRET / AZOBSS_ADMIN_API_SECRET.
+   - Prevents public users from retrying commission generation by guessing orderId/billCode.
+   - Retry can now find orders from Firestore premiumOrders, not only local JSON.
+
+3. Fixed local JSON fallback filtering for /api/commission/status?records=1.
+   - Without API secret, local fallback records are filtered by Firebase identity.
+   - Admin can see all; staff only sees own/share records.
+
+4. Admin Commission Manager fallback improved.
+   - Admin dashboard now tries Firestore direct first.
+   - If Firestore direct is empty/blocked, it calls backend API with Firebase ID token.
+   - Display now shows productName, sale amount, commission type, payout/status, and source.
+
+Firebase Rules:
+- No new Firestore Rules required.
+
+Render ENV recommended:
+- AZOBSS_COMMISSION_API_SECRET=long-secret
+- AZOBSS_ADMIN_API_SECRET=long-secret

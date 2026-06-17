@@ -1270,6 +1270,7 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const ADMIN_EMAIL='zedan91@azobss.local';
+const AZOBSS_BACKEND_API='https://azobss-backend.onrender.com';
 
 let currentUser=null;
 let adminProfile=null;
@@ -1567,11 +1568,23 @@ function commissionRecordTitle(x){
   return esc(x.username || x.ownerUsername || x.createdByUsername || x.email || x.ownerEmail || 'Unknown');
 }
 function commissionAmountOf(x){
-  return Number(x.amount || x.commissionAmount || x.totalCommission || 0) || 0;
+  return Number(x.commissionAmount || x.amount || x.totalCommission || 0) || 0;
+}
+function commissionSaleAmountOf(x){
+  return Number(x.saleAmount || x.orderAmount || x.totalSale || 0) || 0;
 }
 function commissionIsPaid(x){
-  const s = String(x.status || '').toLowerCase();
-  return ['paid','verified','success','completed','approved'].includes(s);
+  const s = String(x.payoutStatus || x.status || '').toLowerCase();
+  return ['paid','settled','released','verified','success','completed','approved'].includes(s);
+}
+async function fetchAdminCommissionsFromApi(){
+  try{
+    const token=currentUser && typeof currentUser.getIdToken==='function' ? await currentUser.getIdToken() : '';
+    const r=await fetch(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=300',{cache:'no-store',headers:token?{Authorization:'Bearer '+token}:{}});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){ console.warn('Admin commission API fallback rejected',j); return []; }
+    return Array.isArray(j.records)?j.records:[];
+  }catch(e){ console.warn('Admin commission API fallback failed',e); return []; }
 }
 function resetCommissionForm(){
   $('#commissionEditDocId').value = '';
@@ -1586,15 +1599,26 @@ function resetCommissionForm(){
   if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Add / Edit Commission';
 }
 async function loadAdminCommissions(){
-  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(100)));
+  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(150)));
   adminCommissionCache = [];
-  let total=0,pending=0,paid=0;
+  const seen=new Set();
   snap?.forEach(d=>{
-    const x={docId:d.id,...d.data()};
+    const x={docId:d.id,...d.data(),_source:'firestore'};
+    const key=x.docId||`${x.orderId||''}_${x.commissionType||''}_${x.username||''}`;
+    if(!seen.has(key)){seen.add(key);adminCommissionCache.push(x);}
+  });
+  if(!adminCommissionCache.length){
+    const apiRows=await fetchAdminCommissionsFromApi();
+    apiRows.forEach((x,i)=>{
+      const key=x.docId||x.id||`${x.orderId||''}_${x.commissionType||''}_${x.username||''}`||String(i);
+      if(!seen.has(key)){seen.add(key);adminCommissionCache.push({...x,_source:'backend-api'});}
+    });
+  }
+  let total=0,pending=0,paid=0;
+  adminCommissionCache.forEach(x=>{
     const amt=commissionAmountOf(x);
     total += amt;
     if(commissionIsPaid(x)) paid += amt; else pending += amt;
-    adminCommissionCache.push(x);
   });
   if($('#adminComTotal')) $('#adminComTotal').textContent = total.toFixed(2);
   if($('#adminComPending')) $('#adminComPending').textContent = pending.toFixed(2);
@@ -1603,12 +1627,15 @@ async function loadAdminCommissions(){
 
   const rows = adminCommissionCache.map(x=>{
     const amt = commissionAmountOf(x).toFixed(2);
+    const sale = commissionSaleAmountOf(x);
     const owner = commissionRecordTitle(x);
-    const product = esc(x.product || x.productTitle || x.itemName || x.saleRef || '-');
-    const status = esc(x.status || 'pending');
+    const product = esc(x.productName || x.product || x.productTitle || x.itemName || x.saleRef || '-');
+    const status = esc(x.payoutStatus || x.status || 'pending');
+    const type = esc(x.commissionType || x.type || 'commission');
+    const source = esc(x._source || '');
     return `<div class="item">
-      <div class="item-title">💸 ${owner} • RM${amt}</div>
-      <div class="item-meta">${product} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)}</div>
+      <div class="item-title">💸 ${owner} • Commission RM${amt}</div>
+      <div class="item-meta">${product} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • ${type} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)} ${source?('• '+source):''}</div>
       <div class="toolbar" style="margin:6px 0 0">
         <button class="btn gray" data-edit-commission="${esc(x.docId)}">Edit</button>
         <button class="btn red" data-delete-commission="${esc(x.docId)}">Delete</button>
@@ -1648,7 +1675,7 @@ function editCommissionRecord(docId){
   if(!x) return;
   $('#commissionEditDocId').value = x.docId;
   $('#commissionUsername').value = x.username || x.ownerUsername || '';
-  $('#commissionProduct').value = x.product || x.productTitle || x.itemName || x.saleRef || '';
+  $('#commissionProduct').value = x.productName || x.product || x.productTitle || x.itemName || x.saleRef || '';
   $('#commissionAmount').value = commissionAmountOf(x);
   $('#commissionStatus').value = x.status || 'pending';
   $('#commissionOwnerUid').value = x.ownerUid || '';
@@ -2232,6 +2259,7 @@ import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where
   const auth=getAuth(app);
   const db=getFirestore(app);
   const ADMIN_EMAIL='zedan91@azobss.local';
+const AZOBSS_BACKEND_API='https://azobss-backend.onrender.com';
   let currentUser=null;
   let isAdmin=false;
 
