@@ -617,6 +617,46 @@ function azPayoutRequestSafe(x = {}, docId = '', adminView = false) {
     timeline: azPayoutTimelineSafe(x.timeline || x.events || [], adminView)
   };
 }
+function azPayoutRequestReceiptHtml(x = {}, docId = '', identity = {}) {
+  const adminView = !!(identity && identity.isAdmin);
+  const requestId = cleanPremiumText(x.requestId || docId || '', 160);
+  const status = cleanPremiumText(x.status || 'requested', 40).toUpperCase();
+  const amount = Number(x.amount || 0) || 0;
+  const profile = azPayoutProfilePublic(x.profileSnapshot || x.profile || {}, adminView);
+  const accountParts = [
+    profile.payoutMethod,
+    profile.bankName || profile.ewalletName,
+    profile.accountName,
+    adminView ? (profile.accountNo || profile.accountNoMasked) : profile.accountNoMasked,
+    profile.duitNowId,
+    profile.payoutPhone,
+    profile.payoutEmail
+  ].filter(Boolean);
+  const timeline = azPayoutTimelineSafe(x.timeline || x.events || [], adminView);
+  const issuedAt = new Date().toISOString();
+  const rows = [
+    ['Receipt Type', 'AZOBSS Commission Payout'],
+    ['Request ID', requestId],
+    ['Status', status],
+    ['Amount', azMoneyRm(amount)],
+    ['Staff', cleanPremiumText(x.username || x.email || '-', 160)],
+    ['Record Count', String(Number(x.recordCount || 0) || 0)],
+    ['Requested At', cleanPremiumText(x.createdAt || '', 80)],
+    ['Updated At', cleanPremiumText(x.updatedAt || '', 80)],
+    ['Paid At', cleanPremiumText(x.paidAt || x.payoutPaidAt || '', 80)],
+    ['Payout Method', cleanPremiumText(x.payoutMethod || profile.payoutMethod || '', 80)],
+    ['Payment Reference', cleanPremiumText(x.payoutReference || '', 160)],
+    ['Payout Account', accountParts.join(' • ')],
+    ['Admin Note', cleanPremiumText(x.adminNote || '', 500)],
+    ['Staff Note', cleanPremiumText(x.note || '', 500)]
+  ];
+  const safeRows = rows.filter(([,v]) => String(v || '').trim()).map(([k,v]) => `<tr><th>${azHtmlEscape(k)}</th><td>${azHtmlEscape(v)}</td></tr>`).join('');
+  const timelineHtml = timeline.length ? timeline.map(ev => `<li><b>${azHtmlEscape(ev.status || ev.type || 'update')}</b> — ${azHtmlEscape(ev.note || '')} ${ev.actorUsername ? 'by ' + azHtmlEscape(ev.actorUsername) : ''} ${ev.createdAt ? '<small>(' + azHtmlEscape(ev.createdAt) + ')</small>' : ''}</li>`).join('') : '<li>No timeline events.</li>';
+  const commissionIds = Array.isArray(x.commissionDocIds) ? x.commissionDocIds.map(v => cleanPremiumText(v, 140)).filter(Boolean).slice(0, 80) : [];
+  const commissionHtml = commissionIds.length ? commissionIds.map(v => `<span class="pill">${azHtmlEscape(v)}</span>`).join(' ') : '<span class="muted">No linked commission record IDs.</span>';
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AZOBSS Payout Receipt ${azHtmlEscape(requestId)}</title><style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111;margin:0;padding:24px}.wrap{max-width:900px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 18px 45px rgba(15,23,42,.08);overflow:hidden}.head{background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff;padding:24px}.head h1{margin:0 0 8px;font-size:26px}.badge{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:6px 10px;border-radius:999px}.content{padding:24px}.amount{font-size:34px;font-weight:800;margin:10px 0}.status{font-weight:800}.status.PAID{color:#059669}.status.REJECTED,.status.CANCELLED{color:#dc2626}.status.APPROVED{color:#2563eb}table{width:100%;border-collapse:collapse;margin:18px 0}th,td{text-align:left;border-bottom:1px solid #e5e7eb;padding:10px;vertical-align:top}th{width:210px;background:#f8fafc;color:#334155}.muted{color:#64748b}.pill{display:inline-block;background:#eef2ff;color:#1e40af;border:1px solid #c7d2fe;border-radius:999px;padding:4px 8px;margin:2px;font-size:12px}ul{padding-left:20px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:10px;background:#111827;color:#fff;padding:10px 14px;font-weight:700;cursor:pointer}.foot{font-size:12px;color:#64748b;margin-top:22px}@media print{body{background:#fff;padding:0}.wrap{box-shadow:none;border:0}.actions{display:none}}</style></head><body><div class="wrap"><div class="head"><h1>AZOBSS Payout Receipt</h1><div class="badge">${azHtmlEscape(requestId)}</div></div><div class="content"><div class="muted">Amount</div><div class="amount">${azHtmlEscape(azMoneyRm(amount))}</div><div>Status: <span class="status ${azHtmlEscape(status)}">${azHtmlEscape(status)}</span></div><table>${safeRows}</table><h2>Linked Commission Records</h2><div>${commissionHtml}</div><h2>Timeline</h2><ul>${timelineHtml}</ul><div class="actions"><button onclick="window.print()">Print / Save PDF</button><button onclick="window.close()">Close</button></div><div class="foot">Generated at ${azHtmlEscape(issuedAt)}. This page is protected by AZOBSS login token and is intended for payout reference only.</div></div></div></body></html>`;
+}
+
 function azPayoutRequestStatus(value) {
   const s = String(value || '').trim().toLowerCase();
   if (['requested','reviewing','approved','paid','rejected','cancelled'].includes(s)) return s;
@@ -2085,6 +2125,13 @@ function makeId(prefix = "az") {
 function cleanPremiumText(value, max = 300) {
   return String(value || "").replace(/[<>]/g, "").trim().slice(0, max);
 }
+function azHtmlEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" }[ch]));
+}
+function azMoneyRm(value) {
+  const n = Number(value || 0) || 0;
+  return "RM" + n.toFixed(2);
+}
 
 function cleanPremiumUrl(value) {
   const v = String(value || "").trim();
@@ -3333,6 +3380,7 @@ async function handler(req, res) {
     if (pathname === "/api/staff/payout-request-cancel" && req.method === "POST" && azRateLimitOrSend(req, res, "staff-payout-cancel", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/payout-requests" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-payout-requests-read", 60, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/payout-request-status" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payout-request-status", 30, 10 * 60 * 1000)) return;
+    if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
 
     // =========================
@@ -3710,6 +3758,33 @@ async function handler(req, res) {
         await ref.set(azJsonSafe(saveRow), { merge:true });
         azFireAndForget(azWriteAdminAuditLog(req, identity, "staff_payout_profile_save", "staffPayoutProfiles", docId, { username: identity.username || '', method: profile.payoutMethod || '', bankName: profile.bankName || profile.ewalletName || '' }, "success"), "Staff payout profile audit log failed");
         return send(res, 200, JSON.stringify({ ok:true, profile: azPayoutProfilePublic(saveRow, false) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET") {
+      try {
+        const requestId = cleanPremiumText(decodeURIComponent(pathname.replace(/^\/api\/payout\/receipt\//, "")), 160);
+        if (!requestId) return send(res, 400, JSON.stringify({ ok:false, error:"Missing payout request ID." }, null, 2), "application/json");
+        const identity = azRequestHasAdminSecret(req, parsed)
+          ? { uid:"api-secret", username:"api-secret", role:"admin", isAdmin:true, authMethod:"api-secret" }
+          : await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Login token required to view payout receipt." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        const snap = await db.collection("payoutRequests").doc(requestId).get();
+        if (!snap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Payout request not found." }, null, 2), "application/json");
+        const row = snap.data() || {};
+        if (!identity.isAdmin && !azPayoutRequestBelongsToIdentity(row, identity)) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"You can only view your own payout receipt." }, null, 2), "application/json");
+        }
+        azFireAndForget(azWriteAdminAuditLog(req, identity, "payout_receipt_view", "payoutRequests", requestId, { status: row.status || '', amount: row.amount || 0, adminView: !!identity.isAdmin }, "success"), "Payout receipt audit log failed");
+        const html = azPayoutRequestReceiptHtml(row, requestId, identity);
+        return send(res, 200, html, "text/html; charset=utf-8", {
+          "Cache-Control":"private, no-store",
+          "Content-Disposition":`inline; filename="azobss-payout-receipt-${requestId}.html"`
+        });
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }

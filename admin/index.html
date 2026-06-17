@@ -1489,6 +1489,16 @@ async function azAdminFetchBlob(url,options={}){
   }
   return {blob:await res.blob(), filename:azFilenameFromDisposition(res.headers.get('content-disposition'))};
 }
+async function viewAdminPayoutReceipt(requestId){
+  try{
+    if(!requestId) return toast('Missing payout request ID.');
+    const out=await azAdminFetchBlob(AZOBSS_BACKEND_API+'/api/payout/receipt/'+encodeURIComponent(requestId),{cache:'no-store'});
+    const url=URL.createObjectURL(out.blob);
+    const w=window.open(url,'_blank','noopener');
+    if(!w){const a=document.createElement('a');a.href=url;a.download=out.filename||('azobss-payout-receipt-'+requestId+'.html');document.body.appendChild(a);a.click();a.remove();}
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }catch(e){toast(e?.message||'Failed to open payout receipt.');}
+}
 function azFilenameFromDisposition(header){
   const h=String(header||'');
   const m=h.match(/filename=\"?([^\";]+)\"?/i);
@@ -2106,7 +2116,9 @@ function renderAdminPayoutRequests(){
   if($('#adminPayoutRequestList')) $('#adminPayoutRequestList').innerHTML=rows.map(r=>{
     const p=r.profile||{};
     const account=[p.payoutMethod,p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • ');
-    return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${esc(r.docId||r.requestId)}">Review</button><button class="btn" data-payout-request-status="approved" data-payout-request-id="${esc(r.docId||r.requestId)}">Approve</button><button class="btn green" data-payout-request-status="paid" data-payout-request-id="${esc(r.docId||r.requestId)}">Mark Paid</button><button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${esc(r.docId||r.requestId)}">Reject</button></div></div>`;
+    const rid=esc(r.docId||r.requestId);
+    const receiptLabel=String(r.status||'requested').toLowerCase()==='paid'?'View Receipt':'View Statement';
+    return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${rid}">Review</button><button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button><button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">Mark Paid</button><button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button></div></div>`;
   }).join('') || '<div class="item">No payout requests.</div>';
 }
 async function updatePayoutRequestStatus(requestId,status){
@@ -2571,6 +2583,8 @@ document.addEventListener('click',async e=>{
   if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
   const dn=e.target.closest('[data-del-notif]');
   if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+  const payoutReceiptBtn = e.target.closest('[data-payout-receipt]');
+  if(payoutReceiptBtn){await viewAdminPayoutReceipt(payoutReceiptBtn.getAttribute('data-payout-receipt'));return;}
   const payoutReqBtn = e.target.closest('[data-payout-request-status]');
   if(payoutReqBtn){await updatePayoutRequestStatus(payoutReqBtn.getAttribute('data-payout-request-id'), payoutReqBtn.getAttribute('data-payout-request-status'));return;}
   const payoutBtn = e.target.closest('[data-commission-payout]');
