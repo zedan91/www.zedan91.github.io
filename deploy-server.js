@@ -1246,6 +1246,38 @@ function azMaintenanceTokenExpired(x = {}, now = Date.now()) {
 function azMaintenancePublicIssue(type, severity, label, count, note = "") {
   return { type, severity, label, count:Number(count||0), note:azAuditSafeText(note, 260) };
 }
+function azMaintenanceRetentionDays(envName, fallbackDays) {
+  const raw = Number(process.env[envName] || fallbackDays);
+  if (!Number.isFinite(raw) || raw <= 0) return Number(fallbackDays || 0) || 0;
+  return Math.max(1, Math.min(3650, Math.floor(raw)));
+}
+function azMaintenanceTimeMs(value) {
+  if (value === undefined || value === null || value === "") return 0;
+  const n = Number(value || 0);
+  if (Number.isFinite(n) && n > 0) return n;
+  const t = Date.parse(String(value || ""));
+  return Number.isFinite(t) && t > 0 ? t : 0;
+}
+function azMaintenanceRowAgeMs(x = {}) {
+  return azMaintenanceTimeMs(x.createdAtMs || x.createdAt || x.updatedAtMs || x.updatedAt || x.paidAtMs || x.paidAt || 0);
+}
+function azMaintenanceExpiredTokenPrunable(x = {}, now = Date.now()) {
+  const days = azMaintenanceRetentionDays("AZOBSS_DOWNLOAD_TOKEN_RETENTION_DAYS", 90);
+  const cutoff = now - (days * 24 * 60 * 60 * 1000);
+  const expiryMs = azMaintenanceTimeMs(x.expiredAtMs || x.expiredAt || x.expiresAtMs || x.expiresAt || x.expireAtMs || 0);
+  const expired = String(x.status || "").toLowerCase() === "expired" || (!!expiryMs && expiryMs <= now);
+  return expired && !!expiryMs && expiryMs <= cutoff;
+}
+function azMaintenanceOldAuditLogPrunable(x = {}, now = Date.now()) {
+  const days = azMaintenanceRetentionDays("AZOBSS_AUDIT_LOG_RETENTION_DAYS", 365);
+  const t = azMaintenanceRowAgeMs(x);
+  return !!t && t <= now - (days * 24 * 60 * 60 * 1000);
+}
+function azMaintenanceOldNotificationPrunable(x = {}, now = Date.now()) {
+  const days = azMaintenanceRetentionDays("AZOBSS_NOTIFICATION_RETENTION_DAYS", 180);
+  const t = azMaintenanceRowAgeMs(x);
+  return !!t && t <= now - (days * 24 * 60 * 60 * 1000);
+}
 async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
   const started = Date.now();
   const db = getAzobssBackendDb();
@@ -1255,15 +1287,23 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
     ok:true,
     generatedAt:new Date(now).toISOString(),
     firestoreConfigured:!!db,
-    scanned:{ premiumOrders:0, premiumDownloadTokens:0, commissionRecords:0 },
+    scanned:{ premiumOrders:0, premiumDownloadTokens:0, commissionRecords:0, adminAuditLogs:0, notifications:0 },
+    retention:{
+      downloadTokenDays:azMaintenanceRetentionDays("AZOBSS_DOWNLOAD_TOKEN_RETENTION_DAYS", 90),
+      auditLogDays:azMaintenanceRetentionDays("AZOBSS_AUDIT_LOG_RETENTION_DAYS", 365),
+      notificationDays:azMaintenanceRetentionDays("AZOBSS_NOTIFICATION_RETENTION_DAYS", 180)
+    },
     issues:[],
     actions:[
       { action:"repair-paid-order-tokens", label:"Repair paid orders missing download token", safe:true },
       { action:"repair-receipt-flags", label:"Add receipt-token requirement to paid premium orders", safe:true },
       { action:"expire-old-download-tokens", label:"Mark expired download tokens as expired", safe:true },
-      { action:"repair-commission-payout-status", label:"Set missing commission payout status to pending", safe:true }
+      { action:"repair-commission-payout-status", label:"Set missing commission payout status to pending", safe:true },
+      { action:"prune-expired-download-tokens", label:"Delete expired download tokens older than retention", safe:true, destructive:true },
+      { action:"prune-old-audit-logs", label:"Delete audit logs older than retention", safe:true, destructive:true },
+      { action:"prune-old-notifications", label:"Delete notifications older than retention", safe:true, destructive:true }
     ],
-    samples:{ paidOrdersMissingToken:[], paidOrdersMissingReceiptFlag:[], expiredDownloadTokens:[], commissionMissingPayoutStatus:[] },
+    samples:{ paidOrdersMissingToken:[], paidOrdersMissingReceiptFlag:[], expiredDownloadTokens:[], commissionMissingPayoutStatus:[], prunableExpiredDownloadTokens:[], oldAuditLogs:[], oldNotifications:[] },
     warnings:[],
     latencyMs:0
   };
@@ -1297,6 +1337,9 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
       if (azMaintenanceTokenExpired(x, now)) {
         result.samples.expiredDownloadTokens.push({ id:docSnap.id, token:azMaskToken(x.token || docSnap.id), orderId:cleanPremiumText(x.orderId || "", 160), expiresAt:cleanPremiumText(x.expiresAt || x.expiresAtMs || "", 80) });
       }
+      if (azMaintenanceExpiredTokenPrunable(x, now)) {
+        result.samples.prunableExpiredDownloadTokens.push({ id:docSnap.id, token:azMaskToken(x.token || docSnap.id), orderId:cleanPremiumText(x.orderId || "", 160), expiresAt:cleanPremiumText(x.expiresAt || x.expiresAtMs || x.expiredAt || "", 80) });
+      }
     });
   } catch (err) {
     result.warnings.push("premiumDownloadTokens scan failed: " + (err && err.message ? err.message : String(err)));
@@ -1313,11 +1356,38 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
   } catch (err) {
     result.warnings.push("commissionRecords scan failed: " + (err && err.message ? err.message : String(err)));
   }
+  try {
+    const auditSnap = await db.collection("adminAuditLogs").limit(limitRows).get();
+    auditSnap.forEach(docSnap => {
+      const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+      result.scanned.adminAuditLogs += 1;
+      if (azMaintenanceOldAuditLogPrunable(x, now)) {
+        result.samples.oldAuditLogs.push({ id:docSnap.id, action:cleanPremiumText(x.action || "", 100), createdAt:cleanPremiumText(x.createdAt || x.createdAtMs || "", 80) });
+      }
+    });
+  } catch (err) {
+    result.warnings.push("adminAuditLogs scan failed: " + (err && err.message ? err.message : String(err)));
+  }
+  try {
+    const notifSnap = await db.collection("notifications").limit(limitRows).get();
+    notifSnap.forEach(docSnap => {
+      const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+      result.scanned.notifications += 1;
+      if (azMaintenanceOldNotificationPrunable(x, now)) {
+        result.samples.oldNotifications.push({ id:docSnap.id, title:cleanPremiumText(x.title || "Notification", 120), createdAt:cleanPremiumText(x.createdAt || x.createdAtMs || "", 80) });
+      }
+    });
+  } catch (err) {
+    result.warnings.push("notifications scan failed: " + (err && err.message ? err.message : String(err)));
+  }
   result.issues = [
     azMaintenancePublicIssue("paidOrdersMissingToken", "high", "Paid orders missing download token", result.samples.paidOrdersMissingToken.length, "Can stop customer download/email recovery."),
     azMaintenancePublicIssue("paidOrdersMissingReceiptFlag", "medium", "Paid orders missing receipt token requirement", result.samples.paidOrdersMissingReceiptFlag.length, "Hardens old/new premium receipt privacy."),
     azMaintenancePublicIssue("expiredDownloadTokens", "low", "Expired download tokens not marked expired", result.samples.expiredDownloadTokens.length, "Keeps token collection cleaner."),
-    azMaintenancePublicIssue("commissionMissingPayoutStatus", "medium", "Commission records missing payout status", result.samples.commissionMissingPayoutStatus.length, "Keeps payout workflow consistent.")
+    azMaintenancePublicIssue("commissionMissingPayoutStatus", "medium", "Commission records missing payout status", result.samples.commissionMissingPayoutStatus.length, "Keeps payout workflow consistent."),
+    azMaintenancePublicIssue("prunableExpiredDownloadTokens", "low", "Expired download tokens older than retention", result.samples.prunableExpiredDownloadTokens.length, `Retention: ${result.retention.downloadTokenDays} days.`),
+    azMaintenancePublicIssue("oldAuditLogs", "low", "Old admin audit logs older than retention", result.samples.oldAuditLogs.length, `Retention: ${result.retention.auditLogDays} days.`),
+    azMaintenancePublicIssue("oldNotifications", "low", "Old notifications older than retention", result.samples.oldNotifications.length, `Retention: ${result.retention.notificationDays} days.`)
   ];
   result.latencyMs = Date.now() - started;
   return result;
@@ -1368,6 +1438,33 @@ async function azAdminMaintenanceRun(req, identity = {}, action = "", options = 
         const repaired = makeDownloadForOrder(order);
         await docSnap.ref.set(azJsonSafe({ ...repaired, maintenanceUpdatedAt:new Date().toISOString(), maintenanceUpdatedAtMs:Date.now() }), { merge:true });
         out.changed += 1; addSample({ orderId:cleanPremiumText(repaired.orderId || docSnap.id, 160), token:azMaskToken(repaired.downloadToken || ""), change:"downloadToken created" });
+      }
+    } else if (action === "prune-expired-download-tokens") {
+      const snap = await db.collection("premiumDownloadTokens").limit(limitRows).get();
+      for (const docSnap of snap.docs) {
+        out.processed += 1;
+        const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+        if (!azMaintenanceExpiredTokenPrunable(x, now)) { out.skipped += 1; continue; }
+        await docSnap.ref.delete();
+        out.changed += 1; addSample({ token:azMaskToken(x.token || docSnap.id), orderId:cleanPremiumText(x.orderId || "", 160), change:"deleted old expired token" });
+      }
+    } else if (action === "prune-old-audit-logs") {
+      const snap = await db.collection("adminAuditLogs").limit(limitRows).get();
+      for (const docSnap of snap.docs) {
+        out.processed += 1;
+        const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+        if (!azMaintenanceOldAuditLogPrunable(x, now)) { out.skipped += 1; continue; }
+        await docSnap.ref.delete();
+        out.changed += 1; addSample({ id:docSnap.id, action:cleanPremiumText(x.action || "", 100), change:"deleted old audit log" });
+      }
+    } else if (action === "prune-old-notifications") {
+      const snap = await db.collection("notifications").limit(limitRows).get();
+      for (const docSnap of snap.docs) {
+        out.processed += 1;
+        const x = { id:docSnap.id, ...(docSnap.data() || {}) };
+        if (!azMaintenanceOldNotificationPrunable(x, now)) { out.skipped += 1; continue; }
+        await docSnap.ref.delete();
+        out.changed += 1; addSample({ id:docSnap.id, title:cleanPremiumText(x.title || "Notification", 120), change:"deleted old notification" });
       }
     } else {
       return { ok:false, error:"Unknown maintenance action." };

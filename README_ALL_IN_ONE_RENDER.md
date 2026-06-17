@@ -1,8 +1,8 @@
-# Render note
+AZOBSS all-in-one Render backend patch 201.
 
-For Software/CAD commission, env must be set on `azobss-backend`, because payment success is processed by that service.
+Optional ENV:
+AZOBSS_DOWNLOAD_TOKEN_RETENTION_DAYS=90
+AZOBSS_AUDIT_LOG_RETENTION_DAYS=365
+AZOBSS_NOTIFICATION_RETENTION_DAYS=180
 
-Required:
-FIREBASE_SERVICE_ACCOUNT_JSON={full Firebase service account JSON}
-
-Then Save, rebuild and deploy.
+Defaults apply automatically if these ENV are not created.
