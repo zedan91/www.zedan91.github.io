@@ -1348,9 +1348,10 @@ function syncHeader(user){
   const name = $('signedInName');
   const avatar = $('userAvatar');
   const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link, a[href="/PA-BM/"].nav-pa-bm-link'));
-  const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
-  const canShowPaBm = hasPaBmTabAccess(user);
-  const isAdminUser = isAzobssAdmin(user);
+  const storedUser = user || (typeof getSavedUser === 'function' ? getSavedUser() : null);
+  const display = storedUser && (storedUser.usernameKey || storedUser.name || storedUser.username || (storedUser.email ? String(storedUser.email).split('@')[0] : ''));
+  const canShowPaBm = hasPaBmTabAccess(storedUser);
+  const isAdminUser = isAzobssAdmin(storedUser);
   document.body.classList.toggle('is-admin', !!isAdminUser);
   document.body.classList.toggle('has-pa-access', !!canShowPaBm);
   paBmButtons.forEach((paBm) => {
@@ -2194,9 +2195,37 @@ function readLocalPurchaseRecords(){
   return [];
 }
 function writeLocalPurchaseRecords(records){
-  // Do not persist PA/BM purchase records in browser storage.
-  // This keeps all browsers consistent with Firestore/admin delete/payment status.
+  // Do not persist PA/BM purchase records in old browser storage.
+  // Use a short-lived stable cache only to prevent admin UI flicker when Firestore/backend is still warming up.
   clearLegacyPurchaseBrowserCache();
+  try{
+    const rows = Array.isArray(records) ? records.filter(Boolean).slice(0, 1000) : [];
+    if(rows.length){
+      sessionStorage.setItem('azobssPaBmPurchaseStableCacheV2', JSON.stringify({ at: Date.now(), rows }));
+      window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__ = rows;
+    }
+  }catch(e){}
+}
+function readStablePurchaseRecords(){
+  try{
+    if(Array.isArray(window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__) && window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__.length){
+      return window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__.slice();
+    }
+  }catch(e){}
+  try{
+    const raw = sessionStorage.getItem('azobssPaBmPurchaseStableCacheV2') || '';
+    if(!raw) return [];
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.rows)) return [];
+    const age = Date.now() - Number(parsed.at || 0);
+    if(age > 10 * 60 * 1000) return [];
+    return parsed.rows.slice();
+  }catch(e){ return []; }
+}
+function getCurrentAdminStablePurchaseRows(key){
+  const rows = readStablePurchaseRecords();
+  if(!key) return rows;
+  return rows.filter(item => String(item.usernameKey || '').toLowerCase() === key || String(item.displayName || '').toLowerCase() === key || String(item.username || '').toLowerCase() === key);
 }
 function purchaseRecordUser(user){
   const u = user || getSavedUser() || {};
@@ -2532,7 +2561,7 @@ async function loadAzobssPurchaseRecords(){
     console.warn('Firestore embedded purchase records read fallback:', error);
   }
 
-  if(isAdminUser && !merged.length){
+  if(isAdminUser){
     try{
       const backendRows = await azobssLoadAdminPaBmPurchaseRecordsFromBackend(false);
       backendRows.forEach(push);
@@ -2546,8 +2575,18 @@ async function loadAzobssPurchaseRecords(){
     .filter(item => isAdminUser || String(item.usernameKey || '').toLowerCase() === key || (current?.uid && String(item.uid||'') === String(current.uid)))
     .sort((a,b) => Number(b.createdAtMs||0) - Number(a.createdAtMs||0));
 
-  // Keep latest Firestore result cached so refresh is fast, but never rely on cache as source of truth.
-  if(rows.length) writeLocalPurchaseRecords(rows.slice(0, 500));
+  // Keep latest successful result in a short-lived stable cache so admin UI does not randomly blank during auth/backend warm-up.
+  if(rows.length){
+    writeLocalPurchaseRecords(rows.slice(0, 500));
+    return rows;
+  }
+  if(isAdminUser){
+    const stableRows = readStablePurchaseRecords();
+    if(stableRows.length){
+      console.warn('AZOBSS PA/BM admin records using stable cache because live read returned empty.');
+      return stableRows;
+    }
+  }
   return rows;
 }
 function escHtml(value){
@@ -3670,6 +3709,7 @@ async function renderAzobssPurchaseRecords(){
   const list = document.getElementById('purchaseSummaryList');
   const userList = document.getElementById('userPaPurchaseList');
   if(!list && !userList) return;
+  const renderSeq = (window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ = (Number(window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ || 0) + 1));
   const current = getSavedUser();
   const isAdminUser = isAzobssAdmin(current);
   const adminSearch = String(document.getElementById('purchaseRecordSearch')?.value || '').trim().toLowerCase();
@@ -3678,6 +3718,7 @@ async function renderAzobssPurchaseRecords(){
   const userSort = String(document.getElementById('userPaPurchaseSort')?.value || 'newest');
   let records = await loadAzobssPurchaseRecords();
   const purchaseResetMap = await loadAzobssPurchaseTotalResetMap();
+  if(renderSeq !== Number(window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ || 0)) return;
 
   if(isAdminUser){
     records = filterPurchaseRows(records, adminSearch);
@@ -3692,6 +3733,28 @@ async function renderAzobssPurchaseRecords(){
     azobssAdminPurchasePage = clampPage(azobssAdminPurchasePage, totalPages);
     const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE);
     if(list){
+      if(!pageRows.length){
+        const hasExistingGoodRows = !!list.querySelector('.admin-purchase-user-card');
+        const stableRows = readStablePurchaseRecords();
+        if(hasExistingGoodRows || stableRows.length){
+          if(!hasExistingGoodRows && stableRows.length){
+            records = stableRows;
+            const stableGroups = new Map();
+            filterPurchaseRows(records, adminSearch).forEach(r => {
+              const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
+              if(!stableGroups.has(k)) stableGroups.set(k, []);
+              stableGroups.get(k).push(r);
+            });
+            const stableGroupedRows = sortAdminPurchaseGroups(Array.from(stableGroups.entries()), adminSort, purchaseResetMap);
+            const stablePageRows = stableGroupedRows.slice(0, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE);
+            if(stablePageRows.length){ pageRows.splice(0, pageRows.length, ...stablePageRows); }
+          }
+          if(!pageRows.length){
+            renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, 0, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, page => { azobssAdminPurchasePage = page; renderAzobssPurchaseRecords(); });
+            return;
+          }
+        }
+      }
       list.innerHTML = pageRows.map(([key, rows]) => {
         rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
         const first = rows[0] || {};
@@ -3810,6 +3873,7 @@ window.azobssRefreshPaBmPurchasesNow = function(){
   azobssSchedulePurchaseRecordsRefresh('manual');
 };
 function bindAzobssPurchaseRecordsUI(){
+  window.__AZOBSS_PABM_PURCHASE_UI_OWNER__ = 'global-auth';
   try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
   ['refreshPurchaseButton','purchaseRecordSearch','purchaseRecordSort','userPaPurchaseSearch','userPaPurchaseSort'].forEach(id => {
     const el = document.getElementById(id);
