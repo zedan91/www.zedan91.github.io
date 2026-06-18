@@ -1,0 +1,42 @@
+AZOBSS (209) Admin Reset PA/BM Download Count
+Date: 2026-06-18
+Baseline: (208)-AZOBSS-PA-BM-ANDROID-NO-JSON-FALLBACK-FIX_20260618.zip
+
+Purpose
+- Allow admin to reset paid PA/BM download usage back to 0/5 for testing without making a new ToyyibPay payment.
+
+Changes
+1) Backend
+- Added protected endpoint:
+  POST /api/pa-bm-download/reset-count
+- Requires Firebase admin ID token or AZOBSS_ADMIN_API_SECRET / AZOBSS_COMMISSION_API_SECRET.
+- Resets these fields on purchaseLogs/{recordId}:
+  downloadCount: 0
+  usedCount: 0
+  downloadsUsed: 0
+  maxDownloads/maxDownload: 5 or existing configured max
+  downloadExpiresAtMs/downloadExpiresAtClient: renewed for 7 days
+  lastDownloadedAtMs: null
+  lastDownloadedAtClient: ""
+- Adds admin reset audit fields.
+- Also attempts to update matching embedded users/{username}.purchaseRecords rows for compatibility.
+- Writes adminAuditLogs action: pa_bm_download_counter_reset.
+
+2) Frontend
+- Added admin-only Reset 0/5 button beside PA/BM paid download count in Latest Purchase List.
+- Button only appears when isAzobssAdmin(getSavedUser()) is true.
+- Sends Firebase ID token to backend and refreshes purchase records after reset.
+
+3) UI
+- Added compact pill-style reset button CSS for PA/BM purchase list.
+
+Validation
+- node --check deploy-server.js OK
+- node --check assets/js/azobss-global-auth.js OK
+- node --check assets/js/azobss-firebase-live-likes-sync.js OK
+
+Firebase Rules
+- No update required. Backend uses Firebase Admin SDK.
+
+Render ENV
+- No new required ENV.

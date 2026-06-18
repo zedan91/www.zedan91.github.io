@@ -2205,13 +2205,108 @@ async function azobssIncrementPurchaseDownload(ref, record, nowMs) {
   const max = azobssRecordMaxDownloads(record);
   await ref.set({
     downloadCount: used + 1,
+    usedCount: used + 1,
+    downloadsUsed: used + 1,
     maxDownloads: max,
+    maxDownload: max,
     downloadExpiresAtMs: azobssRecordExpiresAtMs(record),
     downloadExpiresAtClient: new Date(azobssRecordExpiresAtMs(record)).toISOString(),
     lastDownloadedAtMs: nowMs,
     lastDownloadedAtClient: new Date(nowMs).toISOString(),
     updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
+}
+
+async function azobssResetPurchaseDownloadCounter(ref, record, adminIdentity = {}, nowMs = Date.now()) {
+  if (!ref || !record) return { ok:false, error:"record_missing" };
+  const max = azobssRecordMaxDownloads(record) || AZOBSS_PA_BM_MAX_DOWNLOADS;
+  const expiresAtMs = nowMs + AZOBSS_PA_BM_VALID_MS;
+  const patch = {
+    downloadCount: 0,
+    usedCount: 0,
+    downloadsUsed: 0,
+    maxDownloads: max,
+    maxDownload: max,
+    downloadExpiresAtMs: expiresAtMs,
+    downloadExpiresAtClient: new Date(expiresAtMs).toISOString(),
+    lastDownloadedAtMs: null,
+    lastDownloadedAtClient: "",
+    adminDownloadResetAtMs: nowMs,
+    adminDownloadResetAtClient: new Date(nowMs).toISOString(),
+    adminDownloadResetByUid: cleanPremiumText(adminIdentity.uid || "", 120),
+    adminDownloadResetByUsername: cleanPremiumText(adminIdentity.username || adminIdentity.email || "admin", 120),
+    updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+  };
+  await ref.set(patch, { merge:true });
+  return { ok:true, downloadCount:0, usedCount:0, maxDownloads:max, downloadExpiresAtMs:expiresAtMs, downloadExpiresAtClient:patch.downloadExpiresAtClient };
+}
+
+async function azobssResetEmbeddedPurchaseDownloadCounter(record = {}, adminIdentity = {}, nowMs = Date.now()) {
+  // Compatibility only: older builds duplicated PA/BM rows inside users/{username}.purchaseRecords.
+  // Update matching embedded rows too, so dashboards that fall back to user profile data also show 0/5.
+  try {
+    if (!initFirebaseAdmin()) return { ok:false, updated:0, reason:"firebase_admin_not_configured" };
+    const db = firebaseAdmin.firestore();
+    const uid = String(record.uid || "").trim();
+    const usernameKey = String(record.usernameKey || record.displayName || "").trim().toLowerCase();
+    const targetIds = [record.firestoreId, record.id, record.purchaseLogId, record.recordId, record.localId].map(v => String(v || "").trim()).filter(Boolean);
+    const type = String(record.productType || record.product || "").trim().toUpperCase();
+    const code = String(record.itemCode || record.stesen || record.stationNo || record.productId || "").trim().toUpperCase();
+    const createdAtMs = Number(record.createdAtMs || 0);
+    const max = azobssRecordMaxDownloads(record) || AZOBSS_PA_BM_MAX_DOWNLOADS;
+    const expiresAtMs = nowMs + AZOBSS_PA_BM_VALID_MS;
+
+    const refs = new Map();
+    if (uid) {
+      try {
+        const qs = await db.collection("users").where("uid", "==", uid).limit(5).get();
+        qs.forEach(doc => refs.set(doc.ref.path, doc.ref));
+      } catch (_) {}
+    }
+    if (usernameKey) refs.set(db.collection("users").doc(usernameKey).path, db.collection("users").doc(usernameKey));
+
+    let updated = 0;
+    for (const userRef of refs.values()) {
+      const snap = await userRef.get();
+      if (!snap.exists) continue;
+      const data = snap.data() || {};
+      const rows = Array.isArray(data.purchaseRecords) ? data.purchaseRecords : [];
+      let changed = false;
+      const next = rows.map((row) => {
+        if (!row) return row;
+        const rowIds = [row.firestoreId, row.id, row.purchaseLogId, row.recordId, row.localId].map(v => String(v || "").trim()).filter(Boolean);
+        const idMatch = targetIds.length && rowIds.some(id => targetIds.includes(id));
+        const rowType = String(row.productType || row.product || "").trim().toUpperCase();
+        const rowCode = String(row.itemCode || row.stesen || row.stationNo || row.productId || "").trim().toUpperCase();
+        const rowCreated = Number(row.createdAtMs || 0);
+        const fuzzyMatch = !idMatch && type && code && rowType === type && rowCode === code && (!createdAtMs || !rowCreated || Math.abs(rowCreated - createdAtMs) < 5000);
+        if (!idMatch && !fuzzyMatch) return row;
+        changed = true;
+        return Object.assign({}, row, {
+          downloadCount: 0,
+          usedCount: 0,
+          downloadsUsed: 0,
+          maxDownloads: max,
+          maxDownload: max,
+          downloadExpiresAtMs: expiresAtMs,
+          downloadExpiresAtClient: new Date(expiresAtMs).toISOString(),
+          lastDownloadedAtMs: null,
+          lastDownloadedAtClient: "",
+          adminDownloadResetAtMs: nowMs,
+          adminDownloadResetAtClient: new Date(nowMs).toISOString(),
+          adminDownloadResetByUsername: cleanPremiumText(adminIdentity.username || adminIdentity.email || "admin", 120)
+        });
+      });
+      if (changed) {
+        await userRef.set({ purchaseRecords: next, purchaseRecordsUpdatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp() }, { merge:true });
+        updated += 1;
+      }
+    }
+    return { ok:true, updated };
+  } catch (err) {
+    console.warn("PA/BM embedded download counter reset skipped:", err && (err.message || err));
+    return { ok:false, updated:0, error:err && err.message ? err.message : String(err) };
+  }
 }
 
 
@@ -5379,6 +5474,36 @@ if (
 // =========================
 // PA/BM CONTROLLED DOWNLOAD (5 DOWNLOADS / 7 DAYS)
 // =========================
+
+
+if (pathname === "/api/pa-bm-download/reset-count" && req.method === "POST") {
+  if (azRateLimitOrSend(req, res, "pa-bm-download-reset", 40, 60 * 1000)) return;
+  const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+  if (!adminIdentity || !adminIdentity.isAdmin) {
+    return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to reset PA/BM download counter." }, null, 2), "application/json");
+  }
+
+  let body = {};
+  try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+  const recordId = String(body.recordId || parsed.query.recordId || body.firestoreId || body.id || "").trim();
+  if (!recordId) return send(res, 400, JSON.stringify({ ok:false, error:"Missing recordId" }, null, 2), "application/json");
+
+  try {
+    const result = await azobssGetPurchaseRecord(recordId);
+    const ref = result.ref;
+    const record = result.record;
+    if (!record) return send(res, 404, JSON.stringify({ ok:false, error:"Purchase record not found." }, null, 2), "application/json");
+
+    const nowMs = Date.now();
+    const reset = await azobssResetPurchaseDownloadCounter(ref, record, adminIdentity, nowMs);
+    const embedded = await azobssResetEmbeddedPurchaseDownloadCounter(Object.assign({}, record, { firestoreId: recordId }), adminIdentity, nowMs);
+    azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "pa_bm_download_counter_reset", "purchaseLogs", recordId, { recordId, itemCode: record.itemCode || record.stesen || record.stationNo || "", productType: record.productType || record.product || "", usernameKey: record.usernameKey || "", oldDownloadCount: azobssRecordDownloadCount(record), maxDownloads: reset.maxDownloads, embeddedUpdated: embedded && embedded.updated || 0 }, "success"), "PA/BM download reset audit log failed");
+    return send(res, 200, JSON.stringify(Object.assign({ ok:true, recordId }, reset, { embeddedUpdated: embedded && embedded.updated || 0 }), null, 2), "application/json");
+  } catch (error) {
+    console.error("PA/BM download counter reset failed:", error && (error.stack || error.message || error));
+    return send(res, 500, JSON.stringify({ ok:false, error:error && error.message ? error.message : "Reset failed" }, null, 2), "application/json");
+  }
+}
 
 if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   const recordId = String(parsed.query.recordId || "").trim();

@@ -2447,6 +2447,72 @@ function azobssPurchaseDownloadPayload(r){
     }));
   }catch(e){ return ''; }
 }
+function azobssPurchaseResetPayload(r){
+  try{
+    return encodeURIComponent(JSON.stringify({
+      recordId: r?.firestoreId || r?.id || r?.purchaseLogId || '',
+      firestoreId: r?.firestoreId || '',
+      id: r?.id || '',
+      productType: r?.productType || r?.product || '',
+      itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
+      negeri: r?.negeri || r?.state || '',
+      usernameKey: r?.usernameKey || ''
+    }));
+  }catch(e){ return ''; }
+}
+async function azobssGetFirebaseAuthHeaders(forceRefresh){
+  try{
+    const u = auth && auth.currentUser ? auth.currentUser : null;
+    if(!u || typeof u.getIdToken !== 'function') return {};
+    const token = await u.getIdToken(!!forceRefresh);
+    return token ? { Authorization: 'Bearer ' + token } : {};
+  }catch(e){
+    return {};
+  }
+}
+async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
+  let payload = {};
+  try{ payload = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ payload = {}; }
+  const recordId = String(payload.recordId || payload.firestoreId || payload.id || '').trim();
+  if(!recordId){ alert('Record ID tidak ditemui.'); return false; }
+  const current = getSavedUser && getSavedUser() || {};
+  if(!isAzobssAdmin(current)){ alert('Admin sahaja boleh reset download count.'); return false; }
+  if(!confirm('Reset download count untuk item ini kembali ke 0/5 dan renew tempoh 7 hari?')) return false;
+  const oldText = btn ? btn.textContent : '';
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = 'Resetting...'; }
+    let headers = Object.assign({ 'Content-Type':'application/json' }, await azobssGetFirebaseAuthHeaders(false));
+    let response = await fetch('https://azobss-backend.onrender.com/api/pa-bm-download/reset-count', {
+      method:'POST',
+      headers,
+      body: JSON.stringify({ recordId })
+    });
+    if(response.status === 401 || response.status === 403){
+      headers = Object.assign({ 'Content-Type':'application/json' }, await azobssGetFirebaseAuthHeaders(true));
+      response = await fetch('https://azobss-backend.onrender.com/api/pa-bm-download/reset-count', {
+        method:'POST',
+        headers,
+        body: JSON.stringify({ recordId })
+      });
+    }
+    const data = await response.json().catch(function(){ return null; });
+    if(!response.ok || !data || data.ok === false){
+      alert((data && (data.error || data.message)) || 'Reset download count gagal.');
+      return false;
+    }
+    alert('Download count sudah reset ke 0/5. Tempoh download diperbaharui 7 hari.');
+    try{ azobssSchedulePurchaseRecordsRefresh('admin reset download count'); }catch(e){}
+    setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('admin reset download count delayed'); }catch(e){} }, 900);
+    return false;
+  }catch(error){
+    console.error('Admin reset PA/BM download count failed:', error);
+    alert('Reset download count gagal. Sila cuba lagi.');
+    return false;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = oldText || 'Reset 0/5'; }
+  }
+}
+window.azobssAdminResetPaBmDownloadCounter = azobssAdminResetPaBmDownloadCounter;
 async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
   try{
     const ev = clickEvent || (window.event || null);
@@ -2707,11 +2773,14 @@ function purchaseDetailRowHtml(r){
   const days = azobssPurchaseDownloadRemainingDays(r);
   let actionHtml = '';
   const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
+  const adminResetHtml = (paid && isAzobssAdmin(getSavedUser && getSavedUser() || {}))
+    ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
+    : '';
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${azobssPurchaseDownloadPayload(r)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>${dlMetaHtml}</div>`;
+    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${azobssPurchaseDownloadPayload(r)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>${dlMetaHtml}${adminResetHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
-    actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}</div>`;
+    actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
   }else{
     actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
   }
