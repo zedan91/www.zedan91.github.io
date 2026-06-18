@@ -2956,15 +2956,77 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback) {
   return rows.slice(0, 60);
 }
 
-async function fetchJupem(jupemUrl) {
-  return await fetch(jupemUrl, azJupemFetchOptions({
-    redirect: "follow",
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-      "Accept": "application/pdf,image/tiff,image/*,application/octet-stream,*/*",
-      "Referer": "https://ebiz.jupem.gov.my/"
+function azobssJupemBaseHeaders(extraHeaders = {}) {
+  return Object.assign({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    "Accept": "application/pdf,image/tiff,image/*,application/octet-stream,*/*",
+    "Accept-Language": "ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Referer": "https://ebiz.jupem.gov.my/",
+    "Origin": "https://ebiz.jupem.gov.my"
+  }, extraHeaders || {});
+}
+
+async function fetchJupem(jupemUrl, options = {}) {
+  const extraHeaders = Object.assign({}, options.headers || {});
+  const fetchOptions = Object.assign({}, options, {
+    redirect: options.redirect || "follow",
+    headers: azobssJupemBaseHeaders(extraHeaders)
+  });
+  return await fetch(jupemUrl, azJupemFetchOptions(fetchOptions));
+}
+
+function azobssExtractCookieHeader(headers) {
+  try {
+    if (headers && typeof headers.getSetCookie === "function") {
+      const arr = headers.getSetCookie() || [];
+      return arr.map(v => String(v || "").split(";")[0]).filter(Boolean).join("; ");
     }
-  }));
+  } catch (_err) {}
+  try {
+    const raw = headers && typeof headers.get === "function" ? headers.get("set-cookie") : "";
+    if (!raw) return "";
+    return String(raw).split(/,(?=[^;,]+=[^;,]+)/g).map(v => v.split(";")[0].trim()).filter(Boolean).join("; ");
+  } catch (_err) {
+    return "";
+  }
+}
+
+let azobssJupemSessionCache = { cookie: "", expiresAt: 0 };
+async function azobssGetJupemSessionCookie(force = false) {
+  const now = Date.now();
+  if (!force && azobssJupemSessionCache.cookie && azobssJupemSessionCache.expiresAt > now) {
+    return azobssJupemSessionCache.cookie;
+  }
+  const bootUrls = [
+    "https://ebiz.jupem.gov.my/",
+    "https://ebiz.jupem.gov.my/Produk/StesenTandaAras"
+  ];
+  for (const bootUrl of bootUrls) {
+    try {
+      const r = await fetch(bootUrl, azJupemFetchOptions({
+        redirect: "follow",
+        headers: azobssJupemBaseHeaders({
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        })
+      }));
+      const cookie = azobssExtractCookieHeader(r.headers);
+      // Consume body so undici can reuse the connection cleanly.
+      try { await r.arrayBuffer(); } catch (_err) {}
+      if (cookie) {
+        azobssJupemSessionCache = { cookie, expiresAt: now + 10 * 60 * 1000 };
+        return cookie;
+      }
+    } catch (err) {
+      console.warn("AZOBSS JUPEM session bootstrap failed:", bootUrl, err && (err.message || err));
+    }
+  }
+  return "";
+}
+
+async function fetchJupemWithSession(jupemUrl) {
+  const cookie = await azobssGetJupemSessionCookie(false);
+  if (!cookie) return await fetchJupem(jupemUrl);
+  return await fetchJupem(jupemUrl, { headers: { "Cookie": cookie } });
 }
 
 // =========================
@@ -3074,15 +3136,31 @@ function azobssLooksHtmlOrJsonError(buffer) {
 
 async function azobssFetchValidFileCandidates(candidates, label) {
   let lastResult = null;
+
+  async function tryCandidate(candidate, mode) {
+    const response = mode === "session" ? await fetchJupemWithSession(candidate) : await fetchJupem(candidate);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const firstText = buffer.slice(0, 240).toString("utf8").toLowerCase();
+    const contentType = response.headers && response.headers.get ? String(response.headers.get("content-type") || "") : "";
+    const validFile = !!(response && response.ok && buffer.length > 80 && !azobssLooksHtmlOrJsonError(buffer));
+    return { response, buffer, url: candidate, firstText, contentType, validFile, mode };
+  }
+
   for (const candidate of azobssUnique(candidates)) {
     try {
-      const response = await fetchJupem(candidate);
-      const buffer = Buffer.from(await response.arrayBuffer());
-      const firstText = buffer.slice(0, 240).toString("utf8").toLowerCase();
-      const validFile = !!(response && response.ok && buffer.length > 80 && !azobssLooksHtmlOrJsonError(buffer));
-      lastResult = { response, buffer, url: candidate, firstText, validFile };
-      if (validFile) return lastResult;
-      console.warn("AZOBSS paid download candidate invalid:", JSON.stringify({ label, status: response && response.status, url: candidate, head: firstText.slice(0, 80) }).slice(0, 500));
+      lastResult = await tryCandidate(candidate, "direct");
+      if (lastResult.validFile) return lastResult;
+      console.warn("AZOBSS paid download candidate invalid:", JSON.stringify({ label, mode: "direct", status: lastResult.response && lastResult.response.status, type: lastResult.contentType, url: candidate, head: lastResult.firstText.slice(0, 80) }).slice(0, 650));
+
+      // JUPEM sometimes returns an HTML/session page to server-side requests unless a fresh
+      // eBiz session cookie is presented. Retry once with a scoped JUPEM session cookie.
+      try {
+        lastResult = await tryCandidate(candidate, "session");
+        if (lastResult.validFile) return lastResult;
+        console.warn("AZOBSS paid download candidate invalid:", JSON.stringify({ label, mode: "session", status: lastResult.response && lastResult.response.status, type: lastResult.contentType, url: candidate, head: lastResult.firstText.slice(0, 80) }).slice(0, 650));
+      } catch (retryErr) {
+        console.warn("AZOBSS paid download candidate session retry failed:", label, candidate, retryErr && (retryErr.message || retryErr));
+      }
     } catch (err) {
       console.warn("AZOBSS paid download candidate failed:", label, candidate, err && (err.message || err));
       lastResult = { response: null, buffer: Buffer.alloc(0), url: candidate, firstText: "", validFile: false, error: err };
@@ -3162,7 +3240,7 @@ function azobssStateVariants(negeri) {
   return azobssUnique([upper, title, raw]);
 }
 
-async function fetchPelanAkuiCandidates(noPA, negeri) {
+function azobssBuildPaDownloadCandidates(noPA, negeri) {
   const paVariants = azobssPaNameVariants(noPA);
   const stateVariants = azobssStateVariants(negeri);
   const paramNames = ["noPa", "noPA", "NoPA"];
@@ -3179,7 +3257,11 @@ async function fetchPelanAkuiCandidates(noPA, negeri) {
     });
   });
 
-  return await azobssFetchValidFileCandidates(candidates, "PA");
+  return azobssUnique(candidates);
+}
+
+async function fetchPelanAkuiCandidates(noPA, negeri) {
+  return await azobssFetchValidFileCandidates(azobssBuildPaDownloadCandidates(noPA, negeri), "PA");
 }
 
 async function azobssFetchPaRecordFile(record, itemCode, negeri) {
@@ -3201,6 +3283,49 @@ async function azobssFetchPaRecordFile(record, itemCode, negeri) {
   return last || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
 }
 
+function azobssDirectFallbackEnabled() {
+  return String(process.env.AZOBSS_DISABLE_PABM_DIRECT_FALLBACK || "") !== "1";
+}
+
+function azobssFirstPaFallbackUrl(record, itemCode, negeri) {
+  const inputs = azobssUnique([
+    azobssExtractNoPaFromUrl(record && record.downloadUrl),
+    azobssExtractNoPaFromUrl(record && record.url),
+    record && record.noPA,
+    record && record.noPa,
+    record && record.pa,
+    record && record.itemCode,
+    itemCode && `PA${itemCode}.TIF`,
+    itemCode && `PA ${itemCode}.TIF`
+  ]);
+  for (const input of inputs) {
+    const list = azobssBuildPaDownloadCandidates(input, negeri);
+    if (list && list[0]) return list[0];
+  }
+  return "";
+}
+
+function azobssFirstBmFallbackUrl(record) {
+  const list = azobssBuildBmDownloadCandidates(record);
+  return (list || []).find(u => /^https:\/\/ebiz\.jupem\.gov\.my\//i.test(String(u || ""))) || (list && list[0]) || "";
+}
+
+async function azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, kind, openUrl, filename) {
+  if (!azobssDirectFallbackEnabled() || !openUrl) return false;
+  try {
+    await azobssIncrementPurchaseDownload(ref, record, nowMs);
+  } catch (e) {
+    console.error("Download counter update failed before browser fallback:", e && (e.stack || e.message || e));
+  }
+  return send(res, 200, JSON.stringify({
+    ok: true,
+    mode: "browser-direct-fallback",
+    openUrl,
+    filename: filename || "download",
+    message: `${kind} server proxy is temporarily blocked by JUPEM. Opening the original JUPEM download link in your browser instead.`,
+    counted: true
+  }), "application/json");
+}
 
 
 
@@ -5250,6 +5375,9 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
     const paResult = await azobssFetchPaRecordFile(record, itemCode, negeri);
     if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
+      const fallbackUrl = azobssFirstPaFallbackUrl(record, itemCode, negeri);
+      const fallbackSent = await azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`);
+      if (fallbackSent) return;
       return azobssPaBmDownloadError(res, 502, "PA file is temporarily unavailable from JUPEM. Please try again in a moment.");
     }
 
@@ -5280,10 +5408,16 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     bmResult = await azobssFetchBenchmarkRecordFile(record);
   } catch (fetchError) {
     console.error("BM/SBM controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+    const fallbackUrl = azobssFirstBmFallbackUrl(record);
+    const fallbackSent = await azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
+    if (fallbackSent) return;
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
   if (!bmResult || !bmResult.validFile || !bmResult.buffer || !bmResult.buffer.length) {
+    const fallbackUrl = azobssFirstBmFallbackUrl(record);
+    const fallbackSent = await azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
+    if (fallbackSent) return;
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 

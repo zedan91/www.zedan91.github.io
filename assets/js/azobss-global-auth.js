@@ -2767,6 +2767,37 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       cache: 'no-store'
     });
 
+    const responseType = String(response.headers.get('content-type') || '').toLowerCase();
+    if(responseType.includes('application/json')){
+      let data = null;
+      try{ data = await response.json(); }catch(e){ data = null; }
+      if(data && data.openUrl){
+        try{
+          if(link){
+            link.textContent = 'Opening Download...';
+          }
+          window.location.href = data.openUrl;
+        }catch(e){
+          const a = document.createElement('a');
+          a.href = data.openUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+        try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
+        setTimeout(function(){
+          try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){}
+        }, 1600);
+        return false;
+      }
+      if(!response.ok || (data && data.ok === false)){
+        alert((data && (data.error || data.message)) || 'Download gagal. Sila cuba lagi.');
+        return false;
+      }
+    }
+
     if(!response.ok){
       let message = 'Download gagal. Sila cuba lagi.';
       try{
