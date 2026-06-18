@@ -945,6 +945,112 @@ function azAuditLogPublicRow(x = {}, docId = "") {
 }
 
 
+
+function azPaBmPurchaseRecordPublic(x = {}, docId = "") {
+  const createdAtMs = Number(x.createdAtMs || x.timestampMs || 0)
+    || azobssFirestoreMs(x.createdAtClient)
+    || azobssFirestoreMs(x.createdAt)
+    || 0;
+  const paidAtMs = Number(x.paidAtMs || x.verifiedAtMs || x.paymentVerifiedAtMs || 0)
+    || azobssFirestoreMs(x.paidAtClient)
+    || azobssFirestoreMs(x.verifiedAtClient)
+    || azobssFirestoreMs(x.paidAt)
+    || 0;
+  const updatedAtMs = Number(x.updatedAtMs || 0)
+    || azobssFirestoreMs(x.updatedAtClient)
+    || azobssFirestoreMs(x.updatedAt)
+    || 0;
+  const downloadExpiresAtMs = Number(x.downloadExpiresAtMs || x.expiresAtMs || 0)
+    || azobssFirestoreMs(x.downloadExpiresAtClient)
+    || azobssFirestoreMs(x.expiresAt)
+    || 0;
+  return {
+    id: azExportSafeText(docId || x.firestoreId || x.purchaseLogId || x.id || x.recordId || "", 180),
+    firestoreId: azExportSafeText(docId || x.firestoreId || x.purchaseLogId || x.id || x.recordId || "", 180),
+    purchaseLogId: azExportSafeText(x.purchaseLogId || docId || "", 180),
+    usernameKey: azExportSafeText(x.usernameKey || x.username || x.displayName || "", 120).toLowerCase(),
+    username: azExportSafeText(x.username || x.usernameKey || x.displayName || "", 120),
+    displayName: azExportSafeText(x.displayName || x.username || x.usernameKey || "", 120),
+    uid: azExportSafeText(x.uid || "", 180),
+    email: azExportSafeText(x.email || x.buyerEmail || "", 180),
+    phone: azExportSafeText(x.phone || x.phoneNumber || "", 80),
+    productType: azExportSafeText(x.productType || x.product || x.type || "PA", 40).toUpperCase(),
+    itemCode: azExportSafeText(x.itemCode || x.noPa || x.noPA || x.noBM || x.stesen || x.stationNo || "", 140),
+    negeri: azExportSafeText(x.negeri || x.state || "", 100),
+    amount: azExportAmount(x.amount || x.price || 0),
+    status: azExportSafeText(x.status || x.paymentStatus || "pending", 60).toLowerCase(),
+    orderId: azExportSafeText(x.orderId || x.paymentOrderId || "", 180),
+    billCode: azExportSafeText(x.billCode || x.billcode || "", 140),
+    paymentReference: azExportSafeText(x.paymentReference || x.transactionId || "", 180),
+    paymentMethod: azExportSafeText(x.paymentMethod || "toyyibpay", 80),
+    downloadUrl: azExportSafeText(x.downloadUrl || x.url || x.fileUrl || "", 1000),
+    downloadCount: Number(x.downloadCount || x.usedCount || x.downloadsUsed || 0) || 0,
+    usedCount: Number(x.usedCount || x.downloadCount || x.downloadsUsed || 0) || 0,
+    downloadsUsed: Number(x.downloadsUsed || x.downloadCount || x.usedCount || 0) || 0,
+    maxDownloads: Number(x.maxDownloads || x.maxDownload || x.downloadLimit || 5) || 5,
+    downloadExpiresAtMs,
+    downloadExpiresAtClient: azExportSafeText(x.downloadExpiresAtClient || x.expiresAt || "", 120),
+    createdAtMs,
+    createdAtClient: azExportSafeText(x.createdAtClient || x.createdAt || "", 140),
+    paidAtMs,
+    paidAtClient: azExportSafeText(x.paidAtClient || x.verifiedAtClient || x.paidAt || "", 140),
+    updatedAtMs,
+    updatedAtClient: azExportSafeText(x.updatedAtClient || x.updatedAt || "", 140),
+    source: azExportSafeText(x.__source || "purchaseLogs", 40)
+  };
+}
+function azPaBmPurchaseRecordSortMs(x = {}) {
+  return Number(x.createdAtMs || x.paidAtMs || x.updatedAtMs || 0) || 0;
+}
+async function azLoadAdminPaBmPurchaseRecords(maxRows = 1000) {
+  const db = getAzobssBackendDb();
+  const limitRows = Math.max(1, Math.min(5000, Number(maxRows || 1000) || 1000));
+  if (!db) return { firestoreOk:false, source:"none", records:[], error:"Firebase Admin not configured" };
+  const merged = [];
+  const seen = new Set();
+  function add(row, docId, source) {
+    if (!row) return;
+    const clean = azPaBmPurchaseRecordPublic(Object.assign({}, row, { __source: source || row.__source || "purchaseLogs" }), docId);
+    const key = String(clean.firestoreId || clean.id || `${clean.usernameKey}|${clean.productType}|${clean.itemCode}|${clean.negeri}|${clean.createdAtMs}`).toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    merged.push(clean);
+  }
+  let errors = [];
+  try {
+    let snap;
+    try { snap = await db.collection("purchaseLogs").orderBy("createdAtMs", "desc").limit(limitRows).get(); }
+    catch (_) { snap = await db.collection("purchaseLogs").limit(limitRows).get(); }
+    snap.forEach(doc => add(doc.data() || {}, doc.id, "purchaseLogs"));
+  } catch (err) {
+    errors.push("purchaseLogs: " + (err && err.message ? err.message : String(err)));
+  }
+  // Compatibility: older PA/BM records may live inside users/{username}.purchaseRecords only.
+  try {
+    const usersSnap = await db.collection("users").limit(2000).get();
+    usersSnap.forEach(userDoc => {
+      const userData = userDoc.data() || {};
+      const records = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+      records.forEach((r, idx) => {
+        const docId = String(r && (r.firestoreId || r.purchaseLogId || r.id || r.recordId) || `${userDoc.id}-embedded-${idx}`);
+        add(Object.assign({}, r || {}, {
+          usernameKey: (r && (r.usernameKey || r.username)) || userData.usernameKey || userData.username || userDoc.id,
+          username: (r && r.username) || userData.username || userData.usernameKey || userDoc.id,
+          displayName: (r && r.displayName) || userData.displayName || userData.usernameKey || userDoc.id,
+          uid: (r && r.uid) || userData.uid || "",
+          email: (r && (r.email || r.buyerEmail)) || userData.email || userData.authEmail || "",
+          phone: (r && (r.phone || r.phoneNumber)) || userData.phone || userData.phoneNumber || "",
+          __source: "users.purchaseRecords"
+        }), docId, "users.purchaseRecords");
+      });
+    });
+  } catch (err) {
+    errors.push("users.purchaseRecords: " + (err && err.message ? err.message : String(err)));
+  }
+  merged.sort((a, b) => azPaBmPurchaseRecordSortMs(b) - azPaBmPurchaseRecordSortMs(a));
+  return { firestoreOk: errors.length === 0 || merged.length > 0, source: merged.length ? "firestore-admin" : "empty", records: merged.slice(0, limitRows), error: errors.join(" | ") };
+}
+
 const AZOBSS_ADMIN_EXPORT_TYPES = {
   premiumOrders: { label: "Premium Orders", firestore: "premiumOrders" },
   premiumDownloadTokens: { label: "Premium Download Tokens", firestore: "premiumDownloadTokens" },
@@ -4046,6 +4152,7 @@ async function handler(req, res) {
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-admin-set", 10, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/pa-bm-purchase-records" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-pabm-records-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/export" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-export", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/maintenance-scan" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-maintenance-scan", 40, 10 * 60 * 1000)) return;
@@ -4315,6 +4422,21 @@ async function handler(req, res) {
         catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
         const saved = await azWriteAdminAuditLog(req, adminIdentity, body.action || "admin_frontend_action", body.targetType || "frontend", body.targetId || "", body.details || {}, body.status || "success");
         return send(res, 200, JSON.stringify({ ok:true, audit:saved }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+
+    if (pathname === "/api/admin/pa-bm-purchase-records" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to view PA/BM purchase records." }, null, 2), "application/json");
+        }
+        const maxRows = Math.max(1, Math.min(5000, Number(parsed.query.limit || 1000) || 1000));
+        const result = await azLoadAdminPaBmPurchaseRecords(maxRows);
+        return send(res, 200, JSON.stringify({ ok:true, count:result.records.length, source:result.source, firestoreOk:result.firestoreOk, error:result.error || "", records:result.records }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }

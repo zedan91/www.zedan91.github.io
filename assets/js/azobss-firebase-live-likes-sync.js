@@ -2265,6 +2265,15 @@ async function loadAzobssPurchaseRecords(){
     console.warn('Firestore embedded purchase records read fallback:', error);
   }
 
+  if(isAdminUser && !merged.length){
+    try{
+      const backendRows = await azobssLoadAdminPaBmPurchaseRecordsFromBackend(false);
+      backendRows.forEach(push);
+    }catch(backendError){
+      console.warn('Admin PA/BM backend records fallback skipped:', backendError);
+    }
+  }
+
   const key = getUserKey(current);
   const rows = merged
     .filter(item => isAdminUser || String(item.usernameKey || '').toLowerCase() === key || (current?.uid && String(item.uid||'') === String(current.uid)))
@@ -2470,6 +2479,37 @@ async function azobssGetFirebaseAuthHeaders(forceRefresh){
     return {};
   }
 }
+
+async function azobssLoadAdminPaBmPurchaseRecordsFromBackend(forceRefresh){
+  const current = getSavedUser && getSavedUser() || {};
+  if(!isAzobssAdmin(current)) return [];
+  try{
+    const base = (typeof azobssGetBackendBaseUrl === 'function') ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com';
+    const headers = Object.assign({ 'Accept':'application/json' }, await azobssGetFirebaseAuthHeaders(!!forceRefresh));
+    const response = await fetch(base + '/api/admin/pa-bm-purchase-records?limit=2000', { method:'GET', headers, cache:'no-store' });
+    if((response.status === 401 || response.status === 403) && !forceRefresh){
+      return azobssLoadAdminPaBmPurchaseRecordsFromBackend(true);
+    }
+    const data = await response.json().catch(function(){ return null; });
+    if(!response.ok || !data || data.ok === false){
+      console.warn('Admin PA/BM purchase backend fallback failed:', data && (data.error || data.message) || response.status);
+      return [];
+    }
+    const rows = Array.isArray(data.records) ? data.records : [];
+    return rows.map(function(r){
+      return Object.assign({}, r, {
+        id: r.firestoreId || r.id || r.purchaseLogId || '',
+        firestoreId: r.firestoreId || r.id || r.purchaseLogId || '',
+        usernameKey: String(r.usernameKey || r.username || r.displayName || '').trim().toLowerCase(),
+        createdAtMs: Number(r.createdAtMs || 0) || (r.createdAtClient ? Date.parse(r.createdAtClient) : 0) || 0
+      });
+    });
+  }catch(error){
+    console.warn('Admin PA/BM purchase backend fallback error:', error);
+    return [];
+  }
+}
+
 async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
   let payload = {};
   try{ payload = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ payload = {}; }
