@@ -8,28 +8,40 @@ window.azobssRecaptchaReady = function(){
 };
 if(!document.querySelector('script[src*="recaptcha/api.js"]')){const s=document.createElement('script');s.src='https://www.google.com/recaptcha/api.js?render=explicit&onload=azobssRecaptchaReady';s.async=true;s.defer=true;document.head.appendChild(s);}
 
-// AZOBSS FIX 222: hide Google test-key warning strip only. The checkbox remains usable.
+// AZOBSS FIX 223: cleanly crop Google test-key warning strip without a pasted overlay. Checkbox remains usable.
 function injectAzobssRecaptchaWarningHideStyle(){
   try{
     if(document.getElementById('azobssRecaptchaWarningHideStyle')) return;
     const style=document.createElement('style');
     style.id='azobssRecaptchaWarningHideStyle';
     style.textContent=`
-      .auth-captcha-row{position:relative;display:block;max-width:304px;min-height:78px;overflow:visible;}
-      .auth-captcha-row .g-recaptcha{position:relative;display:block;max-width:304px;min-height:78px;}
-      .auth-captcha-row .g-recaptcha::before{
-        content:"";
-        position:absolute;
-        left:0;
-        top:0;
-        width:304px;
-        max-width:100%;
-        height:18px;
-        background:#f9f9f9;
-        z-index:9;
-        pointer-events:none;
+      .auth-captcha-row{
+        position:relative!important;
+        display:block!important;
+        width:304px!important;
+        max-width:100%!important;
+        height:68px!important;
+        min-height:68px!important;
+        overflow:hidden!important;
+        background:#f9f9f9!important;
+        border-radius:2px!important;
       }
-      .auth-captcha-row iframe{max-width:100%;}
+      .auth-captcha-row .g-recaptcha{
+        position:relative!important;
+        display:block!important;
+        width:304px!important;
+        max-width:100%!important;
+        height:78px!important;
+        min-height:78px!important;
+        overflow:visible!important;
+        transform:translateY(-18px)!important;
+        transform-origin:left top!important;
+      }
+      .auth-captcha-row .g-recaptcha::before{display:none!important;content:none!important;}
+      .auth-captcha-row .g-recaptcha > div,
+      .auth-captcha-row .g-recaptcha iframe{
+        max-width:100%!important;
+      }
     `;
     document.head.appendChild(style);
   }catch(e){}

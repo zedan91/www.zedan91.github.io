@@ -1,0 +1,16 @@
+AZOBSS PATCH 223 - reCAPTCHA clean warning crop fix
+
+Purpose:
+- Hide the Google reCAPTCHA test-key warning more cleanly.
+- Avoid the previous pasted-looking white overlay strip.
+
+Changed:
+- assets/js/azobss-global-auth.js
+
+Fix:
+- Removed pseudo-overlay approach.
+- Wrapped/cropped the visible reCAPTCHA box by shifting the widget upward and clipping the test warning area.
+- Checkbox remains clickable and visible.
+
+Firebase Rules: no update required.
+Render ENV: no new required.
