@@ -8,6 +8,34 @@ window.azobssRecaptchaReady = function(){
 };
 if(!document.querySelector('script[src*="recaptcha/api.js"]')){const s=document.createElement('script');s.src='https://www.google.com/recaptcha/api.js?render=explicit&onload=azobssRecaptchaReady';s.async=true;s.defer=true;document.head.appendChild(s);}
 
+// AZOBSS FIX 222: hide Google test-key warning strip only. The checkbox remains usable.
+function injectAzobssRecaptchaWarningHideStyle(){
+  try{
+    if(document.getElementById('azobssRecaptchaWarningHideStyle')) return;
+    const style=document.createElement('style');
+    style.id='azobssRecaptchaWarningHideStyle';
+    style.textContent=`
+      .auth-captcha-row{position:relative;display:block;max-width:304px;min-height:78px;overflow:visible;}
+      .auth-captcha-row .g-recaptcha{position:relative;display:block;max-width:304px;min-height:78px;}
+      .auth-captcha-row .g-recaptcha::before{
+        content:"";
+        position:absolute;
+        left:0;
+        top:0;
+        width:304px;
+        max-width:100%;
+        height:18px;
+        background:#f9f9f9;
+        z-index:9;
+        pointer-events:none;
+      }
+      .auth-captcha-row iframe{max-width:100%;}
+    `;
+    document.head.appendChild(style);
+  }catch(e){}
+}
+injectAzobssRecaptchaWarningHideStyle();
+
 
 function getAzobssPhoneDialForInput(input){
   try {
