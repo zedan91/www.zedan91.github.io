@@ -1,0 +1,21 @@
+AZOBSS 219 - PA PDF Only / No TIF Fallback Fix
+
+Issue:
+- Paid PA download could still end up as original JUPEM .TIF when backend could not fetch the PA file and browser-direct fallback opened JUPEM.
+- This made PA not convert to PDF.
+
+Fix:
+- Disabled browser-direct fallback for PA by default so raw JUPEM .TIF is not opened for paid PA downloads.
+- PA paid downloads must be converted by backend to PDF before the user receives the file.
+- If backend cannot fetch JUPEM PA file at that moment, user sees a clear retry message and download quota is not consumed.
+- Legacy /api/pa now redirects to /api/pa-pdf unless rawTif=1 is explicitly used for debugging.
+
+Optional emergency ENV:
+- AZOBSS_ALLOW_PA_TIF_FALLBACK=1
+  Enables old PA raw-TIF fallback, not recommended for production.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No required new ENV.

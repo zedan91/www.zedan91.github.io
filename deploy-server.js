@@ -3514,6 +3514,14 @@ function azobssDirectFallbackEnabled() {
   return String(process.env.AZOBSS_DISABLE_PABM_DIRECT_FALLBACK || "") !== "1";
 }
 
+// PA files from JUPEM are usually .TIF. AZOBSS PA paid downloads are expected to be
+// converted to PDF by the backend first. Browser-direct fallback is useful for BM/SBM,
+// but for PA it gives the user the raw .TIF and looks like the PDF converter failed.
+// Keep PA raw-TIF fallback disabled by default; enable only for emergency/debug.
+function azobssPaOriginalTifFallbackEnabled() {
+  return String(process.env.AZOBSS_ALLOW_PA_TIF_FALLBACK || "") === "1";
+}
+
 function azobssFirstPaFallbackUrl(record, itemCode, negeri) {
   const inputs = azobssUnique([
     azobssExtractNoPaFromUrl(record && record.downloadUrl),
@@ -3539,6 +3547,14 @@ function azobssFirstBmFallbackUrl(record) {
 
 async function azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, kind, openUrl, filename) {
   if (!azobssDirectFallbackEnabled() || !openUrl) return false;
+
+  const upperKind = String(kind || "").toUpperCase();
+  if (upperKind === "PA" && !azobssPaOriginalTifFallbackEnabled()) {
+    // Do not open the original JUPEM .TIF for PA by default. Paid PA downloads must
+    // come back as AZOBSS-converted PDF. Also do not consume the 5x quota here.
+    return false;
+  }
+
   try {
     await azobssIncrementPurchaseDownload(ref, record, nowMs);
   } catch (e) {
@@ -5387,6 +5403,16 @@ async function handler(req, res) {
       const negeri =
         cleanState(parsed.query.negeri);
 
+      // Legacy /api/pa used to stage and return a raw .TIF download. Redirect it to
+      // the PDF converter so PA output is consistent everywhere. /api/check-pa remains
+      // the lightweight existence check endpoint.
+      if (noPA && negeri && String(parsed.query.rawTif || "") !== "1") {
+        const target = `/api/pa-pdf?noPA=${encodeURIComponent(noPA)}&negeri=${encodeURIComponent(negeri)}`;
+        res.writeHead(302, azSecurityHeaders({ Location: target, "Cache-Control": "no-store" }));
+        res.end();
+        return;
+      }
+
       if (!noPA) {
 
         return send(
@@ -5691,7 +5717,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       const fallbackUrl = azobssFirstPaFallbackUrl(record, itemCode, negeri);
       const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`);
       if (fallbackSent) return;
-      return azobssPaBmDownloadError(res, 502, "PA file is temporarily unavailable from JUPEM. Please try again in a moment.");
+      return azobssPaBmDownloadError(res, 502, "PA PDF is not ready yet. AZOBSS could not fetch the JUPEM TIF for conversion right now. Please try again in a moment. Your download quota was not used.");
     }
 
     const safeName = ("PA" + itemCode).replace(/[^A-Z0-9_-]/gi, "");
