@@ -368,7 +368,7 @@ async function azCommissionIdentityFromRequest(req) {
         console.warn("Commission identity profile lookup failed:", err && (err.message || err));
       }
     }
-    identity.isAdmin = identity.role === "admin" || identity.username === "zedan91" || identity.email === "zedan91@azobss.local" || identity.email === "zedan9107@gmail.com";
+    identity.isAdmin = identity.role === "admin" || identity.username === "zedan91" || identity.username === "zedan0001" || identity.email === "zedan91@azobss.local" || identity.email === "zedan9107@gmail.com";
     return identity;
   } catch (err) {
     console.warn("Commission Firebase token verify failed:", err && (err.message || err));

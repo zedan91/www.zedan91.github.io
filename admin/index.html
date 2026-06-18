@@ -895,6 +895,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
+
+<style id="azobss-admin-pabm-reset-download-style">
+.az-admin-reset-pabm-download-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:28px;padding:0 10px;border-radius:999px;border:1px solid rgba(56,189,248,.75);background:rgba(14,165,233,.14);color:#7dd3fc;font-size:12px;font-weight:900;line-height:1;cursor:pointer;white-space:nowrap}
+.az-admin-reset-pabm-download-btn:hover{background:rgba(14,165,233,.23);color:#e0f2fe}
+.az-admin-reset-pabm-download-btn:disabled{opacity:.55;cursor:wait}
+.az-admin-pabm-dl-badge{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:rgba(15,23,42,.88);border:1px solid rgba(148,163,184,.25);color:#e5e7eb;font-size:12px;font-weight:850;white-space:nowrap}
+</style>
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -1742,6 +1749,52 @@ async function safeGet(q){
   try{return await getDocs(q)}catch(e){console.warn('Admin dashboard query failed:',e);return null}
 }
 
+function azAdminIsPaBmRecord(x){
+  x=x||{};
+  const hay=[x.productType,x.product,x.category,x.source,x.itemType,x.type,x.title,x.name,x.itemName,x.filename,x.itemCode].map(v=>String(v||'').toLowerCase()).join(' ');
+  return hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster');
+}
+function azAdminIsPaidRecord(x){
+  const status=String(x?.status || x?.paymentStatus || '').toLowerCase();
+  return ['paid','verified','success','completed','approved','confirmed'].includes(status);
+}
+function azAdminDownloadCount(x){
+  return Math.max(0, Number(x?.downloadCount || x?.usedCount || x?.downloadsUsed || 0) || 0);
+}
+function azAdminMaxDownloads(x){
+  const n=Number(x?.maxDownloads || x?.maxDownload || 0) || 0;
+  return n>0?n:5;
+}
+function azAdminPaBmResetActions(x){
+  if(!x || !x.id || !azAdminIsPaBmRecord(x) || !azAdminIsPaidRecord(x)) return '';
+  const used=azAdminDownloadCount(x);
+  const max=azAdminMaxDownloads(x);
+  return `<span class="az-admin-pabm-dl-badge">⬇ ${esc(String(used))}/${esc(String(max))}</span><button class="az-admin-reset-pabm-download-btn" data-reset-pabm-download="${esc(x.id)}" title="Reset PA/BM download limit to 0/5">Reset 0/5</button>`;
+}
+async function azAdminResetPaBmDownloadCount(recordId, btn){
+  recordId=String(recordId||'').trim();
+  if(!recordId){ alert('Record ID tidak ditemui.'); return; }
+  if(!confirm('Reset download limit rekod ini kembali ke 0/5 dan renew tempoh 7 hari?')) return;
+  const old=btn?btn.textContent:'';
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='Resetting...'; }
+    await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/pa-bm-download/reset-count',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({recordId})
+    });
+    alert('Download limit sudah reset ke 0/5. Tempoh download diperbaharui 7 hari.');
+    try{ await loadPayments(); }catch(_){ }
+    try{ await loadPurchases(); }catch(_){ }
+  }catch(e){
+    alert(e?.message || 'Reset download limit gagal.');
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent=old||'Reset 0/5'; }
+  }
+}
+window.azAdminResetPaBmDownloadCount = azAdminResetPaBmDownloadCount;
+
+
 async function loadOverview(){
   try{
     if(!window.__azOverviewLoadingOnlineUsers && typeof loadOnlineUsers === 'function'){
@@ -1903,9 +1956,11 @@ async function loadPayments(){
     const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
     const buyer = esc(x.usernameKey || x.username || x.displayName || x.email || '-');
     const itemName = esc(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productType || 'Purchase');
+    const actions = azAdminPaBmResetActions(x);
     return item(
       `${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)}`,
-      `${buyer} • ${itemName} • Status: ${statusText} • ${fmtDate(x.createdAtMs||x.createdAt)}`
+      `${buyer} • ${itemName} • Status: ${statusText} • ${fmtDate(x.createdAtMs||x.createdAt)}`,
+      actions
     );
   });
 
@@ -1915,7 +1970,7 @@ async function loadPayments(){
 async function loadPurchases(){
   const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
   const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)));
-  const lr=[]; logs?.forEach(d=>{const x=d.data();lr.push(item(esc(x.usernameKey||x.username||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • ${esc(x.status||'')} • RM${esc(x.amount||x.total||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`))});
+  const lr=[]; logs?.forEach(d=>{const x={id:d.id,...(d.data()||{})};lr.push(item(esc(x.usernameKey||x.username||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • ${esc(x.status||'')} • RM${esc(x.amount||x.total||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`, azAdminPaBmResetActions(x))) });
   const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
   $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No purchase logs.</div>';
   $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No purchase summaries.</div>';
@@ -3875,6 +3930,15 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(run, 1200);
   setTimeout(run, 2500);
 })();
+
+document.addEventListener('click', async function(e){
+  const el=e.target && e.target.closest ? e.target.closest('[data-reset-pabm-download]') : null;
+  if(!el) return;
+  e.preventDefault();
+  e.stopPropagation();
+  await azAdminResetPaBmDownloadCount(el.getAttribute('data-reset-pabm-download'), el);
+}, true);
+
 </script>
 
 </body>

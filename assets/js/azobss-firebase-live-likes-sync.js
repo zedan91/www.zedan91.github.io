@@ -997,7 +997,7 @@ function injectProfileSettingsModal() {
   setupPasswordVisibilityToggles();
 }
 
-const AZOBSS_ADMIN_USERS = ['zedan91','zedan9107'];
+const AZOBSS_ADMIN_USERS = ['zedan91','zedan9107','zedan0001'];
 const AZOBSS_ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
 const AZOBSS_PA_MEMBER_CODE = 'ZX6186';
 function getUserKey(user){ return String(user?.usernameKey || user?.username || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
@@ -2513,6 +2513,35 @@ async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
   }
 }
 window.azobssAdminResetPaBmDownloadCounter = azobssAdminResetPaBmDownloadCounter;
+
+function azobssCanShowPaBmAdminReset(){
+  try{
+    const saved = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+    if(typeof isAzobssAdmin === 'function' && isAzobssAdmin(saved)) return true;
+    if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(saved)) return true;
+    const email = String((auth && auth.currentUser && auth.currentUser.email) || saved.email || saved.authEmail || '').trim().toLowerCase();
+    const username = String(saved.usernameKey || saved.username || saved.name || (email ? email.split('@')[0] : '') || '').trim().toLowerCase();
+    const role = String(saved.role || saved.accountRole || saved.userRole || '').trim().toLowerCase();
+    if(role === 'admin') return true;
+    if(['zedan91','zedan9107','zedan0001'].includes(username)) return true;
+    if(['zedan91@azobss.local','zedan9107@gmail.com'].includes(email)) return true;
+    try{
+      const rawKeys = ['azobss_user','azobssUser','siteUser','currentUser','azobss_current_user'];
+      for(const key of rawKeys){
+        const raw = localStorage.getItem(key) || sessionStorage.getItem(key) || '';
+        if(!raw) continue;
+        const u = JSON.parse(raw);
+        const k = String(u.usernameKey || u.username || u.name || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase();
+        const r = String(u.role || u.accountRole || u.userRole || '').trim().toLowerCase();
+        const e = String(u.email || u.authEmail || '').trim().toLowerCase();
+        if(r === 'admin' || ['zedan91','zedan9107','zedan0001'].includes(k) || ['zedan91@azobss.local','zedan9107@gmail.com'].includes(e)) return true;
+      }
+    }catch(_){ }
+  }catch(_){ }
+  return false;
+}
+window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
+
 async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
   try{
     const ev = clickEvent || (window.event || null);
@@ -2773,7 +2802,7 @@ function purchaseDetailRowHtml(r){
   const days = azobssPurchaseDownloadRemainingDays(r);
   let actionHtml = '';
   const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
-  const adminResetHtml = (paid && isAzobssAdmin(getSavedUser && getSavedUser() || {}))
+  const adminResetHtml = (paid && (window.azobssCanShowPaBmAdminReset ? window.azobssCanShowPaBmAdminReset() : isAzobssAdmin(getSavedUser && getSavedUser() || {})))
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
   if(paid && paidDownloadUrl && allowed){

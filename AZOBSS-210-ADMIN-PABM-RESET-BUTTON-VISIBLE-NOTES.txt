@@ -1,0 +1,23 @@
+AZOBSS Patch 210 - Admin PA/BM Reset Button Visible Fix
+Date: 2026-06-18
+
+Purpose:
+- Audit/fix why the admin reset button for PA/BM download limit was not visible.
+
+Root cause:
+- Patch 209 added Reset 0/5 mainly inside the user PA/BM purchase list renderer.
+- The Admin Dashboard Purchase Logs / Payments views did not render any reset action.
+- Frontend admin detection was too narrow for test/admin account zedan0001 if Firestore role was not already present in getSavedUser().
+
+Fixes:
+- Added Reset 0/5 button to Admin Dashboard payment rows for paid PA/BM records.
+- Added Reset 0/5 button to Admin Dashboard Purchase Logs rows for paid PA/BM records.
+- Added admin-side fetch to POST /api/pa-bm-download/reset-count with Firebase ID token.
+- Refreshes Payments and Purchase Logs after reset.
+- Added visible admin button styles in Admin Dashboard.
+- Expanded frontend admin detection to include zedan0001 and multiple saved-user sources.
+- Expanded backend Firebase admin identity check to include zedan0001.
+- Added PA/BM page style override so Reset 0/5 button remains visible beside 0/5 download count.
+
+No Firebase Rules update required.
+No mandatory Render ENV required.
