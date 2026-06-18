@@ -3272,7 +3272,25 @@ function azobssUnique(values) {
 }
 
 function azobssStationKey(value) {
-  return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // Paid purchase rows sometimes store benchmark items as "BM H 0109" / "SBM 201064",
+  // while the local JUPEM database stores only the station code "H 0109" / "201064".
+  // If we compare them raw, the backend cannot rebuild the JUPEM productId and the
+  // user gets a false "BM/SBM not found" after payment. Normalize product prefixes here.
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/^STESEN\s+TANDA\s+ARAS[\s:_-]*/i, "")
+    .replace(/^TANDA\s+ARAS[\s:_-]*/i, "")
+    .replace(/^(BM|SBM)[\s:_-]+/i, "")
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function azobssStationKeyVariants(value) {
+  const raw = String(value || "").trim().toUpperCase();
+  const variants = [raw];
+  variants.push(raw.replace(/^(BM|SBM)(?=[A-Z0-9])/i, ""));
+  variants.push(raw.replace(/^(BM|SBM)[\s:_-]+/i, ""));
+  return azobssUnique(variants.map(azobssStationKey).filter(Boolean));
 }
 
 function azobssDirectBmUrl(productId, jenis) {
@@ -3304,7 +3322,14 @@ function azobssFindStesenRecordForPurchase(record) {
   const urlInfo = urls.map(azobssExtractBmUrlInfo).find(x => x && x.productId) || {};
   const wantedProductId = String((record && (record.productId || record.id)) || urlInfo.productId || "").replace(/[^0-9]/g, "");
   const wantedJenis = String((record && record.jenis) || urlInfo.jenis || ((String(record && (record.productType || record.product) || "").toUpperCase() === "SBM") ? "2" : "1")).trim() === "2" ? "2" : "1";
-  const wantedStation = azobssStationKey(record && (record.itemCode || record.stationNo || record.stesen || record.code));
+  const wantedStationValues = azobssUnique([
+    record && record.itemCode,
+    record && record.stationNo,
+    record && record.stesen,
+    record && record.code
+  ]);
+  const wantedStationKeys = azobssUnique(wantedStationValues.flatMap(azobssStationKeyVariants));
+  const wantedStation = wantedStationKeys[0] || "";
   const wantedState = String(record && (record.negeri || record.state) || "").trim().toUpperCase();
 
   if (wantedProductId) {
@@ -3312,9 +3337,10 @@ function azobssFindStesenRecordForPurchase(record) {
     if (exact) return exact;
   }
 
-  if (wantedStation) {
+  if (wantedStationKeys.length) {
     return rows.find((r) => {
-      const stationOk = azobssStationKey(r.stesen || r.stationNo || r.itemCode || r.code) === wantedStation;
+      const rowKeys = azobssStationKeyVariants(r.stesen || r.stationNo || r.itemCode || r.code);
+      const stationOk = rowKeys.some((key) => wantedStationKeys.includes(key));
       const stateOk = !wantedState || String(r.negeri || r.state || "").trim().toUpperCase() === wantedState;
       const jenisOk = !wantedJenis || String(r.jenis || wantedJenis) === wantedJenis;
       return stationOk && stateOk && jenisOk;
