@@ -1,0 +1,16 @@
+AZOBSS PATCH 216 - Homepage Freeze / PA-BM Guard Scope Fix
+
+Punca:
+- Patch PA/BM admin/user guard lama berjalan juga di homepage index.html.
+- Script 213 memaksa body.is-admin membuka adminPurchasePanel secara global.
+- Script 214 ada MutationObserver subtree yang boleh trigger semula bila script sendiri ubah style, menyebabkan UI jem/flicker dan kadang tidak boleh click.
+
+Fix:
+- Disable script 213 yang force admin PA/BM panel.
+- Scope CSS 213/214 kepada body.pa-bm-page sahaja.
+- Tambah early return untuk 214 applyGuard jika bukan PA/BM page.
+- Buang self-triggering MutationObserver 214.
+- Tambah final homepage unlock guard supaya homepage kekal clickable.
+
+Firebase Rules: tidak perlu update.
+Render ENV: tiada tambahan wajib.
