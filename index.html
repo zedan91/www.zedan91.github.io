@@ -15753,6 +15753,130 @@ body.is-admin #purchaseSummaryList .az-purchase-delete-all-btn{background:#ef444
 })();
 </script>
 
+
+
+<!-- AZOBSS PATCH 215: final PA/BM user/admin panel separation guard -->
+<style id="azobss-pabm-final-owner-only-admin-panel-guard-215">
+/* Final cascade guard: PA/BM Purchase Records Users is ONLY for owner admin.
+   Normal users/staff/test accounts must never see Show/Pending/Reset/All admin summary UI. */
+body.pa-bm-page:not(.pabm-owner-admin) #purchasePanelTitle,
+body.pa-bm-page:not(.pabm-owner-admin) #purchasePanelNote,
+body.pa-bm-page:not(.pabm-owner-admin) #purchaseRecordTools,
+body.pa-bm-page:not(.pabm-owner-admin) #refreshPurchaseButton,
+body.pa-bm-page:not(.pabm-owner-admin) #togglePurchaseRecordsButton,
+body.pa-bm-page:not(.pabm-owner-admin) .purchase-record-actions,
+body.pa-bm-page:not(.pabm-owner-admin) #purchaseAdminError,
+body.pa-bm-page:not(.pabm-owner-admin) #purchaseSummaryList,
+body.pa-bm-page:not(.pabm-owner-admin) #purchaseRecordsPagination,
+body.pa-bm-page:not(.pabm-owner-admin) .az-purchase-show-btn,
+body.pa-bm-page:not(.pabm-owner-admin) .az-purchase-pending-btn,
+body.pa-bm-page:not(.pabm-owner-admin) .az-purchase-reset-btn,
+body.pa-bm-page:not(.pabm-owner-admin) .az-purchase-delete-all-btn,
+body.pa-bm-page:not(.pabm-owner-admin) .az-admin-reset-download-count{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+body.pa-bm-page:not(.pabm-owner-admin) #adminPurchasePanel{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+body.pa-bm-page:not(.pabm-owner-admin) #userPaPurchasePanel{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+body.pa-bm-page:not(.pabm-owner-admin) #userPaPurchasePanel h4,
+body.pa-bm-page:not(.pabm-owner-admin) #userPaPurchaseTools,
+body.pa-bm-page:not(.pabm-owner-admin) #userPaPurchaseList,
+body.pa-bm-page:not(.pabm-owner-admin) #userPaPurchasePagination{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+body.pa-bm-page.pabm-owner-admin #purchasePanelTitle,
+body.pa-bm-page.pabm-owner-admin #purchasePanelNote,
+body.pa-bm-page.pabm-owner-admin .purchase-record-actions,
+body.pa-bm-page.pabm-owner-admin #purchaseRecordTools,
+body.pa-bm-page.pabm-owner-admin #purchaseSummaryList{
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+body.pa-bm-page.pabm-owner-admin #purchaseSummaryList{display:grid!important;}
+body.pa-bm-page.pabm-owner-admin #purchaseRecordTools{display:grid!important;}
+body.pa-bm-page.pabm-owner-admin .purchase-record-actions{display:block!important;}
+body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
+</style>
+<script id="azobss-pabm-final-owner-only-admin-panel-guard-215">
+(function(){
+  var OWNER_KEYS = ['zedan91','zedan9107'];
+  var OWNER_EMAILS = ['zedan9107@gmail.com','zedan91@azobss.local'];
+  function clean(v){ return String(v || '').trim().toLowerCase(); }
+  function parse(raw){ try{ return raw ? JSON.parse(raw) : null; }catch(_){ return null; } }
+  function savedUser(){
+    try{ if(typeof window.getSavedUser === 'function'){ var gu = window.getSavedUser(); if(gu) return gu; } }catch(_){ }
+    var keys = ['azobssUser','azobss_user','azobssCurrentUser','azobss_current_user','siteUser','currentUser'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+        var obj = parse(raw);
+        if(obj) return obj;
+      }catch(_){ }
+    }
+    return {};
+  }
+  function firebaseEmail(){
+    try{
+      var auth = window.firebase && window.firebase.auth && window.firebase.auth();
+      return clean(auth && auth.currentUser && auth.currentUser.email);
+    }catch(_){ return ''; }
+  }
+  function isOwnerAdmin(){
+    var u = savedUser() || {};
+    var email = clean(u.email || u.authEmail || u.realEmail || firebaseEmail());
+    var key = clean(u.usernameKey || u.username || u.displayName || u.name || (email ? email.split('@')[0] : ''));
+    var shown = clean((document.getElementById('signedInName') || {}).textContent || '');
+    return OWNER_KEYS.indexOf(key) !== -1 || OWNER_KEYS.indexOf(shown) !== -1 || OWNER_EMAILS.indexOf(email) !== -1;
+  }
+  function show(el, display){ if(!el) return; el.hidden = false; el.removeAttribute('hidden'); el.style.display = display || 'block'; el.style.visibility = 'visible'; el.style.opacity = '1'; el.style.pointerEvents = 'auto'; }
+  function hide(el){ if(!el) return; el.hidden = true; el.setAttribute('hidden',''); el.style.display = 'none'; el.style.visibility = 'hidden'; el.style.opacity = '0'; el.style.pointerEvents = 'none'; }
+  function apply(){
+    if(!document.body || !document.body.classList.contains('pa-bm-page')) return;
+    var owner = isOwnerAdmin();
+    document.body.classList.toggle('pabm-owner-admin', owner);
+    var title = document.getElementById('purchasePanelTitle');
+    var note = document.getElementById('purchasePanelNote');
+    var tools = document.getElementById('purchaseRecordTools');
+    var actions = document.querySelector('.purchase-record-actions');
+    var summary = document.getElementById('purchaseSummaryList');
+    var pag = document.getElementById('purchaseRecordsPagination');
+    var userPanel = document.getElementById('userPaPurchasePanel');
+    var panel = document.getElementById('adminPurchasePanel');
+    show(panel, 'block');
+    if(owner){
+      if(title){ title.textContent = 'Purchase Records Users'; show(title, 'block'); }
+      show(note, 'block'); show(actions, 'block'); show(tools, 'grid'); show(summary, 'grid'); show(pag, ''); hide(userPanel);
+    }else{
+      if(title){ title.textContent = 'Purchase Records Saya'; hide(title); }
+      hide(note); hide(actions); hide(tools); hide(summary); hide(pag); show(userPanel, 'block');
+      document.querySelectorAll('.az-purchase-show-btn,.az-purchase-pending-btn,.az-purchase-reset-btn,.az-purchase-delete-all-btn,.az-admin-reset-download-count').forEach(hide);
+    }
+  }
+  document.addEventListener('DOMContentLoaded', apply);
+  window.addEventListener('load', apply);
+  window.addEventListener('storage', apply);
+  document.addEventListener('azobss:user-ready', apply);
+  document.addEventListener('azobss:auth-ready', apply);
+  [50,200,700,1500,3000,5000].forEach(function(ms){ setTimeout(apply, ms); });
+  setInterval(apply, 4000);
+})();
+</script>
+
 </body>
 </html>
 

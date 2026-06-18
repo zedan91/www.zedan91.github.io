@@ -4740,3 +4740,25 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
 
 
 
+
+
+// AZOBSS PATCH 215: PA/BM owner-only admin records UI final guard helper
+(function(){
+  if(window.__azobssPabmOwnerOnlyGuard215Installed) return;
+  window.__azobssPabmOwnerOnlyGuard215Installed = true;
+  window.azobssIsPaBmOwnerAdmin = window.azobssIsPaBmOwnerAdmin || function(){
+    var keys=['zedan91','zedan9107'], emails=['zedan9107@gmail.com','zedan91@azobss.local'];
+    function clean(v){return String(v||'').trim().toLowerCase();}
+    function parse(raw){try{return raw?JSON.parse(raw):null;}catch(_){return null;}}
+    var u={};
+    try{ if(typeof window.getSavedUser==='function') u=window.getSavedUser()||{}; }catch(_){ }
+    if(!u || !Object.keys(u).length){
+      ['azobssUser','azobss_user','azobssCurrentUser','azobss_current_user','siteUser','currentUser'].some(function(k){var o=parse(localStorage.getItem(k)||sessionStorage.getItem(k)||''); if(o){u=o; return true;} return false;});
+    }
+    var email=clean(u.email||u.authEmail||'');
+    try{ if(!email && window.firebase && window.firebase.auth) email=clean(window.firebase.auth().currentUser && window.firebase.auth().currentUser.email); }catch(_){ }
+    var key=clean(u.usernameKey||u.username||u.displayName||u.name||(email?email.split('@')[0]:''));
+    var shown=clean((document.getElementById('signedInName')||{}).textContent||'');
+    return keys.indexOf(key)!==-1 || keys.indexOf(shown)!==-1 || emails.indexOf(email)!==-1;
+  };
+})();
