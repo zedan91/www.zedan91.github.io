@@ -3310,23 +3310,80 @@ function azobssFirstBmFallbackUrl(record) {
   return (list || []).find(u => /^https:\/\/ebiz\.jupem\.gov\.my\//i.test(String(u || ""))) || (list && list[0]) || "";
 }
 
-async function azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, kind, openUrl, filename) {
+async function azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, kind, openUrl, filename) {
   if (!azobssDirectFallbackEnabled() || !openUrl) return false;
   try {
     await azobssIncrementPurchaseDownload(ref, record, nowMs);
   } catch (e) {
     console.error("Download counter update failed before browser fallback:", e && (e.stack || e.message || e));
   }
-  return send(res, 200, JSON.stringify({
+
+  const safeKind = String(kind || "File").replace(/[<>]/g, "");
+  const safeFilename = String(filename || "download").replace(/[\r\n"<>]/g, "").trim() || "download";
+  const wantsHtml = (() => {
+    try {
+      const accept = String((req && req.headers && req.headers.accept) || "").toLowerCase();
+      const mode = String((req && req.headers && req.headers["sec-fetch-mode"]) || "").toLowerCase();
+      const dest = String((req && req.headers && req.headers["sec-fetch-dest"]) || "").toLowerCase();
+      return mode === "navigate" || dest === "document" || accept.includes("text/html");
+    } catch (_) {
+      return false;
+    }
+  })();
+
+  if (wantsHtml) {
+    const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AZOBSS Download Fallback</title>
+<style>
+body{margin:0;background:#07111f;color:#e5e7eb;font-family:Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px;box-sizing:border-box}.card{width:min(560px,100%);border:1px solid rgba(34,197,94,.45);background:#111827;border-radius:18px;padding:22px;box-shadow:0 20px 45px rgba(0,0,0,.35)}h1{margin:0 0 10px;font-size:22px}.muted{color:#a9b4c7;line-height:1.45}.btn{display:inline-flex;margin-top:16px;padding:13px 18px;border-radius:11px;background:#16a34a;color:#fff;font-weight:900;text-decoration:none}.small{margin-top:14px;color:#8fa0b8;font-size:12px;word-break:break-word}</style>
+</head>
+<body>
+<div class="card">
+<h1>AZOBSS Download Ready ✅</h1>
+<p class="muted">The AZOBSS server proxy is temporarily blocked by JUPEM, so this page will open the original JUPEM download link directly in your browser.</p>
+<a class="btn" id="openBtn" rel="noopener" href="${azobssEscapeHtml(openUrl)}">Open Original JUPEM Download</a>
+<p class="small">File: ${azobssEscapeHtml(safeFilename)}</p>
+<p class="small">If the download does not start automatically, tap the green button above.</p>
+</div>
+<script>
+(function(){
+  var url = ${JSON.stringify(openUrl)};
+  setTimeout(function(){ try{ window.location.href = url; }catch(e){} }, 650);
+})();
+</script>
+</body>
+</html>`;
+    res.writeHead(200, azSecurityHeaders({
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Disposition": "inline",
+      "Cache-Control": "no-store"
+    }));
+    res.end(html);
+    return true;
+  }
+
+  res.writeHead(200, azSecurityHeaders({
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "X-AZOBSS-Browser-Fallback": "1",
+    "X-AZOBSS-Open-Url": encodeURIComponent(openUrl),
+    "X-AZOBSS-Filename": encodeURIComponent(safeFilename),
+    "Access-Control-Expose-Headers": "Content-Disposition, X-AZOBSS-Browser-Fallback, X-AZOBSS-Open-Url, X-AZOBSS-Filename"
+  }));
+  res.end(JSON.stringify({
     ok: true,
     mode: "browser-direct-fallback",
     openUrl,
-    filename: filename || "download",
-    message: `${kind} server proxy is temporarily blocked by JUPEM. Opening the original JUPEM download link in your browser instead.`,
+    filename: safeFilename,
+    message: `${safeKind} server proxy is temporarily blocked by JUPEM. Opening the original JUPEM download link in your browser instead.`,
     counted: true
-  }), "application/json");
+  }));
+  return true;
 }
-
 
 
 function normalizeAffiliateUrl(rawUrl) {
@@ -5376,7 +5433,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     const paResult = await azobssFetchPaRecordFile(record, itemCode, negeri);
     if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
       const fallbackUrl = azobssFirstPaFallbackUrl(record, itemCode, negeri);
-      const fallbackSent = await azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`);
+      const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`);
       if (fallbackSent) return;
       return azobssPaBmDownloadError(res, 502, "PA file is temporarily unavailable from JUPEM. Please try again in a moment.");
     }
@@ -5409,14 +5466,14 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   } catch (fetchError) {
     console.error("BM/SBM controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
     const fallbackUrl = azobssFirstBmFallbackUrl(record);
-    const fallbackSent = await azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
+    const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
     if (fallbackSent) return;
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
   if (!bmResult || !bmResult.validFile || !bmResult.buffer || !bmResult.buffer.length) {
     const fallbackUrl = azobssFirstBmFallbackUrl(record);
-    const fallbackSent = await azobssReturnBrowserFallbackDownload(res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
+    const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
     if (fallbackSent) return;
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }

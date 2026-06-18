@@ -2850,6 +2850,52 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
+
+(function(){
+  if(window.__azobssPaBmDownloadCaptureInstalled) return;
+  window.__azobssPaBmDownloadCaptureInstalled = true;
+  function findDownloadLink(target){
+    try{
+      if(!target) return null;
+      if(target.closest) return target.closest('.user-pa-download[data-download-url], .user-pa-download[data-download-payload]');
+      while(target && target !== document){
+        if(target.classList && target.classList.contains('user-pa-download')) return target;
+        target = target.parentNode;
+      }
+    }catch(e){}
+    return null;
+  }
+  document.addEventListener('click', function(ev){
+    const link = findDownloadLink(ev.target);
+    if(!link || link.classList.contains('is-locked') || link.classList.contains('is-pending-status')) return;
+    const payload = link.getAttribute('data-download-payload') || '';
+    const url = link.getAttribute('data-download-url') || '';
+    if(!payload && !url) return;
+    try{
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    }catch(e){}
+    if(window.azobssClientControlledDownload){
+      if(payload){
+        window.azobssClientControlledDownload(payload, link, ev);
+      }else{
+        // Legacy safety: never let Android/Chrome download AZOBSS JSON fallback as .pdf.json.
+        link.removeAttribute('download');
+        link.setAttribute('href', '#');
+        fetch(url, { method:'GET', cache:'no-store' }).then(async function(response){
+          const type = String(response.headers.get('content-type') || '').toLowerCase();
+          if(type.includes('application/json')){
+            const data = await response.json().catch(function(){ return null; });
+            if(data && data.openUrl){ window.location.href = data.openUrl; return; }
+          }
+          window.location.href = url;
+        }).catch(function(){ window.location.href = url; });
+      }
+    }
+    return false;
+  }, true);
+})();
 function azobssPurchaseDownloadMetaHtml(r){
   if(!azobssIsPurchasePaidForDownload(r)) return '';
   const used = azobssPurchaseDownloadCount(r);
@@ -2885,7 +2931,7 @@ function purchaseDetailRowHtml(r){
   let actionHtml = '';
   const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>${dlMetaHtml}</div>`;
+    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${azobssPurchaseDownloadPayload(r)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>${dlMetaHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
     actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}</div>`;
