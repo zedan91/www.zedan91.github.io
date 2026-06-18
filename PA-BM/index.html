@@ -7979,6 +7979,40 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
+
+<style id="azobss-pabm-owner-admin-records-visibility-fix">
+/* AZOBSS PATCH 214: PA/BM Purchase Records Users is owner-admin only.
+   Normal members must only see their own Latest Purchase List, even if an old script/cache toggles body.is-admin. */
+body:not(.pabm-owner-admin) #purchaseRecordTools,
+body:not(.pabm-owner-admin) #purchaseRecordsPagination,
+body:not(.pabm-owner-admin) #purchasePanelNote,
+body:not(.pabm-owner-admin) .purchase-record-actions,
+body:not(.pabm-owner-admin) #purchaseSummaryList{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+body:not(.pabm-owner-admin) #userPaPurchasePanel{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+body:not(.pabm-owner-admin) #purchasePanelTitle{
+  display:none!important;
+}
+body:not(.pabm-owner-admin) #userPaPurchaseList .az-admin-reset-download-count{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+body.pabm-owner-admin #purchasePanelTitle{display:block!important;}
+body.pabm-owner-admin #purchaseSummaryList{display:grid!important;visibility:visible!important;pointer-events:auto!important;}
+body.pabm-owner-admin #purchaseRecordTools{display:grid!important;visibility:visible!important;pointer-events:auto!important;}
+body.pabm-owner-admin .purchase-record-actions{display:block!important;visibility:visible!important;pointer-events:auto!important;}
+body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;pointer-events:auto!important;}
+body.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
+</style>
+
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8748,7 +8782,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 (function(){
   const STORAGE_KEY = 'azobss_affiliate_products_v4';
   const ADMIN_USERNAME = 'zedan91';
-  const ADMIN_USERNAMES = ['zedan91','zedan9107','zedan0001'];
+  const ADMIN_USERNAMES = ['zedan91','zedan9107'];
 
   function qs(s){return document.querySelector(s);}
   function qsa(s){return Array.from(document.querySelectorAll(s));}
@@ -10258,7 +10292,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <script>
 (function(){
   var ADMIN_USERNAME = 'zedan91';
-  var ADMIN_USERNAMES = ['zedan91','zedan9107','zedan0001'];
+  var ADMIN_USERNAMES = ['zedan91','zedan9107'];
 
   function clean(v){
     return String(v || '').trim().toLowerCase();
@@ -14388,11 +14422,91 @@ body.is-admin #purchaseSummaryList .az-purchase-delete-all-btn{background:#ef444
 <script id="azobss-admin-pabm-stable-admin-class-fix-213">
 (function(){
   function clean(v){return String(v||'').trim().toLowerCase();}
-  var admins=['zedan91','zedan9107','zedan0001'];
+  var admins=['zedan91','zedan9107'];
   function saved(){try{return (typeof window.getSavedUser==='function'&&window.getSavedUser())||JSON.parse(localStorage.getItem('azobssUser')||localStorage.getItem('azobssCurrentUser')||'null')||null;}catch(e){return null;}}
   function isAdmin(){var u=saved()||{};var key=clean(u.usernameKey||u.username||u.name||(u.email?String(u.email).split('@')[0]:''));var role=clean(u.role);var email=clean(u.email||u.authEmail);var name=clean((document.getElementById('signedInName')||{}).textContent);return role==='admin'||admins.indexOf(key)!==-1||admins.indexOf(name)!==-1||email==='zedan9107@gmail.com'||email==='zedan91@azobss.local';}
   function sync(){if(isAdmin()){document.body.classList.add('is-admin','has-pa-access');var t=document.getElementById('purchasePanelTitle');if(t)t.textContent='Purchase Records Users';var up=document.getElementById('userPaPurchasePanel');if(up)up.style.display='none';var p=document.getElementById('adminPurchasePanel');if(p){p.hidden=false;p.removeAttribute('hidden');p.style.display='block';}}}
   document.addEventListener('DOMContentLoaded',sync);window.addEventListener('load',sync);window.addEventListener('storage',sync);setTimeout(sync,100);setTimeout(sync,700);setTimeout(sync,1800);setInterval(sync,5000);
+})();
+</script>
+
+
+<script id="azobss-pabm-owner-admin-records-visibility-guard">
+(function(){
+  var OWNER_ADMIN_KEYS = ['zedan91','zedan9107'];
+  var OWNER_ADMIN_EMAILS = ['zedan9107@gmail.com','zedan91@azobss.local'];
+  function clean(v){ return String(v || '').trim().toLowerCase(); }
+  function saved(){
+    try{ if(typeof window.getSavedUser === 'function') return window.getSavedUser() || {}; }catch(_){ }
+    var keys=['azobss_user','azobssUser','siteUser','currentUser','azobss_current_user'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw=localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]) || '';
+        if(raw) return JSON.parse(raw) || {};
+      }catch(_){ }
+    }
+    return {};
+  }
+  function ownerAdmin(){
+    var u=saved() || {};
+    var email = clean(u.email || u.authEmail || (window.firebase && window.firebase.auth && window.firebase.auth().currentUser && window.firebase.auth().currentUser.email) || '');
+    var key = clean(u.usernameKey || u.username || u.name || (email ? email.split('@')[0] : ''));
+    var shown = clean((document.getElementById('signedInName') || {}).textContent || '');
+    return OWNER_ADMIN_KEYS.indexOf(key) !== -1 || OWNER_ADMIN_KEYS.indexOf(shown) !== -1 || OWNER_ADMIN_EMAILS.indexOf(email) !== -1;
+  }
+  function applyGuard(){
+    var isOwner = ownerAdmin();
+    document.body.classList.toggle('pabm-owner-admin', !!isOwner);
+
+    var title = document.getElementById('purchasePanelTitle');
+    if(title){ title.textContent = isOwner ? 'Purchase Records Users' : 'Purchase Records Saya'; }
+
+    var adminList = document.getElementById('purchaseSummaryList');
+    if(adminList){
+      adminList.style.display = isOwner ? 'grid' : 'none';
+      adminList.toggleAttribute('aria-hidden', !isOwner);
+    }
+
+    var tools = document.getElementById('purchaseRecordTools');
+    if(tools){
+      tools.hidden = !isOwner;
+      tools.style.display = isOwner ? 'grid' : 'none';
+    }
+
+    var pag = document.getElementById('purchaseRecordsPagination');
+    if(pag){
+      pag.hidden = !isOwner;
+      pag.style.display = isOwner ? '' : 'none';
+    }
+
+    var note = document.getElementById('purchasePanelNote');
+    if(note){ note.style.display = isOwner ? 'block' : 'none'; }
+
+    var actions = document.querySelector('.purchase-record-actions');
+    if(actions){ actions.style.display = isOwner ? '' : 'none'; }
+
+    var userPanel = document.getElementById('userPaPurchasePanel');
+    if(userPanel){
+      userPanel.hidden = false;
+      userPanel.style.display = isOwner ? 'none' : 'block';
+    }
+
+    try{
+      var oldReset = window.azobssCanShowPaBmAdminReset;
+      window.azobssCanShowPaBmAdminReset = function(){ return ownerAdmin(); };
+      window.azobssCanShowPaBmAdminReset._az214 = true;
+    }catch(_){ }
+  }
+  document.addEventListener('DOMContentLoaded', applyGuard);
+  window.addEventListener('load', applyGuard);
+  window.addEventListener('storage', applyGuard);
+  window.addEventListener('azobssAuthChanged', applyGuard);
+  window.addEventListener('azobssPurchaseRecordsRendered', applyGuard);
+  [50,250,700,1500,3000,6000,10000].forEach(function(ms){ setTimeout(applyGuard, ms); });
+  try{
+    var mo = new MutationObserver(function(){ applyGuard(); });
+    mo.observe(document.body, { attributes:true, attributeFilter:['class'], childList:true, subtree:true });
+  }catch(_){ }
 })();
 </script>
 
