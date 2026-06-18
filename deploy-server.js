@@ -3320,68 +3320,51 @@ async function azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs,
 
   const safeKind = String(kind || "File").replace(/[<>]/g, "");
   const safeFilename = String(filename || "download").replace(/[\r\n"<>]/g, "").trim() || "download";
-  const wantsHtml = (() => {
-    try {
-      const accept = String((req && req.headers && req.headers.accept) || "").toLowerCase();
-      const mode = String((req && req.headers && req.headers["sec-fetch-mode"]) || "").toLowerCase();
-      const dest = String((req && req.headers && req.headers["sec-fetch-dest"]) || "").toLowerCase();
-      return mode === "navigate" || dest === "document" || accept.includes("text/html");
-    } catch (_) {
-      return false;
-    }
-  })();
-
-  if (wantsHtml) {
-    const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AZOBSS Download Fallback</title>
-<style>
-body{margin:0;background:#07111f;color:#e5e7eb;font-family:Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px;box-sizing:border-box}.card{width:min(560px,100%);border:1px solid rgba(34,197,94,.45);background:#111827;border-radius:18px;padding:22px;box-shadow:0 20px 45px rgba(0,0,0,.35)}h1{margin:0 0 10px;font-size:22px}.muted{color:#a9b4c7;line-height:1.45}.btn{display:inline-flex;margin-top:16px;padding:13px 18px;border-radius:11px;background:#16a34a;color:#fff;font-weight:900;text-decoration:none}.small{margin-top:14px;color:#8fa0b8;font-size:12px;word-break:break-word}</style>
-</head>
-<body>
-<div class="card">
-<h1>AZOBSS Download Ready ✅</h1>
-<p class="muted">The AZOBSS server proxy is temporarily blocked by JUPEM, so this page will open the original JUPEM download link directly in your browser.</p>
-<a class="btn" id="openBtn" rel="noopener" href="${azobssEscapeHtml(openUrl)}">Open Original JUPEM Download</a>
-<p class="small">File: ${azobssEscapeHtml(safeFilename)}</p>
-<p class="small">If the download does not start automatically, tap the green button above.</p>
-</div>
-<script>
-(function(){
-  var url = ${JSON.stringify(openUrl)};
-  setTimeout(function(){ try{ window.location.href = url; }catch(e){} }, 650);
-})();
-</script>
-</body>
-</html>`;
-    res.writeHead(200, azSecurityHeaders({
-      "Content-Type": "text/html; charset=utf-8",
-      "Content-Disposition": "inline",
-      "Cache-Control": "no-store"
-    }));
-    res.end(html);
-    return true;
-  }
-
-  res.writeHead(200, azSecurityHeaders({
-    "Content-Type": "application/json; charset=utf-8",
+  const safeHtmlFilename = "AZOBSS-Open-JUPEM-Download.html";
+  const fallbackHeaders = {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Disposition": `inline; filename="${safeHtmlFilename}"`,
     "Cache-Control": "no-store",
     "X-AZOBSS-Browser-Fallback": "1",
     "X-AZOBSS-Open-Url": encodeURIComponent(openUrl),
     "X-AZOBSS-Filename": encodeURIComponent(safeFilename),
     "Access-Control-Expose-Headers": "Content-Disposition, X-AZOBSS-Browser-Fallback, X-AZOBSS-Open-Url, X-AZOBSS-Filename"
-  }));
-  res.end(JSON.stringify({
-    ok: true,
-    mode: "browser-direct-fallback",
-    openUrl,
-    filename: safeFilename,
-    message: `${safeKind} server proxy is temporarily blocked by JUPEM. Opening the original JUPEM download link in your browser instead.`,
-    counted: true
-  }));
+  };
+
+  // IMPORTANT:
+  // Never return JSON for PA/BM JUPEM fallback on GET. Some Android browsers/download managers
+  // treat the server response as a downloadable file and save it as .pdf.json. Returning an
+  // HTML redirect page keeps both direct navigation and JS fetch fallback safe.
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="1;url=${azobssEscapeHtml(openUrl)}">
+<title>AZOBSS Open JUPEM Download</title>
+<style>
+body{margin:0;background:#07111f;color:#e5e7eb;font-family:Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px;box-sizing:border-box}.card{width:min(560px,100%);border:1px solid rgba(34,197,94,.45);background:#111827;border-radius:18px;padding:22px;box-shadow:0 20px 45px rgba(0,0,0,.35)}h1{margin:0 0 10px;font-size:22px}.muted{color:#a9b4c7;line-height:1.45}.btn{display:inline-flex;margin-top:16px;padding:13px 18px;border-radius:11px;background:#16a34a;color:#fff;font-weight:900;text-decoration:none}.small{margin-top:14px;color:#8fa0b8;font-size:12px;word-break:break-word}.warn{color:#fbbf24;font-weight:800}</style>
+</head>
+<body>
+<div class="card">
+<h1>AZOBSS Download Ready ✅</h1>
+<p class="muted">The AZOBSS proxy cannot fetch this ${azobssEscapeHtml(safeKind)} file from JUPEM right now, so this page will open the original JUPEM download link directly.</p>
+<p class="warn">If nothing happens, tap the green button below.</p>
+<a class="btn" id="openBtn" rel="noopener" href="${azobssEscapeHtml(openUrl)}">Open Original JUPEM Download</a>
+<p class="small">File: ${azobssEscapeHtml(safeFilename)}</p>
+<p class="small">This page is HTML, not the PDF/TIF file. Your browser should open the original JUPEM link after this page appears.</p>
+</div>
+<script>
+(function(){
+  var url = ${JSON.stringify(openUrl)};
+  function go(){ try{ window.location.replace(url); }catch(e){ try{ window.location.href = url; }catch(_){} } }
+  setTimeout(go, 450);
+})();
+</script>
+</body>
+</html>`;
+  res.writeHead(200, azSecurityHeaders(fallbackHeaders));
+  res.end(html);
   return true;
 }
 

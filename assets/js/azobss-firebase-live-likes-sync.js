@@ -2500,6 +2500,41 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       cache: 'no-store'
     });
 
+    const fallbackFlag = String(response.headers.get('x-azobss-browser-fallback') || '').trim();
+    if(fallbackFlag === '1'){
+      const encodedOpenUrl = response.headers.get('x-azobss-open-url') || '';
+      let openUrl = '';
+      try{ openUrl = decodeURIComponent(encodedOpenUrl); }catch(e){ openUrl = encodedOpenUrl; }
+      if(!openUrl){
+        try{
+          const fallbackHtml = await response.text();
+          const m = fallbackHtml.match(/id=["']openBtn["'][^>]*href=["']([^"']+)/i) || fallbackHtml.match(/url=([^"'<>\s]+)/i);
+          if(m && m[1]) openUrl = m[1].replace(/&amp;/g,'&');
+        }catch(e){}
+      }
+      if(openUrl){
+        try{ if(link){ link.textContent = 'Opening Download...'; } }catch(e){}
+        try{ window.location.href = openUrl; }
+        catch(e){
+          const a = document.createElement('a');
+          a.href = openUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+      }else{
+        // Last resort: open the AZOBSS fallback HTML page directly instead of downloading it as a PDF/blob.
+        try{ window.location.href = directUrl; }catch(e){}
+      }
+      try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
+      setTimeout(function(){
+        try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){}
+      }, 1600);
+      return false;
+    }
+
     const responseType = String(response.headers.get('content-type') || '').toLowerCase();
     if(responseType.includes('application/json')){
       let data = null;
@@ -2617,6 +2652,15 @@ window.azobssClientControlledDownload = azobssClientControlledDownload;
         link.removeAttribute('download');
         link.setAttribute('href', '#');
         fetch(url, { method:'GET', cache:'no-store' }).then(async function(response){
+          const fallbackFlag = String(response.headers.get('x-azobss-browser-fallback') || '').trim();
+          if(fallbackFlag === '1'){
+            const encodedOpenUrl = response.headers.get('x-azobss-open-url') || '';
+            let openUrl = '';
+            try{ openUrl = decodeURIComponent(encodedOpenUrl); }catch(e){ openUrl = encodedOpenUrl; }
+            if(openUrl){ window.location.href = openUrl; return; }
+            window.location.href = url;
+            return;
+          }
           const type = String(response.headers.get('content-type') || '').toLowerCase();
           if(type.includes('application/json')){
             const data = await response.json().catch(function(){ return null; });
