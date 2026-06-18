@@ -3361,10 +3361,70 @@ function azobssLooksHtmlOrJsonError(buffer) {
     (firstText.startsWith("{") && (firstText.includes('"ok":false') || firstText.includes('"error"')));
 }
 
+function azobssHeaderGet(headersObj, name) {
+  const wanted = String(name || "").toLowerCase();
+  const found = (headersObj || []).find(([key]) => String(key || "").toLowerCase() === wanted);
+  return found ? String(found[1] || "") : "";
+}
+
+async function azobssCurlFetchFile(candidate, cookie) {
+  const childProcess = require("child_process");
+  const headerFile = path.join(TEMP_DIR, "azobss-jupem-h-" + crypto.randomBytes(8).toString("hex") + ".txt");
+  const bodyFile = path.join(TEMP_DIR, "azobss-jupem-b-" + crypto.randomBytes(8).toString("hex") + ".bin");
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+
+  const args = [
+    "-sS", "-L", "--insecure", "--compressed", "--max-time", "28",
+    "-D", headerFile, "-o", bodyFile,
+    "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    "-H", "Accept: application/pdf,image/tiff,image/*,application/octet-stream,*/*",
+    "-H", "Accept-Language: ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
+    "-H", "Referer: https://ebiz.jupem.gov.my/",
+    "-H", "Origin: https://ebiz.jupem.gov.my"
+  ];
+  if (cookie) args.push("-H", "Cookie: " + cookie);
+  args.push(candidate);
+
+  try {
+    await new Promise((resolve, reject) => {
+      childProcess.execFile("curl", args, { timeout: 35000, maxBuffer: 1024 * 1024 }, (err) => {
+        if (err) reject(err); else resolve();
+      });
+    });
+
+    const headerText = fs.existsSync(headerFile) ? fs.readFileSync(headerFile, "utf8") : "";
+    const buffer = fs.existsSync(bodyFile) ? fs.readFileSync(bodyFile) : Buffer.alloc(0);
+    const headerBlocks = headerText.split(/\r?\n\r?\n/).filter(Boolean);
+    const lastBlock = headerBlocks[headerBlocks.length - 1] || "";
+    const statusMatch = lastBlock.match(/HTTP\/\S+\s+(\d+)/i);
+    const status = statusMatch ? Number(statusMatch[1]) : (buffer.length ? 200 : 0);
+    const headerPairs = lastBlock.split(/\r?\n/).slice(1).map(line => {
+      const idx = line.indexOf(":");
+      return idx > 0 ? [line.slice(0, idx).trim(), line.slice(idx + 1).trim()] : null;
+    }).filter(Boolean);
+    const contentType = azobssHeaderGet(headerPairs, "content-type") || "application/octet-stream";
+    const response = {
+      ok: status >= 200 && status < 300,
+      status,
+      headers: { get: (key) => azobssHeaderGet(headerPairs, key) }
+    };
+    const firstText = buffer.slice(0, 240).toString("utf8").toLowerCase();
+    const validFile = !!(response.ok && buffer.length > 80 && !azobssLooksHtmlOrJsonError(buffer));
+    return { response, buffer, url: candidate, firstText, contentType, validFile, mode: cookie ? "curl-session" : "curl" };
+  } finally {
+    try { if (fs.existsSync(headerFile)) fs.unlinkSync(headerFile); } catch (_e) {}
+    try { if (fs.existsSync(bodyFile)) fs.unlinkSync(bodyFile); } catch (_e) {}
+  }
+}
+
 async function azobssFetchValidFileCandidates(candidates, label) {
   let lastResult = null;
 
   async function tryCandidate(candidate, mode) {
+    if (mode === "curl" || mode === "curl-session") {
+      const cookie = mode === "curl-session" ? await azobssGetJupemSessionCookie(false) : "";
+      return await azobssCurlFetchFile(candidate, cookie);
+    }
     const response = mode === "session" ? await fetchJupemWithSession(candidate) : await fetchJupem(candidate);
     const buffer = Buffer.from(await response.arrayBuffer());
     const firstText = buffer.slice(0, 240).toString("utf8").toLowerCase();
@@ -3374,23 +3434,15 @@ async function azobssFetchValidFileCandidates(candidates, label) {
   }
 
   for (const candidate of azobssUnique(candidates)) {
-    try {
-      lastResult = await tryCandidate(candidate, "direct");
-      if (lastResult.validFile) return lastResult;
-      console.warn("AZOBSS paid download candidate invalid:", JSON.stringify({ label, mode: "direct", status: lastResult.response && lastResult.response.status, type: lastResult.contentType, url: candidate, head: lastResult.firstText.slice(0, 80) }).slice(0, 650));
-
-      // JUPEM sometimes returns an HTML/session page to server-side requests unless a fresh
-      // eBiz session cookie is presented. Retry once with a scoped JUPEM session cookie.
+    for (const mode of ["direct", "session", "curl", "curl-session"]) {
       try {
-        lastResult = await tryCandidate(candidate, "session");
+        lastResult = await tryCandidate(candidate, mode);
         if (lastResult.validFile) return lastResult;
-        console.warn("AZOBSS paid download candidate invalid:", JSON.stringify({ label, mode: "session", status: lastResult.response && lastResult.response.status, type: lastResult.contentType, url: candidate, head: lastResult.firstText.slice(0, 80) }).slice(0, 650));
-      } catch (retryErr) {
-        console.warn("AZOBSS paid download candidate session retry failed:", label, candidate, retryErr && (retryErr.message || retryErr));
+        console.warn("AZOBSS paid download candidate invalid:", JSON.stringify({ label, mode, status: lastResult.response && lastResult.response.status, type: lastResult.contentType, url: candidate, head: String(lastResult.firstText || "").slice(0, 80) }).slice(0, 650));
+      } catch (err) {
+        console.warn("AZOBSS paid download candidate failed:", label, mode, candidate, err && (err.message || err));
+        lastResult = { response: null, buffer: Buffer.alloc(0), url: candidate, firstText: "", validFile: false, error: err, mode };
       }
-    } catch (err) {
-      console.warn("AZOBSS paid download candidate failed:", label, candidate, err && (err.message || err));
-      lastResult = { response: null, buffer: Buffer.alloc(0), url: candidate, firstText: "", validFile: false, error: err };
     }
   }
   return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
