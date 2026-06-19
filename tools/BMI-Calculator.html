@@ -723,6 +723,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
+
+<style id="azobss-standalone-tools-pro-ui-234">
+body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent 30%),radial-gradient(circle at 88% 5%,rgba(37,99,235,.16),transparent 30%),linear-gradient(180deg,#06111f,#020617 72%)!important;}
+.header{position:relative!important;overflow:hidden!important;padding:34px 18px!important;background:linear-gradient(135deg,rgba(15,23,42,.86),rgba(2,6,23,.62))!important;border-bottom:1px solid rgba(148,163,184,.16)!important;box-shadow:0 16px 50px rgba(0,0,0,.26)!important;}.header::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(34,197,94,.18),transparent 45%,rgba(59,130,246,.14));pointer-events:none}.header>*{position:relative;z-index:1}.header h1{margin-bottom:8px!important;font-size:clamp(28px,4vw,46px)!important;line-height:1.05!important;background:linear-gradient(90deg,#f8fafc,#86efac,#93c5fd)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;letter-spacing:-.03em!important}.header p,.header .muted{color:#cbd5e1!important}.wrap{max-width:1160px!important}.card{border-radius:24px!important;background:linear-gradient(180deg,rgba(19,36,58,.94),rgba(8,14,27,.96))!important;border:1px solid rgba(148,163,184,.14)!important;box-shadow:0 24px 70px rgba(0,0,0,.32)!important}.card h2,.card h3{color:#f8fafc!important;letter-spacing:-.01em}.grid{gap:16px!important}.kpi{border-radius:18px!important;background:linear-gradient(180deg,rgba(2,6,23,.70),rgba(15,23,42,.45))!important;border-color:rgba(148,163,184,.16)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important}.kpi strong{font-size:clamp(22px,3vw,32px)!important;color:#86efac!important}input,select,textarea{background:rgba(2,6,23,.76)!important;border-color:rgba(148,163,184,.20)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}input:focus,select:focus,textarea:focus{border-color:rgba(34,197,94,.62)!important;box-shadow:0 0 0 3px rgba(34,197,94,.10)!important}button,.btn{border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;box-shadow:0 12px 26px rgba(37,99,235,.18)!important}.result{border-radius:18px!important;background:linear-gradient(180deg,rgba(2,6,23,.72),rgba(15,23,42,.42))!important;border-color:rgba(148,163,184,.16)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)!important}.table th{background:rgba(34,197,94,.10)!important;color:#bbf7d0!important}.badge,.pill{border:1px solid rgba(34,197,94,.28)!important}.az-tool-pro-note{margin:16px 0;padding:14px 16px;border:1px solid rgba(34,197,94,.22);border-radius:18px;background:rgba(34,197,94,.07);color:#cbd5e1;font-size:13px;line-height:1.5}.az-tool-pro-note b{color:#bbf7d0}@media(max-width:700px){.header{padding:26px 14px!important}.card{padding:16px!important}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2323,6 +2329,19 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(run, 300);
   setTimeout(run, 1200);
   setTimeout(run, 2500);
+})();
+</script>
+
+
+<script id="azobss-standalone-tools-pro-helper-234">
+(function(){
+  function ready(fn){document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fn):fn();}
+  ready(function(){
+    const wrap=document.querySelector('.wrap'); if(!wrap || document.querySelector('.az-tool-pro-note')) return;
+    const note=document.createElement('div'); note.className='az-tool-pro-note';
+    note.innerHTML='<b>Friendly tip:</b> Fill in the fields, run the tool, then use the result as a practical guide. For important technical, medical or financial decisions, double-check the final value before acting.';
+    const first=wrap.querySelector('.card'); if(first) wrap.insertBefore(note, first.nextSibling);
+  });
 })();
 </script>
 
