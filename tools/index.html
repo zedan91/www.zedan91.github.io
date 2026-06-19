@@ -884,6 +884,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .mini-tools-empty{display:none;grid-column:1/-1;padding:22px;border:1px dashed rgba(148,163,184,.45);border-radius:18px;color:#94a3b8;text-align:center;background:rgba(15,23,42,.45)}
 .tool-card[data-mini-tool-extra="1"] .tool-icon{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.35);color:#bfdbfe}
 .tool-card .mini-tool-custom-tag{display:inline-flex;margin-top:2px;font-size:11px;color:#93c5fd;border:1px solid rgba(147,197,253,.25);border-radius:999px;padding:3px 7px}
+.mini-tools-controls{display:grid;grid-template-columns:minmax(240px,1.7fr) minmax(150px,.7fr) minmax(150px,.7fr) auto;gap:10px;align-items:end;margin:-14px 0 24px;padding:16px;border:1px solid rgba(34,197,94,.24);border-radius:20px;background:rgba(15,23,42,.74);box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.mini-tools-control-field{display:flex;flex-direction:column;gap:7px;color:#cbd5e1;font-size:12px;font-weight:900;letter-spacing:.01em}
+.mini-tools-control-field input,.mini-tools-control-field select{width:100%;min-height:44px;padding:11px 13px;border-radius:13px;border:1px solid #334155;background:#020617;color:#f8fafc;outline:none;font-weight:800}
+.mini-tools-control-field input:focus,.mini-tools-control-field select:focus{border-color:#22c55e;box-shadow:0 0 18px rgba(34,197,94,.24)}
+.mini-tools-reset-filter{min-width:92px;height:44px}
+.tool-card .mini-tool-category-tag{display:inline-flex;margin:2px 6px 0 0;font-size:11px;color:#bbf7d0;border:1px solid rgba(34,197,94,.25);border-radius:999px;padding:3px 7px;background:rgba(34,197,94,.08)}
+@media(max-width:900px){.mini-tools-controls{grid-template-columns:1fr 1fr}.mini-tools-control-search{grid-column:1/-1}.mini-tools-reset-filter{width:100%}}
 @media(max-width:700px){.mini-tools-admin-panel{margin-top:0;padding:14px}.mini-tools-form{grid-template-columns:1fr}.mini-tools-admin-actions{width:100%}.mini-tools-btn{flex:1 1 auto}.topbar{align-items:stretch}.search-box{width:100%}}
 </style>
 </head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -935,7 +942,37 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 </div>
 </div>
-</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div><div class="search-box"><input id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps" type="text"/></div></div><div class="mini-tools-admin-panel" id="miniToolsAdminPanel" aria-label="Mini tools admin panel">
+</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div></div><div class="mini-tools-controls" id="miniToolsControls" aria-label="Mini tools search and filter">
+  <label class="mini-tools-control-field mini-tools-control-search">Carian / Search
+    <input id="searchInput" placeholder="Search tools, keywords, URL... example: SSD, RAM, Mbps, hotkeys" type="search" autocomplete="off"/>
+  </label>
+  <label class="mini-tools-control-field">Jenis / Type
+    <select id="miniToolsCategoryFilter">
+      <option value="all">All types</option>
+      <option value="converter">Converter</option>
+      <option value="calculator">Calculator</option>
+      <option value="checker">Checker</option>
+      <option value="guide">Guide</option>
+      <option value="windows">Windows</option>
+      <option value="finance">Finance</option>
+      <option value="health">Health</option>
+      <option value="hardware">Hardware</option>
+      <option value="network">Network / Internet</option>
+      <option value="hotkeys">Hotkeys</option>
+      <option value="links">Added Links</option>
+      <option value="other">Other</option>
+    </select>
+  </label>
+  <label class="mini-tools-control-field">Sort by
+    <select id="miniToolsSortBy">
+      <option value="default">Default order</option>
+      <option value="title-az">Title A-Z</option>
+      <option value="type-az">Type A-Z</option>
+      <option value="added-new">Added links newest</option>
+    </select>
+  </label>
+  <button class="mini-tools-btn secondary mini-tools-reset-filter" id="miniToolsClearFilters" type="button">Reset</button>
+</div><div class="mini-tools-admin-panel" id="miniToolsAdminPanel" aria-label="Mini tools admin panel">
   <div class="mini-tools-admin-head">
     <div>
       <div class="mini-tools-admin-title">🧰 Mini Tools Link Manager</div>
@@ -953,6 +990,20 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <label>Link URL<input id="miniToolUrl" placeholder="https://example.com or /tools/example.html" required></label>
     <label>Icon / Short Code<input id="miniToolIcon" maxlength="6" placeholder="WEB"></label>
     <label>Badge<input id="miniToolBadge" placeholder="Online / Useful / New"></label>
+    <label>Type / Category<select id="miniToolCategory">
+      <option value="links">Added Links</option>
+      <option value="converter">Converter</option>
+      <option value="calculator">Calculator</option>
+      <option value="checker">Checker</option>
+      <option value="guide">Guide</option>
+      <option value="windows">Windows</option>
+      <option value="finance">Finance</option>
+      <option value="health">Health</option>
+      <option value="hardware">Hardware</option>
+      <option value="network">Network / Internet</option>
+      <option value="hotkeys">Hotkeys</option>
+      <option value="other">Other</option>
+    </select></label>
     <label class="full">Description<input id="miniToolDesc" placeholder="Short description for this link"></label>
     <label class="full">List / Keywords<textarea id="miniToolList" placeholder="One point per line. Example:
 Online scanner
@@ -993,11 +1044,13 @@ Useful for technicians"></textarea></label>
   const grid=document.getElementById('toolsGrid');
   const search=document.getElementById('searchInput');
   const meta=document.getElementById('miniToolsSearchMeta');
+  const categoryFilter=document.getElementById('miniToolsCategoryFilter');
+  const sortBy=document.getElementById('miniToolsSortBy');
   const panel=document.getElementById('miniToolsAdminPanel');
   const form=document.getElementById('miniToolsAddForm');
   const empty=document.createElement('div');
   empty.className='mini-tools-empty';
-  empty.textContent='No tools found. Try another search keyword.';
+  empty.textContent='No tools found. Try another search keyword or type filter.';
   if(grid) grid.appendChild(empty);
   function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function safeUrl(u){
@@ -1010,6 +1063,58 @@ Useful for technicians"></textarea></label>
   function loadCustom(){try{const a=JSON.parse(localStorage.getItem(STORE_KEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&x.title&&x.url):[]}catch(e){return[]}}
   function saveCustom(a){localStorage.setItem(STORE_KEY,JSON.stringify((Array.isArray(a)?a:[]).slice(0,300)));}
   function normalList(v){return String(v||'').split(/\r?\n|\|/).map(x=>x.trim()).filter(Boolean).slice(0,8);}
+  const CATEGORY_LABELS={converter:'Converter',calculator:'Calculator',checker:'Checker',guide:'Guide',windows:'Windows',finance:'Finance',health:'Health',hardware:'Hardware',network:'Network / Internet',hotkeys:'Hotkeys',links:'Added Links',other:'Other'};
+  function normalizeCategory(v){
+    const x=String(v||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    if(['convert','converter','conversion','currency-converter','speed-converter'].includes(x)) return 'converter';
+    if(['calc','calculator','calculation'].includes(x)) return 'calculator';
+    if(['check','checker','diagnostic','diagnostics'].includes(x)) return 'checker';
+    if(['guide','tutorial','reference'].includes(x)) return 'guide';
+    if(['win','windows','cmd','command'].includes(x)) return 'windows';
+    if(['money','finance','currency','fx'].includes(x)) return 'finance';
+    if(['health','bmi'].includes(x)) return 'health';
+    if(['hardware','pc','ssd','hdd','ram','psu'].includes(x)) return 'hardware';
+    if(['net','network','internet'].includes(x)) return 'network';
+    if(['hotkey','hotkeys','shortcut','shortcuts'].includes(x)) return 'hotkeys';
+    if(['link','links','added-links','web'].includes(x)) return 'links';
+    return CATEGORY_LABELS[x]?x:'other';
+  }
+  function inferCategoryFromCard(c){
+    const text=((c.querySelector('.tool-title')?.textContent||'')+' '+(c.querySelector('.badge')?.textContent||'')+' '+(c.getAttribute('href')||'')).toLowerCase();
+    if(text.includes('currency') || text.includes('converter') || text.includes('speed')) return 'converter';
+    if(text.includes('bmi')) return 'health';
+    if(text.includes('psu') || text.includes('calculator')) return 'calculator';
+    if(text.includes('checker') || text.includes('bottleneck') || text.includes('ram usage')) return 'checker';
+    if(text.includes('windows') || text.includes('command') || text.includes('cmd')) return 'windows';
+    if(text.includes('ssd') || text.includes('hdd') || text.includes('guide')) return 'guide';
+    return 'other';
+  }
+  function prepareCards(){
+    allCards().forEach((c,idx)=>{
+      if(!c.dataset.miniOriginalIndex) c.dataset.miniOriginalIndex=String(idx);
+      const cat=normalizeCategory(c.dataset.miniToolCategory||c.dataset.category||inferCategoryFromCard(c));
+      c.dataset.miniToolCategory=cat;
+      if(!c.querySelector('.mini-tool-category-tag')){
+        const tag=document.createElement('span');
+        tag.className='mini-tool-category-tag';
+        tag.textContent=CATEGORY_LABELS[cat]||'Other';
+        c.appendChild(tag);
+      }else{
+        c.querySelector('.mini-tool-category-tag').textContent=CATEGORY_LABELS[cat]||'Other';
+      }
+    });
+  }
+  function sortCards(cards){
+    const mode=sortBy?.value||'default';
+    const getTitle=c=>(c.querySelector('.tool-title')?.textContent||'').trim().toLowerCase();
+    const getCat=c=>CATEGORY_LABELS[c.dataset.miniToolCategory]||'Other';
+    const sorted=[...cards];
+    if(mode==='title-az') sorted.sort((a,b)=>getTitle(a).localeCompare(getTitle(b)));
+    else if(mode==='type-az') sorted.sort((a,b)=>String(getCat(a)).localeCompare(String(getCat(b)))||getTitle(a).localeCompare(getTitle(b)));
+    else if(mode==='added-new') sorted.sort((a,b)=>Number(b.dataset.miniToolAddedAt||0)-Number(a.dataset.miniToolAddedAt||0)||Number(a.dataset.miniOriginalIndex||0)-Number(b.dataset.miniOriginalIndex||0));
+    else sorted.sort((a,b)=>Number(a.dataset.miniOriginalIndex||0)-Number(b.dataset.miniOriginalIndex||0));
+    sorted.forEach(c=>grid.insertBefore(c, empty));
+  }
   function renderCustom(){
     if(!grid) return;
     grid.querySelectorAll('[data-mini-tool-extra="1"]').forEach(x=>x.remove());
@@ -1020,6 +1125,8 @@ Useful for technicians"></textarea></label>
       a.href=safeUrl(x.url);
       a.dataset.miniToolExtra='1';
       a.dataset.customIndex=String(idx);
+      a.dataset.miniToolCategory=normalizeCategory(x.category||x.type||'links');
+      a.dataset.miniToolAddedAt=String(x.addedAt||0);
       if(/^https?:\/\//i.test(a.href) && !a.href.includes(location.host)){a.target='_blank';a.rel='noopener noreferrer';}
       const list=normalList(x.list||x.keywords||'');
       a.innerHTML=(x.badge?`<div class="badge">${esc(x.badge)}</div>`:'')+
@@ -1027,6 +1134,7 @@ Useful for technicians"></textarea></label>
         `<div class="tool-title">${esc(x.title)}</div>`+
         `<div class="tool-desc">${esc(x.desc||x.description||'Useful link added by admin.')}</div>`+
         (list.length?`<ul class="tool-list">${list.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`:'')+
+        `<span class="mini-tool-category-tag">${esc(CATEGORY_LABELS[a.dataset.miniToolCategory]||'Other')}</span>`+
         `<span class="mini-tool-custom-tag">Added link</span>`;
       grid.insertBefore(a, empty);
     });
@@ -1039,25 +1147,37 @@ Useful for technicians"></textarea></label>
       url:c.getAttribute('href')||'',
       icon:(c.querySelector('.tool-icon')?.textContent||'').trim(),
       badge:(c.querySelector('.badge')?.textContent||'').trim(),
+      category:c.dataset.miniToolCategory||'other',
+      categoryLabel:CATEGORY_LABELS[c.dataset.miniToolCategory]||'Other',
       description:(c.querySelector('.tool-desc')?.textContent||'').trim(),
       list:Array.from(c.querySelectorAll('.tool-list li')).map(li=>li.textContent.trim()).filter(Boolean),
       custom:c.dataset.miniToolExtra==='1'
     };
   }
   function applySearch(){
+    prepareCards();
     const v=(search?.value||'').trim().toLowerCase();
+    const selectedCat=categoryFilter?.value||'all';
     const cards=allCards();
+    sortCards(cards);
     let shown=0;
     cards.forEach(c=>{
-      const hay=(c.innerText+' '+(c.getAttribute('href')||'')).toLowerCase();
-      const ok=!v || hay.includes(v);
+      const cat=c.dataset.miniToolCategory||'other';
+      const hay=(c.innerText+' '+(c.getAttribute('href')||'')+' '+cat+' '+(CATEGORY_LABELS[cat]||'')).toLowerCase();
+      const okSearch=!v || v.split(/\s+/).every(q=>hay.includes(q));
+      const okCat=selectedCat==='all' || cat===selectedCat;
+      const ok=okSearch && okCat;
       c.style.display=ok?'':'none';
       if(ok) shown++;
     });
     if(empty) empty.style.display=shown?'none':'block';
     if(meta){
       const customCount=loadCustom().length;
-      meta.textContent=v?`Showing ${shown} result(s) for “${search.value.trim()}”${customCount?` • ${customCount} added link(s)`:''}`:(customCount?`${customCount} added link(s) available. Search by title, link, badge or keywords.`:'');
+      const catLabel=selectedCat==='all'?'All types':(CATEGORY_LABELS[selectedCat]||'Other');
+      const searchText=search?.value?.trim();
+      meta.textContent=(searchText||selectedCat!=='all')
+        ?`Showing ${shown} result(s) • ${catLabel}${searchText?` • Search: “${searchText}”`:''}${customCount?` • ${customCount} added link(s)`:''}`
+        :(customCount?`${customCount} added link(s) available. Search by title, link, type, badge or keywords.`:'Search by title, keyword, URL or choose a type such as Converter, Hotkeys, Windows and more.');
     }
   }
   function isAdminNow(){
@@ -1098,6 +1218,7 @@ Useful for technicians"></textarea></label>
         url:String(x.url||x.href||x.link||'').trim(),
         icon:String(x.icon||'WEB').trim().slice(0,6),
         badge:String(x.badge||'Imported').trim(),
+        category:normalizeCategory(x.category||x.type||x.categoryLabel||'links'),
         desc:String(x.description||x.desc||'').trim(),
         list:Array.isArray(x.list)?x.list.join('\n'):String(x.list||x.keywords||'').trim()
       })).filter(x=>x.title&&x.url);
@@ -1112,6 +1233,9 @@ Useful for technicians"></textarea></label>
     }catch(e){alert('Invalid JSON file.');}
   }
   search?.addEventListener('input',applySearch);
+  categoryFilter?.addEventListener('change',applySearch);
+  sortBy?.addEventListener('change',applySearch);
+  document.getElementById('miniToolsClearFilters')?.addEventListener('click',()=>{if(search) search.value=''; if(categoryFilter) categoryFilter.value='all'; if(sortBy) sortBy.value='default'; applySearch();});
   document.getElementById('miniToolsToggleForm')?.addEventListener('click',()=>{form?.classList.toggle('is-open');});
   document.getElementById('miniToolsCancelForm')?.addEventListener('click',()=>{form?.classList.remove('is-open');});
   document.getElementById('miniToolsExportJson')?.addEventListener('click',downloadJson);
@@ -1128,6 +1252,7 @@ Useful for technicians"></textarea></label>
       url:document.getElementById('miniToolUrl')?.value.trim(),
       icon:(document.getElementById('miniToolIcon')?.value.trim()||'WEB').slice(0,6),
       badge:document.getElementById('miniToolBadge')?.value.trim(),
+      category:normalizeCategory(document.getElementById('miniToolCategory')?.value||'links'),
       desc:document.getElementById('miniToolDesc')?.value.trim(),
       list:document.getElementById('miniToolList')?.value.trim(),
       addedAt:Date.now()
