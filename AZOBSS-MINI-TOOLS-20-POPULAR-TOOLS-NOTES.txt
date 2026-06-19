@@ -1,0 +1,33 @@
+AZOBSS MINI WEB TOOLS - 20 POPULAR TOOLS ADDED
+
+Patch: (231)-AZOBSS-MINI-TOOLS-20-POPULAR-TOOLS-ADD_20260619
+
+Summary:
+- Added 20 more commonly used Mini Web Tools cards to /tools/.
+- Added shared /tools/Quick-Tool.html engine for the new tools.
+- Added more type filters: Text Tools, Developer, Security, Image / Design.
+- Search/sort/export/import still works.
+- No Firebase Rules update required.
+- No Render ENV update required.
+
+New tools:
+1. Unit Converter
+2. File Size Converter
+3. Percentage Calculator
+4. Loan Calculator
+5. SST Calculator
+6. Password Generator
+7. Password Strength Checker
+8. QR Code Generator
+9. Text Case Converter
+10. Word Counter
+11. JSON Formatter
+12. URL Encoder / Decoder
+13. Base64 Encoder / Decoder
+14. SHA-256 Hash Generator
+15. Color Converter
+16. Timestamp Converter
+17. Age Calculator
+18. Date Difference Calculator
+19. Aspect Ratio Calculator
+20. Screen PPI Calculator
