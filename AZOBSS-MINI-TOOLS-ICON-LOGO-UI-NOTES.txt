@@ -1,0 +1,11 @@
+AZOBSS Mini Web Tools Icon/Logo UI Fix
+Date: 2026-06-19
+
+Changes:
+- Replaced text acronym icons such as NET, SSD, BMI, PC, PSU, RAM, CMD and FX with cleaner visual icons.
+- Added category-based icon mapping for custom added links.
+- Existing search, sorting, add link, import and export functions are preserved.
+- Export JSON now exports the displayed icon symbol instead of old text acronym.
+
+No Firebase Rules update required.
+No Render ENV update required.

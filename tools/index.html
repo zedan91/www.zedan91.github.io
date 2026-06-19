@@ -919,8 +919,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   height:42px!important;
   margin:0!important;
   border-radius:14px!important;
-  font-size:13px!important;
+  font-size:23px!important;
   line-height:1!important;
+  letter-spacing:0!important;
+  font-weight:700!important;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",Arial,sans-serif!important;
 }
 .tool-title{
   margin:0!important;
@@ -959,7 +962,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:700px){
   .tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
   .tool-card{min-height:118px!important;padding:14px 9px!important;border-radius:16px!important}
-  .tool-icon{width:38px!important;height:38px!important;font-size:12px!important}
+  .tool-icon{width:38px!important;height:38px!important;font-size:21px!important}
   .tool-title{font-size:13px!important;min-height:32px!important}
 }
 @media(min-width:1100px){
@@ -1061,7 +1064,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <form class="mini-tools-form" id="miniToolsAddForm">
     <label>Title<input id="miniToolTitle" placeholder="Example: VirusTotal" required></label>
     <label>Link URL<input id="miniToolUrl" placeholder="https://example.com or /tools/example.html" required></label>
-    <label>Icon / Short Code<input id="miniToolIcon" maxlength="6" placeholder="WEB"></label>
+    <label>Icon (optional)<input id="miniToolIcon" maxlength="6" placeholder="Auto icon by type"></label>
     <label>Badge<input id="miniToolBadge" placeholder="Online / Useful / New"></label>
     <label>Type / Category<select id="miniToolCategory">
       <option value="links">Added Links</option>
@@ -1089,16 +1092,16 @@ Useful for technicians"></textarea></label>
     </div>
   </form>
 </div><div class="mini-tools-search-meta" id="miniToolsSearchMeta"></div><div class="tools-grid" id="toolsGrid">
-<a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div class="tool-icon">NET</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
-<a class="tool-card" href="SSD-Speed-Checker-guide.html"><div class="tool-icon">SSD</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
-<a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div class="tool-icon">BMI</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric &amp; imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
-<a class="tool-card" href="PC-Bottleneck-Checker.html"><div class="tool-icon">PC</div><div class="tool-title">PC Bottleneck Checker</div><div class="tool-desc">Quick PC balance guide for CPU, GPU and RAM.</div><ul class="tool-list"><li>Gaming / editing / office</li><li>RAM &amp; storage warning</li><li>Upgrade suggestion</li></ul></a>
-<a class="tool-card" href="PSU-Calculator.html"><div class="badge">Gaming</div><div class="tool-icon">PSU</div><div class="tool-title">PSU Calculator</div><div class="tool-desc">Estimate recommended PSU wattage.</div><ul class="tool-list"><li>CPU + GPU + parts</li><li>Headroom calculation</li><li>80+ efficiency guide</li></ul></a>
-<a class="tool-card" href="RAM-Usage-Checker.html"><div class="tool-icon">RAM</div><div class="tool-title">RAM Usage Checker</div><div class="tool-desc">Check RAM usage and upgrade need.</div><ul class="tool-list"><li>Usage percentage</li><li>Available RAM</li><li>Workload guide</li></ul></a>
-<a class="tool-card" href="Windows-Command-Generator.html"><div class="badge">Windows</div><div class="tool-icon">CMD</div><div class="tool-title">Windows Command Generator</div><div class="tool-desc">Generate common Windows repair commands.</div><ul class="tool-list"><li>SFC, DISM, CHKDSK</li><li>Network reset</li><li>Flush DNS &amp; system info</li></ul></a>
+<a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div class="tool-icon" aria-hidden="true">🌐</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
+<a class="tool-card" href="SSD-Speed-Checker-guide.html"><div class="tool-icon" aria-hidden="true">💽</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
+<a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div class="tool-icon" aria-hidden="true">⚖️</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric &amp; imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
+<a class="tool-card" href="PC-Bottleneck-Checker.html"><div class="tool-icon" aria-hidden="true">🖥️</div><div class="tool-title">PC Bottleneck Checker</div><div class="tool-desc">Quick PC balance guide for CPU, GPU and RAM.</div><ul class="tool-list"><li>Gaming / editing / office</li><li>RAM &amp; storage warning</li><li>Upgrade suggestion</li></ul></a>
+<a class="tool-card" href="PSU-Calculator.html"><div class="badge">Gaming</div><div class="tool-icon" aria-hidden="true">⚡</div><div class="tool-title">PSU Calculator</div><div class="tool-desc">Estimate recommended PSU wattage.</div><ul class="tool-list"><li>CPU + GPU + parts</li><li>Headroom calculation</li><li>80+ efficiency guide</li></ul></a>
+<a class="tool-card" href="RAM-Usage-Checker.html"><div class="tool-icon" aria-hidden="true">🧠</div><div class="tool-title">RAM Usage Checker</div><div class="tool-desc">Check RAM usage and upgrade need.</div><ul class="tool-list"><li>Usage percentage</li><li>Available RAM</li><li>Workload guide</li></ul></a>
+<a class="tool-card" href="Windows-Command-Generator.html"><div class="badge">Windows</div><div class="tool-icon" aria-hidden="true">⌨️</div><div class="tool-title">Windows Command Generator</div><div class="tool-desc">Generate common Windows repair commands.</div><ul class="tool-list"><li>SFC, DISM, CHKDSK</li><li>Network reset</li><li>Flush DNS &amp; system info</li></ul></a>
 <a class="tool-card" href="Currency-Converter.html">
 <div class="badge">Finance</div>
-<div class="tool-icon">FX</div>
+<div class="tool-icon" aria-hidden="true">💱</div>
 <div class="tool-title">
         Currency Converter
     </div>
@@ -1137,6 +1140,25 @@ Useful for technicians"></textarea></label>
   function saveCustom(a){localStorage.setItem(STORE_KEY,JSON.stringify((Array.isArray(a)?a:[]).slice(0,300)));}
   function normalList(v){return String(v||'').split(/\r?\n|\|/).map(x=>x.trim()).filter(Boolean).slice(0,8);}
   const CATEGORY_LABELS={converter:'Converter',calculator:'Calculator',checker:'Checker',guide:'Guide',windows:'Windows',finance:'Finance',health:'Health',hardware:'Hardware',network:'Network / Internet',hotkeys:'Hotkeys',links:'Added Links',other:'Other'};
+  const MINI_TOOL_ICONS={
+    converter:'🔁', calculator:'🧮', checker:'✅', guide:'📘', windows:'⌨️',
+    finance:'💱', health:'⚖️', hardware:'💻', network:'🌐', hotkeys:'⌨️', links:'🔗', other:'🛠️'
+  };
+  function miniToolIconSymbol(icon,cat,title){
+    const raw=String(icon||'').trim();
+    const t=String(title||'').toLowerCase();
+    const key=raw.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(raw && !/^[A-Z0-9 ]{2,6}$/i.test(raw)) return raw.slice(0,4);
+    if(t.includes('internet') || key==='NET') return '🌐';
+    if(t.includes('ssd') || t.includes('hdd') || key==='SSD') return '💽';
+    if(t.includes('bmi') || key==='BMI') return '⚖️';
+    if(t.includes('bottleneck') || key==='PC') return '🖥️';
+    if(t.includes('psu') || key==='PSU') return '⚡';
+    if(t.includes('ram') || key==='RAM') return '🧠';
+    if(t.includes('command') || key==='CMD') return '⌨️';
+    if(t.includes('currency') || key==='FX') return '💱';
+    return MINI_TOOL_ICONS[normalizeCategory(cat)] || '🛠️';
+  }
   function normalizeCategory(v){
     const x=String(v||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
     if(['convert','converter','conversion','currency-converter','speed-converter'].includes(x)) return 'converter';
@@ -1167,6 +1189,11 @@ Useful for technicians"></textarea></label>
       if(!c.dataset.miniOriginalIndex) c.dataset.miniOriginalIndex=String(idx);
       const cat=normalizeCategory(c.dataset.miniToolCategory||c.dataset.category||inferCategoryFromCard(c));
       c.dataset.miniToolCategory=cat;
+      const iconEl=c.querySelector('.tool-icon');
+      if(iconEl){
+        iconEl.textContent=miniToolIconSymbol(iconEl.textContent,cat,c.querySelector('.tool-title')?.textContent||'');
+        iconEl.setAttribute('aria-hidden','true');
+      }
       if(!c.querySelector('.mini-tool-category-tag')){
         const tag=document.createElement('span');
         tag.className='mini-tool-category-tag';
@@ -1203,7 +1230,7 @@ Useful for technicians"></textarea></label>
       if(/^https?:\/\//i.test(a.href) && !a.href.includes(location.host)){a.target='_blank';a.rel='noopener noreferrer';}
       const list=normalList(x.list||x.keywords||'');
       a.innerHTML=(x.badge?`<div class="badge">${esc(x.badge)}</div>`:'')+
-        `<div class="tool-icon">${esc((x.icon||'WEB').slice(0,6).toUpperCase())}</div>`+
+        `<div class="tool-icon" aria-hidden="true">${esc(miniToolIconSymbol(x.icon||'',a.dataset.miniToolCategory,x.title))}</div>`+
         `<div class="tool-title">${esc(x.title)}</div>`+
         `<div class="tool-desc">${esc(x.desc||x.description||'Useful link added by admin.')}</div>`+
         (list.length?`<ul class="tool-list">${list.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`:'')+
@@ -1289,7 +1316,7 @@ Useful for technicians"></textarea></label>
       const rows=arr.map(x=>({
         title:String(x.title||x.name||'').trim(),
         url:String(x.url||x.href||x.link||'').trim(),
-        icon:String(x.icon||'WEB').trim().slice(0,6),
+        icon:String(x.icon||'').trim().slice(0,6),
         badge:String(x.badge||'Imported').trim(),
         category:normalizeCategory(x.category||x.type||x.categoryLabel||'links'),
         desc:String(x.description||x.desc||'').trim(),
@@ -1323,7 +1350,7 @@ Useful for technicians"></textarea></label>
     const row={
       title:document.getElementById('miniToolTitle')?.value.trim(),
       url:document.getElementById('miniToolUrl')?.value.trim(),
-      icon:(document.getElementById('miniToolIcon')?.value.trim()||'WEB').slice(0,6),
+      icon:(document.getElementById('miniToolIcon')?.value.trim()||'').slice(0,6),
       badge:document.getElementById('miniToolBadge')?.value.trim(),
       category:normalizeCategory(document.getElementById('miniToolCategory')?.value||'links'),
       desc:document.getElementById('miniToolDesc')?.value.trim(),
