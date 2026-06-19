@@ -1,0 +1,10 @@
+AZOBSS 236P2 - USER PRIORITY 2 SKIPPED
+
+User request:
+- Skip Priority 2 only:
+  1) Cart, Like, Bell, Message badge
+  2) My Purchases data display
+  3) PA/BM download paid/verified flow
+
+This package keeps those Priority 2 areas untouched from the 237 patch.
+No Firestore Rules update required.
