@@ -1010,6 +1010,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         <div class="card"><div class="stat-label">Online Users</div><div id="statOnline" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Today Logins</div><div id="statLogins" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Today Visits</div><div id="statVisits" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Month Visits</div><div id="statMonthVisits" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Total Visits</div><div id="statTotalVisits" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div>
@@ -1433,7 +1435,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <script type="module">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, where, orderBy, limit, serverTimestamp, getCountFromServer } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {"apiKey": "AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8", "authDomain": "azobss.firebaseapp.com", "projectId": "azobss", "storageBucket": "azobss.firebasestorage.app", "messagingSenderId": "159277716405", "appId": "1:159277716405:web:17d8924b6b6380e2b77ffc"};
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -1852,11 +1854,35 @@ async function loadOverview(){
     });
     return count;
   }
+  async function azAdminOverviewCount(ref){
+    try{
+      if(typeof getCountFromServer === 'function'){
+        const snap = await getCountFromServer(ref);
+        const n = Number(snap?.data?.()?.count || 0);
+        return Number.isFinite(n) ? n : 0;
+      }
+    }catch(e){
+      console.warn('Overview count fallback:', e?.message || e);
+    }
+    return null;
+  }
+  async function azAdminOverviewMonthGuestCount(){
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const end = new Date(now.getFullYear(), now.getMonth()+1, 1).getTime();
+    const counted = await azAdminOverviewCount(query(collection(db,'guestHistory'), where('createdAtMs','>=',start), where('createdAtMs','<',end)));
+    return counted === null ? azAdminOverviewMonthCount(guests) : counted;
+  }
+
+  const overviewMonthVisits = await azAdminOverviewMonthGuestCount();
+  const overviewTotalVisits = await azAdminOverviewCount(collection(db,'guestHistory'));
 
   $('#statUsers').textContent=users?.size??0;
   $('#statOnline').textContent=String(window.azAdminRealOnlineCount || 0);
   $('#statLogins').textContent=azAdminOverviewTodayCount(logins);
   $('#statVisits').textContent=azAdminOverviewTodayCount(guests);
+  $('#statMonthVisits').textContent=overviewMonthVisits;
+  $('#statTotalVisits').textContent=overviewTotalVisits === null ? (guests?.size??0) : overviewTotalVisits;
   let openSupportCount=0;
   support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
   let pendingPurchaseCount=0;
@@ -1864,7 +1890,7 @@ async function loadOverview(){
   $('#statSupport').textContent=openSupportCount;
   $('#statNotifications').textContent=notif?.size??0;
   $('#statPurchases').textContent=pendingPurchaseCount;
-  $('#statGuests').textContent=azAdminOverviewMonthCount(guests);
+  $('#statGuests').textContent=overviewTotalVisits === null ? (guests?.size??0) : overviewTotalVisits;
 
   const supportRows=[];
   support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
