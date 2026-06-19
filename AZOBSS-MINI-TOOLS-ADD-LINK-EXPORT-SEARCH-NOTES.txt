@@ -1,0 +1,13 @@
+AZOBSS Mini Web Tools Add Link / Export JSON / Search Fix
+
+Patch summary:
+- Added admin-only Mini Tools Link Manager on /tools/.
+- Admin can add external/internal tool links.
+- Added Export .json for all visible Mini Web Tools cards including added links.
+- Added Import .json for restoring/importing tool links.
+- Search now covers title, description, link URL, badge, list and added links.
+- Added no-results message and search result count.
+- Added links are saved in browser localStorage and can be exported as JSON.
+
+No Firebase Rules update required.
+No Render ENV update required.

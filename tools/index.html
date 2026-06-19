@@ -863,6 +863,29 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
 
+
+<style id="azobss-mini-tools-manager-css">
+.mini-tools-admin-panel{display:none;margin:-14px 0 24px;padding:18px;border:1px solid rgba(34,197,94,.25);border-radius:20px;background:rgba(15,23,42,.72);box-shadow:0 18px 40px rgba(0,0,0,.20)}
+.mini-tools-admin-panel.is-visible{display:block}
+.mini-tools-admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.mini-tools-admin-title{font-size:17px;font-weight:900;color:#f8fafc}
+.mini-tools-admin-note{font-size:12px;color:#94a3b8;margin-top:4px;line-height:1.45}
+.mini-tools-admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+.mini-tools-btn{border:1px solid rgba(34,197,94,.45);background:#16a34a;color:#052e16;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;min-height:40px}
+.mini-tools-btn.secondary{background:#0f172a;color:#e5e7eb;border-color:#334155}
+.mini-tools-btn.danger{background:#7f1d1d;color:#fff;border-color:#ef4444}
+.mini-tools-form{display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.mini-tools-form.is-open{display:grid}
+.mini-tools-form label{font-size:12px;color:#cbd5e1;font-weight:800}
+.mini-tools-form input,.mini-tools-form textarea{width:100%;margin-top:6px;padding:11px 12px;border-radius:12px;border:1px solid #334155;background:#020617;color:#f8fafc;outline:none}
+.mini-tools-form textarea{min-height:76px;resize:vertical}
+.mini-tools-form .full{grid-column:1/-1}
+.mini-tools-search-meta{min-height:22px;margin:-12px 0 18px;color:#94a3b8;font-size:13px}
+.mini-tools-empty{display:none;grid-column:1/-1;padding:22px;border:1px dashed rgba(148,163,184,.45);border-radius:18px;color:#94a3b8;text-align:center;background:rgba(15,23,42,.45)}
+.tool-card[data-mini-tool-extra="1"] .tool-icon{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.35);color:#bfdbfe}
+.tool-card .mini-tool-custom-tag{display:inline-flex;margin-top:2px;font-size:11px;color:#93c5fd;border:1px solid rgba(147,197,253,.25);border-radius:999px;padding:3px 7px}
+@media(max-width:700px){.mini-tools-admin-panel{margin-top:0;padding:14px}.mini-tools-form{grid-template-columns:1fr}.mini-tools-admin-actions{width:100%}.mini-tools-btn{flex:1 1 auto}.topbar{align-items:stretch}.search-box{width:100%}}
+</style>
 </head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">
@@ -912,7 +935,36 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 </div>
 </div>
-</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div><div class="search-box"><input id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps" type="text"/></div></div><div class="tools-grid" id="toolsGrid">
+</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div><div class="search-box"><input id="searchInput" placeholder="Search tools... example: SSD, RAM, Mbps" type="text"/></div></div><div class="mini-tools-admin-panel" id="miniToolsAdminPanel" aria-label="Mini tools admin panel">
+  <div class="mini-tools-admin-head">
+    <div>
+      <div class="mini-tools-admin-title">🧰 Mini Tools Link Manager</div>
+      <div class="mini-tools-admin-note">Admin only. Add external/internal tool links, search them on this page, and export the list as JSON.</div>
+    </div>
+    <div class="mini-tools-admin-actions">
+      <button class="mini-tools-btn" id="miniToolsToggleForm" type="button">+ Add Link</button>
+      <button class="mini-tools-btn secondary" id="miniToolsExportJson" type="button">Export .json</button>
+      <button class="mini-tools-btn secondary" id="miniToolsImportJsonBtn" type="button">Import .json</button>
+      <input id="miniToolsImportJson" type="file" accept="application/json,.json" hidden>
+    </div>
+  </div>
+  <form class="mini-tools-form" id="miniToolsAddForm">
+    <label>Title<input id="miniToolTitle" placeholder="Example: VirusTotal" required></label>
+    <label>Link URL<input id="miniToolUrl" placeholder="https://example.com or /tools/example.html" required></label>
+    <label>Icon / Short Code<input id="miniToolIcon" maxlength="6" placeholder="WEB"></label>
+    <label>Badge<input id="miniToolBadge" placeholder="Online / Useful / New"></label>
+    <label class="full">Description<input id="miniToolDesc" placeholder="Short description for this link"></label>
+    <label class="full">List / Keywords<textarea id="miniToolList" placeholder="One point per line. Example:
+Online scanner
+Free tool
+Useful for technicians"></textarea></label>
+    <div class="mini-tools-admin-actions full">
+      <button class="mini-tools-btn" type="submit">Save Link</button>
+      <button class="mini-tools-btn secondary" id="miniToolsCancelForm" type="button">Cancel</button>
+      <button class="mini-tools-btn danger" id="miniToolsClearCustom" type="button">Clear Added Links</button>
+    </div>
+  </form>
+</div><div class="mini-tools-search-meta" id="miniToolsSearchMeta"></div><div class="tools-grid" id="toolsGrid">
 <a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div class="tool-icon">NET</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
 <a class="tool-card" href="SSD-Speed-Checker-guide.html"><div class="tool-icon">SSD</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
 <a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div class="tool-icon">BMI</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric &amp; imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
@@ -935,8 +987,164 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <li>Quick exchange calculator</li>
 </ul>
 </a>
-</div><a class="back-home" href="/">&lt; Back To Homepage</a><div class="footer">(c) 2026 AZOBSS.COM - Mini Utility Tools</div></div><script>
-const s=document.getElementById('searchInput'),cards=document.querySelectorAll('.tool-card');s.addEventListener('keyup',()=>{const v=s.value.toLowerCase();cards.forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')});
+</div><a class="back-home" href="/">&lt; Back To Homepage</a><div class="footer">(c) 2026 AZOBSS.COM - Mini Utility Tools</div></div><script id="azobss-mini-tools-manager-js">
+(function(){
+  const STORE_KEY='azobss_mini_tools_custom_links_v1';
+  const grid=document.getElementById('toolsGrid');
+  const search=document.getElementById('searchInput');
+  const meta=document.getElementById('miniToolsSearchMeta');
+  const panel=document.getElementById('miniToolsAdminPanel');
+  const form=document.getElementById('miniToolsAddForm');
+  const empty=document.createElement('div');
+  empty.className='mini-tools-empty';
+  empty.textContent='No tools found. Try another search keyword.';
+  if(grid) grid.appendChild(empty);
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function safeUrl(u){
+    const v=String(u||'').trim();
+    if(!v) return '#';
+    if(v.startsWith('/') || v.startsWith('./') || v.startsWith('../')) return v;
+    if(/^https?:\/\//i.test(v)) return v;
+    return 'https://'+v.replace(/^\/+/, '');
+  }
+  function loadCustom(){try{const a=JSON.parse(localStorage.getItem(STORE_KEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&x.title&&x.url):[]}catch(e){return[]}}
+  function saveCustom(a){localStorage.setItem(STORE_KEY,JSON.stringify((Array.isArray(a)?a:[]).slice(0,300)));}
+  function normalList(v){return String(v||'').split(/\r?\n|\|/).map(x=>x.trim()).filter(Boolean).slice(0,8);}
+  function renderCustom(){
+    if(!grid) return;
+    grid.querySelectorAll('[data-mini-tool-extra="1"]').forEach(x=>x.remove());
+    const rows=loadCustom();
+    rows.forEach((x,idx)=>{
+      const a=document.createElement('a');
+      a.className='tool-card';
+      a.href=safeUrl(x.url);
+      a.dataset.miniToolExtra='1';
+      a.dataset.customIndex=String(idx);
+      if(/^https?:\/\//i.test(a.href) && !a.href.includes(location.host)){a.target='_blank';a.rel='noopener noreferrer';}
+      const list=normalList(x.list||x.keywords||'');
+      a.innerHTML=(x.badge?`<div class="badge">${esc(x.badge)}</div>`:'')+
+        `<div class="tool-icon">${esc((x.icon||'WEB').slice(0,6).toUpperCase())}</div>`+
+        `<div class="tool-title">${esc(x.title)}</div>`+
+        `<div class="tool-desc">${esc(x.desc||x.description||'Useful link added by admin.')}</div>`+
+        (list.length?`<ul class="tool-list">${list.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`:'')+
+        `<span class="mini-tool-custom-tag">Added link</span>`;
+      grid.insertBefore(a, empty);
+    });
+    applySearch();
+  }
+  function allCards(){return Array.from(document.querySelectorAll('#toolsGrid .tool-card'));}
+  function cardToJson(c){
+    return {
+      title:(c.querySelector('.tool-title')?.textContent||'').trim(),
+      url:c.getAttribute('href')||'',
+      icon:(c.querySelector('.tool-icon')?.textContent||'').trim(),
+      badge:(c.querySelector('.badge')?.textContent||'').trim(),
+      description:(c.querySelector('.tool-desc')?.textContent||'').trim(),
+      list:Array.from(c.querySelectorAll('.tool-list li')).map(li=>li.textContent.trim()).filter(Boolean),
+      custom:c.dataset.miniToolExtra==='1'
+    };
+  }
+  function applySearch(){
+    const v=(search?.value||'').trim().toLowerCase();
+    const cards=allCards();
+    let shown=0;
+    cards.forEach(c=>{
+      const hay=(c.innerText+' '+(c.getAttribute('href')||'')).toLowerCase();
+      const ok=!v || hay.includes(v);
+      c.style.display=ok?'':'none';
+      if(ok) shown++;
+    });
+    if(empty) empty.style.display=shown?'none':'block';
+    if(meta){
+      const customCount=loadCustom().length;
+      meta.textContent=v?`Showing ${shown} result(s) for “${search.value.trim()}”${customCount?` • ${customCount} added link(s)`:''}`:(customCount?`${customCount} added link(s) available. Search by title, link, badge or keywords.`:'');
+    }
+  }
+  function isAdminNow(){
+    try{
+      const body=document.body;
+      const name=(document.getElementById('signedInName')?.textContent||'').trim().toLowerCase();
+      const role=(body?.dataset?.role||'').toLowerCase();
+      if(role==='admin') return true;
+      if(body?.classList.contains('is-admin') || body?.classList.contains('az-role-is-admin') || body?.classList.contains('azobss-support-admin')) return true;
+      if(localStorage.getItem('azobss_admin_role_cache')==='1') return true;
+      if(['zedan91','zedan9107'].includes(name)) return true;
+    }catch(e){}
+    return false;
+  }
+  function refreshAdminPanel(){ if(panel) panel.classList.toggle('is-visible', isAdminNow()); }
+  function downloadJson(){
+    const payload={
+      exportedAt:new Date().toISOString(),
+      source:'AZOBSS Mini Web Tools',
+      count:allCards().length,
+      tools:allCards().map(cardToJson)
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='azobss-mini-web-tools-export.json';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);
+  }
+  async function importJson(file){
+    if(!file) return;
+    try{
+      const txt=await file.text();
+      const data=JSON.parse(txt);
+      const arr=Array.isArray(data)?data:(Array.isArray(data.tools)?data.tools:[]);
+      const rows=arr.map(x=>({
+        title:String(x.title||x.name||'').trim(),
+        url:String(x.url||x.href||x.link||'').trim(),
+        icon:String(x.icon||'WEB').trim().slice(0,6),
+        badge:String(x.badge||'Imported').trim(),
+        desc:String(x.description||x.desc||'').trim(),
+        list:Array.isArray(x.list)?x.list.join('\n'):String(x.list||x.keywords||'').trim()
+      })).filter(x=>x.title&&x.url);
+      if(!rows.length){alert('No valid links found in JSON.');return;}
+      const current=loadCustom();
+      const key=x=>(x.title+'|'+x.url).toLowerCase();
+      const map=new Map(current.map(x=>[key(x),x]));
+      rows.forEach(x=>map.set(key(x),x));
+      saveCustom(Array.from(map.values()));
+      renderCustom();
+      alert(rows.length+' link(s) imported.');
+    }catch(e){alert('Invalid JSON file.');}
+  }
+  search?.addEventListener('input',applySearch);
+  document.getElementById('miniToolsToggleForm')?.addEventListener('click',()=>{form?.classList.toggle('is-open');});
+  document.getElementById('miniToolsCancelForm')?.addEventListener('click',()=>{form?.classList.remove('is-open');});
+  document.getElementById('miniToolsExportJson')?.addEventListener('click',downloadJson);
+  document.getElementById('miniToolsImportJsonBtn')?.addEventListener('click',()=>document.getElementById('miniToolsImportJson')?.click());
+  document.getElementById('miniToolsImportJson')?.addEventListener('change',e=>importJson(e.target.files&&e.target.files[0]));
+  document.getElementById('miniToolsClearCustom')?.addEventListener('click',()=>{
+    if(!confirm('Clear all added Mini Web Tools links from this browser?')) return;
+    saveCustom([]);renderCustom();
+  });
+  form?.addEventListener('submit',e=>{
+    e.preventDefault();
+    const row={
+      title:document.getElementById('miniToolTitle')?.value.trim(),
+      url:document.getElementById('miniToolUrl')?.value.trim(),
+      icon:(document.getElementById('miniToolIcon')?.value.trim()||'WEB').slice(0,6),
+      badge:document.getElementById('miniToolBadge')?.value.trim(),
+      desc:document.getElementById('miniToolDesc')?.value.trim(),
+      list:document.getElementById('miniToolList')?.value.trim(),
+      addedAt:Date.now()
+    };
+    if(!row.title||!row.url){alert('Please enter title and link URL.');return;}
+    const rows=loadCustom();
+    rows.unshift(row);
+    saveCustom(rows);
+    form.reset();form.classList.remove('is-open');renderCustom();
+  });
+  renderCustom();refreshAdminPanel();applySearch();
+  window.azobssMiniToolsRefresh=function(){renderCustom();refreshAdminPanel();applySearch();};
+  setInterval(refreshAdminPanel,1500);
+  window.addEventListener('storage',()=>{renderCustom();refreshAdminPanel();});
+  window.addEventListener('azobss-auth-state-ready',refreshAdminPanel);
+  window.addEventListener('azobss-role-ready',refreshAdminPanel);
+})();
 </script><script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
