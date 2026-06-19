@@ -969,6 +969,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   .tools-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))!important}
 }
 </style>
+
+<style id="azobss-mini-tools-search-filter-final-fix">
+/* Search/type filter must be able to hide cards even when compact card CSS uses display:flex!important. */
+#toolsGrid .tool-card.mini-tool-hidden{display:none!important;}
+#miniToolsControls .mini-tools-control-field{color:#dbeafe;}
+</style>
 </head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">
@@ -1019,10 +1025,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 </div>
 </header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div></div><div class="mini-tools-controls" id="miniToolsControls" aria-label="Mini tools search and filter">
-  <label class="mini-tools-control-field mini-tools-control-search">Carian / Search
+  <label class="mini-tools-control-field mini-tools-control-search">Search
     <input id="searchInput" placeholder="Search tools, keywords, URL... example: SSD, RAM, Mbps, hotkeys" type="search" autocomplete="off"/>
   </label>
-  <label class="mini-tools-control-field">Jenis / Type
+  <label class="mini-tools-control-field">Type
     <select id="miniToolsCategoryFilter">
       <option value="all">All types</option>
       <option value="converter">Converter</option>
@@ -1319,7 +1325,8 @@ Useful for technicians"></textarea></label>
       const okSearch=!v || v.split(/\s+/).every(q=>hay.includes(q));
       const okCat=selectedCat==='all' || cat===selectedCat;
       const ok=okSearch && okCat;
-      c.style.display=ok?'':'none';
+      c.classList.toggle('mini-tool-hidden', !ok);
+      c.setAttribute('aria-hidden', ok ? 'false' : 'true');
       if(ok) shown++;
     });
     if(empty) empty.style.display=shown?'none':'block';
