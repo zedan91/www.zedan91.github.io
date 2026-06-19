@@ -92,7 +92,7 @@ body.az-admin-access-ok #azAdminAccessDenied{display:none!important}
 <script type="module" id="az-admin-access-guard">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import {getFirestore, doc, getDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 (function(){
   if(window.__azAdminAccessGuard) return;
@@ -110,7 +110,7 @@ import {getFirestore, doc, getDoc} from 'https://www.gstatic.com/firebasejs/12.7
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const ADMIN_EMAILS = ['zedan9107@gmail.com','zedan91@azobss.local'];
+  const ADMIN_EMAIL = 'zedan91@azobss.local';
 
   function showDenied(message){
     document.body.classList.remove('az-admin-access-ok');
@@ -135,7 +135,7 @@ import {getFirestore, doc, getDoc} from 'https://www.gstatic.com/firebasejs/12.7
     if(!user) return false;
 
     const email = String(user.email || '').toLowerCase();
-    if(ADMIN_EMAILS.includes(email)) return true;
+    if(email === ADMIN_EMAIL) return true;
 
     const candidates = [
       'zedan91',
@@ -148,12 +148,10 @@ import {getFirestore, doc, getDoc} from 'https://www.gstatic.com/firebasejs/12.7
         const snap = await getDoc(doc(db,'users',id));
         if(!snap.exists()) continue;
         const x = snap.data() || {};
-        const role = String(x.role || '').toLowerCase().replace(/[^a-z]/g,'');
+        const role = String(x.role || '').toLowerCase();
         const docEmail = String(x.email || x.authEmail || '').toLowerCase();
         const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
-        const sameAuthUser = !x.uid || String(x.uid) === String(user.uid);
-        if(ADMIN_EMAILS.includes(docEmail)) return true;
-        if(sameAuthUser && (role === 'admin' || username === 'zedan91')) return true;
+        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
       }catch(e){}
     }
     return false;
@@ -518,12 +516,6 @@ import {getFirestore, doc, getDoc} from 'https://www.gstatic.com/firebasejs/12.7
 .az-admin-registered-list{display:grid;gap:6px}
 .az-admin-reg-row{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 10px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:rgba(15,23,42,.66);font-size:12px}
 .az-admin-reg-badge{height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:0 8px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:11px;font-weight:950}
-
-.az-admin-reg-badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
-.az-admin-reg-badge.off{background:rgba(148,163,184,.12);border-color:rgba(148,163,184,.26);color:#cbd5e1}
-.az-admin-reg-badge.online{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.45);color:#86efac}
-.az-admin-reg-badge.pabm{background:rgba(59,130,246,.16);border-color:rgba(59,130,246,.45);color:#bfdbfe}
-.az-admin-reg-badge.role{background:rgba(245,158,11,.13);border-color:rgba(245,158,11,.38);color:#fde68a;text-transform:uppercase}
 .az-admin-reg-title{font-size:13px;font-weight:950;color:#f8fafc;white-space:normal;overflow:visible;text-overflow:ellipsis}
 .az-admin-reg-sub{font-size:11px;color:#94a3b8;white-space:normal;overflow:visible;text-overflow:ellipsis}
 .az-admin-reg-time{font-size:10px;color:#94a3b8;text-align:right;white-space:nowrap}
@@ -2486,12 +2478,7 @@ function azRegUser(x){
   return x.usernameKey||x.username||x.name||x.displayName||x.email||x.uid||'Unknown';
 }
 function azRegSub(x){
-  const role = x.role ? ('Role: '+x.role) : 'Role: member';
-  const uid = x.uid ? ('UID: '+String(x.uid).slice(0,8)+'...') : '';
-  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', role, uid].filter(Boolean).join(' • ');
-}
-function azRegSearchText(x){
-  return [x.docId, x.usernameKey, x.username, x.name, x.displayName, x.email, x.authEmail, x.phone, x.phoneNumber, x.uid, x.role, x.status].map(v=>String(v||'')).join(' ').toLowerCase();
+  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', x.role?('Role: '+x.role):''].filter(Boolean).join(' • ');
 }
 function azRegPaAllowed(x){
   const managed = x?.adminPaBmOverride === true || String(x?.paBmManagedBy || '').toLowerCase() === 'admin';
@@ -2525,7 +2512,7 @@ function azRegSortFilter(rows){
 function renderRegisteredUsersAdmin(){
   const box=$('#registeredUsersAdminList'); if(!box)return;
   const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
-  const rows=azRegSortFilter(adminRegisteredUsersCache.filter(x=>!q||azRegSearchText(x).includes(q)));
+  const rows=azRegSortFilter(adminRegisteredUsersCache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q)));
   const totalPages=Math.max(1,Math.ceil(rows.length/ADMIN_REGISTERED_PAGE_SIZE));
   adminRegisteredUsersPage=Math.min(Math.max(1,adminRegisteredUsersPage),totalPages);
   const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
@@ -2533,20 +2520,14 @@ function renderRegisteredUsersAdmin(){
   box.innerHTML=page.map(x=>{
     const id=esc(x.docId||azRegUser(x));
     const pa=azRegPaAllowed(x);
-    const role=azRegRole(x)||'member';
-    const online=azRegIsOnline(x);
     return `<div class="az-admin-reg-row">
-      <div class="az-admin-reg-badges">
-        <span class="az-admin-reg-badge ${online?'online':'off'}">${online?'Online':'Offline'}</span>
-        <span class="az-admin-reg-badge ${pa?'pabm':'off'}">${pa?'PA/BM Yes':'PA/BM No'}</span>
-        <span class="az-admin-reg-badge role">${esc(role)}</span>
-      </div>
+      
       <div>
         <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
-        <div class="az-admin-reg-sub">${esc(azRegSub(x))}</div>
+        <div class="az-admin-reg-sub">${esc(azRegSub(x))} • ${pa?'PA/BM allowed':'PA/BM off'}</div>
       </div>
       <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
-      <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}" type="button">Edit</button><button class="az-reg-delete" data-reg-delete="${id}" type="button">Delete</button></div>
+      <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
     </div>`;
   }).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
   if($('#registeredUsersPageInfo'))$('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} records`;
@@ -2623,19 +2604,9 @@ async function deleteRegisteredUser(id){
 }
 async function loadRegisteredUsersAdmin(){
   const rows=[];
-  const seen=new Set();
-  function pushSnap(snap){
-    snap?.forEach(d=>{
-      if(seen.has(d.id)) return;
-      seen.add(d.id);
-      rows.push({docId:d.id,usernameKey:d.id,...(d.data?d.data():{})});
-    });
-  }
   try{
-    // First try newest ordered records. If Firestore index/rules block it, fallback to plain read.
-    let snap=await safeGet(query(collection(db,'users'),orderBy('createdAtMs','desc'),limit(500)));
-    if(!snap) snap=await safeGet(query(collection(db,'users'),limit(500)));
-    pushSnap(snap);
+    const snap=await safeGet(query(collection(db,'users'),limit(200)));
+    snap?.forEach(d=>rows.push({docId:d.id,usernameKey:d.id,...d.data()}));
   }catch(e){console.warn('registered users load failed',e);}
   rows.sort((a,b)=>azRegMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt||b.registeredAt||b.updatedAt)-azRegMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt||a.registeredAt||a.updatedAt));
   adminRegisteredUsersCache=rows;
@@ -2687,7 +2658,7 @@ async function initSection(id){
   if(id==='overview')return loadOverview();
   if(id==='users'){ return loadRegisteredUsersAdmin(); }
   if(id==='online')return loadOnline();
-  if(id==='activity')return loadAdminActivity();
+  if(id==='activity')return loadActivity();
   if(id==='support')return loadSupport();
   if(id==='notifications')return loadNotifications();
   if(id==='purchases')return loadPurchases();
@@ -3996,6 +3967,5 @@ document.addEventListener('click', async function(e){
 
 </script>
 
-<script type="module" src="/assets/js/azobss-priority-role-guard.js"></script>
 </body>
 </html>
