@@ -1167,6 +1167,12 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
   window.__azAffiliateAdminSoftwareCategoryRuntime=true;
 
+  // Scope this helper to Affiliate Shop only.
+  // It used to scan every <select> on every page and wrongly injected
+  // a "Software" option into Mini Web Tools filters.
+  const azPath=(location.pathname||'/').toLowerCase();
+  if(!(azPath==='/affiliate-shop/' || azPath==='/affiliate-shop/index.html')) return;
+
   function isCategorySelect(sel){
     if(!sel || sel.tagName!=='SELECT') return false;
     const text=(sel.textContent||'').toLowerCase();
