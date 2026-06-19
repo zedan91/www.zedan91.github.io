@@ -893,6 +893,79 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:900px){.mini-tools-controls{grid-template-columns:1fr 1fr}.mini-tools-control-search{grid-column:1/-1}.mini-tools-reset-filter{width:100%}}
 @media(max-width:700px){.mini-tools-admin-panel{margin-top:0;padding:14px}.mini-tools-form{grid-template-columns:1fr}.mini-tools-admin-actions{width:100%}.mini-tools-btn{flex:1 1 auto}.topbar{align-items:stretch}.search-box{width:100%}}
 </style>
+
+<style id="azobss-mini-tools-compact-cards-fix">
+/* AZOBSS Mini Tools compact card mode: icon + tool name + type only */
+.tools-grid{
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;
+  gap:12px!important;
+}
+.tool-card{
+  min-height:128px!important;
+  padding:16px 12px!important;
+  border-radius:18px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  gap:8px!important;
+}
+.tool-card:hover{
+  transform:translateY(-3px)!important;
+}
+.tool-icon{
+  width:42px!important;
+  height:42px!important;
+  margin:0!important;
+  border-radius:14px!important;
+  font-size:13px!important;
+  line-height:1!important;
+}
+.tool-title{
+  margin:0!important;
+  font-size:14px!important;
+  line-height:1.22!important;
+  min-height:34px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  max-width:100%!important;
+}
+.tool-desc,.tool-list{
+  display:none!important;
+}
+.tool-card .mini-tool-category-tag{
+  margin:0!important;
+  padding:4px 9px!important;
+  font-size:11px!important;
+  line-height:1!important;
+  color:#bbf7d0!important;
+  background:rgba(34,197,94,.10)!important;
+  border-color:rgba(34,197,94,.30)!important;
+}
+.tool-card .mini-tool-custom-tag{
+  margin:0!important;
+  padding:3px 7px!important;
+  font-size:10px!important;
+  line-height:1!important;
+}
+.tool-card .badge{
+  top:8px!important;
+  right:8px!important;
+  padding:3px 7px!important;
+  font-size:10px!important;
+}
+@media(max-width:700px){
+  .tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  .tool-card{min-height:118px!important;padding:14px 9px!important;border-radius:16px!important}
+  .tool-icon{width:38px!important;height:38px!important;font-size:12px!important}
+  .tool-title{font-size:13px!important;min-height:32px!important}
+}
+@media(min-width:1100px){
+  .tools-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))!important}
+}
+</style>
 </head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">

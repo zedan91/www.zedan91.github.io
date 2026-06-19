@@ -1,0 +1,11 @@
+AZOBSS Mini Web Tools Compact Card Fix (228)
+
+Changes:
+- Mini Web Tools cards are now compact: icon, tool title, and type only.
+- Descriptions and bullet lists are hidden on the tools listing page to save space.
+- Card grid uses smaller cards and two columns on mobile.
+- Existing search, type filter, sort, add link, import/export remain working.
+- Fixed duplicate searchInput const in mini tools manager script.
+
+No Firebase Rules update required.
+No Render ENV update required.
