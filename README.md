@@ -22,3 +22,10 @@ Skipped / not touched:
 Firebase Rules:
 - No new rules required by this patch.
 - If warning says permission denied, publish the rules from previous admin email sync patch.
+
+## AZOBSS Patch 245 - Admin Key ENV Sync + Admin Dashboard Key Helper
+
+- `deploy-server.js` now treats `ADMIN_KEY` as a valid fallback for `AZOBSS_ADMIN_API_SECRET`, because Render startCommand uses `node deploy-server.js`.
+- Admin Dashboard backend fetch now sends `x-admin-key` from browser storage key `azobssAdminApiKey`.
+- Admin Dashboard Settings now has a Backend Admin Key helper to save/clear the key without opening DevTools console.
+- Priority 2 skipped areas remain untouched: Cart/Like/Bell/Message badge, My Purchases, and PA/BM paid/verified download flow.

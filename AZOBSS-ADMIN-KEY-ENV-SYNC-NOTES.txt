@@ -1,0 +1,19 @@
+AZOBSS Admin Key ENV Sync Fix
+
+Why this patch exists:
+- Render startCommand in this project runs deploy-server.js.
+- Previous instruction used ADMIN_KEY, but deploy-server.js was mainly checking AZOBSS_ADMIN_API_SECRET/AZOBSS_COMMISSION_API_SECRET.
+- This patch makes ADMIN_KEY accepted by deploy-server.js too.
+
+Admin Dashboard improvement:
+- Settings > Backend Admin Key allows saving ADMIN_KEY into this admin browser.
+- Backend requests include x-admin-key automatically when saved.
+
+Required Render ENV:
+- Keep only one ADMIN_KEY row.
+- Value must match the key saved in Admin Dashboard Settings.
+
+Not touched:
+- Cart/Like/Bell/Message badge
+- My Purchases
+- PA/BM paid/verified download flow

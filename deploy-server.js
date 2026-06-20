@@ -192,8 +192,9 @@ function parseAmountToSen(value) {
 const AZOBSS_LOCAL_SOFTWARE_EXPORT = path.join(__dirname, "azobss-software-tools-export (5).json");
 const AZOBSS_ADMIN_TEST_USERNAMES = String(process.env.AZOBSS_ADMIN_TEST_USERNAMES || "zedan91,zedan0001").toLowerCase().split(",").map(s => s.trim()).filter(Boolean);
 const AZOBSS_ADMIN_TEST_EMAILS = String(process.env.AZOBSS_ADMIN_TEST_EMAILS || "zedan91@azobss.local,zedan9107@gmail.com").toLowerCase().split(",").map(s => s.trim()).filter(Boolean);
-const AZOBSS_COMMISSION_API_SECRET = String(process.env.AZOBSS_COMMISSION_API_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || "").trim();
-const AZOBSS_ADMIN_API_SECRET = String(process.env.AZOBSS_ADMIN_API_SECRET || "").trim();
+const AZOBSS_ADMIN_KEY = String(process.env.ADMIN_KEY || "").trim();
+const AZOBSS_COMMISSION_API_SECRET = String(process.env.AZOBSS_COMMISSION_API_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || AZOBSS_ADMIN_KEY || "").trim();
+const AZOBSS_ADMIN_API_SECRET = String(process.env.AZOBSS_ADMIN_API_SECRET || AZOBSS_ADMIN_KEY || "").trim();
 
 function azProductKey(v){ return String(v || "").trim().toLowerCase(); }
 function azProductIdFromAny(product = {}, data = {}) {
@@ -1282,7 +1283,8 @@ async function azBuildAdminSystemHealth(req, identity = {}) {
     azHealthEnvFlag("BREVO_API_KEY", true, "Required for premium download/receipt email sending."),
     azHealthEnvFlag("AZOBSS_FROM_EMAIL", true, "Recommended sender email for customer emails."),
     azHealthEnvFlag("AZOBSS_CORS_ORIGIN", false, "Recommended production value: https://www.azobss.com"),
-    azHealthEnvFlag("AZOBSS_ADMIN_API_SECRET", false, "Optional backup admin API secret."),
+    azHealthEnvFlag("ADMIN_KEY", false, "Recommended admin backend secret used by Admin Dashboard."),
+    azHealthEnvFlag("AZOBSS_ADMIN_API_SECRET", false, "Optional backup admin API secret; ADMIN_KEY is accepted as fallback."),
     azHealthEnvFlag("AZOBSS_COMMISSION_API_SECRET", false, "Optional backup commission/admin API secret."),
     azHealthEnvFlag("AZOBSS_REQUIRE_RECEIPT_TOKEN", false, "Optional strict receipt token mode."),
     azHealthEnvFlag("AZOBSS_VERIFY_TOYYIB_CALLBACK", false, "Default ON. Set 0 only for emergency ToyyibPay verification bypass."),
@@ -5994,7 +5996,7 @@ const filePath =
 
       const adminIdentity = azAdminBypassEnabled() ? { isAdmin:true, uid:"public-bypass", username:"public-bypass", authMethod:"env-bypass" } : await azAdminIdentityFromRequest(req, parsed);
       if (!adminIdentity || !adminIdentity.isAdmin) {
-        return send(res, 403, JSON.stringify({ ok:false, error:"Manual complete-purchase is admin protected. Use Firebase admin login token or AZOBSS_ADMIN_API_SECRET." }, null, 2), "application/json");
+        return send(res, 403, JSON.stringify({ ok:false, error:"Manual complete-purchase is admin protected. Use Firebase admin login token, ADMIN_KEY, or AZOBSS_ADMIN_API_SECRET." }, null, 2), "application/json");
       }
 
       const requestedProduct = data.product || {};

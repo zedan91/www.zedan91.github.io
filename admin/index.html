@@ -1476,6 +1476,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <section id="settings" class="section">
       <h2>⚙️ Settings</h2>
       <div class="card">
+        <h2>Backend Admin Key</h2>
+        <p class="tabs-note">Simpan ADMIN_KEY dari Render untuk admin-only backend actions. Key ini hanya disimpan dalam browser admin kamu, bukan dalam Firestore.</p>
+        <div class="toolbar">
+          <input id="adminApiKeyInput" type="password" autocomplete="off" placeholder="Paste ADMIN_KEY dari Render" style="flex:1;min-width:260px">
+          <button class="btn green" id="saveAdminApiKeyLocal" type="button">Save This Browser</button>
+          <button class="btn gray" id="saveAdminApiKeySession" type="button">Save Session Only</button>
+          <button class="btn red" id="clearAdminApiKey" type="button">Clear Key</button>
+        </div>
+        <div id="adminApiKeyStatus" class="tabs-note">Admin key status: checking...</div>
+      </div>
+      <div class="card">
         <h2>Signup Gate</h2>
         <p class="tabs-note">Quick view for settings/signupGate.</p>
         <div id="settingsBox" class="list"></div>
@@ -1514,6 +1525,47 @@ const ADMIN_EMAILS=['zedan9107@gmail.com','zedan91@azobss.local'];
 const OWNER_USERNAME='zedan91';
 const AZOBSS_BACKEND_API='https://azobss-backend.onrender.com';
 
+function azAdminGetApiKey(){
+  try{
+    return sessionStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssLuckyDrawAdminKey') || '';
+  }catch(_e){return '';}
+}
+function azAdminApiKeyHeaders(){
+  const key=String(azAdminGetApiKey()||'').trim();
+  return key ? {'x-admin-key':key} : {};
+}
+function azAdminRenderApiKeyStatus(){
+  const box=$('#adminApiKeyStatus');
+  const input=$('#adminApiKeyInput');
+  if(!box&&!input)return;
+  let source='not saved', key='';
+  try{
+    key=sessionStorage.getItem('azobssAdminApiKey')||'';
+    if(key)source='saved for this session';
+    else{key=localStorage.getItem('azobssAdminApiKey')||''; if(key)source='saved in this browser';}
+    if(!key){key=localStorage.getItem('azobssLuckyDrawAdminKey')||''; if(key)source='using old lucky draw admin key fallback';}
+  }catch(_e){}
+  if(input) input.value=key||'';
+  if(box) box.textContent = key ? ('Admin key status: '+source+' • length '+String(key.length)) : 'Admin key status: not saved. Backend admin actions may be blocked until key is saved.';
+}
+function azAdminSaveApiKey(mode){
+  const key=String($('#adminApiKeyInput')?.value||'').trim();
+  if(!key)return toast('Paste ADMIN_KEY first.');
+  if(key.length<24 && !confirm('ADMIN_KEY nampak pendek. Simpan juga?'))return;
+  try{
+    if(mode==='session') sessionStorage.setItem('azobssAdminApiKey',key);
+    else localStorage.setItem('azobssAdminApiKey',key);
+    azAdminRenderApiKeyStatus();
+    toast(mode==='session'?'Admin key saved for this session.':'Admin key saved in this browser.');
+  }catch(e){toast('Cannot save admin key: '+(e?.message||e));}
+}
+function azAdminClearApiKey(){
+  try{sessionStorage.removeItem('azobssAdminApiKey');localStorage.removeItem('azobssAdminApiKey');}
+  catch(_e){}
+  azAdminRenderApiKeyStatus();
+  toast('Admin key cleared from this browser/session.');
+}
+
 let currentUser=null;
 let adminProfile=null;
 
@@ -1534,7 +1586,11 @@ let adminApiNotice = '';
 function azAdminApiErrorMessage(status,data,fallback){
   const raw=String(data?.error||data?.message||fallback||'Request failed.');
   if(status===401) return 'Session expired. Please login again, then retry.';
-  if(status===403) return 'Admin permission required. Please login with an authorised admin account.';
+  if(status===403){
+    const err=String(data?.error||'').toLowerCase();
+    if(err.includes('admin_authorization') || err.includes('admin_key')) return 'Admin backend key required or incorrect. Save the same ADMIN_KEY from Render in Admin Dashboard Settings.';
+    return 'Admin permission required. Please login with an authorised admin account.';
+  }
   if(status===429) return 'Too many attempts. '+(data?.retryAfter?('Please wait '+data.retryAfter+' seconds.'):'Please wait a while.');
   if(String(data?.verification||'').toLowerCase()==='pending') return 'Payment verification is still pending. Please wait a moment and check again.';
   return raw;
@@ -1549,12 +1605,13 @@ async function azAdminAuthHeaders(forceRefresh=false){
 }
 async function azAdminFetchJson(url,options={}){
   const baseHeaders=options.headers||{};
+  const adminKeyHeaders=azAdminApiKeyHeaders();
   let authHeaders=await azAdminAuthHeaders(false);
-  let res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+  let res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
   let data=await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
   if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
     authHeaders=await azAdminAuthHeaders(true);
-    res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+    res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
     data=await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
   }
   if(!res.ok) throw new Error(azAdminApiErrorMessage(res.status,data));
@@ -1562,11 +1619,12 @@ async function azAdminFetchJson(url,options={}){
 }
 async function azAdminFetchBlob(url,options={}){
   const baseHeaders=options.headers||{};
+  const adminKeyHeaders=azAdminApiKeyHeaders();
   let authHeaders=await azAdminAuthHeaders(false);
-  let res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+  let res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
   if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
     authHeaders=await azAdminAuthHeaders(true);
-    res=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});
+    res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
   }
   if(!res.ok){
     const text=await res.text().catch(()=>'');
@@ -2896,6 +2954,10 @@ $('#downloadAdminExportAll')?.addEventListener('click', ()=>downloadAdminExport(
 $('#refreshSystemHealth')?.addEventListener('click', loadSystemHealth);
 $('#refreshMaintenanceScan')?.addEventListener('click', loadMaintenanceScan);
 $('#runMaintenanceAction')?.addEventListener('click', runMaintenanceAction);
+$('#saveAdminApiKeyLocal')?.addEventListener('click',()=>azAdminSaveApiKey('local'));
+$('#saveAdminApiKeySession')?.addEventListener('click',()=>azAdminSaveApiKey('session'));
+$('#clearAdminApiKey')?.addEventListener('click',azAdminClearApiKey);
+azAdminRenderApiKeyStatus();
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;
