@@ -1482,6 +1482,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           <input id="adminApiKeyInput" type="password" autocomplete="off" placeholder="Paste ADMIN_KEY dari Render" style="flex:1;min-width:260px">
           <button class="btn green" id="saveAdminApiKeyLocal" type="button">Save This Browser</button>
           <button class="btn gray" id="saveAdminApiKeySession" type="button">Save Session Only</button>
+          <button class="btn" id="testAdminApiKey" type="button">Test Key</button>
           <button class="btn red" id="clearAdminApiKey" type="button">Clear Key</button>
         </div>
         <div id="adminApiKeyStatus" class="tabs-note">Admin key status: checking...</div>
@@ -1564,6 +1565,27 @@ function azAdminClearApiKey(){
   catch(_e){}
   azAdminRenderApiKeyStatus();
   toast('Admin key cleared from this browser/session.');
+}
+async function azAdminTestApiKey(){
+  const box=$('#adminApiKeyStatus');
+  const key=String(azAdminGetApiKey()||'').trim();
+  if(!key){
+    if(box) box.textContent='Admin key status: not saved. Paste ADMIN_KEY first, then Test Key.';
+    return toast('Paste/save ADMIN_KEY first.');
+  }
+  if(box) box.textContent='Admin key status: testing backend...';
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/system-health',{cache:'no-store'});
+    const status=String(j?.status||'ok').toUpperCase();
+    const method=String(j?.admin?.authMethod||'api-secret');
+    const generated=j?.generatedAt?(' • checked '+fmtDate(j.generatedAt)):'';
+    if(box) box.textContent='Admin key status: OK • backend '+status+' • '+method+generated;
+    toast('Admin backend key OK. System Health can be opened safely.');
+  }catch(e){
+    const msg=e?.message||String(e||'Admin key test failed.');
+    if(box) box.textContent='Admin key test failed: '+msg;
+    toast('Admin key test failed: '+msg);
+  }
 }
 
 let currentUser=null;
@@ -2957,6 +2979,7 @@ $('#runMaintenanceAction')?.addEventListener('click', runMaintenanceAction);
 $('#saveAdminApiKeyLocal')?.addEventListener('click',()=>azAdminSaveApiKey('local'));
 $('#saveAdminApiKeySession')?.addEventListener('click',()=>azAdminSaveApiKey('session'));
 $('#clearAdminApiKey')?.addEventListener('click',azAdminClearApiKey);
+$('#testAdminApiKey')?.addEventListener('click',azAdminTestApiKey);
 azAdminRenderApiKeyStatus();
 
 onAuthStateChanged(auth,async user=>{
