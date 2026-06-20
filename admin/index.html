@@ -1978,8 +1978,9 @@ async function loadOverview(){
 
   const overviewMonthVisits = await azAdminOverviewMonthGuestCount();
   const overviewTotalVisits = await azAdminOverviewCount(collection(db,'guestHistory'));
+  const overviewTotalUsers = await azAdminOverviewCount(collection(db,'users'));
 
-  $('#statUsers').textContent=users?.size??0;
+  $('#statUsers').textContent=overviewTotalUsers === null ? (users?.size??0) : overviewTotalUsers;
   $('#statOnline').textContent=String(window.azAdminRealOnlineCount || 0);
   $('#statLogins').textContent=azAdminOverviewTodayCount(logins);
   $('#statVisits').textContent=azAdminOverviewTodayCount(guests);
@@ -2564,7 +2565,9 @@ function loadOnline(){return loadOnlineUsers();}
 
 let adminRegisteredUsersCache=[];
 let adminRegisteredUsersPage=1;
+let adminRegisteredUsersTotalCount=null;
 const ADMIN_REGISTERED_PAGE_SIZE=10;
+const ADMIN_REGISTERED_LOAD_LIMIT=500;
 function azRegMs(v){
   if(!v)return 0;
   if(typeof v==='number')return v;
@@ -2591,6 +2594,13 @@ function azRegPaAllowed(x){
 }
 function azRegRole(x){return String(x.role||'member').trim().toLowerCase().replace(/[^a-z]/g,'');}
 function azRegNameEmail(x){return String((azRegUser(x)||'')+' '+(x.email||x.authEmail||'')).toLowerCase();}
+function azRegSearchText(x){
+  return [
+    x.docId,x.usernameKey,x.username,x.name,x.displayName,x.email,x.authEmail,x.realEmail,
+    x.phone,x.phoneNumber,x.uid,x.authUid,x.userUid,x.firebaseUid,x.role,x.accountRole,
+    x.memberCode,x.inviteCode,x.accessCode,x.signupCode
+  ].map(v=>String(v||'').toLowerCase()).join(' ');
+}
 function azRegIsOnline(x){
   const online = x.online===true || x.isOnline===true || x.loggedIn===true || String(x.status||'').toLowerCase()==='online';
   const seen = azRegMs(x.lastSeenAtMs||x.lastActiveAtMs||x.lastLoginAtMs||x.updatedAtMs||x.lastSeenAt||x.lastActiveAt||x.updatedAt);
@@ -2614,7 +2624,7 @@ function azRegSortFilter(rows){
 function renderRegisteredUsersAdmin(){
   const box=$('#registeredUsersAdminList'); if(!box)return;
   const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
-  const rows=azRegSortFilter(adminRegisteredUsersCache.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q)));
+  const rows=azRegSortFilter(adminRegisteredUsersCache.filter(x=>!q||azRegSearchText(x).includes(q)));
   const totalPages=Math.max(1,Math.ceil(rows.length/ADMIN_REGISTERED_PAGE_SIZE));
   adminRegisteredUsersPage=Math.min(Math.max(1,adminRegisteredUsersPage),totalPages);
   const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
@@ -2632,7 +2642,12 @@ function renderRegisteredUsersAdmin(){
       <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
     </div>`;
   }).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
-  if($('#registeredUsersPageInfo'))$('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} records`;
+  if($('#registeredUsersPageInfo')){
+    const loaded = adminRegisteredUsersCache.length;
+    const total = adminRegisteredUsersTotalCount;
+    const totalText = total === null ? `${loaded} loaded` : `${loaded} loaded / ${total} total`;
+    $('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} matched • ${totalText}`;
+  }
   if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
   if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
 }
@@ -2706,8 +2721,18 @@ async function deleteRegisteredUser(id){
 }
 async function loadRegisteredUsersAdmin(){
   const rows=[];
+  adminRegisteredUsersTotalCount = null;
   try{
-    const snap=await safeGet(query(collection(db,'users'),limit(200)));
+    if(typeof getCountFromServer === 'function'){
+      const countSnap = await getCountFromServer(collection(db,'users'));
+      const n = Number(countSnap?.data?.()?.count || 0);
+      adminRegisteredUsersTotalCount = Number.isFinite(n) ? n : null;
+    }
+  }catch(e){
+    console.warn('registered users count failed:', e?.message || e);
+  }
+  try{
+    const snap = await safeGet(query(collection(db,'users'),limit(ADMIN_REGISTERED_LOAD_LIMIT)));
     snap?.forEach(d=>rows.push({docId:d.id,usernameKey:d.id,...d.data()}));
   }catch(e){console.warn('registered users load failed',e);}
   rows.sort((a,b)=>azRegMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt||b.registeredAt||b.updatedAt)-azRegMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt||a.registeredAt||a.updatedAt));
