@@ -1,0 +1,21 @@
+AZOBSS 240 - Admin Activity Tab Fix
+Date: 2026-06-20
+
+Scope:
+- Step 2 only: Admin Dashboard Activity tab.
+- Based on (239)-AZOBSS-ADMIN-GUARD-STRICT-UID-FIX_20260620.zip.
+
+Fixed:
+- Removed obsolete initSection() call to loadActivity().
+- Activity tab now calls loadAdminActivity() only.
+- Prevents ReferenceError/stuck state when opening Activity tab.
+
+Not touched:
+- Cart, Like, Bell, Message badge.
+- My Purchases.
+- PA/BM paid/verified download flow.
+- Total users/list users counts.
+- Firebase Rules.
+
+Firebase Rules:
+- No update required for this patch.

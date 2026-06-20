@@ -942,7 +942,6 @@ async function initSection(id){
   if(id==='overview')return loadOverview();
   if(id==='users'){ return loadRegisteredUsersAdmin(); }
   if(id==='online')return loadOnline();
-  if(id==='activity')return loadActivity();
   if(id==='support')return loadSupport();
   if(id==='notifications')return loadNotifications();
   if(id==='purchases')return loadPurchases();
