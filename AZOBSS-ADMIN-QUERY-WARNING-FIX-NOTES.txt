@@ -1,0 +1,16 @@
+AZOBSS Admin Query Warning Fix (Patch 243)
+
+Scope:
+- Admin dashboard only.
+- Added visible query warning panel when Firestore query/count fails.
+- Prevents dashboard from silently showing 0/empty data when the real issue is permission denied, missing index, unauthenticated session, or Firestore availability.
+
+Not touched:
+- Cart, Like, Bell, Message badge.
+- My Purchases.
+- PA/BM paid/verified download flow.
+- PA/BM purchase/download logic.
+
+Firebase Rules:
+- No new rules required by this patch.
+- If the warning says permission denied, publish the rules from the previous admin email sync patch.

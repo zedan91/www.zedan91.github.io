@@ -41,6 +41,12 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 .table-card{overflow:auto}.mini-table{width:100%;border-collapse:collapse;font-size:13px}.mini-table th,.mini-table td{border-bottom:1px solid rgba(148,163,184,.18);padding:10px;text-align:left}.mini-table th{color:#bfdbfe}
 .login-cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:999999}
 .login-box{width:min(430px,92vw);background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:20px;padding:22px;text-align:center}
+.az-admin-query-alert{display:none;margin:0 0 16px;padding:13px 14px;border:1px solid rgba(245,158,11,.5);background:rgba(120,53,15,.28);border-radius:16px;color:#fff}
+.az-admin-query-alert.show{display:block}
+.az-admin-query-alert h3{margin:0 0 6px;font-size:15px;color:#fde68a}
+.az-admin-query-alert ul{margin:6px 0 0 18px;padding:0}
+.az-admin-query-alert li{margin:4px 0;font-size:12px;color:#fffbeb}
+.az-admin-query-alert code{color:#fef3c7}
 @media(max-width:980px){.admin-shell{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.side-footer{position:static;margin-top:15px}.grid{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
 @media(max-width:560px){.main{padding:14px}.grid{grid-template-columns:1fr}.nav{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
 
@@ -1054,6 +1060,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <div class="admin-pill"><span id="adminAvatar">Z</span><span id="adminName">Admin</span></div>
     </div>
 
+    <div id="adminQueryAlert" class="az-admin-query-alert" aria-live="polite"></div>
+
     <section id="overview" class="section active">
 
 <div class="card" id="ownerTrackingMigrationNote">
@@ -1849,8 +1857,57 @@ async function getAdminProfile(user){
 function item(title,meta='',actions=''){
   return `<div class="item"><div class="item-row"><div><div class="item-title">${title}</div>${meta?`<div class="item-meta">${meta}</div>`:''}</div><div class="item-actions">${actions}</div></div></div>`;
 }
-async function safeGet(q){
-  try{return await getDocs(q)}catch(e){console.warn('Admin dashboard query failed:',e);return null}
+let adminQueryErrors=[];
+function azAdminFriendlyFirestoreError(e){
+  const code=String(e?.code||'').trim();
+  const msg=String(e?.message||e||'Unknown Firestore error').replace(/\s+/g,' ').slice(0,260);
+  if(code==='permission-denied') return 'Permission denied. Semak Firebase Rules dan pastikan email admin sudah diselaraskan.';
+  if(code==='failed-precondition') return 'Index/query requirement belum lengkap. Semak link index dalam console browser jika ada.';
+  if(code==='unavailable') return 'Firestore temporarily unavailable. Cuba refresh selepas beberapa saat.';
+  if(code==='unauthenticated') return 'Session belum sah. Logout/login semula sebagai admin.';
+  return (code?code+': ':'')+msg;
+}
+function azAdminReportQueryError(label,e){
+  const message=azAdminFriendlyFirestoreError(e);
+  const key=String(label||'Firestore query')+'|'+message;
+  if(!adminQueryErrors.some(x=>x.key===key)){
+    adminQueryErrors.push({key,label:String(label||'Firestore query'),message});
+    if(adminQueryErrors.length>8) adminQueryErrors=adminQueryErrors.slice(-8);
+  }
+  azAdminRenderQueryErrors();
+}
+function azAdminClearQueryErrors(){
+  adminQueryErrors=[];
+  azAdminRenderQueryErrors();
+}
+function azAdminRenderQueryErrors(){
+  const box=$('#adminQueryAlert');
+  if(!box) return;
+  if(!adminQueryErrors.length){
+    box.classList.remove('show');
+    box.innerHTML='';
+    return;
+  }
+  box.classList.add('show');
+  box.innerHTML='<h3>⚠️ Admin dashboard query warning</h3><div>Data mungkin nampak 0/kosong kerana query Firestore gagal, bukan semestinya tiada rekod.</div><ul>'+
+    adminQueryErrors.map(x=>`<li><b>${esc(x.label)}</b>: ${esc(x.message)}</li>`).join('')+
+    '</ul>';
+}
+async function safeGet(q,label){
+  try{return await getDocs(q)}catch(e){console.warn('Admin dashboard query failed:',label||'',e);azAdminReportQueryError(label||'Firestore query',e);return null}
+}
+async function safeCount(ref,label){
+  try{
+    if(typeof getCountFromServer === 'function'){
+      const snap = await getCountFromServer(ref);
+      const n = Number(snap?.data?.()?.count || 0);
+      return Number.isFinite(n) ? n : 0;
+    }
+  }catch(e){
+    console.warn('Admin dashboard count failed:',label||'',e);
+    azAdminReportQueryError(label||'Firestore count',e);
+  }
+  return null;
 }
 
 function azAdminIsPaBmRecord(x){
@@ -1911,13 +1968,13 @@ async function loadOverview(){
     console.warn('Overview online users preload skipped:', e);
   }
 
-  const users=await safeGet(query(collection(db,'users'),limit(50)));
-  const online=await safeGet(query(collection(db,'onlineUsers'),limit(50)));
-  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(200)));
-  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(200)));
-  const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
-  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
-  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
+  const users=await safeGet(query(collection(db,'users'),limit(50)),'Overview: users');
+  const online=await safeGet(query(collection(db,'onlineUsers'),limit(50)),'Overview: onlineUsers');
+  const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(200)),'Overview: loginHistory');
+  const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(200)),'Overview: guestHistory');
+  const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)),'Overview: supportMessages');
+  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)),'Overview: active notifications');
+  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)),'Overview: purchaseLogs');
 
   function azAdminOverviewMs(x){
     if(!x) return 0;
@@ -1956,29 +2013,20 @@ async function loadOverview(){
     });
     return count;
   }
-  async function azAdminOverviewCount(ref){
-    try{
-      if(typeof getCountFromServer === 'function'){
-        const snap = await getCountFromServer(ref);
-        const n = Number(snap?.data?.()?.count || 0);
-        return Number.isFinite(n) ? n : 0;
-      }
-    }catch(e){
-      console.warn('Overview count fallback:', e?.message || e);
-    }
-    return null;
+  async function azAdminOverviewCount(ref,label){
+    return await safeCount(ref,label||'Overview count');
   }
   async function azAdminOverviewMonthGuestCount(){
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     const end = new Date(now.getFullYear(), now.getMonth()+1, 1).getTime();
-    const counted = await azAdminOverviewCount(query(collection(db,'guestHistory'), where('createdAtMs','>=',start), where('createdAtMs','<',end)));
+    const counted = await azAdminOverviewCount(query(collection(db,'guestHistory'), where('createdAtMs','>=',start), where('createdAtMs','<',end)),'Overview: month guest count');
     return counted === null ? azAdminOverviewMonthCount(guests) : counted;
   }
 
   const overviewMonthVisits = await azAdminOverviewMonthGuestCount();
-  const overviewTotalVisits = await azAdminOverviewCount(collection(db,'guestHistory'));
-  const overviewTotalUsers = await azAdminOverviewCount(collection(db,'users'));
+  const overviewTotalVisits = await azAdminOverviewCount(collection(db,'guestHistory'),'Overview: total visits count');
+  const overviewTotalUsers = await azAdminOverviewCount(collection(db,'users'),'Overview: total users count');
 
   $('#statUsers').textContent=overviewTotalUsers === null ? (users?.size??0) : overviewTotalUsers;
   $('#statOnline').textContent=String(window.azAdminRealOnlineCount || 0);
@@ -2010,7 +2058,7 @@ async function loadOverview(){
 async function loadUsers(){ return; }
 
 async function loadSupport(){
-  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)));
+  const snap=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)),'Support Inbox');
   const rows=[];
   snap?.forEach(d=>{
     const x=d.data();
@@ -2022,8 +2070,8 @@ async function loadSupport(){
   $('#supportList').innerHTML=rows.join('')||'<div class="item">No support messages.</div>';
 }
 async function loadNotifications(){
-  let snap=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)));
-  if(!snap)snap=await safeGet(query(collection(db,'notifications'),limit(50)));
+  let snap=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)),'Notifications: active');
+  if(!snap)snap=await safeGet(query(collection(db,'notifications'),limit(50)),'Notifications: fallback latest');
   const rows=[];
   snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
   $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
@@ -2031,7 +2079,7 @@ async function loadNotifications(){
 
 async function loadPayments(){
   const filter = ($('#paymentCategoryFilter')?.value || 'all').toLowerCase();
-  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(100)));
+  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(100)),'Purchase Records: purchaseLogs');
   const records = [];
 
   logs?.forEach(d=>{
@@ -2097,8 +2145,8 @@ async function loadPayments(){
 }
 
 async function loadPurchases(){
-  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)));
-  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)));
+  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)),'Payments & Totals: purchaseLogs');
+  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)),'Payments & Totals: purchaseSummaries');
   const lr=[]; logs?.forEach(d=>{const x={id:d.id,...(d.data()||{})};lr.push(item(esc(x.usernameKey||x.username||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • ${esc(x.status||'')} • RM${esc(x.amount||x.total||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`, azAdminPaBmResetActions(x))) });
   const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
   $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No purchase logs.</div>';
@@ -2106,7 +2154,7 @@ async function loadPurchases(){
 }
 
 async function loadStaffRoles(){
-  const snap = await safeGet(query(collection(db,'users'),limit(100)));
+  const snap = await safeGet(query(collection(db,'users'),limit(100)),'Staff Roles: users');
   const rows = [];
   const permList = [
     ['canManageSoftware','💻','Software'],
@@ -2275,7 +2323,7 @@ function renderAdminCommissions(){
   $('#adminCommissionList').innerHTML = rows.join('') || notice || '<div class="item">No commission records.</div>';
 }
 async function loadAdminCommissions(){
-  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(200)));
+  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(200)),'Commission Manager: commissionRecords');
   adminCommissionCache = [];
   const seen=new Set();
   snap?.forEach(d=>{
@@ -2529,7 +2577,7 @@ async function loadOnlineUsers(){
   if(!box)return;
   const rows=[];
   try{
-    const snap=await safeGet(query(collection(db,AZ_ADMIN_ONLINE_COLLECTION),limit(100)));
+    const snap=await safeGet(query(collection(db,AZ_ADMIN_ONLINE_COLLECTION),limit(100)),'Online Users: '+AZ_ADMIN_ONLINE_COLLECTION);
     snap?.forEach(d=>{const x={docId:d.id,...d.data()}; if(azAdminOnlineIsActive(x))rows.push(x);});
   }catch(e){console.warn('online users load failed',e);}
   rows.sort((a,b)=>azAdminOnlineSeenMs(b)-azAdminOnlineSeenMs(a));
@@ -2722,19 +2770,11 @@ async function deleteRegisteredUser(id){
 async function loadRegisteredUsersAdmin(){
   const rows=[];
   adminRegisteredUsersTotalCount = null;
+  adminRegisteredUsersTotalCount = await safeCount(collection(db,'users'),'Registered Users: total count');
   try{
-    if(typeof getCountFromServer === 'function'){
-      const countSnap = await getCountFromServer(collection(db,'users'));
-      const n = Number(countSnap?.data?.()?.count || 0);
-      adminRegisteredUsersTotalCount = Number.isFinite(n) ? n : null;
-    }
-  }catch(e){
-    console.warn('registered users count failed:', e?.message || e);
-  }
-  try{
-    const snap = await safeGet(query(collection(db,'users'),limit(ADMIN_REGISTERED_LOAD_LIMIT)));
+    const snap = await safeGet(query(collection(db,'users'),limit(ADMIN_REGISTERED_LOAD_LIMIT)),'Registered Users: list');
     snap?.forEach(d=>rows.push({docId:d.id,usernameKey:d.id,...d.data()}));
-  }catch(e){console.warn('registered users load failed',e);}
+  }catch(e){console.warn('registered users load failed',e);azAdminReportQueryError('Registered Users: list',e);}
   rows.sort((a,b)=>azRegMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt||b.registeredAt||b.updatedAt)-azRegMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt||a.registeredAt||a.updatedAt));
   adminRegisteredUsersCache=rows;
   adminRegisteredUsersPage=1;
@@ -2753,7 +2793,7 @@ async function loadAdminActivity(){
   const rows = [];
   for(const [col,type] of collections){
     try{
-      const snap = await safeGet(query(collection(db,col), limit(40)));
+      const snap = await safeGet(query(collection(db,col), limit(40)),'Activity: '+col);
       snap?.forEach(d=>rows.push({docId:d.id, collection:col, type, ...d.data()}));
     }catch(e){}
   }
@@ -2764,7 +2804,7 @@ async function loadAdminActivity(){
 }
 
 async function loadSettings(){
-  const snap=await getDoc(doc(db,'settings','signupGate')).catch(()=>null);
+  const snap=await getDoc(doc(db,'settings','signupGate')).catch(e=>{azAdminReportQueryError('Settings: signupGate',e);return null});
   if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
   else $('#settingsBox').innerHTML='<div class="item">No signupGate settings found.</div>';
 }
@@ -2777,11 +2817,12 @@ async function publishNotification(){
 }
 async function clearNotifications(){
   if(!confirm('Delete latest notifications?'))return;
-  const snap=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)));
+  const snap=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)),'Notifications: clear latest');
   const jobs=[]; snap?.forEach(d=>jobs.push(deleteDoc(doc(db,'notifications',d.id))));
   await Promise.all(jobs); azAdminLogAction('notification_clear_latest','notifications','latest',{count:jobs.length}); await loadNotifications(); await loadOverview(); toast('Notifications cleared.');
 }
 async function initSection(id){
+  azAdminClearQueryErrors();
   if(id==='overview')return loadOverview();
   if(id==='users'){ return loadRegisteredUsersAdmin(); }
   if(id==='online')return loadOnline();
