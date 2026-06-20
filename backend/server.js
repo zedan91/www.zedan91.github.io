@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const ADMIN_KEY = process.env.ADMIN_KEY || "change-this-admin-key";
+const ADMIN_KEY = String(process.env.ADMIN_KEY || "").trim();
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
@@ -796,15 +796,58 @@ function listWinnerHistory() {
     .sort((a, b) => String(b.monthKey).localeCompare(String(a.monthKey)));
 }
 
+const ADMIN_KEY_PLACEHOLDERS = new Set(["", "change-this-admin-key", "optional-no-password-mode", "optional", "admin", "password", "123456", "changeme"]);
+
+function hasConfiguredAdminKey() {
+  return !!ADMIN_KEY && !ADMIN_KEY_PLACEHOLDERS.has(String(ADMIN_KEY || "").trim().toLowerCase());
+}
+
+function getAdminRequestKey(req) {
+  const auth = String(req.header("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  return String(
+    req.header("x-admin-key") ||
+    req.header("x-azobss-api-key") ||
+    req.header("x-api-key") ||
+    auth ||
+    req.query.adminKey ||
+    req.query.key ||
+    req.query.secret ||
+    ""
+  ).trim();
+}
+
+function safeAdminKeyEqual(inputKey, expectedKey) {
+  const a = String(inputKey || "");
+  const b = String(expectedKey || "");
+  if (!a || !b) return false;
+  try {
+    const ah = crypto.createHash("sha256").update(a).digest();
+    const bh = crypto.createHash("sha256").update(b).digest();
+    return crypto.timingSafeEqual(ah, bh);
+  } catch (_) {
+    return a === b;
+  }
+}
+
 function isAdmin(req) {
-  const key = req.header("x-admin-key") || req.query.adminKey || "";
-  return key && key === ADMIN_KEY;
+  return hasConfiguredAdminKey() && safeAdminKeyEqual(getAdminRequestKey(req), ADMIN_KEY);
 }
 
 function requireAdmin(req, res, next) {
-  // NO PASSWORD MODE:
-  // Admin actions are allowed without ADMIN_KEY.
-  // Keep CORS_ORIGIN restricted to your website domain in Render settings.
+  if (!hasConfiguredAdminKey()) {
+    return res.status(503).json({
+      ok: false,
+      error: "admin_key_not_configured",
+      message: "Admin API is locked. Set a strong ADMIN_KEY in Render environment variables, then store the same key in browser localStorage key azobssAdminApiKey for admin-only actions."
+    });
+  }
+  if (!isAdmin(req)) {
+    return res.status(403).json({
+      ok: false,
+      error: "admin_authorization_required",
+      message: "Admin authorization required."
+    });
+  }
   return next();
 }
 

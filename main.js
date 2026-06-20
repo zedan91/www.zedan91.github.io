@@ -187,8 +187,21 @@
     function escapeHtml(value){
       return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     }
+    function azobssAdminApiKey(){
+      try{
+        return sessionStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssLuckyDrawAdminKey') || '';
+      }catch(_){ return ''; }
+    }
+    function azobssWithAdminHeaders(options){
+      const opts = Object.assign({}, options || {});
+      const headers = Object.assign({}, opts.headers || {});
+      const key = azobssAdminApiKey();
+      if(key && !headers['x-admin-key']) headers['x-admin-key'] = key;
+      opts.headers = headers;
+      return opts;
+    }
     async function apiFetch(path, options){
-      const res = await fetch(API_BASE + path, options || {});
+      const res = await fetch(API_BASE + path, azobssWithAdminHeaders(options));
       return res;
     }
 

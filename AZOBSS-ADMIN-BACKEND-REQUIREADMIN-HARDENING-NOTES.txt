@@ -1,0 +1,26 @@
+AZOBSS PATCH 244 - ADMIN BACKEND REQUIREADMIN HARDENING
+
+Scope:
+- Backend admin route guard only.
+- Does not touch Cart, Like, Bell, Message badge, My Purchases, or PA/BM paid/verified download flow.
+
+Fixes:
+1. backend/server.js requireAdmin() no longer allows admin routes with return next() without verification.
+2. Admin routes now require a strong ADMIN_KEY from Render environment variables.
+3. Accepted key locations:
+   - x-admin-key header
+   - x-azobss-api-key header
+   - x-api-key header
+   - Authorization: Bearer <key>
+   - adminKey/key/secret query fallback
+4. Frontend backend bridge now sends x-admin-key from browser storage key azobssAdminApiKey when present.
+5. Software Tools logo backend save sends x-admin-key from azobssAdminApiKey when present.
+
+Admin setup after deploy:
+- Render Environment Variables: set ADMIN_KEY to a long random secret.
+- In admin browser console only, run:
+  localStorage.setItem('azobssAdminApiKey','PASTE_ADMIN_KEY_RENDER_DI_SINI')
+
+Important:
+- Do not paste the real ADMIN_KEY into repo files.
+- If ADMIN_KEY is missing or placeholder, admin backend routes return 503 admin_key_not_configured.

@@ -4393,9 +4393,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       let finalLogo = favicon;
       let savedPath = imgPath;
       try{
+        const adminApiKey = (()=>{
+          try{ return sessionStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssAdminApiKey') || ''; }catch(_){ return ''; }
+        })();
+        const adminHeaders = {'Content-Type':'application/json'};
+        if(adminApiKey) adminHeaders['x-admin-key'] = adminApiKey;
         const res = await fetch(API_BASE + '/api/software-logo/save', {
           method:'POST',
-          headers:{'Content-Type':'application/json'},
+          headers:adminHeaders,
           body:JSON.stringify({
             productId,
             name: current.name || productId,

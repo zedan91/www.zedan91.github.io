@@ -10629,12 +10629,15 @@ localStorage.getItem('azobssLuckyDrawBackendUrl') ||
   const api = () => (window.AZOBSS_LUCKY_DRAW_API || '').replace(/\/$/, '');
 
   function getAdminKey(){
-    return '';
+    try{
+      return sessionStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssLuckyDrawAdminKey') || '';
+    }catch(_){ return ''; }
   }
 
   async function apiFetch(path, options = {}){
-    const headers = options.headers || {};
-    // No password mode: backend does not require ADMIN_KEY.
+    const headers = { ...(options.headers || {}) };
+    const adminKey = getAdminKey();
+    if(adminKey && !headers['x-admin-key']) headers['x-admin-key'] = adminKey;
     const baseUrl = api();
     if(!baseUrl) throw new Error('Render backend URL belum diset.');
     try{

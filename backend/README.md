@@ -7,7 +7,7 @@
 4. Start Command: `npm start`
 
 ## Environment Variables
-- `ADMIN_KEY` = optional sahaja, versi ini NO PASSWORD MODE
+- `ADMIN_KEY` = wajib untuk route admin backend. Guna secret panjang/random dan jangan letak dalam source code.
 - `PUBLIC_BASE_URL` = URL backend Render, contoh `https://azobss-lucky-draw.onrender.com`
 - `CORS_ORIGIN` = `https://azobss.com`
 - `TZ` = `Asia/Kuala_Lumpur`
@@ -18,8 +18,22 @@ Dalam `website/index.html`, cari:
 
 Tukar URL kepada URL Render sebenar.
 
-## No Password Mode
-Versi ini tidak akan minta ADMIN_KEY. Pastikan `CORS_ORIGIN` di Render ditetapkan kepada domain website anda sahaja, contoh `https://azobss.com`.
+## Admin API Key Mode
+Route admin backend kini dikunci. Tetapkan `ADMIN_KEY` di Render Environment Variables.
+
+Untuk guna panel admin yang panggil backend, simpan key yang sama di browser admin sahaja:
+
+```js
+localStorage.setItem('azobssAdminApiKey','PASTE_ADMIN_KEY_RENDER_DI_SINI')
+```
+
+Jika mahu buang semula dari browser:
+
+```js
+localStorage.removeItem('azobssAdminApiKey')
+```
+
+Jangan letak nilai sebenar `ADMIN_KEY` dalam HTML/JS repo.
 
 
 ## NetworkError Fix
