@@ -5,17 +5,17 @@ Add/merge these collections into your Firestore Rules:
 match /staffSoftwareSubmissions/{id} {
   allow read: if request.auth != null;
   allow create: if request.auth != null;
-  allow update, delete: if request.auth != null && request.auth.token.email == "zedan91@azobss.local";
+  allow update, delete: if request.auth != null && (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com");
 }
 
 match /staffCADSubmissions/{id} {
   allow read: if request.auth != null;
   allow create: if request.auth != null;
-  allow update, delete: if request.auth != null && request.auth.token.email == "zedan91@azobss.local";
+  allow update, delete: if request.auth != null && (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com");
 }
 
 match /commissionRecords/{id} {
   allow read: if request.auth != null;
   allow create: if request.auth != null;
-  allow update, delete: if request.auth != null && request.auth.token.email == "zedan91@azobss.local";
+  allow update, delete: if request.auth != null && (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com");
 }

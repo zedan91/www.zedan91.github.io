@@ -11,22 +11,22 @@ service cloud.firestore {
 
       allow read: if request.auth != null
         && (
-          request.auth.token.email == "zedan91@azobss.local"
+          (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com")
           || resource.data.uid == request.auth.uid
         );
 
       allow update: if request.auth != null
-        && request.auth.token.email == "zedan91@azobss.local";
+        && (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com");
 
       allow delete: if request.auth != null
-        && request.auth.token.email == "zedan91@azobss.local";
+        && (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com");
     }
 
     match /notifications/{notificationId} {
       allow read: if true;
 
       allow create, update, delete: if request.auth != null
-        && request.auth.token.email == "zedan91@azobss.local";
+        && (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com");
     }
 
   }
