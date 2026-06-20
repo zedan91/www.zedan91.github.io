@@ -29,3 +29,10 @@ Firebase Rules:
 - Admin Dashboard backend fetch now sends `x-admin-key` from browser storage key `azobssAdminApiKey`.
 - Admin Dashboard Settings now has a Backend Admin Key helper to save/clear the key without opening DevTools console.
 - Priority 2 skipped areas remain untouched: Cart/Like/Bell/Message badge, My Purchases, and PA/BM paid/verified download flow.
+
+
+## Patch 246 - Deploy Server Admin Secret Strict Fix
+
+Admin backend routes in `deploy-server.js` now require the configured `ADMIN_KEY` / admin API secret. Firebase profile role alone is no longer enough for deploy-server admin backend actions. This prevents a user-editable role/profile from being used to pass backend admin routes.
+
+Not touched: Cart/Like/Bell/Message badge, My Purchases, and PA/BM paid/verified user download flow.

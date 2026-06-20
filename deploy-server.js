@@ -377,12 +377,19 @@ async function azCommissionIdentityFromRequest(req) {
   }
 }
 async function azAdminIdentityFromRequest(req, parsed) {
-  if (azRequestHasAdminSecret(req, parsed)) {
-    return { uid: "api-secret", email: "", username: "api-secret", role: "admin", isAdmin: true, authMethod: "api-secret" };
-  }
+  // Admin backend routes must carry the configured ADMIN_KEY / AZOBSS_ADMIN_API_SECRET.
+  // Firebase role/profile alone is not enough here because profile fields may be user-editable
+  // depending on deployed Firestore Rules. This keeps admin backend actions locked by server env secret.
+  if (!azRequestHasAdminSecret(req, parsed)) return null;
+
+  // When the browser also sends a Firebase token, keep that identity only for audit/log context.
+  // The API secret above remains the actual gate.
   const identity = await azCommissionIdentityFromRequest(req);
-  if (identity && identity.isAdmin) return Object.assign({ authMethod: "firebase" }, identity);
-  return null;
+  if (identity) {
+    return Object.assign({}, identity, { role: identity.role || "admin", isAdmin: true, authMethod: "api-secret+firebase" });
+  }
+
+  return { uid: "api-secret", email: "", username: "api-secret", role: "admin", isAdmin: true, authMethod: "api-secret" };
 }
 function azAdminBypassEnabled() {
   // Emergency only. Keep unset in production. This reopens the old public manual completion endpoint.
