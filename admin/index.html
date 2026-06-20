@@ -92,7 +92,7 @@ body.az-admin-access-ok #azAdminAccessDenied{display:none!important}
 <script type="module" id="az-admin-access-guard">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 (function(){
   if(window.__azAdminAccessGuard) return;
@@ -110,15 +110,96 @@ import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/fire
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const ADMIN_EMAIL = 'zedan91@azobss.local';
+  const ADMIN_EMAILS = ['zedan9107@gmail.com','zedan91@azobss.local'];
+  const OWNER_USERNAME = 'zedan91';
+
+  const clean = v => String(v || '').trim().toLowerCase();
+  const unique = arr => [...new Set(arr.map(clean).filter(Boolean))];
+  const isOwnerEmail = email => ADMIN_EMAILS.includes(clean(email));
+
+  function clearAdminCache(){
+    try{
+      localStorage.removeItem('azobss_admin_role_cache');
+      localStorage.removeItem('azobssAdminRoleCache');
+    }catch(_e){}
+    document.body.classList.remove('az-admin-access-ok','az-role-is-admin','is-admin','azobss-support-admin');
+    document.body.setAttribute('data-az-current-role','none');
+  }
+
+  function markAdminCache(){
+    try{ localStorage.setItem('azobss_admin_role_cache','1'); }catch(_e){}
+    document.body.classList.add('az-admin-access-ok','az-role-is-admin','is-admin');
+    document.body.setAttribute('data-az-current-role','admin');
+  }
+
+  function profileBelongsToUser(profile,user){
+    if(!profile || !user) return false;
+    const uid = clean(profile.uid || profile.authUid || profile.userUid || profile.firebaseUid);
+    const docEmail = clean(profile.email || profile.authEmail || profile.realEmail || profile.userEmail);
+    if(uid && uid === clean(user.uid)) return true;
+    if(docEmail && clean(user.email) && docEmail === clean(user.email)) return true;
+    return false;
+  }
+
+  function profileLooksAdmin(profile,docId,user){
+    if(!profileBelongsToUser(profile,user)) return false;
+    const role = clean(profile.role || profile.accountRole || profile.userRole || profile.accessRole);
+    const username = clean(profile.username || profile.usernameKey || profile.name || docId);
+    const docEmail = clean(profile.email || profile.authEmail || profile.realEmail || profile.userEmail);
+    return role === 'admin' || profile.isAdmin === true || profile.admin === true || profile.owner === true || username === OWNER_USERNAME || isOwnerEmail(docEmail);
+  }
+
+  function storedUsernameCandidates(){
+    const keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','azobss_user_profile','azobssProfile','currentUser','userProfile','azobss_auth_user','azobssLoginUser','azobss_logged_user'];
+    const out=[];
+    keys.forEach(k=>{
+      try{
+        const raw=localStorage.getItem(k)||sessionStorage.getItem(k);
+        if(!raw) return;
+        let obj=null;
+        try{ obj=JSON.parse(raw); }catch(_e){ obj={username:raw}; }
+        out.push(obj?.usernameKey,obj?.username,obj?.userName,obj?.id,obj?.name,obj?.displayName);
+      }catch(_e){}
+    });
+    return out;
+  }
+
+  async function readCandidateProfile(id){
+    try{
+      const snap = await getDoc(doc(db,'users',clean(id)));
+      if(!snap.exists()) return null;
+      return { id:snap.id, ...snap.data() };
+    }catch(_e){ return null; }
+  }
+
+  async function isAdmin(user){
+    if(!user) return false;
+    const email = clean(user.email);
+
+    // Owner email is allowed, but normal users are no longer allowed to pass by reading users/zedan91.
+    if(isOwnerEmail(email)) return true;
+
+    const candidates = unique([
+      user.email ? user.email.split('@')[0] : '',
+      user.displayName || '',
+      user.uid || '',
+      ...storedUsernameCandidates()
+    ]);
+
+    for(const id of candidates){
+      const profile = await readCandidateProfile(id);
+      if(profile && profileLooksAdmin(profile,id,user)) return true;
+    }
+    return false;
+  }
 
   function showDenied(message){
-    document.body.classList.remove('az-admin-access-ok');
+    clearAdminCache();
     let box = document.getElementById('azAdminAccessDenied');
     if(!box){
       box = document.createElement('div');
       box.id = 'azAdminAccessDenied';
-      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p></div>';
+      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
       document.body.appendChild(box);
     }
     const msg = document.getElementById('azAdminAccessMessage');
@@ -126,48 +207,27 @@ import {getFirestore, doc, getDoc, deleteDoc} from 'https://www.gstatic.com/fire
   }
 
   function showAdmin(){
-    document.body.classList.add('az-admin-access-ok');
+    markAdminCache();
     const box = document.getElementById('azAdminAccessDenied');
     if(box) box.remove();
-  }
-
-  async function isAdmin(user){
-    if(!user) return false;
-
-    const email = String(user.email || '').toLowerCase();
-    if(email === ADMIN_EMAIL) return true;
-
-    const candidates = [
-      'zedan91',
-      user.email ? user.email.split('@')[0] : '',
-      user.displayName || ''
-    ].filter(Boolean).map(x => String(x).toLowerCase());
-
-    for(const id of candidates){
-      try{
-        const snap = await getDoc(doc(db,'users',id));
-        if(!snap.exists()) continue;
-        const x = snap.data() || {};
-        const role = String(x.role || '').toLowerCase();
-        const docEmail = String(x.email || x.authEmail || '').toLowerCase();
-        const username = String(x.username || x.usernameKey || x.name || id).toLowerCase();
-        if(role === 'admin' || docEmail === ADMIN_EMAIL || username === 'zedan91') return true;
-      }catch(e){}
-    }
-    return false;
+    window.__azobssVerifiedAdmin = true;
   }
 
   showDenied('Checking admin access...');
 
   onAuthStateChanged(auth, async user => {
     if(!user){
+      window.__azobssVerifiedAdmin = false;
       showDenied('Please login as admin first.');
       return;
     }
 
     const ok = await isAdmin(user);
     if(ok) showAdmin();
-    else showDenied('Access denied. Admin account required.');
+    else{
+      window.__azobssVerifiedAdmin = false;
+      showDenied('Access denied. Admin account required.');
+    }
   });
 })();
 
@@ -1442,6 +1502,8 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const ADMIN_EMAIL='zedan91@azobss.local';
+const ADMIN_EMAILS=['zedan9107@gmail.com','zedan91@azobss.local'];
+const OWNER_USERNAME='zedan91';
 const AZOBSS_BACKEND_API='https://azobss-backend.onrender.com';
 
 let currentUser=null;
@@ -1727,19 +1789,59 @@ async function runMaintenanceAction(){
   }
 }
 
+function azAdminClean(v){return String(v||'').trim().toLowerCase();}
+function azAdminIsOwnerEmail(email){return ADMIN_EMAILS.includes(azAdminClean(email));}
+function azAdminProfileBelongsToUser(profile,user){
+  if(!profile || !user) return false;
+  const uid=azAdminClean(profile.uid||profile.authUid||profile.userUid||profile.firebaseUid);
+  const email=azAdminClean(profile.email||profile.authEmail||profile.realEmail||profile.userEmail);
+  if(uid && uid===azAdminClean(user.uid)) return true;
+  if(email && azAdminClean(user.email) && email===azAdminClean(user.email)) return true;
+  return false;
+}
 function isAdminUser(){
-  const email=String(currentUser?.email||adminProfile?.email||adminProfile?.authEmail||'').toLowerCase();
-  const role=String(adminProfile?.role||'').toLowerCase();
-  const username=String(adminProfile?.username||adminProfile?.usernameKey||adminProfile?.name||'').toLowerCase();
-  return email===ADMIN_EMAIL || role==='admin' || username==='zedan91';
+  const user=currentUser||auth.currentUser;
+  const email=azAdminClean(user?.email||adminProfile?.email||adminProfile?.authEmail);
+  if(azAdminIsOwnerEmail(email)) return true;
+  if(!azAdminProfileBelongsToUser(adminProfile,user)) return false;
+  const role=azAdminClean(adminProfile?.role||adminProfile?.accountRole||adminProfile?.userRole||adminProfile?.accessRole);
+  const username=azAdminClean(adminProfile?.username||adminProfile?.usernameKey||adminProfile?.name||adminProfile?.id);
+  const profileEmail=azAdminClean(adminProfile?.email||adminProfile?.authEmail||adminProfile?.realEmail||adminProfile?.userEmail);
+  return role==='admin' || adminProfile?.isAdmin===true || adminProfile?.admin===true || adminProfile?.owner===true || username===OWNER_USERNAME || azAdminIsOwnerEmail(profileEmail);
+}
+function azAdminStoredUsernameCandidates(){
+  const keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','azobss_user_profile','azobssProfile','currentUser','userProfile','azobss_auth_user','azobssLoginUser','azobss_logged_user'];
+  const out=[];
+  keys.forEach(k=>{
+    try{
+      const raw=localStorage.getItem(k)||sessionStorage.getItem(k);
+      if(!raw) return;
+      let obj=null;
+      try{obj=JSON.parse(raw);}catch(_e){obj={username:raw};}
+      out.push(obj?.usernameKey,obj?.username,obj?.userName,obj?.id,obj?.name,obj?.displayName);
+    }catch(_e){}
+  });
+  return out;
 }
 async function getAdminProfile(user){
   if(!user)return null;
-  const candidates=['zedan91', user.email?.split('@')[0], user.displayName].filter(Boolean);
+  const email=azAdminClean(user.email);
+  const candidates=[
+    ...(azAdminIsOwnerEmail(email)?[OWNER_USERNAME]:[]),
+    user.email?.split('@')[0],
+    user.displayName,
+    user.uid,
+    ...azAdminStoredUsernameCandidates()
+  ].map(azAdminClean).filter(Boolean);
+  const seen=new Set();
   for(const c of candidates){
+    if(seen.has(c)) continue;
+    seen.add(c);
     try{
-      const snap=await getDoc(doc(db,'users',String(c).toLowerCase()));
-      if(snap.exists())return {id:snap.id,...snap.data()};
+      const snap=await getDoc(doc(db,'users',c));
+      if(!snap.exists()) continue;
+      const profile={id:snap.id,...snap.data()};
+      if(azAdminIsOwnerEmail(email) || azAdminProfileBelongsToUser(profile,user)) return profile;
     }catch(e){}
   }
   return null;
@@ -3859,7 +3961,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     }
 
     try{
-      if(localStorage.getItem('azobss_admin_role_cache') === '1') return 'admin';
+      if(localStorage.getItem('azobss_admin_role_cache') === '1' && window.__azobssVerifiedAdmin === true) return 'admin';
       if(localStorage.getItem('azobss_staff_role_cache') === '1') return 'staff';
     }catch(e){}
 
@@ -3923,16 +4025,20 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(path === '/staff/' || path === '/staff/index.html') required = 'staff';
     if(!required) return;
 
+    // Admin page access is handled by the strict Firebase auth guard above.
+    // Do not use old localStorage role cache to allow/deny /admin/.
+    if(required === 'admin') return;
+
     var role = applyButtons();
 
-    if(role === required) return;
+    if(role === required && (required !== 'admin' || window.__azobssVerifiedAdmin === true)) return;
 
     // Allow a short delay for auth UI/localStorage to initialize before blocking.
     var tries = 0;
     var timer = setInterval(function(){
       tries++;
       role = applyButtons();
-      if(role === required){
+      if(role === required && (required !== 'admin' || window.__azobssVerifiedAdmin === true)){
         clearInterval(timer);
         return;
       }
