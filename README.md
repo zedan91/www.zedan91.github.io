@@ -79,3 +79,10 @@ Checks:
 - Staff Dashboard Sales View excludes PA/BM purchase records from staff commission.
 - Staff commission sales are now scoped to Software/CAD owner/staff/seller fields, not buyer username/email.
 - PA/BM remains visible in Admin Purchase/Payments only; PA/BM download/payment flow not touched.
+
+
+## Patch 257 - Staff Dashboard No PA/BM Mention UI Fix
+- Removed visible PA/BM explanation/card/empty-state wording from Staff/Semi-admin Dashboard.
+- Staff Dashboard now focuses on eligible staff sales, share link commission and payout only.
+- Internal filtering remains active, but PA/BM is no longer mentioned in staff UI.
+- No Firebase Rules or Render ENV update required.

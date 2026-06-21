@@ -499,7 +499,7 @@ body[data-dashboard-page="staff"] code{
 <div class="az-staff-hero">
   <div class="az-small">AZOBSS Staff Area</div>
   <h2>Dashboard ringkas untuk staff</h2>
-  <p>Di sini anda boleh semak produk sendiri, jualan Software/CAD sendiri, komisen share link dan status payout. <b>PA/BM tidak dikira sebagai komisen staff.</b></p>
+  <p>Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.</p>
   <div class="az-quick-actions">
     <button type="button" data-tab-jump="sales">💳 Lihat Sales</button>
     <button type="button" data-tab-jump="share">🔗 Share Link</button>
@@ -508,14 +508,13 @@ body[data-dashboard-page="staff"] code{
 </div>
 <div class="az-status-strip">
   <div class="az-status-card"><b>Akaun</b><span id="staffAccountStatus">Checking...</span></div>
-  <div class="az-status-card"><b>Komisen PA/BM</b><span>Tidak dikira</span></div>
   <div class="az-status-card"><b>Data dipapar</b><span>Milik anda sahaja</span></div>
 </div>
 <div id="staffOverviewNote" class="card az-zero-note"><b>ℹ️ Nota</b><div class="muted">Semua angka di bawah akan jadi RM0.00 jika tiada jualan Software/CAD atau share link yang sah untuk akaun ini.</div></div>
 <div class="az-friendly-grid">
   <div class="az-stat-card"><div class="az-stat-label">💻 Software Saya</div><div id="statSw" class="az-stat-value">0</div><div class="az-stat-help">Produk software yang dikaitkan dengan akaun ini.</div></div>
   <div class="az-stat-card"><div class="az-stat-label">📐 CAD Saya</div><div id="statCad" class="az-stat-value">0</div><div class="az-stat-help">CAD tools/LISP/VLX milik akaun ini.</div></div>
-  <div class="az-stat-card primary"><div class="az-stat-label">💳 Sales Sah</div><div id="statSales" class="az-stat-value">0</div><div class="az-stat-help">Hanya jualan Software/CAD. PA/BM dikecualikan.</div></div>
+  <div class="az-stat-card primary"><div class="az-stat-label">💳 Sales Sah</div><div id="statSales" class="az-stat-value">0</div><div class="az-stat-help">Jualan produk yang layak untuk akaun ini.</div></div>
 </div>
 <div class="az-friendly-grid compact">
   <div class="az-stat-card primary"><div class="az-stat-label">💰 Komisen Saya</div><div id="statCom" class="az-stat-value">RM0.00</div><div class="az-stat-help">Jumlah komisen yang layak untuk staff ini.</div></div>
@@ -527,7 +526,6 @@ body[data-dashboard-page="staff"] code{
   <div class="az-stat-card"><div class="az-stat-label">🏢 AZOBSS Share</div><div id="statPlatformShare" class="az-stat-value">RM0.00</div><div class="az-stat-help">Bahagian platform untuk jualan yang layak.</div></div>
   <div class="az-stat-card"><div class="az-stat-label">👤 Owner Share</div><div id="statOwnerShare" class="az-stat-value">RM0.00</div><div class="az-stat-help">Bahagian owner produk jika berkaitan.</div></div>
   <div class="az-stat-card"><div class="az-stat-label">🧾 Rekod Layak</div><div id="statEligibleRecords" class="az-stat-value">0</div><div class="az-stat-help">Rekod komisen yang benar-benar dikira.</div></div>
-  <div class="az-stat-card"><div class="az-stat-label">🚫 PA/BM Dibuang</div><div id="statExcludedPabm" class="az-stat-value">0</div><div class="az-stat-help">Rekod PA/BM yang tidak dimasukkan komisen staff.</div></div>
 </div>
 <div class="card az-safe-note" id="azStaffCommissionPolicyBox">
   <h2>📢 Cara kiraan komisen</h2>
@@ -535,14 +533,13 @@ body[data-dashboard-page="staff"] code{
     <div><b>Produk sendiri terjual:</b> staff/owner dapat 70%, AZOBSS dapat 30%.</div>
     <div><b>Share produk admin/AZOBSS:</b> sharer dapat 20%, AZOBSS dapat 80%.</div>
     <div><b>Share produk staff lain:</b> owner dapat 60%, sharer dapat 10%, AZOBSS dapat 30%.</div>
-    <div><b>PA/BM:</b> tidak ada komisen staff dan tidak masuk kiraan dashboard ini.</div>
   </div>
 </div>
 <details class="card"><summary style="cursor:pointer;font-weight:900">🔐 Lihat akses akaun / permission</summary><pre id="permBox" class="az-readable-json"></pre></details>
 </section>
 <section id="software" class="section"><h2>💻 Software Manager</h2><div class="card"><div class="toolbar"><input id="swTitle" placeholder="Software title"><input id="swPrice" type="number" placeholder="RM"><select id="swType"><option>free</option><option>premium</option><option>affiliate</option></select></div><input id="swUrl" placeholder="URL" style="width:100%"><textarea id="swDesc" placeholder="Description"></textarea><button class="btn green" id="submitSw">Submit Software</button></div><div class="card"><h2>Latest</h2><div id="swList" class="list"></div></div></section>
 <section id="cad" class="section"><h2>📐 CAD Tools Manager</h2><div class="card"><div class="toolbar"><input id="cadTitle" placeholder="CAD/LISP title"><input id="cadPrice" type="number" placeholder="RM"><select id="cadType"><option>lisp</option><option>vlx</option><option>plugin</option><option>template</option></select></div><input id="cadUrl" placeholder="URL" style="width:100%"><textarea id="cadDesc" placeholder="Description"></textarea><button class="btn green" id="submitCad">Submit CAD</button></div><div class="card"><h2>Latest</h2><div id="cadList" class="list"></div></div></section>
-<section id="sales" class="section"><div class="az-section-head"><div><h2>💳 Sales View</h2><div class="muted">Jualan yang layak untuk komisen staff. PA/BM akan ditapis keluar secara automatik.</div></div><button class="btn green" id="refreshSales">Refresh Sales</button></div><div id="salesList" class="list"></div></section>
+<section id="sales" class="section"><div class="az-section-head"><div><h2>💳 Sales View</h2><div class="muted">Jualan yang layak untuk komisen staff akaun ini.</div></div><button class="btn green" id="refreshSales">Refresh Sales</button></div><div id="salesList" class="list"></div></section>
 <section id="share" class="section"><h2>🔗 Share Link Commission</h2><div class="card az-share-note"><b>Share link punya paparan</b><div class="muted">Senarai ini baca rekod <b>commissionRecords</b> jenis share/referral. Ia termasuk share produk admin/AZOBSS 20%, share produk staff lain 10%, dan owner split jika berkaitan.</div><div class="muted">Buka produk berbayar → tekan button Share for Lucky Draw → link mengandungi <code>?product=ID&amp;ref=username</code>.</div></div><button class="btn" id="refreshShareCom">Refresh Share Link Records</button><div id="shareComList" class="list"></div></section>
 <section id="payout" class="section"><h2>💸 My Payout</h2><div class="card az-share-note"><b>Commission payout view</b><div class="muted">This page shows your own commission records by payout status. Admin can still manage payout approval from Admin Dashboard.</div><div class="muted">New: save payout details and submit a payout request after commission is approved.</div></div><div class="card"><div class="az-payout-tools"><select id="payoutFilter"><option value="all">All payout status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><button class="btn" id="refreshPayout">Refresh Payout</button><button class="btn green" id="exportPayoutCsv">Export My CSV</button></div><div id="payoutSummary" class="az-payout-summary"></div></div><div class="card"><h2>🏦 Payout Profile</h2><div class="muted">Save your payout details once. Account number is only shown as masked after save.</div><div class="toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><input id="payoutBankName" placeholder="Bank name / wallet name" style="flex:1;min-width:180px"><input id="payoutAccountName" placeholder="Account holder name" style="flex:1;min-width:180px"></div><div class="toolbar"><input id="payoutAccountNo" placeholder="Account no / DuitNow ID / wallet phone" style="flex:1;min-width:220px"><input id="payoutPhone" placeholder="Phone optional" style="flex:1;min-width:160px"><input id="payoutEmail" placeholder="Payout email optional" style="flex:1;min-width:180px"></div><textarea id="payoutProfileNote" placeholder="Payout note optional" style="width:100%;min-height:70px"></textarea><div class="toolbar"><button class="btn green" id="savePayoutProfile" type="button">Save Payout Profile</button><button class="btn" id="loadPayoutProfile" type="button">Reload Profile</button><span id="payoutProfileNotice" class="muted"></span></div></div><div class="card"><h2>📨 Request Payout</h2><div class="muted">You can request payout for approved unpaid commission. Admin will review and mark it as paid after transfer.</div><div class="toolbar"><input id="payoutRequestAmount" type="number" min="0" step="0.01" placeholder="Amount RM, leave blank for all approved" style="min-width:230px"><input id="payoutRequestNote" placeholder="Request note optional" style="flex:1;min-width:220px"><button class="btn green" id="submitPayoutRequest" type="button">Submit Payout Request</button><button class="btn" id="refreshPayoutRequests" type="button">Refresh Requests</button></div><div id="payoutRequestNotice" class="muted"></div><div id="payoutRequestList" class="list"></div></div><div id="payoutList" class="list"></div></section>
 </main></div>
@@ -858,10 +855,10 @@ async function overview(){
  if($('#staffOverviewNote')){
    const clean=(!salesCount&&!eligibleRecords);
    $('#staffOverviewNote').innerHTML= clean
-    ? '<b>✅ Tiada komisen staff yang layak setakat ini.</b><div class="muted">Jika akaun ini hanya membeli PA/BM, jumlah komisen memang RM0.00 kerana PA/BM bukan produk staff.</div>'
-    : `<b>✅ ${eligibleRecords} rekod komisen layak dikira.</b><div class="muted">${excludedPabm} rekod PA/BM/rekod tidak layak telah dikecualikan daripada komisen staff.</div>`;
+    ? '<b>✅ Tiada komisen staff yang layak setakat ini.</b><div class="muted">Komisen akan muncul selepas jualan atau share link yang layak direkodkan.</div>'
+    : `<b>✅ ${eligibleRecords} rekod komisen layak dikira.</b><div class="muted">Paparan ini hanya menunjukkan rekod yang layak untuk akaun staff ini.</div>`;
  }
- $('#permBox').textContent=JSON.stringify({role:profile?.role||profileRole(profile),username:currentOwnerKeys().username,email:currentOwnerKeys().email,permissions:perms,commissionPolicy:'Software/CAD only. PA/BM excluded. Staff sees own records only.'},null,2);
+ $('#permBox').textContent=JSON.stringify({role:profile?.role||profileRole(profile),username:currentOwnerKeys().username,email:currentOwnerKeys().email,permissions:perms,commissionPolicy:'Staff sees eligible own records only.'},null,2);
 }
 async function submitSw(){if(!can('canManageSoftware'))return alert('No permission');await addDoc(collection(db,'staffSoftwareSubmissions'),withOwnerPayload({title:$('#swTitle').value,price:Number($('#swPrice').value||0),type:$('#swType').value,url:$('#swUrl').value,description:$('#swDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffSoftwareSubmissions','#swList');overview()}
 async function submitCad(){if(!can('canManageCAD'))return alert('No permission');await addDoc(collection(db,'staffCADSubmissions'),withOwnerPayload({title:$('#cadTitle').value,price:Number($('#cadPrice').value||0),type:$('#cadType').value,url:$('#cadUrl').value,description:$('#cadDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffCADSubmissions','#cadList');overview()}
@@ -1022,8 +1019,7 @@ async function sales(){
    const status=esc(x.status||x.paymentStatus||'');
    rows.push(`<div class="item az-sale-row"><div><strong>${title}</strong><div class="muted">${type} • ${status}</div></div><div class="az-sale-metrics"><span>Sale RM${amt.toFixed(2)}</span><span>Staff RM${(amt*0.7).toFixed(2)}</span><span>AZOBSS RM${(amt*0.3).toFixed(2)}</span></div></div>`);
  });
- const note=skippedPaBm?`<div class="item az-staff-empty"><b>ℹ️ PA/BM dikecualikan</b><div class="muted">${skippedPaBm} rekod PA/BM tidak dimasukkan kerana PA/BM tiada komisen staff.</div></div>`:'';
- $('#salesList').innerHTML=rows.join('') || (note || '<div class="az-staff-empty"><b>Tiada sales Software/CAD untuk akaun ini.</b><div class="muted">Bila produk staff terjual atau share link yang sah digunakan, rekod akan muncul di sini.</div></div>');
+ $('#salesList').innerHTML=rows.join('') || '<div class="az-staff-empty"><b>Tiada sales untuk akaun ini.</b><div class="muted">Bila jualan atau share link yang sah digunakan, rekod akan muncul di sini.</div></div>';
 }
 document.addEventListener('click',e=>{const jump=e.target.closest('[data-tab-jump]');if(jump){const target=document.querySelector(`[data-tab="${jump.dataset.tabJump}"]`);if(target)target.click();return;}const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
 $('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
