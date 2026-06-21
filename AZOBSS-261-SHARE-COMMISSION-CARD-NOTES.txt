@@ -1,0 +1,20 @@
+AZOBSS Patch 261 - Share Modal Commission Card
+Date: 2026-06-21
+
+Baseline: (260)-AZOBSS-SOFTWARE-CAD-SHARE-BUTTON-FRIENDLY-UI-FIX_20260621.zip
+
+Changes:
+1. Added a logged-in share modal commission info card for Software Tools.
+2. Added the same logged-in share modal commission info card for CAD Tools.
+3. The card explains:
+   - Staff/semi-admin share link commission can be 20% for paid AZOBSS/admin-owned products.
+   - Staff/semi-admin share link commission can be 10% for paid software/CAD owned by another staff.
+   - Commission is counted after purchase confirmation and successful sale matching.
+4. Guest share modal remains product-link only and does not show the commission card.
+
+Not touched:
+- PA/BM paid/verified download flow.
+- My Purchases.
+- Cart / Like / Bell / Message badge logic.
+- Firebase Rules.
+- Render ENV.

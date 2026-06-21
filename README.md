@@ -86,3 +86,10 @@ Checks:
 - Staff Dashboard now focuses on eligible staff sales, share link commission and payout only.
 - Internal filtering remains active, but PA/BM is no longer mentioned in staff UI.
 - No Firebase Rules or Render ENV update required.
+
+## (262) Share Modal Staff/Semi-admin Commission Card Visibility Fix
+- The commission explanation card in Software/CAD share modals is now shown only for staff/semi-admin style users.
+- Normal logged-in users still see Lucky Draw credit active, but they no longer see staff/semi-admin commission percentages.
+- Guest users continue to see product-link sharing only.
+- PA/BM paid/verified download flow, My Purchases, Cart, Like, Bell, and Message badge are not touched.
+- No Firebase Rules or Render ENV update required.

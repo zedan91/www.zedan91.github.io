@@ -4643,6 +4643,12 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 .az-lucky-share-modal-input{flex:1!important;min-width:0!important;background:transparent!important;border:0!important;outline:0!important;color:#fff!important;font-size:14px!important;font-family:inherit!important;}
 .az-lucky-share-modal-copy-btn{border:0!important;background:transparent!important;color:#e5e7eb!important;cursor:pointer!important;font-size:25px!important;line-height:1!important;padding:2px 4px!important;}
 .az-lucky-share-modal-note{text-align:center!important;color:#a7f3d0!important;font-size:12px!important;margin-top:12px!important;min-height:16px!important;}
+
+.az-lucky-share-commission-card{width:min(420px,100%)!important;margin:-4px auto 18px!important;padding:12px 14px!important;border-radius:12px!important;background:linear-gradient(135deg,rgba(250,204,21,.12),rgba(34,197,94,.10))!important;border:1px solid rgba(250,204,21,.32)!important;box-shadow:0 14px 36px rgba(0,0,0,.24)!important;text-align:left!important;}
+.az-lucky-share-commission-title{display:flex!important;align-items:center!important;gap:8px!important;color:#fde68a!important;font-size:13px!important;font-weight:950!important;margin:0 0 8px!important;letter-spacing:.01em!important;}
+.az-lucky-share-commission-lines{display:grid!important;gap:6px!important;color:#dbeafe!important;font-size:12px!important;line-height:1.45!important;}
+.az-lucky-share-commission-lines b{color:#86efac!important;font-weight:950!important;}
+.az-lucky-share-commission-small{color:#93c5fd!important;font-size:11px!important;margin-top:8px!important;line-height:1.35!important;}
 .az-lucky-share-toast{position:fixed!important;left:50%!important;bottom:24px!important;z-index:1000000!important;transform:translateX(-50%) translateY(14px)!important;background:rgba(15,23,42,.96)!important;color:#ecfdf5!important;border:1px solid rgba(52,211,153,.38)!important;border-radius:999px!important;padding:10px 14px!important;font-size:13px!important;font-weight:800!important;box-shadow:0 18px 44px rgba(0,0,0,.42)!important;opacity:0!important;transition:opacity .18s ease,transform .18s ease!important;max-width:min(420px,92vw)!important;text-align:center!important;}
 .az-lucky-share-toast.show{opacity:1!important;transform:translateX(-50%) translateY(0)!important;}
 @media(max-width:700px){
@@ -4666,6 +4672,18 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   function parse(raw){try{return raw?JSON.parse(raw):null}catch(e){return null}}
   function readUser(){return parse(sessionStorage.getItem('azobssCurrentUser'))||parse(localStorage.getItem('azobssCurrentUser'))||parse(sessionStorage.getItem('azobssUser'))||parse(localStorage.getItem('azobssUser'))||{};}
   function username(u){return String((u&&(u.usernameKey||u.username||u.name))||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40)}
+  function isStaffCommissionSharer(){
+    try{
+      const u=readUser()||{};
+      const role=String(u.role||u.userRole||u.accountRole||u.memberRole||'').toLowerCase().replace(/[^a-z0-9-]/g,'');
+      const perms=u.permissions||u.perms||{};
+      const flags=[u.isStaff,u.staff,u.isSemiAdmin,u.semiAdmin,u.semiadmin,u.staffDashboard,perms.canManageSoftware,perms.canManageCAD,perms.canManageCad,perms.canManageTools];
+      if(role==='staff'||role==='semiadmin'||role==='semi-admin'||role==='semistaff'||role==='seller'||role==='editor') return true;
+      if(flags.some(Boolean)) return true;
+      if(localStorage.getItem('azobss_staff_role_cache')==='1'||sessionStorage.getItem('azobss_staff_role_cache')==='1') return true;
+      return false;
+    }catch(_e){return false}
+  }
   function monthKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
   function deviceId(){let id=localStorage.getItem('azobssLuckyDrawDeviceId');if(!id){id='dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('azobssLuckyDrawDeviceId',id)}return id}
   function fingerprint(){return [deviceId(),navigator.userAgent,navigator.language,(screen.width||0)+'x'+(screen.height||0),(Intl.DateTimeFormat().resolvedOptions().timeZone||'')].join('|').slice(0,180)}
@@ -4718,6 +4736,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     const subtitleText = guestMode ? 'Guest boleh share link produk biasa. Login untuk aktifkan credit Lucky Draw.' : ('Credit Lucky Draw aktif untuk ' + (ref || 'akaun anda') + '.');
     const badgeText = guestMode ? 'Product link only' : 'Lucky Draw credit active';
     const copyLabel = guestMode ? 'Copy product link' : 'Copy referral link';
+    const staffCommissionMode = !guestMode && isStaffCommissionSharer();
+    const commissionInfoHtml = staffCommissionMode ? '<div class="az-lucky-share-commission-card"><div class="az-lucky-share-commission-title">💰 Komisen share link staff/semi-admin</div><div class="az-lucky-share-commission-lines"><div><b>20%</b> jika share produk berbayar milik AZOBSS/admin.</div><div><b>10%</b> jika share software/CAD berbayar milik staff lain.</div></div><div class="az-lucky-share-commission-small">Komisen dikira selepas pembelian disahkan dan rekod jualan berjaya dipadankan.</div></div>' : '';
     const encUrl=encodeURIComponent(url), encText=encodeURIComponent(text), encTitle=encodeURIComponent(title);
     const links={
       wa:'https://wa.me/?text='+encodeURIComponent(text+'\n'+url),
@@ -4746,7 +4766,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       +'<button type="button" class="az-lucky-share-modal-icon x" data-share="x" title="X" aria-label="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.3 10.4 22.1 2h-1.9l-6.8 7.3L8 2H1.8l8.2 11-8.2 8.9h1.9l7.1-7.7 5.7 7.7h6.2l-8.4-11.5zm-2.5 2.7-.8-1.1L4.4 3.4h2.7l5.3 7 .8 1.1 6.9 9h-2.7l-5.6-7.4z"/></svg></button>'
       +'<button type="button" class="az-lucky-share-modal-icon dc" data-share="dc" title="Discord" aria-label="Discord"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A16.5 16.5 0 0 0 16.2 3l-.5 1.1a15 15 0 0 0-7.4 0L7.8 3a16.5 16.5 0 0 0-4.1 1.4C1.1 8.2.4 11.9.8 15.5a16.7 16.7 0 0 0 5 2.5l1-1.6a10.5 10.5 0 0 1-1.6-.8l.4-.3a11.8 11.8 0 0 0 12.8 0l.4.3a10.5 10.5 0 0 1-1.6.8l1 1.6a16.7 16.7 0 0 0 5-2.5c.5-4.2-.8-7.8-2.9-11.1zM8.3 13.2c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2zm7.4 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2z"/></svg></button>'
       +'<button type="button" class="az-lucky-share-modal-icon em" data-share="em" title="Email" aria-label="Email"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm8 7.4L4.2 7.2V17h15.6V7.2L12 12.4zm0-2.2L18.8 7H5.2L12 10.2z"/></svg></button>'
-      +'</div><div class="az-lucky-share-modal-copy-label">'+copyLabel+'</div>'
+      +'</div>'+commissionInfoHtml+'<div class="az-lucky-share-modal-copy-label">'+copyLabel+'</div>'
       +'<div class="az-lucky-share-modal-copy"><input class="az-lucky-share-modal-input" readonly value=""><button type="button" class="az-lucky-share-modal-copy-btn" title="Copy link">⧉</button></div>'
       +'<div class="az-lucky-share-modal-note"></div></div>';
     document.body.appendChild(wrap);
