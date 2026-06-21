@@ -392,7 +392,10 @@ async function azCommissionIdentityFromRequest(req) {
         console.warn("Commission identity profile lookup failed:", err && (err.message || err));
       }
     }
-    identity.isAdmin = identity.role === "admin" || identity.username === "zedan91" || identity.username === "zedan0001" || identity.email === "zedan91@azobss.local" || identity.email === "zedan9107@gmail.com";
+    // Strict backend-admin identity: do not trust arbitrary Firestore role/name for admin-level reads.
+    // Admin is allowed only by server-side allow-list email/UID. This prevents staff/semi-admin
+    // or old test usernames (for example zedan0001) from being treated as backend admin.
+    identity.isAdmin = azIdentityTrustedForBackendAdmin(identity);
     return identity;
   } catch (err) {
     console.warn("Commission Firebase token verify failed:", err && (err.message || err));
