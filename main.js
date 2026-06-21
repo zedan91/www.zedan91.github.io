@@ -200,8 +200,19 @@
       opts.headers = headers;
       return opts;
     }
+    async function azobssWithAdminAuthHeaders(options){
+      const opts = azobssWithAdminHeaders(options);
+      const headers = Object.assign({}, opts.headers || {});
+      try{
+        if(!headers.Authorization && typeof window.azobssGetFirebaseAuthHeaders === 'function'){
+          Object.assign(headers, await window.azobssGetFirebaseAuthHeaders(false));
+        }
+      }catch(_e){}
+      opts.headers = headers;
+      return opts;
+    }
     async function apiFetch(path, options){
-      const res = await fetch(API_BASE + path, azobssWithAdminHeaders(options));
+      const res = await fetch(API_BASE + path, await azobssWithAdminAuthHeaders(options));
       return res;
     }
 

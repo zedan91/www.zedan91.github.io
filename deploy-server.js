@@ -341,6 +341,25 @@ function azRequestHasAdminSecret(req, parsed) {
     return token === secret;
   }
 }
+function azAdminAllowedEmailSet() {
+  const defaults = ["zedan91@azobss.local", "zedan9107@gmail.com"];
+  const extra = String(process.env.ADMIN_ALLOWED_EMAILS || process.env.AZOBSS_ADMIN_EMAILS || "").split(/[;,\s]+/).map(v => v.trim()).filter(Boolean);
+  return new Set(defaults.concat(extra).map(v => String(v || "").trim().toLowerCase()).filter(Boolean));
+}
+function azAdminAllowedUidSet() {
+  return new Set(String(process.env.ADMIN_ALLOWED_UIDS || process.env.AZOBSS_ADMIN_UIDS || "").split(/[;,\s]+/).map(v => String(v || "").trim()).filter(Boolean));
+}
+function azIdentityTrustedForBackendAdmin(identity = {}) {
+  const emails = azAdminAllowedEmailSet();
+  const uids = azAdminAllowedUidSet();
+  const authEmail = String(identity.authEmail || identity.email || "").trim().toLowerCase();
+  const profileEmail = String(identity.profileEmail || "").trim().toLowerCase();
+  const uid = String(identity.uid || "").trim();
+  if (authEmail && emails.has(authEmail)) return true;
+  if (profileEmail && emails.has(profileEmail) && authEmail && emails.has(authEmail)) return true;
+  if (uid && uids.has(uid)) return true;
+  return false;
+}
 async function azCommissionIdentityFromRequest(req) {
   try {
     if (!initFirebaseAdmin() || !firebaseAdmin || !firebaseAdmin.auth) return null;
@@ -349,9 +368,12 @@ async function azCommissionIdentityFromRequest(req) {
     if (!token) return null;
     const decoded = await firebaseAdmin.auth().verifyIdToken(token);
     const db = getAzobssBackendDb();
+    const decodedEmail = String(decoded.email || "").toLowerCase();
     const identity = {
       uid: String(decoded.uid || ""),
-      email: String(decoded.email || "").toLowerCase(),
+      email: decodedEmail,
+      authEmail: decodedEmail,
+      profileEmail: "",
       username: "",
       role: "",
       isAdmin: false
@@ -363,7 +385,8 @@ async function azCommissionIdentityFromRequest(req) {
           const x = doc.data() || {};
           identity.username = String(x.usernameKey || x.username || doc.id || "").toLowerCase();
           identity.role = String(x.role || "").toLowerCase();
-          identity.email = String(x.email || x.authEmail || identity.email || "").toLowerCase();
+          identity.profileEmail = String(x.email || x.authEmail || "").toLowerCase();
+          identity.email = identity.authEmail || identity.profileEmail || identity.email;
         });
       } catch (err) {
         console.warn("Commission identity profile lookup failed:", err && (err.message || err));
@@ -377,19 +400,27 @@ async function azCommissionIdentityFromRequest(req) {
   }
 }
 async function azAdminIdentityFromRequest(req, parsed) {
-  // Admin backend routes must carry the configured ADMIN_KEY / AZOBSS_ADMIN_API_SECRET.
-  // Firebase role/profile alone is not enough here because profile fields may be user-editable
-  // depending on deployed Firestore Rules. This keeps admin backend actions locked by server env secret.
-  if (!azRequestHasAdminSecret(req, parsed)) return null;
-
-  // When the browser also sends a Firebase token, keep that identity only for audit/log context.
-  // The API secret above remains the actual gate.
+  const hasSecret = azRequestHasAdminSecret(req, parsed);
   const identity = await azCommissionIdentityFromRequest(req);
-  if (identity) {
-    return Object.assign({}, identity, { role: identity.role || "admin", isAdmin: true, authMethod: "api-secret+firebase" });
+
+  // Preferred flow: browser sends Firebase ID token only. Backend verifies the token
+  // with Firebase Admin and trusts only the server allow-list emails/UIDs.
+  // This means ADMIN_KEY stays private in Render ENV and never has to be saved in browser.
+  if (identity && azIdentityTrustedForBackendAdmin(identity)) {
+    return Object.assign({}, identity, {
+      role: "admin",
+      isAdmin: true,
+      authMethod: hasSecret ? "firebase-admin-token+api-secret" : "firebase-admin-token"
+    });
   }
 
-  return { uid: "api-secret", email: "", username: "api-secret", role: "admin", isAdmin: true, authMethod: "api-secret" };
+  // Backward-compatible emergency/manual fallback: a correct server secret can still unlock
+  // backend admin routes even without a Firebase browser session.
+  if (hasSecret) {
+    return { uid: "api-secret", email: "", authEmail: "", username: "api-secret", role: "admin", isAdmin: true, authMethod: "api-secret" };
+  }
+
+  return null;
 }
 function azAdminBypassEnabled() {
   // Emergency only. Keep unset in production. This reopens the old public manual completion endpoint.
@@ -1290,7 +1321,7 @@ async function azBuildAdminSystemHealth(req, identity = {}) {
     azHealthEnvFlag("BREVO_API_KEY", true, "Required for premium download/receipt email sending."),
     azHealthEnvFlag("AZOBSS_FROM_EMAIL", true, "Recommended sender email for customer emails."),
     azHealthEnvFlag("AZOBSS_CORS_ORIGIN", false, "Recommended production value: https://www.azobss.com"),
-    azHealthEnvFlag("ADMIN_KEY", false, "Recommended admin backend secret used by Admin Dashboard."),
+    azHealthEnvFlag("ADMIN_KEY", false, "Optional fallback admin backend secret. Admin Dashboard normally uses Firebase admin token."),
     azHealthEnvFlag("AZOBSS_ADMIN_API_SECRET", false, "Optional backup admin API secret; ADMIN_KEY is accepted as fallback."),
     azHealthEnvFlag("AZOBSS_COMMISSION_API_SECRET", false, "Optional backup commission/admin API secret."),
     azHealthEnvFlag("AZOBSS_REQUIRE_RECEIPT_TOKEN", false, "Optional strict receipt token mode."),

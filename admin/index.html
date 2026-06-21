@@ -1486,16 +1486,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <section id="settings" class="section">
       <h2>⚙️ Settings</h2>
       <div class="card">
-        <h2>Backend Admin Key</h2>
-        <p class="tabs-note">Simpan ADMIN_KEY dari Render untuk admin-only backend actions. Key ini hanya disimpan dalam browser admin kamu, bukan dalam Firestore.</p>
+        <h2>Backend Admin Auth</h2>
+        <p class="tabs-note">Auto mode: bila login sebagai zedan91/admin, dashboard guna Firebase ID token. ADMIN_KEY kekal rahsia di Render ENV dan tidak perlu disimpan dalam browser. Ruang key di bawah hanya fallback manual jika token Firebase bermasalah.</p>
         <div class="toolbar">
-          <input id="adminApiKeyInput" type="password" autocomplete="off" placeholder="Paste ADMIN_KEY dari Render" style="flex:1;min-width:260px">
-          <button class="btn green" id="saveAdminApiKeyLocal" type="button">Save This Browser</button>
-          <button class="btn gray" id="saveAdminApiKeySession" type="button">Save Session Only</button>
-          <button class="btn" id="testAdminApiKey" type="button">Test Key</button>
+          <input id="adminApiKeyInput" type="password" autocomplete="off" placeholder="Optional fallback: paste ADMIN_KEY dari Render" style="flex:1;min-width:260px">
+          <button class="btn green" id="saveAdminApiKeyLocal" type="button">Save Fallback This Browser</button>
+          <button class="btn gray" id="saveAdminApiKeySession" type="button">Save Fallback Session Only</button>
+          <button class="btn" id="testAdminApiKey" type="button">Test Admin Auth</button>
           <button class="btn red" id="clearAdminApiKey" type="button">Clear Key</button>
         </div>
-        <div id="adminApiKeyStatus" class="tabs-note">Admin key status: checking...</div>
+        <div id="adminApiKeyStatus" class="tabs-note">Admin auth status: checking...</div>
       </div>
       <div class="card">
         <h2>Signup Gate</h2>
@@ -1557,7 +1557,7 @@ function azAdminRenderApiKeyStatus(){
     if(!key){key=localStorage.getItem('azobssLuckyDrawAdminKey')||''; if(key)source='using old lucky draw admin key fallback';}
   }catch(_e){}
   if(input) input.value=key||'';
-  if(box) box.textContent = key ? ('Admin key status: '+source+' • length '+String(key.length)) : 'Admin key status: not saved. Backend admin actions may be blocked until key is saved.';
+  if(box) box.textContent = key ? ('Admin auth status: fallback key '+source+' • length '+String(key.length)+' • Auto Firebase admin auth still preferred.') : 'Admin auth status: Auto Firebase admin login mode. No browser ADMIN_KEY required.';
 }
 function azAdminSaveApiKey(mode){
   const key=String($('#adminApiKeyInput')?.value||'').trim();
@@ -1567,34 +1567,31 @@ function azAdminSaveApiKey(mode){
     if(mode==='session') sessionStorage.setItem('azobssAdminApiKey',key);
     else localStorage.setItem('azobssAdminApiKey',key);
     azAdminRenderApiKeyStatus();
-    toast(mode==='session'?'Admin key saved for this session.':'Admin key saved in this browser.');
+    toast(mode==='session'?'Fallback admin key saved for this session.':'Fallback admin key saved in this browser.');
   }catch(e){toast('Cannot save admin key: '+(e?.message||e));}
 }
 function azAdminClearApiKey(){
   try{sessionStorage.removeItem('azobssAdminApiKey');localStorage.removeItem('azobssAdminApiKey');}
   catch(_e){}
   azAdminRenderApiKeyStatus();
-  toast('Admin key cleared from this browser/session.');
+  toast('Fallback admin key cleared from this browser/session. Auto Firebase admin auth remains available.');
 }
 async function azAdminTestApiKey(){
   const box=$('#adminApiKeyStatus');
-  const key=String(azAdminGetApiKey()||'').trim();
-  if(!key){
-    if(box) box.textContent='Admin key status: not saved. Paste ADMIN_KEY first, then Test Key.';
-    return toast('Paste/save ADMIN_KEY first.');
-  }
-  if(box) box.textContent='Admin key status: testing backend...';
+  if(box) box.textContent='Admin auth status: testing backend with Firebase admin login...';
   try{
     const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/system-health',{cache:'no-store'});
     const status=String(j?.status||'ok').toUpperCase();
-    const method=String(j?.admin?.authMethod||'api-secret');
+    const method=String(j?.admin?.authMethod||'firebase-admin-token');
     const generated=j?.generatedAt?(' • checked '+fmtDate(j.generatedAt)):'';
-    if(box) box.textContent='Admin key status: OK • backend '+status+' • '+method+generated;
-    toast('Admin backend key OK. System Health can be opened safely.');
+    const key=String(azAdminGetApiKey()||'').trim();
+    const fallback=key?' • fallback key saved':' • no browser ADMIN_KEY needed';
+    if(box) box.textContent='Admin auth status: OK • backend '+status+' • '+method+fallback+generated;
+    toast('Admin backend auth OK. No browser ADMIN_KEY needed when logged in as zedan91/admin.');
   }catch(e){
-    const msg=e?.message||String(e||'Admin key test failed.');
-    if(box) box.textContent='Admin key test failed: '+msg;
-    toast('Admin key test failed: '+msg);
+    const msg=e?.message||String(e||'Admin auth test failed.');
+    if(box) box.textContent='Admin auth test failed: '+msg;
+    toast('Admin auth test failed: '+msg);
   }
 }
 
@@ -1620,7 +1617,7 @@ function azAdminApiErrorMessage(status,data,fallback){
   if(status===401) return 'Session expired. Please login again, then retry.';
   if(status===403){
     const err=String(data?.error||'').toLowerCase();
-    if(err.includes('admin_authorization') || err.includes('admin_key')) return 'Admin backend key required or incorrect. Save the same ADMIN_KEY from Render in Admin Dashboard Settings.';
+    if(err.includes('admin_authorization') || err.includes('admin_key')) return 'Admin backend auth required. Login as zedan91/admin. ADMIN_KEY browser storage is optional fallback only.';
     return 'Admin permission required. Please login with an authorised admin account.';
   }
   if(status===429) return 'Too many attempts. '+(data?.retryAfter?('Please wait '+data.retryAfter+' seconds.'):'Please wait a while.');
@@ -1780,13 +1777,14 @@ async function runAdminFrontendDiagnostics(){
     const adminOk=!!(adminProfile && (ADMIN_EMAILS.includes(String(u?.email||'').toLowerCase()) || adminProfile.role==='admin' || adminProfile.isAdmin===true));
     rows.push(azDiagLine(adminOk,'Admin profile guard',adminOk?`Profile accepted: ${esc(adminProfile?.username||adminProfile?.email||u?.email||'admin')}`:'Admin profile not confirmed. /admin/ should stay locked.'));
     const keyInfo=azAdminApiKeySummary();
-    rows.push(azDiagLine(keyInfo.saved,'Backend ADMIN_KEY storage',keyInfo.saved?`Saved via ${esc(keyInfo.source)} • length ${esc(keyInfo.length)}. Secret value is never displayed.`:'Not saved. Backend admin routes may return 403.'));
+    const autoAuthOk=!!u && !!adminOk;
+    rows.push(azDiagLine(autoAuthOk || keyInfo.saved,'Backend admin auth mode',autoAuthOk?`Auto via Firebase admin token. No browser ADMIN_KEY required.${keyInfo.saved?` Optional fallback saved via ${esc(keyInfo.source)} • length ${esc(keyInfo.length)}.`:''}`:(keyInfo.saved?`Fallback saved via ${esc(keyInfo.source)} • length ${esc(keyInfo.length)}.`:'No admin session and no fallback key. Login as admin first.')));
     const requiredSections=['overview','users','online','activity','support','notifications','purchases','payments','commissions','auditlogs','exports','systemhealth','maintenance','staffroles','settings'];
     const missingSections=requiredSections.filter(id=>!document.getElementById(id));
     rows.push(azDiagLine(!missingSections.length,'Admin section DOM',missingSections.length?`Missing: ${esc(missingSections.join(', '))}`:`${requiredSections.length} required sections found.`));
     const requiredButtons=['refreshSystemHealth','runAdminFrontendDiagnostics','saveAdminApiKeyLocal','testAdminApiKey'];
     const missingButtons=requiredButtons.filter(id=>!document.getElementById(id));
-    rows.push(azDiagLine(!missingButtons.length,'Admin helper buttons',missingButtons.length?`Missing: ${esc(missingButtons.join(', '))}`:'System Health and ADMIN_KEY helper buttons found.'));
+    rows.push(azDiagLine(!missingButtons.length,'Admin helper buttons',missingButtons.length?`Missing: ${esc(missingButtons.join(', '))}`:'System Health and admin auth helper buttons found.'));
     rows.push(azDiagLine(typeof loadAdminActivity==='function','Activity tab function',typeof loadAdminActivity==='function'?'loadAdminActivity() is available.':'loadAdminActivity() missing.'));
     rows.push(azDiagLine(typeof loadActivity==='undefined','Old broken loadActivity check',typeof loadActivity==='undefined'?'Old undefined loadActivity() is not being used.':'loadActivity exists unexpectedly; audit tab routing.'));
     try{

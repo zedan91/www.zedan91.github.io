@@ -1,0 +1,27 @@
+AZOBSS PATCH 250 - ADMIN FIREBASE TOKEN AUTO AUTH
+
+Tujuan:
+- ADMIN_KEY kekal rahsia di Render ENV.
+- Browser/admin tidak wajib simpan ADMIN_KEY lagi.
+- Bila login sebagai zedan91/admin, Admin Dashboard hantar Firebase ID token ke backend.
+- Backend verify token dengan Firebase Admin dan hanya percaya admin email/UID allowlist.
+
+Admin allowlist default:
+- zedan91@azobss.local
+- zedan9107@gmail.com
+
+Optional Render ENV:
+- ADMIN_ALLOWED_EMAILS=admin2@example.com,admin3@example.com
+- ADMIN_ALLOWED_UIDS=<firebase_uid_owner>
+
+Fallback lama:
+- x-admin-key / ADMIN_KEY masih diterima untuk emergency/manual action.
+
+Priority 2 tidak disentuh:
+- Cart / Like / Bell / Message badge
+- My Purchases
+- PA/BM paid/verified download flow
+
+Firebase Rules:
+- Tiada rules baru diperlukan untuk auto backend auth ini.
+- Permission denied Firestore collection masih perlu rules admin yang betul jika belum publish.

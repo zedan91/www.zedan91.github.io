@@ -2813,6 +2813,7 @@ async function azobssGetFirebaseAuthHeaders(forceRefresh){
     return {};
   }
 }
+try{ window.azobssGetFirebaseAuthHeaders = azobssGetFirebaseAuthHeaders; }catch(_e){}
 
 async function azobssLoadAdminPaBmPurchaseRecordsFromBackend(forceRefresh){
   const current = getSavedUser && getSavedUser() || {};

@@ -21,6 +21,11 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_KEY = String(process.env.ADMIN_KEY || "").trim();
+const ADMIN_ALLOWED_EMAILS = new Set((["zedan91@azobss.local", "zedan9107@gmail.com"])
+  .concat(String(process.env.ADMIN_ALLOWED_EMAILS || process.env.AZOBSS_ADMIN_EMAILS || "").split(/[;,\s]+/))
+  .map((v) => String(v || "").trim().toLowerCase())
+  .filter(Boolean));
+const ADMIN_ALLOWED_UIDS = new Set(String(process.env.ADMIN_ALLOWED_UIDS || process.env.AZOBSS_ADMIN_UIDS || "").split(/[;,\s]+/).map((v) => String(v || "").trim()).filter(Boolean));
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || "data");
 const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || "uploads");
@@ -833,22 +838,77 @@ function isAdmin(req) {
   return hasConfiguredAdminKey() && safeAdminKeyEqual(getAdminRequestKey(req), ADMIN_KEY);
 }
 
-function requireAdmin(req, res, next) {
-  if (!hasConfiguredAdminKey()) {
-    return res.status(503).json({
-      ok: false,
-      error: "admin_key_not_configured",
-      message: "Admin API is locked. Set a strong ADMIN_KEY in Render environment variables, then store the same key in browser localStorage key azobssAdminApiKey for admin-only actions."
-    });
+function getFirebaseBearerToken(req) {
+  const auth = String(req.header("authorization") || "");
+  const token = auth.replace(/^Bearer\s+/i, "").trim();
+  return token && token !== getAdminRequestKey(req) ? token : token;
+}
+
+function azBackendTrustedAdminIdentity(identity = {}) {
+  const authEmail = String(identity.authEmail || identity.email || "").trim().toLowerCase();
+  const profileEmail = String(identity.profileEmail || "").trim().toLowerCase();
+  const uid = String(identity.uid || "").trim();
+  if (authEmail && ADMIN_ALLOWED_EMAILS.has(authEmail)) return true;
+  if (profileEmail && ADMIN_ALLOWED_EMAILS.has(profileEmail) && authEmail && ADMIN_ALLOWED_EMAILS.has(authEmail)) return true;
+  if (uid && ADMIN_ALLOWED_UIDS.has(uid)) return true;
+  return false;
+}
+
+async function getFirebaseAdminIdentity(req) {
+  try {
+    const token = getFirebaseBearerToken(req);
+    if (!token) return null;
+    const db = getAzobssBackendDb();
+    if (!admin.apps.length || !admin.auth) return null;
+    const decoded = await admin.auth().verifyIdToken(token);
+    const authEmail = String(decoded.email || "").toLowerCase();
+    const identity = {
+      uid: String(decoded.uid || ""),
+      email: authEmail,
+      authEmail,
+      profileEmail: "",
+      username: "",
+      role: "",
+      authMethod: "firebase-admin-token"
+    };
+    if (db && identity.uid) {
+      try {
+        const qs = await db.collection("users").where("uid", "==", identity.uid).limit(1).get();
+        qs.forEach((doc) => {
+          const x = doc.data() || {};
+          identity.username = String(x.usernameKey || x.username || doc.id || "").toLowerCase();
+          identity.role = String(x.role || "").toLowerCase();
+          identity.profileEmail = String(x.email || x.authEmail || "").toLowerCase();
+          identity.email = identity.authEmail || identity.profileEmail || identity.email;
+        });
+      } catch (err) {
+        console.warn("AZOBSS admin profile lookup skipped:", err && (err.message || err));
+      }
+    }
+    return identity;
+  } catch (err) {
+    console.warn("AZOBSS Firebase admin token rejected:", err && (err.message || err));
+    return null;
   }
-  if (!isAdmin(req)) {
-    return res.status(403).json({
-      ok: false,
-      error: "admin_authorization_required",
-      message: "Admin authorization required."
-    });
+}
+
+async function requireAdmin(req, res, next) {
+  if (isAdmin(req)) {
+    req.azobssAdminIdentity = { uid: "api-secret", username: "api-secret", role: "admin", isAdmin: true, authMethod: "api-secret" };
+    return next();
   }
-  return next();
+
+  const identity = await getFirebaseAdminIdentity(req);
+  if (identity && azBackendTrustedAdminIdentity(identity)) {
+    req.azobssAdminIdentity = Object.assign({}, identity, { role: "admin", isAdmin: true });
+    return next();
+  }
+
+  return res.status(403).json({
+    ok: false,
+    error: "admin_authorization_required",
+    message: "Admin authorization required. Login as zedan91/admin account. Browser ADMIN_KEY is optional fallback only."
+  });
 }
 
 function safeFilename(name) {
