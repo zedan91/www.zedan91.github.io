@@ -8090,14 +8090,14 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(/free|percuma/.test(type) || freeOnly) return false;
     return false;
   }
-  function makeShareUrl(info,ref){const url=new URL(location.origin+location.pathname);url.searchParams.set('product',info.id);url.searchParams.set('ref',ref);url.searchParams.set('source',SOURCE_PAGE);return url.toString()}
-  async function copyLink(url, silent){
+  function makeShareUrl(info,ref){const url=new URL(location.origin+location.pathname);url.searchParams.set('product',info.id);if(ref)url.searchParams.set('ref',ref);url.searchParams.set('source',SOURCE_PAGE);return url.toString()}
+  async function copyLink(url, silent, guestMode){
     let ok=false;
     try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(url);ok=true}}catch(e){}
     if(!ok){try{const ta=document.createElement('textarea');ta.value=url;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();ok=document.execCommand('copy');ta.remove()}catch(e){}}
     if(!silent){
-      if(ok) alert('Link share Lucky Draw telah auto-copy. Sila paste dan share kepada orang lain.');
-      else prompt('Copy link share Lucky Draw ini:',url);
+      if(ok) alert(guestMode?'Link produk telah auto-copy. Login untuk dapat credit Lucky Draw.':'Link share Lucky Draw telah auto-copy. Sila paste dan share kepada orang lain.');
+      else prompt(guestMode?'Copy link produk ini:':'Copy link share Lucky Draw ini:',url);
     }
     return ok;
   }
@@ -8105,7 +8105,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   function openPopup(url){try{const w=window.open(url,'_blank','noopener,noreferrer,width=720,height=620');return !!w}catch(e){return false}}
   function openDesktopShareModal(payload){
     const old=document.querySelector('.az-lucky-share-modal-backdrop'); if(old) old.remove();
-    const url=payload.url, text=payload.text, title=payload.title;
+    const url=payload.url, text=payload.text, title=payload.title, guestMode=!!payload.guestMode, ref=payload.ref||'';
     const encUrl=encodeURIComponent(url), encText=encodeURIComponent(text), encTitle=encodeURIComponent(title);
     const links={
       wa:'https://wa.me/?text='+encodeURIComponent(text+'\n'+url),
@@ -8138,21 +8138,24 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     document.body.appendChild(wrap);
     const input=wrap.querySelector('.az-lucky-share-modal-input'); input.value=url;
     const note=wrap.querySelector('.az-lucky-share-modal-note');
+    if(note) note.textContent = guestMode ? 'Guest boleh share/copy link produk. Login untuk dapat credit Lucky Draw.' : ('Lucky Draw credit aktif' + (ref ? ' untuk '+ref : '') + '.');
     function close(){wrap.remove()}
     wrap.querySelector('.az-lucky-share-modal-close').addEventListener('click',close);
     wrap.addEventListener('click',function(e){if(e.target===wrap)close()});
-    wrap.querySelectorAll('[data-share]').forEach(function(btn){btn.addEventListener('click',async function(){const link=links[btn.dataset.share];const ok=openPopup(link); if(!ok){await copyLink(url,true); note.textContent='Popup blocked. Link sudah auto-copy.';} });});
-    wrap.querySelector('.az-lucky-share-modal-copy-btn').addEventListener('click',async function(){const ok=await copyLink(url,true);note.textContent=ok?'Link copied. Paste dan share kepada orang lain.':'Sila copy link secara manual.';input.focus();input.select();});
+    wrap.querySelectorAll('[data-share]').forEach(function(btn){btn.addEventListener('click',async function(){const link=links[btn.dataset.share];const ok=openPopup(link); if(!ok){await copyLink(url,true,guestMode); note.textContent='Popup blocked. Link sudah auto-copy.';} else if(guestMode){note.textContent='Link produk dibuka untuk share. Login untuk dapat credit Lucky Draw.';} });});
+    wrap.querySelector('.az-lucky-share-modal-copy-btn').addEventListener('click',async function(){const ok=await copyLink(url,true,guestMode);note.textContent=ok?(guestMode?'Link produk copied. Login untuk dapat credit Lucky Draw.':'Link copied. Paste dan share kepada orang lain.'):'Sila copy link secara manual.';input.focus();input.select();});
     setTimeout(function(){try{input.focus();input.select()}catch(e){}},80);
   }
   async function shareCard(card,e){
     if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation&&e.stopImmediatePropagation()}
     const ref=username(readUser());
-    if(!ref){alert('Login dahulu sebelum share produk untuk Lucky Draw.');return}
-    const info=productInfo(card);const url=makeShareUrl(info,ref);const text='AZOBSS '+info.name+' — Share for Lucky Draw';
-    const payload={title:'AZOBSS '+info.name,text,url};
+    const info=productInfo(card);
+    const guestMode=!ref;
+    const url=makeShareUrl(info,ref);
+    const text=guestMode?('AZOBSS '+info.name+' — Product link'):('AZOBSS '+info.name+' — Share for Lucky Draw');
+    const payload={title:'AZOBSS '+info.name,text,url,guestMode,ref};
     if(isMobileNativeShare()){
-      try{await navigator.share(payload);return}catch(err){await copyLink(url);return}
+      try{await navigator.share(payload);return}catch(err){await copyLink(url,false,guestMode);return}
     }
     openDesktopShareModal(payload);
   }
@@ -8212,9 +8215,10 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     btn.dataset.azLuckyMain='1';
     btn.dataset.azLuckyProductShare='1';
     btn.className='az-lucky-product-share-btn';
-    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share for Lucky Draw</span>';
-    btn.title='Share for Lucky Draw';
-    btn.setAttribute('aria-label','Share this paid product for Lucky Draw');
+    const loggedIn=!!username(readUser());
+    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> '+(loggedIn?'Share for Lucky Draw':'Share Product')+'</span>';
+    btn.title=loggedIn?'Share for Lucky Draw':'Share Product';
+    btn.setAttribute('aria-label', loggedIn?'Share this paid product for Lucky Draw':'Share this product link');
     btn.addEventListener('click',function(e){shareCard(card,e)},true);
     card.appendChild(btn);
     alignShareButton(card, btn);
