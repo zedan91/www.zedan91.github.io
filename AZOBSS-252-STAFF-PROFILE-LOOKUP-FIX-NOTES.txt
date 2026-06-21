@@ -1,0 +1,11 @@
+AZOBSS Patch 252 - Staff/Semi-admin Profile Lookup Fix
+
+Fixes /staff/ stuck screen: "User profile not found or not linked to this login".
+
+Changes:
+- Staff Dashboard now finds the logged-in staff/semi-admin profile using saved username hints from local/session storage.
+- Lookup candidates include usernameKey, username, name, displayName, email mapping helper keys, displayName and email prefix.
+- Saved browser data is used only as a lookup hint; access still requires a matching Firestore profile UID/email and a staff/semi-admin/admin role/permission.
+- Owner/admin fallback remains allowed only for whitelisted owner emails.
+- No Priority 2 areas touched: Cart, Like, Bell, Message badge, My Purchases, PA/BM paid/verified download flow.
+- No Firebase Rules update required for this patch.

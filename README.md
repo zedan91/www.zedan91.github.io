@@ -43,8 +43,9 @@ Not touched: Cart/Like/Bell/Message badge, My Purchases, and PA/BM paid/verified
 - Helps verify admin session, ADMIN_KEY storage, backend health, Firestore count, required DOM, and old Activity bug removal after deploy.
 - Priority 2 areas were not touched.
 
-## Patch 252 - Staff Admin Owner Fallback Fix
-- Fixes /staff/ stuck screen for whitelisted owner/admin login when profile lookup is unavailable/stale.
-- Owner fallback is allowed only for whitelisted owner emails.
-- Staff/semi-admin users still require linked user profile and valid staff permissions.
-- No Firebase Rules update required.
+## Patch 252 - Staff/Semi-admin Profile Lookup Fix
+- Fixes /staff/ stuck message: "User profile not found or not linked to this login".
+- Staff profile lookup now uses saved username hints, email mapping hints, displayName, and email prefix.
+- Browser storage is used only to find the Firestore username document; access still requires the Firestore profile to match current Firebase uid/email and have staff/semi-admin/admin role or staff permission.
+- Owner/admin fallback is still allowed only for whitelisted owner emails.
+- No Firebase Rules or Render ENV update required.

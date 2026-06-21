@@ -642,51 +642,68 @@ function withOwnerPayload(payload){
 }
 
 function item(t,m=''){return `<div class="item"><b>${t}</b><div class="muted">${m}</div></div>`}
+function safeStaffJson(raw){try{return raw?JSON.parse(raw):null}catch(_e){return null}}
+function pushStaffCandidate(arr,v){
+ const key=cleanUsername(v);
+ if(key && key.length<80 && !arr.includes(key)) arr.push(key);
+}
+function storedStaffUsernameCandidates(u){
+ const arr=[];
+ const email=authEmailOf(u);
+ const emailLocal=email&&email.includes('@')?email.split('@')[0]:'';
+ const keys=['azobssCurrentUser','azobssUser','azobss_user','azobss_current_user','siteUser','currentUser'];
+ const stores=[];
+ try{stores.push(localStorage)}catch(_e){}
+ try{stores.push(sessionStorage)}catch(_e){}
+ stores.forEach(store=>{
+   keys.forEach(k=>{
+     const x=safeStaffJson(store.getItem(k)||'');
+     if(!x) return;
+     const xUid=String(x.uid||x.authUid||x.userUid||'').trim();
+     const xEmail=cleanEmail(x.email||x.authEmail||x.realEmail||x.userEmail||'');
+     // Use saved objects only as lookup hints. Access still requires Firestore profile ownership + staff role.
+     if((xUid&&xUid===String(u?.uid||'')) || (email&&xEmail===email)){
+       pushStaffCandidate(arr,x.usernameKey||x.username||x.name||x.displayName||x.id);
+     }
+   });
+   if(email){
+     pushStaffCandidate(arr,store.getItem('azobssSignupUsernameByEmail:'+email));
+     pushStaffCandidate(arr,store.getItem('azobssLoginUsernameByEmail:'+email));
+     pushStaffCandidate(arr,store.getItem('azobssUsernameByEmail:'+email));
+   }
+ });
+ pushStaffCandidate(arr,u?.displayName);
+ pushStaffCandidate(arr,emailLocal);
+ return arr;
+}
 async function getProfile(u){
  if(!u) return null;
- // Admin owner safety: /staff/ must not get stuck if owner profile lookup is blocked, stale,
- // or not linked to the current Firebase uid. This path is only allowed for whitelisted owner emails.
+ // Owner/admin must never get stuck on /staff/ if the admin profile doc is stale or not linked.
  if(isOwnerAuthUser(u)){
    try{
      const snap=await getDoc(doc(db,'users','zedan91'));
      if(snap.exists()){
        const x={id:snap.id,...snap.data()};
-       return {
-         ...x,
-         id:x.id||'zedan91',
-         username:x.username||x.usernameKey||'zedan91',
-         usernameKey:x.usernameKey||x.username||'zedan91',
-         email:x.email||u.email||'zedan91@azobss.local',
-         uid:x.uid||u.uid,
-         role:'admin',
-         permissions:{...(x.permissions||{}),canAccessStaffDashboard:true,canViewPayments:true,canManageSoftware:true,canManageCAD:true}
-       };
+       return {...x,id:x.id||'zedan91',username:x.username||x.usernameKey||'zedan91',usernameKey:x.usernameKey||x.username||'zedan91',email:x.email||u.email||'zedan91@azobss.local',uid:x.uid||u.uid,role:'admin',permissions:{...(x.permissions||{}),canAccessStaffDashboard:true,canViewPayments:true,canManageSoftware:true,canManageCAD:true,canManageCommission:true}};
      }
-   }catch(e){ console.warn('Owner staff profile fallback failed, using synthetic admin profile',e); }
-   return {
-     id:'zedan91',
-     username:'zedan91',
-     usernameKey:'zedan91',
-     email:u.email||'zedan91@azobss.local',
-     uid:u.uid,
-     role:'admin',
-     permissions:{canAccessStaffDashboard:true,canViewPayments:true,canManageSoftware:true,canManageCAD:true}
-   };
+   }catch(e){console.warn('Staff owner profile lookup failed; using synthetic owner profile',e)}
+   return {id:'zedan91',username:'zedan91',usernameKey:'zedan91',email:u.email||'zedan91@azobss.local',uid:u.uid,role:'admin',permissions:{canAccessStaffDashboard:true,canViewPayments:true,canManageSoftware:true,canManageCAD:true,canManageCommission:true}};
  }
+ // This query may be denied by rules that block list on /users; keep it only as a best-effort fast path.
  try{
    const qs=await getDocs(query(collection(db,'users'),where('uid','==',u.uid),limit(1)));
    let f=null; qs.forEach(d=>{const x={id:d.id,...d.data()}; if(profileBelongsToAuth(x,u)) f=x;});
    if(f) return f;
- }catch(e){ console.warn('Staff profile uid query failed',e); }
- const candidates=[u.email?u.email.split('@')[0]:'',u.displayName].filter(Boolean).map(v=>String(v).toLowerCase());
- for(const id of [...new Set(candidates)]){
+ }catch(e){console.warn('Staff profile uid query skipped',e?.code||e?.message||e)}
+ const candidates=storedStaffUsernameCandidates(u);
+ for(const id of candidates){
    try{
      const snap=await getDoc(doc(db,'users',id));
      if(snap.exists()){
        const x={id:snap.id,...snap.data()};
        if(profileBelongsToAuth(x,u)) return x;
      }
-   }catch(e){ console.warn('Staff profile candidate lookup failed',id,e); }
+   }catch(e){console.warn('Staff profile candidate lookup failed',id,e?.code||e?.message||e)}
  }
  return null;
 }
