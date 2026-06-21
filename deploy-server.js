@@ -422,6 +422,12 @@ async function azAdminIdentityFromRequest(req, parsed) {
 
   return null;
 }
+function azIdentityHasStaffDashboardAccess(identity = {}) {
+  if (!identity || !identity.uid) return false;
+  if (azIdentityTrustedForBackendAdmin(identity)) return true;
+  const role = String(identity.role || '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+  return ['staff', 'semiadmin', 'seller', 'editor'].includes(role);
+}
 function azAdminBypassEnabled() {
   // Emergency only. Keep unset in production. This reopens the old public manual completion endpoint.
   return String(process.env.AZOBSS_ALLOW_PUBLIC_COMPLETE_PURCHASE || "") === "1";
@@ -4668,7 +4674,7 @@ async function handler(req, res) {
     if (pathname === "/api/staff/payout-profile" && req.method === "GET") {
       try {
         const identity = await azCommissionIdentityFromRequest(req);
-        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        if (!azIdentityHasStaffDashboardAccess(identity)) return send(res, 403, JSON.stringify({ ok:false, error:"Staff role required for this backend API." }, null, 2), "application/json");
         const db = getAzobssBackendDb();
         if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
         const profile = await azGetStaffPayoutProfile(identity, false);
@@ -4681,7 +4687,7 @@ async function handler(req, res) {
     if (pathname === "/api/staff/payout-profile" && req.method === "POST") {
       try {
         const identity = await azCommissionIdentityFromRequest(req);
-        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        if (!azIdentityHasStaffDashboardAccess(identity)) return send(res, 403, JSON.stringify({ ok:false, error:"Staff role required for this backend API." }, null, 2), "application/json");
         const db = getAzobssBackendDb();
         if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
         let body = {};
@@ -4737,7 +4743,7 @@ async function handler(req, res) {
     if (pathname === "/api/staff/payout-requests" && req.method === "GET") {
       try {
         const identity = await azCommissionIdentityFromRequest(req);
-        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        if (!azIdentityHasStaffDashboardAccess(identity)) return send(res, 403, JSON.stringify({ ok:false, error:"Staff role required for this backend API." }, null, 2), "application/json");
         const db = getAzobssBackendDb();
         if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
         const maxRows = Math.max(1, Math.min(200, Number(parsed.query.limit || 100) || 100));
@@ -4759,7 +4765,7 @@ async function handler(req, res) {
     if (pathname === "/api/staff/payout-request-cancel" && req.method === "POST") {
       try {
         const identity = await azCommissionIdentityFromRequest(req);
-        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        if (!azIdentityHasStaffDashboardAccess(identity)) return send(res, 403, JSON.stringify({ ok:false, error:"Staff role required for this backend API." }, null, 2), "application/json");
         const db = getAzobssBackendDb();
         if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
         let body = {};
@@ -4811,7 +4817,7 @@ async function handler(req, res) {
     if (pathname === "/api/staff/payout-request" && req.method === "POST") {
       try {
         const identity = await azCommissionIdentityFromRequest(req);
-        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Staff login required." }, null, 2), "application/json");
+        if (!azIdentityHasStaffDashboardAccess(identity)) return send(res, 403, JSON.stringify({ ok:false, error:"Staff role required for this backend API." }, null, 2), "application/json");
         const db = getAzobssBackendDb();
         if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
         let body = {};

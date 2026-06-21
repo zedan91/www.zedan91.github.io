@@ -524,11 +524,49 @@ import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/12.7.0/fire
 import{getAuth,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,collection,addDoc,getDocs,query,where,orderBy,limit,serverTimestamp}from'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 const cfg={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
-const app=getApps().length?getApps()[0]:initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ADMIN='zedan91@azobss.local';
+const app=getApps().length?getApps()[0]:initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
+const AZOBSS_OWNER_EMAILS=new Set(['zedan91@azobss.local','zedan9107@gmail.com']);
+const AZOBSS_OWNER_USERNAMES=new Set(['zedan91','zedan9107']);
 const AZOBSS_BACKEND_API='https://azobss-backend.onrender.com';
 let user=null,profile=null,perms={}; const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let staffApiNotice='';
-function deny(m){document.body.classList.remove('staff-ok');$('#accessMsg').textContent=m} function allow(){document.body.classList.add('staff-ok')} function isAdmin(p){return String(p?.role||'').toLowerCase()==='admin'||String(p?.email||p?.authEmail||'').toLowerCase()===ADMIN||String(p?.id||p?.usernameKey||p?.username||'').toLowerCase()==='zedan91'} function can(k){return isAdmin(profile)||!!perms[k]} 
+function cleanRole(v){return String(v||'').trim().toLowerCase().replace(/[\s_-]+/g,'');}
+function cleanEmail(v){return String(v||'').trim().toLowerCase();}
+function cleanUsername(v){return String(v||'').trim().toLowerCase();}
+function authEmailOf(u=user){return cleanEmail(u?.email||'');}
+function isOwnerAuthUser(u=user){return AZOBSS_OWNER_EMAILS.has(authEmailOf(u));}
+function profileBelongsToAuth(p,u=user){
+ if(!p||!u) return false;
+ const pUid=String(p.uid||p.authUid||p.userUid||'').trim();
+ if(pUid && pUid===String(u.uid||'')) return true;
+ const pEmail=cleanEmail(p.email||p.authEmail||p.realEmail||p.userEmail||'');
+ const aEmail=authEmailOf(u);
+ if(pEmail && aEmail && pEmail===aEmail) return true;
+ return false;
+}
+function profileRole(p){return cleanRole(p?.role||p?.accountRole||p?.userRole||p?.type||'');}
+function isAdmin(p){
+ if(isOwnerAuthUser(user)) return true;
+ if(!profileBelongsToAuth(p,user)) return false;
+ const role=profileRole(p);
+ const uname=cleanUsername(p?.usernameKey||p?.username||p?.id||'');
+ const email=cleanEmail(p?.email||p?.authEmail||'');
+ return role==='admin' && (AZOBSS_OWNER_USERNAMES.has(uname)||AZOBSS_OWNER_EMAILS.has(email));
+}
+function isStaffProfile(p){
+ if(isAdmin(p)) return true;
+ if(!profileBelongsToAuth(p,user)) return false;
+ const role=profileRole(p);
+ const permissions=p?.permissions||{};
+ return ['staff','semiadmin','seller','editor'].includes(role)
+   || permissions.canAccessStaffDashboard===true
+   || permissions.canManageSoftware===true
+   || permissions.canManageCAD===true
+   || permissions.canViewPayments===true;
+}
+function deny(m){document.body.classList.remove('staff-ok');try{localStorage.removeItem('azobss_staff_role_cache');}catch(_e){}$('#accessMsg').textContent=m}
+function allow(){document.body.classList.add('staff-ok')}
+function can(k){return isAdmin(profile)||!!perms[k]} 
 function azStaffApiErrorMessage(status,data,fallback){const raw=String(data?.error||data?.message||fallback||'Request failed.');if(status===401)return 'Session expired. Please login again, then retry.';if(status===403)return 'Staff/Admin permission required for this backend API.';if(status===429)return 'Too many attempts. '+(data?.retryAfter?('Please wait '+data.retryAfter+' seconds.'):'Please wait a while.');if(String(data?.verification||'').toLowerCase()==='pending')return 'Payment verification is still pending. Please wait a moment and check again.';return raw;}
 async function azStaffAuthHeaders(forceRefresh=false){try{const u=user||auth.currentUser;if(!u||typeof u.getIdToken!=='function')return{};const token=await u.getIdToken(!!forceRefresh);return token?{Authorization:'Bearer '+token}:{}}catch(_e){return{};}}
 async function azStaffFetchJson(url,options={}){const baseHeaders=options.headers||{};let authHeaders=await azStaffAuthHeaders(false);let r=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});let j=await r.json().catch(()=>({ok:false,error:'Invalid backend response'}));if((r.status===401||r.status===403)&&Object.keys(authHeaders).length){authHeaders=await azStaffAuthHeaders(true);r=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});j=await r.json().catch(()=>({ok:false,error:'Invalid backend response'}));}if(!r.ok)throw new Error(azStaffApiErrorMessage(r.status,j));return j;}
@@ -604,7 +642,31 @@ function withOwnerPayload(payload){
 }
 
 function item(t,m=''){return `<div class="item"><b>${t}</b><div class="muted">${m}</div></div>`}
-async function getProfile(u){try{const qs=await getDocs(query(collection(db,'users'),where('uid','==',u.uid),limit(1)));let f=null;qs.forEach(d=>f={id:d.id,...d.data()});if(f)return f}catch(e){};for(const id of ['zedan91',u.email?.split('@')[0],u.displayName].filter(Boolean)){try{const s=await getDoc(doc(db,'users',String(id).toLowerCase()));if(s.exists())return{id:s.id,...s.data()}}catch(e){}}return null}
+async function getProfile(u){
+ try{
+   const qs=await getDocs(query(collection(db,'users'),where('uid','==',u.uid),limit(1)));
+   let f=null; qs.forEach(d=>{const x={id:d.id,...d.data()}; if(profileBelongsToAuth(x,u)) f=x;});
+   if(f) return f;
+ }catch(e){}
+ const candidates=[u.email?u.email.split('@')[0]:'',u.displayName].filter(Boolean).map(v=>String(v).toLowerCase());
+ for(const id of [...new Set(candidates)]){
+   try{
+     const snap=await getDoc(doc(db,'users',id));
+     if(snap.exists()){
+       const x={id:snap.id,...snap.data()};
+       if(profileBelongsToAuth(x,u)) return x;
+     }
+   }catch(e){}
+ }
+ // Owner fallback only when the Firebase auth email itself is the allowed admin email.
+ if(isOwnerAuthUser(u)){
+   try{
+     const snap=await getDoc(doc(db,'users','zedan91'));
+     if(snap.exists()) return {id:snap.id,...snap.data(),role:'admin'};
+   }catch(e){}
+ }
+ return null;
+}
 async function safe(q){try{return await getDocs(q)}catch(e){console.warn(e);return null}}
 async function loadList(col,el){
  const s=await safe(query(collection(db,col),orderBy('createdAtMs','desc'),limit(50)));
@@ -795,7 +857,20 @@ async function sales(){
 }
 document.addEventListener('click',e=>{const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
 $('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
-onAuthStateChanged(auth,async u=>{user=u;if(!u)return deny('Please login first.');profile=await getProfile(u);if(!profile)return deny('User profile not found.');perms=profile.permissions||{};const role=String(profile.role||'').toLowerCase();if(!(role==='admin'||role==='semiadmin'||role==='staff'||isAdmin(profile)))return deny('Staff role required.');allow();overview();});
+onAuthStateChanged(auth,async u=>{
+ user=u;
+ if(!u) return deny('Please login first.');
+ profile=await getProfile(u);
+ if(!profile) return deny('User profile not found or not linked to this login.');
+ perms=profile.permissions||{};
+ if(!isStaffProfile(profile)) return deny('Staff role required for this dashboard.');
+ try{
+   if(isAdmin(profile)) localStorage.setItem('azobss_admin_role_cache','1');
+   else { localStorage.removeItem('azobss_admin_role_cache'); localStorage.setItem('azobss_staff_role_cache','1'); }
+ }catch(_e){}
+ allow();
+ overview();
+});
 </script>
 <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script>
