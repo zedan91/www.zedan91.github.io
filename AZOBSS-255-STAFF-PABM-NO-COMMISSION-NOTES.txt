@@ -1,0 +1,16 @@
+(255)-AZOBSS-STAFF-PABM-NO-COMMISSION-FIX
+
+Purpose:
+- PA/BM purchase records must not create/display staff commission inside Staff Dashboard.
+- Staff Sales View now excludes PA/BM rows from commission calculation.
+- Staff Sales View only treats Software/CAD records as staff-owned sales when owner/staff/seller/product-owner fields match the logged-in staff profile.
+
+Touched:
+- staff/index.html only.
+
+Not touched:
+- Cart, Like, Bell, Message badge.
+- My Purchases.
+- PA/BM paid/verified download flow.
+- Firebase Rules.
+- Render ENV.

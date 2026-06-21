@@ -73,3 +73,9 @@ Checks:
 - staff/index.html inline module syntax OK.
 - deploy-server.js syntax OK.
 - ZIP root packaging must stay flat.
+
+
+## Patch 255 - Staff PA/BM No Commission Fix
+- Staff Dashboard Sales View excludes PA/BM purchase records from staff commission.
+- Staff commission sales are now scoped to Software/CAD owner/staff/seller fields, not buyer username/email.
+- PA/BM remains visible in Admin Purchase/Payments only; PA/BM download/payment flow not touched.

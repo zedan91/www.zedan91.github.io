@@ -588,6 +588,27 @@ function isMineRecord(x){
   ].map(v=>String(v||'').toLowerCase()).filter(Boolean);
   return vals.includes(k.uid.toLowerCase()) || vals.includes(k.username) || vals.includes(k.email);
 }
+function isPaBmSaleRecord(x){
+  const raw=[x.productType,x.itemCode,x.category,x.type,x.productName,x.product,x.title,x.itemName,x.source,x.module]
+    .map(v=>String(v||'').trim().toLowerCase()).filter(Boolean);
+  const exact=raw.some(v=>['pa','bm','pa/bm','pabm','pa bm','pelan akui','bayaran pa/bm','purchase records'].includes(v));
+  const joined=(' '+raw.join(' ')+' ').replace(/[\s_\-]+/g,' ');
+  return exact || /(^|\s)(pa\/bm|pabm|pa bm|pelan akui)(\s|$)/.test(joined) || /(^|\s)(pa|bm)(\s|$)/.test(joined);
+}
+function isStaffOwnedSaleRecord(x){
+  if(isPaBmSaleRecord(x)) return false;
+  if(isAdmin(profile)) return true;
+  const k=currentOwnerKeys();
+  const uid=k.uid.toLowerCase(), username=k.username, email=k.email;
+  // For sales/purchaseLogs, usernameKey/uid/email can be buyer fields. Do not use them to grant staff commission.
+  // Only owner/staff/seller/createdBy/product-owner fields count as a staff-owned sale.
+  const ownerVals=[
+    x.createdByUid,x.ownerUid,x.staffUid,x.sellerUid,x.productOwnerUid,x.productStaffUid,x.itemOwnerUid,x.itemStaffUid,
+    x.createdByUsername,x.ownerUsername,x.staffUsername,x.sellerUsername,x.productOwnerUsername,x.productStaffUsername,x.itemOwnerUsername,x.itemStaffUsername,
+    x.createdByEmail,x.ownerEmail,x.staffEmail,x.sellerEmail,x.productOwnerEmail,x.productStaffEmail,x.itemOwnerEmail,x.itemStaffEmail
+  ].map(v=>String(v||'').toLowerCase()).filter(Boolean);
+  return ownerVals.includes(uid) || ownerVals.includes(username) || ownerVals.includes(email);
+}
 function isPaidStatus(x){
   const s=String(x.status||x.paymentStatus||'').toLowerCase();
   return ['paid','verified','success','completed','approved','confirmed'].includes(s);
@@ -761,7 +782,7 @@ async function overview(){
  let swCount=0,cadCount=0,salesCount=0,totalSales=0,totalCom=0,pendingCom=0,paidCom=0,platformShare=0,ownerShare=0,shareCom=0;
  sw.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) swCount++;});
  cad.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) cadCount++;});
- salesRows.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)){ const amt=amountOf(x); salesCount++; totalSales+=amt; ownerShare+=amt*0.7; platformShare+=amt*0.3; }});
+ salesRows.forEach(x=>{ if(isStaffOwnedSaleRecord(x)){ const amt=amountOf(x); salesCount++; totalSales+=amt; ownerShare+=amt*0.7; platformShare+=amt*0.3; }});
  comRows.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)||isMyShareCommissionRecord(x)){ const amt=commissionAmountOf(x); totalCom+=amt; platformShare+=azobssShareOf(x); ownerShare+=ownerShareOf(x); if(isShareCommissionRecord(x)) shareCom+=amt; if(isPaidStatus(x) || String(x.payoutStatus||'').toLowerCase()==='paid') paidCom+=amt; else pendingCom+=amt; }});
  if(!totalCom && ownerShare) { totalCom=ownerShare; pendingCom=ownerShare; }
  $('#statSw').textContent=swCount; $('#statCad').textContent=cadCount; $('#statSales').textContent=salesCount; $('#statCom').textContent='RM'+totalCom.toFixed(2);
@@ -921,12 +942,15 @@ async function sales(){
  if(!can('canViewPayments'))return alert('No permission');
  const docs=await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60});
  let rows=[];
+ let skippedPaBm=0;
  docs.forEach(x=>{
-   if(!isAdmin(profile) && !isMineRecord(x)) return;
+   if(isPaBmSaleRecord(x)){ skippedPaBm++; return; }
+   if(!isStaffOwnedSaleRecord(x)) return;
    const amt=amountOf(x);
-   rows.push(item(esc(x.usernameKey||x.email||x.docId||'Purchase'),`${esc(x.productType||x.itemCode||'Purchase')} • Sale RM${amt.toFixed(2)} • Commission 70% RM${(amt*0.7).toFixed(2)} • AZOBSS 30% RM${(amt*0.3).toFixed(2)} • ${esc(x.status||'')}`));
+   rows.push(item(esc(x.productName||x.product||x.title||x.docId||'Staff product sale'),`${esc(x.productType||x.itemCode||'Software/CAD')} • Sale RM${amt.toFixed(2)} • Staff/Owner 70% RM${(amt*0.7).toFixed(2)} • AZOBSS 30% RM${(amt*0.3).toFixed(2)} • ${esc(x.status||'')}`));
  });
- $('#salesList').innerHTML=rows.join('')||'<div class="item">No sales for your products.</div>';
+ const note=skippedPaBm?`<div class="item"><b>ℹ️ PA/BM excluded</b><div class="muted">${skippedPaBm} PA/BM purchase record(s) ignored because PA/BM has no staff commission.</div></div>`:'';
+ $('#salesList').innerHTML=rows.join('') || (note || '<div class="item">No Software/CAD sales commission for your products.</div>');
 }
 document.addEventListener('click',e=>{const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
 $('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
