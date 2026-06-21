@@ -42,3 +42,9 @@ Not touched: Cart/Like/Bell/Message badge, My Purchases, and PA/BM paid/verified
 - Added Admin Dashboard > System Health > Admin Dashboard Frontend Check.
 - Helps verify admin session, ADMIN_KEY storage, backend health, Firestore count, required DOM, and old Activity bug removal after deploy.
 - Priority 2 areas were not touched.
+
+## Patch 252 - Staff Admin Owner Fallback Fix
+- Fixes /staff/ stuck screen for whitelisted owner/admin login when profile lookup is unavailable/stale.
+- Owner fallback is allowed only for whitelisted owner emails.
+- Staff/semi-admin users still require linked user profile and valid staff permissions.
+- No Firebase Rules update required.

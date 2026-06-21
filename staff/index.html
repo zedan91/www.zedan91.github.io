@@ -643,11 +643,41 @@ function withOwnerPayload(payload){
 
 function item(t,m=''){return `<div class="item"><b>${t}</b><div class="muted">${m}</div></div>`}
 async function getProfile(u){
+ if(!u) return null;
+ // Admin owner safety: /staff/ must not get stuck if owner profile lookup is blocked, stale,
+ // or not linked to the current Firebase uid. This path is only allowed for whitelisted owner emails.
+ if(isOwnerAuthUser(u)){
+   try{
+     const snap=await getDoc(doc(db,'users','zedan91'));
+     if(snap.exists()){
+       const x={id:snap.id,...snap.data()};
+       return {
+         ...x,
+         id:x.id||'zedan91',
+         username:x.username||x.usernameKey||'zedan91',
+         usernameKey:x.usernameKey||x.username||'zedan91',
+         email:x.email||u.email||'zedan91@azobss.local',
+         uid:x.uid||u.uid,
+         role:'admin',
+         permissions:{...(x.permissions||{}),canAccessStaffDashboard:true,canViewPayments:true,canManageSoftware:true,canManageCAD:true}
+       };
+     }
+   }catch(e){ console.warn('Owner staff profile fallback failed, using synthetic admin profile',e); }
+   return {
+     id:'zedan91',
+     username:'zedan91',
+     usernameKey:'zedan91',
+     email:u.email||'zedan91@azobss.local',
+     uid:u.uid,
+     role:'admin',
+     permissions:{canAccessStaffDashboard:true,canViewPayments:true,canManageSoftware:true,canManageCAD:true}
+   };
+ }
  try{
    const qs=await getDocs(query(collection(db,'users'),where('uid','==',u.uid),limit(1)));
    let f=null; qs.forEach(d=>{const x={id:d.id,...d.data()}; if(profileBelongsToAuth(x,u)) f=x;});
    if(f) return f;
- }catch(e){}
+ }catch(e){ console.warn('Staff profile uid query failed',e); }
  const candidates=[u.email?u.email.split('@')[0]:'',u.displayName].filter(Boolean).map(v=>String(v).toLowerCase());
  for(const id of [...new Set(candidates)]){
    try{
@@ -656,14 +686,7 @@ async function getProfile(u){
        const x={id:snap.id,...snap.data()};
        if(profileBelongsToAuth(x,u)) return x;
      }
-   }catch(e){}
- }
- // Owner fallback only when the Firebase auth email itself is the allowed admin email.
- if(isOwnerAuthUser(u)){
-   try{
-     const snap=await getDoc(doc(db,'users','zedan91'));
-     if(snap.exists()) return {id:snap.id,...snap.data(),role:'admin'};
-   }catch(e){}
+   }catch(e){ console.warn('Staff profile candidate lookup failed',id,e); }
  }
  return null;
 }
