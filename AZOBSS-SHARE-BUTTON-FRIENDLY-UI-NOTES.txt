@@ -1,0 +1,41 @@
+AZOBSS Patch 260 - Software/CAD Share Button Friendly UI
+Date: 2026-06-21
+
+Baseline: (259)-AZOBSS-GUEST-SHARE-PRODUCT-LINK-FIX_20260621.zip
+
+Scope:
+- Software Tools share button UI
+- CAD Tools share button UI
+
+Changes:
+1. Guest share button remains allowed for normal product links.
+2. Logged-in user share keeps Lucky Draw referral credit.
+3. Share button now has clearer hover labels:
+   - Guest: Share product link
+   - Logged-in: Lucky Draw credit
+4. Share modal title now changes by mode:
+   - Guest: Share product link
+   - Logged-in: Share for Lucky Draw
+5. Modal now shows a small status badge:
+   - Product link only
+   - Lucky Draw credit active
+6. Copy labels are clearer:
+   - Copy product link
+   - Copy referral link
+7. Old alert-style copy confirmation is replaced with a small toast notification.
+
+Not touched:
+- PA/BM paid/verified download flow
+- My Purchases
+- Cart / Like / Bell / Message badge
+- Admin Dashboard logic
+- Staff Dashboard logic
+- Firebase Rules
+- Render ENV
+
+Validation:
+- Software Tools share script syntax OK
+- CAD Tools share script syntax OK
+- deploy-server.js syntax OK
+- backend/server.js syntax OK
+- main.js syntax OK
