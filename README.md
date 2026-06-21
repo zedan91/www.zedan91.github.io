@@ -36,3 +36,9 @@ Firebase Rules:
 Admin backend routes in `deploy-server.js` now require the configured `ADMIN_KEY` / admin API secret. Firebase profile role alone is no longer enough for deploy-server admin backend actions. This prevents a user-editable role/profile from being used to pass backend admin routes.
 
 Not touched: Cart/Like/Bell/Message badge, My Purchases, and PA/BM paid/verified user download flow.
+
+
+## AZOBSS 249 - Admin Frontend Diagnostics Fix
+- Added Admin Dashboard > System Health > Admin Dashboard Frontend Check.
+- Helps verify admin session, ADMIN_KEY storage, backend health, Firestore count, required DOM, and old Activity bug removal after deploy.
+- Priority 2 areas were not touched.

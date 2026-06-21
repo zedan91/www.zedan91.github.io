@@ -1267,6 +1267,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         <div class="card"><h2>Firestore Collections</h2><div id="systemHealthCollections" class="list"></div></div>
         <div class="card"><h2>Local Fallback Files</h2><div id="systemHealthFiles" class="list"></div></div>
       </div>
+      <div class="card" id="adminFrontendDiagnosticsCard">
+        <h2>Admin Dashboard Frontend Check</h2>
+        <p class="tabs-note">Run this after deploy to confirm admin auth, saved ADMIN_KEY, backend health, Firestore access, required sections and old broken functions.</p>
+        <div class="toolbar">
+          <button class="btn" id="runAdminFrontendDiagnostics" type="button">Run Admin Dashboard Check</button>
+          <button class="btn gray" id="clearAdminFrontendDiagnostics" type="button">Clear Check</button>
+        </div>
+        <div id="adminFrontendDiagnosticsNotice" class="tabs-note">No check run yet.</div>
+        <div id="adminFrontendDiagnosticsList" class="list"></div>
+      </div>
     </section>
 
     <section id="maintenance" class="section">
@@ -1741,6 +1751,75 @@ function azHealthSize(bytes){
   if(n<1024*1024) return (n/1024).toFixed(1)+' KB';
   return (n/1024/1024).toFixed(2)+' MB';
 }
+
+function azDiagLine(ok,title,meta){
+  const cls = ok === true ? 'ok' : (ok === false ? 'danger' : 'warn');
+  const icon = ok === true ? '✅' : (ok === false ? '⚠️' : 'ℹ️');
+  return `<div class="item"><div class="item-title ${cls}">${icon} ${esc(title)}</div><div class="item-meta">${meta||''}</div></div>`;
+}
+function azAdminApiKeySummary(){
+  let source='not saved', key='';
+  try{
+    key=sessionStorage.getItem('azobssAdminApiKey')||'';
+    if(key) source='sessionStorage';
+    else{ key=localStorage.getItem('azobssAdminApiKey')||''; if(key) source='localStorage'; }
+    if(!key){ key=localStorage.getItem('azobssLuckyDrawAdminKey')||''; if(key) source='legacy lucky draw fallback'; }
+  }catch(_e){}
+  return {saved:!!key, source, length:String(key||'').length};
+}
+async function runAdminFrontendDiagnostics(){
+  const list=$('#adminFrontendDiagnosticsList');
+  const notice=$('#adminFrontendDiagnosticsNotice');
+  if(list) list.innerHTML='<div class="item">Running admin dashboard check...</div>';
+  if(notice) notice.textContent='Checking admin dashboard...';
+  const rows=[];
+  const start=Date.now();
+  try{
+    const u=currentUser||auth.currentUser;
+    rows.push(azDiagLine(!!u,'Firebase login session',u?`Signed in as ${esc(u.email||u.uid||'user')} • uid ${esc(String(u.uid||'').slice(0,10))}...`:'No Firebase user session. Re-login admin.'));
+    const adminOk=!!(adminProfile && (ADMIN_EMAILS.includes(String(u?.email||'').toLowerCase()) || adminProfile.role==='admin' || adminProfile.isAdmin===true));
+    rows.push(azDiagLine(adminOk,'Admin profile guard',adminOk?`Profile accepted: ${esc(adminProfile?.username||adminProfile?.email||u?.email||'admin')}`:'Admin profile not confirmed. /admin/ should stay locked.'));
+    const keyInfo=azAdminApiKeySummary();
+    rows.push(azDiagLine(keyInfo.saved,'Backend ADMIN_KEY storage',keyInfo.saved?`Saved via ${esc(keyInfo.source)} • length ${esc(keyInfo.length)}. Secret value is never displayed.`:'Not saved. Backend admin routes may return 403.'));
+    const requiredSections=['overview','users','online','activity','support','notifications','purchases','payments','commissions','auditlogs','exports','systemhealth','maintenance','staffroles','settings'];
+    const missingSections=requiredSections.filter(id=>!document.getElementById(id));
+    rows.push(azDiagLine(!missingSections.length,'Admin section DOM',missingSections.length?`Missing: ${esc(missingSections.join(', '))}`:`${requiredSections.length} required sections found.`));
+    const requiredButtons=['refreshSystemHealth','runAdminFrontendDiagnostics','saveAdminApiKeyLocal','testAdminApiKey'];
+    const missingButtons=requiredButtons.filter(id=>!document.getElementById(id));
+    rows.push(azDiagLine(!missingButtons.length,'Admin helper buttons',missingButtons.length?`Missing: ${esc(missingButtons.join(', '))}`:'System Health and ADMIN_KEY helper buttons found.'));
+    rows.push(azDiagLine(typeof loadAdminActivity==='function','Activity tab function',typeof loadAdminActivity==='function'?'loadAdminActivity() is available.':'loadAdminActivity() missing.'));
+    rows.push(azDiagLine(typeof loadActivity==='undefined','Old broken loadActivity check',typeof loadActivity==='undefined'?'Old undefined loadActivity() is not being used.':'loadActivity exists unexpectedly; audit tab routing.'));
+    try{
+      const usersCount=await safeCount(collection(db,'users'),'Diagnostics: users count');
+      rows.push(azDiagLine(Number.isFinite(usersCount),'Firestore users count',Number.isFinite(usersCount)?`users collection count returned ${esc(usersCount)}.`:'Count unavailable. Check Firestore Rules/index.'));
+    }catch(e){ rows.push(azDiagLine(false,'Firestore users count',esc(e?.message||e))); }
+    try{
+      const health=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/system-health',{cache:'no-store'});
+      const status=String(health?.status||'ok').toUpperCase();
+      const missing=(health?.missingRequired||[]).length||0;
+      const errors=(health?.firebase?.collectionErrors||[]).length||0;
+      rows.push(azDiagLine(status==='OK' || status==='HEALTHY','Backend system-health',`Status ${esc(status)} • missing ENV ${esc(missing)} • collection errors ${esc(errors)} • latency ${esc(health?.latencyMs||0)}ms`));
+    }catch(e){ rows.push(azDiagLine(false,'Backend system-health',esc(e?.message||e))); }
+    try{
+      const res=await fetch('/admin/index.html',{method:'HEAD',cache:'no-store'});
+      rows.push(azDiagLine(res.ok,'GitHub Pages admin file',res.ok?`/admin/index.html reachable • HTTP ${esc(res.status)}`:`/admin/index.html returned HTTP ${esc(res.status)}`));
+    }catch(e){ rows.push(azDiagLine(false,'GitHub Pages admin file',esc(e?.message||e))); }
+    const existingWarnings=adminQueryErrors.length;
+    rows.push(azDiagLine(existingWarnings===0,'Current query warning buffer',existingWarnings?`${esc(existingWarnings)} warning(s) currently recorded above.`:'No Firestore warning currently recorded.'));
+    if(list) list.innerHTML=rows.join('');
+    if(notice) notice.textContent='Admin dashboard check completed in '+(Date.now()-start)+'ms.';
+  }catch(e){
+    if(list) list.innerHTML=rows.join('')+azDiagLine(false,'Diagnostics failed',esc(e?.message||e));
+    if(notice) notice.textContent='Admin dashboard check failed.';
+  }
+}
+function clearAdminFrontendDiagnostics(){
+  const list=$('#adminFrontendDiagnosticsList');
+  const notice=$('#adminFrontendDiagnosticsNotice');
+  if(list) list.innerHTML='';
+  if(notice) notice.textContent='No check run yet.';
+}
+
 async function loadSystemHealth(){
   const notice=$('#systemHealthNotice');
   if(notice) notice.textContent='Checking backend health...';
@@ -2980,6 +3059,8 @@ $('#saveAdminApiKeyLocal')?.addEventListener('click',()=>azAdminSaveApiKey('loca
 $('#saveAdminApiKeySession')?.addEventListener('click',()=>azAdminSaveApiKey('session'));
 $('#clearAdminApiKey')?.addEventListener('click',azAdminClearApiKey);
 $('#testAdminApiKey')?.addEventListener('click',azAdminTestApiKey);
+$('#runAdminFrontendDiagnostics')?.addEventListener('click',runAdminFrontendDiagnostics);
+$('#clearAdminFrontendDiagnostics')?.addEventListener('click',clearAdminFrontendDiagnostics);
 azAdminRenderApiKeyStatus();
 
 onAuthStateChanged(auth,async user=>{
