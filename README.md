@@ -93,3 +93,12 @@ Checks:
 - Guest users continue to see product-link sharing only.
 - PA/BM paid/verified download flow, My Purchases, Cart, Like, Bell, and Message badge are not touched.
 - No Firebase Rules or Render ENV update required.
+
+## Patch 263 - Admin Share Modal Product-Link UI
+- Admin account sharing from Software/CAD now uses normal product-link wording.
+- Admin no longer sees Lucky Draw credit badge/subtitle/note inside the share modal.
+- Admin share URL no longer adds referral credit parameters.
+- Normal logged-in users still receive Lucky Draw credit messaging.
+- Staff/semi-admin commission card visibility from patch 262 remains unchanged.
+- Guest share behavior remains product-link only.
+- No changes to PA/BM download flow, My Purchases, Cart, Like, Bell, Message badge, Firebase Rules, or Render ENV.
