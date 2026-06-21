@@ -1125,6 +1125,102 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .prize-carousel-shell:not(.single) .prize-carousel-btn{display:flex!important;align-items:center!important;justify-content:center!important;z-index:30!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;}
 .prize-carousel-shell:not(.single) .prize-carousel-counter{display:inline-flex!important;z-index:31!important;opacity:1!important;visibility:visible!important;}
 </style>
+
+
+<style id="azobss-lucky-draw-skeleton-loader-264">
+/* AZOBSS PATCH 264: Lucky Draw small skeleton/loading UI only */
+.az-ld-skeleton-line,
+.az-ld-skeleton-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:10px;
+  background:linear-gradient(90deg,rgba(15,23,42,.95),rgba(30,41,59,.88),rgba(15,23,42,.95));
+  border:1px solid rgba(148,163,184,.14);
+}
+.az-ld-skeleton-line::after,
+.az-ld-skeleton-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);
+  animation:azLdSkeletonSweep 1.18s infinite;
+}
+@keyframes azLdSkeletonSweep{100%{transform:translateX(100%);}}
+.az-ld-skeleton-line{display:block;height:14px;margin:8px 0;max-width:100%;}
+.az-ld-skeleton-line.short{width:42%;}
+.az-ld-skeleton-line.mid{width:68%;}
+.az-ld-skeleton-line.long{width:92%;}
+.az-ld-skeleton-card{min-height:54px;padding:10px 12px;}
+.az-ld-skeleton-card .az-ld-skeleton-line{margin:5px 0;background:rgba(148,163,184,.13);}
+.prize-image-wrap{position:relative;}
+.prize-image-wrap.is-loading #prizeImage{opacity:.28;filter:blur(1px) saturate(.8);}
+.az-ld-image-loading-badge{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  display:none;
+  align-items:center;
+  gap:9px;
+  max-width:calc(100% - 28px);
+  padding:10px 13px;
+  border-radius:999px;
+  border:1px solid rgba(34,197,94,.35);
+  background:rgba(2,6,23,.86);
+  color:#bbf7d0;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+  box-shadow:0 14px 32px rgba(0,0,0,.26);
+  z-index:8;
+}
+.az-ld-image-loading-badge::before{
+  content:"";
+  width:14px;
+  height:14px;
+  border-radius:999px;
+  border:2px solid rgba(34,197,94,.28);
+  border-top-color:#22c55e;
+  animation:azLdSpin .8s linear infinite;
+  flex:0 0 auto;
+}
+.prize-image-wrap.is-loading .az-ld-image-loading-badge{display:flex;}
+@keyframes azLdSpin{to{transform:rotate(360deg);}}
+.az-ld-loading-title{min-height:34px;display:block;}
+.az-ld-loading-desc{min-height:120px;display:block;}
+.participant-list.is-loading{gap:8px;}
+.draw-summary-latest.is-loading #drawSummaryLatest,
+#drawSummaryLatest.is-loading{min-height:52px;}
+.az-ld-refresh-note{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:8px;
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(96,165,250,.25);
+  background:rgba(59,130,246,.08);
+  color:#bfdbfe;
+  font-size:12px;
+  font-weight:850;
+}
+.az-ld-refresh-note::before{
+  content:"";
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:#22c55e;
+  box-shadow:0 0 0 0 rgba(34,197,94,.45);
+  animation:azLdPulse 1.15s infinite;
+}
+@keyframes azLdPulse{70%{box-shadow:0 0 0 8px rgba(34,197,94,0);}100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}}
+@media(max-width:760px){
+  .az-ld-image-loading-badge{font-size:11px;padding:8px 10px;}
+  .az-ld-loading-desc{min-height:92px;}
+}
+</style>
+
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
@@ -2235,7 +2331,75 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
     }
 
+
+    function luckyDrawLoadingText(kind){
+      const en = (typeof luckyDrawLang !== 'undefined' && luckyDrawLang === 'en');
+      if (kind === 'entries') return en ? 'Loading latest participants...' : 'Sedang refresh nama peserta...';
+      if (kind === 'summary') return en ? 'Updating summary...' : 'Sedang kemas kini ringkasan...';
+      return en ? 'Loading prize details...' : 'Sedang refresh hadiah...';
+    }
+
+    function getPrizeImageWrap(){
+      return els && els.prizeImage ? els.prizeImage.closest('.prize-image-wrap') : null;
+    }
+
+    function ensurePrizeLoadingBadge(){
+      const wrap = getPrizeImageWrap();
+      if (!wrap) return null;
+      let badge = wrap.querySelector('.az-ld-image-loading-badge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'az-ld-image-loading-badge';
+        badge.setAttribute('aria-live','polite');
+        wrap.appendChild(badge);
+      }
+      return badge;
+    }
+
+    function setPrizeLoading(isLoading){
+      const wrap = getPrizeImageWrap();
+      const badge = ensurePrizeLoadingBadge();
+      if (wrap) wrap.classList.toggle('is-loading', !!isLoading);
+      if (badge) badge.textContent = luckyDrawLoadingText('prize');
+      if (!isLoading) {
+        if (els.prizeTitle) els.prizeTitle.classList.remove('az-ld-loading-title');
+        if (els.prizeDescription) els.prizeDescription.classList.remove('az-ld-loading-desc');
+        return;
+      }
+      const prizeAlreadyLoaded = !!(els.prizeTitle && els.prizeTitle.dataset.azLoaded === '1');
+      if (!prizeAlreadyLoaded) {
+        if (els.prizeTitle) {
+          els.prizeTitle.classList.add('az-ld-loading-title');
+          els.prizeTitle.innerHTML = '<span class="az-ld-skeleton-line mid"></span>';
+        }
+        if (els.prizeDescription) {
+          els.prizeDescription.classList.add('az-ld-loading-desc');
+          els.prizeDescription.innerHTML = '<span class="az-ld-skeleton-line long"></span><span class="az-ld-skeleton-line long"></span><span class="az-ld-skeleton-line mid"></span><span class="az-ld-refresh-note">' + escapeHtml(luckyDrawLoadingText('prize')) + '</span>';
+        }
+      }
+    }
+
+    function setEntriesLoading(isLoading){
+      if (!els.participants) return;
+      els.participants.classList.toggle('is-loading', !!isLoading);
+      if (!isLoading) {
+        if (els.drawSummaryLatest) els.drawSummaryLatest.classList.remove('is-loading');
+        return;
+      }
+      const hasCachedRows = Array.isArray(luckyDrawEntriesCache) && luckyDrawEntriesCache.length > 0;
+      if (!hasCachedRows) {
+        els.participants.innerHTML = [0,1,2].map(function(){
+          return '<div class="az-ld-skeleton-card"><span class="az-ld-skeleton-line mid"></span><span class="az-ld-skeleton-line short"></span></div>';
+        }).join('');
+      }
+      if (els.drawSummaryLatest && !hasCachedRows) {
+        els.drawSummaryLatest.classList.add('is-loading');
+        els.drawSummaryLatest.innerHTML = '<span class="az-ld-skeleton-line long"></span><span class="az-ld-skeleton-line mid"></span>';
+      }
+    }
+
     async function loadPrize(){
+      setPrizeLoading(true);
       try {
         const res = await apiFetch('/api/lucky-draw/prize?autoFolderSync=1&monthKey=' + encodeURIComponent(monthKey()) + '&baseUrl=' + encodeURIComponent(location.origin) + '&_=' + Date.now(), {cache:'no-store'});
         const data = await res.json();
@@ -2250,7 +2414,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const res = await fetch('/lucky-draw/giveaway-prize.json', {cache:'no-store'});
         const data = await res.json();
         renderPrize(data || {});
-      } catch(e) {}
+      } catch(e) {
+        setPrizeLoading(false);
+      }
     }
 
     function normalizeImagePath(image){
@@ -2443,6 +2609,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       prizeCarouselIndex = 0;
       updatePrizeCarousel();
       validateAndSetPrizeImages(images);
+      setPrizeLoading(false);
+      els.prizeTitle.dataset.azLoaded = '1';
+      els.prizeDescription.dataset.azLoaded = '1';
       els.prizeTitle.textContent = title;
       els.prizeDescription.innerHTML = linkifyPrizeDescription(desc);
       setTimeout(updatePrizeDescScrollHint, 60);
@@ -2464,6 +2633,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
 
     async function loadEntries(){
+      setEntriesLoading(true);
       try {
         const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(monthKey()) + '&limit=20&page=1', {cache:'no-store'});
         const data = await res.json();
@@ -2473,15 +2643,19 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         luckyDrawEntriesTotalCache = Number(data.total || luckyDrawEntriesCache.length || 0);
         luckyDrawEntriesOffsetCache = Number(data.offset || 0);
         els.total.textContent = String(luckyDrawEntriesTotalCache);
+        setEntriesLoading(false);
         renderParticipants(luckyDrawEntriesCache, luckyDrawEntriesTotalCache, luckyDrawEntriesOffsetCache);
         updateLuckyDrawSummary();
         updateInvitePanel();
       } catch(e) {
+        setEntriesLoading(false);
         els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesBackendFail')) + '</div>';
       }
     }
 
     function renderParticipants(rows, totalCount, offset){
+      if (els.participants) els.participants.classList.remove('is-loading');
+      if (els.drawSummaryLatest) els.drawSummaryLatest.classList.remove('is-loading');
       if (!rows.length) {
         els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesEmpty')) + '</div>';
         return;
