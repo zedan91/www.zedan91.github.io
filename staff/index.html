@@ -628,11 +628,11 @@ async function fetchCommissionRecordsFromApi(){
 }
 async function getCommissionRecords(){
   const rows=[]; const seen=new Set();
-  const snap=await safe(query(collection(db,'commissionRecords'),orderBy('createdAtMs','desc'),limit(200)));
-  snap?.forEach(d=>{const x={docId:d.id,...d.data(),_source:'firestore'}; const key=x.docId||x.orderId+'_'+x.commissionType+'_'+x.username; if(!seen.has(key)){seen.add(key);rows.push(x);}});
+  const fsRows=await queryOwnedCollectionRows('commissionRecords',{adminLimit:200,staffLimit:60,includeShare:true});
+  fsRows.forEach((x,i)=>{const row={...x,_source:x._source||'firestore'}; const key=docKeyForRow(row,i)+'_'+String(row.commissionType||row.type||''); if(!seen.has(key)){seen.add(key);rows.push(row);}});
   if(!rows.length){
     const apiRows=await fetchCommissionRecordsFromApi();
-    apiRows.forEach((x,i)=>{const key=x.docId||x.id||x.orderId+'_'+x.commissionType+'_'+x.username||String(i); if(!seen.has(key)){seen.add(key);rows.push({...x,_source:'backend-api'});}});
+    apiRows.forEach((x,i)=>{const row={...x,_source:x._source||'backend-api'}; const key=docKeyForRow(row,i)+'_'+String(row.commissionType||row.type||''); if(!seen.has(key)){seen.add(key);rows.push(row);}});
   }
   return rows;
 }
@@ -708,26 +708,60 @@ async function getProfile(u){
  return null;
 }
 async function safe(q){try{return await getDocs(q)}catch(e){console.warn(e);return null}}
+
+function docKeyForRow(x,i=0){return String(x.docId||x.id||x.orderId||x.token||x.reference||x.billCode||('row_'+i));}
+function addSnapRows(rows,seen,snap){snap?.forEach(d=>{const x={docId:d.id,...d.data()};const key=docKeyForRow(x,rows.length);if(!seen.has(key)){seen.add(key);rows.push(x);}});}
+async function queryOwnedCollectionRows(colName,{adminLimit=100,staffLimit=50,includeShare=false,orderField='createdAtMs'}={}){
+ const rows=[]; const seen=new Set();
+ if(isAdmin(profile)){
+   let snap=null;
+   try{snap=await getDocs(query(collection(db,colName),orderBy(orderField,'desc'),limit(adminLimit)));}
+   catch(e){console.warn('Admin ordered query fallback',colName,e?.code||e?.message||e);snap=await safe(query(collection(db,colName),limit(adminLimit)));}
+   addSnapRows(rows,seen,snap);
+   return rows;
+ }
+ const k=currentOwnerKeys();
+ const filters=[];
+ const add=(field,value)=>{value=String(value||'').trim();if(!value)return;const sig=field+'='+value.toLowerCase();if(!filters.some(x=>x.sig===sig))filters.push({field,value,sig});};
+ // Staff users should never list whole admin collections. Query only fields linked to the logged-in uid/email/username.
+ ['createdByUid','ownerUid','staffUid','sellerUid','uid','memberUid','shareUid','refUid'].forEach(f=>add(f,k.uid));
+ ['createdByEmail','ownerEmail','staffEmail','sellerEmail','email','userEmail','shareEmail','refEmail'].forEach(f=>add(f,k.email));
+ ['createdByUsername','ownerUsername','staffUsername','sellerUsername','usernameKey','username','shareUsername','refUsername'].forEach(f=>add(f,k.username));
+ if(includeShare){
+   ['shareReferral.uid','shareReferral.staffUid','shareReferral.ownerUid'].forEach(f=>add(f,k.uid));
+   ['shareReferral.email','shareReferral.staffEmail','shareReferral.ownerEmail'].forEach(f=>add(f,k.email));
+   ['shareReferral.username','shareReferral.staffUsername','shareReferral.ownerUsername','shareReferral.ref'].forEach(f=>add(f,k.username));
+ }
+ for(const f of filters){
+   try{
+     const snap=await getDocs(query(collection(db,colName),where(f.field,'==',f.value),limit(staffLimit)));
+     addSnapRows(rows,seen,snap);
+   }catch(e){
+     // Some legacy fields may not be allowed/indexed in rules. Keep other exact-owner queries running.
+     console.warn('Staff scoped query skipped',colName,f.field,e?.code||e?.message||e);
+   }
+ }
+ return rows.filter(x=>isMineRecord(x)||(includeShare&&isMyShareCommissionRecord(x)));
+}
 async function loadList(col,el){
- const s=await safe(query(collection(db,col),orderBy('createdAtMs','desc'),limit(50)));
+ const docs=await queryOwnedCollectionRows(col,{adminLimit:50,staffLimit:50});
  let rows=[];
- s?.forEach(d=>{
-   const x=d.data();
+ docs.forEach((x)=>{
    if(!isAdmin(profile) && !isMineRecord(x)) return;
    const amt=amountOf(x);
-   rows.push(item(esc(x.title||x.username||x.product||d.id),`RM${amt.toFixed(2)} • Owner 70% RM${(amt*0.7).toFixed(2)} • AZOBSS 30% RM${(amt*0.3).toFixed(2)} • ${esc(x.status||'pending')}`));
+   rows.push(item(esc(x.title||x.username||x.product||x.docId||'Record'),`RM${amt.toFixed(2)} • Owner 70% RM${(amt*0.7).toFixed(2)} • AZOBSS 30% RM${(amt*0.3).toFixed(2)} • ${esc(x.status||'pending')}`));
  });
  $(el).innerHTML=rows.join('')||'<div class="item">No records.</div>';
 }
 async function overview(){
- const sw=await safe(query(collection(db,'staffSoftwareSubmissions'),limit(100)));
- const cad=await safe(query(collection(db,'staffCADSubmissions'),limit(100)));
+ const sw=await queryOwnedCollectionRows('staffSoftwareSubmissions',{adminLimit:100,staffLimit:50});
+ const cad=await queryOwnedCollectionRows('staffCADSubmissions',{adminLimit:100,staffLimit:50});
  const comRows=await getCommissionRecords();
- const salesSnap=can('canViewPayments')?await safe(query(collection(db,'purchaseLogs'),limit(100))):null;
+ const salesRows=can('canViewPayments')?await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60}):[];
  let swCount=0,cadCount=0,salesCount=0,totalSales=0,totalCom=0,pendingCom=0,paidCom=0,platformShare=0,ownerShare=0,shareCom=0;
- sw?.forEach(d=>{const x=d.data(); if(isAdmin(profile)||isMineRecord(x)) swCount++;});
- cad?.forEach(d=>{const x=d.data(); if(isAdmin(profile)||isMineRecord(x)) cadCount++;});
- salesSnap?.forEach(d=>{const x=d.data(); if(isAdmin(profile)||isMineRecord(x)){ const amt=amountOf(x); salesCount++; totalSales+=amt; ownerShare+=amt*0.7; platformShare+=amt*0.3; }});
+ sw.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) swCount++;});
+ cad.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) cadCount++;});
+ salesRows.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)){ const amt=amountOf(x); salesCount++; totalSales+=amt; ownerShare+=amt*0.7; platformShare+=amt*0.3; }});
  comRows.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)||isMyShareCommissionRecord(x)){ const amt=commissionAmountOf(x); totalCom+=amt; platformShare+=azobssShareOf(x); ownerShare+=ownerShareOf(x); if(isShareCommissionRecord(x)) shareCom+=amt; if(isPaidStatus(x) || String(x.payoutStatus||'').toLowerCase()==='paid') paidCom+=amt; else pendingCom+=amt; }});
  if(!totalCom && ownerShare) { totalCom=ownerShare; pendingCom=ownerShare; }
  $('#statSw').textContent=swCount; $('#statCad').textContent=cadCount; $('#statSales').textContent=salesCount; $('#statCom').textContent='RM'+totalCom.toFixed(2);
@@ -885,13 +919,12 @@ async function shareCom(){
 }
 async function sales(){
  if(!can('canViewPayments'))return alert('No permission');
- const s=await safe(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(100)));
+ const docs=await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60});
  let rows=[];
- s?.forEach(d=>{
-   const x=d.data();
+ docs.forEach(x=>{
    if(!isAdmin(profile) && !isMineRecord(x)) return;
    const amt=amountOf(x);
-   rows.push(item(esc(x.usernameKey||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • Sale RM${amt.toFixed(2)} • Commission 70% RM${(amt*0.7).toFixed(2)} • AZOBSS 30% RM${(amt*0.3).toFixed(2)} • ${esc(x.status||'')}`));
+   rows.push(item(esc(x.usernameKey||x.email||x.docId||'Purchase'),`${esc(x.productType||x.itemCode||'Purchase')} • Sale RM${amt.toFixed(2)} • Commission 70% RM${(amt*0.7).toFixed(2)} • AZOBSS 30% RM${(amt*0.3).toFixed(2)} • ${esc(x.status||'')}`));
  });
  $('#salesList').innerHTML=rows.join('')||'<div class="item">No sales for your products.</div>';
 }
