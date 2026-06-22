@@ -118,3 +118,10 @@ Checks:
 - Keeps promotional price display: old price struck through, final price highlighted, Save % badge.
 - Does not change payment amount logic; checkout still uses final selling price.
 - Does not touch PA/BM download flow, My Purchases, Cart/Like/Bell/Message badge logic.
+
+
+## Patch 267 - Promo Price Mobile Stack Final Fix
+- Fixed Software mobile card overlap/clipped Buy Now after promo price.
+- Moved stats footer into normal mobile flow so card height expands naturally.
+- Added matching CAD mobile promo/action safety.
+- No Firebase Rules or Render ENV update required.

@@ -1,0 +1,1 @@
+AZOBSS 267: Fixed mobile Software/CAD promo price card overlap by moving Buy Now/cart and stats footer into normal mobile flow. No Firebase Rules or Render ENV changes required.

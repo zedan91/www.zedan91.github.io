@@ -5375,6 +5375,56 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 }
 </style>
 
+
+
+<style id="azobss-cad-promo-mobile-final-stack-fix-267">
+/* AZOBSS 267: keep CAD promo price and action button in normal mobile flow. */
+@media(max-width:760px){
+  html body .cad-card,
+  html body .cad-item,
+  html body .cad-resource-card,
+  html body .cad-tool-card{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    text-align:center!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    padding:18px 14px!important;
+    overflow:visible!important;
+    box-sizing:border-box!important;
+  }
+  html body .cad-card h3,
+  html body .cad-item h3,
+  html body .cad-resource-card h3,
+  html body .cad-tool-card h3{
+    width:100%!important;min-height:44px!important;max-height:none!important;margin:6px auto 8px!important;overflow:visible!important;
+  }
+  html body .cad-card p,
+  html body .cad-item p,
+  html body .cad-resource-card p,
+  html body .cad-tool-card p{
+    width:100%!important;min-height:74px!important;max-height:none!important;margin:0 auto 10px!important;overflow:visible!important;
+  }
+  html body .cad-card .az-promo-price-block,
+  html body .cad-item .az-promo-price-block,
+  html body .cad-resource-card .az-promo-price-block,
+  html body .cad-tool-card .az-promo-price-block{
+    order:80!important;width:100%!important;min-height:36px!important;margin:8px auto 10px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:6px!important;flex:0 0 auto!important;
+  }
+  html body .cad-card .cad-action-btn,
+  html body .cad-item .cad-action-btn,
+  html body .cad-resource-card .cad-action-btn,
+  html body .cad-tool-card .cad-action-btn,
+  html body .cad-card .download-btn,
+  html body .cad-item .download-btn{
+    order:90!important;width:min(220px,88%)!important;max-width:88%!important;min-height:46px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;margin:0 auto 10px!important;flex:0 0 auto!important;position:relative!important;z-index:12!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
