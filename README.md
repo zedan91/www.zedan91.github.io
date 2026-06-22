@@ -157,3 +157,13 @@ Checks:
 - Keeps single clean merged stats script from (290).
 - Keeps Like / Share / Preview GIF / More / Buy Now visible from first paint.
 - Does not touch PA/BM flow, My Purchases, Cart storage/payment, Bell/message badge, Firebase Rules, or Render ENV.
+
+
+## (293) Shop Card Desc/Share/GIF Final No-Blink Fix
+- Based on (292).
+- Removes duplicate inline GIF preview link from product card flow.
+- Marks first-paint share buttons as already initialized so late share script does not rewrite innerHTML.
+- Removes delayed share align timeout.
+- Converts Software description block from p+button to stable div+span+button and stores full description directly on the More button.
+- Strengthens More click handler so it opens the modal reliably.
+- Does not touch PA/BM, My Purchases, cart storage/payment, bell/message badges, Firebase Rules or Render ENV.

@@ -2257,8 +2257,8 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
   function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
   function azEyeSvg287(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';}
   function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'cad-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add to Likes" title="Add to Likes">♡</button>';}
-  function azStableShareHtml287(item,isPremium){if(!isPremium)return '';return '<button type="button" class="az-lucky-product-share-btn" data-az-lucky-main="1" data-az-lucky-product-share="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link">'+azShareSvg287()+'<span class="az-lucky-share-text"> Share Product</span></button>';}
-  function azStablePreviewHtml287(item){const src=String(item.gifUrl||'').trim();if(!src)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155" href="'+esc(src)+'" data-gif-preview="'+esc(src)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo">'+azEyeSvg287()+'</a>';}
+  function azStableShareHtml287(item,isPremium){if(!isPremium)return '';return '<button type="button" class="az-lucky-product-share-btn az-share-stable-292 az-share-stable-293" data-az-lucky-main="1" data-az-lucky-product-share="1" data-az-share-inner-ready-292="1" data-az-share-firstpaint-293="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link">'+azShareSvg287()+'<span class="az-lucky-share-text"> Share Product</span></button>';}
+  function azStablePreviewHtml287(item){const src=String(item.gifUrl||'').trim();if(!src)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155 az-preview-stable-292 az-preview-stable-293" data-az-preview-firstpaint-293="1" href="'+esc(src)+'" data-gif-preview="'+esc(src)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo">'+azEyeSvg287()+'</a>';}
 
   function renderCard(item){
     const clean = normalizeItem(item);
@@ -2271,7 +2271,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const stablePreviewHtml = azStablePreviewHtml287(clean);
     const mediaSrc = clean.imageUrl || clean.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="cad-card-media"><img src="${esc(mediaSrc)}" alt="${esc(clean.name)} preview" loading="lazy"></div>` : '';
-    const gifHtml = clean.gifUrl && clean.imageUrl ? `<div class="cad-media-links"><a class="cad-media-demo azobss-gif-preview-link" href="${esc(clean.gifUrl)}" data-gif-preview="${esc(clean.gifUrl)}" target="_blank" rel="noopener" title="Hover to preview GIF">👁 Preview</a></div>` : '';
+    const gifHtml = ''; // AZOBSS 293: preview button is first-paint floating control only; no duplicate inline preview link.
     const meta = [clean.category, clean.productId, clean.version, clean.fileSize, ...(clean.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="cad-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
@@ -4917,10 +4917,10 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       card.appendChild(btn);
     }
     var azShareInner292 = '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"></span>';
-    if(btn.getAttribute('data-az-share-inner-ready-292') !== '1'){
+    if(btn.getAttribute('data-az-share-inner-ready-292') !== '1' && !btn.querySelector('.az-lucky-share-icon')){
       btn.innerHTML = azShareInner292;
-      btn.setAttribute('data-az-share-inner-ready-292','1');
     }
+    btn.setAttribute('data-az-share-inner-ready-292','1');
     var azShareText292 = btn.querySelector('.az-lucky-share-text');
     if(azShareText292){
       var azNextShareText292 = ' ' + (creditShareMode ? 'Lucky Draw Share' : 'Share Product');
@@ -4931,7 +4931,6 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
     btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
     alignShareButton(card, btn);
-    setTimeout(function(){alignShareButton(card, btn)}, 80);
     card.dataset.azLuckyProductId=productInfo(card).id;
     card.dataset.azLuckyShareReady='1';
   }
@@ -6260,6 +6259,16 @@ html body .download-card .azobss-sw-desc-more-097{display:inline-flex!important;
   html body .cad-card > .azobss-preview-float-155,
   html body .cad-item > .azobss-preview-float-155{top:106px!important;right:14px!important;}
 }
+</style>
+
+
+<style id="azobss-shop-card-no-reflow-293-css">
+/* AZOBSS 293: keep first-paint share/GIF controls stable. */
+html body .cad-card > .az-share-stable-293,
+html body .cad-item > .az-share-stable-293,
+html body .cad-card > .az-preview-stable-293,
+html body .cad-item > .az-preview-stable-293{transition:filter .16s ease!important;}
+html body .cad-media-links:empty{display:none!important;}
 </style>
 
 </body>
