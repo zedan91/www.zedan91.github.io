@@ -126,9 +126,7 @@ Checks:
 - Added matching CAD mobile promo/action safety.
 - No Firebase Rules or Render ENV update required.
 
-
-## AZOBSS Patch 271 - Promo Badge Readable Text Fix
-- Enlarged top-left promo badge text for old price and Save percentage.
-- Kept final sale price only inside the Buy Now button.
-- Applied to Software Tools and CAD Tools.
-- No changes to PA/BM flow, My Purchases, Cart/Like/Bell/Message badge, Firebase Rules, or Render ENV.
+## (272) Promo Badge Narrow No Logo Overlap Fix
+- Promo badge remains top-left but is narrowed so it does not touch product logo on mobile cards.
+- Original price and Save % remain readable.
+- Final price remains only in the Buy Now button.

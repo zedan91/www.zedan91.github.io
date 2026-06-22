@@ -12,10 +12,3 @@ Use:
 - Promo Original Price: optional old price, e.g. RM30
 
 Public card display will show RM30 crossed out → RM20 with a Save % badge.
-
-
-## AZOBSS Patch 271 - Promo Badge Readable Text Fix
-- Enlarged top-left promo badge text for old price and Save percentage.
-- Kept final sale price only inside the Buy Now button.
-- Applied to Software Tools and CAD Tools.
-- No changes to PA/BM flow, My Purchases, Cart/Like/Bell/Message badge, Firebase Rules, or Render ENV.

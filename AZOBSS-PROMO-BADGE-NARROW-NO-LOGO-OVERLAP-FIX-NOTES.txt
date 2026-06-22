@@ -1,0 +1,17 @@
+AZOBSS (272) Promo Badge Narrow No Logo Overlap Fix
+
+Scope:
+- Software Tools promo badge UI only.
+- CAD Tools promo badge UI only.
+
+Fix:
+- Narrowed the top-left promo badge so it no longer touches/overlaps the centered product logo on mobile cards.
+- Kept RM original price and Save percentage readable.
+- Final selling price remains only inside the Buy Now button.
+
+Not touched:
+- PA/BM paid/download flow.
+- My Purchases.
+- Cart/Like/Bell/Message badge logic.
+- Firebase Rules.
+- Render ENV.
