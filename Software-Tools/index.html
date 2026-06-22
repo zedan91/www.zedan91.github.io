@@ -2928,6 +2928,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:700px){#azobssGifHoverPreview154{width:92vw;max-height:74vh;padding:8px;}#azobssGifHoverPreview154 img{max-height:calc(74vh - 16px);}}
 @media (hover:none){.azobss-gif-preview-link::after{content:'Tap to preview';}}
 </style>
+<style id="azobss-gif-mobile-persistent-modal-277-css">
+#azobssGifMobileModal277{position:fixed;inset:0;z-index:1000000;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.78);backdrop-filter:blur(8px);padding:16px;}
+#azobssGifMobileModal277.az-open{display:flex;}
+#azobssGifMobileModal277 .az-gif-mobile-panel{position:relative;width:min(94vw,760px);max-height:86vh;border:1px solid rgba(34,197,94,.45);border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(2,6,23,.98));box-shadow:0 28px 90px rgba(0,0,0,.72);padding:42px 10px 12px;}
+#azobssGifMobileModal277 .az-gif-mobile-title{position:absolute;left:16px;top:12px;color:#e5e7eb;font-weight:900;font-size:14px;letter-spacing:.2px;}
+#azobssGifMobileModal277 .az-gif-mobile-close{position:absolute;right:10px;top:8px;width:34px;height:34px;border-radius:999px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.92);color:#fff;font-size:22px;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+#azobssGifMobileModal277 img{display:block;width:100%;height:auto;max-height:calc(86vh - 64px);object-fit:contain;border-radius:14px;background:#020617;}
+#azobssGifMobileModal277 .az-gif-mobile-hint{margin-top:8px;text-align:center;color:#93c5fd;font-size:12px;font-weight:700;}
+@media(min-width:769px){#azobssGifMobileModal277{display:none!important;}}
+</style>
 
 <style id="azobss-promo-price-ui-fix-265">
 .az-promo-price-block{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto 10px;line-height:1.2}
@@ -8608,6 +8618,34 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     var el = document.getElementById('azobssGifHoverPreview154');
     if(el) el.style.display = 'none';
   }
+  function mobileModal(){
+    var el = document.getElementById('azobssGifMobileModal277');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'azobssGifMobileModal277';
+      el.setAttribute('role','dialog');
+      el.setAttribute('aria-modal','true');
+      el.innerHTML = '<div class="az-gif-mobile-panel"><div class="az-gif-mobile-title">GIF Preview</div><button type="button" class="az-gif-mobile-close" aria-label="Close preview">×</button><img alt="GIF preview" loading="eager"><div class="az-gif-mobile-hint">Tekan × untuk tutup preview</div></div>';
+      document.body.appendChild(el);
+      el.addEventListener('click', function(ev){
+        if(ev.target === el || (ev.target && ev.target.closest && ev.target.closest('.az-gif-mobile-close'))){ closeMobileModal(); }
+      }, true);
+    }
+    return el;
+  }
+  function closeMobileModal(){
+    var el = document.getElementById('azobssGifMobileModal277');
+    if(el) el.classList.remove('az-open');
+  }
+  function openMobileModal(link){
+    var src = link && (link.getAttribute('data-gif-preview') || link.getAttribute('href'));
+    if(!src) return;
+    var el = mobileModal();
+    var img = el.querySelector('img');
+    if(img && img.getAttribute('src') !== src) img.setAttribute('src', src);
+    el.classList.add('az-open');
+  }
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeMobileModal(); }, true);
 
   document.addEventListener('mouseover', function(e){
     var link = e.target && e.target.closest && e.target.closest('[data-gif-preview]');
@@ -8632,8 +8670,9 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(!link) return;
     if((window.matchMedia && window.matchMedia('(hover: none)').matches) || window.innerWidth <= 768){
       e.preventDefault();
-      show(link, e);
-      setTimeout(hide, 2500);
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      openMobileModal(link);
+      return false;
     }
   }, true);
 })();
