@@ -1,0 +1,13 @@
+AZOBSS patch 297
+
+Audit root cause:
+1. Generic ToyyibPay status/status_id/billStatus could still be interpreted as paid.
+2. Frontend auto-verify used stale azobss_last_order_id / azobss_last_bill_code from localStorage on every page load, so an older paid order could show success after a later cancelled checkout.
+3. Email sending did not have a final hard guard requiring ToyyibPay API verification before generating a download token.
+
+Fix:
+- Only explicit ToyyibPay payment/transaction status fields can confirm paid.
+- Generic status/status_id/billStatus can never unlock Software/CAD download.
+- Download email blocked unless order has toyyibVerifiedAt or paymentVerificationSource=toyyibpay-api.
+- Receipt locked until ToyyibPay API verified for Software/CAD ToyyibPay orders.
+- Frontend auto-verify only uses fresh pending checkout/real return URL, not stale localStorage.

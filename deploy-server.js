@@ -1733,29 +1733,38 @@ function azToyyibResultCandidates(result) {
   }
   return out;
 }
+function azToyyibIsPaymentStatusField(fieldName = "") {
+  const key = String(fieldName || "").trim().toLowerCase();
+  // Only true payment transaction fields may unlock software/CAD downloads.
+  // Generic fields such as status/status_id/billStatus can mean the bill exists or a page/API request succeeded,
+  // so those fields must never be treated as paid.
+  return /(billpayment|bill_payment|paymentstatus|payment_status|transactionstatus|transaction_status)/i.test(key);
+}
 function azToyyibPaidStatusValue(value, fieldName = "") {
   const v = String(value ?? "").trim().toLowerCase();
   const key = String(fieldName || "").trim().toLowerCase();
   if (!v) return false;
-  if (["cancel", "cancelled", "canceled", "failed", "fail", "unpaid", "pending", "processing", "void", "expired", "declined", "rejected"].includes(v)) return false;
+  if (["0", "2", "3", "cancel", "cancelled", "canceled", "failed", "fail", "unpaid", "pending", "processing", "void", "expired", "declined", "rejected"].includes(v)) return false;
 
-  // Important: do not treat a generic API field such as { success:true } or status=success as payment paid.
-  // ToyyibPay payment is only trusted when a real payment/bill transaction status field confirms it.
-  if (v === "1") return true;
-  if (["paid", "successful", "completed", "settled"].includes(v)) return true;
-  if (v === "success") {
-    return /(billpayment|billpaymentstatus|payment|transaction)/i.test(key) && key !== "success";
-  }
+  // CRITICAL: numeric 1/success is only accepted from explicit payment/transaction status fields.
+  // Do not accept generic status_id/status/billStatus because cancelled return/callbacks can still carry them.
+  if (!azToyyibIsPaymentStatusField(key)) return false;
+  if (["1", "paid", "successful", "completed", "settled", "success"].includes(v)) return true;
   return false;
 }
 function azToyyibTxPaid(tx = {}) {
   if (!tx || typeof tx !== "object") return false;
-  const negativeFields = [tx.billpaymentStatus, tx.billPaymentStatus, tx.billpayment_status, tx.billStatus, tx.paymentStatus, tx.payment_status, tx.transaction_status, tx.transactionStatus, tx.status_id, tx.status];
-  if (negativeFields.some(v => ["cancel", "cancelled", "canceled", "failed", "fail", "unpaid", "pending", "processing", "void", "expired", "declined", "rejected"].includes(String(v ?? "").trim().toLowerCase()))) return false;
+  const negativeFields = [tx.billpaymentStatus, tx.billPaymentStatus, tx.billpayment_status, tx.paymentStatus, tx.payment_status, tx.transaction_status, tx.transactionStatus, tx.transaction_status_id];
+  if (negativeFields.some(v => ["0", "2", "3", "cancel", "cancelled", "canceled", "failed", "fail", "unpaid", "pending", "processing", "void", "expired", "declined", "rejected"].includes(String(v ?? "").trim().toLowerCase()))) return false;
   const fields = [
-    ["billpaymentStatus", tx.billpaymentStatus], ["billPaymentStatus", tx.billPaymentStatus], ["billpayment_status", tx.billpayment_status], ["billStatus", tx.billStatus],
-    ["status_id", tx.status_id], ["paymentStatus", tx.paymentStatus], ["payment_status", tx.payment_status], ["transaction_status", tx.transaction_status],
-    ["transactionStatus", tx.transactionStatus], ["transaction_status_id", tx.transaction_status_id]
+    ["billpaymentStatus", tx.billpaymentStatus],
+    ["billPaymentStatus", tx.billPaymentStatus],
+    ["billpayment_status", tx.billpayment_status],
+    ["paymentStatus", tx.paymentStatus],
+    ["payment_status", tx.payment_status],
+    ["transaction_status", tx.transaction_status],
+    ["transactionStatus", tx.transactionStatus],
+    ["transaction_status_id", tx.transaction_status_id]
   ];
   return fields.some(([key, value]) => azToyyibPaidStatusValue(value, key));
 }
@@ -1888,6 +1897,20 @@ async function maybeSendDownloadEmail(order, req) {
     if (isPaBmPremiumOrder(current)) {
       console.log("AZOBSS PA/BM email skipped: download is managed inside Latest Purchase List", JSON.stringify({ orderId: current.orderId || "", billCode: current.billCode || "" }).slice(0, 500));
       return upsertPremiumOrder({ ...current, emailSkippedForPaBm: true, emailError: null });
+    }
+
+    // Critical safety gate: Software/CAD ToyyibPay orders must be verified by ToyyibPay API before any email/token is generated.
+    // This prevents cancelled/abandoned payment pages or stale localStorage from sending download links.
+    const currentPaymentMethod = String(current.paymentMethod || "").toLowerCase();
+    const isToyyibSoftwareCadOrder = !!current.billCode || currentPaymentMethod.includes("toyyib");
+    if (isToyyibSoftwareCadOrder && !(current.toyyibVerifiedAt || current.paymentVerificationSource === "toyyibpay-api")) {
+      console.warn("AZOBSS download email blocked: ToyyibPay order not API-verified", JSON.stringify({ orderId: current.orderId || "", billCode: current.billCode || "", status: current.status || "" }).slice(0, 500));
+      return upsertPremiumOrder({
+        ...current,
+        emailError: "Blocked: ToyyibPay payment not verified by API",
+        emailErrorAt: new Date().toISOString(),
+        emailSendStartedAt: ""
+      });
     }
     const email = cleanPremiumText(current?.user?.email || current?.buyerEmail || current?.email || current?.billEmail || "", 180);
     const realDownloadLink = cleanPremiumUrl(
@@ -3070,10 +3093,9 @@ function isPaBmPremiumOrder(order = {}) {
 }
 
 function toyyibStatusIsPaid(data = {}) {
-  // Strict callback gate: a generic status=success is not enough.
-  // Some return/cancel flows can still include success-like words for page/API status.
+  // Callback is NOT trusted by generic status/status_id. It only opens a verification attempt,
+  // and even then /getBillTransactions must confirm paid before email/token/receipt unlock.
   const statusPairs = [
-    ["status_id", data.status_id],
     ["billpaymentStatus", data.billpaymentStatus],
     ["billPaymentStatus", data.billPaymentStatus],
     ["billpayment_status", data.billpayment_status],
@@ -3081,7 +3103,7 @@ function toyyibStatusIsPaid(data = {}) {
     ["paymentStatus", data.paymentStatus],
     ["transaction_status", data.transaction_status],
     ["transactionStatus", data.transactionStatus],
-    ["status", data.status]
+    ["transaction_status_id", data.transaction_status_id]
   ];
   return statusPairs.some(([key, value]) => azToyyibPaidStatusValue(value, key));
 }
@@ -6246,6 +6268,9 @@ const filePath =
       if (!order) return send(res, 404, "Receipt not found");
       const rt = cleanPremiumText(parsed.query.rt || parsed.query.token || "", 80);
       if (!azReceiptTokenOk(order, rt)) return send(res, 403, "Receipt token required or invalid.");
+      if ((order.billCode || String(order.paymentMethod || "").toLowerCase().includes("toyyib")) && !isPaBmPremiumOrder(order) && !(order.toyyibVerifiedAt || order.paymentVerificationSource === "toyyibpay-api")) {
+        return send(res, 403, "Receipt locked until ToyyibPay confirms paid.");
+      }
       return send(res, 200, buildReceiptHtml(order), "text/html; charset=utf-8");
     }
 

@@ -2565,6 +2565,15 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       }
       if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
       if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
+      try{
+        localStorage.setItem('azobss_pending_toyyib_checkout', JSON.stringify({
+          orderId: data.orderId || '',
+          billCode: data.billCode || '',
+          source: 'CAD Tools',
+          productId: String(currentProduct.id || currentProduct.productId || ''),
+          createdAt: Date.now()
+        }));
+      }catch(_e){}
       try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
@@ -2732,9 +2741,23 @@ async function verifyToyyibPayment(billCode){
 
   async function autoVerifyAfterReturn(){
     try{
-      var billCode = localStorage.getItem('azobss_last_bill_code') || '';
-      var orderId = localStorage.getItem('azobss_last_order_id') || '';
+      var params = new URLSearchParams(window.location.search || '');
+      var pending = null;
+      try{ pending = JSON.parse(localStorage.getItem('azobss_pending_toyyib_checkout') || 'null'); }catch(_e){ pending = null; }
+      var hasReturnSignal = params.has('payment') || params.has('orderId') || params.has('order_id') || params.has('billCode') || params.has('billcode') || params.has('status_id') || params.has('billpaymentStatus');
+      var billCode = params.get('billCode') || params.get('billcode') || (pending && pending.billCode) || '';
+      var orderId = params.get('orderId') || params.get('order_id') || (pending && pending.orderId) || '';
+      var pendingAge = pending && pending.createdAt ? (Date.now() - Number(pending.createdAt || 0)) : 999999999;
+
+      // Important: do not use stale azobss_last_* as proof of the current payment.
+      // Only verify a fresh pending checkout or an actual ToyyibPay return URL.
+      if(!hasReturnSignal && (!pending || pendingAge > 2 * 60 * 60 * 1000)) return;
       if(!billCode && !orderId) return;
+      if(pendingAge > 2 * 60 * 60 * 1000 && !hasReturnSignal){
+        try{ localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
+        return;
+      }
+
       var key = 'azobss_verified_' + (orderId || billCode);
       if(sessionStorage.getItem(key)) return;
       var api = window.API_BASE_URL || window.AZOBSS_BACKEND_URL || 'https://azobss-backend.onrender.com';
@@ -2743,11 +2766,25 @@ async function verifyToyyibPayment(billCode){
       if(orderId) qs.set('orderId', orderId);
       var res = await fetch(api + '/api/verify-payment?' + qs.toString(), {cache:'no-store'});
       var data = await res.json().catch(function(){ return null; });
-      var confirmed = !!(data && data.paid === true && (data.verified === true || data.paymentConfirmed === true || data.toyyibVerified === true));
+      var confirmed = !!(data && data.paid === true && data.verified === true && data.paymentConfirmed === true);
       if(confirmed){
         sessionStorage.setItem(key, '1');
+        try{ localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
+        try{
+          var productId = localStorage.getItem('azobss_last_paid_product_id') || '';
+          var productSource = localStorage.getItem('azobss_last_paid_product_source') || 'Software';
+          var countKey = 'azobss_paid_product_download_counted_' + (orderId || billCode || productId);
+          if(productId && productSource === 'Software' && !localStorage.getItem(countKey)){
+            if(typeof window.azobssRecordPaidSoftwareDownload === 'function'){
+              window.azobssRecordPaidSoftwareDownload(productId, {orderId:orderId, billCode:billCode, productId:productId, source:'paid-verified'});
+              localStorage.setItem(countKey, '1');
+            }
+          }
+        }catch(_e){}
         console.log('AZOBSS payment verified; email trigger status:', data.emailSent, data.emailError || '');
         window.showAzobssPaymentSuccessPopup({ receiptUrl: data.receiptUrl || '' });
+      } else if (data && data.paid === false) {
+        console.log('AZOBSS payment not verified yet:', data.reason || data.status || 'pending');
       }
     }catch(e){ console.warn('AZOBSS auto verify skipped:', e && e.message ? e.message : e); }
   }
