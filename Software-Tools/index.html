@@ -2949,15 +2949,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:620px){.az-promo-price-block .az-price-new{font-size:18px}.az-promo-price-block{gap:6px}}
 </style>
 
-<!-- AZOBSS 278: shared product link no-blink loading guard -->
-<script id="azobss-shared-link-no-blink-early-278-js">
+<!-- AZOBSS 283: shared product instant paint guard. Do not hide controls; show stable seeded buttons/stats immediately. -->
+<script id="azobss-shared-link-instant-paint-283-js">
 (function(){
   try{
-    var p = location.pathname || '';
-    var qs = new URLSearchParams(location.search || '');
-    if(qs.get('product') && /(?:Software-Tools|CAD-Tools-&-Resources)/i.test(p)){
-      document.documentElement.classList.add('az-shared-link-hydrating');
-    }
+    document.documentElement.classList.remove('az-shared-link-hydrating');
+    document.documentElement.classList.add('az-shared-link-instant-283');
   }catch(e){}
 })();
 </script>
@@ -3062,6 +3059,47 @@ html.az-shared-link-hydrating .cad-tool-card::after{
   content:none!important;
 }
 .az-instant-control-seed-281{opacity:1!important;visibility:visible!important;}
+
+/* AZOBSS 283: no blink/no delay for shared-link controls and public stats. All controls stay visible from first paint. */
+html.az-shared-link-hydrating .az-like-btn,
+html.az-shared-link-hydrating .like-btn,
+html.az-shared-link-hydrating .item-like-btn,
+html.az-shared-link-hydrating .az-item-like-btn,
+html.az-shared-link-hydrating [class*="like-btn"],
+html.az-shared-link-hydrating .az-lucky-product-share-btn,
+html.az-shared-link-hydrating [data-az-lucky-product-share],
+html.az-shared-link-hydrating .azobss-gif-preview-link,
+html.az-shared-link-hydrating .azobss-preview-float-155,
+html.az-shared-link-hydrating .software-stats,
+html.az-shared-link-hydrating .download-card > .software-stats,
+html.az-shared-link-hydrating .downloads-grid .download-card > .software-stats,
+html.az-shared-link-instant-283 .az-like-btn,
+html.az-shared-link-instant-283 .like-btn,
+html.az-shared-link-instant-283 .item-like-btn,
+html.az-shared-link-instant-283 .az-item-like-btn,
+html.az-shared-link-instant-283 [class*="like-btn"],
+html.az-shared-link-instant-283 .az-lucky-product-share-btn,
+html.az-shared-link-instant-283 [data-az-lucky-product-share],
+html.az-shared-link-instant-283 .azobss-gif-preview-link,
+html.az-shared-link-instant-283 .azobss-preview-float-155,
+html.az-shared-link-instant-283 .software-stats{opacity:1!important;visibility:visible!important;display:flex!important;pointer-events:auto!important;transition:none!important;animation:none!important;}
+html.az-shared-link-hydrating .download-card::after,
+html.az-shared-link-hydrating .software-card::after,
+html.az-shared-link-hydrating .software-product-card::after,
+html.az-shared-link-hydrating .software-item::after,
+html.az-shared-link-hydrating .cad-card::after,
+html.az-shared-link-hydrating .cad-item::after,
+html.az-shared-link-hydrating .cad-resource-card::after,
+html.az-shared-link-hydrating .cad-tool-card::after,
+html.az-shared-link-instant-283 .download-card::after,
+html.az-shared-link-instant-283 .software-card::after,
+html.az-shared-link-instant-283 .software-product-card::after,
+html.az-shared-link-instant-283 .software-item::after,
+html.az-shared-link-instant-283 .cad-card::after,
+html.az-shared-link-instant-283 .cad-item::after,
+html.az-shared-link-instant-283 .cad-resource-card::after,
+html.az-shared-link-instant-283 .cad-tool-card::after{display:none!important;content:none!important;}
+.az-instant-control-seed-281,.az-instant-stats-seed-281{opacity:1!important;visibility:visible!important;}
 
 </style>
 
@@ -5312,7 +5350,33 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
   function dlSvg(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
   function starsHtml(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
   function footerHtml(st){return '<span class="azb-stat-download"><span class="azb-dl-badge">'+dlSvg()+'</span><strong class="azb-dl-number">'+fmt(st.downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner">'+starsHtml(st.rating)+'<strong class="azb-rate-value">'+Number(st.rating||0).toFixed(1)+'</strong><span class="azb-rate-votes">('+Number(st.ratingVotes||0)+')</span></span></span>';}
-  function render(card){if(!card||!card.classList?.contains('download-card'))return;let box=card.querySelector(':scope>.software-stats');if(!box){box=document.createElement('div');card.appendChild(box);}box.className='software-stats';if(card.lastElementChild!==box)card.appendChild(box);const html=footerHtml(statsFor(card));if(box.innerHTML!==html)box.innerHTML=html;}
+  function render(card){
+    if(!card||!card.classList?.contains('download-card'))return;
+    let box=card.querySelector(':scope>.software-stats');
+    if(!box){box=document.createElement('div');box.className='software-stats';card.appendChild(box);}
+    box.className='software-stats';
+    if(card.lastElementChild!==box)card.appendChild(box);
+    const st=statsFor(card);
+    const html=footerHtml(st);
+    if(!box.dataset.azStableStats283 || !box.querySelector('.azb-dl-number') || !box.querySelector('.azb-rate-value')){
+      box.innerHTML=html;
+      box.dataset.azStableStats283='1';
+      return;
+    }
+    const dl=box.querySelector('.azb-dl-number');
+    if(dl && dl.textContent!==fmt(st.downloads)) dl.textContent=fmt(st.downloads);
+    const value=box.querySelector('.azb-rate-value');
+    const ratingText=Number(st.rating||0).toFixed(1);
+    if(value && value.textContent!==ratingText) value.textContent=ratingText;
+    const votes=box.querySelector('.azb-rate-votes');
+    const voteText='('+Number(st.ratingVotes||0)+')';
+    if(votes && votes.textContent!==voteText) votes.textContent=voteText;
+    const filled=Math.round(Number(st.rating)||0);
+    box.querySelectorAll('.azb-star').forEach(function(btn){
+      const n=Number(btn.dataset.rate||0);
+      btn.classList.toggle('is-filled', n<=filled);
+    });
+  }
   function renderAll(){document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);}
   function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderAll,80);}
   async function loadRemote(){if(syncBusy)return;syncBusy=true;try{await ensureAuth();const snap=await getDoc(STATS_DOC);if(snap.exists()){const remote=itemsOf(snap.data());const c=readCache();const items=itemsOf(c);Object.entries(remote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
@@ -5324,7 +5388,7 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
   document.addEventListener('pointerdown',handleRate,true);
   document.addEventListener('click',function(e){if(e.target.closest?.('.azb-stars,.azb-star')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();return;}handleDownload(e);},true);
   document.addEventListener('keydown',function(e){const wrap=e.target.closest?.('.azb-stars');if(!wrap||!['1','2','3','4','5'].includes(e.key))return;e.preventDefault();const btn=wrap.querySelector('[data-rate="'+e.key+'"]');if(btn)btn.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:btn.getBoundingClientRect().left+2}));},true);
-  document.addEventListener('DOMContentLoaded',function(){renderAll();loadRemote();[100,300,800,1600,3000].forEach(t=>setTimeout(renderAll,t));const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid')||document.body;new MutationObserver(scheduleRender).observe(root,{childList:true,subtree:true});});
+  document.addEventListener('DOMContentLoaded',function(){renderAll();const runRemote=function(){loadRemote();}; if('requestIdleCallback' in window){requestIdleCallback(runRemote,{timeout:900});}else{setTimeout(runRemote,160);} [80,260,700,1400].forEach(t=>setTimeout(renderAll,t));const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid')||document.body;new MutationObserver(scheduleRender).observe(root,{childList:true,subtree:true});});
   window.azobssRenderSoftwareStatsFooter=renderAll;
   window.azobssSyncSoftwareStatsFromFirestore=loadRemote;
   setTimeout(renderAll,0);
@@ -10003,8 +10067,10 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
       window.dispatchEvent(new CustomEvent('azobss-shared-link-hydrated'));
     }catch(e){}
   }
+  release();
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', release, {once:true}); else release();
-  setTimeout(release, 60);
+  requestAnimationFrame(function(){release();});
+  setTimeout(release, 20);
 })();
 </script>
 

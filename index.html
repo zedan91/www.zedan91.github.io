@@ -14226,7 +14226,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   async function updateBadge(){
     const bell=getBell();
     const badge=ensureBadge();
-    if(!bell || !badge){ if(badge) badge.style.display='none'; return;}
+    if(!bell){badge.style.display='none';return;}
     positionBadge();
     try{
       const count=await fetchUnreadCount();
@@ -14238,14 +14238,14 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
       }
     }catch(err){
       console.warn('AZOBSS bell badge update failed:',err);
-      if(badge) badge.style.display='none';
+      badge.style.display='none';
     }
   }
 
   function markSeen(){
     localStorage.setItem(SEEN_KEY,String(Date.now()));
     const badge=ensureBadge();
-    if(badge) badge.style.display='none';
+    badge.style.display='none';
   }
 
   document.addEventListener('click',function(e){

@@ -1797,15 +1797,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:620px){.az-promo-price-block .az-price-new{font-size:17px}.az-promo-price-block{gap:6px}}
 </style>
 
-<!-- AZOBSS 278: shared product link no-blink loading guard -->
-<script id="azobss-shared-link-no-blink-early-278-js">
+<!-- AZOBSS 283: shared product instant paint guard. Do not hide controls; show stable seeded buttons/stats immediately. -->
+<script id="azobss-shared-link-instant-paint-283-js">
 (function(){
   try{
-    var p = location.pathname || '';
-    var qs = new URLSearchParams(location.search || '');
-    if(qs.get('product') && /(?:Software-Tools|CAD-Tools-&-Resources)/i.test(p)){
-      document.documentElement.classList.add('az-shared-link-hydrating');
-    }
+    document.documentElement.classList.remove('az-shared-link-hydrating');
+    document.documentElement.classList.add('az-shared-link-instant-283');
   }catch(e){}
 })();
 </script>
@@ -1910,6 +1907,47 @@ html.az-shared-link-hydrating .cad-tool-card::after{
   content:none!important;
 }
 .az-instant-control-seed-281{opacity:1!important;visibility:visible!important;}
+
+/* AZOBSS 283: no blink/no delay for shared-link controls and public stats. All controls stay visible from first paint. */
+html.az-shared-link-hydrating .az-like-btn,
+html.az-shared-link-hydrating .like-btn,
+html.az-shared-link-hydrating .item-like-btn,
+html.az-shared-link-hydrating .az-item-like-btn,
+html.az-shared-link-hydrating [class*="like-btn"],
+html.az-shared-link-hydrating .az-lucky-product-share-btn,
+html.az-shared-link-hydrating [data-az-lucky-product-share],
+html.az-shared-link-hydrating .azobss-gif-preview-link,
+html.az-shared-link-hydrating .azobss-preview-float-155,
+html.az-shared-link-hydrating .software-stats,
+html.az-shared-link-hydrating .download-card > .software-stats,
+html.az-shared-link-hydrating .downloads-grid .download-card > .software-stats,
+html.az-shared-link-instant-283 .az-like-btn,
+html.az-shared-link-instant-283 .like-btn,
+html.az-shared-link-instant-283 .item-like-btn,
+html.az-shared-link-instant-283 .az-item-like-btn,
+html.az-shared-link-instant-283 [class*="like-btn"],
+html.az-shared-link-instant-283 .az-lucky-product-share-btn,
+html.az-shared-link-instant-283 [data-az-lucky-product-share],
+html.az-shared-link-instant-283 .azobss-gif-preview-link,
+html.az-shared-link-instant-283 .azobss-preview-float-155,
+html.az-shared-link-instant-283 .software-stats{opacity:1!important;visibility:visible!important;display:flex!important;pointer-events:auto!important;transition:none!important;animation:none!important;}
+html.az-shared-link-hydrating .download-card::after,
+html.az-shared-link-hydrating .software-card::after,
+html.az-shared-link-hydrating .software-product-card::after,
+html.az-shared-link-hydrating .software-item::after,
+html.az-shared-link-hydrating .cad-card::after,
+html.az-shared-link-hydrating .cad-item::after,
+html.az-shared-link-hydrating .cad-resource-card::after,
+html.az-shared-link-hydrating .cad-tool-card::after,
+html.az-shared-link-instant-283 .download-card::after,
+html.az-shared-link-instant-283 .software-card::after,
+html.az-shared-link-instant-283 .software-product-card::after,
+html.az-shared-link-instant-283 .software-item::after,
+html.az-shared-link-instant-283 .cad-card::after,
+html.az-shared-link-instant-283 .cad-item::after,
+html.az-shared-link-instant-283 .cad-resource-card::after,
+html.az-shared-link-instant-283 .cad-tool-card::after{display:none!important;content:none!important;}
+.az-instant-control-seed-281,.az-instant-stats-seed-281{opacity:1!important;visibility:visible!important;}
 
 </style>
 
@@ -6177,8 +6215,10 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
       window.dispatchEvent(new CustomEvent('azobss-shared-link-hydrated'));
     }catch(e){}
   }
+  release();
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', release, {once:true}); else release();
-  setTimeout(release, 60);
+  requestAnimationFrame(function(){release();});
+  setTimeout(release, 20);
 })();
 </script>
 

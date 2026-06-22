@@ -1,0 +1,8 @@
+AZOBSS 283 - Shared Link Instant Stats No Blink Fix
+
+- Like / Share / Preview GIF / rating / downloads now remain visible from first paint.
+- Removed early shared-link hydration hiding class.
+- Software stats footer updates in-place instead of replacing innerHTML, preventing visual blink when Firestore/local cache refreshes.
+- Remote stats sync runs after initial paint; card uses seeded local/manual stats immediately.
+- Applied to Software Tools and CAD Tools shared-link controls visibility.
+- Does not modify PA/BM download flow, My Purchases, Cart logic, Firebase Rules or Render ENV.
