@@ -4937,6 +4937,11 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       }
       if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
       if(data.billCode) localStorage.setItem('azobss_last_bill_code', data.billCode);
+      try{
+        localStorage.setItem('azobss_last_paid_product_id', String(currentProduct.id || currentProduct.productId || ''));
+        localStorage.setItem('azobss_last_paid_product_name', String(currentProduct.name || 'Premium Item'));
+        localStorage.setItem('azobss_last_paid_product_source', 'Software');
+      }catch(_e){}
       try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
@@ -5212,11 +5217,31 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists()){applyAll();return;}const local=readLocal();const items=itemsOf(snap.data()||{});Object.keys(items).forEach(k=>{local[slug(k)]=norm(items[k]||{});});writeLocal(local);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);applyAll();}}
   function voterId(){try{let id=localStorage.getItem('azobssRatingClientId');if(!id){id='azr_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('azobssRatingClientId',id);}return id;}catch(e){return 'azr_session';}}
   function saveLocal(card,st){const key=slug(productId(card));const data=readLocal();data[key]=norm(st,card);writeLocal(data);applyCard(card,data[key]);}
-  async function recordDownload(card){const key=slug(productId(card));const st=statsFor(card);st.downloads=Math.max(0,Number(st.downloads||0))+1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=norm(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});loadRemote();}catch(e){console.warn('AZOBSS download stat save skipped:',e);}}
+  function isPaidProductButton(btn){
+    if(!btn) return false;
+    if(btn.getAttribute('data-azobss-premium-buy') === '1') return true;
+    if(btn.classList && btn.classList.contains('premium')) return true;
+    if(btn.dataset && (btn.dataset.paymentLink || btn.dataset.stripeLink || btn.dataset.productPrice)) return true;
+    return /buy\s*now/i.test(String(btn.textContent || ''));
+  }
+  async function recordDownload(card, options){const key=slug(productId(card));const st=statsFor(card);st.downloads=Math.max(0,Number(st.downloads||0))+1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();st.lastDownloadCountSource=options&&options.source?String(options.source):'free-download-click';saveLocal(card,st);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=norm(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();remote.lastDownloadCountSource=st.lastDownloadCountSource;if(options&&options.orderId)remote.lastPaidOrderId=String(options.orderId);if(options&&options.billCode)remote.lastPaidBillCode=String(options.billCode);tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});loadRemote();}catch(e){console.warn('AZOBSS download stat save skipped:',e);}}
+  window.azobssRecordPaidSoftwareDownload = function(productIdOrCard, options){
+    try{
+      let card = null;
+      if(productIdOrCard && productIdOrCard.nodeType === 1) card = productIdOrCard.closest ? productIdOrCard.closest('.download-card') : productIdOrCard;
+      const id = String(productIdOrCard || options?.productId || '').trim();
+      if(!card && id){
+        const escId = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g,'\\$&');
+        const found = document.querySelector('.download-card[data-product-id="'+escId+'"], .download-card [data-product-id="'+escId+'"]');
+        card = (found && found.closest ? found.closest('.download-card') : found) || document.querySelector('.download-card[data-product-id="'+escId+'"]');
+      }
+      if(card) recordDownload(card, {...(options||{}), source:'paid-verified'});
+    }catch(e){console.warn('AZOBSS paid download stat count skipped:', e && e.message ? e.message : e);}
+  };
   function rateFromEvent(e,wrap){const btn=e.target.closest?.('.azb-star');if(btn)return Math.max(1,Math.min(5,Number(btn.dataset.rate||0)));const r=wrap.getBoundingClientRect();const x=e.clientX||(e.touches&&e.touches[0]?.clientX)||r.left;return Math.max(1,Math.min(5,Math.ceil(((x-r.left)/Math.max(1,r.width))*5)));}
   async function recordRating(card,rating){const key=slug(productId(card));const voter=voterId();const st=statsFor(card);st.ratings=st.ratings||{};st.ratedBy=st.ratedBy||{};const old=Number(st.ratedBy[voter]||0);if(old>=1&&old<=5)st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);st.ratedBy[voter]=rating;let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}st.ratingVotes=votes;st.votes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:Number(st.rating||0);st.ratingAverage=st.rating;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=norm(items[key]||{},card);remote.ratings=remote.ratings||{};remote.ratedBy=remote.ratedBy||{};const prev=Number(remote.ratedBy[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rating)]=Math.max(0,Number(remote.ratings[String(rating)]||0)+1);remote.ratedBy[voter]=rating;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rv+=c;rt+=i*c;}remote.ratingVotes=rv;remote.votes=rv;remote.ratingTotal=rt;remote.rating=rv?Math.round((rt/rv)*10)/10:remote.rating;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||0)));remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});loadRemote();}catch(e){console.warn('AZOBSS rating save skipped:',e);}}
   document.addEventListener('pointerdown',function(e){const hit=e.target.closest?.('.azb-stars,.azb-star');if(!hit)return;const wrap=hit.classList.contains('azb-stars')?hit:hit.closest('.azb-stars');const card=wrap&&wrap.closest('.download-card');if(!wrap||!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();const now=Date.now();if(wrap.dataset.busyUntil&&now<Number(wrap.dataset.busyUntil))return;wrap.dataset.busyUntil=String(now+300);const rating=rateFromEvent(e,wrap);if(rating)recordRating(card,rating);},true);
-  document.addEventListener('click',function(e){if(e.target.closest?.('.azb-stars,.azb-star')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();return;}const btn=e.target.closest?.('.download-card .download-btn');if(btn){const card=btn.closest('.download-card');if(card)recordDownload(card);}},true);
+  document.addEventListener('click',function(e){if(e.target.closest?.('.azb-stars,.azb-star')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();return;}const btn=e.target.closest?.('.download-card .download-btn');if(btn){if(isPaidProductButton(btn)) return;const card=btn.closest('.download-card');if(card)recordDownload(card,{source:'free-download-click'});}},true);
   document.addEventListener('keydown',function(e){const wrap=e.target.closest?.('.azb-stars');if(!wrap||!['1','2','3','4','5'].includes(e.key))return;e.preventDefault();const btn=wrap.querySelector('[data-rate="'+e.key+'"]');if(btn)btn.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:btn.getBoundingClientRect().left+2}));},true);
   window.azobssSoftwareStatsSingleSync290=loadRemote;
   window.azobssRenderSoftwareStatsFooter=applyAll;
@@ -5792,6 +5817,17 @@ async function verifyToyyibPayment(billCode){
       var data = await res.json().catch(function(){ return null; });
       if(data && (data.paid === true || data.status === 'paid')){
         sessionStorage.setItem(key, '1');
+        try{
+          var productId = localStorage.getItem('azobss_last_paid_product_id') || '';
+          var productSource = localStorage.getItem('azobss_last_paid_product_source') || 'Software';
+          var countKey = 'azobss_paid_product_download_counted_' + (orderId || billCode || productId);
+          if(productId && productSource === 'Software' && !localStorage.getItem(countKey)){
+            if(typeof window.azobssRecordPaidSoftwareDownload === 'function'){
+              window.azobssRecordPaidSoftwareDownload(productId, {orderId:orderId, billCode:billCode, productId:productId, source:'paid-verified'});
+              localStorage.setItem(countKey, '1');
+            }
+          }
+        }catch(_e){}
         console.log('AZOBSS payment verified; email trigger status:', data.emailSent, data.emailError || '');
         window.showAzobssPaymentSuccessPopup({ receiptUrl: data.receiptUrl || '' });
       }
