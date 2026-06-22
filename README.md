@@ -144,3 +144,9 @@ Checks:
 - Strike line is now semi-transparent and thinner so values like RM30 remain readable.
 - Keeps promo badge at top-left and final price only in the Buy Now button.
 - No PA/BM, My Purchases, Cart/Like/Bell/Message, Firebase Rules, or Render ENV changes.
+
+
+## AZOBSS Patch 276 - Promo Badge Diagonal Strike Fix
+- Old promo price line is now diagonal/slanted and semi-transparent for better readability.
+- Applies to Software Tools and CAD Tools only.
+- No Firebase Rules or Render ENV changes required.

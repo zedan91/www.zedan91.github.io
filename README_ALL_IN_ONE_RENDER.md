@@ -23,3 +23,9 @@ Public card display will show RM30 crossed out → RM20 with a Save % badge.
 
 ### Patch (275)
 Promo badge old-price strike line is lighter/transparent for better readability. No Render ENV or Firebase Rules update required.
+
+
+## AZOBSS Patch 276 - Promo Badge Diagonal Strike Fix
+- Old promo price line is now diagonal/slanted and semi-transparent for better readability.
+- Applies to Software Tools and CAD Tools only.
+- No Firebase Rules or Render ENV changes required.

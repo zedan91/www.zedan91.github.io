@@ -9746,6 +9746,45 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
 }
 </style>
 
+
+
+<style id="azobss-promo-badge-diagonal-strike-fix-276">
+/* AZOBSS 276: diagonal strikethrough for old promo price, lighter so the RM value stays readable. */
+html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
+  position:relative!important;
+  display:inline-block!important;
+  text-decoration:none!important;
+  padding:0 2px!important;
+}
+html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
+  content:"";
+  position:absolute!important;
+  left:-2px!important;
+  right:-2px!important;
+  top:52%!important;
+  height:2px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.38)!important;
+  box-shadow:0 0 4px rgba(0,0,0,.35)!important;
+  transform:rotate(-13deg)!important;
+  transform-origin:center!important;
+  pointer-events:none!important;
+}
+@media(max-width:760px){
+  html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
+    height:1.8px!important;
+    background:rgba(255,255,255,.36)!important;
+    transform:rotate(-14deg)!important;
+  }
+}
+@media(max-width:380px){
+  html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
+    height:1.6px!important;
+    background:rgba(255,255,255,.34)!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
