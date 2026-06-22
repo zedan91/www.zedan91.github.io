@@ -111,3 +111,10 @@ Checks:
 - Admin/semi-admin/staff can edit the promo original price from the existing Software/CAD edit modal.
 - PA/BM paid/verified download flow, My Purchases, Cart, Like, Bell, and Message badge are not touched.
 - No Firebase Rules or Render ENV update required.
+
+
+## (266) Software/CAD Promo Price Mobile Layout Fix
+- Fixes promo price block overlapping Buy Now/cart/stats footer on mobile cards.
+- Keeps promotional price display: old price struck through, final price highlighted, Save % badge.
+- Does not change payment amount logic; checkout still uses final selling price.
+- Does not touch PA/BM download flow, My Purchases, Cart/Like/Bell/Message badge logic.

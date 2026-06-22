@@ -8853,6 +8853,204 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
 })();
 </script>
 
+
+
+<style id="azobss-promo-price-mobile-card-layout-fix-266">
+/* AZOBSS 266: promo price made card taller/extra row. On phone, use a safe flex layout so price, Buy Now and cart never overlap the stats footer. */
+@media(max-width:760px){
+  html body #softwareGrid,
+  html body #softwareDownloadsGrid,
+  html body .downloads-grid{
+    align-items:stretch!important;
+  }
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    text-align:center!important;
+    height:auto!important;
+    min-height:560px!important;
+    max-height:none!important;
+    padding:18px 14px 64px!important;
+    overflow:hidden!important;
+    box-sizing:border-box!important;
+    grid-template-columns:none!important;
+    grid-template-rows:none!important;
+    grid-template-areas:none!important;
+    row-gap:0!important;
+  }
+  html body #softwareGrid > .download-card .software-card-media.az-logo-media,
+  html body #softwareDownloadsGrid > .download-card .software-card-media.az-logo-media,
+  html body .downloads-grid > .download-card .software-card-media.az-logo-media{
+    order:1!important;
+    width:72px!important;
+    height:72px!important;
+    min-height:72px!important;
+    flex:0 0 72px!important;
+    margin:0 auto 10px!important;
+  }
+  html body #softwareGrid > .download-card h3,
+  html body #softwareDownloadsGrid > .download-card h3,
+  html body .downloads-grid > .download-card h3{
+    order:2!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:50px!important;
+    max-height:72px!important;
+    margin:4px auto 8px!important;
+    padding:0 8px!important;
+    font-size:20px!important;
+    line-height:1.12!important;
+    overflow:hidden!important;
+    grid-area:auto!important;
+  }
+  html body #softwareGrid > .download-card .software-meta,
+  html body #softwareDownloadsGrid > .download-card .software-meta,
+  html body .downloads-grid > .download-card .software-meta{
+    order:3!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:26px!important;
+    max-height:54px!important;
+    margin:0 auto 10px!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:flex-start!important;
+    justify-content:center!important;
+    flex-wrap:wrap!important;
+    gap:6px!important;
+    overflow:hidden!important;
+    grid-area:auto!important;
+  }
+  html body #softwareGrid > .download-card p,
+  html body #softwareDownloadsGrid > .download-card p,
+  html body .downloads-grid > .download-card p{
+    order:4!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:92px!important;
+    max-height:118px!important;
+    margin:0 auto 10px!important;
+    padding:0 6px!important;
+    line-height:1.38!important;
+    overflow:hidden!important;
+    grid-area:auto!important;
+  }
+  html body #softwareGrid > .download-card .software-media-links,
+  html body #softwareDownloadsGrid > .download-card .software-media-links,
+  html body .downloads-grid > .download-card .software-media-links{
+    order:5!important;
+    margin:0 auto 8px!important;
+  }
+  html body #softwareGrid > .download-card .az-promo-price-block,
+  html body #softwareDownloadsGrid > .download-card .az-promo-price-block,
+  html body .downloads-grid > .download-card .az-promo-price-block{
+    order:20!important;
+    width:100%!important;
+    min-height:34px!important;
+    margin:6px auto 10px!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-wrap:wrap!important;
+    gap:6px!important;
+    line-height:1.1!important;
+    grid-area:auto!important;
+    flex:0 0 auto!important;
+  }
+  html body #softwareGrid > .download-card .az-promo-price-block .az-price-old,
+  html body #softwareDownloadsGrid > .download-card .az-promo-price-block .az-price-old,
+  html body .downloads-grid > .download-card .az-promo-price-block .az-price-old{
+    font-size:12px!important;
+  }
+  html body #softwareGrid > .download-card .az-promo-price-block .az-price-new,
+  html body #softwareDownloadsGrid > .download-card .az-promo-price-block .az-price-new,
+  html body .downloads-grid > .download-card .az-promo-price-block .az-price-new{
+    font-size:20px!important;
+    line-height:1!important;
+  }
+  html body #softwareGrid > .download-card .az-promo-price-block .az-promo-chip,
+  html body #softwareDownloadsGrid > .download-card .az-promo-price-block .az-promo-chip,
+  html body .downloads-grid > .download-card .az-promo-price-block .az-promo-chip{
+    font-size:10px!important;
+    padding:3px 7px!important;
+  }
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn{
+    order:21!important;
+    grid-area:auto!important;
+    margin:0 auto 8px!important;
+    width:min(205px,88%)!important;
+    max-width:88%!important;
+    min-height:44px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  html body #softwareGrid > .download-card .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row{
+    order:21!important;
+    grid-area:auto!important;
+    width:min(235px,94%)!important;
+    max-width:94%!important;
+    min-height:46px!important;
+    margin:0 auto 10px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:8px!important;
+    flex:0 0 auto!important;
+  }
+  html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn{
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    flex:1 1 auto!important;
+    min-height:44px!important;
+    margin:0!important;
+    padding:0 12px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:5px!important;
+  }
+  html body #softwareGrid > .download-card .az-software-buy-cart-row .az-card-cart-btn,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row .az-card-cart-btn,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row .az-card-cart-btn{
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    min-height:42px!important;
+    flex:0 0 42px!important;
+  }
+  html body #softwareGrid > .download-card .software-card-admin-actions,
+  html body #softwareDownloadsGrid > .download-card .software-card-admin-actions,
+  html body .downloads-grid > .download-card .software-card-admin-actions{
+    order:22!important;
+    margin:6px auto 0!important;
+  }
+  html body #softwareGrid > .download-card > .software-stats,
+  html body #softwareDownloadsGrid > .download-card > .software-stats,
+  html body .downloads-grid > .download-card > .software-stats{
+    z-index:30!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
