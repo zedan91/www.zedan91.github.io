@@ -2145,7 +2145,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   function azPromoPriceHtml(item){
     const p = azPromoPriceInfo(item);
     if(!p.show) return '';
-    return `<div class="az-promo-price-block" title="Promotional price"><span class="az-price-old">${esc(p.old)}</span><span class="az-price-new">${esc(p.sale)}</span><span class="az-promo-chip">Save ${esc(p.percent)}%</span></div>`;
+    return `<div class="az-promo-price-block az-promo-no-sale-text" title="Promotional price"><span class="az-price-old">${esc(p.old)}</span><span class="az-promo-chip">Save ${esc(p.percent)}%</span></div>`;
   }
 function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
   const MAX_MEDIA_BYTES = 900 * 1024;
@@ -5422,6 +5422,28 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   html body .cad-item .download-btn{
     order:90!important;width:min(220px,88%)!important;max-width:88%!important;min-height:46px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;margin:0 auto 10px!important;flex:0 0 auto!important;position:relative!important;z-index:12!important;
   }
+}
+</style>
+
+
+
+<style id="azobss-promo-price-button-only-fix-268">
+/* AZOBSS 268: final promo price is shown only inside the Buy Now button.
+   Promo block keeps old price + save badge only, preventing duplicate RM text above the button. */
+.az-promo-price-block.az-promo-no-sale-text{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  flex-wrap:wrap;
+  margin:6px auto 8px;
+  min-height:22px;
+}
+.az-promo-price-block.az-promo-no-sale-text .az-price-new{display:none!important;}
+.az-promo-price-block.az-promo-no-sale-text .az-price-old{font-size:12.5px!important;opacity:.92;}
+.az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:10px!important;padding:3px 7px!important;}
+@media(max-width:620px){
+  .az-promo-price-block.az-promo-no-sale-text{margin:5px auto 7px!important;gap:6px!important;}
 }
 </style>
 
