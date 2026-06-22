@@ -2995,7 +2995,7 @@ html.az-shared-link-hydrating .cad-card::after,
 html.az-shared-link-hydrating .cad-item::after,
 html.az-shared-link-hydrating .cad-resource-card::after,
 html.az-shared-link-hydrating .cad-tool-card::after{
-  content:'Loading product controls…'!important;
+  content:'Preparing buttons…'!important;
   position:absolute!important;
   left:14px!important;
   right:14px!important;
@@ -3020,7 +3020,7 @@ html.az-shared-link-hydrating .cad-tool-card::after{
 html:not(.az-shared-link-hydrating) .az-shared-link-ready-soft{animation:azSharedLinkReady278 .18s ease-out both!important;}
 @keyframes azSharedLinkReady278{from{opacity:.84;transform:translateY(2px)}to{opacity:1;transform:none}}
 
-/* AZOBSS 279: on shared product links, keep the product grid invisible until auth/stats/share controls finish one stable render. This prevents guest seeing controls/stats blink during hydration. */
+/* AZOBSS 280: show shared product cards immediately. Only controls/stats stay skeleton-hidden until auth/share/stats settle, so guest links do not feel stuck. */
 html.az-shared-link-hydrating #softwareDownloadsGrid,
 html.az-shared-link-hydrating #softwareGrid,
 html.az-shared-link-hydrating .downloads-grid,
@@ -3029,61 +3029,9 @@ html.az-shared-link-hydrating #cadToolsGrid,
 html.az-shared-link-hydrating .cad-grid,
 html.az-shared-link-hydrating .cad-tools-shop,
 html.az-shared-link-hydrating .cad-card-grid{
-  opacity:0!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
-  min-height:420px!important;
-  transition:none!important;
-}
-html.az-shared-link-hydrating .downloads-inner,
-html.az-shared-link-hydrating .cad-inner,
-html.az-shared-link-hydrating main{
-  position:relative!important;
-}
-html.az-shared-link-hydrating .downloads-inner::after,
-html.az-shared-link-hydrating .cad-inner::after,
-html.az-shared-link-hydrating main::after{
-  content:'Preparing shared product…'!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:min(340px,86vw)!important;
-  min-height:170px!important;
-  margin:18px auto!important;
-  border-radius:22px!important;
-  border:1px solid rgba(45,212,191,.26)!important;
-  background:linear-gradient(90deg,rgba(15,23,42,.90),rgba(30,41,59,.98),rgba(15,23,42,.90))!important;
-  background-size:230% 100%!important;
-  color:#dffbff!important;
-  font-size:13px!important;
-  font-weight:950!important;
-  letter-spacing:.02em!important;
-  box-shadow:0 18px 44px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.04)!important;
-  animation:azSharedLinkSkeleton278 1.05s ease-in-out infinite!important;
-}
-html.az-shared-link-stable #softwareDownloadsGrid,
-html.az-shared-link-stable #softwareGrid,
-html.az-shared-link-stable .downloads-grid,
-html.az-shared-link-stable #cadDownloadsGrid,
-html.az-shared-link-stable #cadToolsGrid,
-html.az-shared-link-stable .cad-grid,
-html.az-shared-link-stable .cad-tools-shop,
-html.az-shared-link-stable .cad-card-grid{
   opacity:1!important;
   visibility:visible!important;
-}
-@media(max-width:700px){
-  html.az-shared-link-hydrating #softwareDownloadsGrid,
-  html.az-shared-link-hydrating #softwareGrid,
-  html.az-shared-link-hydrating .downloads-grid,
-  html.az-shared-link-hydrating #cadDownloadsGrid,
-  html.az-shared-link-hydrating #cadToolsGrid,
-  html.az-shared-link-hydrating .cad-grid,
-  html.az-shared-link-hydrating .cad-tools-shop,
-  html.az-shared-link-hydrating .cad-card-grid{min-height:360px!important;}
-  html.az-shared-link-hydrating .downloads-inner::after,
-  html.az-shared-link-hydrating .cad-inner::after,
-  html.az-shared-link-hydrating main::after{min-height:145px!important;margin-top:14px!important;font-size:12px!important;}
+  pointer-events:auto!important;
 }
 
 </style>
@@ -9993,9 +9941,9 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   var html = document.documentElement;
   if(!html.classList.contains('az-shared-link-hydrating')) return;
   var start = Date.now();
-  var maxWait = 4600;
-  var minWait = 900;
-  var stableNeeded = 4;
+  var maxWait = 2200;
+  var minWait = 260;
+  var stableNeeded = 2;
   var stableCount = 0;
   var lastSignature = '';
   var timer = 0;
@@ -10065,7 +10013,7 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
     if(!list.length || elapsed < minWait) return false;
     var card = targetCard(list);
     if(!hasControlsSettled(card)) return false;
-    if(Date.now() - lastMutationAt < 280 && elapsed < maxWait) return false;
+    if(Date.now() - lastMutationAt < 120 && elapsed < maxWait) return false;
     var sig = signature(list, card);
     if(sig === lastSignature) stableCount += 1; else { lastSignature = sig; stableCount = 1; }
     return stableCount >= stableNeeded;
