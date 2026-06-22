@@ -12,3 +12,10 @@ Use:
 - Promo Original Price: optional old price, e.g. RM30
 
 Public card display will show RM30 crossed out → RM20 with a Save % badge.
+
+
+## (274)-AZOBSS-PROMO-BADGE-OLD-PRICE-BIGGER-FIX_20260622
+- Enlarged the crossed original promo price text (example: RM30) so it is clearer on mobile.
+- Kept the promo badge compact at the top-left and avoided product logo overlap.
+- Final selling price remains only inside the Buy Now button.
+- No changes to PA/BM, My Purchases, Cart/Like/Bell/Message badge, Firebase Rules, or Render ENV.
