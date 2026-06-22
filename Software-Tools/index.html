@@ -5676,7 +5676,8 @@ async function verifyToyyibPayment(billCode){
     const res = await fetch(`${window.API_BASE_URL || 'https://azobss-backend.onrender.com'}/api/verify-payment?billCode=${billCode}`);
     const data = await res.json();
 
-    if(data && (data.paid === true || data.status === 'paid')){
+    var confirmed = !!(data && data.paid === true && (data.verified === true || data.paymentConfirmed === true || data.toyyibVerified === true));
+    if(confirmed){
       alert('Payment verified successfully! Download unlocked.');
       document.body.classList.add('payment-unlocked');
     }else{
@@ -5815,7 +5816,8 @@ async function verifyToyyibPayment(billCode){
       if(orderId) qs.set('orderId', orderId);
       var res = await fetch(api + '/api/verify-payment?' + qs.toString(), {cache:'no-store'});
       var data = await res.json().catch(function(){ return null; });
-      if(data && (data.paid === true || data.status === 'paid')){
+      var confirmed = !!(data && data.paid === true && (data.verified === true || data.paymentConfirmed === true || data.toyyibVerified === true));
+      if(confirmed){
         sessionStorage.setItem(key, '1');
         try{
           var productId = localStorage.getItem('azobss_last_paid_product_id') || '';

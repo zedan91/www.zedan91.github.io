@@ -1733,18 +1733,31 @@ function azToyyibResultCandidates(result) {
   }
   return out;
 }
-function azToyyibPaidStatusValue(value) {
+function azToyyibPaidStatusValue(value, fieldName = "") {
   const v = String(value ?? "").trim().toLowerCase();
-  return v === "1" || v === "paid" || v === "success" || v === "successful" || v === "completed" || v === "settled";
+  const key = String(fieldName || "").trim().toLowerCase();
+  if (!v) return false;
+  if (["cancel", "cancelled", "canceled", "failed", "fail", "unpaid", "pending", "processing", "void", "expired", "declined", "rejected"].includes(v)) return false;
+
+  // Important: do not treat a generic API field such as { success:true } or status=success as payment paid.
+  // ToyyibPay payment is only trusted when a real payment/bill transaction status field confirms it.
+  if (v === "1") return true;
+  if (["paid", "successful", "completed", "settled"].includes(v)) return true;
+  if (v === "success") {
+    return /(billpayment|billpaymentstatus|payment|transaction)/i.test(key) && key !== "success";
+  }
+  return false;
 }
 function azToyyibTxPaid(tx = {}) {
   if (!tx || typeof tx !== "object") return false;
+  const negativeFields = [tx.billpaymentStatus, tx.billPaymentStatus, tx.billpayment_status, tx.billStatus, tx.paymentStatus, tx.payment_status, tx.transaction_status, tx.transactionStatus, tx.status_id, tx.status];
+  if (negativeFields.some(v => ["cancel", "cancelled", "canceled", "failed", "fail", "unpaid", "pending", "processing", "void", "expired", "declined", "rejected"].includes(String(v ?? "").trim().toLowerCase()))) return false;
   const fields = [
-    tx.billpaymentStatus, tx.billPaymentStatus, tx.billpayment_status, tx.billStatus,
-    tx.status, tx.status_id, tx.paymentStatus, tx.payment_status, tx.transaction_status,
-    tx.transactionStatus, tx.transaction_status_id, tx.paid, tx.success
+    ["billpaymentStatus", tx.billpaymentStatus], ["billPaymentStatus", tx.billPaymentStatus], ["billpayment_status", tx.billpayment_status], ["billStatus", tx.billStatus],
+    ["status_id", tx.status_id], ["paymentStatus", tx.paymentStatus], ["payment_status", tx.payment_status], ["transaction_status", tx.transaction_status],
+    ["transactionStatus", tx.transactionStatus], ["transaction_status_id", tx.transaction_status_id]
   ];
-  return fields.some(azToyyibPaidStatusValue);
+  return fields.some(([key, value]) => azToyyibPaidStatusValue(value, key));
 }
 function azToyyibTxBillCode(tx = {}) {
   return cleanPremiumText(tx.billCode || tx.billcode || tx.BillCode || tx.bill_code || tx.refno || tx.billcode_id || "", 100);
@@ -2007,6 +2020,7 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
     const nowIso = new Date().toISOString();
     const paidAt = latest.paidAt || opts.paidAt || nowIso;
     const paymentReference = opts.paymentReference || (tx && (tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno)) || latest.paymentReference || "";
+    const verifiedByToyyib = opts.verified === true || !!tx;
     latest = upsertPremiumOrder({
       ...latest,
       status: "paid",
@@ -2016,6 +2030,9 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       toyyibCallback: callbackData || latest.toyyibCallback || undefined,
       paidAt,
       paidFinalizedAt: latest.paidFinalizedAt || nowIso,
+      toyyibVerifiedAt: verifiedByToyyib ? (latest.toyyibVerifiedAt || nowIso) : latest.toyyibVerifiedAt || "",
+      paymentVerifiedAt: verifiedByToyyib ? (latest.paymentVerifiedAt || nowIso) : latest.paymentVerifiedAt || "",
+      paymentVerificationSource: verifiedByToyyib ? "toyyibpay-api" : (latest.paymentVerificationSource || ""),
       callbackTrustBypass: opts.callbackTrustBypass || latest.callbackTrustBypass || false
     });
 
@@ -2052,6 +2069,7 @@ async function refreshToyyibOrder(order, req) {
       return order;
     }
     return await azFinalizePaidOrderOnce(order, req, {
+      verified: true,
       toyyibTransaction: verify.tx,
       paymentReference: verify.paymentReference || order.paymentReference || ""
     });
@@ -3052,16 +3070,20 @@ function isPaBmPremiumOrder(order = {}) {
 }
 
 function toyyibStatusIsPaid(data = {}) {
-  const values = [
-    data.status_id,
-    data.status,
-    data.billpaymentStatus,
-    data.billPaymentStatus,
-    data.payment_status,
-    data.paymentStatus,
-    data.transaction_status
-  ].map(v => String(v ?? "").trim().toLowerCase());
-  return values.some(v => v === "1" || v === "paid" || v === "success" || v === "successful");
+  // Strict callback gate: a generic status=success is not enough.
+  // Some return/cancel flows can still include success-like words for page/API status.
+  const statusPairs = [
+    ["status_id", data.status_id],
+    ["billpaymentStatus", data.billpaymentStatus],
+    ["billPaymentStatus", data.billPaymentStatus],
+    ["billpayment_status", data.billpayment_status],
+    ["payment_status", data.payment_status],
+    ["paymentStatus", data.paymentStatus],
+    ["transaction_status", data.transaction_status],
+    ["transactionStatus", data.transactionStatus],
+    ["status", data.status]
+  ];
+  return statusPairs.some(([key, value]) => azToyyibPaidStatusValue(value, key));
 }
 
 function getToyyibBillCode(data = {}) {
@@ -4457,23 +4479,60 @@ async function handler(req, res) {
       const billCode = cleanPremiumText(parsed.query.billCode || parsed.query.billcode || "", 100);
       const orderId = cleanPremiumText(parsed.query.orderId || parsed.query.order_id || "", 160);
       let order = await findPremiumOrderByAnyDeep({ orderId, billCode });
-      if (!order) return send(res, 404, JSON.stringify({ ok:false, paid:false, status:"order_not_found", error:"Order not found" }, null, 2), "application/json");
-      if (order.status !== "paid") order = await refreshToyyibOrder(order, req);
-      order = await findPremiumOrderByAnyDeep({ orderId: order.orderId || orderId, billCode: order.billCode || billCode }) || order;
-      if (order.status === "paid") {
+      if (!order) return send(res, 404, JSON.stringify({ ok:false, paid:false, verified:false, status:"order_not_found", error:"Order not found" }, null, 2), "application/json");
+
+      const isToyyibOrder = !!(order.billCode || billCode || String(order.paymentMethod || "").toLowerCase().includes("toyyib"));
+      let verified = false;
+      let verifyResult = null;
+
+      if (isToyyibOrder) {
+        verifyResult = await azVerifyToyyibPaidTransaction({ ...order, billCode: order.billCode || billCode });
+        if (verifyResult && verifyResult.paid) {
+          verified = true;
+          order = await azFinalizePaidOrderOnce(order, req, {
+            verified: true,
+            toyyibTransaction: verifyResult.tx,
+            paymentReference: verifyResult.paymentReference || order.paymentReference || ""
+          });
+          order = await findPremiumOrderByAnyDeep({ orderId: order.orderId || orderId, billCode: order.billCode || billCode }) || order;
+        } else {
+          // Safety: local status can never unlock software/CAD unless ToyyibPay API confirms paid.
+          // This prevents cancelled/abandoned payment returns from sending download links or receipts.
+          if (String(order.status || "").toLowerCase() === "paid" && !order.toyyibVerifiedAt) {
+            try {
+              order = upsertPremiumOrder({ ...order, status:"pending", paymentVerificationBlockedAt:new Date().toISOString(), previousUnsafeStatus:"paid", paymentVerificationReason:(verifyResult && verifyResult.reason) || "not_paid" });
+            } catch (_) {}
+          }
+          return send(res, 200, JSON.stringify({
+            ok:true,
+            paid:false,
+            verified:false,
+            paymentConfirmed:false,
+            orderId:order.orderId,
+            status:"pending",
+            billCode:order.billCode || billCode,
+            paymentUrl:order.paymentUrl,
+            reason:(verifyResult && verifyResult.reason) || "not_paid"
+          }, null, 2), "application/json");
+        }
+      } else if (String(order.status || "").toLowerCase() === "paid") {
+        verified = true;
+      }
+
+      if (String(order.status || "").toLowerCase() === "paid" && verified) {
         if (isPaBmPremiumOrder(order)) {
           return send(res, 200, JSON.stringify({
-            ok:true, success:true, paid:true, paBm:true, paBmUpdated:true,
+            ok:true, success:true, paid:true, verified:true, paymentConfirmed:true, paBm:true, paBmUpdated:true,
             orderId:order.orderId, status:order.status, billCode:order.billCode,
             updatedCount:Number(order.paBmPaidSyncedCount || 0),
             paymentReference:order.paymentReference || ""
           }, null, 2), "application/json");
         }
-        order = makeDownloadForOrder(order);
+        if (!order.downloadToken) order = makeDownloadForOrder(order);
         if (!order.emailSentAt) order = await maybeSendDownloadEmail(order, req);
-        return send(res, 200, JSON.stringify({ ...paidPayload(order, req), emailSent: !!order.emailSentAt, emailError: order.emailError || null, emailTo: order.emailTo || order.user?.email || order.email || null }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ...paidPayload(order, req), verified:true, paymentConfirmed:true, emailSent: !!order.emailSentAt, emailError: order.emailError || null, emailTo: order.emailTo || order.user?.email || order.email || null }, null, 2), "application/json");
       }
-      return send(res, 200, JSON.stringify({ ok:true, paid:false, orderId:order.orderId, status:order.status || "pending", billCode:order.billCode, paymentUrl:order.paymentUrl }, null, 2), "application/json");
+      return send(res, 200, JSON.stringify({ ok:true, paid:false, verified:false, paymentConfirmed:false, orderId:order.orderId, status:order.status || "pending", billCode:order.billCode, paymentUrl:order.paymentUrl }, null, 2), "application/json");
     }
 
     if (pathname === "/api/toyyib-callback" && (req.method === "POST" || req.method === "GET")) {
@@ -4506,13 +4565,17 @@ async function handler(req, res) {
           return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false, verification:"pending" }), "application/json");
         }
 
+        if (String(process.env.AZOBSS_ALLOW_UNVERIFIED_TOYYIB_CALLBACK || "0") !== "1") {
+          console.warn("ToyyibPay callback claimed paid but strict verification is required; not finalizing without API verification:", JSON.stringify({ orderId: order.orderId, billCode: order.billCode }).slice(0, 500));
+          return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false, verified:false, verification:"required" }), "application/json");
+        }
         order = await azFinalizePaidOrderOnce(order, req, {
           paymentReference: data.transaction_id || data.billpaymentInvoiceNo || data.refno || data.order_id || order.paymentReference || "",
           toyyibCallback: data,
           callbackTrustBypass: true
         });
         const latest = await findPremiumOrderByAnyDeep({ orderId: order.orderId, billCode: order.billCode }) || order;
-        console.log("ToyyibPay callback processed paid with trust bypass:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, isPaBm: isPaBmPremiumOrder(latest), emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
+        console.log("ToyyibPay callback processed paid with explicit trust bypass:", JSON.stringify({ orderId: latest.orderId, billCode: latest.billCode, isPaBm: isPaBmPremiumOrder(latest), emailSentAt: latest.emailSentAt || null, emailError: latest.emailError || null }).slice(0, 1000));
         return send(res, 200, JSON.stringify({ ok:true, status:"paid", verified:false, trustBypass:true, paBmUpdated: isPaBmPremiumOrder(latest), emailSent: !!latest.emailSentAt, emailError: latest.emailError || null }), "application/json");
       }
 

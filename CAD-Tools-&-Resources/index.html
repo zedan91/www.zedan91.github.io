@@ -2573,30 +2573,16 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       if(fallback){successBox.innerHTML=`<b>Fallback available</b><br><span>The backend is not ready or environment variables are incomplete. You may still open the manual payment link.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`; successBox.classList.add('is-open');}
     }finally{openPaymentBtn.disabled=false; openPaymentBtn.textContent=originalText || 'Open Payment';}
   });
-  completeBtn?.addEventListener('click', async()=>{
+  completeBtn?.addEventListener('click', ()=>{
     if(!currentProduct)return;
     errorBox.textContent=''; successBox.classList.remove('is-open');
     if(!requireBuyerEmail()) return;
     const email = buyerEmail();
-    completeBtn.disabled=true; completeBtn.textContent='Processing...';
-    try{
-      let authHeaders=await azobssFirebaseAuthHeader(false);
-      let res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json',...authHeaders},body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
-      let data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
-      if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
-        authHeaders=await azobssFirebaseAuthHeader(true);
-        res = await fetch(API_BASE + '/api/premium/complete-purchase', {method:'POST',headers:{'Content-Type':'application/json',...authHeaders},body:JSON.stringify({product:{...currentProduct,premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email},buyerEmail:email,email:email,buyerPhone:'01135600723',paymentMethod:currentMethod,paymentReference:''})});
-        data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
-      }
-      if(!res.ok || !data.ok) throw new Error(azobssFriendlyApiError(res.status,data,'Payment verification failed'));
-      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
-      const downloadUrl = toAbsolute(data.downloadUrl);
-      const receiptUrl = toAbsolute(data.receiptUrl);
-      successBox.innerHTML = `<b>Payment Successful ✅</b><br><span>Your temporary download link is active according to the product settings and download limit.</span><br><a href="${esc(downloadUrl)}" target="_blank" rel="noopener">Download File</a><a href="${esc(receiptUrl)}" target="_blank" rel="noopener">Download Receipt</a>`;
-      successBox.classList.add('is-open');
-      if(window.showAzobssPaymentSuccessPopup) window.showAzobssPaymentSuccessPopup({receiptUrl: receiptUrl});
-    }catch(err){errorBox.textContent=err.message || 'Failed to process payment.';}
-    finally{completeBtn.disabled=false; refreshManualCompleteVisibility();}
+    completeBtn.disabled=true;
+    completeBtn.textContent='Pending Verification';
+    successBox.innerHTML = `<b>Payment proof submitted ⏳</b><br><span>Your payment must be verified by ToyyibPay before any download link or receipt is released.</span><br><span>Status: Pending Verification</span>${email ? `<br><span>Buyer email: ${esc(email)}</span>` : ''}`;
+    successBox.classList.add('is-open');
+    setTimeout(()=>{ completeBtn.disabled=false; refreshManualCompleteVisibility(); }, 800);
   });
   document.addEventListener('click', e=>{
     const trigger = e.target.closest('[data-azobss-premium-buy="1"]');
@@ -2617,7 +2603,8 @@ async function verifyToyyibPayment(billCode){
     const res = await fetch(`${window.API_BASE_URL || 'https://azobss-backend.onrender.com'}/api/verify-payment?billCode=${billCode}`);
     const data = await res.json();
 
-    if(data && (data.paid === true || data.status === 'paid')){
+    var confirmed = !!(data && data.paid === true && (data.verified === true || data.paymentConfirmed === true || data.toyyibVerified === true));
+    if(confirmed){
       alert('Payment verified successfully! Download unlocked.');
       document.body.classList.add('payment-unlocked');
     }else{
@@ -2756,7 +2743,8 @@ async function verifyToyyibPayment(billCode){
       if(orderId) qs.set('orderId', orderId);
       var res = await fetch(api + '/api/verify-payment?' + qs.toString(), {cache:'no-store'});
       var data = await res.json().catch(function(){ return null; });
-      if(data && (data.paid === true || data.status === 'paid')){
+      var confirmed = !!(data && data.paid === true && (data.verified === true || data.paymentConfirmed === true || data.toyyibVerified === true));
+      if(confirmed){
         sessionStorage.setItem(key, '1');
         console.log('AZOBSS payment verified; email trigger status:', data.emailSent, data.emailError || '');
         window.showAzobssPaymentSuccessPopup({ receiptUrl: data.receiptUrl || '' });
