@@ -1694,9 +1694,21 @@ function readPremiumOrders() { return readPremiumJson(PREMIUM_ORDERS_FILE, []); 
 function writePremiumOrders(orders) { writePremiumJson(PREMIUM_ORDERS_FILE, (orders || []).slice(0, 500)); }
 function upsertPremiumOrder(order) {
   const orders = readPremiumOrders();
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
   const idx = orders.findIndex(o => o.orderId === order.orderId || (order.billCode && o.billCode === order.billCode));
-  if (idx >= 0) orders[idx] = { ...orders[idx], ...order, updatedAt: new Date().toISOString() };
-  else orders.unshift({ ...order, updatedAt: new Date().toISOString() });
+  const previous = idx >= 0 ? (orders[idx] || {}) : {};
+  const merged = {
+    ...previous,
+    ...order,
+    createdAt: order.createdAt || previous.createdAt || nowIso,
+    createdAtMs: Number(order.createdAtMs || previous.createdAtMs || Date.parse(order.createdAt || previous.createdAt || "") || nowMs) || nowMs,
+    paidAtMs: Number(order.paidAtMs || previous.paidAtMs || Date.parse(order.paidAt || previous.paidAt || "") || 0) || 0,
+    updatedAt: nowIso,
+    updatedAtMs: nowMs
+  };
+  if (idx >= 0) orders[idx] = merged;
+  else orders.unshift(merged);
   writePremiumOrders(orders);
   const saved = idx >= 0 ? orders[idx] : orders[0];
   azFireAndForget(azPersistPremiumOrder(saved), "AZOBSS premium order Firestore persist failed:");
@@ -2911,9 +2923,8 @@ async function azFinalizeCommissionForOrder(order = {}){
 }
 
 function savePremiumOrder(order) {
-  const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []);
-  orders.unshift(order);
-  writePremiumJson(PREMIUM_ORDERS_FILE, orders.slice(0, 200));
+  if (!order || !order.orderId) return;
+  upsertPremiumOrder(order);
 }
 
 function savePremiumToken(tokenData) {

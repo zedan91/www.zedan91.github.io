@@ -1,0 +1,26 @@
+AZOBSS PATCH 297A - Admin Payments Software/CAD Premium Orders Fix
+
+Issue:
+- Admin Dashboard > Payments & Totals only read Firestore purchaseLogs.
+- Software/CAD ToyyibPay orders are stored through backend premiumOrders / premium-orders.json.
+- Result: PA/BM purchase records appeared, but Software/CAD purchases were not counted in admin payment totals/list.
+
+Fix:
+- admin/index.html now loads Software/CAD premiumOrders via protected backend endpoint:
+  /api/admin/export?type=premiumOrders&format=json
+- Payment totals now merge:
+  1) purchaseLogs = PA/BM
+  2) premiumOrders = Software/CAD
+- Software/CAD totals, paid/pending count, and latest payment list now include premiumOrders.
+- Purchase Records tab also shows premiumOrders below purchaseLogs for admin visibility.
+- deploy-server.js upsertPremiumOrder now saves createdAtMs / updatedAtMs / paidAtMs for stable dashboard sorting.
+- savePremiumOrder now uses upsertPremiumOrder so manual/admin test purchase also persists to Firestore premiumOrders.
+
+Safety:
+- PA/BM strict paid verification and download counter logic were not changed.
+- ToyyibPay cancel/incomplete safety gate was not weakened.
+- No Firebase Rules update required because dashboard reads premiumOrders through backend admin-protected endpoint, and backend writes using Firebase Admin SDK.
+
+Deploy:
+- Deploy this ZIP to GitHub Pages and Render backend.
+- Render deploy is recommended because deploy-server.js timestamp/persistence patch is included.
