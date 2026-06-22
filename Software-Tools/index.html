@@ -9365,6 +9365,88 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
 }
 </style>
 
+
+<style id="azobss-promo-badge-compact-no-overlap-fix-270">
+/* AZOBSS 270: compact top-left promo badge so it keeps the requested top-left position without covering the product logo/image. */
+html body .download-card,
+html body .cad-card,
+html body .cad-item,
+html body .cad-resource-card,
+html body .cad-tool-card{
+  position:relative!important;
+}
+html body #softwareGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+html body #softwareDownloadsGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+html body .downloads-grid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+html body .cad-card .az-promo-price-block.az-promo-no-sale-text,
+html body .cad-item .az-promo-price-block.az-promo-no-sale-text,
+html body .cad-resource-card .az-promo-price-block.az-promo-no-sale-text,
+html body .cad-tool-card .az-promo-price-block.az-promo-no-sale-text{
+  position:absolute!important;
+  top:12px!important;
+  left:12px!important;
+  width:76px!important;
+  max-width:76px!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:5px 6px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-wrap:nowrap!important;
+  gap:2px!important;
+  line-height:1!important;
+  border-radius:14px!important;
+  z-index:9!important;
+  transform:rotate(-2deg)!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.24),0 0 0 1px rgba(255,255,255,.08),0 0 20px rgba(245,158,11,.20)!important;
+}
+html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
+  display:block!important;
+  width:100%!important;
+  font-size:9.5px!important;
+  line-height:1!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  letter-spacing:.1px!important;
+}
+html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  padding:2px 0!important;
+  font-size:8.2px!important;
+  line-height:1.05!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  letter-spacing:.15px!important;
+  border-radius:999px!important;
+}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+  html body #softwareDownloadsGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .downloads-grid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-item .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-resource-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-tool-card .az-promo-price-block.az-promo-no-sale-text{
+    top:10px!important;
+    left:10px!important;
+    width:68px!important;
+    max-width:68px!important;
+    padding:4px 5px!important;
+    border-radius:12px!important;
+  }
+  html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{font-size:8.6px!important;}
+  html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:7.4px!important;padding:2px 0!important;}
+}
+</style>
+
 </body>
 </html>
 
