@@ -1538,11 +1538,14 @@ let azobssPresenceHeartbeatTimer = null;
 
 async function azobssCleanupCollection(collectionName){
  try{
+ const saved = (typeof getSavedUser === 'function' ? getSavedUser() : null) || {};
+ const isAdminUser = (typeof isAzobssAdmin === 'function' && isAzobssAdmin(saved));
+ if(!isAdminUser) return;
  const snap=await getDocs(query(collection(db,collectionName),orderBy("createdAt","desc")));
  if(snap.size<=25) return;
  const extra=snap.docs.slice(25);
  for(const d of extra){ await deleteDoc(d.ref);} 
- }catch(e){console.warn("cleanup",e)}
+ }catch(e){ if(e && (e.code === 'permission-denied' || /permission/i.test(String(e.message||'')))) return; console.warn("cleanup",e)}
 }
 function firestoreMs(value){
   if(!value) return 0;

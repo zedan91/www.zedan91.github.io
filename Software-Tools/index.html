@@ -3550,9 +3550,17 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function azLocalLogoUrl(productId, name){
     return 'images/logo/' + azSafeLogoFileName(productId, name) + '.png';
   }
+  function azIsSafeVisibleImageUrl(url){
+    const raw = String(url || '').trim();
+    if(!raw) return false;
+    if(/^(data:image\/|blob:|https?:\/\/)/i.test(raw)) return true;
+    // Avoid old missing repo paths like /Software-Tools/img/*.png that create 404 noise before fallback.
+    return false;
+  }
   function azLogoSrcForItem(item){
-    const local = azLocalLogoUrl(item?.productId || item?.id, item?.name);
-    return item?.imageUrl || local;
+    const uploaded = String(item?.imageUrl || item?.image || '').trim();
+    if(azIsSafeVisibleImageUrl(uploaded)) return uploaded;
+    return azFaviconUrlFromLink(item?.downloadLink || item?.secureDownloadLink || item?.paymentLink || item?.stripeLink || item?.link) || '';
   }
 
   const MAX_MEDIA_BYTES = 900 * 1024;
@@ -4014,7 +4022,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const mediaSrc = item.imageUrl || item.gifUrl;
     const logoSrc = azLogoSrcForItem(item);
     const logoFallback = azFaviconUrlFromLink(item.downloadLink || item.secureDownloadLink || item.paymentLink || item.stripeLink || item.link);
-    const mediaHtml = `<div class="software-card-media az-logo-media"><img class="software-logo-img" src="${esc(logoSrc)}" data-fallback-src="${esc(logoFallback)}" alt="${esc(item.name)} logo" loading="lazy"><span class="software-logo-initial">${esc(item.icon || (item.name||'').slice(0,2).toUpperCase())}</span></div>`;
+    const fallbackAttr = logoFallback ? ` data-fallback-src="${esc(logoFallback)}"` : '';
+    const imgHtml = logoSrc ? `<img class="software-logo-img" src="${esc(logoSrc)}"${fallbackAttr} alt="${esc(item.name)} logo" loading="lazy">` : '';
+    const mediaHtml = `<div class="software-card-media az-logo-media ${logoSrc ? '' : 'is-fallback'}">${imgHtml}<span class="software-logo-initial">${esc(item.icon || (item.name||'').slice(0,2).toUpperCase())}</span></div>`;
     const gifHtml = item.gifUrl && item.imageUrl ? `<div class="software-media-links"><a class="software-media-demo azobss-gif-preview-link" href="${esc(item.gifUrl)}" data-gif-preview="${esc(item.gifUrl)}" target="_blank" rel="noopener" title="Hover to preview GIF">👁 Preview</a></div>` : '';
     const meta = [item.category, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
@@ -5255,7 +5265,7 @@ line-height:1.6;
 <script type="module" id="azobss-software-stats-firestore-final-js">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 (function(){
   'use strict';
   const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
@@ -5267,11 +5277,16 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
   const VOTER_KEY='azobss_rating_voter_id_v2';
   let renderTimer=0, syncBusy=false, authPromise=null;
   function ensureAuth(){
+    // AZOBSS 282: do not force Firebase Anonymous Auth for public stats.
+    // Guest users can read public counters and see instant seeded stats without noisy auth errors.
     if(auth.currentUser) return Promise.resolve(auth.currentUser);
     if(authPromise) return authPromise;
     authPromise=new Promise((resolve)=>{
-      const off=onAuthStateChanged(auth,(u)=>{ if(u){off();resolve(u);} });
-      setTimeout(async()=>{try{const c=await signInAnonymously(auth);resolve(c.user);}catch(e){console.warn('AZOBSS stats auth failed. Enable Firebase Anonymous Auth.',e);resolve(auth.currentUser||null);}},250);
+      let done=false;
+      let off=function(){};
+      const finish=(u)=>{ if(done) return; done=true; try{off();}catch(e){} resolve(u||auth.currentUser||null); };
+      try{ off=onAuthStateChanged(auth,(u)=>finish(u||null)); }catch(e){}
+      setTimeout(()=>finish(auth.currentUser||null),250);
     });
     return authPromise;
   }
@@ -6822,7 +6837,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   async function updateBadge(){
     const bell=getBell();
     const badge=ensureBadge();
-    if(!bell){badge.style.display='none';return;}
+    if(!bell || !badge){ if(badge) badge.style.display='none'; return;}
     positionBadge();
     try{
       const count=await fetchUnreadCount();
@@ -6834,14 +6849,14 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
       }
     }catch(err){
       console.warn('AZOBSS bell badge update failed:',err);
-      badge.style.display='none';
+      if(badge) badge.style.display='none';
     }
   }
 
   function markSeen(){
     localStorage.setItem(SEEN_KEY,String(Date.now()));
     const badge=ensureBadge();
-    badge.style.display='none';
+    if(badge) badge.style.display='none';
   }
 
   document.addEventListener('click',function(e){
