@@ -1867,6 +1867,73 @@ html.az-shared-link-hydrating .cad-tool-card::after{
 @keyframes azSharedLinkSkeleton278{0%{background-position:0 0}100%{background-position:220% 0}}
 html:not(.az-shared-link-hydrating) .az-shared-link-ready-soft{animation:azSharedLinkReady278 .18s ease-out both!important;}
 @keyframes azSharedLinkReady278{from{opacity:.84;transform:translateY(2px)}to{opacity:1;transform:none}}
+
+/* AZOBSS 279: on shared product links, keep the product grid invisible until auth/stats/share controls finish one stable render. This prevents guest seeing controls/stats blink during hydration. */
+html.az-shared-link-hydrating #softwareDownloadsGrid,
+html.az-shared-link-hydrating #softwareGrid,
+html.az-shared-link-hydrating .downloads-grid,
+html.az-shared-link-hydrating #cadDownloadsGrid,
+html.az-shared-link-hydrating #cadToolsGrid,
+html.az-shared-link-hydrating .cad-grid,
+html.az-shared-link-hydrating .cad-tools-shop,
+html.az-shared-link-hydrating .cad-card-grid{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  min-height:420px!important;
+  transition:none!important;
+}
+html.az-shared-link-hydrating .downloads-inner,
+html.az-shared-link-hydrating .cad-inner,
+html.az-shared-link-hydrating main{
+  position:relative!important;
+}
+html.az-shared-link-hydrating .downloads-inner::after,
+html.az-shared-link-hydrating .cad-inner::after,
+html.az-shared-link-hydrating main::after{
+  content:'Preparing shared product…'!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:min(340px,86vw)!important;
+  min-height:170px!important;
+  margin:18px auto!important;
+  border-radius:22px!important;
+  border:1px solid rgba(45,212,191,.26)!important;
+  background:linear-gradient(90deg,rgba(15,23,42,.90),rgba(30,41,59,.98),rgba(15,23,42,.90))!important;
+  background-size:230% 100%!important;
+  color:#dffbff!important;
+  font-size:13px!important;
+  font-weight:950!important;
+  letter-spacing:.02em!important;
+  box-shadow:0 18px 44px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.04)!important;
+  animation:azSharedLinkSkeleton278 1.05s ease-in-out infinite!important;
+}
+html.az-shared-link-stable #softwareDownloadsGrid,
+html.az-shared-link-stable #softwareGrid,
+html.az-shared-link-stable .downloads-grid,
+html.az-shared-link-stable #cadDownloadsGrid,
+html.az-shared-link-stable #cadToolsGrid,
+html.az-shared-link-stable .cad-grid,
+html.az-shared-link-stable .cad-tools-shop,
+html.az-shared-link-stable .cad-card-grid{
+  opacity:1!important;
+  visibility:visible!important;
+}
+@media(max-width:700px){
+  html.az-shared-link-hydrating #softwareDownloadsGrid,
+  html.az-shared-link-hydrating #softwareGrid,
+  html.az-shared-link-hydrating .downloads-grid,
+  html.az-shared-link-hydrating #cadDownloadsGrid,
+  html.az-shared-link-hydrating #cadToolsGrid,
+  html.az-shared-link-hydrating .cad-grid,
+  html.az-shared-link-hydrating .cad-tools-shop,
+  html.az-shared-link-hydrating .cad-card-grid{min-height:360px!important;}
+  html.az-shared-link-hydrating .downloads-inner::after,
+  html.az-shared-link-hydrating .cad-inner::after,
+  html.az-shared-link-hydrating main::after{min-height:145px!important;margin-top:14px!important;font-size:12px!important;}
+}
+
 </style>
 
 </head>
@@ -6112,18 +6179,27 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
 </style>
 
 
-<!-- AZOBSS 278: shared product link hydration release -->
-<script id="azobss-shared-link-no-blink-release-278-js">
+<!-- AZOBSS 279: shared product link hydration release - wait for stable render -->
+<script id="azobss-shared-link-no-blink-release-279-js">
 (function(){
-  if(window.__azobssSharedLinkNoBlink278) return;
-  window.__azobssSharedLinkNoBlink278 = true;
+  if(window.__azobssSharedLinkNoBlink279) return;
+  window.__azobssSharedLinkNoBlink279 = true;
   var html = document.documentElement;
   if(!html.classList.contains('az-shared-link-hydrating')) return;
   var start = Date.now();
-  var maxWait = 2600;
+  var maxWait = 4600;
+  var minWait = 900;
+  var stableNeeded = 4;
+  var stableCount = 0;
+  var lastSignature = '';
   var timer = 0;
+  var lastMutationAt = Date.now();
   var CARD_SELECTOR = '.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
   var GRID_CARD_SELECTOR = '#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  function productParam(){
+    try{return String(new URLSearchParams(location.search||'').get('product')||'').trim().toLowerCase();}catch(e){return '';}
+  }
+  var target = productParam();
   function cards(){
     var set = new Set();
     document.querySelectorAll(GRID_CARD_SELECTOR + ',' + CARD_SELECTOR).forEach(function(el){
@@ -6136,39 +6212,75 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
     return cards().filter(function(c){
       if(c.classList.contains('az-shared-product-hidden')) return false;
       var cs = getComputedStyle(c);
-      return cs.display !== 'none' && cs.visibility !== 'hidden';
+      return cs.display !== 'none' && cs.visibility !== 'hidden' && c.offsetParent !== null;
     });
+  }
+  function cardId(card){
+    if(!card) return '';
+    var id = card.getAttribute('data-product-id') || card.dataset.productId || card.dataset.id || card.getAttribute('data-doc-id') || '';
+    if(!id){
+      var btn = card.querySelector('[data-product-id],[data-software-id],[data-cad-id],[data-doc-id]');
+      id = btn ? (btn.getAttribute('data-product-id') || btn.getAttribute('data-software-id') || btn.getAttribute('data-cad-id') || btn.getAttribute('data-doc-id') || '') : '';
+    }
+    return String(id||'').toLowerCase();
+  }
+  function targetCard(list){
+    if(!target) return list[0] || null;
+    return list.find(function(c){return cardId(c) === target;}) || list[0] || null;
   }
   function isPaid(card){
     if(!card) return false;
-    var type = String(card.dataset.type || '').toLowerCase();
-    var buy = card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.buy-now,[data-product-price]');
-    return type === 'premium' || !!buy;
+    var type = String(card.dataset.type || card.getAttribute('data-type') || '').toLowerCase();
+    var buy = card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.buy-now,.cad-action-btn.premium,[data-product-price]');
+    var txt = (card.textContent || '').toLowerCase();
+    return type === 'premium' || !!buy || txt.indexOf('buy now') > -1;
+  }
+  function hasControlsSettled(card){
+    if(!card) return false;
+    var paid = isPaid(card);
+    var shareOk = !paid || !!card.querySelector(':scope > .az-lucky-product-share-btn,:scope > [data-az-lucky-product-share]');
+    var previewMaybe = card.getAttribute('data-gif-url') || card.dataset.gifUrl;
+    var previewOk = !previewMaybe || !!card.querySelector(':scope > .azobss-preview-float-155,.azobss-gif-preview-link');
+    var statsOk = !!card.querySelector(':scope > .software-stats') || Date.now() - start > 2200;
+    return shareOk && previewOk && statsOk;
+  }
+  function signature(list, card){
+    var side = card ? [
+      !!card.querySelector(':scope > .az-lucky-product-share-btn,:scope > [data-az-lucky-product-share]'),
+      !!card.querySelector(':scope > .azobss-preview-float-155,.azobss-gif-preview-link'),
+      !!card.querySelector(':scope > .software-stats'),
+      cardId(card)
+    ].join(':') : 'none';
+    return list.length + '|' + side + '|' + Math.round((card && card.getBoundingClientRect ? card.getBoundingClientRect().height : 0) || 0);
   }
   function ready(){
+    var elapsed = Date.now() - start;
     var list = visibleCardList();
-    if(!list.length) return false;
-    var card = list[0];
-    var shareReady = !isPaid(card) || !!card.querySelector(':scope > .az-lucky-product-share-btn,:scope > [data-az-lucky-product-share]');
-    var statsReady = !!card.querySelector(':scope > .software-stats') || Date.now() - start > 1400;
-    return shareReady && statsReady;
+    if(!list.length || elapsed < minWait) return false;
+    var card = targetCard(list);
+    if(!hasControlsSettled(card)) return false;
+    if(Date.now() - lastMutationAt < 280 && elapsed < maxWait) return false;
+    var sig = signature(list, card);
+    if(sig === lastSignature) stableCount += 1; else { lastSignature = sig; stableCount = 1; }
+    return stableCount >= stableNeeded;
   }
   function finish(){
     clearTimeout(timer);
     html.classList.remove('az-shared-link-hydrating');
+    html.classList.add('az-shared-link-stable');
     document.body && document.body.classList.remove('az-shared-link-hydrating');
     visibleCardList().forEach(function(card){card.classList.add('az-shared-link-ready-soft');});
     try{window.dispatchEvent(new CustomEvent('azobss-shared-link-hydrated'));}catch(e){}
   }
   function tick(){
     if(ready() || Date.now() - start > maxWait){ finish(); return; }
-    timer = setTimeout(tick, 120);
+    timer = setTimeout(tick, 140);
   }
-  function schedule(){ clearTimeout(timer); timer = setTimeout(tick, 80); }
+  function schedule(){ clearTimeout(timer); timer = setTimeout(tick, 120); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule); else schedule();
-  ['azobss-software-rendered','azobss-cad-rendered','azobss-shop-cart-updated','load'].forEach(function(ev){window.addEventListener(ev, schedule, {passive:true});});
-  try{new MutationObserver(function(){schedule();}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
-  setTimeout(finish, maxWait + 450);
+  ['azobss-software-rendered','azobss-cad-rendered','azobss-shop-cart-updated','azobss-software-stats-ready','azobss-cad-stats-ready','load'].forEach(function(ev){window.addEventListener(ev, schedule, {passive:true});});
+  try{new MutationObserver(function(){lastMutationAt=Date.now(); stableCount=0; schedule();}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','data-az-lucky-share-ready','data-gif-url']});}catch(e){}
+  setTimeout(finish, maxWait + 800);
 })();
 </script>
 

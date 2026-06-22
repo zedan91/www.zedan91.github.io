@@ -150,3 +150,10 @@ Checks:
 - Old promo price line is now diagonal/slanted and semi-transparent for better readability.
 - Applies to Software Tools and CAD Tools only.
 - No Firebase Rules or Render ENV changes required.
+
+
+## (279) Shared Link Guest Stable Hydration Fix
+- Audit dari video Bandicam: shared link masih nampak controls/stats blink kerana grid dibuka sebelum render auth/share/stats benar-benar stabil.
+- Software/CAD shared product grid kini disorok sementara dengan skeleton “Preparing shared product…”.
+- Release hydration menunggu card target, share button, preview GIF dan stats footer stabil beberapa tick sebelum paparan sebenar dibuka.
+- Tidak sentuh PA/BM, My Purchases, Cart/Like/Bell/Message badge logic, Firebase Rules atau Render ENV.
