@@ -4406,9 +4406,10 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   }
   function isLoggedIn(){ return !!(auth.currentUser || sessionStorage.getItem('azobssLoggedIn') === '1' || localStorage.getItem('azobssLoggedIn') === '1'); }
   function openLogin(){
-    const btn = document.querySelector('[data-auth-open="login"], #siteLoginButton, .site-auth-actions .site-auth-btn');
+    try{ if(typeof window.openSiteAuth === 'function'){ window.openSiteAuth('signin'); return; } }catch(e){}
+    const btn = document.querySelector('[data-auth-open="login"], #siteLoginButton, .site-auth-actions .site-auth-btn, #openLoginBtn, .login-btn');
     if(btn) btn.click();
-    else alert('Please login first to like items.');
+    else alert('Sila login/register dahulu untuk like produk ini.');
   }
   function cacheKey(usernameKey){ return CACHE_PREFIX + usernameKey; }
   function loadCache(usernameKey){
@@ -4499,6 +4500,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const cards = [];
     document.querySelectorAll('.card[data-product-id], .download-card, .cad-card').forEach(card=>{
       if(card.closest('.auth-modal,.azobss-pay-modal,.admin-modal,.cad-admin-modal,.software-admin-modal')) return;
+      if(card.querySelector('.az-item-like-btn')) return;
       const info = getCardInfo(card);
       if(!info.id || !info.title) return;
       cards.push({card, info});
@@ -4543,21 +4545,22 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       renderLikesPage(true);
     }
   }
-  function hydrateLikeButtons(){
-    getCards().forEach(({card, info})=>{
+  async function injectLikeButtons(){
+    if(location.pathname.toLowerCase().includes('/likes')) return;
+    addLikeStyle();
+    const usernameKey = getUsernameKey();
+    if(usernameKey && state.loadedFor !== usernameKey) loadCache(usernameKey);
+    const currentCards = getCards();
+    currentCards.forEach(({card, info})=>{
       card.classList.add('az-has-like-btn');
       let btn = card.querySelector(':scope > .az-item-like-btn');
       if(!btn){
         btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'az-item-like-btn';
-        btn.textContent = '♡';
         card.appendChild(btn);
       }
-      btn.type = 'button';
-      btn.classList.add('az-item-like-btn');
       btn.dataset.likeItemId = info.id;
-      setButtonState(btn, state.ids.has(info.id));
       if(btn.dataset.azLikeBound !== '1'){
         btn.dataset.azLikeBound = '1';
         btn.addEventListener('click', (event)=>{
@@ -4566,16 +4569,16 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
           toggleLike(btn, getCardInfo(card));
         });
       }
+      setButtonState(btn, state.ids.has(info.id));
     });
-  }
-  async function injectLikeButtons(){
-    if(location.pathname.toLowerCase().includes('/likes')) return;
-    addLikeStyle();
-    const usernameKey = getUsernameKey();
-    if(usernameKey && state.loadedFor !== usernameKey) loadCache(usernameKey);
-    hydrateLikeButtons();
-    if(usernameKey && state.loadedFor !== usernameKey && !state.loading){
-      loadLikesOnce().then(hydrateLikeButtons).catch(()=>hydrateLikeButtons());
+    if(usernameKey){
+      try{
+        await loadLikesOnce();
+        document.querySelectorAll('.az-item-like-btn').forEach(btn=>{
+          const id = String(btn.dataset.likeItemId || '');
+          if(id) setButtonState(btn, state.ids.has(id));
+        });
+      }catch(e){}
     }
   }
   function likeCardHtml(row){

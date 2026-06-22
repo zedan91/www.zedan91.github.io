@@ -3275,7 +3275,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-  import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+  import {addDoc, collection, deleteDoc, doc, getDocs, getFirestore, orderBy, query, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -3292,9 +3292,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
-  const SOFTWARE_FIRESTORE_STATS_CACHE_KEY = 'azobss_firestore_stats_clean_v2';
-  const SOFTWARE_STATS_PRELOAD_MAX_WAIT_MS = 850;
-  let softwareStatsInitialPromise = null;
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -3641,103 +3638,27 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     return {views:0, downloads:0, rating:0, likes:0};
   }
   function normalizeStats(raw, fallbackName, fallbackCategory){
-    raw = raw || {};
-    const views = Number(raw.views || 0);
-    const downloads = Number(raw.downloads || 0);
-    const likes = Number(raw.likes || 0);
-    let ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes || raw.votes || 0)));
-    let ratingTotal = Math.max(0, Number(raw.ratingTotal || 0));
-    if((!ratingVotes || !ratingTotal) && raw.ratings && typeof raw.ratings === 'object'){
-      ratingVotes = 0;
-      ratingTotal = 0;
-      for(let i=1;i<=5;i++){
-        const count = Math.max(0, Math.round(Number(raw.ratings[String(i)] || 0)));
-        ratingVotes += count;
-        ratingTotal += i * count;
-      }
-    }
-    const fallbackRating = Number(raw.ratingAverage ?? raw.rating ?? 0);
-    const rating = ratingVotes ? (Math.round((ratingTotal / ratingVotes) * 10) / 10) : fallbackRating;
+    const views = Number(raw?.views || 0);
+    const downloads = Number(raw?.downloads || 0);
+    const rating = Number(raw?.rating || 0);
+    const likes = Number(raw?.likes || 0);
     return {
-      views: Math.max(0, Math.round(views)),
+      views: 0,
       downloads: Math.max(0, Math.round(downloads)),
-      rating: Math.max(0, Math.min(5, Number((Number(rating) || 0).toFixed(1)))),
-      ratingAverage: Math.max(0, Math.min(5, Number((Number(rating) || 0).toFixed(1)))),
-      ratingVotes,
-      ratingTotal,
-      ratings: raw.ratings && typeof raw.ratings === 'object' ? raw.ratings : undefined,
-      likes: Math.max(0, Math.round(likes)),
-      updatedAtMs: Number(raw.updatedAtMs || 0)
+      rating: Math.max(0, Math.min(5, Number(rating.toFixed ? rating.toFixed(1) : rating))),
+      likes: Math.max(0, Math.round(likes))
     };
-  }
-  function readSoftwareFirestoreStats(){
-    try{
-      const raw = JSON.parse(localStorage.getItem(SOFTWARE_FIRESTORE_STATS_CACHE_KEY) || '{}') || {};
-      return raw.items && typeof raw.items === 'object' ? raw.items : raw;
-    }catch(e){ return {}; }
-  }
-  function writeSoftwareFirestoreStats(items){
-    try{
-      if(!items || typeof items !== 'object') return;
-      localStorage.setItem(SOFTWARE_FIRESTORE_STATS_CACHE_KEY, JSON.stringify({items, cachedAt:Date.now()}));
-    }catch(e){}
-  }
-  function mergeSoftwareStatsIntoManualCache(items){
-    if(!items || typeof items !== 'object') return;
-    const manual = readSoftwareStats();
-    Object.entries(items).forEach(([key, value])=>{
-      const k = statsKeyFrom(key);
-      manual[k] = {...(manual[k] || {}), ...normalizeStats(value)};
-    });
-    saveSoftwareStats(manual);
-  }
-  function bestStatsForKey(key, fallback){
-    const k = statsKeyFrom(key);
-    const manual = readSoftwareStats();
-    const live = readSoftwareFirestoreStats();
-    return {
-      ...(fallback || {}),
-      ...(manual[k] || {}),
-      ...(live[k] || live[key] || {})
-    };
-  }
-  async function preloadSoftwareStatsForInitialRender(){
-    if(softwareStatsInitialPromise) return softwareStatsInitialPromise;
-    softwareStatsInitialPromise = (async()=>{
-      const cached = readSoftwareFirestoreStats();
-      if(Object.keys(cached).length) mergeSoftwareStatsIntoManualCache(cached);
-      try{
-        const snap = await getDoc(doc(db, 'settings', 'softwareStats'));
-        if(snap.exists()){
-          const data = snap.data() || {};
-          const items = data.items && typeof data.items === 'object' ? data.items : {};
-          const normalized = {};
-          Object.entries(items).forEach(([key, value])=>{
-            normalized[statsKeyFrom(key)] = normalizeStats(value);
-          });
-          writeSoftwareFirestoreStats(normalized);
-          mergeSoftwareStatsIntoManualCache(normalized);
-        }
-      }catch(err){
-        console.warn('Software stats prefetch skipped:', err);
-      }
-    })();
-    return softwareStatsInitialPromise;
-  }
-  function waitForSoftwareStatsFirstPaint(){
-    return Promise.race([
-      preloadSoftwareStatsForInitialRender(),
-      new Promise(resolve => setTimeout(resolve, SOFTWARE_STATS_PRELOAD_MAX_WAIT_MS))
-    ]);
   }
   function statsForItem(item){
+    const stats = readSoftwareStats();
     const key = statsKeyFrom(item?.productId || item?.id || item?.name);
-    return normalizeStats(bestStatsForKey(key, item || {}), item?.name, item?.category);
+    return normalizeStats(stats[key] || item || {}, item?.name, item?.category);
   }
   function statsForCard(card){
     const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'Software Item';
     const key = statsKeyFrom(card?.dataset.productId || card?.dataset.name || name);
-    return normalizeStats(bestStatsForKey(key, {views:card?.dataset.views, downloads:card?.dataset.downloads, rating:card?.dataset.rating, ratingVotes:card?.dataset.ratingVotes, likes:card?.dataset.likes}), name, card?.dataset.category || 'General Tools');
+    const stats = readSoftwareStats();
+    return normalizeStats(stats[key] || {views:card?.dataset.views, downloads:card?.dataset.downloads, rating:card?.dataset.rating, likes:card?.dataset.likes}, name, card?.dataset.category || 'General Tools');
   }
   function applyStatsToCard(card){
     if(!card) return;
@@ -3974,15 +3895,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
-    const instantShareHtml = isPremium ? `<button type="button" class="az-lucky-product-share-btn" data-az-lucky-main="1" data-az-lucky-product-share="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link"><svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share Product</span></button>` : '';
-    const instantLikeHtml = `<button type="button" class="az-item-like-btn" data-like-item-id="${esc(item.productId || item.id)}" aria-label="Add to Likes" title="Add to Likes">♡</button>`;
-    const st0 = statsForItem(item) || {};
-    const dl0 = Number(st0.downloads || item.downloads || 0);
-    const rt0 = Number(st0.rating || item.rating || 0);
-    const rv0 = Number(st0.ratingVotes || item.ratingVotes || item.votes || 0);
-    const stars0 = Array.from({length:5}, (_,i)=>`<button type="button" class="azb-star ${i < Math.round(rt0) ? 'is-filled' : ''}" data-rate="${i+1}" aria-label="Rate ${i+1} star" title="Rate ${i+1} star">★</button>`).join('');
-    const instantStatsHtml = `<div class="software-stats" data-az-instant-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1ZM5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z"/></svg></span><strong class="azb-dl-number">${dl0}</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner"><span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">${stars0}</span><strong class="azb-rate-value">${rt0.toFixed(1)}</strong><span class="azb-rate-votes">(${rv0})</span></span></span></div>`;
-
+    const actionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
+    const actionHtml = isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml;
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
       ${mediaHtml}
       ${badgeExtra}
@@ -3992,10 +3906,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Video</a></div>` : ''}
       ${productIdMeta}
       ${promoPriceHtml}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>
-      ${instantLikeHtml}
-      ${instantShareHtml}
-      ${instantStatsHtml}
+      ${actionHtml}
       ${adminEdit}
     </div>`;
   }
@@ -4289,9 +4200,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   }
   async function loadItems(){
     if(!grid) return;
-    const firestoreItemsPromise = loadFirestore();
-    await waitForSoftwareStatsFirstPaint();
-    softwareDynamicItems = dedupeSoftwareItems([...(await firestoreItemsPromise), ...loadLocal()]);
+    softwareDynamicItems = dedupeSoftwareItems([...await loadFirestore(), ...loadLocal()]);
     applySoftwareFilters();
   }
   function azGetSoftwareRoleInfo(){
@@ -5258,27 +5167,13 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
   function dlSvg(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
   function starsHtml(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
   function footerHtml(st){return '<span class="azb-stat-download"><span class="azb-dl-badge">'+dlSvg()+'</span><strong class="azb-dl-number">'+fmt(st.downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner">'+starsHtml(st.rating)+'<strong class="azb-rate-value">'+Number(st.rating||0).toFixed(1)+'</strong><span class="azb-rate-votes">('+Number(st.ratingVotes||0)+')</span></span></span>';}
-  function updateFooterInPlace(box, st){
-    if(!box) return false;
-    const dl = box.querySelector('.azb-dl-number');
-    const rv = box.querySelector('.azb-rate-value');
-    const votes = box.querySelector('.azb-rate-votes');
-    const stars = box.querySelectorAll('.azb-star');
-    if(!dl || !rv || !votes || !stars.length) return false;
-    dl.textContent = fmt(st.downloads);
-    rv.textContent = Number(st.rating||0).toFixed(1);
-    votes.textContent = '('+Number(st.ratingVotes||0)+')';
-    const filled = Math.round(Number(st.rating)||0);
-    stars.forEach((btn, idx)=>btn.classList.toggle('is-filled', idx < filled));
-    return true;
-  }
-  function render(card){if(!card||!card.classList?.contains('download-card'))return;let box=card.querySelector(':scope>.software-stats');if(!box){box=document.createElement('div');card.appendChild(box);}box.className='software-stats';if(card.lastElementChild!==box)card.appendChild(box);const st=statsFor(card);if(!updateFooterInPlace(box,st)){box.innerHTML=footerHtml(st);}}
+  function render(card){if(!card||!card.classList?.contains('download-card'))return;let box=card.querySelector(':scope>.software-stats');if(!box){box=document.createElement('div');card.appendChild(box);}box.className='software-stats';if(card.lastElementChild!==box)card.appendChild(box);const html=footerHtml(statsFor(card));if(box.innerHTML!==html)box.innerHTML=html;}
   function renderAll(){document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);}
   function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderAll,80);}
-  async function loadRemote(){if(syncBusy)return;syncBusy=true;try{const snap=await getDoc(STATS_DOC);if(snap.exists()){const remote=itemsOf(snap.data());const c=readCache();const items=itemsOf(c);Object.entries(remote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
-  async function recordDownload(card){const key=slug(productId(card));const st=statsFor(card);st.downloads+=1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS download save failed. Check Firestore rules/settings softwareStats.',e);}}
+  async function loadRemote(){if(syncBusy)return;syncBusy=true;try{await ensureAuth();const snap=await getDoc(STATS_DOC);if(snap.exists()){const remote=itemsOf(snap.data());const c=readCache();const items=itemsOf(c);Object.entries(remote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
+  async function recordDownload(card){const key=slug(productId(card));const st=statsFor(card);st.downloads+=1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await ensureAuth();await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS download save failed. Check Anonymous Auth + Firestore rules.',e);}}
   function rateFromEvent(e,wrap){const btn=e.target.closest?.('.azb-star');if(btn)return Math.max(1,Math.min(5,Number(btn.dataset.rate||0)));const r=wrap.getBoundingClientRect();const x=e.clientX||(e.touches&&e.touches[0]?.clientX)||r.left;return Math.max(1,Math.min(5,Math.ceil(((x-r.left)/Math.max(1,r.width))*5)));}
-  async function recordRating(card,rating){const key=slug(productId(card));const voter=voterId();const st=statsFor(card);const old=Number(st.ratedBy[voter]||0);if(old>=1&&old<=5)st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);st.ratedBy[voter]=rating;let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}st.ratingVotes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:0;st.ratingAverage=st.rating;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);const prev=Number(remote.ratedBy?.[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rating)]=Math.max(0,Number(remote.ratings[String(rating)]||0)+1);remote.ratedBy=remote.ratedBy||{};remote.ratedBy[voter]=rating;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rv+=c;rt+=i*c;}remote.ratingVotes=rv;remote.ratingTotal=rt;remote.rating=rv?Math.round((rt/rv)*10)/10:0;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||0)));remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS rating save failed. Check Firestore rules/settings softwareStats.',e);}}
+  async function recordRating(card,rating){const key=slug(productId(card));const voter=voterId();const st=statsFor(card);const old=Number(st.ratedBy[voter]||0);if(old>=1&&old<=5)st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);st.ratedBy[voter]=rating;let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}st.ratingVotes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:0;st.ratingAverage=st.rating;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await ensureAuth();await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);const prev=Number(remote.ratedBy?.[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rating)]=Math.max(0,Number(remote.ratings[String(rating)]||0)+1);remote.ratedBy=remote.ratedBy||{};remote.ratedBy[voter]=rating;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rv+=c;rt+=i*c;}remote.ratingVotes=rv;remote.ratingTotal=rt;remote.rating=rv?Math.round((rt/rv)*10)/10:0;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||0)));remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS rating save failed. Check Anonymous Auth + Firestore rules.',e);}}
   function handleRate(e){const hit=e.target.closest?.('.azb-stars,.azb-star');if(!hit)return;const wrap=hit.classList.contains('azb-stars')?hit:hit.closest('.azb-stars');const card=wrap&&wrap.closest('.download-card');if(!wrap||!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();const now=Date.now();if(wrap.dataset.busyUntil&&now<Number(wrap.dataset.busyUntil))return;wrap.dataset.busyUntil=String(now+300);const rating=rateFromEvent(e,wrap);if(rating)recordRating(card,rating);}
   function handleDownload(e){if(e.target.closest?.('.azb-stars,.azb-star'))return;const btn=e.target.closest?.('.download-card .download-btn');if(!btn)return;const card=btn.closest('.download-card');if(card)recordDownload(card);}
   document.addEventListener('pointerdown',handleRate,true);
@@ -8130,7 +8025,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
  function title(c){var h=c.querySelector('h1,h2,h3,h4,.software-title,.tool-title,.card-title,.title');return h?(h.textContent||'').trim():'Software Description'}
  function isDesc(e){var t=(e.textContent||'').replace(/\bMore\b$/,'').trim(),c=String(e.className||'');return t.length>55&&(/desc|description|software-desc|tool-description|card-description/i.test(c)||(e.tagName&&e.tagName.toLowerCase()==='p'&&/software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(t)))}
  function desc(c){return Array.from(c.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.description,.desc,p')).find(isDesc)}
- function setup(){document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]').forEach(function(card){var d=desc(card);if(!d)return;Array.from(d.querySelectorAll('.azobss-sw-desc-more-096,.azobss-sw-desc-more-097')).forEach(function(x){x.remove()});var full=(d.textContent||'').replace(/\bMore\b$/,'').trim();d.classList.remove('azobss-sw-desc-target-096');d.classList.add('azobss-sw-desc-target-097');d.style.setProperty('max-height','78px','important');d.style.setProperty('overflow','hidden','important');d.style.setProperty('padding-right','42px','important');if(full.length>90){var b=document.createElement('button');b.type='button';b.className='azobss-sw-desc-more-097';b.textContent='More';b.onclick=function(e){e.preventDefault();e.stopPropagation();openM(title(card),full)};d.appendChild(b)}})}
+ function setup(){document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]').forEach(function(card){var d=desc(card);if(!d)return;var full=(d.getAttribute('data-azobss-full-desc-097')||(d.textContent||'').replace(/\bMore\b$/,'').trim());d.setAttribute('data-azobss-full-desc-097',full);d.classList.remove('azobss-sw-desc-target-096');d.classList.add('azobss-sw-desc-target-097');d.style.setProperty('max-height','78px','important');d.style.setProperty('overflow','hidden','important');d.style.setProperty('padding-right','42px','important');if(full.length>90){var b=d.querySelector(':scope > .azobss-sw-desc-more-097');if(!b){Array.from(d.querySelectorAll('.azobss-sw-desc-more-096')).forEach(function(x){x.remove()});b=document.createElement('button');b.type='button';b.className='azobss-sw-desc-more-097';b.textContent='More';d.appendChild(b)}b.onclick=function(e){e.preventDefault();e.stopPropagation();openM(title(card),full)}}})}
  document.addEventListener('DOMContentLoaded',setup);if(document.readyState!=='loading')setup();[100,400,1000,2000].forEach(function(t){setTimeout(setup,t)});window.addEventListener('focus',setup);window.addEventListener('azobss-software-rendered',setup);setTimeout(function(){var r=document.getElementById('softwareList')||document.querySelector('.software-grid');if(r)try{new MutationObserver(function(){requestAnimationFrame(setup)}).observe(r,{childList:true,subtree:true})}catch(e){}},700);
  window.azobssSoftwareDescInlineMoreDebug097=function(){setup();return Array.from(document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]')).map(function(card,i){var d=desc(card);if(!d)return null;var cs=getComputedStyle(d);return{index:i+1,title:title(card),text:(d.textContent||'').replace(/\bMore\b$/,'').trim(),moreInsideDesc:!!d.querySelector('.azobss-sw-desc-more-097'),maxHeight:cs.maxHeight,overflow:cs.overflow,height:Math.round(d.getBoundingClientRect().height)}}).filter(Boolean)};
 })();
@@ -8393,7 +8288,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     return Array.from(set);
   }
   function removeAllGiftButtons(){
-    // Kept for backwards compatibility only. Do not remove/recreate buttons; that was the source of visible blinking on shared links.
+    document.querySelectorAll('.az-lucky-product-share-btn,[data-az-lucky-main="1"],[data-az-lucky-product-share],button[title="Share for Lucky Draw"],a[title="Share for Lucky Draw"]').forEach(function(b){b.remove()});
   }
   function alignShareButton(card, btn){
     try{
@@ -8428,41 +8323,40 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     }catch(e){}
   }
   function ensureOneButton(card){
-    if(!isPaidCard(card)) return;
-    let btn=card.querySelector(':scope > .az-lucky-product-share-btn, :scope > [data-az-lucky-product-share="1"]');
-    const created=!btn;
+    if(!card) return;
+    if(!isPaidCard(card)){
+      var oldBtn = card.querySelector(':scope > .az-lucky-product-share-btn');
+      if(oldBtn) oldBtn.remove();
+      return;
+    }
+    var shareUser=readUser();
+    var loggedIn=!!username(shareUser);
+    var adminShareMode=loggedIn && isAdminShareUser(shareUser);
+    var creditShareMode=loggedIn && !adminShareMode;
+    var btn=card.querySelector(':scope > .az-lucky-product-share-btn');
     if(!btn){
       btn=document.createElement('button');
       btn.type='button';
+      btn.dataset.azLuckyMain='1';
+      btn.dataset.azLuckyProductShare='1';
       btn.className='az-lucky-product-share-btn';
-      btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share Product</span>';
+      btn.addEventListener('click',function(e){shareCard(card,e)},true);
       card.appendChild(btn);
     }
-    btn.type='button';
-    btn.dataset.azLuckyMain='1';
-    btn.dataset.azLuckyProductShare='1';
-    btn.classList.add('az-lucky-product-share-btn');
-    const shareUser=readUser();
-    const loggedIn=!!username(shareUser);
-    const adminShareMode=loggedIn && isAdminShareUser(shareUser);
-    const creditShareMode=loggedIn && !adminShareMode;
-    const text=btn.querySelector('.az-lucky-share-text');
-    if(text) text.textContent=' '+(creditShareMode?'Lucky Draw Share':'Share Product');
+    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> '+(creditShareMode?'Lucky Draw Share':'Share Product')+'</span>';
     btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
     btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
     btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
     btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
-    if(btn.dataset.azLuckyBound!=='1'){
-      btn.dataset.azLuckyBound='1';
-      btn.addEventListener('click',function(e){shareCard(card,e)},true);
-    }
     alignShareButton(card, btn);
-    if(created) setTimeout(function(){alignShareButton(card, btn)}, 80);
+    setTimeout(function(){alignShareButton(card, btn)}, 80);
     card.dataset.azLuckyProductId=productInfo(card).id;
     card.dataset.azLuckyShareReady='1';
   }
   function run(){
     if(!isShopPage()) return;
+    /* Stable controls fix: do not remove/add share buttons on every auth/stat refresh.
+       Update existing button in place so customer does not see blinking. */
     collectCards().forEach(ensureOneButton);
   }
   async function recordOpen(){
@@ -9940,6 +9834,67 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   }
 }
 </style>
+
+
+
+<style id="azobss-card-controls-no-blink-286-css">
+/* AZOBSS 286: visible, stable product controls. No hide/show during auth/stat refresh. */
+.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{contain:layout paint;}
+.az-item-like-btn,.az-lucky-product-share-btn,.azobss-preview-float-155,.download-btn,.az-software-buy-cart-row,.az-card-cart-slot,.az-card-cart-btn,.software-card-stats,.software-stats-footer,.az-card-stats,.product-stats,.download-card-footer{visibility:visible!important;opacity:1!important;}
+.az-item-like-btn,.az-lucky-product-share-btn,.azobss-preview-float-155{will-change:transform;backface-visibility:hidden;}
+.azobss-sw-desc-more-097{visibility:visible!important;opacity:1!important;}
+</style>
+
+
+
+<script id="azobss-stable-cart-placeholder-286-js">
+(function(){
+  if(window.__azStableCartPlaceholder286) return;
+  window.__azStableCartPlaceholder286 = true;
+  function text(el){return String(el&&el.textContent||'').replace(/\s+/g,' ').trim();}
+  function title(card){return text(card.querySelector('h3,.software-title,.cad-title,.card-title')) || 'Item';}
+  function money(card){
+    const btn=card.querySelector('[data-product-price],[data-price]');
+    const v=btn&&(btn.dataset.productPrice||btn.dataset.price);
+    if(v) return v;
+    const m=String(card.innerText||'').match(/RM\s*[0-9][0-9,.]*/i);
+    return m?m[0].replace(/\s+/g,''):'RM0';
+  }
+  function itemFromCard(card){
+    const primary=card.querySelector('[data-azobss-premium-buy="1"],a.download-btn,a.cad-action-btn,a[href]');
+    const src=/CAD-Tools-&-Resources/i.test(location.pathname)?'CAD Tools':'Software';
+    const name=title(card);
+    const href=primary?primary.getAttribute('href')||'':'';
+    return {
+      id: primary?.dataset?.productId || card.dataset.productId || card.dataset.cadId || name,
+      name,
+      price: primary?.dataset?.productPrice || money(card),
+      source: src,
+      category: src,
+      image: card.querySelector('img')?.getAttribute('src') || '',
+      paymentLink: primary?.dataset?.paymentLink || '',
+      stripeLink: primary?.dataset?.stripeLink || '',
+      secureDownloadLink: primary?.dataset?.downloadLink || primary?.dataset?.premiumDownloadFileLink || href || '',
+      premiumDownloadFileLink: primary?.dataset?.premiumDownloadFileLink || primary?.dataset?.downloadLink || href || '',
+      downloadLink: primary?.dataset?.downloadLink || primary?.dataset?.premiumDownloadFileLink || href || '',
+      pageUrl: location.href.split('#')[0]
+    };
+  }
+  document.addEventListener('click', function(e){
+    const btn=e.target.closest&&e.target.closest('.az-card-cart-btn[data-az-stable-cart-placeholder="1"]');
+    if(!btn) return;
+    e.preventDefault();e.stopPropagation();
+    const card=btn.closest('.download-card,.software-card,.software-product-card,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card');
+    if(!card) return;
+    const item=itemFromCard(card);
+    if(typeof window.azobssAddShopCart === 'function'){
+      window.azobssAddShopCart(item);
+      btn.classList.add('is-carted');
+      setTimeout(function(){window.dispatchEvent(new Event('azobss-shop-cart-updated'));},30);
+    }
+  }, true);
+})();
+</script>
 
 </body>
 </html>
