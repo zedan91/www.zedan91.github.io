@@ -1,0 +1,7 @@
+AZOBSS 294 Like + Shared Product Filter Fix
+
+- Based on (293) stable shop card no-blink patch.
+- Added delegated fallback for first-paint Like buttons so guest click opens login/register prompt and logged-in users can toggle like even if per-button binding is delayed.
+- Fixed shared product banner "Lihat semua produk" so delayed timers/mutation observers do not reapply the shared-link filter after user clicks it.
+- Clears search/filter UI and reveals all hidden product cards.
+- No PA/BM, My Purchases, cart storage/payment, Bell/Message, Firebase Rules, or Render ENV changes.

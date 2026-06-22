@@ -4997,6 +4997,32 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   var refRaw = String(qs.get('ref') || '').trim();
   if(!targetRaw) return;
 
+  // AZOBSS 294: when user taps "Lihat semua produk", stop this shared-link filter permanently
+  // for the current page view. Previously delayed timers/mutation observers reapplied the filter.
+  var showAllMode = false;
+  function revealAllSharedProducts294(){
+    showAllMode = true;
+    try{ history.replaceState(null, '', location.pathname); }catch(e){}
+    try{
+      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){
+        el.classList.remove('az-shared-product-hidden');
+      });
+      var note = document.getElementById('azSharedProductFilterNote147');
+      if(note) note.remove();
+      document.querySelectorAll('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]').forEach(function(input){
+        input.value = '';
+        input.dispatchEvent(new Event('input', {bubbles:true}));
+        input.dispatchEvent(new Event('change', {bubbles:true}));
+      });
+      document.querySelectorAll('[data-software-platform],[data-software-type],[data-software-category],[data-cad-platform],[data-cad-type],[data-cad-category]').forEach(function(btn){
+        var v = String(btn.getAttribute('data-software-platform') || btn.getAttribute('data-software-type') || btn.getAttribute('data-software-category') || btn.getAttribute('data-cad-platform') || btn.getAttribute('data-cad-type') || btn.getAttribute('data-cad-category') || '').toLowerCase();
+        if(v === 'all'){
+          try{ btn.click(); }catch(e){}
+        }
+      });
+    }catch(e){}
+  }
+
   var CARD_SELECTOR = '.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
   var GRID_CARD_SELECTOR = '#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
 
@@ -5063,16 +5089,19 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     var name = match ? (cardTitle(match) || targetRaw) : targetRaw;
     note.innerHTML = '<span>Anda sedang melihat produk yang dikongsi: <b></b>'+(refRaw ? ' <small style="opacity:.78">daripada '+refRaw.replace(/[<>]/g,'')+'</small>' : '')+'</span><button type="button">Lihat semua produk</button>';
     note.querySelector('b').textContent = name;
-    note.querySelector('button').addEventListener('click', function(){
-      try{ history.replaceState(null,'',location.pathname); }catch(e){}
-      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){el.classList.remove('az-shared-product-hidden')});
-      note.remove();
-      var input = document.querySelector('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]');
-      if(input){try{input.value=''; input.dispatchEvent(new Event('input',{bubbles:true})); input.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}}
+    note.querySelector('button').addEventListener('click', function(e){
+      if(e){ e.preventDefault(); e.stopPropagation(); }
+      revealAllSharedProducts294();
     });
     anchor.parentNode.insertBefore(note, anchor);
   }
   function applyFilter(){
+    if(showAllMode){
+      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){el.classList.remove('az-shared-product-hidden')});
+      var note = document.getElementById('azSharedProductFilterNote147');
+      if(note) note.remove();
+      return;
+    }
     var cards = collectCards();
     if(!cards.length) return;
     var matches = cards.filter(isMatch);

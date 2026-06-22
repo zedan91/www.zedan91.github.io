@@ -4546,6 +4546,21 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       renderLikesPage(true);
     }
   }
+  // AZOBSS 294: delegated fallback for first-paint like buttons.
+  // Some shop cards render the heart immediately before the injector binds per-button events.
+  // This keeps the button usable: guest gets login/register prompt, logged-in users toggle like.
+  document.addEventListener('click', function(event){
+    const btn = event.target && event.target.closest ? event.target.closest('.az-item-like-btn') : null;
+    if(!btn || location.pathname.toLowerCase().includes('/likes')) return;
+    // If the normal per-button listener is already bound, it stops propagation before this bubble listener.
+    // So reaching here means fallback is needed.
+    const card = btn.closest('.card[data-product-id], .download-card, .cad-card');
+    if(!card) return;
+    event.preventDefault();
+    event.stopPropagation();
+    toggleLike(btn, getCardInfo(card));
+  }, false);
+
   async function injectLikeButtons(){
     if(location.pathname.toLowerCase().includes('/likes')) return;
     addLikeStyle();
