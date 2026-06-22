@@ -2928,6 +2928,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:700px){#azobssGifHoverPreview154{width:92vw;max-height:74vh;padding:8px;}#azobssGifHoverPreview154 img{max-height:calc(74vh - 16px);}}
 @media (hover:none){.azobss-gif-preview-link::after{content:'Tap to preview';}}
 </style>
+
+<style id="azobss-promo-price-ui-fix-265">
+.az-promo-price-block{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto 10px;line-height:1.2}
+.az-promo-price-block .az-price-old{color:#94a3b8;text-decoration:line-through;text-decoration-thickness:2px;font-size:13px;font-weight:800}
+.az-promo-price-block .az-price-new{color:#facc15;font-size:20px;font-weight:1000;letter-spacing:.2px}
+.az-promo-price-block .az-promo-chip{background:rgba(239,68,68,.16);border:1px solid rgba(248,113,113,.45);color:#fecaca;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:1000;text-transform:uppercase}
+.download-card .az-promo-price-block{min-height:24px}
+.software-admin-form small{font-size:11px}
+@media(max-width:620px){.az-promo-price-block .az-price-new{font-size:18px}.az-promo-price-block{gap:6px}}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3079,8 +3089,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <option value="premium">Premium Software</option>
 </select>
         </label>
-        <label>Price / Badge
-          <input id="softwareAdminPrice" type="text" placeholder="FREE or RM10" value="FREE">
+        <label>Selling Price / Final Price
+          <input id="softwareAdminPrice" type="text" placeholder="FREE or RM20" value="FREE">
+        </label>
+        <label>Promo Original Price <small style="display:block;color:#94a3b8;font-weight:700">Optional: contoh RM30 → RM20</small>
+          <input id="softwareAdminOriginalPrice" type="text" placeholder="Optional old price, e.g. RM30">
         </label>
       </div>
       <label>Software Category
@@ -3282,6 +3295,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const form = document.getElementById('softwareAdminForm');
   const typeSelect = document.getElementById('softwareAdminType');
   const priceInput = document.getElementById('softwareAdminPrice');
+  const originalPriceInput = document.getElementById('softwareAdminOriginalPrice');
   const buttonInput = document.getElementById('softwareAdminButtonText');
   const iconInput = document.getElementById('softwareAdminIcon');
   const downloadLinkInput = document.getElementById('softwareAdminDownloadLink');
@@ -3376,6 +3390,23 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   function azUsdLine(price){
     const text = azUsdText(price);
     return text ? '<div class="az-usd-line">' + esc(text) + '</div>' : '';
+  }
+  function azPromoOriginalPrice(item){
+    return String(item?.originalPrice || item?.promoOriginalPrice || item?.oldPrice || item?.beforePrice || '').trim();
+  }
+  function azPromoPriceInfo(item){
+    const sale = String(item?.price || '').trim();
+    const old = azPromoOriginalPrice(item);
+    const saleAmt = azExtractMyrAmount(sale);
+    const oldAmt = azExtractMyrAmount(old);
+    const show = Number.isFinite(saleAmt) && Number.isFinite(oldAmt) && oldAmt > saleAmt;
+    const percent = show ? Math.max(1, Math.round((1 - (saleAmt / oldAmt)) * 100)) : 0;
+    return {show, sale, old, percent};
+  }
+  function azPromoPriceHtml(item){
+    const p = azPromoPriceInfo(item);
+    if(!p.show) return '';
+    return `<div class="az-promo-price-block" title="Promotional price"><span class="az-price-old">${esc(p.old)}</span><span class="az-price-new">${esc(p.sale)}</span><span class="az-promo-chip">Save ${esc(p.percent)}%</span></div>`;
   }
 function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
   function azSafeLogoFileName(productId, name){
@@ -3491,6 +3522,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       desc: item.desc || item.description || '',
       type,
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
+      originalPrice: type === 'free' ? '' : azPromoOriginalPrice(item),
+      promoOriginalPrice: type === 'free' ? '' : azPromoOriginalPrice(item),
       category: item.category || item.softwareCategory || 'Tools',
       productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
       replacesProductId: item.replacesProductId || item.oldProductId || '',
@@ -3526,6 +3559,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       desc: n.desc,
       type: n.type,
       price: n.price,
+      originalPrice: n.originalPrice || '',
+      promoOriginalPrice: n.originalPrice || '',
       category: n.category,
       status: n.status,
       version: n.version,
@@ -3839,6 +3874,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
     const usdBadge = isPremium ? azUsdBadge(item.price) : '';
+    const promoPriceHtml = isPremium ? azPromoPriceHtml(item) : '';
     const mediaSrc = item.imageUrl || item.gifUrl;
     const logoSrc = azLogoSrcForItem(item);
     const logoFallback = azFaviconUrlFromLink(item.downloadLink || item.secureDownloadLink || item.paymentLink || item.stripeLink || item.link);
@@ -3849,7 +3885,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
       ${mediaHtml}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
@@ -3857,7 +3893,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       <p>${esc(item.desc)}</p>
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Video</a></div>` : ''}
       ${productIdMeta}
-      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>
+      ${promoPriceHtml}
+      <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>
       ${adminEdit}
     </div>`;
   }
@@ -4098,7 +4135,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       card.style.display = (selectedSoftwareOwnerFilter !== 'mine' && !isOverridden && categoryOk && cardPlatformOk(card) && typeOk) ? '' : 'none';
     });
     if(keyword){
-      dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
+      dynamic = dynamic.filter(item => clean(`${item.name} ${item.desc} ${item.type} ${item.price} ${item.originalPrice || item.promoOriginalPrice || ''} ${item.imageUrl || ''} ${item.gifUrl || ''}`).includes(keyword));
       staticCards.forEach(card => {
         const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
         const text = clean(card.dataset.search || card.textContent || '');
@@ -4268,6 +4305,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if(saveBtn) saveBtn.textContent = item ? 'Save Changes' : 'Save Item';
     if(typeSelect) typeSelect.value = item?.type || 'free';
     if(priceInput) priceInput.value = item?.price || 'FREE';
+    if(originalPriceInput) originalPriceInput.value = item?.originalPrice || item?.promoOriginalPrice || '';
     if(buttonInput) buttonInput.value = item?.buttonText || 'Download Now';
     if(iconInput) iconInput.value = item?.icon || 'FREE';
     if(productIdInput) productIdInput.value = item?.productId || makeProductId('AZSW');
@@ -4526,7 +4564,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       closeModal();
     }
   });
-  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } syncTypeDefaults(); });
+  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; if(originalPriceInput) originalPriceInput.value = ''; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } syncTypeDefaults(); });
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
 
@@ -4552,6 +4590,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       desc: document.getElementById('softwareAdminDesc').value.trim(),
       type: typeSelect.value,
       price: priceInput.value.trim(),
+      originalPrice: originalPriceInput?.value.trim() || '',
+      promoOriginalPrice: originalPriceInput?.value.trim() || '',
       icon: iconInput.value.trim(),
       imageUrl: uploadedImage || imageUrlInput?.value.trim(),
       gifUrl: uploadedGif || gifUrlInput?.value.trim(),

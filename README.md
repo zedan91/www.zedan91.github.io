@@ -102,3 +102,12 @@ Checks:
 - Staff/semi-admin commission card visibility from patch 262 remains unchanged.
 - Guest share behavior remains product-link only.
 - No changes to PA/BM download flow, My Purchases, Cart, Like, Bell, Message badge, Firebase Rules, or Render ENV.
+
+## Patch 265 - Software/CAD Promotional Price Discount Display Fix
+- Added optional Promo Original Price field for admin/semi-admin/staff item editing.
+- Current Selling Price remains the actual payment/cart price.
+- Premium Software/CAD cards now show old price with strikethrough, final promo price, and Save % chip when original price is higher than current price.
+- Guest and normal logged-in users can see promotional price display.
+- Admin/semi-admin/staff can edit the promo original price from the existing Software/CAD edit modal.
+- PA/BM paid/verified download flow, My Purchases, Cart, Like, Bell, and Message badge are not touched.
+- No Firebase Rules or Render ENV update required.

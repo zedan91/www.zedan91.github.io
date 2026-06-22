@@ -1777,6 +1777,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:700px){#azobssGifHoverPreview154{width:92vw;max-height:74vh;padding:8px;}#azobssGifHoverPreview154 img{max-height:calc(74vh - 16px);}}
 @media (hover:none){.azobss-gif-preview-link::after{content:'Tap to preview';}}
 </style>
+
+<style id="azobss-cad-promo-price-ui-fix-265">
+.az-promo-price-block{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto 10px;line-height:1.2}
+.az-promo-price-block .az-price-old{color:#94a3b8;text-decoration:line-through;text-decoration-thickness:2px;font-size:13px;font-weight:800}
+.az-promo-price-block .az-price-new{color:#facc15;font-size:19px;font-weight:1000;letter-spacing:.2px}
+.az-promo-price-block .az-promo-chip{background:rgba(239,68,68,.16);border:1px solid rgba(248,113,113,.45);color:#fecaca;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:1000;text-transform:uppercase}
+.cad-admin-form small{font-size:11px}
+@media(max-width:620px){.az-promo-price-block .az-price-new{font-size:17px}.az-promo-price-block{gap:6px}}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1897,8 +1906,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
             <option value="premium">Premium CAD Tool</option>
           </select>
         </label>
-        <label>Price / Badge
-          <input id="cadAdminPrice" type="text" placeholder="FREE or RM10">
+        <label>Selling Price / Final Price
+          <input id="cadAdminPrice" type="text" placeholder="FREE or RM20">
+        </label>
+        <label>Promo Original Price <small style="display:block;color:#94a3b8;font-weight:700">Optional: contoh RM30 → RM20</small>
+          <input id="cadAdminOriginalPrice" type="text" placeholder="Optional old price, e.g. RM30">
         </label>
       </div>
       <label>File Type
@@ -2061,6 +2073,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const descInput = document.getElementById('cadAdminDescription');
   const typeInput = document.getElementById('cadAdminType');
   const priceInput = document.getElementById('cadAdminPrice');
+  const originalPriceInput = document.getElementById('cadAdminOriginalPrice');
   const iconInput = document.getElementById('cadAdminIcon');
   const buttonInput = document.getElementById('cadAdminButtonText');
   const downloadLinkInput = document.getElementById('cadAdminDownloadLink');
@@ -2116,6 +2129,23 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   function azUsdLine(price){
     const text = azUsdText(price);
     return text ? '<div class="az-usd-line">' + esc(text) + '</div>' : '';
+  }
+  function azPromoOriginalPrice(item){
+    return String(item?.originalPrice || item?.promoOriginalPrice || item?.oldPrice || item?.beforePrice || '').trim();
+  }
+  function azPromoPriceInfo(item){
+    const sale = String(item?.price || '').trim();
+    const old = azPromoOriginalPrice(item);
+    const saleAmt = azExtractMyrAmount(sale);
+    const oldAmt = azExtractMyrAmount(old);
+    const show = Number.isFinite(saleAmt) && Number.isFinite(oldAmt) && oldAmt > saleAmt;
+    const percent = show ? Math.max(1, Math.round((1 - (saleAmt / oldAmt)) * 100)) : 0;
+    return {show, sale, old, percent};
+  }
+  function azPromoPriceHtml(item){
+    const p = azPromoPriceInfo(item);
+    if(!p.show) return '';
+    return `<div class="az-promo-price-block" title="Promotional price"><span class="az-price-old">${esc(p.old)}</span><span class="az-price-new">${esc(p.sale)}</span><span class="az-promo-chip">Save ${esc(p.percent)}%</span></div>`;
   }
 function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
   const MAX_MEDIA_BYTES = 900 * 1024;
@@ -2191,6 +2221,8 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       description: String(item.description || '').trim(),
       type: isPremium ? 'premium' : 'free',
       price: isPremium ? (price || 'RM') : 'FREE',
+      originalPrice: isPremium ? azPromoOriginalPrice(item) : '',
+      promoOriginalPrice: isPremium ? azPromoOriginalPrice(item) : '',
       productId: item.productId || item.sku || item.id || makeProductId('AZCAD'),
       status: item.status || 'active',
       version: item.version || '',
@@ -2217,6 +2249,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const isPremium = clean.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + clean.price) : 'Free CAD Resource';
     const usdBadge = isPremium ? azUsdBadge(clean.price) : '';
+    const promoPriceHtml = isPremium ? azPromoPriceHtml(clean) : '';
     const mediaSrc = clean.imageUrl || clean.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="cad-card-media"><img src="${esc(mediaSrc)}" alt="${esc(clean.name)} preview" loading="lazy"></div>` : '';
     const gifHtml = clean.gifUrl && clean.imageUrl ? `<div class="cad-media-links"><a class="cad-media-demo azobss-gif-preview-link" href="${esc(clean.gifUrl)}" data-gif-preview="${esc(clean.gifUrl)}" target="_blank" rel="noopener" title="Hover to preview GIF">👁 Preview</a></div>` : '';
@@ -2224,7 +2257,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const metaHtml = meta.length ? `<div class="cad-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="cad-card-admin-actions"><button class="cad-card-edit-btn" type="button" data-cad-edit="${esc(clean.id)}">Edit Details</button><button class="cad-card-delete-btn" type="button" data-cad-delete="${esc(clean.id)}">Delete</button></div>` : '';
-    return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-category="${esc(clean.category || 'LISP (.lsp)')}" data-platforms="${esc((clean.platforms || []).join('|'))}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+(clean.category||'')+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
+    return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-category="${esc(clean.category || 'LISP (.lsp)')}" data-platforms="${esc((clean.platforms || []).join('|'))}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+(clean.originalPrice||clean.promoOriginalPrice||'')+' '+(clean.category||'')+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
       ${mediaHtml}
       <div class="cad-card-icon">${esc(clean.icon)}</div>
       <div class="cad-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
@@ -2233,7 +2266,8 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       ${metaHtml}
       <p>${esc(clean.description)}</p>
       ${gifHtml}
-      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-premium-download-file-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" data-owner-uid="${esc(clean.ownerUid || clean.createdByUid || clean.staffUid || clean.sellerUid || '')}" data-owner-username="${esc(clean.ownerUsername || clean.createdByUsername || clean.staffUsername || clean.sellerUsername || '')}" data-owner-email="${esc(clean.ownerEmail || clean.createdByEmail || clean.staffEmail || clean.sellerEmail || '')}" data-owner-key="${esc(clean.ownerKey || clean.createdByKey || clean.staffOwnerKey || clean.sellerKey || '')}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      ${promoPriceHtml}
+      <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-original-price="${esc(clean.originalPrice || clean.promoOriginalPrice || '')}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-premium-download-file-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" data-owner-uid="${esc(clean.ownerUid || clean.createdByUid || clean.staffUid || clean.sellerUid || '')}" data-owner-username="${esc(clean.ownerUsername || clean.createdByUsername || clean.staffUsername || clean.sellerUsername || '')}" data-owner-email="${esc(clean.ownerEmail || clean.createdByEmail || clean.staffEmail || clean.sellerEmail || '')}" data-owner-key="${esc(clean.ownerKey || clean.createdByKey || clean.staffOwnerKey || clean.sellerKey || '')}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
       ${adminEdit}
     </article>`;
   }
@@ -2283,9 +2317,9 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     if(!visible.length){grid.insertAdjacentHTML('beforeend','<div class="cad-empty-state">No CAD item found.</div>');}
   }
   function syncCadLinkFields(){const premium=typeInput?.value==='premium'; if(downloadLinkLabel) downloadLinkLabel.style.display = premium ? 'none' : ''; if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none'; if(stripeLinkLabel) stripeLinkLabel.style.display = premium ? '' : 'none'; if(downloadLinkInput) downloadLinkInput.required = !premium; if(paymentLinkInput) paymentLinkInput.required = false; if(stripeLinkInput) stripeLinkInput.required = false;}
-  function openModal(editItem){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} const item=editItem?normalizeItem(editItem):null; editingCadId=item?.id||null; form.reset(); const title=document.getElementById('cadAdminTitle'); const saveBtn=form?.querySelector('.cad-admin-save'); if(title) title.textContent=item?'Edit CAD Item':'Add CAD Item'; if(saveBtn) saveBtn.textContent=item?'Save Changes':'Save Item'; typeInput.value=item?.type||'free'; if(categoryInput) categoryInput.value=item?.category || 'LISP (.lsp)'; priceInput.value=item?.price||'FREE'; buttonInput.value=item?.buttonText||'Open Resource'; iconInput.value=item?.icon||''; nameInput.value=item?.name||''; descInput.value=item?.description||''; if(productIdInput) productIdInput.value=item?.productId||makeProductId('AZCAD'); if(statusInput) statusInput.value=item?.status||'active'; if(versionInput) versionInput.value=item?.version||'v1.0.0'; if(fileSizeInput) fileSizeInput.value=item?.fileSize||''; if(downloadLimitInput) downloadLimitInput.value=String(item?.downloadLimit||3); if(expiryInput) expiryInput.value=String(item?.expiryHours??24); if(badgeInput) badgeInput.value=item?.badge||''; setSelectedPlatforms(item?.platforms||['AutoCAD','All CAD']); if(downloadLinkInput) downloadLinkInput.value=item?.downloadLink||''; if(paymentLinkInput) paymentLinkInput.value=item?.paymentLink||''; if(stripeLinkInput) stripeLinkInput.value=item?.stripeLink||''; if(secureDownloadInput) secureDownloadInput.value=item?.secureDownloadLink||''; if(imageUrlInput) imageUrlInput.value=item?.imageUrl||''; if(gifUrlInput) gifUrlInput.value=item?.gifUrl||''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
+  function openModal(editItem){if(!isAdmin()){alert('Admin only. Please sign in as admin.');return;} const item=editItem?normalizeItem(editItem):null; editingCadId=item?.id||null; form.reset(); const title=document.getElementById('cadAdminTitle'); const saveBtn=form?.querySelector('.cad-admin-save'); if(title) title.textContent=item?'Edit CAD Item':'Add CAD Item'; if(saveBtn) saveBtn.textContent=item?'Save Changes':'Save Item'; typeInput.value=item?.type||'free'; if(categoryInput) categoryInput.value=item?.category || 'LISP (.lsp)'; priceInput.value=item?.price||'FREE'; if(originalPriceInput) originalPriceInput.value=item?.originalPrice||item?.promoOriginalPrice||''; buttonInput.value=item?.buttonText||'Open Resource'; iconInput.value=item?.icon||''; nameInput.value=item?.name||''; descInput.value=item?.description||''; if(productIdInput) productIdInput.value=item?.productId||makeProductId('AZCAD'); if(statusInput) statusInput.value=item?.status||'active'; if(versionInput) versionInput.value=item?.version||'v1.0.0'; if(fileSizeInput) fileSizeInput.value=item?.fileSize||''; if(downloadLimitInput) downloadLimitInput.value=String(item?.downloadLimit||3); if(expiryInput) expiryInput.value=String(item?.expiryHours??24); if(badgeInput) badgeInput.value=item?.badge||''; setSelectedPlatforms(item?.platforms||['AutoCAD','All CAD']); if(downloadLinkInput) downloadLinkInput.value=item?.downloadLink||''; if(paymentLinkInput) paymentLinkInput.value=item?.paymentLink||''; if(stripeLinkInput) stripeLinkInput.value=item?.stripeLink||''; if(secureDownloadInput) secureDownloadInput.value=item?.secureDownloadLink||''; if(imageUrlInput) imageUrlInput.value=item?.imageUrl||''; if(gifUrlInput) gifUrlInput.value=item?.gifUrl||''; syncCadLinkFields(); updateMediaPreview(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); nameInput.focus();}
   function closeModal(){editingCadId=null;modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}
-  typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
+  typeInput?.addEventListener('change',()=>{const premium=typeInput.value==='premium'; priceInput.value=premium?'RM':''; if(originalPriceInput && !premium) originalPriceInput.value=''; buttonInput.value=premium?'Buy Now':'Open Resource'; syncCadLinkFields();});
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('input',updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el=>el?.addEventListener('change',updateMediaPreview));
 
@@ -2309,7 +2343,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
     const finalLink = typeInput.value === 'premium' ? (paymentLinkInput?.value || stripeLinkInput?.value) : downloadLinkInput?.value;
-    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,category:categoryInput?.value || 'LISP (.lsp)',price:priceInput.value,icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,stripeLink:stripeLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
+    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,category:categoryInput?.value || 'LISP (.lsp)',price:priceInput.value,originalPrice:originalPriceInput?.value || '',promoOriginalPrice:originalPriceInput?.value || '',icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,stripeLink:stripeLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
     const items = getItems(); const idx = items.findIndex(x=>String(x.id)===String(editingCadId)); if(idx>=0){ items[idx] = {...items[idx], ...item, id: editingCadId, createdAt: items[idx].createdAt || item.createdAt}; } else { items.unshift(item); } saveItems(items); closeModal(); applyFilters();
   });
   platformFilter?.addEventListener('click', e=>{const btn=e.target.closest('[data-cad-platform]'); if(!btn) return; selectedCadPlatform=btn.getAttribute('data-cad-platform')||'all'; platformFilter.querySelectorAll('[data-cad-platform]').forEach(b=>b.classList.toggle('is-active', b===btn)); applyFilters();});
