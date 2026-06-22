@@ -125,3 +125,10 @@ Checks:
 - Moved stats footer into normal mobile flow so card height expands naturally.
 - Added matching CAD mobile promo/action safety.
 - No Firebase Rules or Render ENV update required.
+
+
+## AZOBSS Patch 271 - Promo Badge Readable Text Fix
+- Enlarged top-left promo badge text for old price and Save percentage.
+- Kept final sale price only inside the Buy Now button.
+- Applied to Software Tools and CAD Tools.
+- No changes to PA/BM flow, My Purchases, Cart/Like/Bell/Message badge, Firebase Rules, or Render ENV.
