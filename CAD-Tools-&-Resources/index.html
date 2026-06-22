@@ -1796,6 +1796,79 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .cad-admin-form small{font-size:11px}
 @media(max-width:620px){.az-promo-price-block .az-price-new{font-size:17px}.az-promo-price-block{gap:6px}}
 </style>
+
+<!-- AZOBSS 278: shared product link no-blink loading guard -->
+<script id="azobss-shared-link-no-blink-early-278-js">
+(function(){
+  try{
+    var p = location.pathname || '';
+    var qs = new URLSearchParams(location.search || '');
+    if(qs.get('product') && /(?:Software-Tools|CAD-Tools-&-Resources)/i.test(p)){
+      document.documentElement.classList.add('az-shared-link-hydrating');
+    }
+  }catch(e){}
+})();
+</script>
+<style id="azobss-shared-link-no-blink-278-css">
+html.az-shared-link-hydrating .download-card,
+html.az-shared-link-hydrating .software-card,
+html.az-shared-link-hydrating .software-product-card,
+html.az-shared-link-hydrating .software-item,
+html.az-shared-link-hydrating .cad-card,
+html.az-shared-link-hydrating .cad-item,
+html.az-shared-link-hydrating .cad-resource-card,
+html.az-shared-link-hydrating .cad-tool-card{position:relative!important;}
+html.az-shared-link-hydrating .az-like-btn,
+html.az-shared-link-hydrating .like-btn,
+html.az-shared-link-hydrating .item-like-btn,
+html.az-shared-link-hydrating [class*="like-btn"],
+html.az-shared-link-hydrating .az-lucky-product-share-btn,
+html.az-shared-link-hydrating [data-az-lucky-product-share],
+html.az-shared-link-hydrating .azobss-gif-preview-link,
+html.az-shared-link-hydrating .azobss-preview-float-155,
+html.az-shared-link-hydrating .download-card > .software-stats,
+html.az-shared-link-hydrating #softwareGrid .download-card > .software-stats,
+html.az-shared-link-hydrating #softwareDownloadsGrid .download-card > .software-stats,
+html.az-shared-link-hydrating .downloads-grid .download-card > .software-stats{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  transition:none!important;
+}
+html.az-shared-link-hydrating .download-card::after,
+html.az-shared-link-hydrating .software-card::after,
+html.az-shared-link-hydrating .software-product-card::after,
+html.az-shared-link-hydrating .software-item::after,
+html.az-shared-link-hydrating .cad-card::after,
+html.az-shared-link-hydrating .cad-item::after,
+html.az-shared-link-hydrating .cad-resource-card::after,
+html.az-shared-link-hydrating .cad-tool-card::after{
+  content:'Loading product controls…'!important;
+  position:absolute!important;
+  left:14px!important;
+  right:14px!important;
+  bottom:8px!important;
+  height:34px!important;
+  z-index:70!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:14px!important;
+  border:1px solid rgba(45,212,191,.22)!important;
+  background:linear-gradient(90deg,rgba(15,23,42,.86),rgba(30,41,59,.94),rgba(15,23,42,.86))!important;
+  background-size:220% 100%!important;
+  color:#dffbff!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  letter-spacing:.02em!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.22)!important;
+  animation:azSharedLinkSkeleton278 1.05s ease-in-out infinite!important;
+}
+@keyframes azSharedLinkSkeleton278{0%{background-position:0 0}100%{background-position:220% 0}}
+html:not(.az-shared-link-hydrating) .az-shared-link-ready-soft{animation:azSharedLinkReady278 .18s ease-out both!important;}
+@keyframes azSharedLinkReady278{from{opacity:.84;transform:translateY(2px)}to{opacity:1;transform:none}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -4905,31 +4978,51 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     }catch(e){}
   }
   function ensureOneButton(card){
-    if(!isPaidCard(card)) return;
-    const btn=document.createElement('button');
-    btn.type='button';
-    btn.dataset.azLuckyMain='1';
-    btn.dataset.azLuckyProductShare='1';
-    btn.className='az-lucky-product-share-btn';
-    const shareUser=readUser();
-    const loggedIn=!!username(shareUser);
-    const adminShareMode=loggedIn && isAdminShareUser(shareUser);
-    const creditShareMode=loggedIn && !adminShareMode;
-    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> '+(creditShareMode?'Lucky Draw Share':'Share Product')+'</span>';
-    btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
-    btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
-    btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
-    btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
+    var oldButtons = Array.from(card.querySelectorAll('.az-lucky-product-share-btn,[data-az-lucky-main="1"],[data-az-lucky-product-share]')).filter(function(b){return b.parentElement === card;});
+    if(!isPaidCard(card)){
+      oldButtons.forEach(function(b){b.remove();});
+      delete card.dataset.azLuckyShareReady;
+      return;
+    }
+
+    function applyButtonState(btn){
+      const shareUser=readUser();
+      const loggedIn=!!username(shareUser);
+      const adminShareMode=loggedIn && isAdminShareUser(shareUser);
+      const creditShareMode=loggedIn && !adminShareMode;
+      if(!btn.querySelector('.az-lucky-share-icon')){
+        btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"></span>';
+      }
+      var text = btn.querySelector('.az-lucky-share-text');
+      if(text) text.textContent = ' ' + (creditShareMode ? 'Lucky Draw Share' : 'Share Product');
+      btn.type='button';
+      btn.dataset.azLuckyMain='1';
+      btn.dataset.azLuckyProductShare='1';
+      btn.className='az-lucky-product-share-btn';
+      btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
+      btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
+      btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
+      btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
+      alignShareButton(card, btn);
+      setTimeout(function(){alignShareButton(card, btn)}, 80);
+      card.dataset.azLuckyProductId=productInfo(card).id;
+      card.dataset.azLuckyShareReady='1';
+    }
+
+    let btn = oldButtons.shift();
+    oldButtons.forEach(function(b){b.remove();});
+    if(btn){
+      applyButtonState(btn);
+      return;
+    }
+
+    btn=document.createElement('button');
     btn.addEventListener('click',function(e){shareCard(card,e)},true);
     card.appendChild(btn);
-    alignShareButton(card, btn);
-    setTimeout(function(){alignShareButton(card, btn)}, 80);
-    card.dataset.azLuckyProductId=productInfo(card).id;
-    card.dataset.azLuckyShareReady='1';
+    applyButtonState(btn);
   }
   function run(){
     if(!isShopPage()) return;
-    removeAllGiftButtons();
     collectCards().forEach(ensureOneButton);
   }
   async function recordOpen(){
@@ -6017,6 +6110,67 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   }
 }
 </style>
+
+
+<!-- AZOBSS 278: shared product link hydration release -->
+<script id="azobss-shared-link-no-blink-release-278-js">
+(function(){
+  if(window.__azobssSharedLinkNoBlink278) return;
+  window.__azobssSharedLinkNoBlink278 = true;
+  var html = document.documentElement;
+  if(!html.classList.contains('az-shared-link-hydrating')) return;
+  var start = Date.now();
+  var maxWait = 2600;
+  var timer = 0;
+  var CARD_SELECTOR = '.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  var GRID_CARD_SELECTOR = '#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  function cards(){
+    var set = new Set();
+    document.querySelectorAll(GRID_CARD_SELECTOR + ',' + CARD_SELECTOR).forEach(function(el){
+      var c = el.closest && el.closest(CARD_SELECTOR);
+      if(c && !c.closest('#userPaPurchaseList,#benchmarkCartList,.pa-section,.bm-section,#PA-BM')) set.add(c);
+    });
+    return Array.from(set);
+  }
+  function visibleCardList(){
+    return cards().filter(function(c){
+      if(c.classList.contains('az-shared-product-hidden')) return false;
+      var cs = getComputedStyle(c);
+      return cs.display !== 'none' && cs.visibility !== 'hidden';
+    });
+  }
+  function isPaid(card){
+    if(!card) return false;
+    var type = String(card.dataset.type || '').toLowerCase();
+    var buy = card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.buy-now,[data-product-price]');
+    return type === 'premium' || !!buy;
+  }
+  function ready(){
+    var list = visibleCardList();
+    if(!list.length) return false;
+    var card = list[0];
+    var shareReady = !isPaid(card) || !!card.querySelector(':scope > .az-lucky-product-share-btn,:scope > [data-az-lucky-product-share]');
+    var statsReady = !!card.querySelector(':scope > .software-stats') || Date.now() - start > 1400;
+    return shareReady && statsReady;
+  }
+  function finish(){
+    clearTimeout(timer);
+    html.classList.remove('az-shared-link-hydrating');
+    document.body && document.body.classList.remove('az-shared-link-hydrating');
+    visibleCardList().forEach(function(card){card.classList.add('az-shared-link-ready-soft');});
+    try{window.dispatchEvent(new CustomEvent('azobss-shared-link-hydrated'));}catch(e){}
+  }
+  function tick(){
+    if(ready() || Date.now() - start > maxWait){ finish(); return; }
+    timer = setTimeout(tick, 120);
+  }
+  function schedule(){ clearTimeout(timer); timer = setTimeout(tick, 80); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule); else schedule();
+  ['azobss-software-rendered','azobss-cad-rendered','azobss-shop-cart-updated','load'].forEach(function(ev){window.addEventListener(ev, schedule, {passive:true});});
+  try{new MutationObserver(function(){schedule();}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  setTimeout(finish, maxWait + 450);
+})();
+</script>
 
 </body>
 </html>
