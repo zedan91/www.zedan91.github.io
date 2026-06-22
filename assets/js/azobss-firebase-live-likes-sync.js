@@ -1321,14 +1321,11 @@ let azobssPresenceHeartbeatTimer = null;
 
 async function azobssCleanupCollection(collectionName){
  try{
- const saved = (typeof getSavedUser === 'function' ? getSavedUser() : null) || {};
- const isAdminUser = (typeof isAzobssAdmin === 'function' && isAzobssAdmin(saved));
- if(!isAdminUser) return;
  const snap=await getDocs(query(collection(db,collectionName),orderBy("createdAt","desc")));
  if(snap.size<=25) return;
  const extra=snap.docs.slice(25);
  for(const d of extra){ await deleteDoc(d.ref);} 
- }catch(e){ if(e && (e.code === 'permission-denied' || /permission/i.test(String(e.message||'')))) return; console.warn("cleanup",e)}
+ }catch(e){console.warn("cleanup",e)}
 }
 function firestoreMs(value){
   if(!value) return 0;
@@ -4422,11 +4419,6 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     try{ localStorage.setItem(cacheKey(usernameKey), JSON.stringify(Array.from(state.ids))); }catch(e){}
   }
   async function loadLikesOnce(){
-    if(!isLoggedIn()){
-      state.ids = new Set();
-      state.loadedFor = 'guest';
-      return state.ids;
-    }
     const usernameKey = getUsernameKey();
     if(!usernameKey) return state.ids;
     if(state.loadedFor === usernameKey) return state.ids;
@@ -4507,8 +4499,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const cards = [];
     document.querySelectorAll('.card[data-product-id], .download-card, .cad-card').forEach(card=>{
       if(card.closest('.auth-modal,.azobss-pay-modal,.admin-modal,.cad-admin-modal,.software-admin-modal')) return;
-      const seededBtn = card.querySelector(':scope > .az-item-like-btn');
-      if(seededBtn && seededBtn.dataset.azLikeBound === '1') return;
+      if(card.querySelector('.az-item-like-btn')) return;
       const info = getCardInfo(card);
       if(!info.id || !info.title) return;
       cards.push({card, info});
@@ -4559,25 +4550,17 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     await loadLikesOnce();
     getCards().forEach(({card, info})=>{
       card.classList.add('az-has-like-btn');
-      let btn = card.querySelector(':scope > .az-item-like-btn');
-      if(!btn){
-        btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'az-item-like-btn';
-        card.appendChild(btn);
-      }
+      const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = (btn.className || '').includes('az-item-like-btn') ? btn.className : 'az-item-like-btn';
+      btn.className = 'az-item-like-btn';
       btn.dataset.likeItemId = info.id;
       setButtonState(btn, state.ids.has(info.id));
-      if(btn.dataset.azLikeBound !== '1'){
-        btn.dataset.azLikeBound = '1';
-        btn.addEventListener('click', (event)=>{
-          event.preventDefault();
-          event.stopPropagation();
-          toggleLike(btn, info);
-        });
-      }
+      btn.addEventListener('click', (event)=>{
+        event.preventDefault();
+        event.stopPropagation();
+        toggleLike(btn, info);
+      });
+      card.appendChild(btn);
     });
   }
   function likeCardHtml(row){

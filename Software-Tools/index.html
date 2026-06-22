@@ -2948,161 +2948,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .software-admin-form small{font-size:11px}
 @media(max-width:620px){.az-promo-price-block .az-price-new{font-size:18px}.az-promo-price-block{gap:6px}}
 </style>
-
-<!-- AZOBSS 283: shared product instant paint guard. Do not hide controls; show stable seeded buttons/stats immediately. -->
-<script id="azobss-shared-link-instant-paint-283-js">
-(function(){
-  try{
-    document.documentElement.classList.remove('az-shared-link-hydrating');
-    document.documentElement.classList.add('az-shared-link-instant-283');
-  }catch(e){}
-})();
-</script>
-<style id="azobss-shared-link-no-blink-278-css">
-html.az-shared-link-hydrating .download-card,
-html.az-shared-link-hydrating .software-card,
-html.az-shared-link-hydrating .software-product-card,
-html.az-shared-link-hydrating .software-item,
-html.az-shared-link-hydrating .cad-card,
-html.az-shared-link-hydrating .cad-item,
-html.az-shared-link-hydrating .cad-resource-card,
-html.az-shared-link-hydrating .cad-tool-card{position:relative!important;}
-html.az-shared-link-hydrating .az-like-btn,
-html.az-shared-link-hydrating .like-btn,
-html.az-shared-link-hydrating .item-like-btn,
-html.az-shared-link-hydrating [class*="like-btn"],
-html.az-shared-link-hydrating .az-lucky-product-share-btn,
-html.az-shared-link-hydrating [data-az-lucky-product-share],
-html.az-shared-link-hydrating .azobss-gif-preview-link,
-html.az-shared-link-hydrating .azobss-preview-float-155,
-html.az-shared-link-hydrating .download-card > .software-stats,
-html.az-shared-link-hydrating #softwareGrid .download-card > .software-stats,
-html.az-shared-link-hydrating #softwareDownloadsGrid .download-card > .software-stats,
-html.az-shared-link-hydrating .downloads-grid .download-card > .software-stats{
-  opacity:0!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
-  transition:none!important;
-}
-html.az-shared-link-hydrating .download-card::after,
-html.az-shared-link-hydrating .software-card::after,
-html.az-shared-link-hydrating .software-product-card::after,
-html.az-shared-link-hydrating .software-item::after,
-html.az-shared-link-hydrating .cad-card::after,
-html.az-shared-link-hydrating .cad-item::after,
-html.az-shared-link-hydrating .cad-resource-card::after,
-html.az-shared-link-hydrating .cad-tool-card::after{
-  content:'Preparing buttons…'!important;
-  position:absolute!important;
-  left:14px!important;
-  right:14px!important;
-  bottom:8px!important;
-  height:34px!important;
-  z-index:70!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:14px!important;
-  border:1px solid rgba(45,212,191,.22)!important;
-  background:linear-gradient(90deg,rgba(15,23,42,.86),rgba(30,41,59,.94),rgba(15,23,42,.86))!important;
-  background-size:220% 100%!important;
-  color:#dffbff!important;
-  font-size:11px!important;
-  font-weight:900!important;
-  letter-spacing:.02em!important;
-  box-shadow:0 10px 26px rgba(0,0,0,.22)!important;
-  animation:azSharedLinkSkeleton278 1.05s ease-in-out infinite!important;
-}
-@keyframes azSharedLinkSkeleton278{0%{background-position:0 0}100%{background-position:220% 0}}
-html:not(.az-shared-link-hydrating) .az-shared-link-ready-soft{animation:azSharedLinkReady278 .18s ease-out both!important;}
-@keyframes azSharedLinkReady278{from{opacity:.84;transform:translateY(2px)}to{opacity:1;transform:none}}
-
-/* AZOBSS 280: show shared product cards immediately. Only controls/stats stay skeleton-hidden until auth/share/stats settle, so guest links do not feel stuck. */
-html.az-shared-link-hydrating #softwareDownloadsGrid,
-html.az-shared-link-hydrating #softwareGrid,
-html.az-shared-link-hydrating .downloads-grid,
-html.az-shared-link-hydrating #cadDownloadsGrid,
-html.az-shared-link-hydrating #cadToolsGrid,
-html.az-shared-link-hydrating .cad-grid,
-html.az-shared-link-hydrating .cad-tools-shop,
-html.az-shared-link-hydrating .cad-card-grid{
-  opacity:1!important;
-  visibility:visible!important;
-  pointer-events:auto!important;
-}
-html.az-shared-link-hydrating .az-like-btn,
-html.az-shared-link-hydrating .like-btn,
-html.az-shared-link-hydrating .item-like-btn,
-html.az-shared-link-hydrating .az-item-like-btn,
-html.az-shared-link-hydrating [class*="like-btn"],
-html.az-shared-link-hydrating .az-lucky-product-share-btn,
-html.az-shared-link-hydrating [data-az-lucky-product-share],
-html.az-shared-link-hydrating .azobss-gif-preview-link,
-html.az-shared-link-hydrating .azobss-preview-float-155,
-html.az-shared-link-hydrating .download-card > .software-stats,
-html.az-shared-link-hydrating #softwareGrid .download-card > .software-stats,
-html.az-shared-link-hydrating #softwareDownloadsGrid .download-card > .software-stats,
-html.az-shared-link-hydrating .downloads-grid .download-card > .software-stats{
-  opacity:1!important;
-  visibility:visible!important;
-  pointer-events:auto!important;
-}
-html.az-shared-link-hydrating .download-card::after,
-html.az-shared-link-hydrating .software-card::after,
-html.az-shared-link-hydrating .software-product-card::after,
-html.az-shared-link-hydrating .software-item::after,
-html.az-shared-link-hydrating .cad-card::after,
-html.az-shared-link-hydrating .cad-item::after,
-html.az-shared-link-hydrating .cad-resource-card::after,
-html.az-shared-link-hydrating .cad-tool-card::after{
-  display:none!important;
-  content:none!important;
-}
-.az-instant-control-seed-281{opacity:1!important;visibility:visible!important;}
-
-/* AZOBSS 283: no blink/no delay for shared-link controls and public stats. All controls stay visible from first paint. */
-html.az-shared-link-hydrating .az-like-btn,
-html.az-shared-link-hydrating .like-btn,
-html.az-shared-link-hydrating .item-like-btn,
-html.az-shared-link-hydrating .az-item-like-btn,
-html.az-shared-link-hydrating [class*="like-btn"],
-html.az-shared-link-hydrating .az-lucky-product-share-btn,
-html.az-shared-link-hydrating [data-az-lucky-product-share],
-html.az-shared-link-hydrating .azobss-gif-preview-link,
-html.az-shared-link-hydrating .azobss-preview-float-155,
-html.az-shared-link-hydrating .software-stats,
-html.az-shared-link-hydrating .download-card > .software-stats,
-html.az-shared-link-hydrating .downloads-grid .download-card > .software-stats,
-html.az-shared-link-instant-283 .az-like-btn,
-html.az-shared-link-instant-283 .like-btn,
-html.az-shared-link-instant-283 .item-like-btn,
-html.az-shared-link-instant-283 .az-item-like-btn,
-html.az-shared-link-instant-283 [class*="like-btn"],
-html.az-shared-link-instant-283 .az-lucky-product-share-btn,
-html.az-shared-link-instant-283 [data-az-lucky-product-share],
-html.az-shared-link-instant-283 .azobss-gif-preview-link,
-html.az-shared-link-instant-283 .azobss-preview-float-155,
-html.az-shared-link-instant-283 .software-stats{opacity:1!important;visibility:visible!important;display:flex!important;pointer-events:auto!important;transition:none!important;animation:none!important;}
-html.az-shared-link-hydrating .download-card::after,
-html.az-shared-link-hydrating .software-card::after,
-html.az-shared-link-hydrating .software-product-card::after,
-html.az-shared-link-hydrating .software-item::after,
-html.az-shared-link-hydrating .cad-card::after,
-html.az-shared-link-hydrating .cad-item::after,
-html.az-shared-link-hydrating .cad-resource-card::after,
-html.az-shared-link-hydrating .cad-tool-card::after,
-html.az-shared-link-instant-283 .download-card::after,
-html.az-shared-link-instant-283 .software-card::after,
-html.az-shared-link-instant-283 .software-product-card::after,
-html.az-shared-link-instant-283 .software-item::after,
-html.az-shared-link-instant-283 .cad-card::after,
-html.az-shared-link-instant-283 .cad-item::after,
-html.az-shared-link-instant-283 .cad-resource-card::after,
-html.az-shared-link-instant-283 .cad-tool-card::after{display:none!important;content:none!important;}
-.az-instant-control-seed-281,.az-instant-stats-seed-281{opacity:1!important;visibility:visible!important;}
-
-</style>
-
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3588,17 +3433,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function azLocalLogoUrl(productId, name){
     return 'images/logo/' + azSafeLogoFileName(productId, name) + '.png';
   }
-  function azIsSafeVisibleImageUrl(url){
-    const raw = String(url || '').trim();
-    if(!raw) return false;
-    if(/^(data:image\/|blob:|https?:\/\/)/i.test(raw)) return true;
-    // Avoid old missing repo paths like /Software-Tools/img/*.png that create 404 noise before fallback.
-    return false;
-  }
   function azLogoSrcForItem(item){
-    const uploaded = String(item?.imageUrl || item?.image || '').trim();
-    if(azIsSafeVisibleImageUrl(uploaded)) return uploaded;
-    return azFaviconUrlFromLink(item?.downloadLink || item?.secureDownloadLink || item?.paymentLink || item?.stripeLink || item?.link) || '';
+    const local = azLocalLogoUrl(item?.productId || item?.id, item?.name);
+    return item?.imageUrl || local;
   }
 
   const MAX_MEDIA_BYTES = 900 * 1024;
@@ -4043,15 +3880,6 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     return (!!key&&keys.includes(key))|| (!!u.uid&&uidFields.includes(String(u.uid).toLowerCase())) || (!!u.username&&userFields.includes(u.username)) || (!!u.email&&emailFields.includes(u.email));
   }
 
-
-  /* AZOBSS 281: instant shared-link controls. Seed like/share/preview/stats inside card HTML so guest shared links show controls immediately without blinking. */
-  function azInstantDlSvg281(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
-  function azInstantStars281(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
-  function azInstantStatsHtml281(item){const st=statsForItem(item);const d=Math.max(0,Math.round(Number(st.downloads||item.downloads||0)||0));const r=Math.max(0,Math.min(5,Number(st.rating||item.rating||0)||0));const votes=Math.max(0,Math.round(Number(st.ratingVotes||item.ratingVotes||0)||0));return '<div class="software-stats az-instant-stats-seed-281"><span class="azb-stat-download"><span class="azb-dl-badge">'+azInstantDlSvg281()+'</span><strong class="azb-dl-number">'+esc(d)+'</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner">'+azInstantStars281(r)+'<strong class="azb-rate-value">'+r.toFixed(1)+'</strong><span class="azb-rate-votes">('+esc(votes)+')</span></span></span></div>';}
-  function azInstantLikeButtonHtml281(item){const id=esc(item.productId || item.id || item.name || '');return '<button type="button" class="az-item-like-btn az-instant-control-seed-281" data-like-item-id="'+id+'" aria-label="Add to Likes" title="Add to Likes">♡</button>';}
-  function azInstantShareButtonHtml281(item,isPremium){if(!isPremium)return '';return '<button type="button" class="az-lucky-product-share-btn az-instant-control-seed-281" data-az-lucky-main="1" data-az-lucky-product-share="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link"><svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share Product</span></button>';}
-  function azInstantPreviewButtonHtml281(item){if(!item.gifUrl)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155 az-instant-control-seed-281" href="'+esc(item.gifUrl)+'" data-gif-preview="'+esc(item.gifUrl)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg></a>';}
-
   function renderItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
@@ -4060,21 +3888,14 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const mediaSrc = item.imageUrl || item.gifUrl;
     const logoSrc = azLogoSrcForItem(item);
     const logoFallback = azFaviconUrlFromLink(item.downloadLink || item.secureDownloadLink || item.paymentLink || item.stripeLink || item.link);
-    const fallbackAttr = logoFallback ? ` data-fallback-src="${esc(logoFallback)}"` : '';
-    const imgHtml = logoSrc ? `<img class="software-logo-img" src="${esc(logoSrc)}"${fallbackAttr} alt="${esc(item.name)} logo" loading="lazy">` : '';
-    const mediaHtml = `<div class="software-card-media az-logo-media ${logoSrc ? '' : 'is-fallback'}">${imgHtml}<span class="software-logo-initial">${esc(item.icon || (item.name||'').slice(0,2).toUpperCase())}</span></div>`;
+    const mediaHtml = `<div class="software-card-media az-logo-media"><img class="software-logo-img" src="${esc(logoSrc)}" data-fallback-src="${esc(logoFallback)}" alt="${esc(item.name)} logo" loading="lazy"><span class="software-logo-initial">${esc(item.icon || (item.name||'').slice(0,2).toUpperCase())}</span></div>`;
     const gifHtml = item.gifUrl && item.imageUrl ? `<div class="software-media-links"><a class="software-media-demo azobss-gif-preview-link" href="${esc(item.gifUrl)}" data-gif-preview="${esc(item.gifUrl)}" target="_blank" rel="noopener" title="Hover to preview GIF">👁 Preview</a></div>` : '';
     const meta = [item.category, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
-    const instantLikeHtml = azInstantLikeButtonHtml281(item);
-    const instantShareHtml = azInstantShareButtonHtml281(item, isPremium);
-    const instantPreviewHtml = azInstantPreviewButtonHtml281(item);
-    const instantStatsHtml = azInstantStatsHtml281(item);
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
-      ${instantLikeHtml}${instantShareHtml}${instantPreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
@@ -4085,7 +3906,6 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       ${promoPriceHtml}
       <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>
       ${adminEdit}
-      ${instantStatsHtml}
     </div>`;
   }
   function loadLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]').map(normalizeItem); } catch(e){ return []; } }
@@ -5303,7 +5123,7 @@ line-height:1.6;
 <script type="module" id="azobss-software-stats-firestore-final-js">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 (function(){
   'use strict';
   const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
@@ -5315,16 +5135,11 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
   const VOTER_KEY='azobss_rating_voter_id_v2';
   let renderTimer=0, syncBusy=false, authPromise=null;
   function ensureAuth(){
-    // AZOBSS 282: do not force Firebase Anonymous Auth for public stats.
-    // Guest users can read public counters and see instant seeded stats without noisy auth errors.
     if(auth.currentUser) return Promise.resolve(auth.currentUser);
     if(authPromise) return authPromise;
     authPromise=new Promise((resolve)=>{
-      let done=false;
-      let off=function(){};
-      const finish=(u)=>{ if(done) return; done=true; try{off();}catch(e){} resolve(u||auth.currentUser||null); };
-      try{ off=onAuthStateChanged(auth,(u)=>finish(u||null)); }catch(e){}
-      setTimeout(()=>finish(auth.currentUser||null),250);
+      const off=onAuthStateChanged(auth,(u)=>{ if(u){off();resolve(u);} });
+      setTimeout(async()=>{try{const c=await signInAnonymously(auth);resolve(c.user);}catch(e){console.warn('AZOBSS stats auth failed. Enable Firebase Anonymous Auth.',e);resolve(auth.currentUser||null);}},250);
     });
     return authPromise;
   }
@@ -5350,33 +5165,7 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
   function dlSvg(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
   function starsHtml(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
   function footerHtml(st){return '<span class="azb-stat-download"><span class="azb-dl-badge">'+dlSvg()+'</span><strong class="azb-dl-number">'+fmt(st.downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner">'+starsHtml(st.rating)+'<strong class="azb-rate-value">'+Number(st.rating||0).toFixed(1)+'</strong><span class="azb-rate-votes">('+Number(st.ratingVotes||0)+')</span></span></span>';}
-  function render(card){
-    if(!card||!card.classList?.contains('download-card'))return;
-    let box=card.querySelector(':scope>.software-stats');
-    if(!box){box=document.createElement('div');box.className='software-stats';card.appendChild(box);}
-    box.className='software-stats';
-    if(card.lastElementChild!==box)card.appendChild(box);
-    const st=statsFor(card);
-    const html=footerHtml(st);
-    if(!box.dataset.azStableStats283 || !box.querySelector('.azb-dl-number') || !box.querySelector('.azb-rate-value')){
-      box.innerHTML=html;
-      box.dataset.azStableStats283='1';
-      return;
-    }
-    const dl=box.querySelector('.azb-dl-number');
-    if(dl && dl.textContent!==fmt(st.downloads)) dl.textContent=fmt(st.downloads);
-    const value=box.querySelector('.azb-rate-value');
-    const ratingText=Number(st.rating||0).toFixed(1);
-    if(value && value.textContent!==ratingText) value.textContent=ratingText;
-    const votes=box.querySelector('.azb-rate-votes');
-    const voteText='('+Number(st.ratingVotes||0)+')';
-    if(votes && votes.textContent!==voteText) votes.textContent=voteText;
-    const filled=Math.round(Number(st.rating)||0);
-    box.querySelectorAll('.azb-star').forEach(function(btn){
-      const n=Number(btn.dataset.rate||0);
-      btn.classList.toggle('is-filled', n<=filled);
-    });
-  }
+  function render(card){if(!card||!card.classList?.contains('download-card'))return;let box=card.querySelector(':scope>.software-stats');if(!box){box=document.createElement('div');card.appendChild(box);}box.className='software-stats';if(card.lastElementChild!==box)card.appendChild(box);const html=footerHtml(statsFor(card));if(box.innerHTML!==html)box.innerHTML=html;}
   function renderAll(){document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);}
   function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderAll,80);}
   async function loadRemote(){if(syncBusy)return;syncBusy=true;try{await ensureAuth();const snap=await getDoc(STATS_DOC);if(snap.exists()){const remote=itemsOf(snap.data());const c=readCache();const items=itemsOf(c);Object.entries(remote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
@@ -5388,7 +5177,7 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
   document.addEventListener('pointerdown',handleRate,true);
   document.addEventListener('click',function(e){if(e.target.closest?.('.azb-stars,.azb-star')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();return;}handleDownload(e);},true);
   document.addEventListener('keydown',function(e){const wrap=e.target.closest?.('.azb-stars');if(!wrap||!['1','2','3','4','5'].includes(e.key))return;e.preventDefault();const btn=wrap.querySelector('[data-rate="'+e.key+'"]');if(btn)btn.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:btn.getBoundingClientRect().left+2}));},true);
-  document.addEventListener('DOMContentLoaded',function(){renderAll();const runRemote=function(){loadRemote();}; if('requestIdleCallback' in window){requestIdleCallback(runRemote,{timeout:900});}else{setTimeout(runRemote,160);} [80,260,700,1400].forEach(t=>setTimeout(renderAll,t));const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid')||document.body;new MutationObserver(scheduleRender).observe(root,{childList:true,subtree:true});});
+  document.addEventListener('DOMContentLoaded',function(){renderAll();loadRemote();[100,300,800,1600,3000].forEach(t=>setTimeout(renderAll,t));const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid')||document.body;new MutationObserver(scheduleRender).observe(root,{childList:true,subtree:true});});
   window.azobssRenderSoftwareStatsFooter=renderAll;
   window.azobssSyncSoftwareStatsFromFirestore=loadRemote;
   setTimeout(renderAll,0);
@@ -6901,7 +6690,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   async function updateBadge(){
     const bell=getBell();
     const badge=ensureBadge();
-    if(!bell || !badge){ if(badge) badge.style.display='none'; return;}
+    if(!bell){badge.style.display='none';return;}
     positionBadge();
     try{
       const count=await fetchUnreadCount();
@@ -6913,14 +6702,14 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
       }
     }catch(err){
       console.warn('AZOBSS bell badge update failed:',err);
-      if(badge) badge.style.display='none';
+      badge.style.display='none';
     }
   }
 
   function markSeen(){
     localStorage.setItem(SEEN_KEY,String(Date.now()));
     const badge=ensureBadge();
-    if(badge) badge.style.display='none';
+    badge.style.display='none';
   }
 
   document.addEventListener('click',function(e){
@@ -8532,51 +8321,31 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     }catch(e){}
   }
   function ensureOneButton(card){
-    var oldButtons = Array.from(card.querySelectorAll('.az-lucky-product-share-btn,[data-az-lucky-main="1"],[data-az-lucky-product-share]')).filter(function(b){return b.parentElement === card;});
-    if(!isPaidCard(card)){
-      oldButtons.forEach(function(b){b.remove();});
-      delete card.dataset.azLuckyShareReady;
-      return;
-    }
-
-    function applyButtonState(btn){
-      const shareUser=readUser();
-      const loggedIn=!!username(shareUser);
-      const adminShareMode=loggedIn && isAdminShareUser(shareUser);
-      const creditShareMode=loggedIn && !adminShareMode;
-      if(!btn.querySelector('.az-lucky-share-icon')){
-        btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"></span>';
-      }
-      var text = btn.querySelector('.az-lucky-share-text');
-      if(text) text.textContent = ' ' + (creditShareMode ? 'Lucky Draw Share' : 'Share Product');
-      btn.type='button';
-      btn.dataset.azLuckyMain='1';
-      btn.dataset.azLuckyProductShare='1';
-      btn.className='az-lucky-product-share-btn';
-      btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
-      btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
-      btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
-      btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
-      alignShareButton(card, btn);
-      setTimeout(function(){alignShareButton(card, btn)}, 80);
-      card.dataset.azLuckyProductId=productInfo(card).id;
-      card.dataset.azLuckyShareReady='1';
-    }
-
-    let btn = oldButtons.shift();
-    oldButtons.forEach(function(b){b.remove();});
-    if(btn){
-      applyButtonState(btn);
-      return;
-    }
-
-    btn=document.createElement('button');
+    if(!isPaidCard(card)) return;
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.dataset.azLuckyMain='1';
+    btn.dataset.azLuckyProductShare='1';
+    btn.className='az-lucky-product-share-btn';
+    const shareUser=readUser();
+    const loggedIn=!!username(shareUser);
+    const adminShareMode=loggedIn && isAdminShareUser(shareUser);
+    const creditShareMode=loggedIn && !adminShareMode;
+    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> '+(creditShareMode?'Lucky Draw Share':'Share Product')+'</span>';
+    btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
+    btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
+    btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
+    btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
     btn.addEventListener('click',function(e){shareCard(card,e)},true);
     card.appendChild(btn);
-    applyButtonState(btn);
+    alignShareButton(card, btn);
+    setTimeout(function(){alignShareButton(card, btn)}, 80);
+    card.dataset.azLuckyProductId=productInfo(card).id;
+    card.dataset.azLuckyShareReady='1';
   }
   function run(){
     if(!isShopPage()) return;
+    removeAllGiftButtons();
     collectCards().forEach(ensureOneButton);
   }
   async function recordOpen(){
@@ -10054,25 +9823,6 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   }
 }
 </style>
-
-
-<!-- AZOBSS 281: shared product link instant controls release -->
-<script id="azobss-shared-link-instant-controls-281-js">
-(function(){
-  function release(){
-    try{
-      document.documentElement.classList.remove('az-shared-link-hydrating');
-      document.documentElement.classList.add('az-shared-link-stable','az-shared-link-instant-281');
-      document.body && document.body.classList.remove('az-shared-link-hydrating');
-      window.dispatchEvent(new CustomEvent('azobss-shared-link-hydrated'));
-    }catch(e){}
-  }
-  release();
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', release, {once:true}); else release();
-  requestAnimationFrame(function(){release();});
-  setTimeout(release, 20);
-})();
-</script>
 
 </body>
 </html>
