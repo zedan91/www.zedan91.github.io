@@ -5447,6 +5447,118 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 }
 </style>
 
+
+<style id="azobss-promo-badge-top-left-fix-269">
+/* AZOBSS 269: show promo old price + save badge at top-left with a clean highlight effect.
+   Final selling price stays only inside the Buy Now button. */
+.download-card,
+.software-card,
+.software-product-card,
+.cad-card,
+.cad-item,
+.cad-resource-card,
+.cad-tool-card{
+  position:relative!important;
+}
+.az-promo-price-block.az-promo-no-sale-text{
+  position:absolute!important;
+  top:12px!important;
+  left:12px!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:38!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:calc(100% - 82px)!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:5px 7px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:6px!important;
+  flex-wrap:nowrap!important;
+  line-height:1!important;
+  border-radius:999px!important;
+  border:1px solid rgba(250,204,21,.42)!important;
+  background:linear-gradient(135deg,rgba(15,23,42,.92),rgba(69,26,3,.72),rgba(127,29,29,.72))!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 8px 22px rgba(0,0,0,.28),0 0 18px rgba(250,204,21,.13)!important;
+  transform:translateZ(0)!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+}
+.az-promo-price-block.az-promo-no-sale-text::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.22) 36%,transparent 64%);
+  transform:translateX(-130%);
+  animation:azPromoBadgeSweep269 3.2s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes azPromoBadgeSweep269{
+  0%,48%{transform:translateX(-130%);opacity:0;}
+  58%{opacity:1;}
+  78%,100%{transform:translateX(130%);opacity:0;}
+}
+.az-promo-price-block.az-promo-no-sale-text .az-price-old{
+  color:#cbd5e1!important;
+  opacity:.95!important;
+  font-size:11px!important;
+  font-weight:1000!important;
+  text-decoration:line-through!important;
+  text-decoration-thickness:2px!important;
+  text-decoration-color:rgba(248,113,113,.95)!important;
+  letter-spacing:.1px!important;
+  white-space:nowrap!important;
+  position:relative!important;
+  z-index:1!important;
+}
+.az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
+  color:#fff7ed!important;
+  background:linear-gradient(135deg,#ef4444,#f97316,#f59e0b)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  border-radius:999px!important;
+  padding:3px 6px!important;
+  font-size:9px!important;
+  font-weight:1000!important;
+  letter-spacing:.25px!important;
+  text-transform:uppercase!important;
+  box-shadow:0 4px 12px rgba(239,68,68,.26)!important;
+  white-space:nowrap!important;
+  position:relative!important;
+  z-index:1!important;
+}
+.az-promo-price-block.az-promo-no-sale-text .az-price-new{display:none!important;}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+  html body #softwareDownloadsGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .downloads-grid > .download-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-item .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-resource-card .az-promo-price-block.az-promo-no-sale-text,
+  html body .cad-tool-card .az-promo-price-block.az-promo-no-sale-text{
+    position:absolute!important;
+    top:10px!important;
+    left:10px!important;
+    width:auto!important;
+    min-height:0!important;
+    max-width:calc(100% - 76px)!important;
+    order:0!important;
+    margin:0!important;
+    padding:4px 6px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    flex-wrap:nowrap!important;
+    gap:5px!important;
+    flex:0 0 auto!important;
+  }
+  html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{font-size:10px!important;}
+  html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:8.5px!important;padding:3px 5px!important;}
+}
+</style>
+
 </body>
 </html>
 
