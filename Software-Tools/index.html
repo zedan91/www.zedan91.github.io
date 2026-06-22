@@ -9721,6 +9721,31 @@ html body .az-promo-price-block.az-promo-no-sale-text{
 }
 </style>
 
+
+
+<style id="azobss-promo-badge-strikeline-transparent-readable-fix-275">
+/* AZOBSS 275: make the old price strike line lighter/transparent so RM value remains readable. */
+html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
+  text-decoration-line:line-through!important;
+  text-decoration-color:rgba(255,255,255,.42)!important;
+  text-decoration-thickness:2px!important;
+  text-decoration-skip-ink:none!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.92),0 0 6px rgba(255,255,255,.22)!important;
+}
+@media(max-width:760px){
+  html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
+    text-decoration-color:rgba(255,255,255,.38)!important;
+    text-decoration-thickness:1.8px!important;
+  }
+}
+@media(max-width:380px){
+  html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
+    text-decoration-color:rgba(255,255,255,.34)!important;
+    text-decoration-thickness:1.6px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 

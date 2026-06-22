@@ -137,3 +137,10 @@ Checks:
 - Kept the promo badge compact at the top-left and avoided product logo overlap.
 - Final selling price remains only inside the Buy Now button.
 - No changes to PA/BM, My Purchases, Cart/Like/Bell/Message badge, Firebase Rules, or Render ENV.
+
+
+## (275) AZOBSS Promo Badge Strike Line Transparent Readable Fix
+- Adjusted Software Tools and CAD Tools promo old-price strike-through line.
+- Strike line is now semi-transparent and thinner so values like RM30 remain readable.
+- Keeps promo badge at top-left and final price only in the Buy Now button.
+- No PA/BM, My Purchases, Cart/Like/Bell/Message, Firebase Rules, or Render ENV changes.

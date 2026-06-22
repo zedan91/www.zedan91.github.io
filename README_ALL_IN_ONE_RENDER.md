@@ -19,3 +19,7 @@ Public card display will show RM30 crossed out → RM20 with a Save % badge.
 - Kept the promo badge compact at the top-left and avoided product logo overlap.
 - Final selling price remains only inside the Buy Now button.
 - No changes to PA/BM, My Purchases, Cart/Like/Bell/Message badge, Firebase Rules, or Render ENV.
+
+
+### Patch (275)
+Promo badge old-price strike line is lighter/transparent for better readability. No Render ENV or Firebase Rules update required.
