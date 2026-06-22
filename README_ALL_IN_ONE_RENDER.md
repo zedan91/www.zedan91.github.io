@@ -29,3 +29,11 @@ Promo badge old-price strike line is lighter/transparent for better readability.
 - Old promo price line is now diagonal/slanted and semi-transparent for better readability.
 - Applies to Software Tools and CAD Tools only.
 - No Firebase Rules or Render ENV changes required.
+
+
+## AZOBSS Patch 281 - Shared Link Instant Controls No Blink
+- Software/CAD shared product links now show Like, Share, Preview GIF, rating and download stats immediately.
+- Removed the shared-link control hiding/skeleton wait that made controls appear late.
+- Seeded stable card controls in the initial card HTML, then later scripts update state silently in-place.
+- Patched like button binding so pre-rendered Like buttons still work.
+- Does not touch PA/BM flow, My Purchases, Cart/Bell/Message badge logic, Firebase Rules, or Render ENV.

@@ -157,3 +157,11 @@ Checks:
 - Software/CAD shared product grid kini disorok sementara dengan skeleton “Preparing shared product…”.
 - Release hydration menunggu card target, share button, preview GIF dan stats footer stabil beberapa tick sebelum paparan sebenar dibuka.
 - Tidak sentuh PA/BM, My Purchases, Cart/Like/Bell/Message badge logic, Firebase Rules atau Render ENV.
+
+
+## AZOBSS Patch 281 - Shared Link Instant Controls No Blink
+- Software/CAD shared product links now show Like, Share, Preview GIF, rating and download stats immediately.
+- Removed the shared-link control hiding/skeleton wait that made controls appear late.
+- Seeded stable card controls in the initial card HTML, then later scripts update state silently in-place.
+- Patched like button binding so pre-rendered Like buttons still work.
+- Does not touch PA/BM flow, My Purchases, Cart/Bell/Message badge logic, Firebase Rules, or Render ENV.

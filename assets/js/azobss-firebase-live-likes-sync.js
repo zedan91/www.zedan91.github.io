@@ -4499,7 +4499,8 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const cards = [];
     document.querySelectorAll('.card[data-product-id], .download-card, .cad-card').forEach(card=>{
       if(card.closest('.auth-modal,.azobss-pay-modal,.admin-modal,.cad-admin-modal,.software-admin-modal')) return;
-      if(card.querySelector('.az-item-like-btn')) return;
+      const seededBtn = card.querySelector(':scope > .az-item-like-btn');
+      if(seededBtn && seededBtn.dataset.azLikeBound === '1') return;
       const info = getCardInfo(card);
       if(!info.id || !info.title) return;
       cards.push({card, info});
@@ -4550,17 +4551,25 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     await loadLikesOnce();
     getCards().forEach(({card, info})=>{
       card.classList.add('az-has-like-btn');
-      const btn = document.createElement('button');
+      let btn = card.querySelector(':scope > .az-item-like-btn');
+      if(!btn){
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'az-item-like-btn';
+        card.appendChild(btn);
+      }
       btn.type = 'button';
-      btn.className = 'az-item-like-btn';
+      btn.className = (btn.className || '').includes('az-item-like-btn') ? btn.className : 'az-item-like-btn';
       btn.dataset.likeItemId = info.id;
       setButtonState(btn, state.ids.has(info.id));
-      btn.addEventListener('click', (event)=>{
-        event.preventDefault();
-        event.stopPropagation();
-        toggleLike(btn, info);
-      });
-      card.appendChild(btn);
+      if(btn.dataset.azLikeBound !== '1'){
+        btn.dataset.azLikeBound = '1';
+        btn.addEventListener('click', (event)=>{
+          event.preventDefault();
+          event.stopPropagation();
+          toggleLike(btn, info);
+        });
+      }
     });
   }
   function likeCardHtml(row){
