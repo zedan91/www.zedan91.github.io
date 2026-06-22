@@ -3275,7 +3275,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-  import {addDoc, collection, deleteDoc, doc, getDocs, getFirestore, orderBy, query, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+  import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -3637,28 +3637,110 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   function defaultSoftwareStats(name, category){
     return {views:0, downloads:0, rating:0, likes:0};
   }
+  const AZ_FIRESTORE_STATS_CACHE_KEY = 'azobss_firestore_stats_clean_v2';
+  let azSoftwareStatsPrefetchPromise = null;
+  function azSafeParseStatsCache(key){
+    try { return JSON.parse(localStorage.getItem(key) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+  function azFirestoreStatsItems(){
+    const raw = azSafeParseStatsCache(AZ_FIRESTORE_STATS_CACHE_KEY);
+    return (raw && raw.items && typeof raw.items === 'object') ? raw.items : {};
+  }
+  function azStatsKeyVariants(id, name){
+    const out = [];
+    [id, name].forEach(v => {
+      const k = statsKeyFrom(v);
+      if(k && !out.includes(k)) out.push(k);
+    });
+    return out;
+  }
+  function azFindCachedStats(id, name){
+    const manual = readSoftwareStats();
+    const firestore = azFirestoreStatsItems();
+    const variants = azStatsKeyVariants(id, name);
+    for(const k of variants){
+      if(manual[k]) return manual[k];
+      if(firestore[k]) return firestore[k];
+    }
+    const normalizedName = statsKeyFrom(name);
+    if(normalizedName){
+      for(const value of Object.values(firestore)){
+        if(value && statsKeyFrom(value.name) === normalizedName) return value;
+      }
+      for(const value of Object.values(manual)){
+        if(value && statsKeyFrom(value.name) === normalizedName) return value;
+      }
+    }
+    return null;
+  }
   function normalizeStats(raw, fallbackName, fallbackCategory){
+    raw = raw || {};
+    let ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes ?? raw.votes ?? 0) || 0));
+    let ratingTotal = Math.max(0, Number(raw.ratingTotal || 0) || 0);
+    if(raw.ratings && typeof raw.ratings === 'object'){
+      ratingVotes = 0;
+      ratingTotal = 0;
+      for(let i=1;i<=5;i++){
+        const c = Math.max(0, Math.round(Number(raw.ratings[String(i)] || raw.ratings[i] || 0) || 0));
+        ratingVotes += c;
+        ratingTotal += i * c;
+      }
+    }
+    const rawRating = ratingVotes ? (ratingTotal / ratingVotes) : Number(raw.ratingAverage ?? raw.rating ?? 0);
     const views = Number(raw?.views || 0);
     const downloads = Number(raw?.downloads || 0);
-    const rating = Number(raw?.rating || 0);
+    const rating = Math.max(0, Math.min(5, Number(rawRating || 0)));
     const likes = Number(raw?.likes || 0);
     return {
-      views: 0,
+      views: Math.max(0, Math.round(views)),
       downloads: Math.max(0, Math.round(downloads)),
-      rating: Math.max(0, Math.min(5, Number(rating.toFixed ? rating.toFixed(1) : rating))),
-      likes: Math.max(0, Math.round(likes))
+      rating: Math.round(rating * 10) / 10,
+      ratingVotes: Math.max(0, Math.round(ratingVotes)),
+      votes: Math.max(0, Math.round(ratingVotes)),
+      likes: Math.max(0, Math.round(likes)),
+      name: raw.name || fallbackName || '',
+      category: raw.category || fallbackCategory || ''
     };
   }
   function statsForItem(item){
-    const stats = readSoftwareStats();
-    const key = statsKeyFrom(item?.productId || item?.id || item?.name);
-    return normalizeStats(stats[key] || item || {}, item?.name, item?.category);
+    const id = item?.productId || item?.id || item?.name;
+    const name = item?.name || id;
+    const cached = azFindCachedStats(id, name);
+    return normalizeStats(cached || item || {}, name, item?.category);
   }
   function statsForCard(card){
     const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'Software Item';
-    const key = statsKeyFrom(card?.dataset.productId || card?.dataset.name || name);
-    const stats = readSoftwareStats();
-    return normalizeStats(stats[key] || {views:card?.dataset.views, downloads:card?.dataset.downloads, rating:card?.dataset.rating, likes:card?.dataset.likes}, name, card?.dataset.category || 'General Tools');
+    const id = card?.dataset.productId || card?.dataset.name || name;
+    const cached = azFindCachedStats(id, name);
+    return normalizeStats(cached || {views:card?.dataset.views, downloads:card?.dataset.downloads, rating:card?.dataset.rating, ratingVotes:card?.dataset.ratingVotes, likes:card?.dataset.likes}, name, card?.dataset.category || 'General Tools');
+  }
+  function azMirrorFirestoreStatsToManual(remoteItems){
+    if(!remoteItems || typeof remoteItems !== 'object') return;
+    const manual = readSoftwareStats();
+    Object.entries(remoteItems).forEach(([key, value]) => {
+      const st = normalizeStats(value || {}, value?.name, value?.category);
+      const keys = azStatsKeyVariants(key, st.name);
+      keys.forEach(k => { manual[k] = st; });
+    });
+    saveSoftwareStats(manual);
+    try { localStorage.setItem(AZ_FIRESTORE_STATS_CACHE_KEY, JSON.stringify({items: remoteItems, cachedAt: Date.now()})); } catch(e){}
+  }
+  async function azPrefetchRealSoftwareStats(){
+    if(azSoftwareStatsPrefetchPromise) return azSoftwareStatsPrefetchPromise;
+    azSoftwareStatsPrefetchPromise = (async () => {
+      try{
+        const snap = await getDoc(doc(db, 'settings', 'softwareStats'));
+        if(snap.exists()){
+          const data = snap.data() || {};
+          const remoteItems = (data.items && typeof data.items === 'object') ? data.items : {};
+          azMirrorFirestoreStatsToManual(remoteItems);
+        }
+      }catch(err){
+        console.warn('AZOBSS real stats prefetch skipped:', err);
+      }
+    })();
+    return azSoftwareStatsPrefetchPromise;
   }
   function applyStatsToCard(card){
     if(!card) return;
@@ -4218,7 +4300,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   }
   async function loadItems(){
     if(!grid) return;
-    softwareDynamicItems = dedupeSoftwareItems([...await loadFirestore(), ...loadLocal()]);
+    const firestoreItemsPromise = loadFirestore();
+    await azPrefetchRealSoftwareStats();
+    softwareDynamicItems = dedupeSoftwareItems([...(await firestoreItemsPromise), ...loadLocal()]);
     applySoftwareFilters();
   }
   function azGetSoftwareRoleInfo(){
@@ -5143,25 +5227,26 @@ line-height:1.6;
 <script type="module" id="azobss-software-stats-firestore-final-js">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 (function(){
   'use strict';
   const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
   const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
   const db=getFirestore(app);
-  const auth=getAuth(app);
   const STATS_DOC=doc(db,'settings','softwareStats');
   const CACHE_KEY='azobss_firestore_stats_clean_v2';
   const VOTER_KEY='azobss_rating_voter_id_v2';
-  let renderTimer=0, syncBusy=false, authPromise=null;
-  function ensureAuth(){
-    if(auth.currentUser) return Promise.resolve(auth.currentUser);
-    if(authPromise) return authPromise;
-    authPromise=new Promise((resolve)=>{
-      const off=onAuthStateChanged(auth,(u)=>{ if(u){off();resolve(u);} });
-      setTimeout(async()=>{try{const c=await signInAnonymously(auth);resolve(c.user);}catch(e){console.warn('AZOBSS stats auth failed. Enable Firebase Anonymous Auth.',e);resolve(auth.currentUser||null);}},250);
-    });
-    return authPromise;
+  const MANUAL_STATS_KEY='azobss_software_manual_stats_v2';
+  let renderTimer=0, syncBusy=false;
+  function mirrorToManual(remote){
+    try{
+      const manual = JSON.parse(localStorage.getItem(MANUAL_STATS_KEY) || '{}') || {};
+      Object.entries(itemsOf({items:remote})).forEach(([k,v])=>{
+        const st = normalize(v || {});
+        const keys = [slug(k), slug(st.name)].filter(Boolean);
+        keys.forEach(key => { manual[key] = {views:0, downloads:st.downloads, rating:st.rating, ratingVotes:st.ratingVotes, votes:st.ratingVotes, likes:0, name:st.name||''}; });
+      });
+      localStorage.setItem(MANUAL_STATS_KEY, JSON.stringify(manual));
+    }catch(e){}
   }
   function slug(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,120)||'software-item';}
   function readCache(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'{"items":{}}')||{items:{}};}catch(e){return{items:{}};}}
@@ -5188,10 +5273,10 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
   function render(card){if(!card||!card.classList?.contains('download-card'))return;let box=card.querySelector(':scope>.software-stats');if(!box){box=document.createElement('div');card.appendChild(box);}box.className='software-stats';if(card.lastElementChild!==box)card.appendChild(box);const html=footerHtml(statsFor(card));if(box.innerHTML!==html)box.innerHTML=html;}
   function renderAll(){document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);}
   function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderAll,80);}
-  async function loadRemote(){if(syncBusy)return;syncBusy=true;try{await ensureAuth();const snap=await getDoc(STATS_DOC);if(snap.exists()){const remote=itemsOf(snap.data());const c=readCache();const items=itemsOf(c);Object.entries(remote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
-  async function recordDownload(card){const key=slug(productId(card));const st=statsFor(card);st.downloads+=1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await ensureAuth();await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS download save failed. Check Anonymous Auth + Firestore rules.',e);}}
+  async function loadRemote(){if(syncBusy)return;syncBusy=true;try{const snap=await getDoc(STATS_DOC);if(snap.exists()){const remote=itemsOf(snap.data());const c=readCache();const items=itemsOf(c);Object.entries(remote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});mirrorToManual(items);renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
+  async function recordDownload(card){const key=slug(productId(card));const st=statsFor(card);st.downloads+=1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS download save failed. Check Anonymous Auth + Firestore rules.',e);}}
   function rateFromEvent(e,wrap){const btn=e.target.closest?.('.azb-star');if(btn)return Math.max(1,Math.min(5,Number(btn.dataset.rate||0)));const r=wrap.getBoundingClientRect();const x=e.clientX||(e.touches&&e.touches[0]?.clientX)||r.left;return Math.max(1,Math.min(5,Math.ceil(((x-r.left)/Math.max(1,r.width))*5)));}
-  async function recordRating(card,rating){const key=slug(productId(card));const voter=voterId();const st=statsFor(card);const old=Number(st.ratedBy[voter]||0);if(old>=1&&old<=5)st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);st.ratedBy[voter]=rating;let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}st.ratingVotes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:0;st.ratingAverage=st.rating;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await ensureAuth();await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);const prev=Number(remote.ratedBy?.[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rating)]=Math.max(0,Number(remote.ratings[String(rating)]||0)+1);remote.ratedBy=remote.ratedBy||{};remote.ratedBy[voter]=rating;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rv+=c;rt+=i*c;}remote.ratingVotes=rv;remote.ratingTotal=rt;remote.rating=rv?Math.round((rt/rv)*10)/10:0;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||0)));remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS rating save failed. Check Anonymous Auth + Firestore rules.',e);}}
+  async function recordRating(card,rating){const key=slug(productId(card));const voter=voterId();const st=statsFor(card);const old=Number(st.ratedBy[voter]||0);if(old>=1&&old<=5)st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);st.ratedBy[voter]=rating;let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}st.ratingVotes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:0;st.ratingAverage=st.rating;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st,true);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=normalize(items[key]||{},card);const prev=Number(remote.ratedBy?.[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rating)]=Math.max(0,Number(remote.ratings[String(rating)]||0)+1);remote.ratedBy=remote.ratedBy||{};remote.ratedBy[voter]=rating;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rv+=c;rt+=i*c;}remote.ratingVotes=rv;remote.ratingTotal=rt;remote.rating=rv?Math.round((rt/rv)*10)/10:0;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||0)));remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS rating save failed. Check Anonymous Auth + Firestore rules.',e);}}
   function handleRate(e){const hit=e.target.closest?.('.azb-stars,.azb-star');if(!hit)return;const wrap=hit.classList.contains('azb-stars')?hit:hit.closest('.azb-stars');const card=wrap&&wrap.closest('.download-card');if(!wrap||!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();const now=Date.now();if(wrap.dataset.busyUntil&&now<Number(wrap.dataset.busyUntil))return;wrap.dataset.busyUntil=String(now+300);const rating=rateFromEvent(e,wrap);if(rating)recordRating(card,rating);}
   function handleDownload(e){if(e.target.closest?.('.azb-stars,.azb-star'))return;const btn=e.target.closest?.('.download-card .download-btn');if(!btn)return;const card=btn.closest('.download-card');if(card)recordDownload(card);}
   document.addEventListener('pointerdown',handleRate,true);

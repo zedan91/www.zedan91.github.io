@@ -1,0 +1,19 @@
+Patch 288 - Shop Card Real Download/Rating No Zero Fix
+
+Baseline: (287)-AZOBSS-SHOP-CARD-FIRST-PAINT-CONTROLS-NO-BLINK-FIX_20260622.zip
+
+Fix:
+- Software Tools now prefetches Firestore settings/softwareStats before rendering dynamic product cards.
+- Downloads and rating use the real Firestore value on first paint where available.
+- No Firebase Anonymous Auth is forced for public stats reads.
+- Firestore stats are mirrored into the older manual stats cache so sort/filter/card first paint uses the same real numbers.
+- Rating vote count is preserved instead of being discarded by the old normalizeStats helper.
+- Existing controls remain first-paint/stable from patch 287.
+
+Not touched:
+- PA/BM paid/verified download flow
+- My Purchases
+- Cart storage/payment logic
+- Bell/message badge logic
+- Firebase Rules
+- Render ENV
