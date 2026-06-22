@@ -3275,7 +3275,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-  import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+  import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -3556,8 +3556,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       buttonText: item.buttonText || (type === 'free' ? 'Download Now' : 'Buy Now'),
       views: 0,
       downloads: Number(item.downloads || 0),
-      rating: Number(item.ratingAverage ?? item.avgRating ?? item.rating ?? 0),
-      ratingVotes: Number(item.ratingVotes ?? item.votes ?? item.ratingCount ?? item.reviews ?? 0),
+      rating: Number(item.rating || 0),
       likes: Number(item.likes || 0),
       createdAtMs: item.createdAtMs || (item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : (Number(item.createdAt) || 0)))
     };
@@ -3591,7 +3590,6 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       views: 0,
       downloads: Number(n.downloads || 0),
       rating: Number(n.rating || 0),
-      ratingVotes: Number(n.ratingVotes || 0),
       likes: Number(n.likes || 0),
       createdAtMs: n.createdAtMs || Date.now()
     };
@@ -3622,26 +3620,51 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     setTimeout(() => URL.revokeObjectURL(url), 800);
   }
   function readSoftwareStats(){
-    try {
-      const parsed = JSON.parse(localStorage.getItem(SOFTWARE_STATS_KEY) || '{}') || {};
-      const source = (parsed.items && typeof parsed.items === 'object') ? parsed.items : parsed;
-      const out = {};
-      Object.entries(source || {}).forEach(([key, value]) => {
-        if(!value || typeof value !== 'object') return;
-        const normalized = normalizeStats(value);
-        [key, value.productId, value.id, value.sku, value.name, value.title].filter(Boolean).forEach(k => {
-          azStatsKeyCandidates(k).forEach(kk => { out[kk] = normalized; });
-        });
-      });
-      return out;
-    } catch(e){ return {}; }
+    try { return JSON.parse(localStorage.getItem(SOFTWARE_STATS_KEY) || '{}') || {}; }
+    catch(e){ return {}; }
   }
   function saveSoftwareStats(stats){
-    const out = {};
-    Object.entries(stats || {}).forEach(([key,value]) => {
-      if(value && typeof value === 'object') out[statsKeyFrom(key)] = normalizeStats(value);
+    localStorage.setItem(SOFTWARE_STATS_KEY, JSON.stringify(stats || {}));
+  }
+
+  function azStatsItemsBundle290(data){
+    if(!data || typeof data !== 'object') return {};
+    if(data.items && typeof data.items === 'object') return data.items;
+    return data;
+  }
+  function azMergeSoftwareStats290(existing, incoming){
+    const out = {...(existing || {})};
+    const input = azStatsItemsBundle290(incoming);
+    Object.keys(input || {}).forEach(key => {
+      const remote = input[key] || {};
+      const prev = out[key] || {};
+      const downloads = Number(remote.downloads ?? prev.downloads ?? 0);
+      const rAvg = Number(remote.ratingAverage ?? remote.avgRating ?? remote.rating ?? prev.ratingAverage ?? prev.avgRating ?? prev.rating ?? 0);
+      const rVotes = Number(remote.ratingVotes ?? remote.votes ?? remote.ratingCount ?? remote.reviews ?? prev.ratingVotes ?? prev.votes ?? prev.ratingCount ?? prev.reviews ?? 0);
+      out[key] = {
+        ...prev,
+        ...remote,
+        downloads: Number.isFinite(downloads) ? Math.max(0, Math.round(downloads)) : 0,
+        rating: Number.isFinite(rAvg) ? Math.max(0, Math.min(5, Math.round(rAvg * 10) / 10)) : 0,
+        ratingAverage: Number.isFinite(rAvg) ? Math.max(0, Math.min(5, Math.round(rAvg * 10) / 10)) : 0,
+        ratingVotes: Number.isFinite(rVotes) ? Math.max(0, Math.round(rVotes)) : 0,
+        votes: Number.isFinite(rVotes) ? Math.max(0, Math.round(rVotes)) : 0
+      };
     });
-    localStorage.setItem(SOFTWARE_STATS_KEY, JSON.stringify(out || {}));
+    return out;
+  }
+  async function azPrefetchSoftwareStatsForFirstPaint290(){
+    try{
+      const snap = await getDoc(doc(db, 'settings', 'softwareStats'));
+      if(!snap.exists()) return readSoftwareStats();
+      const merged = azMergeSoftwareStats290(readSoftwareStats(), snap.data() || {});
+      saveSoftwareStats(merged);
+      window.__azobssSoftwareStatsCache290 = merged;
+      return merged;
+    }catch(err){
+      console.warn('AZOBSS software stats prefetch skipped:', err);
+      return readSoftwareStats();
+    }
   }
   function statsKeyFrom(value){
     return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'software-item';
@@ -3656,70 +3679,47 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
   }
   function normalizeStats(raw, fallbackName, fallbackCategory){
     raw = raw || {};
-    const ratings = (raw.ratings && typeof raw.ratings === 'object') ? raw.ratings : null;
-    let ratingVotes = Math.max(0, Math.round(Number(raw.ratingVotes ?? raw.votes ?? raw.ratingCount ?? raw.reviews ?? 0) || 0));
-    let ratingTotal = Math.max(0, Number(raw.ratingTotal || 0) || 0);
-    let rating = Number(raw.ratingAverage ?? raw.avgRating ?? raw.rating ?? 0) || 0;
-    if(ratings){
-      let rv = 0, rt = 0;
-      for(let i=1;i<=5;i++){
-        const c = Math.max(0, Math.round(Number(ratings[String(i)] || ratings[i] || 0) || 0));
-        rv += c; rt += i * c;
-      }
-      if(rv > 0){ ratingVotes = rv; ratingTotal = rt; rating = Math.round((rt / rv) * 10) / 10; }
-    }
-    if(!ratingVotes && Number(raw.ratingVotes) > 0) ratingVotes = Math.round(Number(raw.ratingVotes));
-    rating = Math.max(0, Math.min(5, Math.round(Number(rating || 0) * 10) / 10));
+    const views = Number(raw.views || 0);
+    const downloads = Number(raw.downloads || 0);
+    const ratingRaw = Number(raw.ratingAverage ?? raw.avgRating ?? raw.rating ?? 0);
+    const votesRaw = Number(raw.ratingVotes ?? raw.votes ?? raw.ratingCount ?? raw.reviews ?? 0);
+    const totalRaw = Number(raw.ratingTotal ?? raw.totalRating ?? 0);
+    const likes = Number(raw.likes || 0);
+    const rating = Number.isFinite(ratingRaw) ? Math.max(0, Math.min(5, Math.round(ratingRaw * 10) / 10)) : 0;
+    const ratingVotes = Number.isFinite(votesRaw) ? Math.max(0, Math.round(votesRaw)) : 0;
+    const ratingTotal = Number.isFinite(totalRaw) ? Math.max(0, Math.round(totalRaw)) : Math.round(rating * ratingVotes);
     return {
-      views: Math.max(0, Math.round(Number(raw.views || 0) || 0)),
-      downloads: Math.max(0, Math.round(Number(raw.downloads || 0) || 0)),
+      views: Math.max(0, Math.round(Number.isFinite(views) ? views : 0)),
+      downloads: Math.max(0, Math.round(Number.isFinite(downloads) ? downloads : 0)),
       rating,
       ratingAverage: rating,
+      avgRating: rating,
       ratingVotes,
-      ratingTotal: ratingTotal || (ratingVotes ? rating * ratingVotes : 0),
-      likes: Math.max(0, Math.round(Number(raw.likes || 0) || 0))
-    };
-  }
-  function azStatsKeyCandidates(value){
-    const raw = String(value || '').trim();
-    const compact = raw.toLowerCase().replace(/https?:\/\//g,'').replace(/www\./g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-    const plain = raw.toLowerCase().replace(/[^a-z0-9]+/g,'').trim();
-    return Array.from(new Set([statsKeyFrom(raw), compact, plain].filter(Boolean)));
-  }
-  function azStatLookup(stats, keys){
-    for(const k of keys){
-      for(const kk of azStatsKeyCandidates(k)){
-        if(stats && stats[kk]) return stats[kk];
-      }
-    }
-    return null;
-  }
-  function azMergeStats(baseRaw, remoteRaw){
-    const base = normalizeStats(baseRaw || {});
-    const remote = remoteRaw ? normalizeStats(remoteRaw || {}) : null;
-    if(!remote) return base;
-    return {
-      views: remote.views || base.views,
-      downloads: remote.downloads || base.downloads,
-      rating: remote.rating > 0 ? remote.rating : base.rating,
-      ratingAverage: remote.rating > 0 ? remote.rating : base.rating,
-      ratingVotes: remote.ratingVotes > 0 ? remote.ratingVotes : base.ratingVotes,
-      ratingTotal: remote.ratingTotal > 0 ? remote.ratingTotal : base.ratingTotal,
-      likes: remote.likes || base.likes
+      votes: ratingVotes,
+      ratingCount: ratingVotes,
+      ratingTotal,
+      likes: Math.max(0, Math.round(Number.isFinite(likes) ? likes : 0)),
+      ratings: raw.ratings || {},
+      ratedBy: raw.ratedBy || {}
     };
   }
   function statsForItem(item){
     const stats = readSoftwareStats();
-    const keys = [item?.productId, item?.id, item?.sku, item?.name, item?.downloadLink, item?.link].filter(Boolean);
-    const remote = azStatLookup(stats, keys);
-    return azMergeStats(item || {}, remote);
+    const key = statsKeyFrom(item?.productId || item?.id || item?.name);
+    const remote = stats[key] || {};
+    const hasRemoteRating = remote && (remote.rating != null || remote.ratingAverage != null || remote.avgRating != null || remote.ratingVotes != null || remote.votes != null || remote.ratingCount != null);
+    const merged = hasRemoteRating ? {...(item || {}), ...remote} : {...remote, ...(item || {})};
+    return normalizeStats(merged, item?.name, item?.category);
   }
   function statsForCard(card){
     const name = card?.querySelector('h3')?.textContent?.trim() || card?.dataset.name || 'Software Item';
-    const base = {views:card?.dataset.views, downloads:card?.dataset.downloads, rating:card?.dataset.rating, ratingVotes:card?.dataset.ratingVotes, likes:card?.dataset.likes};
+    const key = statsKeyFrom(card?.dataset.productId || card?.dataset.name || name);
     const stats = readSoftwareStats();
-    const remote = azStatLookup(stats, [card?.dataset.productId, card?.dataset.name, name, card?.querySelector('a.download-btn')?.getAttribute('href')]);
-    return azMergeStats(base, remote);
+    const local = {views:card?.dataset.views, downloads:card?.dataset.downloads, rating:card?.dataset.rating, ratingVotes:card?.dataset.ratingVotes, votes:card?.dataset.ratingVotes, likes:card?.dataset.likes};
+    const remote = stats[key] || {};
+    const hasRemoteRating = remote && (remote.rating != null || remote.ratingAverage != null || remote.avgRating != null || remote.ratingVotes != null || remote.votes != null || remote.ratingCount != null);
+    const merged = hasRemoteRating ? {...local, ...remote} : {...remote, ...local};
+    return normalizeStats(merged, name, card?.dataset.category || 'General Tools');
   }
   function applyStatsToCard(card){
     if(!card) return;
@@ -3974,7 +3974,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     const actionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
     const actionHtml = isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml;
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
       ${stableLikeHtml}${stableShareHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
@@ -4078,7 +4078,6 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       views: statsForCard(card).views,
       downloads: statsForCard(card).downloads,
       rating: statsForCard(card).rating,
-      ratingVotes: statsForCard(card).ratingVotes,
       likes: statsForCard(card).likes,
       createdAtMs: Number(card?.dataset.created || 0)
     });
@@ -4278,30 +4277,12 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software yang ditambah selepas owner auto-set akan muncul. Item lama tanpa owner tidak akan muncul; edit & save sekali untuk assign owner.</div>');
     }
   }
-  async function preloadSoftwareStatsFromFirestore(){
-    try{
-      const snap = await getDoc(doc(db, 'settings', 'softwareStats'));
-      if(!snap.exists()) return;
-      const data = snap.data() || {};
-      const items = (data.items && typeof data.items === 'object') ? data.items : data;
-      const merged = readSoftwareStats();
-      Object.entries(items || {}).forEach(([key, value]) => {
-        if(!value || typeof value !== 'object') return;
-        const normalized = normalizeStats(value);
-        [key, value.productId, value.id, value.sku, value.name, value.title].filter(Boolean).forEach(k => {
-          azStatsKeyCandidates(k).forEach(kk => { merged[kk] = normalized; });
-        });
-      });
-      saveSoftwareStats(merged);
-    }catch(err){
-      console.warn('AZOBSS software stats prefetch skipped:', err);
-    }
-  }
   async function loadItems(){
     if(!grid) return;
-    await preloadSoftwareStatsFromFirestore();
-    softwareDynamicItems = dedupeSoftwareItems([...await loadFirestore(), ...loadLocal()]);
+    const [remoteItems] = await Promise.all([loadFirestore(), azPrefetchSoftwareStatsForFirstPaint290()]);
+    softwareDynamicItems = dedupeSoftwareItems([...remoteItems, ...loadLocal()]);
     applySoftwareFilters();
+    try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
   }
   function azGetSoftwareRoleInfo(){
     const currentUser = (typeof getCurrentUserObject === 'function' ? getCurrentUserObject() : {}) || {};
@@ -5177,8 +5158,34 @@ all.appendChild(wrap);
 
 <!-- AZOBSS MODERN FOOTER DOWNLOAD + EASY CLICK 5 STAR RATING (single final script) -->
 
-<!-- AZOBSS 290 SINGLE CLEAN SOFTWARE STATS CONTROLLER START
-     One source for download + rating display. No innerHTML footer replacement, no anonymous auth, no duplicate renderer. -->
+<!-- AZOBSS SOFTWARE STATS SINGLE CLEAN MERGED START
+     Source: cleaned from (287). One stats script only. No footer innerHTML replacement. -->
+<style id="azobss-software-stats-single-clean-290-css">
+.download-card>.software-stats,
+#softwareGrid .download-card>.software-stats,
+#softwareDownloadsGrid .download-card>.software-stats,
+.downloads-grid .download-card>.software-stats{
+  position:absolute!important;left:0!important;right:0!important;bottom:0!important;height:46px!important;min-height:46px!important;
+  display:grid!important;grid-template-columns:86px minmax(0,1fr)!important;align-items:stretch!important;overflow:hidden!important;
+  border-top:1px solid rgba(148,163,184,.12)!important;border-radius:0 0 16px 16px!important;background:rgba(5,15,28,.55)!important;z-index:20!important;visibility:visible!important;opacity:1!important;
+}
+.azb-stat-download,.azb-stat-rating{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:0!important;height:46px!important;}
+.azb-stat-download{border-right:1px solid rgba(148,163,184,.12)!important;color:#dfffea!important;font-weight:900!important;}
+.azb-dl-badge{width:30px!important;height:30px!important;min-width:30px!important;border-radius:50%!important;background:rgba(22,163,74,.18)!important;border:1px solid rgba(34,197,94,.32)!important;color:#22c55e!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;}
+.azb-dl-badge svg{width:15px!important;height:15px!important;display:block!important;}
+.azb-dl-number{font-size:12px!important;color:#fff!important;font-weight:800!important;line-height:1!important;}
+.azb-stat-rating{padding:0 8px!important;color:#fff!important;}
+.azb-rating-inner{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:0!important;max-width:100%!important;}
+.azb-stars{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:0!important;flex:0 0 auto!important;padding:2px 5px!important;min-height:24px!important;max-width:90px!important;border-radius:999px!important;background:rgba(15,23,42,.75)!important;border:1px solid rgba(96,165,250,.20)!important;cursor:pointer!important;user-select:none!important;pointer-events:auto!important;touch-action:manipulation!important;}
+.azb-star{appearance:none!important;-webkit-appearance:none!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;width:12px!important;min-width:12px!important;height:20px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-family:Arial,sans-serif!important;font-size:11px!important;line-height:1!important;color:#64748b!important;cursor:pointer!important;pointer-events:auto!important;transition:transform .10s ease,color .10s ease,text-shadow .10s ease!important;}
+.azb-star.is-filled{color:#ffcc28!important;text-shadow:0 0 7px rgba(250,204,21,.35)!important;}
+.azb-stars:hover .azb-star{color:#ffcc28!important;transform:scale(1.08)!important;}
+.azb-stars .azb-star:hover~.azb-star{color:#64748b!important;transform:none!important;text-shadow:none!important;}
+.azb-rate-value{font-size:12px!important;font-weight:900!important;color:#fff!important;line-height:1!important;white-space:nowrap!important;}
+.azb-rate-votes{font-size:11px!important;font-weight:800!important;color:#cbd5e1!important;line-height:1!important;white-space:nowrap!important;}
+.download-card .software-stats .rating-display,.download-card .software-stats .rating-main-star,.download-card .software-stats .software-rating-count,.download-card .software-stats .stat-like,.download-card .software-stats .rating-pill,.download-card .software-stats .rating-box,.download-card .software-stats .download-stat-pill{display:none!important;}
+@media(max-width:640px){.download-card{padding-bottom:42px!important}.download-card>.software-stats{height:42px!important;min-height:42px!important;grid-template-columns:76px minmax(0,1fr)!important}.azb-stat-download,.azb-stat-rating{height:42px!important;min-height:42px!important}.azb-dl-badge{width:28px!important;height:28px!important;min-width:28px!important}.azb-stars{max-width:92px!important}.azb-star{width:12px!important;min-width:12px!important;font-size:11px!important}}
+</style>
 <script type="module" id="azobss-software-stats-single-clean-290-js">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -5189,67 +5196,36 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
   const db=getFirestore(app);
   const STATS_DOC=doc(db,'settings','softwareStats');
-  const CACHE_KEY='azobss_software_manual_stats_v2';
-  const CARD_SELECTOR='#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card';
-  function slug(v){return String(v||'').toLowerCase().replace(/https?:\/\//g,'').replace(/www\./g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';}
-  function plain(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'').trim();}
-  function keys(v){const s=slug(v), p=plain(v); return Array.from(new Set([s,p].filter(Boolean)));}
-  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function fmt(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
-  function normalize(raw){
-    raw=raw||{};
-    const ratings=(raw.ratings&&typeof raw.ratings==='object')?raw.ratings:null;
-    let ratingVotes=Math.max(0,Math.round(Number(raw.ratingVotes??raw.votes??raw.ratingCount??raw.reviews??0)||0));
-    let ratingTotal=Math.max(0,Number(raw.ratingTotal||0)||0);
-    let rating=Number(raw.ratingAverage??raw.avgRating??raw.rating??0)||0;
-    if(ratings){let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(ratings[String(i)]||ratings[i]||0)||0));rv+=c;rt+=i*c;}if(rv>0){ratingVotes=rv;ratingTotal=rt;rating=Math.round((rt/rv)*10)/10;}}
-    rating=Math.max(0,Math.min(5,Math.round(Number(rating||0)*10)/10));
-    return {views:Math.max(0,Math.round(Number(raw.views||0)||0)),downloads:Math.max(0,Math.round(Number(raw.downloads||0)||0)),rating,ratingAverage:rating,ratingVotes,ratingTotal:ratingTotal||(ratingVotes?rating*ratingVotes:0),likes:Math.max(0,Math.round(Number(raw.likes||0)||0)),ratings:ratings||null,ratedBy:(raw.ratedBy&&typeof raw.ratedBy==='object')?raw.ratedBy:{},name:raw.name||raw.title||'',updatedAtMs:raw.updatedAtMs||0};
-  }
-  function read(){try{const parsed=JSON.parse(localStorage.getItem(CACHE_KEY)||'{}')||{};const src=(parsed.items&&typeof parsed.items==='object')?parsed.items:parsed;const out={};Object.entries(src||{}).forEach(([k,v])=>{if(!v||typeof v!=='object')return;const n=normalize(v);[k,v.productId,v.id,v.sku,v.name,v.title].filter(Boolean).forEach(x=>keys(x).forEach(kk=>out[kk]=n));});return out;}catch(e){return {};}}
-  function write(map){const out={};Object.entries(map||{}).forEach(([k,v])=>{if(v&&typeof v==='object')out[slug(k)]=normalize(v);});try{localStorage.setItem(CACHE_KEY,JSON.stringify(out));}catch(e){}}
-  function title(card){return card?.querySelector('h3')?.textContent?.trim()||card?.dataset.name||'';}
-  function productId(card){return card?.dataset.productId||card?.querySelector('[data-product-id]')?.dataset.productId||title(card)||'software-item';}
-  function baseFromCard(card){return normalize({downloads:card?.dataset.downloads,rating:card?.dataset.rating,ratingVotes:card?.dataset.ratingVotes,likes:card?.dataset.likes,name:title(card)});}
-  function lookup(card,map=read()){
-    const candidates=[productId(card),card?.dataset.name,title(card),card?.querySelector('a.download-btn')?.getAttribute('href')].filter(Boolean);
-    for(const c of candidates){for(const k of keys(c)){if(map[k])return merge(baseFromCard(card),map[k]);}}
-    return baseFromCard(card);
-  }
-  function merge(base,remote){remote=remote?normalize(remote):null;base=normalize(base);if(!remote)return base;return {...base,views:remote.views||base.views,downloads:remote.downloads||base.downloads,rating:remote.rating>0?remote.rating:base.rating,ratingAverage:remote.rating>0?remote.rating:base.rating,ratingVotes:remote.ratingVotes>0?remote.ratingVotes:base.ratingVotes,ratingTotal:remote.ratingTotal>0?remote.ratingTotal:base.ratingTotal,likes:remote.likes||base.likes,ratings:remote.ratings||base.ratings,ratedBy:remote.ratedBy||base.ratedBy,updatedAtMs:remote.updatedAtMs||base.updatedAtMs};}
-  function starButtons(box,rating){
-    let wrap=box.querySelector('.azb-stars');
-    if(!wrap){wrap=document.createElement('span');wrap.className='azb-stars';wrap.setAttribute('role','radiogroup');wrap.setAttribute('aria-label','Rate this software');box.querySelector('.azb-rating-inner')?.prepend(wrap);}
-    if(!wrap.children.length){for(let i=1;i<=5;i++){const b=document.createElement('button');b.type='button';b.className='azb-star';b.dataset.rate=String(i);b.setAttribute('aria-label','Rate '+i+' star');b.title='Rate '+i+' star';b.textContent='★';wrap.appendChild(b);}}
-    const fill=Math.round(Number(rating)||0);wrap.querySelectorAll('.azb-star').forEach((b,i)=>b.classList.toggle('is-filled',i<fill));
-  }
-  function applyCard(card,map){
-    if(!card) return;
-    const st=lookup(card,map);
-    card.dataset.downloads=String(st.downloads);
-    card.dataset.rating=String(st.rating);
-    card.dataset.ratingVotes=String(st.ratingVotes);
-    let box=card.querySelector(':scope > .software-stats');
-    if(!box) return; // first-paint owns the markup; do not create late footers that cause blink.
-    const dl=box.querySelector('.azb-dl-number'); if(dl) dl.textContent=fmt(st.downloads);
-    const val=box.querySelector('.azb-rate-value'); if(val) val.textContent=Number(st.rating||0).toFixed(1);
-    const votes=box.querySelector('.azb-rate-votes'); if(votes) votes.textContent='('+Math.max(0,Math.round(Number(st.ratingVotes||0)))+')';
-    starButtons(box,st.rating);
-  }
-  function applyAll(){const map=read();document.querySelectorAll(CARD_SELECTOR).forEach(card=>applyCard(card,map));}
-  async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists())return;const data=snap.data()||{};const items=(data.items&&typeof data.items==='object')?data.items:data;const map=read();Object.entries(items||{}).forEach(([k,v])=>{if(!v||typeof v!=='object')return;const n=normalize(v);[k,v.productId,v.id,v.sku,v.name,v.title].filter(Boolean).forEach(x=>keys(x).forEach(kk=>map[kk]=n));});write(map);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);}}
-  function voterId(){let id=localStorage.getItem('azobss_rating_voter_id');if(!id){id='voter-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);localStorage.setItem('azobss_rating_voter_id',id);}return id;}
-  async function saveRating(card,rate){
-    const key=slug(productId(card));const voter=voterId();const map=read();const current=lookup(card,map);const local=normalize(current);local.ratings=local.ratings||{};local.ratedBy=local.ratedBy||{};const old=Number(local.ratedBy[voter]||0);if(old>=1&&old<=5)local.ratings[String(old)]=Math.max(0,Number(local.ratings[String(old)]||0)-1);local.ratings[String(rate)]=Math.max(0,Number(local.ratings[String(rate)]||0)+1);local.ratedBy[voter]=rate;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(local.ratings[String(i)]||0)));local.ratings[String(i)]=c;rv+=c;rt+=i*c;}local.ratingVotes=rv;local.ratingTotal=rt;local.rating=rv?Math.round((rt/rv)*10)/10:0;local.ratingAverage=local.rating;local.name=title(card);local.updatedAtMs=Date.now();keys(key).forEach(k=>map[k]=local);write(map);applyCard(card,map);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=(data.items&&typeof data.items==='object')?data.items:{};const remote=normalize(items[key]||{});remote.ratings=remote.ratings||{};remote.ratedBy=remote.ratedBy||{};const prev=Number(remote.ratedBy[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rate)]=Math.max(0,Number(remote.ratings[String(rate)]||0)+1);remote.ratedBy[voter]=rate;let rrv=0,rrt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rrv+=c;rrt+=i*c;}remote.ratingVotes=rrv;remote.ratingTotal=rrt;remote.rating=rrv?Math.round((rrt/rrv)*10)/10:0;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||local.downloads||0)));remote.name=title(card);remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});await loadRemote();}catch(e){console.warn('AZOBSS rating save failed:',e);}
-  }
-  document.addEventListener('click',function(e){const b=e.target.closest&&e.target.closest('.software-stats .azb-star');if(!b)return;const card=b.closest('.download-card');if(!card)return;e.preventDefault();e.stopPropagation();const rate=Math.max(1,Math.min(5,Number(b.dataset.rate||0)||0));if(rate)saveRating(card,rate);},true);
-  document.addEventListener('DOMContentLoaded',function(){applyAll();loadRemote();});
-  if(document.readyState!=='loading'){applyAll();loadRemote();}
-  window.addEventListener('azobss-software-rendered',applyAll);
+  const LOCAL='azobssSoftwareStats';
+  const slug=v=>String(v||'software-item').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';
+  const fmt=n=>{n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));};
+  function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL)||'{}')||{};}catch(e){return {};}}
+  function writeLocal(data){try{localStorage.setItem(LOCAL,JSON.stringify(data||{}));}catch(e){}}
+  function itemsOf(data){if(!data||typeof data!=='object')return {};return data.items&&typeof data.items==='object'?data.items:data;}
+  function productId(card){return card?.dataset?.productId||card?.querySelector('[data-product-id]')?.dataset?.productId||card?.querySelector('h3')?.textContent||'software-item';}
+  function baseFromCard(card){return {downloads:Number(card?.dataset?.downloads||0)||0,rating:Number(card?.dataset?.rating||0)||0,ratingAverage:Number(card?.dataset?.rating||0)||0,ratingVotes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,votes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,likes:Number(card?.dataset?.likes||0)||0,ratings:{},ratedBy:{}};}
+  function norm(raw,card){raw=raw||{};const base=card?baseFromCard(card):{};const hasRemoteRating=raw.rating!=null||raw.ratingAverage!=null||raw.avgRating!=null||raw.ratingVotes!=null||raw.votes!=null||raw.ratingCount!=null||raw.reviews!=null;const src=hasRemoteRating?{...base,...raw}:{...raw,...base};const rating=Number(src.ratingAverage??src.avgRating??src.rating??0);const votes=Number(src.ratingVotes??src.votes??src.ratingCount??src.reviews??0);const downloads=Number(src.downloads??0);const likes=Number(src.likes??0);return {...src,downloads:Number.isFinite(downloads)?Math.max(0,Math.round(downloads)):0,rating:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingAverage:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingVotes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,votes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,likes:Number.isFinite(likes)?Math.max(0,Math.round(likes)):0,ratings:src.ratings||{},ratedBy:src.ratedBy||{}};}
+  function statsFor(card){const key=slug(productId(card));const local=readLocal();return norm(local[key]||{},card);}
+  function setStars(wrap,rating){const filled=Math.round(Number(rating)||0);wrap?.querySelectorAll?.('.azb-star').forEach((star,idx)=>star.classList.toggle('is-filled',idx<filled));}
+  function applyCard(card,st){if(!card)return;const box=card.querySelector(':scope > .software-stats');if(!box)return;st=norm(st,card);card.dataset.downloads=String(st.downloads);card.dataset.rating=String(st.rating);card.dataset.ratingVotes=String(st.ratingVotes);card.dataset.likes=String(st.likes||0);const dl=box.querySelector('.azb-dl-number');if(dl&&dl.textContent!==fmt(st.downloads))dl.textContent=fmt(st.downloads);const val=box.querySelector('.azb-rate-value');const nextVal=Number(st.rating||0).toFixed(1);if(val&&val.textContent!==nextVal)val.textContent=nextVal;const votes=box.querySelector('.azb-rate-votes');const nextVotes='('+Number(st.ratingVotes||0)+')';if(votes&&votes.textContent!==nextVotes)votes.textContent=nextVotes;setStars(box.querySelector('.azb-stars'),st.rating);}
+  function applyAll(){document.querySelectorAll('.download-card').forEach(card=>applyCard(card,statsFor(card)));}
+  async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists()){applyAll();return;}const local=readLocal();const items=itemsOf(snap.data()||{});Object.keys(items).forEach(k=>{local[slug(k)]=norm(items[k]||{});});writeLocal(local);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);applyAll();}}
+  function voterId(){try{let id=localStorage.getItem('azobssRatingClientId');if(!id){id='azr_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('azobssRatingClientId',id);}return id;}catch(e){return 'azr_session';}}
+  function saveLocal(card,st){const key=slug(productId(card));const data=readLocal();data[key]=norm(st,card);writeLocal(data);applyCard(card,data[key]);}
+  async function recordDownload(card){const key=slug(productId(card));const st=statsFor(card);st.downloads=Math.max(0,Number(st.downloads||0))+1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=norm(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});loadRemote();}catch(e){console.warn('AZOBSS download stat save skipped:',e);}}
+  function rateFromEvent(e,wrap){const btn=e.target.closest?.('.azb-star');if(btn)return Math.max(1,Math.min(5,Number(btn.dataset.rate||0)));const r=wrap.getBoundingClientRect();const x=e.clientX||(e.touches&&e.touches[0]?.clientX)||r.left;return Math.max(1,Math.min(5,Math.ceil(((x-r.left)/Math.max(1,r.width))*5)));}
+  async function recordRating(card,rating){const key=slug(productId(card));const voter=voterId();const st=statsFor(card);st.ratings=st.ratings||{};st.ratedBy=st.ratedBy||{};const old=Number(st.ratedBy[voter]||0);if(old>=1&&old<=5)st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);st.ratedBy[voter]=rating;let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}st.ratingVotes=votes;st.votes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:Number(st.rating||0);st.ratingAverage=st.rating;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=norm(items[key]||{},card);remote.ratings=remote.ratings||{};remote.ratedBy=remote.ratedBy||{};const prev=Number(remote.ratedBy[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rating)]=Math.max(0,Number(remote.ratings[String(rating)]||0)+1);remote.ratedBy[voter]=rating;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rv+=c;rt+=i*c;}remote.ratingVotes=rv;remote.votes=rv;remote.ratingTotal=rt;remote.rating=rv?Math.round((rt/rv)*10)/10:remote.rating;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||0)));remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});loadRemote();}catch(e){console.warn('AZOBSS rating save skipped:',e);}}
+  document.addEventListener('pointerdown',function(e){const hit=e.target.closest?.('.azb-stars,.azb-star');if(!hit)return;const wrap=hit.classList.contains('azb-stars')?hit:hit.closest('.azb-stars');const card=wrap&&wrap.closest('.download-card');if(!wrap||!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();const now=Date.now();if(wrap.dataset.busyUntil&&now<Number(wrap.dataset.busyUntil))return;wrap.dataset.busyUntil=String(now+300);const rating=rateFromEvent(e,wrap);if(rating)recordRating(card,rating);},true);
+  document.addEventListener('click',function(e){if(e.target.closest?.('.azb-stars,.azb-star')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();return;}const btn=e.target.closest?.('.download-card .download-btn');if(btn){const card=btn.closest('.download-card');if(card)recordDownload(card);}},true);
+  document.addEventListener('keydown',function(e){const wrap=e.target.closest?.('.azb-stars');if(!wrap||!['1','2','3','4','5'].includes(e.key))return;e.preventDefault();const btn=wrap.querySelector('[data-rate="'+e.key+'"]');if(btn)btn.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:btn.getBoundingClientRect().left+2}));},true);
+  window.azobssSoftwareStatsSingleSync290=loadRemote;
   window.azobssRenderSoftwareStatsFooter=applyAll;
+  window.azobssSyncSoftwareStatsFromFirestore=loadRemote;
+  document.addEventListener('DOMContentLoaded',function(){applyAll();loadRemote();const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid')||document.body;new MutationObserver(()=>requestAnimationFrame(applyAll)).observe(root,{childList:true,subtree:true});});
+  setTimeout(applyAll,0);
 })();
 </script>
-<!-- AZOBSS 290 SINGLE CLEAN SOFTWARE STATS CONTROLLER END -->
+<!-- AZOBSS SOFTWARE STATS SINGLE CLEAN MERGED END -->
 
 <!-- AZOBSS PAGINATION 8 CARDS FINAL: one source only, after all render scripts -->
 <style id="azobss-pagination-8-final-css">
@@ -8083,12 +8059,15 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
 <script id="azobss-software-desc-inline-more-097-js">
 (function(){
-  if(window.__azobssSoftwareDescInlineMore097Clean290) return;
-  window.__azobssSoftwareDescInlineMore097Clean290 = true;
-  function modal(){var m=document.getElementById('azobssSwDescModal097');if(m)return m;m=document.createElement('div');m.id='azobssSwDescModal097';m.className='azobss-sw-desc-modal-097';m.innerHTML='<div class="azobss-sw-desc-box-097"><div class="azobss-sw-desc-head-097"><div class="azobss-sw-desc-title-097"></div><button type="button" class="azobss-sw-desc-close-097">×</button></div><div class="azobss-sw-desc-text-097"></div></div>';document.body.appendChild(m);m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('is-open')});m.querySelector('.azobss-sw-desc-close-097').onclick=function(){m.classList.remove('is-open')};document.addEventListener('keydown',function(e){if(e.key==='Escape')m.classList.remove('is-open')});return m}
-  function title(c){var h=c&&c.querySelector('h1,h2,h3,h4,.software-title,.tool-title,.card-title,.title');return h?(h.textContent||'').trim():'Software Description'}
-  function openM(t,x){var m=modal();m.querySelector('.azobss-sw-desc-title-097').textContent=t||'Software Description';m.querySelector('.azobss-sw-desc-text-097').textContent=x||'';m.classList.add('is-open')}
-  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.azobss-sw-desc-more-097');if(!b)return;e.preventDefault();e.stopPropagation();var d=b.closest('.azobss-sw-desc-target-097,.software-description,.software-desc,.card-description,.tool-description,.description,.desc,p');var c=b.closest('.download-card,.software-card,.software-product-card,.software-item,[data-software-id],[data-product-id]');var full=(d&&d.getAttribute('data-azobss-full-desc-097'))||(d&&(d.textContent||'').replace(/More$/,'').trim())||'';openM(title(c),full);},true);
+ if(window.__azobssSoftwareDescInlineMore097)return;window.__azobssSoftwareDescInlineMore097=true;
+ function modal(){var m=document.getElementById('azobssSwDescModal097');if(m)return m;m=document.createElement('div');m.id='azobssSwDescModal097';m.className='azobss-sw-desc-modal-097';m.innerHTML='<div class="azobss-sw-desc-box-097"><div class="azobss-sw-desc-head-097"><div class="azobss-sw-desc-title-097"></div><button type="button" class="azobss-sw-desc-close-097">×</button></div><div class="azobss-sw-desc-text-097"></div></div>';document.body.appendChild(m);m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('is-open')});m.querySelector('.azobss-sw-desc-close-097').onclick=function(){m.classList.remove('is-open')};document.addEventListener('keydown',function(e){if(e.key==='Escape')m.classList.remove('is-open')});return m}
+ function openM(t,x){var m=modal();m.querySelector('.azobss-sw-desc-title-097').textContent=t||'Software Description';m.querySelector('.azobss-sw-desc-text-097').textContent=x||'';m.classList.add('is-open')}
+ function title(c){var h=c.querySelector('h1,h2,h3,h4,.software-title,.tool-title,.card-title,.title');return h?(h.textContent||'').trim():'Software Description'}
+ function isDesc(e){var t=(e.textContent||'').replace(/\bMore\b$/,'').trim(),c=String(e.className||'');return t.length>55&&(/desc|description|software-desc|tool-description|card-description/i.test(c)||(e.tagName&&e.tagName.toLowerCase()==='p'&&/software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(t)))}
+ function desc(c){return Array.from(c.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.description,.desc,p')).find(isDesc)}
+ function setup(){document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]').forEach(function(card){var d=desc(card);if(!d)return;var full=(d.getAttribute('data-azobss-full-desc-097')||(d.textContent||'').replace(/\bMore\b$/,'').trim());d.setAttribute('data-azobss-full-desc-097',full);d.classList.remove('azobss-sw-desc-target-096');d.classList.add('azobss-sw-desc-target-097');d.style.setProperty('max-height','78px','important');d.style.setProperty('overflow','hidden','important');d.style.setProperty('padding-right','42px','important');if(full.length>90){var b=d.querySelector(':scope > .azobss-sw-desc-more-097');if(!b){Array.from(d.querySelectorAll('.azobss-sw-desc-more-096')).forEach(function(x){x.remove()});b=document.createElement('button');b.type='button';b.className='azobss-sw-desc-more-097';b.textContent='More';d.appendChild(b)}b.onclick=function(e){e.preventDefault();e.stopPropagation();openM(title(card),full)}}})}
+ document.addEventListener('DOMContentLoaded',setup);if(document.readyState!=='loading')setup();[100,400,1000,2000].forEach(function(t){setTimeout(setup,t)});window.addEventListener('focus',setup);window.addEventListener('azobss-software-rendered',setup);setTimeout(function(){var r=document.getElementById('softwareList')||document.querySelector('.software-grid');if(r)try{new MutationObserver(function(){requestAnimationFrame(setup)}).observe(r,{childList:true,subtree:true})}catch(e){}},700);
+ window.azobssSoftwareDescInlineMoreDebug097=function(){setup();return Array.from(document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]')).map(function(card,i){var d=desc(card);if(!d)return null;var cs=getComputedStyle(d);return{index:i+1,title:title(card),text:(d.textContent||'').replace(/\bMore\b$/,'').trim(),moreInsideDesc:!!d.querySelector('.azobss-sw-desc-more-097'),maxHeight:cs.maxHeight,overflow:cs.overflow,height:Math.round(d.getBoundingClientRect().height)}}).filter(Boolean)};
 })();
 </script>
 
@@ -9975,6 +9954,198 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   #softwareGrid .download-card > .azobss-preview-float-155,.downloads-grid .download-card > .azobss-preview-float-155{top:106px!important;right:14px!important;}
 }
 </style>
+
+
+<!-- AZOBSS 291: mobile card footer visible fix - keep first paint controls, but let the card grow naturally on mobile. -->
+<style id="azobss-mobile-card-footer-visible-291-css">
+@media (max-width: 760px){
+  html body #softwareGrid,
+  html body #softwareDownloadsGrid,
+  html body .downloads-grid{
+    grid-template-columns:minmax(0, 1fr)!important;
+    align-items:stretch!important;
+    gap:18px!important;
+  }
+
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding:20px 16px 0!important;
+    box-sizing:border-box!important;
+    gap:9px!important;
+    text-align:center!important;
+    grid-template-columns:none!important;
+    grid-template-rows:none!important;
+    grid-template-areas:none!important;
+    contain:none!important;
+  }
+
+  html body #softwareGrid > .download-card > .az-promo-price-block,
+  html body #softwareDownloadsGrid > .download-card > .az-promo-price-block,
+  html body .downloads-grid > .download-card > .az-promo-price-block{
+    position:absolute!important;
+    top:10px!important;
+    left:12px!important;
+    order:0!important;
+    margin:0!important;
+    z-index:72!important;
+  }
+
+  html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
+  html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+  html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
+    order:1!important;
+    flex:0 0 auto!important;
+    margin:0 auto 4px!important;
+  }
+
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    order:2!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    display:block!important;
+    width:100%!important;
+    max-width:220px!important;
+    margin:2px auto 2px!important;
+    padding:0!important;
+    line-height:1.08!important;
+    overflow:visible!important;
+  }
+
+  html body #softwareGrid > .download-card > .software-meta,
+  html body #softwareDownloadsGrid > .download-card > .software-meta,
+  html body .downloads-grid > .download-card > .software-meta{
+    order:3!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    width:100%!important;
+    margin:0 auto!important;
+    overflow:visible!important;
+  }
+
+  html body #softwareGrid > .download-card > p,
+  html body #softwareDownloadsGrid > .download-card > p,
+  html body .downloads-grid > .download-card > p{
+    order:4!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    width:100%!important;
+    max-width:240px!important;
+    margin:0 auto!important;
+    padding:0!important;
+    display:block!important;
+    line-height:1.34!important;
+    overflow:visible!important;
+  }
+
+  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card > .az-software-buy-cart-row{
+    order:20!important;
+    width:100%!important;
+    max-width:230px!important;
+    margin:6px auto 4px!important;
+    flex:0 0 auto!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:8px!important;
+  }
+
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn{
+    order:20!important;
+    margin:6px auto 4px!important;
+    flex:0 0 auto!important;
+  }
+
+  html body #softwareGrid > .download-card > .software-card-admin-actions,
+  html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions,
+  html body .downloads-grid > .download-card > .software-card-admin-actions{
+    order:25!important;
+    margin:2px auto 0!important;
+  }
+
+  html body #softwareGrid > .download-card > .software-stats,
+  html body #softwareDownloadsGrid > .download-card > .software-stats,
+  html body .downloads-grid > .download-card > .software-stats{
+    order:100!important;
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    width:calc(100% + 32px)!important;
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+    margin:6px -16px 0!important;
+    padding:0!important;
+    flex:0 0 42px!important;
+    display:grid!important;
+    grid-template-columns:76px minmax(0, 1fr)!important;
+    align-items:stretch!important;
+    visibility:visible!important;
+    opacity:1!important;
+    overflow:hidden!important;
+    z-index:40!important;
+    border-radius:0 0 16px 16px!important;
+  }
+
+  html body #softwareGrid > .download-card > .az-item-like-btn,
+  html body #softwareDownloadsGrid > .download-card > .az-item-like-btn,
+  html body .downloads-grid > .download-card > .az-item-like-btn{
+    position:absolute!important;
+    top:14px!important;
+    right:14px!important;
+    display:inline-flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    z-index:75!important;
+  }
+  html body #softwareGrid > .download-card > .az-lucky-product-share-btn,
+  html body #softwareDownloadsGrid > .download-card > .az-lucky-product-share-btn,
+  html body .downloads-grid > .download-card > .az-lucky-product-share-btn{
+    position:absolute!important;
+    top:62px!important;
+    right:14px!important;
+    display:inline-flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    z-index:74!important;
+  }
+  html body #softwareGrid > .download-card > .azobss-preview-float-155,
+  html body #softwareDownloadsGrid > .download-card > .azobss-preview-float-155,
+  html body .downloads-grid > .download-card > .azobss-preview-float-155{
+    position:absolute!important;
+    top:110px!important;
+    right:14px!important;
+    display:inline-flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    z-index:73!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
