@@ -3880,11 +3880,27 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     return (!!key&&keys.includes(key))|| (!!u.uid&&uidFields.includes(String(u.uid).toLowerCase())) || (!!u.username&&userFields.includes(u.username)) || (!!u.email&&emailFields.includes(u.email));
   }
 
+  function azStableDlSvg287(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
+  function azStableFmt287(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
+  function azStableStars287(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
+  function azStableStatsHtml287(item){const st=statsForItem(item)||{};const downloads=Number(st.downloads||item.downloads||0)||0;const rating=Number(st.rating||item.rating||0)||0;const votes=Number(st.ratingVotes||st.votes||item.ratingVotes||0)||0;return '<div class="software-stats" data-az-firstpaint-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge">'+azStableDlSvg287()+'</span><strong class="azb-dl-number">'+azStableFmt287(downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner">'+azStableStars287(rating)+'<strong class="azb-rate-value">'+rating.toFixed(1)+'</strong><span class="azb-rate-votes">('+votes+')</span></span></span></div>';}
+  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'software-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add to Likes" title="Add to Likes">♡</button>';}
+  function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
+  function azStableShareHtml287(item,isPremium){if(!isPremium)return '';return '<button type="button" class="az-lucky-product-share-btn" data-az-lucky-main="1" data-az-lucky-product-share="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link">'+azShareSvg287()+'<span class="az-lucky-share-text"> Share Product</span></button>';}
+  function azEyeSvg287(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';}
+  function azStablePreviewHtml287(item){const src=String(item.gifUrl||'').trim();if(!src)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155" href="'+esc(src)+'" data-gif-preview="'+esc(src)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo">'+azEyeSvg287()+'</a>';}
+  function azDescHtml287(item){const raw=String(item.desc||'');const more=raw.length>90?'<button type="button" class="azobss-sw-desc-more-097">More</button>':'';return '<p class="azobss-sw-desc-target-097" data-azobss-full-desc-097="'+esc(raw)+'">'+esc(raw)+more+'</p>';}
+
   function renderItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
     const usdBadge = isPremium ? azUsdBadge(item.price) : '';
     const promoPriceHtml = isPremium ? azPromoPriceHtml(item) : '';
+    const stableLikeHtml = azStableLikeHtml287(item);
+    const stableShareHtml = azStableShareHtml287(item, isPremium);
+    const stablePreviewHtml = azStablePreviewHtml287(item);
+    const stableStatsHtml = azStableStatsHtml287(item);
+    const descHtml = azDescHtml287(item);
     const mediaSrc = item.imageUrl || item.gifUrl;
     const logoSrc = azLogoSrcForItem(item);
     const logoFallback = azFaviconUrlFromLink(item.downloadLink || item.secureDownloadLink || item.paymentLink || item.stripeLink || item.link);
@@ -3898,16 +3914,18 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const actionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
     const actionHtml = isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml;
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
+      ${stableLikeHtml}${stableShareHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
       ${metaHtml}
-      <p>${esc(item.desc)}</p>
+      ${descHtml}
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Video</a></div>` : ''}
       ${productIdMeta}
       ${promoPriceHtml}
       ${actionHtml}
       ${adminEdit}
+      ${stableStatsHtml}
     </div>`;
   }
   function loadLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]').map(normalizeItem); } catch(e){ return []; } }
@@ -9896,6 +9914,24 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
 })();
 </script>
 
+
+<style id="azobss-first-paint-controls-287-css">
+/* AZOBSS 287: render controls in the card HTML itself, then update them in place. */
+#softwareGrid .download-card > .az-item-like-btn,
+.downloads-grid .download-card > .az-item-like-btn{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:14px!important;right:14px!important;z-index:65!important;}
+#softwareGrid .download-card > .az-lucky-product-share-btn,
+.downloads-grid .download-card > .az-lucky-product-share-btn{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:62px!important;right:16px!important;z-index:64!important;}
+#softwareGrid .download-card > .azobss-preview-float-155,
+.downloads-grid .download-card > .azobss-preview-float-155{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:110px!important;right:16px!important;z-index:63!important;}
+#softwareGrid .download-card > .software-stats,
+.downloads-grid .download-card > .software-stats{display:grid!important;visibility:visible!important;opacity:1!important;}
+#softwareGrid .download-card .azobss-sw-desc-more-097,
+.downloads-grid .download-card .azobss-sw-desc-more-097{display:inline-flex!important;visibility:visible!important;opacity:1!important;}
+@media(max-width:700px){
+  #softwareGrid .download-card > .az-lucky-product-share-btn,.downloads-grid .download-card > .az-lucky-product-share-btn{top:60px!important;right:14px!important;}
+  #softwareGrid .download-card > .azobss-preview-float-155,.downloads-grid .download-card > .azobss-preview-float-155{top:106px!important;right:14px!important;}
+}
+</style>
 </body>
 </html>
 

@@ -2254,12 +2254,21 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       createdAt: Number(item.createdAt || Date.now())
     };
   }
+  function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
+  function azEyeSvg287(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';}
+  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'cad-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add to Likes" title="Add to Likes">♡</button>';}
+  function azStableShareHtml287(item,isPremium){if(!isPremium)return '';return '<button type="button" class="az-lucky-product-share-btn" data-az-lucky-main="1" data-az-lucky-product-share="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link">'+azShareSvg287()+'<span class="az-lucky-share-text"> Share Product</span></button>';}
+  function azStablePreviewHtml287(item){const src=String(item.gifUrl||'').trim();if(!src)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155" href="'+esc(src)+'" data-gif-preview="'+esc(src)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo">'+azEyeSvg287()+'</a>';}
+
   function renderCard(item){
     const clean = normalizeItem(item);
     const isPremium = clean.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + clean.price) : 'Free CAD Resource';
     const usdBadge = isPremium ? azUsdBadge(clean.price) : '';
     const promoPriceHtml = isPremium ? azPromoPriceHtml(clean) : '';
+    const stableLikeHtml = azStableLikeHtml287(clean);
+    const stableShareHtml = azStableShareHtml287(clean, isPremium);
+    const stablePreviewHtml = azStablePreviewHtml287(clean);
     const mediaSrc = clean.imageUrl || clean.gifUrl;
     const mediaHtml = mediaSrc ? `<div class="cad-card-media"><img src="${esc(mediaSrc)}" alt="${esc(clean.name)} preview" loading="lazy"></div>` : '';
     const gifHtml = clean.gifUrl && clean.imageUrl ? `<div class="cad-media-links"><a class="cad-media-demo azobss-gif-preview-link" href="${esc(clean.gifUrl)}" data-gif-preview="${esc(clean.gifUrl)}" target="_blank" rel="noopener" title="Hover to preview GIF">👁 Preview</a></div>` : '';
@@ -2268,6 +2277,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="cad-card-admin-actions"><button class="cad-card-edit-btn" type="button" data-cad-edit="${esc(clean.id)}">Edit Details</button><button class="cad-card-delete-btn" type="button" data-cad-delete="${esc(clean.id)}">Delete</button></div>` : '';
     return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-category="${esc(clean.category || 'LISP (.lsp)')}" data-platforms="${esc((clean.platforms || []).join('|'))}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+(clean.originalPrice||clean.promoOriginalPrice||'')+' '+(clean.category||'')+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
+      ${stableLikeHtml}${stableShareHtml}${stablePreviewHtml}
       ${mediaHtml}
       <div class="cad-card-icon">${esc(clean.icon)}</div>
       <div class="cad-badge ${isPremium ? 'premium' : 'free'}">${esc(badgeText)}</div>
@@ -6037,6 +6047,13 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
 .azobss-sw-desc-more-097{visibility:visible!important;opacity:1!important;}
 </style>
 
+
+<style id="azobss-cad-first-paint-controls-287-css">
+.cad-card > .az-item-like-btn,.cad-item > .az-item-like-btn{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:14px!important;right:14px!important;z-index:65!important;}
+.cad-card > .az-lucky-product-share-btn,.cad-item > .az-lucky-product-share-btn{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:62px!important;right:16px!important;z-index:64!important;}
+.cad-card > .azobss-preview-float-155,.cad-item > .azobss-preview-float-155{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:110px!important;right:16px!important;z-index:63!important;}
+@media(max-width:700px){.cad-card > .az-lucky-product-share-btn,.cad-item > .az-lucky-product-share-btn{top:60px!important;right:14px!important}.cad-card > .azobss-preview-float-155,.cad-item > .azobss-preview-float-155{top:106px!important;right:14px!important}}
+</style>
 </body>
 </html>
 

@@ -4500,7 +4500,8 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const cards = [];
     document.querySelectorAll('.card[data-product-id], .download-card, .cad-card').forEach(card=>{
       if(card.closest('.auth-modal,.azobss-pay-modal,.admin-modal,.cad-admin-modal,.software-admin-modal')) return;
-      if(card.querySelector('.az-item-like-btn')) return;
+      // AZOBSS 287: do not skip cards that already include a first-paint like button.
+      // Bind/update the existing button in place so the control is visible immediately and never blinks.
       const info = getCardInfo(card);
       if(!info.id || !info.title) return;
       cards.push({card, info});
