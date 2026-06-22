@@ -4499,7 +4499,6 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const cards = [];
     document.querySelectorAll('.card[data-product-id], .download-card, .cad-card').forEach(card=>{
       if(card.closest('.auth-modal,.azobss-pay-modal,.admin-modal,.cad-admin-modal,.software-admin-modal')) return;
-      if(card.querySelector('.az-item-like-btn')) return;
       const info = getCardInfo(card);
       if(!info.id || !info.title) return;
       cards.push({card, info});
@@ -4544,24 +4543,40 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       renderLikesPage(true);
     }
   }
+  function hydrateLikeButtons(){
+    getCards().forEach(({card, info})=>{
+      card.classList.add('az-has-like-btn');
+      let btn = card.querySelector(':scope > .az-item-like-btn');
+      if(!btn){
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'az-item-like-btn';
+        btn.textContent = '♡';
+        card.appendChild(btn);
+      }
+      btn.type = 'button';
+      btn.classList.add('az-item-like-btn');
+      btn.dataset.likeItemId = info.id;
+      setButtonState(btn, state.ids.has(info.id));
+      if(btn.dataset.azLikeBound !== '1'){
+        btn.dataset.azLikeBound = '1';
+        btn.addEventListener('click', (event)=>{
+          event.preventDefault();
+          event.stopPropagation();
+          toggleLike(btn, getCardInfo(card));
+        });
+      }
+    });
+  }
   async function injectLikeButtons(){
     if(location.pathname.toLowerCase().includes('/likes')) return;
     addLikeStyle();
-    await loadLikesOnce();
-    getCards().forEach(({card, info})=>{
-      card.classList.add('az-has-like-btn');
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'az-item-like-btn';
-      btn.dataset.likeItemId = info.id;
-      setButtonState(btn, state.ids.has(info.id));
-      btn.addEventListener('click', (event)=>{
-        event.preventDefault();
-        event.stopPropagation();
-        toggleLike(btn, info);
-      });
-      card.appendChild(btn);
-    });
+    const usernameKey = getUsernameKey();
+    if(usernameKey && state.loadedFor !== usernameKey) loadCache(usernameKey);
+    hydrateLikeButtons();
+    if(usernameKey && state.loadedFor !== usernameKey && !state.loading){
+      loadLikesOnce().then(hydrateLikeButtons).catch(()=>hydrateLikeButtons());
+    }
   }
   function likeCardHtml(row){
     const title = String(row.title || row.name || row.itemId || 'Liked item');

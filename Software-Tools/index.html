@@ -3895,6 +3895,15 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
+    const instantShareHtml = isPremium ? `<button type="button" class="az-lucky-product-share-btn" data-az-lucky-main="1" data-az-lucky-product-share="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link"><svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share Product</span></button>` : '';
+    const instantLikeHtml = `<button type="button" class="az-item-like-btn" data-like-item-id="${esc(item.productId || item.id)}" aria-label="Add to Likes" title="Add to Likes">♡</button>`;
+    const st0 = statsForItem(item) || {};
+    const dl0 = Number(st0.downloads || item.downloads || 0);
+    const rt0 = Number(st0.rating || item.rating || 0);
+    const rv0 = Number(st0.ratingVotes || item.ratingVotes || item.votes || 0);
+    const stars0 = Array.from({length:5}, (_,i)=>`<button type="button" class="azb-star ${i < Math.round(rt0) ? 'is-filled' : ''}" data-rate="${i+1}" aria-label="Rate ${i+1} star" title="Rate ${i+1} star">★</button>`).join('');
+    const instantStatsHtml = `<div class="software-stats" data-az-instant-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1ZM5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z"/></svg></span><strong class="azb-dl-number">${dl0}</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner"><span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">${stars0}</span><strong class="azb-rate-value">${rt0.toFixed(1)}</strong><span class="azb-rate-votes">(${rv0})</span></span></span></div>`;
+
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
       ${mediaHtml}
       ${badgeExtra}
@@ -3905,6 +3914,9 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       ${productIdMeta}
       ${promoPriceHtml}
       <a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>
+      ${instantLikeHtml}
+      ${instantShareHtml}
+      ${instantStatsHtml}
       ${adminEdit}
     </div>`;
   }
@@ -5165,7 +5177,21 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
   function dlSvg(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
   function starsHtml(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
   function footerHtml(st){return '<span class="azb-stat-download"><span class="azb-dl-badge">'+dlSvg()+'</span><strong class="azb-dl-number">'+fmt(st.downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-rating-inner">'+starsHtml(st.rating)+'<strong class="azb-rate-value">'+Number(st.rating||0).toFixed(1)+'</strong><span class="azb-rate-votes">('+Number(st.ratingVotes||0)+')</span></span></span>';}
-  function render(card){if(!card||!card.classList?.contains('download-card'))return;let box=card.querySelector(':scope>.software-stats');if(!box){box=document.createElement('div');card.appendChild(box);}box.className='software-stats';if(card.lastElementChild!==box)card.appendChild(box);const html=footerHtml(statsFor(card));if(box.innerHTML!==html)box.innerHTML=html;}
+  function updateFooterInPlace(box, st){
+    if(!box) return false;
+    const dl = box.querySelector('.azb-dl-number');
+    const rv = box.querySelector('.azb-rate-value');
+    const votes = box.querySelector('.azb-rate-votes');
+    const stars = box.querySelectorAll('.azb-star');
+    if(!dl || !rv || !votes || !stars.length) return false;
+    dl.textContent = fmt(st.downloads);
+    rv.textContent = Number(st.rating||0).toFixed(1);
+    votes.textContent = '('+Number(st.ratingVotes||0)+')';
+    const filled = Math.round(Number(st.rating)||0);
+    stars.forEach((btn, idx)=>btn.classList.toggle('is-filled', idx < filled));
+    return true;
+  }
+  function render(card){if(!card||!card.classList?.contains('download-card'))return;let box=card.querySelector(':scope>.software-stats');if(!box){box=document.createElement('div');card.appendChild(box);}box.className='software-stats';if(card.lastElementChild!==box)card.appendChild(box);const st=statsFor(card);if(!updateFooterInPlace(box,st)){box.innerHTML=footerHtml(st);}}
   function renderAll(){document.querySelectorAll('#softwareDownloadsGrid .download-card,#softwareGrid .download-card,.downloads-grid .download-card').forEach(render);}
   function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderAll,80);}
   async function loadRemote(){if(syncBusy)return;syncBusy=true;try{await ensureAuth();const snap=await getDoc(STATS_DOC);if(snap.exists()){const remote=itemsOf(snap.data());const c=readCache();const items=itemsOf(c);Object.entries(remote).forEach(([k,v])=>{items[slug(k)]=normalize(v);});writeCache({items,cachedAt:Date.now()});renderAll();}else{await setDoc(STATS_DOC,{items:{}},{merge:true});}}catch(e){console.warn('AZOBSS Firestore stats read/create failed.',e);}finally{syncBusy=false;}}
@@ -8286,7 +8312,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     return Array.from(set);
   }
   function removeAllGiftButtons(){
-    document.querySelectorAll('.az-lucky-product-share-btn,[data-az-lucky-main="1"],[data-az-lucky-product-share],button[title="Share for Lucky Draw"],a[title="Share for Lucky Draw"]').forEach(function(b){b.remove()});
+    // Kept for backwards compatibility only. Do not remove/recreate buttons; that was the source of visible blinking on shared links.
   }
   function alignShareButton(card, btn){
     try{
@@ -8322,30 +8348,40 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   }
   function ensureOneButton(card){
     if(!isPaidCard(card)) return;
-    const btn=document.createElement('button');
+    let btn=card.querySelector(':scope > .az-lucky-product-share-btn, :scope > [data-az-lucky-product-share="1"]');
+    const created=!btn;
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='az-lucky-product-share-btn';
+      btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share Product</span>';
+      card.appendChild(btn);
+    }
     btn.type='button';
     btn.dataset.azLuckyMain='1';
     btn.dataset.azLuckyProductShare='1';
-    btn.className='az-lucky-product-share-btn';
+    btn.classList.add('az-lucky-product-share-btn');
     const shareUser=readUser();
     const loggedIn=!!username(shareUser);
     const adminShareMode=loggedIn && isAdminShareUser(shareUser);
     const creditShareMode=loggedIn && !adminShareMode;
-    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> '+(creditShareMode?'Lucky Draw Share':'Share Product')+'</span>';
+    const text=btn.querySelector('.az-lucky-share-text');
+    if(text) text.textContent=' '+(creditShareMode?'Lucky Draw Share':'Share Product');
     btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
     btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
     btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
     btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
-    btn.addEventListener('click',function(e){shareCard(card,e)},true);
-    card.appendChild(btn);
+    if(btn.dataset.azLuckyBound!=='1'){
+      btn.dataset.azLuckyBound='1';
+      btn.addEventListener('click',function(e){shareCard(card,e)},true);
+    }
     alignShareButton(card, btn);
-    setTimeout(function(){alignShareButton(card, btn)}, 80);
+    if(created) setTimeout(function(){alignShareButton(card, btn)}, 80);
     card.dataset.azLuckyProductId=productInfo(card).id;
     card.dataset.azLuckyShareReady='1';
   }
   function run(){
     if(!isShopPage()) return;
-    removeAllGiftButtons();
     collectCards().forEach(ensureOneButton);
   }
   async function recordOpen(){

@@ -2267,6 +2267,9 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const metaHtml = meta.length ? `<div class="cad-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const badgeExtra = clean.badge ? `<div class="cad-badge extra">${esc(clean.badge)}</div>` : '';
     const adminEdit = isAdmin() ? `<div class="cad-card-admin-actions"><button class="cad-card-edit-btn" type="button" data-cad-edit="${esc(clean.id)}">Edit Details</button><button class="cad-card-delete-btn" type="button" data-cad-delete="${esc(clean.id)}">Delete</button></div>` : '';
+    const instantShareHtml = isPremium ? `<button type="button" class="az-lucky-product-share-btn" data-az-lucky-main="1" data-az-lucky-product-share="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link"><svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share Product</span></button>` : '';
+    const instantLikeHtml = `<button type="button" class="az-item-like-btn" data-like-item-id="${esc(clean.productId || clean.id)}" aria-label="Add to Likes" title="Add to Likes">♡</button>`;
+
     return `<article class="cad-card cad-status-${esc(clean.status || 'active')}" data-admin-cad="1" data-cad-id="${esc(clean.id)}" data-status="${esc(clean.status || 'active')}" data-type="${esc(clean.type)}" data-category="${esc(clean.category || 'LISP (.lsp)')}" data-platforms="${esc((clean.platforms || []).join('|'))}" data-created="${esc(clean.createdAt)}" data-name="${esc(clean.name.toLowerCase())}" data-search="${esc((clean.name+' '+clean.description+' '+clean.type+' '+clean.price+' '+(clean.originalPrice||clean.promoOriginalPrice||'')+' '+(clean.category||'')+' '+clean.productId+' '+clean.version+' '+clean.fileSize+' '+(clean.platforms||[]).join(' ')+' '+clean.badge+' '+clean.imageUrl+' '+clean.gifUrl).toLowerCase())}">
       ${mediaHtml}
       <div class="cad-card-icon">${esc(clean.icon)}</div>
@@ -2278,6 +2281,8 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       ${gifHtml}
       ${promoPriceHtml}
       <a class="cad-action-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(clean.productId || clean.id)}" data-product-name="${esc(clean.name)}" data-product-price="${esc(clean.price)}" data-original-price="${esc(clean.originalPrice || clean.promoOriginalPrice || '')}" data-payment-link="${esc(clean.paymentLink)}" data-stripe-link="${esc(clean.stripeLink)}" data-download-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-premium-download-file-link="${esc(clean.secureDownloadLink || clean.downloadLink)}" data-download-limit="${esc(clean.downloadLimit || 3)}" data-expiry-hours="${esc(clean.expiryHours ?? 24)}" data-owner-uid="${esc(clean.ownerUid || clean.createdByUid || clean.staffUid || clean.sellerUid || '')}" data-owner-username="${esc(clean.ownerUsername || clean.createdByUsername || clean.staffUsername || clean.sellerUsername || '')}" data-owner-email="${esc(clean.ownerEmail || clean.createdByEmail || clean.staffEmail || clean.sellerEmail || '')}" data-owner-key="${esc(clean.ownerKey || clean.createdByKey || clean.staffOwnerKey || clean.sellerKey || '')}" href="${esc(isPremium ? '#' : clean.link)}" rel="noopener" target="_blank">${esc(clean.buttonText)}</a>
+      ${instantLikeHtml}
+      ${instantShareHtml}
       ${adminEdit}
     </article>`;
   }
@@ -4870,7 +4875,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     return Array.from(set);
   }
   function removeAllGiftButtons(){
-    document.querySelectorAll('.az-lucky-product-share-btn,[data-az-lucky-main="1"],[data-az-lucky-product-share],button[title="Share for Lucky Draw"],a[title="Share for Lucky Draw"]').forEach(function(b){b.remove()});
+    // Kept for backwards compatibility only. Do not remove/recreate buttons; that was the source of visible blinking on shared links.
   }
   function alignShareButton(card, btn){
     try{
@@ -4906,30 +4911,40 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   }
   function ensureOneButton(card){
     if(!isPaidCard(card)) return;
-    const btn=document.createElement('button');
+    let btn=card.querySelector(':scope > .az-lucky-product-share-btn, :scope > [data-az-lucky-product-share="1"]');
+    const created=!btn;
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='az-lucky-product-share-btn';
+      btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> Share Product</span>';
+      card.appendChild(btn);
+    }
     btn.type='button';
     btn.dataset.azLuckyMain='1';
     btn.dataset.azLuckyProductShare='1';
-    btn.className='az-lucky-product-share-btn';
+    btn.classList.add('az-lucky-product-share-btn');
     const shareUser=readUser();
     const loggedIn=!!username(shareUser);
     const adminShareMode=loggedIn && isAdminShareUser(shareUser);
     const creditShareMode=loggedIn && !adminShareMode;
-    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> '+(creditShareMode?'Lucky Draw Share':'Share Product')+'</span>';
+    const text=btn.querySelector('.az-lucky-share-text');
+    if(text) text.textContent=' '+(creditShareMode?'Lucky Draw Share':'Share Product');
     btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
     btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
     btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
     btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
-    btn.addEventListener('click',function(e){shareCard(card,e)},true);
-    card.appendChild(btn);
+    if(btn.dataset.azLuckyBound!=='1'){
+      btn.dataset.azLuckyBound='1';
+      btn.addEventListener('click',function(e){shareCard(card,e)},true);
+    }
     alignShareButton(card, btn);
-    setTimeout(function(){alignShareButton(card, btn)}, 80);
+    if(created) setTimeout(function(){alignShareButton(card, btn)}, 80);
     card.dataset.azLuckyProductId=productInfo(card).id;
     card.dataset.azLuckyShareReady='1';
   }
   function run(){
     if(!isShopPage()) return;
-    removeAllGiftButtons();
     collectCards().forEach(ensureOneButton);
   }
   async function recordOpen(){
