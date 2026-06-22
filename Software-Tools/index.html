@@ -8065,7 +8065,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
  function title(c){var h=c.querySelector('h1,h2,h3,h4,.software-title,.tool-title,.card-title,.title');return h?(h.textContent||'').trim():'Software Description'}
  function isDesc(e){var t=(e.textContent||'').replace(/\bMore\b$/,'').trim(),c=String(e.className||'');return t.length>55&&(/desc|description|software-desc|tool-description|card-description/i.test(c)||(e.tagName&&e.tagName.toLowerCase()==='p'&&/software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(t)))}
  function desc(c){return Array.from(c.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.description,.desc,p')).find(isDesc)}
- function setup(){document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]').forEach(function(card){var d=desc(card);if(!d)return;var full=(d.getAttribute('data-azobss-full-desc-097')||(d.textContent||'').replace(/\bMore\b$/,'').trim());d.setAttribute('data-azobss-full-desc-097',full);d.classList.remove('azobss-sw-desc-target-096');d.classList.add('azobss-sw-desc-target-097');d.style.setProperty('max-height','78px','important');d.style.setProperty('overflow','hidden','important');d.style.setProperty('padding-right','42px','important');if(full.length>90){var b=d.querySelector(':scope > .azobss-sw-desc-more-097');if(!b){Array.from(d.querySelectorAll('.azobss-sw-desc-more-096')).forEach(function(x){x.remove()});b=document.createElement('button');b.type='button';b.className='azobss-sw-desc-more-097';b.textContent='More';d.appendChild(b)}b.onclick=function(e){e.preventDefault();e.stopPropagation();openM(title(card),full)}}})}
+ function setup(){/* AZOBSS 292: no-op; description/More is rendered in first paint to avoid blinking. */}
+ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('.azobss-sw-desc-more-097');if(!b)return;var d=b.closest('.azobss-sw-desc-target-097');var card=b.closest('.download-card,.software-card,.software-item,[data-product-id],[data-software-id]');var full=(d&&d.getAttribute('data-azobss-full-desc-097'))||((d&&d.textContent)||'').replace(/\bMore\b$/,'').trim();e.preventDefault();e.stopPropagation();openM(title(card||document.body),full);},true);
  document.addEventListener('DOMContentLoaded',setup);if(document.readyState!=='loading')setup();[100,400,1000,2000].forEach(function(t){setTimeout(setup,t)});window.addEventListener('focus',setup);window.addEventListener('azobss-software-rendered',setup);setTimeout(function(){var r=document.getElementById('softwareList')||document.querySelector('.software-grid');if(r)try{new MutationObserver(function(){requestAnimationFrame(setup)}).observe(r,{childList:true,subtree:true})}catch(e){}},700);
  window.azobssSoftwareDescInlineMoreDebug097=function(){setup();return Array.from(document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]')).map(function(card,i){var d=desc(card);if(!d)return null;var cs=getComputedStyle(d);return{index:i+1,title:title(card),text:(d.textContent||'').replace(/\bMore\b$/,'').trim(),moreInsideDesc:!!d.querySelector('.azobss-sw-desc-more-097'),maxHeight:cs.maxHeight,overflow:cs.overflow,height:Math.round(d.getBoundingClientRect().height)}}).filter(Boolean)};
 })();
@@ -8327,39 +8328,20 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     });
     return Array.from(set);
   }
-  function removeAllGiftButtons(){
-    document.querySelectorAll('.az-lucky-product-share-btn,[data-az-lucky-main="1"],[data-az-lucky-product-share],button[title="Share for Lucky Draw"],a[title="Share for Lucky Draw"]').forEach(function(b){b.remove()});
-  }
+  function removeAllGiftButtons(){/* AZOBSS 292: no-op; first-paint share buttons must not be removed. */}
   function alignShareButton(card, btn){
+    /* AZOBSS 292: keep first-paint share button fixed. Do not write inline top/right on repeated auth/stat refresh. */
     try{
-      const like = card.querySelector(':scope > .az-like-btn,:scope > .like-btn,:scope > .item-like-btn,:scope > button[class*="like"],:scope > [class*="like"]');
-      if(!like) return;
-      const cr = card.getBoundingClientRect();
-      const lr = like.getBoundingClientRect();
-      const isPhone = window.matchMedia && window.matchMedia('(max-width: 700px)').matches;
-      const baseW = Math.round(lr.width || 38);
-      const baseH = Math.round(lr.height || baseW);
-      const w = isPhone ? 34 : Math.max(34, Math.min(42, baseW));
-      const h = isPhone ? 34 : Math.max(34, Math.min(42, baseH));
-      /* Align share button center with like button center. On phone keep it smaller so it does not cover product image/title. */
-      const likeCenterX = lr.left + (lr.width || w) / 2;
-      const right = Math.max(8, Math.round(cr.right - likeCenterX - (w / 2)));
-      const topGap = isPhone ? 4 : 8;
-      const top = Math.max(8, Math.round(lr.top - cr.top + (lr.height || h) + topGap));
-      btn.style.setProperty('width', w + 'px', 'important');
-      btn.style.setProperty('height', h + 'px', 'important');
-      btn.style.setProperty('min-width', w + 'px', 'important');
-      btn.style.setProperty('min-height', h + 'px', 'important');
-      btn.style.setProperty('max-width', w + 'px', 'important');
-      btn.style.setProperty('max-height', h + 'px', 'important');
-      btn.style.setProperty('right', right + 'px', 'important');
-      btn.style.setProperty('top', top + 'px', 'important');
-      const svg = btn.querySelector('.az-lucky-share-icon');
-      if(svg){
-        const iw = isPhone ? 16 : Math.max(16, Math.min(20, Math.round(w * 0.5)));
-        svg.style.setProperty('width', iw + 'px', 'important');
-        svg.style.setProperty('height', iw + 'px', 'important');
-      }
+      if(!btn) return;
+      btn.classList.add('az-share-stable-292');
+      btn.style.removeProperty('top');
+      btn.style.removeProperty('right');
+      btn.style.removeProperty('width');
+      btn.style.removeProperty('height');
+      btn.style.removeProperty('min-width');
+      btn.style.removeProperty('min-height');
+      btn.style.removeProperty('max-width');
+      btn.style.removeProperty('max-height');
     }catch(e){}
   }
   function ensureOneButton(card){
@@ -8383,7 +8365,16 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       btn.addEventListener('click',function(e){shareCard(card,e)},true);
       card.appendChild(btn);
     }
-    btn.innerHTML='<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"> '+(creditShareMode?'Lucky Draw Share':'Share Product')+'</span>';
+    var azShareInner292 = '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg><span class="az-lucky-share-text"></span>';
+    if(btn.getAttribute('data-az-share-inner-ready-292') !== '1'){
+      btn.innerHTML = azShareInner292;
+      btn.setAttribute('data-az-share-inner-ready-292','1');
+    }
+    var azShareText292 = btn.querySelector('.az-lucky-share-text');
+    if(azShareText292){
+      var azNextShareText292 = ' ' + (creditShareMode ? 'Lucky Draw Share' : 'Share Product');
+      if(azShareText292.textContent !== azNextShareText292) azShareText292.textContent = azNextShareText292;
+    }
     btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
     btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
     btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
@@ -8408,7 +8399,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   document.addEventListener('click',function(e){const b=e.target.closest('.az-lucky-product-share-btn');if(!b)return;const card=b.closest(CARD_SELECTOR);if(card)shareCard(card,e)},true);
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){const m=document.querySelector('.az-lucky-share-modal-backdrop');if(m)m.remove();}});
   document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();
-  [100,300,700,1200,2200,4000,7000,10000].forEach(function(t){setTimeout(run,t)});
+  /* AZOBSS 292: removed repeated timer reflows; render/focus/mutation events are enough. */
   window.addEventListener('azobss-software-rendered',run);window.addEventListener('azobss-cad-rendered',run);window.addEventListener('focus',run);
   try{new MutationObserver(function(){clearTimeout(window.__azLuckyShareSingleTimer133);window.__azLuckyShareSingleTimer133=setTimeout(run,120)}).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
   recordOpen();
@@ -8776,18 +8767,18 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     return card.querySelector(':scope > .az-like-btn,:scope > .like-btn,:scope > .item-like-btn,:scope > button[class*="like"],:scope > [class*="like"]');
   }
   function align(card, btn, base){
+    /* AZOBSS 292: keep preview button position from CSS/first paint; no inline reflow. */
     try{
-      var cr=card.getBoundingClientRect(), br=base.getBoundingClientRect();
-      var phone=window.matchMedia&&window.matchMedia('(max-width:700px)').matches;
-      var w=phone?34:Math.max(34,Math.min(42,Math.round(br.width||38)));
-      var h=phone?34:Math.max(34,Math.min(42,Math.round(br.height||w)));
-      var cx=br.left+(br.width||w)/2;
-      var right=Math.max(8,Math.round(cr.right-cx-(w/2)));
-      var top=Math.max(8,Math.round(br.top-cr.top+(br.height||h)+(phone?4:8)));
-      btn.style.setProperty('width',w+'px','important');btn.style.setProperty('height',h+'px','important');
-      btn.style.setProperty('min-width',w+'px','important');btn.style.setProperty('min-height',h+'px','important');
-      btn.style.setProperty('max-width',w+'px','important');btn.style.setProperty('max-height',h+'px','important');
-      btn.style.setProperty('right',right+'px','important');btn.style.setProperty('top',top+'px','important');
+      if(!btn) return;
+      btn.classList.add('az-preview-stable-292');
+      btn.style.removeProperty('top');
+      btn.style.removeProperty('right');
+      btn.style.removeProperty('width');
+      btn.style.removeProperty('height');
+      btn.style.removeProperty('min-width');
+      btn.style.removeProperty('min-height');
+      btn.style.removeProperty('max-width');
+      btn.style.removeProperty('max-height');
     }catch(e){}
   }
   function ensure(card){
@@ -8799,11 +8790,11 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(!base) return;
     var btn=existing;
     if(!btn){btn=document.createElement('a');btn.className='azobss-gif-preview-link azobss-preview-float-155';btn.target='_blank';btn.rel='noopener';btn.title='Preview';btn.setAttribute('aria-label','Preview GIF demo');btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';card.appendChild(btn);} 
-    btn.href=src;btn.setAttribute('data-gif-preview',src);align(card,btn,base);setTimeout(function(){align(card,btn,base)},80);
+    btn.href=src;btn.setAttribute('data-gif-preview',src);align(card,btn,base);
   }
   function run(){collect().forEach(ensure);}
   document.addEventListener('DOMContentLoaded',run);if(document.readyState!=='loading')run();
-  [100,300,700,1200,2200,4000,7000,10000].forEach(function(t){setTimeout(run,t)});
+  /* AZOBSS 292: removed repeated timer reflows; render/focus/mutation events are enough. */
   window.addEventListener('azobss-software-rendered',run);window.addEventListener('azobss-cad-rendered',run);window.addEventListener('resize',run);window.addEventListener('focus',run);
   try{new MutationObserver(function(){clearTimeout(window.__azPreviewFloatTimer155);window.__azPreviewFloatTimer155=setTimeout(run,140)}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
 })();
@@ -10143,6 +10134,32 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
     opacity:1!important;
     z-index:73!important;
   }
+}
+</style>
+
+
+
+<style id="azobss-shop-card-stable-controls-292-css">
+/* AZOBSS 292: final anti-blink positions. Buttons are rendered in first paint; late scripts must not visually move them. */
+html body .download-card > .az-lucky-product-share-btn,
+html body .cad-card > .az-lucky-product-share-btn,
+html body .cad-item > .az-lucky-product-share-btn{
+  top:62px!important;right:16px!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;transform:none!important;
+}
+html body .download-card > .azobss-preview-float-155,
+html body .cad-card > .azobss-preview-float-155,
+html body .cad-item > .azobss-preview-float-155{
+  top:110px!important;right:16px!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;transform:none!important;
+}
+html body .download-card .azobss-sw-desc-target-097{max-height:78px!important;overflow:hidden!important;padding-right:42px!important;}
+html body .download-card .azobss-sw-desc-more-097{display:inline-flex!important;visibility:visible!important;opacity:1!important;}
+@media(max-width:700px){
+  html body .download-card > .az-lucky-product-share-btn,
+  html body .cad-card > .az-lucky-product-share-btn,
+  html body .cad-item > .az-lucky-product-share-btn{top:60px!important;right:14px!important;}
+  html body .download-card > .azobss-preview-float-155,
+  html body .cad-card > .azobss-preview-float-155,
+  html body .cad-item > .azobss-preview-float-155{top:106px!important;right:14px!important;}
 }
 </style>
 
