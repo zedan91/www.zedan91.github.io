@@ -15918,6 +15918,214 @@ body:not(.pa-bm-page) button{
 })();
 </script>
 
+
+
+<style id="azobss-software-card-meta-ribbon-fix-320">
+/* AZOBSS 320: move card meta labels into a thin ribbon so description area stays wider/taller. */
+html body #softwareGrid > .download-card,
+html body #softwareDownloadsGrid > .download-card,
+html body .downloads-grid > .download-card{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  height:430px!important;
+  min-height:430px!important;
+  max-height:430px!important;
+  padding:18px 24px 48px!important;
+  gap:0!important;
+  overflow:hidden!important;
+  grid-template-columns:none!important;
+  grid-template-rows:none!important;
+  grid-template-areas:none!important;
+}
+html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
+html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
+  order:1!important;
+  flex:0 0 72px!important;
+  width:72px!important;
+  height:72px!important;
+  min-height:72px!important;
+  margin:0 auto 8px!important;
+}
+html body #softwareGrid > .download-card > h3,
+html body #softwareDownloadsGrid > .download-card > h3,
+html body .downloads-grid > .download-card > h3,
+html body #softwareGrid > .download-card > .software-title,
+html body #softwareDownloadsGrid > .download-card > .software-title,
+html body .downloads-grid > .download-card > .software-title{
+  order:2!important;
+  flex:0 0 auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  max-width:230px!important;
+  height:auto!important;
+  min-height:42px!important;
+  max-height:56px!important;
+  margin:0 auto 7px!important;
+  padding:0 4px!important;
+  font-size:21px!important;
+  line-height:1.08!important;
+  text-align:center!important;
+  overflow:hidden!important;
+}
+html body #softwareGrid > .download-card > .software-meta,
+html body #softwareDownloadsGrid > .download-card > .software-meta,
+html body .downloads-grid > .download-card > .software-meta{
+  order:3!important;
+  flex:0 0 25px!important;
+  width:100%!important;
+  max-width:232px!important;
+  height:25px!important;
+  min-height:25px!important;
+  max-height:25px!important;
+  margin:0 auto 9px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-wrap:nowrap!important;
+  gap:4px!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+html body #softwareGrid > .download-card > .software-meta span,
+html body #softwareDownloadsGrid > .download-card > .software-meta span,
+html body .downloads-grid > .download-card > .software-meta span{
+  flex:0 1 auto!important;
+  min-width:0!important;
+  max-width:70px!important;
+  height:20px!important;
+  padding:2px 6px!important;
+  border-radius:999px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:9.5px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  letter-spacing:.01em!important;
+  color:#dbeafe!important;
+  background:rgba(15,23,42,.74)!important;
+  border:1px solid rgba(96,165,250,.26)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+html body #softwareGrid > .download-card > .software-meta span:first-child,
+html body #softwareDownloadsGrid > .download-card > .software-meta span:first-child,
+html body .downloads-grid > .download-card > .software-meta span:first-child{
+  max-width:88px!important;
+  color:#bfdbfe!important;
+  background:linear-gradient(135deg,rgba(30,41,59,.86),rgba(15,23,42,.76))!important;
+}
+html body #softwareGrid > .download-card > .software-meta span:nth-child(2),
+html body #softwareDownloadsGrid > .download-card > .software-meta span:nth-child(2),
+html body .downloads-grid > .download-card > .software-meta span:nth-child(2){max-width:44px!important;}
+html body #softwareGrid > .download-card > .software-meta span:nth-child(3),
+html body #softwareDownloadsGrid > .download-card > .software-meta span:nth-child(3),
+html body .downloads-grid > .download-card > .software-meta span:nth-child(3){max-width:54px!important;}
+html body #softwareGrid > .download-card > .software-meta span:nth-child(n+4),
+html body #softwareDownloadsGrid > .download-card > .software-meta span:nth-child(n+4),
+html body .downloads-grid > .download-card > .software-meta span:nth-child(n+4){
+  max-width:58px!important;
+  color:#e0f2fe!important;
+  border-color:rgba(56,189,248,.30)!important;
+}
+html body #softwareGrid > .download-card > p,
+html body #softwareDownloadsGrid > .download-card > p,
+html body .downloads-grid > .download-card > p,
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097{
+  order:4!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  max-width:246px!important;
+  min-height:88px!important;
+  max-height:112px!important;
+  margin:0 auto 10px!important;
+  padding:0 6px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  line-height:1.38!important;
+  overflow:hidden!important;
+}
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097{
+  display:block!important;
+  padding-right:42px!important;
+}
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row,
+html body #softwareGrid > .download-card > .download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn,
+html body .downloads-grid > .download-card > .download-btn{
+  order:20!important;
+  flex:0 0 auto!important;
+  margin:0 auto 4px!important;
+}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    height:auto!important;
+    min-height:430px!important;
+    max-height:none!important;
+    padding:18px 14px 0!important;
+  }
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3{
+    max-width:220px!important;
+    min-height:36px!important;
+    max-height:58px!important;
+    margin-bottom:6px!important;
+    font-size:20px!important;
+  }
+  html body #softwareGrid > .download-card > .software-meta,
+  html body #softwareDownloadsGrid > .download-card > .software-meta,
+  html body .downloads-grid > .download-card > .software-meta{
+    max-width:226px!important;
+    height:23px!important;
+    min-height:23px!important;
+    max-height:23px!important;
+    margin-bottom:8px!important;
+    gap:3px!important;
+  }
+  html body #softwareGrid > .download-card > .software-meta span,
+  html body #softwareDownloadsGrid > .download-card > .software-meta span,
+  html body .downloads-grid > .download-card > .software-meta span{
+    height:19px!important;
+    padding:2px 5px!important;
+    font-size:9px!important;
+    max-width:62px!important;
+  }
+  html body #softwareGrid > .download-card > .software-meta span:first-child,
+  html body #softwareDownloadsGrid > .download-card > .software-meta span:first-child,
+  html body .downloads-grid > .download-card > .software-meta span:first-child{max-width:82px!important;}
+  html body #softwareGrid > .download-card > p,
+  html body #softwareDownloadsGrid > .download-card > p,
+  html body .downloads-grid > .download-card > p,
+  html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-target-097{
+    max-width:246px!important;
+    min-height:82px!important;
+    max-height:112px!important;
+    margin-bottom:8px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 

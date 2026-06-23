@@ -1,0 +1,25 @@
+AZOBSS PATCH (320) - Software/CAD Card Meta Ribbon Layout Fix
+Date: 2026-06-23
+
+Purpose:
+- Move product card labels such as category, version, file size and platform into a thin compact ribbon.
+- Reduce meta label vertical space so the description area is not squeezed.
+- Make labels look more consistent and professional on Software Tools and CAD Tools cards.
+
+Changed files:
+- index.html
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+
+What changed:
+1. Added final CSS block: azobss-software-card-meta-ribbon-fix-320.
+2. Product meta labels are now one compact row.
+3. Category label has a slightly wider first chip.
+4. Version / size / platform chips are smaller and use ellipsis if too long.
+5. Description area gets more usable vertical room.
+6. Mobile layout keeps the compact label ribbon and prevents labels from pushing down the description.
+
+Backend/Firebase:
+- No Firebase Rules update required.
+- No Render backend deploy required.
+- GitHub Pages deploy only.
