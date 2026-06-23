@@ -74,3 +74,10 @@ Notes:
 - Frontend only: admin/index.html.
 - Firebase Rules: not required.
 - Render backend deploy: not required.
+
+
+## (314) AZOBSS Admin Dashboard Raise Tight Fix - 2026-06-23
+- Raised Admin Dashboard content slightly closer to the top navigation.
+- Reduced top padding in main admin area and sidebar.
+- Tightened topbar and section title spacing so dashboard header takes less vertical space.
+- UI-only patch: no Firebase Rules update required, no Render backend deploy required.
