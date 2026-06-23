@@ -10767,49 +10767,6 @@ html body .downloads-grid > .download-card > .download-btn{
   }
 }
 </style>
-<script id="azobss-software-card-desc-true-center-fix-322">
-(function(){
-  if(window.__azobssDescTrueCenter322) return;
-  window.__azobssDescTrueCenter322 = true;
-  function qsa(root, sel){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
-  function normalizeCardDesc(){
-    var cards = qsa(document, '#softwareGrid .download-card, #softwareDownloadsGrid .download-card, .downloads-grid .download-card');
-    cards.forEach(function(card){
-      var desc = card.querySelector(':scope > .azobss-sw-desc-target-097');
-      if(!desc) return;
-      desc.classList.add('az-desc-text-only-322');
-      var inlineBtn = desc.querySelector(':scope > .azobss-sw-desc-more-097');
-      var outsideBtn = card.querySelector(':scope > .az-desc-more-outside-322');
-      if(inlineBtn){
-        if(!outsideBtn){
-          outsideBtn = inlineBtn.cloneNode(true);
-          outsideBtn.classList.add('az-desc-more-outside-322');
-          outsideBtn.setAttribute('aria-label','Read full description');
-          outsideBtn.textContent = (outsideBtn.textContent || 'More').trim() || 'More';
-          desc.insertAdjacentElement('afterend', outsideBtn);
-        }
-        inlineBtn.remove();
-      }
-      /* If old patches left right-padding inline style, clear it after render. */
-      desc.style.paddingRight = '0px';
-      desc.style.paddingLeft = '0px';
-      desc.style.textAlign = 'center';
-      var copy = desc.querySelector(':scope > .az-desc-copy-293');
-      if(copy){
-        copy.style.textAlign = 'center';
-        copy.style.width = '100%';
-      }
-    });
-  }
-  function schedule(){ clearTimeout(window.__azobssDescTrueCenter322Timer); window.__azobssDescTrueCenter322Timer=setTimeout(normalizeCardDesc,60); }
-  document.addEventListener('DOMContentLoaded', function(){ normalizeCardDesc(); [120,400,900,1600,3000].forEach(function(t){setTimeout(normalizeCardDesc,t);}); });
-  if(document.readyState !== 'loading'){ normalizeCardDesc(); [120,400,900,1600,3000].forEach(function(t){setTimeout(normalizeCardDesc,t);}); }
-  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){ }
-})();
-</script>
-
-
-
 <style id="azobss-software-cad-desc-more-button-footer-gap-fix-323">
 /* AZOBSS 323: Description + More button spacing and bottom action alignment.
    Fixes: More chip touching/overlapping the description text, and Download/Buy button sitting too high above the stats footer. */
@@ -10931,49 +10888,6 @@ html body .downloads-grid > .download-card > .download-btn{
   }
 }
 </style>
-<script id="azobss-software-cad-desc-more-button-footer-gap-fix-323">
-(function(){
-  if(window.__azobssDescMoreFooterGap323) return;
-  window.__azobssDescMoreFooterGap323 = true;
-  function qsa(root, sel){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
-  function normalize(){
-    qsa(document, '#softwareGrid .download-card, #softwareDownloadsGrid .download-card, .downloads-grid .download-card').forEach(function(card){
-      var desc = card.querySelector(':scope > .azobss-sw-desc-target-097');
-      if(!desc) return;
-      var inline = desc.querySelector(':scope > .azobss-sw-desc-more-097');
-      var outside = card.querySelector(':scope > .az-desc-more-outside-322');
-      if(inline){
-        if(!outside){
-          outside = inline.cloneNode(true);
-          outside.classList.add('az-desc-more-outside-322');
-          outside.textContent = (outside.textContent || 'More').trim() || 'More';
-          desc.insertAdjacentElement('afterend', outside);
-        }
-        inline.remove();
-      }
-      if(outside && outside.previousElementSibling !== desc){
-        desc.insertAdjacentElement('afterend', outside);
-      }
-      desc.style.setProperty('padding-right','0px','important');
-      desc.style.setProperty('padding-left','0px','important');
-      desc.style.setProperty('text-align','center','important');
-      desc.style.setProperty('margin-bottom','0px','important');
-      var copy = desc.querySelector(':scope > .az-desc-copy-293');
-      if(copy){
-        copy.style.setProperty('text-align','center','important');
-        copy.style.setProperty('width','100%','important');
-      }
-    });
-  }
-  function schedule(){ clearTimeout(window.__azobssDescMoreFooterGap323Timer); window.__azobssDescMoreFooterGap323Timer=setTimeout(normalize,50); }
-  document.addEventListener('DOMContentLoaded', function(){ normalize(); [120,400,900,1600,3000].forEach(function(t){ setTimeout(normalize,t); }); });
-  if(document.readyState !== 'loading'){ normalize(); [120,400,900,1600,3000].forEach(function(t){ setTimeout(normalize,t); }); }
-  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){ }
-})();
-</script>
-
-
-
 <!-- AZOBSS PATCH 324: Software/CAD card CTA pinned near stats footer -->
 <style id="azobss-software-cad-action-bottom-pin-fix-324">
 /* AZOBSS 324
@@ -11080,49 +10994,6 @@ html body .downloads-grid > .download-card > p{
   }
 }
 </style>
-<script id="azobss-software-cad-action-bottom-pin-fix-324">
-(function(){
-  if(window.__azobssActionBottomPin324) return;
-  window.__azobssActionBottomPin324 = true;
-  function qsa(root, sel){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
-  function apply(){
-    qsa(document, '#softwareGrid .download-card, #softwareDownloadsGrid .download-card, .downloads-grid .download-card').forEach(function(card){
-      card.classList.add('az-action-bottom-pin-324');
-      var more = card.querySelector(':scope > .az-desc-more-outside-322');
-      if(more){
-        more.style.setProperty('position','absolute','important');
-        more.style.setProperty('left','50%','important');
-        more.style.setProperty('bottom','100px','important');
-        more.style.setProperty('transform','translateX(-50%)','important');
-        more.style.setProperty('margin','0','important');
-      }
-      var action = card.querySelector(':scope > .az-software-buy-cart-row, :scope > .download-btn');
-      if(action){
-        action.style.setProperty('position','absolute','important');
-        action.style.setProperty('left','50%','important');
-        action.style.setProperty('bottom','52px','important');
-        action.style.setProperty('transform','translateX(-50%)','important');
-        action.style.setProperty('margin','0','important');
-      }
-      var stats = card.querySelector(':scope > .software-stats');
-      if(stats){
-        stats.style.setProperty('position','absolute','important');
-        stats.style.setProperty('left','0','important');
-        stats.style.setProperty('right','0','important');
-        stats.style.setProperty('bottom','0','important');
-        stats.style.setProperty('margin','0','important');
-      }
-    });
-  }
-  function schedule(){ clearTimeout(window.__azobssActionBottomPin324Timer); window.__azobssActionBottomPin324Timer = setTimeout(apply, 40); }
-  document.addEventListener('DOMContentLoaded', function(){ apply(); [120,400,900,1600,3000].forEach(function(t){ setTimeout(apply,t); }); });
-  if(document.readyState !== 'loading'){ apply(); [120,400,900,1600,3000].forEach(function(t){ setTimeout(apply,t); }); }
-  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){ }
-})();
-</script>
-
-
-
 <!-- AZOBSS PATCH 326: Software/CAD TRUE 3-line description clamp on real pages -->
 <style id="azobss-software-cad-desc-realpage-3line-clamp-fix-326">
 /* AZOBSS 326
@@ -11267,68 +11138,188 @@ html body .cad-card-grid > .cad-card > .az-software-buy-cart-row{
   html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293{max-height:calc(1.32em * 3)!important;}
 }
 </style>
-<script id="azobss-software-cad-desc-realpage-3line-clamp-fix-326">
-(function(){
-  if(window.__azobssDescClampRealPage326) return;
-  window.__azobssDescClampRealPage326 = true;
-  var CARD_SELECTOR = '#softwareGrid .download-card,#softwareDownloadsGrid .download-card,.downloads-grid .download-card,.software-grid .software-card,.cad-tools-shop .cad-card,.cad-tools-shop .cad-item,.cad-card-grid .cad-card';
-  function qsa(root, sel){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
-  function apply(){
-    qsa(document, CARD_SELECTOR).forEach(function(card){
-      var desc = card.querySelector(':scope > .azobss-sw-desc-target-097, :scope > p');
-      if(desc){
-        desc.classList.add('az-desc-real-clamp-326');
-        desc.style.setProperty('height', window.matchMedia('(max-width:760px)').matches ? '66px' : '70px', 'important');
-        desc.style.setProperty('max-height', window.matchMedia('(max-width:760px)').matches ? '66px' : '70px', 'important');
-        desc.style.setProperty('min-height', window.matchMedia('(max-width:760px)').matches ? '66px' : '70px', 'important');
-        desc.style.setProperty('overflow','hidden','important');
-        desc.style.setProperty('padding-right','8px','important');
-        desc.style.setProperty('padding-left','8px','important');
-        desc.style.setProperty('text-align','center','important');
-        desc.style.setProperty('text-align-last','center','important');
-        var copy = desc.querySelector(':scope > .az-desc-copy-293') || desc;
-        var full = (copy.textContent || '').trim();
-        if(full && !desc.getAttribute('title')) desc.setAttribute('title', full);
-        copy.style.setProperty('display','-webkit-box','important');
-        copy.style.setProperty('-webkit-box-orient','vertical','important');
-        copy.style.setProperty('-webkit-line-clamp','3','important');
-        copy.style.setProperty('line-clamp','3','important');
-        copy.style.setProperty('overflow','hidden','important');
-        copy.style.setProperty('text-overflow','ellipsis','important');
-        copy.style.setProperty('text-align','center','important');
-        copy.style.setProperty('text-align-last','center','important');
-        copy.style.setProperty('max-height','calc(1.35em * 3)','important');
-      }
-      var more = card.querySelector(':scope > .az-desc-more-outside-322, :scope > .azobss-sw-desc-more-097');
-      if(more){
-        more.style.setProperty('position','absolute','important');
-        more.style.setProperty('left','50%','important');
-        more.style.setProperty('bottom','102px','important');
-        more.style.setProperty('transform','translateX(-50%)','important');
-        more.style.setProperty('margin','0','important');
-      }
-      var action = card.querySelector(':scope > .az-software-buy-cart-row, :scope > .download-btn');
-      if(action){
-        action.style.setProperty('position','absolute','important');
-        action.style.setProperty('left','50%','important');
-        action.style.setProperty('bottom','52px','important');
-        action.style.setProperty('transform','translateX(-50%)','important');
-        action.style.setProperty('margin','0','important');
-      }
-    });
-  }
-  function schedule(){ clearTimeout(window.__azobssDescClampRealPage326Timer); window.__azobssDescClampRealPage326Timer=setTimeout(apply,30); }
-  document.addEventListener('DOMContentLoaded', function(){ apply(); [100,300,700,1200,2500,5000].forEach(function(t){ setTimeout(apply,t); }); });
-  if(document.readyState !== 'loading'){ apply(); [100,300,700,1200,2500,5000].forEach(function(t){ setTimeout(apply,t); }); }
-  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){ }
-})();
-</script>
-
-
-
 <!-- AZOBSS PATCH 327: stop Software/CAD description blinking
      Root cause: patch 326 MutationObserver watched style/class attributes while the same script was setting inline styles, causing a self-trigger loop.
      Fix: observer now watches new cards only (childList), so More/description no longer flickers. -->
+
+
+<!-- AZOBSS PATCH 328: stable CSS-only description clamp + no blinking -->
+<style id="azobss-software-cad-desc-stable-css-only-fix-328">
+/*
+  AZOBSS 328
+  Root cause: old desc/More patches 323/324/326 used JS normalizers + MutationObserver + delayed inline style writes.
+  That made the description and More chip flicker/blink when cards were re-rendered.
+  Fix: remove those JS normalizers and control layout with final CSS only.
+*/
+html body #softwareGrid > .download-card,
+html body #softwareDownloadsGrid > .download-card,
+html body .downloads-grid > .download-card,
+html body .software-grid > .software-card,
+html body .software-grid > .software-item,
+html body .cad-tools-shop > .cad-card,
+html body .cad-tools-shop > .cad-item,
+html body .cad-card-grid > .cad-card{
+  position:relative!important;
+  overflow:hidden!important;
+}
+
+/* Real 3-line clamp. The text stays centered and cannot push the CTA. */
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097,
+html body .software-grid > .software-card > .azobss-sw-desc-target-097,
+html body .software-grid > .software-item > .azobss-sw-desc-target-097,
+html body .cad-tools-shop > .cad-card > .azobss-sw-desc-target-097,
+html body .cad-tools-shop > .cad-item > .azobss-sw-desc-target-097,
+html body .cad-card-grid > .cad-card > .azobss-sw-desc-target-097,
+html body #softwareGrid > .download-card > p,
+html body #softwareDownloadsGrid > .download-card > p,
+html body .downloads-grid > .download-card > p,
+html body .software-grid > .software-card > p,
+html body .software-grid > .software-item > p,
+html body .cad-tools-shop > .cad-card > p,
+html body .cad-tools-shop > .cad-item > p,
+html body .cad-card-grid > .cad-card > p{
+  order:4!important;
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:3!important;
+  line-clamp:3!important;
+  width:min(100%,250px)!important;
+  max-width:250px!important;
+  height:58px!important;
+  min-height:58px!important;
+  max-height:58px!important;
+  margin:0 auto!important;
+  padding:0 8px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  text-align:center!important;
+  text-align-last:center!important;
+  line-height:1.32!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  transform:none!important;
+  transition:none!important;
+  animation:none!important;
+}
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .software-grid > .software-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .software-grid > .software-item > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-tools-shop > .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-tools-shop > .cad-item > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-card-grid > .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293{
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:3!important;
+  line-clamp:3!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:58px!important;
+  margin:0 auto!important;
+  padding:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  text-align:center!important;
+  text-align-last:center!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  transform:none!important;
+  transition:none!important;
+  animation:none!important;
+}
+
+/* More chip overlays lower desc area only; it no longer reserves a row or triggers JS reposition. */
+html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+html body .downloads-grid > .download-card > .az-desc-more-outside-322,
+html body .software-grid > .software-card > .az-desc-more-outside-322,
+html body .software-grid > .software-item > .az-desc-more-outside-322,
+html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
+html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
+html body .cad-card-grid > .cad-card > .az-desc-more-outside-322{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:102px!important;
+  transform:translateX(-50%)!important;
+  margin:0!important;
+  z-index:90!important;
+  transition:none!important;
+  animation:none!important;
+}
+
+/* CTA pinned near footer/download/rating row. */
+html body #softwareGrid > .download-card > .download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn,
+html body .downloads-grid > .download-card > .download-btn,
+html body .software-grid > .software-card > .download-btn,
+html body .software-grid > .software-item > .download-btn,
+html body .cad-tools-shop > .cad-card > .download-btn,
+html body .cad-tools-shop > .cad-item > .download-btn,
+html body .cad-card-grid > .cad-card > .download-btn,
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row,
+html body .software-grid > .software-card > .az-software-buy-cart-row,
+html body .software-grid > .software-item > .az-software-buy-cart-row,
+html body .cad-tools-shop > .cad-card > .az-software-buy-cart-row,
+html body .cad-tools-shop > .cad-item > .az-software-buy-cart-row,
+html body .cad-card-grid > .cad-card > .az-software-buy-cart-row{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:52px!important;
+  transform:translateX(-50%)!important;
+  margin:0!important;
+  z-index:85!important;
+  transition:none!important;
+  animation:none!important;
+}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-target-097,
+  html body #softwareGrid > .download-card > p,
+  html body #softwareDownloadsGrid > .download-card > p,
+  html body .downloads-grid > .download-card > p{
+    height:56px!important;
+    min-height:56px!important;
+    max-height:56px!important;
+    line-height:1.3!important;
+  }
+  html body #softwareGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293{
+    max-height:56px!important;
+  }
+}
+</style>
+<script id="azobss-software-cad-desc-stable-css-only-fix-328">
+(function(){
+  if(window.__azobssDescStableCssOnly328) return;
+  window.__azobssDescStableCssOnly328 = true;
+  /* No MutationObserver, no repeated inline-style writes. This only adds title tooltip once. */
+  function addTitles(){
+    document.querySelectorAll('.azobss-sw-desc-target-097').forEach(function(desc){
+      var copy = desc.querySelector(':scope > .az-desc-copy-293') || desc;
+      var full = (copy.textContent || '').trim();
+      if(full && !desc.getAttribute('title')) desc.setAttribute('title', full);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', addTitles);
+  if(document.readyState !== 'loading') addTitles();
+})();
+</script>
+
 </body>
 </html>
 
