@@ -7265,10 +7265,15 @@ html body .cad-card-grid > .cad-card > .az-software-buy-cart-row{
   function schedule(){ clearTimeout(window.__azobssDescClampRealPage326Timer); window.__azobssDescClampRealPage326Timer=setTimeout(apply,30); }
   document.addEventListener('DOMContentLoaded', function(){ apply(); [100,300,700,1200,2500,5000].forEach(function(t){ setTimeout(apply,t); }); });
   if(document.readyState !== 'loading'){ apply(); [100,300,700,1200,2500,5000].forEach(function(t){ setTimeout(apply,t); }); }
-  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']}); }catch(_){ }
+  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){ }
 })();
 </script>
 
+
+
+<!-- AZOBSS PATCH 327: stop Software/CAD description blinking
+     Root cause: patch 326 MutationObserver watched style/class attributes while the same script was setting inline styles, causing a self-trigger loop.
+     Fix: observer now watches new cards only (childList), so More/description no longer flickers. -->
 </body>
 </html>
 
