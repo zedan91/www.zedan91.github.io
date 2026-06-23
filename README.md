@@ -111,3 +111,10 @@ Deploy: GitHub Pages sahaja.
 - Download Now / Buy Now pinned close to downloads/rating footer.
 - More chip no longer takes its own row.
 - No Firebase Rules update. No Render deploy required.
+
+
+## Patch (326) - Software/CAD desc 3-line real page clamp
+- Fixed issue where desc clamp did not appear because previous patch was not injected into actual /Software-Tools/ page.
+- Added real 3-line ellipsis clamp to Software Tools and CAD Tools pages.
+- Kept Download Now / Buy Now pinned near footer downloads/rating.
+- No Firebase Rules update. No Render deploy required.
