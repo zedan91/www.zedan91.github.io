@@ -8527,45 +8527,42 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   cursor:pointer!important;
 }
 .az-shared-product-hidden{display:none!important;}
+/* AZOBSS 332: shared-link filtering must not animate/flicker. */
+html.azobss-shared-product-mode-332 .az-shared-product-hidden{display:none!important;}
+html.azobss-shared-product-mode-332 .download-card,
+html.azobss-shared-product-mode-332 .software-card,
+html.azobss-shared-product-mode-332 .software-product-card,
+html.azobss-shared-product-mode-332 .cad-card,
+html.azobss-shared-product-mode-332 .cad-item{
+  animation:none!important;
+}
 </style>
 <script id="azobss-shared-product-filter-147-js">
 (function(){
-  if(window.__azobssSharedProductFilter147) return;
-  window.__azobssSharedProductFilter147 = true;
+  /* AZOBSS 332: share-link open no-blink fix.
+     Punca lama: script share filter menulis value search input + dispatch input/change berulang.
+     Itu trigger filter/render semula, lalu card nampak blinking. Versi ini tidak sentuh search box. */
+  if(window.__azobssSharedProductFilter332) return;
+  window.__azobssSharedProductFilter332 = true;
 
-  var qs = new URLSearchParams(location.search);
+  var qs = new URLSearchParams(location.search || '');
   var targetRaw = String(qs.get('product') || '').trim();
   var refRaw = String(qs.get('ref') || '').trim();
   if(!targetRaw) return;
 
-  // AZOBSS 294: when user taps "Lihat semua produk", stop this shared-link filter permanently
-  // for the current page view. Previously delayed timers/mutation observers reapplied the filter.
+  try{ document.documentElement.classList.add('azobss-shared-product-mode-332'); }catch(e){}
+
   var showAllMode = false;
-  function revealAllSharedProducts294(){
-    showAllMode = true;
-    try{ history.replaceState(null, '', location.pathname); }catch(e){}
-    try{
-      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){
-        el.classList.remove('az-shared-product-hidden');
-      });
-      var note = document.getElementById('azSharedProductFilterNote147');
-      if(note) note.remove();
-      document.querySelectorAll('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]').forEach(function(input){
-        input.value = '';
-        input.dispatchEvent(new Event('input', {bubbles:true}));
-        input.dispatchEvent(new Event('change', {bubbles:true}));
-      });
-      document.querySelectorAll('[data-software-platform],[data-software-type],[data-software-category],[data-cad-platform],[data-cad-type],[data-cad-category]').forEach(function(btn){
-        var v = String(btn.getAttribute('data-software-platform') || btn.getAttribute('data-software-type') || btn.getAttribute('data-software-category') || btn.getAttribute('data-cad-platform') || btn.getAttribute('data-cad-type') || btn.getAttribute('data-cad-category') || '').toLowerCase();
-        if(v === 'all'){
-          try{ btn.click(); }catch(e){}
-        }
-      });
-    }catch(e){}
-  }
+  var appliedOnce = false;
+  var scrolledOnce = false;
+  var pendingTimer = 0;
+  var lastCardsSignature = '';
+  var bodyObserverStarted = false;
+  var gridObservers = new WeakSet();
 
   var CARD_SELECTOR = '.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
   var GRID_CARD_SELECTOR = '#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  var GRID_SELECTOR = '#softwareDownloadsGrid,#softwareGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop,.products-grid,.cards-grid';
 
   function clean(v){return String(v||'').replace(/\s+/g,' ').trim();}
   function norm(v){return clean(v).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,140);}
@@ -8592,7 +8589,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   }
   function cardIds(card){
     var title = cardTitle(card);
-    var vals = [
+    return [
       card.dataset.azLuckyProductId,
       card.dataset.productId,
       card.dataset.softwareId,
@@ -8602,66 +8599,128 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       card.getAttribute('data-id'),
       title
     ].filter(Boolean);
-    return vals;
   }
   function isMatch(card){
     var vals = cardIds(card);
     for(var i=0;i<vals.length;i++){
-      var a = norm(vals[i]), b = normLoose(vals[i]);
+      var a = norm(vals[i]);
+      var b = normLoose(vals[i]);
       if(a && (a === target || a.indexOf(target) !== -1 || target.indexOf(a) !== -1)) return true;
       if(b && (b === targetLoose || b.indexOf(targetLoose) !== -1 || targetLoose.indexOf(b) !== -1)) return true;
     }
     return false;
   }
-  function putSearchText(match){
-    var text = cardTitle(match) || targetRaw;
-    var input = document.querySelector('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]');
-    if(input){
-      try{input.value = text; input.dispatchEvent(new Event('input',{bubbles:true})); input.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}
-    }
+  function setHidden(card, hidden){
+    if(!card) return;
+    var has = card.classList.contains('az-shared-product-hidden');
+    if(hidden && !has) card.classList.add('az-shared-product-hidden');
+    if(!hidden && has) card.classList.remove('az-shared-product-hidden');
+  }
+  function removeNote(){
+    var note = document.getElementById('azSharedProductFilterNote147');
+    if(note) note.remove();
+  }
+  function revealAllSharedProducts294(){
+    showAllMode = true;
+    try{ document.documentElement.classList.remove('azobss-shared-product-mode-332'); }catch(e){}
+    try{ history.replaceState(null, '', location.pathname); }catch(e){}
+    document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){ setHidden(el, false); });
+    removeNote();
+    // User asked to view all products. Only then reset UI filters. Do not do this during initial share-link open.
+    try{
+      document.querySelectorAll('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]').forEach(function(input){
+        input.value = '';
+        input.dispatchEvent(new Event('input', {bubbles:true}));
+        input.dispatchEvent(new Event('change', {bubbles:true}));
+      });
+      document.querySelectorAll('[data-software-platform],[data-software-type],[data-software-category],[data-cad-platform],[data-cad-type],[data-cad-category]').forEach(function(btn){
+        var v = String(btn.getAttribute('data-software-platform') || btn.getAttribute('data-software-type') || btn.getAttribute('data-software-category') || btn.getAttribute('data-cad-platform') || btn.getAttribute('data-cad-type') || btn.getAttribute('data-cad-category') || '').toLowerCase();
+        if(v === 'all'){
+          try{ btn.click(); }catch(e){}
+        }
+      });
+    }catch(e){}
   }
   function addNote(match, count){
-    if(document.getElementById('azSharedProductFilterNote147')) return;
-    var anchor = document.querySelector('#softwareDownloadsGrid,#softwareGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop,.products-grid,.cards-grid');
+    var anchor = document.querySelector(GRID_SELECTOR);
     if(!anchor) return;
-    var note = document.createElement('div');
-    note.id = 'azSharedProductFilterNote147';
-    note.className = 'az-shared-product-filter-note';
+    var note = document.getElementById('azSharedProductFilterNote147');
     var name = match ? (cardTitle(match) || targetRaw) : targetRaw;
-    note.innerHTML = '<span>Anda sedang melihat produk yang dikongsi: <b></b>'+(refRaw ? ' <small style="opacity:.78">daripada '+refRaw.replace(/[<>]/g,'')+'</small>' : '')+'</span><button type="button">Lihat semua produk</button>';
-    note.querySelector('b').textContent = name;
-    note.querySelector('button').addEventListener('click', function(e){
-      if(e){ e.preventDefault(); e.stopPropagation(); }
-      revealAllSharedProducts294();
-    });
-    anchor.parentNode.insertBefore(note, anchor);
+    if(!note){
+      note = document.createElement('div');
+      note.id = 'azSharedProductFilterNote147';
+      note.className = 'az-shared-product-filter-note';
+      note.innerHTML = '<span>Anda sedang melihat produk yang dikongsi: <b></b>'+(refRaw ? ' <small style="opacity:.78"></small>' : '')+'</span><button type="button">Lihat semua produk</button>';
+      note.querySelector('button').addEventListener('click', function(e){
+        if(e){ e.preventDefault(); e.stopPropagation(); }
+        revealAllSharedProducts294();
+      });
+      anchor.parentNode.insertBefore(note, anchor);
+    }
+    var b = note.querySelector('b');
+    if(b) b.textContent = name;
+    var small = note.querySelector('small');
+    if(small) small.textContent = 'daripada ' + refRaw.replace(/[<>]/g,'');
+  }
+  function signature(cards){
+    return cards.map(function(c){ return cardIds(c).join('|'); }).join('||') + '::' + target;
+  }
+  function scrollToMatch(match){
+    if(scrolledOnce || !match) return;
+    scrolledOnce = true;
+    setTimeout(function(){
+      try{ match.scrollIntoView({behavior:'auto', block:'center', inline:'nearest'}); }catch(e){}
+    }, 120);
   }
   function applyFilter(){
     if(showAllMode){
-      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){el.classList.remove('az-shared-product-hidden')});
-      var note = document.getElementById('azSharedProductFilterNote147');
-      if(note) note.remove();
+      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){ setHidden(el, false); });
+      removeNote();
       return;
     }
     var cards = collectCards();
     if(!cards.length) return;
+    var sig = signature(cards);
     var matches = cards.filter(isMatch);
     if(!matches.length) return;
-    cards.forEach(function(card){
-      if(matches.indexOf(card) === -1) card.classList.add('az-shared-product-hidden');
-      else card.classList.remove('az-shared-product-hidden');
-    });
-    putSearchText(matches[0]);
+
+    // If the same product set is already filtered, avoid touching DOM again.
+    if(appliedOnce && sig === lastCardsSignature){
+      addNote(matches[0], matches.length);
+      return;
+    }
+    lastCardsSignature = sig;
+    appliedOnce = true;
+
+    cards.forEach(function(card){ setHidden(card, matches.indexOf(card) === -1); });
     addNote(matches[0], matches.length);
+    scrollToMatch(matches[0]);
+  }
+  function scheduleApply(delay){
+    clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(applyFilter, Number(delay) || 80);
+  }
+  function observeGrids(){
+    document.querySelectorAll(GRID_SELECTOR).forEach(function(grid){
+      if(!grid || gridObservers.has(grid)) return;
+      gridObservers.add(grid);
+      try{ new MutationObserver(function(){ scheduleApply(90); }).observe(grid,{childList:true,subtree:false}); }catch(e){}
+    });
+    if(!bodyObserverStarted){
+      bodyObserverStarted = true;
+      try{
+        var bodyObs = new MutationObserver(function(){ observeGrids(); scheduleApply(120); });
+        bodyObs.observe(document.body || document.documentElement,{childList:true,subtree:false});
+        setTimeout(function(){ try{ bodyObs.disconnect(); }catch(e){} }, 7000);
+      }catch(e){}
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', applyFilter);
-  if(document.readyState !== 'loading') applyFilter();
-  [150,400,900,1600,2600,4200,7000,10000].forEach(function(t){setTimeout(applyFilter,t)});
-  window.addEventListener('azobss-software-rendered', applyFilter);
-  window.addEventListener('azobss-cad-rendered', applyFilter);
-  window.addEventListener('focus', applyFilter);
-  try{new MutationObserver(function(){clearTimeout(window.__azSharedProductFilterTimer147);window.__azSharedProductFilterTimer147=setTimeout(applyFilter,180)}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  document.addEventListener('DOMContentLoaded', function(){ observeGrids(); scheduleApply(60); });
+  if(document.readyState !== 'loading'){ observeGrids(); scheduleApply(60); }
+  [150,400,900,1600,2600,4200,6500].forEach(function(t){ setTimeout(function(){ observeGrids(); applyFilter(); }, t); });
+  window.addEventListener('azobss-software-rendered', function(){ observeGrids(); scheduleApply(80); });
+  window.addEventListener('azobss-cad-rendered', function(){ observeGrids(); scheduleApply(80); });
 })();
 </script>
 

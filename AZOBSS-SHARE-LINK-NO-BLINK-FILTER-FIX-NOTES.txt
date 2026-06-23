@@ -1,0 +1,20 @@
+AZOBSS Share Link No-Blink Filter Fix (332)
+
+Problem:
+- Opening Software/CAD using shared product link could blink/flicker.
+- Cause: old shared-product filter script wrote product title into the search input and dispatched input/change repeatedly.
+- That triggered Software/CAD filter rendering again and again, so cards/descriptions/buttons appeared to blink.
+
+Fix:
+- Shared link filter no longer writes to search input during page load.
+- It filters by adding/removing az-shared-product-hidden class only.
+- MutationObserver is limited to product grid childList changes, not full document subtree.
+- DOM writes are idempotent: if product set is already filtered, script does not touch card classes again.
+- User can still click "Lihat semua produk" to reset search/filter and view all products.
+
+Files changed:
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+
+Firebase Rules: not required.
+Render deploy: not required. GitHub Pages deploy only.
