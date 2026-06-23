@@ -1992,6 +1992,78 @@ function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const receiptPdfUrl = receiptUrl + (receiptUrl.includes("?") ? "&" : "?") + "format=pdf";
   return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download count is only used after you press Start Download.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download count is only used after you press Start Download. If it is not used, the link will expire on ${expires}.</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
 }
+// AZOBSS PATCH 319: Admin resend receipt email should also include Software/CAD download link.
+async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
+  try {
+    let current = order || {};
+    const category = azReceiptCategory(current);
+    if (String(category || '').toLowerCase().includes('pa/bm') || isPaBmPremiumOrder(current)) return '';
+    if (azReceiptStatusBucket(current) !== 'paid') return '';
+    const orderId = cleanPremiumText(current.orderId || current.receiptNo || '', 180);
+    const billCode = cleanPremiumText(current.billCode || '', 120);
+    try {
+      const latestLocal = findPremiumOrderByAny({ orderId, billCode });
+      if (latestLocal) current = { ...current, ...latestLocal };
+    } catch (_) {}
+    try {
+      const latestPersistent = await azFindPremiumOrderPersistent({ orderId, billCode });
+      if (latestPersistent) current = { ...current, ...latestPersistent };
+    } catch (_) {}
+
+    const base = req ? publicBaseUrlFromReq(req) : publicBaseUrlFromReq({ headers:{} });
+    const existingToken = cleanPremiumText(current.downloadToken || current.token || '', 220);
+    if (existingToken) {
+      let tokenRow = null;
+      try { tokenRow = findPremiumToken(existingToken); } catch (_) {}
+      if (!tokenRow) { try { tokenRow = await azFindPremiumTokenPersistent(existingToken); } catch (_) {} }
+      const expiresAt = Number(tokenRow && tokenRow.expiresAt || 0) || Date.parse(String(current.tokenExpiresAt || current.expiresAt || '')) || 0;
+      const used = Number(tokenRow && tokenRow.usedCount || current.usedCount || current.downloadCount || 0) || 0;
+      const max = Math.max(1, Number(tokenRow && tokenRow.maxDownload || current.maxDownload || current.maxDownloads || 1) || 1);
+      if ((!expiresAt || expiresAt > Date.now()) && used < max) {
+        return `${base}/api/premium/download/${encodeURIComponent(existingToken)}`;
+      }
+    }
+
+    const realDownloadLink = cleanPremiumUrl(current.downloadLink || current.premiumDownloadFileLink || current.secureDownloadLink || current.privateDownloadLink || current.downloadUrl || '');
+    if (!realDownloadLink) return '';
+    const token = makeId('dl').replace(/[^a-zA-Z0-9_-]/g, '');
+    const now = Date.now();
+    const expiryHours = Math.max(1, Math.min(24 * 30, Number(current.expiryHours || 24) || 24));
+    const expiresAtMs = now + expiryHours * 60 * 60 * 1000;
+    const maxDownload = Math.max(1, Math.min(20, Number(current.maxDownload || current.maxDownloads || 1) || 1));
+    const tokenData = {
+      token,
+      orderId: current.orderId || orderId,
+      billCode: current.billCode || billCode,
+      productId: current.productId || current.receiptProductId || '',
+      productName: current.productName || current.receiptProductName || 'AZOBSS Digital Product',
+      user: current.user || { email: current.email || current.buyerEmail || current.receiptBuyerEmail || '', username: current.username || current.usernameKey || current.receiptBuyerUsername || '' },
+      downloadLink: realDownloadLink,
+      premiumDownloadFileLink: realDownloadLink,
+      createdAt: now,
+      expiresAt: expiresAtMs,
+      usedCount: 0,
+      maxDownload
+    };
+    savePremiumToken(tokenData);
+    upsertPremiumOrder({
+      ...current,
+      orderId: current.orderId || orderId,
+      billCode: current.billCode || billCode,
+      downloadLink: realDownloadLink,
+      premiumDownloadFileLink: realDownloadLink,
+      downloadToken: token,
+      tokenExpiresAt: new Date(expiresAtMs).toISOString(),
+      maxDownload,
+      lastAdminResendDownloadLinkAt: new Date(now).toISOString()
+    });
+    return `${base}/api/premium/download/${encodeURIComponent(token)}`;
+  } catch (err) {
+    console.warn('AZOBSS admin receipt+download resend link failed:', err && (err.message || err));
+    return '';
+  }
+}
+
 async function maybeSendDownloadEmail(order, req) {
   try {
     let current = order || {};
@@ -3782,11 +3854,12 @@ async function azFindMyPurchaseReceiptRecord(identifier = "", source = "", ident
     receiptSource: match.source
   }, match.source);
 }
-function azReceiptEmailHtml(order = {}) {
+function azReceiptEmailHtml(order = {}, options = {}) {
   const o = azNormalizePaymentReceiptOrder(order || {}, order && order.receiptSource || "");
-  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:720px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Payment Receipt / Invoice</h2><p>Your purchase receipt is attached as PDF.</p><p><b>Receipt:</b> ${azHtmlEscape(o.receiptNo)}<br><b>Product:</b> ${azHtmlEscape(o.receiptProductName)}<br><b>Amount:</b> ${azHtmlEscape(o.receiptAmountText)}<br><b>Status:</b> ${azHtmlEscape(String(o.receiptStatus||'').toUpperCase())}<br><b>Date:</b> ${azHtmlEscape(o.receiptDateText)}</p><p style="font-size:12px;color:#64748b">AZOBSS Digital Store</p></div></body></html>`;
+  const downloadUrl = cleanPremiumUrl(options.downloadUrl || "");
+  const downloadBlock = downloadUrl ? `<p><a href="${azHtmlEscape(downloadUrl)}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:800">Download Software/CAD File</a></p><p style="color:#b45309;font-size:13px"><b>Important:</b> This secure link opens a confirmation page first. Download count is only used after the customer presses Start Download.</p>` : "";
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:720px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Payment Receipt / Invoice</h2><p>Your purchase receipt is attached as PDF.</p><p><b>Receipt:</b> ${azHtmlEscape(o.receiptNo)}<br><b>Product:</b> ${azHtmlEscape(o.receiptProductName)}<br><b>Amount:</b> ${azHtmlEscape(o.receiptAmountText)}<br><b>Status:</b> ${azHtmlEscape(String(o.receiptStatus||'').toUpperCase())}<br><b>Date:</b> ${azHtmlEscape(o.receiptDateText)}</p>${downloadBlock}<p style="font-size:12px;color:#64748b">AZOBSS Digital Store</p></div></body></html>`;
 }
-
 
 // AUTO DELETE FILE > 30 DAYS
 const FILE_EXPIRE_MS =
@@ -5625,12 +5698,15 @@ async function handler(req, res) {
         const to = cleanPremiumText(body.email || order.receiptBuyerEmail || "", 180);
         if (!to) return send(res, 400, JSON.stringify({ ok:false, error:"Buyer email missing. Enter email manually." }, null, 2), "application/json");
         const pdf = await buildReceiptPdfBuffer(order);
-        const subject = `AZOBSS Receipt - ${cleanPremiumText(order.receiptProductName || order.receiptNo || "Purchase", 80)}`;
-        const html = azReceiptEmailHtml(order);
-        const text = `AZOBSS Payment Receipt / Invoice\n\nReceipt: ${order.receiptNo}\nProduct: ${order.receiptProductName}\nAmount: ${order.receiptAmountText}\nStatus: ${String(order.receiptStatus||"").toUpperCase()}\nDate: ${order.receiptDateText}\n\nPDF receipt is attached.`;
+        const downloadUrl = await azEnsurePremiumDownloadResendLink(order, req);
+        const subject = downloadUrl
+          ? `AZOBSS Receipt + Download Link - ${cleanPremiumText(order.receiptProductName || order.receiptNo || "Purchase", 80)}`
+          : `AZOBSS Receipt - ${cleanPremiumText(order.receiptProductName || order.receiptNo || "Purchase", 80)}`;
+        const html = azReceiptEmailHtml(order, { downloadUrl });
+        const text = `AZOBSS Payment Receipt / Invoice\n\nReceipt: ${order.receiptNo}\nProduct: ${order.receiptProductName}\nAmount: ${order.receiptAmountText}\nStatus: ${String(order.receiptStatus||"").toUpperCase()}\nDate: ${order.receiptDateText}${downloadUrl ? `\n\nDownload Software/CAD File: ${downloadUrl}\nImportant: This secure link opens a confirmation page first. Download count is only used after Start Download is pressed.` : ""}\n\nPDF receipt is attached.`;
         const info = await azSendEmailWithOptionalPdf({ to, subject, html, text, pdfBuffer:pdf, filename:azReceiptFilename(order, "pdf") });
-        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payment_receipt_email", order.receiptSource || source || "payment", order.receiptNo || receiptId, { source, to:maskEmail(to), category:order.receiptCategory, amount:order.receiptAmount }, "success"), "Admin receipt email audit log failed");
-        return send(res, 200, JSON.stringify({ ok:true, sent:true, to:maskEmail(to), receiptNo:order.receiptNo, messageId:info && (info.messageId || info.messageIdHeader || info.messageId || "") || "" }, null, 2), "application/json");
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payment_receipt_email", order.receiptSource || source || "payment", order.receiptNo || receiptId, { source, to:maskEmail(to), category:order.receiptCategory, amount:order.receiptAmount, downloadLinkIncluded:!!downloadUrl }, "success"), "Admin receipt email audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, sent:true, to:maskEmail(to), receiptNo:order.receiptNo, downloadLinkIncluded:!!downloadUrl, messageId:info && (info.messageId || info.messageIdHeader || info.messageId || "") || "" }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
