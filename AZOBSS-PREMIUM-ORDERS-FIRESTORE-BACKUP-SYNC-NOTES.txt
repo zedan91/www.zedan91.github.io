@@ -1,0 +1,57 @@
+AZOBSS PATCH (303) - PREMIUM ORDERS FIRESTORE BACKUP / SYNC
+============================================================
+
+Baseline: (302)-AZOBSS-ADMIN-COMMISSION-MANAGER-PRO-FIX_20260623.zip
+Patch:    (303)-AZOBSS-PREMIUM-ORDERS-FIRESTORE-BACKUP-SYNC-FIX_20260623.zip
+
+Tujuan
+------
+Mengukuhkan rekod pembelian Software/CAD premium supaya tidak bergantung kepada local JSON backend sahaja.
+
+Apa yang ditambah
+-----------------
+1. deploy-server.js
+   - premiumOrders kini dinormalize sebelum disimpan ke Firestore.
+   - Field penting ditambah/dirapikan:
+     orderId, billCode, statusLower, isPaid, category, productId, productName,
+     amountSen, saleAmount, username, usernameKey, email, buyerEmail,
+     createdAtMs, paidAtMs, updatedAtMs, firestoreSyncedAt.
+   - upsertPremiumOrder() masih simpan local premium-orders.json, dan fire-and-forget backup ke Firestore.
+   - azPersistPremiumOrder() kini boleh guna orderId atau billCode sebagai Firestore doc ID.
+   - /api/admin/export?type=premiumOrders kini merge Firestore + local-json, bukan pilih salah satu sahaja.
+   - Tambah sync helper:
+     * local-json -> Firestore
+     * Firestore -> local premium-orders.json
+
+2. Admin > Maintenance / Repair
+   - Tambah action:
+     * Backup local premiumOrders to Firestore
+     * Restore local premiumOrders from Firestore
+   - Scan maintenance kini tunjuk:
+     * Local Orders
+     * Need Firestore Backup
+     * Need Local Restore
+   - Scan akan detect rekod premiumOrders yang ada di local tetapi belum ada di Firestore.
+   - Scan juga detect rekod Firestore yang belum ada dalam local cache.
+
+Kesan kepada Admin Dashboard
+----------------------------
+Sales Overview, Payment Logs dan Commission Manager lebih tahan terhadap Render restart/deploy kerana data utama premiumOrders disimpan dan boleh dibaca dari Firestore.
+
+Firebase Rules
+--------------
+Tidak perlu update Firebase Rules untuk frontend client.
+Collection premiumOrders ditulis/dibaca melalui Render backend menggunakan Firebase Admin SDK.
+
+Render Backend
+--------------
+WAJIB deploy Render backend untuk patch ini kerana deploy-server.js berubah.
+
+Cadangan test selepas deploy
+----------------------------
+1. Buka Admin > Maintenance / Repair.
+2. Tekan Scan Maintenance Status.
+3. Jika Need Firestore Backup > 0, pilih Backup local premiumOrders to Firestore dan Run Selected Repair.
+4. Scan semula, pastikan Need Firestore Backup turun.
+5. Semak Admin > Sales Overview dan Payment Logs masih papar Software/CAD premium orders.
+6. Buat test purchase RM1 jika perlu dan pastikan order masuk Payment Logs.

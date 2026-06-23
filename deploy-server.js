@@ -1229,6 +1229,7 @@ async function azLoadAdminExportRows(type, maxRows = 500) {
     if (fsRows.rows.length) return { rows: fsRows.rows.map(x => azJsonSafe(x)).slice(0, limitRows), firestoreOk: fsRows.firestoreOk, source:"firestore", error: fsRows.error || "" };
     return { rows: azExportSafeSoftwareStats(readSoftwareStats()).slice(0, limitRows), firestoreOk:false, source:"local-json", error: fsRows.error || "" };
   }
+  if (type === "premiumOrders") return azLoadPremiumOrdersMerged(limitRows);
   const cfg = AZOBSS_ADMIN_EXPORT_TYPES[type];
   if (!cfg) return { rows:[], firestoreOk:false, source:"none", error:"Unsupported export type" };
   const fsRows = await azExportFirestoreRows(cfg.firestore, limitRows);
@@ -1258,6 +1259,46 @@ function azRowsToCsv(rows = []) {
 function azExportFileName(type, format) {
   const d = new Date().toISOString().slice(0,10);
   return `azobss-${type}-export-${d}.${format === "csv" ? "csv" : "json"}`;
+}
+
+
+function azPremiumOrderMergeKey(row = {}, docId = "") {
+  return String(row.orderId || row.billCode || row.billcode || docId || row.id || "").trim().toLowerCase();
+}
+function azPremiumOrderSortMs(row = {}) {
+  return Number(row.paidAtMs || row.updatedAtMs || row.createdAtMs || Date.parse(row.paidAt || row.updatedAt || row.createdAt || "") || 0) || 0;
+}
+async function azLoadPremiumOrdersMerged(maxRows = 500) {
+  const limitRows = Math.max(1, Math.min(5000, Number(maxRows || 500) || 500));
+  const merged = [];
+  const seen = new Set();
+  let firestoreOk = false;
+  let error = "";
+  const sources = new Set();
+  const add = (row, docId, source) => {
+    if (!row) return;
+    const key = azPremiumOrderMergeKey(row, docId);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    sources.add(source || "unknown");
+    merged.push({ ...(row || {}), docId: docId || row.docId || row.id || "", _backupSource: source || "unknown" });
+  };
+  try {
+    const fsRows = await azExportFirestoreRows("premiumOrders", limitRows);
+    firestoreOk = !!fsRows.firestoreOk;
+    error = fsRows.error || "";
+    (Array.isArray(fsRows.rows) ? fsRows.rows : []).forEach(row => add(row, row.docId || row.id || row.orderId || row.billCode || "", "firestore"));
+  } catch (err) {
+    error = err && err.message ? err.message : String(err);
+  }
+  try {
+    (readPremiumOrders() || []).slice(0, limitRows).forEach((row, idx) => add(row, row.docId || row.id || row.orderId || row.billCode || `local_${idx}`, "local-json"));
+  } catch (err) {
+    error = [error, "local-json: " + (err && err.message ? err.message : String(err))].filter(Boolean).join(" | ");
+  }
+  merged.sort((a, b) => azPremiumOrderSortMs(b) - azPremiumOrderSortMs(a));
+  const source = sources.size ? Array.from(sources).join("+") : "empty";
+  return { rows: merged.slice(0, limitRows).map((x, i) => azExportSafePremiumOrder(x, x.docId || x.orderId || x.billCode || `merged_${i}`)), firestoreOk, source, error };
 }
 
 
@@ -1454,7 +1495,7 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
     ok:true,
     generatedAt:new Date(now).toISOString(),
     firestoreConfigured:!!db,
-    scanned:{ premiumOrders:0, premiumDownloadTokens:0, commissionRecords:0, adminAuditLogs:0, notifications:0 },
+    scanned:{ premiumOrders:0, localPremiumOrders:0, premiumDownloadTokens:0, commissionRecords:0, adminAuditLogs:0, notifications:0 },
     retention:{
       downloadTokenDays:azMaintenanceRetentionDays("AZOBSS_DOWNLOAD_TOKEN_RETENTION_DAYS", 90),
       auditLogDays:azMaintenanceRetentionDays("AZOBSS_AUDIT_LOG_RETENTION_DAYS", 365),
@@ -1466,14 +1507,20 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
       { action:"repair-receipt-flags", label:"Add receipt-token requirement to paid premium orders", safe:true },
       { action:"expire-old-download-tokens", label:"Mark expired download tokens as expired", safe:true },
       { action:"repair-commission-payout-status", label:"Set missing commission payout status to pending", safe:true },
+      { action:"sync-local-premium-orders-firestore", label:"Backup local premiumOrders to Firestore", safe:true },
+      { action:"hydrate-local-premium-orders-firestore", label:"Restore local premium-orders.json from Firestore", safe:true },
       { action:"prune-expired-download-tokens", label:"Delete expired download tokens older than retention", safe:true, destructive:true, confirmPhrase:azMaintenanceConfirmPhrase() },
       { action:"prune-old-audit-logs", label:"Delete audit logs older than retention", safe:true, destructive:true, confirmPhrase:azMaintenanceConfirmPhrase() },
       { action:"prune-old-notifications", label:"Delete notifications older than retention", safe:true, destructive:true, confirmPhrase:azMaintenanceConfirmPhrase() }
     ],
-    samples:{ paidOrdersMissingToken:[], paidOrdersMissingReceiptFlag:[], expiredDownloadTokens:[], commissionMissingPayoutStatus:[], prunableExpiredDownloadTokens:[], oldAuditLogs:[], oldNotifications:[] },
+    samples:{ paidOrdersMissingToken:[], paidOrdersMissingReceiptFlag:[], localPremiumOrdersMissingFirestore:[], firestorePremiumOrdersMissingLocal:[], expiredDownloadTokens:[], commissionMissingPayoutStatus:[], prunableExpiredDownloadTokens:[], oldAuditLogs:[], oldNotifications:[] },
     warnings:[],
     latencyMs:0
   };
+  const localPremiumOrders = (readPremiumOrders() || []).slice(0, limitRows);
+  result.scanned.localPremiumOrders = localPremiumOrders.length;
+  const localPremiumOrderKeys = new Set(localPremiumOrders.map(x => azPremiumOrderMergeKey(x, x && (x.docId || x.id))).filter(Boolean));
+  const firestorePremiumOrderKeys = new Set();
   if (!db) {
     result.ok = false;
     result.warnings.push("Firebase Admin is not configured. Maintenance scan can only run when FIREBASE_SERVICE_ACCOUNT_JSON is configured.");
@@ -1485,6 +1532,13 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
     ordersSnap.forEach(docSnap => {
       const x = { id:docSnap.id, ...(docSnap.data() || {}) };
       result.scanned.premiumOrders += 1;
+      const fsKey = azPremiumOrderMergeKey(x, docSnap.id);
+      if (fsKey) {
+        firestorePremiumOrderKeys.add(fsKey);
+        if (!localPremiumOrderKeys.has(fsKey)) {
+          result.samples.firestorePremiumOrdersMissingLocal.push({ id:docSnap.id, orderId:cleanPremiumText(x.orderId || docSnap.id, 160), productName:cleanPremiumText(x.productName || "", 120), status:cleanPremiumText(x.status || "", 60) });
+        }
+      }
       const paid = azMaintenanceStatusPaid(x);
       if (paid && !x.downloadToken && azMaintenanceHasDownloadTarget(x)) {
         result.samples.paidOrdersMissingToken.push({ id:docSnap.id, orderId:cleanPremiumText(x.orderId || docSnap.id, 160), productName:cleanPremiumText(x.productName || "", 120), email:azMaskEmail(x.buyerEmail || x.email || (x.user && x.user.email) || "") });
@@ -1496,6 +1550,17 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
   } catch (err) {
     result.warnings.push("premiumOrders scan failed: " + (err && err.message ? err.message : String(err)));
   }
+  try {
+    localPremiumOrders.forEach((x) => {
+      const key = azPremiumOrderMergeKey(x, x && (x.docId || x.id));
+      if (key && !firestorePremiumOrderKeys.has(key)) {
+        result.samples.localPremiumOrdersMissingFirestore.push({ orderId:cleanPremiumText(x.orderId || "", 160), billCode:cleanPremiumText(x.billCode || "", 120), productName:cleanPremiumText(x.productName || "", 120), status:cleanPremiumText(x.status || "", 60) });
+      }
+    });
+  } catch (err) {
+    result.warnings.push("local premiumOrders compare failed: " + (err && err.message ? err.message : String(err)));
+  }
+
   try {
     const tokensSnap = await db.collection("premiumDownloadTokens").limit(limitRows).get();
     tokensSnap.forEach(docSnap => {
@@ -1552,6 +1617,8 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
     azMaintenancePublicIssue("paidOrdersMissingReceiptFlag", "medium", "Paid orders missing receipt token requirement", result.samples.paidOrdersMissingReceiptFlag.length, "Hardens old/new premium receipt privacy."),
     azMaintenancePublicIssue("expiredDownloadTokens", "low", "Expired download tokens not marked expired", result.samples.expiredDownloadTokens.length, "Keeps token collection cleaner."),
     azMaintenancePublicIssue("commissionMissingPayoutStatus", "medium", "Commission records missing payout status", result.samples.commissionMissingPayoutStatus.length, "Keeps payout workflow consistent."),
+    azMaintenancePublicIssue("localPremiumOrdersMissingFirestore", "high", "Local premiumOrders not backed up to Firestore", result.samples.localPremiumOrdersMissingFirestore.length, "Run sync-local-premium-orders-firestore to protect Software/CAD payment records from Render restart/deploy loss."),
+    azMaintenancePublicIssue("firestorePremiumOrdersMissingLocal", "low", "Firestore premiumOrders not cached locally", result.samples.firestorePremiumOrdersMissingLocal.length, "Run hydrate-local-premium-orders-firestore when local JSON needs restore after restart."),
     azMaintenancePublicIssue("prunableExpiredDownloadTokens", "low", "Expired download tokens older than retention", result.samples.prunableExpiredDownloadTokens.length, `Retention: ${result.retention.downloadTokenDays} days.`),
     azMaintenancePublicIssue("oldAuditLogs", "low", "Old admin audit logs older than retention", result.samples.oldAuditLogs.length, `Retention: ${result.retention.auditLogDays} days.`),
     azMaintenancePublicIssue("oldNotifications", "low", "Old notifications older than retention", result.samples.oldNotifications.length, `Retention: ${result.retention.notificationDays} days.`)
@@ -1568,7 +1635,23 @@ async function azAdminMaintenanceRun(req, identity = {}, action = "", options = 
   const out = { ok:true, action:cleanPremiumText(action, 80), destructive:azMaintenanceDestructiveAction(action), processed:0, changed:0, skipped:0, errors:[], samples:[], generatedAt:new Date(now).toISOString(), latencyMs:0 };
   const addSample = (x) => { if (out.samples.length < 20) out.samples.push(x); };
   try {
-    if (action === "repair-receipt-flags") {
+    if (action === "sync-local-premium-orders-firestore") {
+      const sync = await azSyncLocalPremiumOrdersToFirestore({ limit: limitRows });
+      out.processed = sync.processed || 0;
+      out.changed = sync.changed || 0;
+      out.skipped = sync.skipped || 0;
+      out.errors = sync.errors || (sync.error ? [sync.error] : []);
+      out.samples = sync.samples || [];
+      out.ok = sync.ok !== false;
+    } else if (action === "hydrate-local-premium-orders-firestore") {
+      const sync = await azHydrateLocalPremiumOrdersFromFirestore({ limit: limitRows });
+      out.processed = sync.processed || 0;
+      out.changed = sync.changed || 0;
+      out.skipped = sync.skipped || 0;
+      out.errors = sync.errors || (sync.error ? [sync.error] : []);
+      out.samples = sync.samples || [];
+      out.ok = sync.ok !== false;
+    } else if (action === "repair-receipt-flags") {
       const snap = await db.collection("premiumOrders").limit(limitRows).get();
       for (const docSnap of snap.docs) {
         out.processed += 1;
@@ -2698,13 +2781,86 @@ function azFireAndForget(promise, label) {
     console.warn(label || "AZOBSS async task setup failed:", err && (err.message || err));
   }
 }
+
+function azPremiumOrderCategoryForBackup(order = {}) {
+  const raw = String(order.category || order.productCategory || order.productType || order.type || order.source || "").toLowerCase();
+  const productId = String(order.productId || (order.product && (order.product.productId || order.product.id)) || "").toLowerCase();
+  const productName = String(order.productName || order.productTitle || (order.product && (order.product.name || order.product.title)) || "").toLowerCase();
+  if (raw.includes("cad") || productId.includes("cad") || productName.includes("cad")) return "cad";
+  if (raw.includes("pa") || raw.includes("bm") || productId.includes("pa-bm") || Array.isArray(order.paBmItems)) return "pa-bm";
+  return "software";
+}
+function azPremiumOrderStatusForBackup(order = {}) {
+  return cleanPremiumText(order.status || order.paymentStatus || "pending", 60).toLowerCase() || "pending";
+}
+function azPremiumOrderIsPaid(order = {}) {
+  return ["paid", "verified", "success", "completed", "settled", "approved", "confirmed"].includes(azPremiumOrderStatusForBackup(order));
+}
+function azPremiumOrderAmountSenForBackup(order = {}) {
+  const sen = Number(order.amountSen || order.billAmount || order.priceSen || 0) || 0;
+  if (sen > 0) return Math.round(sen);
+  const rm = Number(order.saleAmount || order.amountRm || order.amount || order.price || 0) || 0;
+  return Math.max(0, Math.round(rm * 100));
+}
+function azNormalizePremiumOrderForFirestore(order = {}) {
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const safe = azJsonSafe(order || {});
+  const user = safe.user && typeof safe.user === "object" ? safe.user : {};
+  const orderId = cleanPremiumText(safe.orderId || safe.id || "", 160);
+  const billCode = cleanPremiumText(safe.billCode || safe.billcode || "", 120);
+  const product = safe.product && typeof safe.product === "object" ? safe.product : {};
+  const productId = cleanPremiumText(safe.productId || product.productId || product.id || "", 180);
+  const productName = cleanPremiumText(safe.productName || safe.productTitle || product.productName || product.name || product.title || productId || "AZOBSS Premium Product", 240);
+  const createdAt = cleanPremiumText(safe.createdAt || safe.createdAtClient || "", 140);
+  const paidAt = cleanPremiumText(safe.paidAt || safe.verifiedAt || safe.paymentVerifiedAt || "", 140);
+  const updatedAt = cleanPremiumText(safe.updatedAt || nowIso, 140) || nowIso;
+  const createdAtMs = Number(safe.createdAtMs || Date.parse(createdAt || "") || nowMs) || nowMs;
+  const paidAtMs = Number(safe.paidAtMs || Date.parse(paidAt || "") || 0) || 0;
+  const updatedAtMs = Number(safe.updatedAtMs || Date.parse(updatedAt || "") || nowMs) || nowMs;
+  const amountSen = azPremiumOrderAmountSenForBackup(safe);
+  const statusLower = azPremiumOrderStatusForBackup(safe);
+  return {
+    ...safe,
+    orderId,
+    billCode,
+    billcode: billCode || safe.billcode || "",
+    status: statusLower,
+    statusLower,
+    isPaid: azPremiumOrderIsPaid({ status: statusLower }),
+    category: azPremiumOrderCategoryForBackup(safe),
+    productId,
+    productName,
+    amountSen,
+    saleAmount: Number(safe.saleAmount || (amountSen ? amountSen / 100 : 0)) || 0,
+    username: cleanPremiumText(safe.username || safe.usernameKey || user.username || user.usernameKey || "", 100),
+    usernameKey: cleanPremiumText(safe.usernameKey || safe.username || user.usernameKey || user.username || "", 100).toLowerCase(),
+    email: cleanPremiumText(safe.email || safe.buyerEmail || user.email || "", 180),
+    buyerEmail: cleanPremiumText(safe.buyerEmail || safe.email || user.email || "", 180),
+    createdAt: createdAt || new Date(createdAtMs || nowMs).toISOString(),
+    createdAtMs,
+    paidAt,
+    paidAtMs,
+    updatedAt: nowIso,
+    updatedAtMs: nowMs,
+    firestoreBackupVersion: 2,
+    firestoreSyncedAt: nowIso,
+    firestoreSyncedAtMs: nowMs,
+    backupSource: cleanPremiumText(safe.backupSource || "render-premium-orders", 80)
+  };
+}
+function azPremiumOrderFirestoreDocId(order = {}) {
+  return cleanPremiumText(order.orderId || order.billCode || order.billcode || "", 180);
+}
 async function azPersistPremiumOrder(order = {}) {
-  if (!order || !order.orderId) return { ok:false, reason:"missing-order-id" };
+  if (!order) return { ok:false, reason:"missing-order" };
   const db = getAzobssBackendDb();
   if (!db) return { ok:false, reason:"firebase-not-ready" };
-  const safe = azJsonSafe({ ...order, updatedAt: new Date().toISOString() });
-  await db.collection("premiumOrders").doc(String(order.orderId)).set(safe, { merge:true });
-  return { ok:true };
+  const safe = azNormalizePremiumOrderForFirestore(order);
+  const docId = azPremiumOrderFirestoreDocId(safe);
+  if (!docId) return { ok:false, reason:"missing-order-id-or-bill-code" };
+  await db.collection("premiumOrders").doc(String(docId)).set(safe, { merge:true });
+  return { ok:true, docId, orderId:safe.orderId || "", billCode:safe.billCode || "" };
 }
 async function azFindPremiumOrderPersistent(ref = {}) {
   const db = getAzobssBackendDb();
@@ -2720,6 +2876,68 @@ async function azFindPremiumOrderPersistent(ref = {}) {
     if (!q.empty) return q.docs[0].data() || null;
   }
   return null;
+}
+
+async function azSyncLocalPremiumOrdersToFirestore(options = {}) {
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, error:"Firebase Admin is not configured.", processed:0, changed:0, skipped:0, samples:[] };
+  const limitRows = Math.max(1, Math.min(1000, Number(options.limit || 500) || 500));
+  const local = (readPremiumOrders() || []).slice(0, limitRows);
+  const out = { ok:true, direction:"local-json-to-firestore", processed:0, changed:0, skipped:0, errors:[], samples:[] };
+  for (const row of local) {
+    out.processed += 1;
+    try {
+      const safe = azNormalizePremiumOrderForFirestore({ ...row, backupSource:"local-json-sync" });
+      const docId = azPremiumOrderFirestoreDocId(safe);
+      if (!docId) { out.skipped += 1; continue; }
+      await db.collection("premiumOrders").doc(docId).set(safe, { merge:true });
+      out.changed += 1;
+      if (out.samples.length < 20) out.samples.push({ orderId:safe.orderId || "", billCode:safe.billCode || "", productName:safe.productName || "", status:safe.status || "", change:"synced to Firestore" });
+    } catch (err) {
+      out.errors.push(err && err.message ? err.message : String(err));
+    }
+  }
+  if (out.errors.length) out.ok = false;
+  return out;
+}
+async function azHydrateLocalPremiumOrdersFromFirestore(options = {}) {
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, error:"Firebase Admin is not configured.", processed:0, changed:0, skipped:0, samples:[] };
+  const limitRows = Math.max(1, Math.min(1000, Number(options.limit || 500) || 500));
+  const out = { ok:true, direction:"firestore-to-local-json", processed:0, changed:0, skipped:0, errors:[], samples:[] };
+  let snap;
+  try { snap = await db.collection("premiumOrders").orderBy("updatedAtMs", "desc").limit(limitRows).get(); }
+  catch (_) { snap = await db.collection("premiumOrders").limit(limitRows).get(); }
+  const local = readPremiumOrders() || [];
+  const merged = local.slice();
+  const index = new Map();
+  merged.forEach((row, idx) => {
+    const key = azPremiumOrderMergeKey(row, row && (row.docId || row.id));
+    if (key) index.set(key, idx);
+  });
+  for (const docSnap of snap.docs) {
+    out.processed += 1;
+    try {
+      const row = { docId:docSnap.id, ...(docSnap.data() || {}), backupSource:"firestore-hydrate" };
+      const key = azPremiumOrderMergeKey(row, docSnap.id);
+      if (!key) { out.skipped += 1; continue; }
+      if (index.has(key)) {
+        const idx = index.get(key);
+        merged[idx] = { ...(merged[idx] || {}), ...row, updatedAt: row.updatedAt || (merged[idx] && merged[idx].updatedAt) || new Date().toISOString() };
+      } else {
+        merged.unshift(row);
+        index.set(key, 0);
+      }
+      out.changed += 1;
+      if (out.samples.length < 20) out.samples.push({ orderId:cleanPremiumText(row.orderId || docSnap.id, 160), billCode:cleanPremiumText(row.billCode || "", 120), productName:cleanPremiumText(row.productName || "", 120), change:"hydrated local JSON" });
+    } catch (err) {
+      out.errors.push(err && err.message ? err.message : String(err));
+    }
+  }
+  merged.sort((a, b) => azPremiumOrderSortMs(b) - azPremiumOrderSortMs(a));
+  writePremiumOrders(merged);
+  if (out.errors.length) out.ok = false;
+  return out;
 }
 async function azPersistPremiumToken(tokenData = {}) {
   if (!tokenData || !tokenData.token) return { ok:false, reason:"missing-token" };

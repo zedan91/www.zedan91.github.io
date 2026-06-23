@@ -1489,6 +1489,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
             <option value="repair-receipt-flags">Add receipt-token requirement to paid orders</option>
             <option value="expire-old-download-tokens">Mark expired download tokens as expired</option>
             <option value="repair-commission-payout-status">Set missing commission payout status to pending</option>
+            <option value="sync-local-premium-orders-firestore">Backup local premiumOrders to Firestore</option>
+            <option value="hydrate-local-premium-orders-firestore">Restore local premiumOrders from Firestore</option>
             <option value="prune-expired-download-tokens">Prune old expired download tokens</option>
             <option value="prune-old-audit-logs">Prune old admin audit logs</option>
             <option value="prune-old-notifications">Prune old notifications</option>
@@ -1504,6 +1506,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         <div class="card"><div class="stat-label">Receipt Flags Missing</div><div id="maintReceiptFlag" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Expired Tokens</div><div id="maintExpiredTokens" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Commission Status Missing</div><div id="maintCommissionStatus" class="stat-value">-</div></div>
+        <div class="card"><div class="stat-label">Local Orders</div><div id="maintLocalPremiumOrdersCount" class="stat-value">-</div></div>
+        <div class="card"><div class="stat-label">Need Firestore Backup</div><div id="maintLocalOrdersMissingFirestore" class="stat-value">-</div></div>
+        <div class="card"><div class="stat-label">Need Local Restore</div><div id="maintFirestoreOrdersMissingLocal" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Prunable Tokens</div><div id="maintPrunableTokens" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Old Audit Logs</div><div id="maintOldAuditLogs" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Old Notifications</div><div id="maintOldNotifications" class="stat-value">-</div></div>
@@ -2187,19 +2192,22 @@ function azMaintSamplesHtml(samples){
 async function loadMaintenanceScan(){
   const notice=$('#maintenanceNotice');
   if(notice) notice.textContent='Scanning backend maintenance status...';
-  ['maintMissingToken','maintReceiptFlag','maintExpiredTokens','maintCommissionStatus','maintPrunableTokens','maintOldAuditLogs','maintOldNotifications'].forEach(id=>{const el=$('#'+id); if(el) el.textContent='...';});
+  ['maintMissingToken','maintReceiptFlag','maintExpiredTokens','maintCommissionStatus','maintLocalPremiumOrdersCount','maintLocalOrdersMissingFirestore','maintFirestoreOrdersMissingLocal','maintPrunableTokens','maintOldAuditLogs','maintOldNotifications'].forEach(id=>{const el=$('#'+id); if(el) el.textContent='...';});
   try{
     const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/maintenance-scan',{cache:'no-store'});
     if($('#maintMissingToken')) $('#maintMissingToken').textContent=String(azMaintIssueCount(j,'paidOrdersMissingToken'));
     if($('#maintReceiptFlag')) $('#maintReceiptFlag').textContent=String(azMaintIssueCount(j,'paidOrdersMissingReceiptFlag'));
     if($('#maintExpiredTokens')) $('#maintExpiredTokens').textContent=String(azMaintIssueCount(j,'expiredDownloadTokens'));
     if($('#maintCommissionStatus')) $('#maintCommissionStatus').textContent=String(azMaintIssueCount(j,'commissionMissingPayoutStatus'));
+    if($('#maintLocalPremiumOrdersCount')) $('#maintLocalPremiumOrdersCount').textContent=String((j.scanned&&j.scanned.localPremiumOrders)||0);
+    if($('#maintLocalOrdersMissingFirestore')) $('#maintLocalOrdersMissingFirestore').textContent=String(azMaintIssueCount(j,'localPremiumOrdersMissingFirestore'));
+    if($('#maintFirestoreOrdersMissingLocal')) $('#maintFirestoreOrdersMissingLocal').textContent=String(azMaintIssueCount(j,'firestorePremiumOrdersMissingLocal'));
     if($('#maintPrunableTokens')) $('#maintPrunableTokens').textContent=String(azMaintIssueCount(j,'prunableExpiredDownloadTokens'));
     if($('#maintOldAuditLogs')) $('#maintOldAuditLogs').textContent=String(azMaintIssueCount(j,'oldAuditLogs'));
     if($('#maintOldNotifications')) $('#maintOldNotifications').textContent=String(azMaintIssueCount(j,'oldNotifications'));
     const ret=j.retention||{};
     if($('#maintenanceRetentionNote')) $('#maintenanceRetentionNote').textContent=`Retention cleanup: download tokens ${esc(ret.downloadTokenDays||90)} days • audit logs ${esc(ret.auditLogDays||365)} days • notifications ${esc(ret.notificationDays||180)} days.`;
-    if(notice) notice.textContent='Last scanned: '+fmtDate(j.generatedAt)+' • latency: '+esc(j.latencyMs||0)+'ms';
+    if(notice) notice.textContent='Last scanned: '+fmtDate(j.generatedAt)+' • Firestore orders: '+esc((j.scanned&&j.scanned.premiumOrders)||0)+' • Local orders: '+esc((j.scanned&&j.scanned.localPremiumOrders)||0)+' • latency: '+esc(j.latencyMs||0)+'ms';
     const issues=Array.isArray(j.issues)?j.issues:[];
     if($('#maintenanceIssueList')) $('#maintenanceIssueList').innerHTML=issues.map(x=>item(`<span class="${azMaintSeverityClass(x.severity)}">${esc((x.severity||'info').toUpperCase())}</span> ${esc(x.label||x.type)}`,`Count: ${esc(x.count||0)}${x.note?' • '+esc(x.note):''}`)).join('')||'<div class="item">No issues data.</div>';
     if($('#maintenanceSampleList')) $('#maintenanceSampleList').innerHTML=azMaintSamplesHtml(j.samples||{});
@@ -2215,9 +2223,10 @@ async function runMaintenanceAction(){
   if(!action)return toast('Please choose maintenance action first.');
   const isPrune=String(action||'').startsWith('prune-');
   let confirmText='';
+  const isSync=String(action||'').includes('premium-orders-firestore');
   const msg=isPrune
     ? 'Run this retention cleanup now?\n\n'+action+'\n\nThis may DELETE old Firestore rows that are already outside retention. Export backup first if needed.'
-    : 'Run this maintenance repair now?\n\n'+action+'\n\nThis will write changes to Firestore where needed.';
+    : (isSync ? 'Run Premium Orders Firestore Backup / Sync now?\n\n'+action+'\n\nThis is safe. It merges records and does not delete payment data.' : 'Run this maintenance repair now?\n\n'+action+'\n\nThis will write changes to Firestore where needed.');
   if(!confirm(msg))return;
   if(isPrune){
     confirmText=prompt('Type CONFIRM CLEANUP to continue this destructive cleanup action.','')||'';
