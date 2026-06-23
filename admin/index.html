@@ -988,6 +988,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-admin-reset-pabm-download-btn:hover{background:rgba(14,165,233,.23);color:#e0f2fe}
 .az-admin-reset-pabm-download-btn:disabled{opacity:.55;cursor:wait}
 .az-admin-pabm-dl-badge{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:rgba(15,23,42,.88);border:1px solid rgba(148,163,184,.25);color:#e5e7eb;font-size:12px;font-weight:850;white-space:nowrap}
+</style>
 
 <style id="azobss-admin-payment-logs-pro-style">
 .az-payment-logs-pro-card{border-color:rgba(34,197,94,.34)}
@@ -1011,6 +1012,32 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-payment-detail-cell span{color:#e5e7eb;font-weight:800;word-break:break-word}
 .az-payment-detail-raw{white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;background:#030712;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:12px;color:#dbeafe;font-size:12px}
 @media(max-width:760px){.az-payment-logs-toolbar input,.az-payment-logs-toolbar select,.az-payment-logs-toolbar button{width:100%;min-width:0}.az-payment-detail-grid{grid-template-columns:1fr}.az-payment-detail-head{flex-direction:column}.az-payment-detail-panel{max-height:92vh}}
+</style>
+
+
+<style id="azobss-admin-sales-analytics-style">
+.az-sales-snapshot-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:18px 0 10px}
+.az-sales-snapshot-head h2{margin:0;font-size:20px}
+.az-sales-snapshot-head .tabs-note{margin:0}
+.az-sales-quick-grid{margin-top:0}
+.az-sales-analytics-split{align-items:stretch}
+.az-sales-chart-box{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.az-sales-chart-row{display:grid;grid-template-columns:minmax(88px,132px) 1fr minmax(78px,118px);gap:10px;align-items:center}
+.az-sales-chart-label{color:#dbeafe;font-weight:850;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-sales-chart-track{position:relative;height:15px;border-radius:999px;background:rgba(15,23,42,.86);border:1px solid rgba(148,163,184,.18);overflow:hidden}
+.az-sales-chart-fill{height:100%;width:0%;min-width:3px;border-radius:inherit;background:linear-gradient(90deg,rgba(56,189,248,.68),rgba(34,197,94,.72));box-shadow:0 0 24px rgba(34,197,94,.16)}
+.az-sales-chart-fill.warning{background:linear-gradient(90deg,rgba(245,158,11,.70),rgba(250,204,21,.72))}
+.az-sales-chart-fill.bad{background:linear-gradient(90deg,rgba(248,113,113,.72),rgba(244,63,94,.74))}
+.az-sales-chart-value{text-align:right;color:#f8fafc;font-weight:950;font-size:12px;white-space:nowrap}
+.az-sales-top-product{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(148,163,184,.13)}
+.az-sales-top-product:last-child{border-bottom:0}
+.az-sales-rank{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:rgba(59,130,246,.16);border:1px solid rgba(96,165,250,.28);font-weight:950;color:#bfdbfe}
+.az-sales-product-title{font-weight:950;color:#f8fafc;line-height:1.25}
+.az-sales-product-meta{margin-top:3px;color:#94a3b8;font-size:12px;font-weight:700}
+.az-sales-product-amount{text-align:right;font-weight:950;color:#86efac;white-space:nowrap}
+.az-sales-empty{border:1px dashed rgba(148,163,184,.28);border-radius:16px;padding:14px;color:#94a3b8;background:rgba(15,23,42,.42)}
+.az-sales-small-note{margin-top:10px;color:#94a3b8;font-size:12px;font-weight:750}
+@media(max-width:820px){.az-sales-snapshot-head{flex-direction:column;align-items:flex-start}.az-sales-chart-row{grid-template-columns:1fr;gap:6px}.az-sales-chart-value{text-align:left}.az-sales-top-product{grid-template-columns:28px 1fr}.az-sales-product-amount{grid-column:2;text-align:left}}
 </style>
 
 </head>
@@ -1339,6 +1366,46 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
             <button class="btn" id="refreshPayments">Refresh Overview</button>
             <button class="btn gray" data-tab="purchases" type="button">View All Payment Logs</button>
           </div>
+        </div>
+      </div>
+
+      <div class="az-sales-snapshot-head">
+        <div>
+          <h2>📈 Sales Analytics</h2>
+          <p class="tabs-note">Confirmed revenue dikira dari rekod Paid/Verified sahaja supaya angka chart tidak bercampur dengan pending/cancelled.</p>
+        </div>
+      </div>
+
+      <div class="grid az-sales-quick-grid">
+        <div class="card"><div class="stat-label">Today Sales RM</div><div id="salesTodayTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Month Sales RM</div><div id="salesThisMonthTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Month Orders</div><div id="salesThisMonthOrders" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Avg Paid Order RM</div><div id="salesAverageOrder" class="stat-value">0</div></div>
+      </div>
+
+      <div class="split az-sales-analytics-split">
+        <div class="card">
+          <h2>Monthly Revenue Trend</h2>
+          <p class="tabs-note">Last 6 months confirmed revenue.</p>
+          <div id="salesMonthlyTrend" class="az-sales-chart-box"></div>
+        </div>
+        <div class="card">
+          <h2>Sales by Category</h2>
+          <p class="tabs-note">PA/BM, Software dan CAD Tools berdasarkan paid/verified records.</p>
+          <div id="salesCategoryBreakdown" class="az-sales-chart-box"></div>
+        </div>
+      </div>
+
+      <div class="split az-sales-analytics-split">
+        <div class="card">
+          <h2>Paid vs Pending</h2>
+          <p class="tabs-note">Status semua rekod yang berjaya dimuatkan.</p>
+          <div id="salesStatusBreakdown" class="az-sales-chart-box"></div>
+        </div>
+        <div class="card">
+          <h2>Top Selling Products</h2>
+          <p class="tabs-note">Top 5 produk ikut confirmed revenue.</p>
+          <div id="salesTopProducts" class="az-sales-chart-box"></div>
         </div>
       </div>
 
@@ -2543,6 +2610,121 @@ async function loadNotifications(){
   $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
 }
 
+
+/* AZOBSS PATCH 301: Lightweight Sales Overview analytics charts (no external library). */
+function azAdminMoney(n){
+  const num=Number(n||0);
+  return Number.isFinite(num)?num.toFixed(2):'0.00';
+}
+function azAdminSetText(sel,val){
+  const el=$(sel);
+  if(el) el.textContent=String(val);
+}
+function azAdminMonthKeyFromDate(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function azAdminMonthLabel(key){
+  const parts=String(key||'').split('-');
+  const y=Number(parts[0]||0);
+  const m=Number(parts[1]||1)-1;
+  const d=new Date(y,m,1);
+  if(Number.isNaN(d.getTime())) return key||'-';
+  return d.toLocaleDateString('en-MY',{month:'short',year:'2-digit'});
+}
+function azAdminLastMonthKeys(count=6){
+  const now=new Date();
+  const out=[];
+  for(let i=count-1;i>=0;i--){
+    out.push(azAdminMonthKeyFromDate(new Date(now.getFullYear(),now.getMonth()-i,1)));
+  }
+  return out;
+}
+function azAdminPaidRevenueRecords(records){
+  return (records||[]).filter(x=>azAdminStatusBucket(x)==='paid' && (Number(x.amount||0)||0)>0);
+}
+function azAdminSalesProductName(x){
+  return String(x?.title || x?.name || x?.itemName || x?.filename || x?.itemCode || x?.productName || x?.productTitle || x?.product?.name || x?.product?.title || x?.productId || 'Purchase').trim() || 'Purchase';
+}
+function azAdminRenderBarRows(targetSel, rows, opts={}){
+  const box=$(targetSel);
+  if(!box) return;
+  rows=Array.isArray(rows)?rows:[];
+  const empty=opts.empty || 'No data yet.';
+  if(!rows.length){ box.innerHTML='<div class="az-sales-empty">'+esc(empty)+'</div>'; return; }
+  const max=Math.max(...rows.map(r=>Number(r.value||0)||0),1);
+  box.innerHTML=rows.map(r=>{
+    const pct=Math.max(3,Math.min(100,((Number(r.value||0)||0)/max)*100));
+    const fillClass=r.fillClass?(' '+String(r.fillClass).replace(/[^a-z0-9_-]/gi,'')):'';
+    const label=esc(r.label||'-');
+    const value=esc(r.valueText||String(r.value||0));
+    return `<div class="az-sales-chart-row"><div class="az-sales-chart-label" title="${label}">${label}</div><div class="az-sales-chart-track"><div class="az-sales-chart-fill${fillClass}" style="width:${pct.toFixed(1)}%"></div></div><div class="az-sales-chart-value">${value}</div></div>`;
+  }).join('') + (opts.note?'<div class="az-sales-small-note">'+esc(opts.note)+'</div>':'');
+}
+function azAdminRenderTopProducts(rows){
+  const box=$('#salesTopProducts');
+  if(!box) return;
+  if(!rows.length){ box.innerHTML='<div class="az-sales-empty">No confirmed product sales yet.</div>'; return; }
+  box.innerHTML=rows.slice(0,5).map((r,i)=>{
+    const meta=[r.category, (r.count||0)+' order'+((r.count||0)>1?'s':'')].filter(Boolean).join(' • ');
+    return `<div class="az-sales-top-product"><div class="az-sales-rank">${i+1}</div><div><div class="az-sales-product-title">${esc(r.name)}</div><div class="az-sales-product-meta">${esc(meta)}</div></div><div class="az-sales-product-amount">RM${azAdminMoney(r.amount)}</div></div>`;
+  }).join('');
+}
+function azAdminRenderSalesOverviewCharts(records){
+  records=Array.isArray(records)?records:[];
+  const paid=azAdminPaidRevenueRecords(records);
+  const now=new Date();
+  const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+  let todayTotal=0,monthTotal=0,monthOrders=0,paidTotal=0;
+  paid.forEach(x=>{
+    const amount=Number(x.amount||0)||0;
+    const ms=azAdminPaymentMs(x);
+    paidTotal+=amount;
+    if(ms>=todayStart){ todayTotal+=amount; }
+    if(ms>=monthStart){ monthTotal+=amount; monthOrders++; }
+  });
+  azAdminSetText('#salesTodayTotal',azAdminMoney(todayTotal));
+  azAdminSetText('#salesThisMonthTotal',azAdminMoney(monthTotal));
+  azAdminSetText('#salesThisMonthOrders',monthOrders);
+  azAdminSetText('#salesAverageOrder',azAdminMoney(paid.length?paidTotal/paid.length:0));
+
+  const monthKeys=azAdminLastMonthKeys(6);
+  const monthTotals=Object.fromEntries(monthKeys.map(k=>[k,0]));
+  paid.forEach(x=>{
+    const ms=azAdminPaymentMs(x);
+    if(!ms) return;
+    const key=azAdminMonthKeyFromDate(new Date(ms));
+    if(key in monthTotals) monthTotals[key]+=Number(x.amount||0)||0;
+  });
+  azAdminRenderBarRows('#salesMonthlyTrend',monthKeys.map(k=>({label:azAdminMonthLabel(k),value:monthTotals[k],valueText:'RM'+azAdminMoney(monthTotals[k])})),{empty:'No confirmed revenue for the last 6 months.'});
+
+  const catOrder=['PA/BM','Software','CAD Tools','Others'];
+  const catTotals={}; catOrder.forEach(c=>catTotals[c]=0);
+  paid.forEach(x=>{const c=catOrder.includes(x.category)?x.category:'Others';catTotals[c]+=Number(x.amount||0)||0;});
+  const catRows=catOrder.filter(c=>catTotals[c]>0 || c!=='Others').map(c=>({label:c,value:catTotals[c],valueText:'RM'+azAdminMoney(catTotals[c])}));
+  azAdminRenderBarRows('#salesCategoryBreakdown',catRows,{empty:'No confirmed category sales yet.'});
+
+  const statusCounts={paid:0,pending:0,cancelled:0,failed:0};
+  records.forEach(x=>{const b=azAdminStatusBucket(x); if(statusCounts[b]!==undefined) statusCounts[b]++;});
+  azAdminRenderBarRows('#salesStatusBreakdown',[
+    {label:'Paid / Verified',value:statusCounts.paid,valueText:String(statusCounts.paid)},
+    {label:'Pending',value:statusCounts.pending,valueText:String(statusCounts.pending),fillClass:'warning'},
+    {label:'Cancelled',value:statusCounts.cancelled,valueText:String(statusCounts.cancelled),fillClass:'bad'},
+    {label:'Failed',value:statusCounts.failed,valueText:String(statusCounts.failed),fillClass:'bad'}
+  ],{empty:'No payment status data yet.',note:'Status count includes PA/BM purchaseLogs and Software/CAD premiumOrders.'});
+
+  const products=new Map();
+  paid.forEach(x=>{
+    const name=azAdminSalesProductName(x);
+    const key=(name+'|'+(x.category||'')).toLowerCase();
+    const old=products.get(key)||{name,category:x.category||'',amount:0,count:0};
+    old.amount+=Number(x.amount||0)||0;
+    old.count+=1;
+    products.set(key,old);
+  });
+  azAdminRenderTopProducts([...products.values()].sort((a,b)=>(b.amount-a.amount)||(b.count-a.count)));
+}
+
 async function loadPayments(){
   const filter = ($('#paymentCategoryFilter')?.value || 'all').toLowerCase();
   let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(150)),'Sales Overview: purchaseLogs');
@@ -2552,6 +2734,7 @@ async function loadPayments(){
   logs?.forEach(d=>records.push(azAdminPurchaseLogToPaymentRecord(d.id, d.data())));
   premiumRecords.forEach(x=>records.push(x));
   records.sort((a,b)=>azAdminPaymentMs(b)-azAdminPaymentMs(a));
+  azAdminRenderSalesOverviewCharts(records);
 
   const totals = {pabm:0, software:0, cad:0, all:0, pending:0, paid:0};
   records.forEach(x=>{

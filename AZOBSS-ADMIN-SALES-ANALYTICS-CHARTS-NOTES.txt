@@ -1,0 +1,40 @@
+AZOBSS PATCH (301) - ADMIN SALES OVERVIEW ANALYTICS CHARTS
+Date: 2026-06-23
+
+Baseline:
+- (300)-AZOBSS-ADMIN-PAYMENT-LOGS-PRO-FILTER-EXPORT-FIX_20260623.zip
+
+Scope:
+- Admin Dashboard only.
+- File changed: admin/index.html
+- No Firebase Rules update required.
+- No Render backend deploy required.
+
+What changed:
+1. Added Sales Analytics section inside Admin > Sales Overview.
+2. Added quick confirmed-sales cards:
+   - Today Sales RM
+   - This Month Sales RM
+   - This Month Orders
+   - Avg Paid Order RM
+3. Added lightweight CSS/JS charts without external libraries:
+   - Monthly Revenue Trend (last 6 months)
+   - Sales by Category (PA/BM, Software, CAD Tools)
+   - Paid vs Pending / Cancelled / Failed count
+   - Top Selling Products by confirmed revenue
+4. Confirmed revenue charts count Paid/Verified records only.
+   This avoids mixing pending/cancelled amount into revenue analytics.
+5. Sales Overview still reads combined sources:
+   - purchaseLogs for PA/BM
+   - premiumOrders for Software/CAD Tools
+6. Fixed a missing closing </style> tag around the admin PA/BM reset-download style block from the previous UI patch so the following style blocks parse cleanly.
+
+Test checklist:
+- Deploy GitHub Pages.
+- Open /admin/ and login as admin.
+- Open Sales Overview.
+- Confirm analytics section appears under Quick Filter.
+- Confirm latest 5 payment records still appear.
+- Confirm Payment Logs tab still works.
+- Confirm Export CSV and View Details still work.
+
