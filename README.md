@@ -52,3 +52,9 @@ Notes:
 - Compact card layout for Admin > Staff Roles > Latest Staff Users.
 - No Firebase Rules update required.
 - Render backend deploy not required.
+
+## PATCH (310) - Admin Remaining Lists Pagination
+- Added pagination to remaining long admin lists: Support Inbox, Notifications, Payment Alerts, Payment Logs, PA/BM Summaries, Commission Records, Payout Requests, Staff Roles, Online Users, and Audit Logs.
+- Existing Registered Users and Activity pagination were preserved.
+- Firebase Rules update: not required.
+- Render backend deploy: not required.

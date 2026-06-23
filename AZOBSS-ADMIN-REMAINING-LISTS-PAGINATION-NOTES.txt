@@ -1,0 +1,29 @@
+AZOBSS PATCH (310) - Admin Remaining Lists Pagination
+Date: 2026-06-23
+
+Purpose:
+- Add pagination to admin areas that still rendered long lists without page controls.
+- Keep compact card design from patch (308)/(309).
+
+Updated Admin Lists:
+- Support Inbox
+- Notifications
+- Payment Alerts
+- Payment Logs / Download Control
+- PA/BM Purchase Summaries
+- Commission Manager records
+- Commission payout requests
+- Staff Roles / Latest Staff Users
+- Online Users
+- Audit Logs
+
+Technical Notes:
+- Added generic azAdminApplyPager() helper in admin/index.html.
+- Added compact pager CSS with Prev / Next and page info.
+- Existing Registered Users and Activity pagination were left untouched because they already had dedicated pagination.
+- Payment Logs now renders all filtered records and uses pagination instead of truncating at 250 visible rows.
+
+Deployment:
+- Firebase Rules update: NOT required.
+- Render backend deploy: NOT required.
+- GitHub Pages deploy: Required because admin/index.html changed.

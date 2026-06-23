@@ -1104,6 +1104,25 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 </style>
 
+
+<style id="az-admin-pagination-all-lists-style">
+/* AZOBSS PATCH 310: pagination for remaining admin lists */
+.az-admin-pager{
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  margin:9px 0 2px;color:#cbd5e1;font-size:12px;font-weight:800;
+}
+.az-admin-pager[hidden]{display:none!important}
+.az-admin-pager button{
+  border:1px solid rgba(148,163,184,.25);background:#1e293b;color:#eaf2ff;
+  border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;cursor:pointer;
+}
+.az-admin-pager button:hover:not(:disabled){filter:brightness(1.12);border-color:rgba(34,197,94,.45)}
+.az-admin-pager button:disabled{opacity:.42;cursor:not-allowed}
+.az-admin-pager .az-admin-pager-info{min-width:160px;text-align:center;color:#9fb3d0}
+.az-admin-pager .az-admin-pager-count{color:#7cffb0;font-weight:950}
+@media(max-width:560px){.az-admin-pager{gap:6px}.az-admin-pager .az-admin-pager-info{min-width:100%;order:-1}.az-admin-pager button{flex:1}}
+</style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2207,6 +2226,49 @@ let adminProfile=null;
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+/* AZOBSS PATCH 310: Generic admin list pagination helper. */
+const AZ_ADMIN_DEFAULT_PAGER_SIZE = 8;
+window.azAdminPagerState = window.azAdminPagerState || {};
+function azAdminPagerSafeKey(key){
+  return String(key||'list').replace(/[^a-z0-9_-]/gi,'_').slice(0,80)||'list';
+}
+function azAdminApplyPager(selector, options={}){
+  const list = typeof selector === 'string' ? document.querySelector(selector) : selector;
+  if(!list) return;
+  const key = azAdminPagerSafeKey(options.key || list.id || 'azlist');
+  const pageSize = Math.max(1, Number(options.pageSize || AZ_ADMIN_DEFAULT_PAGER_SIZE) || AZ_ADMIN_DEFAULT_PAGER_SIZE);
+  const pagerId = 'azAdminPager_' + key;
+  let pager = document.getElementById(pagerId);
+  if(!pager){
+    pager = document.createElement('div');
+    pager.id = pagerId;
+    pager.className = 'az-admin-pager';
+    pager.setAttribute('data-az-pager-for', key);
+    list.insertAdjacentElement('afterend', pager);
+  }
+  const items = Array.from(list.children).filter(el => !el.classList.contains('az-admin-pager'));
+  const totalItems = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const state = window.azAdminPagerState[key] || {page:1};
+  if(options.reset === true) state.page = 1;
+  state.page = Math.min(Math.max(1, Number(state.page||1)), totalPages);
+  window.azAdminPagerState[key] = state;
+  const start = (state.page - 1) * pageSize;
+  const end = start + pageSize;
+  items.forEach((el, i) => { el.style.display = (i >= start && i < end) ? '' : 'none'; });
+  const label = options.label || 'records';
+  const pageLabel = totalItems ? `${start+1}-${Math.min(end,totalItems)} / ${totalItems}` : `0 / 0`;
+  pager.hidden = totalItems <= pageSize && options.hideWhenSingle !== false;
+  pager.innerHTML = `
+    <button type="button" data-az-pager-prev ${state.page<=1?'disabled':''}>‹ Prev</button>
+    <span class="az-admin-pager-info">Page ${state.page} / ${totalPages} • <span class="az-admin-pager-count">${pageLabel}</span> ${esc(label)}</span>
+    <button type="button" data-az-pager-next ${state.page>=totalPages?'disabled':''}>Next ›</button>`;
+  pager.querySelector('[data-az-pager-prev]')?.addEventListener('click',()=>{state.page=Math.max(1,state.page-1);azAdminApplyPager(list,{...options,reset:false});});
+  pager.querySelector('[data-az-pager-next]')?.addEventListener('click',()=>{state.page=Math.min(totalPages,state.page+1);azAdminApplyPager(list,{...options,reset:false});});
+}
+window.azAdminApplyPager = azAdminApplyPager;
+
 function fmtDate(v){
   try{
     let d=null;
@@ -2340,6 +2402,7 @@ async function loadAdminAuditLogs(){
         ${details?`<div class="item-meta" style="margin-top:4px;word-break:break-word">${details}</div>`:''}
       </div>`;
     }).join('');
+    azAdminApplyPager('#adminAuditLogsList',{key:'adminAuditLogsList',pageSize:10,label:'audit logs',reset:true});
   }catch(e){
     if(notice) notice.textContent=e?.message||'Failed to load audit logs.';
     if(list) list.innerHTML=`<div class="item"><div class="item-title">⚠️ Audit log error</div><div class="item-meta">${esc(e?.message||e)}</div></div>`;
@@ -3033,6 +3096,7 @@ async function loadSupport(){
     </div>`);
   });
   $('#supportList').innerHTML=rows.join('')||'<div class="item">No support messages.</div>';
+  azAdminApplyPager('#supportList',{key:'supportList',pageSize:8,label:'support',reset:true});
 }
 async function loadNotifications(){
   let snap=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)),'Notifications: active');
@@ -3040,6 +3104,7 @@ async function loadNotifications(){
   const rows=[];
   snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
   $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
+  azAdminApplyPager('#notificationsList',{key:'notificationsList',pageSize:8,label:'notifications',reset:true});
 }
 
 
@@ -3106,6 +3171,7 @@ function renderAdminPaymentAlerts(){
       </div>
     </div>`;
   }).join('') || '<div class="item">No admin payment alerts yet.</div>';
+  azAdminApplyPager('#adminPaymentAlertsList',{key:'adminPaymentAlertsList',pageSize:8,label:'alerts',reset:true});
 }
 async function loadAdminPaymentAlerts(){
   const notice=$('#adminPaymentAlertsNotice');
@@ -3340,7 +3406,7 @@ async function loadPurchases(){
   window.azAdminPaymentLogsRecords = records;
   window.azAdminPaymentLogsFiltered = filtered;
   window.azAdminPaymentLogsMap = {};
-  const visible = filtered.slice(0,250);
+  const visible = filtered; // PATCH 310: render all filtered records; paginator controls display per page.
 
   const lr=visible.map((x,idx)=>{
     const key='paylog_'+idx+'_'+String(x.id||x.orderId||x.billCode||'x').replace(/[^a-z0-9_-]/gi,'').slice(0,40);
@@ -3364,11 +3430,13 @@ async function loadPurchases(){
   const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
   $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No payment logs found.</div>';
   $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No PA/BM purchase summaries.</div>';
+  azAdminApplyPager('#purchaseLogsList',{key:'purchaseLogsList',pageSize:8,label:'payment logs',reset:true});
+  azAdminApplyPager('#purchaseSummariesList',{key:'purchaseSummariesList',pageSize:8,label:'summaries',reset:true});
   const info=$('#paymentLogsResultInfo');
   if(info){
     const range=azAdminPaymentLogDateRange(dateFilter).label;
     const shown=Math.min(visible.length, filtered.length);
-    info.textContent=`Showing ${shown} of ${filtered.length} matched records from ${records.length} loaded records • Date: ${range}`;
+    info.textContent=`Showing ${filtered.length} matched records from ${records.length} loaded records • Date: ${range} • Pagination enabled`;
   }
 }
 
@@ -3524,6 +3592,7 @@ async function loadStaffRoles(){
   });
   $('#staffRolesList').classList.add('staff-role-list');
   $('#staffRolesList').innerHTML=rows.join('')||'<div class="staff-role-card">No staff users found.</div>';
+  azAdminApplyPager('#staffRolesList',{key:'staffRolesList',pageSize:8,label:'staff users',reset:true});
 }
 
 async function resetStaffRoleToUser(username){
@@ -3618,7 +3687,10 @@ function renderAdminCommissions(){
     return `<div class="item az-commission-row"><div class="az-commission-row-head"><input type="checkbox" value="${docId}" data-commission-select ${selectDisabled}><div style="flex:1;min-width:0"><div class="item-title">💸 ${owner} <span class="az-com-badge ${statusBucket}">${commissionStatusBadge(statusRaw)}</span> <span class="az-com-badge type">${typeLabel}</span></div><div class="item-meta">${product} • Commission RM${amt} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • Rate ${rate?rate.toFixed(1)+'%':'-'} • ${fmtDate(commissionCreatedMs(x))} ${source?('• '+source):''}</div><div class="item-meta">Order: ${esc(x.orderId||'-')} • Bill: ${esc(x.billCode||'-')} • Product ID: ${esc(x.productId||'-')} ${payoutMeta?(' • '+payoutMeta):''}</div><div class="toolbar" style="margin:6px 0 0"><button class="btn" data-commission-detail="${rowKey}" title="View commission details">Detail</button><button class="btn" data-commission-payout="approved" data-commission-doc="${docId}" ${selectDisabled}>Approve</button><button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}" ${selectDisabled}>Paid</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}" ${selectDisabled}>Reject</button><button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}" ${selectDisabled}>Pending</button><button class="btn gray" data-edit-commission="${docId}" ${selectDisabled}>Edit</button><button class="btn red" data-delete-commission="${docId}" ${selectDisabled}>Delete</button></div></div></div></div>`;
   });
   const notice=adminApiNotice?`<div class="item"><div class="item-title">⚠️ Backend API notice</div><div class="item-meta">${esc(adminApiNotice)}</div></div>`:'';
-  if($('#adminCommissionList')) $('#adminCommissionList').innerHTML=rows.join('')||notice||'<div class="item">No commission records.</div>';
+  if($('#adminCommissionList')){
+    $('#adminCommissionList').innerHTML=rows.join('')||notice||'<div class="item">No commission records.</div>';
+    azAdminApplyPager('#adminCommissionList',{key:'adminCommissionList',pageSize:8,label:'commission records',reset:true});
+  }
   azAdminUpdateCommissionSelectedInfo();
 }
 async function fetchAdminCommissionsFromApi(){ adminApiNotice=''; try{ const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=500',{cache:'no-store'}); return Array.isArray(j.records)?j.records:[]; }catch(e){ adminApiNotice=e?.message||'Commission backend API fallback failed.'; console.warn('Admin commission API fallback failed',e); return []; } }
@@ -3676,13 +3748,17 @@ function renderAdminPayoutRequests(){
   const rows=adminPayoutRequestCache.filter(r=>filter==='all'||String(r.status||'requested').toLowerCase()===filter);
   const sum=adminPayoutRequestCache.reduce((a,r)=>{const st=String(r.status||'requested').toLowerCase();a.total+=Number(r.amount||0)||0;a.count++;a[st]=(a[st]||0)+(Number(r.amount||0)||0);return a;},{total:0,count:0});
   if($('#adminPayoutRequestSummary')) $('#adminPayoutRequestSummary').textContent=`Requests: ${sum.count} • Total RM${sum.total.toFixed(2)} • Requested RM${(sum.requested||0).toFixed(2)} • Approved RM${(sum.approved||0).toFixed(2)} • Paid RM${(sum.paid||0).toFixed(2)}`;
-  if($('#adminPayoutRequestList')) $('#adminPayoutRequestList').innerHTML=rows.map(r=>{
-    const p=r.profile||{};
-    const account=[p.payoutMethod,p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • ');
-    const rid=esc(r.docId||r.requestId);
-    const receiptLabel=String(r.status||'requested').toLowerCase()==='paid'?'View Receipt':'View Statement';
-    return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${rid}">Review</button><button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button><button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">Mark Paid</button><button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button></div></div>`;
-  }).join('') || '<div class="item">No payout requests.</div>';
+  const payoutBox=$('#adminPayoutRequestList');
+  if(payoutBox){
+    payoutBox.innerHTML=rows.map(r=>{
+      const p=r.profile||{};
+      const account=[p.payoutMethod,p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • ');
+      const rid=esc(r.docId||r.requestId);
+      const receiptLabel=String(r.status||'requested').toLowerCase()==='paid'?'View Receipt':'View Statement';
+      return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${rid}">Review</button><button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button><button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">Mark Paid</button><button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button></div></div>`;
+    }).join('') || '<div class="item">No payout requests.</div>';
+    azAdminApplyPager('#adminPayoutRequestList',{key:'adminPayoutRequestList',pageSize:6,label:'payout requests',reset:true});
+  }
 }
 async function updatePayoutRequestStatus(requestId,status){
   if(!requestId) return toast('Missing payout request ID.');
@@ -3809,6 +3885,7 @@ async function loadOnlineUsers(){
     </div>
     <div class="az-admin-mini-time">${esc(azAdminOnlineSeenText(x))}</div>
   </div>`).join('')||'<div class="az-admin-mini-record"><div class="az-admin-mini-main"><div class="az-admin-mini-title">No users online now.</div><div class="az-admin-mini-sub">Mengikut logic PA/BM + anti stale.</div></div></div>';
+  azAdminApplyPager(box,{key:'onlineList',pageSize:10,label:'online users',reset:true});
 
   try{
     const renderedRows = Array.from((box && box.children) || []);
@@ -4532,6 +4609,7 @@ onAuthStateChanged(auth,async user=>{
       });
       box.classList.add('staff-role-list');
       box.innerHTML=rows.join('')||'<div class="staff-role-card">No staff users.</div>';
+      if(window.azAdminApplyPager) window.azAdminApplyPager(box,{key:'staffRolesList',pageSize:8,label:'staff users',reset:true});
       return true;
     }catch(e){
       console.warn('staff role badge firestore render failed',e);
