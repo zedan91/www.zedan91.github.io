@@ -24,3 +24,13 @@ Firebase:
 - Backend writes `adminNotifications` with Firebase Admin SDK after strict paid finalization.
 - Render backend deploy is required.
 - Firebase Rules update is not required.
+
+## AZOBSS Patch (306) - Admin Payment Receipt / Invoice PDF
+
+- Added Admin Payment Logs receipt actions: Receipt, PDF, and Email Receipt.
+- Added protected backend receipt endpoints for PA/BM `purchaseLogs` and Software/CAD `premiumOrders`.
+- Added PDF receipt generation using backend `pdfkit`.
+- Customer Software/CAD receipt token URL now supports `format=pdf`.
+- No Firebase Rules update required.
+- Render backend deploy required because `deploy-server.js` changed.
+

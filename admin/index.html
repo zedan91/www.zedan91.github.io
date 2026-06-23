@@ -2503,6 +2503,18 @@ function azAdminPaBmResetActions(x){
   const max=azAdminMaxDownloads(x);
   return `<span class="az-admin-pabm-dl-badge">⬇ ${esc(String(used))}/${esc(String(max))}</span><button class="az-admin-reset-pabm-download-btn" data-reset-pabm-download="${esc(x.id)}" title="Reset PA/BM download limit to 0/5">Reset 0/5</button>`;
 }
+function azAdminPaymentReceiptId(x){
+  return String(x?.orderId || x?.billCode || x?.paymentReference || x?.transactionId || x?.txnId || x?.receiptNo || x?.id || x?.docId || '').trim();
+}
+function azAdminPaymentReceiptSource(x){
+  return x?._azSource === 'premiumOrders' ? 'premiumOrders' : 'purchaseLogs';
+}
+function azAdminPaymentReceiptActions(x,key){
+  const id=azAdminPaymentReceiptId(x);
+  if(!id) return '';
+  const safeKey=esc(key||x?._azDetailKey||id);
+  return `<button class="btn" data-paylog-receipt="${safeKey}" data-format="html" type="button">Receipt</button><button class="btn green" data-paylog-receipt="${safeKey}" data-format="pdf" data-download="1" type="button">PDF</button><button class="btn gray" data-paylog-email-receipt="${safeKey}" type="button">Email Receipt</button>`;
+}
 
 
 /* AZOBSS PATCH 297A: Admin dashboard must count Software/CAD premium orders.
@@ -3147,7 +3159,8 @@ async function loadPurchases(){
     const sourceBadge = x._azSource === 'premiumOrders' ? 'premiumOrders' : 'purchaseLogs';
     const dateText = fmtDate(azAdminPaymentMs(x)||x.createdAtMs||x.createdAt);
     const reset = x._azSource === 'premiumOrders' ? '' : azAdminPaBmResetActions(x);
-    const actions = `<button class="btn gray" data-paylog-detail="${esc(key)}" type="button">View Details</button>${reset}`;
+    const receiptBtns = azAdminPaymentReceiptActions(x,key);
+    const actions = `<button class="btn gray" data-paylog-detail="${esc(key)}" type="button">View Details</button>${receiptBtns}${reset}`;
     return `<div class="item az-payment-log-row"><div class="item-row"><div><div class="item-title">${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)} <span class="az-pay-badge ${esc(bucket)}">${esc(bucket.toUpperCase())}</span></div><div class="item-meta">${buyer}${buyerEmail} • ${itemName}${productId?' • Product ID: '+productId:''} • ${sourceBadge}${orderId?' • Order/Bill: '+orderId:''} • ${dateText}</div></div><div class="item-actions">${actions}</div></div></div>`;
   });
 
@@ -3217,7 +3230,8 @@ function azAdminOpenPaymentLogDetail(key){
     ['Download Used',azAdminDownloadCount(rec)],
     ['Download Max',azAdminMaxDownloads(rec)]
   ];
-  body.innerHTML='<div class="az-payment-detail-grid">'+fields.map(([k,v])=>`<div class="az-payment-detail-cell"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')+'</div><h3 style="margin:10px 0 8px">Raw Debug Data</h3><pre class="az-payment-detail-raw">'+esc(JSON.stringify(rec,(k,v)=>k==='_azDetailKey'?undefined:v,2))+'</pre>';
+  const receiptActions=azAdminPaymentReceiptActions(rec,key);
+  body.innerHTML='<div class="toolbar" style="margin:0 0 12px">'+receiptActions+'</div><div class="az-payment-detail-grid">'+fields.map(([k,v])=>`<div class="az-payment-detail-cell"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')+'</div><h3 style="margin:10px 0 8px">Raw Debug Data</h3><pre class="az-payment-detail-raw">'+esc(JSON.stringify(rec,(k,v)=>k==='_azDetailKey'?undefined:v,2))+'</pre>';
   if(sub) sub.textContent=(rec.category||'Payment')+' • '+(rec.orderId||rec.billCode||rec.id||'No ID');
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden','false');
@@ -3225,6 +3239,52 @@ function azAdminOpenPaymentLogDetail(key){
 function azAdminClosePaymentLogDetail(){
   const modal=$('#paymentLogDetailModal');
   if(modal){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+}
+function azAdminPaymentRecordByKey(key){
+  const rec=window.azAdminPaymentLogsMap?.[key];
+  if(rec) return rec;
+  return (window.azAdminPaymentLogsRecords||[]).find(x=>String(x._azDetailKey||azAdminPaymentReceiptId(x))===String(key));
+}
+async function azAdminOpenPaymentReceipt(key, format='html', download=false){
+  const rec=azAdminPaymentRecordByKey(key);
+  if(!rec) return toast('Payment record not found. Refresh Payment Logs and try again.');
+  const id=azAdminPaymentReceiptId(rec);
+  if(!id) return toast('Receipt ID not found for this record.');
+  const source=azAdminPaymentReceiptSource(rec);
+  const fmt=String(format||'html').toLowerCase()==='pdf'?'pdf':'html';
+  try{
+    const url=AZOBSS_BACKEND_API+'/api/admin/payment-receipt/'+encodeURIComponent(id)+'?source='+encodeURIComponent(source)+'&format='+encodeURIComponent(fmt)+(download?'&download=1':'');
+    const out=await azAdminFetchBlob(url,{cache:'no-store'});
+    const blobUrl=URL.createObjectURL(out.blob);
+    if(fmt==='pdf' && download){
+      azSaveBlob(out.blob,out.filename||('azobss-receipt-'+id+'.pdf'));
+      setTimeout(()=>URL.revokeObjectURL(blobUrl),1500);
+      return;
+    }
+    const w=window.open(blobUrl,'_blank','noopener');
+    if(!w){
+      const a=document.createElement('a'); a.href=blobUrl; a.download=out.filename||('azobss-receipt-'+id+'.'+(fmt==='pdf'?'pdf':'html')); document.body.appendChild(a); a.click(); a.remove();
+    }
+    setTimeout(()=>URL.revokeObjectURL(blobUrl),30000);
+  }catch(e){ toast(e?.message||'Failed to open receipt.'); }
+}
+async function azAdminEmailPaymentReceipt(key){
+  const rec=azAdminPaymentRecordByKey(key);
+  if(!rec) return toast('Payment record not found. Refresh Payment Logs and try again.');
+  const id=azAdminPaymentReceiptId(rec);
+  if(!id) return toast('Receipt ID not found for this record.');
+  const currentEmail=rec.email||rec.buyerEmail||rec.user?.email||'';
+  const email=prompt('Send PDF receipt to email:', currentEmail||'');
+  if(!email) return;
+  if(!confirm('Send AZOBSS PDF receipt to '+email+'?')) return;
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payment-receipt-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({recordId:id,source:azAdminPaymentReceiptSource(rec),email})
+    });
+    toast('Receipt email sent to '+(j.to||email));
+  }catch(e){ toast(e?.message||'Failed to email receipt.'); }
 }
 
 async function loadStaffRoles(){
@@ -4088,6 +4148,10 @@ document.addEventListener('click',async e=>{
   if(alertRead){await azAdminPaymentAlertAction('mark-read',alertRead.getAttribute('data-admin-alert-read'));return;}
   const payDetail=e.target.closest('[data-paylog-detail]');
   if(payDetail){azAdminOpenPaymentLogDetail(payDetail.getAttribute('data-paylog-detail'));return;}
+  const payReceipt=e.target.closest('[data-paylog-receipt]');
+  if(payReceipt){await azAdminOpenPaymentReceipt(payReceipt.getAttribute('data-paylog-receipt'), payReceipt.getAttribute('data-format')||'html', payReceipt.getAttribute('data-download')==='1');return;}
+  const payEmailReceipt=e.target.closest('[data-paylog-email-receipt]');
+  if(payEmailReceipt){await azAdminEmailPaymentReceipt(payEmailReceipt.getAttribute('data-paylog-email-receipt'));return;}
   const closePayDetail=e.target.closest('[data-close-payment-detail]');
   if(closePayDetail){azAdminClosePaymentLogDetail();return;}
   const comDetailBtn = e.target.closest('[data-commission-detail]');

@@ -1929,11 +1929,22 @@ function makeMailer() {
     socketTimeout: 30000
   });
 }
-async function sendBrevoApiEmail({ to, subject, html, text }) {
+async function sendBrevoApiEmail({ to, subject, html, text, attachments }) {
   const apiKey = getBrevoApiKey();
   if (!apiKey) throw new Error("BREVO_API_KEY missing");
   const fromEmail = cleanPremiumText(process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "", 180);
   if (!fromEmail) throw new Error("MAIL_FROM missing");
+
+  const payload = {
+    sender: { name: process.env.MAIL_FROM_NAME || "AZOBSS", email: fromEmail },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+    textContent: text
+  };
+  if (Array.isArray(attachments) && attachments.length) {
+    payload.attachment = attachments.map(a => ({ name: a.name || a.filename || "azobss-receipt.pdf", content: a.content || a.base64 || "" })).filter(a => a.content);
+  }
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -1942,13 +1953,7 @@ async function sendBrevoApiEmail({ to, subject, html, text }) {
       "api-key": apiKey,
       "content-type": "application/json"
     },
-    body: JSON.stringify({
-      sender: { name: process.env.MAIL_FROM_NAME || "AZOBSS", email: fromEmail },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-      textContent: text
-    })
+    body: JSON.stringify(payload)
   });
 
   const bodyText = await response.text();
@@ -1960,9 +1965,32 @@ async function sendBrevoApiEmail({ to, subject, html, text }) {
   }
   return bodyJson || { raw: bodyText };
 }
+async function azSendEmailWithOptionalPdf({ to, subject, html, text, pdfBuffer, filename }) {
+  const cleanTo = cleanPremiumText(to || "", 180);
+  if (!cleanTo) throw new Error("Recipient email missing");
+  const safeFilename = cleanPremiumText(filename || "azobss-receipt.pdf", 120) || "azobss-receipt.pdf";
+  if (brevoApiReady()) {
+    return await sendBrevoApiEmail({
+      to: cleanTo, subject, html, text,
+      attachments: pdfBuffer ? [{ name: safeFilename, content: Buffer.from(pdfBuffer).toString("base64") }] : []
+    });
+  }
+  if (!mailReady()) throw new Error("Email not ready. Set BREVO_API_KEY + MAIL_FROM, or SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS.");
+  const transporter = makeMailer();
+  await transporter.verify();
+  return await transporter.sendMail({
+    from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    to: cleanTo,
+    subject,
+    html,
+    text,
+    attachments: pdfBuffer ? [{ filename: safeFilename, content: pdfBuffer, contentType: "application/pdf" }] : []
+  });
+}
 function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
-  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download count is only used after you press Start Download.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download count is only used after you press Start Download. If it is not used, the link will expire on ${expires}.</p><p><a href="${receiptUrl}">View receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
+  const receiptPdfUrl = receiptUrl + (receiptUrl.includes("?") ? "&" : "?") + "format=pdf";
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download count is only used after you press Start Download.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download count is only used after you press Start Download. If it is not used, the link will expire on ${expires}.</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
 }
 async function maybeSendDownloadEmail(order, req) {
   try {
@@ -3335,20 +3363,203 @@ function updatePremiumToken(token, updater) {
   return index >= 0 ? tokens[index] : null;
 }
 
+function azReceiptAmountNumber(order = {}) {
+  const direct = Number(order.saleAmount || order.amountRm || order.amountValue || order.total || order.price || 0);
+  if (Number.isFinite(direct) && direct > 0) return Math.round(direct * 100) / 100;
+  const sen = Number(order.amountSen || order.paymentAmountSen || 0);
+  if (Number.isFinite(sen) && sen > 0) return Math.round(sen) / 100;
+  const raw = String(order.amount || order.amountText || order.saleAmountText || order.priceText || "").replace(/,/g, "");
+  const m = raw.match(/([0-9]+(?:\.[0-9]{1,2})?)/);
+  return m ? Number(m[1]) : 0;
+}
+function azReceiptStatusBucket(order = {}) {
+  const status = String(order.status || order.paymentStatus || order.payment_state || "").toLowerCase();
+  if (["paid","verified","success","completed","approved","confirmed","settled"].includes(status) || order.paid === true || order.isPaid === true) return "paid";
+  if (status.includes("cancel") || ["cancelled","canceled","void","aborted"].includes(status)) return "cancelled";
+  if (status.includes("fail") || status.includes("reject") || ["failed","declined","rejected","expired"].includes(status)) return "failed";
+  return status || "pending";
+}
+function azReceiptCategory(order = {}) {
+  const raw = [order.category, order.productCategory, order.productType, order.itemType, order.type, order.source, order.productName, order.itemName, order.title].map(v => String(v || "").toLowerCase()).join(" ");
+  if (raw.includes("cad") || raw.includes("lisp") || raw.includes("autocad") || raw.includes("dwg")) return "CAD Tools";
+  if (raw.includes("software") || raw.includes("premium") || raw.includes("license") || raw.includes("download")) return "Software";
+  if (raw.includes("pa") || raw.includes("bm") || raw.includes("pabm") || raw.includes("lot") || raw.includes("kadaster")) return "PA/BM";
+  if (isPaBmPremiumOrder(order)) return "PA/BM";
+  return "Digital Product";
+}
+function azReceiptNo(order = {}) {
+  return cleanPremiumText(order.receiptNo || order.orderId || order.billCode || order.paymentReference || order.transactionId || order.txnId || order.docId || order.id || "AZOBSS-RECEIPT", 160) || "AZOBSS-RECEIPT";
+}
+function azReceiptProductName(order = {}) {
+  return cleanPremiumText(order.productName || order.productTitle || order.itemName || order.title || order.name || order.filename || order.itemCode || (order.product && (order.product.name || order.product.title || order.product.productName)) || "AZOBSS Digital Product", 220);
+}
+function azReceiptProductId(order = {}) {
+  return cleanPremiumText(order.productId || order.softwareId || order.cadId || order.itemCode || order.noPa || order.noBm || (order.product && (order.product.id || order.product.productId)) || "", 180);
+}
+function azReceiptBuyerUsername(order = {}) {
+  const user = order.user && typeof order.user === "object" ? order.user : {};
+  return cleanPremiumText(user.username || order.username || order.usernameKey || order.displayName || order.buyerName || "", 120);
+}
+function azReceiptBuyerEmail(order = {}) {
+  const user = order.user && typeof order.user === "object" ? order.user : {};
+  return cleanPremiumText(user.email || order.email || order.buyerEmail || order.billEmail || "", 180);
+}
+function azReceiptDate(order = {}) {
+  const raw = order.paidAt || order.completedAt || order.updatedAt || order.createdAt || order.created_at || "";
+  const ms = Number(order.paidAtMs || order.completedAtMs || order.updatedAtMs || order.createdAtMs || 0) || Date.parse(raw || "") || Date.now();
+  return new Date(ms).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur", hour12: true });
+}
+function azNormalizePaymentReceiptOrder(order = {}, source = "") {
+  const amount = azReceiptAmountNumber(order);
+  const out = {
+    ...(order || {}),
+    receiptNo: azReceiptNo(order),
+    receiptStatus: azReceiptStatusBucket(order),
+    receiptCategory: azReceiptCategory(order),
+    receiptProductName: azReceiptProductName(order),
+    receiptProductId: azReceiptProductId(order),
+    receiptAmount: amount,
+    receiptAmountText: amount ? azMoneyRm(amount) : cleanPremiumText(order.amount || order.amountText || order.saleAmountText || "RM0.00", 80),
+    receiptBuyerUsername: azReceiptBuyerUsername(order),
+    receiptBuyerEmail: azReceiptBuyerEmail(order),
+    receiptDateText: azReceiptDate(order),
+    receiptSource: source || order._azSource || order.__source || order.source || "payment-record"
+  };
+  return out;
+}
+function azReceiptHtmlRows(rows = []) {
+  return rows.map(([k, v]) => `<tr><th>${azHtmlEscape(k)}</th><td>${azHtmlEscape(v || "-")}</td></tr>`).join("");
+}
 function buildReceiptHtml(order) {
-  const lines = [
-    ["Receipt No", order.orderId],
-    ["Status", order.status],
-    ["Product", order.productName],
-    ["Amount", order.amount],
-    ["Payment Method", order.paymentMethod],
-    ["Reference", order.paymentReference || "-"],
-    ["Username", order.user?.username || "-"],
-    ["Email", order.user?.email || "-"],
-    ["Date", new Date(order.paidAt || order.createdAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })]
+  const o = azNormalizePaymentReceiptOrder(order || {}, order && order.receiptSource || "");
+  const status = String(o.receiptStatus || "pending").toUpperCase();
+  const issuedAt = new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur", hour12: true });
+  const rows = azReceiptHtmlRows([
+    ["Receipt / Invoice No", o.receiptNo],
+    ["Status", status],
+    ["Category", o.receiptCategory],
+    ["Product", o.receiptProductName],
+    ["Product ID", o.receiptProductId || "-"],
+    ["Amount", o.receiptAmountText],
+    ["Payment Method", o.paymentMethod || "toyyibpay"],
+    ["Payment Reference", o.paymentReference || o.billCode || o.transactionId || o.txnId || "-"],
+    ["Bill Code", o.billCode || "-"],
+    ["Username", o.receiptBuyerUsername || "-"],
+    ["Email", o.receiptBuyerEmail || "-"],
+    ["Payment Date", o.receiptDateText],
+    ["Source", o.receiptSource || "-"]
+  ]);
+  const paidClass = o.receiptStatus === "paid" ? "ok" : (o.receiptStatus === "pending" ? "warn" : "bad");
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Receipt ${azHtmlEscape(o.receiptNo)}</title><style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111;margin:0;padding:24px}.receipt{max-width:860px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 20px 60px rgba(15,23,42,.10);overflow:hidden}.head{background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff;padding:26px}.head h1{margin:0 0 8px;font-size:28px}.head p{margin:0;color:#dbeafe}.content{padding:24px}.amount{font-size:34px;font-weight:900;margin:6px 0 12px}.badge{display:inline-block;border-radius:999px;padding:6px 10px;font-weight:800}.ok{color:#047857;background:#ecfdf5;border:1px solid #a7f3d0}.warn{color:#a16207;background:#fefce8;border:1px solid #fde68a}.bad{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{text-align:left;border-bottom:1px solid #e5e7eb;padding:11px;vertical-align:top}th{width:210px;background:#f8fafc;color:#334155}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}button{border:0;border-radius:10px;background:#111827;color:#fff;padding:11px 15px;font-weight:800;cursor:pointer}.muted{font-size:12px;color:#64748b;margin-top:18px}@media print{body{background:#fff;padding:0}.receipt{box-shadow:none;border:0}.actions{display:none}}</style></head><body><div class="receipt"><div class="head"><h1>AZOBSS Payment Receipt / Invoice</h1><p>${azHtmlEscape(o.receiptNo)}</p></div><div class="content"><div class="badge ${paidClass}">${azHtmlEscape(status)}</div><div class="amount">${azHtmlEscape(o.receiptAmountText)}</div><table>${rows}</table><div class="actions"><button onclick="window.print()">Print / Save PDF</button><button onclick="window.close()">Close</button></div><p class="muted">Generated at ${azHtmlEscape(issuedAt)}. This receipt is generated from AZOBSS payment records for purchase verification.</p></div></div></body></html>`;
+}
+async function buildReceiptPdfBuffer(order = {}) {
+  if (!PDFDocument) throw new Error("PDFKit dependency missing. Deploy backend with pdfkit installed.");
+  const o = azNormalizePaymentReceiptOrder(order || {}, order && order.receiptSource || "");
+  const rows = [
+    ["Receipt / Invoice No", o.receiptNo],
+    ["Status", String(o.receiptStatus || "pending").toUpperCase()],
+    ["Category", o.receiptCategory],
+    ["Product", o.receiptProductName],
+    ["Product ID", o.receiptProductId || "-"],
+    ["Amount", o.receiptAmountText],
+    ["Payment Method", o.paymentMethod || "toyyibpay"],
+    ["Payment Reference", o.paymentReference || o.billCode || o.transactionId || o.txnId || "-"],
+    ["Bill Code", o.billCode || "-"],
+    ["Username", o.receiptBuyerUsername || "-"],
+    ["Email", o.receiptBuyerEmail || "-"],
+    ["Payment Date", o.receiptDateText],
+    ["Source", o.receiptSource || "-"]
   ];
-  const rows = lines.map(([k,v]) => `<tr><th>${String(k)}</th><td>${String(v || "-")}</td></tr>`).join("");
-  return `<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Receipt ${order.orderId}</title><style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111;padding:24px}.receipt{max-width:720px;margin:auto;background:#fff;border:1px solid #ddd;border-radius:14px;padding:24px}h1{margin-top:0}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}th{width:180px;color:#555}.ok{color:#16a34a;font-weight:700}.print{margin-top:20px}</style></head><body><div class="receipt"><h1>AZOBSS Payment Receipt</h1><p class="ok">Payment Successful ✅</p><table>${rows}</table><p class="print"><button onclick="window.print()">Print / Save PDF</button></p></div></body></html>`;
+  return await new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margin: 48, info: { Title: `AZOBSS Receipt ${o.receiptNo}`, Creator: "AZOBSS" } });
+    const chunks = [];
+    doc.on("data", c => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+    doc.rect(0, 0, doc.page.width, 118).fill("#0f172a");
+    doc.fillColor("#ffffff").fontSize(24).text("AZOBSS Payment Receipt / Invoice", 48, 36, { width: 500 });
+    doc.fontSize(11).fillColor("#dbeafe").text(String(o.receiptNo || "-"), 48, 70);
+    doc.moveDown(3);
+    doc.y = 142;
+    doc.fillColor("#111827").fontSize(12).text("Amount", 48, doc.y);
+    doc.fontSize(30).fillColor("#111827").text(String(o.receiptAmountText || "RM0.00"), 48, doc.y + 4);
+    doc.fontSize(12).fillColor(o.receiptStatus === "paid" ? "#047857" : (o.receiptStatus === "pending" ? "#a16207" : "#b91c1c")).text("Status: " + String(o.receiptStatus || "pending").toUpperCase(), 48, doc.y + 8);
+    doc.moveDown(1.5);
+    const labelW = 165;
+    const valueW = doc.page.width - 96 - labelW;
+    let y = doc.y + 12;
+    rows.forEach(([label, value], idx) => {
+      const rowH = Math.max(28, doc.heightOfString(String(value || "-"), { width: valueW }) + 14);
+      if (y + rowH > doc.page.height - 70) { doc.addPage({ margin: 48 }); y = 48; }
+      if (idx % 2 === 0) doc.rect(48, y, doc.page.width - 96, rowH).fill("#f8fafc");
+      doc.fillColor("#334155").fontSize(10).text(String(label), 58, y + 8, { width: labelW - 12 });
+      doc.fillColor("#111827").fontSize(10).text(String(value || "-"), 48 + labelW, y + 8, { width: valueW });
+      doc.strokeColor("#e5e7eb").moveTo(48, y + rowH).lineTo(doc.page.width - 48, y + rowH).stroke();
+      y += rowH;
+    });
+    const issuedAt = new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur", hour12: true });
+    doc.fillColor("#64748b").fontSize(9).text("Generated at " + issuedAt + ". This receipt is generated from AZOBSS payment records for purchase verification.", 48, doc.page.height - 52, { width: doc.page.width - 96 });
+    doc.end();
+  });
+}
+function azReceiptFilename(order = {}, ext = "pdf") {
+  const base = String(azReceiptNo(order) || "azobss-receipt").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "azobss-receipt";
+  return `${base}.${ext === "html" ? "html" : "pdf"}`;
+}
+async function azFindPaBmReceiptRecord(identifier = "") {
+  const id = cleanPremiumText(identifier || "", 180);
+  if (!id) return null;
+  const db = getAzobssBackendDb();
+  if (!db) return null;
+  try {
+    const direct = await db.collection("purchaseLogs").doc(id).get();
+    if (direct.exists) return azNormalizePaymentReceiptOrder({ docId: direct.id, ...(direct.data() || {}) }, "purchaseLogs");
+  } catch (_) {}
+  const fields = ["orderId", "billCode", "paymentReference", "transactionId", "txnId", "receiptNo", "itemCode"];
+  for (const field of fields) {
+    try {
+      const q = await db.collection("purchaseLogs").where(field, "==", id).limit(1).get();
+      if (!q.empty) { const d = q.docs[0]; return azNormalizePaymentReceiptOrder({ docId: d.id, ...(d.data() || {}) }, "purchaseLogs"); }
+    } catch (_) {}
+  }
+  try {
+    const usersSnap = await db.collection("users").limit(300).get();
+    let found = null;
+    usersSnap.forEach(userDoc => {
+      if (found) return;
+      const u = userDoc.data() || {};
+      const list = Array.isArray(u.purchaseRecords) ? u.purchaseRecords : [];
+      const row = list.find(r => [r && r.id, r && r.recordId, r && r.purchaseLogId, r && r.orderId, r && r.billCode, r && r.paymentReference, r && r.itemCode].some(v => String(v || "") === id));
+      if (row) found = azNormalizePaymentReceiptOrder({ ...(row || {}), username: row.username || u.username || userDoc.id, usernameKey: row.usernameKey || u.usernameKey || userDoc.id, email: row.email || u.email || u.authEmail || "", docId: row.id || id }, "users.purchaseRecords");
+    });
+    if (found) return found;
+  } catch (_) {}
+  return null;
+}
+async function azFindAdminPaymentReceiptRecord(identifier = "", source = "") {
+  const id = cleanPremiumText(identifier || "", 180);
+  const src = String(source || "").toLowerCase();
+  if (!id) return null;
+  if (!src || src.includes("premium")) {
+    let order = null;
+    try { order = await azFindReceiptOrder(id); } catch (_) {}
+    if (!order) { try { order = await azFindPremiumOrderPersistent({ orderId:id, billCode:id }); } catch (_) {} }
+    if (order) return azNormalizePaymentReceiptOrder(order, "premiumOrders");
+  }
+  if (!src || src.includes("purchase") || src.includes("pabm") || src.includes("log")) {
+    const rec = await azFindPaBmReceiptRecord(id);
+    if (rec) return rec;
+  }
+  if (src && !src.includes("premium")) {
+    let order = null;
+    try { order = await azFindReceiptOrder(id); } catch (_) {}
+    if (order) return azNormalizePaymentReceiptOrder(order, "premiumOrders");
+  }
+  return null;
+}
+function azReceiptEmailHtml(order = {}) {
+  const o = azNormalizePaymentReceiptOrder(order || {}, order && order.receiptSource || "");
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:720px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Payment Receipt / Invoice</h2><p>Your purchase receipt is attached as PDF.</p><p><b>Receipt:</b> ${azHtmlEscape(o.receiptNo)}<br><b>Product:</b> ${azHtmlEscape(o.receiptProductName)}<br><b>Amount:</b> ${azHtmlEscape(o.receiptAmountText)}<br><b>Status:</b> ${azHtmlEscape(String(o.receiptStatus||'').toUpperCase())}<br><b>Date:</b> ${azHtmlEscape(o.receiptDateText)}</p><p style="font-size:12px;color:#64748b">AZOBSS Digital Store</p></div></body></html>`;
 }
 
 
@@ -5098,6 +5309,63 @@ async function handler(req, res) {
       }
     }
 
+    if (pathname.startsWith("/api/admin/payment-receipt/") && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to view payment receipts." }, null, 2), "application/json");
+        }
+        const receiptId = decodeURIComponent(path.basename(pathname));
+        const source = cleanPremiumText(parsed.query.source || "", 80);
+        const format = String(parsed.query.format || "html").toLowerCase();
+        const order = await azFindAdminPaymentReceiptRecord(receiptId, source);
+        if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Payment receipt record not found." }, null, 2), "application/json");
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payment_receipt_view", order.receiptSource || source || "payment", order.receiptNo || receiptId, { source, format, category:order.receiptCategory, amount:order.receiptAmount }, "success"), "Admin payment receipt audit log failed");
+        if (format === "json") {
+          return send(res, 200, JSON.stringify({ ok:true, receipt:order }, null, 2), "application/json");
+        }
+        if (format === "pdf") {
+          const pdf = await buildReceiptPdfBuffer(order);
+          const disposition = String(parsed.query.download || "") === "1" ? "attachment" : "inline";
+          res.writeHead(200, azSecurityHeaders({
+            "Content-Type":"application/pdf",
+            "Content-Disposition": `${disposition}; filename="${azReceiptFilename(order, "pdf")}"`
+          }));
+          res.end(pdf);
+          return;
+        }
+        return send(res, 200, buildReceiptHtml(order), "text/html; charset=utf-8", { "Content-Disposition": `inline; filename="${azReceiptFilename(order, "html")}"` });
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/payment-receipt-email" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to email payment receipts." }, null, 2), "application/json");
+        }
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+        const receiptId = cleanPremiumText(body.recordId || body.orderId || body.billCode || body.id || "", 180);
+        const source = cleanPremiumText(body.source || "", 80);
+        const order = await azFindAdminPaymentReceiptRecord(receiptId, source);
+        if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Payment receipt record not found." }, null, 2), "application/json");
+        const to = cleanPremiumText(body.email || order.receiptBuyerEmail || "", 180);
+        if (!to) return send(res, 400, JSON.stringify({ ok:false, error:"Buyer email missing. Enter email manually." }, null, 2), "application/json");
+        const pdf = await buildReceiptPdfBuffer(order);
+        const subject = `AZOBSS Receipt - ${cleanPremiumText(order.receiptProductName || order.receiptNo || "Purchase", 80)}`;
+        const html = azReceiptEmailHtml(order);
+        const text = `AZOBSS Payment Receipt / Invoice\n\nReceipt: ${order.receiptNo}\nProduct: ${order.receiptProductName}\nAmount: ${order.receiptAmountText}\nStatus: ${String(order.receiptStatus||"").toUpperCase()}\nDate: ${order.receiptDateText}\n\nPDF receipt is attached.`;
+        const info = await azSendEmailWithOptionalPdf({ to, subject, html, text, pdfBuffer:pdf, filename:azReceiptFilename(order, "pdf") });
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payment_receipt_email", order.receiptSource || source || "payment", order.receiptNo || receiptId, { source, to:maskEmail(to), category:order.receiptCategory, amount:order.receiptAmount }, "success"), "Admin receipt email audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, sent:true, to:maskEmail(to), receiptNo:order.receiptNo, messageId:info && (info.messageId || info.messageIdHeader || info.messageId || "") || "" }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
     if (pathname === "/api/admin/export" && req.method === "GET") {
       try {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
@@ -6699,7 +6967,17 @@ const filePath =
       if ((order.billCode || String(order.paymentMethod || "").toLowerCase().includes("toyyib")) && !isPaBmPremiumOrder(order) && !(order.toyyibVerifiedAt || order.paymentVerificationSource === "toyyibpay-api")) {
         return send(res, 403, "Receipt locked until ToyyibPay confirms paid.");
       }
-      return send(res, 200, buildReceiptHtml(order), "text/html; charset=utf-8");
+      if (String(parsed.query.format || "").toLowerCase() === "pdf") {
+        const pdf = await buildReceiptPdfBuffer(azNormalizePaymentReceiptOrder(order, "premiumOrders"));
+        const disposition = String(parsed.query.download || "") === "1" ? "attachment" : "inline";
+        res.writeHead(200, azSecurityHeaders({
+          "Content-Type":"application/pdf",
+          "Content-Disposition": `${disposition}; filename="${azReceiptFilename(order, "pdf")}"`
+        }));
+        res.end(pdf);
+        return;
+      }
+      return send(res, 200, buildReceiptHtml(azNormalizePaymentReceiptOrder(order, "premiumOrders")), "text/html; charset=utf-8");
     }
 
     // =========================
