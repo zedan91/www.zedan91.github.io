@@ -1,0 +1,21 @@
+AZOBSS 313 - Admin Dashboard Header Compact Fix
+
+Purpose:
+- Compact the Admin Dashboard header/topbar and section headings so they use less vertical space.
+
+Changes:
+- Reduced main dashboard padding.
+- Reduced topbar padding, radius and margin.
+- Reduced dashboard title and subtitle size/spacing.
+- Reduced admin pill size.
+- Reduced section h2 heading spacing and underline height.
+- Reduced hero/header card spacing where used.
+- Reduced KPI/quick card vertical height slightly for desktop and low-height laptop screens.
+
+Scope:
+- Frontend only: admin/index.html.
+- No Firebase Rules update required.
+- No Render backend deploy required.
+
+Deploy:
+- GitHub Pages deploy only.

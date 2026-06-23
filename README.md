@@ -67,8 +67,10 @@ Notes:
 - No Firebase Rules update required.
 - No Render backend deploy required; GitHub Pages deploy only.
 
-## (312) Admin Sidebar Compact No Scroll Fix
-- Admin Dashboard left sidebar compacted to reduce/avoid sidebar scrolling.
-- Smaller menu buttons, section labels, logo, and spacing.
-- Footer tip hidden on desktop to save vertical space.
-- Frontend-only change: deploy GitHub Pages only.
+
+## AZOBSS 313 - Admin Dashboard Header Compact Fix
+- Compact Admin Dashboard topbar/header so it uses less vertical space.
+- Compact section headings, subtitle spacing, hero/header cards and KPI/header spacing.
+- Frontend only: admin/index.html.
+- Firebase Rules: not required.
+- Render backend deploy: not required.

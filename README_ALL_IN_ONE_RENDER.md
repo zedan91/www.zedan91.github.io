@@ -45,3 +45,11 @@ Frontend-only patch:
 - Software admin card action buttons now float on the right side only.
 - Duplicate bottom admin button row/background below Buy Now is removed.
 - No backend/Render changes required.
+
+
+## AZOBSS 313 - Admin Dashboard Header Compact Fix
+- Compact Admin Dashboard topbar/header so it uses less vertical space.
+- Compact section headings, subtitle spacing, hero/header cards and KPI/header spacing.
+- Frontend only: admin/index.html.
+- Firebase Rules: not required.
+- Render backend deploy: not required.
