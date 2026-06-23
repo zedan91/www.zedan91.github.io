@@ -1,0 +1,17 @@
+AZOBSS PATCH (317) - Admin Payment Logs PA/BM Category Fix
+Date: 2026-06-23
+
+Issue:
+- Admin > Payment Logs > All Payment Logs showed some PA/BM related records as Software.
+- This happened because category detection for premiumOrders defaulted to Software and did not detect PA/BM markers such as PA/BM, pa-bm product IDs, noPa/noBm, JUPEM, Pelan Akui, Batu Sempadan, or Kadaster.
+
+Fix:
+- Added a shared azAdminDetectPaymentCategory() helper in admin/index.html.
+- PA/BM detection now runs before Software/CAD fallback.
+- PremiumOrders and purchaseLogs now use the same category detection logic.
+- Records like "PA/BM Purchase Records" or product ID "pa-bm-purchase-record" now appear as PA/BM instead of Software.
+
+Scope:
+- Frontend admin UI only.
+- No Firebase Rules update required.
+- No Render backend deploy required.

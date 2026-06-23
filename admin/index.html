@@ -3207,12 +3207,42 @@ function azAdminPaymentMs(x){
   }
   return 0;
 }
-function azAdminPremiumCategory(x){
+function azAdminDetectPaymentCategory(x, fallback='Others'){
   x=x||{};
-  const hay=[x.category,x.productCategory,x.sourcePage,x.sourceUrl,x.pageUrl,x.productId,x.productName,x.product?.category,x.product?.type,x.product?.toolType,x.product?.productType,x.product?.badge]
-    .map(v=>String(v||'').toLowerCase()).join(' ');
-  if(hay.includes('cad') || hay.includes('lisp') || hay.includes('vlx') || hay.includes('autocad') || hay.includes('dwg')) return 'CAD Tools';
-  return 'Software';
+  const product=x.product||{};
+  const rawFields=[
+    x.category,x.productCategory,x.sourcePage,x.sourceUrl,x.pageUrl,x.productId,x.productName,x.productTitle,
+    x.productType,x.source,x.itemType,x.type,x.title,x.name,x.itemName,x.filename,x.itemCode,x.softwareId,x.cadId,
+    x.noPa,x.noPA,x.noBm,x.noBM,x.paNo,x.bmNo,x.orderId,x.billCode,x.collection,
+    product.category,product.type,product.toolType,product.productType,product.badge,product.id,product.name,product.title
+  ];
+  const hay=rawFields.map(v=>String(v||'').toLowerCase()).join(' ').replace(/[._]+/g,' ');
+  const compact=hay.replace(/[^a-z0-9]+/g,'');
+
+  // PA/BM must be detected before Software because some PA/BM rows can carry generic
+  // product/category words like "purchase record" or accidentally come from premiumOrders.
+  const isPabm = (
+    /\bpa\s*[/+-]?\s*bm\b/.test(hay) ||
+    /\bpabm\b/.test(hay) ||
+    compact.includes('pabm') ||
+    compact.includes('nopabm') ||
+    compact.includes('nopa') ||
+    compact.includes('nobm') ||
+    /\bpa[-\s]*\d{2,}/.test(hay) ||
+    /\bbm[-\s]*\d{2,}/.test(hay) ||
+    hay.includes('pelan akui') ||
+    hay.includes('batu sempadan') ||
+    hay.includes('kadaster') ||
+    hay.includes('jupem')
+  );
+  if(isPabm) return 'PA/BM';
+
+  if(/\bcad\b/.test(hay) || hay.includes('cad tools') || hay.includes('lisp') || hay.includes('vlx') || hay.includes('autocad') || hay.includes('dwg')) return 'CAD Tools';
+  if(hay.includes('software') || hay.includes('license') || hay.includes('download') || String(fallback||'').toLowerCase()==='software') return 'Software';
+  return fallback || 'Others';
+}
+function azAdminPremiumCategory(x){
+  return azAdminDetectPaymentCategory(x, 'Software');
 }
 function azAdminPremiumAmount(x){
   const n=Number(x?.saleAmount || x?.total || x?.totalAmount || x?.price || x?.amountValue || 0);
@@ -3240,14 +3270,7 @@ function azAdminPaymentAmount(x){
 }
 function azAdminPurchaseLogToPaymentRecord(id, data){
   const x = {id:id || data?.id || '', ...(data||{}), _azSource:'purchaseLogs'};
-  const typeRaw = String(x.productType || x.category || x.source || x.itemType || x.type || '').toLowerCase();
-  const nameRaw = String(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productName || '').toLowerCase();
-  const hay = typeRaw + ' ' + nameRaw;
-
-  let category = 'Others';
-  if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = 'PA/BM';
-  else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad') || hay.includes('dwg')) category = 'CAD Tools';
-  else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = 'Software';
+  const category = azAdminDetectPaymentCategory(x, 'Others');
 
   const amount = azAdminPaymentAmount(x);
   const status = String(x.status || x.paymentStatus || '').toLowerCase();
