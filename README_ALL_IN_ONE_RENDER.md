@@ -10,3 +10,10 @@ Render:
 
 Firebase:
 - No Rules update required.
+
+
+## PATCH 304 - Admin Website Health Report / Export
+- Adds Admin > System Report.
+- One-click full website check with copy/export TXT, JSON, CSV, and Print/Save PDF.
+- Report combines page checks, backend health, maintenance scan, payment logs/premiumOrders, commission records, support and notifications.
+- No Firebase Rules update required. Render backend is not required for this frontend-only patch if patch 303 backend is already active.

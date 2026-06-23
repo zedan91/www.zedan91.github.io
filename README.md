@@ -24,10 +24,9 @@ Notes:
 - No Firebase Rules update required.
 - No Render backend deploy required.
 
-PATCH (303) - Premium Orders Firestore Backup / Sync
-----------------------------------------------------
-- Strengthens Software/CAD premiumOrders persistence with Firestore backup/sync.
-- Admin export now merges Firestore + local premium-orders.json.
-- Admin Maintenance adds Backup local premiumOrders to Firestore and Restore local premiumOrders from Firestore.
-- Firebase Rules update is not required because access uses Render backend Firebase Admin SDK.
-- Render backend deploy is required because deploy-server.js changed.
+
+## PATCH 304 - Admin Website Health Report / Export
+- Adds Admin > System Report.
+- One-click full website check with copy/export TXT, JSON, CSV, and Print/Save PDF.
+- Report combines page checks, backend health, maintenance scan, payment logs/premiumOrders, commission records, support and notifications.
+- No Firebase Rules update required. Render backend is not required for this frontend-only patch if patch 303 backend is already active.

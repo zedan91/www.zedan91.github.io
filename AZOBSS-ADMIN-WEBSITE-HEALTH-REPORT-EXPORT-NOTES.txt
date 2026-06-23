@@ -1,0 +1,32 @@
+AZOBSS PATCH 304 - ADMIN WEBSITE HEALTH REPORT / EXPORT
+
+Purpose:
+- Add one admin report tab to check overall website status and export/copy a report for ChatGPT troubleshooting.
+
+Changed:
+- admin/index.html only.
+
+New Admin tab:
+- System > System Report
+
+Buttons:
+- Run Full Website Check
+- Copy Report for ChatGPT
+- Export TXT
+- Export JSON
+- Export CSV
+- Print / Save PDF
+
+Checks included:
+- Main page reachability: Home, Affiliate Shop, Software Tools, CAD Tools, Lucky Draw, PA/BM, Mini Web Tools, Admin Dashboard, Staff Dashboard.
+- Backend / Firebase readiness via /api/admin/system-health.
+- Maintenance status via /api/admin/maintenance-scan.
+- Payment data summary from purchaseLogs + premiumOrders.
+- Premium Orders Firestore backup sample warning.
+- Commission Manager records summary.
+- Support Inbox / Notifications readable check.
+
+Notes:
+- No Firebase Rules update needed.
+- Render backend deploy is not required if patch 303 backend is already deployed, because this patch uses existing backend endpoints.
+- If system-health or maintenance-scan endpoints are not available on Render yet, deploy backend from patch 303 or this zip.
