@@ -1,0 +1,20 @@
+AZOBSS PATCH 322 - SOFTWARE/CAD DESCRIPTION TRUE CENTER FIX
+
+Punca:
+- Description nampak tidak center kerana button More duduk dalam description container / CSS lama reserve padding-right 42px.
+- Text sebenarnya align center dalam area yang sudah tertolak, jadi visual card nampak tidak center.
+
+Fix:
+- Description container dijadikan text-only dan centered dengan CSS grid/place-items center.
+- Button More dipindahkan keluar sebagai row kecil di bawah description, center.
+- CSS override buang padding kanan lama dan hide leftover inline More.
+- MutationObserver repair dynamic cards selepas render Firestore/local data.
+
+Scope:
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+- root index.html fallback
+
+Firebase Rules: tidak perlu update.
+Render backend: tidak perlu deploy semula.
+Deploy: GitHub Pages sahaja.
