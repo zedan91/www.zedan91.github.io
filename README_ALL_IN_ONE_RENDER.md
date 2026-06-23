@@ -78,3 +78,9 @@ Firebase Rules tidak perlu update.
 - More button no longer touches/overlaps description text.
 - Download Now / Buy Now is closer to the downloads/rating footer.
 - GitHub Pages only; no Firebase Rules / Render required.
+
+
+## Patch 324 - Software/CAD card action bottom pin
+- Download Now / Buy Now pinned close to downloads/rating footer.
+- More chip no longer takes its own row.
+- No Firebase Rules update. No Render deploy required.

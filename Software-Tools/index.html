@@ -10972,6 +10972,155 @@ html body .downloads-grid > .download-card > .download-btn{
 })();
 </script>
 
+
+
+<!-- AZOBSS PATCH 324: Software/CAD card CTA pinned near stats footer -->
+<style id="azobss-software-cad-action-bottom-pin-fix-324">
+/* AZOBSS 324
+   Goal: Download Now / Buy Now must sit close to the downloads/rating footer.
+   The More chip is allowed to sit on/near the description, so it should not reserve its own row. */
+html body #softwareGrid > .download-card,
+html body #softwareDownloadsGrid > .download-card,
+html body .downloads-grid > .download-card{
+  position:relative!important;
+  padding-bottom:98px!important;
+  overflow:hidden!important;
+}
+
+/* More chip: do not consume card vertical space. It can overlay the lower description area. */
+html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+html body .downloads-grid > .download-card > .az-desc-more-outside-322{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:100px!important;
+  top:auto!important;
+  transform:translateX(-50%)!important;
+  order:0!important;
+  margin:0!important;
+  z-index:62!important;
+  pointer-events:auto!important;
+}
+
+/* Desktop/tablet: pin the action button directly above the stats footer. */
+html body #softwareGrid > .download-card > .download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn,
+html body .downloads-grid > .download-card > .download-btn,
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:52px!important;
+  top:auto!important;
+  transform:translateX(-50%)!important;
+  order:90!important;
+  margin:0!important;
+  z-index:63!important;
+}
+html body #softwareGrid > .download-card > .download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn,
+html body .downloads-grid > .download-card > .download-btn{
+  width:min(212px,82%)!important;
+  max-width:82%!important;
+}
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row{
+  width:min(232px,86%)!important;
+  max-width:86%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+}
+html body #softwareGrid > .download-card > .software-stats,
+html body #softwareDownloadsGrid > .download-card > .software-stats,
+html body .downloads-grid > .download-card > .software-stats{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  top:auto!important;
+  margin:0!important;
+  z-index:50!important;
+}
+
+/* Give description a safe ceiling so it cannot push/overlap the pinned CTA. */
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareGrid > .download-card > p,
+html body #softwareDownloadsGrid > .download-card > p,
+html body .downloads-grid > .download-card > p{
+  max-height:130px!important;
+  margin-bottom:0!important;
+}
+
+@media(max-width:760px){
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    padding-bottom:94px!important;
+  }
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn,
+  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card > .az-software-buy-cart-row{
+    bottom:48px!important;
+  }
+  html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html body .downloads-grid > .download-card > .az-desc-more-outside-322{
+    bottom:96px!important;
+  }
+}
+</style>
+<script id="azobss-software-cad-action-bottom-pin-fix-324">
+(function(){
+  if(window.__azobssActionBottomPin324) return;
+  window.__azobssActionBottomPin324 = true;
+  function qsa(root, sel){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+  function apply(){
+    qsa(document, '#softwareGrid .download-card, #softwareDownloadsGrid .download-card, .downloads-grid .download-card').forEach(function(card){
+      card.classList.add('az-action-bottom-pin-324');
+      var more = card.querySelector(':scope > .az-desc-more-outside-322');
+      if(more){
+        more.style.setProperty('position','absolute','important');
+        more.style.setProperty('left','50%','important');
+        more.style.setProperty('bottom','100px','important');
+        more.style.setProperty('transform','translateX(-50%)','important');
+        more.style.setProperty('margin','0','important');
+      }
+      var action = card.querySelector(':scope > .az-software-buy-cart-row, :scope > .download-btn');
+      if(action){
+        action.style.setProperty('position','absolute','important');
+        action.style.setProperty('left','50%','important');
+        action.style.setProperty('bottom','52px','important');
+        action.style.setProperty('transform','translateX(-50%)','important');
+        action.style.setProperty('margin','0','important');
+      }
+      var stats = card.querySelector(':scope > .software-stats');
+      if(stats){
+        stats.style.setProperty('position','absolute','important');
+        stats.style.setProperty('left','0','important');
+        stats.style.setProperty('right','0','important');
+        stats.style.setProperty('bottom','0','important');
+        stats.style.setProperty('margin','0','important');
+      }
+    });
+  }
+  function schedule(){ clearTimeout(window.__azobssActionBottomPin324Timer); window.__azobssActionBottomPin324Timer = setTimeout(apply, 40); }
+  document.addEventListener('DOMContentLoaded', function(){ apply(); [120,400,900,1600,3000].forEach(function(t){ setTimeout(apply,t); }); });
+  if(document.readyState !== 'loading'){ apply(); [120,400,900,1600,3000].forEach(function(t){ setTimeout(apply,t); }); }
+  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){ }
+})();
+</script>
+
 </body>
 </html>
 
