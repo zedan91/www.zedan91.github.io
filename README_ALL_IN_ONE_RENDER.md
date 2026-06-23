@@ -72,3 +72,9 @@ Firebase Rules tidak perlu update.
 - Centered Software/CAD card description text visually inside each card.
 - More chip no longer makes the description look off-center.
 - No Firebase Rules update. No Render deploy required.
+
+
+## Patch 323 - Software/CAD More Button + Action Footer Gap Fix
+- More button no longer touches/overlaps description text.
+- Download Now / Buy Now is closer to the downloads/rating footer.
+- GitHub Pages only; no Firebase Rules / Render required.
