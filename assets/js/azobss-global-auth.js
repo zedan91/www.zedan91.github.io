@@ -4870,6 +4870,230 @@ document.addEventListener('click',function(e){
   window.addEventListener('azobss-my-purchases-updated', renderMyPurchasesList);
 })();
 
+/* AZOBSS PATCH 307: Customer My Purchases Pro.
+   Shows PA/BM + Software + CAD purchase records with filters, receipt PDF, and active downloads. */
+(function(){
+  if(window.__azobssMyPurchasesProReady) return;
+  window.__azobssMyPurchasesProReady = true;
+
+  const state = { rows: [], q: '', category: 'all', status: 'all', loading: false, error: '' };
+  const SHOP_LOCAL_PREFIX = 'azobss_shop_purchase_history_';
+
+  function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function money(v){ const n = Number(v || 0); return 'RM' + (Number.isFinite(n) ? n.toFixed(2).replace(/\.00$/,'') : '0'); }
+  function msDate(ms){ ms = Number(ms || 0); return ms ? new Date(ms).toLocaleString('en-MY', {hour12:true, day:'2-digit', month:'2-digit', year:'numeric', hour:'numeric', minute:'2-digit'}) : '-'; }
+  function userKey(){
+    try{
+      const u = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+      const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      return String(uid || u.uid || u.usernameKey || u.username || u.displayName || 'guest').trim().toLowerCase() || 'guest';
+    }catch(_){ return 'guest'; }
+  }
+  function cleanCategory(v){
+    const s = String(v || '').toLowerCase();
+    if(s.includes('cad')) return 'CAD Tools';
+    if(s.includes('software')) return 'Software';
+    if(s.includes('pa') || s.includes('bm')) return 'PA/BM';
+    return String(v || 'Digital Product');
+  }
+  function isPaid(row){ return row && (row.isPaid === true || ['paid','verified','success','completed','settled','approved'].includes(String(row.status || '').toLowerCase())); }
+  function normalizeLocalShop(row){
+    const p = row || {};
+    const amount = Number(String(p.totalPrice || p.saleAmount || p.amount || p.unitPrice || p.price || 0).replace(/[^0-9.]/g,'')) || 0;
+    const category = cleanCategory(p.source || p.category || p.type || 'Software');
+    return {
+      recordId: String(p.orderId || p.billCode || p.id || p.productId || p.name || ('local-' + Math.random().toString(36).slice(2))).trim(),
+      source: 'localHistory', category, status: p.status || 'paid', isPaid: true,
+      productName: String(p.name || p.title || p.productName || 'Premium Item'),
+      productId: String(p.productId || p.id || ''),
+      amount, amountText: amount ? money(amount) : String(p.priceText || p.price || 'RM0'),
+      username: '', email: '', createdAtMs: Number(p.createdAtMs || Date.now()), paidAtMs: Number(p.paidAtMs || p.createdAtMs || Date.now()),
+      downloadUsed: Number(p.downloadCount || 0), downloadMax: Number(p.maxDownload || 1), downloadActive: false,
+      receiptUrl: '', receiptPdfUrl: '', downloadUrl: ''
+    };
+  }
+  function readLocalShopHistory(){
+    try{
+      const rows = JSON.parse(localStorage.getItem(SHOP_LOCAL_PREFIX + userKey()) || '[]');
+      return Array.isArray(rows) ? rows.filter(Boolean).map(normalizeLocalShop) : [];
+    }catch(_){ return []; }
+  }
+  function normalizePaBmFallback(r){
+    const paid = (typeof azobssIsPurchasePaidForDownload === 'function') ? azobssIsPurchasePaidForDownload(r) : isPaid(r);
+    const allowed = (typeof azobssPurchaseDownloadAllowed === 'function') ? azobssPurchaseDownloadAllowed(r) : paid;
+    const amount = Number(r.amount || 0) || 0;
+    const id = String(r.firestoreId || r.purchaseLogId || r.id || r.orderId || r.itemCode || '').trim();
+    return {
+      recordId: id, source: 'purchaseLogs', category: 'PA/BM', status: paid ? 'paid' : (r.status || 'pending'), isPaid: paid,
+      productName: `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim(), productId: String(r.itemCode || ''), itemCode: String(r.itemCode || ''), state: String(r.negeri || r.state || ''),
+      amount, amountText: money(amount), username: String(r.usernameKey || r.displayName || ''), email: String(r.email || ''), createdAtMs: Number(r.createdAtMs || 0), paidAtMs: Number(r.paidAtMs || 0),
+      downloadUsed: Number(r.downloadCount || 0), downloadMax: Number(r.maxDownloads || 5), downloadExpiresAtMs: Number(r.downloadExpiresAtMs || 0), downloadExpired: (typeof azobssPurchaseDownloadExpired === 'function') ? azobssPurchaseDownloadExpired(r) : false,
+      downloadActive: !!(paid && allowed), downloadUrl: '', receiptUrl: id ? `/api/my-purchases/receipt/${encodeURIComponent(id)}?source=purchaseLogs` : '', receiptPdfUrl: id ? `/api/my-purchases/receipt/${encodeURIComponent(id)}?source=purchaseLogs&format=pdf` : '', raw: r
+    };
+  }
+  async function tokenHeader(){
+    const current = auth && auth.currentUser ? auth.currentUser : null;
+    if(!current) throw new Error('Please login first.');
+    const token = await current.getIdToken();
+    return { 'Authorization':'Bearer ' + token };
+  }
+  async function fetchBackendPurchases(){
+    const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+    const headers = await tokenHeader();
+    const res = await fetch(base + '/api/my-purchases?limit=300', { headers, cache:'no-store' });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || 'Unable to load My Purchases.');
+    return Array.isArray(data.records) ? data.records : [];
+  }
+  async function loadRows(){
+    state.loading = true; state.error = ''; render();
+    try{
+      let rows = [];
+      try{ rows = await fetchBackendPurchases(); }
+      catch(err){ state.error = err && err.message ? err.message : String(err); }
+      if(!rows.length && typeof loadAzobssPurchaseRecords === 'function'){
+        try{ rows = rows.concat((await loadAzobssPurchaseRecords()).map(normalizePaBmFallback)); }catch(_){ }
+      }
+      rows = rows.concat(readLocalShopHistory());
+      const map = new Map();
+      rows.filter(Boolean).forEach(r => {
+        const key = String((r.source || '') + '::' + (r.recordId || r.productId || r.productName || '')).toLowerCase();
+        if(!map.has(key)) map.set(key, r);
+      });
+      state.rows = Array.from(map.values()).sort((a,b)=>Number(b.paidAtMs || b.createdAtMs || 0)-Number(a.paidAtMs || a.createdAtMs || 0));
+    }finally{
+      state.loading = false; render();
+    }
+  }
+  function ensureModal(){
+    let modal = document.getElementById('azobssMyPurchasesProModal');
+    if(modal) return modal;
+    const style = document.createElement('style');
+    style.id = 'azobss-my-purchases-pro-css';
+    style.textContent = `
+      #azobssMyPurchasesProModal{position:fixed;inset:0;z-index:9999999;background:rgba(2,6,23,.76);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(10px)}
+      #azobssMyPurchasesProModal.is-open{display:flex}.az-mypro-card{width:min(980px,100%);max-height:88vh;overflow:auto;background:#07101f;color:#fff;border:1px solid rgba(148,163,184,.30);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.52)}
+      .az-mypro-head{position:sticky;top:0;z-index:3;background:rgba(7,16,31,.96);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid rgba(148,163,184,.20)}.az-mypro-head h3{margin:0;font-size:21px;font-weight:950}.az-mypro-close{width:36px;height:36px;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font-size:24px;cursor:pointer}
+      .az-mypro-body{padding:14px 16px 18px}.az-mypro-note{margin:0 0 12px;color:#cbd5e1;font-size:13px;line-height:1.45}.az-mypro-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 12px}.az-mypro-kpi{border:1px solid rgba(148,163,184,.22);border-radius:14px;background:rgba(15,23,42,.72);padding:10px}.az-mypro-kpi span{display:block;color:#94a3b8;font-size:11px;font-weight:850;text-transform:uppercase}.az-mypro-kpi strong{display:block;font-size:18px;margin-top:4px}
+      .az-mypro-tools{display:grid;grid-template-columns:1.2fr .8fr .8fr auto;gap:8px;margin:10px 0 12px}.az-mypro-tools input,.az-mypro-tools select{width:100%;border:1px solid rgba(148,163,184,.28);background:rgba(2,6,23,.58);color:#fff;border-radius:12px;padding:10px 11px;font-weight:750}.az-mypro-tools button,.az-mypro-action{border:0;border-radius:12px;padding:10px 12px;background:#2563eb;color:#fff;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px}.az-mypro-action.secondary{background:rgba(148,163,184,.18);color:#e2e8f0}.az-mypro-action.good{background:#16a34a}.az-mypro-action.warn{background:#b45309}.az-mypro-action:disabled{opacity:.55;cursor:wait}
+      .az-mypro-list{display:grid;gap:10px}.az-mypro-row{border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.72);border-radius:16px;padding:12px}.az-mypro-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.az-mypro-title{min-width:0}.az-mypro-title strong{display:block;font-size:15px}.az-mypro-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;color:#cbd5e1;font-size:12px}.az-mypro-badge{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.24);background:rgba(2,6,23,.45);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;color:#dbeafe}.az-mypro-badge.paid{color:#bbf7d0;background:rgba(22,163,74,.14);border-color:rgba(22,163,74,.28)}.az-mypro-badge.pending{color:#fde68a;background:rgba(180,83,9,.14);border-color:rgba(180,83,9,.28)}.az-mypro-badge.bad{color:#fecaca;background:rgba(220,38,38,.14);border-color:rgba(220,38,38,.28)}.az-mypro-amount{font-size:17px;font-weight:950;color:#fef3c7;white-space:nowrap}.az-mypro-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.az-mypro-empty{padding:18px;text-align:center;color:#cbd5e1;border:1px dashed rgba(148,163,184,.30);border-radius:14px}.az-mypro-error{padding:10px 12px;background:rgba(180,83,9,.16);border:1px solid rgba(251,191,36,.28);border-radius:12px;color:#fde68a;margin-bottom:10px;font-size:13px}
+      @media(max-width:720px){.az-mypro-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.az-mypro-tools{grid-template-columns:1fr 1fr}.az-mypro-tools input{grid-column:1/-1}.az-mypro-top{display:block}.az-mypro-amount{margin-top:8px}.az-mypro-card{max-height:92vh}.az-mypro-body{padding:12px}.az-mypro-actions .az-mypro-action{flex:1 1 120px}}
+    `;
+    document.head.appendChild(style);
+    modal = document.createElement('div');
+    modal.id = 'azobssMyPurchasesProModal';
+    modal.innerHTML = `<div class="az-mypro-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesProTitle"><div class="az-mypro-head"><h3 id="azMyPurchasesProTitle">🧾 My Purchases Pro</h3><button type="button" class="az-mypro-close" aria-label="Close">×</button></div><div class="az-mypro-body"><p class="az-mypro-note">Semua pembelian anda dalam satu tempat: PA/BM, Software dan CAD Tools. Receipt PDF boleh dibuka semula dari sini.</p><div id="azMyProError"></div><div class="az-mypro-kpis" id="azMyProKpis"></div><div class="az-mypro-tools"><input id="azMyProSearch" placeholder="Search product / order ID / state..."><select id="azMyProCategory"><option value="all">All Categories</option><option value="PA/BM">PA/BM</option><option value="Software">Software</option><option value="CAD Tools">CAD Tools</option></select><select id="azMyProStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="active">Download Active</option><option value="expired">Expired / Used</option><option value="failed">Failed / Cancelled</option></select><button id="azMyProRefresh" type="button">Refresh</button></div><div class="az-mypro-list" id="azMyProList"><div class="az-mypro-empty">Loading...</div></div></div></div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target === modal || e.target.closest('.az-mypro-close')) modal.classList.remove('is-open'); });
+    modal.querySelector('#azMyProSearch')?.addEventListener('input', e => { state.q = e.target.value || ''; render(); });
+    modal.querySelector('#azMyProCategory')?.addEventListener('change', e => { state.category = e.target.value || 'all'; render(); });
+    modal.querySelector('#azMyProStatus')?.addEventListener('change', e => { state.status = e.target.value || 'all'; render(); });
+    modal.querySelector('#azMyProRefresh')?.addEventListener('click', loadRows);
+    modal.addEventListener('click', handleActionClick);
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') modal.classList.remove('is-open'); });
+    return modal;
+  }
+  function filteredRows(){
+    const q = String(state.q || '').trim().toLowerCase();
+    return state.rows.filter(r => {
+      if(state.category !== 'all' && cleanCategory(r.category) !== state.category) return false;
+      const st = String(r.status || '').toLowerCase();
+      if(state.status === 'paid' && !isPaid(r)) return false;
+      if(state.status === 'pending' && (isPaid(r) || st.includes('fail') || st.includes('cancel'))) return false;
+      if(state.status === 'active' && !r.downloadActive) return false;
+      if(state.status === 'expired' && !(isPaid(r) && !r.downloadActive)) return false;
+      if(state.status === 'failed' && !(st.includes('fail') || st.includes('cancel') || st.includes('reject') || st.includes('expired'))) return false;
+      if(!q) return true;
+      return [r.recordId,r.category,r.status,r.productName,r.productId,r.itemCode,r.state,r.amountText,r.dateText].join(' ').toLowerCase().includes(q);
+    });
+  }
+  function renderKpis(rows){
+    const paidRows = rows.filter(isPaid);
+    const total = paidRows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+    const active = rows.filter(r=>r.downloadActive).length;
+    const kpis = document.getElementById('azMyProKpis');
+    if(kpis) kpis.innerHTML = `<div class="az-mypro-kpi"><span>Total Paid</span><strong>${esc(money(total))}</strong></div><div class="az-mypro-kpi"><span>Records</span><strong>${esc(rows.length)}</strong></div><div class="az-mypro-kpi"><span>Active Downloads</span><strong>${esc(active)}</strong></div><div class="az-mypro-kpi"><span>Paid Orders</span><strong>${esc(paidRows.length)}</strong></div>`;
+  }
+  function statusBadge(r){
+    const st = String(r.status || (isPaid(r) ? 'paid' : 'pending')).toLowerCase();
+    const cls = isPaid(r) ? 'paid' : ((st.includes('fail') || st.includes('cancel') || st.includes('reject')) ? 'bad' : 'pending');
+    return `<span class="az-mypro-badge ${cls}">${esc(st.toUpperCase())}</span>`;
+  }
+  function rowHtml(r, i){
+    const dlText = r.downloadActive ? `Download ${Number(r.downloadUsed||0)}/${Number(r.downloadMax||1)}` : (isPaid(r) ? `Download ${Number(r.downloadUsed||0)}/${Number(r.downloadMax||1)}` : 'Download locked');
+    const exp = r.downloadExpiresAtMs ? `Expiry: ${msDate(r.downloadExpiresAtMs)}` : '';
+    return `<div class="az-mypro-row" data-row-index="${i}"><div class="az-mypro-top"><div class="az-mypro-title"><strong>${esc(r.productName || 'AZOBSS Digital Product')}</strong><div class="az-mypro-meta"><span class="az-mypro-badge">${esc(cleanCategory(r.category))}</span>${statusBadge(r)}${r.productId?`<span class="az-mypro-badge">ID: ${esc(r.productId)}</span>`:''}${r.state?`<span class="az-mypro-badge">${esc(r.state)}</span>`:''}<span class="az-mypro-badge">${esc(r.recordId || '-')}</span><span class="az-mypro-badge">${esc(msDate(r.paidAtMs || r.createdAtMs))}</span>${exp?`<span class="az-mypro-badge">${esc(exp)}</span>`:''}</div></div><div class="az-mypro-amount">${esc(r.amountText || money(r.amount))}</div></div><div class="az-mypro-actions">${r.receiptUrl?`<button class="az-mypro-action secondary" data-mypro-action="receipt" data-index="${i}">View Receipt</button><button class="az-mypro-action secondary" data-mypro-action="pdf" data-index="${i}">PDF Receipt</button>`:''}${r.downloadActive?`<button class="az-mypro-action good" data-mypro-action="download" data-index="${i}">${esc(dlText)}</button>`:`<button class="az-mypro-action secondary" disabled>${esc(dlText)}</button>`}<button class="az-mypro-action warn" data-mypro-action="support" data-index="${i}">Contact Admin</button></div></div>`;
+  }
+  function render(){
+    ensureModal();
+    const list = document.getElementById('azMyProList');
+    const err = document.getElementById('azMyProError');
+    if(err) err.innerHTML = state.error ? `<div class="az-mypro-error">${esc(state.error)}${state.rows.length ? '<br>Showing available local records.' : ''}</div>` : '';
+    const rows = filteredRows();
+    renderKpis(rows);
+    if(!list) return;
+    if(state.loading) { list.innerHTML = '<div class="az-mypro-empty">Loading purchases...</div>'; return; }
+    if(!rows.length){ list.innerHTML = '<div class="az-mypro-empty">Belum ada rekod pembelian untuk filter ini.</div>'; return; }
+    list.innerHTML = rows.map(rowHtml).join('');
+  }
+  async function fetchReceiptBlob(row, format, download){
+    const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+    let url = base + (format === 'pdf' ? (row.receiptPdfUrl || row.receiptUrl + '&format=pdf') : row.receiptUrl);
+    if(format === 'pdf' && download && !/[?&]download=1/.test(url)) url += (url.includes('?') ? '&' : '?') + 'download=1';
+    const headers = await tokenHeader();
+    const res = await fetch(url, { headers, cache:'no-store' });
+    if(!res.ok) throw new Error((await res.text().catch(()=>'')) || 'Receipt request failed.');
+    return await res.blob();
+  }
+  async function openReceipt(row, format){
+    const blob = await fetchReceiptBlob(row, format, format === 'pdf');
+    const url = URL.createObjectURL(blob);
+    if(format === 'pdf'){
+      const a = document.createElement('a');
+      a.href = url; a.download = (row.recordId || 'azobss-receipt').replace(/[^a-z0-9_-]+/gi,'-') + '.pdf'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 15000);
+    }else{
+      window.open(url, '_blank', 'noopener');
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    }
+  }
+  async function handleActionClick(e){
+    const btn = e.target && e.target.closest ? e.target.closest('[data-mypro-action]') : null;
+    if(!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    const rows = filteredRows();
+    const row = rows[Number(btn.dataset.index || 0)];
+    if(!row) return;
+    const action = btn.dataset.myproAction;
+    const old = btn.textContent;
+    try{
+      btn.disabled = true; btn.textContent = 'Please wait...';
+      if(action === 'receipt') await openReceipt(row, 'html');
+      else if(action === 'pdf') await openReceipt(row, 'pdf');
+      else if(action === 'download'){
+        if(row.source === 'purchaseLogs' && row.raw && typeof azobssClientControlledDownload === 'function' && typeof azobssPurchaseDownloadPayload === 'function'){
+          await azobssClientControlledDownload(azobssPurchaseDownloadPayload(row.raw), btn, e);
+          setTimeout(loadRows, 1400);
+        }else if(row.downloadUrl){ window.open(row.downloadUrl, '_blank', 'noopener'); }
+      }else if(action === 'support'){
+        try{
+          const chat = document.querySelector('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"],[aria-label="Contact Admin / Support"]');
+          if(chat) chat.click(); else location.href = '/#support';
+        }catch(_){ location.href = '/#support'; }
+      }
+    }catch(err){ alert(err && err.message ? err.message : String(err)); }
+    finally{ btn.disabled = false; btn.textContent = old; }
+  }
+  window.azobssOpenMyPurchases = async function(){
+    const modal = ensureModal();
+    try{ document.getElementById('azobssMyPurchasesModal')?.classList.remove('is-open'); }catch(_){ }
+    modal.classList.add('is-open');
+    await loadRows();
+  };
+  window.addEventListener('azobss-my-purchases-updated', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) loadRows(); });
+})();
+
+
 
 // AZOBSS PATCH 215: PA/BM owner-only admin records UI final guard helper
 (function(){

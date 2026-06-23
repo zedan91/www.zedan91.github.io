@@ -25,12 +25,9 @@ Firebase:
 - Render backend deploy is required.
 - Firebase Rules update is not required.
 
-## AZOBSS Patch (306) - Admin Payment Receipt / Invoice PDF
 
-- Added Admin Payment Logs receipt actions: Receipt, PDF, and Email Receipt.
-- Added protected backend receipt endpoints for PA/BM `purchaseLogs` and Software/CAD `premiumOrders`.
-- Added PDF receipt generation using backend `pdfkit`.
-- Customer Software/CAD receipt token URL now supports `format=pdf`.
-- No Firebase Rules update required.
-- Render backend deploy required because `deploy-server.js` changed.
-
+## Patch 307 - Customer My Purchases Pro
+- Customer My Purchases now supports PA/BM + Software + CAD records.
+- Includes category/status/search filters, receipt HTML/PDF, active download action, and Contact Admin shortcut.
+- Backend adds protected /api/my-purchases and /api/my-purchases/receipt/:id endpoints.
+- Render backend deploy required. Firebase Rules update not required.

@@ -1,0 +1,14 @@
+AZOBSS PATCH 307 - Customer My Purchases Pro
+
+Scope:
+- Adds Customer My Purchases Pro modal for PA/BM + Software + CAD Tools.
+- Adds backend GET /api/my-purchases protected by Firebase ID token.
+- Adds backend GET /api/my-purchases/receipt/:id protected by Firebase ID token for customer receipt HTML/PDF.
+- Adds filters for category/status/search and KPI summary in the modal.
+- Adds View Receipt, PDF Receipt, Download, and Contact Admin actions.
+- Does not change ToyyibPay strict paid verification or admin payment/commission flow.
+
+Deploy:
+- GitHub Pages deploy required for assets/js/azobss-global-auth.js.
+- Render backend deploy required for deploy-server.js endpoints.
+- Firebase Rules update not required because customer purchase API uses backend Firebase Admin SDK plus Firebase ID token owner check.

@@ -3557,6 +3557,231 @@ async function azFindAdminPaymentReceiptRecord(identifier = "", source = "") {
   }
   return null;
 }
+
+
+// AZOBSS PATCH 307: Customer My Purchases Pro backend helpers.
+function azMyPurchasesIdentityNeedles(identity = {}) {
+  const out = new Set();
+  [identity.uid, identity.email, identity.authEmail, identity.profileEmail, identity.username]
+    .forEach(v => { const s = String(v || "").trim().toLowerCase(); if (s) out.add(s); });
+  return out;
+}
+function azMyPurchasesRecordValues(row = {}) {
+  const user = row.user && typeof row.user === "object" ? row.user : {};
+  const product = row.product && typeof row.product === "object" ? row.product : {};
+  return [
+    row.uid, row.userUid, row.buyerUid, row.customerUid, row.createdByUid, row.memberUid, user.uid,
+    row.email, row.buyerEmail, row.customerEmail, row.billEmail, row.userEmail, user.email,
+    row.username, row.usernameKey, row.displayName, row.buyerName, row.customerName, user.username, user.usernameKey, user.displayName,
+    row.receiptBuyerEmail, row.receiptBuyerUsername,
+    product.email, product.username, product.usernameKey
+  ].map(v => String(v || "").trim().toLowerCase()).filter(Boolean);
+}
+function azMyPurchasesBelongsToIdentity(row = {}, identity = {}) {
+  if (!identity || !identity.uid) return false;
+  if (identity.isAdmin) return true;
+  const needles = azMyPurchasesIdentityNeedles(identity);
+  if (!needles.size) return false;
+  const vals = azMyPurchasesRecordValues(row);
+  return vals.some(v => needles.has(v));
+}
+function azMyPurchasesMs(row = {}) {
+  const direct = Number(row.paidAtMs || row.completedAtMs || row.updatedAtMs || row.createdAtMs || row.createdMs || row.timestampMs || 0);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const dates = [row.paidAt, row.completedAt, row.updatedAt, row.createdAt, row.createdAtClient, row.date, row.time];
+  for (const d of dates) {
+    if (d && typeof d.toMillis === "function") return d.toMillis();
+    const ms = Date.parse(String(d || ""));
+    if (ms) return ms;
+  }
+  return 0;
+}
+function azMyPurchasesPaBmDownloadMeta(row = {}) {
+  const paid = azReceiptStatusBucket(row) === "paid";
+  const used = Math.max(0, Number(row.downloadCount || row.usedDownloads || 0) || 0);
+  const max = Math.max(1, Number(row.maxDownloads || row.maxDownload || 5) || 5);
+  let expiresAtMs = Number(row.downloadExpiresAtMs || row.expiresAtMs || 0) || 0;
+  const paidAtMs = Number(row.paidAtMs || row.downloadResetAtMs || row.updatedAtMs || row.createdAtMs || 0) || 0;
+  if (!expiresAtMs && paidAtMs) expiresAtMs = paidAtMs + (7 * 24 * 60 * 60 * 1000);
+  const expired = !!(expiresAtMs && Date.now() > expiresAtMs);
+  return { used, max, expiresAtMs, expired, active: !!(paid && used < max && !expired) };
+}
+function azMyPurchasesPremiumDownloadMeta(row = {}, req = null) {
+  const paid = azReceiptStatusBucket(row) === "paid";
+  const token = cleanPremiumText(row.downloadToken || row.token || "", 220);
+  const used = Math.max(0, Number(row.downloadCount || row.usedDownloads || 0) || 0);
+  const max = Math.max(1, Number(row.maxDownload || row.maxDownloads || 1) || 1);
+  let expiresAtMs = Number(row.tokenExpiresAtMs || row.downloadExpiresAtMs || row.expiresAtMs || 0) || 0;
+  if (!expiresAtMs && row.tokenExpiresAt) expiresAtMs = Date.parse(String(row.tokenExpiresAt || "")) || 0;
+  if (!expiresAtMs && row.expiresAt) expiresAtMs = Date.parse(String(row.expiresAt || "")) || 0;
+  const expired = !!(expiresAtMs && Date.now() > expiresAtMs);
+  const base = req ? publicBaseUrlFromReq(req) : "";
+  return { used, max, expiresAtMs, expired, active: !!(paid && token && used < max && !expired), url: token && base ? `${base}/api/premium/download/${encodeURIComponent(token)}` : "" };
+}
+function azMyPurchasesPublicRow(row = {}, source = "", docId = "", req = null) {
+  const src = cleanPremiumText(source || row.__source || row._azSource || "", 80);
+  const isPremium = src.toLowerCase().includes("premium");
+  const normalized = azNormalizePaymentReceiptOrder({ docId, id: docId, ...row }, isPremium ? "premiumOrders" : "purchaseLogs");
+  const category = azReceiptCategory({ ...row, receiptCategory: normalized.receiptCategory, source: src });
+  const recordId = cleanPremiumText(docId || row.orderId || row.billCode || row.paymentReference || row.transactionId || row.txnId || row.id || row.itemCode || normalized.receiptNo, 180);
+  const amount = azReceiptAmountNumber(row) || Number(normalized.receiptAmount || 0) || 0;
+  const status = azReceiptStatusBucket(row);
+  const download = isPremium ? azMyPurchasesPremiumDownloadMeta(row, req) : azMyPurchasesPaBmDownloadMeta(row);
+  const createdAtMs = azMyPurchasesMs(row);
+  const paidAtMs = Number(row.paidAtMs || row.completedAtMs || 0) || (row.paidAt ? Date.parse(String(row.paidAt)) || 0 : 0) || (status === "paid" ? createdAtMs : 0);
+  const receiptPath = `/api/my-purchases/receipt/${encodeURIComponent(recordId)}?source=${encodeURIComponent(isPremium ? "premiumOrders" : "purchaseLogs")}`;
+  return {
+    recordId,
+    source: isPremium ? "premiumOrders" : "purchaseLogs",
+    category,
+    status,
+    isPaid: status === "paid",
+    productName: normalized.receiptProductName || azReceiptProductName(row),
+    productId: normalized.receiptProductId || azReceiptProductId(row),
+    itemCode: cleanPremiumText(row.itemCode || row.noPa || row.noBm || "", 120),
+    state: cleanPremiumText(row.negeri || row.state || row.stateName || "", 120),
+    amount,
+    amountText: normalized.receiptAmountText || azMoneyRm(amount),
+    username: normalized.receiptBuyerUsername || azReceiptBuyerUsername(row),
+    email: normalized.receiptBuyerEmail || azReceiptBuyerEmail(row),
+    createdAtMs,
+    paidAtMs,
+    dateText: normalized.receiptDateText || "-",
+    downloadUsed: download.used,
+    downloadMax: download.max,
+    downloadExpiresAtMs: download.expiresAtMs,
+    downloadExpired: download.expired,
+    downloadActive: download.active,
+    downloadUrl: download.url || "",
+    receiptUrl: receiptPath,
+    receiptPdfUrl: `${receiptPath}&format=pdf`,
+    raw: isPremium ? null : {
+      id: docId || row.id || "",
+      firestoreId: docId || row.firestoreId || row.purchaseLogId || row.id || "",
+      purchaseLogId: docId || row.purchaseLogId || row.firestoreId || row.id || "",
+      productType: row.productType || row.type || "PA",
+      itemCode: row.itemCode || row.noPa || row.noBm || "",
+      negeri: row.negeri || row.state || "",
+      amount: row.amount || row.saleAmount || amount,
+      status: row.status || row.paymentStatus || "",
+      uid: row.uid || "",
+      usernameKey: row.usernameKey || row.username || "",
+      displayName: row.displayName || row.username || row.usernameKey || "",
+      email: row.email || row.buyerEmail || "",
+      createdAtMs: row.createdAtMs || createdAtMs,
+      paidAtMs: row.paidAtMs || paidAtMs,
+      downloadUrl: row.downloadUrl || row.fileUrl || "",
+      filename: row.filename || "",
+      downloadCount: row.downloadCount || 0,
+      maxDownloads: row.maxDownloads || row.maxDownload || 5,
+      downloadExpiresAtMs: row.downloadExpiresAtMs || download.expiresAtMs,
+      paymentOrderId: row.paymentOrderId || row.orderId || "",
+      billCode: row.billCode || ""
+    }
+  };
+}
+async function azLoadMyPurchasesForIdentity(req, identity = {}, limitRows = 300) {
+  const rows = [];
+  const seen = new Set();
+  const db = getAzobssBackendDb();
+  const push = (row, source, docId) => {
+    if (!row || !azMyPurchasesBelongsToIdentity(row, identity)) return;
+    const pub = azMyPurchasesPublicRow(row, source, docId, req);
+    const key = `${pub.source}:${pub.recordId || docId || rows.length}`.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    rows.push(pub);
+  };
+  const uid = cleanPremiumText(identity.uid || "", 160);
+  const username = cleanPremiumText(identity.username || "", 120).toLowerCase();
+  const emails = Array.from(new Set([identity.email, identity.authEmail, identity.profileEmail].map(v => String(v || "").trim().toLowerCase()).filter(Boolean)));
+
+  if (db) {
+    const queryTasks = [];
+    function addQuery(col, field, value, source) {
+      if (!value) return;
+      queryTasks.push((async () => {
+        try {
+          const snap = await db.collection(col).where(field, "==", value).limit(limitRows).get();
+          snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, source, d.id));
+        } catch (_) {}
+      })());
+    }
+    addQuery("purchaseLogs", "uid", uid, "purchaseLogs");
+    addQuery("purchaseLogs", "usernameKey", username, "purchaseLogs");
+    emails.forEach(e => addQuery("purchaseLogs", "email", e, "purchaseLogs"));
+    addQuery("premiumOrders", "uid", uid, "premiumOrders");
+    addQuery("premiumOrders", "user.uid", uid, "premiumOrders");
+    addQuery("premiumOrders", "username", username, "premiumOrders");
+    addQuery("premiumOrders", "usernameKey", username, "premiumOrders");
+    addQuery("premiumOrders", "user.usernameKey", username, "premiumOrders");
+    emails.forEach(e => {
+      addQuery("premiumOrders", "email", e, "premiumOrders");
+      addQuery("premiumOrders", "buyerEmail", e, "premiumOrders");
+      addQuery("premiumOrders", "user.email", e, "premiumOrders");
+    });
+    await Promise.all(queryTasks);
+
+    // Embedded PA/BM fallback inside user profile.
+    try {
+      let userDocs = [];
+      if (uid) {
+        const q = await db.collection("users").where("uid", "==", uid).limit(3).get();
+        q.forEach(d => userDocs.push(d));
+      }
+      if (username) {
+        const d = await db.collection("users").doc(username).get();
+        if (d.exists) userDocs.push(d);
+      }
+      const userSeen = new Set();
+      userDocs.forEach(d => {
+        if (!d || !d.exists || userSeen.has(d.id)) return;
+        userSeen.add(d.id);
+        const u = d.data() || {};
+        const list = Array.isArray(u.purchaseRecords) ? u.purchaseRecords : [];
+        list.forEach((r, i) => push({ ...(r || {}), usernameKey:r.usernameKey || u.usernameKey || d.id, username:r.username || u.usernameKey || d.id, email:r.email || u.email || u.authEmail || "", uid:r.uid || u.uid || "", docId:r.firestoreId || r.purchaseLogId || r.id || `embedded_${i}` }, "purchaseLogs", r.firestoreId || r.purchaseLogId || r.id || `embedded_${i}`));
+      });
+    } catch (_) {}
+  }
+
+  // Render local JSON fallback for premium orders, then owner-filter strictly before returning.
+  try {
+    const localPremium = readPremiumOrders();
+    localPremium.forEach((x, i) => push(x || {}, "premiumOrders", x.orderId || x.billCode || `local_${i}`));
+  } catch (_) {}
+
+  rows.sort((a,b) => Number(b.paidAtMs || b.createdAtMs || 0) - Number(a.paidAtMs || a.createdAtMs || 0));
+  return rows.slice(0, limitRows);
+}
+async function azFindMyPurchaseReceiptRecord(identifier = "", source = "", identity = {}) {
+  const id = cleanPremiumText(identifier || "", 180);
+  if (!id) return null;
+  const src = String(source || "").toLowerCase();
+  let order = await azFindAdminPaymentReceiptRecord(id, src);
+  if (order && azMyPurchasesBelongsToIdentity(order, identity)) return order;
+
+  // The normalized receipt can lose UID fields, so retry through the full customer rows.
+  const fakeReq = null;
+  const rows = await azLoadMyPurchasesForIdentity(fakeReq, identity, 500);
+  const match = rows.find(r => [r.recordId, r.productId, r.itemCode].some(v => String(v || "") === id) && (!src || String(r.source || "").toLowerCase().includes(src.includes("premium") ? "premium" : "purchase")));
+  if (!match) return null;
+  order = await azFindAdminPaymentReceiptRecord(match.recordId, match.source);
+  if (order && azMyPurchasesBelongsToIdentity(order, identity)) return order;
+  // Last resort: build receipt from public row fields.
+  return azNormalizePaymentReceiptOrder({
+    receiptNo: match.recordId,
+    status: match.status,
+    category: match.category,
+    productName: match.productName,
+    productId: match.productId,
+    saleAmount: match.amount,
+    username: match.username || identity.username || "",
+    email: match.email || identity.email || identity.authEmail || "",
+    paidAtMs: match.paidAtMs,
+    createdAtMs: match.createdAtMs,
+    receiptSource: match.source
+  }, match.source);
+}
 function azReceiptEmailHtml(order = {}) {
   const o = azNormalizePaymentReceiptOrder(order || {}, order && order.receiptSource || "");
   return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:720px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Payment Receipt / Invoice</h2><p>Your purchase receipt is attached as PDF.</p><p><b>Receipt:</b> ${azHtmlEscape(o.receiptNo)}<br><b>Product:</b> ${azHtmlEscape(o.receiptProductName)}<br><b>Amount:</b> ${azHtmlEscape(o.receiptAmountText)}<br><b>Status:</b> ${azHtmlEscape(String(o.receiptStatus||'').toUpperCase())}<br><b>Date:</b> ${azHtmlEscape(o.receiptDateText)}</p><p style="font-size:12px;color:#64748b">AZOBSS Digital Store</p></div></body></html>`;
@@ -4938,6 +5163,8 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
+    if (pathname === "/api/my-purchases" && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-read", 80, 10 * 60 * 1000)) return;
+    if (pathname.startsWith("/api/my-purchases/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-receipt", 60, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats" && req.method === "GET" && azRateLimitOrSend(req, res, "software-stats-read", 240, 60 * 1000)) return;
     if (pathname === "/api/software-stats/download" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-download", 60, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats/like" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-like", 80, 10 * 60 * 1000)) return;
@@ -5218,6 +5445,49 @@ async function handler(req, res) {
 
 
 
+
+
+    if (pathname === "/api/my-purchases" && req.method === "GET") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Login token required to view My Purchases." }, null, 2), "application/json");
+        }
+        const maxRows = Math.max(1, Math.min(500, Number(parsed.query.limit || 300) || 300));
+        const records = await azLoadMyPurchasesForIdentity(req, identity, maxRows);
+        return send(res, 200, JSON.stringify({ ok:true, count:records.length, records }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err), records:[] }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname.startsWith("/api/my-purchases/receipt/") && req.method === "GET") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Login token required to view your receipt." }, null, 2), "application/json");
+        }
+        const receiptId = decodeURIComponent(path.basename(pathname));
+        const source = cleanPremiumText(parsed.query.source || "", 80);
+        const format = String(parsed.query.format || "html").toLowerCase();
+        const order = await azFindMyPurchaseReceiptRecord(receiptId, source, identity);
+        if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Receipt not found for this account." }, null, 2), "application/json");
+        if (format === "json") return send(res, 200, JSON.stringify({ ok:true, receipt:order }, null, 2), "application/json");
+        if (format === "pdf") {
+          const pdf = await buildReceiptPdfBuffer(order);
+          const disposition = String(parsed.query.download || "") === "1" ? "attachment" : "inline";
+          res.writeHead(200, azSecurityHeaders({
+            "Content-Type":"application/pdf",
+            "Content-Disposition": `${disposition}; filename="${azReceiptFilename(order, "pdf")}"`
+          }));
+          res.end(pdf);
+          return;
+        }
+        return send(res, 200, buildReceiptHtml(order), "text/html; charset=utf-8", { "Content-Disposition": `inline; filename="${azReceiptFilename(order, "html")}"` });
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
 
     if (pathname === "/api/admin/payment-notifications" && req.method === "GET") {
       try {
