@@ -16451,6 +16451,152 @@ html body .downloads-grid > .download-card > p{
 })();
 </script>
 
+
+
+<!-- AZOBSS PATCH 325: Software/CAD description 3-line ellipsis clamp -->
+<style id="azobss-software-cad-desc-3line-ellipsis-fix-325">
+/* AZOBSS 325
+   Goal: long Software/CAD descriptions must show only 3 lines with ellipsis,
+   so the CTA can stay pinned near downloads/rating and the card height stays neat. */
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareGrid > .download-card > p,
+html body #softwareDownloadsGrid > .download-card > p,
+html body .downloads-grid > .download-card > p{
+  order:4!important;
+  display:block!important;
+  width:min(100%,246px)!important;
+  max-width:246px!important;
+  min-height:70px!important;
+  height:70px!important;
+  max-height:70px!important;
+  margin:0 auto!important;
+  padding:0 8px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  text-align:center!important;
+  text-align-last:center!important;
+  line-height:1.35!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  text-wrap:initial!important;
+}
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293{
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:3!important;
+  line-clamp:3!important;
+  width:100%!important;
+  max-width:100%!important;
+  max-height:calc(1.35em * 3)!important;
+  margin:0 auto!important;
+  padding:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  text-align:center!important;
+  text-align-last:center!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  transform:none!important;
+}
+/* Plain <p> descriptions without wrapper also get true 3-line clamp. */
+html body #softwareGrid > .download-card > p:not(.azobss-sw-desc-target-097),
+html body #softwareDownloadsGrid > .download-card > p:not(.azobss-sw-desc-target-097),
+html body .downloads-grid > .download-card > p:not(.azobss-sw-desc-target-097){
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:3!important;
+  line-clamp:3!important;
+  text-overflow:ellipsis!important;
+}
+/* More chip can overlay near the clipped description, but it must not create extra height or push the CTA. */
+html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+html body .downloads-grid > .download-card > .az-desc-more-outside-322{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:100px!important;
+  top:auto!important;
+  transform:translateX(-50%)!important;
+  margin:0!important;
+  z-index:64!important;
+}
+/* Keep CTA pinned just above footer after desc is clamped. */
+html body #softwareGrid > .download-card > .download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn,
+html body .downloads-grid > .download-card > .download-btn,
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row{
+  bottom:52px!important;
+}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-target-097,
+  html body #softwareGrid > .download-card > p,
+  html body #softwareDownloadsGrid > .download-card > p,
+  html body .downloads-grid > .download-card > p{
+    width:min(100%,238px)!important;
+    max-width:238px!important;
+    min-height:66px!important;
+    height:66px!important;
+    max-height:66px!important;
+    line-height:1.32!important;
+    padding:0 7px!important;
+  }
+  html body #softwareGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293{
+    max-height:calc(1.32em * 3)!important;
+  }
+}
+</style>
+<script id="azobss-software-cad-desc-3line-ellipsis-fix-325">
+(function(){
+  if(window.__azobssDesc3LineEllipsis325) return;
+  window.__azobssDesc3LineEllipsis325 = true;
+  function qsa(root, sel){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+  function apply(){
+    qsa(document, '#softwareGrid .download-card, #softwareDownloadsGrid .download-card, .downloads-grid .download-card').forEach(function(card){
+      var desc = card.querySelector(':scope > .azobss-sw-desc-target-097, :scope > p');
+      if(desc){
+        desc.classList.add('az-desc-clamp-3line-325');
+        var copy = desc.querySelector(':scope > .az-desc-copy-293') || desc;
+        var full = (copy.textContent || '').trim();
+        if(full && !desc.getAttribute('title')) desc.setAttribute('title', full);
+        desc.style.setProperty('height', window.matchMedia('(max-width:760px)').matches ? '66px' : '70px', 'important');
+        desc.style.setProperty('max-height', window.matchMedia('(max-width:760px)').matches ? '66px' : '70px', 'important');
+        desc.style.setProperty('overflow','hidden','important');
+        if(copy){
+          copy.style.setProperty('display','-webkit-box','important');
+          copy.style.setProperty('-webkit-box-orient','vertical','important');
+          copy.style.setProperty('-webkit-line-clamp','3','important');
+          copy.style.setProperty('overflow','hidden','important');
+          copy.style.setProperty('text-overflow','ellipsis','important');
+          copy.style.setProperty('text-align','center','important');
+        }
+      }
+      var action = card.querySelector(':scope > .az-software-buy-cart-row, :scope > .download-btn');
+      if(action){
+        action.style.setProperty('bottom','52px','important');
+        action.style.setProperty('margin','0','important');
+      }
+    });
+  }
+  function schedule(){ clearTimeout(window.__azobssDesc3LineEllipsis325Timer); window.__azobssDesc3LineEllipsis325Timer=setTimeout(apply,40); }
+  document.addEventListener('DOMContentLoaded', function(){ apply(); [100,350,800,1500,3000].forEach(function(t){ setTimeout(apply,t); }); });
+  if(document.readyState !== 'loading'){ apply(); [100,350,800,1500,3000].forEach(function(t){ setTimeout(apply,t); }); }
+  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(_){ }
+})();
+</script>
+
 </body>
 </html>
 
