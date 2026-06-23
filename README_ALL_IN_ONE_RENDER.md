@@ -91,3 +91,6 @@ Firebase Rules tidak perlu update.
 - Added real 3-line ellipsis clamp to Software Tools and CAD Tools pages.
 - Kept Download Now / Buy Now pinned near footer downloads/rating.
 - No Firebase Rules update. No Render deploy required.
+
+
+Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. No Firebase Rules or Render backend update required.

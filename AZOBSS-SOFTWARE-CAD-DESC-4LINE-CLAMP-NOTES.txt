@@ -1,0 +1,7 @@
+AZOBSS Software/CAD Desc 4-Line Clamp Fix (329)
+
+- Updated Software/CAD card descriptions from 3 visible lines to 4 visible lines.
+- Applied to /Software-Tools/, /CAD-Tools-&-Resources/, and root fallback index.html.
+- Kept CSS-only no-blink approach from patch 328.
+- Firebase Rules: no update required.
+- Render backend: no deploy required.
