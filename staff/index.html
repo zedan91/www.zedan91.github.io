@@ -436,6 +436,103 @@ body[data-dashboard-page="staff"] code{
 }
 </style>
 
+
+
+<style id="azobss-staff-dashboard-header-compact-fix-318">
+/* (318) Staff/Semi-admin dashboard header compact fix
+   Rapatkan bahagian atas staff dashboard supaya tidak makan ruang. */
+body[data-dashboard-page="staff"] .shell{
+  min-height:calc(100vh - 50px)!important;
+}
+body[data-dashboard-page="staff"] .main{
+  padding-top:6px!important;
+  padding-left:22px!important;
+  padding-right:22px!important;
+}
+body[data-dashboard-page="staff"] .main > h1{
+  font-size:34px!important;
+  line-height:1.03!important;
+  margin:2px 0 4px!important;
+  letter-spacing:.4px!important;
+}
+body[data-dashboard-page="staff"] .main > p.muted{
+  margin:0 0 8px!important;
+  font-size:13px!important;
+  line-height:1.35!important;
+}
+body[data-dashboard-page="staff"] .az-staff-hero{
+  margin:6px 0 10px!important;
+  padding:16px 18px!important;
+  border-radius:18px!important;
+}
+body[data-dashboard-page="staff"] .az-staff-hero .az-small{
+  font-size:12px!important;
+  margin-bottom:4px!important;
+}
+body[data-dashboard-page="staff"] .az-staff-hero h2{
+  font-size:26px!important;
+  line-height:1.08!important;
+  margin:0 0 6px!important;
+}
+body[data-dashboard-page="staff"] .az-staff-hero p{
+  margin:4px 0!important;
+  line-height:1.35!important;
+}
+body[data-dashboard-page="staff"] .az-quick-actions{
+  margin-top:10px!important;
+  gap:8px!important;
+}
+body[data-dashboard-page="staff"] .az-quick-actions button{
+  padding:7px 11px!important;
+  font-size:13px!important;
+}
+body[data-dashboard-page="staff"] .az-status-strip,
+body[data-dashboard-page="staff"] .az-friendly-grid{
+  margin:10px 0!important;
+}
+body[data-dashboard-page="staff"] .az-status-card{
+  padding:10px!important;
+}
+body[data-dashboard-page="staff"] .az-stat-card{
+  min-height:84px!important;
+  padding:12px!important;
+}
+body[data-dashboard-page="staff"] .az-stat-value{
+  font-size:27px!important;
+  margin-top:4px!important;
+}
+body[data-dashboard-page="staff"] .card{
+  margin-top:10px!important;
+  margin-bottom:10px!important;
+}
+@media(max-height:760px) and (min-width:801px){
+  body[data-dashboard-page="staff"] .main{padding-top:2px!important}
+  body[data-dashboard-page="staff"] .main > h1{font-size:30px!important;margin:0 0 2px!important}
+  body[data-dashboard-page="staff"] .main > p.muted{margin-bottom:6px!important;font-size:12px!important}
+  body[data-dashboard-page="staff"] .az-staff-hero{padding:13px 16px!important;margin:4px 0 8px!important}
+  body[data-dashboard-page="staff"] .az-staff-hero h2{font-size:23px!important}
+}
+@media(max-width:800px){
+  body[data-dashboard-page="staff"] .main{
+    padding:10px 14px 76px!important;
+  }
+  body[data-dashboard-page="staff"] .main > h1{
+    font-size:28px!important;
+    margin:4px 0 4px!important;
+  }
+  body[data-dashboard-page="staff"] .main > p.muted{
+    margin-bottom:8px!important;
+  }
+  body[data-dashboard-page="staff"] .az-staff-hero{
+    padding:14px!important;
+    margin:6px 0 10px!important;
+  }
+  body[data-dashboard-page="staff"] .az-staff-hero h2{
+    font-size:22px!important;
+  }
+}
+</style>
+
 </head>
 <body data-dashboard-page="staff">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->

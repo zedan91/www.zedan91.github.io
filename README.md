@@ -81,3 +81,15 @@ Notes:
 - Reduced top padding in main admin area and sidebar.
 - Tightened topbar and section title spacing so dashboard header takes less vertical space.
 - UI-only patch: no Firebase Rules update required, no Render backend deploy required.
+
+## Patch 318 - Staff Dashboard Header Compact Fix
+
+- Rapatkan header Staff/Semi-admin Dashboard ke atas.
+- Kecilkan sedikit tajuk `Staff Dashboard`.
+- Kurangkan jarak subtitle dan hero card.
+- Padatkan hero card, quick action button dan KPI bahagian atas.
+- Hanya ubah `/staff/index.html`.
+
+Firebase Rules: tidak perlu update.
+Render backend: tidak perlu deploy semula.
+Deploy: GitHub Pages sahaja.

@@ -60,3 +60,9 @@ Frontend-only patch:
 - Reduced top padding in main admin area and sidebar.
 - Tightened topbar and section title spacing so dashboard header takes less vertical space.
 - UI-only patch: no Firebase Rules update required, no Render backend deploy required.
+
+## Patch 318 - Staff Dashboard Header Compact Fix
+
+Patch ini hanya UI frontend untuk `/staff/index.html`.
+Render backend tidak perlu deploy semula.
+Firebase Rules tidak perlu update.

@@ -1,0 +1,16 @@
+AZOBSS PATCH 318 - STAFF DASHBOARD HEADER COMPACT FIX
+
+Scope:
+- Staff / Semi-admin dashboard only: /staff/index.html
+
+Changes:
+- Reduced top whitespace below sticky navigation.
+- Smaller Staff Dashboard title.
+- Tighter subtitle spacing.
+- Compact staff hero card spacing and heading.
+- Compact quick action buttons and top KPI spacing.
+- Added low-height laptop mode so content stays higher on screen.
+
+No Firebase Rules update required.
+No Render backend deploy required.
+GitHub Pages deploy only.
