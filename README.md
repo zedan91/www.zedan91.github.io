@@ -93,3 +93,9 @@ Notes:
 Firebase Rules: tidak perlu update.
 Render backend: tidak perlu deploy semula.
 Deploy: GitHub Pages sahaja.
+
+
+## AZOBSS Patch 321 - Software/CAD Card Description Center Fix
+- Centered Software/CAD card description text visually inside each card.
+- More chip no longer makes the description look off-center.
+- No Firebase Rules update. No Render deploy required.

@@ -66,3 +66,9 @@ Frontend-only patch:
 Patch ini hanya UI frontend untuk `/staff/index.html`.
 Render backend tidak perlu deploy semula.
 Firebase Rules tidak perlu update.
+
+
+## AZOBSS Patch 321 - Software/CAD Card Description Center Fix
+- Centered Software/CAD card description text visually inside each card.
+- More chip no longer makes the description look off-center.
+- No Firebase Rules update. No Render deploy required.
