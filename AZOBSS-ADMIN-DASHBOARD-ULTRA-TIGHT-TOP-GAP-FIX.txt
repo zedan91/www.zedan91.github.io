@@ -1,0 +1,17 @@
+AZOBSS PATCH (315) - ADMIN DASHBOARD ULTRA TIGHT TOP GAP FIX
+
+Tujuan:
+- Naikkan kandungan Admin Dashboard supaya lebih rapat dengan top navigation.
+- Buang ruang kosong/header besar Admin Control Center yang masih mengambil ruang atas.
+
+Perubahan:
+- topbar Admin Control Center disembunyikan dari flow admin page.
+- main content padding-top dikurangkan lagi.
+- section header, subtitle, hero Overview dan margin atas setiap section dipadatkan.
+- responsive desktop/laptop/mobile dikekalkan.
+
+Kesan:
+- Users / Overview / Sales Overview / Payment Logs / section lain naik lebih rapat.
+- Sidebar compact patch (312) kekal.
+- Tiada perubahan backend.
+- Tiada Firebase Rules update diperlukan.
