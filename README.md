@@ -45,3 +45,10 @@ Notes:
 - Includes category/status/search filters, receipt HTML/PDF, active download action, and Contact Admin shortcut.
 - Backend adds protected /api/my-purchases and /api/my-purchases/receipt/:id endpoints.
 - Render backend deploy required. Firebase Rules update not required.
+
+
+## (309) Admin Commission + Staff Roles Compact Card Fix
+- Compact card layout for Admin > Commission Manager > Commission Records.
+- Compact card layout for Admin > Staff Roles > Latest Staff Users.
+- No Firebase Rules update required.
+- Render backend deploy not required.

@@ -1115,6 +1115,190 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
 <a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+
+
+<style id="az-admin-commission-staffroles-compact-309">
+/* (309) Compact cards for Commission Manager + Staff Roles, matching compact Payment Logs style */
+#commissions .card:has(#adminCommissionList),
+#staffroles .card:has(#staffRolesList){
+  padding:10px!important;
+}
+#adminCommissionList,
+#staffRolesList.staff-role-list,
+#staffRolesList{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:6px!important;
+}
+#adminCommissionList .az-commission-row.item,
+#adminCommissionList .item.az-commission-row{
+  padding:6px 8px!important;
+  min-height:38px!important;
+  border-radius:10px!important;
+  background:rgba(15,23,42,.70)!important;
+  border:1px solid rgba(148,163,184,.18)!important;
+  box-shadow:none!important;
+}
+#adminCommissionList .az-commission-row-head{
+  display:grid!important;
+  grid-template-columns:18px minmax(0,1fr)!important;
+  gap:7px!important;
+  align-items:center!important;
+}
+#adminCommissionList .az-commission-row-head input[type="checkbox"]{
+  width:14px!important;
+  height:14px!important;
+  margin:0!important;
+}
+#adminCommissionList .az-commission-row-head > div{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  column-gap:8px!important;
+  row-gap:1px!important;
+  align-items:center!important;
+  min-width:0!important;
+}
+#adminCommissionList .az-commission-row .item-title{
+  grid-column:1!important;
+  font-size:12px!important;
+  line-height:1.15!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#adminCommissionList .az-commission-row .item-meta{
+  grid-column:1!important;
+  font-size:10.5px!important;
+  line-height:1.15!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  color:#94a3b8!important;
+}
+#adminCommissionList .az-commission-row .az-com-badge{
+  font-size:9.5px!important;
+  padding:1px 5px!important;
+  border-radius:999px!important;
+  margin-left:4px!important;
+}
+#adminCommissionList .az-commission-row .toolbar{
+  grid-column:2!important;
+  grid-row:1 / span 3!important;
+  align-self:center!important;
+  margin:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(44px,auto))!important;
+  gap:4px!important;
+  justify-content:end!important;
+  max-width:150px!important;
+}
+#adminCommissionList .az-commission-row .toolbar .btn,
+#adminCommissionList .az-commission-row .toolbar button{
+  min-height:24px!important;
+  padding:4px 6px!important;
+  border-radius:7px!important;
+  font-size:10.5px!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+}
+#staffRolesList.staff-role-list{
+  grid-template-columns:1fr!important;
+  gap:6px!important;
+}
+#staffRolesList .staff-role-card{
+  display:grid!important;
+  grid-template-columns:145px minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;
+  gap:3px 8px!important;
+  align-items:center!important;
+  padding:6px 8px!important;
+  min-height:36px!important;
+  border-radius:10px!important;
+  background:rgba(15,23,42,.70)!important;
+  border:1px solid rgba(148,163,184,.18)!important;
+  box-shadow:none!important;
+}
+#staffRolesList .staff-role-name{
+  grid-column:1!important;
+  grid-row:1!important;
+  font-size:12px!important;
+  line-height:1.1!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  color:#6ee7b7!important;
+}
+#staffRolesList .staff-role-meta{
+  grid-column:1!important;
+  grid-row:2!important;
+  font-size:10.5px!important;
+  line-height:1.1!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#staffRolesList .staff-role-badges{
+  grid-column:2!important;
+  grid-row:1 / span 2!important;
+  align-self:center!important;
+  margin:0!important;
+  display:flex!important;
+  gap:3px!important;
+  flex-wrap:wrap!important;
+}
+#staffRolesList .staff-role-badge{
+  padding:2px 5px!important;
+  font-size:9.5px!important;
+  line-height:1.05!important;
+  border-radius:999px!important;
+}
+#staffRolesList .staff-role-actions{
+  grid-column:3!important;
+  grid-row:1 / span 2!important;
+  align-self:center!important;
+  justify-content:flex-end!important;
+  margin:0!important;
+  display:flex!important;
+  gap:4px!important;
+  flex-wrap:nowrap!important;
+}
+#staffRolesList .staff-role-actions button{
+  min-height:24px!important;
+  padding:4px 7px!important;
+  border-radius:7px!important;
+  font-size:10.5px!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+}
+@media(max-width:860px){
+  #adminCommissionList .az-commission-row-head > div{
+    grid-template-columns:1fr!important;
+  }
+  #adminCommissionList .az-commission-row .toolbar{
+    grid-column:1!important;
+    grid-row:auto!important;
+    justify-content:start!important;
+    grid-template-columns:repeat(4,minmax(42px,auto))!important;
+    max-width:none!important;
+    margin-top:3px!important;
+  }
+  #staffRolesList .staff-role-card{
+    grid-template-columns:1fr!important;
+  }
+  #staffRolesList .staff-role-name,
+  #staffRolesList .staff-role-meta,
+  #staffRolesList .staff-role-badges,
+  #staffRolesList .staff-role-actions{
+    grid-column:1!important;
+    grid-row:auto!important;
+    justify-content:flex-start!important;
+  }
+}
+</style>
 <a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
 <a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
@@ -3333,8 +3517,8 @@ async function loadStaffRoles(){
       <div class="staff-role-meta">Role: <b>${esc(roleLabel(role))}</b></div>
       ${badgeHtml(x.permissions||{})}
       <div class="staff-role-actions">
-        <button class="staff-role-edit" data-staff-edit="${esc(d.id)}">✏️ Edit</button>
-        <button class="staff-role-reset" data-staff-reset="${esc(d.id)}">↩️ Reset User</button>
+        <button class="staff-role-edit" data-staff-edit="${esc(d.id)}">Edit</button>
+        <button class="staff-role-reset" data-staff-reset="${esc(d.id)}">Reset</button>
       </div>
     </div>`);
   });
@@ -3431,7 +3615,7 @@ function renderAdminCommissions(){
   const rows=adminCommissionFilteredCache.map(x=>{
     const amt=commissionAmountOf(x).toFixed(2), sale=commissionSaleAmountOf(x), owner=commissionRecordTitle(x), product=esc(commissionProductName(x)), statusRaw=commissionPayoutStatus(x), statusBucket=commissionStatusBucket(x), docId=esc(x.docId||''), rowKey=esc(x._azRowKey||x.docId||''), typeLabel=esc(commissionTypeLabel(x)), rate=commissionRateOf(x), source=esc(x._source||'');
     const payoutMeta=[x.payoutReference?('Ref: '+esc(x.payoutReference)):'',x.payoutMethod?('Method: '+esc(x.payoutMethod)):'',x.payoutNote?('Note: '+esc(x.payoutNote)):''].filter(Boolean).join(' • '); const selectDisabled=docId?'':'disabled';
-    return `<div class="item az-commission-row"><div class="az-commission-row-head"><input type="checkbox" value="${docId}" data-commission-select ${selectDisabled}><div style="flex:1;min-width:0"><div class="item-title">💸 ${owner} <span class="az-com-badge ${statusBucket}">${commissionStatusBadge(statusRaw)}</span> <span class="az-com-badge type">${typeLabel}</span></div><div class="item-meta">${product} • Commission RM${amt} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • Rate ${rate?rate.toFixed(1)+'%':'-'} • ${fmtDate(commissionCreatedMs(x))} ${source?('• '+source):''}</div><div class="item-meta">Order: ${esc(x.orderId||'-')} • Bill: ${esc(x.billCode||'-')} • Product ID: ${esc(x.productId||'-')} ${payoutMeta?(' • '+payoutMeta):''}</div><div class="toolbar" style="margin:6px 0 0"><button class="btn" data-commission-detail="${rowKey}">View Details</button><button class="btn" data-commission-payout="approved" data-commission-doc="${docId}" ${selectDisabled}>Approve</button><button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}" ${selectDisabled}>Mark Paid</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}" ${selectDisabled}>Reject</button><button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}" ${selectDisabled}>Pending</button><button class="btn gray" data-edit-commission="${docId}" ${selectDisabled}>Edit</button><button class="btn red" data-delete-commission="${docId}" ${selectDisabled}>Delete</button></div></div></div></div>`;
+    return `<div class="item az-commission-row"><div class="az-commission-row-head"><input type="checkbox" value="${docId}" data-commission-select ${selectDisabled}><div style="flex:1;min-width:0"><div class="item-title">💸 ${owner} <span class="az-com-badge ${statusBucket}">${commissionStatusBadge(statusRaw)}</span> <span class="az-com-badge type">${typeLabel}</span></div><div class="item-meta">${product} • Commission RM${amt} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • Rate ${rate?rate.toFixed(1)+'%':'-'} • ${fmtDate(commissionCreatedMs(x))} ${source?('• '+source):''}</div><div class="item-meta">Order: ${esc(x.orderId||'-')} • Bill: ${esc(x.billCode||'-')} • Product ID: ${esc(x.productId||'-')} ${payoutMeta?(' • '+payoutMeta):''}</div><div class="toolbar" style="margin:6px 0 0"><button class="btn" data-commission-detail="${rowKey}" title="View commission details">Detail</button><button class="btn" data-commission-payout="approved" data-commission-doc="${docId}" ${selectDisabled}>Approve</button><button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}" ${selectDisabled}>Paid</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}" ${selectDisabled}>Reject</button><button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}" ${selectDisabled}>Pending</button><button class="btn gray" data-edit-commission="${docId}" ${selectDisabled}>Edit</button><button class="btn red" data-delete-commission="${docId}" ${selectDisabled}>Delete</button></div></div></div></div>`;
   });
   const notice=adminApiNotice?`<div class="item"><div class="item-title">⚠️ Backend API notice</div><div class="item-meta">${esc(adminApiNotice)}</div></div>`:'';
   if($('#adminCommissionList')) $('#adminCommissionList').innerHTML=rows.join('')||notice||'<div class="item">No commission records.</div>';
@@ -4321,8 +4505,8 @@ onAuthStateChanged(auth,async user=>{
       <div class="staff-role-meta">Role: <b>${esc(roleLabel(x.role))}</b></div>
       ${badges(perms)}
       <div class="staff-role-actions">
-        <button class="staff-role-edit" data-staff-edit="${esc(username)}">✏️ Edit</button>
-        <button class="staff-role-reset" data-staff-reset="${esc(username)}">↩️ Reset User</button>
+        <button class="staff-role-edit" data-staff-edit="${esc(username)}">Edit</button>
+        <button class="staff-role-reset" data-staff-reset="${esc(username)}">Reset</button>
       </div>
     </div>`;
   }
