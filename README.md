@@ -23,3 +23,10 @@ Notes:
 - Keeps PA/BM reset download limit button unchanged.
 - No Firebase Rules update required.
 - No Render backend deploy required.
+
+## Patch 302 - Admin Commission Manager Pro
+
+- Upgraded Admin > Commission Manager into a professional commission review and payout workflow.
+- Added rule cards, pro search/filter, date filtering, filtered KPIs, View Details, filtered CSV export, bulk payout actions, and paid-order commission repair.
+- Firebase Rules update: not required.
+- Render backend deploy: not required if patch 301 backend is already deployed; redeploy only if commission retry endpoint is not active yet.

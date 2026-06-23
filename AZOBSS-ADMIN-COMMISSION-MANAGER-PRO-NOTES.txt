@@ -1,0 +1,40 @@
+AZOBSS Admin Commission Manager Pro Fix
+
+Patch 302 - Commission Manager Pro
+
+Changes:
+- Upgraded Admin > Commission Manager into Commission Manager Pro.
+- Added professional commission rule cards:
+  - Staff own Software/CAD product sale: 70% owner / 30% AZOBSS.
+  - Share AZOBSS paid product: 20%.
+  - Share non-AZOBSS paid product: 10%.
+  - PA/BM is excluded from staff commission.
+- Added stronger search and filters:
+  - username/email/order ID/bill code/product/product ID
+  - staff username
+  - product name/product ID
+  - commission type
+  - payout status
+  - today/this month/last month/custom date
+- KPI cards now update based on filtered commission records.
+- Added filtered sales RM, average commission percentage and filtered record count.
+- Added View Details modal with raw debug data.
+- Added filtered CSV export.
+- Added bulk payout actions for selected records.
+- Added Generate / Repair Commission From Paid Order tool using existing backend endpoint /api/commission/retry-order.
+- Manual commission adjustment moved into a collapsible panel to reduce accidental admin edits.
+
+Deploy notes:
+- Firebase Rules update: not required for this UI/filter patch.
+- Render backend deploy: not required if patch 301 backend is already deployed because required commission endpoints already exist.
+- If /api/commission/retry-order is not available on the currently deployed Render backend, redeploy Render using this ZIP.
+
+Test checklist:
+1. Open Admin > Commission Manager.
+2. Confirm rule cards and KPI cards display.
+3. Test search/filter by username/product/status/month.
+4. Test View Details on one commission row.
+5. Test Export CSV after applying a filter.
+6. Test Approve/Mark Paid for one record.
+7. Test bulk status update on selected records.
+8. Test Generate / Repair with a paid Software/CAD order ID if needed.

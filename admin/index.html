@@ -1015,6 +1015,29 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </style>
 
 
+
+<style id="azobss-admin-commission-pro-style">
+.az-commission-rule-grid,.az-commission-kpi-grid{margin-top:0}
+.az-commission-rule-card{border-color:rgba(56,189,248,.28);background:linear-gradient(180deg,rgba(15,23,42,.86),rgba(2,6,23,.64))}
+.az-commission-rule-card b{display:block;color:#e0f2fe;margin-bottom:5px}
+.az-commission-rule-card span{display:block;color:#94a3b8;font-size:13px;line-height:1.45}
+.az-commission-pro-card{border-color:rgba(168,85,247,.34)}
+.az-commission-toolbar{align-items:center}
+.az-commission-toolbar input,.az-commission-toolbar select{min-width:150px}
+.az-commission-date-input:disabled{opacity:.45;cursor:not-allowed}
+.az-commission-pro-split{align-items:stretch}
+.az-commission-row .item-title{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.az-commission-row-head{display:flex;align-items:flex-start;gap:10px}
+.az-commission-row-head input[type="checkbox"]{margin-top:4px;transform:scale(1.1)}
+.az-com-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:950;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.9);color:#dbeafe}
+.az-com-badge.pending{border-color:rgba(245,158,11,.55);color:#fde68a;background:rgba(245,158,11,.10)}
+.az-com-badge.approved{border-color:rgba(59,130,246,.55);color:#bfdbfe;background:rgba(59,130,246,.10)}
+.az-com-badge.paid{border-color:rgba(34,197,94,.5);color:#86efac;background:rgba(34,197,94,.10)}
+.az-com-badge.rejected{border-color:rgba(248,113,113,.55);color:#fecaca;background:rgba(239,68,68,.10)}
+.az-com-badge.type{border-color:rgba(168,85,247,.45);color:#e9d5ff;background:rgba(168,85,247,.10)}
+@media(max-width:760px){.az-commission-toolbar input,.az-commission-toolbar select,.az-commission-toolbar button,.az-commission-pro-split .toolbar button{width:100%;min-width:0}.az-commission-row-head{align-items:flex-start}}
+</style>
+
 <style id="azobss-admin-sales-analytics-style">
 .az-sales-snapshot-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:18px 0 10px}
 .az-sales-snapshot-head h2{margin:0;font-size:20px}
@@ -1506,12 +1529,21 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 
     <section id="commissions" class="section">
-      <h2>💸 Commission Manager</h2>
-      <p class="az-section-help">Urus komisen staff/share link dan status payout dari satu tempat.</p>
-      <p class="tabs-note">Admin sahaja boleh tambah, edit dan delete rekod komisen. Staff/semiAdmin hanya boleh lihat komisen sendiri di Staff Dashboard.</p>
+      <h2>💸 Commission Manager Pro</h2>
+      <p class="az-section-help">Urus komisen staff/semi-admin untuk jualan Software/CAD paid orders, share link, approval dan payout dari satu tempat.</p>
+      <p class="tabs-note">PA/BM tidak masuk komisen staff. Data utama datang daripada <b>commissionRecords</b> yang dijana selepas Software/CAD payment verified.</p>
 
-      <div class="grid">
-        <div class="card"><div class="stat-label">Total Commission RM</div><div id="adminComTotal" class="stat-value">0.00</div></div>
+      <div class="grid az-commission-rule-grid">
+        <div class="card az-commission-rule-card"><b>🏪 Produk Staff Sendiri</b><span>Owner/staff share 70% • AZOBSS 30%</span></div>
+        <div class="card az-commission-rule-card"><b>🔗 Share Produk AZOBSS</b><span>Sharer commission 20% untuk paid order yang sah.</span></div>
+        <div class="card az-commission-rule-card"><b>🔗 Share Produk Bukan AZOBSS</b><span>Sharer commission 10% untuk paid order yang sah.</span></div>
+        <div class="card az-commission-rule-card"><b>🚫 PA/BM Excluded</b><span>PA/BM tidak dikira dalam commission staff/semi-admin.</span></div>
+      </div>
+
+      <div class="grid az-commission-kpi-grid">
+        <div class="card"><div class="stat-label">Filtered Commission RM</div><div id="adminComTotal" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Filtered Sales RM</div><div id="adminComSalesTotal" class="stat-value">0.00</div></div>
+        <div class="card"><div class="stat-label">Avg Commission %</div><div id="adminComAvgRate" class="stat-value">0%</div></div>
         <div class="card"><div class="stat-label">Pending RM</div><div id="adminComPending" class="stat-value">0.00</div></div>
         <div class="card"><div class="stat-label">Approved RM</div><div id="adminComApproved" class="stat-value">0.00</div></div>
         <div class="card"><div class="stat-label">Paid RM</div><div id="adminComPaid" class="stat-value">0.00</div></div>
@@ -1519,12 +1551,76 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         <div class="card"><div class="stat-label">Records</div><div id="adminComCount" class="stat-value">0</div></div>
       </div>
 
-      <div class="card">
-        <h2 id="commissionFormTitle">Add / Edit Commission</h2>
+      <div class="card az-commission-pro-card">
+        <h2>Search & Filter</h2>
+        <div class="toolbar az-commission-toolbar">
+          <input id="commissionSearch" placeholder="Search username / email / product / order ID / bill code..." style="flex:1;min-width:260px">
+          <input id="commissionStaffFilter" placeholder="Staff username" style="min-width:170px">
+          <input id="commissionProductFilter" placeholder="Product name / ID" style="min-width:190px">
+          <select id="commissionTypeFilter" title="Commission type">
+            <option value="all">All Types</option>
+            <option value="owner_sale_split">Owner Sale Split</option>
+            <option value="share_referral">Share Referral</option>
+            <option value="manual">Manual/Admin</option>
+          </select>
+          <select id="commissionPayoutFilter" title="Payout status">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select id="commissionMonthFilter" title="Date range">
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="custom">Custom Date</option>
+          </select>
+          <input id="commissionDateFrom" type="date" title="From date" class="az-commission-date-input" disabled>
+          <input id="commissionDateTo" type="date" title="To date" class="az-commission-date-input" disabled>
+          <button class="btn" id="refreshCommissionRecords" type="button">Refresh</button>
+          <button class="btn gray" id="clearCommissionFilters" type="button">Clear Filters</button>
+          <button class="btn green" id="exportCommissionCsv" type="button">Export CSV</button>
+        </div>
+        <div id="commissionResultInfo" class="tabs-note">Ready.</div>
+      </div>
+
+      <div class="split az-commission-pro-split">
+        <div class="card">
+          <h2>Generate / Repair Commission From Paid Order</h2>
+          <p class="tabs-note">Guna bila payment Software/CAD sudah paid tetapi commissionRecords belum dijana. Masukkan Order ID atau Bill Code.</p>
+          <div class="toolbar">
+            <input id="commissionRetryOrderId" placeholder="Order ID / Bill Code" style="flex:1;min-width:220px">
+            <button class="btn amber" id="retryCommissionOrder" type="button">Generate / Repair</button>
+          </div>
+          <div id="commissionRetryResult" class="tabs-note">Only paid Software/CAD orders are eligible.</div>
+        </div>
+
+        <div class="card">
+          <h2>Bulk Payout Action</h2>
+          <p class="tabs-note">Pilih rekod dalam senarai bawah, kemudian update payout status secara batch.</p>
+          <div class="toolbar">
+            <button class="btn gray" id="selectAllVisibleCommissions" type="button">Select Visible</button>
+            <button class="btn gray" id="clearSelectedCommissions" type="button">Clear Selected</button>
+            <button class="btn" data-commission-bulk="approved" type="button">Approve Selected</button>
+            <button class="btn green" data-commission-bulk="paid" type="button">Mark Paid Selected</button>
+            <button class="btn red" data-commission-bulk="rejected" type="button">Reject Selected</button>
+            <button class="btn gray" data-commission-bulk="pending" type="button">Set Pending</button>
+          </div>
+          <div id="commissionSelectedInfo" class="tabs-note">Selected: 0</div>
+        </div>
+      </div>
+
+      <details class="card az-admin-details" id="commissionManualEntryPanel">
+        <summary>➕ Manual Commission Adjustment</summary>
+        <p class="tabs-note">Untuk adjustment khas sahaja. Commission normal patut dijana automatik daripada paid order Software/CAD.</p>
+        <h2 id="commissionFormTitle">Add / Edit Manual Commission</h2>
         <input type="hidden" id="commissionEditDocId">
         <div class="toolbar">
           <input id="commissionUsername" placeholder="Username / staff owner" style="flex:1;min-width:180px">
           <input id="commissionProduct" placeholder="Product / sale reference" style="flex:1;min-width:180px">
+          <input id="commissionSaleAmount" type="number" min="0" step="0.01" placeholder="Sale RM optional">
           <input id="commissionAmount" type="number" min="0" step="0.01" placeholder="Commission RM">
           <select id="commissionStatus">
             <option value="pending">pending</option>
@@ -1540,24 +1636,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         </div>
         <textarea id="commissionNote" placeholder="Note" style="width:100%;min-height:90px"></textarea>
         <div class="toolbar">
-          <button class="btn green" id="saveCommissionRecord">Save Commission</button>
+          <button class="btn green" id="saveCommissionRecord">Save Manual Commission</button>
           <button class="btn gray" id="resetCommissionForm" type="button">Reset</button>
-          <button class="btn" id="refreshCommissionRecords" type="button">Refresh</button>
         </div>
-      </div>
+      </details>
 
       <div class="card">
         <h2>Commission Records</h2>
-        <div class="toolbar">
-          <select id="commissionPayoutFilter">
-            <option value="all">All payout status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="paid">Paid</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <button class="btn gray" id="exportCommissionCsv" type="button">Export CSV</button>
-        </div>
         <div id="adminCommissionList" class="list"></div>
       </div>
 
@@ -1696,6 +1781,21 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <button class="btn gray" type="button" data-close-payment-detail="1">Close</button>
     </div>
     <div id="paymentLogDetailBody" class="az-payment-detail-body"></div>
+  </div>
+</div>
+
+
+<div id="commissionDetailModal" class="az-payment-detail-modal" aria-hidden="true">
+  <div class="az-payment-detail-backdrop" data-close-commission-detail="1"></div>
+  <div class="az-payment-detail-panel" role="dialog" aria-modal="true" aria-labelledby="commissionDetailTitle">
+    <div class="az-payment-detail-head">
+      <div>
+        <h2 id="commissionDetailTitle">Commission Details</h2>
+        <p class="tabs-note">Detailed commission record for admin review and payout audit.</p>
+      </div>
+      <button class="btn gray" type="button" data-close-commission-detail="1">Close</button>
+    </div>
+    <div id="commissionDetailBody" class="az-payment-detail-body"></div>
   </div>
 </div>
 
@@ -2967,121 +3067,96 @@ async function saveStaffRole(){
 
 
 let adminCommissionCache = [];
+let adminCommissionFilteredCache = [];
+let adminCommissionSelectedDocIds = new Set();
+let azCommissionSearchTimer = null;
 
-function commissionRecordTitle(x){
-  return esc(x.username || x.ownerUsername || x.createdByUsername || x.email || x.ownerEmail || 'Unknown');
+function commissionUsernameOf(x){
+  return String(x.username || x.ownerUsername || x.createdByUsername || x.staffUsername || x.sellerUsername || x.sharerUsername || x.email || x.ownerEmail || '').trim();
 }
-function commissionAmountOf(x){
-  return Number(x.commissionAmount || x.amount || x.totalCommission || 0) || 0;
+function commissionRecordTitle(x){ return esc(commissionUsernameOf(x) || 'Unknown'); }
+function commissionProductName(x){ return String(x.productName || x.product || x.productTitle || x.itemName || x.saleRef || x.title || '-').trim(); }
+function commissionAmountOf(x){ return Number(x.commissionAmount || x.amount || x.totalCommission || 0) || 0; }
+function commissionSaleAmountOf(x){ return Number(x.saleAmount || x.orderAmount || x.totalSale || 0) || 0; }
+function commissionRateOf(x){ const explicit=Number(x.commissionRate || x.rate || 0) || 0; if(explicit) return explicit; const sale=commissionSaleAmountOf(x), amt=commissionAmountOf(x); return sale>0 ? (amt/sale)*100 : 0; }
+function commissionCreatedMs(x){ const v=x.createdAtMs || x.paidAtMs || x.updatedAtMs || x.createdAt || x.paidAt || x.updatedAt || 0; if(typeof v==='number') return v; if(v?.toMillis) return v.toMillis(); if(v?.toDate) return v.toDate().getTime(); const d=new Date(v); return isNaN(d)?0:d.getTime(); }
+function commissionPayoutStatus(x){ return String(x.payoutStatus || x.status || 'pending').toLowerCase() || 'pending'; }
+function commissionStatusBucket(x){ const s=commissionPayoutStatus(x); if(['paid','settled','released'].includes(s)) return 'paid'; if(['approved'].includes(s)) return 'approved'; if(['rejected','cancelled','void'].includes(s)) return 'rejected'; return 'pending'; }
+function commissionStatusBadge(status){ const s=String(status||'pending').toLowerCase(); if(s==='paid') return '✅ paid'; if(s==='approved') return '🟦 approved'; if(s==='rejected') return '⛔ rejected'; return '⏳ pending'; }
+function commissionTypeBucket(x){ const raw=String(x.commissionType || x.type || x.source || '').toLowerCase(); if(raw.includes('owner') || raw.includes('sale_split')) return 'owner_sale_split'; if(raw.includes('share') || raw.includes('referral')) return 'share_referral'; if(raw.includes('manual') || raw.includes('admin')) return 'manual'; return raw || 'manual'; }
+function commissionTypeLabel(x){ const t=commissionTypeBucket(x); if(t==='owner_sale_split') return 'Owner Sale Split'; if(t==='share_referral') return 'Share Referral'; if(t==='manual') return 'Manual/Admin'; return String(x.commissionType || x.type || 'Commission'); }
+function commissionSearchText(x){ return [x.docId,x.orderId,x.billCode,x.productId,commissionProductName(x),commissionUsernameOf(x),x.ownerUsername,x.ownerEmail,x.email,x.commissionType,x.type,x.payoutStatus,x.status,x.payoutReference,x.note,x.payoutNote,x.sourcePage,x._source,x.shareReferral&&(x.shareReferral.username+' '+x.shareReferral.ref+' '+x.shareReferral.productId)].filter(Boolean).join(' ').toLowerCase(); }
+function azAdminCommissionDateRange(){
+  const mode=String($('#commissionMonthFilter')?.value||'all'); const now=new Date(); let start=null,end=null;
+  if(mode==='today'){ start=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(); end=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime(); }
+  else if(mode==='thisMonth'){ start=new Date(now.getFullYear(),now.getMonth(),1).getTime(); end=new Date(now.getFullYear(),now.getMonth()+1,1).getTime(); }
+  else if(mode==='lastMonth'){ start=new Date(now.getFullYear(),now.getMonth()-1,1).getTime(); end=new Date(now.getFullYear(),now.getMonth(),1).getTime(); }
+  else if(mode==='custom'){ const f=$('#commissionDateFrom')?.value||''; const t=$('#commissionDateTo')?.value||''; if(f) start=new Date(f+'T00:00:00').getTime(); if(t) end=new Date(t+'T23:59:59').getTime()+1; }
+  return {start,end};
 }
-function commissionSaleAmountOf(x){
-  return Number(x.saleAmount || x.orderAmount || x.totalSale || 0) || 0;
+function azAdminSetCommissionDateState(){ const custom=String($('#commissionMonthFilter')?.value||'all')==='custom'; if($('#commissionDateFrom')) $('#commissionDateFrom').disabled=!custom; if($('#commissionDateTo')) $('#commissionDateTo').disabled=!custom; }
+function getFilteredAdminCommissions(){
+  const q=String($('#commissionSearch')?.value||'').trim().toLowerCase();
+  const staff=String($('#commissionStaffFilter')?.value||'').trim().toLowerCase();
+  const product=String($('#commissionProductFilter')?.value||'').trim().toLowerCase();
+  const status=String($('#commissionPayoutFilter')?.value||'all').toLowerCase();
+  const type=String($('#commissionTypeFilter')?.value||'all').toLowerCase();
+  const {start,end}=azAdminCommissionDateRange();
+  return adminCommissionCache.filter(x=>{
+    const text=commissionSearchText(x);
+    if(q && !text.includes(q)) return false;
+    if(staff && !String([commissionUsernameOf(x),x.ownerUsername,x.ownerEmail,x.email,x.uid,x.ownerUid].filter(Boolean).join(' ')).toLowerCase().includes(staff)) return false;
+    if(product && !String([commissionProductName(x),x.productId,x.orderId,x.billCode].filter(Boolean).join(' ')).toLowerCase().includes(product)) return false;
+    if(status!=='all' && commissionStatusBucket(x)!==status) return false;
+    if(type!=='all' && commissionTypeBucket(x)!==type) return false;
+    const ms=commissionCreatedMs(x);
+    if(start!==null && (!ms || ms<start)) return false;
+    if(end!==null && (!ms || ms>=end)) return false;
+    return true;
+  });
 }
-function commissionPayoutStatus(x){
-  return String(x.payoutStatus || x.status || 'pending').toLowerCase() || 'pending';
-}
-function commissionStatusBucket(x){
-  const s = commissionPayoutStatus(x);
-  if(['paid','settled','released'].includes(s)) return 'paid';
-  if(['approved'].includes(s)) return 'approved';
-  if(['rejected','cancelled','void'].includes(s)) return 'rejected';
-  return 'pending';
-}
-function commissionStatusBadge(status){
-  const s=String(status||'pending').toLowerCase();
-  if(s==='paid') return '✅ paid';
-  if(s==='approved') return '🟦 approved';
-  if(s==='rejected') return '⛔ rejected';
-  return '⏳ pending';
-}
-async function fetchAdminCommissionsFromApi(){
-  adminApiNotice = '';
-  try{
-    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=300',{cache:'no-store'});
-    return Array.isArray(j.records)?j.records:[];
-  }catch(e){
-    adminApiNotice = e?.message || 'Commission backend API fallback failed.';
-    console.warn('Admin commission API fallback failed',e);
-    return [];
-  }
-}
-function resetCommissionForm(){
-  $('#commissionEditDocId').value = '';
-  $('#commissionUsername').value = '';
-  $('#commissionProduct').value = '';
-  $('#commissionAmount').value = '';
-  $('#commissionStatus').value = 'pending';
-  $('#commissionOwnerUid').value = '';
-  $('#commissionOwnerUsername').value = '';
-  $('#commissionOwnerEmail').value = '';
-  $('#commissionNote').value = '';
-  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Add / Edit Commission';
-}
+function azAdminUpdateCommissionSelectedInfo(){ const ids=[...document.querySelectorAll('[data-commission-select]:checked')].map(el=>el.value).filter(Boolean); adminCommissionSelectedDocIds=new Set(ids); if($('#commissionSelectedInfo')) $('#commissionSelectedInfo').textContent='Selected: '+ids.length; }
 function renderAdminCommissions(){
-  let total=0,pending=0,approved=0,paid=0,rejected=0;
-  adminCommissionCache.forEach(x=>{
-    const amt=commissionAmountOf(x);
-    total += amt;
-    const bucket=commissionStatusBucket(x);
-    if(bucket==='paid') paid += amt;
-    else if(bucket==='approved') approved += amt;
-    else if(bucket==='rejected') rejected += amt;
-    else pending += amt;
+  azAdminSetCommissionDateState(); adminCommissionFilteredCache=getFilteredAdminCommissions();
+  let total=0,pending=0,approved=0,paid=0,rejected=0,sales=0;
+  adminCommissionFilteredCache.forEach(x=>{ const amt=commissionAmountOf(x); total+=amt; sales+=commissionSaleAmountOf(x); const b=commissionStatusBucket(x); if(b==='paid') paid+=amt; else if(b==='approved') approved+=amt; else if(b==='rejected') rejected+=amt; else pending+=amt; });
+  const avgRate=sales>0?(total/sales)*100:0;
+  if($('#adminComTotal')) $('#adminComTotal').textContent=total.toFixed(2); if($('#adminComSalesTotal')) $('#adminComSalesTotal').textContent=sales.toFixed(2); if($('#adminComAvgRate')) $('#adminComAvgRate').textContent=avgRate?avgRate.toFixed(1)+'%':'0%'; if($('#adminComPending')) $('#adminComPending').textContent=pending.toFixed(2); if($('#adminComApproved')) $('#adminComApproved').textContent=approved.toFixed(2); if($('#adminComPaid')) $('#adminComPaid').textContent=paid.toFixed(2); if($('#adminComRejected')) $('#adminComRejected').textContent=rejected.toFixed(2); if($('#adminComCount')) $('#adminComCount').textContent=adminCommissionFilteredCache.length+' / '+adminCommissionCache.length;
+  if($('#commissionResultInfo')) $('#commissionResultInfo').textContent=`Showing ${adminCommissionFilteredCache.length} of ${adminCommissionCache.length} records • Filtered commission RM${total.toFixed(2)} • Filtered sales RM${sales.toFixed(2)}`;
+  const rows=adminCommissionFilteredCache.map(x=>{
+    const amt=commissionAmountOf(x).toFixed(2), sale=commissionSaleAmountOf(x), owner=commissionRecordTitle(x), product=esc(commissionProductName(x)), statusRaw=commissionPayoutStatus(x), statusBucket=commissionStatusBucket(x), docId=esc(x.docId||''), rowKey=esc(x._azRowKey||x.docId||''), typeLabel=esc(commissionTypeLabel(x)), rate=commissionRateOf(x), source=esc(x._source||'');
+    const payoutMeta=[x.payoutReference?('Ref: '+esc(x.payoutReference)):'',x.payoutMethod?('Method: '+esc(x.payoutMethod)):'',x.payoutNote?('Note: '+esc(x.payoutNote)):''].filter(Boolean).join(' • '); const selectDisabled=docId?'':'disabled';
+    return `<div class="item az-commission-row"><div class="az-commission-row-head"><input type="checkbox" value="${docId}" data-commission-select ${selectDisabled}><div style="flex:1;min-width:0"><div class="item-title">💸 ${owner} <span class="az-com-badge ${statusBucket}">${commissionStatusBadge(statusRaw)}</span> <span class="az-com-badge type">${typeLabel}</span></div><div class="item-meta">${product} • Commission RM${amt} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • Rate ${rate?rate.toFixed(1)+'%':'-'} • ${fmtDate(commissionCreatedMs(x))} ${source?('• '+source):''}</div><div class="item-meta">Order: ${esc(x.orderId||'-')} • Bill: ${esc(x.billCode||'-')} • Product ID: ${esc(x.productId||'-')} ${payoutMeta?(' • '+payoutMeta):''}</div><div class="toolbar" style="margin:6px 0 0"><button class="btn" data-commission-detail="${rowKey}">View Details</button><button class="btn" data-commission-payout="approved" data-commission-doc="${docId}" ${selectDisabled}>Approve</button><button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}" ${selectDisabled}>Mark Paid</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}" ${selectDisabled}>Reject</button><button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}" ${selectDisabled}>Pending</button><button class="btn gray" data-edit-commission="${docId}" ${selectDisabled}>Edit</button><button class="btn red" data-delete-commission="${docId}" ${selectDisabled}>Delete</button></div></div></div></div>`;
   });
-  if($('#adminComTotal')) $('#adminComTotal').textContent = total.toFixed(2);
-  if($('#adminComPending')) $('#adminComPending').textContent = pending.toFixed(2);
-  if($('#adminComApproved')) $('#adminComApproved').textContent = approved.toFixed(2);
-  if($('#adminComPaid')) $('#adminComPaid').textContent = paid.toFixed(2);
-  if($('#adminComRejected')) $('#adminComRejected').textContent = rejected.toFixed(2);
-  if($('#adminComCount')) $('#adminComCount').textContent = adminCommissionCache.length;
-
-  const filter=String($('#commissionPayoutFilter')?.value||'all').toLowerCase();
-  const filtered=adminCommissionCache.filter(x=>filter==='all'||commissionStatusBucket(x)===filter);
-  const rows = filtered.map(x=>{
-    const amt = commissionAmountOf(x).toFixed(2);
-    const sale = commissionSaleAmountOf(x);
-    const owner = commissionRecordTitle(x);
-    const product = esc(x.productName || x.product || x.productTitle || x.itemName || x.saleRef || '-');
-    const statusRaw = commissionPayoutStatus(x);
-    const status = esc(statusRaw || 'pending');
-    const type = esc(x.commissionType || x.type || 'commission');
-    const source = esc(x._source || '');
-    const docId = esc(x.docId || '');
-    const payoutMeta = [x.payoutReference?('Ref: '+esc(x.payoutReference)):'', x.payoutMethod?('Method: '+esc(x.payoutMethod)):'', x.payoutNote?('Note: '+esc(x.payoutNote)):''].filter(Boolean).join(' • ');
-    return `<div class="item">
-      <div class="item-title">💸 ${owner} • Commission RM${amt} • ${commissionStatusBadge(statusRaw)}</div>
-      <div class="item-meta">${product} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • ${type} • Status: ${status} • ${fmtDate(x.createdAtMs||x.createdAt)} ${source?('• '+source):''}${payoutMeta?(' • '+payoutMeta):''}</div>
-      <div class="toolbar" style="margin:6px 0 0">
-        <button class="btn" data-commission-payout="approved" data-commission-doc="${docId}">Approve</button>
-        <button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}">Mark Paid</button>
-        <button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}">Reject</button>
-        <button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}">Pending</button>
-        <button class="btn gray" data-edit-commission="${docId}">Edit</button>
-        <button class="btn red" data-delete-commission="${docId}">Delete</button>
-      </div>
-    </div>`;
-  });
-  const notice = adminApiNotice ? `<div class="item"><div class="item-title">⚠️ Backend API notice</div><div class="item-meta">${esc(adminApiNotice)}</div></div>` : '';
-  $('#adminCommissionList').innerHTML = rows.join('') || notice || '<div class="item">No commission records.</div>';
+  const notice=adminApiNotice?`<div class="item"><div class="item-title">⚠️ Backend API notice</div><div class="item-meta">${esc(adminApiNotice)}</div></div>`:'';
+  if($('#adminCommissionList')) $('#adminCommissionList').innerHTML=rows.join('')||notice||'<div class="item">No commission records.</div>';
+  azAdminUpdateCommissionSelectedInfo();
 }
+async function fetchAdminCommissionsFromApi(){ adminApiNotice=''; try{ const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/status?records=1&limit=500',{cache:'no-store'}); return Array.isArray(j.records)?j.records:[]; }catch(e){ adminApiNotice=e?.message||'Commission backend API fallback failed.'; console.warn('Admin commission API fallback failed',e); return []; } }
 async function loadAdminCommissions(){
-  const snap = await safeGet(query(collection(db,'commissionRecords'), orderBy('createdAtMs','desc'), limit(200)),'Commission Manager: commissionRecords');
-  adminCommissionCache = [];
-  const seen=new Set();
-  snap?.forEach(d=>{
-    const x={docId:d.id,...d.data(),_source:'firestore'};
-    const key=x.docId||`${x.orderId||''}_${x.commissionType||''}_${x.username||''}`;
-    if(!seen.has(key)){seen.add(key);adminCommissionCache.push(x);}
-  });
-  if(!adminCommissionCache.length){
-    const apiRows=await fetchAdminCommissionsFromApi();
-    apiRows.forEach((x,i)=>{
-      const key=x.docId||x.id||`${x.orderId||''}_${x.commissionType||''}_${x.username||''}`||String(i);
-      if(!seen.has(key)){seen.add(key);adminCommissionCache.push({...x,_source:'backend-api'});}
-    });
-  }
-  renderAdminCommissions();
+  const snap=await safeGet(query(collection(db,'commissionRecords'),orderBy('createdAtMs','desc'),limit(500)),'Commission Manager: commissionRecords'); adminCommissionCache=[]; adminCommissionSelectedDocIds=new Set(); const seen=new Set();
+  snap?.forEach(d=>{ const x={docId:d.id,...d.data(),_source:'firestore'}; const key=x.docId||`${x.orderId||''}_${x.commissionType||''}_${x.username||''}`; if(!seen.has(key)){seen.add(key);adminCommissionCache.push({...x,_azRowKey:key});} });
+  if(!adminCommissionCache.length){ const apiRows=await fetchAdminCommissionsFromApi(); apiRows.forEach((x,i)=>{ const key=x.docId||x.id||`${x.orderId||''}_${x.commissionType||''}_${x.username||''}`||String(i); if(!seen.has(key)){seen.add(key);adminCommissionCache.push({...x,_source:'backend-api',_azRowKey:key});} }); }
+  adminCommissionCache.sort((a,b)=>commissionCreatedMs(b)-commissionCreatedMs(a)); renderAdminCommissions();
 }
+function resetCommissionForm(){ $('#commissionEditDocId').value=''; $('#commissionUsername').value=''; $('#commissionProduct').value=''; if($('#commissionSaleAmount')) $('#commissionSaleAmount').value=''; $('#commissionAmount').value=''; $('#commissionStatus').value='pending'; $('#commissionOwnerUid').value=''; $('#commissionOwnerUsername').value=''; $('#commissionOwnerEmail').value=''; $('#commissionNote').value=''; if($('#commissionFormTitle')) $('#commissionFormTitle').textContent='Add / Edit Manual Commission'; }
+function clearCommissionFilters(){ ['commissionSearch','commissionStaffFilter','commissionProductFilter'].forEach(id=>{const el=$('#'+id); if(el) el.value='';}); if($('#commissionTypeFilter')) $('#commissionTypeFilter').value='all'; if($('#commissionPayoutFilter')) $('#commissionPayoutFilter').value='all'; if($('#commissionMonthFilter')) $('#commissionMonthFilter').value='all'; if($('#commissionDateFrom')) $('#commissionDateFrom').value=''; if($('#commissionDateTo')) $('#commissionDateTo').value=''; renderAdminCommissions(); }
+function exportCommissionCsv(){ const rows=(adminCommissionFilteredCache.length?adminCommissionFilteredCache:getFilteredAdminCommissions()).map(x=>({docId:x.docId||'',orderId:x.orderId||'',billCode:x.billCode||'',productId:x.productId||'',username:commissionUsernameOf(x),ownerEmail:x.ownerEmail||x.email||'',product:commissionProductName(x),commissionType:commissionTypeLabel(x),saleAmount:commissionSaleAmountOf(x),commissionRate:commissionRateOf(x).toFixed(2),commissionAmount:commissionAmountOf(x),payoutStatus:commissionPayoutStatus(x),payoutReference:x.payoutReference||'',payoutMethod:x.payoutMethod||'',payoutNote:x.payoutNote||'',source:x._source||'',createdAt:x.createdAt||x.createdAtMs||''})); const headers=['docId','orderId','billCode','productId','username','ownerEmail','product','commissionType','saleAmount','commissionRate','commissionAmount','payoutStatus','payoutReference','payoutMethod','payoutNote','source','createdAt']; const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>'"'+String(r[h]??'').replace(/"/g,'""')+'"').join(','))).join('\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='azobss-commission-records-filtered-'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+async function saveCommissionRecord(){
+  const docId=$('#commissionEditDocId')?.value||'', amount=Number($('#commissionAmount')?.value||0), saleAmount=Number($('#commissionSaleAmount')?.value||0), productName=$('#commissionProduct')?.value.trim()||'';
+  const payload={username:$('#commissionUsername')?.value.trim()||'',product:productName,productName,saleAmount,saleAmountText:saleAmount?('RM'+saleAmount.toFixed(2)):'',amount,commissionAmount:amount,amountText:'RM'+amount.toFixed(2),commissionType:'manual_admin_adjustment',status:$('#commissionStatus')?.value||'pending',payoutStatus:$('#commissionStatus')?.value||'pending',note:$('#commissionNote')?.value.trim()||'',ownerUid:$('#commissionOwnerUid')?.value.trim()||'',ownerUsername:$('#commissionOwnerUsername')?.value.trim()||$('#commissionUsername')?.value.trim()||'',ownerEmail:$('#commissionOwnerEmail')?.value.trim()||'',ownerShare:70,platformShare:30,commissionRate:saleAmount>0?Math.round((amount/saleAmount)*10000)/100:0,updatedAt:serverTimestamp(),updatedAtMs:Date.now()};
+  if(!payload.username&&!payload.ownerUsername) return toast('Username/staff owner is required.'); if(!payload.productName) return toast('Product/reference is required.'); if(!amount) return toast('Commission amount is required.');
+  if(docId){ await updateDoc(doc(db,'commissionRecords',docId),payload); azAdminLogAction('commission_record_update','commissionRecords',docId,{username:payload.username,product:payload.productName,amount:payload.amount,status:payload.status}); }
+  else{ const added=await addDoc(collection(db,'commissionRecords'),{...payload,createdAt:serverTimestamp(),createdAtMs:Date.now(),createdByAdmin:'admin-dashboard'}); azAdminLogAction('commission_record_create','commissionRecords',added.id,{username:payload.username,product:payload.productName,amount:payload.amount,status:payload.status}); }
+  resetCommissionForm(); await loadAdminCommissions();
+}
+function editCommissionRecord(docId){ const x=adminCommissionCache.find(r=>r.docId===docId); if(!x) return; const panel=$('#commissionManualEntryPanel'); if(panel) panel.open=true; $('#commissionEditDocId').value=x.docId; $('#commissionUsername').value=x.username||x.ownerUsername||''; $('#commissionProduct').value=commissionProductName(x); if($('#commissionSaleAmount')) $('#commissionSaleAmount').value=commissionSaleAmountOf(x)||''; $('#commissionAmount').value=commissionAmountOf(x); $('#commissionStatus').value=x.payoutStatus||x.status||'pending'; $('#commissionOwnerUid').value=x.ownerUid||''; $('#commissionOwnerUsername').value=x.ownerUsername||x.username||''; $('#commissionOwnerEmail').value=x.ownerEmail||''; $('#commissionNote').value=x.note||x.payoutNote||''; if($('#commissionFormTitle')) $('#commissionFormTitle').textContent='Editing Commission'; panel?.scrollIntoView({behavior:'smooth',block:'start'}); }
+async function deleteCommissionRecord(docId){ if(!confirm('Delete this commission record?')) return; await deleteDoc(doc(db,'commissionRecords',docId)); azAdminLogAction('commission_record_delete','commissionRecords',docId,{}); await loadAdminCommissions(); }
+async function updateCommissionPayoutStatus(docId,status){ if(!docId) return toast('Missing commission record ID.'); const label=String(status||'').toUpperCase(); if(!confirm('Update this commission payout status to '+label+'?')) return; let payoutReference='',payoutMethod='',payoutNote=''; if(status==='paid'){payoutReference=prompt('Payment/reference number / transfer reference (recommended):','')||''; payoutMethod=prompt('Payout method (optional, e.g. bank transfer):','')||'';} if(status==='rejected') payoutNote=prompt('Reason / note for rejection (optional):','')||''; if(status==='approved') payoutNote=prompt('Approval note (optional):','')||''; try{ const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/payout-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({docId,payoutStatus:status,payoutReference,payoutMethod,payoutNote})}); toast('Commission payout updated: '+(j.payoutStatus||status)); await loadAdminCommissions(); }catch(e){ toast(e?.message||'Failed to update commission payout status.'); } }
+async function azAdminBulkCommissionStatus(status){ const ids=[...document.querySelectorAll('[data-commission-select]:checked')].map(el=>el.value).filter(Boolean); if(!ids.length) return toast('Select commission records first.'); if(!confirm('Update '+ids.length+' selected commission record(s) to '+String(status).toUpperCase()+'?')) return; let payoutReference='',payoutMethod='',payoutNote=''; if(status==='paid'){payoutReference=prompt('Payment/reference number / transfer reference (optional):','')||''; payoutMethod=prompt('Payout method (optional):','bank transfer')||'';} if(status==='rejected') payoutNote=prompt('Reason / note for rejection (optional):','')||''; if(status==='approved') payoutNote=prompt('Approval note (optional):','')||''; try{ const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/payout-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({docIds:ids,payoutStatus:status,payoutReference,payoutMethod,payoutNote})}); toast('Bulk commission updated: '+(j.updated||ids.length)+' record(s).'); await loadAdminCommissions(); }catch(e){ toast(e?.message||'Bulk update failed.'); } }
+function azAdminOpenCommissionDetail(key){ const rec=adminCommissionCache.find(x=>String(x.docId||'')===String(key)||String(x._azRowKey||'')===String(key)); if(!rec) return toast('Commission record not found.'); const fields=[['Staff / Username',commissionUsernameOf(rec)||'-'],['Product',commissionProductName(rec)],['Product ID',rec.productId||'-'],['Order ID',rec.orderId||'-'],['Bill Code',rec.billCode||'-'],['Type',commissionTypeLabel(rec)],['Sale Amount',commissionSaleAmountOf(rec)?('RM'+commissionSaleAmountOf(rec).toFixed(2)):'-'],['Commission','RM'+commissionAmountOf(rec).toFixed(2)],['Rate',commissionRateOf(rec)?commissionRateOf(rec).toFixed(2)+'%':'-'],['Status',commissionPayoutStatus(rec)],['Payout Method',rec.payoutMethod||'-'],['Payout Reference',rec.payoutReference||'-'],['Created',fmtDate(commissionCreatedMs(rec))],['Source',rec._source||rec.sourcePage||'-']]; const body=$('#commissionDetailBody'); if(body){body.innerHTML='<div class="az-payment-detail-grid">'+fields.map(([k,v])=>`<div class="az-payment-detail-cell"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')+'</div><h3 style="margin:10px 0 8px">Raw Debug Data</h3><pre class="az-payment-detail-raw">'+esc(JSON.stringify(rec,(k,v)=>k==='_azRowKey'?undefined:v,2))+'</pre>'; } $('#commissionDetailModal')?.classList.add('is-open'); }
+function azAdminCloseCommissionDetail(){ $('#commissionDetailModal')?.classList.remove('is-open'); }
+async function retryCommissionForOrder(){ const raw=String($('#commissionRetryOrderId')?.value||'').trim(); if(!raw) return toast('Enter Order ID or Bill Code first.'); const box=$('#commissionRetryResult'); if(box) box.textContent='Checking paid order and generating commission...'; try{ const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/retry-order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:raw,billCode:raw})}); const msg='Commission repair OK: '+(j.commission?.created||j.commission?.updated||j.commission?.count||0)+' line(s) processed.'; if(box) box.textContent=msg; toast(msg); await loadAdminCommissions(); }catch(e){ const msg=e?.message||'Commission repair failed.'; if(box) box.textContent=msg; toast(msg); } }
 
 let adminPayoutRequestCache=[];
 function adminPayoutTimelineHtml(r){
@@ -3135,93 +3210,6 @@ async function updatePayoutRequestStatus(requestId,status){
     toast('Payout request updated: '+(j.status||status));
     await Promise.all([loadAdminPayoutRequests(), loadAdminCommissions()]);
   }catch(e){ toast(e?.message||'Failed to update payout request.'); }
-}
-async function updateCommissionPayoutStatus(docId,status){
-  if(!docId) return toast('Missing commission record ID.');
-  const label=String(status||'').toUpperCase();
-  if(!confirm('Update this commission payout status to '+label+'?')) return;
-  let payoutReference='';
-  let payoutMethod='';
-  let payoutNote='';
-  if(status==='paid'){
-    payoutReference = prompt('Payment/reference number / transfer reference (recommended):','') || '';
-    payoutMethod = prompt('Payout method (optional, e.g. bank transfer):','') || '';
-  }
-  if(status==='rejected') payoutNote = prompt('Reason / note for rejection (optional):','') || '';
-  if(status==='approved') payoutNote = prompt('Approval note (optional):','') || '';
-  try{
-    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/payout-status',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({docId,payoutStatus:status,payoutReference,payoutMethod,payoutNote})
-    });
-    toast('Commission payout updated: '+(j.payoutStatus||status));
-    await loadAdminCommissions();
-  }catch(e){
-    toast(e?.message || 'Failed to update commission payout status.');
-  }
-}
-function exportCommissionCsv(){
-  const rows=adminCommissionCache.map(x=>({
-    docId:x.docId||'', orderId:x.orderId||'', billCode:x.billCode||'', username:x.username||x.ownerUsername||'', product:x.productName||x.product||'', commissionType:x.commissionType||'', saleAmount:commissionSaleAmountOf(x), commissionAmount:commissionAmountOf(x), payoutStatus:commissionPayoutStatus(x), payoutReference:x.payoutReference||'', payoutMethod:x.payoutMethod||'', payoutNote:x.payoutNote||'', createdAt:x.createdAt||x.createdAtMs||''
-  }));
-  const headers=['docId','orderId','billCode','username','product','commissionType','saleAmount','commissionAmount','payoutStatus','payoutReference','payoutMethod','payoutNote','createdAt'];
-  const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>'"'+String(r[h]??'').replace(/"/g,'""')+'"').join(','))).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='azobss-commission-records-'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-async function saveCommissionRecord(){
-  const docId = $('#commissionEditDocId')?.value || '';
-  const amount = Number($('#commissionAmount')?.value || 0);
-  const payload = {
-    username: $('#commissionUsername')?.value.trim() || '',
-    product: $('#commissionProduct')?.value.trim() || '',
-    amount,
-    status: $('#commissionStatus')?.value || 'pending',
-    payoutStatus: $('#commissionStatus')?.value || 'pending',
-    note: $('#commissionNote')?.value.trim() || '',
-    ownerUid: $('#commissionOwnerUid')?.value.trim() || '',
-    ownerUsername: $('#commissionOwnerUsername')?.value.trim() || $('#commissionUsername')?.value.trim() || '',
-    ownerEmail: $('#commissionOwnerEmail')?.value.trim() || '',
-    ownerShare: 70,
-    platformShare: 30,
-    commissionRate: 70,
-    updatedAt: serverTimestamp(),
-    updatedAtMs: Date.now()
-  };
-  if(docId){
-    await updateDoc(doc(db,'commissionRecords',docId), payload);
-    azAdminLogAction('commission_record_update','commissionRecords',docId,{username:payload.username, product:payload.product, amount:payload.amount, status:payload.status});
-  }else{
-    const added=await addDoc(collection(db,'commissionRecords'), {...payload, createdAt: serverTimestamp(), createdAtMs: Date.now(), createdByAdmin: 'admin-dashboard'});
-    azAdminLogAction('commission_record_create','commissionRecords',added.id,{username:payload.username, product:payload.product, amount:payload.amount, status:payload.status});
-  }
-  resetCommissionForm();
-  await loadAdminCommissions();
-}
-function editCommissionRecord(docId){
-  const x = adminCommissionCache.find(r=>r.docId===docId);
-  if(!x) return;
-  $('#commissionEditDocId').value = x.docId;
-  $('#commissionUsername').value = x.username || x.ownerUsername || '';
-  $('#commissionProduct').value = x.productName || x.product || x.productTitle || x.itemName || x.saleRef || '';
-  $('#commissionAmount').value = commissionAmountOf(x);
-  $('#commissionStatus').value = x.payoutStatus || x.status || 'pending';
-  $('#commissionOwnerUid').value = x.ownerUid || '';
-  $('#commissionOwnerUsername').value = x.ownerUsername || x.username || '';
-  $('#commissionOwnerEmail').value = x.ownerEmail || '';
-  $('#commissionNote').value = x.note || '';
-  if($('#commissionFormTitle')) $('#commissionFormTitle').textContent = 'Editing Commission';
-}
-async function deleteCommissionRecord(docId){
-  if(!confirm('Delete this commission record?')) return;
-  await deleteDoc(doc(db,'commissionRecords',docId));
-  azAdminLogAction('commission_record_delete','commissionRecords',docId,{});
-  await loadAdminCommissions();
 }
 
 
@@ -3602,6 +3590,12 @@ document.addEventListener('click',async e=>{
   if(payDetail){azAdminOpenPaymentLogDetail(payDetail.getAttribute('data-paylog-detail'));return;}
   const closePayDetail=e.target.closest('[data-close-payment-detail]');
   if(closePayDetail){azAdminClosePaymentLogDetail();return;}
+  const comDetailBtn = e.target.closest('[data-commission-detail]');
+  if(comDetailBtn){azAdminOpenCommissionDetail(comDetailBtn.getAttribute('data-commission-detail'));return;}
+  const closeComDetail=e.target.closest('[data-close-commission-detail]');
+  if(closeComDetail){azAdminCloseCommissionDetail();return;}
+  const comBulkBtn=e.target.closest('[data-commission-bulk]');
+  if(comBulkBtn){await azAdminBulkCommissionStatus(comBulkBtn.getAttribute('data-commission-bulk'));return;}
   const payoutReceiptBtn = e.target.closest('[data-payout-receipt]');
   if(payoutReceiptBtn){await viewAdminPayoutReceipt(payoutReceiptBtn.getAttribute('data-payout-receipt'));return;}
   const payoutReqBtn = e.target.closest('[data-payout-request-status]');
@@ -3651,6 +3645,18 @@ $('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
 $('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
 $('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
 $('#commissionPayoutFilter')?.addEventListener('change', renderAdminCommissions);
+$('#commissionTypeFilter')?.addEventListener('change', renderAdminCommissions);
+$('#commissionMonthFilter')?.addEventListener('change', ()=>{azAdminSetCommissionDateState();renderAdminCommissions();});
+$('#commissionDateFrom')?.addEventListener('change', renderAdminCommissions);
+$('#commissionDateTo')?.addEventListener('change', renderAdminCommissions);
+$('#commissionSearch')?.addEventListener('input',()=>{clearTimeout(azCommissionSearchTimer);azCommissionSearchTimer=setTimeout(renderAdminCommissions,160);});
+$('#commissionStaffFilter')?.addEventListener('input',()=>{clearTimeout(azCommissionSearchTimer);azCommissionSearchTimer=setTimeout(renderAdminCommissions,160);});
+$('#commissionProductFilter')?.addEventListener('input',()=>{clearTimeout(azCommissionSearchTimer);azCommissionSearchTimer=setTimeout(renderAdminCommissions,160);});
+$('#clearCommissionFilters')?.addEventListener('click', clearCommissionFilters);
+$('#retryCommissionOrder')?.addEventListener('click', retryCommissionForOrder);
+$('#selectAllVisibleCommissions')?.addEventListener('click',()=>{document.querySelectorAll('[data-commission-select]:not(:disabled)').forEach(el=>{el.checked=true;});azAdminUpdateCommissionSelectedInfo();});
+$('#clearSelectedCommissions')?.addEventListener('click',()=>{document.querySelectorAll('[data-commission-select]').forEach(el=>{el.checked=false;});azAdminUpdateCommissionSelectedInfo();});
+document.addEventListener('change',e=>{if(e.target?.matches?.('[data-commission-select]')) azAdminUpdateCommissionSelectedInfo();});
 $('#payoutRequestFilter')?.addEventListener('change', renderAdminPayoutRequests);
 $('#refreshPayoutRequestsAdmin')?.addEventListener('click', loadAdminPayoutRequests);
 $('#exportCommissionCsv')?.addEventListener('click', exportCommissionCsv);
