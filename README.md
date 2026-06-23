@@ -66,3 +66,9 @@ Notes:
 - Forced admin action buttons to float at the right side only for Software product cards.
 - No Firebase Rules update required.
 - No Render backend deploy required; GitHub Pages deploy only.
+
+## (312) Admin Sidebar Compact No Scroll Fix
+- Admin Dashboard left sidebar compacted to reduce/avoid sidebar scrolling.
+- Smaller menu buttons, section labels, logo, and spacing.
+- Footer tip hidden on desktop to save vertical space.
+- Frontend-only change: deploy GitHub Pages only.
