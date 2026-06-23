@@ -121,3 +121,10 @@ Deploy: GitHub Pages sahaja.
 
 
 Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. No Firebase Rules or Render backend update required.
+
+
+## AZOBSS Patch 330 - Software/CAD Description Real 4-Line Height Fix
+- Fix real 4-line description: previous 329 clamp had 58px height, causing only ~3 visual lines.
+- Now desc container and inner span get actual 4-line height using CSS calc.
+- Applies to Software Tools, CAD Tools and root fallback.
+- No Firebase Rules update. No Render backend deploy required.
