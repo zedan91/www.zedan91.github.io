@@ -1,0 +1,16 @@
+AZOBSS PATCH (308) - ADMIN PAYMENT LOGS COMPACT CARD FIX
+
+Baseline: (307)-AZOBSS-CUSTOMER-MY-PURCHASES-PRO-FIX_20260623.zip
+
+Change:
+- Admin > Payment Logs > All Payment Logs card is now compact/dense.
+- Reduced row padding, title/meta font size, button height and row gaps.
+- Action buttons shortened: View Details -> Detail, Email Receipt -> Email.
+- Receipt/PDF/Email/Reset actions are kept, only layout is minimized.
+- Desktop layout uses a compact 2-column action grid to prevent tall vertical button stacking.
+- Mobile layout remains responsive.
+
+No backend changes.
+No Firebase Rules update required.
+No Render deploy required.
+Only GitHub Pages/admin UI needs deploy.

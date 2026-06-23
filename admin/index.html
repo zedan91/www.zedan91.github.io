@@ -1011,7 +1011,20 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-payment-detail-cell b{display:block;color:#93c5fd;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .az-payment-detail-cell span{color:#e5e7eb;font-weight:800;word-break:break-word}
 .az-payment-detail-raw{white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;background:#030712;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:12px;color:#dbeafe;font-size:12px}
-@media(max-width:760px){.az-payment-logs-toolbar input,.az-payment-logs-toolbar select,.az-payment-logs-toolbar button{width:100%;min-width:0}.az-payment-detail-grid{grid-template-columns:1fr}.az-payment-detail-head{flex-direction:column}.az-payment-detail-panel{max-height:92vh}}
+/* (308) Compact All Payment Logs card - keep full actions but minimize row height */
+.az-payment-log-list-card{padding:12px 14px!important}
+.az-payment-log-list-card>h2{font-size:20px!important;margin-bottom:10px!important}
+.az-mini-payment-list{gap:6px!important}
+.az-mini-payment-list .az-payment-log-row{padding:7px 9px!important;border-radius:12px!important;gap:0!important}
+.az-mini-payment-list .az-payment-log-row .item-row{display:grid!important;grid-template-columns:minmax(0,1fr) 114px!important;gap:8px!important;align-items:center!important}
+.az-mini-payment-list .az-payment-log-main{min-width:0!important;overflow:hidden!important}
+.az-mini-payment-list .az-payment-log-row .item-title{font-size:13px!important;line-height:1.15!important;gap:4px!important;flex-wrap:nowrap!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.az-mini-payment-list .az-payment-log-row .item-meta{font-size:10.5px!important;line-height:1.2!important;color:#b7c4dd!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;word-break:break-word!important}
+.az-mini-payment-list .az-pay-badge{font-size:9.5px!important;padding:2px 5px!important;line-height:1!important}
+.az-mini-payment-list .item-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;width:114px!important;align-items:center!important;justify-content:end!important}
+.az-mini-payment-list .item-actions .btn,.az-mini-payment-list .az-admin-reset-pabm-download-btn{height:23px!important;min-height:23px!important;padding:0 5px!important;border-radius:8px!important;font-size:10px!important;line-height:1!important;white-space:nowrap!important;min-width:0!important}
+.az-mini-payment-list .az-admin-pabm-dl-badge{height:23px!important;min-height:23px!important;padding:0 5px!important;border-radius:8px!important;font-size:10px!important;line-height:1!important;justify-content:center!important}
+@media(max-width:760px){.az-payment-logs-toolbar input,.az-payment-logs-toolbar select,.az-payment-logs-toolbar button{width:100%;min-width:0}.az-payment-detail-grid{grid-template-columns:1fr}.az-payment-detail-head{flex-direction:column}.az-payment-detail-panel{max-height:92vh}.az-mini-payment-list .az-payment-log-row .item-row{grid-template-columns:1fr!important}.az-mini-payment-list .item-actions{width:100%!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}.az-mini-payment-list .az-payment-log-row .item-meta{-webkit-line-clamp:3!important}}
 </style>
 
 
@@ -1411,7 +1424,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         <div id="paymentLogsResultInfo" class="tabs-note">Ready.</div>
       </div>
       <div class="split az-payment-logs-split">
-        <div class="card"><h2>All Payment Logs</h2><div id="purchaseLogsList" class="list"></div></div>
+        <div class="card az-payment-log-list-card"><h2>All Payment Logs</h2><div id="purchaseLogsList" class="list az-mini-payment-list"></div></div>
         <div class="card"><h2>PA/BM Purchase Summaries</h2><div id="purchaseSummariesList" class="list"></div></div>
       </div>
     </section>
@@ -2513,7 +2526,7 @@ function azAdminPaymentReceiptActions(x,key){
   const id=azAdminPaymentReceiptId(x);
   if(!id) return '';
   const safeKey=esc(key||x?._azDetailKey||id);
-  return `<button class="btn" data-paylog-receipt="${safeKey}" data-format="html" type="button">Receipt</button><button class="btn green" data-paylog-receipt="${safeKey}" data-format="pdf" data-download="1" type="button">PDF</button><button class="btn gray" data-paylog-email-receipt="${safeKey}" type="button">Email Receipt</button>`;
+  return `<button class="btn" data-paylog-receipt="${safeKey}" data-format="html" title="View receipt" type="button">Receipt</button><button class="btn green" data-paylog-receipt="${safeKey}" data-format="pdf" data-download="1" title="Download PDF receipt" type="button">PDF</button><button class="btn gray" data-paylog-email-receipt="${safeKey}" title="Email receipt again" type="button">Email</button>`;
 }
 
 
@@ -3160,8 +3173,8 @@ async function loadPurchases(){
     const dateText = fmtDate(azAdminPaymentMs(x)||x.createdAtMs||x.createdAt);
     const reset = x._azSource === 'premiumOrders' ? '' : azAdminPaBmResetActions(x);
     const receiptBtns = azAdminPaymentReceiptActions(x,key);
-    const actions = `<button class="btn gray" data-paylog-detail="${esc(key)}" type="button">View Details</button>${receiptBtns}${reset}`;
-    return `<div class="item az-payment-log-row"><div class="item-row"><div><div class="item-title">${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)} <span class="az-pay-badge ${esc(bucket)}">${esc(bucket.toUpperCase())}</span></div><div class="item-meta">${buyer}${buyerEmail} • ${itemName}${productId?' • Product ID: '+productId:''} • ${sourceBadge}${orderId?' • Order/Bill: '+orderId:''} • ${dateText}</div></div><div class="item-actions">${actions}</div></div></div>`;
+    const actions = `<button class="btn gray" data-paylog-detail="${esc(key)}" title="View details" type="button">Detail</button>${receiptBtns}${reset}`;
+    return `<div class="item az-payment-log-row"><div class="item-row"><div class="az-payment-log-main"><div class="item-title">${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)} <span class="az-pay-badge ${esc(bucket)}">${esc(bucket.toUpperCase())}</span></div><div class="item-meta">${buyer}${buyerEmail} • ${itemName}${productId?' • Product ID: '+productId:''} • ${sourceBadge}${orderId?' • Order/Bill: '+orderId:''} • ${dateText}</div></div><div class="item-actions">${actions}</div></div></div>`;
   });
 
   const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
