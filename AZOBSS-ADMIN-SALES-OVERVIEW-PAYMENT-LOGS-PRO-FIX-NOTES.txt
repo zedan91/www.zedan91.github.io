@@ -1,0 +1,31 @@
+AZOBSS Admin Sales Overview + Payment Logs Pro Fix
+Baseline: (298)-AZOBSS-ADMIN-PAYMENTS-SOFTWARE-CAD-PREMIUMORDERS-FIX_20260623.zip
+Output: (299)-AZOBSS-ADMIN-SALES-OVERVIEW-PAYMENT-LOGS-PRO-FIX_20260623.zip
+
+Changes:
+- Renamed Admin Dashboard sidebar:
+  - Payments & Totals -> Sales Overview
+  - Purchase Records -> Payment Logs
+- Reordered Support & Sales menu so Sales Overview appears before Payment Logs.
+- Sales Overview is now focused as a summary/report page:
+  - PA/BM Total RM
+  - Software Total RM
+  - CAD Tools Total RM
+  - All Purchases RM
+  - Pending / Verified / Total Records
+  - Latest 5 payment records only
+  - View All Payment Logs button
+- Payment Logs / Download Control is now focused as the detailed admin/debug page:
+  - All PA/BM, Software and CAD premium payment logs in one list
+  - Search by username, email, product or order ID
+  - Filter by PA/BM / Software / CAD Tools
+  - Filter by Paid/Verified or Pending
+  - PA/BM download reset control retained
+  - PA/BM Purchase Summaries retained separately
+- Added shared normalizer/helper logic so purchaseLogs and premiumOrders render consistently.
+
+Firebase Rules:
+- No Firebase Rules update needed.
+
+Backend:
+- No Render backend code change required in this patch.

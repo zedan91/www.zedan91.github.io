@@ -1060,8 +1060,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <div class="nav-group">Support & Sales</div>
       <button data-tab="support">💬 Support Inbox</button>
       <button data-tab="notifications">🔔 Notifications</button>
-      <button data-tab="purchases">💰 Purchase Records</button>
-      <button data-tab="payments">💳 Payments & Totals</button>
+      <button data-tab="payments">📊 Sales Overview</button>
+      <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <div class="nav-group">System</div>
       <button data-tab="auditlogs">🧾 Audit Logs</button>
@@ -1092,7 +1092,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         <p>Semak keadaan website dengan cepat. Nombor utama dikumpulkan mengikut pengguna, aktiviti, mesej, notifikasi dan pembelian supaya lebih mudah faham.</p>
         <div class="az-admin-hero-actions">
           <button class="btn green" data-tab="systemhealth">🩺 Check System</button>
-          <button class="btn gray" data-tab="payments">💳 Payments</button>
+          <button class="btn gray" data-tab="payments">📊 Sales Overview</button>
           <button class="btn gray" data-tab="support">💬 Support</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
         </div>
@@ -1100,7 +1100,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
       <div class="az-friendly-strip">
         <div class="card az-simple-card"><b>👥 Users</b><span>Pantau user berdaftar, online dan login hari ini.</span></div>
-        <div class="card az-simple-card"><b>💳 Payments</b><span>Semak pending, paid dan jumlah rekod pembelian.</span></div>
+        <div class="card az-simple-card"><b>📊 Sales Overview</b><span>Semak total jualan, pending, paid dan jumlah rekod pembelian.</span></div>
         <div class="card az-simple-card"><b>💬 Support</b><span>Lihat mesej user dan balas dari Support Inbox.</span></div>
         <div class="card az-simple-card"><b>🩺 System</b><span>Pastikan backend, Firebase dan ENV berada dalam keadaan OK.</span></div>
       </div>
@@ -1135,7 +1135,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           <button class="btn gray" data-tab="online">🟢 Online Users</button>
           <button class="btn gray" data-tab="support">💬 Support Inbox</button>
           <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
-          <button class="btn gray" data-tab="purchases">💰 Purchases</button>
+          <button class="btn gray" data-tab="purchases">🧾 Payment Logs</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
           <button class="btn gray" data-tab="auditlogs">🧾 Audit Logs</button>
           <button class="btn gray" data-tab="exports">📦 Export</button>
@@ -1238,20 +1238,38 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     </section>
 
     <section id="purchases" class="section">
-      <h2>💰 Purchase Records</h2>
-      <p class="az-section-help">Semak rekod pembelian, status bayaran dan reset had download jika perlu.</p>
-      <p class="tabs-note">Latest 50 purchase logs and summaries.</p>
+      <h2>🧾 Payment Logs / Download Control</h2>
+      <p class="az-section-help">Senarai penuh rekod bayaran PA/BM, Software dan CAD Tools untuk semakan detail, carian, filter dan reset had download jika perlu.</p>
+      <p class="tabs-note">Tab ini untuk kerja admin/debug. Ringkasan jualan utama berada di Sales Overview.</p>
+      <div class="card">
+        <h2>Search & Filter</h2>
+        <div class="toolbar">
+          <input id="paymentLogsSearch" placeholder="Search username, email, product, order ID..." style="flex:1;min-width:240px">
+          <select id="paymentLogsCategoryFilter">
+            <option value="all">All Categories</option>
+            <option value="pabm">PA/BM</option>
+            <option value="software">Software</option>
+            <option value="cad">CAD Tools</option>
+          </select>
+          <select id="paymentLogsStatusFilter">
+            <option value="all">All Status</option>
+            <option value="paid">Paid / Verified</option>
+            <option value="pending">Pending</option>
+          </select>
+          <button class="btn" id="refreshPaymentLogs">Refresh Logs</button>
+        </div>
+      </div>
       <div class="split">
-        <div class="card"><h2>Purchase Logs</h2><div id="purchaseLogsList" class="list"></div></div>
-        <div class="card"><h2>Purchase Summaries</h2><div id="purchaseSummariesList" class="list"></div></div>
+        <div class="card"><h2>All Payment Logs</h2><div id="purchaseLogsList" class="list"></div></div>
+        <div class="card"><h2>PA/BM Purchase Summaries</h2><div id="purchaseSummariesList" class="list"></div></div>
       </div>
     </section>
 
 
     <section id="payments" class="section">
-      <h2>💳 Payments & Totals</h2>
-      <p class="az-section-help">Ringkasan bayaran PA/BM, Software dan CAD Tools mengikut status.</p>
-      <p class="tabs-note">Ringkasan total pembelian mengikut kategori: PA/BM, Software dan CAD Tools.</p>
+      <h2>📊 Sales Overview</h2>
+      <p class="az-section-help">Ringkasan jualan PA/BM, Software dan CAD Tools mengikut kategori dan status.</p>
+      <p class="tabs-note">Overview untuk pantauan cepat. Untuk carian penuh, buka Payment Logs / Download Control.</p>
 
       <div class="grid">
         <div class="card"><div class="stat-label">PA/BM Total RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
@@ -1280,13 +1298,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
               <option value="pending">Pending Only</option>
               <option value="paid">Paid/Verified Only</option>
             </select>
-            <button class="btn" id="refreshPayments">Refresh</button>
+            <button class="btn" id="refreshPayments">Refresh Overview</button>
+            <button class="btn gray" data-tab="purchases" type="button">View All Payment Logs</button>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <h2>Latest Payment / Purchase Records</h2>
+        <h2>Latest 5 Payment Records</h2>
         <div id="paymentsList" class="list"></div>
       </div>
     </section>
@@ -2182,6 +2201,58 @@ function azAdminPremiumAmount(x){
   const m=raw.match(/([0-9]+(?:\.[0-9]+)?)/);
   return m ? Number(m[1]) : 0;
 }
+function azAdminPaymentAmount(x){
+  x=x||{};
+  const keys=['amount','total','totalAmount','price','paymentAmount','amountValue','saleAmount'];
+  for(const k of keys){
+    const v=x[k];
+    if(typeof v==='number' && Number.isFinite(v) && v>0) return v;
+    if(typeof v==='string'){
+      const m=v.replace(/,/g,'').match(/([0-9]+(?:\.[0-9]+)?)/);
+      if(m) return Number(m[1]) || 0;
+    }
+  }
+  const sen=Number(x.amountSen || x.paymentAmountSen || 0);
+  if(Number.isFinite(sen) && sen>0) return Math.round(sen)/100;
+  return 0;
+}
+function azAdminPurchaseLogToPaymentRecord(id, data){
+  const x = {id:id || data?.id || '', ...(data||{}), _azSource:'purchaseLogs'};
+  const typeRaw = String(x.productType || x.category || x.source || x.itemType || x.type || '').toLowerCase();
+  const nameRaw = String(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productName || '').toLowerCase();
+  const hay = typeRaw + ' ' + nameRaw;
+
+  let category = 'Others';
+  if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = 'PA/BM';
+  else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad') || hay.includes('dwg')) category = 'CAD Tools';
+  else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = 'Software';
+
+  const amount = azAdminPaymentAmount(x);
+  const status = String(x.status || x.paymentStatus || '').toLowerCase();
+  const paid = ['paid','verified','success','completed','approved','confirmed'].includes(status);
+  const pending = !paid && (!status || ['pending','unpaid','waiting','manual','review'].includes(status));
+  return {...x, category, amount, paid, pending, createdAtMs:azAdminPaymentMs(x)};
+}
+function azAdminFilterPaymentRecords(records, categoryFilter, statusFilter, searchText){
+  const filter = String(categoryFilter || 'all').toLowerCase();
+  const status = String(statusFilter || 'all').toLowerCase();
+  const q = String(searchText || '').trim().toLowerCase();
+  return (records||[]).filter(x=>{
+    if(filter === 'pabm' && x.category !== 'PA/BM') return false;
+    if(filter === 'software' && x.category !== 'Software') return false;
+    if(filter === 'cad' && x.category !== 'CAD Tools') return false;
+    if(filter === 'pending' && !x.pending) return false;
+    if(filter === 'paid' && !x.paid) return false;
+    if(status === 'pending' && !x.pending) return false;
+    if(status === 'paid' && !x.paid) return false;
+    if(q){
+      const hay=[x.id,x.orderId,x.billCode,x.paymentReference,x.usernameKey,x.username,x.displayName,x.email,x.title,x.name,x.itemName,x.filename,x.itemCode,x.productName,x.category,x.status,x.paymentStatus,x._azSource]
+        .map(v=>String(v||'').toLowerCase()).join(' ');
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
 function azAdminPremiumToPaymentRecord(x){
   x=x||{};
   const user=x.user||{};
@@ -2213,7 +2284,7 @@ async function azAdminLoadPremiumOrdersViaBackend(limitRows=300){
     return rows.map(azAdminPremiumToPaymentRecord);
   }catch(e){
     console.warn('Admin premiumOrders backend read failed:', e);
-    azAdminReportQueryError('Payments & Totals: premiumOrders backend', e);
+    azAdminReportQueryError('Sales Overview/Payment Logs: premiumOrders backend', e);
     return [];
   }
 }
@@ -2366,29 +2437,11 @@ async function loadNotifications(){
 
 async function loadPayments(){
   const filter = ($('#paymentCategoryFilter')?.value || 'all').toLowerCase();
-  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(150)),'Purchase Records: purchaseLogs');
+  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(150)),'Sales Overview: purchaseLogs');
   const premiumRecords = await azAdminLoadPremiumOrdersViaBackend(300);
   const records = [];
 
-  logs?.forEach(d=>{
-    const x = {id:d.id, ...d.data(), _azSource:'purchaseLogs'};
-    const typeRaw = String(x.productType || x.category || x.source || x.itemType || x.type || '').toLowerCase();
-    const nameRaw = String(x.title || x.name || x.itemName || x.filename || x.itemCode || '').toLowerCase();
-    const hay = typeRaw + ' ' + nameRaw;
-
-    let category = 'Others';
-    if(hay.includes('pa') || hay.includes('bm') || hay.includes('pabm') || hay.includes('lot') || hay.includes('kadaster')) category = 'PA/BM';
-    else if(hay.includes('cad') || hay.includes('lisp') || hay.includes('autocad')) category = 'CAD Tools';
-    else if(hay.includes('software') || hay.includes('license') || hay.includes('download')) category = 'Software';
-
-    const amount = Number(x.amount || x.total || x.totalAmount || x.price || x.paymentAmount || 0) || 0;
-    const status = String(x.status || x.paymentStatus || '').toLowerCase();
-    const paid = ['paid','verified','success','completed','approved','confirmed'].includes(status);
-    const pending = !paid && (!status || ['pending','unpaid','waiting','manual','review'].includes(status));
-
-    records.push({...x, category, amount, paid, pending, createdAtMs:azAdminPaymentMs(x)});
-  });
-
+  logs?.forEach(d=>records.push(azAdminPurchaseLogToPaymentRecord(d.id, d.data())));
   premiumRecords.forEach(x=>records.push(x));
   records.sort((a,b)=>azAdminPaymentMs(b)-azAdminPaymentMs(a));
 
@@ -2410,15 +2463,7 @@ async function loadPayments(){
   if($('#payPaidCount')) $('#payPaidCount').textContent = totals.paid;
   if($('#payRecordCount')) $('#payRecordCount').textContent = records.length;
 
-  const filtered = records.filter(x=>{
-    if(filter === 'all') return true;
-    if(filter === 'pabm') return x.category === 'PA/BM';
-    if(filter === 'software') return x.category === 'Software';
-    if(filter === 'cad') return x.category === 'CAD Tools';
-    if(filter === 'pending') return x.pending;
-    if(filter === 'paid') return x.paid;
-    return true;
-  }).slice(0,80);
+  const filtered = azAdminFilterPaymentRecords(records, filter, 'all', '').slice(0,5);
 
   const rows = filtered.map(x=>{
     const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
@@ -2433,19 +2478,40 @@ async function loadPayments(){
     );
   });
 
-  $('#paymentsList').innerHTML = rows.join('') || '<div class="item">No payment records found.</div>';
+  $('#paymentsList').innerHTML = rows.join('') || '<div class="item">No latest payment records found.</div>';
 }
 
 async function loadPurchases(){
-  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)),'Payments & Totals: purchaseLogs');
-  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(50)),'Payments & Totals: purchaseSummaries');
-  const premiumRecords=await azAdminLoadPremiumOrdersViaBackend(80);
-  const lr=[];
-  logs?.forEach(d=>{const x={id:d.id,...(d.data()||{}),_azSource:'purchaseLogs'};lr.push(item(esc(x.usernameKey||x.username||x.email||d.id),`${esc(x.productType||x.itemCode||'Purchase')} • ${esc(x.status||'')} • RM${esc(x.amount||x.total||'')} • ${fmtDate(x.createdAtMs||x.createdAt)}`, azAdminPaBmResetActions(x))) });
-  premiumRecords.slice(0,50).forEach(x=>{lr.push(item(esc(x.usernameKey||x.username||x.email||x.id),`${esc(x.category)} • ${esc(x.itemName||x.productName||'Premium Order')} • ${esc(x.status||'')} • RM${Number(x.amount||0).toFixed(2)} • ${fmtDate(azAdminPaymentMs(x))}`))});
+  const catFilter = ($('#paymentLogsCategoryFilter')?.value || 'all').toLowerCase();
+  const statusFilter = ($('#paymentLogsStatusFilter')?.value || 'all').toLowerCase();
+  const searchText = $('#paymentLogsSearch')?.value || '';
+  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(200)),'Payment Logs: purchaseLogs');
+  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(80)),'Payment Logs: purchaseSummaries');
+  const premiumRecords=await azAdminLoadPremiumOrdersViaBackend(300);
+  const records=[];
+
+  logs?.forEach(d=>records.push(azAdminPurchaseLogToPaymentRecord(d.id, d.data())));
+  premiumRecords.forEach(x=>records.push(x));
+  records.sort((a,b)=>azAdminPaymentMs(b)-azAdminPaymentMs(a));
+
+  const filtered = azAdminFilterPaymentRecords(records, catFilter, statusFilter, searchText).slice(0,200);
+  const lr=filtered.map(x=>{
+    const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
+    const buyer = esc(x.usernameKey || x.username || x.displayName || x.email || '-');
+    const itemName = esc(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productType || x.productName || 'Purchase');
+    const orderId = esc(x.orderId || x.billCode || x.paymentReference || x.id || '');
+    const sourceBadge = x._azSource === 'premiumOrders' ? ' • premiumOrders' : ' • purchaseLogs';
+    const actions = x._azSource === 'premiumOrders' ? '' : azAdminPaBmResetActions(x);
+    return item(
+      `${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)}`,
+      `${buyer} • ${itemName} • Status: ${statusText}${sourceBadge}${orderId ? ' • ID: '+orderId : ''} • ${fmtDate(azAdminPaymentMs(x)||x.createdAtMs||x.createdAt)}`,
+      actions
+    );
+  });
+
   const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
-  $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No purchase logs.</div>';
-  $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No purchase summaries.</div>';
+  $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No payment logs found.</div>';
+  $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No PA/BM purchase summaries.</div>';
 }
 
 async function loadStaffRoles(){
@@ -3170,6 +3236,10 @@ $('#publishNotif').addEventListener('click',publishNotification);
 $('#clearNotif').addEventListener('click',clearNotifications);
 $('#refreshPayments')?.addEventListener('click',loadPayments);
 $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
+$('#refreshPaymentLogs')?.addEventListener('click',loadPurchases);
+$('#paymentLogsCategoryFilter')?.addEventListener('change',loadPurchases);
+$('#paymentLogsStatusFilter')?.addEventListener('change',loadPurchases);
+$('#paymentLogsSearch')?.addEventListener('input',()=>{ clearTimeout(window.azPaymentLogsSearchTimer); window.azPaymentLogsSearchTimer=setTimeout(loadPurchases,180); });
 $('#saveStaffRole')?.addEventListener('click',saveStaffRole);
 $('#registeredUsersSearch')?.addEventListener('input',()=>{adminRegisteredUsersPage=1;renderRegisteredUsersAdmin();});
 $('#registeredUsersSort')?.addEventListener('change',()=>{adminRegisteredUsersPage=1;renderRegisteredUsersAdmin();});
