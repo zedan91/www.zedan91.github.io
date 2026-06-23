@@ -988,7 +988,31 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-admin-reset-pabm-download-btn:hover{background:rgba(14,165,233,.23);color:#e0f2fe}
 .az-admin-reset-pabm-download-btn:disabled{opacity:.55;cursor:wait}
 .az-admin-pabm-dl-badge{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:rgba(15,23,42,.88);border:1px solid rgba(148,163,184,.25);color:#e5e7eb;font-size:12px;font-weight:850;white-space:nowrap}
+
+<style id="azobss-admin-payment-logs-pro-style">
+.az-payment-logs-pro-card{border-color:rgba(34,197,94,.34)}
+.az-payment-logs-toolbar{align-items:center}
+.az-payment-logs-toolbar input,.az-payment-logs-toolbar select{min-width:150px}
+.az-payment-date-input:disabled{opacity:.45;cursor:not-allowed}
+.az-payment-log-row .item-title{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.az-pay-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:950;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.9);color:#dbeafe}
+.az-pay-badge.paid{border-color:rgba(34,197,94,.5);color:#86efac;background:rgba(34,197,94,.10)}
+.az-pay-badge.pending{border-color:rgba(245,158,11,.55);color:#fde68a;background:rgba(245,158,11,.10)}
+.az-pay-badge.failed,.az-pay-badge.cancelled{border-color:rgba(248,113,113,.55);color:#fecaca;background:rgba(239,68,68,.10)}
+.az-payment-detail-modal{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;padding:18px}
+.az-payment-detail-modal.is-open{display:flex}
+.az-payment-detail-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.74);backdrop-filter:blur(8px)}
+.az-payment-detail-panel{position:relative;width:min(860px,94vw);max-height:86vh;overflow:auto;border:1px solid rgba(148,163,184,.28);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(8,13,24,.98));box-shadow:0 30px 100px rgba(0,0,0,.55);padding:18px}
+.az-payment-detail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid rgba(148,163,184,.18);padding-bottom:12px;margin-bottom:14px}
+.az-payment-detail-head h2{margin:0;font-size:24px}
+.az-payment-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.az-payment-detail-cell{border:1px solid rgba(148,163,184,.18);border-radius:14px;background:rgba(15,23,42,.64);padding:10px}
+.az-payment-detail-cell b{display:block;color:#93c5fd;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.az-payment-detail-cell span{color:#e5e7eb;font-weight:800;word-break:break-word}
+.az-payment-detail-raw{white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;background:#030712;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:12px;color:#dbeafe;font-size:12px}
+@media(max-width:760px){.az-payment-logs-toolbar input,.az-payment-logs-toolbar select,.az-payment-logs-toolbar button{width:100%;min-width:0}.az-payment-detail-grid{grid-template-columns:1fr}.az-payment-detail-head{flex-direction:column}.az-payment-detail-panel{max-height:92vh}}
 </style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -1241,25 +1265,39 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <h2>🧾 Payment Logs / Download Control</h2>
       <p class="az-section-help">Senarai penuh rekod bayaran PA/BM, Software dan CAD Tools untuk semakan detail, carian, filter dan reset had download jika perlu.</p>
       <p class="tabs-note">Tab ini untuk kerja admin/debug. Ringkasan jualan utama berada di Sales Overview.</p>
-      <div class="card">
+      <div class="card az-payment-logs-pro-card">
         <h2>Search & Filter</h2>
-        <div class="toolbar">
-          <input id="paymentLogsSearch" placeholder="Search username, email, product, order ID..." style="flex:1;min-width:240px">
-          <select id="paymentLogsCategoryFilter">
+        <div class="toolbar az-payment-logs-toolbar">
+          <input id="paymentLogsSearch" placeholder="Search username / email / product / product ID / order ID / bill code..." style="flex:1;min-width:260px">
+          <select id="paymentLogsCategoryFilter" title="Category">
             <option value="all">All Categories</option>
             <option value="pabm">PA/BM</option>
             <option value="software">Software</option>
             <option value="cad">CAD Tools</option>
           </select>
-          <select id="paymentLogsStatusFilter">
+          <select id="paymentLogsStatusFilter" title="Status">
             <option value="all">All Status</option>
             <option value="paid">Paid / Verified</option>
             <option value="pending">Pending</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="failed">Failed</option>
           </select>
-          <button class="btn" id="refreshPaymentLogs">Refresh Logs</button>
+          <select id="paymentLogsDateFilter" title="Date range">
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="custom">Custom Date</option>
+          </select>
+          <input id="paymentLogsDateFrom" type="date" title="From date" class="az-payment-date-input" disabled>
+          <input id="paymentLogsDateTo" type="date" title="To date" class="az-payment-date-input" disabled>
+          <button class="btn" id="refreshPaymentLogs" type="button">Refresh Logs</button>
+          <button class="btn gray" id="clearPaymentLogsFilters" type="button">Clear Filters</button>
+          <button class="btn green" id="exportPaymentLogsCsv" type="button">Export CSV</button>
         </div>
+        <div id="paymentLogsResultInfo" class="tabs-note">Ready.</div>
       </div>
-      <div class="split">
+      <div class="split az-payment-logs-split">
         <div class="card"><h2>All Payment Logs</h2><div id="purchaseLogsList" class="list"></div></div>
         <div class="card"><h2>PA/BM Purchase Summaries</h2><div id="purchaseSummariesList" class="list"></div></div>
       </div>
@@ -1578,6 +1616,20 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       </div>
     </section>
   </main>
+</div>
+
+<div id="paymentLogDetailModal" class="az-payment-detail-modal" aria-hidden="true">
+  <div class="az-payment-detail-backdrop" data-close-payment-detail="1"></div>
+  <div class="az-payment-detail-panel" role="dialog" aria-modal="true" aria-labelledby="paymentLogDetailTitle">
+    <div class="az-payment-detail-head">
+      <div>
+        <h2 id="paymentLogDetailTitle">Payment Details</h2>
+        <p id="paymentLogDetailSubtitle" class="tabs-note">Full payment log information.</p>
+      </div>
+      <button class="btn gray" type="button" data-close-payment-detail="1">Close</button>
+    </div>
+    <div id="paymentLogDetailBody" class="az-payment-detail-body"></div>
+  </div>
 </div>
 
 
@@ -2233,25 +2285,81 @@ function azAdminPurchaseLogToPaymentRecord(id, data){
   const pending = !paid && (!status || ['pending','unpaid','waiting','manual','review'].includes(status));
   return {...x, category, amount, paid, pending, createdAtMs:azAdminPaymentMs(x)};
 }
-function azAdminFilterPaymentRecords(records, categoryFilter, statusFilter, searchText){
+function azAdminStatusBucket(x){
+  const status=String(x?.status || x?.paymentStatus || x?.payment_state || '').toLowerCase();
+  const hay=[status,x?.resultCode,x?.reason,x?.message,x?.verification,x?.paymentStatus].map(v=>String(v||'').toLowerCase()).join(' ');
+  if(['paid','verified','success','completed','approved','confirmed','settled'].includes(status) || x?.paid === true) return 'paid';
+  if(hay.includes('cancel') || status === 'void' || status === 'aborted') return 'cancelled';
+  if(hay.includes('fail') || hay.includes('error') || hay.includes('reject') || hay.includes('expired') || ['failed','unsuccessful','declined','rejected','expired'].includes(status)) return 'failed';
+  return 'pending';
+}
+function azAdminPaymentRecordSearchHay(x){
+  const user=x?.user||{};
+  const product=x?.product||{};
+  return [
+    x?.id,x?.docId,x?.orderId,x?.billCode,x?.paymentReference,x?.transactionId,x?.txnId,x?.invoiceNo,x?.refNo,x?.receiptNo,
+    x?.usernameKey,x?.username,x?.displayName,x?.buyerName,x?.customerName,x?.email,x?.buyerEmail,user?.username,user?.email,user?.displayName,
+    x?.title,x?.name,x?.itemName,x?.filename,x?.itemCode,x?.productName,x?.productTitle,x?.productId,x?.softwareId,x?.cadId,product?.id,product?.name,product?.title,product?.category,
+    x?.category,x?.status,x?.paymentStatus,x?._azSource
+  ].map(v=>String(v||'').toLowerCase()).join(' ');
+}
+function azAdminNormalizeDateInput(v,endOfDay=false){
+  const raw=String(v||'').trim();
+  if(!raw) return 0;
+  const d=new Date(raw+'T00:00:00');
+  if(Number.isNaN(d.getTime())) return 0;
+  if(endOfDay) d.setHours(23,59,59,999);
+  return d.getTime();
+}
+function azAdminPaymentLogDateRange(dateFilter){
+  const f=String(dateFilter||'all');
+  const now=new Date();
+  const startToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  if(f==='today') return {from:startToday,to:startToday+86400000-1,label:'Today'};
+  if(f==='thisMonth'){
+    const from=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+    const to=new Date(now.getFullYear(),now.getMonth()+1,1).getTime()-1;
+    return {from,to,label:'This Month'};
+  }
+  if(f==='lastMonth'){
+    const from=new Date(now.getFullYear(),now.getMonth()-1,1).getTime();
+    const to=new Date(now.getFullYear(),now.getMonth(),1).getTime()-1;
+    return {from,to,label:'Last Month'};
+  }
+  if(f==='custom'){
+    const from=azAdminNormalizeDateInput($('#paymentLogsDateFrom')?.value,false);
+    const to=azAdminNormalizeDateInput($('#paymentLogsDateTo')?.value,true);
+    return {from,to,label:'Custom Date'};
+  }
+  return {from:0,to:0,label:'All Dates'};
+}
+function azAdminFilterPaymentRecords(records, categoryFilter, statusFilter, searchText, dateFilter){
   const filter = String(categoryFilter || 'all').toLowerCase();
   const status = String(statusFilter || 'all').toLowerCase();
   const q = String(searchText || '').trim().toLowerCase();
+  const dateRange = azAdminPaymentLogDateRange(dateFilter || 'all');
+  const terms = q.split(/\s+/).filter(Boolean);
   return (records||[]).filter(x=>{
     if(filter === 'pabm' && x.category !== 'PA/BM') return false;
     if(filter === 'software' && x.category !== 'Software') return false;
     if(filter === 'cad' && x.category !== 'CAD Tools') return false;
-    if(filter === 'pending' && !x.pending) return false;
-    if(filter === 'paid' && !x.paid) return false;
-    if(status === 'pending' && !x.pending) return false;
-    if(status === 'paid' && !x.paid) return false;
-    if(q){
-      const hay=[x.id,x.orderId,x.billCode,x.paymentReference,x.usernameKey,x.username,x.displayName,x.email,x.title,x.name,x.itemName,x.filename,x.itemCode,x.productName,x.category,x.status,x.paymentStatus,x._azSource]
-        .map(v=>String(v||'').toLowerCase()).join(' ');
-      if(!hay.includes(q)) return false;
+    const bucket=azAdminStatusBucket(x);
+    if(status !== 'all' && bucket !== status) return false;
+    if(dateRange.from || dateRange.to){
+      const ms=azAdminPaymentMs(x);
+      if(dateRange.from && (!ms || ms < dateRange.from)) return false;
+      if(dateRange.to && (!ms || ms > dateRange.to)) return false;
+    }
+    if(terms.length){
+      const hay=azAdminPaymentRecordSearchHay(x);
+      if(!terms.every(t=>hay.includes(t))) return false;
     }
     return true;
   });
+}
+function azAdminSetPaymentLogCustomDateState(){
+  const custom=String($('#paymentLogsDateFilter')?.value||'all')==='custom';
+  ['#paymentLogsDateFrom','#paymentLogsDateTo'].forEach(sel=>{const el=$(sel); if(el) el.disabled=!custom;});
 }
 function azAdminPremiumToPaymentRecord(x){
   x=x||{};
@@ -2463,7 +2571,9 @@ async function loadPayments(){
   if($('#payPaidCount')) $('#payPaidCount').textContent = totals.paid;
   if($('#payRecordCount')) $('#payRecordCount').textContent = records.length;
 
-  const filtered = azAdminFilterPaymentRecords(records, filter, 'all', '').slice(0,5);
+  const overviewCategory = (filter === 'pending' || filter === 'paid') ? 'all' : filter;
+  const overviewStatus = (filter === 'pending' || filter === 'paid') ? filter : 'all';
+  const filtered = azAdminFilterPaymentRecords(records, overviewCategory, overviewStatus, '', 'all').slice(0,5);
 
   const rows = filtered.map(x=>{
     const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
@@ -2482,36 +2592,124 @@ async function loadPayments(){
 }
 
 async function loadPurchases(){
+  azAdminSetPaymentLogCustomDateState();
   const catFilter = ($('#paymentLogsCategoryFilter')?.value || 'all').toLowerCase();
   const statusFilter = ($('#paymentLogsStatusFilter')?.value || 'all').toLowerCase();
+  const dateFilter = ($('#paymentLogsDateFilter')?.value || 'all');
   const searchText = $('#paymentLogsSearch')?.value || '';
-  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(200)),'Payment Logs: purchaseLogs');
-  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(80)),'Payment Logs: purchaseSummaries');
-  const premiumRecords=await azAdminLoadPremiumOrdersViaBackend(300);
+  const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(300)),'Payment Logs: purchaseLogs');
+  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(100)),'Payment Logs: purchaseSummaries');
+  const premiumRecords=await azAdminLoadPremiumOrdersViaBackend(500);
   const records=[];
 
   logs?.forEach(d=>records.push(azAdminPurchaseLogToPaymentRecord(d.id, d.data())));
   premiumRecords.forEach(x=>records.push(x));
+  records.forEach(x=>{
+    const bucket=azAdminStatusBucket(x);
+    x._azStatusBucket=bucket;
+    x.paid=bucket==='paid';
+    x.pending=bucket==='pending';
+  });
   records.sort((a,b)=>azAdminPaymentMs(b)-azAdminPaymentMs(a));
 
-  const filtered = azAdminFilterPaymentRecords(records, catFilter, statusFilter, searchText).slice(0,200);
-  const lr=filtered.map(x=>{
-    const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
+  const filtered = azAdminFilterPaymentRecords(records, catFilter, statusFilter, searchText, dateFilter);
+  window.azAdminPaymentLogsRecords = records;
+  window.azAdminPaymentLogsFiltered = filtered;
+  window.azAdminPaymentLogsMap = {};
+  const visible = filtered.slice(0,250);
+
+  const lr=visible.map((x,idx)=>{
+    const key='paylog_'+idx+'_'+String(x.id||x.orderId||x.billCode||'x').replace(/[^a-z0-9_-]/gi,'').slice(0,40);
+    x._azDetailKey=key;
+    window.azAdminPaymentLogsMap[key]=x;
+    const bucket=azAdminStatusBucket(x);
+    const statusText = esc(x.status || x.paymentStatus || bucket);
     const buyer = esc(x.usernameKey || x.username || x.displayName || x.email || '-');
+    const buyerEmail = x.email || x.buyerEmail ? ' • '+esc(x.email || x.buyerEmail) : '';
     const itemName = esc(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productType || x.productName || 'Purchase');
-    const orderId = esc(x.orderId || x.billCode || x.paymentReference || x.id || '');
-    const sourceBadge = x._azSource === 'premiumOrders' ? ' • premiumOrders' : ' • purchaseLogs';
-    const actions = x._azSource === 'premiumOrders' ? '' : azAdminPaBmResetActions(x);
-    return item(
-      `${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)}`,
-      `${buyer} • ${itemName} • Status: ${statusText}${sourceBadge}${orderId ? ' • ID: '+orderId : ''} • ${fmtDate(azAdminPaymentMs(x)||x.createdAtMs||x.createdAt)}`,
-      actions
-    );
+    const productId = esc(x.productId || x.softwareId || x.cadId || x.itemCode || x.product?.id || '');
+    const orderId = esc(x.orderId || x.billCode || x.paymentReference || x.transactionId || x.txnId || x.id || '');
+    const sourceBadge = x._azSource === 'premiumOrders' ? 'premiumOrders' : 'purchaseLogs';
+    const dateText = fmtDate(azAdminPaymentMs(x)||x.createdAtMs||x.createdAt);
+    const reset = x._azSource === 'premiumOrders' ? '' : azAdminPaBmResetActions(x);
+    const actions = `<button class="btn gray" data-paylog-detail="${esc(key)}" type="button">View Details</button>${reset}`;
+    return `<div class="item az-payment-log-row"><div class="item-row"><div><div class="item-title">${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)} <span class="az-pay-badge ${esc(bucket)}">${esc(bucket.toUpperCase())}</span></div><div class="item-meta">${buyer}${buyerEmail} • ${itemName}${productId?' • Product ID: '+productId:''} • ${sourceBadge}${orderId?' • Order/Bill: '+orderId:''} • ${dateText}</div></div><div class="item-actions">${actions}</div></div></div>`;
   });
 
   const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
   $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No payment logs found.</div>';
   $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No PA/BM purchase summaries.</div>';
+  const info=$('#paymentLogsResultInfo');
+  if(info){
+    const range=azAdminPaymentLogDateRange(dateFilter).label;
+    const shown=Math.min(visible.length, filtered.length);
+    info.textContent=`Showing ${shown} of ${filtered.length} matched records from ${records.length} loaded records • Date: ${range}`;
+  }
+}
+
+function azAdminPaymentLogCsvValue(v){
+  const s=String(v??'').replace(/\r?\n/g,' ').trim();
+  return '"'+s.replace(/"/g,'""')+'"';
+}
+function azAdminExportPaymentLogsCsv(){
+  const rows=Array.isArray(window.azAdminPaymentLogsFiltered)?window.azAdminPaymentLogsFiltered:[];
+  if(!rows.length){ toast('No payment logs to export.'); return; }
+  const header=['category','status','amount_rm','username','email','product_name','product_id','order_or_bill_id','source','payment_date','download_used','download_max'];
+  const lines=[header.map(azAdminPaymentLogCsvValue).join(',')];
+  rows.forEach(x=>{
+    const vals=[
+      x.category||'',
+      x.status||x.paymentStatus||azAdminStatusBucket(x),
+      Number(x.amount||0).toFixed(2),
+      x.usernameKey||x.username||x.displayName||'',
+      x.email||x.buyerEmail||x.user?.email||'',
+      x.title||x.name||x.itemName||x.productName||x.productTitle||'',
+      x.productId||x.softwareId||x.cadId||x.itemCode||x.product?.id||'',
+      x.orderId||x.billCode||x.paymentReference||x.transactionId||x.txnId||x.id||'',
+      x._azSource||'',
+      fmtDate(azAdminPaymentMs(x)||x.createdAtMs||x.createdAt),
+      azAdminDownloadCount(x),
+      azAdminMaxDownloads(x)
+    ];
+    lines.push(vals.map(azAdminPaymentLogCsvValue).join(','));
+  });
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const stamp=new Date().toISOString().slice(0,10);
+  a.href=url; a.download='azobss-payment-logs-'+stamp+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function azAdminOpenPaymentLogDetail(key){
+  const rec=window.azAdminPaymentLogsMap?.[key];
+  if(!rec){ toast('Payment record not found. Refresh logs and try again.'); return; }
+  const modal=$('#paymentLogDetailModal');
+  const body=$('#paymentLogDetailBody');
+  const sub=$('#paymentLogDetailSubtitle');
+  if(!modal||!body) return;
+  const fields=[
+    ['Category',rec.category||'-'],
+    ['Status',rec.status||rec.paymentStatus||azAdminStatusBucket(rec)],
+    ['Amount RM',Number(rec.amount||0).toFixed(2)],
+    ['Username',rec.usernameKey||rec.username||rec.displayName||'-'],
+    ['Email',rec.email||rec.buyerEmail||rec.user?.email||'-'],
+    ['Product',rec.title||rec.name||rec.itemName||rec.productName||rec.productTitle||'-'],
+    ['Product ID',rec.productId||rec.softwareId||rec.cadId||rec.itemCode||rec.product?.id||'-'],
+    ['Order / Bill ID',rec.orderId||rec.billCode||rec.paymentReference||rec.transactionId||rec.txnId||rec.id||'-'],
+    ['Source',rec._azSource||'-'],
+    ['Payment Date',fmtDate(azAdminPaymentMs(rec)||rec.createdAtMs||rec.createdAt)],
+    ['Download Used',azAdminDownloadCount(rec)],
+    ['Download Max',azAdminMaxDownloads(rec)]
+  ];
+  body.innerHTML='<div class="az-payment-detail-grid">'+fields.map(([k,v])=>`<div class="az-payment-detail-cell"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')+'</div><h3 style="margin:10px 0 8px">Raw Debug Data</h3><pre class="az-payment-detail-raw">'+esc(JSON.stringify(rec,(k,v)=>k==='_azDetailKey'?undefined:v,2))+'</pre>';
+  if(sub) sub.textContent=(rec.category||'Payment')+' • '+(rec.orderId||rec.billCode||rec.id||'No ID');
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+}
+function azAdminClosePaymentLogDetail(){
+  const modal=$('#paymentLogDetailModal');
+  if(modal){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
 }
 
 async function loadStaffRoles(){
@@ -3217,6 +3415,10 @@ document.addEventListener('click',async e=>{
   if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
   const dn=e.target.closest('[data-del-notif]');
   if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+  const payDetail=e.target.closest('[data-paylog-detail]');
+  if(payDetail){azAdminOpenPaymentLogDetail(payDetail.getAttribute('data-paylog-detail'));return;}
+  const closePayDetail=e.target.closest('[data-close-payment-detail]');
+  if(closePayDetail){azAdminClosePaymentLogDetail();return;}
   const payoutReceiptBtn = e.target.closest('[data-payout-receipt]');
   if(payoutReceiptBtn){await viewAdminPayoutReceipt(payoutReceiptBtn.getAttribute('data-payout-receipt'));return;}
   const payoutReqBtn = e.target.closest('[data-payout-request-status]');
@@ -3239,6 +3441,20 @@ $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
 $('#refreshPaymentLogs')?.addEventListener('click',loadPurchases);
 $('#paymentLogsCategoryFilter')?.addEventListener('change',loadPurchases);
 $('#paymentLogsStatusFilter')?.addEventListener('change',loadPurchases);
+$('#paymentLogsDateFilter')?.addEventListener('change',()=>{azAdminSetPaymentLogCustomDateState();loadPurchases();});
+$('#paymentLogsDateFrom')?.addEventListener('change',loadPurchases);
+$('#paymentLogsDateTo')?.addEventListener('change',loadPurchases);
+$('#clearPaymentLogsFilters')?.addEventListener('click',()=>{
+  if($('#paymentLogsSearch')) $('#paymentLogsSearch').value='';
+  if($('#paymentLogsCategoryFilter')) $('#paymentLogsCategoryFilter').value='all';
+  if($('#paymentLogsStatusFilter')) $('#paymentLogsStatusFilter').value='all';
+  if($('#paymentLogsDateFilter')) $('#paymentLogsDateFilter').value='all';
+  if($('#paymentLogsDateFrom')) $('#paymentLogsDateFrom').value='';
+  if($('#paymentLogsDateTo')) $('#paymentLogsDateTo').value='';
+  azAdminSetPaymentLogCustomDateState();
+  loadPurchases();
+});
+$('#exportPaymentLogsCsv')?.addEventListener('click',azAdminExportPaymentLogsCsv);
 $('#paymentLogsSearch')?.addEventListener('input',()=>{ clearTimeout(window.azPaymentLogsSearchTimer); window.azPaymentLogsSearchTimer=setTimeout(loadPurchases,180); });
 $('#saveStaffRole')?.addEventListener('click',saveStaffRole);
 $('#registeredUsersSearch')?.addEventListener('input',()=>{adminRegisteredUsersPage=1;renderRegisteredUsersAdmin();});

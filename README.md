@@ -15,3 +15,11 @@ Notes:
 - Render backend: deploy required because deploy-server.js changed.
 - Keep AZOBSS_VERIFY_TOYYIB_CALLBACK default ON.
 - Do not set AZOBSS_ALLOW_UNVERIFIED_TOYYIB_CALLBACK unless emergency.
+
+
+## Patch 300 - Admin Payment Logs Pro Filter + Export
+
+- Upgraded Admin > Payment Logs with stronger search, date filter, status filter, CSV export, and View Details modal.
+- Keeps PA/BM reset download limit button unchanged.
+- No Firebase Rules update required.
+- No Render backend deploy required.
