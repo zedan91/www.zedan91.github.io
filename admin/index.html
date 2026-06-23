@@ -1072,6 +1072,19 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-report-chip.ok{color:#86efac;border-color:rgba(34,197,94,.28);background:rgba(22,101,52,.16)}
 .az-report-chip.warning{color:#fbbf24;border-color:rgba(245,158,11,.28);background:rgba(146,64,14,.16)}
 .az-report-chip.critical{color:#fca5a5;border-color:rgba(239,68,68,.30);background:rgba(127,29,29,.18)}
+.az-admin-alert-card{border-color:rgba(34,197,94,.32);background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(2,6,23,.72))}
+.az-admin-alert-toolbar{align-items:center}
+.az-admin-alert-toolbar input,.az-admin-alert-toolbar select{min-width:160px}
+.az-alert-kpi-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.az-admin-alert-list .item{border-left:3px solid rgba(34,197,94,.65)}
+.az-admin-alert-list .item.is-unread{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.9)}
+.az-admin-alert-list .item-title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.az-alert-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:950;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.72);color:#dbeafe}
+.az-alert-chip.success{color:#86efac;border-color:rgba(34,197,94,.34);background:rgba(22,101,52,.18)}
+.az-alert-chip.unread{color:#fbbf24;border-color:rgba(245,158,11,.34);background:rgba(146,64,14,.18)}
+.az-nav-badge{display:inline-flex;min-width:18px;height:18px;padding:0 5px;margin-left:6px;align-items:center;justify-content:center;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:950;vertical-align:middle}
+.az-nav-badge[hidden]{display:none!important}
+@media(max-width:760px){.az-admin-alert-toolbar input,.az-admin-alert-toolbar select,.az-admin-alert-toolbar button{width:100%;min-width:0}}
 .az-report-action-list .item-title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .az-report-json-box{max-height:420px;overflow:auto;border:1px solid rgba(148,163,184,.18);border-radius:14px;background:rgba(2,6,23,.55);padding:12px}
 @media print{body *{visibility:hidden}.az-report-print-area,.az-report-print-area *{visibility:visible}.az-report-print-area{position:absolute;left:0;top:0;width:100%}.sidebar,.topbar,.toolbar,.market-sticky-bar,#loginCover{display:none!important}.az-report-preview{border:0;color:#000;background:#fff}}
@@ -1149,6 +1162,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <div class="nav-group">Support & Sales</div>
       <button data-tab="support">💬 Support Inbox</button>
       <button data-tab="notifications">🔔 Notifications</button>
+      <button data-tab="adminalerts">🔔 Payment Alerts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="payments">📊 Sales Overview</button>
       <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
@@ -1214,6 +1228,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         <div class="card az-kpi-card"><div><div class="stat-label">Total Visits</div><div id="statTotalVisits" class="stat-value">0</div></div><div class="az-kpi-note">Semua rekod visit yang disimpan.</div></div>
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div><div class="az-kpi-note">Mesej support yang belum selesai.</div></div>
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div><div class="az-kpi-note">Pengumuman/notifikasi aktif.</div></div>
+        <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Payment Alerts</div><div id="statPaymentAlerts" class="stat-value">0</div></div><div class="az-kpi-note">Bayaran baru yang belum dibaca admin.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
       </div>
@@ -1226,6 +1241,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           <button class="btn gray" data-tab="online">🟢 Online Users</button>
           <button class="btn gray" data-tab="support">💬 Support Inbox</button>
           <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
+          <button class="btn gray" data-tab="adminalerts">🔔 Payment Alerts</button>
           <button class="btn gray" data-tab="purchases">🧾 Payment Logs</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
           <button class="btn gray" data-tab="auditlogs">🧾 Audit Logs</button>
@@ -1326,6 +1342,36 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         </div>
       </div>
       <div class="card"><h2>Latest Notifications</h2><div id="notificationsList" class="list"></div></div>
+    </section>
+
+    <section id="adminalerts" class="section">
+      <h2>🔔 Payment Alerts</h2>
+      <p class="az-section-help">Notifikasi khas admin bila bayaran PA/BM, Software atau CAD Tools berjaya disahkan paid.</p>
+      <p class="tabs-note">Data ini private untuk admin. Ia tidak guna collection pengumuman user biasa.</p>
+      <div class="grid az-alert-kpi-grid">
+        <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Alerts</div><div id="alertUnreadCount" class="stat-value">0</div></div><div class="az-kpi-note">Payment paid belum dibaca.</div></div>
+        <div class="card az-kpi-card"><div><div class="stat-label">Loaded Alerts</div><div id="alertLoadedCount" class="stat-value">0</div></div><div class="az-kpi-note">Jumlah alert dalam senarai semasa.</div></div>
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">Alert Sales RM</div><div id="alertSalesTotal" class="stat-value">0.00</div></div><div class="az-kpi-note">Jumlah RM daripada alert yang dimuatkan.</div></div>
+      </div>
+      <div class="card az-admin-alert-card">
+        <h2>Admin Payment Notification Center</h2>
+        <div class="toolbar az-admin-alert-toolbar">
+          <input id="adminPaymentAlertSearch" placeholder="Search product / username / email / order ID / bill code..." style="flex:1;min-width:260px">
+          <select id="adminPaymentAlertFilter">
+            <option value="all">All Alerts</option>
+            <option value="unread">Unread Only</option>
+            <option value="pabm">PA/BM</option>
+            <option value="software">Software</option>
+            <option value="cad">CAD Tools</option>
+          </select>
+          <button class="btn" id="refreshAdminPaymentAlerts">Refresh</button>
+          <button class="btn green" id="markAllAdminPaymentAlertsRead">Mark All Read</button>
+          <button class="btn red" id="clearReadAdminPaymentAlerts">Clear Read</button>
+          <button class="btn gray" data-tab="purchases">Open Payment Logs</button>
+        </div>
+        <div id="adminPaymentAlertsNotice" class="tabs-note">Payment alerts will appear after a paid payment is finalized by backend.</div>
+        <div id="adminPaymentAlertsList" class="list az-admin-alert-list"></div>
+      </div>
     </section>
 
     <section id="purchases" class="section">
@@ -2143,7 +2189,7 @@ async function runAdminFrontendDiagnostics(){
     const keyInfo=azAdminApiKeySummary();
     const autoAuthOk=!!u && !!adminOk;
     rows.push(azDiagLine(autoAuthOk || keyInfo.saved,'Backend admin auth mode',autoAuthOk?`Auto via Firebase admin token. No browser ADMIN_KEY required.${keyInfo.saved?` Optional fallback saved via ${esc(keyInfo.source)} • length ${esc(keyInfo.length)}.`:''}`:(keyInfo.saved?`Fallback saved via ${esc(keyInfo.source)} • length ${esc(keyInfo.length)}.`:'No admin session and no fallback key. Login as admin first.')));
-    const requiredSections=['overview','users','online','activity','support','notifications','purchases','payments','commissions','auditlogs','exports','systemhealth','maintenance','staffroles','settings'];
+    const requiredSections=['overview','users','online','activity','support','notifications','adminalerts','purchases','payments','commissions','auditlogs','exports','systemhealth','maintenance','staffroles','settings'];
     const missingSections=requiredSections.filter(id=>!document.getElementById(id));
     rows.push(azDiagLine(!missingSections.length,'Admin section DOM',missingSections.length?`Missing: ${esc(missingSections.join(', '))}`:`${requiredSections.length} required sections found.`));
     const requiredButtons=['refreshSystemHealth','runAdminFrontendDiagnostics','saveAdminApiKeyLocal','testAdminApiKey'];
@@ -2682,6 +2728,7 @@ async function loadOverview(){
   const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)),'Overview: active notifications');
   const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)),'Overview: purchaseLogs');
   const premiumOverviewOrders=await azAdminLoadPremiumOrdersViaBackend(100);
+  const paymentAlertOverview=await azAdminLoadPaymentAlertSummaryOnly();
 
   function azAdminOverviewMs(x){
     if(!x) return 0;
@@ -2748,6 +2795,7 @@ async function loadOverview(){
   premiumOverviewOrders.forEach(x=>{ if(x.pending) pendingPurchaseCount++; });
   $('#statSupport').textContent=openSupportCount;
   $('#statNotifications').textContent=notif?.size??0;
+  azAdminSetPaymentAlertBadge(paymentAlertOverview?.unreadCount||0);
   $('#statPurchases').textContent=pendingPurchaseCount;
   $('#statGuests').textContent=overviewTotalVisits === null ? (guests?.size??0) : overviewTotalVisits;
 
@@ -2783,6 +2831,115 @@ async function loadNotifications(){
   const rows=[];
   snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
   $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
+}
+
+
+/* AZOBSS PATCH 305: Admin Payment Alerts / Notification Center. */
+let azAdminPaymentAlertsCache=[];
+let azAdminPaymentAlertSummary={unreadCount:0,total:0};
+function azAdminSetPaymentAlertBadge(n){
+  n=Math.max(0,Number(n||0)||0);
+  const badge=$('#adminPaymentAlertBadge');
+  if(badge){ badge.textContent=String(n); badge.hidden=!n; }
+  const stat=$('#statPaymentAlerts');
+  if(stat) stat.textContent=String(n);
+  const unread=$('#alertUnreadCount');
+  if(unread) unread.textContent=String(n);
+}
+function azPaymentAlertCategoryLabel(cat){
+  cat=String(cat||'').toLowerCase();
+  if(cat==='pabm'||cat==='pa-bm')return 'PA/BM';
+  if(cat==='cad')return 'CAD Tools';
+  return 'Software';
+}
+function azPaymentAlertSearchText(x){
+  return [x.title,x.body,x.category,x.productName,x.productId,x.username,x.email,x.orderId,x.billCode,x.paymentReference,x.amountText].map(v=>String(v||'').toLowerCase()).join(' ');
+}
+function azPaymentAlertFilteredRows(){
+  const q=String($('#adminPaymentAlertSearch')?.value||'').trim().toLowerCase();
+  const f=String($('#adminPaymentAlertFilter')?.value||'all').toLowerCase();
+  return (azAdminPaymentAlertsCache||[]).filter(x=>{
+    if(f==='unread' && x.read) return false;
+    if(['pabm','software','cad'].includes(f) && String(x.category||'').toLowerCase()!==f) return false;
+    if(q && !azPaymentAlertSearchText(x).includes(q)) return false;
+    return true;
+  });
+}
+function renderAdminPaymentAlerts(){
+  const rows=azPaymentAlertFilteredRows();
+  const box=$('#adminPaymentAlertsList');
+  const notice=$('#adminPaymentAlertsNotice');
+  const totalRm=rows.reduce((sum,x)=>sum+(Number(x.amountRm||x.saleAmount||0)||0),0);
+  azAdminSetText('#alertLoadedCount',rows.length);
+  azAdminSetText('#alertSalesTotal',azAdminMoney(totalRm));
+  azAdminSetPaymentAlertBadge(azAdminPaymentAlertSummary.unreadCount||0);
+  if(notice) notice.textContent=`Loaded ${rows.length} alert(s). Unread ${azAdminPaymentAlertSummary.unreadCount||0}.`;
+  if(!box) return;
+  box.innerHTML=rows.map(x=>{
+    const id=esc(x.id||x.docId||'');
+    const unread=!x.read;
+    const cat=azPaymentAlertCategoryLabel(x.category);
+    const rm=Number(x.amountRm||x.saleAmount||0)||0;
+    const title=esc(x.title||('New '+cat+' payment paid'));
+    const meta=[cat, rm?('RM'+azAdminMoney(rm)):'', x.username||'', x.email||'', x.orderId?('Order '+x.orderId):'', x.billCode?('Bill '+x.billCode):'', fmtDate(x.createdAtMs||x.createdAt)].filter(Boolean).map(esc).join(' • ');
+    return `<div class="item ${unread?'is-unread':''}">
+      <div class="item-row">
+        <div>
+          <div class="item-title"><span>${title}</span><span class="az-alert-chip success">${esc(cat)}</span>${unread?'<span class="az-alert-chip unread">Unread</span>':''}</div>
+          <div>${esc(x.body||x.productName||'Payment received')}</div>
+          <div class="item-meta">${meta}</div>
+        </div>
+        <div class="item-actions">
+          ${unread?`<button class="btn green" data-admin-alert-read="${id}">Mark Read</button>`:''}
+          <button class="btn gray" data-tab="purchases">Payment Logs</button>
+          <button class="btn gray" data-tab="payments">Sales Overview</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="item">No admin payment alerts yet.</div>';
+}
+async function loadAdminPaymentAlerts(){
+  const notice=$('#adminPaymentAlertsNotice');
+  if(notice) notice.textContent='Loading admin payment alerts...';
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payment-notifications?limit=120',{cache:'no-store'});
+    azAdminPaymentAlertsCache=Array.isArray(j.records)?j.records:[];
+    azAdminPaymentAlertSummary={unreadCount:Number(j.unreadCount||0)||0,total:Number(j.total||azAdminPaymentAlertsCache.length)||azAdminPaymentAlertsCache.length};
+    renderAdminPaymentAlerts();
+    return azAdminPaymentAlertSummary;
+  }catch(e){
+    console.warn('Admin payment alerts load failed',e);
+    azAdminPaymentAlertsCache=[];
+    azAdminPaymentAlertSummary={unreadCount:0,total:0,error:e?.message||String(e||'')};
+    azAdminSetPaymentAlertBadge(0);
+    if(notice) notice.textContent='Unable to load payment alerts: '+(e?.message||e);
+    if($('#adminPaymentAlertsList')) $('#adminPaymentAlertsList').innerHTML='<div class="item">Unable to load admin payment alerts.</div>';
+    return azAdminPaymentAlertSummary;
+  }
+}
+async function azAdminPaymentAlertAction(action,id){
+  try{
+    await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payment-notifications-action',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id})
+    });
+    await loadAdminPaymentAlerts();
+    if(action==='mark-read') toast('Payment alert marked as read.');
+    if(action==='mark-all-read') toast('All payment alerts marked as read.');
+    if(action==='clear-read') toast('Read payment alerts cleared.');
+  }catch(e){toast(e?.message||'Payment alert action failed.');}
+}
+async function azAdminLoadPaymentAlertSummaryOnly(){
+  try{
+    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payment-notifications?limit=120',{cache:'no-store'});
+    azAdminPaymentAlertsCache=Array.isArray(j.records)?j.records:[];
+    azAdminPaymentAlertSummary={unreadCount:Number(j.unreadCount||0)||0,total:Number(j.total||azAdminPaymentAlertsCache.length)||azAdminPaymentAlertsCache.length};
+    azAdminSetPaymentAlertBadge(azAdminPaymentAlertSummary.unreadCount||0);
+    return azAdminPaymentAlertSummary;
+  }catch(e){
+    console.warn('Overview payment alert summary skipped',e);
+    azAdminSetPaymentAlertBadge(0);
+    return {unreadCount:0,total:0,error:e?.message||String(e||'')};
+  }
 }
 
 
@@ -3897,6 +4054,7 @@ async function initSection(id){
   if(id==='online')return loadOnline();
   if(id==='support')return loadSupport();
   if(id==='notifications')return loadNotifications();
+  if(id==='adminalerts')return loadAdminPaymentAlerts();
   if(id==='purchases')return loadPurchases();
   if(id==='payments')return loadPayments();
   if(id==='activity')return loadAdminActivity();
@@ -3926,6 +4084,8 @@ document.addEventListener('click',async e=>{
   if(rs){const id=rs.dataset.replySupport;const reply=$('#reply_'+id).value.trim();if(!reply)return toast('Write reply first.');await updateDoc(doc(db,'supportMessages',id),{reply,status:'replied',repliedAt:serverTimestamp(),repliedAtMs:Date.now()});await loadSupport();return;}
   const dn=e.target.closest('[data-del-notif]');
   if(dn&&confirm('Delete notification?')){await deleteDoc(doc(db,'notifications',dn.dataset.delNotif));await loadNotifications();await loadOverview();return;}
+  const alertRead=e.target.closest('[data-admin-alert-read]');
+  if(alertRead){await azAdminPaymentAlertAction('mark-read',alertRead.getAttribute('data-admin-alert-read'));return;}
   const payDetail=e.target.closest('[data-paylog-detail]');
   if(payDetail){azAdminOpenPaymentLogDetail(payDetail.getAttribute('data-paylog-detail'));return;}
   const closePayDetail=e.target.closest('[data-close-payment-detail]');
@@ -3953,6 +4113,11 @@ $('#refreshOnline').addEventListener('click',loadOnline);
 $('#refreshSupport').addEventListener('click',loadSupport);
 $('#publishNotif').addEventListener('click',publishNotification);
 $('#clearNotif').addEventListener('click',clearNotifications);
+$('#refreshAdminPaymentAlerts')?.addEventListener('click',loadAdminPaymentAlerts);
+$('#adminPaymentAlertFilter')?.addEventListener('change',renderAdminPaymentAlerts);
+$('#adminPaymentAlertSearch')?.addEventListener('input',()=>{clearTimeout(window.azPaymentAlertSearchTimer);window.azPaymentAlertSearchTimer=setTimeout(renderAdminPaymentAlerts,160);});
+$('#markAllAdminPaymentAlertsRead')?.addEventListener('click',()=>azAdminPaymentAlertAction('mark-all-read'));
+$('#clearReadAdminPaymentAlerts')?.addEventListener('click',()=>{if(confirm('Clear all read payment alerts?')) azAdminPaymentAlertAction('clear-read');});
 $('#refreshPayments')?.addEventListener('click',loadPayments);
 $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
 $('#refreshPaymentLogs')?.addEventListener('click',loadPurchases);

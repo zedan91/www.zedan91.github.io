@@ -17,3 +17,10 @@ Firebase:
 - One-click full website check with copy/export TXT, JSON, CSV, and Print/Save PDF.
 - Report combines page checks, backend health, maintenance scan, payment logs/premiumOrders, commission records, support and notifications.
 - No Firebase Rules update required. Render backend is not required for this frontend-only patch if patch 303 backend is already active.
+
+## PATCH 305 - Admin Payment Notification Center
+- Adds private admin-only Payment Alerts for paid PA/BM, Software and CAD payments.
+- New backend endpoints: `/api/admin/payment-notifications` and `/api/admin/payment-notifications-action`.
+- Backend writes `adminNotifications` with Firebase Admin SDK after strict paid finalization.
+- Render backend deploy is required.
+- Firebase Rules update is not required.

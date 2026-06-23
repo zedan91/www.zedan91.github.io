@@ -1311,6 +1311,7 @@ const AZOBSS_SYSTEM_HEALTH_COLLECTIONS = [
   "softwareStats",
   "adminAuditLogs",
   "notifications",
+  "adminNotifications",
   "supportMessages"
 ];
 const AZOBSS_SYSTEM_HEALTH_FILES = [
@@ -2175,6 +2176,15 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
     } else if (!latest.emailSkippedForPaBm) {
       latest = upsertPremiumOrder({ ...latest, emailSkippedForPaBm: true, emailError: null });
     }
+
+    try {
+      const notifResult = await azCreateAdminPaymentNotification(req, latest);
+      if (notifResult && notifResult.ok && !latest.adminPaymentNotificationAt) {
+        latest = upsertPremiumOrder({ ...latest, adminPaymentNotificationAt: new Date().toISOString(), adminPaymentNotificationId: notifResult.docId || "" });
+      }
+    } catch (notifError) {
+      console.warn("Admin payment notification skipped:", notifError && (notifError.message || notifError));
+    }
     return findPremiumOrderByAny({ orderId: latest.orderId, billCode: latest.billCode }) || latest;
   });
 }
@@ -2852,6 +2862,162 @@ function azNormalizePremiumOrderForFirestore(order = {}) {
 function azPremiumOrderFirestoreDocId(order = {}) {
   return cleanPremiumText(order.orderId || order.billCode || order.billcode || "", 180);
 }
+
+function azAdminPaymentNotificationCategory(order = {}) {
+  const cat = azPremiumOrderCategoryForBackup(order);
+  if (cat === "pa-bm") return "pabm";
+  if (cat === "cad") return "cad";
+  return "software";
+}
+function azAdminPaymentNotificationAmountRm(order = {}) {
+  const sen = azPremiumOrderAmountSenForBackup(order);
+  if (sen > 0) return Math.round((sen / 100) * 100) / 100;
+  const rm = Number(order.saleAmount || order.amountRm || order.amount || 0) || 0;
+  return Math.max(0, Math.round(rm * 100) / 100);
+}
+function azAdminPaymentNotificationDocId(order = {}) {
+  const raw = cleanPremiumText(order.orderId || order.billCode || order.billcode || order.paymentReference || "", 180);
+  const key = (raw || makeId("payalert")).toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 150);
+  return `payment_${key || makeId("payalert")}`;
+}
+function azAdminPaymentNotificationPublic(row = {}, docId = "") {
+  const safe = azJsonSafe(row || {});
+  return {
+    id: cleanPremiumText(docId || safe.id || safe.docId || "", 180),
+    docId: cleanPremiumText(docId || safe.docId || safe.id || "", 180),
+    type: cleanPremiumText(safe.type || "payment_paid", 80),
+    category: cleanPremiumText(safe.category || "software", 60),
+    title: cleanPremiumText(safe.title || "Payment received", 180),
+    body: cleanPremiumText(safe.body || "", 500),
+    status: cleanPremiumText(safe.status || "paid", 60),
+    severity: cleanPremiumText(safe.severity || "success", 40),
+    read: !!safe.read,
+    active: safe.active !== false,
+    orderId: cleanPremiumText(safe.orderId || "", 160),
+    billCode: cleanPremiumText(safe.billCode || "", 120),
+    paymentReference: cleanPremiumText(safe.paymentReference || "", 180),
+    productId: cleanPremiumText(safe.productId || "", 180),
+    productName: cleanPremiumText(safe.productName || "", 240),
+    username: cleanPremiumText(safe.username || "", 100),
+    email: cleanPremiumText(safe.email || safe.buyerEmail || "", 180),
+    amountRm: Number(safe.amountRm || safe.saleAmount || 0) || 0,
+    amountText: cleanPremiumText(safe.amountText || (Number(safe.amountRm || safe.saleAmount || 0) ? `RM${Number(safe.amountRm || safe.saleAmount || 0).toFixed(2)}` : ""), 80),
+    targetTab: cleanPremiumText(safe.targetTab || "purchases", 60),
+    targetLabel: cleanPremiumText(safe.targetLabel || "Open Payment Logs", 120),
+    createdAt: cleanPremiumText(safe.createdAt || "", 140),
+    createdAtMs: Number(safe.createdAtMs || 0) || 0,
+    readAt: cleanPremiumText(safe.readAt || "", 140),
+    readAtMs: Number(safe.readAtMs || 0) || 0,
+    source: cleanPremiumText(safe.source || "render-payment-finalize", 80)
+  };
+}
+async function azCreateAdminPaymentNotification(req, order = {}) {
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, reason:"firebase-not-ready" };
+  if (!order) return { ok:false, reason:"missing-order" };
+  const status = String(order.status || "").toLowerCase();
+  if (!azPremiumOrderIsPaid({ status })) return { ok:false, reason:"order-not-paid" };
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const docId = azAdminPaymentNotificationDocId(order);
+  const ref = db.collection("adminNotifications").doc(docId);
+  const oldSnap = await ref.get();
+  if (oldSnap.exists) {
+    await ref.set({ updatedAt: nowIso, updatedAtMs: nowMs, lastSeenOrderStatus: status, active:true }, { merge:true });
+    return { ok:true, docId, existed:true, created:false };
+  }
+  const category = azAdminPaymentNotificationCategory(order);
+  const amountRm = azAdminPaymentNotificationAmountRm(order);
+  const productName = cleanPremiumText(order.productName || (order.product && (order.product.name || order.product.title)) || "AZOBSS Product", 200);
+  const categoryLabel = category === "pabm" ? "PA/BM" : (category === "cad" ? "CAD Tools" : "Software");
+  const username = cleanPremiumText(order.username || order.usernameKey || (order.user && (order.user.username || order.user.usernameKey)) || "", 100);
+  const email = cleanPremiumText(order.email || order.buyerEmail || (order.user && order.user.email) || "", 180);
+  const orderId = cleanPremiumText(order.orderId || "", 160);
+  const billCode = cleanPremiumText(order.billCode || order.billcode || "", 120);
+  const payload = {
+    id: docId,
+    type: "payment_paid",
+    category,
+    title: `New ${categoryLabel} payment paid`,
+    body: `${productName}${amountRm ? ` • RM${amountRm.toFixed(2)}` : ""}${username ? ` • ${username}` : ""}`,
+    status: "paid",
+    severity: "success",
+    active: true,
+    read: false,
+    orderId,
+    billCode,
+    paymentReference: cleanPremiumText(order.paymentReference || "", 180),
+    productId: cleanPremiumText(order.productId || (order.product && (order.product.productId || order.product.id)) || "", 180),
+    productName,
+    username,
+    email,
+    buyerEmail: email,
+    amountRm,
+    saleAmount: amountRm,
+    amountText: amountRm ? `RM${amountRm.toFixed(2)}` : cleanPremiumText(order.amount || "", 80),
+    targetTab: "purchases",
+    targetLabel: "Open Payment Logs",
+    source: "render-payment-finalize",
+    createdAt: nowIso,
+    createdAtMs: nowMs,
+    updatedAt: nowIso,
+    updatedAtMs: nowMs
+  };
+  await ref.set(azJsonSafe(payload), { merge:false });
+  azFireAndForget(azWriteAdminAuditLog(req, { uid:"system", username:"system", role:"system", isAdmin:true }, "admin_payment_notification_create", "adminNotifications", docId, { category, amountRm, orderId, billCode, productName }, "success"), "Admin payment notification audit log failed");
+  return { ok:true, docId, existed:false, created:true };
+}
+async function azLoadAdminPaymentNotifications(options = {}) {
+  const db = getAzobssBackendDb();
+  const limitRows = Math.max(1, Math.min(500, Number(options.limit || 80) || 80));
+  const unreadOnly = !!options.unreadOnly;
+  if (!db) return { ok:false, error:"Firebase Admin is not configured.", records:[], unreadCount:0, total:0 };
+  const records = [];
+  let snap;
+  try {
+    snap = await db.collection("adminNotifications").orderBy("createdAtMs", "desc").limit(limitRows).get();
+  } catch (_) {
+    snap = await db.collection("adminNotifications").limit(limitRows).get();
+  }
+  snap.forEach(docSnap => {
+    const row = azAdminPaymentNotificationPublic(docSnap.data() || {}, docSnap.id);
+    if (row.active === false) return;
+    if (unreadOnly && row.read) return;
+    records.push(row);
+  });
+  records.sort((a,b)=>(Number(b.createdAtMs||0)-Number(a.createdAtMs||0)));
+  const unreadCount = records.filter(x => !x.read).length;
+  return { ok:true, records, unreadCount, total:records.length };
+}
+async function azAdminPaymentNotificationAction(req, identity = {}, body = {}) {
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, error:"Firebase Admin is not configured.", changed:0 };
+  const action = cleanPremiumText(body.action || "", 60);
+  const id = cleanPremiumText(body.id || body.notificationId || "", 180);
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  let changed = 0;
+  if (action === "mark-read") {
+    if (!id) return { ok:false, error:"Missing notification ID.", changed:0 };
+    await db.collection("adminNotifications").doc(id).set({ read:true, readAt:nowIso, readAtMs:nowMs, readBy:identity.email || identity.username || "admin", updatedAt:nowIso, updatedAtMs:nowMs }, { merge:true });
+    changed = 1;
+  } else if (action === "mark-all-read") {
+    const snap = await db.collection("adminNotifications").limit(300).get();
+    const batch = db.batch();
+    snap.forEach(docSnap => { const x = docSnap.data() || {}; if (x.active !== false && !x.read) { batch.set(docSnap.ref, { read:true, readAt:nowIso, readAtMs:nowMs, readBy:identity.email || identity.username || "admin", updatedAt:nowIso, updatedAtMs:nowMs }, { merge:true }); changed += 1; } });
+    if (changed) await batch.commit();
+  } else if (action === "clear-read") {
+    const snap = await db.collection("adminNotifications").limit(300).get();
+    const batch = db.batch();
+    snap.forEach(docSnap => { const x = docSnap.data() || {}; if (x.read || x.active === false) { batch.delete(docSnap.ref); changed += 1; } });
+    if (changed) await batch.commit();
+  } else {
+    return { ok:false, error:"Unknown admin notification action.", changed:0 };
+  }
+  azFireAndForget(azWriteAdminAuditLog(req, identity, "admin_payment_notification_" + action.replace(/[^a-z0-9_-]+/gi, "_"), "adminNotifications", id || "bulk", { action, changed }, "success"), "Admin payment notification action audit log failed");
+  return { ok:true, action, changed };
+}
+
 async function azPersistPremiumOrder(order = {}) {
   if (!order) return { ok:false, reason:"missing-order" };
   const db = getAzobssBackendDb();
@@ -4573,6 +4739,8 @@ async function handler(req, res) {
     if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/maintenance-scan" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-maintenance-scan", 40, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/maintenance-run" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-maintenance-run", 10, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/payment-notifications" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-payment-notifications-read", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/payment-notifications-action" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payment-notifications-action", 40, 10 * 60 * 1000)) return;
     if ((pathname === "/api/staff/payout-profile" || pathname === "/api/staff/payout-requests") && req.method === "GET" && azRateLimitOrSend(req, res, "staff-payout-read", 80, 10 * 60 * 1000)) return;
     if ((pathname === "/api/staff/payout-profile" || pathname === "/api/staff/payout-request") && req.method === "POST" && azRateLimitOrSend(req, res, "staff-payout-write", 20, 10 * 60 * 1000)) return;
     if (pathname === "/api/staff/payout-request-cancel" && req.method === "POST" && azRateLimitOrSend(req, res, "staff-payout-cancel", 12, 10 * 60 * 1000)) return;
@@ -4838,6 +5006,37 @@ async function handler(req, res) {
     }
 
 
+
+
+    if (pathname === "/api/admin/payment-notifications" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to view payment notifications." }, null, 2), "application/json");
+        }
+        const maxRows = Math.max(1, Math.min(300, Number(parsed.query.limit || 80) || 80));
+        const unreadOnly = String(parsed.query.unreadOnly || "0") === "1";
+        const result = await azLoadAdminPaymentNotifications({ limit:maxRows, unreadOnly });
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err), records:[] }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/payment-notifications-action" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to update payment notifications." }, null, 2), "application/json");
+        }
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+        const result = await azAdminPaymentNotificationAction(req, adminIdentity, body);
+        return send(res, result.ok ? 200 : 400, JSON.stringify(result, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err), changed:0 }, null, 2), "application/json");
+      }
+    }
 
     if (pathname === "/api/admin/audit-logs" && req.method === "GET") {
       try {

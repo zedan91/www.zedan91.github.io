@@ -1,0 +1,30 @@
+PATCH 305 - AZOBSS Admin Payment Notification Center
+
+Scope:
+- Admin Dashboard only + Render backend payment finalize hook.
+
+What changed:
+1. New admin tab: Payment Alerts.
+2. New backend Firestore collection via Admin SDK: adminNotifications.
+3. When ToyyibPay payment is strictly verified and order is finalized paid, backend creates one private admin payment notification.
+4. Notification is deduplicated by orderId/billCode so repeated callback/status checks do not spam admin.
+5. Admin dashboard can:
+   - view latest payment alerts
+   - see unread badge/count
+   - filter by All/Unread/PA-BM/Software/CAD
+   - search product/username/email/order ID/bill code
+   - mark one alert as read
+   - mark all as read
+   - clear read alerts
+   - jump to Payment Logs or Sales Overview
+
+Safety:
+- Does not change ToyyibPay strict paid verification.
+- Does not unlock downloads.
+- Does not touch PA/BM reset limit logic.
+- Does not use the public notifications collection for private payment data.
+
+Deploy:
+- Firebase Rules: no update required.
+- Render backend: deploy required because deploy-server.js changed.
+- GitHub Pages: deploy required for admin/index.html.

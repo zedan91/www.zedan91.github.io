@@ -30,3 +30,11 @@ Notes:
 - One-click full website check with copy/export TXT, JSON, CSV, and Print/Save PDF.
 - Report combines page checks, backend health, maintenance scan, payment logs/premiumOrders, commission records, support and notifications.
 - No Firebase Rules update required. Render backend is not required for this frontend-only patch if patch 303 backend is already active.
+
+## PATCH 305 - Admin Payment Notification Center
+- Adds Admin > Payment Alerts for private admin-only payment notifications.
+- Backend creates a deduplicated admin notification when a PA/BM, Software, or CAD Tools ToyyibPay order is finalized as paid.
+- Adds unread badge, overview KPI, search/filter, mark read, mark all read, clear read, and direct shortcuts to Payment Logs/Sales Overview.
+- Uses backend Admin SDK collection `adminNotifications`; no public user notification collection is used for payment details.
+- Firebase Rules: no update required.
+- Render backend: deploy required because `deploy-server.js` changed.
