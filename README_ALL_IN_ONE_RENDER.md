@@ -38,3 +38,10 @@ Firebase:
 - Compact card layout for Admin > Staff Roles > Latest Staff Users.
 - No Firebase Rules update required.
 - Render backend deploy not required.
+
+## Patch 311 - Admin Software Card Duplicate Bottom Actions Fix
+
+Frontend-only patch:
+- Software admin card action buttons now float on the right side only.
+- Duplicate bottom admin button row/background below Buy Now is removed.
+- No backend/Render changes required.

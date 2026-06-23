@@ -1,0 +1,10 @@
+AZOBSS PATCH 311 - Admin Software Card Duplicate Bottom Actions Fix
+
+Fix:
+- Admin software product card no longer shows duplicate admin action buttons/background row below Buy Now.
+- Existing original admin wrapper is reused and marked as restored instead of appending another wrapper.
+- Admin action buttons now float consistently at the right side for #softwareGrid, #softwareDownloadsGrid and .downloads-grid.
+
+No Firebase Rules update required.
+No Render backend deploy required.
+GitHub Pages deploy only.

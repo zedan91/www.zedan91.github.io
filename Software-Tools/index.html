@@ -5499,6 +5499,8 @@ line-height:1.6;
 /* AZOBSS final admin buttons - fixed position under love icon */
 #softwareGrid .download-card{position:relative!important;}
 #softwareGrid .download-card .software-card-admin-actions,
+#softwareDownloadsGrid .download-card .software-card-admin-actions,
+.downloads-grid .download-card .software-card-admin-actions,
 .download-card .software-card-admin-actions[data-azobss-admin-actions-restored="1"]{
   position:absolute!important;
   top:66px!important;
@@ -5514,6 +5516,8 @@ line-height:1.6;
   pointer-events:auto!important;
 }
 #softwareGrid .download-card .software-card-admin-actions button,
+#softwareDownloadsGrid .download-card .software-card-admin-actions button,
+.downloads-grid .download-card .software-card-admin-actions button,
 .download-card .software-card-admin-actions[data-azobss-admin-actions-restored="1"] button{
   width:38px!important;
   height:38px!important;
@@ -5531,11 +5535,11 @@ line-height:1.6;
   backdrop-filter:blur(7px)!important;
   box-shadow:0 8px 18px rgba(0,0,0,.25)!important;
 }
-#softwareGrid .software-logo-admin-btn{border:2px solid #22c55e!important;color:#86efac!important;}
-#softwareGrid .software-card-edit-btn{border:2px solid #38bdf8!important;color:#7dd3fc!important;}
-#softwareGrid .software-card-delete-btn{border:2px solid #fb7185!important;color:#fda4af!important;}
-#softwareGrid .software-card-id-btn,.download-card .software-card-admin-actions[data-azobss-admin-actions-restored="1"] .software-card-id-btn{border:2px solid #38bdf8!important;color:#93c5fd!important;}
-#softwareGrid .download-card .download-btn .az-btn-icon{display:none!important;}
+#softwareGrid .software-logo-admin-btn,#softwareDownloadsGrid .software-logo-admin-btn,.downloads-grid .software-logo-admin-btn{border:2px solid #22c55e!important;color:#86efac!important;}
+#softwareGrid .software-card-edit-btn,#softwareDownloadsGrid .software-card-edit-btn,.downloads-grid .software-card-edit-btn{border:2px solid #38bdf8!important;color:#7dd3fc!important;}
+#softwareGrid .software-card-delete-btn,#softwareDownloadsGrid .software-card-delete-btn,.downloads-grid .software-card-delete-btn{border:2px solid #fb7185!important;color:#fda4af!important;}
+#softwareGrid .software-card-id-btn,#softwareDownloadsGrid .software-card-id-btn,.downloads-grid .software-card-id-btn,.download-card .software-card-admin-actions[data-azobss-admin-actions-restored="1"] .software-card-id-btn{border:2px solid #38bdf8!important;color:#93c5fd!important;}
+#softwareGrid .download-card .download-btn .az-btn-icon,#softwareDownloadsGrid .download-card .download-btn .az-btn-icon,.downloads-grid .download-card .download-btn .az-btn-icon{display:none!important;}
 
 .commission-policy-card{
 display:none;
@@ -5647,18 +5651,42 @@ line-height:1.6;
     cards.forEach(card => {
       const id = productId(card);
       if(!id) return;
-      card.querySelectorAll('.software-card-admin-actions[data-azobss-admin-actions-restored="1"]').forEach((el,idx)=>{ if(idx>0) el.remove(); });
-      if(card.querySelector('.software-card-admin-actions[data-azobss-admin-actions-restored="1"]')) return;
-      const wrap = document.createElement('div');
-      wrap.className = 'software-card-admin-actions';
+
+      // 311 fix: keep only ONE admin action wrapper per card.
+      // Before this, dynamic cards could keep their original bottom wrapper and the restore script
+      // added another floating wrapper, causing the ugly dark/background row below Buy Now.
+      const existing = Array.from(card.querySelectorAll(':scope > .software-card-admin-actions'));
+      let wrap = existing[0] || null;
+      existing.slice(1).forEach(el => el.remove());
+
+      if(!wrap){
+        wrap = document.createElement('div');
+        wrap.className = 'software-card-admin-actions';
+        wrap.setAttribute('aria-label','Admin card actions');
+        card.appendChild(wrap);
+      }
       wrap.setAttribute('data-azobss-admin-actions-restored','1');
       wrap.setAttribute('aria-label','Admin card actions');
-      wrap.innerHTML =
-        '<button class="software-logo-admin-btn" type="button" data-software-logo-regen="'+escAttr(id)+'" title="Generate logo from website link" aria-label="Generate logo">🪄</button>' +
-        '<button class="software-card-edit-btn" type="button" data-software-edit="'+escAttr(id)+'" title="Edit software" aria-label="Edit">✏️</button>' +
-        '<button class="software-card-delete-btn" type="button" data-software-delete="'+escAttr(id)+'" title="Delete software" aria-label="Delete">🗑️</button>' +
-        '<button class="software-card-id-btn" type="button" data-software-id="'+escAttr(id)+'" title="Copy Product ID" aria-label="Product ID">🆔</button>';
-      card.appendChild(wrap);
+
+      function ensureButton(cls, attr, label, icon, title){
+        let btn = wrap.querySelector('.' + cls);
+        if(!btn){
+          btn = document.createElement('button');
+          btn.className = cls;
+          btn.type = 'button';
+          btn.textContent = icon;
+          wrap.appendChild(btn);
+        }
+        btn.setAttribute(attr, id);
+        btn.setAttribute('title', title || label);
+        btn.setAttribute('aria-label', label);
+        btn.type = 'button';
+        return btn;
+      }
+      ensureButton('software-logo-admin-btn', 'data-software-logo-regen', 'Generate logo', '🪄', 'Generate logo from website link');
+      ensureButton('software-card-edit-btn', 'data-software-edit', 'Edit', '✏️', 'Edit software');
+      ensureButton('software-card-delete-btn', 'data-software-delete', 'Delete software', '🗑️', 'Delete software');
+      ensureButton('software-card-id-btn', 'data-software-id', 'Product ID', '🆔', 'Copy Product ID');
     });
   }
 
@@ -10263,6 +10291,93 @@ html body .download-card .az-desc-stable-293 .az-desc-copy-293{display:inline!im
 html body .download-card > .az-share-stable-293,
 html body .download-card > .az-preview-stable-293{transition:filter .16s ease!important;}
 html body .download-card .software-media-links:empty{display:none!important;}
+</style>
+
+
+
+<style id="azobss-admin-card-bottom-duplicate-clean-fix-311">
+/* AZOBSS 311: admin product tools must float only on right side, never create a bottom background row. */
+html body #softwareGrid > .download-card,
+html body #softwareDownloadsGrid > .download-card,
+html body .downloads-grid > .download-card{
+  position:relative!important;
+}
+html body #softwareGrid > .download-card > .software-card-admin-actions,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions,
+html body .downloads-grid > .download-card > .software-card-admin-actions{
+  position:absolute!important;
+  top:66px!important;
+  right:14px!important;
+  left:auto!important;
+  bottom:auto!important;
+  order:0!important;
+  width:auto!important;
+  max-width:44px!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  z-index:130!important;
+  pointer-events:auto!important;
+}
+html body #softwareGrid > .download-card > .software-card-admin-actions > button,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions > button,
+html body .downloads-grid > .download-card > .software-card-admin-actions > button{
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  max-width:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:50%!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:15px!important;
+  line-height:1!important;
+  background:rgba(2,6,23,.72)!important;
+  box-shadow:0 8px 18px rgba(0,0,0,.25)!important;
+  backdrop-filter:blur(7px)!important;
+  color:#e5e7eb!important;
+  overflow:hidden!important;
+}
+html body #softwareGrid > .download-card > .software-card-admin-actions > .software-logo-admin-btn,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions > .software-logo-admin-btn,
+html body .downloads-grid > .download-card > .software-card-admin-actions > .software-logo-admin-btn{border:2px solid #22c55e!important;color:#86efac!important;}
+html body #softwareGrid > .download-card > .software-card-admin-actions > .software-card-edit-btn,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions > .software-card-edit-btn,
+html body .downloads-grid > .download-card > .software-card-admin-actions > .software-card-edit-btn{border:2px solid #14b8a6!important;color:#5eead4!important;}
+html body #softwareGrid > .download-card > .software-card-admin-actions > .software-card-delete-btn,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions > .software-card-delete-btn,
+html body .downloads-grid > .download-card > .software-card-admin-actions > .software-card-delete-btn{border:2px solid #fb7185!important;color:#fda4af!important;}
+html body #softwareGrid > .download-card > .software-card-admin-actions > .software-card-id-btn,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions > .software-card-id-btn,
+html body .downloads-grid > .download-card > .software-card-admin-actions > .software-card-id-btn{border:2px solid #38bdf8!important;color:#93c5fd!important;}
+html body #softwareGrid > .download-card > .software-card-admin-actions > .software-card-test-buy-btn,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions > .software-card-test-buy-btn,
+html body .downloads-grid > .download-card > .software-card-admin-actions > .software-card-test-buy-btn{
+  border:2px solid #facc15!important;
+  color:#fde68a!important;
+  font-size:9px!important;
+}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card > .software-card-admin-actions,
+  html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions,
+  html body .downloads-grid > .download-card > .software-card-admin-actions{
+    top:62px!important;
+    right:13px!important;
+    margin:0!important;
+  }
+}
 </style>
 
 </body>

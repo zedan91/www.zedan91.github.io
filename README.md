@@ -58,3 +58,11 @@ Notes:
 - Existing Registered Users and Activity pagination were preserved.
 - Firebase Rules update: not required.
 - Render backend deploy: not required.
+
+## Patch 311 - Admin Software Card Duplicate Bottom Actions Fix
+
+- Fixed admin-only Software card issue where duplicate admin buttons/background appeared below the Buy Now row on mobile.
+- Reused the existing admin action wrapper instead of appending another duplicate wrapper.
+- Forced admin action buttons to float at the right side only for Software product cards.
+- No Firebase Rules update required.
+- No Render backend deploy required; GitHub Pages deploy only.
