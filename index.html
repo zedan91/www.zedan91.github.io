@@ -18060,6 +18060,63 @@ html body .azobss-sw-desc-target-097 > .azobss-sw-desc-more-097{
 </script>
 <!-- /AZOBSS PATCH 342 -->
 
+
+
+<!-- AZOBSS PATCH 343: Give More button extra breathing space below description
+     Fix: More chip was too close to description text after restore/equal-card patches.
+     Keep it stable, no blinking, and move it slightly downward toward CTA area. -->
+<style id="azobss-software-cad-more-button-desc-gap-fix-343">
+html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+html body .downloads-grid > .download-card > .az-desc-more-outside-322,
+html body .software-grid > .software-card > .az-desc-more-outside-322,
+html body .software-grid > .software-item > .az-desc-more-outside-322,
+html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
+html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
+html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
+html body .cad-card > .az-desc-more-outside-322,
+html body .cad-item > .az-desc-more-outside-322,
+html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
+html body .software-grid > .software-card > .azobss-sw-desc-more-097,
+html body .software-grid > .software-item > .azobss-sw-desc-more-097,
+html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
+html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
+html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
+html body .cad-card > .azobss-sw-desc-more-097,
+html body .cad-item > .azobss-sw-desc-more-097{
+  bottom:84px!important;
+  margin-top:6px!important;
+  z-index:125!important;
+}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html body .downloads-grid > .download-card > .az-desc-more-outside-322,
+  html body .software-grid > .software-card > .az-desc-more-outside-322,
+  html body .software-grid > .software-item > .az-desc-more-outside-322,
+  html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
+  html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
+  html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
+  html body .cad-card > .az-desc-more-outside-322,
+  html body .cad-item > .az-desc-more-outside-322,
+  html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
+  html body .software-grid > .software-card > .azobss-sw-desc-more-097,
+  html body .software-grid > .software-item > .azobss-sw-desc-more-097,
+  html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
+  html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
+  html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
+  html body .cad-card > .azobss-sw-desc-more-097,
+  html body .cad-item > .azobss-sw-desc-more-097{
+    bottom:82px!important;
+  }
+}
+</style>
+<!-- /AZOBSS PATCH 343 -->
+
 </body>
 </html>
 

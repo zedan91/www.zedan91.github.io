@@ -149,3 +149,13 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Restores Software/CAD More button after equal-card CTA layout.
 - Keeps no-blink behavior.
 - No Firebase Rules or Render backend deploy required.
+
+
+## AZOBSS PATCH 343 - Software/CAD More Button Desc Gap Fix
+
+- Moves the `More` chip slightly downward so it is not too close to the description text.
+- Keeps the no-blink behavior from patch 342.
+- Keeps CTA buttons pinned near the footer.
+- Applies to root fallback, Software Tools, and CAD Tools pages.
+- No Firebase Rules update required.
+- No Render backend deploy required.
