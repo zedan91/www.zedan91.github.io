@@ -310,24 +310,6 @@
 .azobss-pay-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 16px;width:100%}
 .azobss-pay-step{background:#0d1b34;border:1px solid rgba(255,255,255,.08);padding:8px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#9fb5d9;text-align:center;white-space:normal;line-height:1.1;min-width:0}
 .azobss-pay-step.is-active{background:#0d1b34;color:#9fb5d9;border-color:rgba(255,255,255,.08)}
-html body .az-owner-source-chip .az-owner-source-title{
-  display:block!important;
-  width:100%!important;
-  font-size:6.8px!important;
-  line-height:1!important;
-  opacity:.82!important;
-  letter-spacing:.55px!important;
-}
-html body .az-owner-source-chip .az-owner-source-name{
-  display:block!important;
-  width:100%!important;
-  max-width:96px!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-size:8.6px!important;
-  line-height:1.04!important;
-}
 @media(max-width:520px){.azobss-pay-steps{gap:5px}.azobss-pay-step{font-size:9.5px;padding:7px 4px;letter-spacing:-.25px}}
 
 
@@ -2135,7 +2117,7 @@ line-height:1.6;
 
 <style id="azobss-shop-card-cart-button-css">
 /* AZOBSS patch: card cart button for Software + CAD only. Does not touch PA/BM cart. */
-.az-card-cart-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;border:1px solid rgba(96,165,250,.48)!important;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.96))!important;color:#eaf2ff!important;border-radius:12px!important;padding:9px 13px!important;min-height:38px!important;font-size:13px!important;font-weight:950!important;line-height:1!important;cursor:pointer!important;text-decoration:none!important;box-shadow:0 10px 22px rgba(37,99,235,.18), inset 0 1px 0 rgba(255,255,255,.08)!important;transition:transform .16s ease,filter .16s ease,border-color .16s ease!important;margin:8px auto 0!important;white-space:nowrap!important;}
+.az-card-cart-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;border:1px solid rgba(96,165,250,.48)!important;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.96))!important;color:#eaf2ff!important;border-radius:999px!important;padding:9px 13px!important;min-height:38px!important;font-size:13px!important;font-weight:950!important;line-height:1!important;cursor:pointer!important;text-decoration:none!important;box-shadow:0 10px 22px rgba(37,99,235,.18), inset 0 1px 0 rgba(255,255,255,.08)!important;transition:transform .16s ease,filter .16s ease,border-color .16s ease!important;margin:8px auto 0!important;white-space:nowrap!important;}
 .az-card-cart-btn:hover{transform:translateY(-1px)!important;filter:brightness(1.08)!important;border-color:rgba(34,197,94,.75)!important;color:#bbf7d0!important;}
 .az-card-cart-btn.is-carted{background:linear-gradient(135deg,#16a34a,#22c55e)!important;color:#052e16!important;border-color:#22c55e!important;}
 .az-card-cart-btn .az-card-cart-icon{font-size:15px!important;line-height:1!important;}
@@ -2261,10 +2243,8 @@ line-height:1.6;
 .software-card .download-btn.premium,
 .software-product-card .download-btn.premium{
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   gap:5px!important;
   white-space:nowrap!important;
 }
@@ -2393,7 +2373,7 @@ line-height:1.6;
 
 
 <style id="azobss-support-notification-css">
-.azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:12px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
+.azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
 .azobss-mini-action-btn:hover{transform:translateY(-1px);border-color:#22c55e!important;box-shadow:0 0 18px rgba(34,197,94,.22)!important}
 .azobss-mini-badge{position:absolute;right:-5px;top:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;display:none}
 .azobss-mini-badge.is-show{display:inline-block}
@@ -2514,7 +2494,7 @@ line-height:1.6;
 #azSupportModal .azobss-modal-close{
   width:32px!important;
   height:32px!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
 }
 
 #azBellModal .azobss-lite-list,
@@ -2754,11 +2734,9 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   max-height:34px!important;
   padding:0!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   line-height:1!important;
 }
 .market-nav .nav-whatsapp-link{
@@ -2770,10 +2748,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   max-height:38px!important;
   padding:0!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   border:0!important;
   background:transparent!important;
 }
@@ -2787,10 +2763,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   margin:0!important;
   padding:0!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
 }
 </style>
 
@@ -2867,13 +2841,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 <style id="azobss-software-desc-inline-more-097-css">
 .azobss-sw-desc-target-097{position:relative!important;display:block!important;max-height:78px!important;min-height:54px!important;overflow:hidden!important;white-space:normal!important;overflow-wrap:anywhere!important;padding-right:42px!important;box-sizing:border-box!important;line-height:1.45!important;}
-.azobss-sw-desc-more-097{position:absolute!important;right:0!important;bottom:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:2px 7px!important;border:1px solid rgba(34,197,94,.55)!important;border-radius:12px!important;background:#152033!important;color:#86efac!important;font-size:10px!important;font-weight:900!important;line-height:1.1!important;cursor:pointer!important;z-index:4!important;}
+.azobss-sw-desc-more-097{position:absolute!important;right:0!important;bottom:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:2px 7px!important;border:1px solid rgba(34,197,94,.55)!important;border-radius:999px!important;background:#152033!important;color:#86efac!important;font-size:10px!important;font-weight:900!important;line-height:1.1!important;cursor:pointer!important;z-index:4!important;}
 .azobss-sw-desc-modal-097{position:fixed!important;inset:0!important;z-index:999999!important;display:none!important;align-items:center!important;justify-content:center!important;padding:18px!important;background:rgba(2,6,23,.78)!important;backdrop-filter:blur(6px)!important;}
 .azobss-sw-desc-modal-097.is-open{display:flex!important;}
 .azobss-sw-desc-box-097{width:min(620px,94vw)!important;max-height:76vh!important;overflow:auto!important;background:#0f172a!important;border:1px solid rgba(34,197,94,.45)!important;border-radius:18px!important;box-shadow:0 20px 60px rgba(0,0,0,.45)!important;padding:20px!important;color:#e5e7eb!important;}
 .azobss-sw-desc-head-097{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:12px!important;}
 .azobss-sw-desc-title-097{color:#86efac!important;font-size:18px!important;font-weight:900!important;line-height:1.25!important;}
-.azobss-sw-desc-close-097{width:34px!important;height:34px!important;border-radius:12px!important;border:1px solid rgba(148,163,184,.35)!important;background:rgba(15,23,42,.9)!important;color:#fff!important;font-size:18px!important;cursor:pointer!important;}
+.azobss-sw-desc-close-097{width:34px!important;height:34px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.35)!important;background:rgba(15,23,42,.9)!important;color:#fff!important;font-size:18px!important;cursor:pointer!important;}
 .azobss-sw-desc-text-097{font-size:14px!important;line-height:1.65!important;color:#dbeafe!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;}
 </style>
 
@@ -5256,7 +5230,7 @@ all.appendChild(wrap);
 .azb-dl-number{font-size:12px!important;color:#fff!important;font-weight:800!important;line-height:1!important;}
 .azb-stat-rating{padding:0 8px!important;color:#fff!important;}
 .azb-rating-inner{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:0!important;max-width:100%!important;}
-.azb-stars{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:0!important;flex:0 0 auto!important;padding:2px 5px!important;min-height:24px!important;max-width:90px!important;border-radius:12px!important;background:rgba(15,23,42,.75)!important;border:1px solid rgba(96,165,250,.20)!important;cursor:pointer!important;user-select:none!important;pointer-events:auto!important;touch-action:manipulation!important;}
+.azb-stars{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:0!important;flex:0 0 auto!important;padding:2px 5px!important;min-height:24px!important;max-width:90px!important;border-radius:999px!important;background:rgba(15,23,42,.75)!important;border:1px solid rgba(96,165,250,.20)!important;cursor:pointer!important;user-select:none!important;pointer-events:auto!important;touch-action:manipulation!important;}
 .azb-star{appearance:none!important;-webkit-appearance:none!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;width:12px!important;min-width:12px!important;height:20px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-family:Arial,sans-serif!important;font-size:11px!important;line-height:1!important;color:#64748b!important;cursor:pointer!important;pointer-events:auto!important;transition:transform .10s ease,color .10s ease,text-shadow .10s ease!important;}
 .azb-star.is-filled{color:#ffcc28!important;text-shadow:0 0 7px rgba(250,204,21,.35)!important;}
 .azb-stars:hover .azb-star{color:#ffcc28!important;transform:scale(1.08)!important;}
@@ -5864,25 +5838,7 @@ async function verifyToyyibPayment(billCode){
       .azobss-success-email-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
       .azobss-success-email-btn{border:0;border-radius:999px;background:#16a34a;color:#fff;font-weight:800;padding:12px 22px;cursor:pointer;box-shadow:0 10px 24px rgba(22,163,74,.28)}
       .azobss-success-email-link{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#0f172a;color:#fff!important;text-decoration:none;font-weight:800;padding:12px 18px}
-      html body .az-owner-source-chip .az-owner-source-title{
-  display:block!important;
-  width:100%!important;
-  font-size:6.8px!important;
-  line-height:1!important;
-  opacity:.82!important;
-  letter-spacing:.55px!important;
-}
-html body .az-owner-source-chip .az-owner-source-name{
-  display:block!important;
-  width:100%!important;
-  max-width:96px!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-size:8.6px!important;
-  line-height:1.04!important;
-}
-@media(max-width:520px){.azobss-success-email-card{padding:22px}.azobss-success-email-card h2{font-size:22px}}
+      @media(max-width:520px){.azobss-success-email-card{padding:22px}.azobss-success-email-card h2{font-size:22px}}
     `;
     document.head.appendChild(style);
 
@@ -7979,10 +7935,8 @@ body[data-dashboard-page="admin"] .market-user-tools{
 }
 body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"]{
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   position:relative!important;
   flex:0 0 auto!important;
   width:32px!important;
@@ -8275,7 +8229,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   max-height:38px!important;
   padding:0!important;
   margin:0!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
@@ -8294,7 +8248,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 .az-lucky-product-share-btn .az-lucky-share-text{display:none!important;}
 .az-lucky-product-share-btn[data-share-mode="guest"]{background:linear-gradient(135deg,#0f766e,#14b8a6)!important;border-color:rgba(45,212,191,.85)!important;box-shadow:0 10px 22px rgba(20,184,166,.28)!important;}
 .az-lucky-product-share-btn[data-share-mode="credit"]{background:linear-gradient(135deg,#2563eb,#7c3aed)!important;border-color:rgba(147,197,253,.92)!important;box-shadow:0 10px 22px rgba(37,99,235,.34)!important;}
-.az-lucky-product-share-btn::after{content:attr(data-share-label);position:absolute!important;right:0!important;top:calc(100% + 6px)!important;white-space:nowrap!important;background:rgba(15,23,42,.96)!important;color:#e5e7eb!important;border:1px solid rgba(148,163,184,.34)!important;border-radius:12px!important;padding:5px 9px!important;font-size:11px!important;font-weight:800!important;letter-spacing:.01em!important;box-shadow:0 10px 22px rgba(0,0,0,.28)!important;opacity:0!important;pointer-events:none!important;transform:translateY(-4px)!important;transition:opacity .16s ease,transform .16s ease!important;}
+.az-lucky-product-share-btn::after{content:attr(data-share-label);position:absolute!important;right:0!important;top:calc(100% + 6px)!important;white-space:nowrap!important;background:rgba(15,23,42,.96)!important;color:#e5e7eb!important;border:1px solid rgba(148,163,184,.34)!important;border-radius:999px!important;padding:5px 9px!important;font-size:11px!important;font-weight:800!important;letter-spacing:.01em!important;box-shadow:0 10px 22px rgba(0,0,0,.28)!important;opacity:0!important;pointer-events:none!important;transform:translateY(-4px)!important;transition:opacity .16s ease,transform .16s ease!important;}
 .az-lucky-product-share-btn:hover::after,.az-lucky-product-share-btn:focus-visible::after{opacity:1!important;transform:translateY(0)!important;}
 .az-lucky-share-modal-backdrop{
   position:fixed!important;inset:0!important;z-index:999999!important;background:rgba(0,0,0,.55)!important;
@@ -8307,10 +8261,10 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 .az-lucky-share-modal-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:18px!important;}
 .az-lucky-share-modal-title{font-size:22px!important;font-weight:700!important;letter-spacing:.01em!important;margin:0!important;}
 .az-lucky-share-modal-subtitle{text-align:center!important;color:#cbd5e1!important;font-size:13px!important;line-height:1.45!important;margin:-6px auto 14px!important;max-width:420px!important;}
-.az-lucky-share-modal-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;margin:0 auto 12px!important;padding:6px 10px!important;border-radius:12px!important;background:rgba(16,185,129,.14)!important;border:1px solid rgba(52,211,153,.35)!important;color:#86efac!important;font-size:12px!important;font-weight:900!important;}
+.az-lucky-share-modal-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;margin:0 auto 12px!important;padding:6px 10px!important;border-radius:999px!important;background:rgba(16,185,129,.14)!important;border:1px solid rgba(52,211,153,.35)!important;color:#86efac!important;font-size:12px!important;font-weight:900!important;}
 .az-lucky-share-modal-close{border:0!important;background:transparent!important;color:#d1d5db!important;font-size:32px!important;line-height:1!important;cursor:pointer!important;padding:0 2px!important;}
 .az-lucky-share-modal-icons{display:flex!important;justify-content:center!important;gap:20px!important;flex-wrap:wrap!important;margin:10px 0 22px!important;}
-.az-lucky-share-modal-icon{width:46px!important;height:46px!important;border-radius:12px!important;border:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#fff!important;font-size:25px!important;font-weight:900!important;text-decoration:none!important;cursor:pointer!important;}
+.az-lucky-share-modal-icon{width:46px!important;height:46px!important;border-radius:999px!important;border:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#fff!important;font-size:25px!important;font-weight:900!important;text-decoration:none!important;cursor:pointer!important;}
 .az-lucky-share-modal-icon svg{width:25px!important;height:25px!important;display:block!important;fill:currentColor!important;stroke:none!important;}
 .az-lucky-share-modal-icon.ms svg{width:28px!important;height:28px!important;}
 .az-lucky-share-modal-icon.wa svg{width:27px!important;height:31px!important;}
@@ -8335,7 +8289,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 .az-lucky-share-commission-lines{display:grid!important;gap:6px!important;color:#dbeafe!important;font-size:12px!important;line-height:1.45!important;}
 .az-lucky-share-commission-lines b{color:#86efac!important;font-weight:950!important;}
 .az-lucky-share-commission-small{color:#93c5fd!important;font-size:11px!important;margin-top:8px!important;line-height:1.35!important;}
-.az-lucky-share-toast{position:fixed!important;left:50%!important;bottom:24px!important;z-index:1000000!important;transform:translateX(-50%) translateY(14px)!important;background:rgba(15,23,42,.96)!important;color:#ecfdf5!important;border:1px solid rgba(52,211,153,.38)!important;border-radius:12px!important;padding:10px 14px!important;font-size:13px!important;font-weight:800!important;box-shadow:0 18px 44px rgba(0,0,0,.42)!important;opacity:0!important;transition:opacity .18s ease,transform .18s ease!important;max-width:min(420px,92vw)!important;text-align:center!important;}
+.az-lucky-share-toast{position:fixed!important;left:50%!important;bottom:24px!important;z-index:1000000!important;transform:translateX(-50%) translateY(14px)!important;background:rgba(15,23,42,.96)!important;color:#ecfdf5!important;border:1px solid rgba(52,211,153,.38)!important;border-radius:999px!important;padding:10px 14px!important;font-size:13px!important;font-weight:800!important;box-shadow:0 18px 44px rgba(0,0,0,.42)!important;opacity:0!important;transition:opacity .18s ease,transform .18s ease!important;max-width:min(420px,92vw)!important;text-align:center!important;}
 .az-lucky-share-toast.show{opacity:1!important;transform:translateX(-50%) translateY(0)!important;}
 @media(max-width:700px){
   .az-lucky-product-share-btn{top:56px!important;right:16px!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;max-width:34px!important;max-height:34px!important;font-size:15px!important;box-shadow:0 8px 18px rgba(37,99,235,.28)!important;}
@@ -8612,7 +8566,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   border:1px solid rgba(148,163,184,.35)!important;
   background:#111827!important;
   color:#f8fafc!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   padding:7px 11px!important;
   font-weight:800!important;
   cursor:pointer!important;
@@ -9032,7 +8986,7 @@ html.azobss-shared-product-mode-332 .cad-item{
   position:absolute!important;
   z-index:36!important;
   width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;max-width:38px!important;max-height:38px!important;
-  border-radius:12px!important;padding:0!important;margin:0!important;
+  border-radius:999px!important;padding:0!important;margin:0!important;
   display:flex!important;align-items:center!important;justify-content:center!important;
   border:1px solid rgba(52,211,153,.88)!important;
   background:linear-gradient(135deg,#0f766e,#22c55e)!important;
@@ -9118,10 +9072,8 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
   padding:0 6px!important;
   border-radius:12px!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   font-size:11px!important;
   font-weight:950!important;
   letter-spacing:.2px!important;
@@ -9671,7 +9623,7 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
   gap:6px!important;
   flex-wrap:nowrap!important;
   line-height:1!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   border:1px solid rgba(250,204,21,.42)!important;
   background:linear-gradient(135deg,rgba(15,23,42,.92),rgba(69,26,3,.72),rgba(127,29,29,.72))!important;
   box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 8px 22px rgba(0,0,0,.28),0 0 18px rgba(250,204,21,.13)!important;
@@ -9710,7 +9662,7 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
   color:#fff7ed!important;
   background:linear-gradient(135deg,#ef4444,#f97316,#f59e0b)!important;
   border:1px solid rgba(255,255,255,.18)!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   padding:3px 6px!important;
   font-size:9px!important;
   font-weight:1000!important;
@@ -9795,10 +9747,9 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
   font-size:9.5px!important;
   line-height:1!important;
   text-align:center!important;
-  white-space:normal!important;
+  white-space:nowrap!important;
   overflow:hidden!important;
-  text-overflow:clip!important;
-  text-align:center!important;
+  text-overflow:ellipsis!important;
   letter-spacing:.1px!important;
 }
 html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
@@ -9812,7 +9763,7 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
   text-align:center!important;
   white-space:nowrap!important;
   letter-spacing:.15px!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
 }
 @media(max-width:760px){
   html body #softwareGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
@@ -10019,7 +9970,7 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
   color:#ffffff!important;
   background:rgba(220,38,38,.94)!important;
   border:1px solid rgba(255,255,255,.38)!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   padding:4px 3px!important;
   white-space:nowrap!important;
   letter-spacing:.14px!important;
@@ -10150,7 +10101,7 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   right:-2px!important;
   top:52%!important;
   height:2px!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   background:rgba(255,255,255,.38)!important;
   box-shadow:0 0 4px rgba(0,0,0,.35)!important;
   transform:rotate(-13deg)!important;
@@ -10526,10 +10477,8 @@ html body .downloads-grid > .download-card > .software-card-admin-actions > butt
   margin:0!important;
   border-radius:50%!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   font-size:15px!important;
   line-height:1!important;
   background:rgba(2,6,23,.72)!important;
@@ -10650,12 +10599,10 @@ html body .downloads-grid > .download-card > .software-meta span{
   max-width:70px!important;
   height:20px!important;
   padding:2px 6px!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   font-size:9.5px!important;
   line-height:1!important;
   font-weight:900!important;
@@ -10920,10 +10867,8 @@ html body .downloads-grid > .download-card > .az-desc-more-outside-322{
   bottom:auto!important;
   transform:none!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   align-self:center!important;
   width:auto!important;
   min-width:44px!important;
@@ -10932,7 +10877,7 @@ html body .downloads-grid > .download-card > .az-desc-more-outside-322{
   min-height:18px!important;
   margin:-2px auto 8px!important;
   padding:1px 8px!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   font-size:9px!important;
   line-height:1!important;
   z-index:5!important;
@@ -11013,10 +10958,8 @@ html body .downloads-grid > .download-card > .az-desc-more-outside-322{
   bottom:auto!important;
   transform:none!important;
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
   align-self:center!important;
   width:auto!important;
   min-width:42px!important;
@@ -11025,7 +10968,7 @@ html body .downloads-grid > .download-card > .az-desc-more-outside-322{
   min-height:17px!important;
   margin:5px auto 8px!important;
   padding:1px 8px!important;
-  border-radius:12px!important;
+  border-radius:999px!important;
   font-size:8.5px!important;
   line-height:1!important;
   z-index:8!important;
@@ -11629,23 +11572,22 @@ html body .cad-tool-card{
 html body .az-owner-source-chip{
   display:none!important;
   position:absolute!important;
-  top:76px!important;
+  top:72px!important;
   left:12px!important;
   right:auto!important;
   z-index:39!important;
-  max-width:112px!important;
-  min-height:30px!important;
-  padding:4px 7px!important;
-  border-radius:12px!important;
-  font-size:8.2px!important;
+  max-width:128px!important;
+  min-height:18px!important;
+  padding:3px 7px!important;
+  border-radius:999px!important;
+  font-size:8.4px!important;
   line-height:1.05!important;
   font-weight:1000!important;
   letter-spacing:.25px!important;
   text-transform:uppercase!important;
-  white-space:normal!important;
+  white-space:nowrap!important;
   overflow:hidden!important;
-  text-overflow:clip!important;
-  text-align:center!important;
+  text-overflow:ellipsis!important;
   pointer-events:none!important;
   user-select:none!important;
   transform:translateZ(0)!important;
@@ -11653,10 +11595,8 @@ html body .az-owner-source-chip{
 }
 html body.az-owner-source-visible .az-owner-source-chip{
   display:inline-flex!important;
-  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:1px!important;
 }
 html body .az-owner-source-chip.is-azobss{
   color:#dcfce7!important;
@@ -11669,36 +11609,18 @@ html body .az-owner-source-chip.is-staff{
   background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(67,56,202,.88))!important;
 }
 html body .az-owner-source-chip.has-promo{
-  top:76px!important;
+  top:72px!important;
 }
 html body .az-owner-source-chip.no-promo{
   top:10px!important;
   left:12px!important;
 }
 html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
-  top:76px!important;
-}
-html body .az-owner-source-chip .az-owner-source-title{
-  display:block!important;
-  width:100%!important;
-  font-size:6.8px!important;
-  line-height:1!important;
-  opacity:.82!important;
-  letter-spacing:.55px!important;
-}
-html body .az-owner-source-chip .az-owner-source-name{
-  display:block!important;
-  width:100%!important;
-  max-width:96px!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-size:8.6px!important;
-  line-height:1.04!important;
+  top:72px!important;
 }
 @media(max-width:520px){
-  html body .az-owner-source-chip{top:70px!important;left:10px!important;font-size:7.8px!important;padding:4px 5px!important;max-width:104px!important;min-height:28px!important;}
-  html body .az-owner-source-chip.has-promo{top:70px!important;}
+  html body .az-owner-source-chip{top:66px!important;left:10px!important;font-size:7.8px!important;padding:3px 5px!important;max-width:116px!important;}
+  html body .az-owner-source-chip.has-promo{top:66px!important;}
   html body .az-owner-source-chip.no-promo{top:10px!important;}
 }
 </style>
@@ -11768,8 +11690,7 @@ html body .az-owner-source-chip .az-owner-source-name{
       return;
     }
     var az=isAzobssOwner(owner);
-    var ownerName=az ? 'AZOBSS' : staffName(owner);
-    var text='OWNED: '+ownerName;
+    var text=az ? 'Owned: AZOBSS' : ('Owned: '+staffName(owner));
     if(!old){
       old=document.createElement('div');
       old.className='az-owner-source-chip';
@@ -11779,8 +11700,7 @@ html body .az-owner-source-chip .az-owner-source-name{
     }
     var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
     old.className='az-owner-source-chip '+(az?'is-azobss':'is-staff')+' '+(hasPromo?'has-promo':'no-promo');
-    old.innerHTML='<span class="az-owner-source-title">OWNED:</span><span class="az-owner-source-name">'+esc(ownerName)+'</span>';
-    old.setAttribute('aria-label',text);
+    old.textContent=text;
     old.title=az ? 'Owned by AZOBSS' : ('Owned by '+staffName(owner));
   }
   function run(){
@@ -11802,987 +11722,6 @@ html body .az-owner-source-chip .az-owner-source-name{
 })();
 </script>
 <!-- /AZOBSS PATCH 335 -->
-
-
-
-<!-- AZOBSS PATCH 338: Buy Now compact size restore
-     Root cause: previous layout overrides + premium button column layout could make Buy Now look oversized.
-     Fix: force premium CTA to compact pill size while keeping price spacing and cart icon intact. -->
-<style id="azobss-software-cad-buy-now-compact-size-fix-338">
-/* Keep the premium Software row compact: Buy Now + small cart icon. */
-html body #softwareGrid > .download-card > .az-software-buy-cart-row,
-html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
-html body .downloads-grid > .download-card > .az-software-buy-cart-row,
-html body .software-grid > .software-card > .az-software-buy-cart-row,
-html body .software-grid > .software-item > .az-software-buy-cart-row{
-  width:min(226px,88%)!important;
-  max-width:226px!important;
-  height:36px!important;
-  min-height:36px!important;
-  max-height:36px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:8px!important;
-  padding:0!important;
-  margin:0!important;
-  box-sizing:border-box!important;
-}
-
-/* Premium Buy Now must stay small, not stretch vertically or full width. */
-html body #softwareGrid > .download-card > .download-btn.premium,
-html body #softwareDownloadsGrid > .download-card > .download-btn.premium,
-html body .downloads-grid > .download-card > .download-btn.premium,
-html body .software-grid > .software-card > .download-btn.premium,
-html body .software-grid > .software-item > .download-btn.premium,
-html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-html body .software-grid > .software-card .az-software-buy-cart-row > .download-btn.premium,
-html body .software-grid > .software-item .az-software-buy-cart-row > .download-btn.premium,
-html body [data-azobss-premium-buy="1"].download-btn{
-  width:166px!important;
-  max-width:166px!important;
-  min-width:138px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0 13px!important;
-  border-radius:999px!important;
-  display:inline-flex!important;
-  flex-direction:row!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:7px!important;
-  flex:0 0 auto!important;
-  box-sizing:border-box!important;
-  font-size:12px!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-decoration:none!important;
-}
-
-/* CAD premium CTA uses a different class. Keep it visually same size as Software Buy Now. */
-html body .cad-action-btn.premium,
-html body .cad-card .cad-action-btn.premium,
-html body .cad-item .cad-action-btn.premium,
-html body .cad-tools-shop .cad-action-btn.premium,
-html body .cad-card-grid .cad-action-btn.premium{
-  width:166px!important;
-  max-width:166px!important;
-  min-width:138px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0 13px!important;
-  border-radius:999px!important;
-  display:inline-flex!important;
-  flex-direction:row!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:7px!important;
-  flex:0 0 auto!important;
-  box-sizing:border-box!important;
-  font-size:12px!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-decoration:none!important;
-}
-
-html body .download-btn.premium .buy-price,
-html body .download-btn.premium .buy-text,
-html body [data-azobss-premium-buy="1"].download-btn .buy-price,
-html body [data-azobss-premium-buy="1"].download-btn .buy-text{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  line-height:1!important;
-  margin:0!important;
-  padding:0!important;
-  white-space:nowrap!important;
-}
-html body .download-btn.premium .buy-price,
-html body [data-azobss-premium-buy="1"].download-btn .buy-price{
-  font-size:11px!important;
-  font-weight:1000!important;
-  max-width:58px!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-html body .download-btn.premium .buy-text,
-html body [data-azobss-premium-buy="1"].download-btn .buy-text{
-  font-size:12px!important;
-  font-weight:1000!important;
-}
-
-/* Cart icon beside Buy Now should remain small. */
-html body .az-software-buy-cart-row .az-card-cart-btn{
-  width:34px!important;
-  min-width:34px!important;
-  max-width:34px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border-radius:11px!important;
-  font-size:13px!important;
-}
-html body .az-software-buy-cart-row .az-card-cart-icon{
-  font-size:14px!important;
-  line-height:1!important;
-}
-
-@media(max-width:760px){
-  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
-  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
-  html body .downloads-grid > .download-card > .az-software-buy-cart-row,
-  html body .software-grid > .software-card > .az-software-buy-cart-row,
-  html body .software-grid > .software-item > .az-software-buy-cart-row{
-    width:min(214px,90%)!important;
-    max-width:214px!important;
-    height:34px!important;
-    min-height:34px!important;
-    max-height:34px!important;
-    gap:7px!important;
-  }
-  html body #softwareGrid > .download-card > .download-btn.premium,
-  html body #softwareDownloadsGrid > .download-card > .download-btn.premium,
-  html body .downloads-grid > .download-card > .download-btn.premium,
-  html body .software-grid > .software-card > .download-btn.premium,
-  html body .software-grid > .software-item > .download-btn.premium,
-  html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-  html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-  html body .software-grid > .software-card .az-software-buy-cart-row > .download-btn.premium,
-  html body .software-grid > .software-item .az-software-buy-cart-row > .download-btn.premium,
-  html body [data-azobss-premium-buy="1"].download-btn,
-  html body .cad-action-btn.premium{
-    width:158px!important;
-    max-width:158px!important;
-    min-width:128px!important;
-    height:32px!important;
-    min-height:32px!important;
-    max-height:32px!important;
-    padding:0 11px!important;
-    font-size:11.5px!important;
-    gap:6px!important;
-  }
-  html body .az-software-buy-cart-row .az-card-cart-btn{
-    width:32px!important;
-    min-width:32px!important;
-    max-width:32px!important;
-    height:32px!important;
-    min-height:32px!important;
-    max-height:32px!important;
-  }
-}
-</style>
-<!-- /AZOBSS PATCH 338 -->
-
-
-
-<!-- AZOBSS PATCH 339: Software/CAD equal fixed card layout + bottom pinned CTA
-     Purpose: make Download Now / Buy Now stay close to downloads/rating footer on every card,
-     even when description length, promo badge, owner label, or meta badges are different. -->
-<style id="azobss-software-cad-equal-card-bottom-cta-fix-339">
-/* One stable geometry for product cards. Footer stays bottom, CTA stays just above footer. */
-html body #softwareGrid > .download-card,
-html body #softwareDownloadsGrid > .download-card,
-html body .downloads-grid > .download-card,
-html body .software-grid > .software-card,
-html body .software-grid > .software-item,
-html body .cad-card-grid > .cad-card,
-html body .cad-tools-shop > .cad-card,
-html body .cad-tools-shop > .cad-item,
-html body .cad-card,
-html body .cad-item,
-html body .cad-resource-card,
-html body .cad-tool-card{
-  position:relative!important;
-  height:424px!important;
-  min-height:424px!important;
-  max-height:424px!important;
-  padding-bottom:92px!important;
-  overflow:hidden!important;
-  box-sizing:border-box!important;
-}
-
-/* Keep description inside its own safe zone so it never pushes or overlaps the CTA/footer. */
-html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
-html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
-html body .downloads-grid > .download-card > .azobss-sw-desc-target-097,
-html body .software-grid > .software-card > .azobss-sw-desc-target-097,
-html body .software-grid > .software-item > .azobss-sw-desc-target-097,
-html body .cad-card-grid > .cad-card > .azobss-sw-desc-target-097,
-html body .cad-tools-shop > .cad-card > .azobss-sw-desc-target-097,
-html body .cad-tools-shop > .cad-item > .azobss-sw-desc-target-097,
-html body .cad-card > .azobss-sw-desc-target-097,
-html body .cad-item > .azobss-sw-desc-target-097{
-  height:calc(1.30em * 4)!important;
-  min-height:calc(1.30em * 4)!important;
-  max-height:calc(1.30em * 4)!important;
-  line-height:1.30!important;
-  margin:4px auto 0!important;
-  padding:0 8px!important;
-  overflow:hidden!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  box-sizing:border-box!important;
-}
-html body #softwareGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .software-grid > .software-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .software-grid > .software-item > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .cad-card-grid > .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .cad-tools-shop > .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .cad-tools-shop > .cad-item > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
-html body .cad-item > .azobss-sw-desc-target-097 > .az-desc-copy-293{
-  display:-webkit-box!important;
-  -webkit-box-orient:vertical!important;
-  -webkit-line-clamp:4!important;
-  line-clamp:4!important;
-  max-height:calc(1.30em * 4)!important;
-  line-height:1.30!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  text-align:center!important;
-  text-align-last:center!important;
-}
-
-/* More can remain near description, but must not create layout height. */
-html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
-html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
-html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
-html body .software-grid > .software-card > .azobss-sw-desc-more-097,
-html body .software-grid > .software-item > .azobss-sw-desc-more-097,
-html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
-html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
-html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
-html body .cad-card > .azobss-sw-desc-more-097,
-html body .cad-item > .azobss-sw-desc-more-097{
-  position:relative!important;
-  z-index:5!important;
-  margin:-7px auto 0!important;
-  flex:0 0 auto!important;
-}
-
-/* Pin Software CTA row just above stats footer. This is the main equal-height fix. */
-html body #softwareGrid > .download-card > .az-software-buy-cart-row,
-html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
-html body .downloads-grid > .download-card > .az-software-buy-cart-row,
-html body .software-grid > .software-card > .az-software-buy-cart-row,
-html body .software-grid > .software-item > .az-software-buy-cart-row,
-html body #softwareGrid > .download-card > .download-btn,
-html body #softwareDownloadsGrid > .download-card > .download-btn,
-html body .downloads-grid > .download-card > .download-btn,
-html body .software-grid > .software-card > .download-btn,
-html body .software-grid > .software-item > .download-btn{
-  position:absolute!important;
-  left:50%!important;
-  right:auto!important;
-  bottom:50px!important;
-  transform:translateX(-50%)!important;
-  z-index:8!important;
-  margin:0!important;
-}
-
-/* If the Buy Now button is inside the row, keep the button itself normal relative to that row. */
-html body .az-software-buy-cart-row > .download-btn,
-html body .az-software-buy-cart-row > a.download-btn{
-  position:relative!important;
-  left:auto!important;
-  bottom:auto!important;
-  transform:none!important;
-  margin:0!important;
-}
-
-/* Pin CAD action row / button the same way. */
-html body .cad-card > .cad-action-row,
-html body .cad-card > .cad-actions,
-html body .cad-card > .cad-card-actions,
-html body .cad-item > .cad-action-row,
-html body .cad-item > .cad-actions,
-html body .cad-item > .cad-card-actions,
-html body .cad-resource-card > .cad-action-row,
-html body .cad-tool-card > .cad-action-row,
-html body .cad-card > .cad-action-btn,
-html body .cad-item > .cad-action-btn,
-html body .cad-resource-card > .cad-action-btn,
-html body .cad-tool-card > .cad-action-btn{
-  position:absolute!important;
-  left:50%!important;
-  right:auto!important;
-  bottom:50px!important;
-  transform:translateX(-50%)!important;
-  z-index:8!important;
-  margin:0!important;
-}
-
-/* Stats/rating/downloads footer stays at the real bottom. */
-html body #softwareGrid > .download-card > .software-stats,
-html body #softwareDownloadsGrid > .download-card > .software-stats,
-html body .downloads-grid > .download-card > .software-stats,
-html body .software-grid > .software-card > .software-stats,
-html body .software-grid > .software-item > .software-stats,
-html body .cad-card-grid > .cad-card > .software-stats,
-html body .cad-tools-shop > .cad-card > .software-stats,
-html body .cad-tools-shop > .cad-item > .software-stats,
-html body .cad-card > .software-stats,
-html body .cad-item > .software-stats,
-html body .software-card-stats,
-html body .software-stats-footer,
-html body .az-card-stats,
-html body .product-stats,
-html body .download-card-footer{
-  position:absolute!important;
-  left:0!important;
-  right:0!important;
-  bottom:0!important;
-  z-index:7!important;
-  margin:0!important;
-}
-
-/* Keep admin floating controls above pinned CTA/footer without creating bottom bars. */
-html body .software-card-admin-actions{
-  position:absolute!important;
-  right:12px!important;
-  top:72px!important;
-  z-index:20!important;
-  margin:0!important;
-}
-
-@media(max-width:760px){
-  html body #softwareGrid > .download-card,
-  html body #softwareDownloadsGrid > .download-card,
-  html body .downloads-grid > .download-card,
-  html body .software-grid > .software-card,
-  html body .software-grid > .software-item,
-  html body .cad-card-grid > .cad-card,
-  html body .cad-tools-shop > .cad-card,
-  html body .cad-tools-shop > .cad-item,
-  html body .cad-card,
-  html body .cad-item,
-  html body .cad-resource-card,
-  html body .cad-tool-card{
-    height:408px!important;
-    min-height:408px!important;
-    max-height:408px!important;
-    padding-bottom:88px!important;
-  }
-  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
-  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
-  html body .downloads-grid > .download-card > .az-software-buy-cart-row,
-  html body .software-grid > .software-card > .az-software-buy-cart-row,
-  html body .software-grid > .software-item > .az-software-buy-cart-row,
-  html body #softwareGrid > .download-card > .download-btn,
-  html body #softwareDownloadsGrid > .download-card > .download-btn,
-  html body .downloads-grid > .download-card > .download-btn,
-  html body .software-grid > .software-card > .download-btn,
-  html body .software-grid > .software-item > .download-btn,
-  html body .cad-card > .cad-action-btn,
-  html body .cad-item > .cad-action-btn{
-    bottom:48px!important;
-  }
-}
-</style>
-<!-- /AZOBSS PATCH 339 -->
-
-
-
-<!-- AZOBSS PATCH 340: Owner label fixed below discount badge, admin/staff only
-     Fix: keep OWNED label visible after equal-card layout and place it under promo badge. -->
-<style id="azobss-owner-label-fixed-below-promo-340">
-html body .download-card > .az-owner-source-chip,
-html body .software-card > .az-owner-source-chip,
-html body .software-product-card > .az-owner-source-chip,
-html body .software-item > .az-owner-source-chip,
-html body .cad-card > .az-owner-source-chip,
-html body .cad-item > .az-owner-source-chip,
-html body .cad-resource-card > .az-owner-source-chip,
-html body .cad-tool-card > .az-owner-source-chip{
-  position:absolute!important;
-  left:16px!important;
-  right:auto!important;
-  top:92px!important;
-  z-index:45!important;
-  width:82px!important;
-  min-width:82px!important;
-  max-width:82px!important;
-  min-height:32px!important;
-  padding:4px 6px!important;
-  border-radius:11px!important;
-  box-sizing:border-box!important;
-  text-align:center!important;
-  pointer-events:none!important;
-  overflow:hidden!important;
-  transform:none!important;
-}
-html body.az-owner-source-visible .download-card > .az-owner-source-chip,
-html body.az-owner-source-visible .software-card > .az-owner-source-chip,
-html body.az-owner-source-visible .software-product-card > .az-owner-source-chip,
-html body.az-owner-source-visible .software-item > .az-owner-source-chip,
-html body.az-owner-source-visible .cad-card > .az-owner-source-chip,
-html body.az-owner-source-visible .cad-item > .az-owner-source-chip,
-html body.az-owner-source-visible .cad-resource-card > .az-owner-source-chip,
-html body.az-owner-source-visible .cad-tool-card > .az-owner-source-chip{
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:1px!important;
-}
-html body .az-owner-source-chip.has-promo{
-  top:92px!important;
-}
-html body .az-owner-source-chip.no-promo{
-  top:14px!important;
-  left:16px!important;
-}
-html body .az-owner-source-chip .az-owner-source-title{
-  display:block!important;
-  width:100%!important;
-  font-size:7px!important;
-  line-height:1!important;
-  font-weight:1000!important;
-  letter-spacing:.7px!important;
-  opacity:.78!important;
-  text-align:center!important;
-  white-space:nowrap!important;
-}
-html body .az-owner-source-chip .az-owner-source-name{
-  display:block!important;
-  width:100%!important;
-  max-width:70px!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-size:8.8px!important;
-  line-height:1.08!important;
-  font-weight:1000!important;
-  letter-spacing:.15px!important;
-  text-align:center!important;
-}
-@media(max-width:520px){
-  html body .download-card > .az-owner-source-chip,
-  html body .software-card > .az-owner-source-chip,
-  html body .software-item > .az-owner-source-chip,
-  html body .cad-card > .az-owner-source-chip,
-  html body .cad-item > .az-owner-source-chip{
-    top:86px!important;
-    left:12px!important;
-    width:76px!important;
-    min-width:76px!important;
-    max-width:76px!important;
-    min-height:30px!important;
-    padding:4px 5px!important;
-  }
-  html body .az-owner-source-chip.has-promo{top:86px!important;}
-  html body .az-owner-source-chip.no-promo{top:12px!important;left:12px!important;}
-}
-</style>
-<script id="azobss-owner-label-fixed-below-promo-script-340">
-(function(){
-  if(window.__azOwnerLabelFixedBelowPromo340) return;
-  window.__azOwnerLabelFixedBelowPromo340=true;
-  var ADMIN_NAMES={'zedan91':true};
-  var ADMIN_EMAILS={'zedan9107@gmail.com':true,'zedan91@azobss.local':true};
-  var CARD_SELECTOR='#softwareGrid > .download-card,#softwareDownloadsGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.software-product-card,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
-  function norm(v){return String(v||'').trim().toLowerCase();}
-  function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function jsonStore(key){
-    for(var i=0;i<2;i++){
-      try{var raw=(i?localStorage:sessionStorage).getItem(key); if(raw){var o=JSON.parse(raw); if(o&&typeof o==='object') return o;}}catch(e){}
-    }
-    return null;
-  }
-  function readUser(){
-    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
-    for(var i=0;i<keys.length;i++){var o=jsonStore(keys[i]); if(o) return o;}
-    try{if(typeof window.getSavedUser==='function'){var s=window.getSavedUser(); if(s&&typeof s==='object') return s;}}catch(e){}
-    return {};
-  }
-  function textOf(sel){try{var el=document.querySelector(sel); return el ? norm(el.textContent||el.value||'') : '';}catch(e){return '';}}
-  function currentRoleInfo(){
-    var u=readUser();
-    var username=norm(u.usernameKey||u.username||u.id||u.name||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername')||localStorage.getItem('azobssLockedUsername')||sessionStorage.getItem('azobssLockedUsername')||textOf('#signedInName')||textOf('.signed-in-name')||textOf('[data-azobss-navbar-username]')||textOf('.user-name'));
-    var email=norm(u.email||u.authEmail||u.contactEmail||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||localStorage.getItem('email')||sessionStorage.getItem('email'));
-    var role=norm(u.role||u.userRole||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||document.body.getAttribute('data-role'));
-    var admin=role==='admin'||ADMIN_NAMES[username]||ADMIN_EMAILS[email]||document.body.classList.contains('az-software-full-admin')||document.body.classList.contains('azobss-admin')||/\/admin\/?$/i.test(location.pathname);
-    var staff=role==='staff'||role==='semiadmin'||role==='semi-admin'||document.body.classList.contains('az-software-staff-role-ok')||document.body.classList.contains('azobss-staff')||/\/staff\/?$/i.test(location.pathname);
-    return {ok:!!(admin||staff),admin:!!admin,staff:!!staff,username:username,email:email,role:role};
-  }
-  function ownerFromCard(card){
-    var trigger=card.querySelector('[data-owner-username],[data-owner-email],[data-owner-key],[data-owner-uid],[data-created-by-username],[data-staff-username],[data-azobss-premium-buy]');
-    var d=card.dataset||{};
-    function get(k){return norm(d[k]||(trigger&&trigger.dataset&&trigger.dataset[k])||'');}
-    var username=get('ownerUsername')||get('createdByUsername')||get('staffUsername')||get('sellerUsername')||get('uploadedBy')||get('addedBy');
-    var email=get('ownerEmail')||get('createdByEmail')||get('staffEmail')||get('sellerEmail');
-    var key=get('ownerKey')||get('createdByKey')||get('staffOwnerKey')||get('sellerKey');
-    var uid=get('ownerUid')||get('createdByUid')||get('staffUid')||get('sellerUid');
-    return {username:username,email:email,key:key,uid:uid,raw:username||email||key||uid};
-  }
-  function isAzobssOwner(o){
-    if(!o||!o.raw) return true;
-    var v=norm(o.username+' '+o.email+' '+o.key);
-    return /(^|\s)(zedan91|azobss)(\s|$)/i.test(v)||ADMIN_NAMES[o.username]||ADMIN_EMAILS[o.email]||v.indexOf('azobss')>=0;
-  }
-  function staffName(o){
-    if(!o) return 'AZOBSS';
-    if(o.username) return o.username;
-    if(o.email) return o.email.split('@')[0];
-    if(o.key) return o.key.length>16 ? o.key.slice(0,16)+'…' : o.key;
-    return 'staff';
-  }
-  function cardNeedsOwner(card,o){
-    var type=norm((card.dataset&&card.dataset.type)||'');
-    var hasPremium=!!card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.az-software-buy-cart-row');
-    var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
-    return !!(o&&o.raw)||type==='premium'||hasPremium||hasPromo;
-  }
-  function upsert(card){
-    if(!card) return;
-    var info=currentRoleInfo();
-    var chip=card.querySelector(':scope > .az-owner-source-chip');
-    var owner=ownerFromCard(card);
-    if(!info.ok || !cardNeedsOwner(card,owner)){ if(chip) chip.remove(); return; }
-    var az=isAzobssOwner(owner);
-    var ownerName=az?'AZOBSS':staffName(owner);
-    if(!chip){
-      chip=document.createElement('div');
-      chip.className='az-owner-source-chip';
-      card.insertBefore(chip,card.firstChild);
-    }
-    var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
-    chip.className='az-owner-source-chip '+(az?'is-azobss':'is-staff')+' '+(hasPromo?'has-promo':'no-promo')+' az-owner-source-fixed-340';
-    chip.innerHTML='<span class="az-owner-source-title">OWNED:</span><span class="az-owner-source-name">'+esc(ownerName)+'</span>';
-    chip.setAttribute('aria-label','OWNED: '+ownerName);
-    chip.title=az?'Owned by AZOBSS':'Owned by '+ownerName;
-  }
-  function run(){
-    var info=currentRoleInfo();
-    if(document.body) document.body.classList.toggle('az-owner-source-visible',info.ok);
-    document.querySelectorAll(CARD_SELECTOR).forEach(upsert);
-  }
-  document.addEventListener('DOMContentLoaded',run);
-  if(document.readyState!=='loading') run();
-  [150,500,1000,1800,3000].forEach(function(t){setTimeout(run,t);});
-  try{
-    var root=document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop')||document.body;
-    new MutationObserver(function(muts){
-      for(var i=0;i<muts.length;i++){if(muts[i].addedNodes&&muts[i].addedNodes.length){requestAnimationFrame(run);break;}}
-    }).observe(root,{childList:true,subtree:true});
-  }catch(e){}
-})();
-</script>
-<!-- /AZOBSS PATCH 340 -->
-
-
-
-<!-- AZOBSS PATCH 341: Premium Buy Now / cart CTA height aligned with Download Now
-     Fix: make RM price + Buy Now text and the premium cart row the same visual height as Download Now. -->
-<style id="azobss-software-cad-buy-now-download-height-align-fix-341">
-/* Final CTA geometry: Free Download Now and Premium Buy Now row share the same height and bottom position. */
-html body #softwareGrid > .download-card > .download-btn:not(.premium),
-html body #softwareDownloadsGrid > .download-card > .download-btn:not(.premium),
-html body .downloads-grid > .download-card > .download-btn:not(.premium),
-html body .software-grid > .software-card > .download-btn:not(.premium),
-html body .software-grid > .software-item > .download-btn:not(.premium),
-html body .cad-card > .cad-action-btn:not(.premium),
-html body .cad-item > .cad-action-btn:not(.premium),
-html body .cad-resource-card > .cad-action-btn:not(.premium),
-html body .cad-tool-card > .cad-action-btn:not(.premium){
-  height:42px!important;
-  min-height:42px!important;
-  max-height:42px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  line-height:1!important;
-  box-sizing:border-box!important;
-}
-
-/* Premium row must look like one CTA group with the same height as Download Now. */
-html body #softwareGrid > .download-card > .az-software-buy-cart-row,
-html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
-html body .downloads-grid > .download-card > .az-software-buy-cart-row,
-html body .software-grid > .software-card > .az-software-buy-cart-row,
-html body .software-grid > .software-item > .az-software-buy-cart-row{
-  width:min(236px,86%)!important;
-  max-width:236px!important;
-  min-width:218px!important;
-  height:42px!important;
-  min-height:42px!important;
-  max-height:42px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:10px!important;
-  padding:0!important;
-  margin:0!important;
-  box-sizing:border-box!important;
-}
-
-html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-html body .software-grid > .software-card .az-software-buy-cart-row > .download-btn.premium,
-html body .software-grid > .software-item .az-software-buy-cart-row > .download-btn.premium,
-html body [data-azobss-premium-buy="1"].download-btn,
-html body .cad-action-btn.premium,
-html body .cad-card .cad-action-btn.premium,
-html body .cad-item .cad-action-btn.premium,
-html body .cad-tools-shop .cad-action-btn.premium,
-html body .cad-card-grid .cad-action-btn.premium{
-  height:42px!important;
-  min-height:42px!important;
-  max-height:42px!important;
-  width:184px!important;
-  max-width:184px!important;
-  min-width:168px!important;
-  padding:0 16px!important;
-  border-radius:999px!important;
-  display:inline-flex!important;
-  flex-direction:row!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:8px!important;
-  box-sizing:border-box!important;
-  font-size:13px!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-decoration:none!important;
-}
-
-html body .download-btn.premium .buy-price,
-html body [data-azobss-premium-buy="1"].download-btn .buy-price{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  height:auto!important;
-  margin:0!important;
-  padding:0!important;
-  font-size:13px!important;
-  line-height:1!important;
-  font-weight:1000!important;
-  white-space:nowrap!important;
-}
-html body .download-btn.premium .buy-text,
-html body [data-azobss-premium-buy="1"].download-btn .buy-text{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  height:auto!important;
-  margin:0!important;
-  padding:0!important;
-  font-size:13px!important;
-  line-height:1!important;
-  font-weight:1000!important;
-  white-space:nowrap!important;
-}
-
-/* Cart icon beside Buy Now must align to the same CTA height. */
-html body .az-software-buy-cart-row .az-card-cart-slot{
-  height:42px!important;
-  min-height:42px!important;
-  max-height:42px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  flex:0 0 42px!important;
-}
-html body .az-software-buy-cart-row .az-card-cart-btn{
-  width:42px!important;
-  min-width:42px!important;
-  max-width:42px!important;
-  height:42px!important;
-  min-height:42px!important;
-  max-height:42px!important;
-  padding:0!important;
-  margin:0!important;
-  border-radius:14px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  box-sizing:border-box!important;
-  font-size:15px!important;
-  line-height:1!important;
-}
-html body .az-software-buy-cart-row .az-card-cart-icon{
-  font-size:15px!important;
-  line-height:1!important;
-}
-
-/* Keep pinned CTA exactly aligned above the footer. */
-html body #softwareGrid > .download-card > .az-software-buy-cart-row,
-html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
-html body .downloads-grid > .download-card > .az-software-buy-cart-row,
-html body .software-grid > .software-card > .az-software-buy-cart-row,
-html body .software-grid > .software-item > .az-software-buy-cart-row,
-html body #softwareGrid > .download-card > .download-btn,
-html body #softwareDownloadsGrid > .download-card > .download-btn,
-html body .downloads-grid > .download-card > .download-btn,
-html body .software-grid > .software-card > .download-btn,
-html body .software-grid > .software-item > .download-btn,
-html body .cad-card > .cad-action-row,
-html body .cad-card > .cad-actions,
-html body .cad-card > .cad-card-actions,
-html body .cad-item > .cad-action-row,
-html body .cad-item > .cad-actions,
-html body .cad-item > .cad-card-actions,
-html body .cad-card > .cad-action-btn,
-html body .cad-item > .cad-action-btn{
-  bottom:50px!important;
-}
-
-@media(max-width:760px){
-  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
-  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
-  html body .downloads-grid > .download-card > .az-software-buy-cart-row,
-  html body .software-grid > .software-card > .az-software-buy-cart-row,
-  html body .software-grid > .software-item > .az-software-buy-cart-row{
-    width:min(224px,88%)!important;
-    max-width:224px!important;
-    min-width:206px!important;
-    height:40px!important;
-    min-height:40px!important;
-    max-height:40px!important;
-    gap:8px!important;
-  }
-  html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-  html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.premium,
-  html body .software-grid > .software-card .az-software-buy-cart-row > .download-btn.premium,
-  html body .software-grid > .software-item .az-software-buy-cart-row > .download-btn.premium,
-  html body [data-azobss-premium-buy="1"].download-btn,
-  html body .cad-action-btn.premium{
-    width:174px!important;
-    max-width:174px!important;
-    min-width:158px!important;
-    height:40px!important;
-    min-height:40px!important;
-    max-height:40px!important;
-    padding:0 13px!important;
-    font-size:12px!important;
-    gap:7px!important;
-  }
-  html body .download-btn.premium .buy-price,
-  html body .download-btn.premium .buy-text,
-  html body [data-azobss-premium-buy="1"].download-btn .buy-price,
-  html body [data-azobss-premium-buy="1"].download-btn .buy-text{
-    font-size:12px!important;
-  }
-  html body .az-software-buy-cart-row .az-card-cart-slot,
-  html body .az-software-buy-cart-row .az-card-cart-btn{
-    width:40px!important;
-    min-width:40px!important;
-    max-width:40px!important;
-    height:40px!important;
-    min-height:40px!important;
-    max-height:40px!important;
-    flex-basis:40px!important;
-  }
-}
-</style>
-<!-- /AZOBSS PATCH 341 -->
-
-
-
-<!-- AZOBSS PATCH 342: Restore stable More button visibility after equal-card CTA layout
-     Fix: Some equal-card/bottom-CTA overrides could hide or fail to render the More chip.
-     This patch keeps More visible for long descriptions without MutationObserver style loops. -->
-<style id="azobss-software-cad-more-button-restore-fix-342">
-html body #softwareGrid > .download-card > .az-desc-more-outside-322,
-html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
-html body .downloads-grid > .download-card > .az-desc-more-outside-322,
-html body .software-grid > .software-card > .az-desc-more-outside-322,
-html body .software-grid > .software-item > .az-desc-more-outside-322,
-html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
-html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
-html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
-html body .cad-card > .az-desc-more-outside-322,
-html body .cad-item > .az-desc-more-outside-322,
-html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
-html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
-html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
-html body .software-grid > .software-card > .azobss-sw-desc-more-097,
-html body .software-grid > .software-item > .azobss-sw-desc-more-097,
-html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
-html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
-html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
-html body .cad-card > .azobss-sw-desc-more-097,
-html body .cad-item > .azobss-sw-desc-more-097{
-  display:inline-flex!important;
-  visibility:visible!important;
-  opacity:1!important;
-  position:absolute!important;
-  left:50%!important;
-  right:auto!important;
-  top:auto!important;
-  bottom:94px!important;
-  transform:translateX(-50%)!important;
-  width:auto!important;
-  min-width:38px!important;
-  max-width:72px!important;
-  height:16px!important;
-  min-height:16px!important;
-  max-height:16px!important;
-  margin:0!important;
-  padding:1px 8px!important;
-  border-radius:999px!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:8.5px!important;
-  line-height:1!important;
-  font-weight:1000!important;
-  z-index:120!important;
-  pointer-events:auto!important;
-  transition:none!important;
-  animation:none!important;
-}
-/* Hide only a wrongly inserted More inside the desc text box; the restored sibling button remains visible. */
-html body .azobss-sw-desc-target-097 > .azobss-sw-desc-more-097{
-  display:none!important;
-}
-@media(max-width:760px){
-  html body #softwareGrid > .download-card > .az-desc-more-outside-322,
-  html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
-  html body .downloads-grid > .download-card > .az-desc-more-outside-322,
-  html body .software-grid > .software-card > .az-desc-more-outside-322,
-  html body .software-grid > .software-item > .az-desc-more-outside-322,
-  html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
-  html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
-  html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
-  html body .cad-card > .az-desc-more-outside-322,
-  html body .cad-item > .az-desc-more-outside-322,
-  html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
-  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
-  html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
-  html body .software-grid > .software-card > .azobss-sw-desc-more-097,
-  html body .software-grid > .software-item > .azobss-sw-desc-more-097,
-  html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
-  html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
-  html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
-  html body .cad-card > .azobss-sw-desc-more-097,
-  html body .cad-item > .azobss-sw-desc-more-097{
-    bottom:92px!important;
-    height:15px!important;
-    min-height:15px!important;
-    max-height:15px!important;
-    font-size:8px!important;
-  }
-}
-</style>
-<script id="azobss-software-cad-more-button-restore-script-342">
-(function(){
-  if(window.__azobssMoreButtonRestore342) return;
-  window.__azobssMoreButtonRestore342=true;
-  var CARD_SEL='#softwareGrid > .download-card,#softwareDownloadsGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item';
-  function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function title(card){
-    var h=card&&card.querySelector('h1,h2,h3,.software-title,.cad-title,.product-title');
-    return (h&&h.textContent||'Product Description').trim();
-  }
-  function restoreCard(card){
-    if(!card) return;
-    var desc=card.querySelector(':scope > .azobss-sw-desc-target-097');
-    if(!desc) return;
-    var copy=desc.querySelector(':scope > .az-desc-copy-293')||desc;
-    var full=(desc.getAttribute('data-azobss-full-desc-097')||copy.textContent||'').trim();
-    if(!full || full.length<70) return;
-    /* Remove any accidentally nested More inside desc; nested button is hidden and can confuse layout. */
-    desc.querySelectorAll(':scope > .azobss-sw-desc-more-097').forEach(function(b){b.remove();});
-    var btn=card.querySelector(':scope > .az-desc-more-outside-322, :scope > .azobss-sw-desc-more-097');
-    if(!btn){
-      btn=document.createElement('button');
-      btn.type='button';
-      btn.className='azobss-sw-desc-more-097 az-desc-more-outside-322 az-more-restored-342';
-      btn.textContent='More';
-      desc.insertAdjacentElement('afterend',btn);
-    }
-    btn.setAttribute('data-azobss-full-desc-097',full);
-    btn.setAttribute('aria-label','Read full description');
-    btn.title='Read full description';
-  }
-  function run(){document.querySelectorAll(CARD_SEL).forEach(restoreCard);}
-  document.addEventListener('DOMContentLoaded',run);
-  if(document.readyState!=='loading') run();
-  [100,350,900,1600,2800].forEach(function(t){setTimeout(run,t);});
-  try{
-    var root=document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop')||document.body;
-    new MutationObserver(function(muts){
-      for(var i=0;i<muts.length;i++){
-        if(muts[i].addedNodes&&muts[i].addedNodes.length){requestAnimationFrame(run);break;}
-      }
-    }).observe(root,{childList:true,subtree:true});
-  }catch(e){}
-})();
-</script>
-<!-- /AZOBSS PATCH 342 -->
-
-
-
-<!-- AZOBSS PATCH 343: Give More button extra breathing space below description
-     Fix: More chip was too close to description text after restore/equal-card patches.
-     Keep it stable, no blinking, and move it slightly downward toward CTA area. -->
-<style id="azobss-software-cad-more-button-desc-gap-fix-343">
-html body #softwareGrid > .download-card > .az-desc-more-outside-322,
-html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
-html body .downloads-grid > .download-card > .az-desc-more-outside-322,
-html body .software-grid > .software-card > .az-desc-more-outside-322,
-html body .software-grid > .software-item > .az-desc-more-outside-322,
-html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
-html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
-html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
-html body .cad-card > .az-desc-more-outside-322,
-html body .cad-item > .az-desc-more-outside-322,
-html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
-html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
-html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
-html body .software-grid > .software-card > .azobss-sw-desc-more-097,
-html body .software-grid > .software-item > .azobss-sw-desc-more-097,
-html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
-html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
-html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
-html body .cad-card > .azobss-sw-desc-more-097,
-html body .cad-item > .azobss-sw-desc-more-097{
-  bottom:84px!important;
-  margin-top:6px!important;
-  z-index:125!important;
-}
-@media(max-width:760px){
-  html body #softwareGrid > .download-card > .az-desc-more-outside-322,
-  html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
-  html body .downloads-grid > .download-card > .az-desc-more-outside-322,
-  html body .software-grid > .software-card > .az-desc-more-outside-322,
-  html body .software-grid > .software-item > .az-desc-more-outside-322,
-  html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
-  html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
-  html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
-  html body .cad-card > .az-desc-more-outside-322,
-  html body .cad-item > .az-desc-more-outside-322,
-  html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
-  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
-  html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
-  html body .software-grid > .software-card > .azobss-sw-desc-more-097,
-  html body .software-grid > .software-item > .azobss-sw-desc-more-097,
-  html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
-  html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
-  html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
-  html body .cad-card > .azobss-sw-desc-more-097,
-  html body .cad-item > .azobss-sw-desc-more-097{
-    bottom:82px!important;
-  }
-}
-</style>
-<!-- /AZOBSS PATCH 343 -->
 
 </body>
 </html>
