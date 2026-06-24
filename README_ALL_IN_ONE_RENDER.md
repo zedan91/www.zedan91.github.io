@@ -116,3 +116,9 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Keeps price + Buy Now text readable with proper gap.
 - Keeps cart icon compact.
 - GitHub Pages deploy only. No Firebase Rules or Render deploy needed.
+
+
+## AZOBSS PATCH 342 - More Button Restore Fix
+- Restores Software/CAD More button after equal-card CTA layout.
+- Keeps no-blink behavior.
+- No Firebase Rules or Render backend deploy required.

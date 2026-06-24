@@ -8507,6 +8507,140 @@ html body .cad-item > .cad-action-btn{
 </style>
 <!-- /AZOBSS PATCH 341 -->
 
+
+
+<!-- AZOBSS PATCH 342: Restore stable More button visibility after equal-card CTA layout
+     Fix: Some equal-card/bottom-CTA overrides could hide or fail to render the More chip.
+     This patch keeps More visible for long descriptions without MutationObserver style loops. -->
+<style id="azobss-software-cad-more-button-restore-fix-342">
+html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+html body .downloads-grid > .download-card > .az-desc-more-outside-322,
+html body .software-grid > .software-card > .az-desc-more-outside-322,
+html body .software-grid > .software-item > .az-desc-more-outside-322,
+html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
+html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
+html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
+html body .cad-card > .az-desc-more-outside-322,
+html body .cad-item > .az-desc-more-outside-322,
+html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
+html body .software-grid > .software-card > .azobss-sw-desc-more-097,
+html body .software-grid > .software-item > .azobss-sw-desc-more-097,
+html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
+html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
+html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
+html body .cad-card > .azobss-sw-desc-more-097,
+html body .cad-item > .azobss-sw-desc-more-097{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:94px!important;
+  transform:translateX(-50%)!important;
+  width:auto!important;
+  min-width:38px!important;
+  max-width:72px!important;
+  height:16px!important;
+  min-height:16px!important;
+  max-height:16px!important;
+  margin:0!important;
+  padding:1px 8px!important;
+  border-radius:999px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:8.5px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  z-index:120!important;
+  pointer-events:auto!important;
+  transition:none!important;
+  animation:none!important;
+}
+/* Hide only a wrongly inserted More inside the desc text box; the restored sibling button remains visible. */
+html body .azobss-sw-desc-target-097 > .azobss-sw-desc-more-097{
+  display:none!important;
+}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html body .downloads-grid > .download-card > .az-desc-more-outside-322,
+  html body .software-grid > .software-card > .az-desc-more-outside-322,
+  html body .software-grid > .software-item > .az-desc-more-outside-322,
+  html body .cad-card-grid > .cad-card > .az-desc-more-outside-322,
+  html body .cad-tools-shop > .cad-card > .az-desc-more-outside-322,
+  html body .cad-tools-shop > .cad-item > .az-desc-more-outside-322,
+  html body .cad-card > .az-desc-more-outside-322,
+  html body .cad-item > .az-desc-more-outside-322,
+  html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
+  html body .software-grid > .software-card > .azobss-sw-desc-more-097,
+  html body .software-grid > .software-item > .azobss-sw-desc-more-097,
+  html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
+  html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
+  html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
+  html body .cad-card > .azobss-sw-desc-more-097,
+  html body .cad-item > .azobss-sw-desc-more-097{
+    bottom:92px!important;
+    height:15px!important;
+    min-height:15px!important;
+    max-height:15px!important;
+    font-size:8px!important;
+  }
+}
+</style>
+<script id="azobss-software-cad-more-button-restore-script-342">
+(function(){
+  if(window.__azobssMoreButtonRestore342) return;
+  window.__azobssMoreButtonRestore342=true;
+  var CARD_SEL='#softwareGrid > .download-card,#softwareDownloadsGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item';
+  function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function title(card){
+    var h=card&&card.querySelector('h1,h2,h3,.software-title,.cad-title,.product-title');
+    return (h&&h.textContent||'Product Description').trim();
+  }
+  function restoreCard(card){
+    if(!card) return;
+    var desc=card.querySelector(':scope > .azobss-sw-desc-target-097');
+    if(!desc) return;
+    var copy=desc.querySelector(':scope > .az-desc-copy-293')||desc;
+    var full=(desc.getAttribute('data-azobss-full-desc-097')||copy.textContent||'').trim();
+    if(!full || full.length<70) return;
+    /* Remove any accidentally nested More inside desc; nested button is hidden and can confuse layout. */
+    desc.querySelectorAll(':scope > .azobss-sw-desc-more-097').forEach(function(b){b.remove();});
+    var btn=card.querySelector(':scope > .az-desc-more-outside-322, :scope > .azobss-sw-desc-more-097');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='azobss-sw-desc-more-097 az-desc-more-outside-322 az-more-restored-342';
+      btn.textContent='More';
+      desc.insertAdjacentElement('afterend',btn);
+    }
+    btn.setAttribute('data-azobss-full-desc-097',full);
+    btn.setAttribute('aria-label','Read full description');
+    btn.title='Read full description';
+  }
+  function run(){document.querySelectorAll(CARD_SEL).forEach(restoreCard);}
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.readyState!=='loading') run();
+  [100,350,900,1600,2800].forEach(function(t){setTimeout(run,t);});
+  try{
+    var root=document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop')||document.body;
+    new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        if(muts[i].addedNodes&&muts[i].addedNodes.length){requestAnimationFrame(run);break;}
+      }
+    }).observe(root,{childList:true,subtree:true});
+  }catch(e){}
+})();
+</script>
+<!-- /AZOBSS PATCH 342 -->
+
 </body>
 </html>
 
