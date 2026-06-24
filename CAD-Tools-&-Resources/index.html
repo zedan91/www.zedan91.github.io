@@ -7896,6 +7896,218 @@ html body .az-software-buy-cart-row .az-card-cart-icon{
 </style>
 <!-- /AZOBSS PATCH 338 -->
 
+
+
+<!-- AZOBSS PATCH 339: Software/CAD equal fixed card layout + bottom pinned CTA
+     Purpose: make Download Now / Buy Now stay close to downloads/rating footer on every card,
+     even when description length, promo badge, owner label, or meta badges are different. -->
+<style id="azobss-software-cad-equal-card-bottom-cta-fix-339">
+/* One stable geometry for product cards. Footer stays bottom, CTA stays just above footer. */
+html body #softwareGrid > .download-card,
+html body #softwareDownloadsGrid > .download-card,
+html body .downloads-grid > .download-card,
+html body .software-grid > .software-card,
+html body .software-grid > .software-item,
+html body .cad-card-grid > .cad-card,
+html body .cad-tools-shop > .cad-card,
+html body .cad-tools-shop > .cad-item,
+html body .cad-card,
+html body .cad-item,
+html body .cad-resource-card,
+html body .cad-tool-card{
+  position:relative!important;
+  height:424px!important;
+  min-height:424px!important;
+  max-height:424px!important;
+  padding-bottom:92px!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+
+/* Keep description inside its own safe zone so it never pushes or overlaps the CTA/footer. */
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097,
+html body .software-grid > .software-card > .azobss-sw-desc-target-097,
+html body .software-grid > .software-item > .azobss-sw-desc-target-097,
+html body .cad-card-grid > .cad-card > .azobss-sw-desc-target-097,
+html body .cad-tools-shop > .cad-card > .azobss-sw-desc-target-097,
+html body .cad-tools-shop > .cad-item > .azobss-sw-desc-target-097,
+html body .cad-card > .azobss-sw-desc-target-097,
+html body .cad-item > .azobss-sw-desc-target-097{
+  height:calc(1.30em * 4)!important;
+  min-height:calc(1.30em * 4)!important;
+  max-height:calc(1.30em * 4)!important;
+  line-height:1.30!important;
+  margin:4px auto 0!important;
+  padding:0 8px!important;
+  overflow:hidden!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  box-sizing:border-box!important;
+}
+html body #softwareGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .software-grid > .software-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .software-grid > .software-item > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-card-grid > .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-tools-shop > .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-tools-shop > .cad-item > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-card > .azobss-sw-desc-target-097 > .az-desc-copy-293,
+html body .cad-item > .azobss-sw-desc-target-097 > .az-desc-copy-293{
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:4!important;
+  line-clamp:4!important;
+  max-height:calc(1.30em * 4)!important;
+  line-height:1.30!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  text-align:center!important;
+  text-align-last:center!important;
+}
+
+/* More can remain near description, but must not create layout height. */
+html body #softwareGrid > .download-card > .azobss-sw-desc-more-097,
+html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-more-097,
+html body .downloads-grid > .download-card > .azobss-sw-desc-more-097,
+html body .software-grid > .software-card > .azobss-sw-desc-more-097,
+html body .software-grid > .software-item > .azobss-sw-desc-more-097,
+html body .cad-card-grid > .cad-card > .azobss-sw-desc-more-097,
+html body .cad-tools-shop > .cad-card > .azobss-sw-desc-more-097,
+html body .cad-tools-shop > .cad-item > .azobss-sw-desc-more-097,
+html body .cad-card > .azobss-sw-desc-more-097,
+html body .cad-item > .azobss-sw-desc-more-097{
+  position:relative!important;
+  z-index:5!important;
+  margin:-7px auto 0!important;
+  flex:0 0 auto!important;
+}
+
+/* Pin Software CTA row just above stats footer. This is the main equal-height fix. */
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row,
+html body .software-grid > .software-card > .az-software-buy-cart-row,
+html body .software-grid > .software-item > .az-software-buy-cart-row,
+html body #softwareGrid > .download-card > .download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn,
+html body .downloads-grid > .download-card > .download-btn,
+html body .software-grid > .software-card > .download-btn,
+html body .software-grid > .software-item > .download-btn{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:50px!important;
+  transform:translateX(-50%)!important;
+  z-index:8!important;
+  margin:0!important;
+}
+
+/* If the Buy Now button is inside the row, keep the button itself normal relative to that row. */
+html body .az-software-buy-cart-row > .download-btn,
+html body .az-software-buy-cart-row > a.download-btn{
+  position:relative!important;
+  left:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  margin:0!important;
+}
+
+/* Pin CAD action row / button the same way. */
+html body .cad-card > .cad-action-row,
+html body .cad-card > .cad-actions,
+html body .cad-card > .cad-card-actions,
+html body .cad-item > .cad-action-row,
+html body .cad-item > .cad-actions,
+html body .cad-item > .cad-card-actions,
+html body .cad-resource-card > .cad-action-row,
+html body .cad-tool-card > .cad-action-row,
+html body .cad-card > .cad-action-btn,
+html body .cad-item > .cad-action-btn,
+html body .cad-resource-card > .cad-action-btn,
+html body .cad-tool-card > .cad-action-btn{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:50px!important;
+  transform:translateX(-50%)!important;
+  z-index:8!important;
+  margin:0!important;
+}
+
+/* Stats/rating/downloads footer stays at the real bottom. */
+html body #softwareGrid > .download-card > .software-stats,
+html body #softwareDownloadsGrid > .download-card > .software-stats,
+html body .downloads-grid > .download-card > .software-stats,
+html body .software-grid > .software-card > .software-stats,
+html body .software-grid > .software-item > .software-stats,
+html body .cad-card-grid > .cad-card > .software-stats,
+html body .cad-tools-shop > .cad-card > .software-stats,
+html body .cad-tools-shop > .cad-item > .software-stats,
+html body .cad-card > .software-stats,
+html body .cad-item > .software-stats,
+html body .software-card-stats,
+html body .software-stats-footer,
+html body .az-card-stats,
+html body .product-stats,
+html body .download-card-footer{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  z-index:7!important;
+  margin:0!important;
+}
+
+/* Keep admin floating controls above pinned CTA/footer without creating bottom bars. */
+html body .software-card-admin-actions{
+  position:absolute!important;
+  right:12px!important;
+  top:72px!important;
+  z-index:20!important;
+  margin:0!important;
+}
+
+@media(max-width:760px){
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card,
+  html body .software-grid > .software-card,
+  html body .software-grid > .software-item,
+  html body .cad-card-grid > .cad-card,
+  html body .cad-tools-shop > .cad-card,
+  html body .cad-tools-shop > .cad-item,
+  html body .cad-card,
+  html body .cad-item,
+  html body .cad-resource-card,
+  html body .cad-tool-card{
+    height:408px!important;
+    min-height:408px!important;
+    max-height:408px!important;
+    padding-bottom:88px!important;
+  }
+  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card > .az-software-buy-cart-row,
+  html body .software-grid > .software-card > .az-software-buy-cart-row,
+  html body .software-grid > .software-item > .az-software-buy-cart-row,
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn,
+  html body .software-grid > .software-card > .download-btn,
+  html body .software-grid > .software-item > .download-btn,
+  html body .cad-card > .cad-action-btn,
+  html body .cad-item > .cad-action-btn{
+    bottom:48px!important;
+  }
+}
+</style>
+<!-- /AZOBSS PATCH 339 -->
+
 </body>
 </html>
 
