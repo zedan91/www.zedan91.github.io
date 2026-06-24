@@ -8108,6 +8108,195 @@ html body .software-card-admin-actions{
 </style>
 <!-- /AZOBSS PATCH 339 -->
 
+
+
+<!-- AZOBSS PATCH 340: Owner label fixed below discount badge, admin/staff only
+     Fix: keep OWNED label visible after equal-card layout and place it under promo badge. -->
+<style id="azobss-owner-label-fixed-below-promo-340">
+html body .download-card > .az-owner-source-chip,
+html body .software-card > .az-owner-source-chip,
+html body .software-product-card > .az-owner-source-chip,
+html body .software-item > .az-owner-source-chip,
+html body .cad-card > .az-owner-source-chip,
+html body .cad-item > .az-owner-source-chip,
+html body .cad-resource-card > .az-owner-source-chip,
+html body .cad-tool-card > .az-owner-source-chip{
+  position:absolute!important;
+  left:16px!important;
+  right:auto!important;
+  top:92px!important;
+  z-index:45!important;
+  width:82px!important;
+  min-width:82px!important;
+  max-width:82px!important;
+  min-height:32px!important;
+  padding:4px 6px!important;
+  border-radius:11px!important;
+  box-sizing:border-box!important;
+  text-align:center!important;
+  pointer-events:none!important;
+  overflow:hidden!important;
+  transform:none!important;
+}
+html body.az-owner-source-visible .download-card > .az-owner-source-chip,
+html body.az-owner-source-visible .software-card > .az-owner-source-chip,
+html body.az-owner-source-visible .software-product-card > .az-owner-source-chip,
+html body.az-owner-source-visible .software-item > .az-owner-source-chip,
+html body.az-owner-source-visible .cad-card > .az-owner-source-chip,
+html body.az-owner-source-visible .cad-item > .az-owner-source-chip,
+html body.az-owner-source-visible .cad-resource-card > .az-owner-source-chip,
+html body.az-owner-source-visible .cad-tool-card > .az-owner-source-chip{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:1px!important;
+}
+html body .az-owner-source-chip.has-promo{
+  top:92px!important;
+}
+html body .az-owner-source-chip.no-promo{
+  top:14px!important;
+  left:16px!important;
+}
+html body .az-owner-source-chip .az-owner-source-title{
+  display:block!important;
+  width:100%!important;
+  font-size:7px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  letter-spacing:.7px!important;
+  opacity:.78!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+html body .az-owner-source-chip .az-owner-source-name{
+  display:block!important;
+  width:100%!important;
+  max-width:70px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:8.8px!important;
+  line-height:1.08!important;
+  font-weight:1000!important;
+  letter-spacing:.15px!important;
+  text-align:center!important;
+}
+@media(max-width:520px){
+  html body .download-card > .az-owner-source-chip,
+  html body .software-card > .az-owner-source-chip,
+  html body .software-item > .az-owner-source-chip,
+  html body .cad-card > .az-owner-source-chip,
+  html body .cad-item > .az-owner-source-chip{
+    top:86px!important;
+    left:12px!important;
+    width:76px!important;
+    min-width:76px!important;
+    max-width:76px!important;
+    min-height:30px!important;
+    padding:4px 5px!important;
+  }
+  html body .az-owner-source-chip.has-promo{top:86px!important;}
+  html body .az-owner-source-chip.no-promo{top:12px!important;left:12px!important;}
+}
+</style>
+<script id="azobss-owner-label-fixed-below-promo-script-340">
+(function(){
+  if(window.__azOwnerLabelFixedBelowPromo340) return;
+  window.__azOwnerLabelFixedBelowPromo340=true;
+  var ADMIN_NAMES={'zedan91':true};
+  var ADMIN_EMAILS={'zedan9107@gmail.com':true,'zedan91@azobss.local':true};
+  var CARD_SELECTOR='#softwareGrid > .download-card,#softwareDownloadsGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.software-product-card,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
+  function norm(v){return String(v||'').trim().toLowerCase();}
+  function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function jsonStore(key){
+    for(var i=0;i<2;i++){
+      try{var raw=(i?localStorage:sessionStorage).getItem(key); if(raw){var o=JSON.parse(raw); if(o&&typeof o==='object') return o;}}catch(e){}
+    }
+    return null;
+  }
+  function readUser(){
+    var keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','currentUser','user'];
+    for(var i=0;i<keys.length;i++){var o=jsonStore(keys[i]); if(o) return o;}
+    try{if(typeof window.getSavedUser==='function'){var s=window.getSavedUser(); if(s&&typeof s==='object') return s;}}catch(e){}
+    return {};
+  }
+  function textOf(sel){try{var el=document.querySelector(sel); return el ? norm(el.textContent||el.value||'') : '';}catch(e){return '';}}
+  function currentRoleInfo(){
+    var u=readUser();
+    var username=norm(u.usernameKey||u.username||u.id||u.name||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername')||localStorage.getItem('azobssLockedUsername')||sessionStorage.getItem('azobssLockedUsername')||textOf('#signedInName')||textOf('.signed-in-name')||textOf('[data-azobss-navbar-username]')||textOf('.user-name'));
+    var email=norm(u.email||u.authEmail||u.contactEmail||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||localStorage.getItem('email')||sessionStorage.getItem('email'));
+    var role=norm(u.role||u.userRole||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole')||document.body.getAttribute('data-role'));
+    var admin=role==='admin'||ADMIN_NAMES[username]||ADMIN_EMAILS[email]||document.body.classList.contains('az-software-full-admin')||document.body.classList.contains('azobss-admin')||/\/admin\/?$/i.test(location.pathname);
+    var staff=role==='staff'||role==='semiadmin'||role==='semi-admin'||document.body.classList.contains('az-software-staff-role-ok')||document.body.classList.contains('azobss-staff')||/\/staff\/?$/i.test(location.pathname);
+    return {ok:!!(admin||staff),admin:!!admin,staff:!!staff,username:username,email:email,role:role};
+  }
+  function ownerFromCard(card){
+    var trigger=card.querySelector('[data-owner-username],[data-owner-email],[data-owner-key],[data-owner-uid],[data-created-by-username],[data-staff-username],[data-azobss-premium-buy]');
+    var d=card.dataset||{};
+    function get(k){return norm(d[k]||(trigger&&trigger.dataset&&trigger.dataset[k])||'');}
+    var username=get('ownerUsername')||get('createdByUsername')||get('staffUsername')||get('sellerUsername')||get('uploadedBy')||get('addedBy');
+    var email=get('ownerEmail')||get('createdByEmail')||get('staffEmail')||get('sellerEmail');
+    var key=get('ownerKey')||get('createdByKey')||get('staffOwnerKey')||get('sellerKey');
+    var uid=get('ownerUid')||get('createdByUid')||get('staffUid')||get('sellerUid');
+    return {username:username,email:email,key:key,uid:uid,raw:username||email||key||uid};
+  }
+  function isAzobssOwner(o){
+    if(!o||!o.raw) return true;
+    var v=norm(o.username+' '+o.email+' '+o.key);
+    return /(^|\s)(zedan91|azobss)(\s|$)/i.test(v)||ADMIN_NAMES[o.username]||ADMIN_EMAILS[o.email]||v.indexOf('azobss')>=0;
+  }
+  function staffName(o){
+    if(!o) return 'AZOBSS';
+    if(o.username) return o.username;
+    if(o.email) return o.email.split('@')[0];
+    if(o.key) return o.key.length>16 ? o.key.slice(0,16)+'…' : o.key;
+    return 'staff';
+  }
+  function cardNeedsOwner(card,o){
+    var type=norm((card.dataset&&card.dataset.type)||'');
+    var hasPremium=!!card.querySelector('[data-azobss-premium-buy="1"],.download-btn.premium,.az-software-buy-cart-row');
+    var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
+    return !!(o&&o.raw)||type==='premium'||hasPremium||hasPromo;
+  }
+  function upsert(card){
+    if(!card) return;
+    var info=currentRoleInfo();
+    var chip=card.querySelector(':scope > .az-owner-source-chip');
+    var owner=ownerFromCard(card);
+    if(!info.ok || !cardNeedsOwner(card,owner)){ if(chip) chip.remove(); return; }
+    var az=isAzobssOwner(owner);
+    var ownerName=az?'AZOBSS':staffName(owner);
+    if(!chip){
+      chip=document.createElement('div');
+      chip.className='az-owner-source-chip';
+      card.insertBefore(chip,card.firstChild);
+    }
+    var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
+    chip.className='az-owner-source-chip '+(az?'is-azobss':'is-staff')+' '+(hasPromo?'has-promo':'no-promo')+' az-owner-source-fixed-340';
+    chip.innerHTML='<span class="az-owner-source-title">OWNED:</span><span class="az-owner-source-name">'+esc(ownerName)+'</span>';
+    chip.setAttribute('aria-label','OWNED: '+ownerName);
+    chip.title=az?'Owned by AZOBSS':'Owned by '+ownerName;
+  }
+  function run(){
+    var info=currentRoleInfo();
+    if(document.body) document.body.classList.toggle('az-owner-source-visible',info.ok);
+    document.querySelectorAll(CARD_SELECTOR).forEach(upsert);
+  }
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.readyState!=='loading') run();
+  [150,500,1000,1800,3000].forEach(function(t){setTimeout(run,t);});
+  try{
+    var root=document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop')||document.body;
+    new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){if(muts[i].addedNodes&&muts[i].addedNodes.length){requestAnimationFrame(run);break;}}
+    }).observe(root,{childList:true,subtree:true});
+  }catch(e){}
+})();
+</script>
+<!-- /AZOBSS PATCH 340 -->
+
 </body>
 </html>
 
