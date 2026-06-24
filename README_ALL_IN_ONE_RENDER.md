@@ -108,3 +108,12 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Email login no longer creates a navbar name from Gmail prefix when real username can be resolved.
 - Files changed: `assets/js/azobss-global-auth.js`, `main.js`.
 - Firebase Rules: not required. Render deploy: not required.
+
+
+## (346) AZOBSS SOFTWARE FREE DOWNLOAD COUNT FIX
+- Fixed Free Software Download Now count not increasing.
+- Root cause: stats script detected any button with `data-product-price` as premium, and Free buttons also carried that attribute.
+- Now only real premium buttons/payment links/Buy Now are skipped.
+- Buy Now still does not increment downloads before payment.
+- Firebase Rules: no update required.
+- Render backend: no deploy required.

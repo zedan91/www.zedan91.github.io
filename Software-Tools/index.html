@@ -5268,9 +5268,12 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   function saveLocal(card,st){const key=slug(productId(card));const data=readLocal();data[key]=norm(st,card);writeLocal(data);applyCard(card,data[key]);}
   function isPaidProductButton(btn){
     if(!btn) return false;
-    if(btn.getAttribute('data-azobss-premium-buy') === '1') return true;
+    // AZOBSS 346: Free Download Now buttons also carry data-product-price in some renders.
+    // Do NOT treat data-product-price alone as premium, otherwise free download count is skipped.
+    const flag = String(btn.getAttribute('data-azobss-premium-buy') || '').toLowerCase();
+    if(flag === '1' || flag === 'true') return true;
     if(btn.classList && btn.classList.contains('premium')) return true;
-    if(btn.dataset && (btn.dataset.paymentLink || btn.dataset.stripeLink || btn.dataset.productPrice)) return true;
+    if(btn.dataset && (String(btn.dataset.paymentLink || '').trim() || String(btn.dataset.stripeLink || '').trim())) return true;
     return /buy\s*now/i.test(String(btn.textContent || ''));
   }
   async function recordDownload(card, options){const key=slug(productId(card));const st=statsFor(card);st.downloads=Math.max(0,Number(st.downloads||0))+1;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();st.lastDownloadCountSource=options&&options.source?String(options.source):'free-download-click';saveLocal(card,st);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=norm(items[key]||{},card);remote.downloads=Math.max(0,Number(remote.downloads||0))+1;remote.name=st.name;remote.updatedAtMs=Date.now();remote.lastDownloadCountSource=st.lastDownloadCountSource;if(options&&options.orderId)remote.lastPaidOrderId=String(options.orderId);if(options&&options.billCode)remote.lastPaidBillCode=String(options.billCode);tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});loadRemote();}catch(e){console.warn('AZOBSS download stat save skipped:',e);}}
