@@ -5365,13 +5365,16 @@ line-height:1.6;
   function clearPaginationHide(cards){
     cards.forEach(card => {
       if(card.dataset.azPage === '1'){
-        card.style.removeProperty('display');
         card.dataset.azPage = '0';
+        if(!card.classList.contains('az-shared-product-hidden') && card.dataset.azSharedHidden !== '1'){
+          card.style.removeProperty('display');
+        }
       }
     });
   }
 
   function cardIsFilterVisible(card){
+    if(card.classList.contains('az-shared-product-hidden') || card.dataset.azSharedHidden === '1') return false;
     if(card.dataset.azPage === '1') return true;
     if(card.hidden) return false;
     if(card.classList.contains('software-empty-state')) return false;
@@ -5479,6 +5482,8 @@ line-height:1.6;
   document.addEventListener('change', function(e){
     if(e.target.matches('select, input, textarea')) schedule(true);
   }, true);
+
+  window.addEventListener('azobss-shared-product-filtered', () => schedule(true));
 
   document.addEventListener('DOMContentLoaded', function(){
     const grid = getGrid();
@@ -8539,34 +8544,36 @@ html.azobss-shared-product-mode-332 .cad-item{
 </style>
 <script id="azobss-shared-product-filter-147-js">
 (function(){
-  /* AZOBSS 332: share-link open no-blink fix.
-     Punca lama: script share filter menulis value search input + dispatch input/change berulang.
-     Itu trigger filter/render semula, lalu card nampak blinking. Versi ini tidak sentuh search box. */
-  if(window.__azobssSharedProductFilter332) return;
-  window.__azobssSharedProductFilter332 = true;
+  /* AZOBSS 333: share-link filter must show ONLY the shared product, without blinking.
+     Fix for 332: previous idempotent guard skipped re-hiding when pagination/render scripts
+     later restored cards. This version re-enforces hidden state safely on every run. */
+  if(window.__azobssSharedProductFilter333) return;
+  window.__azobssSharedProductFilter333 = true;
 
   var qs = new URLSearchParams(location.search || '');
-  var targetRaw = String(qs.get('product') || '').trim();
+  var targetRaw = String(qs.get('product') || qs.get('productId') || qs.get('id') || '').trim();
   var refRaw = String(qs.get('ref') || '').trim();
   if(!targetRaw) return;
 
-  try{ document.documentElement.classList.add('azobss-shared-product-mode-332'); }catch(e){}
+  try{ document.documentElement.classList.add('azobss-shared-product-mode-332','azobss-shared-product-mode-333'); }catch(e){}
 
   var showAllMode = false;
-  var appliedOnce = false;
   var scrolledOnce = false;
   var pendingTimer = 0;
-  var lastCardsSignature = '';
+  var lastMatchKey = '';
   var bodyObserverStarted = false;
   var gridObservers = new WeakSet();
+  var stableMissCount = 0;
 
   var CARD_SELECTOR = '.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
   var GRID_CARD_SELECTOR = '#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
   var GRID_SELECTOR = '#softwareDownloadsGrid,#softwareGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop,.products-grid,.cards-grid';
 
   function clean(v){return String(v||'').replace(/\s+/g,' ').trim();}
-  function norm(v){return clean(v).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,140);}
-  function normLoose(v){return clean(v).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'').slice(0,140);}
+  function norm(v){return clean(v).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,180);}
+  function normLoose(v){return clean(v).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'').slice(0,180);}
+  function cssEscape(v){try{return CSS.escape(String(v));}catch(e){return String(v).replace(/[^a-zA-Z0-9_-]/g,'\\$&');}}
+
   var target = norm(targetRaw);
   var targetLoose = normLoose(targetRaw);
 
@@ -8585,11 +8592,11 @@ html.azobss-shared-product-mode-332 .cad-item{
     return Array.from(set);
   }
   function cardTitle(card){
-    return clean((card.querySelector('h3,.software-title,.cad-title,.card-title,[data-product-name],[data-title]')||{}).textContent || card.dataset.name || card.dataset.title || '');
+    return clean((card.querySelector('h3,.software-title,.cad-title,.card-title')||{}).textContent || card.dataset.name || card.dataset.title || '');
   }
   function cardIds(card){
     var title = cardTitle(card);
-    return [
+    var vals = [
       card.dataset.azLuckyProductId,
       card.dataset.productId,
       card.dataset.softwareId,
@@ -8597,14 +8604,31 @@ html.azobss-shared-product-mode-332 .cad-item{
       card.dataset.docId,
       card.dataset.id,
       card.getAttribute('data-id'),
+      card.getAttribute('id'),
       title
-    ].filter(Boolean);
+    ];
+    card.querySelectorAll('[data-product-id],[data-product-name],[data-software-id],[data-cad-id],[data-id],[href]').forEach(function(el){
+      vals.push(el.dataset.productId, el.dataset.productName, el.dataset.softwareId, el.dataset.cadId, el.dataset.id, el.getAttribute('data-id'));
+      var href = el.getAttribute('href') || '';
+      if(href) vals.push(href);
+    });
+    return vals.filter(Boolean).map(clean).filter(Boolean);
+  }
+  function isStrongProductIdMatch(card){
+    var direct = [card.dataset.productId, card.dataset.softwareId, card.dataset.cadId, card.dataset.docId, card.dataset.id, card.getAttribute('data-id')].filter(Boolean);
+    for(var i=0;i<direct.length;i++){
+      if(norm(direct[i]) === target || normLoose(direct[i]) === targetLoose) return true;
+    }
+    var el = card.querySelector('[data-product-id="'+cssEscape(targetRaw)+'"],[data-software-id="'+cssEscape(targetRaw)+'"],[data-cad-id="'+cssEscape(targetRaw)+'"]');
+    return !!el;
   }
   function isMatch(card){
+    if(isStrongProductIdMatch(card)) return true;
     var vals = cardIds(card);
     for(var i=0;i<vals.length;i++){
       var a = norm(vals[i]);
       var b = normLoose(vals[i]);
+      if(!a && !b) continue;
       if(a && (a === target || a.indexOf(target) !== -1 || target.indexOf(a) !== -1)) return true;
       if(b && (b === targetLoose || b.indexOf(targetLoose) !== -1 || targetLoose.indexOf(b) !== -1)) return true;
     }
@@ -8612,9 +8636,18 @@ html.azobss-shared-product-mode-332 .cad-item{
   }
   function setHidden(card, hidden){
     if(!card) return;
-    var has = card.classList.contains('az-shared-product-hidden');
-    if(hidden && !has) card.classList.add('az-shared-product-hidden');
-    if(!hidden && has) card.classList.remove('az-shared-product-hidden');
+    if(hidden){
+      if(card.dataset.azSharedHidden !== '1') card.dataset.azSharedHidden = '1';
+      if(!card.classList.contains('az-shared-product-hidden')) card.classList.add('az-shared-product-hidden');
+      card.setAttribute('aria-hidden','true');
+      card.style.setProperty('display','none','important');
+    }else{
+      if(card.dataset.azSharedHidden) delete card.dataset.azSharedHidden;
+      if(card.classList.contains('az-shared-product-hidden')) card.classList.remove('az-shared-product-hidden');
+      card.removeAttribute('aria-hidden');
+      // Only remove our hidden display. If pagination still owns this card, pagination may re-hide later.
+      if(card.dataset.azPage !== '1') card.style.removeProperty('display');
+    }
   }
   function removeNote(){
     var note = document.getElementById('azSharedProductFilterNote147');
@@ -8622,11 +8655,10 @@ html.azobss-shared-product-mode-332 .cad-item{
   }
   function revealAllSharedProducts294(){
     showAllMode = true;
-    try{ document.documentElement.classList.remove('azobss-shared-product-mode-332'); }catch(e){}
+    try{ document.documentElement.classList.remove('azobss-shared-product-mode-332','azobss-shared-product-mode-333'); }catch(e){}
     try{ history.replaceState(null, '', location.pathname); }catch(e){}
-    document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){ setHidden(el, false); });
+    document.querySelectorAll('.az-shared-product-hidden,[data-az-shared-hidden="1"]').forEach(function(el){ setHidden(el, false); });
     removeNote();
-    // User asked to view all products. Only then reset UI filters. Do not do this during initial share-link open.
     try{
       document.querySelectorAll('input[type="search"], input[placeholder*="Search" i], input[id*="search" i], input[class*="search" i]').forEach(function(input){
         input.value = '';
@@ -8662,9 +8694,6 @@ html.azobss-shared-product-mode-332 .cad-item{
     var small = note.querySelector('small');
     if(small) small.textContent = 'daripada ' + refRaw.replace(/[<>]/g,'');
   }
-  function signature(cards){
-    return cards.map(function(c){ return cardIds(c).join('|'); }).join('||') + '::' + target;
-  }
   function scrollToMatch(match){
     if(scrolledOnce || !match) return;
     scrolledOnce = true;
@@ -8674,26 +8703,34 @@ html.azobss-shared-product-mode-332 .cad-item{
   }
   function applyFilter(){
     if(showAllMode){
-      document.querySelectorAll('.az-shared-product-hidden').forEach(function(el){ setHidden(el, false); });
+      document.querySelectorAll('.az-shared-product-hidden,[data-az-shared-hidden="1"]').forEach(function(el){ setHidden(el, false); });
       removeNote();
       return;
     }
     var cards = collectCards();
     if(!cards.length) return;
-    var sig = signature(cards);
     var matches = cards.filter(isMatch);
-    if(!matches.length) return;
-
-    // If the same product set is already filtered, avoid touching DOM again.
-    if(appliedOnce && sig === lastCardsSignature){
-      addNote(matches[0], matches.length);
+    if(!matches.length){
+      stableMissCount++;
+      // Do not show a wrong all-products page as final. Keep retrying; if product still not rendered, leave page untouched temporarily.
+      if(stableMissCount > 8) console.warn('AZOBSS shared product not found for:', targetRaw);
       return;
     }
-    lastCardsSignature = sig;
-    appliedOnce = true;
-
-    cards.forEach(function(card){ setHidden(card, matches.indexOf(card) === -1); });
+    stableMissCount = 0;
+    var matchSet = new Set(matches);
+    var changed = false;
+    cards.forEach(function(card){
+      var shouldHide = !matchSet.has(card);
+      var currentlyHidden = card.classList.contains('az-shared-product-hidden') || card.dataset.azSharedHidden === '1' || getComputedStyle(card).display === 'none';
+      if(shouldHide !== currentlyHidden) changed = true;
+      setHidden(card, shouldHide);
+    });
     addNote(matches[0], matches.length);
+    var key = matches.map(function(c){return cardIds(c).join('|');}).join('||');
+    if(changed || key !== lastMatchKey){
+      lastMatchKey = key;
+      try{ window.dispatchEvent(new CustomEvent('azobss-shared-product-filtered', {detail:{target:targetRaw, count:matches.length}})); }catch(e){}
+    }
     scrollToMatch(matches[0]);
   }
   function scheduleApply(delay){
@@ -8704,23 +8741,24 @@ html.azobss-shared-product-mode-332 .cad-item{
     document.querySelectorAll(GRID_SELECTOR).forEach(function(grid){
       if(!grid || gridObservers.has(grid)) return;
       gridObservers.add(grid);
-      try{ new MutationObserver(function(){ scheduleApply(90); }).observe(grid,{childList:true,subtree:false}); }catch(e){}
+      try{ new MutationObserver(function(){ scheduleApply(60); }).observe(grid,{childList:true,subtree:false}); }catch(e){}
     });
     if(!bodyObserverStarted){
       bodyObserverStarted = true;
       try{
-        var bodyObs = new MutationObserver(function(){ observeGrids(); scheduleApply(120); });
+        var bodyObs = new MutationObserver(function(){ observeGrids(); scheduleApply(90); });
         bodyObs.observe(document.body || document.documentElement,{childList:true,subtree:false});
-        setTimeout(function(){ try{ bodyObs.disconnect(); }catch(e){} }, 7000);
+        setTimeout(function(){ try{ bodyObs.disconnect(); }catch(e){} }, 9000);
       }catch(e){}
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function(){ observeGrids(); scheduleApply(60); });
-  if(document.readyState !== 'loading'){ observeGrids(); scheduleApply(60); }
-  [150,400,900,1600,2600,4200,6500].forEach(function(t){ setTimeout(function(){ observeGrids(); applyFilter(); }, t); });
-  window.addEventListener('azobss-software-rendered', function(){ observeGrids(); scheduleApply(80); });
-  window.addEventListener('azobss-cad-rendered', function(){ observeGrids(); scheduleApply(80); });
+  document.addEventListener('DOMContentLoaded', function(){ observeGrids(); scheduleApply(40); });
+  if(document.readyState !== 'loading'){ observeGrids(); scheduleApply(40); }
+  [80,180,350,700,1200,2000,3200,5000,8000].forEach(function(t){ setTimeout(function(){ observeGrids(); applyFilter(); }, t); });
+  window.addEventListener('azobss-software-rendered', function(){ observeGrids(); scheduleApply(50); });
+  window.addEventListener('azobss-cad-rendered', function(){ observeGrids(); scheduleApply(50); });
+  window.addEventListener('azobss-shared-product-filtered', function(){ setTimeout(applyFilter, 120); });
 })();
 </script>
 
