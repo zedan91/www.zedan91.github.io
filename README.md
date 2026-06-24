@@ -135,3 +135,11 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Email login no longer creates a navbar name from Gmail prefix when real username can be resolved.
 - Files changed: `assets/js/azobss-global-auth.js`, `main.js`.
 - Firebase Rules: not required. Render deploy: not required.
+
+
+## AZOBSS PATCH 338 - Buy Now Compact Size Fix
+- Fixes Software/CAD premium Buy Now button suddenly appearing too large.
+- Forces premium CTA back to compact pill size.
+- Keeps price + Buy Now text readable with proper gap.
+- Keeps cart icon compact.
+- GitHub Pages deploy only. No Firebase Rules or Render deploy needed.
