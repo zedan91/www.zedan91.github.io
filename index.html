@@ -16912,18 +16912,18 @@ html body .az-owner-source-chip{
   left:12px!important;
   right:auto!important;
   z-index:39!important;
-  max-width:128px!important;
-  min-height:18px!important;
-  padding:3px 7px!important;
-  border-radius:999px!important;
-  font-size:8.4px!important;
-  line-height:1.05!important;
+  max-width:118px!important;
+  min-height:30px!important;
+  padding:4px 7px!important;
+  border-radius:10px!important;
+  font-size:7.7px!important;
+  line-height:1.03!important;
   font-weight:1000!important;
   letter-spacing:.25px!important;
   text-transform:uppercase!important;
-  white-space:nowrap!important;
+  white-space:normal!important;
   overflow:hidden!important;
-  text-overflow:ellipsis!important;
+  text-overflow:clip!important;
   pointer-events:none!important;
   user-select:none!important;
   transform:translateZ(0)!important;
@@ -16931,8 +16931,25 @@ html body .az-owner-source-chip{
 }
 html body.az-owner-source-visible .az-owner-source-chip{
   display:inline-flex!important;
+  flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
+  gap:1px!important;
+}
+html body .az-owner-source-chip .az-owner-source-title{
+  display:block!important;
+  font-size:7px!important;
+  line-height:1!important;
+  opacity:.92!important;
+}
+html body .az-owner-source-chip .az-owner-source-name{
+  display:block!important;
+  max-width:104px!important;
+  font-size:8px!important;
+  line-height:1!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
 }
 html body .az-owner-source-chip.is-azobss{
   color:#dcfce7!important;
@@ -16955,7 +16972,7 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
   top:72px!important;
 }
 @media(max-width:520px){
-  html body .az-owner-source-chip{top:66px!important;left:10px!important;font-size:7.8px!important;padding:3px 5px!important;max-width:116px!important;}
+  html body .az-owner-source-chip{top:66px!important;left:10px!important;font-size:7.2px!important;padding:4px 5px!important;max-width:112px!important;min-height:29px!important;}
   html body .az-owner-source-chip.has-promo{top:66px!important;}
   html body .az-owner-source-chip.no-promo{top:10px!important;}
 }
@@ -17026,7 +17043,7 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
       return;
     }
     var az=isAzobssOwner(owner);
-    var text=az ? 'Owned: AZOBSS' : ('Owned: '+staffName(owner));
+    var ownerText=az ? 'AZOBSS' : staffName(owner);
     if(!old){
       old=document.createElement('div');
       old.className='az-owner-source-chip';
@@ -17036,7 +17053,7 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
     }
     var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
     old.className='az-owner-source-chip '+(az?'is-azobss':'is-staff')+' '+(hasPromo?'has-promo':'no-promo');
-    old.textContent=text;
+    old.innerHTML='<span class="az-owner-source-title">OWNED:</span><span class="az-owner-source-name">'+esc(ownerText)+'</span>';
     old.title=az ? 'Owned by AZOBSS' : ('Owned by '+staffName(owner));
   }
   function run(){

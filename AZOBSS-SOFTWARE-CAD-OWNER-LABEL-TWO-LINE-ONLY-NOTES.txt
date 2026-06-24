@@ -1,0 +1,21 @@
+AZOBSS SOFTWARE/CAD OWNER LABEL TWO-LINE ONLY FIX
+
+Baseline used:
+(336)-AZOBSS-SOFTWARE-CAD-OWNER-LABEL-LOWER-OWNED-FIX_20260624_20260624_090900_20260624_143642.zip
+
+Change:
+- Only changed the owner label format under the discount badge.
+- Old: Owned: AZOBSS
+- New:
+  OWNED:
+  AZOBSS
+
+Scope:
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+- index.html fallback
+
+Notes:
+- No Firebase Rules update required.
+- No Render backend deploy required.
+- GitHub Pages deploy only.
