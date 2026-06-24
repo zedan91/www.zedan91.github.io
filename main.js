@@ -762,7 +762,7 @@
 
     function showUser(){
       const user = readUser();
-      const display = user && (user.usernameKey || user.name || (user.email ? String(user.email).split('@')[0] : ''));
+      const display = (typeof window.azobssResolveUsername === 'function') ? window.azobssResolveUsername(user || {}) : (user && (user.usernameKey || user.username || user.name || ''));
       document.body.classList.toggle('is-admin', isAdmin(user));
       if (els.paBm) {
         const canPa = hasPaBmAccess(user);
@@ -772,6 +772,7 @@
       if (display) {
         els.name.textContent = display;
         els.avatar.textContent = initials(display);
+        if(typeof window.azobssApplyNavbarUsernameLock === 'function') window.azobssApplyNavbarUsernameLock(user);
         document.body.classList.add('is-authenticated');
         if (els.auth) els.auth.style.display = 'none';
         if (els.tools) els.tools.style.display = 'flex';

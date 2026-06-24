@@ -967,15 +967,111 @@ function setupCountryPhoneSelectors(root=document){
 document.addEventListener('click',(event)=>{ if(!event.target.closest('.country-combo')) document.querySelectorAll('.country-combo.is-open').forEach(el=>el.classList.remove('is-open')); });
 function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
 function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
+
+
+/* AZOBSS NAVBAR USERNAME LOCK FIX 20260624
+   Keep the top navbar showing the official AZOBSS username only.
+   Do not let Firebase/Gmail displayName or email prefix overwrite it after auth/profile renders. */
+function azobssIsEmailLike(value){ return /@/.test(String(value || '')); }
+function azobssUsernameCandidate(value){
+  const raw = String(value || '').trim();
+  if(!raw || azobssIsEmailLike(raw)) return '';
+  const key = normalizeUsername(raw);
+  // Avoid storing obvious human display names / random labels as the navbar username.
+  if(!key || key === 'user' || key === 'guest') return '';
+  return key;
+}
+function azobssReadUserStorageValue(){
+  return safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
+    safeJson(localStorage.getItem('azobssCurrentUser')) ||
+    safeJson(sessionStorage.getItem('azobssUser')) ||
+    safeJson(localStorage.getItem('azobssUser')) || {};
+}
+function azobssLockStorageKeys(user={}){
+  const uid = String(user.uid || '').trim();
+  const email = String(user.authEmail || user.email || '').trim().toLowerCase();
+  return {
+    uidKey: uid ? 'azobssUsernameLock:uid:' + uid : '',
+    emailKey: email ? 'azobssUsernameLock:email:' + email : '',
+    legacyEmailKey: email ? 'azobssSignupUsernameByEmail:' + email : ''
+  };
+}
+function azobssResolveUsername(user={}){
+  const direct = [user.usernameKey, user.username, user.userName, user.id]
+    .map(azobssUsernameCandidate).find(Boolean);
+  const keys = azobssLockStorageKeys(user);
+  const fromLock = [
+    keys.uidKey ? localStorage.getItem(keys.uidKey) : '',
+    keys.emailKey ? localStorage.getItem(keys.emailKey) : '',
+    keys.legacyEmailKey ? localStorage.getItem(keys.legacyEmailKey) : ''
+  ].map(azobssUsernameCandidate).find(Boolean);
+  const saved = azobssReadUserStorageValue();
+  const sameSaved = saved && (
+    (user.uid && saved.uid && String(user.uid) === String(saved.uid)) ||
+    (String(user.email || user.authEmail || '').trim().toLowerCase() && String(saved.email || saved.authEmail || '').trim().toLowerCase() === String(user.email || user.authEmail || '').trim().toLowerCase())
+  );
+  const fromSaved = sameSaved ? [saved.usernameKey, saved.username, saved.userName, saved.id]
+    .map(azobssUsernameCandidate).find(Boolean) : '';
+  const resolved = direct || fromLock || fromSaved || '';
+  if(resolved){
+    try{
+      if(keys.uidKey) localStorage.setItem(keys.uidKey, resolved);
+      if(keys.emailKey) localStorage.setItem(keys.emailKey, resolved);
+      if(keys.legacyEmailKey) localStorage.setItem(keys.legacyEmailKey, resolved);
+      localStorage.setItem('azobssUsernameLock:last', resolved);
+    }catch(_e){}
+    try{ window.azobssCurrentUsername = resolved; }catch(_e){}
+  }
+  return resolved;
+}
+function azobssNormalizeSavedUser(user={}){
+  if(!user || typeof user !== 'object') return user;
+  const key = azobssResolveUsername(user);
+  if(!key) return user;
+  return {...user, usernameKey:key, username:key, name:key, displayName:key};
+}
+function azobssApplyNavbarUsernameLock(user){
+  const key = azobssResolveUsername(user || getSavedUser?.() || {});
+  if(!key) return '';
+  const nameEl = document.getElementById('signedInName');
+  const avatarEl = document.getElementById('userAvatar');
+  if(nameEl && nameEl.textContent !== key){
+    nameEl.dataset.azobssUsernameLocked = '1';
+    nameEl.textContent = key;
+  }
+  if(avatarEl){
+    avatarEl.textContent = initials(key);
+    avatarEl.dataset.azobssUsernameLocked = '1';
+  }
+  return key;
+}
+function azobssInstallNavbarUsernameGuard(){
+  const nameEl = document.getElementById('signedInName');
+  if(!nameEl || nameEl.dataset.azobssGuardReady === '1') return;
+  nameEl.dataset.azobssGuardReady = '1';
+  const observer = new MutationObserver(()=>{
+    const saved = getSavedUser?.() || {};
+    const key = azobssResolveUsername(saved);
+    if(key && nameEl.textContent !== key){
+      requestAnimationFrame(()=>azobssApplyNavbarUsernameLock(saved));
+    }
+  });
+  observer.observe(nameEl, {childList:true, characterData:true, subtree:true});
+  azobssApplyNavbarUsernameLock(getSavedUser?.() || {});
+}
+window.azobssResolveUsername = azobssResolveUsername;
+window.azobssApplyNavbarUsernameLock = azobssApplyNavbarUsernameLock;
 function safeJson(raw){try{return JSON.parse(raw||'null');}catch{return null;}}
 function clearSavedUser(){try{localStorage.removeItem('azobssUser');sessionStorage.removeItem('azobssUser');}catch(e){}}
 function saveUser(user){
-  const value = JSON.stringify(user);
+  const normalizedUser = azobssNormalizeSavedUser(user || {});
+  const value = JSON.stringify(normalizedUser);
   sessionStorage.setItem('azobssCurrentUser', value);
   localStorage.setItem('azobssCurrentUser', value);
   sessionStorage.setItem('azobssLoggedIn', '1');
   localStorage.setItem('azobssLoggedIn', '1');
   window.dispatchEvent(new Event('storage'));
+  setTimeout(()=>azobssApplyNavbarUsernameLock(normalizedUser), 0);
 }
 function clearUser(silent=false){
   ['azobssCurrentUser','azobssUser','azobssLoggedIn'].forEach((key)=>{
@@ -1028,10 +1124,11 @@ async function azobssLogoutOnce(){
 window.azobssLogoutUser = azobssLogoutOnce;
 window.addEventListener('beforeunload', ()=>{ try{ if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer); }catch(_e){} });
 function getSavedUser(){
-  return safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
+  const saved = safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
     safeJson(localStorage.getItem('azobssCurrentUser')) ||
     safeJson(sessionStorage.getItem('azobssUser')) ||
     safeJson(localStorage.getItem('azobssUser'));
+  return saved ? azobssNormalizeSavedUser(saved) : saved;
 }
 
 // Expose auth helpers for legacy admin panels in index.html and PA-BM/index.html.
@@ -1376,8 +1473,8 @@ function syncHeader(user){
   const name = $('signedInName');
   const avatar = $('userAvatar');
   const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link, a[href="/PA-BM/"].nav-pa-bm-link'));
-  const storedUser = user || (typeof getSavedUser === 'function' ? getSavedUser() : null);
-  const display = storedUser && (storedUser.usernameKey || storedUser.name || storedUser.username || (storedUser.email ? String(storedUser.email).split('@')[0] : ''));
+  const storedUser = azobssNormalizeSavedUser(user || (typeof getSavedUser === 'function' ? getSavedUser() : null));
+  const display = storedUser && azobssResolveUsername(storedUser);
   const canShowPaBm = hasPaBmTabAccess(storedUser);
   const isAdminUser = isAzobssAdmin(storedUser);
   document.body.classList.toggle('is-admin', !!isAdminUser);
@@ -3929,7 +4026,7 @@ window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
 window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser());
+  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser()); azobssInstallNavbarUsernameGuard();
   bindAzobssPurchaseRecordsUI(); bindAzobssPaBmToyyibButton(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
@@ -4000,7 +4097,7 @@ function bindAuth() {
     const submitButton = event.submitter || $('siteSignInForm')?.querySelector('button[type="submit"]') || $('siteSignInForm')?.querySelector('button');
     const loginInputRaw=String(fieldValue('siteLoginUsername','siteLoginName')).trim().toLowerCase();
     const inputIsEmail = loginInputRaw.includes('@');
-    let usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || loginInputRaw.split('@')[0]) : normalizeUsername(loginInputRaw);
+    let usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || localStorage.getItem('azobssUsernameLock:email:' + loginInputRaw) || '') : normalizeUsername(loginInputRaw);
     const password=fieldValue('siteLoginPassword');
     if(!loginInputRaw || !password){ if(err) err.textContent='Please enter username/email and password.'; return; }
     try{
@@ -4022,7 +4119,7 @@ function bindAuth() {
       try{
         credential = await signInWithEmailAndPassword(auth, loginEmail, password);
       }catch(primaryError){
-        if(lookupEmail){
+        if(lookupEmail && usernameKey){
           credential = await signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password);
         }else{
           throw primaryError;
@@ -4038,7 +4135,9 @@ function bindAuth() {
         profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'member'};
       }
       const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
-      const isOwnerBypass = usernameKey === 'zedan91' || (typeof realEmail !== 'undefined' ? realEmail : (window.__azobssSafeRealEmail || '')) === 'zedan91@azobss.local';
+      const resolvedLoginUsername = azobssResolveUsername({uid:authUser.uid, email:realEmail, authEmail:realEmail, ...profile, usernameKey: profile.usernameKey || profile.username || profile.id || usernameKey});
+      if(resolvedLoginUsername) usernameKey = resolvedLoginUsername;
+      const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
       if(!authUser.emailVerified && !isOwnerBypass){
         await signOut(auth);
         clearSavedUser();
@@ -4046,18 +4145,25 @@ function bindAuth() {
         if(err) err.textContent='Please verify your email first.';
         return;
       }
-      if(realEmail && realEmail.includes('@')){
-        try{ localStorage.setItem('azobssAuthEmailMap:' + usernameKey, realEmail); localStorage.setItem('azobssSignupUsernameByEmail:' + realEmail, usernameKey); }catch(_){}
+      if(usernameKey && realEmail && realEmail.includes('@')){
+        try{
+          localStorage.setItem('azobssAuthEmailMap:' + usernameKey, realEmail);
+          localStorage.setItem('azobssSignupUsernameByEmail:' + realEmail, usernameKey);
+          localStorage.setItem('azobssUsernameLock:email:' + realEmail, usernameKey);
+          localStorage.setItem('azobssUsernameLock:uid:' + authUser.uid, usernameKey);
+        }catch(_){}
         await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
       }
       let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
       try{
-        const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
-        const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
-        preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
-        var mergedPaBmForLogin = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
-        await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true});
-        profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin};
+        if(usernameKey){
+          const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
+          const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
+          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
+          var mergedPaBmForLogin = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
+          await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true});
+          profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin};
+        }
       }catch(loginProfileUpdateError){
         console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
       }
@@ -4364,9 +4470,10 @@ function bindAuth() {
         if(usernameKey && !profile._profileMissing){
           const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
           const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
-          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
-          var mergedPaBmForState = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
-          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForState}, {merge:true});
+          const profileEmailForState = String(profile.authEmail || profile.email || freshUser.email || '').trim().toLowerCase();
+          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + profileEmailForState) || '');
+          var mergedPaBmForState = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + profileEmailForState) || '');
+          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForState}, {merge:true});
           profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForState};
         }
       }catch(stateProfileUpdateError){

@@ -128,3 +128,10 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Now desc container and inner span get actual 4-line height using CSS calc.
 - Applies to Software Tools, CAD Tools and root fallback.
 - No Firebase Rules update. No Render backend deploy required.
+
+## Patch (334) - AZOBSS Navbar Username Lock Fix
+- Navbar now prioritizes official AZOBSS username instead of Gmail/Firebase displayName.
+- Adds username lock cache by uid/email and a safe text guard for `#signedInName`.
+- Email login no longer creates a navbar name from Gmail prefix when real username can be resolved.
+- Files changed: `assets/js/azobss-global-auth.js`, `main.js`.
+- Firebase Rules: not required. Render deploy: not required.
