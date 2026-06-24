@@ -1,0 +1,14 @@
+AZOBSS PATCH 345 - OWNER LABEL BIGGER CARD + TEXT FIX
+
+Baseline:
+(344)-AZOBSS-SOFTWARE-CAD-OWNER-LABEL-TWO-LINE-ONLY-FIX_20260624.zip
+
+Changes:
+- Enlarged Software/CAD owner label chip slightly.
+- Enlarged OWNED: title and owner name text.
+- Kept two-line format:
+  OWNED:
+  AZOBSS / staff_username
+- Kept visibility admin/staff/semi-admin only.
+- No Firebase Rules update needed.
+- No Render backend deploy needed.
