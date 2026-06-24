@@ -1,0 +1,14 @@
+AZOBSS PATCH 341 - Software/CAD Buy Now + Download Now Height Align Fix
+
+Baseline: (340)-AZOBSS-SOFTWARE-CAD-OWNER-LABEL-FIXED-BELOW-PROMO-FIX_20260624.zip
+
+Fixes:
+- Align Premium Buy Now button height with Free Download Now button.
+- Align RM price + Buy Now text vertically in one clean CTA line.
+- Align cart icon beside Buy Now to the same height as the button.
+- Keep CTA row pinned near downloads/rating footer.
+- Apply to Software Tools, CAD Tools and root fallback.
+
+No Firebase Rules update required.
+No Render backend deploy required.
+Deploy GitHub Pages only.

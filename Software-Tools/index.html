@@ -12383,6 +12383,216 @@ html body .az-owner-source-chip .az-owner-source-name{
 </script>
 <!-- /AZOBSS PATCH 340 -->
 
+
+
+<!-- AZOBSS PATCH 341: Premium Buy Now / cart CTA height aligned with Download Now
+     Fix: make RM price + Buy Now text and the premium cart row the same visual height as Download Now. -->
+<style id="azobss-software-cad-buy-now-download-height-align-fix-341">
+/* Final CTA geometry: Free Download Now and Premium Buy Now row share the same height and bottom position. */
+html body #softwareGrid > .download-card > .download-btn:not(.premium),
+html body #softwareDownloadsGrid > .download-card > .download-btn:not(.premium),
+html body .downloads-grid > .download-card > .download-btn:not(.premium),
+html body .software-grid > .software-card > .download-btn:not(.premium),
+html body .software-grid > .software-item > .download-btn:not(.premium),
+html body .cad-card > .cad-action-btn:not(.premium),
+html body .cad-item > .cad-action-btn:not(.premium),
+html body .cad-resource-card > .cad-action-btn:not(.premium),
+html body .cad-tool-card > .cad-action-btn:not(.premium){
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+  box-sizing:border-box!important;
+}
+
+/* Premium row must look like one CTA group with the same height as Download Now. */
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row,
+html body .software-grid > .software-card > .az-software-buy-cart-row,
+html body .software-grid > .software-item > .az-software-buy-cart-row{
+  width:min(236px,86%)!important;
+  max-width:236px!important;
+  min-width:218px!important;
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+  padding:0!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+
+html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
+html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
+html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.premium,
+html body .software-grid > .software-card .az-software-buy-cart-row > .download-btn.premium,
+html body .software-grid > .software-item .az-software-buy-cart-row > .download-btn.premium,
+html body [data-azobss-premium-buy="1"].download-btn,
+html body .cad-action-btn.premium,
+html body .cad-card .cad-action-btn.premium,
+html body .cad-item .cad-action-btn.premium,
+html body .cad-tools-shop .cad-action-btn.premium,
+html body .cad-card-grid .cad-action-btn.premium{
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  width:184px!important;
+  max-width:184px!important;
+  min-width:168px!important;
+  padding:0 16px!important;
+  border-radius:999px!important;
+  display:inline-flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  box-sizing:border-box!important;
+  font-size:13px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-decoration:none!important;
+}
+
+html body .download-btn.premium .buy-price,
+html body [data-azobss-premium-buy="1"].download-btn .buy-price{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:13px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+}
+html body .download-btn.premium .buy-text,
+html body [data-azobss-premium-buy="1"].download-btn .buy-text{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:13px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+}
+
+/* Cart icon beside Buy Now must align to the same CTA height. */
+html body .az-software-buy-cart-row .az-card-cart-slot{
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 42px!important;
+}
+html body .az-software-buy-cart-row .az-card-cart-btn{
+  width:42px!important;
+  min-width:42px!important;
+  max-width:42px!important;
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:14px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  font-size:15px!important;
+  line-height:1!important;
+}
+html body .az-software-buy-cart-row .az-card-cart-icon{
+  font-size:15px!important;
+  line-height:1!important;
+}
+
+/* Keep pinned CTA exactly aligned above the footer. */
+html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+html body .downloads-grid > .download-card > .az-software-buy-cart-row,
+html body .software-grid > .software-card > .az-software-buy-cart-row,
+html body .software-grid > .software-item > .az-software-buy-cart-row,
+html body #softwareGrid > .download-card > .download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn,
+html body .downloads-grid > .download-card > .download-btn,
+html body .software-grid > .software-card > .download-btn,
+html body .software-grid > .software-item > .download-btn,
+html body .cad-card > .cad-action-row,
+html body .cad-card > .cad-actions,
+html body .cad-card > .cad-card-actions,
+html body .cad-item > .cad-action-row,
+html body .cad-item > .cad-actions,
+html body .cad-item > .cad-card-actions,
+html body .cad-card > .cad-action-btn,
+html body .cad-item > .cad-action-btn{
+  bottom:50px!important;
+}
+
+@media(max-width:760px){
+  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card > .az-software-buy-cart-row,
+  html body .software-grid > .software-card > .az-software-buy-cart-row,
+  html body .software-grid > .software-item > .az-software-buy-cart-row{
+    width:min(224px,88%)!important;
+    max-width:224px!important;
+    min-width:206px!important;
+    height:40px!important;
+    min-height:40px!important;
+    max-height:40px!important;
+    gap:8px!important;
+  }
+  html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.premium,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.premium,
+  html body .software-grid > .software-card .az-software-buy-cart-row > .download-btn.premium,
+  html body .software-grid > .software-item .az-software-buy-cart-row > .download-btn.premium,
+  html body [data-azobss-premium-buy="1"].download-btn,
+  html body .cad-action-btn.premium{
+    width:174px!important;
+    max-width:174px!important;
+    min-width:158px!important;
+    height:40px!important;
+    min-height:40px!important;
+    max-height:40px!important;
+    padding:0 13px!important;
+    font-size:12px!important;
+    gap:7px!important;
+  }
+  html body .download-btn.premium .buy-price,
+  html body .download-btn.premium .buy-text,
+  html body [data-azobss-premium-buy="1"].download-btn .buy-price,
+  html body [data-azobss-premium-buy="1"].download-btn .buy-text{
+    font-size:12px!important;
+  }
+  html body .az-software-buy-cart-row .az-card-cart-slot,
+  html body .az-software-buy-cart-row .az-card-cart-btn{
+    width:40px!important;
+    min-width:40px!important;
+    max-width:40px!important;
+    height:40px!important;
+    min-height:40px!important;
+    max-height:40px!important;
+    flex-basis:40px!important;
+  }
+}
+</style>
+<!-- /AZOBSS PATCH 341 -->
+
 </body>
 </html>
 
