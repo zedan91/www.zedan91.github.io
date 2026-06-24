@@ -1,0 +1,27 @@
+AZOBSS PATCH 335 - SOFTWARE/CAD OWNER LABEL STAFF/ADMIN ONLY
+
+Purpose:
+- Add a small ownership label below the discount/promo badge on Software/CAD cards.
+- Label indicates whether the product/listing belongs to AZOBSS or a staff/semi-admin account.
+- Label is hidden from normal visitors/customers and only visible to admin/staff/semi-admin.
+
+Changes:
+1. Added CSS/JS owner label patch to:
+   - /Software-Tools/index.html
+   - /CAD-Tools-&-Resources/index.html
+   - /index.html fallback
+
+2. Added owner label behavior:
+   - AZOBSS-owned products show: AZOBSS
+   - Staff-owned products show: STAFF: username
+   - Normal guest/member users do not see the label.
+
+3. Preserved Software/CAD owner metadata during normalizeItem() so existing owner fields from Firestore/local JSON are not dropped.
+
+4. No Firebase Rules update required.
+5. No Render backend deploy required.
+6. GitHub Pages deploy only.
+
+Notes:
+- The label is positioned under the discount/promo badge area.
+- It is idempotent and uses childList-only observer, so it should not cause blinking/flicker.
