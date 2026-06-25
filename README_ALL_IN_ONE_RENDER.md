@@ -123,3 +123,10 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Radio floating button now stays close to the right side of the screen.
 - The hidden panel no longer pushes the Radio pill inward.
 - GitHub Pages deploy only. No Firebase Rules or Render deploy required.
+
+## Patch (354) - Radio All Pages Install
+- Added AZOBSS Radio Player to every HTML page, including Affiliate Shop, Lucky Draw, PA/BM, Likes, Mini Tools, Docs, Admin and Staff.
+- Cache bust updated to `azobss-radio-player.js?v=354`.
+- No Firebase Rules update required.
+- No Render deploy required.
+

@@ -1,0 +1,32 @@
+AZOBSS RADIO ALL PAGES INSTALL FIX (354)
+
+Purpose:
+- Install AZOBSS Radio Player on all public/admin/staff/tool/docs pages, not only Home, Software Tools, and CAD Tools.
+
+Changes:
+- Added /assets/js/azobss-radio-player.js?v=354 to every HTML page in the ZIP.
+- Preserved previous radio fixes:
+  - full Malaysia channel list
+  - channel search
+  - floating button right align
+  - hide small pill while panel is open
+  - keep-playing state across internal page navigation where browser allows autoplay restore
+- No Firebase Rules update required.
+- No Render backend deploy required.
+
+Pages patched:
+- index.html
+- affiliate-shop/index.html
+- CAD-Tools-&-Resources/index.html
+- docs/*.html
+- likes/index.html
+- lucky-draw/index.html
+- PA-BM/index.html
+- Software-Tools/index.html
+- tools/*.html
+- admin/index.html
+- staff/index.html
+
+Deploy:
+- GitHub Pages only.
+- Hard refresh browser after deploy.
