@@ -143,3 +143,11 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Radio now has Play / Stop / Volume / Minimize only.
 - Cache-bust updated to v356.
 - GitHub Pages deploy only. No Firebase Rules or Render deploy required.
+
+
+## Patch 357 - AZOBSS Radio Random Channel Button
+- Added small 🔀 random channel button beside radio station dropdown.
+- If radio is playing, random switches and plays a new station immediately.
+- If radio is stopped, random only selects a station; user can press Play.
+- Cache bust updated to azobss-radio-player.js?v=357.
+- No Firebase Rules or Render deploy required.

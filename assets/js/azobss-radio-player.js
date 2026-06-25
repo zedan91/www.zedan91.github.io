@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 356: remove Open button; only Play/Stop/Minimize remain for simpler radio UI.
+   Patch 357: add small random channel button; can auto-switch channel while playing.
 */
 (function(){
   'use strict';
@@ -152,6 +152,9 @@
       .az-radio-select,.az-radio-custom{width:100%;border:1px solid rgba(148,163,184,.25);border-radius:12px;background:#020617;color:#f8fafc;min-height:36px;padding:0 10px;font-size:13px;font-weight:800;outline:none;}
       .az-radio-select optgroup{background:#020617;color:#93c5fd;font-weight:1000;}
       .az-radio-select option{background:#020617;color:#f8fafc;font-weight:800;}
+      .az-radio-random{width:38px;height:36px;border:1px solid rgba(34,197,94,.42);border-radius:12px;background:linear-gradient(135deg,#052e16,#075985);color:#ecfeff;font-size:15px;font-weight:1000;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);}
+      .az-radio-random:hover{border-color:#22c55e;filter:brightness(1.08);transform:translateY(-1px);}
+      .az-radio-random:disabled{opacity:.55;cursor:not-allowed;transform:none;}
       .az-radio-count{display:block;margin-top:5px;text-align:center;color:#94a3b8;font-size:10.5px;font-weight:900;}
       .az-radio-custom{display:none;margin-top:8px;}
       .az-radio-player.is-custom .az-radio-custom{display:block;}
@@ -193,7 +196,7 @@
         <input class="az-radio-search" id="azRadioSearch" type="search" placeholder="Search radio channel... ERA, Hot FM, IKIM, Sabah FM" autocomplete="off">
         <div class="az-radio-row">
           <select class="az-radio-select" id="azRadioStation" aria-label="Select radio station">${renderStationOptions(selected)}</select>
-          <span class="az-radio-dot" aria-hidden="true"></span>
+          <button type="button" class="az-radio-random" id="azRadioRandom" title="Random channel" aria-label="Random channel">🔀</button>
         </div>
         <span class="az-radio-count" id="azRadioCount">${Math.max(0, STATIONS.length - 1)} Malaysia channels + Custom URL</span>
         <input class="az-radio-custom" id="azRadioCustom" type="url" placeholder="Paste direct stream URL (.mp3/.aac/.m3u8)" value="${esc(store.customUrl||'')}">
@@ -268,6 +271,7 @@
     const count=root.querySelector('#azRadioCount');
     const custom=root.querySelector('#azRadioCustom');
     const play=root.querySelector('#azRadioPlay');
+    const random=root.querySelector('#azRadioRandom');
     const stop=root.querySelector('#azRadioStop');
     const vol=root.querySelector('#azRadioVolume');
     const audio=root.querySelector('#azRadioAudio');
@@ -282,6 +286,39 @@
       const visible = Math.max(0, [...select.options].filter(o => o.value !== 'custom').length);
       if(count) count.textContent = (search && search.value.trim()) ? `${visible} channel match found` : `${Math.max(0, STATIONS.length - 1)} Malaysia channels + Custom URL`;
       syncCustom();
+    }
+    function getRandomStationId(){
+      const opts = [...select.options].map(o => o.value).filter(v => v && v !== 'custom');
+      const pool = (opts.length ? opts : STATIONS.map(st => st.id).filter(id => id !== 'custom'));
+      if(!pool.length) return 'sinar';
+      let pick = pool[Math.floor(Math.random() * pool.length)];
+      if(pool.length > 1 && pick === select.value){
+        const alt = pool.filter(v => v !== select.value);
+        pick = alt[Math.floor(Math.random() * alt.length)] || pick;
+      }
+      return pick;
+    }
+    async function playCurrentStation(){
+      const station=getStation(select.value);
+      try{
+        save();
+        play.disabled=true;
+        if(random) random.disabled=true;
+        setStatus('Loading ' + station.label + '...', '');
+        const url=await resolveStream(station, status);
+        if(audio.src !== url) audio.src=url;
+        audio.volume=Number(vol.value)||0.7;
+        await audio.play();
+        root.classList.add('is-playing');
+        markPlaying(url);
+        setStatus('Playing: ' + station.label, 'ok');
+      }catch(e){
+        root.classList.remove('is-playing');
+        setStatus(e?.message || 'Radio gagal dimainkan.', 'err');
+      }finally{
+        play.disabled=false;
+        if(random) random.disabled=false;
+      }
     }
     function save(extra){
       const s=readStore();
@@ -319,25 +356,15 @@
     custom.addEventListener('input', save);
     vol.addEventListener('input', ()=>{ audio.volume=Number(vol.value)||0; save(); });
 
-    play.addEventListener('click', async ()=>{
-      const station=getStation(select.value);
-      try{
-        save();
-        play.disabled=true;
-        setStatus('Loading ' + station.label + '...', '');
-        const url=await resolveStream(station, status);
-        if(audio.src !== url) audio.src=url;
-        audio.volume=Number(vol.value)||0.7;
-        await audio.play();
-        root.classList.add('is-playing');
-        markPlaying(url);
-        setStatus('Playing: ' + station.label, 'ok');
-      }catch(e){
-        root.classList.remove('is-playing');
-        setStatus(e?.message || 'Radio gagal dimainkan.', 'err');
-      }finally{
-        play.disabled=false;
-      }
+    play.addEventListener('click', playCurrentStation);
+    if(random) random.addEventListener('click', async ()=>{
+      const wasPlaying = audio && !audio.paused && (audio.currentSrc || audio.src);
+      const nextId = getRandomStationId();
+      select.value = nextId;
+      syncCustom();
+      const st = getStation(nextId);
+      setStatus('Random: ' + (st.label || st.name) + (wasPlaying ? ' — switching...' : ' dipilih. Tekan Play.'), wasPlaying ? '' : 'ok');
+      if(wasPlaying) await playCurrentStation();
     });
     stop.addEventListener('click', ()=>{ try{ audio.pause(); audio.removeAttribute('src'); audio.load(); }catch(e){} root.classList.remove('is-playing'); markStopped(); setStatus('Radio dihentikan.',''); });
     audio.addEventListener('playing', ()=>{ root.classList.add('is-playing'); markPlaying(audio.currentSrc || audio.src || ''); });
