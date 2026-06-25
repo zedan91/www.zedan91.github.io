@@ -2222,7 +2222,16 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
   function makeProductId(prefix){return `${prefix}-${Date.now().toString().slice(-6)}`;}
   function selectedPlatforms(){return Array.from(platformBox?.querySelectorAll('input:checked')||[]).map(x=>x.value);}
   function setSelectedPlatforms(values){const set=new Set(Array.isArray(values)&&values.length?values:['AutoCAD','All CAD']); platformBox?.querySelectorAll('input').forEach(x=>{x.checked=set.has(x.value);});}
-  function normalizeItem(item){
+  
+  function azExpiryHoursValue(v, fallback = 24){
+    if (v === 0 || v === '0') return 0;
+    const text = String(v ?? '').trim().toLowerCase();
+    if (text && /(never|no\s*expire|no\s*expiry|lifetime|permanent|tidak\s*tamat|tak\s*tamat)/i.test(text)) return 0;
+    const n = Number(v);
+    if (Number.isFinite(n) && n >= 0) return Math.max(0, Math.min(24 * 30, n));
+    return fallback;
+  }
+function normalizeItem(item){
     const isPremium = item.type === 'premium';
     const price = String(item.price || '').trim();
     return {
@@ -2241,7 +2250,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
       platforms: Array.isArray(item.platforms) ? item.platforms : (item.platform ? [item.platform] : ['AutoCAD','All CAD']),
       badge: item.badge || '',
       downloadLimit: Number(item.downloadLimit || item.maxDownload || 3),
-      expiryHours: Number(item.expiryHours ?? 24),
+      expiryHours: azExpiryHoursValue(item.expiryHours ?? item.linkExpiryHours ?? item.downloadExpiryHours ?? item.linkExpiry ?? item.expiry, 24),
       icon: String(item.icon || (isPremium ? '🛒' : 'L')).trim().slice(0,3),
       downloadLink: String(item.downloadLink || item.link || '').trim(),
       paymentLink: String(item.paymentLink || item.toyyibpayLink || '').trim(),
@@ -2383,7 +2392,7 @@ function esc(value){return String(value||'').replace(/[&<>'"]/g,function(c){retu
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
     const finalLink = typeInput.value === 'premium' ? (paymentLinkInput?.value || stripeLinkInput?.value) : downloadLinkInput?.value;
-    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:Number(expiryInput?.value??24),name:nameInput.value,description:descInput.value,type:typeInput.value,category:categoryInput?.value || 'LISP (.lsp)',price:priceInput.value,originalPrice:originalPriceInput?.value || '',promoOriginalPrice:originalPriceInput?.value || '',icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,stripeLink:stripeLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
+    const item = normalizeItem({id:productIdInput?.value || makeProductId('AZCAD'),productId:productIdInput?.value || makeProductId('AZCAD'),status:statusInput?.value || 'active',version:versionInput?.value,fileSize:fileSizeInput?.value,platforms:selectedPlatforms(),badge:badgeInput?.value || '',downloadLimit:Math.max(1,Math.min(20,Number(downloadLimitInput?.value||3))),expiryHours:azExpiryHoursValue(expiryInput?.value??24,24),name:nameInput.value,description:descInput.value,type:typeInput.value,category:categoryInput?.value || 'LISP (.lsp)',price:priceInput.value,originalPrice:originalPriceInput?.value || '',promoOriginalPrice:originalPriceInput?.value || '',icon:iconInput.value,imageUrl:uploadedImage || imageUrlInput?.value,gifUrl:uploadedGif || gifUrlInput?.value,buttonText:buttonInput.value,downloadLink:downloadLinkInput?.value,paymentLink:paymentLinkInput?.value,stripeLink:stripeLinkInput?.value,secureDownloadLink:secureDownloadInput?.value,link:finalLink,createdAt:Date.now()});
     const items = getItems(); const idx = items.findIndex(x=>String(x.id)===String(editingCadId)); if(idx>=0){ items[idx] = {...items[idx], ...item, id: editingCadId, createdAt: items[idx].createdAt || item.createdAt}; } else { items.unshift(item); } saveItems(items); closeModal(); applyFilters();
   });
   platformFilter?.addEventListener('click', e=>{const btn=e.target.closest('[data-cad-platform]'); if(!btn) return; selectedCadPlatform=btn.getAttribute('data-cad-platform')||'all'; platformFilter.querySelectorAll('[data-cad-platform]').forEach(b=>b.classList.toggle('is-active', b===btn)); applyFilters();});
@@ -4243,7 +4252,7 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   window.azNormalizePremiumOrderSettings = function(item){
     item = item || {};
     const n = (v, f)=>{ const x = Number(v); return Number.isFinite(x) && x > 0 ? x : f; };
-    let expiryHours = n(item.expiryHours || item.linkExpiryHours || item.downloadExpiryHours, 0);
+    let expiryHours = azExpiryHoursValue(item.expiryHours ?? item.linkExpiryHours ?? item.downloadExpiryHours, 0);
     if(!expiryHours){
       const days = n(item.expiryDays || item.linkExpiryDays || item.downloadExpiryDays, 0);
       if(days) expiryHours = days * 24;
@@ -4257,9 +4266,9 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
         expiryHours = /hour|jam/.test(unit) ? value : value * 24;
       }
     }
-    if(!expiryHours) expiryHours = 24;
+    if(expiryHours === undefined || expiryHours === null || expiryHours === '') expiryHours = 24;
     const downloadLimit = n(item.downloadLimit || item.maxDownloads || item.maxDownload || item.download_limit, 1);
-    return { expiryHours, expiryDays: Math.ceil(expiryHours/24), downloadLimit, maxDownloads: downloadLimit, maxDownload: downloadLimit };
+    return { expiryHours, expiryDays: expiryHours === 0 ? 0 : Math.ceil(expiryHours/24), downloadLimit, maxDownloads: downloadLimit, maxDownload: downloadLimit, expiresNever: expiryHours === 0 };
   };
 })();
 </script>

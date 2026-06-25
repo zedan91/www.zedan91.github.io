@@ -43,13 +43,26 @@ function azobssExpiryHoursFromOrder(order){
   }
   return 24;
 }
+function azobssOrderNeverExpire(order){
+  if (!order) return false;
+  return order.expiresNever === true
+    || order.neverExpire === true
+    || order.downloadNeverExpire === true
+    || azobssExpiryHoursFromOrder(order || {}) === 0;
+}
 function azobssTokenExpiresAtMsFromOrder(order, now = Date.now()){
   const expiryHours = azobssExpiryHoursFromOrder(order || {});
   if (expiryHours === 0) return now + AZOBSS_NEVER_EXPIRE_MS;
   return now + Math.max(1, Math.min(24 * 30, Number(expiryHours) || 24)) * 60 * 60 * 1000;
 }
+function azobssTokenIsExpired(row = {}, now = Date.now()){
+  if (!row) return true;
+  if (row.expiresNever === true || row.neverExpire === true || row.downloadNeverExpire === true) return false;
+  const expiresAt = Number(row.expiresAt || row.expiresAtMs || 0) || 0;
+  return !!(expiresAt && expiresAt < now);
+}
 function azobssExpiryLabelForOrder(order){
-  if (azobssExpiryHoursFromOrder(order || {}) === 0) return 'Never expire';
+  if (azobssOrderNeverExpire(order || {})) return 'Never expire';
   if (order && order.tokenExpiresAt) {
     try { return new Date(order.tokenExpiresAt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' }); } catch (_) {}
   }
@@ -278,7 +291,9 @@ function azNormalizeTrustedProduct(item = {}, source = "trusted") {
     privateDownloadLink: cleanPremiumUrl(item.privateDownloadLink || item.secureDownloadLink || item.premiumDownloadFileLink || item.downloadLink || item.fileUrl || ""),
     downloadLink,
     downloadLimit: Number(item.downloadLimit || item.maxDownload || item.maxDownloads || 1) || 1,
-    expiryHours: Number(item.expiryHours ?? item.linkExpiryHours ?? item.downloadExpiryHours ?? 24) || 24
+    expiryHours: azobssExpiryHoursFromOrder({ product: item }),
+    linkExpiryHours: azobssExpiryHoursFromOrder({ product: item }),
+    expiresNever: azobssExpiryHoursFromOrder({ product: item }) === 0
   };
 }
 function azFindLocalSoftwareProduct(productId = "") {
@@ -2032,8 +2047,47 @@ async function azSendEmailWithOptionalPdf({ to, subject, html, text, pdfBuffer, 
     attachments: pdfBuffer ? [{ filename: safeFilename, content: pdfBuffer, contentType: "application/pdf" }] : []
   });
 }
+
+async function azHydratePremiumOrderExpiryFromCurrentProduct(order = {}) {
+  try {
+    if (!order || isPaBmPremiumOrder(order)) return order;
+    const productId = cleanPremiumText(order.productId || order.product?.productId || order.product?.id || '', 180);
+    if (!productId) return order;
+    let trusted = await azFindFirestoreProduct(productId);
+    if (!trusted) trusted = azFindLocalSoftwareProduct(productId);
+    if (!trusted) return order;
+    const expiryHours = azobssExpiryHoursFromOrder({ product: trusted });
+    const downloadLimit = azobssDownloadLimitFromOrder({ product: trusted });
+    const never = expiryHours === 0;
+    return {
+      ...order,
+      product: {
+        ...(order.product || {}),
+        ...trusted,
+        expiryHours,
+        linkExpiryHours: expiryHours,
+        downloadExpiryHours: expiryHours,
+        downloadLimit,
+        maxDownload: downloadLimit,
+        maxDownloads: downloadLimit,
+        expiresNever: never
+      },
+      expiryHours,
+      linkExpiryHours: expiryHours,
+      downloadExpiryHours: expiryHours,
+      downloadLimit,
+      maxDownload: downloadLimit,
+      maxDownloads: downloadLimit,
+      expiresNever: never
+    };
+  } catch (err) {
+    console.warn('AZOBSS premium expiry hydrate skipped:', err && (err.message || err));
+    return order;
+  }
+}
+
 function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
-  const neverExpire = azobssExpiryHoursFromOrder(order || {}) === 0;
+  const neverExpire = azobssOrderNeverExpire(order || {});
   const expires = azobssExpiryLabelForOrder(order || {});
   const expirySentence = neverExpire ? "This link is set to Never expire, but download limit still applies." : `If it is not used, the link will expire on ${expires}.`;
   const receiptPdfUrl = receiptUrl + (receiptUrl.includes("?") ? "&" : "?") + "format=pdf";
@@ -2075,9 +2129,11 @@ async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
     if (!realDownloadLink) return '';
     const token = makeId('dl').replace(/[^a-zA-Z0-9_-]/g, '');
     const now = Date.now();
+    current = await azHydratePremiumOrderExpiryFromCurrentProduct(current);
     const expiryHours = azobssExpiryHoursFromOrder(current);
     const expiresAtMs = azobssTokenExpiresAtMsFromOrder(current, now);
     const maxDownload = azobssDownloadLimitFromOrder(current);
+    const expiresNever = expiryHours === 0;
     const tokenData = {
       token,
       orderId: current.orderId || orderId,
@@ -2089,6 +2145,8 @@ async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
       premiumDownloadFileLink: realDownloadLink,
       createdAt: now,
       expiresAt: expiresAtMs,
+      expiresNever,
+      expiryHours,
       usedCount: 0,
       maxDownload
     };
@@ -2101,6 +2159,9 @@ async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
       premiumDownloadFileLink: realDownloadLink,
       downloadToken: token,
       tokenExpiresAt: new Date(expiresAtMs).toISOString(),
+      expiresNever,
+      expiryHours,
+      linkExpiryHours: expiryHours,
       maxDownload,
       lastAdminResendDownloadLinkAt: new Date(now).toISOString()
     });
@@ -2182,7 +2243,8 @@ async function maybeSendDownloadEmail(order, req) {
     if (current.emailSentAt) return current;
     if (!mailReady()) return upsertPremiumOrder({ ...current, emailError: "Email not ready. Set BREVO_API_KEY + MAIL_FROM, or SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS.", emailErrorAt: new Date().toISOString() });
 
-    // Ensure the order and token always carry the real premium download target.
+    // Ensure the order and token always carry the real premium download target and current product expiry setting.
+    current = await azHydratePremiumOrderExpiryFromCurrentProduct(current);
     current = upsertPremiumOrder({ ...current, email, buyerEmail: email, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink });
     current = makeDownloadForOrder(current);
 
@@ -2240,11 +2302,13 @@ function makeDownloadForOrder(order) {
   if (!order || order.downloadToken) return order;
   const token = makeId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
+  const expiryHours = azobssExpiryHoursFromOrder(order);
   const expiresAtMs = azobssTokenExpiresAtMsFromOrder(order, now);
+  const expiresNever = expiryHours === 0;
   const maxDownload = azobssDownloadLimitFromOrder(order);
   const realDownloadLink = cleanPremiumUrl(order.downloadLink || order.premiumDownloadFileLink || order.secureDownloadLink || order.privateDownloadLink || order.downloadUrl || "");
-  savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload });
-  return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), downloadLimit:maxDownload, maxDownloads:maxDownload, maxDownload, receiptTokenRequired: order.receiptTokenRequired === false ? false : true, receiptTokenVersion: order.receiptTokenVersion || 2 });
+  savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, createdAt: now, expiresAt: expiresAtMs, expiresNever, expiryHours, usedCount: 0, maxDownload });
+  return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), expiresNever, expiryHours, linkExpiryHours: expiryHours, downloadExpiryHours: expiryHours, downloadLimit:maxDownload, maxDownloads:maxDownload, maxDownload, receiptTokenRequired: order.receiptTokenRequired === false ? false : true, receiptTokenVersion: order.receiptTokenVersion || 2 });
 }
 
 const AZOBSS_ORDER_FINALIZE_LOCKS = new Map();
@@ -2315,6 +2379,7 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
     }
 
     if (!isPaBmPremiumOrder(latest)) {
+      latest = await azHydratePremiumOrderExpiryFromCurrentProduct(latest);
       if (!latest.downloadToken) latest = makeDownloadForOrder(latest);
       if (!latest.emailSentAt) {
         await maybeSendDownloadEmail(latest, req);
@@ -7376,8 +7441,9 @@ const filePath =
       const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);
       const paymentReference = cleanPremiumText(data.paymentReference || data.reference || "", 200);
       const requestedLimit = Math.max(1, Math.min(20, Number(product.downloadLimit || data.downloadLimit || product.maxDownload || 3)));
-      const requestedExpiryHours = Math.max(0, Math.min(24 * 30, Number(product.expiryHours ?? data.expiryHours ?? 24)));
-      const expiresAtMs = requestedExpiryHours === 0 ? Date.now() + (100 * 365 * 24 * 60 * 60 * 1000) : Date.now() + requestedExpiryHours * 60 * 60 * 1000;
+      const requestedExpiryHours = azobssExpiryHoursFromOrder({ ...data, product });
+      const expiresNever = requestedExpiryHours === 0;
+      const expiresAtMs = azobssTokenExpiresAtMsFromOrder({ ...data, product, expiryHours: requestedExpiryHours, expiresNever }, Date.now());
       const user = getPremiumUser(data);
 
       if (!productName || !amount || !amountSen) {
@@ -7412,6 +7478,9 @@ const filePath =
         paidAt: new Date(now).toISOString(),
         downloadToken: token,
         tokenExpiresAt: new Date(expiresAtMs).toISOString(),
+        expiresNever,
+        expiryHours: requestedExpiryHours,
+        linkExpiryHours: requestedExpiryHours,
         maxDownload: requestedLimit,
         completedByUid: cleanPremiumText(adminIdentity.uid || "", 120),
         completedByUsername: cleanPremiumText(adminIdentity.username || "", 80),
@@ -7432,6 +7501,8 @@ const filePath =
         downloadLink,
         createdAt: now,
         expiresAt: expiresAtMs,
+        expiresNever,
+        expiryHours: requestedExpiryHours,
         usedCount: 0,
         maxDownload: requestedLimit
       });
@@ -7455,7 +7526,7 @@ const filePath =
       if (!saved) {
         try { saved = await azFindPremiumTokenPersistent(token); } catch (err) { console.warn("Premium token Firestore lookup failed:", err && (err.message || err)); }
       }
-      if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
+      if (!saved || azobssTokenIsExpired(saved) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
         return send(res, 403, "Download link expired or already used too many times.");
       }
       const nextUsed = Number(saved.usedCount || 0) + 1;
@@ -7483,14 +7554,15 @@ const filePath =
       if (!saved) {
         try { saved = await azFindPremiumTokenPersistent(token); } catch (err) { console.warn("Premium token Firestore lookup failed:", err && (err.message || err)); }
       }
-      if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
+      if (!saved || azobssTokenIsExpired(saved) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
         return send(res, 403, "Download link expired or already used too many times.");
       }
 
       // Email scanners/prefetchers use GET. GET now always shows a safe gate and never consumes quota.
       // The real download only starts after a human presses the POST form button.
       const order = findPremiumOrderByAny({ orderId: saved.orderId }) || await azFindPremiumOrderPersistent({ orderId: saved.orderId }) || {};
-      const expires = saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-";
+      const expiresNever = saved.expiresNever === true || azobssOrderNeverExpire(order);
+      const expires = expiresNever ? "Never expire" : (saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-");
       const actionUrl = `/api/premium/download/${encodeURIComponent(token)}`;
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Click the button below to start the actual download. This preview page does not use your download quota.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download count is only used after you press Start Download.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email previews will not consume the token. The actual download uses POST confirmation.</p></div></body></html>`;
       return send(res, 200, html, "text/html; charset=utf-8");

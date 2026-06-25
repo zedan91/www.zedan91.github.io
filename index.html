@@ -15622,7 +15622,7 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
       privateDownloadLink: downloadLink,
       downloadLink: downloadLink,
       downloadLimit: Number((buy && buy.dataset.downloadLimit) || 3),
-      expiryHours: Number((buy && buy.dataset.expiryHours) || 24),
+      expiryHours: azExpiryHoursValue((buy && buy.dataset.expiryHours) ?? 24, 24),
       ownerUid: buy ? (buy.dataset.ownerUid || '') : '',
       ownerUsername: buy ? (buy.dataset.ownerUsername || '') : '',
       ownerEmail: buy ? (buy.dataset.ownerEmail || '') : '',
@@ -17078,6 +17078,17 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
 <!-- /AZOBSS PATCH 335 -->
 
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
+
+<script id="azobss-expiry-hours-helper-root">
+function azExpiryHoursValue(v, fallback = 24){
+  if (v === 0 || v === '0') return 0;
+  const text = String(v ?? '').trim().toLowerCase();
+  if (text && /(never|no\s*expire|no\s*expiry|lifetime|permanent|tidak\s*tamat|tak\s*tamat)/i.test(text)) return 0;
+  const n = Number(v);
+  if (Number.isFinite(n) && n >= 0) return Math.max(0, Math.min(24 * 30, n));
+  return fallback;
+}
+</script>
 </body>
 </html>
 

@@ -3522,7 +3522,16 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     const set = new Set(Array.isArray(values) && values.length ? values : ['Windows']);
     platformBox?.querySelectorAll('input').forEach(x => { x.checked = set.has(x.value); });
   }
-  function normalizeItem(item){
+  
+  function azExpiryHoursValue(v, fallback = 24){
+    if (v === 0 || v === '0') return 0;
+    const text = String(v ?? '').trim().toLowerCase();
+    if (text && /(never|no\s*expire|no\s*expiry|lifetime|permanent|tidak\s*tamat|tak\s*tamat)/i.test(text)) return 0;
+    const n = Number(v);
+    if (Number.isFinite(n) && n >= 0) return Math.max(0, Math.min(24 * 30, n));
+    return fallback;
+  }
+function normalizeItem(item){
     const type = item.type === 'premium' ? 'premium' : 'free';
     const price = String(item.price || (type === 'free' ? 'FREE' : '')).trim();
     return {
@@ -3543,7 +3552,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       platforms: Array.isArray(item.platforms) ? item.platforms : (item.platform ? [item.platform] : ['Windows']),
       badge: item.badge || '',
       downloadLimit: Number(item.downloadLimit || item.maxDownload || 3),
-      expiryHours: Number(item.expiryHours ?? 24),
+      expiryHours: azExpiryHoursValue(item.expiryHours ?? item.linkExpiryHours ?? item.downloadExpiryHours ?? item.linkExpiry ?? item.expiry, 24),
       icon: item.icon || (type === 'free' ? 'FREE' : '🛒'),
       downloadLink: item.downloadLink || item.link || item.url || '',
       paymentLink: item.paymentLink || item.toyyibpayLink || '',
@@ -3599,6 +3608,8 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       badge: n.badge,
       downloadLimit: n.downloadLimit,
       expiryHours: n.expiryHours,
+      linkExpiryHours: n.expiryHours,
+      expiresNever: n.expiryHours === 0,
       icon: n.icon,
       buttonText: n.buttonText,
       downloadLink: n.downloadLink,
@@ -4718,7 +4729,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       category: categoryInput?.value || 'General Tools',
       badge: badgeInput?.value || '',
       downloadLimit: Math.max(1, Math.min(20, Number(downloadLimitInput?.value || 3))),
-      expiryHours: Number(expiryInput?.value ?? 24),
+      expiryHours: azExpiryHoursValue(expiryInput?.value ?? 24, 24),
       name: document.getElementById('softwareAdminName').value.trim(),
       desc: document.getElementById('softwareAdminDesc').value.trim(),
       type: typeSelect.value,
@@ -5053,7 +5064,7 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
       privateDownloadLink: trigger.dataset.premiumDownloadFileLink || trigger.dataset.downloadLink || '',
       downloadLink: trigger.dataset.downloadLink || trigger.dataset.premiumDownloadFileLink || '',
       downloadLimit: Number(trigger.dataset.downloadLimit || 3),
-      expiryHours: Number(trigger.dataset.expiryHours ?? 24),
+      expiryHours: azExpiryHoursValue(trigger.dataset.expiryHours ?? 24, 24),
       ownerUid: trigger.dataset.ownerUid || '',
       ownerUsername: trigger.dataset.ownerUsername || '',
       ownerEmail: trigger.dataset.ownerEmail || '',
@@ -7672,7 +7683,7 @@ window.azDebugSoftwareOwnerRuntime = function(){
   window.azNormalizePremiumOrderSettings = function(item){
     item = item || {};
     const n = (v, f)=>{ const x = Number(v); return Number.isFinite(x) && x > 0 ? x : f; };
-    let expiryHours = n(item.expiryHours || item.linkExpiryHours || item.downloadExpiryHours, 0);
+    let expiryHours = azExpiryHoursValue(item.expiryHours ?? item.linkExpiryHours ?? item.downloadExpiryHours, 0);
     if(!expiryHours){
       const days = n(item.expiryDays || item.linkExpiryDays || item.downloadExpiryDays, 0);
       if(days) expiryHours = days * 24;
@@ -7686,9 +7697,9 @@ window.azDebugSoftwareOwnerRuntime = function(){
         expiryHours = /hour|jam/.test(unit) ? value : value * 24;
       }
     }
-    if(!expiryHours) expiryHours = 24;
+    if(expiryHours === undefined || expiryHours === null || expiryHours === '') expiryHours = 24;
     const downloadLimit = n(item.downloadLimit || item.maxDownloads || item.maxDownload || item.download_limit, 1);
-    return { expiryHours, expiryDays: Math.ceil(expiryHours/24), downloadLimit, maxDownloads: downloadLimit, maxDownload: downloadLimit };
+    return { expiryHours, expiryDays: expiryHours === 0 ? 0 : Math.ceil(expiryHours/24), downloadLimit, maxDownloads: downloadLimit, maxDownload: downloadLimit, expiresNever: expiryHours === 0 };
   };
 })();
 </script>
@@ -9181,7 +9192,7 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
       privateDownloadLink: downloadLink,
       downloadLink: downloadLink,
       downloadLimit: Number((buy && buy.dataset.downloadLimit) || 3),
-      expiryHours: Number((buy && buy.dataset.expiryHours) || 24),
+      expiryHours: azExpiryHoursValue((buy && buy.dataset.expiryHours) ?? 24, 24),
       ownerUid: buy ? (buy.dataset.ownerUid || '') : '',
       ownerUsername: buy ? (buy.dataset.ownerUsername || '') : '',
       ownerEmail: buy ? (buy.dataset.ownerEmail || '') : '',
