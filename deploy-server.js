@@ -4344,6 +4344,13 @@ async function azLoadMyPurchasesForIdentity(req, identity = {}, limitRows = 300)
   const push = (row, source, docId) => {
     if (!row || !azMyPurchasesBelongsToIdentity(row, identity)) return;
     if (azMyPurchasesIsHiddenForIdentity(row, identity)) return;
+
+    // AZOBSS FIX 377:
+    // Customer My Purchases must not show abandoned/halfway checkout invoices.
+    // Creating a ToyyibPay bill is only "pending invoice", not a purchase yet.
+    // Keep pending rows internally for callback/verification, but show the customer only paid/verified records.
+    if (azReceiptStatusBucket(row) !== "paid") return;
+
     const pub = azMyPurchasesPublicRow(row, source, docId, req);
     const key = `${pub.source}:${pub.recordId || docId || rows.length}`.toLowerCase();
     if (seen.has(key)) return;

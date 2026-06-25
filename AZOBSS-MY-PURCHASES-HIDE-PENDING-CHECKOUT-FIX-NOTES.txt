@@ -1,0 +1,18 @@
+AZOBSS FIX 377 - My Purchases Hide Pending Checkout
+
+Masalah:
+- Bila user tekan Buy Now / Admin Test RM1 dan ToyyibPay bill berjaya dibuat, order status pending muncul dalam My Purchases walaupun user belum bayar atau batal di pertengahan.
+- Ini mengelirukan kerana My Purchases sepatutnya hanya rekod pembelian sebenar.
+
+Fix:
+1. Backend /api/my-purchases sekarang hanya return rekod paid/verified kepada customer.
+2. Pending ToyyibPay invoice masih disimpan dalam premiumOrders untuk callback/verify payment, tetapi tidak dipaparkan dalam My Purchases.
+3. Frontend My Purchases Pro juga filter semula dan hide pending/unpaid rows sebagai perlindungan tambahan.
+4. Receipt/download tetap hanya muncul selepas ToyyibPay API verified paid.
+
+Firebase Rules:
+- Tidak perlu update.
+
+Selepas deploy:
+- Rekod pending lama tidak patut muncul lagi selepas Refresh My Purchases.
+- Jika masih nampak dari cache browser lama, tekan Refresh dalam My Purchases atau clear site data/localStorage.

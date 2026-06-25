@@ -5039,6 +5039,11 @@ document.addEventListener('click',function(e){
     return String(v || 'Digital Product');
   }
   function isPaid(row){ return row && (row.isPaid === true || ['paid','verified','success','completed','settled','approved'].includes(String(row.status || '').toLowerCase())); }
+  function shouldShowCustomerPurchase(row){
+    // AZOBSS FIX 377: hide pending/abandoned checkout from customer My Purchases.
+    // Backend still keeps pending ToyyibPay orders for callback/verification.
+    return !!(row && isPaid(row));
+  }
   function normalizeLocalShop(row){
     const p = row || {};
     const amount = Number(String(p.totalPrice || p.saleAmount || p.amount || p.unitPrice || p.price || 0).replace(/[^0-9.]/g,'')) || 0;
@@ -5103,7 +5108,7 @@ document.addEventListener('click',function(e){
       }
       rows = rows.concat(readLocalShopHistory());
       const map = new Map();
-      rows.filter(Boolean).filter(r => !isLocallyHidden(r)).forEach(r => {
+      rows.filter(Boolean).filter(shouldShowCustomerPurchase).filter(r => !isLocallyHidden(r)).forEach(r => {
         const key = rowKey(r);
         if(!map.has(key)) map.set(key, r);
       });
@@ -5129,7 +5134,7 @@ document.addEventListener('click',function(e){
     document.head.appendChild(style);
     modal = document.createElement('div');
     modal.id = 'azobssMyPurchasesProModal';
-    modal.innerHTML = `<div class="az-mypro-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesProTitle"><div class="az-mypro-head"><h3 id="azMyPurchasesProTitle">🧾 My Purchases Pro</h3><button type="button" class="az-mypro-close" aria-label="Close">×</button></div><div class="az-mypro-body"><p class="az-mypro-note">Semua pembelian anda dalam satu tempat: PA/BM, Software dan CAD Tools. Receipt PDF boleh dibuka semula dari sini.</p><div id="azMyProError"></div><div class="az-mypro-kpis" id="azMyProKpis"></div><div class="az-mypro-tools"><input id="azMyProSearch" placeholder="Search product / order ID / state..."><select id="azMyProCategory"><option value="all">All Categories</option><option value="PA/BM">PA/BM</option><option value="Software">Software</option><option value="CAD Tools">CAD Tools</option></select><select id="azMyProStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="active">Download Active</option><option value="expired">Expired / Used</option><option value="failed">Failed / Cancelled</option></select><button id="azMyProRefresh" type="button">Refresh</button></div><div class="az-mypro-list" id="azMyProList"><div class="az-mypro-empty">Loading...</div></div></div></div>`;
+    modal.innerHTML = `<div class="az-mypro-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesProTitle"><div class="az-mypro-head"><h3 id="azMyPurchasesProTitle">🧾 My Purchases Pro</h3><button type="button" class="az-mypro-close" aria-label="Close">×</button></div><div class="az-mypro-body"><p class="az-mypro-note">Hanya pembelian yang sudah berjaya/verified dipaparkan di sini. Checkout yang belum selesai tidak akan masuk My Purchases.</p><div id="azMyProError"></div><div class="az-mypro-kpis" id="azMyProKpis"></div><div class="az-mypro-tools"><input id="azMyProSearch" placeholder="Search product / order ID / state..."><select id="azMyProCategory"><option value="all">All Categories</option><option value="PA/BM">PA/BM</option><option value="Software">Software</option><option value="CAD Tools">CAD Tools</option></select><select id="azMyProStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="active">Download Active</option><option value="expired">Expired / Used</option><option value="failed">Failed / Cancelled</option></select><button id="azMyProRefresh" type="button">Refresh</button></div><div class="az-mypro-list" id="azMyProList"><div class="az-mypro-empty">Loading...</div></div></div></div>`;
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if(e.target === modal || e.target.closest('.az-mypro-close')) modal.classList.remove('is-open'); });
     modal.querySelector('#azMyProSearch')?.addEventListener('input', e => { state.q = e.target.value || ''; render(); });
