@@ -1,0 +1,16 @@
+AZOBSS RADIO NAVBAR ICON COMPACT BEAUTY FIX (360)
+
+Purpose:
+- Make the headphone radio button beside username look cleaner and less cramped.
+- Prevent the radio icon from taking too much navbar width or crowding username/cart/notification buttons.
+
+Changes:
+- Navbar radio button reduced to a neat round 34px icon on desktop.
+- Mobile radio button reduced to 32px.
+- Removed large min-width from radio container that caused extra spacing.
+- Kept neon headphone image, play status dot, full radio list, random button, minimize behavior, and page navigation restore.
+- Cache bust updated to azobss-radio-player.js?v=360.
+
+No Firebase Rules update required.
+No Render backend deploy required.
+Deploy GitHub Pages only.

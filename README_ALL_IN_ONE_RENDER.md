@@ -163,3 +163,10 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Works on desktop and phone.
 - Cache bust: `/assets/js/azobss-radio-player.js?v=359`.
 - No Firebase Rules / Render deploy required.
+
+
+## Patch 360 - Radio Navbar Icon Compact Beauty Fix
+- Radio button beside username is now a smaller round headphone icon.
+- Reduced navbar width/margin so it does not crowd nearby buttons.
+- Cache bust: `/assets/js/azobss-radio-player.js?v=360`.
+- GitHub Pages deploy only. No Firebase Rules/Render changes.
