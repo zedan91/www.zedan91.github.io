@@ -1429,6 +1429,7 @@ app.get("/api/premium/receipt/:orderId", (req, res) => {
   const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []);
   const order = orders.find(o => o.orderId === req.params.orderId);
   if (!order) return res.status(404).send("Receipt not found");
+  if (String(order.status || "").toLowerCase() !== "paid") return res.status(403).send("Receipt locked until payment is verified.");
   res.type("html").send(buildReceiptHtml(order));
 });
 

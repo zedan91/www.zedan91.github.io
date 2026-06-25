@@ -4286,6 +4286,7 @@ function azMyPurchasesPublicRow(row = {}, source = "", docId = "", req = null) {
   const createdAtMs = azMyPurchasesMs(row);
   const paidAtMs = Number(row.paidAtMs || row.completedAtMs || 0) || (row.paidAt ? Date.parse(String(row.paidAt)) || 0 : 0) || (status === "paid" ? createdAtMs : 0);
   const receiptPath = `/api/my-purchases/receipt/${encodeURIComponent(recordId)}?source=${encodeURIComponent(isPremium ? "premiumOrders" : "purchaseLogs")}`;
+  const receiptAvailable = status === "paid";
   return {
     recordId,
     source: isPremium ? "premiumOrders" : "purchaseLogs",
@@ -4309,8 +4310,8 @@ function azMyPurchasesPublicRow(row = {}, source = "", docId = "", req = null) {
     downloadExpired: download.expired,
     downloadActive: download.active,
     downloadUrl: download.url || "",
-    receiptUrl: receiptPath,
-    receiptPdfUrl: `${receiptPath}&format=pdf`,
+    receiptUrl: receiptAvailable ? receiptPath : "",
+    receiptPdfUrl: receiptAvailable ? `${receiptPath}&format=pdf` : "",
     raw: isPremium ? null : {
       id: docId || row.id || "",
       firestoreId: docId || row.firestoreId || row.purchaseLogId || row.id || "",
@@ -6149,6 +6150,7 @@ async function handler(req, res) {
         const format = String(parsed.query.format || "html").toLowerCase();
         const order = await azFindMyPurchaseReceiptRecord(receiptId, source, identity);
         if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Receipt not found for this account." }, null, 2), "application/json");
+        if (azReceiptStatusBucket(order) !== "paid") return send(res, 403, JSON.stringify({ ok:false, error:"Receipt locked until payment is verified." }, null, 2), "application/json");
         if (format === "json") return send(res, 200, JSON.stringify({ ok:true, receipt:order }, null, 2), "application/json");
         if (format === "pdf") {
           const pdf = await buildReceiptPdfBuffer(order);
@@ -7931,6 +7933,7 @@ const filePath =
       const orderId = decodeURIComponent(path.basename(pathname));
       const order = await azFindReceiptOrder(orderId);
       if (!order) return send(res, 404, "Receipt not found");
+      if (azReceiptStatusBucket(order) !== "paid") return send(res, 403, "Receipt locked until payment is verified.");
       const rt = cleanPremiumText(parsed.query.rt || parsed.query.token || "", 80);
       if (!azReceiptTokenOk(order, rt)) return send(res, 403, "Receipt token required or invalid.");
       if ((order.billCode || String(order.paymentMethod || "").toLowerCase().includes("toyyib")) && !isPaBmPremiumOrder(order) && !(order.toyyibVerifiedAt || order.paymentVerificationSource === "toyyibpay-api")) {

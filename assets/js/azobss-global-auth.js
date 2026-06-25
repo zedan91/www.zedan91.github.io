@@ -4834,6 +4834,21 @@ document.addEventListener('click',function(e){
     return path.includes('cad-tools') ? 'CAD Tools' : 'Software';
   }
 
+  function isConfirmedShopPurchase(product){
+    const p = product || {};
+    const status = String(p.status || p.paymentStatus || p.orderStatus || '').trim().toLowerCase();
+    const paidStatuses = ['paid','verified','success','successful','completed','complete','settled','approved'];
+    return !!(
+      p.isPaid === true ||
+      p.paymentConfirmed === true ||
+      p.verified === true ||
+      p.toyyibVerifiedAt ||
+      p.paymentVerificationSource === 'toyyibpay-api' ||
+      p.paidAt || p.paidAtMs || p.completedAt || p.completedAtMs ||
+      paidStatuses.includes(status)
+    );
+  }
+
   function normalizeShopPurchase(product){
     const p = product || {};
     const qty = Math.max(1, Number(p.qty || p.quantity || 1) || 1);
@@ -4841,6 +4856,8 @@ document.addEventListener('click',function(e){
     const source = currentShopSource(p);
     const name = String(p.name || p.title || p.productName || 'Premium Item').trim() || 'Premium Item';
     const id = String(p.id || p.productId || name).trim();
+    const confirmed = isConfirmedShopPurchase(p);
+    const rawStatus = String(p.status || p.paymentStatus || '').trim().toLowerCase();
     return {
       id,
       name,
@@ -4850,6 +4867,9 @@ document.addEventListener('click',function(e){
       priceText: p.price ? String(p.price) : formatRM(unit),
       totalPrice: unit * qty,
       orderId: String(p.orderId || p.billCode || p.paymentReference || '').trim(),
+      status: confirmed ? (rawStatus || 'paid') : (rawStatus || 'pending'),
+      isPaid: confirmed,
+      paidAtMs: Number(p.paidAtMs || p.completedAtMs || 0) || (p.paidAt ? Date.parse(String(p.paidAt)) || 0 : 0),
       createdAtMs: Date.now()
     };
   }
@@ -4902,6 +4922,11 @@ document.addEventListener('click',function(e){
 
   window.azobssRecordShopPurchase = async function(product){
     const record = normalizeShopPurchase(product || {});
+    // STRICT FIX 376:
+    // Do not save a Software/CAD item to local My Purchases when user only opens checkout
+    // or creates a ToyyibPay bill. Backend /api/my-purchases is the source of truth.
+    // This prevents unpaid/cancelled checkout from appearing as PAID with a fake receipt.
+    if(!record.isPaid) return record;
     const rows = readMyShopPurchases();
     // Avoid exact duplicate order/bill rows, but keep separate purchases if order id is different/empty.
     if(record.orderId && rows.some(r => String(r.orderId || '') === record.orderId)) return record;
@@ -5018,13 +5043,16 @@ document.addEventListener('click',function(e){
     const p = row || {};
     const amount = Number(String(p.totalPrice || p.saleAmount || p.amount || p.unitPrice || p.price || 0).replace(/[^0-9.]/g,'')) || 0;
     const category = cleanCategory(p.source || p.category || p.type || 'Software');
+    const rawStatus = String(p.status || p.paymentStatus || '').trim().toLowerCase();
+    const paidStatuses = ['paid','verified','success','successful','completed','complete','settled','approved'];
+    const confirmed = !!(p.isPaid === true || p.paymentConfirmed === true || p.verified === true || p.toyyibVerifiedAt || p.paymentVerificationSource === 'toyyibpay-api' || p.paidAt || p.paidAtMs || p.completedAt || p.completedAtMs || paidStatuses.includes(rawStatus));
     return {
       recordId: String(p.orderId || p.billCode || p.id || p.productId || p.name || ('local-' + Math.random().toString(36).slice(2))).trim(),
-      source: 'localHistory', category, status: p.status || 'paid', isPaid: true,
+      source: 'localHistory', category, status: confirmed ? (rawStatus || 'paid') : (rawStatus || 'pending'), isPaid: confirmed,
       productName: String(p.name || p.title || p.productName || 'Premium Item'),
       productId: String(p.productId || p.id || ''),
       amount, amountText: amount ? money(amount) : String(p.priceText || p.price || 'RM0'),
-      username: '', email: '', createdAtMs: Number(p.createdAtMs || Date.now()), paidAtMs: Number(p.paidAtMs || p.createdAtMs || Date.now()),
+      username: '', email: '', createdAtMs: Number(p.createdAtMs || Date.now()), paidAtMs: Number(p.paidAtMs || p.completedAtMs || 0) || (p.paidAt ? Date.parse(String(p.paidAt)) || 0 : 0),
       downloadUsed: Number(p.downloadCount || 0), downloadMax: Number(p.maxDownload || 1), downloadActive: false,
       receiptUrl: '', receiptPdfUrl: '', downloadUrl: ''
     };
@@ -5032,7 +5060,9 @@ document.addEventListener('click',function(e){
   function readLocalShopHistory(){
     try{
       const rows = JSON.parse(localStorage.getItem(SHOP_LOCAL_PREFIX + userKey()) || '[]');
-      return Array.isArray(rows) ? rows.filter(Boolean).map(normalizeLocalShop) : [];
+      // Hide old/local checkout rows unless they contain real paid proof.
+      // Pending ToyyibPay orders come from backend /api/my-purchases instead.
+      return Array.isArray(rows) ? rows.filter(Boolean).map(normalizeLocalShop).filter(r => r && r.isPaid) : [];
     }catch(_){ return []; }
   }
   function normalizePaBmFallback(r){

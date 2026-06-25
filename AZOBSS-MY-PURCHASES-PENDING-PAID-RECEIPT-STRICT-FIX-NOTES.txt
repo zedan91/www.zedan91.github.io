@@ -1,0 +1,20 @@
+AZOBSS Fix 376 - My Purchases pending/paid/receipt strict fix
+
+Issue:
+- Opening ToyyibPay checkout or creating a bill could write a local Software/CAD purchase history row before payment was completed.
+- The local fallback normalized old rows as PAID by default, causing My Purchases to show PAID / Download unavailable even when ToyyibPay was not completed.
+- Pending backend rows also showed View Receipt / PDF Receipt, making incomplete transactions look like they already had receipts.
+
+Fix:
+1. azobssRecordShopPurchase no longer saves local Software/CAD purchase history unless the record has verified paid proof.
+2. Local My Purchases fallback no longer defaults to PAID. Old checkout-only local rows are hidden from Pro view unless paid proof exists.
+3. Backend /api/my-purchases only returns receiptUrl/receiptPdfUrl for paid records.
+4. Backend /api/my-purchases/receipt/:id blocks receipt access until status is paid.
+5. Backend /api/premium/receipt/:orderId also blocks receipt access until status is paid.
+
+Firebase Rules:
+- No update required.
+
+After deploy:
+- Refresh browser / clear site cache if an old local paid row still appears.
+- The false PAID local row can also be removed with Delete in My Purchases.
