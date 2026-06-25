@@ -2439,6 +2439,30 @@ function normalizeItem(item){
 <!-- Old LISP table script removed. CAD Tools search now controls all CAD/LISP items. -->
 
 <script src="/assets/js/azobss-global-auth.js" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+
+
+<!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
+<script id="azobss-expiry-hours-global-helper-fix-374">
+(function(){
+  if(typeof window.azobssExpiryHoursValue374 !== 'function'){
+    window.azobssExpiryHoursValue374 = function(v, fallback){
+      if(fallback === undefined) fallback = 24;
+      if(v === 0 || v === '0') return 0;
+      var text = String(v == null ? '' : v).trim().toLowerCase();
+      if(text && /(never|no\s*expire|no\s*expiry|lifetime|permanent|tidak\s*tamat|tak\s*tamat)/i.test(text)) return 0;
+      var n = Number(v);
+      if(Number.isFinite(n) && n >= 0) return Math.max(0, Math.min(24 * 30, n));
+      return fallback;
+    };
+  }
+  // Important: Software admin script is type=module, so its azExpiryHoursValue() is not global.
+  // Buy Now and RM1 are normal scripts and need a global function.
+  if(typeof window.azExpiryHoursValue !== 'function'){
+    window.azExpiryHoursValue = window.azobssExpiryHoursValue374;
+  }
+})();
+</script>
+
 <script id="azobss-premium-flow-script">
 (function(){
   const API_BASE = (localStorage.getItem('azobssPremiumBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');

@@ -15519,6 +15519,30 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
+
+
+<!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
+<script id="azobss-expiry-hours-global-helper-fix-374">
+(function(){
+  if(typeof window.azobssExpiryHoursValue374 !== 'function'){
+    window.azobssExpiryHoursValue374 = function(v, fallback){
+      if(fallback === undefined) fallback = 24;
+      if(v === 0 || v === '0') return 0;
+      var text = String(v == null ? '' : v).trim().toLowerCase();
+      if(text && /(never|no\s*expire|no\s*expiry|lifetime|permanent|tidak\s*tamat|tak\s*tamat)/i.test(text)) return 0;
+      var n = Number(v);
+      if(Number.isFinite(n) && n >= 0) return Math.max(0, Math.min(24 * 30, n));
+      return fallback;
+    };
+  }
+  // Important: Software admin script is type=module, so its azExpiryHoursValue() is not global.
+  // Buy Now and RM1 are normal scripts and need a global function.
+  if(typeof window.azExpiryHoursValue !== 'function'){
+    window.azExpiryHoursValue = window.azobssExpiryHoursValue374;
+  }
+})();
+</script>
+
 <!-- AZOBSS ADMIN TEST PURCHASE RM1 BUTTON PATCH -->
 <style id="azobss-admin-test-purchase-rm1-style">
 body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}

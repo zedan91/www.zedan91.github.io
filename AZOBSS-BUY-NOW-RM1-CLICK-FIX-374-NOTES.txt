@@ -1,0 +1,19 @@
+AZOBSS BUY NOW + ADMIN TEST RM1 CLICK FIX 374
+
+Punca:
+- /Software-Tools/ ada fungsi azExpiryHoursValue() dalam <script type="module">.
+- Function module tidak expose ke window/global scope.
+- Script Buy Now dan Admin Test RM1 ialah normal script. Bila click, ia panggil azExpiryHoursValue() lalu ReferenceError.
+- Akibatnya click Buy Now/RM1 nampak seperti tiada fungsi dan payment modal tidak terbuka.
+
+Fix:
+- Tambah global helper window.azExpiryHoursValue sebelum premium payment flow.
+- Apply kepada Software-Tools/index.html.
+- Tambah juga helper defensif di index.html dan CAD-Tools-&-Resources/index.html.
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tiada ENV baru untuk fix ini.
+- Secure premium download patch sebelum ini masih perlukan AZOBSS_DOWNLOAD_HASH_SECRET.
