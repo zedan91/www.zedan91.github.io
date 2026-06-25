@@ -4985,6 +4985,7 @@ document.addEventListener('click',function(e){
 
   const state = { rows: [], q: '', category: 'all', status: 'all', loading: false, error: '' };
   const SHOP_LOCAL_PREFIX = 'azobss_shop_purchase_history_';
+  const HIDDEN_LOCAL_PREFIX = 'azobss_my_purchases_hidden_';
 
   function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
   function money(v){ const n = Number(v || 0); return 'RM' + (Number.isFinite(n) ? n.toFixed(2).replace(/\.00$/,'') : '0'); }
@@ -4996,6 +4997,15 @@ document.addEventListener('click',function(e){
       return String(uid || u.uid || u.usernameKey || u.username || u.displayName || 'guest').trim().toLowerCase() || 'guest';
     }catch(_){ return 'guest'; }
   }
+  function rowKey(r){ return String((r && r.source || '') + '::' + (r && (r.recordId || r.productId || r.productName) || '')).toLowerCase(); }
+  function readHiddenKeys(){
+    try{ return new Set(JSON.parse(localStorage.getItem(HIDDEN_LOCAL_PREFIX + userKey()) || '[]').map(v => String(v || '').toLowerCase())); }catch(_){ return new Set(); }
+  }
+  function writeHiddenKeys(set){
+    try{ localStorage.setItem(HIDDEN_LOCAL_PREFIX + userKey(), JSON.stringify(Array.from(set || []))); }catch(_){ }
+  }
+  function isLocallyHidden(r){ return readHiddenKeys().has(rowKey(r)); }
+  function markLocallyHidden(r){ const set = readHiddenKeys(); set.add(rowKey(r)); writeHiddenKeys(set); }
   function cleanCategory(v){
     const s = String(v || '').toLowerCase();
     if(s.includes('cad')) return 'CAD Tools';
@@ -5063,8 +5073,8 @@ document.addEventListener('click',function(e){
       }
       rows = rows.concat(readLocalShopHistory());
       const map = new Map();
-      rows.filter(Boolean).forEach(r => {
-        const key = String((r.source || '') + '::' + (r.recordId || r.productId || r.productName || '')).toLowerCase();
+      rows.filter(Boolean).filter(r => !isLocallyHidden(r)).forEach(r => {
+        const key = rowKey(r);
         if(!map.has(key)) map.set(key, r);
       });
       state.rows = Array.from(map.values()).sort((a,b)=>Number(b.paidAtMs || b.createdAtMs || 0)-Number(a.paidAtMs || a.createdAtMs || 0));
@@ -5082,7 +5092,7 @@ document.addEventListener('click',function(e){
       #azobssMyPurchasesProModal.is-open{display:flex}.az-mypro-card{width:min(980px,100%);max-height:88vh;overflow:auto;background:#07101f;color:#fff;border:1px solid rgba(148,163,184,.30);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.52)}
       .az-mypro-head{position:sticky;top:0;z-index:3;background:rgba(7,16,31,.96);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid rgba(148,163,184,.20)}.az-mypro-head h3{margin:0;font-size:21px;font-weight:950}.az-mypro-close{width:36px;height:36px;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font-size:24px;cursor:pointer}
       .az-mypro-body{padding:14px 16px 18px}.az-mypro-note{margin:0 0 12px;color:#cbd5e1;font-size:13px;line-height:1.45}.az-mypro-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 12px}.az-mypro-kpi{border:1px solid rgba(148,163,184,.22);border-radius:14px;background:rgba(15,23,42,.72);padding:10px}.az-mypro-kpi span{display:block;color:#94a3b8;font-size:11px;font-weight:850;text-transform:uppercase}.az-mypro-kpi strong{display:block;font-size:18px;margin-top:4px}
-      .az-mypro-tools{display:grid;grid-template-columns:1.2fr .8fr .8fr auto;gap:8px;margin:10px 0 12px}.az-mypro-tools input,.az-mypro-tools select{width:100%;border:1px solid rgba(148,163,184,.28);background:rgba(2,6,23,.58);color:#fff;border-radius:12px;padding:10px 11px;font-weight:750}.az-mypro-tools button,.az-mypro-action{border:0;border-radius:12px;padding:10px 12px;background:#2563eb;color:#fff;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px}.az-mypro-action.secondary{background:rgba(148,163,184,.18);color:#e2e8f0}.az-mypro-action.good{background:#16a34a}.az-mypro-action.warn{background:#b45309}.az-mypro-action:disabled{opacity:.55;cursor:wait}
+      .az-mypro-tools{display:grid;grid-template-columns:1.2fr .8fr .8fr auto;gap:8px;margin:10px 0 12px}.az-mypro-tools input,.az-mypro-tools select{width:100%;border:1px solid rgba(148,163,184,.28);background:rgba(2,6,23,.58);color:#fff;border-radius:12px;padding:10px 11px;font-weight:750}.az-mypro-tools button,.az-mypro-action{border:0;border-radius:12px;padding:10px 12px;background:#2563eb;color:#fff;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px}.az-mypro-action.secondary{background:rgba(148,163,184,.18);color:#e2e8f0}.az-mypro-action.good{background:#16a34a}.az-mypro-action.warn{background:#b45309}.az-mypro-action.danger{background:#dc2626;color:#fff}.az-mypro-action:disabled{opacity:.55;cursor:wait}.az-mypro-status-note{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(148,163,184,.24);background:rgba(148,163,184,.12);color:#cbd5e1;border-radius:12px;padding:10px 12px;font-weight:900;font-size:12px}.az-mypro-status-note.ok{background:rgba(22,163,74,.13);border-color:rgba(22,163,74,.28);color:#bbf7d0}.az-mypro-status-note.pending{background:rgba(180,83,9,.13);border-color:rgba(251,191,36,.28);color:#fde68a}.az-mypro-status-note.bad{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.28);color:#fecaca}
       .az-mypro-list{display:grid;gap:10px}.az-mypro-row{border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.72);border-radius:16px;padding:12px}.az-mypro-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.az-mypro-title{min-width:0}.az-mypro-title strong{display:block;font-size:15px}.az-mypro-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;color:#cbd5e1;font-size:12px}.az-mypro-badge{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.24);background:rgba(2,6,23,.45);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;color:#dbeafe}.az-mypro-badge.paid{color:#bbf7d0;background:rgba(22,163,74,.14);border-color:rgba(22,163,74,.28)}.az-mypro-badge.pending{color:#fde68a;background:rgba(180,83,9,.14);border-color:rgba(180,83,9,.28)}.az-mypro-badge.bad{color:#fecaca;background:rgba(220,38,38,.14);border-color:rgba(220,38,38,.28)}.az-mypro-amount{font-size:17px;font-weight:950;color:#fef3c7;white-space:nowrap}.az-mypro-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.az-mypro-empty{padding:18px;text-align:center;color:#cbd5e1;border:1px dashed rgba(148,163,184,.30);border-radius:14px}.az-mypro-error{padding:10px 12px;background:rgba(180,83,9,.16);border:1px solid rgba(251,191,36,.28);border-radius:12px;color:#fde68a;margin-bottom:10px;font-size:13px}
       @media(max-width:720px){.az-mypro-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.az-mypro-tools{grid-template-columns:1fr 1fr}.az-mypro-tools input{grid-column:1/-1}.az-mypro-top{display:block}.az-mypro-amount{margin-top:8px}.az-mypro-card{max-height:92vh}.az-mypro-body{padding:12px}.az-mypro-actions .az-mypro-action{flex:1 1 120px}}
     `;
@@ -5126,10 +5136,30 @@ document.addEventListener('click',function(e){
     const cls = isPaid(r) ? 'paid' : ((st.includes('fail') || st.includes('cancel') || st.includes('reject')) ? 'bad' : 'pending');
     return `<span class="az-mypro-badge ${cls}">${esc(st.toUpperCase())}</span>`;
   }
+  function downloadStateHtml(r, i){
+    const used = Number(r.downloadUsed || 0);
+    const max = Math.max(1, Number(r.downloadMax || 1) || 1);
+    const st = String(r.status || '').toLowerCase();
+    const paid = isPaid(r);
+    const failed = st.includes('fail') || st.includes('cancel') || st.includes('reject');
+    if(r.downloadActive){
+      return `<button class="az-mypro-action good" data-mypro-action="download" data-index="${i}">Download ${used}/${max}</button>`;
+    }
+    if(!paid){
+      if(failed) return `<span class="az-mypro-status-note bad">Payment not completed</span>`;
+      return `<span class="az-mypro-status-note pending">Pending payment — download will appear after verified</span>`;
+    }
+    if(used >= max){
+      return `<span class="az-mypro-status-note ok">Downloaded ${used}/${max}</span>`;
+    }
+    if(r.downloadExpired){
+      return `<span class="az-mypro-status-note bad">Download expired</span>`;
+    }
+    return `<span class="az-mypro-status-note bad">Download unavailable</span>`;
+  }
   function rowHtml(r, i){
-    const dlText = r.downloadActive ? `Download ${Number(r.downloadUsed||0)}/${Number(r.downloadMax||1)}` : (isPaid(r) ? `Download ${Number(r.downloadUsed||0)}/${Number(r.downloadMax||1)}` : 'Download locked');
-    const exp = r.downloadExpiresAtMs ? `Expiry: ${msDate(r.downloadExpiresAtMs)}` : '';
-    return `<div class="az-mypro-row" data-row-index="${i}"><div class="az-mypro-top"><div class="az-mypro-title"><strong>${esc(r.productName || 'AZOBSS Digital Product')}</strong><div class="az-mypro-meta"><span class="az-mypro-badge">${esc(cleanCategory(r.category))}</span>${statusBadge(r)}${r.productId?`<span class="az-mypro-badge">ID: ${esc(r.productId)}</span>`:''}${r.state?`<span class="az-mypro-badge">${esc(r.state)}</span>`:''}<span class="az-mypro-badge">${esc(r.recordId || '-')}</span><span class="az-mypro-badge">${esc(msDate(r.paidAtMs || r.createdAtMs))}</span>${exp?`<span class="az-mypro-badge">${esc(exp)}</span>`:''}</div></div><div class="az-mypro-amount">${esc(r.amountText || money(r.amount))}</div></div><div class="az-mypro-actions">${r.receiptUrl?`<button class="az-mypro-action secondary" data-mypro-action="receipt" data-index="${i}">View Receipt</button><button class="az-mypro-action secondary" data-mypro-action="pdf" data-index="${i}">PDF Receipt</button>`:''}${r.downloadActive?`<button class="az-mypro-action good" data-mypro-action="download" data-index="${i}">${esc(dlText)}</button>`:`<button class="az-mypro-action secondary" disabled>${esc(dlText)}</button>`}<button class="az-mypro-action warn" data-mypro-action="support" data-index="${i}">Contact Admin</button></div></div>`;
+    const exp = (isPaid(r) && r.downloadExpiresAtMs) ? `Expiry: ${msDate(r.downloadExpiresAtMs)}` : '';
+    return `<div class="az-mypro-row" data-row-index="${i}"><div class="az-mypro-top"><div class="az-mypro-title"><strong>${esc(r.productName || 'AZOBSS Digital Product')}</strong><div class="az-mypro-meta"><span class="az-mypro-badge">${esc(cleanCategory(r.category))}</span>${statusBadge(r)}${r.productId?`<span class="az-mypro-badge">ID: ${esc(r.productId)}</span>`:''}${r.state?`<span class="az-mypro-badge">${esc(r.state)}</span>`:''}<span class="az-mypro-badge">${esc(r.recordId || '-')}</span><span class="az-mypro-badge">${esc(msDate(r.paidAtMs || r.createdAtMs))}</span>${exp?`<span class="az-mypro-badge">${esc(exp)}</span>`:''}</div></div><div class="az-mypro-amount">${esc(r.amountText || money(r.amount))}</div></div><div class="az-mypro-actions">${r.receiptUrl?`<button class="az-mypro-action secondary" data-mypro-action="receipt" data-index="${i}">View Receipt</button><button class="az-mypro-action secondary" data-mypro-action="pdf" data-index="${i}">PDF Receipt</button>`:''}${downloadStateHtml(r, i)}<button class="az-mypro-action warn" data-mypro-action="support" data-index="${i}">Contact Admin</button><button class="az-mypro-action danger" data-mypro-action="delete" data-index="${i}">Delete</button></div></div>`;
   }
   function render(){
     ensureModal();
@@ -5164,6 +5194,26 @@ document.addEventListener('click',function(e){
       setTimeout(()=>URL.revokeObjectURL(url), 60000);
     }
   }
+  async function softDeletePurchase(row){
+    if(!row) return;
+    if(!confirm('Delete this record from My Purchases? This only removes it from your purchase list view.')) return;
+    markLocallyHidden(row);
+    state.rows = state.rows.filter(x => rowKey(x) !== rowKey(row));
+    render();
+    if(row.source !== 'localHistory' && row.recordId){
+      try{
+        const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+        const headers = await tokenHeader();
+        await fetch(base + '/api/my-purchases/delete/' + encodeURIComponent(row.recordId) + '?source=' + encodeURIComponent(row.source || ''), { method:'DELETE', headers, cache:'no-store' });
+      }catch(err){ console.warn('AZOBSS My Purchases cloud delete skipped:', err); }
+    }else{
+      try{
+        const rows = JSON.parse(localStorage.getItem(SHOP_LOCAL_PREFIX + userKey()) || '[]');
+        const next = Array.isArray(rows) ? rows.filter(x => rowKey(normalizeLocalShop(x)) !== rowKey(row)) : [];
+        localStorage.setItem(SHOP_LOCAL_PREFIX + userKey(), JSON.stringify(next));
+      }catch(_){ }
+    }
+  }
   async function handleActionClick(e){
     const btn = e.target && e.target.closest ? e.target.closest('[data-mypro-action]') : null;
     if(!btn) return;
@@ -5182,6 +5232,10 @@ document.addEventListener('click',function(e){
           await azobssClientControlledDownload(azobssPurchaseDownloadPayload(row.raw), btn, e);
           setTimeout(loadRows, 1400);
         }else if(row.downloadUrl){ window.open(row.downloadUrl, '_blank', 'noopener'); }
+      }else if(action === 'delete'){
+        btn.disabled = false; btn.textContent = old;
+        await softDeletePurchase(row);
+        return;
       }else if(action === 'support'){
         try{
           const chat = document.querySelector('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"],[aria-label="Contact Admin / Support"]');

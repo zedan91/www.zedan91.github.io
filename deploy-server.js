@@ -3657,6 +3657,83 @@ function azMyPurchasesBelongsToIdentity(row = {}, identity = {}) {
   const vals = azMyPurchasesRecordValues(row);
   return vals.some(v => needles.has(v));
 }
+function azMyPurchasesHiddenKeys(identity = {}) {
+  return Array.from(azMyPurchasesIdentityNeedles(identity));
+}
+function azMyPurchasesIsHiddenForIdentity(row = {}, identity = {}) {
+  if (!row || !identity || !identity.uid || identity.isAdmin) return false;
+  const keys = azMyPurchasesHiddenKeys(identity);
+  if (!keys.length) return false;
+  const hidden = []
+    .concat(Array.isArray(row.myPurchasesDeletedForKeys) ? row.myPurchasesDeletedForKeys : [])
+    .concat(Array.isArray(row.myPurchasesHiddenForKeys) ? row.myPurchasesHiddenForKeys : [])
+    .concat(Array.isArray(row.hiddenFor) ? row.hiddenFor : [])
+    .concat(Array.isArray(row.deletedFor) ? row.deletedFor : []);
+  const hiddenSet = new Set(hidden.map(v => String(v || "").trim().toLowerCase()).filter(Boolean));
+  return keys.some(k => hiddenSet.has(k));
+}
+async function azSoftDeleteMyPurchaseForIdentity(identifier = "", source = "", identity = {}) {
+  const id = cleanPremiumText(identifier || "", 180);
+  if (!id || !identity || !identity.uid) return { ok:false, error:"Missing purchase id." };
+  const src = String(source || "").toLowerCase();
+  const keys = azMyPurchasesHiddenKeys(identity);
+  const db = getAzobssBackendDb();
+  let hidden = false;
+
+  async function markDoc(col, docId, data) {
+    if (!db || !docId || !data || !azMyPurchasesBelongsToIdentity(data, identity)) return false;
+    try {
+      await db.collection(col).doc(docId).set({
+        myPurchasesDeletedForKeys: firebaseAdmin.firestore.FieldValue.arrayUnion(...keys),
+        myPurchasesDeletedAtMs: Date.now(),
+        myPurchasesDeletedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+      }, { merge:true });
+      return true;
+    } catch (_) { return false; }
+  }
+
+  if (db) {
+    const cols = src.includes("premium") ? ["premiumOrders"] : src.includes("purchase") ? ["purchaseLogs"] : ["premiumOrders", "purchaseLogs"];
+    for (const col of cols) {
+      try {
+        const direct = await db.collection(col).doc(id).get();
+        if (direct.exists && await markDoc(col, direct.id, direct.data() || {})) hidden = true;
+      } catch (_) {}
+      if (hidden) break;
+      for (const field of ["orderId","billCode","paymentReference","transactionId","txnId","itemCode","productId"]) {
+        try {
+          const snap = await db.collection(col).where(field, "==", id).limit(5).get();
+          for (const d of snap.docs) {
+            if (await markDoc(col, d.id, d.data() || {})) hidden = true;
+          }
+        } catch (_) {}
+        if (hidden) break;
+      }
+      if (hidden) break;
+    }
+  }
+
+  if (src.includes("premium") || !src) {
+    try {
+      const orders = readPremiumOrders();
+      let changed = false;
+      const next = orders.map(o => {
+        const match = [o.orderId, o.billCode, o.paymentReference, o.transactionId, o.txnId, o.productId, o.id].some(v => String(v || "") === id);
+        if (match && azMyPurchasesBelongsToIdentity(o, identity)) {
+          const list = new Set([].concat(Array.isArray(o.myPurchasesDeletedForKeys) ? o.myPurchasesDeletedForKeys : []).map(v => String(v || "").trim().toLowerCase()).filter(Boolean));
+          keys.forEach(k => list.add(k));
+          changed = true; hidden = true;
+          return { ...o, myPurchasesDeletedForKeys:Array.from(list), myPurchasesDeletedAtMs:Date.now(), updatedAtMs:Date.now() };
+        }
+        return o;
+      });
+      if (changed) writePremiumOrders(next);
+    } catch (_) {}
+  }
+
+  return { ok:true, hidden, localFallback:true };
+}
 function azMyPurchasesMs(row = {}) {
   const direct = Number(row.paidAtMs || row.completedAtMs || row.updatedAtMs || row.createdAtMs || row.createdMs || row.timestampMs || 0);
   if (Number.isFinite(direct) && direct > 0) return direct;
@@ -3758,6 +3835,7 @@ async function azLoadMyPurchasesForIdentity(req, identity = {}, limitRows = 300)
   const db = getAzobssBackendDb();
   const push = (row, source, docId) => {
     if (!row || !azMyPurchasesBelongsToIdentity(row, identity)) return;
+    if (azMyPurchasesIsHiddenForIdentity(row, identity)) return;
     const pub = azMyPurchasesPublicRow(row, source, docId, req);
     const key = `${pub.source}:${pub.recordId || docId || rows.length}`.toLowerCase();
     if (seen.has(key)) return;
@@ -5237,6 +5315,7 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
     if (pathname === "/api/my-purchases" && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-read", 80, 10 * 60 * 1000)) return;
+    if (pathname.startsWith("/api/my-purchases/delete/") && req.method === "DELETE" && azRateLimitOrSend(req, res, "my-purchases-delete", 40, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/my-purchases/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-receipt", 60, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats" && req.method === "GET" && azRateLimitOrSend(req, res, "software-stats-read", 240, 60 * 1000)) return;
     if (pathname === "/api/software-stats/download" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-download", 60, 10 * 60 * 1000)) return;
@@ -5531,6 +5610,21 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({ ok:true, count:records.length, records }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err), records:[] }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname.startsWith("/api/my-purchases/delete/") && req.method === "DELETE") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Login token required to delete a My Purchases record." }, null, 2), "application/json");
+        }
+        const purchaseId = decodeURIComponent(path.basename(pathname));
+        const source = cleanPremiumText(parsed.query.source || "", 80);
+        const result = await azSoftDeleteMyPurchaseForIdentity(purchaseId, source, identity);
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
     }
 

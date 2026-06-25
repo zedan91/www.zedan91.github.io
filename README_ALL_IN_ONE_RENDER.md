@@ -238,3 +238,11 @@ Changes:
 Firebase Rules: not required.
 Render backend deploy: not required.
 Deploy GitHub Pages only.
+
+
+## PATCH 369 - My Purchases Delete + Status Text Fix
+- Added Delete button in My Purchases Pro.
+- Pending records no longer show Download locked.
+- Used Gmail download link now shows Downloaded/expired wording on card.
+- Backend soft-delete endpoint added, so Render deploy is required.
+- No Firebase Rules update required.
