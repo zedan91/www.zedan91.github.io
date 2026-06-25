@@ -1,0 +1,29 @@
+AZOBSS IDM Handoff 403 Fix
+Patch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_IDM_HANDOFF_20260626
+
+Problem:
+- IDM shows HTTP/1.1 403 Forbidden after browser starts the first download request.
+- Browser and IDM can use different headers/User-Agent and sometimes the browser's first non-Range request is marked as completed before IDM takes over.
+
+Fix:
+- Download session is no longer hard-blocked by clientKey mismatch.
+- Active session can be reused/reopened within the short TTL for IDM handoff.
+- Non-Range browser request no longer closes the session immediately.
+- Session remains active until TTL so IDM Range/resume requests can continue.
+- The real files.azobss.com link is still not redirected/exposed to user/IDM.
+
+Files patched:
+- deploy-server.js
+- backend/server.js
+
+Render ENV:
+- No new ENV needed.
+- Keep AZOBSS_DOWNLOAD_HASH_SECRET.
+- Keep AZOBSS_DOWNLOAD_SESSION_TTL_MS=900000 or higher if file is large.
+
+Firebase Rules:
+- No update required.
+
+Testing note:
+- After deploy, generate a fresh Admin Test RM1 link/token and test again.
+- Old failed sessions may already be expired/used, so do not rely on the same failed link.

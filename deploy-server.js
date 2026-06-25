@@ -3602,7 +3602,7 @@ function updatePremiumToken(token, updater) {
 // AZOBSS PATCH 373: Secure premium download session stream.
 // Goal: IDM/browser must never receive the real premium file URL.
 // A one-time token creates ONE short-lived backend session; Range/resume requests are allowed only inside that session.
-const AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH = "AZOBSS_SECURE_PREMIUM_DOWNLOAD_20260626";
+const AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH = "AZOBSS_SECURE_PREMIUM_DOWNLOAD_IDM_HANDOFF_20260626";
 function azPremiumSessionTtlMs() {
   const n = Number(process.env.AZOBSS_DOWNLOAD_SESSION_TTL_MS || 15 * 60 * 1000);
   return Number.isFinite(n) && n >= 60 * 1000 ? Math.min(n, 6 * 60 * 60 * 1000) : 15 * 60 * 1000;
@@ -3625,8 +3625,8 @@ function azPremiumClientIp(req) {
   return fwd || String(req.socket && req.socket.remoteAddress || "unknown");
 }
 function azPremiumClientKey(req) {
-  // IP-only binding is intentional: IDM/browser extensions often use a different User-Agent than Chrome/Edge.
-  // Binding to User-Agent would break valid IDM downloads after the POST confirmation.
+  // Audit-only client key. Do not hard-block session by User-Agent/IP here.
+  // IDM often starts after the browser request and can present different headers/proxy behavior.
   return azHashDownloadValue(azPremiumClientIp(req));
 }
 function azSafeDownloadFilename(value = "azobss-download.bin") {
@@ -3745,12 +3745,17 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
   const activeExpiresAt = Number(saved.activeDownloadSessionExpiresAt || 0) || 0;
   if (activeSessionId && activeExpiresAt > now) {
     const active = await azFindPremiumSessionDeep(activeSessionId);
-    if (active && active.status === "active" && active.clientKey === clientKey && Number(active.expiresAt || 0) > now) {
-      updatePremiumDownloadSession(activeSessionId, { lastSeenAt: new Date(now).toISOString(), lastSeenAtMs: now, tokenRouteHits: Number(active.tokenRouteHits || 0) + 1 });
+    if (active && ["active", "completed"].includes(String(active.status || "active")) && Number(active.expiresAt || 0) > now) {
+      // IDM handoff fix: return/reopen the same session even if the browser's first request marked it completed.
+      // The sessionId itself is a high-entropy temporary secret and expires shortly.
+      updatePremiumDownloadSession(activeSessionId, {
+        status: "active",
+        lastSeenAt: new Date(now).toISOString(),
+        lastSeenAtMs: now,
+        tokenRouteHits: Number(active.tokenRouteHits || 0) + 1,
+        idmHandoffReuse: true
+      });
       return activeSessionId;
-    }
-    if (active && active.status === "active" && Number(active.expiresAt || 0) > now && active.clientKey !== clientKey) {
-      throw Object.assign(new Error("Download session already started on another device/browser. Please request a new token from admin if needed."), { statusCode: 409 });
     }
   }
   if (azobssTokenIsExpired(saved, now) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
@@ -3904,25 +3909,31 @@ async function azHandlePremiumDownloadSession(req, res, sessionId) {
   const now = Date.now();
   let session = await azFindPremiumSessionDeep(cleanSessionId);
   if (!session) return send(res, 404, "Download session not found.");
-  if (session.status !== "active" || Number(session.expiresAt || 0) <= now) {
+  const sessionStatus = String(session.status || "active");
+  if (!["active", "completed"].includes(sessionStatus) || Number(session.expiresAt || 0) <= now) {
     updatePremiumDownloadSession(cleanSessionId, { status: Number(session.expiresAt || 0) <= now ? "expired" : session.status || "closed", expiredAt: new Date(now).toISOString(), expiredAtMs: now });
     return send(res, 410, "Download session expired. Please request a new token from admin if needed.");
   }
+  if (sessionStatus === "completed") updatePremiumDownloadSession(cleanSessionId, { status: "active", reopenedForIdmAt: new Date(now).toISOString(), reopenedForIdmAtMs: now });
   const clientKey = azPremiumClientKey(req);
-  if (session.clientKey && session.clientKey !== clientKey) return send(res, 403, "This download session belongs to another network/device.");
+  const clientKeyChanged = Boolean(session.clientKey && session.clientKey !== clientKey);
+  // IDM/browser handoff: do not 403 just because the second downloader uses different headers/IP key.
+  // Security relies on short TTL + random sessionId + token cannot create a new session after TTL.
   updatePremiumDownloadSession(cleanSessionId, {
     lastSeenAt: new Date(now).toISOString(),
     lastSeenAtMs: now,
     requestCount: Number(session.requestCount || 0) + 1,
     rangeRequestCount: Number(session.rangeRequestCount || 0) + (req.headers.range ? 1 : 0),
-    lastRange: req.headers.range ? String(req.headers.range).slice(0, 120) : ""
+    lastRange: req.headers.range ? String(req.headers.range).slice(0, 120) : "",
+    clientKeyChangedDuringSession: clientKeyChanged
   });
   session = { ...session, requestCount: Number(session.requestCount || 0) + 1 };
   try {
     if (session.sourceType === "local" || String(session.sourceTarget || "").startsWith("/")) await azStreamLocalPremiumSession(req, res, session);
     else await azStreamRemotePremiumSession(req, res, session);
-    // For normal single-stream browser download, close after complete. For Range/IDM, keep alive until TTL.
-    if (!req.headers.range) updatePremiumDownloadSession(cleanSessionId, { status: "completed", completedAt: new Date().toISOString(), completedAtMs: Date.now() });
+    // IDM handoff fix: do NOT close the session after the browser's first non-Range request.
+    // IDM may take over immediately after that first request. Keep the session active until TTL.
+    if (!req.headers.range) updatePremiumDownloadSession(cleanSessionId, { lastFullRequestCompletedAt: new Date().toISOString(), lastFullRequestCompletedAtMs: Date.now() });
   } catch (err) {
     console.error("AZOBSS secure premium session stream failed:", err && (err.stack || err.message || err));
     updatePremiumDownloadSession(cleanSessionId, { lastError: err && err.message ? err.message : String(err), lastErrorAt: new Date().toISOString(), lastErrorAtMs: Date.now() });
