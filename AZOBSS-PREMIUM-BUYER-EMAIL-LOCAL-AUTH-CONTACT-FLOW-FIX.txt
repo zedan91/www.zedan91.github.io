@@ -1,0 +1,22 @@
+AZOBSS Premium Buyer Email Local/Auth/Contact Flow Fix (371)
+
+Purpose:
+- Premium Software/CAD checkout and email delivery now use a safer buyer email resolver.
+
+Flow:
+1. If email is a real/non-local email, use email.
+2. If email is an AZOBSS local alias such as @azobss.local, try authEmail first.
+3. If authEmail is missing or still not usable, use contactEmail.
+4. .local addresses are kept only as last fallback because they cannot receive customer email.
+
+Touched:
+- deploy-server.js
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+
+Deploy:
+- Render backend deploy required because deploy-server.js changed.
+- GitHub Pages deploy required because Software/CAD checkout payload changed.
+
+Firebase Rules:
+- No update required.

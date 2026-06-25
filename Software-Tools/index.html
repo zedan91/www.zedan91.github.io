@@ -4823,7 +4823,21 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     }
     return {};
   }
-  function userEmail(){ const u=storedUser(); return String(u.email || u.realEmail || u.authEmail || '').trim(); }
+  function isAzobssLocalEmail(v){ var email=String(v||'').trim().toLowerCase(); return !!email && (email.endsWith('@azobss.local') || email.endsWith('.local')); }
+  function pickBuyerEmailFromUser(u){
+    u=u||{};
+    var email=String(u.email||'').trim();
+    var authEmail=String(u.authEmail||u.loginEmail||'').trim();
+    var contactEmail=String(u.contactEmail||u.realEmail||u.emailAddress||'').trim();
+    if(email && !isAzobssLocalEmail(email)) return email;
+    if(isAzobssLocalEmail(email)){
+      if(authEmail && !isAzobssLocalEmail(authEmail)) return authEmail;
+      if(contactEmail && !isAzobssLocalEmail(contactEmail)) return contactEmail;
+      return authEmail || contactEmail || email;
+    }
+    return email || authEmail || contactEmail || '';
+  }
+  function userEmail(){ const u=storedUser(); return String(pickBuyerEmailFromUser(u)).trim(); }
   function isLoggedIn(){ return !!(userEmail() || sessionStorage.getItem('azobssLoggedIn')==='1' || localStorage.getItem('azobssLoggedIn')==='1'); }
   function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim()); }
   function buyerEmail(){ return userEmail() || String(refInput?.value || '').trim(); }
@@ -4963,9 +4977,11 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
           premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
           secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
           downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink,
-          user: {...storedUser(), email},
+          user: {...storedUser(), email, resolvedBuyerEmail: email},
           buyerEmail: email,
           email: email,
+          authEmail: String(storedUser().authEmail || storedUser().loginEmail || '').trim(),
+          contactEmail: String(storedUser().contactEmail || storedUser().realEmail || storedUser().emailAddress || '').trim(),
           buyerPhone: '01135600723',
           returnUrl: returnUrl
         })

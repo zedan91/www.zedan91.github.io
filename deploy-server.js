@@ -2155,7 +2155,7 @@ async function maybeSendDownloadEmail(order, req) {
         emailSendStartedAt: ""
       });
     }
-    const email = cleanPremiumText(current?.user?.email || current?.buyerEmail || current?.email || current?.billEmail || "", 180);
+    const email = cleanPremiumText(azPickPremiumBuyerEmailFromOrder(current), 180);
     const realDownloadLink = cleanPremiumUrl(
       current.downloadLink ||
       current.premiumDownloadFileLink ||
@@ -2912,12 +2912,61 @@ function cleanPremiumUrl(value) {
   return "";
 }
 
+function azIsLocalEmail(value) {
+  const email = String(value || "").trim().toLowerCase();
+  return !!email && (email.endsWith("@azobss.local") || email.endsWith(".local"));
+}
+function azValidEmailLike(value) {
+  const email = String(value || "").trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+function azPickPremiumBuyerEmail(data = {}) {
+  const user = (data.user && typeof data.user === "object") ? data.user : {};
+  const email = cleanPremiumText(user.email || data.buyerEmail || data.email || data.customerEmail || data.billEmail || "", 180);
+  const authEmail = cleanPremiumText(user.authEmail || data.authEmail || user.loginEmail || data.loginEmail || "", 180);
+  const contactEmail = cleanPremiumText(user.contactEmail || data.contactEmail || user.realEmail || data.realEmail || user.emailAddress || data.emailAddress || "", 180);
+
+  // Requested AZOBSS priority:
+  // 1) Use normal email if it is a real email.
+  // 2) If email is an AZOBSS local/login alias, try authEmail.
+  // 3) If authEmail is missing/unusable, use contactEmail.
+  // Safety: .local addresses are kept only as a last fallback because they cannot receive customer emails.
+  if (azValidEmailLike(email) && !azIsLocalEmail(email)) return email;
+  if (azIsLocalEmail(email)) {
+    if (azValidEmailLike(authEmail) && !azIsLocalEmail(authEmail)) return authEmail;
+    if (azValidEmailLike(contactEmail) && !azIsLocalEmail(contactEmail)) return contactEmail;
+    if (azValidEmailLike(authEmail)) return authEmail;
+    if (azValidEmailLike(contactEmail)) return contactEmail;
+    return email;
+  }
+  if (azValidEmailLike(email)) return email;
+  if (azValidEmailLike(authEmail) && !azIsLocalEmail(authEmail)) return authEmail;
+  if (azValidEmailLike(contactEmail) && !azIsLocalEmail(contactEmail)) return contactEmail;
+  return authEmail || contactEmail || email || "";
+}
+function azPickPremiumBuyerEmailFromOrder(order = {}) {
+  const user = (order.user && typeof order.user === "object") ? order.user : {};
+  return azPickPremiumBuyerEmail({
+    user,
+    buyerEmail: order.buyerEmail,
+    email: order.email,
+    customerEmail: order.customerEmail,
+    billEmail: order.billEmail,
+    contactEmail: order.contactEmail || order.receiptBuyerEmail,
+    authEmail: order.authEmail
+  });
+}
+
 function getPremiumUser(data) {
   const user = data.user || {};
+  const email = azPickPremiumBuyerEmail(data);
   return {
     uid: cleanPremiumText(user.uid || data.uid, 120),
     username: cleanPremiumText(user.username || user.usernameKey || data.username, 80),
-    email: cleanPremiumText(user.email || data.buyerEmail || data.email || data.customerEmail || data.billEmail, 160),
+    email: cleanPremiumText(email, 160),
+    authEmail: cleanPremiumText(user.authEmail || data.authEmail || user.loginEmail || data.loginEmail || "", 160),
+    contactEmail: cleanPremiumText(user.contactEmail || data.contactEmail || user.realEmail || data.realEmail || user.emailAddress || data.emailAddress || "", 160),
+    rawEmail: cleanPremiumText(user.email || data.buyerEmail || data.email || data.customerEmail || data.billEmail || "", 160),
     phone: cleanPremiumText(user.phone || data.phone || data.buyerPhone || '01135600723', 40)
   };
 }
@@ -3521,7 +3570,7 @@ function azReceiptBuyerUsername(order = {}) {
 }
 function azReceiptBuyerEmail(order = {}) {
   const user = order.user && typeof order.user === "object" ? order.user : {};
-  return cleanPremiumText(user.email || order.email || order.buyerEmail || order.billEmail || "", 180);
+  return cleanPremiumText(azPickPremiumBuyerEmailFromOrder(order), 180);
 }
 function azReceiptDate(order = {}) {
   const raw = order.paidAt || order.completedAt || order.updatedAt || order.createdAt || order.created_at || "";
@@ -5588,7 +5637,7 @@ async function handler(req, res) {
         }
         if (!order.downloadToken) order = makeDownloadForOrder(order);
         if (!order.emailSentAt) order = await maybeSendDownloadEmail(order, req);
-        return send(res, 200, JSON.stringify({ ...paidPayload(order, req), verified:true, paymentConfirmed:true, emailSent: !!order.emailSentAt, emailError: order.emailError || null, emailTo: order.emailTo || order.user?.email || order.email || null }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ...paidPayload(order, req), verified:true, paymentConfirmed:true, emailSent: !!order.emailSentAt, emailError: order.emailError || null, emailTo: order.emailTo || azPickPremiumBuyerEmailFromOrder(order) || null }, null, 2), "application/json");
       }
       return send(res, 200, JSON.stringify({ ok:true, paid:false, verified:false, paymentConfirmed:false, orderId:order.orderId, status:order.status || "pending", billCode:order.billCode, paymentUrl:order.paymentUrl }, null, 2), "application/json");
     }
