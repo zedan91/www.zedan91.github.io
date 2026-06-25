@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 353: hide floating Radio pill while panel is open; keep page-nav restore behavior.
+   Patch 355: replace X close button with clear Minimize control; panel minimize keeps radio playing.
 */
 (function(){
   'use strict';
@@ -145,7 +145,7 @@
       .az-radio-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;}
       .az-radio-title{font-size:14px;font-weight:1000;color:#fff;line-height:1.15;}
       .az-radio-sub{font-size:10.5px;color:#94a3b8;font-weight:800;margin-top:2px;}
-      .az-radio-x{width:28px;height:28px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:#0f172a;color:#e5e7eb;font-weight:900;cursor:pointer;}
+      .az-radio-x{min-width:82px;height:28px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:#0f172a;color:#e5e7eb;font-weight:900;cursor:pointer;padding:0 9px;font-size:11.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;}
       .az-radio-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0;}
       .az-radio-search{width:100%;border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#020617;color:#f8fafc;min-height:34px;padding:0 10px;font-size:12.5px;font-weight:800;outline:none;margin:7px 0 8px;}
       .az-radio-search::placeholder{color:#64748b;}
@@ -189,7 +189,7 @@
       <div class="az-radio-panel" id="azRadioPanel" role="dialog" aria-label="AZOBSS Radio Player">
         <div class="az-radio-head">
           <div><div class="az-radio-title">AZOBSS Radio</div><div class="az-radio-sub">Mini online radio player</div></div>
-          <button type="button" class="az-radio-x" id="azRadioClose" aria-label="Close radio player">×</button>
+          <button type="button" class="az-radio-x" id="azRadioClose" aria-label="Minimize radio panel" title="Minimize radio panel">− Minimize</button>
         </div>
         <input class="az-radio-search" id="azRadioSearch" type="search" placeholder="Search radio channel... ERA, Hot FM, IKIM, Sabah FM" autocomplete="off">
         <div class="az-radio-row">
@@ -308,7 +308,7 @@
     function setOpen(v){
       root.classList.toggle('is-open', !!v);
       toggle.setAttribute('aria-expanded', v?'true':'false');
-      // Do not pause/reload audio when the radio tab is opened/closed.
+      // Do not pause/reload audio when the radio panel is minimized/opened.
       // Only Stop button should stop playback.
       if(!audio.paused && audio.src){ root.classList.add('is-playing'); }
     }

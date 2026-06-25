@@ -153,7 +153,13 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 
 ## Patch (354) - Radio All Pages Install
 - Added AZOBSS Radio Player to every HTML page, including Affiliate Shop, Lucky Draw, PA/BM, Likes, Mini Tools, Docs, Admin and Staff.
-- Cache bust updated to `azobss-radio-player.js?v=354`.
+- Cache bust updated to `azobss-radio-player.js?v=355`.
 - No Firebase Rules update required.
 - No Render deploy required.
 
+
+
+## Patch 355 - Radio Minimize Button
+- Replaced radio panel X button with "− Minimize" to avoid user confusion.
+- Minimize hides the panel but keeps radio playing; Stop remains the only stop control.
+- Cache-bust updated to `azobss-radio-player.js?v=355`.
