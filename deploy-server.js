@@ -3,12 +3,36 @@ function azobssNum(v, fallback){
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
+const AZOBSS_NEVER_EXPIRE_MS = 100 * 365 * 24 * 60 * 60 * 1000;
+function azobssExpiryValueIsNever(value){
+  if (value === 0 || value === '0') return true;
+  const text = String(value ?? '').trim().toLowerCase();
+  return !!text && /(never|no\s*expire|no\s*expiry|lifetime|permanent|tidak\s*tamat|tak\s*tamat)/i.test(text);
+}
 function azobssExpiryHoursFromOrder(order){
-  const direct = azobssNum(order && (order.expiryHours || order.linkExpiryHours || order.downloadExpiryHours), 0);
-  if(direct) return direct;
-  const days = azobssNum(order && (order.expiryDays || order.linkExpiryDays || order.downloadExpiryDays), 0);
-  if(days) return days * 24;
-  const text = String(order && (order.linkExpiry || order.expiry || order.expiryLabel || '') || '').toLowerCase();
+  const product = order && order.product || {};
+  const hourCandidates = [
+    product.expiryHours, product.linkExpiryHours, product.downloadExpiryHours,
+    order && order.expiryHours, order && order.linkExpiryHours, order && order.downloadExpiryHours
+  ];
+  for (const value of hourCandidates) {
+    if (value === undefined || value === null || value === '') continue;
+    if (azobssExpiryValueIsNever(value)) return 0;
+    const n = Number(value);
+    if (Number.isFinite(n)) return Math.max(0, Math.min(24 * 30, n));
+  }
+  const dayCandidates = [
+    product.expiryDays, product.linkExpiryDays, product.downloadExpiryDays,
+    order && order.expiryDays, order && order.linkExpiryDays, order && order.downloadExpiryDays
+  ];
+  for (const value of dayCandidates) {
+    if (value === undefined || value === null || value === '') continue;
+    if (azobssExpiryValueIsNever(value)) return 0;
+    const n = Number(value);
+    if (Number.isFinite(n) && n >= 0) return Math.max(0, Math.min(30, n)) * 24;
+  }
+  const text = String((product.linkExpiry || product.expiry || product.expiryLabel || order && (order.linkExpiry || order.expiry || order.expiryLabel) || '') || '').toLowerCase();
+  if (azobssExpiryValueIsNever(text)) return 0;
   const m = text.match(/(\d+(?:\.\d+)?)\s*(day|days|hari|hour|hours|jam)/i);
   if(m){
     const value = Number(m[1]);
@@ -19,8 +43,29 @@ function azobssExpiryHoursFromOrder(order){
   }
   return 24;
 }
+function azobssTokenExpiresAtMsFromOrder(order, now = Date.now()){
+  const expiryHours = azobssExpiryHoursFromOrder(order || {});
+  if (expiryHours === 0) return now + AZOBSS_NEVER_EXPIRE_MS;
+  return now + Math.max(1, Math.min(24 * 30, Number(expiryHours) || 24)) * 60 * 60 * 1000;
+}
+function azobssExpiryLabelForOrder(order){
+  if (azobssExpiryHoursFromOrder(order || {}) === 0) return 'Never expire';
+  if (order && order.tokenExpiresAt) {
+    try { return new Date(order.tokenExpiresAt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' }); } catch (_) {}
+  }
+  return '24 jam';
+}
 function azobssDownloadLimitFromOrder(order){
-  return azobssNum(order && (order.downloadLimit || order.maxDownloads || order.maxDownload || order.download_limit), 1);
+  const product = order && order.product || {};
+  const candidates = [
+    product.downloadLimit, product.maxDownloads, product.maxDownload, product.download_limit,
+    order && order.downloadLimit, order && order.maxDownloads, order && order.maxDownload, order && order.download_limit
+  ];
+  for (const value of candidates) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return Math.max(1, Math.min(20, n));
+  }
+  return 1;
 }
 
 
@@ -1988,9 +2033,11 @@ async function azSendEmailWithOptionalPdf({ to, subject, html, text, pdfBuffer, 
   });
 }
 function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
-  const expires = order.tokenExpiresAt ? new Date(order.tokenExpiresAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "24 jam";
+  const neverExpire = azobssExpiryHoursFromOrder(order || {}) === 0;
+  const expires = azobssExpiryLabelForOrder(order || {});
+  const expirySentence = neverExpire ? "This link is set to Never expire, but download limit still applies." : `If it is not used, the link will expire on ${expires}.`;
   const receiptPdfUrl = receiptUrl + (receiptUrl.includes("?") ? "&" : "?") + "format=pdf";
-  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download count is only used after you press Start Download.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download count is only used after you press Start Download. If it is not used, the link will expire on ${expires}.</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download count is only used after you press Start Download.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download count is only used after you press Start Download. ${expirySentence}</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
 }
 // AZOBSS PATCH 319: Admin resend receipt email should also include Software/CAD download link.
 async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
@@ -2028,9 +2075,9 @@ async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
     if (!realDownloadLink) return '';
     const token = makeId('dl').replace(/[^a-zA-Z0-9_-]/g, '');
     const now = Date.now();
-    const expiryHours = Math.max(1, Math.min(24 * 30, Number(current.expiryHours || 24) || 24));
-    const expiresAtMs = now + expiryHours * 60 * 60 * 1000;
-    const maxDownload = Math.max(1, Math.min(20, Number(current.maxDownload || current.maxDownloads || 1) || 1));
+    const expiryHours = azobssExpiryHoursFromOrder(current);
+    const expiresAtMs = azobssTokenExpiresAtMsFromOrder(current, now);
+    const maxDownload = azobssDownloadLimitFromOrder(current);
     const tokenData = {
       token,
       orderId: current.orderId || orderId,
@@ -2193,11 +2240,11 @@ function makeDownloadForOrder(order) {
   if (!order || order.downloadToken) return order;
   const token = makeId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
-  const expiryHours = Math.max(1, Math.min(24 * 30, Number(order.expiryHours || 24)));
-  const expiresAtMs = now + expiryHours * 60 * 60 * 1000;
+  const expiresAtMs = azobssTokenExpiresAtMsFromOrder(order, now);
+  const maxDownload = azobssDownloadLimitFromOrder(order);
   const realDownloadLink = cleanPremiumUrl(order.downloadLink || order.premiumDownloadFileLink || order.secureDownloadLink || order.privateDownloadLink || order.downloadUrl || "");
-  savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload: 1 });
-  return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload: 1, receiptTokenRequired: order.receiptTokenRequired === false ? false : true, receiptTokenVersion: order.receiptTokenVersion || 2 });
+  savePremiumToken({ token, orderId: order.orderId, productId: order.productId, productName: order.productName, user: order.user || {}, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, createdAt: now, expiresAt: expiresAtMs, usedCount: 0, maxDownload });
+  return upsertPremiumOrder({ ...order, downloadLink: realDownloadLink, premiumDownloadFileLink: realDownloadLink, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), downloadLimit:maxDownload, maxDownloads:maxDownload, maxDownload, receiptTokenRequired: order.receiptTokenRequired === false ? false : true, receiptTokenVersion: order.receiptTokenVersion || 2 });
 }
 
 const AZOBSS_ORDER_FINALIZE_LOCKS = new Map();
@@ -2309,7 +2356,7 @@ async function refreshToyyibOrder(order, req) {
 function paidPayload(order, req) {
   const base = publicBaseUrlFromReq(req);
   const o = makeDownloadForOrder(order);
-  return { ok: true, success: true, paid: true, orderId: o.orderId, status: o.status, downloadUrl: `${base}/api/premium/download/${encodeURIComponent(o.downloadToken)}`, receiptUrl: azReceiptUrl(base, o), expiresAt: o.tokenExpiresAt, maxDownload: 1 };
+  return { ok: true, success: true, paid: true, orderId: o.orderId, status: o.status, downloadUrl: `${base}/api/premium/download/${encodeURIComponent(o.downloadToken)}`, receiptUrl: azReceiptUrl(base, o), expiresAt: o.tokenExpiresAt, maxDownload: azobssDownloadLimitFromOrder(o) };
 }
 
 // =========================
@@ -5436,6 +5483,8 @@ async function handler(req, res) {
         const amountSen = Number(trustedResolved.amountSen || parseAmountToSen(amountText));
         const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || "");
         const user = getPremiumUser(data);
+        const requestedLimit = azobssDownloadLimitFromOrder({ ...data, product });
+        const requestedExpiryHours = azobssExpiryHoursFromOrder({ ...data, product });
         if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing backend product name or valid backend amount." }, null, 2), "application/json");
         if (!downloadLink) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Download link belum diset untuk produk ini." }, null, 2), "application/json");
         const orderId = makeId("tp");
@@ -5476,7 +5525,7 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText }, trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, maxDownload:1, expiryHours:24, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours }, trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
         return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
