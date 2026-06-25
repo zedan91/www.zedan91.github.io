@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 349: keep radio audio alive when opening/closing the radio tab/panel.
+   Patch 350: keep tab playing + cache-bust + grouped/searchable Malaysia channel list.
 */
 (function(){
   'use strict';
@@ -82,6 +82,24 @@
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   }
+  function renderStationOptions(selected, keyword){
+    const q = String(keyword || '').trim().toLowerCase();
+    const rows = STATIONS.filter(st => {
+      if(!q) return true;
+      return [st.name, st.label, st.group, st.query, st.id].join(' ').toLowerCase().includes(q);
+    });
+    const groups = [];
+    rows.forEach(st => {
+      const g = st.group || 'Other';
+      let bucket = groups.find(x => x.group === g);
+      if(!bucket){ bucket = {group:g, items:[]}; groups.push(bucket); }
+      bucket.items.push(st);
+    });
+    if(!groups.length){
+      return '<option value="custom">No station found - Custom URL</option>';
+    }
+    return groups.map(g => `<optgroup label="${esc(g.group)}">${g.items.map(st => `<option value="${esc(st.id)}" ${st.id===selected?'selected':''}>${esc(st.label)}</option>`).join('')}</optgroup>`).join('');
+  }
   function readStore(){ try { return JSON.parse(localStorage.getItem(STORE_KEY)||'{}') || {}; } catch(e){ return {}; } }
   function writeStore(v){ try { localStorage.setItem(STORE_KEY, JSON.stringify(v||{})); } catch(e){} }
   function readCache(id){
@@ -109,7 +127,12 @@
       .az-radio-sub{font-size:10.5px;color:#94a3b8;font-weight:800;margin-top:2px;}
       .az-radio-x{width:28px;height:28px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:#0f172a;color:#e5e7eb;font-weight:900;cursor:pointer;}
       .az-radio-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0;}
+      .az-radio-search{width:100%;border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#020617;color:#f8fafc;min-height:34px;padding:0 10px;font-size:12.5px;font-weight:800;outline:none;margin:7px 0 8px;}
+      .az-radio-search::placeholder{color:#64748b;}
       .az-radio-select,.az-radio-custom{width:100%;border:1px solid rgba(148,163,184,.25);border-radius:12px;background:#020617;color:#f8fafc;min-height:36px;padding:0 10px;font-size:13px;font-weight:800;outline:none;}
+      .az-radio-select optgroup{background:#020617;color:#93c5fd;font-weight:1000;}
+      .az-radio-select option{background:#020617;color:#f8fafc;font-weight:800;}
+      .az-radio-count{display:block;margin-top:5px;text-align:center;color:#94a3b8;font-size:10.5px;font-weight:900;}
       .az-radio-custom{display:none;margin-top:8px;}
       .az-radio-player.is-custom .az-radio-custom{display:block;}
       .az-radio-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px;}
@@ -148,10 +171,12 @@
           <div><div class="az-radio-title">AZOBSS Radio</div><div class="az-radio-sub">Mini online radio player</div></div>
           <button type="button" class="az-radio-x" id="azRadioClose" aria-label="Close radio player">×</button>
         </div>
+        <input class="az-radio-search" id="azRadioSearch" type="search" placeholder="Search radio channel... ERA, Hot FM, IKIM, Sabah FM" autocomplete="off">
         <div class="az-radio-row">
-          <select class="az-radio-select" id="azRadioStation" aria-label="Select radio station">${STATIONS.map(s=>`<option value="${esc(s.id)}" ${s.id===selected?'selected':''}>${esc(s.label)}</option>`).join('')}</select>
+          <select class="az-radio-select" id="azRadioStation" aria-label="Select radio station">${renderStationOptions(selected)}</select>
           <span class="az-radio-dot" aria-hidden="true"></span>
         </div>
+        <span class="az-radio-count" id="azRadioCount">${Math.max(0, STATIONS.length - 1)} Malaysia channels + Custom URL</span>
         <input class="az-radio-custom" id="azRadioCustom" type="url" placeholder="Paste direct stream URL (.mp3/.aac/.m3u8)" value="${esc(store.customUrl||'')}">
         <div class="az-radio-btns">
           <button type="button" class="az-radio-btn play" id="azRadioPlay">▶ Play</button>
@@ -220,7 +245,9 @@
   function wire(root){
     const toggle=root.querySelector('#azRadioToggle');
     const close=root.querySelector('#azRadioClose');
+    const search=root.querySelector('#azRadioSearch');
     const select=root.querySelector('#azRadioStation');
+    const count=root.querySelector('#azRadioCount');
     const custom=root.querySelector('#azRadioCustom');
     const play=root.querySelector('#azRadioPlay');
     const stop=root.querySelector('#azRadioStop');
@@ -230,6 +257,15 @@
     const status=root.querySelector('#azRadioStatus');
 
     function setStatus(text, cls){ status.textContent=text; status.className='az-radio-status '+(cls||''); }
+    function updateStationOptions(){
+      const current = select.value || readStore().station || 'sinar';
+      select.innerHTML = renderStationOptions(current, search ? search.value : '');
+      if([...select.options].some(o => o.value === current)) select.value = current;
+      else if(select.options.length) select.value = select.options[0].value;
+      const visible = Math.max(0, [...select.options].filter(o => o.value !== 'custom').length);
+      if(count) count.textContent = (search && search.value.trim()) ? `${visible} channel match found` : `${Math.max(0, STATIONS.length - 1)} Malaysia channels + Custom URL`;
+      syncCustom();
+    }
     function save(){ const s=readStore(); s.station=select.value; s.customUrl=custom.value; s.volume=Number(vol.value)||0.7; writeStore(s); }
     function syncCustom(){ root.classList.toggle('is-custom', select.value==='custom'); save(); }
     function setOpen(v){
@@ -243,6 +279,7 @@
     audio.volume = Math.min(1, Math.max(0, Number(vol.value)||0.7));
     toggle.addEventListener('click', ()=>setOpen(!root.classList.contains('is-open')));
     close.addEventListener('click', ()=>setOpen(false));
+    if(search) search.addEventListener('input', ()=>{ updateStationOptions(); setStatus('Pilih stesen dan tekan Play.'); });
     select.addEventListener('change', ()=>{ syncCustom(); setStatus('Pilih stesen dan tekan Play.'); });
     custom.addEventListener('change', save);
     custom.addEventListener('input', save);
@@ -276,7 +313,7 @@
     audio.addEventListener('playing', ()=>root.classList.add('is-playing'));
     audio.addEventListener('pause', ()=>root.classList.remove('is-playing'));
     audio.addEventListener('error', ()=>{ root.classList.remove('is-playing'); setStatus('Stream gagal dimainkan. Cuba pilih stesen lain atau tekan Open.', 'err'); });
-    syncCustom();
+    updateStationOptions();
   }
 
   function init(){
