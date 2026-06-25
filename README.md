@@ -223,3 +223,10 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Added station aliases and local broken-station hiding for 12 hours.
 - Cache bust updated to `azobss-radio-player.js?v=364`.
 - No Firebase Rules or Render backend deploy required.
+
+
+## Patch 365 - Radio Remove Search Box
+- Removed radio search input/card from radio panel.
+- Kept dropdown station list, random button, Play/Stop, volume and minimize.
+- Cache-bust updated to `azobss-radio-player.js?v=365`.
+- No Firebase Rules or Render backend deploy required.

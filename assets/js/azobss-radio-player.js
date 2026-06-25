@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 364: keep only stable Malaysia stations and improve stream lookup aliases.
+   Patch 365: remove radio search box for cleaner compact panel; keep verified streams.
 */
 (function(){
   'use strict';
@@ -166,7 +166,7 @@
       .az-radio-title{font-size:14px;font-weight:1000;color:#fff;line-height:1.15;}
       .az-radio-sub{font-size:10.5px;color:#94a3b8;font-weight:800;margin-top:2px;}
       .az-radio-x{min-width:82px;height:28px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:#0f172a;color:#e5e7eb;font-weight:900;cursor:pointer;padding:0 9px;font-size:11.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;}
-      .az-radio-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0;}
+      .az-radio-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0;}.az-radio-row-no-search{margin-top:4px;}
       .az-radio-search{width:100%;border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#020617;color:#f8fafc;min-height:34px;padding:0 10px;font-size:12.5px;font-weight:800;outline:none;margin:7px 0 8px;}
       .az-radio-search::placeholder{color:#64748b;}
       .az-radio-select,.az-radio-custom{width:100%;border:1px solid rgba(148,163,184,.25);border-radius:12px;background:#020617;color:#f8fafc;min-height:36px;padding:0 10px;font-size:13px;font-weight:800;outline:none;}
@@ -213,8 +213,7 @@
           <div><div class="az-radio-title">AZOBSS Radio</div><div class="az-radio-sub">Mini online radio player</div></div>
           <button type="button" class="az-radio-x" id="azRadioClose" aria-label="Minimize radio panel" title="Minimize radio panel">− Minimize</button>
         </div>
-        <input class="az-radio-search" id="azRadioSearch" type="search" placeholder="Search channel... ERA, Hot FM, IKIM, BFM" autocomplete="off">
-        <div class="az-radio-row">
+        <div class="az-radio-row az-radio-row-no-search">
           <select class="az-radio-select" id="azRadioStation" aria-label="Select radio station">${renderStationOptions(selected)}</select>
           <button type="button" class="az-radio-random" id="azRadioRandom" title="Random channel" aria-label="Random channel">🔀</button>
         </div>
@@ -371,7 +370,7 @@
       if([...select.options].some(o => o.value === current)) select.value = current;
       else if(select.options.length) select.value = select.options[0].value;
       const visible = Math.max(0, [...select.options].filter(o => o.value !== 'custom').length);
-      if(count) count.textContent = (search && search.value.trim()) ? `${visible} channel match found` : `${Math.max(0, STATIONS.length - 1)} verified Malaysia channels + Custom URL`;
+      if(count) count.textContent = `${Math.max(0, STATIONS.length - 1)} verified Malaysia channels + Custom URL`;
       syncCustom();
     }
     function getRandomStationId(){
@@ -437,7 +436,6 @@
     audio.volume = Math.min(1, Math.max(0, Number(vol.value)||0.7));
     toggle.addEventListener('click', ()=>setOpen(!root.classList.contains('is-open')));
     close.addEventListener('click', ()=>setOpen(false));
-    if(search) search.addEventListener('input', ()=>{ updateStationOptions(); setStatus('Pilih stesen dan tekan Play.'); });
     select.addEventListener('change', ()=>{ syncCustom(); setStatus('Pilih stesen dan tekan Play.'); });
     window.addEventListener('azobss-radio-broken-list-changed', ()=>{ updateStationOptions(); });
     custom.addEventListener('change', save);
