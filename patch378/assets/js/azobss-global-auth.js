@@ -5058,7 +5058,7 @@ document.addEventListener('click',function(e){
       productId: String(p.productId || p.id || ''),
       amount, amountText: amount ? money(amount) : String(p.priceText || p.price || 'RM0'),
       username: '', email: '', createdAtMs: Number(p.createdAtMs || Date.now()), paidAtMs: Number(p.paidAtMs || p.completedAtMs || 0) || (p.paidAt ? Date.parse(String(p.paidAt)) || 0 : 0),
-      downloadUsed: Number(p.downloadCount || 0), downloadMax: Number(p.maxDownload || 1), downloadActive: false,
+      downloadUsed: Number(p.downloadCount || p.usedCount || p.downloadsUsed || 0), downloadMax: Number(p.maxDownload || p.maxDownloads || p.downloadLimit || 1), downloadActive: false,
       receiptUrl: '', receiptPdfUrl: '', downloadUrl: ''
     };
   }
@@ -5266,7 +5266,14 @@ document.addEventListener('click',function(e){
         if(row.source === 'purchaseLogs' && row.raw && typeof azobssClientControlledDownload === 'function' && typeof azobssPurchaseDownloadPayload === 'function'){
           await azobssClientControlledDownload(azobssPurchaseDownloadPayload(row.raw), btn, e);
           setTimeout(loadRows, 1400);
-        }else if(row.downloadUrl){ window.open(row.downloadUrl, '_blank', 'noopener'); }
+        }else if(row.downloadUrl){
+          window.open(row.downloadUrl, '_blank', 'noopener');
+          // AZOBSS PATCH 378: premium token usage is counted by backend only after Start Download creates a secure session.
+          // Auto-refresh a few times so My Purchases changes from Download 0/1 to Downloaded 1/1/Expired after the real session starts.
+          setTimeout(loadRows, 3000);
+          setTimeout(loadRows, 15000);
+          setTimeout(loadRows, 45000);
+        }
       }else if(action === 'delete'){
         btn.disabled = false; btn.textContent = old;
         await softDeletePurchase(row);

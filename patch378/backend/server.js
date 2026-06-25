@@ -363,6 +363,42 @@ function savePremiumToken(tokenData) { const tokens = readPremiumJson(PREMIUM_TO
 function findPremiumToken(token) { return readPremiumJson(PREMIUM_TOKENS_FILE, []).find(t => t.token === token); }
 function updatePremiumToken(token, updater) { const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []); const index = tokens.findIndex(t => t.token === token); if (index >= 0) { tokens[index] = updater(tokens[index]); writePremiumJson(PREMIUM_TOKENS_FILE, tokens); return tokens[index]; } return null; }
 
+// AZOBSS PATCH 378: sync secure token usage back to premiumOrders so My Purchases shows 1/1 or expired after real download starts.
+function azSyncPremiumOrderDownloadUsage(saved={}, token="", used=0, sessionId="", sessionExpiresAt=0, now=Date.now()){
+  try{
+    if(!saved || !(saved.orderId || saved.billCode)) return null;
+    const max=Math.max(1,Number(saved.maxDownload||saved.maxDownloads||saved.downloadLimit||1)||1);
+    const tokenExpiresAtMs=Number(saved.expiresAt||saved.expiresAtMs||0)||0;
+    const exhausted=Number(used||0)>=max;
+    const expiredByTime=!!(tokenExpiresAtMs&&tokenExpiresAtMs<=now&&saved.expiresNever!==true&&saved.neverExpire!==true&&saved.downloadNeverExpire!==true);
+    return upsertPremiumOrder({
+      ...saved,
+      downloadToken:token||saved.downloadToken||saved.token||"",
+      tokenExpiresAt:tokenExpiresAtMs?new Date(tokenExpiresAtMs).toISOString():(saved.tokenExpiresAt||""),
+      tokenExpiresAtMs,
+      downloadExpiresAtMs:tokenExpiresAtMs,
+      downloadExpiresAtClient:tokenExpiresAtMs?new Date(tokenExpiresAtMs).toISOString():"",
+      downloadCount:Math.max(0,Number(used||0)||0),
+      usedCount:Math.max(0,Number(used||0)||0),
+      downloadsUsed:Math.max(0,Number(used||0)||0),
+      maxDownload:max,
+      maxDownloads:max,
+      downloadLimit:max,
+      downloadExpired:expiredByTime||exhausted,
+      downloadActive:!(expiredByTime||exhausted),
+      downloadStatus:exhausted?"used":(expiredByTime?"expired":"active"),
+      activeDownloadSessionId:sessionId||saved.activeDownloadSessionId||"",
+      activeDownloadSessionExpiresAt:Number(sessionExpiresAt||saved.activeDownloadSessionExpiresAt||0)||0,
+      lastDownloadedAt:new Date(now).toISOString(),
+      lastDownloadedAtMs:now,
+      lastDownloadUsageSyncAt:new Date(now).toISOString(),
+      lastDownloadUsageSyncAtMs:now,
+      secureDownloadPatch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH,
+      azobssPatch378:true
+    });
+  }catch(err){ console.warn("AZOBSS legacy premium order download usage sync failed:", err&&err.message?err.message:err); return null; }
+}
+
 
 // AZOBSS PATCH 373: secure premium download session stream for legacy backend/server.js too.
 const AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH = "AZOBSS_SECURE_PREMIUM_DOWNLOAD_20260626";
@@ -380,7 +416,7 @@ function readPremiumDownloadSessions(){ const now=Date.now(); const rows=readPre
 function savePremiumDownloadSession(session={}){ const rows=readPremiumDownloadSessions().filter(x=>x.sessionId!==session.sessionId); rows.unshift(session); writePremiumJson(PREMIUM_DOWNLOAD_SESSIONS_FILE, rows.slice(0,500)); return session; }
 function findPremiumDownloadSession(sessionId){ return readPremiumDownloadSessions().find(x=>x.sessionId===sessionId) || null; }
 function updatePremiumDownloadSession(sessionId, patch={}){ const rows=readPremiumDownloadSessions(); const idx=rows.findIndex(x=>x.sessionId===sessionId); if(idx>=0){ rows[idx]={...(rows[idx]||{}),...(patch||{}),updatedAt:new Date().toISOString(),updatedAtMs:Date.now()}; writePremiumJson(PREMIUM_DOWNLOAD_SESSIONS_FILE, rows); return rows[idx]; } return null; }
-function azCreatePremiumDownloadSession(req, token, saved={}){ const now=Date.now(); const clientKey=azPremiumClientKey(req); const activeSessionId=String(saved.activeDownloadSessionId||""); const activeExpiresAt=Number(saved.activeDownloadSessionExpiresAt||0)||0; if(activeSessionId&&activeExpiresAt>now){ const active=findPremiumDownloadSession(activeSessionId); if(active&&["active","completed"].includes(String(active.status||"active"))&&Number(active.expiresAt||0)>now){ updatePremiumDownloadSession(activeSessionId,{status:"active",lastSeenAt:new Date(now).toISOString(),lastSeenAtMs:now,idmHandoffReuse:true}); return activeSessionId; } } if(Number(saved.expiresAt||0)<now || Number(saved.usedCount||0)>=Number(saved.maxDownload||1)) throw Object.assign(new Error("Download link expired or already used too many times."),{statusCode:403}); const src=azValidatePremiumSource(azPremiumDownloadSource(saved)); const sessionId=makePremiumId("dls").replace(/[^a-zA-Z0-9_-]/g,""); const expiresAt=now+azPremiumSessionTtlMs(); const filename=azPremiumDownloadFilename(saved, src.target); savePremiumDownloadSession({sessionId,token,orderId:saved.orderId||"",productName:saved.productName||"AZOBSS Digital Product",sourceType:src.type,sourceTarget:src.target,filename,status:"active",clientKey,ipHash:azHashDownloadValue(azPremiumClientIp(req)),createdAt:new Date(now).toISOString(),createdAtMs:now,expiresAt,expiresAtIso:new Date(expiresAt).toISOString(),requestCount:0,rangeRequestCount:0,patch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH}); const nextUsed=Number(saved.usedCount||0)+1; updatePremiumToken(token,t=>({...t,usedCount:nextUsed,lastUsedAt:now,lastMethod:"SESSION_STREAM",activeDownloadSessionId:sessionId,activeDownloadSessionExpiresAt:expiresAt,secureDownloadPatch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH})); return sessionId; }
+function azCreatePremiumDownloadSession(req, token, saved={}){ const now=Date.now(); const clientKey=azPremiumClientKey(req); const activeSessionId=String(saved.activeDownloadSessionId||""); const activeExpiresAt=Number(saved.activeDownloadSessionExpiresAt||0)||0; if(activeSessionId&&activeExpiresAt>now){ const active=findPremiumDownloadSession(activeSessionId); if(active&&["active","completed"].includes(String(active.status||"active"))&&Number(active.expiresAt||0)>now){ updatePremiumDownloadSession(activeSessionId,{status:"active",lastSeenAt:new Date(now).toISOString(),lastSeenAtMs:now,idmHandoffReuse:true}); azSyncPremiumOrderDownloadUsage(saved,token,Math.max(0,Number(saved.usedCount||saved.downloadCount||0)||0),activeSessionId,activeExpiresAt,now); return activeSessionId; } } if(Number(saved.expiresAt||0)<now || Number(saved.usedCount||0)>=Number(saved.maxDownload||1)) throw Object.assign(new Error("Download link expired or already used too many times."),{statusCode:403}); const src=azValidatePremiumSource(azPremiumDownloadSource(saved)); const sessionId=makePremiumId("dls").replace(/[^a-zA-Z0-9_-]/g,""); const expiresAt=now+azPremiumSessionTtlMs(); const filename=azPremiumDownloadFilename(saved, src.target); savePremiumDownloadSession({sessionId,token,orderId:saved.orderId||"",productName:saved.productName||"AZOBSS Digital Product",sourceType:src.type,sourceTarget:src.target,filename,status:"active",clientKey,ipHash:azHashDownloadValue(azPremiumClientIp(req)),createdAt:new Date(now).toISOString(),createdAtMs:now,expiresAt,expiresAtIso:new Date(expiresAt).toISOString(),requestCount:0,rangeRequestCount:0,patch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH}); const nextUsed=Number(saved.usedCount||0)+1; updatePremiumToken(token,t=>({...t,usedCount:nextUsed,lastUsedAt:now,lastMethod:"SESSION_STREAM",activeDownloadSessionId:sessionId,activeDownloadSessionExpiresAt:expiresAt,secureDownloadPatch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH})); azSyncPremiumOrderDownloadUsage(saved,token,nextUsed,sessionId,expiresAt,now); return sessionId; }
 function azPremiumContentDisposition(filename="azobss-download.bin"){ const safe=azSafeDownloadFilename(filename); return `attachment; filename="${safe.replace(/"/g,"_")}"; filename*=UTF-8''${encodeURIComponent(safe)}`; }
 function azParseRange(rangeHeader="", size=0){ const m=String(rangeHeader||"").match(/^bytes=(\d*)-(\d*)$/); if(!m||!size) return null; let start=m[1]===""?null:Number(m[1]); let end=m[2]===""?null:Number(m[2]); if(start===null&&end!==null){start=Math.max(0,size-end);end=size-1;} if(start!==null&&end===null) end=size-1; if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<start||start>=size) return null; return {start,end:Math.min(end,size-1)}; }
 function azNoStoreDownloadHeaders(res){ res.set({"Cache-Control":"no-store, no-cache, must-revalidate, private, max-age=0","Pragma":"no-cache","Expires":"0","X-AZOBSS-Secure-Download":"1"}); }

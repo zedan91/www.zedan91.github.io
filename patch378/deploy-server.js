@@ -3599,6 +3599,56 @@ function updatePremiumToken(token, updater) {
 }
 
 
+// AZOBSS PATCH 378: Keep My Purchases download status in sync with real secure token usage.
+// The customer purchase card is based on premiumOrders, while the secure download route updates premiumDownloadTokens.
+// Sync the used/max/expired fields back to premiumOrders whenever a real download session is created or reused.
+function azPremiumDownloadUsagePatch(saved = {}, token = "", used = 0, sessionId = "", sessionExpiresAt = 0, now = Date.now()) {
+  const max = Math.max(1, Number(saved.maxDownload || saved.maxDownloads || saved.downloadLimit || 1) || 1);
+  const tokenExpiresAtMs = Number(saved.expiresAt || saved.expiresAtMs || 0) || 0;
+  const expiredByTime = !!(tokenExpiresAtMs && tokenExpiresAtMs <= now && !azobssOrderNeverExpire(saved));
+  const exhausted = Number(used || 0) >= max;
+  return {
+    orderId: cleanPremiumText(saved.orderId || "", 180),
+    billCode: cleanPremiumText(saved.billCode || saved.billcode || "", 120),
+    productId: cleanPremiumText(saved.productId || "", 180),
+    productName: cleanPremiumText(saved.productName || "AZOBSS Digital Product", 240),
+    downloadToken: cleanPremiumText(token || saved.downloadToken || saved.token || "", 220),
+    tokenExpiresAt: tokenExpiresAtMs ? new Date(tokenExpiresAtMs).toISOString() : (saved.tokenExpiresAt || saved.expiresAtIso || ""),
+    tokenExpiresAtMs,
+    downloadExpiresAtMs: tokenExpiresAtMs,
+    downloadExpiresAtClient: tokenExpiresAtMs ? new Date(tokenExpiresAtMs).toISOString() : "",
+    downloadCount: Math.max(0, Number(used || 0) || 0),
+    usedCount: Math.max(0, Number(used || 0) || 0),
+    downloadsUsed: Math.max(0, Number(used || 0) || 0),
+    maxDownload: max,
+    maxDownloads: max,
+    downloadLimit: max,
+    downloadExpired: expiredByTime || exhausted,
+    downloadActive: !(expiredByTime || exhausted),
+    downloadStatus: exhausted ? "used" : (expiredByTime ? "expired" : "active"),
+    activeDownloadSessionId: cleanPremiumText(sessionId || saved.activeDownloadSessionId || "", 160),
+    activeDownloadSessionExpiresAt: Number(sessionExpiresAt || saved.activeDownloadSessionExpiresAt || 0) || 0,
+    lastDownloadedAt: new Date(now).toISOString(),
+    lastDownloadedAtMs: now,
+    lastDownloadUsageSyncAt: new Date(now).toISOString(),
+    lastDownloadUsageSyncAtMs: now,
+    secureDownloadPatch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH,
+    azobssPatch378: true
+  };
+}
+function azSyncPremiumOrderDownloadUsage(saved = {}, token = "", used = 0, sessionId = "", sessionExpiresAt = 0, now = Date.now()) {
+  try {
+    if (!saved || !(saved.orderId || saved.billCode || saved.billcode)) return null;
+    const patch = azPremiumDownloadUsagePatch(saved, token, used, sessionId, sessionExpiresAt, now);
+    const merged = upsertPremiumOrder({ ...(saved || {}), ...(patch || {}) });
+    return merged;
+  } catch (err) {
+    console.warn("AZOBSS premium order download usage sync failed:", err && (err.message || err));
+    return null;
+  }
+}
+
+
 // AZOBSS PATCH 373: Secure premium download session stream.
 // Goal: IDM/browser must never receive the real premium file URL.
 // A one-time token creates ONE short-lived backend session; Range/resume requests are allowed only inside that session.
@@ -3755,6 +3805,7 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
         tokenRouteHits: Number(active.tokenRouteHits || 0) + 1,
         idmHandoffReuse: true
       });
+      azSyncPremiumOrderDownloadUsage(saved, token, Math.max(0, Number(saved.usedCount || saved.downloadCount || 0) || 0), activeSessionId, activeExpiresAt, now);
       return activeSessionId;
     }
   }
@@ -3809,6 +3860,7 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
   } catch (err) {
     console.warn("Premium token Firestore session update failed:", err && (err.message || err));
   }
+  azSyncPremiumOrderDownloadUsage(saved, token, nextUsed, sessionId, expiresAt, now);
   return sessionId;
 }
 function azNoStoreDownloadHeaders(extra = {}) {
@@ -4265,14 +4317,16 @@ function azMyPurchasesPaBmDownloadMeta(row = {}) {
 function azMyPurchasesPremiumDownloadMeta(row = {}, req = null) {
   const paid = azReceiptStatusBucket(row) === "paid";
   const token = cleanPremiumText(row.downloadToken || row.token || "", 220);
-  const used = Math.max(0, Number(row.downloadCount || row.usedDownloads || 0) || 0);
-  const max = Math.max(1, Number(row.maxDownload || row.maxDownloads || 1) || 1);
+  const used = Math.max(0, Number(row.downloadCount || row.usedCount || row.downloadsUsed || row.usedDownloads || 0) || 0);
+  const max = Math.max(1, Number(row.maxDownload || row.maxDownloads || row.downloadLimit || 1) || 1);
   let expiresAtMs = Number(row.tokenExpiresAtMs || row.downloadExpiresAtMs || row.expiresAtMs || 0) || 0;
   if (!expiresAtMs && row.tokenExpiresAt) expiresAtMs = Date.parse(String(row.tokenExpiresAt || "")) || 0;
   if (!expiresAtMs && row.expiresAt) expiresAtMs = Date.parse(String(row.expiresAt || "")) || 0;
-  const expired = !!(expiresAtMs && Date.now() > expiresAtMs);
+  const expiredByTime = !!(expiresAtMs && Date.now() > expiresAtMs);
+  const exhausted = used >= max || row.downloadStatus === "used" || row.downloadExpired === true;
+  const expired = expiredByTime || exhausted;
   const base = req ? publicBaseUrlFromReq(req) : "";
-  return { used, max, expiresAtMs, expired, active: !!(paid && token && used < max && !expired), url: token && base ? `${base}/api/premium/download/${encodeURIComponent(token)}` : "" };
+  return { used, max, expiresAtMs, expired, active: !!(paid && token && used < max && !expiredByTime && !exhausted), url: token && base ? `${base}/api/premium/download/${encodeURIComponent(token)}` : "" };
 }
 function azMyPurchasesPublicRow(row = {}, source = "", docId = "", req = null) {
   const src = cleanPremiumText(source || row.__source || row._azSource || "", 80);
