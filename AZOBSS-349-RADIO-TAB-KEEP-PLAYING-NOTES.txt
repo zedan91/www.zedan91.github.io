@@ -1,0 +1,11 @@
+AZOBSS Radio Tab Keep Playing Fix
+
+Patch 349
+- Fix radio playback stopping when the Radio floating tab/panel is opened or closed.
+- Root cause: the radio panel used display:none/display:block; some browsers/webviews can suspend media inside a display:none container when toggled.
+- Change panel hiding to opacity/visibility/max-height instead of display:none, so the audio element stays alive.
+- setOpen() now only opens/closes the panel and never pauses/reloads the audio.
+- Only the Stop button should stop playback.
+- Firebase Rules: not required.
+- Render backend deploy: not required.
+- GitHub Pages deploy only.

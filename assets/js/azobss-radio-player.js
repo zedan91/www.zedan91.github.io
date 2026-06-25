@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 347: adds a lightweight radio player with Radio Browser resolving + custom stream URL.
+   Patch 349: keep radio audio alive when opening/closing the radio tab/panel.
 */
 (function(){
   'use strict';
@@ -102,8 +102,8 @@
       .az-radio-pill:hover{border-color:#22c55e;color:#bbf7d0;transform:translateY(-1px);}
       .az-radio-dot{width:7px;height:7px;border-radius:50%;background:#64748b;box-shadow:0 0 0 3px rgba(100,116,139,.18);}
       .az-radio-player.is-playing .az-radio-dot{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18),0 0 14px rgba(34,197,94,.8);}
-      .az-radio-panel{display:none;width:min(330px,calc(100vw - 24px));margin-top:9px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.97);backdrop-filter:blur(14px);border-radius:18px;padding:12px;box-shadow:0 20px 46px rgba(0,0,0,.5);}
-      .az-radio-player.is-open .az-radio-panel{display:block;}
+      .az-radio-panel{width:min(330px,calc(100vw - 24px));margin-top:9px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.97);backdrop-filter:blur(14px);border-radius:18px;padding:12px;box-shadow:0 20px 46px rgba(0,0,0,.5);opacity:0;visibility:hidden;pointer-events:none;max-height:0;overflow:hidden;transform:translateY(6px);transition:opacity .16s ease,transform .16s ease,visibility .16s ease,max-height .16s ease,padding .16s ease,margin .16s ease;}
+      .az-radio-player.is-open .az-radio-panel{opacity:1;visibility:visible;pointer-events:auto;max-height:520px;overflow:visible;transform:translateY(0);}
       .az-radio-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;}
       .az-radio-title{font-size:14px;font-weight:1000;color:#fff;line-height:1.15;}
       .az-radio-sub{font-size:10.5px;color:#94a3b8;font-weight:800;margin-top:2px;}
@@ -232,7 +232,13 @@
     function setStatus(text, cls){ status.textContent=text; status.className='az-radio-status '+(cls||''); }
     function save(){ const s=readStore(); s.station=select.value; s.customUrl=custom.value; s.volume=Number(vol.value)||0.7; writeStore(s); }
     function syncCustom(){ root.classList.toggle('is-custom', select.value==='custom'); save(); }
-    function setOpen(v){ root.classList.toggle('is-open', !!v); toggle.setAttribute('aria-expanded', v?'true':'false'); }
+    function setOpen(v){
+      root.classList.toggle('is-open', !!v);
+      toggle.setAttribute('aria-expanded', v?'true':'false');
+      // Do not pause/reload audio when the radio tab is opened/closed.
+      // Only Stop button should stop playback.
+      if(!audio.paused && audio.src){ root.classList.add('is-playing'); }
+    }
 
     audio.volume = Math.min(1, Math.max(0, Number(vol.value)||0.7));
     toggle.addEventListener('click', ()=>setOpen(!root.classList.contains('is-open')));
