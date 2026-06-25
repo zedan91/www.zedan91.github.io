@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 352: keep playing across AZOBSS page navigation using saved playback restore.
+   Patch 353: hide floating Radio pill while panel is open; keep page-nav restore behavior.
 */
 (function(){
   'use strict';
@@ -136,6 +136,8 @@
       .az-radio-player *{box-sizing:border-box;}
       .az-radio-pill{border:1px solid rgba(34,197,94,.48);background:linear-gradient(135deg,#06131f,#0f172a);color:#f8fafc;border-radius:999px;min-height:38px;padding:0 13px;display:inline-flex;align-items:center;gap:7px;font-weight:900;font-size:13px;letter-spacing:.02em;box-shadow:0 12px 28px rgba(0,0,0,.38),inset 0 0 0 1px rgba(255,255,255,.05);cursor:pointer;}
       .az-radio-pill:hover{border-color:#22c55e;color:#bbf7d0;transform:translateY(-1px);}
+      .az-radio-player.is-open .az-radio-pill{opacity:0;visibility:hidden;pointer-events:none;min-height:0!important;height:0!important;max-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;transform:translateY(4px) scale(.96);box-shadow:none!important;}
+      .az-radio-player.is-open .az-radio-panel{margin-top:0;}
       .az-radio-dot{width:7px;height:7px;border-radius:50%;background:#64748b;box-shadow:0 0 0 3px rgba(100,116,139,.18);}
       .az-radio-player.is-playing .az-radio-dot{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18),0 0 14px rgba(34,197,94,.8);}
       .az-radio-panel{width:min(330px,calc(100vw - 24px));margin-top:9px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.97);backdrop-filter:blur(14px);border-radius:18px;padding:12px;box-shadow:0 20px 46px rgba(0,0,0,.5);opacity:0;visibility:hidden;pointer-events:none;max-height:0;overflow:hidden;transform:translateY(6px);transition:opacity .16s ease,transform .16s ease,visibility .16s ease,max-height .16s ease,padding .16s ease,margin .16s ease;}
