@@ -209,3 +209,9 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Cache bust updated to `azobss-radio-player.js?v=361`.
 - No Firebase Rules update required.
 - No Render backend deploy required.
+
+## Patch 362 - Radio Guest Navbar Visible Fix
+- Radio icon is no longer inserted inside `#marketUserTools`, because that area is hidden for guests.
+- Radio now mounts before Register/Login for guests and remains left of username/account tools after login.
+- Cache bust updated to `azobss-radio-player.js?v=362`.
+- No Firebase Rules or Render backend deploy required.

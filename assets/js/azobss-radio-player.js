@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 360: compact neon headphone navbar icon so it does not crowd nearby username/menu buttons.
+   Patch 363: compact guest/navbar radio so it fits inside narrow nav/card areas.
 */
 (function(){
   'use strict';
@@ -131,12 +131,13 @@
     if(document.getElementById('azobss-radio-player-css')) return;
     const css = `
       .az-radio-player{z-index:10050;font-family:Arial,sans-serif;color:#e5e7eb;display:inline-flex;flex-direction:column;align-items:flex-end;width:auto;max-width:calc(100vw - 16px);flex:0 0 auto;}
-      .az-radio-player.az-radio-navbar{position:relative;right:auto;bottom:auto;margin:0 4px 0 0;vertical-align:middle;min-width:28px;max-width:28px;width:28px;align-items:center;}
+      .az-radio-player.az-radio-navbar{position:relative;right:auto;bottom:auto;margin:0 3px 0 0;vertical-align:middle;min-width:24px;max-width:24px;width:24px;align-items:center;flex-shrink:0;}
+      .az-radio-player.az-radio-navbar.az-radio-guest{margin-left:2px;margin-right:3px;}
       .az-radio-player.az-radio-floating{position:fixed;right:8px;bottom:86px;}
       .az-radio-player > .az-radio-pill{align-self:flex-end;}
       .az-radio-player > .az-radio-panel{align-self:flex-end;}
       .az-radio-player *{box-sizing:border-box;}
-      .az-radio-pill{border:1px solid rgba(34,197,94,.46);background:rgba(2,6,23,.72);color:#f8fafc;border-radius:50%;width:30px;height:30px;min-width:30px;min-height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;gap:0;font-weight:900;font-size:0;letter-spacing:0;box-shadow:0 4px 10px rgba(0,0,0,.26),0 0 8px rgba(34,197,94,.10),inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;overflow:hidden;position:relative;}
+      .az-radio-pill{border:1px solid rgba(34,197,94,.46);background:rgba(2,6,23,.72);color:#f8fafc;border-radius:50%;width:26px;height:26px;min-width:26px;min-height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;gap:0;font-weight:900;font-size:0;letter-spacing:0;box-shadow:0 3px 8px rgba(0,0,0,.24),0 0 7px rgba(34,197,94,.10),inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;overflow:hidden;position:relative;}
       .az-radio-pill img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;filter:saturate(1.08) contrast(1.04) brightness(.98);}
       .az-radio-pill::after{content:'';position:absolute;right:2px;top:2px;width:5px;height:5px;border-radius:50%;background:#64748b;box-shadow:0 0 0 2px rgba(100,116,139,.15);}
       .az-radio-player.is-playing .az-radio-pill::after{background:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.22),0 0 9px rgba(34,197,94,.75);}
@@ -144,29 +145,29 @@
       .az-radio-player.is-open .az-radio-pill{opacity:0;visibility:hidden;pointer-events:none;min-height:0!important;height:0!important;max-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;transform:translateY(4px) scale(.96);box-shadow:none!important;}
       .az-radio-player.is-open .az-radio-panel{margin-top:0;}
       .az-radio-dot{display:none;}
-      .az-radio-panel{width:min(330px,calc(100vw - 24px));margin-top:9px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.97);backdrop-filter:blur(14px);border-radius:18px;padding:12px;box-shadow:0 20px 46px rgba(0,0,0,.5);opacity:0;visibility:hidden;pointer-events:none;max-height:0;overflow:hidden;transform:translateY(6px);transition:opacity .16s ease,transform .16s ease,visibility .16s ease,max-height .16s ease,padding .16s ease,margin .16s ease;}
-      .az-radio-player.az-radio-navbar .az-radio-panel{position:absolute;top:calc(100% + 10px);right:0;margin-top:0;}
-      .az-radio-player.az-radio-navbar.is-open{min-width:28px;max-width:28px;width:28px;}
-      .az-radio-player.az-radio-navbar .az-radio-pill{width:28px;height:28px;min-width:28px;min-height:28px;padding:0;font-size:0;border-radius:50%;}
+      .az-radio-panel{width:min(300px,calc(100vw - 12px));margin-top:9px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.97);backdrop-filter:blur(14px);border-radius:18px;padding:12px;box-shadow:0 20px 46px rgba(0,0,0,.5);opacity:0;visibility:hidden;pointer-events:none;max-height:0;overflow:hidden;transform:translateY(6px);transition:opacity .16s ease,transform .16s ease,visibility .16s ease,max-height .16s ease,padding .16s ease,margin .16s ease;}
+      .az-radio-player.az-radio-navbar .az-radio-panel{position:absolute;top:calc(100% + 8px);right:0;margin-top:0;max-width:calc(100vw - 12px);}
+      .az-radio-player.az-radio-navbar.is-open{min-width:24px;max-width:24px;width:24px;}
+      .az-radio-player.az-radio-navbar .az-radio-pill{width:24px;height:24px;min-width:24px;min-height:24px;padding:0;font-size:0;border-radius:50%;}
       .az-radio-player.is-open .az-radio-panel{opacity:1;visibility:visible;pointer-events:auto;max-height:520px;overflow:visible;transform:translateY(0);}
       .az-radio-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;}
       .az-radio-title{font-size:14px;font-weight:1000;color:#fff;line-height:1.15;}
       .az-radio-sub{font-size:10.5px;color:#94a3b8;font-weight:800;margin-top:2px;}
       .az-radio-x{min-width:82px;height:28px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:#0f172a;color:#e5e7eb;font-weight:900;cursor:pointer;padding:0 9px;font-size:11.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;}
       .az-radio-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0;}
-      .az-radio-search{width:100%;border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#020617;color:#f8fafc;min-height:34px;padding:0 10px;font-size:12.5px;font-weight:800;outline:none;margin:7px 0 8px;}
+      .az-radio-search{width:100%;max-width:100%;border:1px solid rgba(34,197,94,.22);border-radius:12px;background:#020617;color:#f8fafc;min-height:32px;padding:0 9px;font-size:11.5px;font-weight:800;outline:none;margin:6px 0 7px;}
       .az-radio-search::placeholder{color:#64748b;}
-      .az-radio-select,.az-radio-custom{width:100%;border:1px solid rgba(148,163,184,.25);border-radius:12px;background:#020617;color:#f8fafc;min-height:36px;padding:0 10px;font-size:13px;font-weight:800;outline:none;}
+      .az-radio-select,.az-radio-custom{width:100%;max-width:100%;min-width:0;border:1px solid rgba(148,163,184,.25);border-radius:12px;background:#020617;color:#f8fafc;min-height:34px;padding:0 8px;font-size:12px;font-weight:800;outline:none;text-overflow:ellipsis;}
       .az-radio-select optgroup{background:#020617;color:#93c5fd;font-weight:1000;}
       .az-radio-select option{background:#020617;color:#f8fafc;font-weight:800;}
-      .az-radio-random{width:38px;height:36px;border:1px solid rgba(34,197,94,.42);border-radius:12px;background:linear-gradient(135deg,#052e16,#075985);color:#ecfeff;font-size:15px;font-weight:1000;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);}
+      .az-radio-random{width:34px;height:34px;border:1px solid rgba(34,197,94,.42);border-radius:12px;background:linear-gradient(135deg,#052e16,#075985);color:#ecfeff;font-size:15px;font-weight:1000;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);}
       .az-radio-random:hover{border-color:#22c55e;filter:brightness(1.08);transform:translateY(-1px);}
       .az-radio-random:disabled{opacity:.55;cursor:not-allowed;transform:none;}
       .az-radio-count{display:block;margin-top:5px;text-align:center;color:#94a3b8;font-size:10.5px;font-weight:900;}
       .az-radio-custom{display:none;margin-top:8px;}
       .az-radio-player.is-custom .az-radio-custom{display:block;}
       .az-radio-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;}
-      .az-radio-btn{border:1px solid rgba(34,197,94,.36);background:#052e16;color:#bbf7d0;border-radius:12px;min-height:36px;padding:0 9px;font-size:12px;font-weight:1000;cursor:pointer;}
+      .az-radio-btn{border:1px solid rgba(34,197,94,.36);background:#052e16;color:#bbf7d0;border-radius:12px;min-height:34px;padding:0 8px;font-size:11.5px;font-weight:1000;cursor:pointer;}
       .az-radio-btn.stop{border-color:rgba(248,113,113,.35);background:#450a0a;color:#fecaca;}
       .az-radio-btn:disabled{opacity:.55;cursor:not-allowed;}
       .az-radio-vol{display:flex;align-items:center;gap:8px;margin-top:9px;padding:8px 9px;border-radius:13px;background:rgba(15,23,42,.78);border:1px solid rgba(148,163,184,.14);}
@@ -176,7 +177,7 @@
       .az-radio-status.ok{color:#bbf7d0;border-color:rgba(34,197,94,.22);}
       .az-radio-status.err{color:#fecaca;border-color:rgba(248,113,113,.22);}
       .az-radio-note{margin-top:7px;color:#94a3b8;font-size:10.5px;line-height:1.25;text-align:center;}
-      @media(max-width:720px){.az-radio-player.az-radio-floating{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-player.az-radio-navbar{margin-right:3px;min-width:26px;max-width:26px;width:26px}.az-radio-pill{width:28px;height:28px;min-width:28px;min-height:28px;padding:0;font-size:0;border-radius:50%}.az-radio-pill img{border-radius:50%}.az-radio-player.az-radio-navbar .az-radio-pill{width:26px;height:26px;min-width:26px;min-height:26px;padding:0;font-size:0;border-radius:50%}.az-radio-player.az-radio-navbar .az-radio-panel{position:fixed;top:54px;right:8px;width:min(330px,calc(100vw - 16px));}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}}
+      @media(max-width:720px){.az-radio-player.az-radio-floating{right:5px;bottom:76px;max-width:calc(100vw - 10px)}.az-radio-player.az-radio-navbar{margin-right:2px;min-width:22px;max-width:22px;width:22px}.az-radio-pill{width:24px;height:24px;min-width:24px;min-height:24px;padding:0;font-size:0;border-radius:50%}.az-radio-pill img{border-radius:50%}.az-radio-player.az-radio-navbar .az-radio-pill{width:22px;height:22px;min-width:22px;min-height:22px;padding:0;font-size:0;border-radius:50%}.az-radio-pill::after{right:1px;top:1px;width:4px;height:4px}.az-radio-player.az-radio-navbar .az-radio-panel{position:fixed;top:50px;right:6px;width:min(292px,calc(100vw - 12px));}.az-radio-panel{border-radius:15px;padding:9px}.az-radio-btns{grid-template-columns:1fr 1fr}}
     `;
     const style=document.createElement('style');
     style.id='azobss-radio-player-css';
@@ -217,11 +218,14 @@
         <audio id="azRadioAudio" preload="none" crossorigin="anonymous"></audio>
       </div>`;
     const tools = document.getElementById('marketUserTools') || document.querySelector('.market-user-tools');
-    const userMenu = document.getElementById('userMenu') || (tools ? tools.querySelector('.user-menu') : null);
-    if(tools){
+    const authActions = document.getElementById('siteAuthActions') || document.querySelector('.site-auth-actions');
+    const marketRow = (tools && tools.parentElement) || (authActions && authActions.parentElement) || document.querySelector('.market-main-row');
+    if(marketRow && (tools || authActions)){
+      // Keep radio outside #marketUserTools because that container is hidden for guests.
+      // Mount before Register/Login on guest view, and before the username tools after login.
       el.classList.add('az-radio-navbar');
-      if(userMenu) tools.insertBefore(el, userMenu);
-      else tools.prepend(el);
+      if(authActions && (!tools || getComputedStyle(tools).display === 'none' || tools.hidden)){ el.classList.add('az-radio-guest'); }
+      marketRow.insertBefore(el, authActions || tools);
     }else{
       el.classList.add('az-radio-floating');
       document.body.appendChild(el);

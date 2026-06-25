@@ -1,0 +1,9 @@
+AZOBSS Radio Navbar Fit Compact Fix (363)
+
+- Reduces navbar radio icon footprint so it fits better beside username / Register Login area.
+- Makes guest radio button visible without stretching the navbar.
+- Narrows radio panel to fit within small screens/cards.
+- Compacts search/select/buttons inside the radio panel so long station text does not overflow.
+- Keeps previous radio behavior: full channel list, minimize, random channel, page navigation resume.
+- No Firebase Rules update.
+- No Render deploy required.
