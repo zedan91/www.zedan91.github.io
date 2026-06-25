@@ -254,3 +254,18 @@ Deploy GitHub Pages only.
 - Top group now stays focused on mainstream Malaysia/Malay/English stations first.
 - Dropdown group order is now enforced so Chinese and Tamil / Indian sections appear lower, not mixed into Top.
 - Cache bust updated to azobss-radio-player.js?v=367.
+
+
+AZOBSS RADIO SEARCH + OUTSIDE MINIMIZE FIX (PATCH 368)
+
+Changes:
+- Restored compact radio channel search input.
+- Typing keyword filters the radio station dropdown instantly.
+- Count text shows filtered channel count while searching.
+- Clicking outside the open radio panel now minimizes the panel.
+- Radio playback does not stop when minimized by outside click.
+- Cache bust updated to azobss-radio-player.js?v=368.
+
+Firebase Rules: not required.
+Render backend deploy: not required.
+Deploy GitHub Pages only.
