@@ -1,0 +1,1 @@
+Patch 363: Radio panel status/error text now wraps and truncates safely inside the card. Removed long technical Failed to fetch suffix from user-facing status text. Cache-bust azobss-radio-player.js?v=363. No Firebase Rules or Render deploy required.

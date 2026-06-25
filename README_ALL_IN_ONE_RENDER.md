@@ -186,3 +186,11 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Mounted outside the signed-in-only user tools container.
 - Cache bust updated to `azobss-radio-player.js?v=362`.
 - No Firebase Rules or Render backend deploy required.
+
+
+## Patch 364 - Radio Verified Stream List Fix
+- Radio station list changed to stable/verified Malaysia station pool only.
+- Risky stations that often return stream-not-found were removed.
+- Added station aliases and local broken-station hiding for 12 hours.
+- Cache bust updated to `azobss-radio-player.js?v=364`.
+- No Firebase Rules or Render backend deploy required.
