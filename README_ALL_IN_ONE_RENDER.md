@@ -201,3 +201,20 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Kept dropdown station list, random button, Play/Stop, volume and minimize.
 - Cache-bust updated to `azobss-radio-player.js?v=365`.
 - No Firebase Rules or Render backend deploy required.
+
+
+## AZOBSS Radio Online.My Channel Reference List Fix (366)
+
+AZOBSS RADIO ONLINE MY CHANNEL REFERENCE LIST FIX (366)
+
+Changes:
+- Updated AZOBSS Radio dropdown list to follow Radio-Online.My Malaysia station reference/order.
+- Top Radio-Online.My channels stay at the top: ERA, SINAR FM, THR Raaga, Suria, Radio Klasik, Sarawak FM, THR Gegar, Astro Vani, MY FM, Melody FM, Hot FM, and more.
+- Added more RTM state stations, Sabah/Sarawak stations, Astro/SYOK theme channels, Chinese/Tamil/English/news/local channels listed by Radio-Online.My.
+- Kept previous compact navbar radio UI, no search box, random channel button, Minimize button, no Open button, and page-navigation restore.
+- The player still resolves playable stream URLs via browser-side stream lookup and temporarily hides stations that fail on that browser.
+- Cache bust updated to azobss-radio-player.js?v=366.
+
+No Firebase Rules update needed.
+No Render backend deploy needed.
+Deploy GitHub Pages only.

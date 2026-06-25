@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 365: remove radio search box for cleaner compact panel; keep verified streams.
+   Patch 366: station dropdown refreshed using Radio-Online.My Malaysia channel reference list; top channels stay first.
 */
 (function(){
   'use strict';
@@ -7,58 +7,1227 @@
   window.__AZOBSS_RADIO_PLAYER_LOADED__ = true;
 
   const STATIONS = [
-    // Patch 364: verified Malaysia radio list only. Stations below are kept because they are
-    // commonly available via online stream directories; risky/website-only channels were removed.
-    // Top channels stay at the top.
-    { id:'era', name:'ERA', label:'⭐ ERA', group:'Top Malaysia', country:'MY', query:'ERA', aliases:['ERA FM','ERA Malaysia','Era FM Malaysia'], web:'https://audio1.syok.my/era' },
-    { id:'hotfm', name:'Hot FM', label:'⭐ Hot FM', group:'Top Malaysia', country:'MY', query:'Hot FM', aliases:['Hot FM Malaysia','Dengar Hot FM','HotFM'], web:'https://dengar.hotfm.audio/' },
-    { id:'sinar', name:'SINAR', label:'⭐ SINAR', group:'Top Malaysia', country:'MY', query:'Sinar FM', aliases:['SINAR','Radio Sinar FM','Sinar Malaysia'], web:'https://audio1.syok.my/sinar' },
-    { id:'suria', name:'Suria FM', label:'⭐ Suria FM', group:'Top Malaysia', country:'MY', query:'Suria FM', aliases:['Suria Malaysia'], web:'https://suria.my/' },
-    { id:'zayan', name:'ZAYAN', label:'⭐ ZAYAN', group:'Top Malaysia', country:'MY', query:'ZAYAN', aliases:['Zayan FM','Zayan Malaysia'], web:'https://audio1.syok.my/zayan' },
-    { id:'ikim', name:'IKIM FM', label:'⭐ IKIM FM', group:'Top Malaysia', country:'MY', query:'IKIM FM', aliases:['Radio IKIM','Radio Ikim FM','IKIMfm'], web:'https://ikimfm.my/' },
-    { id:'radioklasik', name:'Radio Klasik', label:'⭐ Radio Klasik', group:'Top Malaysia', country:'MY', query:'Radio Klasik', aliases:['Klasik Nasional','Klasik FM','RTM Klasik'], web:'https://radio.rtm.gov.my/klasik' },
-    { id:'gegar', name:'GEGAR', label:'⭐ GEGAR', group:'Top Malaysia', country:'MY', query:'GEGAR', aliases:['THR Gegar','Gegar FM'], web:'https://audio1.syok.my/gegar' },
-
-    { id:'hitz', name:'HITZ', label:'HITZ', group:'English', country:'MY', query:'HITZ', aliases:['Hitz FM','Hitz Malaysia'], web:'https://audio1.syok.my/hitz' },
-    { id:'flyfm', name:'Fly FM', label:'Fly FM', group:'English', country:'MY', query:'Fly FM', aliases:['Fly Malaysia'], web:'https://www.flyfm.audio/' },
-    { id:'lite', name:'LITE', label:'LITE', group:'English', country:'MY', query:'LITE', aliases:['Lite FM','Lite Malaysia'], web:'https://audio1.syok.my/lite' },
-    { id:'mix', name:'MIX', label:'MIX', group:'English', country:'MY', query:'MIX', aliases:['Mix FM','Mix Malaysia'], web:'https://audio1.syok.my/mix' },
-    { id:'traxx', name:'TraXX FM', label:'TraXX FM', group:'English', country:'MY', query:'TraXX FM', aliases:['Traxx','RTM Traxx'], web:'https://radio.rtm.gov.my/traxx' },
-    { id:'bfm', name:'BFM 89.9', label:'BFM 89.9', group:'English', country:'MY', query:'BFM 89.9', aliases:['BFM Radio','BFM Malaysia'], web:'https://www.bfm.my/' },
-
-    { id:'myfm', name:'MY FM', label:'MY FM', group:'Chinese', country:'MY', query:'MY FM', aliases:['MyFM','MY Malaysia'], web:'https://audio1.syok.my/my' },
-    { id:'fm988', name:'988 FM', label:'988 FM', group:'Chinese', country:'MY', query:'988 FM', aliases:['Radio 988','988 Malaysia'], web:'https://www.988.com.my/' },
-    { id:'melody', name:'MELODY', label:'MELODY', group:'Chinese', country:'MY', query:'MELODY', aliases:['Melody FM','Melody Malaysia'], web:'https://audio1.syok.my/melody' },
-    { id:'goxuan', name:'GOXUAN', label:'GOXUAN', group:'Chinese', country:'MY', query:'GOXUAN', aliases:['Go Xuan','GoXuan FM'], web:'https://audio1.syok.my/goxuan' },
-    { id:'aifm', name:'Ai FM', label:'Ai FM', group:'Chinese', country:'MY', query:'Ai FM', aliases:['Radio Ai FM','RTM Ai'], web:'https://radio.rtm.gov.my/ai' },
-
-    { id:'raaga', name:'RAAGA', label:'RAAGA', group:'Tamil / Indian', country:'MY', query:'RAAGA', aliases:['Raaga FM','THR Raaga'], web:'https://audio1.syok.my/raaga' },
-    { id:'minnalfm', name:'Minnal FM', label:'Minnal FM', group:'Tamil / Indian', country:'MY', query:'Minnal FM', aliases:['RTM Minnal','Radio Minnal'], web:'https://radio.rtm.gov.my/minnal' },
-
-    { id:'nasionalfm', name:'Nasional FM', label:'Nasional FM', group:'RTM / Negeri', country:'MY', query:'Nasional FM', aliases:['RTM Nasional','Radio Nasional'], web:'https://radio.rtm.gov.my/nasional' },
-    { id:'klfm', name:'KL FM', label:'KL FM', group:'RTM / Negeri', country:'MY', query:'KL FM', aliases:['RTM KL FM','Kuala Lumpur FM'], web:'https://radio.rtm.gov.my/klfm' },
-    { id:'selangorfm', name:'Selangor FM', label:'Selangor FM', group:'RTM / Negeri', country:'MY', query:'Selangor FM', aliases:['RTM Selangor'], web:'https://radio.rtm.gov.my/selangor' },
-    { id:'johorfm', name:'Johor FM', label:'Johor FM', group:'RTM / Negeri', country:'MY', query:'Johor FM', aliases:['RTM Johor'], web:'https://radio.rtm.gov.my/johor' },
-    { id:'kedahfm', name:'Kedah FM', label:'Kedah FM', group:'RTM / Negeri', country:'MY', query:'Kedah FM', aliases:['RTM Kedah'], web:'https://radio.rtm.gov.my/kedah' },
-    { id:'kelantanfm', name:'Kelantan FM', label:'Kelantan FM', group:'RTM / Negeri', country:'MY', query:'Kelantan FM', aliases:['RTM Kelantan'], web:'https://radio.rtm.gov.my/kelantan' },
-    { id:'melakafm', name:'Melaka FM', label:'Melaka FM', group:'RTM / Negeri', country:'MY', query:'Melaka FM', aliases:['RTM Melaka'], web:'https://radio.rtm.gov.my/melaka' },
-    { id:'negerifm', name:'Negeri FM', label:'Negeri FM', group:'RTM / Negeri', country:'MY', query:'Negeri FM', aliases:['Negeri Sembilan FM','RTM Negeri'], web:'https://radio.rtm.gov.my/negeri' },
-    { id:'pahangfm', name:'Pahang FM', label:'Pahang FM', group:'RTM / Negeri', country:'MY', query:'Pahang FM', aliases:['RTM Pahang'], web:'https://radio.rtm.gov.my/pahang' },
-    { id:'perakfm', name:'Perak FM', label:'Perak FM', group:'RTM / Negeri', country:'MY', query:'Perak FM', aliases:['RTM Perak'], web:'https://radio.rtm.gov.my/perak' },
-    { id:'mutiarafm', name:'Mutiara FM', label:'Mutiara FM', group:'RTM / Negeri', country:'MY', query:'Mutiara FM', aliases:['RTM Mutiara','Penang Mutiara FM'], web:'https://radio.rtm.gov.my/mutiara' },
-    { id:'terengganufm', name:'Terengganu FM', label:'Terengganu FM', group:'RTM / Negeri', country:'MY', query:'Terengganu FM', aliases:['RTM Terengganu'], web:'https://radio.rtm.gov.my/terengganu' },
-    { id:'sabahfm', name:'Sabah FM', label:'Sabah FM', group:'Sabah / Sarawak', country:'MY', query:'Sabah FM', aliases:['RTM Sabah FM','Radio Sabah'], web:'https://radio.rtm.gov.my/sabah' },
-    { id:'sarawakfm', name:'Sarawak FM', label:'Sarawak FM', group:'Sabah / Sarawak', country:'MY', query:'Sarawak FM', aliases:['RTM Sarawak FM','Radio Sarawak'], web:'https://radio.rtm.gov.my/sarawak' },
-
-    { id:'bernama', name:'Bernama Radio', label:'Bernama Radio', group:'News / Local', country:'MY', query:'Bernama Radio', aliases:['Bernama'], web:'https://bernama.com/radio/' },
-    { id:'catsfm', name:'Cats FM', label:'Cats FM', group:'News / Local', country:'MY', query:'Cats FM', aliases:['Cats Radio','Cats FM Malaysia'], web:'https://catsfm.my/' },
-    { id:'manisfm', name:'Manis FM', label:'Manis FM', group:'News / Local', country:'MY', query:'Manis FM', aliases:['Manis Radio'], web:'https://www.manis.fm/' },
-    { id:'bestfm', name:'Best FM', label:'Best FM', group:'News / Local', country:'MY', query:'Best FM', aliases:['Best 104','Best Radio'], web:'https://bestfm.com.my/' },
-    { id:'kool101', name:'Kool 101', label:'Kool 101', group:'News / Local', country:'MY', query:'Kool 101', aliases:['Kool FM','Kool Malaysia'], web:'https://www.kool101.audio/' },
-    { id:'eightfm', name:'Eight FM', label:'Eight FM', group:'News / Local', country:'MY', query:'Eight FM', aliases:['8FM','Eight Radio','8 FM Malaysia'], web:'https://www.eight.audio/' },
-
-    { id:'custom', name:'Custom URL', label:'Custom URL', group:'Custom', country:'', query:'', aliases:[], web:'' }
-  ];
+    {
+        "id": "era",
+        "name": "ERA",
+        "label": "⭐ ERA",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Era FM",
+        "aliases": [
+            "ERA FM",
+            "ERA Malaysia",
+            "Era FM Malaysia",
+            "Muzik Hit Terkini"
+        ],
+        "web": "https://radio-online.my/era"
+    },
+    {
+        "id": "sinar",
+        "name": "SINAR FM",
+        "label": "⭐ SINAR FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Sinar FM",
+        "aliases": [
+            "SINAR",
+            "Radio Sinar FM",
+            "Sinar Malaysia"
+        ],
+        "web": "https://radio-online.my/sinar-fm"
+    },
+    {
+        "id": "raaga",
+        "name": "THR Raaga",
+        "label": "⭐ THR Raaga",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "THR Raaga",
+        "aliases": [
+            "RAAGA",
+            "Raaga FM",
+            "THR Raaga Malaysia"
+        ],
+        "web": "https://radio-online.my/thr-raaga"
+    },
+    {
+        "id": "suria",
+        "name": "Suria",
+        "label": "⭐ Suria",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Suria FM",
+        "aliases": [
+            "Suria Malaysia",
+            "Suria FM"
+        ],
+        "web": "https://radio-online.my/suria"
+    },
+    {
+        "id": "radioklasik",
+        "name": "Radio Klasik",
+        "label": "⭐ Radio Klasik",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Radio Klasik",
+        "aliases": [
+            "Klasik Nasional",
+            "Klasik FM",
+            "RTM Klasik"
+        ],
+        "web": "https://radio-online.my/radio-klasik"
+    },
+    {
+        "id": "sarawakfm",
+        "name": "Sarawak FM",
+        "label": "⭐ Sarawak FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Sarawak FM",
+        "aliases": [
+            "RTM Sarawak FM",
+            "Radio Sarawak"
+        ],
+        "web": "https://radio-online.my/sarawak-fm"
+    },
+    {
+        "id": "gegar",
+        "name": "THR Gegar",
+        "label": "⭐ THR Gegar",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "THR Gegar",
+        "aliases": [
+            "GEGAR",
+            "Gegar FM",
+            "THR Gegar FM"
+        ],
+        "web": "https://radio-online.my/thr-gegar"
+    },
+    {
+        "id": "astro_vani",
+        "name": "Astro Vani",
+        "label": "⭐ Astro Vani",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Astro Vani",
+        "aliases": [
+            "Vani FM",
+            "Vani Radio"
+        ],
+        "web": "https://radio-online.my/astro-vani"
+    },
+    {
+        "id": "myfm",
+        "name": "MY FM",
+        "label": "⭐ MY FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "MY FM",
+        "aliases": [
+            "MyFM",
+            "MY Malaysia"
+        ],
+        "web": "https://radio-online.my/my-fm"
+    },
+    {
+        "id": "melody",
+        "name": "Melody FM",
+        "label": "⭐ Melody FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Melody FM",
+        "aliases": [
+            "MELODY",
+            "Melody Malaysia"
+        ],
+        "web": "https://radio-online.my/melody-fm"
+    },
+    {
+        "id": "hotfm",
+        "name": "Hot FM",
+        "label": "⭐ Hot FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Hot FM",
+        "aliases": [
+            "Hot FM Malaysia",
+            "Dengar Hot FM",
+            "HotFM"
+        ],
+        "web": "https://radio-online.my/hot-fm"
+    },
+    {
+        "id": "minnalfm",
+        "name": "Minnal FM",
+        "label": "⭐ Minnal FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Minnal FM",
+        "aliases": [
+            "RTM Minnal",
+            "Radio Minnal"
+        ],
+        "web": "https://radio-online.my/minnal-fm"
+    },
+    {
+        "id": "waifm",
+        "name": "Wai FM",
+        "label": "⭐ Wai FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Wai FM",
+        "aliases": [
+            "RTM Wai FM",
+            "Wai Iban",
+            "Wai Bidayuh"
+        ],
+        "web": "https://radio-online.my/wai-fm"
+    },
+    {
+        "id": "fm988",
+        "name": "988 FM",
+        "label": "⭐ 988 FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "988 FM",
+        "aliases": [
+            "Radio 988",
+            "988 Malaysia"
+        ],
+        "web": "https://radio-online.my/988-fm"
+    },
+    {
+        "id": "bestfm",
+        "name": "Best FM",
+        "label": "⭐ Best FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Best FM",
+        "aliases": [
+            "Best 104",
+            "Best Radio"
+        ],
+        "web": "https://radio-online.my/best-fm"
+    },
+    {
+        "id": "lite",
+        "name": "Lite",
+        "label": "⭐ Lite",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Lite FM",
+        "aliases": [
+            "LITE",
+            "Lite Malaysia"
+        ],
+        "web": "https://radio-online.my/lite"
+    },
+    {
+        "id": "zayan",
+        "name": "Zayan",
+        "label": "⭐ Zayan",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Zayan FM",
+        "aliases": [
+            "ZAYAN",
+            "Zayan Malaysia"
+        ],
+        "web": "https://radio-online.my/zayan-fm"
+    },
+    {
+        "id": "nasionalfm",
+        "name": "Nasional FM",
+        "label": "Nasional FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Nasional FM",
+        "aliases": [
+            "RTM Nasional",
+            "Radio Nasional"
+        ],
+        "web": "https://radio-online.my/nasional-fm"
+    },
+    {
+        "id": "osai",
+        "name": "Osai",
+        "label": "Osai",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Osai",
+        "aliases": [
+            "Osai FM",
+            "Astro Osai"
+        ],
+        "web": "https://radio-online.my/osai"
+    },
+    {
+        "id": "kool101",
+        "name": "Kool 101",
+        "label": "Kool 101",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Kool 101",
+        "aliases": [
+            "Kool FM",
+            "Kool Malaysia"
+        ],
+        "web": "https://radio-online.my/kool-101"
+    },
+    {
+        "id": "aifm",
+        "name": "Ai FM",
+        "label": "Ai FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Ai FM",
+        "aliases": [
+            "Radio Ai FM",
+            "RTM Ai"
+        ],
+        "web": "https://radio-online.my/ai-fm"
+    },
+    {
+        "id": "mix",
+        "name": "Mix FM",
+        "label": "Mix FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Mix FM",
+        "aliases": [
+            "MIX",
+            "Mix Malaysia"
+        ],
+        "web": "https://radio-online.my/mix-fm"
+    },
+    {
+        "id": "kelantanfm",
+        "name": "Kelantan FM",
+        "label": "Kelantan FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Kelantan FM",
+        "aliases": [
+            "RTM Kelantan"
+        ],
+        "web": "https://radio-online.my/kelantan-fm"
+    },
+    {
+        "id": "hitz",
+        "name": "Hitz",
+        "label": "Hitz",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Hitz FM",
+        "aliases": [
+            "HITZ",
+            "Hitz Malaysia"
+        ],
+        "web": "https://radio-online.my/hitz"
+    },
+    {
+        "id": "sabahfm",
+        "name": "Sabah FM",
+        "label": "Sabah FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Sabah FM",
+        "aliases": [
+            "RTM Sabah FM",
+            "Radio Sabah"
+        ],
+        "web": "https://radio-online.my/sabah-fm"
+    },
+    {
+        "id": "oli968",
+        "name": "Oli 96.8",
+        "label": "Oli 96.8",
+        "group": "Nearby / Online",
+        "country": "SG",
+        "query": "Oli 96.8",
+        "aliases": [
+            "Oli 968",
+            "Oli FM"
+        ],
+        "web": "https://radio-online.my/oli-968"
+    },
+    {
+        "id": "flyfm",
+        "name": "Fly FM",
+        "label": "Fly FM",
+        "group": "Top Radio-Online.My",
+        "country": "MY",
+        "query": "Fly FM",
+        "aliases": [
+            "Fly Malaysia"
+        ],
+        "web": "https://radio-online.my/fly-fm"
+    },
+    {
+        "id": "johorfm",
+        "name": "Johor FM",
+        "label": "Johor FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Johor FM",
+        "aliases": [
+            "RTM Johor"
+        ],
+        "web": "https://radio-online.my/johor-fm"
+    },
+    {
+        "id": "klfm",
+        "name": "KL FM",
+        "label": "KL FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "KL FM",
+        "aliases": [
+            "RTM KL FM",
+            "Kuala Lumpur FM"
+        ],
+        "web": "https://radio-online.my/kl-fm"
+    },
+    {
+        "id": "kedahfm",
+        "name": "Kedah FM",
+        "label": "Kedah FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Kedah FM",
+        "aliases": [
+            "RTM Kedah"
+        ],
+        "web": "https://radio-online.my/kedah-fm"
+    },
+    {
+        "id": "perakfm",
+        "name": "Perak FM",
+        "label": "Perak FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Perak FM",
+        "aliases": [
+            "RTM Perak"
+        ],
+        "web": "https://radio-online.my/perak-fm"
+    },
+    {
+        "id": "tawaufm",
+        "name": "Tawau FM",
+        "label": "Tawau FM",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Tawau FM",
+        "aliases": [
+            "RTM Tawau"
+        ],
+        "web": "https://radio-online.my/tawau-fm"
+    },
+    {
+        "id": "sabahvfm",
+        "name": "Sabah VFM",
+        "label": "Sabah VFM",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Sabah VFM",
+        "aliases": [
+            "RTM Sabah VFM",
+            "Sabah V FM"
+        ],
+        "web": "https://radio-online.my/sabah-vfm"
+    },
+    {
+        "id": "molekfm",
+        "name": "Molek FM",
+        "label": "Molek FM",
+        "group": "News / Local",
+        "country": "MY",
+        "query": "Molek FM",
+        "aliases": [
+            "Molek Radio"
+        ],
+        "web": "https://radio-online.my/molek-fm"
+    },
+    {
+        "id": "manisfm",
+        "name": "Manis FM",
+        "label": "Manis FM",
+        "group": "News / Local",
+        "country": "MY",
+        "query": "Manis FM",
+        "aliases": [
+            "Manis Radio"
+        ],
+        "web": "https://radio-online.my/manis-fm"
+    },
+    {
+        "id": "traxx",
+        "name": "TraXX",
+        "label": "TraXX",
+        "group": "English",
+        "country": "MY",
+        "query": "TraXX FM",
+        "aliases": [
+            "Traxx",
+            "RTM Traxx"
+        ],
+        "web": "https://radio-online.my/traxx"
+    },
+    {
+        "id": "eightfm",
+        "name": "Eight FM",
+        "label": "Eight FM",
+        "group": "News / Local",
+        "country": "MY",
+        "query": "Eight FM",
+        "aliases": [
+            "8FM",
+            "Eight Radio",
+            "8 FM Malaysia"
+        ],
+        "web": "https://radio-online.my/eight-fm"
+    },
+    {
+        "id": "catsfm",
+        "name": "Cats FM",
+        "label": "Cats FM",
+        "group": "News / Local",
+        "country": "MY",
+        "query": "Cats FM",
+        "aliases": [
+            "Cats Radio",
+            "Cats FM Malaysia"
+        ],
+        "web": "https://radio-online.my/cats-fm"
+    },
+    {
+        "id": "era_sabah",
+        "name": "Era FM Sabah",
+        "label": "Era FM Sabah",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Era Sabah",
+        "aliases": [
+            "ERA Sabah",
+            "Era FM Sabah"
+        ],
+        "web": "https://radio-online.my/era-fm-sabah"
+    },
+    {
+        "id": "era_sarawak",
+        "name": "Era FM Sarawak",
+        "label": "Era FM Sarawak",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Era Sarawak",
+        "aliases": [
+            "ERA Sarawak",
+            "Era FM Sarawak"
+        ],
+        "web": "https://radio-online.my/era-fm-sarawak"
+    },
+    {
+        "id": "selangorfm",
+        "name": "Selangor FM",
+        "label": "Selangor FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Selangor FM",
+        "aliases": [
+            "RTM Selangor"
+        ],
+        "web": "https://radio-online.my/selangor-fm"
+    },
+    {
+        "id": "pahangfm",
+        "name": "Pahang FM",
+        "label": "Pahang FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Pahang FM",
+        "aliases": [
+            "RTM Pahang"
+        ],
+        "web": "https://radio-online.my/pahang-fm"
+    },
+    {
+        "id": "negerifm",
+        "name": "Negeri FM",
+        "label": "Negeri FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Negeri FM",
+        "aliases": [
+            "Negeri Sembilan FM",
+            "RTM Negeri"
+        ],
+        "web": "https://radio-online.my/negeri-fm"
+    },
+    {
+        "id": "goxuan",
+        "name": "GoXuan",
+        "label": "GoXuan",
+        "group": "Chinese",
+        "country": "MY",
+        "query": "GoXuan",
+        "aliases": [
+            "GOXUAN",
+            "Go Xuan",
+            "GoXuan FM"
+        ],
+        "web": "https://radio-online.my/goxuan"
+    },
+    {
+        "id": "terengganufm",
+        "name": "Terengganu FM",
+        "label": "Terengganu FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Terengganu FM",
+        "aliases": [
+            "RTM Terengganu"
+        ],
+        "web": "https://radio-online.my/terengganu-fm"
+    },
+    {
+        "id": "mutiarafm",
+        "name": "Mutiara FM",
+        "label": "Mutiara FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Mutiara FM",
+        "aliases": [
+            "RTM Mutiara",
+            "Penang Mutiara FM"
+        ],
+        "web": "https://radio-online.my/mutiara-fm"
+    },
+    {
+        "id": "melakafm",
+        "name": "Melaka FM",
+        "label": "Melaka FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Melaka FM",
+        "aliases": [
+            "RTM Melaka"
+        ],
+        "web": "https://radio-online.my/melaka-fm"
+    },
+    {
+        "id": "perlisfm",
+        "name": "Perlis FM",
+        "label": "Perlis FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Perlis FM",
+        "aliases": [
+            "RTM Perlis"
+        ],
+        "web": "https://radio-online.my/perlis-fm"
+    },
+    {
+        "id": "kristalfm",
+        "name": "Kristal FM",
+        "label": "Kristal FM",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Kristal FM",
+        "aliases": [
+            "Kristal Radio"
+        ],
+        "web": "https://radio-online.my/kristal-fm"
+    },
+    {
+        "id": "kupikupifm",
+        "name": "Kupi-Kupi FM Sabah",
+        "label": "Kupi-Kupi FM Sabah",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Kupi-Kupi FM Sabah",
+        "aliases": [
+            "Kupi Kupi FM",
+            "Kupi-Kupi FM"
+        ],
+        "web": "https://radio-online.my/kupi-kupi-fm-sabah"
+    },
+    {
+        "id": "alam_seni",
+        "name": "Alam Seni",
+        "label": "Alam Seni",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Alam Seni",
+        "aliases": [
+            "Alam Seni FM"
+        ],
+        "web": "https://radio-online.my/alam-seni"
+    },
+    {
+        "id": "india_beat",
+        "name": "India Beat",
+        "label": "India Beat",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "India Beat",
+        "aliases": [
+            "Astro India Beat"
+        ],
+        "web": "https://radio-online.my/india-beat"
+    },
+    {
+        "id": "redfm",
+        "name": "Red FM",
+        "label": "Red FM",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Red FM",
+        "aliases": [
+            "Red FM Malaysia"
+        ],
+        "web": "https://radio-online.my/red-fm"
+    },
+    {
+        "id": "sandakanfm",
+        "name": "Sandakan FM",
+        "label": "Sandakan FM",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Sandakan FM",
+        "aliases": [
+            "RTM Sandakan"
+        ],
+        "web": "https://radio-online.my/sandakan-fm"
+    },
+    {
+        "id": "radio_lagenda",
+        "name": "Radio Lagenda",
+        "label": "Radio Lagenda",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Radio Lagenda",
+        "aliases": [
+            "Lagenda Radio"
+        ],
+        "web": "https://radio-online.my/radio-lagenda"
+    },
+    {
+        "id": "ila",
+        "name": "ILA",
+        "label": "ILA",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "ILA",
+        "aliases": [
+            "ILA FM"
+        ],
+        "web": "https://radio-online.my/ila"
+    },
+    {
+        "id": "asyikfm",
+        "name": "Asyik FM",
+        "label": "Asyik FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Asyik FM",
+        "aliases": [
+            "RTM Asyik"
+        ],
+        "web": "https://radio-online.my/asyik-fm"
+    },
+    {
+        "id": "labuanfm",
+        "name": "Labuan FM",
+        "label": "Labuan FM",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Labuan FM",
+        "aliases": [
+            "RTM Labuan"
+        ],
+        "web": "https://radio-online.my/labuan-fm"
+    },
+    {
+        "id": "kenyalang",
+        "name": "Kenyalang",
+        "label": "Kenyalang",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Kenyalang",
+        "aliases": [
+            "Kenyalang FM",
+            "Astro Kenyalang"
+        ],
+        "web": "https://radio-online.my/kenyalang"
+    },
+    {
+        "id": "gemersik",
+        "name": "Gemersik",
+        "label": "Gemersik",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Gemersik",
+        "aliases": [
+            "Gemersik FM"
+        ],
+        "web": "https://radio-online.my/gemersik"
+    },
+    {
+        "id": "gegar_muzik",
+        "name": "Gegar Muzik FM",
+        "label": "Gegar Muzik FM",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Gegar Muzik FM",
+        "aliases": [
+            "Gegar Muzik"
+        ],
+        "web": "https://radio-online.my/gegar-muzik-fm"
+    },
+    {
+        "id": "bayufm",
+        "name": "Bayu FM",
+        "label": "Bayu FM",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Bayu FM",
+        "aliases": [
+            "Astro Bayu"
+        ],
+        "web": "https://radio-online.my/bayu-fm"
+    },
+    {
+        "id": "myfriendsfm",
+        "name": "MyFriends FM",
+        "label": "MyFriends FM",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "MyFriends FM",
+        "aliases": [
+            "My Friends FM"
+        ],
+        "web": "https://radio-online.my/myfriends-fm"
+    },
+    {
+        "id": "impian",
+        "name": "Impian",
+        "label": "Impian",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Impian",
+        "aliases": [
+            "Impian FM"
+        ],
+        "web": "https://radio-online.my/impian"
+    },
+    {
+        "id": "pelangifm",
+        "name": "Pelangi FM",
+        "label": "Pelangi FM",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Pelangi FM",
+        "aliases": [
+            "Pelangi Radio"
+        ],
+        "web": "https://radio-online.my/pelangi-fm"
+    },
+    {
+        "id": "teafm",
+        "name": "Tea FM",
+        "label": "Tea FM",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Tea FM",
+        "aliases": [
+            "TEA FM"
+        ],
+        "web": "https://radio-online.my/tea-fm"
+    },
+    {
+        "id": "langkawifm",
+        "name": "Langkawi FM",
+        "label": "Langkawi FM",
+        "group": "RTM Negeri",
+        "country": "MY",
+        "query": "Langkawi FM",
+        "aliases": [
+            "RTM Langkawi"
+        ],
+        "web": "https://radio-online.my/langkawi-fm"
+    },
+    {
+        "id": "iras",
+        "name": "Iras",
+        "label": "Iras",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Iras",
+        "aliases": [
+            "Iras FM"
+        ],
+        "web": "https://radio-online.my/iras"
+    },
+    {
+        "id": "sinar_rock_kapak",
+        "name": "Sinar Rock Kapak",
+        "label": "Sinar Rock Kapak",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Sinar Rock Kapak",
+        "aliases": [
+            "Sinar Rock",
+            "Rock Kapak"
+        ],
+        "web": "https://radio-online.my/sinar-rock-kapak"
+    },
+    {
+        "id": "sinar_jiwang",
+        "name": "Sinar Jiwang",
+        "label": "Sinar Jiwang",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Sinar Jiwang",
+        "aliases": [
+            "Sinar FM Jiwang"
+        ],
+        "web": "https://radio-online.my/sinar-jiwang"
+    },
+    {
+        "id": "sinar_imusik",
+        "name": "Sinar I-Musik",
+        "label": "Sinar I-Musik",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Sinar I-Musik",
+        "aliases": [
+            "Sinar Imusik",
+            "Sinar iMusik"
+        ],
+        "web": "https://radio-online.my/sinar-i-musik"
+    },
+    {
+        "id": "sinar_pop_yeh_yeh",
+        "name": "Sinar Pop Yeh Yeh",
+        "label": "Sinar Pop Yeh Yeh",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Sinar Pop Yeh Yeh",
+        "aliases": [
+            "Sinar Pop Yeh-Yeh"
+        ],
+        "web": "https://radio-online.my/sinar-pop-yeh-yeh"
+    },
+    {
+        "id": "zayan_nasheed",
+        "name": "Zayan Nasyeed",
+        "label": "Zayan Nasyeed",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Zayan Nasyeed",
+        "aliases": [
+            "Zayan Nasyid",
+            "Zayan Nasheed"
+        ],
+        "web": "https://radio-online.my/zayan-nasyeed"
+    },
+    {
+        "id": "zayan_surah",
+        "name": "Zayan Surah",
+        "label": "Zayan Surah",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Zayan Surah",
+        "aliases": [
+            "Zayan Quran",
+            "Zayan Al Quran"
+        ],
+        "web": "https://radio-online.my/zayan-surah"
+    },
+    {
+        "id": "zayan_almusika",
+        "name": "Zayan Almusika",
+        "label": "Zayan Almusika",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Zayan Almusika",
+        "aliases": [
+            "Zayan Al Musika"
+        ],
+        "web": "https://radio-online.my/zayan-almusika"
+    },
+    {
+        "id": "hitz_sabah",
+        "name": "Hitz FM Sabah",
+        "label": "Hitz FM Sabah",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Hitz FM Sabah",
+        "aliases": [
+            "HITZ Sabah"
+        ],
+        "web": "https://radio-online.my/hitz-fm-sabah"
+    },
+    {
+        "id": "hitz_sarawak",
+        "name": "Hitz FM Sarawak",
+        "label": "Hitz FM Sarawak",
+        "group": "Sabah / Sarawak",
+        "country": "MY",
+        "query": "Hitz FM Sarawak",
+        "aliases": [
+            "HITZ Sarawak"
+        ],
+        "web": "https://radio-online.my/hitz-fm-sarawak"
+    },
+    {
+        "id": "hitz_kpop",
+        "name": "Hitz KPOP",
+        "label": "Hitz KPOP",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz KPOP",
+        "aliases": [
+            "HITZ K-POP",
+            "Hitz K Pop"
+        ],
+        "web": "https://radio-online.my/hitz-kpop"
+    },
+    {
+        "id": "hitz_stage",
+        "name": "Hitz Stage",
+        "label": "Hitz Stage",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz Stage",
+        "aliases": [
+            "HITZ Stage"
+        ],
+        "web": "https://radio-online.my/hitz-stage"
+    },
+    {
+        "id": "hitz_dance",
+        "name": "Hitz Dance",
+        "label": "Hitz Dance",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz Dance",
+        "aliases": [
+            "HITZ Dance"
+        ],
+        "web": "https://radio-online.my/hitz-dance"
+    },
+    {
+        "id": "hitz_throwback",
+        "name": "Hitz Throwback",
+        "label": "Hitz Throwback",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz Throwback",
+        "aliases": [
+            "HITZ Throwback"
+        ],
+        "web": "https://radio-online.my/hitz-throwback"
+    },
+    {
+        "id": "hitz_chillest",
+        "name": "Hitz Chillest",
+        "label": "Hitz Chillest",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz Chillest",
+        "aliases": [
+            "HITZ Chillest"
+        ],
+        "web": "https://radio-online.my/hitz-chillest"
+    },
+    {
+        "id": "hitz_top40",
+        "name": "Hitz Top40",
+        "label": "Hitz Top40",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz Top40",
+        "aliases": [
+            "HITZ Top 40"
+        ],
+        "web": "https://radio-online.my/hitz-top40"
+    },
+    {
+        "id": "hitz_urban",
+        "name": "Hitz Urban",
+        "label": "Hitz Urban",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz Urban",
+        "aliases": [
+            "HITZ Urban"
+        ],
+        "web": "https://radio-online.my/hitz-urban"
+    },
+    {
+        "id": "hitz_local",
+        "name": "Hitz Local",
+        "label": "Hitz Local",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Hitz Local",
+        "aliases": [
+            "HITZ Local"
+        ],
+        "web": "https://radio-online.my/hitz-local"
+    },
+    {
+        "id": "melody_chi_90",
+        "name": "Melody Chi Classic 90",
+        "label": "Melody Chi Classic 90",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Melody Chi Classic 90",
+        "aliases": [
+            "Melody Classic 90",
+            "Melody 90s"
+        ],
+        "web": "https://radio-online.my/melody-chi-classic-90"
+    },
+    {
+        "id": "melody_chi_80",
+        "name": "Melody Chi Classic 80",
+        "label": "Melody Chi Classic 80",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Melody Chi Classic 80",
+        "aliases": [
+            "Melody Classic 80",
+            "Melody 80s"
+        ],
+        "web": "https://radio-online.my/melody-chi-classic-80"
+    },
+    {
+        "id": "melody_chi_ost",
+        "name": "Melody Chi Classic OST",
+        "label": "Melody Chi Classic OST",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Melody Chi Classic OST",
+        "aliases": [
+            "Melody OST"
+        ],
+        "web": "https://radio-online.my/melody-chi-classic-ost"
+    },
+    {
+        "id": "raaga_evergreen_80",
+        "name": "Raaga Evergreen 80s",
+        "label": "Raaga Evergreen 80s",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Raaga Evergreen 80",
+        "aliases": [
+            "Raaga Evergreen 80s",
+            "Raaga Evergreen 80's"
+        ],
+        "web": "https://radio-online.my/raaga-evergreen-80s"
+    },
+    {
+        "id": "raaga_90s",
+        "name": "Raaga 90s Hits",
+        "label": "Raaga 90s Hits",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Raaga 90s Hits",
+        "aliases": [
+            "Raaga 90's Hits",
+            "Raaga 90s"
+        ],
+        "web": "https://radio-online.my/raaga-90s-hits"
+    },
+    {
+        "id": "raaga_puthu",
+        "name": "Raaga Puthu Varavu",
+        "label": "Raaga Puthu Varavu",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Raaga Puthu Varavu",
+        "aliases": [
+            "Raaga Puthu"
+        ],
+        "web": "https://radio-online.my/raaga-puthu-varavu"
+    },
+    {
+        "id": "opusfm",
+        "name": "Opus FM",
+        "label": "Opus FM",
+        "group": "Astro / Theme Channels",
+        "country": "MY",
+        "query": "Opus FM",
+        "aliases": [
+            "Astro Opus"
+        ],
+        "web": "https://radio-online.my/opus-fm"
+    },
+    {
+        "id": "amboifm",
+        "name": "Amboi FM",
+        "label": "Amboi FM",
+        "group": "More from Radio-Online.My",
+        "country": "MY",
+        "query": "Amboi FM",
+        "aliases": [
+            "Amboi Radio"
+        ],
+        "web": "https://radio-online.my/amboi-fm"
+    },
+    {
+        "id": "bfm",
+        "name": "BFM 89.9",
+        "label": "BFM 89.9",
+        "group": "News / Local",
+        "country": "MY",
+        "query": "BFM 89.9",
+        "aliases": [
+            "BFM Radio",
+            "BFM Malaysia"
+        ],
+        "web": "https://radio-online.my/bfm-899"
+    },
+    {
+        "id": "cityplus",
+        "name": "CITYPlus",
+        "label": "CITYPlus",
+        "group": "Chinese",
+        "country": "MY",
+        "query": "CITYPlus",
+        "aliases": [
+            "CityPlus FM",
+            "City Plus FM"
+        ],
+        "web": "https://radio-online.my/cityplus"
+    },
+    {
+        "id": "rakita",
+        "name": "Rakita",
+        "label": "Rakita",
+        "group": "News / Local",
+        "country": "MY",
+        "query": "Rakita",
+        "aliases": [
+            "Rakita Radio"
+        ],
+        "web": "https://radio-online.my/rakita"
+    },
+    {
+        "id": "custom",
+        "name": "Custom URL",
+        "label": "Custom URL",
+        "group": "Custom",
+        "country": "",
+        "query": "",
+        "aliases": [],
+        "web": ""
+    }
+];
   const API_BASES = [
     'https://de1.api.radio-browser.info/json/stations/search',
     'https://nl1.api.radio-browser.info/json/stations/search',
@@ -217,7 +1386,7 @@
           <select class="az-radio-select" id="azRadioStation" aria-label="Select radio station">${renderStationOptions(selected)}</select>
           <button type="button" class="az-radio-random" id="azRadioRandom" title="Random channel" aria-label="Random channel">🔀</button>
         </div>
-        <span class="az-radio-count" id="azRadioCount">${Math.max(0, STATIONS.length - 1)} verified Malaysia channels + Custom URL</span>
+        <span class="az-radio-count" id="azRadioCount">${Math.max(0, STATIONS.length - 1)} Radio-Online.My channels + Custom URL</span>
         <input class="az-radio-custom" id="azRadioCustom" type="url" placeholder="Paste direct stream URL (.mp3/.aac/.m3u8)" value="${esc(store.customUrl||'')}">
         <div class="az-radio-btns">
           <button type="button" class="az-radio-btn play" id="azRadioPlay">▶ Play</button>
@@ -370,7 +1539,7 @@
       if([...select.options].some(o => o.value === current)) select.value = current;
       else if(select.options.length) select.value = select.options[0].value;
       const visible = Math.max(0, [...select.options].filter(o => o.value !== 'custom').length);
-      if(count) count.textContent = `${Math.max(0, STATIONS.length - 1)} verified Malaysia channels + Custom URL`;
+      if(count) count.textContent = `${Math.max(0, STATIONS.length - 1)} Radio-Online.My channels + Custom URL`;
       syncCustom();
     }
     function getRandomStationId(){
