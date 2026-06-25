@@ -247,3 +247,10 @@ Changes:
 No Firebase Rules update needed.
 No Render backend deploy needed.
 Deploy GitHub Pages only.
+
+## Patch 367 - Radio Top Group Language Order Fix
+- Chinese-language stations removed from Top Radio-Online.My group and placed under Chinese.
+- Indian/Tamil-language stations removed from Top Radio-Online.My group and placed under Tamil / Indian.
+- Top group now stays focused on mainstream Malaysia/Malay/English stations first.
+- Dropdown group order is now enforced so Chinese and Tamil / Indian sections appear lower, not mixed into Top.
+- Cache bust updated to azobss-radio-player.js?v=367.

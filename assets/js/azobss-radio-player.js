@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 366: station dropdown refreshed using Radio-Online.My Malaysia channel reference list; top channels stay first.
+   Patch 367: Chinese and Indian language stations are no longer placed in the Top group; Top group focuses on mainstream Malay/English/Malaysia stations first.
 */
 (function(){
   'use strict';
@@ -39,8 +39,8 @@
     {
         "id": "raaga",
         "name": "THR Raaga",
-        "label": "⭐ THR Raaga",
-        "group": "Top Radio-Online.My",
+        "label": "THR Raaga",
+        "group": "Tamil / Indian",
         "country": "MY",
         "query": "THR Raaga",
         "aliases": [
@@ -107,8 +107,8 @@
     {
         "id": "astro_vani",
         "name": "Astro Vani",
-        "label": "⭐ Astro Vani",
-        "group": "Top Radio-Online.My",
+        "label": "Astro Vani",
+        "group": "Tamil / Indian",
         "country": "MY",
         "query": "Astro Vani",
         "aliases": [
@@ -120,8 +120,8 @@
     {
         "id": "myfm",
         "name": "MY FM",
-        "label": "⭐ MY FM",
-        "group": "Top Radio-Online.My",
+        "label": "MY FM",
+        "group": "Chinese",
         "country": "MY",
         "query": "MY FM",
         "aliases": [
@@ -133,8 +133,8 @@
     {
         "id": "melody",
         "name": "Melody FM",
-        "label": "⭐ Melody FM",
-        "group": "Top Radio-Online.My",
+        "label": "Melody FM",
+        "group": "Chinese",
         "country": "MY",
         "query": "Melody FM",
         "aliases": [
@@ -160,8 +160,8 @@
     {
         "id": "minnalfm",
         "name": "Minnal FM",
-        "label": "⭐ Minnal FM",
-        "group": "Top Radio-Online.My",
+        "label": "Minnal FM",
+        "group": "Tamil / Indian",
         "country": "MY",
         "query": "Minnal FM",
         "aliases": [
@@ -187,8 +187,8 @@
     {
         "id": "fm988",
         "name": "988 FM",
-        "label": "⭐ 988 FM",
-        "group": "Top Radio-Online.My",
+        "label": "988 FM",
+        "group": "Chinese",
         "country": "MY",
         "query": "988 FM",
         "aliases": [
@@ -253,7 +253,7 @@
         "id": "osai",
         "name": "Osai",
         "label": "Osai",
-        "group": "Top Radio-Online.My",
+        "group": "Tamil / Indian",
         "country": "MY",
         "query": "Osai",
         "aliases": [
@@ -279,7 +279,7 @@
         "id": "aifm",
         "name": "Ai FM",
         "label": "Ai FM",
-        "group": "Top Radio-Online.My",
+        "group": "Chinese",
         "country": "MY",
         "query": "Ai FM",
         "aliases": [
@@ -1276,6 +1276,24 @@
       let bucket = groups.find(x => x.group === g);
       if(!bucket){ bucket = {group:g, items:[]}; groups.push(bucket); }
       bucket.items.push(st);
+    });
+    const groupOrder = [
+      'Top Radio-Online.My',
+      'English',
+      'RTM Negeri',
+      'Sabah / Sarawak',
+      'News / Local',
+      'Chinese',
+      'Tamil / Indian',
+      'Astro / Theme Channels',
+      'More from Radio-Online.My',
+      'Nearby / Online',
+      'Custom'
+    ];
+    groups.sort((a,b) => {
+      const ia = groupOrder.indexOf(a.group);
+      const ib = groupOrder.indexOf(b.group);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
     });
     if(!groups.length){
       return '<option value="custom">No station found - Custom URL</option>';

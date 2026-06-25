@@ -1,0 +1,16 @@
+AZOBSS Patch 367 - Radio Top Group Language Order Fix
+
+Purpose:
+- Keep Chinese and Indian/Tamil language radio stations out of the Top Radio-Online.My group.
+
+Changed:
+- MY FM, Melody FM, 988 FM, Ai FM -> Chinese group.
+- THR Raaga, Astro Vani, Minnal FM, Osai -> Tamil / Indian group.
+- Top group remains focused on mainstream Malaysia/Malay/English station order.
+- Dropdown group order is enforced so Chinese and Tamil / Indian appear below core groups.
+- Cache bust updated to azobss-radio-player.js?v=367.
+
+Deploy:
+- GitHub Pages only.
+- Firebase Rules: not required.
+- Render backend: not required.
