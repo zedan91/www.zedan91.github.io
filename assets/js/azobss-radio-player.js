@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 355: replace X close button with clear Minimize control; panel minimize keeps radio playing.
+   Patch 356: remove Open button; only Play/Stop/Minimize remain for simpler radio UI.
 */
 (function(){
   'use strict';
@@ -155,10 +155,9 @@
       .az-radio-count{display:block;margin-top:5px;text-align:center;color:#94a3b8;font-size:10.5px;font-weight:900;}
       .az-radio-custom{display:none;margin-top:8px;}
       .az-radio-player.is-custom .az-radio-custom{display:block;}
-      .az-radio-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px;}
+      .az-radio-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;}
       .az-radio-btn{border:1px solid rgba(34,197,94,.36);background:#052e16;color:#bbf7d0;border-radius:12px;min-height:36px;padding:0 9px;font-size:12px;font-weight:1000;cursor:pointer;}
       .az-radio-btn.stop{border-color:rgba(248,113,113,.35);background:#450a0a;color:#fecaca;}
-      .az-radio-btn.open{border-color:rgba(56,189,248,.35);background:#082f49;color:#bae6fd;}
       .az-radio-btn:disabled{opacity:.55;cursor:not-allowed;}
       .az-radio-vol{display:flex;align-items:center;gap:8px;margin-top:9px;padding:8px 9px;border-radius:13px;background:rgba(15,23,42,.78);border:1px solid rgba(148,163,184,.14);}
       .az-radio-vol span{font-size:12px;font-weight:900;color:#cbd5e1;white-space:nowrap;}
@@ -167,7 +166,7 @@
       .az-radio-status.ok{color:#bbf7d0;border-color:rgba(34,197,94,.22);}
       .az-radio-status.err{color:#fecaca;border-color:rgba(248,113,113,.22);}
       .az-radio-note{margin-top:7px;color:#94a3b8;font-size:10.5px;line-height:1.25;text-align:center;}
-      @media(max-width:720px){.az-radio-player{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-pill{min-height:36px;font-size:12px;padding:0 11px}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}.az-radio-btn.open{grid-column:1 / -1}}
+      @media(max-width:720px){.az-radio-player{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-pill{min-height:36px;font-size:12px;padding:0 11px}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}}
     `;
     const style=document.createElement('style');
     style.id='azobss-radio-player-css';
@@ -201,7 +200,6 @@
         <div class="az-radio-btns">
           <button type="button" class="az-radio-btn play" id="azRadioPlay">▶ Play</button>
           <button type="button" class="az-radio-btn stop" id="azRadioStop">■ Stop</button>
-          <button type="button" class="az-radio-btn open" id="azRadioOpen">Open</button>
         </div>
         <div class="az-radio-vol"><span>Volume</span><input id="azRadioVolume" type="range" min="0" max="1" step="0.05" value="${Math.min(1,Math.max(0,volume))}"></div>
         <div class="az-radio-status" id="azRadioStatus">Pilih stesen dan tekan Play.</div>
@@ -259,7 +257,7 @@
         if(url){ writeCache(station.id,url); return url; }
       }catch(e){ lastErr = e?.message || String(e); }
     }
-    throw new Error('Stream tidak dijumpai. Cuba Open station page.' + (lastErr ? ' (' + lastErr + ')' : ''));
+    throw new Error('Stream tidak dijumpai. Cuba pilih stesen lain atau paste Custom URL.' + (lastErr ? ' (' + lastErr + ')' : ''));
   }
 
   function wire(root){
@@ -271,7 +269,6 @@
     const custom=root.querySelector('#azRadioCustom');
     const play=root.querySelector('#azRadioPlay');
     const stop=root.querySelector('#azRadioStop');
-    const open=root.querySelector('#azRadioOpen');
     const vol=root.querySelector('#azRadioVolume');
     const audio=root.querySelector('#azRadioAudio');
     const status=root.querySelector('#azRadioStatus');
@@ -343,14 +340,9 @@
       }
     });
     stop.addEventListener('click', ()=>{ try{ audio.pause(); audio.removeAttribute('src'); audio.load(); }catch(e){} root.classList.remove('is-playing'); markStopped(); setStatus('Radio dihentikan.',''); });
-    open.addEventListener('click', ()=>{
-      const st=getStation(select.value);
-      const url = st.id==='custom' ? (custom.value || '') : (st.web || 'https://audio1.syok.my/');
-      if(url) window.open(url, '_blank', 'noopener');
-    });
     audio.addEventListener('playing', ()=>{ root.classList.add('is-playing'); markPlaying(audio.currentSrc || audio.src || ''); });
     audio.addEventListener('pause', ()=>{ root.classList.remove('is-playing'); if(!document.hidden) { /* Stop button handles persistent stopped state. */ } });
-    audio.addEventListener('error', ()=>{ root.classList.remove('is-playing'); setStatus('Stream gagal dimainkan. Cuba pilih stesen lain atau tekan Open.', 'err'); });
+    audio.addEventListener('error', ()=>{ root.classList.remove('is-playing'); setStatus('Stream gagal dimainkan. Cuba pilih stesen lain atau paste Custom URL.', 'err'); });
 
     // Save playing state before normal AZOBSS page navigation. A full page reload
     // cannot keep the same <audio> element alive, so the next page restores it.
