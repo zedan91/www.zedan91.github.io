@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 357: add small random channel button; can auto-switch channel while playing.
+   Patch 358: move radio button into navbar beside username; keep panel dropdown and random channel button.
 */
 (function(){
   'use strict';
@@ -130,7 +130,9 @@
   function injectCss(){
     if(document.getElementById('azobss-radio-player-css')) return;
     const css = `
-      .az-radio-player{position:fixed;right:8px;bottom:86px;z-index:3999;font-family:Arial,sans-serif;color:#e5e7eb;display:flex;flex-direction:column;align-items:flex-end;width:auto;max-width:calc(100vw - 16px);}
+      .az-radio-player{z-index:10050;font-family:Arial,sans-serif;color:#e5e7eb;display:inline-flex;flex-direction:column;align-items:flex-end;width:auto;max-width:calc(100vw - 16px);flex:0 0 auto;}
+      .az-radio-player.az-radio-navbar{position:relative;right:auto;bottom:auto;margin:0 7px 0 0;vertical-align:middle;min-width:96px;}
+      .az-radio-player.az-radio-floating{position:fixed;right:8px;bottom:86px;}
       .az-radio-player > .az-radio-pill{align-self:flex-end;}
       .az-radio-player > .az-radio-panel{align-self:flex-end;}
       .az-radio-player *{box-sizing:border-box;}
@@ -141,6 +143,9 @@
       .az-radio-dot{width:7px;height:7px;border-radius:50%;background:#64748b;box-shadow:0 0 0 3px rgba(100,116,139,.18);}
       .az-radio-player.is-playing .az-radio-dot{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18),0 0 14px rgba(34,197,94,.8);}
       .az-radio-panel{width:min(330px,calc(100vw - 24px));margin-top:9px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.97);backdrop-filter:blur(14px);border-radius:18px;padding:12px;box-shadow:0 20px 46px rgba(0,0,0,.5);opacity:0;visibility:hidden;pointer-events:none;max-height:0;overflow:hidden;transform:translateY(6px);transition:opacity .16s ease,transform .16s ease,visibility .16s ease,max-height .16s ease,padding .16s ease,margin .16s ease;}
+      .az-radio-player.az-radio-navbar .az-radio-panel{position:absolute;top:calc(100% + 10px);right:0;margin-top:0;}
+      .az-radio-player.az-radio-navbar.is-open{min-width:96px;}
+      .az-radio-player.az-radio-navbar .az-radio-pill{min-height:34px;padding:0 10px;font-size:12.5px;}
       .az-radio-player.is-open .az-radio-panel{opacity:1;visibility:visible;pointer-events:auto;max-height:520px;overflow:visible;transform:translateY(0);}
       .az-radio-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;}
       .az-radio-title{font-size:14px;font-weight:1000;color:#fff;line-height:1.15;}
@@ -169,7 +174,7 @@
       .az-radio-status.ok{color:#bbf7d0;border-color:rgba(34,197,94,.22);}
       .az-radio-status.err{color:#fecaca;border-color:rgba(248,113,113,.22);}
       .az-radio-note{margin-top:7px;color:#94a3b8;font-size:10.5px;line-height:1.25;text-align:center;}
-      @media(max-width:720px){.az-radio-player{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-pill{min-height:36px;font-size:12px;padding:0 11px}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}}
+      @media(max-width:720px){.az-radio-player.az-radio-floating{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-player.az-radio-navbar{margin-right:5px;min-width:82px}.az-radio-pill{min-height:32px;font-size:11.5px;padding:0 9px}.az-radio-player.az-radio-navbar .az-radio-pill{min-height:30px;padding:0 8px;font-size:11px}.az-radio-player.az-radio-navbar .az-radio-panel{position:fixed;top:54px;right:8px;width:min(330px,calc(100vw - 16px));}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}}
     `;
     const style=document.createElement('style');
     style.id='azobss-radio-player-css';
@@ -209,7 +214,16 @@
         <div class="az-radio-note">Jika tukar page, radio akan cuba sambung semula. Jika browser block autoplay, tekan Play sekali.</div>
         <audio id="azRadioAudio" preload="none" crossorigin="anonymous"></audio>
       </div>`;
-    document.body.appendChild(el);
+    const tools = document.getElementById('marketUserTools') || document.querySelector('.market-user-tools');
+    const userMenu = document.getElementById('userMenu') || (tools ? tools.querySelector('.user-menu') : null);
+    if(tools){
+      el.classList.add('az-radio-navbar');
+      if(userMenu) tools.insertBefore(el, userMenu);
+      else tools.prepend(el);
+    }else{
+      el.classList.add('az-radio-floating');
+      document.body.appendChild(el);
+    }
     wire(el);
   }
 

@@ -178,3 +178,10 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - If radio is stopped, random only selects a station; user can press Play.
 - Cache bust updated to azobss-radio-player.js?v=357.
 - No Firebase Rules or Render deploy required.
+
+## Patch 358 - Radio Navbar Button Beside Username
+- Moved AZOBSS Radio trigger from floating bottom/right button into the top navbar, directly before the username/account area.
+- On mobile, the Radio button is also placed before the username/account icon area.
+- Radio panel opens as a right-aligned dropdown and still supports Minimize, Play, Stop, Volume, full Malaysia station list, page-navigation restore, and random channel button.
+- Floating mode is kept only as a fallback if a page has no navbar user tools.
+- Cache bust updated to azobss-radio-player.js?v=358.

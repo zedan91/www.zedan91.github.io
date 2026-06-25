@@ -151,3 +151,8 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - If radio is stopped, random only selects a station; user can press Play.
 - Cache bust updated to azobss-radio-player.js?v=357.
 - No Firebase Rules or Render deploy required.
+
+## Patch 358 - Radio Navbar Button Beside Username
+- Radio button moved beside username in navbar on desktop/mobile.
+- Floating mode remains fallback only if navbar target is missing.
+- No Render deploy required; static assets only.
