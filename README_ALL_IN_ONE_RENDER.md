@@ -156,3 +156,10 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Radio button moved beside username in navbar on desktop/mobile.
 - Floating mode remains fallback only if navbar target is missing.
 - No Render deploy required; static assets only.
+
+
+## Patch 359 - Radio Navbar Image Button
+- Replaced the crowded `📻 Radio` text pill with a compact neon headphone image button beside username.
+- Works on desktop and phone.
+- Cache bust: `/assets/js/azobss-radio-player.js?v=359`.
+- No Firebase Rules / Render deploy required.

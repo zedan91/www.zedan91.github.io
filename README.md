@@ -185,3 +185,10 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Radio panel opens as a right-aligned dropdown and still supports Minimize, Play, Stop, Volume, full Malaysia station list, page-navigation restore, and random channel button.
 - Floating mode is kept only as a fallback if a page has no navbar user tools.
 - Cache bust updated to azobss-radio-player.js?v=358.
+
+
+## Patch 359 - Radio Navbar Image Button
+- Replaced the crowded `📻 Radio` text pill with a compact neon headphone image button beside username.
+- Works on desktop and phone.
+- Cache bust: `/assets/js/azobss-radio-player.js?v=359`.
+- No Firebase Rules / Render deploy required.
