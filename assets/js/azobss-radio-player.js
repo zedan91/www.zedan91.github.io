@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 350: keep tab playing + cache-bust + grouped/searchable Malaysia channel list.
+   Patch 352: keep playing across AZOBSS page navigation using saved playback restore.
 */
 (function(){
   'use strict';
@@ -102,6 +102,22 @@
   }
   function readStore(){ try { return JSON.parse(localStorage.getItem(STORE_KEY)||'{}') || {}; } catch(e){ return {}; } }
   function writeStore(v){ try { localStorage.setItem(STORE_KEY, JSON.stringify(v||{})); } catch(e){} }
+  function patchStore(fn){
+    const s = readStore();
+    const next = fn ? (fn(s) || s) : s;
+    writeStore(next);
+    return next;
+  }
+  function isInternalAzobssLink(a){
+    try{
+      if(!a || !a.href) return false;
+      const u = new URL(a.href, location.href);
+      if(u.origin !== location.origin) return false;
+      if(a.target && a.target !== '_self') return false;
+      if(a.hasAttribute('download')) return false;
+      return true;
+    }catch(e){ return false; }
+  }
   function readCache(id){
     try{
       const raw = JSON.parse(localStorage.getItem(CACHE_PREFIX + id) || 'null');
@@ -187,7 +203,7 @@
         </div>
         <div class="az-radio-vol"><span>Volume</span><input id="azRadioVolume" type="range" min="0" max="1" step="0.05" value="${Math.min(1,Math.max(0,volume))}"></div>
         <div class="az-radio-status" id="azRadioStatus">Pilih stesen dan tekan Play.</div>
-        <div class="az-radio-note">Jika stream tidak boleh autoplay, tekan Play sekali lagi atau guna butang Open.</div>
+        <div class="az-radio-note">Jika tukar page, radio akan cuba sambung semula. Jika browser block autoplay, tekan Play sekali.</div>
         <audio id="azRadioAudio" preload="none" crossorigin="anonymous"></audio>
       </div>`;
     document.body.appendChild(el);
@@ -268,7 +284,24 @@
       if(count) count.textContent = (search && search.value.trim()) ? `${visible} channel match found` : `${Math.max(0, STATIONS.length - 1)} Malaysia channels + Custom URL`;
       syncCustom();
     }
-    function save(){ const s=readStore(); s.station=select.value; s.customUrl=custom.value; s.volume=Number(vol.value)||0.7; writeStore(s); }
+    function save(extra){
+      const s=readStore();
+      s.station=select.value;
+      s.customUrl=custom.value;
+      s.volume=Number(vol.value)||0.7;
+      if(extra && typeof extra === 'object') Object.assign(s, extra);
+      writeStore(s);
+      return s;
+    }
+    function markPlaying(url){
+      save({
+        playing:true,
+        streamUrl:url || audio.currentSrc || audio.src || '',
+        stationName:(getStation(select.value).label || getStation(select.value).name || select.value),
+        updatedAt:Date.now()
+      });
+    }
+    function markStopped(){ save({playing:false, streamUrl:'', updatedAt:Date.now()}); }
     function syncCustom(){ root.classList.toggle('is-custom', select.value==='custom'); save(); }
     function setOpen(v){
       root.classList.toggle('is-open', !!v);
@@ -298,6 +331,7 @@
         audio.volume=Number(vol.value)||0.7;
         await audio.play();
         root.classList.add('is-playing');
+        markPlaying(url);
         setStatus('Playing: ' + station.label, 'ok');
       }catch(e){
         root.classList.remove('is-playing');
@@ -306,16 +340,54 @@
         play.disabled=false;
       }
     });
-    stop.addEventListener('click', ()=>{ try{ audio.pause(); audio.removeAttribute('src'); audio.load(); }catch(e){} root.classList.remove('is-playing'); setStatus('Radio dihentikan.',''); });
+    stop.addEventListener('click', ()=>{ try{ audio.pause(); audio.removeAttribute('src'); audio.load(); }catch(e){} root.classList.remove('is-playing'); markStopped(); setStatus('Radio dihentikan.',''); });
     open.addEventListener('click', ()=>{
       const st=getStation(select.value);
       const url = st.id==='custom' ? (custom.value || '') : (st.web || 'https://audio1.syok.my/');
       if(url) window.open(url, '_blank', 'noopener');
     });
-    audio.addEventListener('playing', ()=>root.classList.add('is-playing'));
-    audio.addEventListener('pause', ()=>root.classList.remove('is-playing'));
+    audio.addEventListener('playing', ()=>{ root.classList.add('is-playing'); markPlaying(audio.currentSrc || audio.src || ''); });
+    audio.addEventListener('pause', ()=>{ root.classList.remove('is-playing'); if(!document.hidden) { /* Stop button handles persistent stopped state. */ } });
     audio.addEventListener('error', ()=>{ root.classList.remove('is-playing'); setStatus('Stream gagal dimainkan. Cuba pilih stesen lain atau tekan Open.', 'err'); });
+
+    // Save playing state before normal AZOBSS page navigation. A full page reload
+    // cannot keep the same <audio> element alive, so the next page restores it.
+    document.addEventListener('click', (ev)=>{
+      const a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+      if(!a || !isInternalAzobssLink(a)) return;
+      if(audio && !audio.paused && (audio.currentSrc || audio.src)) markPlaying(audio.currentSrc || audio.src || '');
+    }, true);
+    window.addEventListener('pagehide', ()=>{
+      if(audio && !audio.paused && (audio.currentSrc || audio.src)) markPlaying(audio.currentSrc || audio.src || '');
+    });
+    window.addEventListener('beforeunload', ()=>{
+      if(audio && !audio.paused && (audio.currentSrc || audio.src)) markPlaying(audio.currentSrc || audio.src || '');
+    });
+
+    async function restoreIfNeeded(){
+      const s = readStore();
+      if(!s || !s.playing) return;
+      if(Date.now() - Number(s.updatedAt || 0) > 6 * 60 * 60 * 1000) return;
+      try{
+        if(s.station && [...select.options].some(o => o.value === s.station)) select.value = s.station;
+        if(s.customUrl) custom.value = s.customUrl;
+        if(s.volume != null){ vol.value = Math.min(1, Math.max(0, Number(s.volume)||0.7)); audio.volume=Number(vol.value)||0.7; }
+        syncCustom();
+        const station=getStation(select.value);
+        const url=s.streamUrl || await resolveStream(station, status);
+        if(url && audio.src !== url) audio.src=url;
+        setStatus('Menyambung radio semula...', '');
+        await audio.play();
+        root.classList.add('is-playing');
+        markPlaying(url);
+        setStatus('Playing: ' + (station.label || s.stationName || 'Radio'), 'ok');
+      }catch(e){
+        root.classList.remove('is-playing');
+        setStatus('Radio sedia untuk sambung. Tekan Play sekali jika browser block autoplay.', 'err');
+      }
+    }
     updateStationOptions();
+    setTimeout(restoreIfNeeded, 350);
   }
 
   function init(){

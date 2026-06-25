@@ -1,0 +1,21 @@
+AZOBSS Radio Page Navigation Restore Fix (Patch 352)
+
+Problem:
+- Radio stopped when user clicked CAD Tools / Software / other internal navigation links.
+- This happens because a normal page navigation unloads the current HTML document and destroys the active <audio> element.
+
+Fix:
+- Radio player now saves the current station, stream URL, volume, and playing state before internal AZOBSS page navigation.
+- The next page automatically restores and attempts to continue playing the same station.
+- If the browser blocks autoplay after navigation, the player shows a clear resume message and the user can press Play once.
+- Stop button still fully stops radio and clears playing state.
+- Cache-bust updated to azobss-radio-player.js?v=352.
+
+Files changed:
+- assets/js/azobss-radio-player.js
+- index.html
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+
+Firebase Rules: Not required.
+Render deploy: Not required.
