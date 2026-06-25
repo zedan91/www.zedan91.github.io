@@ -24,6 +24,12 @@ services:
         sync: false
       - key: AZOBSS_RECEIPT_SECRET
         sync: false
+      - key: AZOBSS_DOWNLOAD_HASH_SECRET
+        sync: false
+      - key: AZOBSS_DOWNLOAD_SESSION_TTL_MS
+        value: "900000"
+      - key: AZOBSS_PREMIUM_ALLOWED_FILE_HOSTS
+        value: files.azobss.com
       - key: TOYYIB_SECRET_KEY
         sync: false
       - key: TOYYIB_CATEGORY_CODE

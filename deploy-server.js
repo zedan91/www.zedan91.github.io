@@ -93,6 +93,7 @@ const path = require("path");
 const http = require("http");
 const url = require("url");
 const crypto = require("crypto");
+const { Readable } = require("stream");
 
 let azJupemInsecureDispatcher = null;
 function azGetJupemDispatcher() {
@@ -2091,7 +2092,7 @@ function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const expires = azobssExpiryLabelForOrder(order || {});
   const expirySentence = neverExpire ? "This link is set to Never expire, but download limit still applies." : `If it is not used, the link will expire on ${expires}.`;
   const receiptPdfUrl = receiptUrl + (receiptUrl.includes("?") ? "&" : "?") + "format=pdf";
-  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download count is only used after you press Start Download.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download count is only used after you press Start Download. ${expirySentence}</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota. ${expirySentence}</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
 }
 // AZOBSS PATCH 319: Admin resend receipt email should also include Software/CAD download link.
 async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
@@ -2262,7 +2263,7 @@ Order ID: ${current.orderId}
 Download: ${downloadUrl}
 Receipt: ${receiptUrl}
 
-This link opens a confirmation page first. Download count is only used after you press Start Download.`;
+This link opens a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.`;
 
     let sendInfo = null;
     if (brevoApiReady()) {
@@ -2934,6 +2935,7 @@ const DOWNLOAD_TOKENS = new Map();
 
 const PREMIUM_ORDERS_FILE = path.join(ROOT, "premium-orders.json");
 const PREMIUM_TOKENS_FILE = path.join(ROOT, "premium-download-tokens.json");
+const PREMIUM_DOWNLOAD_SESSIONS_FILE = path.join(ROOT, "premium-download-sessions.json");
 const COMMISSION_RECORDS_FILE = path.join(ROOT, "commission-records.json");
 
 function readPremiumJson(file, fallback) {
@@ -3596,6 +3598,339 @@ function updatePremiumToken(token, updater) {
   return index >= 0 ? tokens[index] : null;
 }
 
+
+// AZOBSS PATCH 373: Secure premium download session stream.
+// Goal: IDM/browser must never receive the real premium file URL.
+// A one-time token creates ONE short-lived backend session; Range/resume requests are allowed only inside that session.
+const AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH = "AZOBSS_SECURE_PREMIUM_DOWNLOAD_20260626";
+function azPremiumSessionTtlMs() {
+  const n = Number(process.env.AZOBSS_DOWNLOAD_SESSION_TTL_MS || 15 * 60 * 1000);
+  return Number.isFinite(n) && n >= 60 * 1000 ? Math.min(n, 6 * 60 * 60 * 1000) : 15 * 60 * 1000;
+}
+function azSecureDownloadSecret() {
+  return String(
+    process.env.AZOBSS_DOWNLOAD_HASH_SECRET ||
+    process.env.AZOBSS_RECEIPT_SECRET ||
+    process.env.AZOBSS_ADMIN_API_SECRET ||
+    process.env.ADMIN_KEY ||
+    process.env.TOYYIB_SECRET_KEY ||
+    "azobss-secure-download-fallback-change-this-secret"
+  );
+}
+function azHashDownloadValue(value = "") {
+  return crypto.createHmac("sha256", azSecureDownloadSecret()).update(String(value || "")).digest("hex");
+}
+function azPremiumClientIp(req) {
+  const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return fwd || String(req.socket && req.socket.remoteAddress || "unknown");
+}
+function azPremiumClientKey(req) {
+  // IP-only binding is intentional: IDM/browser extensions often use a different User-Agent than Chrome/Edge.
+  // Binding to User-Agent would break valid IDM downloads after the POST confirmation.
+  return azHashDownloadValue(azPremiumClientIp(req));
+}
+function azSafeDownloadFilename(value = "azobss-download.bin") {
+  const raw = String(value || "azobss-download.bin").trim() || "azobss-download.bin";
+  return raw.replace(/[\\/:*?"<>|\r\n\t]/g, "_").replace(/\s+/g, " ").slice(0, 180) || "azobss-download.bin";
+}
+function azPremiumDownloadSource(saved = {}) {
+  return cleanPremiumUrl(
+    saved.privateFileUrl || saved.sourceFileUrl || saved.downloadLink || saved.premiumDownloadFileLink ||
+    saved.secureDownloadLink || saved.privateDownloadLink || saved.downloadUrl || saved.url || ""
+  );
+}
+function azPremiumDownloadFilename(saved = {}, source = "") {
+  try {
+    const direct = saved.filename || saved.fileName || saved.productFilename || saved.softwareFilename || saved.productName || "";
+    if (direct) {
+      const ext = path.extname(String(direct));
+      if (ext) return azSafeDownloadFilename(direct);
+      const srcExt = path.extname(new URL(source).pathname || "");
+      return azSafeDownloadFilename(srcExt ? `${direct}${srcExt}` : direct);
+    }
+  } catch (_) {}
+  try {
+    const u = new URL(source);
+    const base = decodeURIComponent(path.basename(u.pathname || ""));
+    if (base) return azSafeDownloadFilename(base);
+  } catch (_) {}
+  return azSafeDownloadFilename("azobss-download.bin");
+}
+function azPremiumAllowedDownloadHost(hostname = "") {
+  const host = String(hostname || "").trim().toLowerCase();
+  if (!host) return false;
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return false;
+  if (/^(127\.|10\.|0\.|169\.254\.|192\.168\.)/.test(host)) return false;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return false;
+  if (host === "::1" || host === "[::1]") return false;
+  const rawAllow = String(process.env.AZOBSS_PREMIUM_ALLOWED_FILE_HOSTS || "").trim();
+  if (!rawAllow) return true; // Backward compatible: allow public HTTPS hosts unless admin locks this in Render ENV.
+  const allowed = rawAllow.split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+  return allowed.includes("*") || allowed.some(rule => host === rule || (rule.startsWith("*.") && host.endsWith(rule.slice(1))));
+}
+function azValidatePremiumSource(source = "") {
+  const target = cleanPremiumUrl(source);
+  if (!target) throw Object.assign(new Error("Premium file URL is missing."), { statusCode: 404 });
+  if (target.startsWith("/")) return { type: "local", target };
+  const u = new URL(target);
+  if (u.protocol !== "https:") throw Object.assign(new Error("Premium file source must use HTTPS."), { statusCode: 403 });
+  if (!azPremiumAllowedDownloadHost(u.hostname)) throw Object.assign(new Error("Premium file source host is not allowed."), { statusCode: 403 });
+  return { type: "remote", target: u.toString() };
+}
+function readPremiumDownloadSessions() {
+  const now = Date.now();
+  const rows = readPremiumJson(PREMIUM_DOWNLOAD_SESSIONS_FILE, []);
+  return (Array.isArray(rows) ? rows : []).filter(x => Number(x.expiresAt || 0) > now - 60 * 60 * 1000).slice(0, 500);
+}
+function writePremiumDownloadSessions(rows) {
+  writePremiumJson(PREMIUM_DOWNLOAD_SESSIONS_FILE, (rows || []).slice(0, 500));
+}
+function findPremiumDownloadSession(sessionId) {
+  return readPremiumDownloadSessions().find(x => x && x.sessionId === sessionId) || null;
+}
+function savePremiumDownloadSession(session = {}) {
+  const rows = readPremiumDownloadSessions().filter(x => x.sessionId !== session.sessionId);
+  rows.unshift(session);
+  writePremiumDownloadSessions(rows);
+  azFireAndForget(azPersistPremiumDownloadSession(session), "AZOBSS premium download session Firestore persist failed:");
+  return session;
+}
+function updatePremiumDownloadSession(sessionId, patch = {}) {
+  const rows = readPremiumDownloadSessions();
+  const idx = rows.findIndex(x => x.sessionId === sessionId);
+  if (idx >= 0) {
+    rows[idx] = { ...(rows[idx] || {}), ...(patch || {}), updatedAt: new Date().toISOString(), updatedAtMs: Date.now() };
+    writePremiumDownloadSessions(rows);
+    azFireAndForget(azUpdatePremiumDownloadSessionPersistent(sessionId, patch), "AZOBSS premium download session Firestore update failed:");
+    return rows[idx];
+  }
+  return null;
+}
+async function azPersistPremiumDownloadSession(session = {}) {
+  const db = getAzobssBackendDb();
+  if (!db || !session || !session.sessionId) return { ok:false };
+  await db.collection("premiumDownloadSessions").doc(String(session.sessionId)).set(azJsonSafe({ ...session, updatedAt: new Date().toISOString(), updatedAtMs: Date.now() }), { merge:true });
+  return { ok:true };
+}
+async function azFindPremiumDownloadSessionPersistent(sessionId) {
+  const db = getAzobssBackendDb();
+  if (!db || !sessionId) return null;
+  const snap = await db.collection("premiumDownloadSessions").doc(String(sessionId)).get();
+  return snap.exists ? (snap.data() || null) : null;
+}
+async function azUpdatePremiumDownloadSessionPersistent(sessionId, patch = {}) {
+  const db = getAzobssBackendDb();
+  if (!db || !sessionId) return null;
+  await db.collection("premiumDownloadSessions").doc(String(sessionId)).set(azJsonSafe({ ...(patch || {}), updatedAt: new Date().toISOString(), updatedAtMs: Date.now() }), { merge:true });
+  return { ok:true };
+}
+async function azFindPremiumSessionDeep(sessionId) {
+  let s = findPremiumDownloadSession(sessionId);
+  if (s) return s;
+  try {
+    s = await azFindPremiumDownloadSessionPersistent(sessionId);
+    if (s) {
+      savePremiumDownloadSession({ ...s, sessionId: s.sessionId || sessionId });
+      return { ...s, sessionId: s.sessionId || sessionId };
+    }
+  } catch (err) {
+    console.warn("Premium download session Firestore lookup failed:", err && (err.message || err));
+  }
+  return null;
+}
+async function azCreatePremiumDownloadSession(req, token, saved = {}) {
+  const now = Date.now();
+  const clientKey = azPremiumClientKey(req);
+  const activeSessionId = cleanPremiumText(saved.activeDownloadSessionId || "", 140);
+  const activeExpiresAt = Number(saved.activeDownloadSessionExpiresAt || 0) || 0;
+  if (activeSessionId && activeExpiresAt > now) {
+    const active = await azFindPremiumSessionDeep(activeSessionId);
+    if (active && active.status === "active" && active.clientKey === clientKey && Number(active.expiresAt || 0) > now) {
+      updatePremiumDownloadSession(activeSessionId, { lastSeenAt: new Date(now).toISOString(), lastSeenAtMs: now, tokenRouteHits: Number(active.tokenRouteHits || 0) + 1 });
+      return activeSessionId;
+    }
+    if (active && active.status === "active" && Number(active.expiresAt || 0) > now && active.clientKey !== clientKey) {
+      throw Object.assign(new Error("Download session already started on another device/browser. Please request a new token from admin if needed."), { statusCode: 409 });
+    }
+  }
+  if (azobssTokenIsExpired(saved, now) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
+    throw Object.assign(new Error("Download link expired or already used too many times."), { statusCode: 403 });
+  }
+  const sourceInfo = azValidatePremiumSource(azPremiumDownloadSource(saved));
+  const sessionId = makeId("dls").replace(/[^a-zA-Z0-9_-]/g, "");
+  const expiresAt = now + azPremiumSessionTtlMs();
+  const filename = azPremiumDownloadFilename(saved, sourceInfo.target);
+  const nextUsed = Number(saved.usedCount || 0) + 1;
+  const session = {
+    sessionId,
+    token,
+    orderId: saved.orderId || "",
+    productId: saved.productId || "",
+    productName: saved.productName || "AZOBSS Digital Product",
+    sourceType: sourceInfo.type,
+    sourceTarget: sourceInfo.target,
+    filename,
+    status: "active",
+    clientKey,
+    ipHash: azHashDownloadValue(azPremiumClientIp(req)),
+    createdAt: new Date(now).toISOString(),
+    createdAtMs: now,
+    expiresAt,
+    expiresAtIso: new Date(expiresAt).toISOString(),
+    requestCount: 0,
+    rangeRequestCount: 0,
+    tokenRouteHits: 1,
+    patch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
+  };
+  savePremiumDownloadSession(session);
+  updatePremiumToken(token, t => ({
+    ...t,
+    usedCount: nextUsed,
+    lastUsedAt: now,
+    lastMethod: "SESSION_STREAM",
+    activeDownloadSessionId: sessionId,
+    activeDownloadSessionExpiresAt: expiresAt,
+    secureDownloadPatch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
+  }));
+  try {
+    await azUpdatePremiumTokenPersistent(token, {
+      usedCount: nextUsed,
+      lastUsedAt: now,
+      lastMethod: "SESSION_STREAM",
+      activeDownloadSessionId: sessionId,
+      activeDownloadSessionExpiresAt: expiresAt,
+      secureDownloadPatch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
+    });
+  } catch (err) {
+    console.warn("Premium token Firestore session update failed:", err && (err.message || err));
+  }
+  return sessionId;
+}
+function azNoStoreDownloadHeaders(extra = {}) {
+  return azSecurityHeaders(Object.assign({
+    "Cache-Control": "no-store, no-cache, must-revalidate, private, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+    "X-AZOBSS-Secure-Download": "1"
+  }, extra || {}));
+}
+function azCopyFetchHeader(srcHeaders, out, name, outName = name) {
+  try {
+    const v = srcHeaders.get(name);
+    if (v) out[outName] = v;
+  } catch (_) {}
+}
+function azPremiumContentDisposition(filename = "azobss-download.bin") {
+  const safe = azSafeDownloadFilename(filename);
+  return `attachment; filename="${safe.replace(/"/g, "_")}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
+}
+function azParseRange(rangeHeader = "", size = 0) {
+  const m = String(rangeHeader || "").match(/^bytes=(\d*)-(\d*)$/);
+  if (!m || !size) return null;
+  let start = m[1] === "" ? null : Number(m[1]);
+  let end = m[2] === "" ? null : Number(m[2]);
+  if (start === null && end !== null) { start = Math.max(0, size - end); end = size - 1; }
+  if (start !== null && end === null) end = size - 1;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start || start >= size) return null;
+  return { start, end: Math.min(end, size - 1) };
+}
+async function azStreamLocalPremiumSession(req, res, session) {
+  const filePath = safePath(session.sourceTarget || "");
+  if (!filePath || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return send(res, 404, "File not found");
+  const st = fs.statSync(filePath);
+  const range = String(req.headers.range || "").trim();
+  const parsed = range ? azParseRange(range, st.size) : null;
+  const filename = azSafeDownloadFilename(session.filename || path.basename(filePath));
+  if (range && !parsed) {
+    res.writeHead(416, azNoStoreDownloadHeaders({ "Content-Range": `bytes */${st.size}`, "Accept-Ranges": "bytes" }));
+    return res.end();
+  }
+  if (parsed) {
+    res.writeHead(206, azNoStoreDownloadHeaders({
+      "Content-Type": mimeType(filePath),
+      "Content-Disposition": azPremiumContentDisposition(filename),
+      "Accept-Ranges": "bytes",
+      "Content-Range": `bytes ${parsed.start}-${parsed.end}/${st.size}`,
+      "Content-Length": String(parsed.end - parsed.start + 1)
+    }));
+    if (req.method === "HEAD") return res.end();
+    fs.createReadStream(filePath, { start: parsed.start, end: parsed.end }).pipe(res);
+    return;
+  }
+  res.writeHead(200, azNoStoreDownloadHeaders({
+    "Content-Type": mimeType(filePath),
+    "Content-Disposition": azPremiumContentDisposition(filename),
+    "Accept-Ranges": "bytes",
+    "Content-Length": String(st.size)
+  }));
+  if (req.method === "HEAD") return res.end();
+  fs.createReadStream(filePath).pipe(res);
+}
+async function azStreamRemotePremiumSession(req, res, session) {
+  const range = String(req.headers.range || "").trim();
+  const headers = {};
+  if (range) headers.Range = range;
+  const upstream = await fetch(session.sourceTarget, { method: req.method === "HEAD" ? "HEAD" : "GET", headers, redirect: "follow" });
+  if (![200, 206].includes(upstream.status)) {
+    return send(res, 502, "File source cannot be reached right now.");
+  }
+  // If IDM asks for a range, the upstream should reply 206. A 200 here means the host ignored Range,
+  // so we return 502 instead of sending a wrong full-file chunk that may corrupt IDM download.
+  if (range && upstream.status !== 206) {
+    return send(res, 502, "File host does not support resume/Range for this download. Please try normal browser download or move file to files.azobss.com/private storage with Range support.");
+  }
+  const out = {
+    "Content-Type": upstream.headers.get("content-type") || "application/octet-stream",
+    "Content-Disposition": azPremiumContentDisposition(session.filename || "azobss-download.bin"),
+    "Accept-Ranges": upstream.headers.get("accept-ranges") || "bytes"
+  };
+  azCopyFetchHeader(upstream.headers, out, "content-length");
+  azCopyFetchHeader(upstream.headers, out, "content-range");
+  azCopyFetchHeader(upstream.headers, out, "etag");
+  azCopyFetchHeader(upstream.headers, out, "last-modified");
+  res.writeHead(upstream.status, azNoStoreDownloadHeaders(out));
+  if (req.method === "HEAD" || !upstream.body) return res.end();
+  const nodeStream = Readable.fromWeb(upstream.body);
+  await new Promise((resolve, reject) => {
+    nodeStream.on("error", reject);
+    res.on("finish", resolve);
+    res.on("close", resolve);
+    nodeStream.pipe(res);
+  });
+}
+async function azHandlePremiumDownloadSession(req, res, sessionId) {
+  const cleanSessionId = cleanPremiumText(String(sessionId || "").replace(/[^a-zA-Z0-9_-]/g, ""), 140);
+  if (!cleanSessionId) return send(res, 400, "Invalid download session.");
+  const now = Date.now();
+  let session = await azFindPremiumSessionDeep(cleanSessionId);
+  if (!session) return send(res, 404, "Download session not found.");
+  if (session.status !== "active" || Number(session.expiresAt || 0) <= now) {
+    updatePremiumDownloadSession(cleanSessionId, { status: Number(session.expiresAt || 0) <= now ? "expired" : session.status || "closed", expiredAt: new Date(now).toISOString(), expiredAtMs: now });
+    return send(res, 410, "Download session expired. Please request a new token from admin if needed.");
+  }
+  const clientKey = azPremiumClientKey(req);
+  if (session.clientKey && session.clientKey !== clientKey) return send(res, 403, "This download session belongs to another network/device.");
+  updatePremiumDownloadSession(cleanSessionId, {
+    lastSeenAt: new Date(now).toISOString(),
+    lastSeenAtMs: now,
+    requestCount: Number(session.requestCount || 0) + 1,
+    rangeRequestCount: Number(session.rangeRequestCount || 0) + (req.headers.range ? 1 : 0),
+    lastRange: req.headers.range ? String(req.headers.range).slice(0, 120) : ""
+  });
+  session = { ...session, requestCount: Number(session.requestCount || 0) + 1 };
+  try {
+    if (session.sourceType === "local" || String(session.sourceTarget || "").startsWith("/")) await azStreamLocalPremiumSession(req, res, session);
+    else await azStreamRemotePremiumSession(req, res, session);
+    // For normal single-stream browser download, close after complete. For Range/IDM, keep alive until TTL.
+    if (!req.headers.range) updatePremiumDownloadSession(cleanSessionId, { status: "completed", completedAt: new Date().toISOString(), completedAtMs: Date.now() });
+  } catch (err) {
+    console.error("AZOBSS secure premium session stream failed:", err && (err.stack || err.message || err));
+    updatePremiumDownloadSession(cleanSessionId, { lastError: err && err.message ? err.message : String(err), lastErrorAt: new Date().toISOString(), lastErrorAtMs: Date.now() });
+    if (!res.headersSent) return send(res, 500, "Download failed. Please contact admin.");
+    try { res.destroy(err); } catch (_) {}
+  }
+}
+
 function azReceiptAmountNumber(order = {}) {
   const direct = Number(order.saleAmount || order.amountRm || order.amountValue || order.total || order.price || 0);
   if (Number.isFinite(direct) && direct > 0) return Math.round(direct * 100) / 100;
@@ -4111,8 +4446,8 @@ function azSecurityHeaders(extra = {}) {
   return Object.assign({
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": azCorsOrigin(),
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-key, x-api-key, x-azobss-api-key",
+    "Access-Control-Allow-Methods": "GET, POST, HEAD, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",
@@ -5474,6 +5809,7 @@ async function handler(req, res) {
     if (pathname === "/api/commission/payout-status" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-payout-status", 30, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
+    if (pathname.startsWith("/api/premium/download-session/") && (req.method === "GET" || req.method === "HEAD") && azRateLimitOrSend(req, res, "premium-download-session", 500, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
     if (pathname === "/api/my-purchases" && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-read", 80, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/my-purchases/delete/") && req.method === "DELETE" && azRateLimitOrSend(req, res, "my-purchases-delete", 40, 10 * 60 * 1000)) return;
@@ -7521,31 +7857,26 @@ const filePath =
     }
 
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST") {
-      const token = decodeURIComponent(path.basename(pathname));
+      const token = decodeURIComponent(path.basename(pathname)).replace(/[^a-zA-Z0-9_-]/g, "");
       let saved = findPremiumToken(token);
       if (!saved) {
         try { saved = await azFindPremiumTokenPersistent(token); } catch (err) { console.warn("Premium token Firestore lookup failed:", err && (err.message || err)); }
+        if (saved) {
+          try { savePremiumToken({ ...saved, token: saved.token || token }); } catch (_) {}
+        }
       }
-      if (!saved || azobssTokenIsExpired(saved) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
-        return send(res, 403, "Download link expired or already used too many times.");
-      }
-      const nextUsed = Number(saved.usedCount || 0) + 1;
-      updatePremiumToken(token, t => ({ ...t, usedCount: nextUsed, lastUsedAt: Date.now(), lastMethod: "POST" }));
-      try { await azUpdatePremiumTokenPersistent(token, { usedCount: nextUsed, lastUsedAt: Date.now(), lastMethod: "POST" }); } catch (err) { console.warn("Premium token Firestore update failed:", err && (err.message || err)); }
-      const target = saved.downloadLink || saved.premiumDownloadFileLink || "";
-      if (/^https?:\/\//i.test(target)) {
-        res.writeHead(303, azSecurityHeaders({ Location: target }));
+      if (!saved) return send(res, 403, "Download link expired or already used too many times.");
+      try {
+        const sessionId = await azCreatePremiumDownloadSession(req, token, { ...saved, token });
+        res.writeHead(303, azNoStoreDownloadHeaders({ Location: `/api/premium/download-session/${encodeURIComponent(sessionId)}` }));
         res.end();
         return;
+      } catch (err) {
+        const status = err && err.statusCode ? err.statusCode : 500;
+        const message = status >= 500 ? "Download cannot start. Please contact admin." : (err && err.message ? err.message : "Download cannot start.");
+        console.warn("AZOBSS secure premium download start failed:", err && (err.message || err));
+        return send(res, status, message);
       }
-      if (target.startsWith("/")) {
-        const filePath = safePath(target);
-        if (!filePath || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return send(res, 404, "File not found");
-        res.writeHead(200, azSecurityHeaders({ "Content-Type": mimeType(filePath), "Content-Disposition": `attachment; filename="${path.basename(filePath)}"` }));
-        fs.createReadStream(filePath).pipe(res);
-        return;
-      }
-      return send(res, 404, "Invalid download link");
     }
 
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET") {
@@ -7564,8 +7895,25 @@ const filePath =
       const expiresNever = saved.expiresNever === true || azobssOrderNeverExpire(order);
       const expires = expiresNever ? "Never expire" : (saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-");
       const actionUrl = `/api/premium/download/${encodeURIComponent(token)}`;
-      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Click the button below to start the actual download. This preview page does not use your download quota.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download count is only used after you press Start Download.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email previews will not consume the token. The actual download uses POST confirmation.</p></div></body></html>`;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Click the button below to start the actual download. This preview page does not use your download quota.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email previews will not consume the token. POST creates a short secure backend stream session and does not expose the real file URL.</p></div></body></html>`;
       return send(res, 200, html, "text/html; charset=utf-8");
+    }
+
+    if (pathname === "/api/premium/download-health" && req.method === "GET") {
+      return send(res, 200, JSON.stringify({
+        ok: true,
+        patch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH,
+        mode: "one-token-one-session-backend-stream",
+        rangeSupport: true,
+        sessionTtlMs: azPremiumSessionTtlMs(),
+        sessionStore: "local-json+firestore-if-configured",
+        note: "Real premium file URL is streamed by backend and is not sent as redirect Location."
+      }, null, 2), "application/json");
+    }
+
+    if (pathname.startsWith("/api/premium/download-session/") && (req.method === "GET" || req.method === "HEAD")) {
+      const sessionId = decodeURIComponent(path.basename(pathname));
+      return await azHandlePremiumDownloadSession(req, res, sessionId);
     }
 
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET") {

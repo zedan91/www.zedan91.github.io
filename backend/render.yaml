@@ -8,6 +8,12 @@ services:
     envVars:
       - key: ADMIN_KEY
         sync: false
+      - key: AZOBSS_DOWNLOAD_HASH_SECRET
+        sync: false
+      - key: AZOBSS_DOWNLOAD_SESSION_TTL_MS
+        value: "900000"
+      - key: AZOBSS_PREMIUM_ALLOWED_FILE_HOSTS
+        value: files.azobss.com
       - key: PUBLIC_BASE_URL
         sync: false
       - key: CORS_ORIGIN
