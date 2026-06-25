@@ -114,7 +114,9 @@
   function injectCss(){
     if(document.getElementById('azobss-radio-player-css')) return;
     const css = `
-      .az-radio-player{position:fixed;right:14px;bottom:86px;z-index:3999;font-family:Arial,sans-serif;color:#e5e7eb;}
+      .az-radio-player{position:fixed;right:8px;bottom:86px;z-index:3999;font-family:Arial,sans-serif;color:#e5e7eb;display:flex;flex-direction:column;align-items:flex-end;width:auto;max-width:calc(100vw - 16px);}
+      .az-radio-player > .az-radio-pill{align-self:flex-end;}
+      .az-radio-player > .az-radio-panel{align-self:flex-end;}
       .az-radio-player *{box-sizing:border-box;}
       .az-radio-pill{border:1px solid rgba(34,197,94,.48);background:linear-gradient(135deg,#06131f,#0f172a);color:#f8fafc;border-radius:999px;min-height:38px;padding:0 13px;display:inline-flex;align-items:center;gap:7px;font-weight:900;font-size:13px;letter-spacing:.02em;box-shadow:0 12px 28px rgba(0,0,0,.38),inset 0 0 0 1px rgba(255,255,255,.05);cursor:pointer;}
       .az-radio-pill:hover{border-color:#22c55e;color:#bbf7d0;transform:translateY(-1px);}
@@ -147,7 +149,7 @@
       .az-radio-status.ok{color:#bbf7d0;border-color:rgba(34,197,94,.22);}
       .az-radio-status.err{color:#fecaca;border-color:rgba(248,113,113,.22);}
       .az-radio-note{margin-top:7px;color:#94a3b8;font-size:10.5px;line-height:1.25;text-align:center;}
-      @media(max-width:720px){.az-radio-player{right:10px;bottom:76px}.az-radio-pill{min-height:36px;font-size:12px;padding:0 11px}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}.az-radio-btn.open{grid-column:1 / -1}}
+      @media(max-width:720px){.az-radio-player{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-pill{min-height:36px;font-size:12px;padding:0 11px}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}.az-radio-btn.open{grid-column:1 / -1}}
     `;
     const style=document.createElement('style');
     style.id='azobss-radio-player-css';

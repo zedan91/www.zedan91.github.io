@@ -117,3 +117,9 @@ Patch 329: Software/CAD card description clamp changed from 3 lines to 4 lines. 
 - Buy Now still does not increment downloads before payment.
 - Firebase Rules: no update required.
 - Render backend: no deploy required.
+
+
+## Patch 351 - Radio Floating Right Align Fix
+- Radio floating button now stays close to the right side of the screen.
+- The hidden panel no longer pushes the Radio pill inward.
+- GitHub Pages deploy only. No Firebase Rules or Render deploy required.
