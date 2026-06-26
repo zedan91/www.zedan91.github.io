@@ -2052,10 +2052,10 @@ body[data-dashboard-page="admin"] .topbar{
       <p class="tabs-note">Overview untuk pantauan cepat. Untuk carian penuh, buka Payment Logs / Download Control.</p>
 
       <div class="grid">
-        <div class="card"><div class="stat-label">PA/BM Total RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">Software Total RM</div><div id="payTotalSoftware" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">CAD Tools Total RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">All Purchases RM</div><div id="payTotalAll" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">PA/BM Paid RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Software Paid RM</div><div id="payTotalSoftware" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">CAD Tools Paid RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">All Paid Purchases RM</div><div id="payTotalAll" class="stat-value">0</div></div>
       </div>
 
       <div class="split">
@@ -2076,7 +2076,7 @@ body[data-dashboard-page="admin"] .topbar{
               <option value="software">Software</option>
               <option value="cad">CAD Tools</option>
               <option value="pending">Pending Only</option>
-              <option value="paid">Paid/Verified Only</option>
+              <option value="paid" selected>Paid/Verified Only</option>
             </select>
             <button class="btn" id="refreshPayments">Refresh Overview</button>
             <button class="btn gray" data-tab="purchases" type="button">View All Payment Logs</button>
@@ -3779,14 +3779,22 @@ async function loadPayments(){
   records.sort((a,b)=>azAdminPaymentMs(b)-azAdminPaymentMs(a));
   azAdminRenderSalesOverviewCharts(records);
 
+  // AZOBSS PATCH 384: Sales Overview revenue must count Paid/Verified records only.
+  // Pending/cancelled/failed records remain visible in status counts, but are excluded from RM totals.
   const totals = {pabm:0, software:0, cad:0, all:0, pending:0, paid:0};
   records.forEach(x=>{
-    totals.all += Number(x.amount || 0) || 0;
-    if(x.category === 'PA/BM') totals.pabm += Number(x.amount || 0) || 0;
-    if(x.category === 'Software') totals.software += Number(x.amount || 0) || 0;
-    if(x.category === 'CAD Tools') totals.cad += Number(x.amount || 0) || 0;
-    if(x.pending) totals.pending++;
-    if(x.paid) totals.paid++;
+    const bucket = azAdminStatusBucket(x);
+    const isPaid = bucket === 'paid';
+    const amount = Number(x.amount || 0) || 0;
+
+    if(isPaid){
+      totals.all += amount;
+      if(x.category === 'PA/BM') totals.pabm += amount;
+      if(x.category === 'Software') totals.software += amount;
+      if(x.category === 'CAD Tools') totals.cad += amount;
+      totals.paid++;
+    }
+    if(bucket === 'pending') totals.pending++;
   });
 
   if($('#payTotalPABM')) $('#payTotalPABM').textContent = totals.pabm.toFixed(2);
@@ -4892,6 +4900,9 @@ $('#adminPaymentAlertFilter')?.addEventListener('change',renderAdminPaymentAlert
 $('#adminPaymentAlertSearch')?.addEventListener('input',()=>{clearTimeout(window.azPaymentAlertSearchTimer);window.azPaymentAlertSearchTimer=setTimeout(renderAdminPaymentAlerts,160);});
 $('#markAllAdminPaymentAlertsRead')?.addEventListener('click',()=>azAdminPaymentAlertAction('mark-all-read'));
 $('#clearReadAdminPaymentAlerts')?.addEventListener('click',()=>{if(confirm('Clear all read payment alerts?')) azAdminPaymentAlertAction('clear-read');});
+// AZOBSS PATCH 384: default Sales Overview to Paid/Verified Only.
+// Some browsers restore old select state, so force this tab's default on fresh admin load.
+if($('#paymentCategoryFilter')) $('#paymentCategoryFilter').value='paid';
 $('#refreshPayments')?.addEventListener('click',loadPayments);
 $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
 $('#refreshPaymentLogs')?.addEventListener('click',loadPurchases);
