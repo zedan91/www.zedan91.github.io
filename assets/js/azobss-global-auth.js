@@ -5127,6 +5127,62 @@ document.addEventListener('click',function(e){
       clearTimeout(timer);
     }
   }
+
+  function premiumTokenFromRow(r){
+    try{
+      var raw = String((r && (r.downloadToken || r.token || r.downloadUrl)) || '');
+      if(!raw) return '';
+      var m = raw.match(/\/api\/premium\/download\/([^?#\/]+)/i);
+      var token = m ? decodeURIComponent(m[1]) : raw;
+      token = String(token || '').replace(/[^a-zA-Z0-9_-]/g,'');
+      return token.indexOf('dl-') === 0 ? token : '';
+    }catch(_){ return ''; }
+  }
+  async function refreshPremiumTokenStatusRows(rows){
+    if(!Array.isArray(rows) || !rows.length) return rows || [];
+    var base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+    var headers = null;
+    try{ headers = await tokenHeader(); }catch(_){ headers = {}; }
+    var tokens = [];
+    rows.forEach(function(r){
+      if(!r || String(r.source || '').toLowerCase() !== 'premiumorders') return;
+      var t = premiumTokenFromRow(r);
+      if(t && tokens.indexOf(t) < 0) tokens.push(t);
+    });
+    tokens = tokens.slice(0, 80);
+    if(!tokens.length) return rows;
+    var statusMap = new Map();
+    await Promise.all(tokens.map(async function(t){
+      var controller = new AbortController();
+      var timer = setTimeout(function(){ try{ controller.abort(); }catch(_){ } }, 6500);
+      try{
+        var res = await fetch(base + '/api/premium/download-status/' + encodeURIComponent(t) + '?_=' + Date.now(), { headers:headers, cache:'no-store', signal:controller.signal });
+        var data = await res.json().catch(function(){ return null; });
+        if(res.ok && data && data.ok) statusMap.set(t, data);
+      }catch(_){
+      }finally{
+        clearTimeout(timer);
+      }
+    }));
+    if(!statusMap.size) return rows;
+    rows.forEach(function(r){
+      var t = premiumTokenFromRow(r);
+      var st = t ? statusMap.get(t) : null;
+      if(!st) return;
+      var used = Math.max(0, Number(st.usedCount || st.downloadCount || st.downloadsUsed || 0) || 0);
+      var max = Math.max(1, Number(st.maxDownload || st.maxDownloads || st.downloadLimit || r.downloadMax || 1) || 1);
+      r.downloadToken = t;
+      r.downloadUsed = used;
+      r.downloadMax = max;
+      r.downloadExpiresAtMs = Number(st.downloadExpiresAtMs || st.tokenExpiresAtMs || st.expiresAtMs || r.downloadExpiresAtMs || 0) || 0;
+      r.downloadExpired = !!(st.downloadExpired || st.expiredByTime || st.exhausted || used >= max);
+      r.downloadActive = !!(st.downloadActive && !r.downloadExpired && used < max);
+      r.downloadStatus = st.downloadStatus || (used >= max ? 'used' : (r.downloadExpired ? 'expired' : 'active'));
+      r.downloadUrl = r.downloadActive ? (st.downloadUrl || (base + '/api/premium/download/' + encodeURIComponent(t))) : '';
+    });
+    return rows;
+  }
+
   async function loadRows(options){
     options = options || {};
     if(loadPromise) return loadPromise;
@@ -5162,7 +5218,8 @@ document.addEventListener('click',function(e){
           const key = rowKey(r);
           if(!map.has(key)) map.set(key, r);
         });
-        state.rows = Array.from(map.values()).sort((a,b)=>Number(b.paidAtMs || b.createdAtMs || 0)-Number(a.paidAtMs || a.createdAtMs || 0));
+        var nextRows = Array.from(map.values()).sort((a,b)=>Number(b.paidAtMs || b.createdAtMs || 0)-Number(a.paidAtMs || a.createdAtMs || 0));
+        state.rows = await refreshPremiumTokenStatusRows(nextRows);
         if(state.rows.length) writeCachedRows(state.rows);
       }finally{
         state.loading = false;
@@ -5351,6 +5408,8 @@ document.addEventListener('click',function(e){
     await loadRows();
   };
   window.addEventListener('azobss-my-purchases-updated', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(700); });
+  window.addEventListener('focus', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(500); });
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(500); });
 })();
 
 

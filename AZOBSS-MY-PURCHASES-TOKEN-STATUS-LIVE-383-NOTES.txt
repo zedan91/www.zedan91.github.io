@@ -1,0 +1,15 @@
+AZOBSS My Purchases Token Status Live Fix 383
+
+Punca:
+- My Purchases boleh masih tunjuk cache/rekod premiumOrders lama Download 0/1 walaupun token sebenar sudah used/expired.
+- Backend memang reject link sebagai expired/already used, tapi UI tidak semak token status secara live.
+
+Fix:
+- Tambah backend endpoint: GET /api/premium/download-status/:token
+- Frontend My Purchases extract token dl-xxx dari downloadUrl dan semak status live.
+- Jika token used/max sudah habis, UI tukar kepada Downloaded 1/1.
+- Jika expired masa, UI tukar kepada Download expired.
+- Cache My Purchases dinaikkan ke v383 supaya cache lama v382 tidak terus dipakai.
+
+Firebase Rules: Tidak perlu update.
+Render ENV: Tidak perlu tambah.

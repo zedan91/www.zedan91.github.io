@@ -1461,6 +1461,22 @@ function azSyncPremiumOrderTokenStateLegacy(saved = {}, token = "") {
   } catch (_) { return null; }
 }
 
+
+app.get("/api/premium/download-status/:token", (req, res) => {
+  const token = String(req.params.token || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  const saved = token ? findPremiumToken(token) : null;
+  if (!saved) return res.status(404).json({ ok:false, error:"TOKEN_NOT_FOUND" });
+  const now = Date.now();
+  const used = Math.max(0, Number(saved.usedCount || saved.downloadCount || saved.downloadsUsed || 0) || 0);
+  const max = Math.max(1, Number(saved.maxDownload || saved.maxDownloads || saved.downloadLimit || 1) || 1);
+  const expiresAtMs = Number(saved.expiresAtMs || saved.expiresAt || saved.tokenExpiresAtMs || saved.downloadExpiresAtMs || 0) || 0;
+  const expiredByTime = !!(expiresAtMs && now > expiresAtMs && saved.expiresNever !== true && saved.neverExpire !== true && saved.downloadNeverExpire !== true);
+  const exhausted = used >= max || String(saved.downloadStatus || "").toLowerCase() === "used" || saved.downloadExpired === true;
+  const expired = expiredByTime || exhausted;
+  try { azSyncPremiumOrderTokenStateLegacy(saved, token); } catch (_) {}
+  res.json({ ok:true, token, usedCount:used, downloadCount:used, downloadsUsed:used, maxDownload:max, maxDownloads:max, downloadLimit:max, expiresAtMs, tokenExpiresAtMs:expiresAtMs, downloadExpiresAtMs:expiresAtMs, expiredByTime, exhausted, downloadExpired:expired, downloadActive:!expired && used < max, downloadStatus:exhausted?"used":(expiredByTime?"expired":"active"), downloadUrl:(!expired && used < max)?`/api/premium/download/${encodeURIComponent(token)}`:"", patch:"AZOBSS_MY_PURCHASES_TOKEN_STATUS_383_LEGACY" });
+});
+
 app.get("/api/premium/download-health", (req, res) => {
   res.json({ ok:true, patch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH, mode:"one-token-one-session-backend-stream", rangeSupport:true, sessionTtlMs:azPremiumSessionTtlMs() });
 });

@@ -8113,6 +8113,50 @@ const filePath =
       return send(res, 200, html, "text/html; charset=utf-8");
     }
 
+
+    if (pathname.startsWith("/api/premium/download-status/") && req.method === "GET") {
+      const token = decodeURIComponent(path.basename(pathname)).replace(/[^a-zA-Z0-9_-]/g, "");
+      let saved = token ? findPremiumToken(token) : null;
+      if (!saved && token) {
+        try { saved = await azFindPremiumTokenPersistent(token); } catch (err) { console.warn("Premium token status Firestore lookup failed:", err && (err.message || err)); }
+        if (saved) {
+          try { savePremiumToken({ ...saved, token: saved.token || token }); } catch (_) {}
+        }
+      }
+      if (!saved) {
+        return send(res, 404, JSON.stringify({ ok:false, error:"TOKEN_NOT_FOUND" }), "application/json");
+      }
+      const now = Date.now();
+      const used = Math.max(0, Number(saved.usedCount || saved.downloadCount || saved.downloadsUsed || 0) || 0);
+      const max = Math.max(1, Number(saved.maxDownload || saved.maxDownloads || saved.downloadLimit || 1) || 1);
+      const expiresNever = saved.expiresNever === true || azobssOrderNeverExpire(saved);
+      const expiresAtMs = azMyPurchasesTokenMs(saved.expiresAtMs || saved.expiresAt || saved.tokenExpiresAtMs || saved.tokenExpiresAt || saved.downloadExpiresAtMs);
+      const expiredByTime = !expiresNever && !!(expiresAtMs && now > expiresAtMs);
+      const exhausted = used >= max || String(saved.downloadStatus || "").toLowerCase() === "used" || saved.downloadExpired === true;
+      const expired = expiredByTime || exhausted;
+      try { azSyncPremiumOrderTokenState({ ...saved, token }, token, now); } catch (_) {}
+      return send(res, 200, JSON.stringify({
+        ok: true,
+        token,
+        usedCount: used,
+        downloadCount: used,
+        downloadsUsed: used,
+        maxDownload: max,
+        maxDownloads: max,
+        downloadLimit: max,
+        expiresAtMs,
+        tokenExpiresAtMs: expiresAtMs,
+        downloadExpiresAtMs: expiresAtMs,
+        expiredByTime,
+        exhausted,
+        downloadExpired: expired,
+        downloadActive: !expired && used < max,
+        downloadStatus: exhausted ? "used" : (expiredByTime ? "expired" : "active"),
+        downloadUrl: (!expired && used < max) ? `${publicBaseUrlFromReq(req)}/api/premium/download/${encodeURIComponent(token)}` : "",
+        patch: "AZOBSS_MY_PURCHASES_TOKEN_STATUS_383"
+      }), "application/json");
+    }
+
     if (pathname === "/api/premium/download-health" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok: true,
