@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>AZOBSS Admin Dashboard</title>
+<script id="az-admin-canonical-www-redirect">
+(function(){
+  try{
+    if(location.hostname === 'azobss.com'){
+      location.replace('https://www.azobss.com' + location.pathname + location.search + location.hash);
+    }
+  }catch(_e){}
+})();
+</script>
+
 <link rel="icon" href="/favicon.ico">
 <style>
 :root{--bg:#07111f;--panel:#111c2d;--panel2:#0d1728;--border:rgba(148,163,184,.25);--text:#f8fafc;--muted:#9fb3d0;--green:#22c55e;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b}
@@ -220,17 +230,24 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
     return false;
   }
 
+  function azAdminWhenBodyReady(fn){
+    if(document.body) return fn();
+    document.addEventListener('DOMContentLoaded', fn, { once:true });
+  }
+
   function showDenied(message){
     clearAdminCache();
-    let box = document.getElementById('azAdminAccessDenied');
-    if(!box){
-      box = document.createElement('div');
-      box.id = 'azAdminAccessDenied';
-      box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
-      document.body.appendChild(box);
-    }
-    const msg = document.getElementById('azAdminAccessMessage');
-    if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+    azAdminWhenBodyReady(() => {
+      let box = document.getElementById('azAdminAccessDenied');
+      if(!box){
+        box = document.createElement('div');
+        box.id = 'azAdminAccessDenied';
+        box.innerHTML = '<div class="box"><h2>🔐 Admin Only</h2><p id="azAdminAccessMessage"></p><a href="/">Back to Home</a></div>';
+        document.body.appendChild(box);
+      }
+      const msg = document.getElementById('azAdminAccessMessage');
+      if(msg) msg.textContent = message || 'You do not have permission to access this page.';
+    });
   }
 
   function showAdmin(){
@@ -243,6 +260,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
   showDenied('Checking admin access...');
 
   onAuthStateChanged(auth, async user => {
+    window.__azAdminTopGuardResolved = true;
     if(!user){
       window.__azobssVerifiedAdmin = false;
       showDenied('Please login as admin first.');
@@ -255,6 +273,11 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
       window.__azobssVerifiedAdmin = false;
       showDenied('Access denied. Admin account required.');
     }
+  }, err => {
+    window.__azAdminTopGuardResolved = true;
+    window.__azobssVerifiedAdmin = false;
+    showDenied('Admin access check failed. Please refresh or login again.');
+    console.warn('[AZOBSS admin access guard]', err);
   });
 })();
 
@@ -4837,9 +4860,7 @@ function printWebsiteReport(){
   if(!azWebsiteReportLast){ toast('Run Full Website Check first.'); return; }
   const w=window.open('','_blank','noopener,noreferrer,width=900,height=700');
   if(!w){ window.print(); return; }
-  w.document.write('<!doctype html><html><head><title>AZOBSS Health Report</title><style>body{font-family:Arial,sans-serif;margin:24px;white-space:pre-wrap;line-height:1.45}pre{font-family:Consolas,monospace}</style></head><body><pre>'+esc(azWebsiteReportLast.text||'')+'</pre>
-<!-- AZOBSS PATCH 385: Payment Logs pending receipt/PDF/email actions locked. -->
-</body></html>');
+  w.document.write('<!doctype html><html><head><title>AZOBSS Health Report</title><style>body{font-family:Arial,sans-serif;margin:24px;white-space:pre-wrap;line-height:1.45}pre{font-family:Consolas,monospace}</style></head><body><pre>'+esc(azWebsiteReportLast.text||'')+'</pre></body></html>');
   w.document.close(); w.focus(); setTimeout(()=>w.print(),250);
 }
 
@@ -4988,23 +5009,79 @@ $('#runAdminFrontendDiagnostics')?.addEventListener('click',runAdminFrontendDiag
 $('#clearAdminFrontendDiagnostics')?.addEventListener('click',clearAdminFrontendDiagnostics);
 azAdminRenderApiKeyStatus();
 
-onAuthStateChanged(auth,async user=>{
-  currentUser=user;
-  if(!user){$('#loginState').textContent='Please login as admin from main website first.';return;}
-  adminProfile=await getAdminProfile(user);
-  if(!isAdminUser()){$('#loginState').textContent='Access denied. Admin only.';return;}
-  $('#loginCover').classList.add('hidden');
-  $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
-  $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
-  await loadOverview();
+// AZOBSS PATCH 386: prevent admin dashboard from staying forever at "Checking admin access..."
+function azAdminPromiseTimeout(promise, ms, label='request'){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timeout')), ms))
+  ]);
+}
+let azAdminAuthResolved = false;
+const azAdminAuthWatchdog = setTimeout(() => {
+  if(azAdminAuthResolved) return;
+  const st = $('#loginState');
+  if(st){
+    st.innerHTML = 'Admin access check is taking too long.<br><br>Try open <b>https://www.azobss.com/admin/</b>, refresh, or login again from main website.';
+  }
+}, 12000);
+
+onAuthStateChanged(auth, async user => {
+  try{
+    currentUser = user;
+    if(!user){
+      azAdminAuthResolved = true;
+      clearTimeout(azAdminAuthWatchdog);
+      const st=$('#loginState');
+      if(st) st.textContent='Please login as admin from main website first.';
+      return;
+    }
+
+    const st=$('#loginState');
+    if(st) st.textContent='Checking admin profile...';
+
+    try{
+      adminProfile = await azAdminPromiseTimeout(getAdminProfile(user), 12000, 'Admin profile check');
+    }catch(profileErr){
+      console.warn('[AZOBSS admin] profile check slow/failed:', profileErr);
+      adminProfile = null;
+    }
+
+    // Owner email may pass even if profile lookup is slow.
+    if(!isAdminUser()){
+      azAdminAuthResolved = true;
+      clearTimeout(azAdminAuthWatchdog);
+      const st2=$('#loginState');
+      if(st2) st2.textContent='Access denied. Admin only.';
+      return;
+    }
+
+    azAdminAuthResolved = true;
+    clearTimeout(azAdminAuthWatchdog);
+    $('#loginCover')?.classList.add('hidden');
+    $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
+    $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
+    await loadOverview();
+  }catch(e){
+    azAdminAuthResolved = true;
+    clearTimeout(azAdminAuthWatchdog);
+    console.error('[AZOBSS admin] access check failed:', e);
+    const st=$('#loginState');
+    if(st) st.innerHTML='Admin access check failed.<br><br>Please refresh or login again as admin.';
+  }
+}, err => {
+  azAdminAuthResolved = true;
+  clearTimeout(azAdminAuthWatchdog);
+  console.error('[AZOBSS admin] auth listener failed:', err);
+  const st=$('#loginState');
+  if(st) st.innerHTML='Firebase admin login check failed.<br><br>Please refresh or login again.';
 });
 </script>
 
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=385"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=385"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=386"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=386"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
@@ -6234,5 +6311,6 @@ document.addEventListener('click', async function(e){
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 
 <!-- AZOBSS PATCH 385: Payment Logs pending receipt/PDF/email actions locked. -->
+<!-- AZOBSS PATCH 386: Admin access checking timeout + www canonical redirect. -->
 </body>
 </html>
