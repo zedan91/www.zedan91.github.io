@@ -1,0 +1,18 @@
+AZOBSS GitHub Pages 404 Flat Root Fix
+
+Tujuan:
+- Pastikan index.html berada di root ZIP.
+- Pastikan CNAME berada di root ZIP.
+- Elak deploy bot/GitHub Pages kehilangan custom domain selepas ZIP diextract dalam folder nested.
+
+CNAME:
+www.azobss.com
+
+DNS yang masih perlu disemak di domain provider:
+@ A 185.199.108.153
+@ A 185.199.109.153
+@ A 185.199.110.153
+@ A 185.199.111.153
+www CNAME zedan91.github.io
+
+Jika buka azobss.com tanpa www masih 404, masalah itu DNS apex/root domain, bukan Render backend.
