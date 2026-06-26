@@ -5011,6 +5011,13 @@ document.addEventListener('click',function(e){
   const state = { rows: [], q: '', category: 'all', status: 'all', loading: false, error: '' };
   const SHOP_LOCAL_PREFIX = 'azobss_shop_purchase_history_';
   const HIDDEN_LOCAL_PREFIX = 'azobss_my_purchases_hidden_';
+  // AZOBSS FIX 381: My Purchases should not get stuck on "Loading purchases..." when Render/Firebase is slow.
+  const CACHE_LOCAL_PREFIX = 'azobss_my_purchases_cached_paid_';
+  const FETCH_TIMEOUT_MS = 9000;
+  const MIN_REFRESH_GAP_MS = 2500;
+  let loadPromise = null;
+  let lastLoadStartedAt = 0;
+  let refreshTimer = null;
 
   function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
   function money(v){ const n = Number(v || 0); return 'RM' + (Number.isFinite(n) ? n.toFixed(2).replace(/\.00$/,'') : '0'); }
@@ -5028,6 +5035,20 @@ document.addEventListener('click',function(e){
   }
   function writeHiddenKeys(set){
     try{ localStorage.setItem(HIDDEN_LOCAL_PREFIX + userKey(), JSON.stringify(Array.from(set || []))); }catch(_){ }
+  }
+  function readCachedRows(){
+    try{
+      const raw = localStorage.getItem(CACHE_LOCAL_PREFIX + userKey()) || '[]';
+      const rows = JSON.parse(raw);
+      return Array.isArray(rows) ? rows.filter(Boolean) : [];
+    }catch(_){ return []; }
+  }
+  function writeCachedRows(rows){
+    try{ localStorage.setItem(CACHE_LOCAL_PREFIX + userKey(), JSON.stringify((rows || []).slice(0, 500))); }catch(_){ }
+  }
+  function scheduleLoadRows(delay){
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(function(){ loadRows({silent: true}); }, Number(delay || 700));
   }
   function isLocallyHidden(r){ return readHiddenKeys().has(rowKey(r)); }
   function markLocallyHidden(r){ const set = readHiddenKeys(); set.add(rowKey(r)); writeHiddenKeys(set); }
@@ -5092,30 +5113,65 @@ document.addEventListener('click',function(e){
   async function fetchBackendPurchases(){
     const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
     const headers = await tokenHeader();
-    const res = await fetch(base + '/api/my-purchases?limit=300', { headers, cache:'no-store' });
-    const data = await res.json().catch(()=>({}));
-    if(!res.ok || !data.ok) throw new Error(data.error || 'Unable to load My Purchases.');
-    return Array.isArray(data.records) ? data.records : [];
-  }
-  async function loadRows(){
-    state.loading = true; state.error = ''; render();
+    const controller = new AbortController();
+    const timer = setTimeout(function(){ try{ controller.abort(); }catch(_){ } }, FETCH_TIMEOUT_MS);
     try{
-      let rows = [];
-      try{ rows = await fetchBackendPurchases(); }
-      catch(err){ state.error = err && err.message ? err.message : String(err); }
-      if(!rows.length && typeof loadAzobssPurchaseRecords === 'function'){
-        try{ rows = rows.concat((await loadAzobssPurchaseRecords()).map(normalizePaBmFallback)); }catch(_){ }
-      }
-      rows = rows.concat(readLocalShopHistory());
-      const map = new Map();
-      rows.filter(Boolean).filter(shouldShowCustomerPurchase).filter(r => !isLocallyHidden(r)).forEach(r => {
-        const key = rowKey(r);
-        if(!map.has(key)) map.set(key, r);
-      });
-      state.rows = Array.from(map.values()).sort((a,b)=>Number(b.paidAtMs || b.createdAtMs || 0)-Number(a.paidAtMs || a.createdAtMs || 0));
+      const res = await fetch(base + '/api/my-purchases?limit=300&_=' + Date.now(), { headers, cache:'no-store', signal: controller.signal });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok || !data.ok) throw new Error(data.error || 'Unable to load My Purchases.');
+      return Array.isArray(data.records) ? data.records : [];
+    }catch(err){
+      if(err && err.name === 'AbortError') throw new Error('My Purchases server slow/idle. Showing cached records; press Refresh again in a moment.');
+      throw err;
     }finally{
-      state.loading = false; render();
+      clearTimeout(timer);
     }
+  }
+  async function loadRows(options){
+    options = options || {};
+    if(loadPromise) return loadPromise;
+    const started = Date.now();
+    if(options.silent && state.rows.length && started - lastLoadStartedAt < MIN_REFRESH_GAP_MS) return Promise.resolve(state.rows);
+    lastLoadStartedAt = started;
+
+    loadPromise = (async function(){
+      const cached = readCachedRows().filter(r => !isLocallyHidden(r));
+      if(!state.rows.length && cached.length){
+        state.rows = cached;
+        state.error = '';
+        state.loading = false;
+        render();
+      }
+
+      state.loading = true;
+      state.error = '';
+      render();
+      try{
+        let rows = [];
+        try{ rows = await fetchBackendPurchases(); }
+        catch(err){
+          state.error = err && err.message ? err.message : String(err);
+          if(cached.length) rows = cached;
+        }
+        if(!rows.length && typeof loadAzobssPurchaseRecords === 'function'){
+          try{ rows = rows.concat((await loadAzobssPurchaseRecords()).map(normalizePaBmFallback)); }catch(_){ }
+        }
+        rows = rows.concat(readLocalShopHistory());
+        const map = new Map();
+        rows.filter(Boolean).filter(shouldShowCustomerPurchase).filter(r => !isLocallyHidden(r)).forEach(r => {
+          const key = rowKey(r);
+          if(!map.has(key)) map.set(key, r);
+        });
+        state.rows = Array.from(map.values()).sort((a,b)=>Number(b.paidAtMs || b.createdAtMs || 0)-Number(a.paidAtMs || a.createdAtMs || 0));
+        if(state.rows.length) writeCachedRows(state.rows);
+      }finally{
+        state.loading = false;
+        loadPromise = null;
+        render();
+      }
+      return state.rows;
+    })();
+    return loadPromise;
   }
   function ensureModal(){
     let modal = document.getElementById('azobssMyPurchasesProModal');
@@ -5204,9 +5260,10 @@ document.addEventListener('click',function(e){
     const rows = filteredRows();
     renderKpis(rows);
     if(!list) return;
-    if(state.loading) { list.innerHTML = '<div class="az-mypro-empty">Loading purchases...</div>'; return; }
+    if(state.loading && !rows.length) { list.innerHTML = '<div class="az-mypro-empty">Loading purchases...<br><small>If Render is waking up, cached records will be shown automatically.</small></div>'; return; }
     if(!rows.length){ list.innerHTML = '<div class="az-mypro-empty">Belum ada rekod pembelian untuk filter ini.</div>'; return; }
-    list.innerHTML = rows.map(rowHtml).join('');
+    const refreshing = state.loading ? '<div class="az-mypro-error">Refreshing purchases in background...</div>' : '';
+    list.innerHTML = refreshing + rows.map(rowHtml).join('');
   }
   async function fetchReceiptBlob(row, format, download){
     const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
@@ -5265,14 +5322,14 @@ document.addEventListener('click',function(e){
       else if(action === 'download'){
         if(row.source === 'purchaseLogs' && row.raw && typeof azobssClientControlledDownload === 'function' && typeof azobssPurchaseDownloadPayload === 'function'){
           await azobssClientControlledDownload(azobssPurchaseDownloadPayload(row.raw), btn, e);
-          setTimeout(loadRows, 1400);
+          scheduleLoadRows(1400);
         }else if(row.downloadUrl){
           window.open(row.downloadUrl, '_blank', 'noopener');
           // AZOBSS PATCH 378: premium token usage is counted by backend only after Start Download creates a secure session.
           // Auto-refresh a few times so My Purchases changes from Download 0/1 to Downloaded 1/1/Expired after the real session starts.
-          setTimeout(loadRows, 3000);
-          setTimeout(loadRows, 15000);
-          setTimeout(loadRows, 45000);
+          scheduleLoadRows(3000);
+          scheduleLoadRows(15000);
+          scheduleLoadRows(45000);
         }
       }else if(action === 'delete'){
         btn.disabled = false; btn.textContent = old;
@@ -5293,7 +5350,7 @@ document.addEventListener('click',function(e){
     modal.classList.add('is-open');
     await loadRows();
   };
-  window.addEventListener('azobss-my-purchases-updated', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) loadRows(); });
+  window.addEventListener('azobss-my-purchases-updated', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(700); });
 })();
 
 
