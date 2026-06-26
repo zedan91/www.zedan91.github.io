@@ -1431,6 +1431,36 @@ app.post("/api/commission/retry-order", async (req, res) => {
   }
 });
 
+
+function azSyncPremiumOrderTokenStateLegacy(saved = {}, token = "") {
+  try {
+    if (!saved || !saved.orderId) return null;
+    const used = Math.max(0, Number(saved.usedCount || saved.downloadCount || saved.downloadsUsed || 0) || 0);
+    const max = Math.max(1, Number(saved.maxDownload || saved.maxDownloads || saved.downloadLimit || 1) || 1);
+    const expiresAtMs = Number(saved.expiresAtMs || saved.expiresAt || 0) || Date.parse(String(saved.tokenExpiresAt || "")) || 0;
+    const expiredByTime = !!(expiresAtMs && Date.now() > expiresAtMs);
+    const exhausted = used >= max;
+    const existing = findPremiumOrderByAny({ orderId:saved.orderId, billCode:saved.billCode }) || saved;
+    return upsertPremiumOrder({
+      ...(existing || {}),
+      downloadToken: token || saved.token || saved.downloadToken || "",
+      tokenExpiresAtMs: expiresAtMs,
+      downloadExpiresAtMs: expiresAtMs,
+      downloadCount: used,
+      usedCount: used,
+      downloadsUsed: used,
+      maxDownload: max,
+      maxDownloads: max,
+      downloadExpired: expiredByTime || exhausted,
+      downloadActive: !(expiredByTime || exhausted),
+      downloadStatus: exhausted ? "used" : (expiredByTime ? "expired" : "active"),
+      lastDownloadUsageSyncAt: new Date().toISOString(),
+      lastDownloadUsageSyncAtMs: Date.now(),
+      azobssPatch382: true
+    });
+  } catch (_) { return null; }
+}
+
 app.get("/api/premium/download-health", (req, res) => {
   res.json({ ok:true, patch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH, mode:"one-token-one-session-backend-stream", rangeSupport:true, sessionTtlMs:azPremiumSessionTtlMs() });
 });
@@ -1446,6 +1476,7 @@ app.post("/api/premium/download/:token", (req, res) => {
     const sessionId = azCreatePremiumDownloadSession(req, token, saved);
     return res.redirect(303, `/api/premium/download-session/${encodeURIComponent(sessionId)}`);
   } catch (err) {
+    try { if (saved) azSyncPremiumOrderTokenStateLegacy(saved, token); } catch (_) {}
     return res.status(err.statusCode || 500).send(err.statusCode ? err.message : "Download cannot start. Please contact admin.");
   }
 });
@@ -1454,6 +1485,7 @@ app.get("/api/premium/download/:token", (req, res) => {
   const token = req.params.token;
   const saved = findPremiumToken(token);
   if (!saved || Number(saved.expiresAt || 0) < Date.now() || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
+    if (saved) azSyncPremiumOrderTokenStateLegacy(saved, token);
     return res.status(403).send("Download link expired or already used too many times.");
   }
   const productName = String(saved.productName || "AZOBSS Digital Product").replace(/[<>]/g, "");

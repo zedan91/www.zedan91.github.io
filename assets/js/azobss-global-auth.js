@@ -5011,8 +5011,8 @@ document.addEventListener('click',function(e){
   const state = { rows: [], q: '', category: 'all', status: 'all', loading: false, error: '' };
   const SHOP_LOCAL_PREFIX = 'azobss_shop_purchase_history_';
   const HIDDEN_LOCAL_PREFIX = 'azobss_my_purchases_hidden_';
-  // AZOBSS FIX 381: My Purchases should not get stuck on "Loading purchases..." when Render/Firebase is slow.
-  const CACHE_LOCAL_PREFIX = 'azobss_my_purchases_cached_paid_';
+  // AZOBSS FIX 382: My Purchases should not get stuck on "Loading purchases..." when Render/Firebase is slow.
+  const CACHE_LOCAL_PREFIX = 'azobss_my_purchases_cached_paid_v382_';
   const FETCH_TIMEOUT_MS = 9000;
   const MIN_REFRESH_GAP_MS = 2500;
   let loadPromise = null;
@@ -5233,18 +5233,18 @@ document.addEventListener('click',function(e){
     const st = String(r.status || '').toLowerCase();
     const paid = isPaid(r);
     const failed = st.includes('fail') || st.includes('cancel') || st.includes('reject');
+    if(used >= max){
+      return `<span class="az-mypro-status-note ok">Downloaded ${used}/${max}</span>`;
+    }
+    if(r.downloadExpired){
+      return `<span class="az-mypro-status-note bad">Download expired</span>`;
+    }
     if(r.downloadActive){
       return `<button class="az-mypro-action good" data-mypro-action="download" data-index="${i}">Download ${used}/${max}</button>`;
     }
     if(!paid){
       if(failed) return `<span class="az-mypro-status-note bad">Payment not completed</span>`;
       return `<span class="az-mypro-status-note pending">Pending payment — download will appear after verified</span>`;
-    }
-    if(used >= max){
-      return `<span class="az-mypro-status-note ok">Downloaded ${used}/${max}</span>`;
-    }
-    if(r.downloadExpired){
-      return `<span class="az-mypro-status-note bad">Download expired</span>`;
     }
     return `<span class="az-mypro-status-note bad">Download unavailable</span>`;
   }

@@ -4328,6 +4328,143 @@ function azMyPurchasesPremiumDownloadMeta(row = {}, req = null) {
   const base = req ? publicBaseUrlFromReq(req) : "";
   return { used, max, expiresAtMs, expired, active: !!(paid && token && used < max && !expiredByTime && !exhausted), url: token && base ? `${base}/api/premium/download/${encodeURIComponent(token)}` : "" };
 }
+
+// AZOBSS PATCH 382: Reconcile My Purchases Software/CAD download state from premiumDownloadTokens.
+// My Purchases cards are based on premiumOrders, but real one-time usage is stored on premiumDownloadTokens.
+// This makes used/expired tokens show as Downloaded 1/1 or Download expired, not stale Download 0/1.
+function azMyPurchasesTokenMs(v) {
+  if (!v) return 0;
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  if (typeof v === "string") {
+    const n = Number(v);
+    if (Number.isFinite(n) && n > 100000000000) return n;
+    const ms = Date.parse(v);
+    return Number.isFinite(ms) ? ms : 0;
+  }
+  if (typeof v.toMillis === "function") return v.toMillis();
+  if (typeof v.seconds === "number") return v.seconds * 1000;
+  return 0;
+}
+function azExtractPremiumDownloadTokenFromUrl(url = "") {
+  try {
+    const m = String(url || "").match(/\/api\/premium\/download\/([^?#\/]+)/i);
+    return m ? decodeURIComponent(m[1]).replace(/[^a-zA-Z0-9_-]/g, "") : "";
+  } catch (_) { return ""; }
+}
+function azPremiumTokenSortMs(t = {}) {
+  return Math.max(
+    azMyPurchasesTokenMs(t.lastUsedAt),
+    azMyPurchasesTokenMs(t.updatedAtMs || t.updatedAt),
+    azMyPurchasesTokenMs(t.createdAtMs || t.createdAt),
+    azMyPurchasesTokenMs(t.expiresAtMs || t.expiresAt || t.tokenExpiresAtMs || t.tokenExpiresAt)
+  );
+}
+async function azFindPremiumTokenForMyPurchaseRow(row = {}) {
+  const token = cleanPremiumText(row.downloadToken || row.token || azExtractPremiumDownloadTokenFromUrl(row.downloadUrl || ""), 220);
+  const orderId = cleanPremiumText(row.orderId || row.recordId || row.receiptNo || "", 180);
+  const billCode = cleanPremiumText(row.billCode || "", 120);
+  const productId = cleanPremiumText(row.productId || "", 180);
+  const candidates = [];
+  const push = (x) => { if (x && typeof x === "object") candidates.push({ ...(x || {}), token: x.token || token || "" }); };
+
+  try { if (token) push(findPremiumToken(token)); } catch (_) {}
+  try {
+    const localTokens = readPremiumJson(PREMIUM_TOKENS_FILE, []);
+    (Array.isArray(localTokens) ? localTokens : []).forEach(t => {
+      if (!t) return;
+      if ((token && t.token === token) || (orderId && t.orderId === orderId) || (billCode && t.billCode === billCode) || (productId && t.productId === productId && t.orderId === orderId)) push(t);
+    });
+  } catch (_) {}
+
+  try { if (token) push(await azFindPremiumTokenPersistent(token)); } catch (_) {}
+
+  const db = getAzobssBackendDb();
+  if (db) {
+    async function q(field, value) {
+      if (!value) return;
+      try {
+        const snap = await db.collection("premiumDownloadTokens").where(field, "==", value).limit(5).get();
+        snap.forEach(d => push({ docId:d.id, ...(d.data() || {}), token:(d.data() || {}).token || d.id }));
+      } catch (_) {}
+    }
+    await q("orderId", orderId);
+    await q("billCode", billCode);
+  }
+
+  candidates.sort((a, b) => azPremiumTokenSortMs(b) - azPremiumTokenSortMs(a));
+  return candidates[0] || null;
+}
+function azApplyPremiumTokenToMyPurchasePublicRow(row = {}, tokenData = {}, req = null) {
+  if (!row || !tokenData) return row;
+  const token = cleanPremiumText(tokenData.token || row.downloadToken || azExtractPremiumDownloadTokenFromUrl(row.downloadUrl || ""), 220);
+  const used = Math.max(0, Number(tokenData.usedCount || tokenData.downloadCount || tokenData.downloadsUsed || 0) || 0);
+  const max = Math.max(1, Number(tokenData.maxDownload || tokenData.maxDownloads || tokenData.downloadLimit || row.downloadMax || 1) || 1);
+  const expiresNever = tokenData.expiresNever === true || azobssOrderNeverExpire(tokenData);
+  let expiresAtMs = azMyPurchasesTokenMs(tokenData.expiresAtMs || tokenData.expiresAt || tokenData.tokenExpiresAtMs || tokenData.tokenExpiresAt || row.downloadExpiresAtMs);
+  const expiredByTime = !expiresNever && !!(expiresAtMs && Date.now() > expiresAtMs);
+  const exhausted = used >= max || String(tokenData.downloadStatus || "").toLowerCase() === "used" || tokenData.downloadExpired === true;
+  const expired = expiredByTime || exhausted;
+  const base = req ? publicBaseUrlFromReq(req) : "";
+  row.downloadUsed = used;
+  row.downloadMax = max;
+  row.downloadExpiresAtMs = expiresAtMs || row.downloadExpiresAtMs || 0;
+  row.downloadExpired = expired;
+  row.downloadActive = !!(row.isPaid && token && used < max && !expired);
+  row.downloadStatus = exhausted ? "used" : (expiredByTime ? "expired" : (row.downloadActive ? "active" : "unavailable"));
+  row.downloadUrl = row.downloadActive && base ? `${base}/api/premium/download/${encodeURIComponent(token)}` : "";
+  if (token) row.downloadToken = token;
+  return row;
+}
+function azSyncPremiumOrderTokenState(saved = {}, token = "", now = Date.now()) {
+  try {
+    if (!saved || !(saved.orderId || saved.billCode || saved.billcode)) return null;
+    const used = Math.max(0, Number(saved.usedCount || saved.downloadCount || saved.downloadsUsed || 0) || 0);
+    const max = Math.max(1, Number(saved.maxDownload || saved.maxDownloads || saved.downloadLimit || 1) || 1);
+    const expiresAtMs = azMyPurchasesTokenMs(saved.expiresAtMs || saved.expiresAt || saved.tokenExpiresAtMs || saved.tokenExpiresAt);
+    const expiredByTime = !azobssOrderNeverExpire(saved) && !!(expiresAtMs && now > expiresAtMs);
+    const exhausted = used >= max || String(saved.downloadStatus || "").toLowerCase() === "used" || saved.downloadExpired === true;
+    const patch = {
+      orderId: cleanPremiumText(saved.orderId || "", 180),
+      billCode: cleanPremiumText(saved.billCode || saved.billcode || "", 120),
+      downloadToken: cleanPremiumText(token || saved.token || saved.downloadToken || "", 220),
+      tokenExpiresAtMs: expiresAtMs,
+      downloadExpiresAtMs: expiresAtMs,
+      downloadCount: used,
+      usedCount: used,
+      downloadsUsed: used,
+      maxDownload: max,
+      maxDownloads: max,
+      downloadLimit: max,
+      downloadExpired: expiredByTime || exhausted,
+      downloadActive: !(expiredByTime || exhausted),
+      downloadStatus: exhausted ? "used" : (expiredByTime ? "expired" : "active"),
+      lastDownloadUsageSyncAt: new Date(now).toISOString(),
+      lastDownloadUsageSyncAtMs: now,
+      azobssPatch382: true
+    };
+    const existing = findPremiumOrderByAny({ orderId: patch.orderId, billCode: patch.billCode }) || saved;
+    return upsertPremiumOrder({ ...(existing || {}), ...(patch || {}) });
+  } catch (err) {
+    console.warn("AZOBSS premium order token state sync failed:", err && (err.message || err));
+    return null;
+  }
+}
+async function azReconcileMyPurchasePremiumRows(rows = [], req = null) {
+  for (const row of rows || []) {
+    if (!row || String(row.source || "").toLowerCase() !== "premiumorders") continue;
+    try {
+      const tokenData = await azFindPremiumTokenForMyPurchaseRow(row);
+      if (tokenData) {
+        azApplyPremiumTokenToMyPurchasePublicRow(row, tokenData, req);
+        azSyncPremiumOrderTokenState({ ...(tokenData || {}), orderId: tokenData.orderId || row.recordId || "", billCode: tokenData.billCode || row.billCode || "", productId: tokenData.productId || row.productId || "", productName: tokenData.productName || row.productName || "" }, tokenData.token || row.downloadToken || "");
+      }
+    } catch (err) {
+      console.warn("AZOBSS My Purchases premium token reconcile skipped:", err && (err.message || err));
+    }
+  }
+  return rows;
+}
+
 function azMyPurchasesPublicRow(row = {}, source = "", docId = "", req = null) {
   const src = cleanPremiumText(source || row.__source || row._azSource || "", 80);
   const isPremium = src.toLowerCase().includes("premium");
@@ -4469,6 +4606,7 @@ async function azLoadMyPurchasesForIdentity(req, identity = {}, limitRows = 300)
     localPremium.forEach((x, i) => push(x || {}, "premiumOrders", x.orderId || x.billCode || `local_${i}`));
   } catch (_) {}
 
+  await azReconcileMyPurchasePremiumRows(rows, req);
   rows.sort((a,b) => Number(b.paidAtMs || b.createdAtMs || 0) - Number(a.paidAtMs || a.createdAtMs || 0));
   return rows.slice(0, limitRows);
 }
@@ -7946,6 +8084,7 @@ const filePath =
         res.end();
         return;
       } catch (err) {
+        try { if (saved) azSyncPremiumOrderTokenState({ ...saved, token }, token); } catch (_) {}
         const status = err && err.statusCode ? err.statusCode : 500;
         const message = status >= 500 ? "Download cannot start. Please contact admin." : (err && err.message ? err.message : "Download cannot start.");
         console.warn("AZOBSS secure premium download start failed:", err && (err.message || err));
@@ -7960,6 +8099,7 @@ const filePath =
         try { saved = await azFindPremiumTokenPersistent(token); } catch (err) { console.warn("Premium token Firestore lookup failed:", err && (err.message || err)); }
       }
       if (!saved || azobssTokenIsExpired(saved) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
+        if (saved) azSyncPremiumOrderTokenState({ ...saved, token }, token);
         return send(res, 403, "Download link expired or already used too many times.");
       }
 
