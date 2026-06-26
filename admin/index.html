@@ -1025,6 +1025,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-mini-payment-list .item-actions{display:flex!important;flex-wrap:wrap!important;gap:3px!important;min-width:190px!important;max-width:226px!important;width:auto!important;align-items:center!important;justify-content:flex-end!important}
 .az-mini-payment-list .item-actions .btn,.az-mini-payment-list .az-admin-reset-pabm-download-btn{height:20px!important;min-height:20px!important;padding:0 5px!important;border-radius:7px!important;font-size:9.4px!important;line-height:1!important;white-space:nowrap!important;min-width:0!important}
 .az-mini-payment-list .item-actions .btn[data-paylog-email-receipt]{padding:0 6px!important}
+.az-paylog-receipt-locked{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:5px 8px;border-radius:8px;
+  background:#3b2f17;border:1px solid rgba(250,204,21,.35);
+  color:#fde68a;font-weight:900;font-size:11px;white-space:nowrap;
+}
 .az-mini-payment-list .az-admin-pabm-dl-badge{height:20px!important;min-height:20px!important;padding:0 4px!important;border-radius:7px!important;font-size:9.4px!important;line-height:1!important;justify-content:center!important}
 @media(max-width:980px){.az-payment-logs-split{grid-template-columns:1fr!important}.az-mini-payment-list .item-actions{min-width:178px!important;max-width:210px!important}}
 @media(max-width:760px){.az-payment-logs-toolbar input,.az-payment-logs-toolbar select,.az-payment-logs-toolbar button{width:100%;min-width:0}.az-payment-detail-grid{grid-template-columns:1fr}.az-payment-detail-head{flex-direction:column}.az-payment-detail-panel{max-height:92vh}.az-mini-payment-list .az-payment-log-row .item-row{grid-template-columns:1fr!important}.az-mini-payment-list .item-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important}.az-mini-payment-list .az-payment-log-row .item-meta{white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important}}
@@ -3182,9 +3188,17 @@ function azAdminPaymentReceiptId(x){
 function azAdminPaymentReceiptSource(x){
   return x?._azSource === 'premiumOrders' ? 'premiumOrders' : 'purchaseLogs';
 }
+function azAdminCanIssuePaymentReceipt(x){
+  // AZOBSS PATCH 385:
+  // Pending/cancelled/failed payment logs must not show receipt, PDF or email+download-link actions.
+  return azAdminStatusBucket(x) === 'paid';
+}
 function azAdminPaymentReceiptActions(x,key){
   const id=azAdminPaymentReceiptId(x);
   if(!id) return '';
+  if(!azAdminCanIssuePaymentReceipt(x)){
+    return '<span class="az-paylog-receipt-locked" title="Receipt/PDF available only after payment is verified">Receipt locked</span>';
+  }
   const safeKey=esc(key||x?._azDetailKey||id);
   return `<button class="btn" data-paylog-receipt="${safeKey}" data-format="html" title="View receipt" type="button">Rcpt</button><button class="btn green" data-paylog-receipt="${safeKey}" data-format="pdf" data-download="1" title="Download PDF receipt" type="button">PDF</button><button class="btn gray" data-paylog-email-receipt="${safeKey}" title="Email receipt plus Software/CAD download link when available" type="button">Email+Link</button>`;
 }
@@ -3957,6 +3971,7 @@ function azAdminPaymentRecordByKey(key){
 async function azAdminOpenPaymentReceipt(key, format='html', download=false){
   const rec=azAdminPaymentRecordByKey(key);
   if(!rec) return toast('Payment record not found. Refresh Payment Logs and try again.');
+  if(!azAdminCanIssuePaymentReceipt(rec)) return toast('Receipt/PDF hanya tersedia selepas payment Paid/Verified.');
   const id=azAdminPaymentReceiptId(rec);
   if(!id) return toast('Receipt ID not found for this record.');
   const source=azAdminPaymentReceiptSource(rec);
@@ -3980,6 +3995,7 @@ async function azAdminOpenPaymentReceipt(key, format='html', download=false){
 async function azAdminEmailPaymentReceipt(key){
   const rec=azAdminPaymentRecordByKey(key);
   if(!rec) return toast('Payment record not found. Refresh Payment Logs and try again.');
+  if(!azAdminCanIssuePaymentReceipt(rec)) return toast('Email receipt/download link hanya tersedia selepas payment Paid/Verified.');
   const id=azAdminPaymentReceiptId(rec);
   if(!id) return toast('Receipt ID not found for this record.');
   const currentEmail=rec.email||rec.buyerEmail||rec.user?.email||'';
@@ -4821,7 +4837,9 @@ function printWebsiteReport(){
   if(!azWebsiteReportLast){ toast('Run Full Website Check first.'); return; }
   const w=window.open('','_blank','noopener,noreferrer,width=900,height=700');
   if(!w){ window.print(); return; }
-  w.document.write('<!doctype html><html><head><title>AZOBSS Health Report</title><style>body{font-family:Arial,sans-serif;margin:24px;white-space:pre-wrap;line-height:1.45}pre{font-family:Consolas,monospace}</style></head><body><pre>'+esc(azWebsiteReportLast.text||'')+'</pre></body></html>');
+  w.document.write('<!doctype html><html><head><title>AZOBSS Health Report</title><style>body{font-family:Arial,sans-serif;margin:24px;white-space:pre-wrap;line-height:1.45}pre{font-family:Consolas,monospace}</style></head><body><pre>'+esc(azWebsiteReportLast.text||'')+'</pre>
+<!-- AZOBSS PATCH 385: Payment Logs pending receipt/PDF/email actions locked. -->
+</body></html>');
   w.document.close(); w.focus(); setTimeout(()=>w.print(),250);
 }
 
@@ -4985,8 +5003,8 @@ onAuthStateChanged(auth,async user=>{
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=383"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=383"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=385"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=385"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
@@ -6214,5 +6232,7 @@ document.addEventListener('click', async function(e){
 
 
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
+
+<!-- AZOBSS PATCH 385: Payment Logs pending receipt/PDF/email actions locked. -->
 </body>
 </html>

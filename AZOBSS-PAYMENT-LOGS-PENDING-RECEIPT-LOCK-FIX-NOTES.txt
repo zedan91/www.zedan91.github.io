@@ -1,0 +1,18 @@
+AZOBSS PATCH 385 - Payment Logs Pending Receipt Lock Fix
+
+Punca:
+- Admin Payment Logs masih paparkan Rcpt / PDF / Email+Link untuk rekod PENDING.
+- Pending belum sah sebagai resit pembelian kerana ToyyibPay/backend belum verify payment.
+
+Fix:
+- Pending/cancelled/failed payment logs tidak lagi paparkan Rcpt/PDF/Email+Link.
+- Rekod belum paid hanya papar Detail + badge "Receipt locked".
+- Frontend guard: klik paksa tidak akan buka receipt untuk pending.
+- Backend guard: /api/admin/payment-receipt dan /api/admin/payment-receipt-email reject non-paid dengan 403.
+- Receipt/PDF/Email+Link hanya untuk Paid/Verified/Succeeded/Completed/Settled.
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.

@@ -6468,6 +6468,9 @@ async function handler(req, res) {
         const format = String(parsed.query.format || "html").toLowerCase();
         const order = await azFindAdminPaymentReceiptRecord(receiptId, source);
         if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Payment receipt record not found." }, null, 2), "application/json");
+        if (String(order.receiptStatus || "").toLowerCase() !== "paid") {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Receipt/PDF is only available after payment is Paid/Verified." }, null, 2), "application/json");
+        }
         azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payment_receipt_view", order.receiptSource || source || "payment", order.receiptNo || receiptId, { source, format, category:order.receiptCategory, amount:order.receiptAmount }, "success"), "Admin payment receipt audit log failed");
         if (format === "json") {
           return send(res, 200, JSON.stringify({ ok:true, receipt:order }, null, 2), "application/json");
@@ -6500,6 +6503,9 @@ async function handler(req, res) {
         const source = cleanPremiumText(body.source || "", 80);
         const order = await azFindAdminPaymentReceiptRecord(receiptId, source);
         if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Payment receipt record not found." }, null, 2), "application/json");
+        if (String(order.receiptStatus || "").toLowerCase() !== "paid") {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Receipt email/download link is only available after payment is Paid/Verified." }, null, 2), "application/json");
+        }
         const to = cleanPremiumText(body.email || order.receiptBuyerEmail || "", 180);
         if (!to) return send(res, 400, JSON.stringify({ ok:false, error:"Buyer email missing. Enter email manually." }, null, 2), "application/json");
         const pdf = await buildReceiptPdfBuffer(order);
