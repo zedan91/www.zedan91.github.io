@@ -1889,6 +1889,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Payment Alerts</div><div id="statPaymentAlerts" class="stat-value">0</div></div><div class="az-kpi-note">Bayaran baru yang belum dibaca admin.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah paid/verified bulan semasa sahaja.</div></div>
       </div>
 
       <div class="card az-quick-card" style="margin-bottom:16px">
@@ -3471,8 +3472,8 @@ async function loadOverview(){
   const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(200)),'Overview: guestHistory');
   const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)),'Overview: supportMessages');
   const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)),'Overview: active notifications');
-  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(50)),'Overview: purchaseLogs');
-  const premiumOverviewOrders=await azAdminLoadPremiumOrdersViaBackend(100);
+  const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(300)),'Overview: purchaseLogs');
+  const premiumOverviewOrders=await azAdminLoadPremiumOrdersViaBackend(500);
   const paymentAlertOverview=await azAdminLoadPaymentAlertSummaryOnly();
 
   function azAdminOverviewMs(x){
@@ -3543,6 +3544,44 @@ async function loadOverview(){
   azAdminSetPaymentAlertBadge(paymentAlertOverview?.unreadCount||0);
   $('#statPurchases').textContent=pendingPurchaseCount;
   $('#statGuests').textContent=overviewTotalVisits === null ? (guests?.size??0) : overviewTotalVisits;
+
+  // AZOBSS PATCH 387:
+  // Overview "This Month Sales" must count paid/verified records only.
+  // Pending/cancelled/failed records are excluded from sales RM.
+  function azAdminOverviewSaleKey(x){
+    const vals=[
+      x?.receiptNo,x?.orderId,x?.billCode,x?.transactionId,x?.txnId,x?.paymentReference,
+      x?.docId,x?.id,x?.token,x?.downloadToken
+    ].map(v=>String(v||'').trim()).filter(Boolean);
+    return vals[0] || '';
+  }
+  function azAdminOverviewAddMonthSale(x, seen, range){
+    if(!x) return 0;
+    if(azAdminStatusBucket(x) !== 'paid') return 0;
+    const amount=Number(x.amount || azAdminPaymentAmount(x) || 0) || 0;
+    if(amount <= 0) return 0;
+    const ms=azAdminPaymentMs(x);
+    if(!ms || ms < range.from || ms >= range.to) return 0;
+    const key=azAdminOverviewSaleKey(x);
+    if(key && seen.has(key)) return 0;
+    if(key) seen.add(key);
+    return amount;
+  }
+  const azOverviewNow=new Date();
+  const azOverviewMonthRange={
+    from:new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth(),1).getTime(),
+    to:new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth()+1,1).getTime()
+  };
+  const azOverviewMonthSeen=new Set();
+  let azOverviewMonthSales=0;
+  purchases?.forEach(d=>{
+    azOverviewMonthSales += azAdminOverviewAddMonthSale(azAdminPurchaseLogToPaymentRecord(d.id,d.data()), azOverviewMonthSeen, azOverviewMonthRange);
+  });
+  premiumOverviewOrders.forEach(x=>{
+    azOverviewMonthSales += azAdminOverviewAddMonthSale(x, azOverviewMonthSeen, azOverviewMonthRange);
+  });
+  const azMonthSalesEl=$('#statThisMonthSales');
+  if(azMonthSalesEl) azMonthSalesEl.textContent='RM'+azAdminMoney(azOverviewMonthSales);
 
   const supportRows=[];
   support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
@@ -5080,8 +5119,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=386"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=386"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=387"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=387"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
