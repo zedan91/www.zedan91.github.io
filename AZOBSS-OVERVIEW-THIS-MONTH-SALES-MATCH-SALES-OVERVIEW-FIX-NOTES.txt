@@ -1,0 +1,19 @@
+AZOBSS PATCH 388 - Overview This Month Sales Match Sales Overview Fix
+
+Punca:
+- Card "This Month Sales" di Overview Admin menggunakan kiraan sendiri.
+- Kiraan lama guna Number(x.amount), jadi nilai string seperti "RM20.00" boleh jadi NaN/0.
+- Akibatnya Software Paid RM20 tidak masuk di Overview, lalu Overview tunjuk RM88 sedangkan Sales Overview tunjuk RM108.
+
+Fix:
+- Overview "This Month Sales" sekarang guna rekod normalized seperti Sales Overview.
+- Amount dinormalize melalui azAdminPaymentAmount().
+- Hanya Paid/Verified bulan semasa dikira.
+- Pending/cancelled/failed kekal tidak dikira.
+- Nilai Overview sepatutnya sama dengan Sales Overview > This Month Sales RM.
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.

@@ -3545,41 +3545,24 @@ async function loadOverview(){
   $('#statPurchases').textContent=pendingPurchaseCount;
   $('#statGuests').textContent=overviewTotalVisits === null ? (guests?.size??0) : overviewTotalVisits;
 
-  // AZOBSS PATCH 387:
-  // Overview "This Month Sales" must count paid/verified records only.
-  // Pending/cancelled/failed records are excluded from sales RM.
-  function azAdminOverviewSaleKey(x){
-    const vals=[
-      x?.receiptNo,x?.orderId,x?.billCode,x?.transactionId,x?.txnId,x?.paymentReference,
-      x?.docId,x?.id,x?.token,x?.downloadToken
-    ].map(v=>String(v||'').trim()).filter(Boolean);
-    return vals[0] || '';
+  // AZOBSS PATCH 388:
+  // Overview "This Month Sales" now uses the same paid-only records logic as Sales Overview.
+  // Previous patch missed amounts stored as strings like "RM20.00".
+  function azAdminOverviewNormalizeSaleRecord(x){
+    const amount = azAdminPaymentAmount(x);
+    return {...(x||{}), amount};
   }
-  function azAdminOverviewAddMonthSale(x, seen, range){
-    if(!x) return 0;
-    if(azAdminStatusBucket(x) !== 'paid') return 0;
-    const amount=Number(x.amount || azAdminPaymentAmount(x) || 0) || 0;
-    if(amount <= 0) return 0;
-    const ms=azAdminPaymentMs(x);
-    if(!ms || ms < range.from || ms >= range.to) return 0;
-    const key=azAdminOverviewSaleKey(x);
-    if(key && seen.has(key)) return 0;
-    if(key) seen.add(key);
-    return amount;
-  }
+  const azOverviewRecords=[];
+  purchases?.forEach(d=>azOverviewRecords.push(azAdminPurchaseLogToPaymentRecord(d.id,d.data())));
+  premiumOverviewOrders.forEach(x=>azOverviewRecords.push(azAdminOverviewNormalizeSaleRecord(x)));
   const azOverviewNow=new Date();
-  const azOverviewMonthRange={
-    from:new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth(),1).getTime(),
-    to:new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth()+1,1).getTime()
-  };
-  const azOverviewMonthSeen=new Set();
-  let azOverviewMonthSales=0;
-  purchases?.forEach(d=>{
-    azOverviewMonthSales += azAdminOverviewAddMonthSale(azAdminPurchaseLogToPaymentRecord(d.id,d.data()), azOverviewMonthSeen, azOverviewMonthRange);
+  const azOverviewMonthStart=new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth(),1).getTime();
+  const azOverviewMonthEnd=new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth()+1,1).getTime();
+  const azOverviewMonthPaid=azAdminPaidRevenueRecords(azOverviewRecords).filter(x=>{
+    const ms=azAdminPaymentMs(x);
+    return ms && ms>=azOverviewMonthStart && ms<azOverviewMonthEnd;
   });
-  premiumOverviewOrders.forEach(x=>{
-    azOverviewMonthSales += azAdminOverviewAddMonthSale(x, azOverviewMonthSeen, azOverviewMonthRange);
-  });
+  const azOverviewMonthSales=azOverviewMonthPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
   const azMonthSalesEl=$('#statThisMonthSales');
   if(azMonthSalesEl) azMonthSalesEl.textContent='RM'+azAdminMoney(azOverviewMonthSales);
 
@@ -5119,8 +5102,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=387"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=387"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=388"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=388"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
