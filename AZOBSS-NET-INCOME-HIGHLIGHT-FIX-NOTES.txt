@@ -1,0 +1,22 @@
+AZOBSS PATCH 390 - Net Income Highlight Fix
+
+Request:
+- Net After Fee ialah final pendapatan bersih.
+- Nilai seperti RM141 perlu warna lebih menonjol.
+
+Fix:
+- Tambah style khas .az-net-income-card.
+- Net After Fee RM diberi warna emas/kuning terang dan glow.
+- Today Net Sales RM dan This Month Net Sales RM juga diberi highlight.
+- Overview Admin > This Month Net Sales juga diberi highlight.
+- Label note ditukar supaya jelas ia final income/pendapatan bersih.
+
+Kiraan tidak berubah:
+- Net = Gross - (Paid Transaction Count × RM1 ToyyibPay)
+- Patch ini hanya improve UI visual.
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.

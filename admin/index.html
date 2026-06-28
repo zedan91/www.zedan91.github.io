@@ -85,6 +85,49 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 @media(max-width:1180px){.az-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.az-friendly-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.main{padding:14px}.topbar{padding:16px}.title h1{font-size:28px}.az-admin-hero{padding:18px}.az-admin-hero h2{font-size:25px}.az-kpi-grid,.az-friendly-strip{grid-template-columns:1fr}.az-admin-hero-actions .btn{width:100%;justify-content:center}.section>h2{font-size:23px}}
 
+
+/* AZOBSS PATCH 390: make final net income cards stand out */
+.az-net-income-card{
+  position:relative;
+  border:1px solid rgba(250,204,21,.72)!important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(250,204,21,.20), transparent 34%),
+    radial-gradient(circle at 90% 10%, rgba(34,197,94,.18), transparent 35%),
+    linear-gradient(135deg, rgba(45,38,16,.92), rgba(13,42,35,.92))!important;
+  box-shadow:
+    0 0 0 1px rgba(250,204,21,.16) inset,
+    0 0 22px rgba(250,204,21,.16),
+    0 18px 42px rgba(0,0,0,.24)!important;
+}
+.az-net-income-card .stat-label{
+  color:#fde68a!important;
+  letter-spacing:.08em!important;
+}
+.az-net-income-card .stat-value{
+  color:#facc15!important;
+  text-shadow:
+    0 0 12px rgba(250,204,21,.55),
+    0 0 26px rgba(34,197,94,.28);
+  font-size:36px!important;
+}
+.az-net-income-card .az-kpi-note{
+  color:#fef3c7!important;
+}
+.az-net-income-card::after{
+  content:"FINAL NET";
+  position:absolute;
+  right:14px;
+  top:12px;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  color:#07140f;
+  background:linear-gradient(135deg,#facc15,#bbf7d0);
+  border-radius:999px;
+  padding:4px 8px;
+  box-shadow:0 8px 20px rgba(250,204,21,.18);
+}
+
 </style>
 
 <style id="az-admin-access-guard-style">
@@ -1890,7 +1933,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Gross Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah paid/verified bulan semasa sebelum caj.</div></div>
-        <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Bersih selepas caj ToyyibPay RM1/transaksi.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Final pendapatan bulan ini selepas caj.</div></div>
       </div>
 
       <div class="card az-quick-card" style="margin-bottom:16px">
@@ -2088,7 +2131,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card"><div class="stat-label">CAD Tools Paid RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">All Paid Gross RM</div><div id="payTotalAll" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">ToyyibPay Fee RM</div><div id="payTotalFee" class="stat-value">0</div><div class="az-kpi-note">RM1 × paid transaction</div></div>
-        <div class="card"><div class="stat-label">Net After Fee RM</div><div id="payTotalNet" class="stat-value">0</div><div class="az-kpi-note">Gross - ToyyibPay fee</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">Net After Fee RM</div><div id="payTotalNet" class="stat-value">0</div><div class="az-kpi-note">Final pendapatan bersih diterima</div></div>
       </div>
 
       <div class="split">
@@ -2126,9 +2169,9 @@ body[data-dashboard-page="admin"] .topbar{
 
       <div class="grid az-sales-quick-grid">
         <div class="card"><div class="stat-label">Today Gross Sales RM</div><div id="salesTodayTotal" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">Today Net Sales RM</div><div id="salesTodayNetTotal" class="stat-value">0</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">Today Net Sales RM</div><div id="salesTodayNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income hari ini</div></div>
         <div class="card"><div class="stat-label">This Month Gross Sales RM</div><div id="salesThisMonthTotal" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">This Month Net Sales RM</div><div id="salesThisMonthNetTotal" class="stat-value">0</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">This Month Net Sales RM</div><div id="salesThisMonthNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income bulan ini</div></div>
         <div class="card"><div class="stat-label">This Month Orders</div><div id="salesThisMonthOrders" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">ToyyibPay Fee This Month RM</div><div id="salesThisMonthFeeTotal" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Avg Gross Order RM</div><div id="salesAverageOrder" class="stat-value">0</div></div>
@@ -5134,8 +5177,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=389"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=389"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=390"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=390"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
