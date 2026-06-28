@@ -113,19 +113,13 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 .az-net-income-card .az-kpi-note{
   color:#fef3c7!important;
 }
-.az-net-income-card::after{
-  content:"FINAL NET";
-  position:absolute;
-  right:14px;
-  top:12px;
-  font-size:10px;
-  font-weight:1000;
-  letter-spacing:.08em;
-  color:#07140f;
-  background:linear-gradient(135deg,#facc15,#bbf7d0);
-  border-radius:999px;
-  padding:4px 8px;
-  box-shadow:0 8px 20px rgba(250,204,21,.18);
+
+/* AZOBSS PATCH 391: remove FINAL NET badge, keep net card clean */
+.az-net-income-card .stat-label{
+  padding-right:0!important;
+}
+.az-net-income-card{
+  overflow:hidden;
 }
 
 </style>
@@ -1933,7 +1927,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Gross Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah paid/verified bulan semasa sebelum caj.</div></div>
-        <div class="card az-kpi-card is-money az-net-income-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Final pendapatan bulan ini selepas caj.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih bulan ini selepas caj.</div></div>
       </div>
 
       <div class="card az-quick-card" style="margin-bottom:16px">
@@ -5177,8 +5171,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=390"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=390"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=391"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=391"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
