@@ -1889,7 +1889,8 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Payment Alerts</div><div id="statPaymentAlerts" class="stat-value">0</div></div><div class="az-kpi-note">Bayaran baru yang belum dibaca admin.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
-        <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah paid/verified bulan semasa sahaja.</div></div>
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Gross Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah paid/verified bulan semasa sebelum caj.</div></div>
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Bersih selepas caj ToyyibPay RM1/transaksi.</div></div>
       </div>
 
       <div class="card az-quick-card" style="margin-bottom:16px">
@@ -2085,7 +2086,9 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card"><div class="stat-label">PA/BM Paid RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Software Paid RM</div><div id="payTotalSoftware" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">CAD Tools Paid RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">All Paid Purchases RM</div><div id="payTotalAll" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">All Paid Gross RM</div><div id="payTotalAll" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">ToyyibPay Fee RM</div><div id="payTotalFee" class="stat-value">0</div><div class="az-kpi-note">RM1 × paid transaction</div></div>
+        <div class="card"><div class="stat-label">Net After Fee RM</div><div id="payTotalNet" class="stat-value">0</div><div class="az-kpi-note">Gross - ToyyibPay fee</div></div>
       </div>
 
       <div class="split">
@@ -2117,15 +2120,18 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="az-sales-snapshot-head">
         <div>
           <h2>📈 Sales Analytics</h2>
-          <p class="tabs-note">Confirmed revenue dikira dari rekod Paid/Verified sahaja supaya angka chart tidak bercampur dengan pending/cancelled.</p>
+          <p class="tabs-note">Confirmed revenue dikira dari rekod Paid/Verified sahaja. Gross = sebelum caj; Net = selepas tolak caj ToyyibPay RM1 setiap transaksi.</p>
         </div>
       </div>
 
       <div class="grid az-sales-quick-grid">
-        <div class="card"><div class="stat-label">Today Sales RM</div><div id="salesTodayTotal" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">This Month Sales RM</div><div id="salesThisMonthTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Gross Sales RM</div><div id="salesTodayTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Net Sales RM</div><div id="salesTodayNetTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Month Gross Sales RM</div><div id="salesThisMonthTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Month Net Sales RM</div><div id="salesThisMonthNetTotal" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">This Month Orders</div><div id="salesThisMonthOrders" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">Avg Paid Order RM</div><div id="salesAverageOrder" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">ToyyibPay Fee This Month RM</div><div id="salesThisMonthFeeTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Avg Gross Order RM</div><div id="salesAverageOrder" class="stat-value">0</div></div>
       </div>
 
       <div class="split az-sales-analytics-split">
@@ -3563,8 +3569,12 @@ async function loadOverview(){
     return ms && ms>=azOverviewMonthStart && ms<azOverviewMonthEnd;
   });
   const azOverviewMonthSales=azOverviewMonthPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
+  const azOverviewMonthFee=azOverviewMonthPaid.length * azAdminToyyibPayFeePerTransaction();
+  const azOverviewMonthNet=Math.max(0, azOverviewMonthSales - azOverviewMonthFee);
   const azMonthSalesEl=$('#statThisMonthSales');
   if(azMonthSalesEl) azMonthSalesEl.textContent='RM'+azAdminMoney(azOverviewMonthSales);
+  const azMonthNetSalesEl=$('#statThisMonthNetSales');
+  if(azMonthNetSalesEl) azMonthNetSalesEl.textContent='RM'+azAdminMoney(azOverviewMonthNet);
 
   const supportRows=[];
   support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
@@ -3741,6 +3751,16 @@ function azAdminLastMonthKeys(count=6){
   }
   return out;
 }
+function azAdminToyyibPayFeePerTransaction(){
+  // AZOBSS PATCH 389:
+  // ToyyibPay fee is RM1 for each paid/verified transaction.
+  // Keep as a function so it is easy to change later if the fee changes.
+  return 1;
+}
+function azAdminNetAfterToyyibPay(gross, transactionCount){
+  const fee=(Number(transactionCount||0)||0) * azAdminToyyibPayFeePerTransaction();
+  return Math.max(0, (Number(gross||0)||0) - fee);
+}
 function azAdminPaidRevenueRecords(records){
   return (records||[]).filter(x=>azAdminStatusBucket(x)==='paid' && (Number(x.amount||0)||0)>0);
 }
@@ -3777,16 +3797,23 @@ function azAdminRenderSalesOverviewCharts(records){
   const now=new Date();
   const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
   const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-  let todayTotal=0,monthTotal=0,monthOrders=0,paidTotal=0;
+  let todayTotal=0,todayOrders=0,monthTotal=0,monthOrders=0,paidTotal=0;
   paid.forEach(x=>{
     const amount=Number(x.amount||0)||0;
     const ms=azAdminPaymentMs(x);
     paidTotal+=amount;
-    if(ms>=todayStart){ todayTotal+=amount; }
+    if(ms>=todayStart){ todayTotal+=amount; todayOrders++; }
     if(ms>=monthStart){ monthTotal+=amount; monthOrders++; }
   });
+  const todayFee=todayOrders * azAdminToyyibPayFeePerTransaction();
+  const monthFee=monthOrders * azAdminToyyibPayFeePerTransaction();
+  const todayNet=azAdminNetAfterToyyibPay(todayTotal, todayOrders);
+  const monthNet=azAdminNetAfterToyyibPay(monthTotal, monthOrders);
   azAdminSetText('#salesTodayTotal',azAdminMoney(todayTotal));
+  azAdminSetText('#salesTodayNetTotal',azAdminMoney(todayNet));
   azAdminSetText('#salesThisMonthTotal',azAdminMoney(monthTotal));
+  azAdminSetText('#salesThisMonthNetTotal',azAdminMoney(monthNet));
+  azAdminSetText('#salesThisMonthFeeTotal',azAdminMoney(monthFee));
   azAdminSetText('#salesThisMonthOrders',monthOrders);
   azAdminSetText('#salesAverageOrder',azAdminMoney(paid.length?paidTotal/paid.length:0));
 
@@ -3840,7 +3867,7 @@ async function loadPayments(){
 
   // AZOBSS PATCH 384: Sales Overview revenue must count Paid/Verified records only.
   // Pending/cancelled/failed records remain visible in status counts, but are excluded from RM totals.
-  const totals = {pabm:0, software:0, cad:0, all:0, pending:0, paid:0};
+  const totals = {pabm:0, software:0, cad:0, all:0, fee:0, net:0, pending:0, paid:0};
   records.forEach(x=>{
     const bucket = azAdminStatusBucket(x);
     const isPaid = bucket === 'paid';
@@ -3856,10 +3883,15 @@ async function loadPayments(){
     if(bucket === 'pending') totals.pending++;
   });
 
+  totals.fee = totals.paid * azAdminToyyibPayFeePerTransaction();
+  totals.net = Math.max(0, totals.all - totals.fee);
+
   if($('#payTotalPABM')) $('#payTotalPABM').textContent = totals.pabm.toFixed(2);
   if($('#payTotalSoftware')) $('#payTotalSoftware').textContent = totals.software.toFixed(2);
   if($('#payTotalCAD')) $('#payTotalCAD').textContent = totals.cad.toFixed(2);
   if($('#payTotalAll')) $('#payTotalAll').textContent = totals.all.toFixed(2);
+  if($('#payTotalFee')) $('#payTotalFee').textContent = totals.fee.toFixed(2);
+  if($('#payTotalNet')) $('#payTotalNet').textContent = totals.net.toFixed(2);
   if($('#payPendingCount')) $('#payPendingCount').textContent = totals.pending;
   if($('#payPaidCount')) $('#payPaidCount').textContent = totals.paid;
   if($('#payRecordCount')) $('#payRecordCount').textContent = records.length;
@@ -5102,8 +5134,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=388"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=388"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=389"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=389"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">

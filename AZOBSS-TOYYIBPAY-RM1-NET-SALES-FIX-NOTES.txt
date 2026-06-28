@@ -1,0 +1,36 @@
+AZOBSS PATCH 389 - ToyyibPay RM1 Net Sales Fix
+
+Request:
+- Tambah total bersih selepas tolak caj ToyyibPay RM1 per transaction.
+- Caj hanya dikenakan kepada paid/verified transaction.
+
+Fix:
+- Sales Overview top cards:
+  - All Paid Gross RM
+  - ToyyibPay Fee RM
+  - Net After Fee RM
+- Sales Analytics:
+  - Today Gross Sales RM
+  - Today Net Sales RM
+  - This Month Gross Sales RM
+  - This Month Net Sales RM
+  - ToyyibPay Fee This Month RM
+  - This Month Orders
+  - Avg Gross Order RM
+- Overview Admin:
+  - This Month Gross Sales
+  - This Month Net Sales
+- Kiraan: Net = Gross - (Paid Transaction Count × RM1)
+- Pending/cancelled/failed tidak dikira dalam gross, fee atau net.
+
+Contoh:
+- Gross RM168
+- Paid transactions 27
+- ToyyibPay fee RM27
+- Net After Fee RM141
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.
