@@ -1,0 +1,20 @@
+AZOBSS PATCH 393 - Overview Net Sales Top Center Fix
+
+Request:
+- Letak card "This Month Net Sales" di atas tengah.
+- Maksudnya berada di atas/selari tengah, tepat sebelum card Online Now.
+
+Fix:
+- Pindahkan "This Month Net Sales" daripada bawah kiri ke row khas di atas KPI grid.
+- Card diletakkan di grid column tengah.
+- Online Now kekal dalam grid utama di bawahnya.
+- Mobile responsive: card kembali full width di phone.
+
+Kiraan tidak berubah:
+- Net = Gross - (Paid Transaction Count × RM1 ToyyibPay)
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.

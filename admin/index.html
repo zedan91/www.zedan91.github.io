@@ -137,6 +137,27 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
   white-space:normal!important;
 }
 
+
+/* AZOBSS PATCH 393: place This Month Net Sales at top center above Online Now */
+.az-overview-net-center-row{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin:12px 0 10px;
+}
+.az-overview-net-center-card{
+  grid-column:2;
+  min-height:96px;
+}
+@media(max-width:900px){
+  .az-overview-net-center-row{
+    grid-template-columns:1fr;
+  }
+  .az-overview-net-center-card{
+    grid-column:1;
+  }
+}
+
 </style>
 
 <style id="az-admin-access-guard-style">
@@ -1929,6 +1950,9 @@ body[data-dashboard-page="admin"] .topbar{
         </p>
       </details>
 
+      <div class="az-overview-net-center-row">
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih bulan ini selepas caj.</div></div>
+      </div>
       <div class="grid az-kpi-grid">
         <div class="card az-kpi-card"><div><div class="stat-label">Registered Users</div><div id="statUsers" class="stat-value">0</div></div><div class="az-kpi-note">Jumlah akaun user yang direkodkan.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Online Now</div><div id="statOnline" class="stat-value">0</div></div><div class="az-kpi-note">User login yang sedang aktif.</div></div>
@@ -1942,7 +1966,6 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Gross Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah paid/verified bulan semasa sebelum caj.</div></div>
-        <div class="card az-kpi-card is-money az-net-income-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih bulan ini selepas caj.</div></div>
       </div>
 
       <div class="card az-quick-card" style="margin-bottom:16px">
@@ -5186,8 +5209,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=392"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=392"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=393"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=393"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
