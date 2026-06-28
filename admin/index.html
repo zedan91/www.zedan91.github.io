@@ -122,6 +122,21 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
   overflow:hidden;
 }
 
+
+/* AZOBSS PATCH 392: force remove all FINAL NET badges from net income cards */
+.az-net-income-card::after,
+.az-net-income-card::before{
+  content:none!important;
+  display:none!important;
+}
+.az-net-income-card{
+  padding-top:22px!important;
+}
+.az-net-income-card .stat-label{
+  padding-right:0!important;
+  white-space:normal!important;
+}
+
 </style>
 
 <style id="az-admin-access-guard-style">
@@ -5171,8 +5186,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=391"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=391"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=392"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=392"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">

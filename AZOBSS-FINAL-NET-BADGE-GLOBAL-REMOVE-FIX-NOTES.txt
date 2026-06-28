@@ -1,0 +1,22 @@
+AZOBSS PATCH 392 - FINAL NET Badge Global Remove Fix
+
+Request:
+- Badge FINAL NET masih muncul di Sales Overview dan mengganggu tulisan.
+- Buang semua badge FINAL NET.
+
+Fix:
+- Remove semua CSS pseudo-element .az-net-income-card::after yang memaparkan FINAL NET.
+- Tambah override keras:
+  .az-net-income-card::after,
+  .az-net-income-card::before { content:none!important; display:none!important; }
+- Highlight warna kuning/emas untuk nilai net masih kekal.
+- Cache version dinaikkan ke v392.
+
+Kiraan tidak berubah:
+- Net = Gross - (Paid Transaction Count × RM1 ToyyibPay)
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.
