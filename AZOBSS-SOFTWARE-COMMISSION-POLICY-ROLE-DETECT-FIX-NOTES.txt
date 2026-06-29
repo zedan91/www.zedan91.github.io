@@ -1,0 +1,22 @@
+AZOBSS PATCH 403 - Software Commission Policy Role Detect Fix
+
+Issue:
+- Software Tools showed only "Private Sales Access" under Commission Policy.
+- Staff/semiAdmin percentage rows were hidden because role detection was not ready when the page rendered.
+
+Fix:
+- Software Tools now detects role from multiple sources:
+  - azCurrentSoftwareOwner()
+  - localStorage/sessionStorage profile objects
+  - direct role cache keys
+  - staff/semi-admin mode fallback
+- Commission policy re-renders multiple times after page load/auth/profile events.
+- If role is staff: show Staff 70% Commission and AZOBSS 30%.
+- If role is semiAdmin: show Semi-admin 90% Commission and AZOBSS 10%.
+- Private Sales Access remains visible below the role-specific policy.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No new ENV required.

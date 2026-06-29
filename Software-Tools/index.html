@@ -3953,16 +3953,51 @@ function normalizeItem(item){
   function azSoftwareRoleKey(role){
     return String(role||'').toLowerCase().replace(/[\s_-]+/g,'');
   }
+  function azTryJson(v){try{return v?JSON.parse(v):null}catch(_e){return null}}
+  function azSoftwareReadRoleFromStorage(){
+    const keys=['azobssCurrentUser','azobssUser','azobss_user','azobss_current_user','siteUser','currentUser','azobssProfile','azobssUserProfile'];
+    const stores=[];
+    try{stores.push(localStorage)}catch(_e){}
+    try{stores.push(sessionStorage)}catch(_e){}
+    for(const store of stores){
+      for(const k of keys){
+        const x=azTryJson(store.getItem(k)||'');
+        const r=azSoftwareRoleKey(x?.role||x?.accountRole||x?.userRole||x?.type||x?.permissions?.role||'');
+        if(r==='semiadmin'||r==='staff') return r;
+      }
+      const directKeys=['azobssRole','azobss_user_role','azobss_staff_role','azobssCurrentRole','azobss_account_role'];
+      for(const k of directKeys){
+        const r=azSoftwareRoleKey(store.getItem(k)||'');
+        if(r==='semiadmin'||r==='staff') return r;
+      }
+    }
+    return '';
+  }
+  function azSoftwareCurrentRoleKey(){
+    let u={};
+    try{u=azCurrentSoftwareOwner()||{}}catch(_e){}
+    let r=azSoftwareRoleKey(u.role||u.ownerRole||u.accountRole||u.userRole||u.type||'');
+    if(r==='semiadmin'||r==='staff') return r;
+    r=azSoftwareReadRoleFromStorage();
+    if(r==='semiadmin'||r==='staff') return r;
+    const modeText=String(document.body?.innerText||'');
+    const canManage=!!document.querySelector('#softwareAdminAddButton,[data-add-software-item],.software-admin-panel');
+    if(/staff\/semi-admin mode/i.test(modeText)||canManage) return 'staff';
+    return '';
+  }
   function azRenderRoleCommissionPolicy(){
     try{
       const box=document.getElementById('commissionPolicyCard');
       const note=document.getElementById('azSoftwareAutoCommissionNote');
-      const u=azCurrentSoftwareOwner();
-      const roleKey=azSoftwareRoleKey(u.role);
+      const roleKey=azSoftwareCurrentRoleKey();
       const isStaff=roleKey==='staff';
       const isSemi=roleKey==='semiadmin';
+      if(!box && !note) return;
       if(!isStaff && !isSemi){
-        if(box) box.style.display='none';
+        if(box){
+          box.style.display='none';
+          box.querySelectorAll('[data-commission-staff],[data-commission-semiadmin]').forEach(el=>{ el.style.display='none'; });
+        }
         if(note) note.style.display='none';
         return;
       }
@@ -3980,7 +4015,7 @@ function normalizeItem(item){
           ? '💰 Auto Commission: Your software is auto set to <b>90% owner commission</b> / <b>10% AZOBSS</b>.'
           : '💰 Auto Commission: Your software is auto set to <b>70% owner commission</b> / <b>30% AZOBSS</b>.';
       }
-    }catch(e){}
+    }catch(e){console.warn('AZOBSS commission policy render failed',e)}
   }
   function azSoftwareCommissionPolicyForRate(rate){
     const r=Number(rate||70)||70;
@@ -11932,12 +11967,10 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
     }catch(e){}
   }
   document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(run, 250);
-    setTimeout(run, 1200);
-    setTimeout(run, 2500);
+    [100,300,800,1500,3000,5000].forEach(ms=>setTimeout(run,ms));
   });
-  window.addEventListener('azobss:user-ready', run);
-  window.addEventListener('storage', run);
+  ['azobss:user-ready','azobss:auth-ready','azobss:profile-ready','azobss:login','storage','focus'].forEach(ev=>window.addEventListener(ev, run));
+  window.azRefreshSoftwareCommissionPolicy = run;
 })();
 </script>
 
