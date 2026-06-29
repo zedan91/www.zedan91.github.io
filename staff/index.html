@@ -756,19 +756,37 @@ function isPaidStatus(x){
 function amountOf(x){ return Number(x.amount||x.total||x.totalAmount||x.price||x.paymentAmount||0)||0; }
 function saleAmountOf(x){ return Number(x.saleAmount||x.orderAmount||x.totalSale||x.total||x.totalAmount||x.price||x.paymentAmount||0)||0; }
 function commissionAmountOf(x){ return Number(x.commissionAmount||x.amount||x.totalCommission||0)||0; }
+function isSemiAdminRoleValue(v){
+  const r=String(v||'').toLowerCase().replace(/[\s_-]+/g,'');
+  return r==='semiadmin'||r==='semistaff';
+}
+function staffOwnerRatePercent(x={}){
+  const explicit=Number(x.ownerShare||x.commissionRate||x.rate||0)||0;
+  if(explicit>0) return Math.max(0,Math.min(100,explicit));
+  const role=x.ownerRole||x.createdByRole||x.staffRole||profileRole(profile);
+  return isSemiAdminRoleValue(role)?90:70;
+}
+function staffPlatformRatePercent(x={}){
+  return Math.max(0,100-staffOwnerRatePercent(x));
+}
+function staffCommissionPolicyText(x={}){
+  const owner=staffOwnerRatePercent(x), platform=Math.max(0,100-owner);
+  return owner+'% owner / '+platform+'% AZOBSS';
+}
 function azobssShareOf(x){
   const direct=Number(x.azobssShareAmount||0)||0; if(direct) return direct;
   const sale=saleAmountOf(x), kind=commissionKind(x);
   if(!sale) return 0;
   if(kind==='admin_product_share_referral') return sale*0.8;
-  if(kind==='owner_sale'||kind==='owner_sale_split'||kind==='share_referral') return sale*0.3;
+  if(kind==='owner_sale') return sale*(staffPlatformRatePercent(x)/100);
+  if(kind==='owner_sale_split'||kind==='share_referral') return sale*(Number(x.azobssShareRate||30)/100);
   return 0;
 }
 function ownerShareOf(x){
   const direct=Number(x.ownerShareAmount||0)||0; if(direct) return direct;
   const sale=saleAmountOf(x), kind=commissionKind(x);
   if(!sale) return 0;
-  if(kind==='owner_sale') return sale*0.7;
+  if(kind==='owner_sale') return sale*(staffOwnerRatePercent(x)/100);
   if(kind==='owner_sale_split') return sale*0.6;
   return 0;
 }
@@ -799,7 +817,10 @@ async function getCommissionRecords(){
 }
 function withOwnerPayload(payload){
   const k=currentOwnerKeys();
-  return {...payload, createdBy:user?.email||'', createdByUid:k.uid, createdByUsername:k.username, ownerUid:k.uid, ownerUsername:k.username, ownerEmail:k.email, commissionRate:70, ownerShare:70, platformShare:30, commissionPolicy:'70% owner / 30% AZOBSS'};
+  const role=profileRole(profile);
+  const rate=isSemiAdminRoleValue(role)?90:70;
+  const platform=Math.max(0,100-rate);
+  return {...payload, createdBy:user?.email||'', createdByUid:k.uid, createdByUsername:k.username, ownerUid:k.uid, ownerUsername:k.username, ownerEmail:k.email, ownerRole:role, createdByRole:role, staffRole:role, commissionRate:rate, ownerShare:rate, platformShare:platform, commissionPolicy:rate+'% owner / '+platform+'% AZOBSS'};
 }
 
 function item(t,m=''){return `<div class="item"><b>${t}</b><div class="muted">${m}</div></div>`}
@@ -910,7 +931,8 @@ async function loadList(col,el){
  docs.forEach((x)=>{
    if(!isAdmin(profile) && !isMineRecord(x)) return;
    const amt=amountOf(x);
-   rows.push(item(esc(x.title||x.username||x.product||x.docId||'Record'),`RM${amt.toFixed(2)} • Owner 70% RM${(amt*0.7).toFixed(2)} • AZOBSS 30% RM${(amt*0.3).toFixed(2)} • ${esc(x.status||'pending')}`));
+   const ownerRate=staffOwnerRatePercent(x), platformRate=staffPlatformRatePercent(x);
+   rows.push(item(esc(x.title||x.username||x.product||x.docId||'Record'),`RM${amt.toFixed(2)} • Owner ${ownerRate}% RM${(amt*ownerRate/100).toFixed(2)} • AZOBSS ${platformRate}% RM${(amt*platformRate/100).toFixed(2)} • ${esc(x.status||'pending')}`));
  });
  $(el).innerHTML=rows.join('')||'<div class="item">No records.</div>';
 }
@@ -924,7 +946,7 @@ async function overview(){
  cad.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) cadCount++;});
  salesRows.forEach(x=>{
    if(isPaBmSaleRecord(x)){ excludedPabm++; return; }
-   if(isStaffOwnedSaleRecord(x)){ const amt=amountOf(x); salesCount++; totalSales+=amt; ownerShare+=amt*0.7; platformShare+=amt*0.3; }
+   if(isStaffOwnedSaleRecord(x)){ const amt=amountOf(x), ownerRate=staffOwnerRatePercent(x), platformRate=staffPlatformRatePercent(x); salesCount++; totalSales+=amt; ownerShare+=amt*ownerRate/100; platformShare+=amt*platformRate/100; }
  });
  comRows.forEach(x=>{
    if(isPaBmSaleRecord(x)){ excludedPabm++; return; }

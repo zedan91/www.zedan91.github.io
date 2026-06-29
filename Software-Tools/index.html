@@ -2948,6 +2948,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .software-admin-form small{font-size:11px}
 @media(max-width:620px){.az-promo-price-block .az-price-new{font-size:18px}.az-promo-price-block{gap:6px}}
 </style>
+
+<style id="azobss-subscription-code-plans-fix-399">
+.az-subscription-admin-box{border:1px solid rgba(250,204,21,.35);background:linear-gradient(135deg,rgba(250,204,21,.08),rgba(34,197,94,.08));border-radius:14px;padding:12px;margin:10px 0}.az-subscription-admin-title{display:flex;align-items:center;gap:8px;font-weight:1000;color:#fde68a;margin-bottom:8px}.az-subscription-plans-preview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}.az-sub-plan-preview,.az-sub-plan-card{border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.72);border-radius:12px;padding:10px;text-align:center}.az-sub-plan-preview b,.az-sub-plan-card b{display:block;color:#fff}.az-sub-plan-preview strong,.az-sub-plan-card strong{display:block;color:#facc15;font-size:18px;margin:4px 0}.az-sub-plan-preview small,.az-sub-plan-card small{display:block;color:#bbf7d0;font-weight:800}.az-subscription-card-box{margin:10px 0;border:1px solid rgba(250,204,21,.28);border-radius:14px;padding:10px;background:rgba(2,6,23,.35)}.az-subscription-card-title{font-size:12px;font-weight:1000;color:#fde68a;text-align:center;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}.az-subscription-plan-grid{display:grid;grid-template-columns:1fr;gap:7px}.az-subscribe-plan-btn{width:100%;text-align:center;display:flex!important;flex-direction:column;gap:2px;line-height:1.2}.az-subscribe-plan-btn .az-sub-plan-title{font-weight:1000}.az-subscribe-plan-btn .az-sub-plan-price{font-size:18px;color:#fff}.az-subscribe-plan-btn .az-sub-plan-save{font-size:11px;color:#bbf7d0}.azobss-pay-plan-box{margin-top:8px;border:1px solid rgba(250,204,21,.32);background:rgba(250,204,21,.08);border-radius:12px;padding:10px;color:#fde68a;font-size:13px}.azobss-pay-plan-box b{color:#facc15}@media(max-width:700px){.az-subscription-plans-preview{grid-template-columns:1fr}.az-subscription-plan-grid{grid-template-columns:1fr}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3005,8 +3010,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 <div id="commissionPolicyCard" class="commission-policy-card">
 <div class="title">💰 STAFF & SEMI‑ADMIN COMMISSION POLICY</div>
-<div class="row">🟢 <b>70% Commission</b> — Anda menerima 70% komisen bagi setiap jualan Software atau CAD Tools milik anda.</div>
-<div class="row">🔵 <b>30% Platform Fee</b> — 30% diperuntukkan kepada AZOBSS untuk hosting, maintenance, pembangunan dan pemasaran platform.</div>
+<div class="row">🟢 <b>Staff: 70% Commission</b> — Staff menerima 70% komisen bagi setiap jualan software milik sendiri.</div>
+<div class="row">🟡 <b>Semi-admin: 90% Commission</b> — Semi-admin menerima 90% komisen jika software milik sendiri terjual.</div>
+<div class="row">🔵 <b>Platform Fee</b> — Staff: 30% AZOBSS. Semi-admin: 10% AZOBSS.</div>
 <div class="row">🔒 <b>Private Sales Access</b> — Akses jualan dan komisen adalah peribadi. Anda hanya boleh melihat rekod produk milik anda sendiri.</div>
 </div>
 <h1>💻 Software Tools & Downloads</h1>
@@ -3023,7 +3029,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><div id="azStaffCommissionNoteSoftware" class="software-admin-json-status" style="display:none;margin-top:8px"></div><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
 </div>
 <div id="azSoftwareAutoCommissionNote" class="software-admin-json-status" style="display:none;margin-top:10px;padding:12px 14px;border:1px solid rgba(34,197,94,.55);border-radius:14px;background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(20,83,45,.35));color:#d1fae5;font-weight:800">
-💰 Auto Commission: Software yang staff/semi-admin tambah akan auto set <b>70% komisen owner</b> dan <b>30% AZOBSS</b>.
+💰 Auto Commission: Staff auto set <b>70% komisen owner</b> / <b>30% AZOBSS</b>. Semi-admin auto set <b>90% komisen owner</b> / <b>10% AZOBSS</b>.
 </div>
 <div class="software-shop-controls" aria-label="Software search and sorting controls">
   <label>Search
@@ -3214,6 +3220,23 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <label>Premium Download File Link
         <input id="softwareAdminSecureDownloadLink" type="url" placeholder="Private file/download link used after payment success">
       </label>
+      <div class="az-subscription-admin-box" id="softwareSubscriptionAdminBox">
+        <div class="az-subscription-admin-title"><input id="softwareAdminSubscriptionEnabled" type="checkbox"> <span>Sell Subscription Activation Code</span></div>
+        <div class="software-admin-row">
+          <label>Activation Code Prefix
+            <input id="softwareAdminActivationPrefix" type="text" placeholder="Example: AZOBSS" maxlength="16">
+          </label>
+          <label>Activation Validation API
+            <input id="softwareAdminActivationApi" type="url" value="https://azobss-backend.onrender.com/api/subscription/verify" readonly>
+          </label>
+        </div>
+        <div class="az-subscription-plans-preview" aria-label="Activation code plans">
+          <div class="az-sub-plan-preview"><b>1 Month Activation Code</b><strong>RM24.90</strong><small>Save RM5.00</small></div>
+          <div class="az-sub-plan-preview"><b>3 Months Activation Code</b><strong>RM69.90</strong><small>RM23.30/month · Save RM19.80</small></div>
+          <div class="az-sub-plan-preview"><b>12 Months Activation Code</b><strong>RM239.00</strong><small>RM19.92/month · Save RM119.80</small></div>
+        </div>
+        <small style="display:block;color:#cbd5e1;margin-top:8px;font-weight:700">When enabled, customers buy an activation code. After paid/verified, AZOBSS generates a Pro activation code that can be verified by your software for 1, 3 or 12 months.</small>
+      </div>
       <div class="software-admin-row">
         <label>Image URL
           <input id="softwareAdminImageUrl" type="url" placeholder="Optional product/card image URL">
@@ -3231,7 +3254,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         </label>
       </div>
       <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items use Bank Transfer / FPX via ToyyibPay bill. After payment is confirmed, a temporary backend token reveals the private download link and receipt.</p>
+      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items use Bank Transfer / FPX via ToyyibPay bill. Subscription code products generate a Pro activation code after payment verification, and the download link/receipt are sent by email.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -3312,6 +3335,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const paymentLinkInput = document.getElementById('softwareAdminPaymentLink');
   const stripeLinkInput = document.getElementById('softwareAdminStripeLink');
   const secureDownloadInput = document.getElementById('softwareAdminSecureDownloadLink');
+  const subscriptionEnabledInput = document.getElementById('softwareAdminSubscriptionEnabled');
+  const activationPrefixInput = document.getElementById('softwareAdminActivationPrefix');
   const downloadLinkLabel = document.getElementById('softwareDownloadLinkLabel');
   const paymentLinkLabel = document.getElementById('softwarePaymentLinkLabel');
   const stripeLinkLabel = document.getElementById('softwareStripeLinkLabel');
@@ -3332,6 +3357,28 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const badgeInput = document.getElementById('softwareAdminBadge');
   const categoryInput = document.getElementById('softwareAdminCategory');
   const platformBox = document.getElementById('softwareAdminPlatforms');
+  const AZOBSS_SUBSCRIPTION_PLANS = [
+    {id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM24.90', monthlyText:'RM24.90/month', saveText:'Save RM5.00'},
+    {id:'3m', months:3, durationDays:93, label:'3 Months Activation Code', price:'RM69.90', monthlyText:'RM23.30/month', saveText:'Save RM19.80'},
+    {id:'12m', months:12, durationDays:366, label:'12 Months Activation Code', price:'RM239.00', monthlyText:'RM19.92/month', saveText:'Save RM119.80'}
+  ];
+  function azSoftwareSubscriptionEnabled(item){ return !!(item && (item.subscriptionCodeEnabled || item.subscriptionProduct || item.activationCodeSale)); }
+  function azSoftwareSubscriptionPlans(item){ return (Array.isArray(item?.subscriptionPlans) && item.subscriptionPlans.length ? item.subscriptionPlans : AZOBSS_SUBSCRIPTION_PLANS).map((p,i)=>({...AZOBSS_SUBSCRIPTION_PLANS[i], ...p, id:(p.id||AZOBSS_SUBSCRIPTION_PLANS[i]?.id||'1m')})); }
+  function azSubscriptionPlanButtonsHtml(item){
+    if(!azSoftwareSubscriptionEnabled(item)) return '';
+    const plans=azSoftwareSubscriptionPlans(item);
+    return `<div class="az-subscription-card-box"><div class="az-subscription-card-title">Choose Pro Activation Code</div><div class="az-subscription-plan-grid">${plans.map(p=>`<a class="download-btn premium az-subscribe-plan-btn" data-azobss-premium-buy="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(p.price)}" data-original-price="" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" data-subscription-code-enabled="1" data-subscription-plan-id="${esc(p.id)}" data-subscription-plan-label="${esc(p.label)}" data-subscription-months="${esc(p.months)}" data-subscription-duration-days="${esc(p.durationDays)}" data-subscription-monthly-text="${esc(p.monthlyText)}" data-subscription-save-text="${esc(p.saveText)}" data-activation-code-prefix="${esc(item.activationCodePrefix || item.subscriptionCodePrefix || 'AZOBSS')}" href="#"><span class="az-sub-plan-title">${esc(p.label)}</span><span class="az-sub-plan-price">${esc(p.price)}</span><span class="az-sub-plan-save">${esc(p.monthlyText)} · ${esc(p.saveText)}</span></a>`).join('')}</div></div>`;
+  }
+  function syncSubscriptionAdminDefaults(){
+    if(!subscriptionEnabledInput) return;
+    if(subscriptionEnabledInput.checked){
+      if(typeSelect) typeSelect.value='premium';
+      if(buttonInput) buttonInput.value='Buy Activation Code';
+      if(iconInput) iconInput.value='PRO';
+      if(priceInput && (!priceInput.value || /^free$/i.test(priceInput.value))) priceInput.value='RM24.90';
+      if(!activationPrefixInput.value) activationPrefixInput.value='AZOBSS';
+    }
+  }
   const searchInput = document.getElementById('softwareSearchInput');
   const sortSelect = document.getElementById('softwareSortSelect');
   const categoryFilter = document.getElementById('softwareCategoryFilter');
@@ -3899,11 +3946,23 @@ function normalizeItem(item){
     return azIsFullSoftwareAdmin()||((u.role==='semiadmin'||u.role==='staff')&&u.permissions.canManageSoftware===true);
   }
 
+  function azSoftwareOwnerCommissionRateForRole(role){
+    const r=String(role||'').toLowerCase().replace(/[\s_-]+/g,'');
+    return (r==='semiadmin'||r==='semistaff') ? 90 : 70;
+  }
+  function azSoftwareCommissionPolicyForRate(rate){
+    const r=Number(rate||70)||70;
+    const az=Math.max(0,100-r);
+    return r+'% owner / '+az+'% AZOBSS';
+  }
+
   function azApplySoftwareCommissionOwner(item){
     try{
       const u=azCurrentSoftwareOwner();
       if(!item||typeof item!=='object') return item;
       const key=String(u.uid||u.username||u.email||'unknown-owner').toLowerCase();
+      const rate=azSoftwareOwnerCommissionRateForRole(u.role);
+      const azRate=Math.max(0,100-rate);
 
       item.ownerKey=item.ownerKey||key;
       item.createdByKey=item.createdByKey||key;
@@ -3924,10 +3983,13 @@ function normalizeItem(item){
       if(!item.staffEmail&&u.email)item.staffEmail=u.email;
       if(!item.sellerEmail&&u.email)item.sellerEmail=u.email;
 
-      item.commissionRate=70;
-      item.ownerShare=70;
-      item.platformShare=30;
-      item.commissionPolicy='70% owner / 30% AZOBSS';
+      item.ownerRole=u.role||item.ownerRole||'';
+      item.createdByRole=u.role||item.createdByRole||'';
+      item.staffRole=u.role||item.staffRole||'';
+      item.commissionRate=rate;
+      item.ownerShare=rate;
+      item.platformShare=azRate;
+      item.commissionPolicy=azSoftwareCommissionPolicyForRate(rate);
       item.updatedByUid=u.uid||item.updatedByUid||'';
       item.updatedByUsername=u.username||item.updatedByUsername||'';
       item.updatedByEmail=u.email||item.updatedByEmail||'';
@@ -3935,6 +3997,7 @@ function normalizeItem(item){
     }catch(e){}
     return item;
   }
+
 
 
   function azForceSoftwareOwnerMetadata(item){
@@ -3960,10 +4023,15 @@ function normalizeItem(item){
     item.staffEmail = u.email || '';
     item.sellerEmail = u.email || '';
 
-    item.commissionRate = 70;
-    item.ownerShare = 70;
-    item.platformShare = 30;
-    item.commissionPolicy = '70% owner / 30% AZOBSS';
+    const rate = azSoftwareOwnerCommissionRateForRole(u.role);
+    const azRate = Math.max(0, 100 - rate);
+    item.ownerRole = u.role || '';
+    item.createdByRole = u.role || '';
+    item.staffRole = u.role || '';
+    item.commissionRate = rate;
+    item.ownerShare = rate;
+    item.platformShare = azRate;
+    item.commissionPolicy = azSoftwareCommissionPolicyForRate(rate);
 
     item.updatedByUid = u.uid || '';
     item.updatedByUsername = u.username || '';
@@ -4024,8 +4092,9 @@ function normalizeItem(item){
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     const actionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
-    const actionHtml = isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml;
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
+    const subscriptionHtml = isPremium ? azSubscriptionPlanButtonsHtml(item) : '';
+    const actionHtml = subscriptionHtml || (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml);
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
       ${stableLikeHtml}${stableShareHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
@@ -4467,6 +4536,8 @@ function normalizeItem(item){
     if(paymentLinkInput) paymentLinkInput.value = item?.paymentLink || '';
     if(stripeLinkInput) stripeLinkInput.value = item?.stripeLink || '';
     if(secureDownloadInput) secureDownloadInput.value = item?.secureDownloadLink || '';
+    if(subscriptionEnabledInput) subscriptionEnabledInput.checked = azSoftwareSubscriptionEnabled(item);
+    if(activationPrefixInput) activationPrefixInput.value = item?.activationCodePrefix || item?.subscriptionCodePrefix || 'AZOBSS';
     if(imageUrlInput) imageUrlInput.value = item?.imageUrl || '';
     if(gifUrlInput) gifUrlInput.value = item?.gifUrl || '';
     const st = item ? statsForItem(item) : {downloads:'', rating:'', likes:''};
@@ -4708,7 +4779,8 @@ function normalizeItem(item){
       closeModal();
     }
   });
-  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = 'RM10'; buttonInput.value = 'Buy Now'; iconInput.value = '🛒'; } else { priceInput.value = 'FREE'; if(originalPriceInput) originalPriceInput.value = ''; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; } syncTypeDefaults(); });
+  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = subscriptionEnabledInput?.checked ? 'RM24.90' : 'RM10'; buttonInput.value = subscriptionEnabledInput?.checked ? 'Buy Activation Code' : 'Buy Now'; iconInput.value = subscriptionEnabledInput?.checked ? 'PRO' : '🛒'; } else { priceInput.value = 'FREE'; if(originalPriceInput) originalPriceInput.value = ''; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; if(subscriptionEnabledInput) subscriptionEnabledInput.checked=false; } syncTypeDefaults(); });
+  subscriptionEnabledInput?.addEventListener('change', () => { syncSubscriptionAdminDefaults(); syncTypeDefaults(); });
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
 
@@ -4745,6 +4817,11 @@ function normalizeItem(item){
       paymentLink: paymentLinkInput?.value.trim(),
       stripeLink: stripeLinkInput?.value.trim(),
       secureDownloadLink: secureDownloadInput?.value.trim(),
+      subscriptionCodeEnabled: !!subscriptionEnabledInput?.checked,
+      subscriptionProduct: !!subscriptionEnabledInput?.checked,
+      activationCodeSale: !!subscriptionEnabledInput?.checked,
+      activationCodePrefix: (activationPrefixInput?.value.trim() || 'AZOBSS').toUpperCase().replace(/[^A-Z0-9]+/g,''),
+      subscriptionPlans: subscriptionEnabledInput?.checked ? AZOBSS_SUBSCRIPTION_PLANS : [],
       downloads: Number(downloadsInput?.value || 0),
       rating: Number(ratingInput?.value || 0),
       likes: Number(likesInput?.value || 0),
@@ -4945,7 +5022,8 @@ function normalizeItem(item){
     syncBuyerEmailField();
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden','false');
-    productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">Choose Bank Transfer / FPX for a secure and reliable payment experience.</div>`;
+    const planHtml = product.subscriptionCodeEnabled ? `<div class="azobss-pay-plan-box"><b>${esc(product.subscriptionPlanLabel || 'Activation Code')}</b><br>${esc(product.subscriptionMonthlyText || '')}${product.subscriptionSaveText ? ' · '+esc(product.subscriptionSaveText) : ''}<br><small>The Pro activation code will be generated after payment is verified.</small></div>` : '';
+    productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div>${planHtml}<div style="font-size:13px;color:#bfdbfe;margin-top:6px">Choose Bank Transfer / FPX for a secure and reliable payment experience.</div>`;
     setActiveMethod('bank');
   }
 
@@ -5008,6 +5086,9 @@ function normalizeItem(item){
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           product: {...currentProduct, staffReferral: azStaffShareReferralForProduct(currentProduct), premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink, secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink, downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink},
+          subscriptionPlanId: currentProduct.subscriptionPlanId || '',
+          subscriptionPlan: currentProduct.subscriptionPlan || null,
+          subscriptionCodeEnabled: !!currentProduct.subscriptionCodeEnabled,
           staffReferral: azStaffShareReferralForProduct(currentProduct),
           premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
           secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
@@ -5092,7 +5173,16 @@ function normalizeItem(item){
       ownerUid: trigger.dataset.ownerUid || '',
       ownerUsername: trigger.dataset.ownerUsername || '',
       ownerEmail: trigger.dataset.ownerEmail || '',
-      ownerKey: trigger.dataset.ownerKey || ''
+      ownerKey: trigger.dataset.ownerKey || '',
+      subscriptionCodeEnabled: trigger.dataset.subscriptionCodeEnabled === '1',
+      subscriptionPlanId: trigger.dataset.subscriptionPlanId || '',
+      subscriptionPlanLabel: trigger.dataset.subscriptionPlanLabel || '',
+      subscriptionMonths: Number(trigger.dataset.subscriptionMonths || 0) || 0,
+      subscriptionDurationDays: Number(trigger.dataset.subscriptionDurationDays || 0) || 0,
+      subscriptionMonthlyText: trigger.dataset.subscriptionMonthlyText || '',
+      subscriptionSaveText: trigger.dataset.subscriptionSaveText || '',
+      activationCodePrefix: trigger.dataset.activationCodePrefix || 'AZOBSS',
+      subscriptionPlan: trigger.dataset.subscriptionPlanId ? { id: trigger.dataset.subscriptionPlanId || '', label: trigger.dataset.subscriptionPlanLabel || '', months:Number(trigger.dataset.subscriptionMonths || 0)||0, durationDays:Number(trigger.dataset.subscriptionDurationDays || 0)||0, price:trigger.dataset.productPrice || '', monthlyText:trigger.dataset.subscriptionMonthlyText || '', saveText:trigger.dataset.subscriptionSaveText || '' } : null
     };
     open(product);
   });
@@ -7542,10 +7632,15 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
       if(!item.ownerUid && u.uid) item.ownerUid = u.uid;
       if(!item.ownerUsername && u.username) item.ownerUsername = u.username;
       if(!item.ownerEmail && u.email) item.ownerEmail = u.email;
-      if(item.commissionRate == null) item.commissionRate = 70;
-      if(item.ownerShare == null) item.ownerShare = 70;
-      if(item.platformShare == null) item.platformShare = 30;
-      item.commissionPolicy = item.commissionPolicy || '70% owner / 30% AZOBSS';
+      var rate = (u.role && u.role.replace(/[\s_-]+/g,'').toLowerCase()==='semiadmin') ? 90 : 70;
+      var azRate = Math.max(0,100-rate);
+      if(!item.ownerRole && u.role) item.ownerRole = u.role;
+      if(!item.createdByRole && u.role) item.createdByRole = u.role;
+      if(!item.staffRole && u.role) item.staffRole = u.role;
+      if(item.commissionRate == null) item.commissionRate = rate;
+      if(item.ownerShare == null) item.ownerShare = rate;
+      if(item.platformShare == null) item.platformShare = azRate;
+      item.commissionPolicy = item.commissionPolicy || (rate+'% owner / '+azRate+'% AZOBSS');
       item.updatedByUid = u.uid || item.updatedByUid || '';
       item.updatedByUsername = u.username || item.updatedByUsername || '';
       item.updatedAtClient = new Date().toISOString();

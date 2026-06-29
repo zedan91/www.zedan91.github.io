@@ -1,0 +1,30 @@
+AZOBSS PATCH 398 - Semi-admin Share Split 90/4/6 Fix
+
+Request:
+- Semi-admin product dijual oleh share staff lain:
+  Owner 90% + Sharer 4% + AZOBSS 6%.
+
+Fix:
+- Backend commission split untuk produk semi-admin melalui share staff:
+  - owner_sale_split = 90%
+  - share_referral = 4%
+  - azobssShareRate = 6%
+- Produk staff biasa melalui share staff lain kekal:
+  - owner = 60%
+  - sharer = 10%
+  - AZOBSS = 30%
+- Produk semi-admin tanpa sharer masih:
+  - owner = 90%
+  - AZOBSS = 10%
+
+Tidak disentuh:
+- PA/BM
+- ToyyibPay
+- Download token
+- Staff product normal percent
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.

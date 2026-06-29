@@ -333,6 +333,86 @@ async function azFindFirestoreProduct(productId = "") {
   }
   return null;
 }
+
+// AZOBSS PATCH 399: Subscription activation code plans for Software Tools.
+const AZOBSS_SUBSCRIPTION_PLAN_DEFS = [
+  { id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM24.90', priceSen:2490, saveText:'Save RM5.00', monthlyText:'RM24.90/month' },
+  { id:'3m', months:3, durationDays:93, label:'3 Months Activation Code', price:'RM69.90', priceSen:6990, saveText:'Save RM19.80', monthlyText:'RM23.30/month' },
+  { id:'12m', months:12, durationDays:366, label:'12 Months Activation Code', price:'RM239.00', priceSen:23900, saveText:'Save RM119.80', monthlyText:'RM19.92/month' }
+];
+function azSubscriptionPlanDefs(){ return AZOBSS_SUBSCRIPTION_PLAN_DEFS.map(x => ({...x})); }
+function azSubscriptionPlanId(v=''){
+  const s = String(v || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+  if(['1','1m','month','1month','monthly'].includes(s)) return '1m';
+  if(['3','3m','3month','3months','quarter','quarterly'].includes(s)) return '3m';
+  if(['12','12m','year','yearly','annual','annually','12month','12months'].includes(s)) return '12m';
+  return s;
+}
+function azSubscriptionProductEnabled(product = {}){
+  return product && (product.subscriptionCodeEnabled === true || product.subscriptionProduct === true || product.activationCodeSale === true || String(product.subscriptionCodeEnabled||'').toLowerCase()==='true');
+}
+function azSubscriptionPlansFromProduct(product = {}){
+  const raw = Array.isArray(product.subscriptionPlans) ? product.subscriptionPlans : [];
+  const base = azSubscriptionPlanDefs();
+  if(!raw.length) return base;
+  return base.map(def => {
+    const r = raw.find(x => azSubscriptionPlanId(x && (x.id || x.planId || x.months || x.durationMonths)) === def.id) || {};
+    const price = cleanPremiumText(r.price || r.amount || def.price, 40);
+    const priceSen = Number(r.priceSen || parseAmountToSen(price) || def.priceSen) || def.priceSen;
+    return {...def, ...r, id:def.id, price, priceSen, months:Number(r.months || def.months), durationDays:Number(r.durationDays || def.durationDays), label:cleanPremiumText(r.label || def.label, 80), monthlyText:cleanPremiumText(r.monthlyText || def.monthlyText, 40), saveText:cleanPremiumText(r.saveText || def.saveText, 60)};
+  });
+}
+function azSubscriptionSelectedPlan(data = {}, product = {}){
+  if(!azSubscriptionProductEnabled(product)) return null;
+  const requested = azSubscriptionPlanId(data.subscriptionPlanId || data.planId || (data.subscriptionPlan && data.subscriptionPlan.id) || (data.product && (data.product.subscriptionPlanId || data.product.selectedSubscriptionPlanId || data.product.planId)) || '1m');
+  const plans = azSubscriptionPlansFromProduct(product);
+  return plans.find(p => azSubscriptionPlanId(p.id) === requested) || plans[0] || null;
+}
+function azActivationCodePrefix(product = {}){
+  return cleanPremiumText(product.activationCodePrefix || product.subscriptionCodePrefix || product.productId || product.id || 'AZOBSS', 18).toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12) || 'AZOBSS';
+}
+function azActivationCodeMs(value){
+  if(!value) return 0;
+  if(typeof value === 'number') return value;
+  if(typeof value === 'string') return Date.parse(value) || 0;
+  if(typeof value.toMillis === 'function') return value.toMillis();
+  if(typeof value._seconds === 'number') return value._seconds * 1000;
+  return 0;
+}
+function azEnsureSubscriptionActivation(order = {}){
+  if(!azSubscriptionProductEnabled(order) && !azSubscriptionProductEnabled(order.product || {})) return order;
+  if(String(order.status || '').toLowerCase() !== 'paid') return order;
+  if(order.activationCode && order.activationCodeExpiresAtMs) return order;
+  const plan = order.subscriptionPlan || azSubscriptionSelectedPlan({subscriptionPlanId:order.subscriptionPlanId || order.planId}, order.product || order) || azSubscriptionPlanDefs()[0];
+  const paidMs = Number(order.paidAtMs || 0) || azActivationCodeMs(order.paidAt) || Date.now();
+  const durationDays = Math.max(1, Number(plan.durationDays || 31));
+  const expiresAtMs = paidMs + durationDays * 24 * 60 * 60 * 1000;
+  const prefix = azActivationCodePrefix(order.product || order);
+  const planTag = String(plan.id || '1m').toUpperCase();
+  const code = `${prefix}-${planTag}-${makeId('PRO').replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,6)}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+  return upsertPremiumOrder({
+    ...order,
+    subscriptionCodeEnabled:true,
+    activationCodeSale:true,
+    subscriptionPlan:plan,
+    subscriptionPlanId:plan.id,
+    subscriptionPlanLabel:plan.label,
+    subscriptionDurationDays:durationDays,
+    subscriptionMonths:Number(plan.months || 1),
+    activationCode:code,
+    activationCodeStatus:'active',
+    activationCodeIssuedAt:new Date(paidMs).toISOString(),
+    activationCodeIssuedAtMs:paidMs,
+    activationCodeExpiresAt:new Date(expiresAtMs).toISOString(),
+    activationCodeExpiresAtMs:expiresAtMs
+  });
+}
+function azSubscriptionActivationHtml(order = {}){
+  if(!order.activationCode) return '';
+  const exp = order.activationCodeExpiresAt || (order.activationCodeExpiresAtMs ? new Date(Number(order.activationCodeExpiresAtMs)).toISOString() : '');
+  return `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:14px;padding:16px;margin:16px 0;color:#111"><h3 style="margin:0 0 8px;color:#854d0e">Your Pro Activation Code</h3><div style="font-family:Consolas,monospace;font-size:22px;font-weight:900;letter-spacing:1px;background:#111827;color:#facc15;border-radius:10px;padding:12px;text-align:center">${String(order.activationCode)}</div><p style="margin:10px 0 0"><b>Plan:</b> ${String(order.subscriptionPlanLabel || order.subscriptionPlan?.label || '-')}<br><b>Valid until:</b> ${String(exp || '-')}</p><p style="font-size:13px;color:#713f12;margin:10px 0 0">Open the software, paste this activation code in the Subscription / Pro Version screen, then the software can verify it through the AZOBSS backend.</p></div>`;
+}
+
 async function azResolveTrustedPremiumProduct(data = {}, req = null) {
   const clientProduct = data.product || {};
   const user = getPremiumUser(data);
@@ -368,15 +448,20 @@ async function azResolveTrustedPremiumProduct(data = {}, req = null) {
   if (!azProductIsPremium(trusted)) {
     throw new Error("Product is not marked as premium on backend.");
   }
-  const amountSen = parseAmountToSen(trusted.price || trusted.amount || "");
+  const subscriptionPlan = azSubscriptionSelectedPlan(data, trusted);
+  let amountSen = subscriptionPlan ? Number(subscriptionPlan.priceSen || 0) : parseAmountToSen(trusted.price || trusted.amount || "");
   if (!amountSen) throw new Error("Backend product price is invalid.");
+  const amountText = subscriptionPlan ? cleanPremiumText(subscriptionPlan.price || `RM${(amountSen/100).toFixed(2)}`, 40) : cleanPremiumText(trusted.price || `RM${(amountSen/100).toFixed(2)}`, 40);
   const downloadLink = cleanPremiumUrl(trusted.secureDownloadLink || trusted.premiumDownloadFileLink || trusted.privateDownloadLink || trusted.downloadLink || trusted.fileUrl || "");
   if (!downloadLink) throw new Error("Download link belum diset untuk produk ini.");
+  const saleProduct = subscriptionPlan ? { ...trusted, subscriptionCodeEnabled:true, activationCodeSale:true, subscriptionPlan, subscriptionPlanId:subscriptionPlan.id, selectedSubscriptionPlan:subscriptionPlan, price:amountText } : trusted;
   return {
-    product: trusted,
-    amountText: cleanPremiumText(trusted.price || `RM${(amountSen/100).toFixed(2)}`, 40),
+    product: saleProduct,
+    amountText,
     amountSen,
     downloadLink,
+    subscriptionCodeEnabled: !!subscriptionPlan,
+    subscriptionPlan,
     trustedSource: trusted.source || "backend",
     isAdminTestPurchase: false
   };
@@ -2092,7 +2177,7 @@ function buildAzobssDownloadEmail(order, downloadUrl, receiptUrl) {
   const expires = azobssExpiryLabelForOrder(order || {});
   const expirySentence = neverExpire ? "This link is set to Never expire, but download limit still applies." : `If it is not used, the link will expire on ${expires}.`;
   const receiptPdfUrl = receiptUrl + (receiptUrl.includes("?") ? "&" : "?") + "format=pdf";
-  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota. ${expirySentence}</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111"><div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px"><h2 style="margin-top:0">AZOBSS Download Ready ✅</h2><p>Thank you for your purchase. Your payment has been verified successfully.</p><p><b>Product:</b> ${String(order.productName || "AZOBSS Digital Product")}<br><b>Order ID:</b> ${String(order.orderId || "-")}<br><b>Amount:</b> ${String(order.amount || "-")}</p>${azSubscriptionActivationHtml(order)}<p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:700">Download Now</a></p><p style="color:#374151;font-size:13px">This secure button will open a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p style="color:#b45309"><b>Important:</b> This link opens a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota. ${expirySentence}</p><p><a href="${receiptUrl}">View receipt</a> &nbsp;|&nbsp; <a href="${receiptPdfUrl}">Download PDF receipt</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"><p style="font-size:12px;color:#6b7280">AZOBSS Digital Store</p></div></body></html>`;
 }
 // AZOBSS PATCH 319: Admin resend receipt email should also include Software/CAD download link.
 async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
@@ -2261,7 +2346,10 @@ async function maybeSendDownloadEmail(order, req) {
 Product: ${current.productName}
 Order ID: ${current.orderId}
 Download: ${downloadUrl}
-Receipt: ${receiptUrl}
+Receipt: ${receiptUrl}${current.activationCode ? `
+Activation Code: ${current.activationCode}
+Plan: ${current.subscriptionPlanLabel || current.subscriptionPlan?.label || '-'}
+Valid Until: ${current.activationCodeExpiresAt || '-'}` : ''}
 
 This link opens a confirmation page first. Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.`;
 
@@ -2379,6 +2467,7 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
     }
 
+    latest = azEnsureSubscriptionActivation(latest);
     if (!isPaBmPremiumOrder(latest)) {
       latest = await azHydratePremiumOrderExpiryFromCurrentProduct(latest);
       if (!latest.downloadToken) latest = makeDownloadForOrder(latest);
@@ -3456,11 +3545,26 @@ function azProductOwnerFrom(product = {}, order = {}){
   const ownerUid = azCleanOwnerField(p.ownerUid || p.createdByUid || p.staffUid || p.sellerUid || order.ownerUid || '', 140);
   const ownerEmail = azCleanOwnerField(p.ownerEmail || p.createdByEmail || p.staffEmail || p.sellerEmail || order.ownerEmail || '', 180);
   const ownerKey = azCleanOwnerField(p.ownerKey || p.createdByKey || p.staffOwnerKey || p.sellerKey || ownerUsername || ownerUid || ownerEmail || '', 180);
-  const ownerRole = azCleanOwnerField(p.ownerRole || p.createdByRole || p.staffRole || p.role || '', 40);
+  const ownerRole = azCleanOwnerField(p.ownerRole || p.createdByRole || p.staffRole || p.role || order.ownerRole || order.createdByRole || '', 40);
   const adminNames = new Set(['zedan91','admin','azobss']);
-  const isAdminOwner = !ownerUsername || adminNames.has(ownerUsername) || /admin/i.test(ownerRole);
+  const isAdminOwner = !ownerUsername || adminNames.has(ownerUsername) || (/admin/i.test(ownerRole) && !/semi/i.test(ownerRole));
   return { ownerUsername, ownerUid, ownerEmail, ownerKey, ownerRole, isAdminOwner };
 }
+function azOwnerRoleIsSemiAdmin(role=''){
+  const r = String(role || '').toLowerCase().replace(/[\s_-]+/g, '');
+  return r === 'semiadmin' || r === 'semistaff';
+}
+function azCommissionOwnerRateForProduct(product = {}, owner = {}, order = {}){
+  const raw = Number(product.ownerShare ?? product.commissionRate ?? product.rate ?? order.ownerShare ?? order.commissionRate ?? 0) || 0;
+  if (raw > 0) return Math.max(0, Math.min(100, raw));
+  return azOwnerRoleIsSemiAdmin(owner.ownerRole) ? 90 : 70;
+}
+function azCommissionOwnerPolicyText(rate){
+  const r = Number(rate || 0) || 0;
+  const az = Math.max(0, 100 - r);
+  return `${r}% owner / ${az}% AZOBSS`;
+}
+
 function azReferralFromUrl(value = '', product = {}, order = {}){
   try{
     const rawUrl = String(value || '').trim();
@@ -3499,36 +3603,49 @@ function azBuildCommissionLines(order = {}){
   if (!saleAmount) return [];
   const productId = cleanPremiumText(order.productId || product.id || product.productId || '', 160);
   const productName = cleanPremiumText(order.productName || product.name || '', 180);
+  const ownerDirectRate = azCommissionOwnerRateForProduct(product, owner, order);
+  const ownerDirectAzRate = Math.max(0, 100 - ownerDirectRate);
+  const ownerDirectPolicy = azCommissionOwnerPolicyText(ownerDirectRate);
   const base = {
     orderId: order.orderId || '', billCode: order.billCode || '', productId, productName,
     saleAmount, saleAmountText: azCommissionAmountText(saleAmount), buyerUsername: buyer,
     buyerEmail: cleanPremiumText(order.user?.email || '', 180), paymentStatus: order.status || 'paid',
     paymentMethod: order.paymentMethod || '', paymentReference: order.paymentReference || '',
     createdAt: new Date().toISOString(), createdAtMs: Date.now(), status: 'pending', payoutStatus: 'pending',
-    source: 'software-cad-auto-commission'
+    source: 'software-cad-auto-commission',
+    ownerRole: owner.ownerRole || product.ownerRole || product.createdByRole || '',
+    ownerShare: ownerDirectRate,
+    platformShare: ownerDirectAzRate,
+    commissionPolicy: ownerDirectPolicy
   };
   const lines = [];
   const sharer = referral.username;
   const ownerName = owner.ownerUsername;
   const hasStaffOwner = !!(ownerName && !owner.isAdminOwner);
   const validSharer = !!(sharer && sharer !== buyer && (!ownerName || sharer !== ownerName));
-  function add(kind, username, uid, email, rate, note){
+  function add(kind, username, uid, email, rate, note, opts = {}){
     if(!username || !rate) return;
     const amount = Math.round((saleAmount * rate / 100) * 100) / 100;
-    const azRate = Math.max(0, 100 - Number(rate || 0));
+    const azRate = opts.azobssShareRate != null ? Math.max(0, Number(opts.azobssShareRate || 0)) : Math.max(0, 100 - Number(rate || 0));
     const azobssShareAmount = Math.round((saleAmount * azRate / 100) * 100) / 100;
-    const line = { ...base, commissionType: kind, username, uid: uid || '', ownerUid: uid || '', ownerUsername: username, ownerEmail: email || '', commissionRate: rate, rate, commissionAmount: amount, amount, amountText: azCommissionAmountText(amount), azobssShareRate: azRate, azobssShareAmount, azobssShareText: azCommissionAmountText(azobssShareAmount), ownerShareAmount: 0, sharerShareAmount: 0, note, shareReferral: referral, productOwner: owner };
-    if (String(kind).includes('share')) line.sharerShareAmount = amount;
-    else line.ownerShareAmount = amount;
-    if (kind === 'owner_sale_split') { line.ownerShareAmount = amount; line.azobssShareRate = 30; line.azobssShareAmount = Math.round((saleAmount * 0.30) * 100) / 100; line.azobssShareText = azCommissionAmountText(line.azobssShareAmount); }
-    if (kind === 'share_referral') { line.sharerShareAmount = amount; line.azobssShareRate = 30; line.azobssShareAmount = Math.round((saleAmount * 0.30) * 100) / 100; line.azobssShareText = azCommissionAmountText(line.azobssShareAmount); }
+    const line = { ...base, commissionType: kind, username, uid: uid || '', ownerUid: uid || '', ownerUsername: username, ownerEmail: email || '', commissionRate: rate, rate, commissionAmount: amount, amount, amountText: azCommissionAmountText(amount), azobssShareRate: azRate, azobssShareAmount, azobssShareText: azCommissionAmountText(azobssShareAmount), ownerShareAmount: String(kind).includes('share') ? 0 : amount, sharerShareAmount: String(kind).includes('share') ? amount : 0, note, shareReferral: referral, productOwner: owner };
     lines.push(line);
   }
   if (hasStaffOwner && validSharer) {
-    add('owner_sale_split', ownerName, owner.ownerUid, owner.ownerEmail, 60, 'Produk staff terjual melalui share link staff lain. Owner 60%, sharer 10%, AZOBSS 30%.');
-    add('share_referral', sharer, '', '', 10, 'Staff share link berjaya menjual produk staff lain. Sharer 10%.');
+    const semiOwner = ownerDirectRate >= 90;
+    const sharerRate = semiOwner ? 4 : 10;
+    const ownerSplitRate = semiOwner ? 90 : 60;
+    const splitAzRate = Math.max(0, 100 - ownerSplitRate - sharerRate);
+    const splitNote = semiOwner
+      ? 'Produk semi-admin terjual melalui share link staff lain. Semi-admin owner 90%, sharer 4%, AZOBSS 6%.'
+      : 'Produk staff terjual melalui share link staff lain. Owner 60%, sharer 10%, AZOBSS 30%.';
+    const shareNote = semiOwner
+      ? 'Staff share link berjaya menjual produk semi-admin. Sharer 4%, AZOBSS 6%.'
+      : 'Staff share link berjaya menjual produk staff lain. Sharer 10%.';
+    add('owner_sale_split', ownerName, owner.ownerUid, owner.ownerEmail, ownerSplitRate, splitNote, { azobssShareRate: splitAzRate });
+    add('share_referral', sharer, '', '', sharerRate, shareNote, { azobssShareRate: splitAzRate });
   } else if (hasStaffOwner) {
-    add('owner_sale', ownerName, owner.ownerUid, owner.ownerEmail, 70, 'Produk staff sendiri terjual. Owner 70%, AZOBSS 30%.');
+    add('owner_sale', ownerName, owner.ownerUid, owner.ownerEmail, ownerDirectRate, `Produk owner terjual. ${ownerDirectPolicy}.`);
   } else if (validSharer) {
     add('admin_product_share_referral', sharer, '', '', 20, 'Staff share link berjaya menjual produk admin/AZOBSS. Sharer 20%, AZOBSS 80%.');
   }
@@ -4503,6 +4620,11 @@ function azMyPurchasesPublicRow(row = {}, source = "", docId = "", req = null) {
     downloadUrl: download.url || "",
     receiptUrl: receiptAvailable ? receiptPath : "",
     receiptPdfUrl: receiptAvailable ? `${receiptPath}&format=pdf` : "",
+    isSubscriptionCode: !!(row.subscriptionCodeEnabled || row.activationCodeSale || row.activationCode),
+    activationCode: receiptAvailable ? cleanPremiumText(row.activationCode || "", 120) : "",
+    activationPlanLabel: receiptAvailable ? cleanPremiumText(row.subscriptionPlanLabel || row.subscriptionPlan?.label || "", 100) : "",
+    activationCodeExpiresAtMs: receiptAvailable ? (Number(row.activationCodeExpiresAtMs || 0) || azActivationCodeMs(row.activationCodeExpiresAt)) : 0,
+    activationCodeExpiresAt: receiptAvailable ? cleanPremiumText(row.activationCodeExpiresAt || "", 140) : "",
     raw: isPremium ? null : {
       id: docId || row.id || "",
       firestoreId: docId || row.firestoreId || row.purchaseLogId || row.id || "",
@@ -6138,7 +6260,9 @@ async function handler(req, res) {
         const requestedProduct = data.product || {};
         const trustedResolved = await azResolveTrustedPremiumProduct(data, req);
         const product = trustedResolved.product || {};
-        const productName = cleanPremiumText(product.name || product.productName || data.productName || data.title || "AZOBSS Digital Product", 160);
+        const activationPlan = trustedResolved.subscriptionPlan || product.subscriptionPlan || product.selectedSubscriptionPlan || null;
+        const baseProductName = cleanPremiumText(product.name || product.productName || data.productName || data.title || "AZOBSS Digital Product", 130);
+        const productName = cleanPremiumText(activationPlan ? `${baseProductName} (${activationPlan.label || activationPlan.id})` : baseProductName, 160);
         const productId = cleanPremiumText(product.productId || product.id || data.productId || requestedProduct.productId || requestedProduct.id || productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), 160);
         const amountText = cleanPremiumText(trustedResolved.amountText || product.price || "", 40);
         const amountSen = Number(trustedResolved.amountSen || parseAmountToSen(amountText));
@@ -6186,7 +6310,7 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours }, trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product) }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
         return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
@@ -6308,6 +6432,44 @@ async function handler(req, res) {
 
 
 
+
+
+    if (pathname === "/api/subscription/verify" && (req.method === "GET" || req.method === "POST")) {
+      try {
+        let body = {};
+        if (req.method === "POST") {
+          try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+        }
+        const code = cleanPremiumText(body.code || parsed.query.code || parsed.query.activationCode || "", 140).toUpperCase().replace(/\s+/g, "");
+        const productId = cleanPremiumText(body.productId || parsed.query.productId || "", 180);
+        if (!code) return send(res, 400, JSON.stringify({ ok:false, valid:false, error:"Activation code is required." }, null, 2), "application/json");
+        const rows = [];
+        try { readPremiumOrders().forEach(x => rows.push(x)); } catch (_) {}
+        const db = getAzobssBackendDb();
+        if (db) {
+          try {
+            const snap = await db.collection("premiumOrders").where("activationCode", "==", code).limit(3).get();
+            snap.forEach(d => rows.push({ docId:d.id, ...(d.data() || {}) }));
+          } catch (err) { console.warn("Activation code Firestore lookup skipped:", err && (err.message || err)); }
+        }
+        const seen = new Set();
+        const order = rows.find(x => {
+          const key = String(x.orderId || x.billCode || x.docId || x.activationCode || Math.random());
+          if (seen.has(key)) return false; seen.add(key);
+          if (String(x.activationCode || "").toUpperCase().replace(/\s+/g, "") !== code) return false;
+          if (productId && ![x.productId, x.product?.productId, x.product?.id].some(v => String(v || "") === productId)) return false;
+          return true;
+        });
+        if (!order) return send(res, 404, JSON.stringify({ ok:true, valid:false, status:"not_found", error:"Activation code not found." }, null, 2), "application/json");
+        const paid = String(order.status || "").toLowerCase() === "paid";
+        const expiresAtMs = Number(order.activationCodeExpiresAtMs || 0) || azActivationCodeMs(order.activationCodeExpiresAt);
+        const expired = !!expiresAtMs && Date.now() > expiresAtMs;
+        const valid = paid && !expired;
+        return send(res, 200, JSON.stringify({ ok:true, valid, status: valid ? "active" : (expired ? "expired" : "not_paid"), productId: order.productId || order.product?.productId || "", productName: order.productName || order.product?.name || "", plan: order.subscriptionPlanLabel || order.subscriptionPlan?.label || "", months: Number(order.subscriptionMonths || order.subscriptionPlan?.months || 0) || 0, expiresAt: order.activationCodeExpiresAt || (expiresAtMs ? new Date(expiresAtMs).toISOString() : ""), expiresAtMs, orderId: cleanPremiumText(order.orderId || "", 120) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, valid:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
 
     if (pathname === "/api/my-purchases" && req.method === "GET") {
       try {

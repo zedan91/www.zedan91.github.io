@@ -222,11 +222,26 @@ function azProductOwnerFrom(product = {}, order = {}){
   const ownerUid = azCleanOwnerField(p.ownerUid || p.createdByUid || p.staffUid || p.sellerUid || order.ownerUid || '', 140);
   const ownerEmail = azCleanOwnerField(p.ownerEmail || p.createdByEmail || p.staffEmail || p.sellerEmail || order.ownerEmail || '', 180);
   const ownerKey = azCleanOwnerField(p.ownerKey || p.createdByKey || p.staffOwnerKey || p.sellerKey || ownerUsername || ownerUid || ownerEmail || '', 180);
-  const ownerRole = azCleanOwnerField(p.ownerRole || p.createdByRole || p.staffRole || p.role || '', 40);
+  const ownerRole = azCleanOwnerField(p.ownerRole || p.createdByRole || p.staffRole || p.role || order.ownerRole || order.createdByRole || '', 40);
   const adminNames = new Set(['zedan91','admin','azobss']);
-  const isAdminOwner = !ownerUsername || adminNames.has(ownerUsername) || /admin/i.test(ownerRole);
+  const isAdminOwner = !ownerUsername || adminNames.has(ownerUsername) || (/admin/i.test(ownerRole) && !/semi/i.test(ownerRole));
   return { ownerUsername, ownerUid, ownerEmail, ownerKey, ownerRole, isAdminOwner };
 }
+function azOwnerRoleIsSemiAdmin(role=''){
+  const r = String(role || '').toLowerCase().replace(/[\s_-]+/g, '');
+  return r === 'semiadmin' || r === 'semistaff';
+}
+function azCommissionOwnerRateForProduct(product = {}, owner = {}, order = {}){
+  const raw = Number(product.ownerShare ?? product.commissionRate ?? product.rate ?? order.ownerShare ?? order.commissionRate ?? 0) || 0;
+  if (raw > 0) return Math.max(0, Math.min(100, raw));
+  return azOwnerRoleIsSemiAdmin(owner.ownerRole) ? 90 : 70;
+}
+function azCommissionOwnerPolicyText(rate){
+  const r = Number(rate || 0) || 0;
+  const az = Math.max(0, 100 - r);
+  return `${r}% owner / ${az}% AZOBSS`;
+}
+
 function azReferralFromUrl(value = '', product = {}, order = {}){
   try{
     const rawUrl = String(value || '').trim();
@@ -265,6 +280,9 @@ function azBuildCommissionLines(order = {}){
   if (!saleAmount) return [];
   const productId = cleanPremiumText(order.productId || product.id || product.productId || '', 160);
   const productName = cleanPremiumText(order.productName || product.name || '', 180);
+  const ownerDirectRate = azCommissionOwnerRateForProduct(product, owner, order);
+  const ownerDirectAzRate = Math.max(0, 100 - ownerDirectRate);
+  const ownerDirectPolicy = azCommissionOwnerPolicyText(ownerDirectRate);
   const base = {
     orderId: order.orderId || '',
     billCode: order.billCode || '',
@@ -280,17 +298,23 @@ function azBuildCommissionLines(order = {}){
     createdAtMs: Date.now(),
     status: 'pending',
     payoutStatus: 'pending',
-    source: 'software-cad-auto-commission'
+    source: 'software-cad-auto-commission',
+    ownerRole: owner.ownerRole || product.ownerRole || product.createdByRole || '',
+    ownerShare: ownerDirectRate,
+    platformShare: ownerDirectAzRate,
+    commissionPolicy: ownerDirectPolicy
   };
   const lines = [];
   const sharer = referral.username;
   const ownerName = owner.ownerUsername;
   const hasStaffOwner = !!(ownerName && !owner.isAdminOwner);
   const validSharer = !!(sharer && sharer !== buyer && (!ownerName || sharer !== ownerName));
-  function add(kind, username, uid, email, rate, note){
+  function add(kind, username, uid, email, rate, note, opts = {}){
     if(!username || !rate) return;
     const amount = Math.round((saleAmount * rate / 100) * 100) / 100;
-    lines.push({
+    const azRate = opts.azobssShareRate != null ? Math.max(0, Number(opts.azobssShareRate || 0)) : Math.max(0, 100 - Number(rate || 0));
+    const azobssShareAmount = Math.round((saleAmount * azRate / 100) * 100) / 100;
+    const line = {
       ...base,
       commissionType: kind,
       username,
@@ -303,16 +327,32 @@ function azBuildCommissionLines(order = {}){
       commissionAmount: amount,
       amount,
       amountText: azCommissionAmountText(amount),
+      azobssShareRate: azRate,
+      azobssShareAmount,
+      azobssShareText: azCommissionAmountText(azobssShareAmount),
+      ownerShareAmount: String(kind).includes('share') ? 0 : amount,
+      sharerShareAmount: String(kind).includes('share') ? amount : 0,
       note,
       shareReferral: referral,
       productOwner: owner
-    });
+    };
+    lines.push(line);
   }
   if (hasStaffOwner && validSharer) {
-    add('owner_sale_split', ownerName, owner.ownerUid, owner.ownerEmail, 60, 'Produk staff terjual melalui share link staff lain. Owner 60%, sharer 10%, AZOBSS 30%.');
-    add('share_referral', sharer, '', '', 10, 'Staff share link berjaya menjual produk staff lain. Sharer 10%.');
+    const semiOwner = ownerDirectRate >= 90;
+    const sharerRate = semiOwner ? 4 : 10;
+    const ownerSplitRate = semiOwner ? 90 : 60;
+    const splitAzRate = Math.max(0, 100 - ownerSplitRate - sharerRate);
+    const splitNote = semiOwner
+      ? 'Produk semi-admin terjual melalui share link staff lain. Semi-admin owner 90%, sharer 4%, AZOBSS 6%.'
+      : 'Produk staff terjual melalui share link staff lain. Owner 60%, sharer 10%, AZOBSS 30%.';
+    const shareNote = semiOwner
+      ? 'Staff share link berjaya menjual produk semi-admin. Sharer 4%, AZOBSS 6%.'
+      : 'Staff share link berjaya menjual produk staff lain. Sharer 10%.';
+    add('owner_sale_split', ownerName, owner.ownerUid, owner.ownerEmail, ownerSplitRate, splitNote, { azobssShareRate: splitAzRate });
+    add('share_referral', sharer, '', '', sharerRate, shareNote, { azobssShareRate: splitAzRate });
   } else if (hasStaffOwner) {
-    add('owner_sale', ownerName, owner.ownerUid, owner.ownerEmail, 70, 'Produk staff sendiri terjual. Owner 70%, AZOBSS 30%.');
+    add('owner_sale', ownerName, owner.ownerUid, owner.ownerEmail, ownerDirectRate, `Produk owner terjual. ${ownerDirectPolicy}.`);
   } else if (validSharer) {
     add('admin_product_share_referral', sharer, '', '', 20, 'Staff share link berjaya menjual produk admin/AZOBSS. Sharer 20%, AZOBSS 80%.');
   }
