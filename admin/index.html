@@ -2203,6 +2203,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-net-income-card"><div class="stat-label">Today Net Sales RM</div><div id="salesTodayNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income hari ini</div></div>
         <div class="card"><div class="stat-label">This Month Gross Sales RM</div><div id="salesThisMonthTotal" class="stat-value">0</div></div>
         <div class="card az-net-income-card"><div class="stat-label">This Month Net Sales RM</div><div id="salesThisMonthNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income bulan ini</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">This Year Net Sales RM</div><div id="salesThisYearNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income tahun ini</div></div>
         <div class="card"><div class="stat-label">This Month Orders</div><div id="salesThisMonthOrders" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">ToyyibPay Fee This Month RM</div><div id="salesThisMonthFeeTotal" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Avg Gross Order RM</div><div id="salesAverageOrder" class="stat-value">0</div></div>
@@ -3882,22 +3883,27 @@ function azAdminRenderSalesOverviewCharts(records){
   const now=new Date();
   const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
   const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-  let todayTotal=0,todayOrders=0,monthTotal=0,monthOrders=0,paidTotal=0;
+  const yearStart=new Date(now.getFullYear(),0,1).getTime();
+  let todayTotal=0,todayOrders=0,monthTotal=0,monthOrders=0,yearTotal=0,yearOrders=0,paidTotal=0;
   paid.forEach(x=>{
     const amount=Number(x.amount||0)||0;
     const ms=azAdminPaymentMs(x);
     paidTotal+=amount;
     if(ms>=todayStart){ todayTotal+=amount; todayOrders++; }
     if(ms>=monthStart){ monthTotal+=amount; monthOrders++; }
+    if(ms>=yearStart){ yearTotal+=amount; yearOrders++; }
   });
   const todayFee=todayOrders * azAdminToyyibPayFeePerTransaction();
   const monthFee=monthOrders * azAdminToyyibPayFeePerTransaction();
+  const yearFee=yearOrders * azAdminToyyibPayFeePerTransaction();
   const todayNet=azAdminNetAfterToyyibPay(todayTotal, todayOrders);
   const monthNet=azAdminNetAfterToyyibPay(monthTotal, monthOrders);
+  const yearNet=azAdminNetAfterToyyibPay(yearTotal, yearOrders);
   azAdminSetText('#salesTodayTotal',azAdminMoney(todayTotal));
   azAdminSetText('#salesTodayNetTotal',azAdminMoney(todayNet));
   azAdminSetText('#salesThisMonthTotal',azAdminMoney(monthTotal));
   azAdminSetText('#salesThisMonthNetTotal',azAdminMoney(monthNet));
+  azAdminSetText('#salesThisYearNetTotal',azAdminMoney(yearNet));
   azAdminSetText('#salesThisMonthFeeTotal',azAdminMoney(monthFee));
   azAdminSetText('#salesThisMonthOrders',monthOrders);
   azAdminSetText('#salesAverageOrder',azAdminMoney(paid.length?paidTotal/paid.length:0));
@@ -5219,8 +5225,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=395"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=395"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=396"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=396"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">

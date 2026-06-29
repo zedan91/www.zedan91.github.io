@@ -1,0 +1,20 @@
+AZOBSS PATCH 396 - Sales Overview Yearly Net Sales
+
+Request:
+- Di Sales Overview > Sales Analytics, tambah yearly net sales.
+- Overview Admin atas kekal Today Net Sales + This Month Net Sales sahaja.
+
+Fix:
+- Tambah card "This Year Net Sales RM" di Sales Analytics.
+- Kiraan yearly:
+  - Ambil paid/verified transaction tahun semasa.
+  - Gross tahun semasa - (paid transaction tahun semasa × RM1 ToyyibPay).
+- Pending/cancelled/failed tidak dikira.
+
+Kiraan tidak berubah untuk card lain.
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.
