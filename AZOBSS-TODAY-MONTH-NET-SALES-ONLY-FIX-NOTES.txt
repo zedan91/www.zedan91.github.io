@@ -1,0 +1,20 @@
+AZOBSS PATCH 395 - Today + This Month Net Sales Only
+
+Request:
+- Bahagian atas Overview Admin jangan papar Yearly Net Sales.
+- Letak Today Net Sales dan This Month Net Sales sahaja.
+
+Fix:
+- Overview Admin top net section:
+  - Today Net Sales
+  - This Month Net Sales
+- Yearly Net Sales dibuang daripada bahagian atas tersebut.
+- Sales Overview analytics juga dibersihkan daripada This Year Net Sales supaya tidak mengganggu.
+- Kiraan Today Net = Gross paid/verified hari ini - (paid transaction hari ini × RM1 ToyyibPay).
+- Kiraan This Month Net kekal.
+
+Firebase Rules:
+- Tidak perlu update.
+
+Render ENV:
+- Tidak perlu tambah ENV baru.
