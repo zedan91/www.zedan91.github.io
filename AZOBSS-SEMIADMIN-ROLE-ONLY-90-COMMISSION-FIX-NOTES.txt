@@ -1,0 +1,30 @@
+AZOBSS PATCH 400 - semiAdmin Role Only 90% Commission Fix
+
+Request:
+- Role dropdown values are: member, staff, semiAdmin, admin.
+- Only semiAdmin should get 90% commission when their own software/product is sold.
+- staff must stay at the old percentage.
+
+Fix:
+- Tightened role detection:
+  - semiAdmin -> 90% owner / 10% AZOBSS for own software sale.
+  - staff -> stays 70% owner / 30% AZOBSS for own software sale.
+  - member/admin do not become 90%.
+- Removed extra semistaff fallback so only actual semiAdmin role triggers 90%.
+- Existing semiAdmin share split from previous patch remains:
+  - semiAdmin product sold by other staff share link:
+    Owner 90% + Sharer 4% + AZOBSS 6%.
+- Existing staff split remains:
+  - staff product sold by other staff share link:
+    Owner 60% + Sharer 10% + AZOBSS 30%.
+
+Not changed:
+- Subscription Activation Code feature from patch 399 remains.
+- PA/BM not touched.
+- ToyyibPay and download token not touched.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No new ENV required.

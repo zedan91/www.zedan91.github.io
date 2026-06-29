@@ -3551,8 +3551,9 @@ function azProductOwnerFrom(product = {}, order = {}){
   return { ownerUsername, ownerUid, ownerEmail, ownerKey, ownerRole, isAdminOwner };
 }
 function azOwnerRoleIsSemiAdmin(role=''){
+  // AZOBSS PATCH 400: only dropdown role value semiAdmin gets 90%; staff remains old rate.
   const r = String(role || '').toLowerCase().replace(/[\s_-]+/g, '');
-  return r === 'semiadmin' || r === 'semistaff';
+  return r === 'semiadmin';
 }
 function azCommissionOwnerRateForProduct(product = {}, owner = {}, order = {}){
   const raw = Number(product.ownerShare ?? product.commissionRate ?? product.rate ?? order.ownerShare ?? order.commissionRate ?? 0) || 0;

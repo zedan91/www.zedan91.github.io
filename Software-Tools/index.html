@@ -3947,8 +3947,9 @@ function normalizeItem(item){
   }
 
   function azSoftwareOwnerCommissionRateForRole(role){
+    // AZOBSS PATCH 400: only dropdown role value semiAdmin gets 90%; staff remains old rate.
     const r=String(role||'').toLowerCase().replace(/[\s_-]+/g,'');
-    return (r==='semiadmin'||r==='semistaff') ? 90 : 70;
+    return (r==='semiadmin') ? 90 : 70;
   }
   function azSoftwareCommissionPolicyForRate(rate){
     const r=Number(rate||70)||70;

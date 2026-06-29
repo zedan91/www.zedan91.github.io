@@ -757,8 +757,9 @@ function amountOf(x){ return Number(x.amount||x.total||x.totalAmount||x.price||x
 function saleAmountOf(x){ return Number(x.saleAmount||x.orderAmount||x.totalSale||x.total||x.totalAmount||x.price||x.paymentAmount||0)||0; }
 function commissionAmountOf(x){ return Number(x.commissionAmount||x.amount||x.totalCommission||0)||0; }
 function isSemiAdminRoleValue(v){
+  // AZOBSS PATCH 400: only dropdown role value semiAdmin gets 90%; staff remains old rate.
   const r=String(v||'').toLowerCase().replace(/[\s_-]+/g,'');
-  return r==='semiadmin'||r==='semistaff';
+  return r==='semiadmin';
 }
 function staffOwnerRatePercent(x={}){
   const explicit=Number(x.ownerShare||x.commissionRate||x.rate||0)||0;
