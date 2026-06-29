@@ -3230,7 +3230,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           </label>
         </div>
         <div class="az-subscription-plans-preview" aria-label="Activation code plans">
-          <div class="az-sub-plan-preview"><b>1 Month Activation Code</b><strong>RM24.90</strong><small>Save RM5.00</small></div>
+          <div class="az-sub-plan-preview"><b>1 Month Activation Code</b><strong>RM29.90</strong><small>Base monthly price</small></div>
           <div class="az-sub-plan-preview"><b>3 Months Activation Code</b><strong>RM69.90</strong><small>RM23.30/month · Save RM19.80</small></div>
           <div class="az-sub-plan-preview"><b>12 Months Activation Code</b><strong>RM239.00</strong><small>RM19.92/month · Save RM119.80</small></div>
         </div>
@@ -3357,7 +3357,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const categoryInput = document.getElementById('softwareAdminCategory');
   const platformBox = document.getElementById('softwareAdminPlatforms');
   const AZOBSS_SUBSCRIPTION_PLANS = [
-    {id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM24.90', monthlyText:'RM24.90/month', saveText:'Save RM5.00'},
+    {id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM29.90', monthlyText:'RM29.90/month', saveText:'Base monthly price'},
     {id:'3m', months:3, durationDays:93, label:'3 Months Activation Code', price:'RM69.90', monthlyText:'RM23.30/month', saveText:'Save RM19.80'},
     {id:'12m', months:12, durationDays:366, label:'12 Months Activation Code', price:'RM239.00', monthlyText:'RM19.92/month', saveText:'Save RM119.80'}
   ];
@@ -3374,7 +3374,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if(typeSelect) typeSelect.value='premium';
       if(buttonInput) buttonInput.value='Buy Activation Code';
       if(iconInput) iconInput.value='PRO';
-      if(priceInput && (!priceInput.value || /^free$/i.test(priceInput.value))) priceInput.value='RM24.90';
+      if(priceInput && (!priceInput.value || /^free$/i.test(priceInput.value))) priceInput.value='RM29.90';
       if(!activationPrefixInput.value) activationPrefixInput.value='AZOBSS';
     }
   }
@@ -4846,7 +4846,7 @@ function normalizeItem(item){
       closeModal();
     }
   });
-  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = subscriptionEnabledInput?.checked ? 'RM24.90' : 'RM10'; buttonInput.value = subscriptionEnabledInput?.checked ? 'Buy Activation Code' : 'Buy Now'; iconInput.value = subscriptionEnabledInput?.checked ? 'PRO' : '🛒'; } else { priceInput.value = 'FREE'; if(originalPriceInput) originalPriceInput.value = ''; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; if(subscriptionEnabledInput) subscriptionEnabledInput.checked=false; } syncTypeDefaults(); });
+  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = subscriptionEnabledInput?.checked ? 'RM29.90' : 'RM10'; buttonInput.value = subscriptionEnabledInput?.checked ? 'Buy Activation Code' : 'Buy Now'; iconInput.value = subscriptionEnabledInput?.checked ? 'PRO' : '🛒'; } else { priceInput.value = 'FREE'; if(originalPriceInput) originalPriceInput.value = ''; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; if(subscriptionEnabledInput) subscriptionEnabledInput.checked=false; } syncTypeDefaults(); });
   subscriptionEnabledInput?.addEventListener('change', () => { syncSubscriptionAdminDefaults(); syncTypeDefaults(); });
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));

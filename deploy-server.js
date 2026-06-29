@@ -336,7 +336,7 @@ async function azFindFirestoreProduct(productId = "") {
 
 // AZOBSS PATCH 399: Subscription activation code plans for Software Tools.
 const AZOBSS_SUBSCRIPTION_PLAN_DEFS = [
-  { id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM24.90', priceSen:2490, saveText:'Save RM5.00', monthlyText:'RM24.90/month' },
+  { id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM24.90', priceSen:2490, saveText:'', monthlyText:'RM24.90/month' },
   { id:'3m', months:3, durationDays:93, label:'3 Months Activation Code', price:'RM69.90', priceSen:6990, saveText:'Save RM19.80', monthlyText:'RM23.30/month' },
   { id:'12m', months:12, durationDays:366, label:'12 Months Activation Code', price:'RM239.00', priceSen:23900, saveText:'Save RM119.80', monthlyText:'RM19.92/month' }
 ];
