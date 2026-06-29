@@ -666,12 +666,31 @@ function profileBelongsToAuth(p,u=user){
 function profileRole(p){return cleanRole(p?.role||p?.accountRole||p?.userRole||p?.type||'');}
 function isSemiAdminProfile(p=profile){return profileRole(p)==='semiadmin';}
 function isStaffRoleProfile(p=profile){return profileRole(p)==='staff';}
+function azStaffAccountDisplayName(p=profile){
+ const k=currentOwnerKeys();
+ const candidates=[
+   k.username,
+   p?.username,
+   p?.usernameKey,
+   p?.displayName,
+   p?.name,
+   p?.fullName,
+   p?.email ? String(p.email).split('@')[0] : '',
+   k.email ? String(k.email).split('@')[0] : ''
+ ];
+ for(const v of candidates){
+   const s=String(v||'').trim();
+   if(s) return s;
+ }
+ return 'Account';
+}
 function azStaffRankLabel(p=profile){
  const role=profileRole(p);
- if(isAdmin(p)) return 'AZOBSS (Admin)';
- if(role==='semiadmin') return 'AZOBSS (SemiAdmin)';
- if(role==='staff') return 'AZOBSS (Staff)';
- return 'AZOBSS';
+ const name=azStaffAccountDisplayName(p);
+ if(isAdmin(p)) return name+' (Admin)';
+ if(role==='semiadmin') return name+' (SemiAdmin)';
+ if(role==='staff') return name+' (Staff)';
+ return name;
 }
 function azStaffRoleName(p=profile){
  const role=profileRole(p);
@@ -688,7 +707,7 @@ function azRenderStaffRoleUI(){
    const roleName=azStaffRoleName(profile);
    if($('#staffDashboardBrand')) $('#staffDashboardBrand').textContent='🧑‍💼 '+label;
    if($('#staffDashboardTitle')) $('#staffDashboardTitle').textContent=label+' Dashboard';
-   if($('#staffDashboardSubtitle')) $('#staffDashboardSubtitle').textContent='Ringkasan jualan dan komisen untuk akaun '+roleName+' anda sahaja.';
+   if($('#staffDashboardSubtitle')) $('#staffDashboardSubtitle').textContent='Ringkasan jualan dan komisen untuk akaun '+azStaffAccountDisplayName(profile)+' sahaja.';
    if($('#staffDashboardAreaLabel')) $('#staffDashboardAreaLabel').textContent=label+' Area';
    if($('#staffDashboardHeroTitle')) $('#staffDashboardHeroTitle').textContent='Dashboard ringkas untuk '+roleName;
    if($('#staffDashboardHeroText')) $('#staffDashboardHeroText').textContent='Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.';
@@ -1024,7 +1043,7 @@ async function overview(){
     ? '<b>✅ Tiada komisen staff yang layak setakat ini.</b><div class="muted">Komisen akan muncul selepas jualan atau share link yang layak direkodkan.</div>'
     : `<b>✅ ${eligibleRecords} rekod komisen layak dikira.</b><div class="muted">Paparan ini hanya menunjukkan rekod yang layak untuk akaun staff ini.</div>`;
  }
- $('#permBox').textContent=JSON.stringify({role:profile?.role||profileRole(profile),rank:azStaffRankLabel(profile),username:currentOwnerKeys().username,email:currentOwnerKeys().email,permissions:perms,commissionPolicy:isSemiAdminProfile(profile)?'semiAdmin own sale: 90% owner / 10% AZOBSS. semiAdmin product via staff share: owner 90%, sharer 4%, AZOBSS 6%.':'staff own sale: 70% owner / 30% AZOBSS. staff product via staff share: owner 60%, sharer 10%, AZOBSS 30%.'},null,2);
+ $('#permBox').textContent=JSON.stringify({role:profile?.role||profileRole(profile),account:azStaffAccountDisplayName(profile),rank:azStaffRankLabel(profile),username:currentOwnerKeys().username,email:currentOwnerKeys().email,permissions:perms,commissionPolicy:isSemiAdminProfile(profile)?'semiAdmin own sale: 90% owner / 10% AZOBSS. semiAdmin product via staff share: owner 90%, sharer 4%, AZOBSS 6%.':'staff own sale: 70% owner / 30% AZOBSS. staff product via staff share: owner 60%, sharer 10%, AZOBSS 30%.'},null,2);
 }
 async function submitSw(){if(!can('canManageSoftware'))return alert('No permission');await addDoc(collection(db,'staffSoftwareSubmissions'),withOwnerPayload({title:$('#swTitle').value,price:Number($('#swPrice').value||0),type:$('#swType').value,url:$('#swUrl').value,description:$('#swDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffSoftwareSubmissions','#swList');overview()}
 async function submitCad(){if(!can('canManageCAD'))return alert('No permission');await addDoc(collection(db,'staffCADSubmissions'),withOwnerPayload({title:$('#cadTitle').value,price:Number($('#cadPrice').value||0),type:$('#cadType').value,url:$('#cadUrl').value,description:$('#cadDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffCADSubmissions','#cadList');overview()}
