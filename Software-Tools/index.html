@@ -3008,12 +3008,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <section class="downloads-section">
 <div class="downloads-inner">
 
-<div id="commissionPolicyCard" class="commission-policy-card">
-<div class="title">💰 STAFF & SEMI‑ADMIN COMMISSION POLICY</div>
-<div class="row">🟢 <b>Staff: 70% Commission</b> — Staff menerima 70% komisen bagi setiap jualan software milik sendiri.</div>
-<div class="row">🟡 <b>Semi-admin: 90% Commission</b> — Semi-admin menerima 90% komisen jika software milik sendiri terjual.</div>
-<div class="row">🔵 <b>Platform Fee</b> — Staff: 30% AZOBSS. Semi-admin: 10% AZOBSS.</div>
-<div class="row">🔒 <b>Private Sales Access</b> — Akses jualan dan komisen adalah peribadi. Anda hanya boleh melihat rekod produk milik anda sendiri.</div>
+<div id="commissionPolicyCard" class="commission-policy-card" style="display:none">
+<div class="title" id="azCommissionPolicyTitle">💰 COMMISSION POLICY</div>
+<div class="row" data-commission-staff style="display:none">🟢 <b>Staff: 70% Commission</b> — You receive 70% commission for each sale of your own software.</div>
+<div class="row" data-commission-staff style="display:none">🔵 <b>Platform Fee</b> — AZOBSS receives 30% for hosting, maintenance and platform development.</div>
+<div class="row" data-commission-semiadmin style="display:none">🟡 <b>Semi-admin: 90% Commission</b> — You receive 90% commission when your own software is sold.</div>
+<div class="row" data-commission-semiadmin style="display:none">🔵 <b>Platform Fee</b> — AZOBSS receives 10% for hosting, maintenance and platform development.</div>
+<div class="row" data-commission-common>🔒 <b>Private Sales Access</b> — Your sales and commission access is private. You can only view your own product records.</div>
 </div>
 <h1>💻 Software Tools & Downloads</h1>
 <p class="downloads-intro">
@@ -3028,9 +3029,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <input id="softwareImportJsonFile" type="file" accept="application/json,.json" hidden>
   <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><div id="azStaffCommissionNoteSoftware" class="software-admin-json-status" style="display:none;margin-top:8px"></div><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
 </div>
-<div id="azSoftwareAutoCommissionNote" class="software-admin-json-status" style="display:none;margin-top:10px;padding:12px 14px;border:1px solid rgba(34,197,94,.55);border-radius:14px;background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(20,83,45,.35));color:#d1fae5;font-weight:800">
-💰 Auto Commission: Staff auto set <b>70% komisen owner</b> / <b>30% AZOBSS</b>. Semi-admin auto set <b>90% komisen owner</b> / <b>10% AZOBSS</b>.
-</div>
+<div id="azSoftwareAutoCommissionNote" class="software-admin-json-status" style="display:none;margin-top:10px;padding:12px 14px;border:1px solid rgba(34,197,94,.55);border-radius:14px;background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(20,83,45,.35));color:#d1fae5;font-weight:800"></div>
 <div class="software-shop-controls" aria-label="Software search and sorting controls">
   <label>Search
     <input id="softwareSearchInput" type="search" placeholder="Search software name or description...">
@@ -3950,6 +3949,38 @@ function normalizeItem(item){
     // AZOBSS PATCH 400: only dropdown role value semiAdmin gets 90%; staff remains old rate.
     const r=String(role||'').toLowerCase().replace(/[\s_-]+/g,'');
     return (r==='semiadmin') ? 90 : 70;
+  }
+  function azSoftwareRoleKey(role){
+    return String(role||'').toLowerCase().replace(/[\s_-]+/g,'');
+  }
+  function azRenderRoleCommissionPolicy(){
+    try{
+      const box=document.getElementById('commissionPolicyCard');
+      const note=document.getElementById('azSoftwareAutoCommissionNote');
+      const u=azCurrentSoftwareOwner();
+      const roleKey=azSoftwareRoleKey(u.role);
+      const isStaff=roleKey==='staff';
+      const isSemi=roleKey==='semiadmin';
+      if(!isStaff && !isSemi){
+        if(box) box.style.display='none';
+        if(note) note.style.display='none';
+        return;
+      }
+      if(box){
+        box.style.display='';
+        const title=document.getElementById('azCommissionPolicyTitle');
+        if(title) title.textContent=isSemi ? '💰 SEMI-ADMIN COMMISSION POLICY' : '💰 STAFF COMMISSION POLICY';
+        box.querySelectorAll('[data-commission-staff]').forEach(el=>{ el.style.display=isStaff?'':'none'; });
+        box.querySelectorAll('[data-commission-semiadmin]').forEach(el=>{ el.style.display=isSemi?'':'none'; });
+        box.querySelectorAll('[data-commission-common]').forEach(el=>{ el.style.display=''; });
+      }
+      if(note){
+        note.style.display='';
+        note.innerHTML = isSemi
+          ? '💰 Auto Commission: Your software is auto set to <b>90% owner commission</b> / <b>10% AZOBSS</b>.'
+          : '💰 Auto Commission: Your software is auto set to <b>70% owner commission</b> / <b>30% AZOBSS</b>.';
+      }
+    }catch(e){}
   }
   function azSoftwareCommissionPolicyForRate(rate){
     const r=Number(rate||70)||70;
@@ -11892,6 +11923,24 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
 <!-- /AZOBSS PATCH 335 -->
 
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
+
+<script id="az-role-specific-commission-policy-display-fix">
+(function(){
+  function run(){
+    try{
+      if(typeof azRenderRoleCommissionPolicy === 'function') azRenderRoleCommissionPolicy();
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(run, 250);
+    setTimeout(run, 1200);
+    setTimeout(run, 2500);
+  });
+  window.addEventListener('azobss:user-ready', run);
+  window.addEventListener('storage', run);
+})();
+</script>
+
 </body>
 </html>
 

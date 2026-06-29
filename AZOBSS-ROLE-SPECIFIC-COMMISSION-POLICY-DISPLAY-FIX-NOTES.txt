@@ -1,0 +1,32 @@
+AZOBSS PATCH 401 - Role Specific Commission Policy Display Fix
+
+Request:
+- If the user is semiAdmin, show only the semiAdmin commission percentage.
+- If the user is staff, show only the staff commission percentage.
+- Do not show staff and semiAdmin commission policies together.
+
+Fix:
+- Software Tools commission policy box is now role-specific:
+  - staff: only shows 70% owner / 30% AZOBSS.
+  - semiAdmin: only shows 90% owner / 10% AZOBSS.
+- Auto Commission note is now role-specific:
+  - staff sees only staff auto commission.
+  - semiAdmin sees only semiAdmin auto commission.
+- member/admin do not see the staff/semiAdmin commission policy box.
+- Commission calculation from patch 400 is unchanged:
+  - Only role value semiAdmin gets 90%.
+  - staff keeps old percentage.
+
+Not changed:
+- Subscription Activation Code feature remains.
+- Backend commission split remains:
+  - semiAdmin own sale: 90% / 10%.
+  - semiAdmin product via staff share: owner 90% + sharer 4% + AZOBSS 6%.
+  - staff own sale: 70% / 30%.
+  - staff product via staff share: owner 60% + sharer 10% + AZOBSS 30%.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No new ENV required.
