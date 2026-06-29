@@ -1,0 +1,41 @@
+AZOBSS PATCH 407 - Lucky Draw Participants Backend URL Fix
+
+Issue:
+- Lucky Draw participant names suddenly could not load.
+- The frontend still had/remembered the old backend URL:
+  https://azobss-lucky-draw-api.onrender.com
+- If this old URL was saved in browser localStorage, the page continued calling the wrong backend even after deploy.
+
+Fix:
+- Default Lucky Draw backend URL changed to:
+  https://azobss-lucky-draw.onrender.com
+- Added automatic migration:
+  localStorage azobssLuckyDrawBackendUrl is replaced if it points to the old backend.
+- Patched these Lucky Draw URL consumers:
+  - index.html
+  - lucky-draw/index.html
+  - main.js
+  - PA-BM/index.html
+  - Software-Tools/index.html
+  - CAD-Tools-&-Resources/index.html
+- Added clearer participant loading error message showing the backend health URL.
+
+After deploy:
+1. Open Lucky Draw page.
+2. Hard refresh Ctrl+F5.
+3. If still failed, manually open:
+   https://azobss-lucky-draw.onrender.com/api/health
+   Expected: JSON with ok:true.
+4. If browser still uses old URL, clear localStorage key:
+   azobssLuckyDrawBackendUrl
+
+Not changed:
+- Subscription price fix from patch 405 remains.
+- Commission fixes remain.
+- PA/BM, ToyyibPay and download token are not touched.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No new ENV required.
