@@ -10616,14 +10616,40 @@ document.addEventListener('DOMContentLoaded', function(){
   obs.observe(affiliateArea, {childList:true, subtree:true});
 });
 </script>
+<script id="az-lucky-draw-correct-api-url-migration-408">
+(function(){
+  var GOOD='https://azobss-lucky-draw-api.onrender.com';
+  var WRONG=['https://azobss-lucky-draw.onrender.com','azobss-lucky-draw.onrender.com'];
+  function clean(url){
+    url=String(url||'').trim();
+    if(!url) return '';
+    url=url.replace(/\/api\/.*$/i,'').replace(/\/$/,'');
+    if(url && !/^https?:\/\//i.test(url)) url='https://'+url;
+    return url;
+  }
+  try{
+    var saved=clean(localStorage.getItem('azobssLuckyDrawBackendUrl')||'');
+    var bad=!saved || WRONG.some(function(x){
+      var y=String(x||'').replace(/^https?:\/\//,'');
+      return saved.indexOf(y)!==-1 || saved.indexOf(x)!==-1;
+    });
+    if(bad){
+      saved=GOOD;
+      localStorage.setItem('azobssLuckyDrawBackendUrl', saved);
+    }
+    window.AZOBSS_LUCKY_DRAW_API=saved||GOOD;
+  }catch(e){
+    window.AZOBSS_LUCKY_DRAW_API=GOOD;
+  }
+})();
+</script>
+
 <script>
 /* =========================================================
    AZOBSS LUCKY DRAW RENDER BACKEND BRIDGE
    Tukar URL ini selepas deploy backend di Render:
 ========================================================= */
-window.AZOBSS_LUCKY_DRAW_API =
-localStorage.getItem('azobssLuckyDrawBackendUrl') ||
-'https://azobss-lucky-draw-api.onrender.com';
+window.AZOBSS_LUCKY_DRAW_API = window.AZOBSS_LUCKY_DRAW_API || localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com';
 
 (function(){
   const api = () => (window.AZOBSS_LUCKY_DRAW_API || '').replace(/\/$/, '');

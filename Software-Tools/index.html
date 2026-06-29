@@ -3295,6 +3295,34 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     © 2026 AZOBSS. All rights reserved.
   </footer>
 
+<script id="az-lucky-draw-correct-api-url-migration-408">
+(function(){
+  var GOOD='https://azobss-lucky-draw-api.onrender.com';
+  var WRONG=['https://azobss-lucky-draw.onrender.com','azobss-lucky-draw.onrender.com'];
+  function clean(url){
+    url=String(url||'').trim();
+    if(!url) return '';
+    url=url.replace(/\/api\/.*$/i,'').replace(/\/$/,'');
+    if(url && !/^https?:\/\//i.test(url)) url='https://'+url;
+    return url;
+  }
+  try{
+    var saved=clean(localStorage.getItem('azobssLuckyDrawBackendUrl')||'');
+    var bad=!saved || WRONG.some(function(x){
+      var y=String(x||'').replace(/^https?:\/\//,'');
+      return saved.indexOf(y)!==-1 || saved.indexOf(x)!==-1;
+    });
+    if(bad){
+      saved=GOOD;
+      localStorage.setItem('azobssLuckyDrawBackendUrl', saved);
+    }
+    window.AZOBSS_LUCKY_DRAW_API=saved||GOOD;
+  }catch(e){
+    window.AZOBSS_LUCKY_DRAW_API=GOOD;
+  }
+})();
+</script>
+
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
   import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -8578,7 +8606,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   window.__azobssLuckyProductShareSingle134 = true;
   window.__azobssLuckyProductShareSingle132 = true;
 
-  const API_BASE=(localStorage.getItem('azobssLuckyDrawBackendUrl')||'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/,'');
+  const API_BASE = (window.AZOBSS_LUCKY_DRAW_API || localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
   const SOURCE_PAGE=/CAD-Tools/i.test(location.pathname)?'cad':'software';
   const CARD_SELECTOR='.download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';
   const GRID_CARD_SELECTOR='#softwareDownloadsGrid > .download-card,#softwareGrid > .download-card,.downloads-grid > .download-card,.software-grid > .software-card,.software-grid > .software-item,.cad-card-grid > .cad-card,.cad-tools-shop > .cad-card,.cad-tools-shop > .cad-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card';

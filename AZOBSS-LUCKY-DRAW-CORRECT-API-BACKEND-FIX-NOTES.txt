@@ -1,0 +1,41 @@
+AZOBSS PATCH 408 - Lucky Draw Correct API Backend Fix
+
+Important:
+- Patch 407 is rejected and must not be used.
+- This patch is based on baseline 406, not 407.
+
+Confirmed by user screenshots:
+- Wrong / Not Found:
+  https://azobss-lucky-draw.onrender.com/api/health
+- Correct / ok:true:
+  https://azobss-lucky-draw-api.onrender.com/api/health
+
+Fix:
+- Keep and force Lucky Draw backend to:
+  https://azobss-lucky-draw-api.onrender.com
+- Do not migrate to the non-api backend.
+- Auto-correct browser localStorage if it contains:
+  https://azobss-lucky-draw.onrender.com
+- Add correct API URL migration script:
+  az-lucky-draw-correct-api-url-migration-408
+- Participant load error now points to:
+  https://azobss-lucky-draw-api.onrender.com/api/health
+
+Patched:
+- index.html
+- lucky-draw/index.html
+- main.js
+- PA-BM/index.html
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+
+Not changed:
+- Subscription RM29.90 fix from patch 405 remains.
+- Software commission Firestore role fix from patch 406 remains.
+- PA/BM, ToyyibPay and download token not touched.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No new ENV required.

@@ -1490,8 +1490,36 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <footer>© 2026 AZOBSS. All rights reserved.</footer>
 </main>
 <a aria-label="WhatsApp" class="whatsapp" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"></a>
+<script id="az-lucky-draw-correct-api-url-migration-408">
+(function(){
+  var GOOD='https://azobss-lucky-draw-api.onrender.com';
+  var WRONG=['https://azobss-lucky-draw.onrender.com','azobss-lucky-draw.onrender.com'];
+  function clean(url){
+    url=String(url||'').trim();
+    if(!url) return '';
+    url=url.replace(/\/api\/.*$/i,'').replace(/\/$/,'');
+    if(url && !/^https?:\/\//i.test(url)) url='https://'+url;
+    return url;
+  }
+  try{
+    var saved=clean(localStorage.getItem('azobssLuckyDrawBackendUrl')||'');
+    var bad=!saved || WRONG.some(function(x){
+      var y=String(x||'').replace(/^https?:\/\//,'');
+      return saved.indexOf(y)!==-1 || saved.indexOf(x)!==-1;
+    });
+    if(bad){
+      saved=GOOD;
+      localStorage.setItem('azobssLuckyDrawBackendUrl', saved);
+    }
+    window.AZOBSS_LUCKY_DRAW_API=saved||GOOD;
+  }catch(e){
+    window.AZOBSS_LUCKY_DRAW_API=GOOD;
+  }
+})();
+</script>
+
 <script>
-    const API_BASE = (localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
+    const API_BASE = (window.AZOBSS_LUCKY_DRAW_API || localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
     const ADMIN_USERNAME = 'zedan91';
     const MEMBER_PA_CODE = 'ZX6186';
     function getLuckyDrawTargetDate(){
@@ -1693,8 +1721,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       return opts;
     }
     async function apiFetch(path, options){
-      const res = await fetch(API_BASE + path, azobssWithAdminHeaders(options));
-      return res;
+      try{
+        const res = await fetch(API_BASE + path, azobssWithAdminHeaders(options));
+        return res;
+      }catch(error){
+        throw new Error('Lucky Draw backend tidak dapat dihubungi: ' + API_BASE + '/api/health');
+      }
     }
 
     const luckyDrawI18n = {
@@ -2649,7 +2681,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         updateInvitePanel();
       } catch(e) {
         setEntriesLoading(false);
-        els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesBackendFail')) + '</div>';
+        console.warn('Lucky Draw participants load failed:', e);
+        els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesBackendFail')) + '<br><small>Backend: ' + escapeHtml(API_BASE + '/api/health') + '</small></div>';
       }
     }
 

@@ -8,7 +8,7 @@
 
 ## Environment Variables
 - `ADMIN_KEY` = wajib untuk route admin backend. Guna secret panjang/random dan jangan letak dalam source code.
-- `PUBLIC_BASE_URL` = URL backend Render, contoh `https://azobss-lucky-draw.onrender.com`
+- `PUBLIC_BASE_URL` = URL backend Render, contoh `https://azobss-lucky-draw-api.onrender.com`
 - `CORS_ORIGIN` = `https://azobss.com`
 - `TZ` = `Asia/Kuala_Lumpur`
 
