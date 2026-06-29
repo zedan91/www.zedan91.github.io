@@ -587,16 +587,16 @@ body[data-dashboard-page="staff"] .card{
 
 <div class="cover"><div class="box"><h2>🔐 Staff Only</h2><p id="accessMsg">Checking access...</p></div></div>
 <div class="shell">
-<aside class="side"><div class="brand">🧑‍💼 AZOBSS Staff</div><nav class="nav">
+<aside class="side"><div class="brand" id="staffDashboardBrand">🧑‍💼 AZOBSS Staff</div><nav class="nav">
 <button data-tab="overview" class="active">📊 Overview</button><button data-tab="software">💻 Software</button><button data-tab="cad">📐 CAD Tools</button><button data-tab="sales">💳 Sales View</button><button data-tab="share">🔗 Share Link</button><button data-tab="payout">💸 Payout</button>
 </nav></aside>
 <main class="main">
-<h1>Staff Dashboard</h1><p class="muted">Ringkasan jualan dan komisen untuk akaun staff/semi-admin anda sahaja.</p>
+<h1 id="staffDashboardTitle">Staff Dashboard</h1><p class="muted" id="staffDashboardSubtitle">Ringkasan jualan dan komisen untuk akaun staff/semi-admin anda sahaja.</p>
 <section id="overview" class="section active">
 <div class="az-staff-hero">
-  <div class="az-small">AZOBSS Staff Area</div>
-  <h2>Dashboard ringkas untuk staff</h2>
-  <p>Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.</p>
+  <div class="az-small" id="staffDashboardAreaLabel">AZOBSS Staff Area</div>
+  <h2 id="staffDashboardHeroTitle">Dashboard ringkas untuk staff</h2>
+  <p id="staffDashboardHeroText">Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.</p>
   <div class="az-quick-actions">
     <button type="button" data-tab-jump="sales">💳 Lihat Sales</button>
     <button type="button" data-tab-jump="share">🔗 Share Link</button>
@@ -614,7 +614,7 @@ body[data-dashboard-page="staff"] .card{
   <div class="az-stat-card primary"><div class="az-stat-label">💳 Sales Sah</div><div id="statSales" class="az-stat-value">0</div><div class="az-stat-help">Jualan produk yang layak untuk akaun ini.</div></div>
 </div>
 <div class="az-friendly-grid compact">
-  <div class="az-stat-card primary"><div class="az-stat-label">💰 Komisen Saya</div><div id="statCom" class="az-stat-value">RM0.00</div><div class="az-stat-help">Jumlah komisen yang layak untuk staff ini.</div></div>
+  <div class="az-stat-card primary"><div class="az-stat-label">💰 Komisen Saya</div><div id="statCom" class="az-stat-value">RM0.00</div><div class="az-stat-help" id="statComHelp">Jumlah komisen yang layak untuk akaun ini.</div></div>
   <div class="az-stat-card"><div class="az-stat-label">🔗 Share Link</div><div id="statShareCom" class="az-stat-value">RM0.00</div><div class="az-stat-help">Komisen daripada link referral/share.</div></div>
   <div class="az-stat-card"><div class="az-stat-label">⏳ Pending</div><div id="statComPending" class="az-stat-value">RM0.00</div><div class="az-stat-help">Belum dibayar / belum selesai payout.</div></div>
   <div class="az-stat-card"><div class="az-stat-label">✅ Paid</div><div id="statComPaid" class="az-stat-value">RM0.00</div><div class="az-stat-help">Komisen yang sudah dibayar.</div></div>
@@ -626,10 +626,8 @@ body[data-dashboard-page="staff"] .card{
 </div>
 <div class="card az-safe-note" id="azStaffCommissionPolicyBox">
   <h2>📢 Cara kiraan komisen</h2>
-  <div class="az-info-list">
-    <div><b>Produk sendiri terjual:</b> staff/owner dapat 70%, AZOBSS dapat 30%.</div>
-    <div><b>Share produk admin/AZOBSS:</b> sharer dapat 20%, AZOBSS dapat 80%.</div>
-    <div><b>Share produk staff lain:</b> owner dapat 60%, sharer dapat 10%, AZOBSS dapat 30%.</div>
+  <div class="az-info-list" id="azStaffCommissionPolicyLines">
+    <div>Checking commission policy...</div>
   </div>
 </div>
 <details class="card"><summary style="cursor:pointer;font-weight:900">🔐 Lihat akses akaun / permission</summary><pre id="permBox" class="az-readable-json"></pre></details>
@@ -666,6 +664,53 @@ function profileBelongsToAuth(p,u=user){
  return false;
 }
 function profileRole(p){return cleanRole(p?.role||p?.accountRole||p?.userRole||p?.type||'');}
+function isSemiAdminProfile(p=profile){return profileRole(p)==='semiadmin';}
+function isStaffRoleProfile(p=profile){return profileRole(p)==='staff';}
+function azStaffRankLabel(p=profile){
+ const role=profileRole(p);
+ if(isAdmin(p)) return 'AZOBSS (Admin)';
+ if(role==='semiadmin') return 'AZOBSS (SemiAdmin)';
+ if(role==='staff') return 'AZOBSS (Staff)';
+ return 'AZOBSS';
+}
+function azStaffRoleName(p=profile){
+ const role=profileRole(p);
+ if(role==='semiadmin') return 'SemiAdmin';
+ if(role==='staff') return 'Staff';
+ if(role==='admin') return 'Admin';
+ return role ? role : 'Staff';
+}
+function azRenderStaffRoleUI(){
+ try{
+   const semi=isSemiAdminProfile(profile);
+   const staffRole=isStaffRoleProfile(profile);
+   const label=azStaffRankLabel(profile);
+   const roleName=azStaffRoleName(profile);
+   if($('#staffDashboardBrand')) $('#staffDashboardBrand').textContent='🧑‍💼 '+label;
+   if($('#staffDashboardTitle')) $('#staffDashboardTitle').textContent=label+' Dashboard';
+   if($('#staffDashboardSubtitle')) $('#staffDashboardSubtitle').textContent='Ringkasan jualan dan komisen untuk akaun '+roleName+' anda sahaja.';
+   if($('#staffDashboardAreaLabel')) $('#staffDashboardAreaLabel').textContent=label+' Area';
+   if($('#staffDashboardHeroTitle')) $('#staffDashboardHeroTitle').textContent='Dashboard ringkas untuk '+roleName;
+   if($('#staffDashboardHeroText')) $('#staffDashboardHeroText').textContent='Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.';
+   if($('#statComHelp')) $('#statComHelp').textContent='Jumlah komisen yang layak untuk akaun '+roleName+' ini.';
+   const box=$('#azStaffCommissionPolicyLines');
+   if(box){
+     if(semi){
+       box.innerHTML=[
+        '<div><b>Produk sendiri terjual:</b> semiAdmin/owner dapat 90%, AZOBSS dapat 10%.</div>',
+        '<div><b>Produk semiAdmin dijual melalui share staff lain:</b> owner dapat 90%, sharer dapat 4%, AZOBSS dapat 6%.</div>',
+        '<div><b>Share produk admin/AZOBSS:</b> sharer dapat 20%, AZOBSS dapat 80%.</div>'
+       ].join('');
+     }else{
+       box.innerHTML=[
+        '<div><b>Produk sendiri terjual:</b> staff/owner dapat 70%, AZOBSS dapat 30%.</div>',
+        '<div><b>Share produk admin/AZOBSS:</b> sharer dapat 20%, AZOBSS dapat 80%.</div>',
+        '<div><b>Share produk staff lain:</b> owner dapat 60%, sharer dapat 10%, AZOBSS dapat 30%.</div>'
+       ].join('');
+     }
+   }
+ }catch(e){console.warn('Staff role UI render failed',e)}
+}
 function isAdmin(p){
  if(isOwnerAuthUser(user)) return true;
  if(!profileBelongsToAuth(p,user)) return false;
@@ -686,7 +731,7 @@ function isStaffProfile(p){
    || permissions.canViewPayments===true;
 }
 function deny(m){document.body.classList.remove('staff-ok');try{localStorage.removeItem('azobss_staff_role_cache');}catch(_e){}$('#accessMsg').textContent=m}
-function allow(){document.body.classList.add('staff-ok')}
+function allow(){document.body.classList.add('staff-ok'); try{azRenderStaffRoleUI();}catch(_e){}}
 function can(k){return isAdmin(profile)||!!perms[k]} 
 function azStaffApiErrorMessage(status,data,fallback){const raw=String(data?.error||data?.message||fallback||'Request failed.');if(status===401)return 'Session expired. Please login again, then retry.';if(status===403)return 'Staff/Admin permission required for this backend API.';if(status===429)return 'Too many attempts. '+(data?.retryAfter?('Please wait '+data.retryAfter+' seconds.'):'Please wait a while.');if(String(data?.verification||'').toLowerCase()==='pending')return 'Payment verification is still pending. Please wait a moment and check again.';return raw;}
 async function azStaffAuthHeaders(forceRefresh=false){try{const u=user||auth.currentUser;if(!u||typeof u.getIdToken!=='function')return{};const token=await u.getIdToken(!!forceRefresh);return token?{Authorization:'Bearer '+token}:{}}catch(_e){return{};}}
@@ -971,14 +1016,15 @@ async function overview(){
  if($('#statShareCom')) $('#statShareCom').textContent='RM'+shareCom.toFixed(2);
  if($('#statEligibleRecords')) $('#statEligibleRecords').textContent=eligibleRecords;
  if($('#statExcludedPabm')) $('#statExcludedPabm').textContent=excludedPabm;
- if($('#staffAccountStatus')) $('#staffAccountStatus').textContent=isAdmin(profile)?'Admin / owner':(profileRole(profile)==='semiadmin'?'Semi-admin':'Staff');
+ azRenderStaffRoleUI();
+ if($('#staffAccountStatus')) $('#staffAccountStatus').textContent=azStaffRankLabel(profile);
  if($('#staffOverviewNote')){
    const clean=(!salesCount&&!eligibleRecords);
    $('#staffOverviewNote').innerHTML= clean
     ? '<b>✅ Tiada komisen staff yang layak setakat ini.</b><div class="muted">Komisen akan muncul selepas jualan atau share link yang layak direkodkan.</div>'
     : `<b>✅ ${eligibleRecords} rekod komisen layak dikira.</b><div class="muted">Paparan ini hanya menunjukkan rekod yang layak untuk akaun staff ini.</div>`;
  }
- $('#permBox').textContent=JSON.stringify({role:profile?.role||profileRole(profile),username:currentOwnerKeys().username,email:currentOwnerKeys().email,permissions:perms,commissionPolicy:'Staff sees eligible own records only.'},null,2);
+ $('#permBox').textContent=JSON.stringify({role:profile?.role||profileRole(profile),rank:azStaffRankLabel(profile),username:currentOwnerKeys().username,email:currentOwnerKeys().email,permissions:perms,commissionPolicy:isSemiAdminProfile(profile)?'semiAdmin own sale: 90% owner / 10% AZOBSS. semiAdmin product via staff share: owner 90%, sharer 4%, AZOBSS 6%.':'staff own sale: 70% owner / 30% AZOBSS. staff product via staff share: owner 60%, sharer 10%, AZOBSS 30%.'},null,2);
 }
 async function submitSw(){if(!can('canManageSoftware'))return alert('No permission');await addDoc(collection(db,'staffSoftwareSubmissions'),withOwnerPayload({title:$('#swTitle').value,price:Number($('#swPrice').value||0),type:$('#swType').value,url:$('#swUrl').value,description:$('#swDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffSoftwareSubmissions','#swList');overview()}
 async function submitCad(){if(!can('canManageCAD'))return alert('No permission');await addDoc(collection(db,'staffCADSubmissions'),withOwnerPayload({title:$('#cadTitle').value,price:Number($('#cadPrice').value||0),type:$('#cadType').value,url:$('#cadUrl').value,description:$('#cadDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffCADSubmissions','#cadList');overview()}
