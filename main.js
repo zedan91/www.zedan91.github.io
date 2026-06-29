@@ -1,5 +1,5 @@
 
-    const API_BASE = (window.AZOBSS_LUCKY_DRAW_API || localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw.onrender.com').replace(/\/$/, '');
+    const API_BASE = (localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
     const ADMIN_USERNAME = 'zedan91';
     const MEMBER_PA_CODE = 'ZX6186';
     function getLuckyDrawTargetDate(){
