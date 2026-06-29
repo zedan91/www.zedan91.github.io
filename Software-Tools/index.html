@@ -3008,7 +3008,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <section class="downloads-section">
 <div class="downloads-inner">
 
-<div id="commissionPolicyCard" class="commission-policy-card" style="display:none">
+<div id="commissionPolicyCard" class="commission-policy-card" style="display:none" data-role-policy-card="1">
 <div class="title" id="azCommissionPolicyTitle">💰 COMMISSION POLICY</div>
 <div class="row" data-commission-staff style="display:none">🟢 <b>Staff: 70% Commission</b> — You receive 70% commission for each sale of your own software.</div>
 <div class="row" data-commission-staff style="display:none">🔵 <b>Platform Fee</b> — AZOBSS receives 30% for hosting, maintenance and platform development.</div>
@@ -3978,12 +3978,70 @@ function normalizeItem(item){
     try{u=azCurrentSoftwareOwner()||{}}catch(_e){}
     let r=azSoftwareRoleKey(u.role||u.ownerRole||u.accountRole||u.userRole||u.type||'');
     if(r==='semiadmin'||r==='staff') return r;
+    r=azSoftwareRoleKey(window.__azSoftwareForcedRole||window.__azobssSoftwareRole||'');
+    if(r==='semiadmin'||r==='staff') return r;
     r=azSoftwareReadRoleFromStorage();
     if(r==='semiadmin'||r==='staff') return r;
     const modeText=String(document.body?.innerText||'');
     const canManage=!!document.querySelector('#softwareAdminAddButton,[data-add-software-item],.software-admin-panel');
     if(/staff\/semi-admin mode/i.test(modeText)||canManage) return 'staff';
     return '';
+  }
+  function azSoftwareCurrentUsernameGuess(){
+    const names=[];
+    try{
+      const u=azCurrentSoftwareOwner()||{};
+      names.push(u.username,u.ownerUsername,u.createdByUsername,u.email?String(u.email).split('@')[0]:'');
+    }catch(_e){}
+    try{
+      const navText=String(document.querySelector('.az-user-name,.user-name,[data-username],#azUserName,#currentUsername')?.textContent||'');
+      names.push(navText);
+    }catch(_e){}
+    try{
+      const body=String(document.body?.innerText||'');
+      const m=body.match(/\bzedan\w*\b/i);
+      if(m) names.push(m[0]);
+    }catch(_e){}
+    try{
+      const stores=[localStorage,sessionStorage];
+      for(const s of stores){
+        for(const k of ['azobssUsername','azobss_username','username','currentUsername']){
+          names.push(s.getItem(k)||'');
+        }
+        for(const k of ['azobssCurrentUser','azobssUser','azobss_user','azobss_current_user','siteUser','currentUser','azobssProfile','azobssUserProfile']){
+          const x=azTryJson(s.getItem(k)||'');
+          names.push(x?.username,x?.usernameKey,x?.name,x?.displayName,x?.email?String(x.email).split('@')[0]:'');
+        }
+      }
+    }catch(_e){}
+    for(const v of names){
+      const s=String(v||'').trim();
+      if(s && !/^(member|staff|semiadmin|admin|account|user)$/i.test(s)) return s;
+    }
+    return '';
+  }
+  async function azSoftwareResolveRoleFromFirestore(){
+    try{
+      if(window.__azSoftwareRoleResolving) return;
+      window.__azSoftwareRoleResolving=true;
+      const username=azSoftwareCurrentUsernameGuess();
+      if(!username) return;
+      if(typeof db==='undefined' || typeof doc==='undefined' || typeof getDoc==='undefined') return;
+      const snap=await getDoc(doc(db,'users',username));
+      if(!snap.exists()) return;
+      const data=snap.data()||{};
+      const role=azSoftwareRoleKey(data.role||data.accountRole||data.userRole||data.type||'');
+      if(role==='semiadmin'||role==='staff'){
+        window.__azSoftwareForcedRole=role;
+        try{localStorage.setItem('azobss_staff_role',role)}catch(_e){}
+        try{localStorage.setItem('azobss_account_role',role)}catch(_e){}
+        azRenderRoleCommissionPolicy();
+      }
+    }catch(e){
+      console.warn('AZOBSS Software role Firestore resolve failed',e);
+    }finally{
+      window.__azSoftwareRoleResolving=false;
+    }
   }
   function azRenderRoleCommissionPolicy(){
     try{
@@ -3994,6 +4052,7 @@ function normalizeItem(item){
       const isSemi=roleKey==='semiadmin';
       if(!box && !note) return;
       if(!isStaff && !isSemi){
+        try{azSoftwareResolveRoleFromFirestore();}catch(_e){}
         if(box){
           box.style.display='none';
           box.querySelectorAll('[data-commission-staff],[data-commission-semiadmin]').forEach(el=>{ el.style.display='none'; });
@@ -11964,6 +12023,7 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
   function run(){
     try{
       if(typeof azRenderRoleCommissionPolicy === 'function') azRenderRoleCommissionPolicy();
+      if(typeof azSoftwareResolveRoleFromFirestore === 'function') azSoftwareResolveRoleFromFirestore();
     }catch(e){}
   }
   document.addEventListener('DOMContentLoaded', function(){
@@ -11971,6 +12031,22 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
   });
   ['azobss:user-ready','azobss:auth-ready','azobss:profile-ready','azobss:login','storage','focus'].forEach(ev=>window.addEventListener(ev, run));
   window.azRefreshSoftwareCommissionPolicy = run;
+})();
+</script>
+
+
+<script id="az-software-role-firestore-resolver-406">
+(function(){
+  function run(){
+    try{
+      if(typeof azSoftwareResolveRoleFromFirestore==='function') azSoftwareResolveRoleFromFirestore();
+      if(typeof azRenderRoleCommissionPolicy==='function') azRenderRoleCommissionPolicy();
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    [500,1200,2500,4500,7000].forEach(ms=>setTimeout(run,ms));
+  });
+  ['focus','storage','azobss:profile-ready','azobss:user-ready','azobss:auth-ready'].forEach(ev=>window.addEventListener(ev,run));
 })();
 </script>
 

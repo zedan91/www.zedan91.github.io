@@ -1,0 +1,37 @@
+AZOBSS PATCH 406 - Software Commission Policy Firestore Role Fix
+
+Issue:
+- Software Tools still showed only "Private Sales Access" or failed to show the correct commission percentage.
+- Role detection from cache/localStorage was not reliable enough.
+
+Fix:
+- Software Tools now resolves staff/semiAdmin role directly from Firestore:
+  users/{username}
+- Username is guessed from:
+  - azCurrentSoftwareOwner()
+  - navbar/body username text
+  - localStorage/sessionStorage profile/cache
+- Once Firestore returns role:
+  - staff -> show Staff: 70% Commission + AZOBSS 30%
+  - semiAdmin -> show Semi-admin: 90% Commission + AZOBSS 10%
+- Firestore role overrides the weak staff-mode fallback.
+- The policy re-checks several times after page load/auth/profile/focus events.
+
+Expected result for zedan0002 if role is semiAdmin:
+- COMMISSION POLICY
+- Semi-admin: 90% Commission
+- Platform Fee: AZOBSS 10%
+- Private Sales Access
+
+Not changed:
+- 1 Month subscription price fix from patch 405 remains.
+- Staff Dashboard account name/rank fix remains.
+- Backend commission calculation remains.
+- PA/BM, ToyyibPay and download token are not touched.
+
+Firebase Rules:
+- No update required if users/{username} role is already readable by the logged-in user as currently used by the site.
+- If Firestore blocks reading users/{username}, this UI cannot detect the role until rules allow the signed-in user to read their own profile.
+
+Render ENV:
+- No new ENV required.
