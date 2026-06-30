@@ -128,6 +128,8 @@
     .countdown-panel span{display:block;color:#86efac;font-size:11px;font-weight:900;text-transform:uppercase}
     .countdown-panel strong{display:block;color:#22c55e;font-size:clamp(24px,4vw,42px);line-height:1;margin-top:6px;font-family:Consolas,monospace}
     .countdown-panel small{display:block;color:#94a3b8;margin-top:5px}
+    .lucky-draw-minimum-note{margin-top:10px;padding:10px 12px;border:1px solid rgba(250,204,21,.34);border-radius:12px;background:rgba(250,204,21,.08);color:#fde68a;font-size:12px;font-weight:800;line-height:1.45;text-align:left}
+    .lucky-draw-minimum-note b{color:#facc15}
     .spin-box{min-height:150px;display:grid;place-items:center;border:1px solid rgba(34,197,94,.25);border-radius:12px;background:radial-gradient(circle at center,rgba(34,197,94,.14),#050914 62%)}
     .spin-box strong{color:#facc15;font-size:30px}
     .spin-box span{display:block;color:#e5e7eb;font-weight:900;margin-top:8px}
@@ -1324,6 +1326,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <span>Lucky Draw akan berjalan dalam</span>
 <strong id="countdownText">-- hari --:--:--</strong>
 <small id="targetText">Auto hujung bulan, 10:00 PM Malaysia</small>
+<div class="lucky-draw-minimum-note" id="minimumParticipantsNote">Jika peserta tidak mencapai <b>100 orang</b>, roll tidak akan berjalan. Countdown akan reset dan dibawa ke bulan seterusnya.</div>
 </div>
 <div class="panel spin-box draw-summary-panel">
 <span class="kicker" id="drawSummaryKicker">Ringkasan</span>
@@ -1772,6 +1775,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         note3: 'Klik berulang dari device atau IP yang sama tidak akan dikira banyak kali.',
         countdownLabel: 'Lucky Draw akan berjalan dalam',
         targetFallback: 'Auto hujung bulan, 10:00 PM Malaysia',
+        minimumParticipantsNote: 'Jika peserta tidak mencapai <b>100 orang</b>, roll tidak akan berjalan. Countdown akan reset dan dibawa ke bulan seterusnya.',
         prizeSmall: 'Prize',
         winnerPending: 'Pemenang belum dipilih',
         rollingTitle: '🎰 Sedang memilih pemenang...',
@@ -1926,6 +1930,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         note3: 'Repeated clicks from the same device or IP address will not be counted multiple times.',
         countdownLabel: 'Lucky Draw will run in',
         targetFallback: 'Auto end of month, 10:00 PM Malaysia',
+        minimumParticipantsNote: 'If participants do not reach <b>100 people</b>, the roll will not run. The countdown will reset and move to next month.',
         prizeSmall: 'Prize',
         winnerPending: 'Winner has not been selected',
         rollingTitle: '🎰 Picking winner...',
@@ -2071,6 +2076,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('#referralInfoNote strong', tr('noteTitle'));
       setTextAll('#referralInfoNote li', [tr('note1'), tr('note2'), tr('note3')]);
       setText('.countdown-panel span', tr('countdownLabel'));
+      const minNote=document.getElementById('minimumParticipantsNote'); if(minNote) minNote.innerHTML=tr('minimumParticipantsNote');
       setText('#drawSummaryTitle', tr('summaryTitle'));
       setText('#drawSummaryParticipantsLabel', tr('summaryParticipants'));
       setText('#drawSummaryShareLabel', tr('summaryProductShare'));
