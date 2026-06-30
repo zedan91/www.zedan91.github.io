@@ -1,0 +1,43 @@
+AZOBSS PATCH 413 - Subscription Route Diagnostic + Fallback Entrypoint
+
+Issue:
+- Even after patch 412, live URL still returns:
+  File Not Found
+  at /api/subscription/verify
+
+Meaning:
+- The route exists in patch 412 code.
+- If live Render still says File Not Found, Render is not running the patched file OR it is running an older deploy/source.
+
+Fix in this patch:
+- Added early diagnostic route to deploy-server.js:
+  GET /api/subscription/health
+  GET /api/subscription/ping
+- Added early missing-code response to deploy-server.js:
+  GET /api/subscription/verify
+  should return JSON with status missing_code if the route is live.
+- Added diagnostic route to backend/server.js:
+  GET /api/subscription/health
+- Added root server.js fallback:
+  If Render start command is accidentally set to node server.js, it will load deploy-server.js.
+- Added startup log marker:
+  AZOBSS_PATCH: 413-subscription-route-diagnostic
+
+After deploy:
+1. Open:
+   https://azobss-backend.onrender.com/api/subscription/health
+2. Expected:
+   JSON with patch: "413"
+3. Then open:
+   https://azobss-backend.onrender.com/api/subscription/verify
+4. Expected:
+   JSON with status: "missing_code"
+
+If health still returns File Not Found:
+- Render is still running an old deploy/source.
+- Do Render Dashboard > azobss-backend > Manual Deploy > Clear build cache & deploy.
+- Check Logs and confirm it shows:
+  AZOBSS_PATCH: 413-subscription-route-diagnostic
+
+No Firebase Rules update required.
+No new Render ENV required.

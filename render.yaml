@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: bash render-build.sh
-    startCommand: node deploy-server.js
+    startCommand: node deploy-server.js # AZOBSS PATCH 413 expected backend entry
     envVars:
       - key: ADMIN_KEY
         sync: false

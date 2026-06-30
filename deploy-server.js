@@ -6399,6 +6399,34 @@ async function handler(req, res) {
     const parsed = url.parse(req.url, true);
     const pathname = parsed.pathname || "/";
 
+    // AZOBSS PATCH 413: emergency subscription route diagnostics before all other route logic.
+    if (pathname === "/api/subscription/health" || pathname === "/api/subscription/ping") {
+      return send(res, 200, JSON.stringify({
+        ok:true,
+        service:"azobss-backend",
+        patch:"413",
+        route:"subscription",
+        runningFile:"deploy-server.js",
+        verify:"/api/subscription/verify",
+        time:new Date().toISOString()
+      }, null, 2), "application/json");
+    }
+    if (pathname === "/api/subscription/verify" && (req.method === "GET" || req.method === "HEAD")) {
+      const quickCode = azSubscriptionCleanCode((parsed.query && (parsed.query.code || parsed.query.activationCode)) || "");
+      if (!quickCode) {
+        return send(res, 400, JSON.stringify({
+          ok:false,
+          valid:false,
+          pro:false,
+          status:"missing_code",
+          error:"Activation code is required.",
+          patch:"413",
+          runningFile:"deploy-server.js"
+        }, null, 2), "application/json");
+      }
+      // If code exists, continue to the full verify handler below.
+    }
+
     if (req.method === "OPTIONS") {
       return send(res, 204, "");
     }
@@ -9066,6 +9094,8 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("PORT:", SERVER_PORT);
   console.log("ROOT:", ROOT);
   console.log("HEALTH:", `/api/create-payment`);
+  console.log("SUBSCRIPTION_HEALTH:", `/api/subscription/health`);
+  console.log("AZOBSS_PATCH:", "413-subscription-route-diagnostic");
   console.log("================================");
   console.log("");
 

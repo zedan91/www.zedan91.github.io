@@ -3152,6 +3152,16 @@ async function azSubVerifyHandler(req, res) {
   }
 }
 
+app.get("/api/subscription/health", (req, res) => res.json({
+  ok:true,
+  service:"azobss-backend",
+  patch:"413",
+  route:"subscription",
+  runningFile:"backend/server.js",
+  verify:"/api/subscription/verify",
+  time:new Date().toISOString()
+}));
+
 app.all("/api/subscription/verify", azSubVerifyHandler);
 
 app.post("/api/subscription/admin/create-code", requireAdmin, async (req, res) => {
@@ -3307,6 +3317,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`AZOBSS Lucky Draw Backend running on port ${PORT}`);
+  console.log("AZOBSS_PATCH: 413-subscription-route-diagnostic");
 });
 
 
