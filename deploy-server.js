@@ -4597,8 +4597,10 @@ function azMyPurchasesRecordValues(row = {}) {
   ].map(v => String(v || "").trim().toLowerCase()).filter(Boolean);
 }
 function azMyPurchasesBelongsToIdentity(row = {}, identity = {}) {
+  // AZOBSS PATCH 415:
+  // My Purchases is an own-account customer view.
+  // Admin all-user viewing remains in Admin Dashboard > Payment Logs / Sales Overview.
   if (!identity || !identity.uid) return false;
-  if (identity.isAdmin) return true;
   const needles = azMyPurchasesIdentityNeedles(identity);
   if (!needles.size) return false;
   const vals = azMyPurchasesRecordValues(row);
@@ -4608,7 +4610,7 @@ function azMyPurchasesHiddenKeys(identity = {}) {
   return Array.from(azMyPurchasesIdentityNeedles(identity));
 }
 function azMyPurchasesIsHiddenForIdentity(row = {}, identity = {}) {
-  if (!row || !identity || !identity.uid || identity.isAdmin) return false;
+  if (!row || !identity || !identity.uid) return false;
   const keys = azMyPurchasesHiddenKeys(identity);
   if (!keys.length) return false;
   const hidden = []
@@ -7039,7 +7041,7 @@ async function handler(req, res) {
         }
         const maxRows = Math.max(1, Math.min(500, Number(parsed.query.limit || 300) || 300));
         const records = await azLoadMyPurchasesForIdentity(req, identity, maxRows);
-        return send(res, 200, JSON.stringify({ ok:true, count:records.length, records }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, scope:"own-account-only", patch:"415", count:records.length, records }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err), records:[] }, null, 2), "application/json");
       }

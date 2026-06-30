@@ -5012,7 +5012,7 @@ document.addEventListener('click',function(e){
   const SHOP_LOCAL_PREFIX = 'azobss_shop_purchase_history_';
   const HIDDEN_LOCAL_PREFIX = 'azobss_my_purchases_hidden_';
   // AZOBSS FIX 382: My Purchases should not get stuck on "Loading purchases..." when Render/Firebase is slow.
-  const CACHE_LOCAL_PREFIX = 'azobss_my_purchases_cached_paid_v382_';
+  const CACHE_LOCAL_PREFIX = 'azobss_my_purchases_cached_paid_v415_';
   const FETCH_TIMEOUT_MS = 9000;
   const MIN_REFRESH_GAP_MS = 2500;
   let loadPromise = null;
@@ -5028,6 +5028,44 @@ document.addEventListener('click',function(e){
       const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
       return String(uid || u.uid || u.usernameKey || u.username || u.displayName || 'guest').trim().toLowerCase() || 'guest';
     }catch(_){ return 'guest'; }
+  }
+  function currentMyPurchasesNeedles(){
+    try{
+      const u = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+      const cur = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+      const vals = [
+        cur && cur.uid,
+        cur && cur.email,
+        u.uid,
+        u.email,
+        u.authEmail,
+        u.profileEmail,
+        u.username,
+        u.usernameKey,
+        u.displayName
+      ];
+      return new Set(vals.map(v => String(v || '').trim().toLowerCase()).filter(Boolean));
+    }catch(_){ return new Set(); }
+  }
+  function myPurchasesOwnerValues(row){
+    const r = row || {};
+    const raw = r.raw && typeof r.raw === 'object' ? r.raw : {};
+    return [
+      r.uid, r.userUid, r.buyerUid,
+      r.email, r.buyerEmail, r.customerEmail,
+      r.username, r.usernameKey, r.displayName,
+      raw.uid, raw.userUid, raw.buyerUid,
+      raw.email, raw.buyerEmail, raw.customerEmail,
+      raw.username, raw.usernameKey, raw.displayName
+    ].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+  }
+  function myPurchasesBelongsToCurrentUser(row){
+    if(row && String(row.source || '').toLowerCase() === 'localhistory') return true;
+    const needles = currentMyPurchasesNeedles();
+    if(!needles.size) return false;
+    const vals = myPurchasesOwnerValues(row);
+    if(!vals.length) return false;
+    return vals.some(v => needles.has(v));
   }
   function rowKey(r){ return String((r && r.source || '') + '::' + (r && (r.recordId || r.productId || r.productName) || '')).toLowerCase(); }
   function readHiddenKeys(){
@@ -5191,7 +5229,7 @@ document.addEventListener('click',function(e){
     lastLoadStartedAt = started;
 
     loadPromise = (async function(){
-      const cached = readCachedRows().filter(r => !isLocallyHidden(r));
+      const cached = readCachedRows().filter(r => !isLocallyHidden(r)).filter(myPurchasesBelongsToCurrentUser);
       if(!state.rows.length && cached.length){
         state.rows = cached;
         state.error = '';
@@ -5213,6 +5251,7 @@ document.addEventListener('click',function(e){
           try{ rows = rows.concat((await loadAzobssPurchaseRecords()).map(normalizePaBmFallback)); }catch(_){ }
         }
         rows = rows.concat(readLocalShopHistory());
+        rows = rows.filter(myPurchasesBelongsToCurrentUser);
         const map = new Map();
         rows.filter(Boolean).filter(shouldShowCustomerPurchase).filter(r => !isLocallyHidden(r)).forEach(r => {
           const key = rowKey(r);
@@ -5247,7 +5286,7 @@ document.addEventListener('click',function(e){
     document.head.appendChild(style);
     modal = document.createElement('div');
     modal.id = 'azobssMyPurchasesProModal';
-    modal.innerHTML = `<div class="az-mypro-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesProTitle"><div class="az-mypro-head"><h3 id="azMyPurchasesProTitle">🧾 My Purchases Pro</h3><button type="button" class="az-mypro-close" aria-label="Close">×</button></div><div class="az-mypro-body"><p class="az-mypro-note">Hanya pembelian yang sudah berjaya/verified dipaparkan di sini. Checkout yang belum selesai tidak akan masuk My Purchases.</p><div id="azMyProError"></div><div class="az-mypro-kpis" id="azMyProKpis"></div><div class="az-mypro-tools"><input id="azMyProSearch" placeholder="Search product / order ID / state..."><select id="azMyProCategory"><option value="all">All Categories</option><option value="PA/BM">PA/BM</option><option value="Software">Software</option><option value="CAD Tools">CAD Tools</option></select><select id="azMyProStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="active">Download Active</option><option value="expired">Expired / Used</option><option value="failed">Failed / Cancelled</option></select><button id="azMyProRefresh" type="button">Refresh</button></div><div class="az-mypro-list" id="azMyProList"><div class="az-mypro-empty">Loading...</div></div></div></div>`;
+    modal.innerHTML = `<div class="az-mypro-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesProTitle"><div class="az-mypro-head"><h3 id="azMyPurchasesProTitle">🧾 My Purchases Pro</h3><button type="button" class="az-mypro-close" aria-label="Close">×</button></div><div class="az-mypro-body"><p class="az-mypro-note">Hanya pembelian akaun ini yang sudah berjaya/verified dipaparkan di sini. Admin boleh lihat semua transaksi melalui Payment Logs / Sales Overview.</p><div id="azMyProError"></div><div class="az-mypro-kpis" id="azMyProKpis"></div><div class="az-mypro-tools"><input id="azMyProSearch" placeholder="Search product / order ID / state..."><select id="azMyProCategory"><option value="all">All Categories</option><option value="PA/BM">PA/BM</option><option value="Software">Software</option><option value="CAD Tools">CAD Tools</option></select><select id="azMyProStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="active">Download Active</option><option value="expired">Expired / Used</option><option value="failed">Failed / Cancelled</option></select><button id="azMyProRefresh" type="button">Refresh</button></div><div class="az-mypro-list" id="azMyProList"><div class="az-mypro-empty">Loading...</div></div></div></div>`;
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if(e.target === modal || e.target.closest('.az-mypro-close')) modal.classList.remove('is-open'); });
     modal.querySelector('#azMyProSearch')?.addEventListener('input', e => { state.q = e.target.value || ''; render(); });
