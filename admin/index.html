@@ -1500,6 +1500,107 @@ body[data-dashboard-page="admin"] .topbar{
 }
 </style>
 
+
+<style id="az-admin-registered-role-color-dot-fix-410">
+/* AZOBSS PATCH 410: Registered User Records role color + PA/BM allowed dot */
+.az-admin-reg-row{
+  position:relative;
+  overflow:hidden;
+  border-left:5px solid rgba(148,163,184,.35)!important;
+}
+.az-admin-reg-row::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:100%;
+  pointer-events:none;
+  opacity:.22;
+}
+.az-admin-reg-row.role-admin{
+  border-color:rgba(250,204,21,.78)!important;
+  background:linear-gradient(135deg,rgba(113,63,18,.33),rgba(15,23,42,.72))!important;
+}
+.az-admin-reg-row.role-admin::before{
+  background:radial-gradient(circle at 0% 20%,rgba(250,204,21,.26),transparent 35%);
+}
+.az-admin-reg-row.role-semiadmin{
+  border-color:rgba(168,85,247,.86)!important;
+  background:linear-gradient(135deg,rgba(88,28,135,.34),rgba(15,23,42,.72))!important;
+}
+.az-admin-reg-row.role-semiadmin::before{
+  background:radial-gradient(circle at 0% 20%,rgba(168,85,247,.30),transparent 35%);
+}
+.az-admin-reg-row.role-staff{
+  border-color:rgba(59,130,246,.86)!important;
+  background:linear-gradient(135deg,rgba(30,64,175,.34),rgba(15,23,42,.72))!important;
+}
+.az-admin-reg-row.role-staff::before{
+  background:radial-gradient(circle at 0% 20%,rgba(59,130,246,.28),transparent 35%);
+}
+.az-admin-reg-row.role-member,
+.az-admin-reg-row.role-user{
+  border-color:rgba(34,197,94,.76)!important;
+  background:linear-gradient(135deg,rgba(20,83,45,.27),rgba(15,23,42,.72))!important;
+}
+.az-admin-reg-row.role-member::before,
+.az-admin-reg-row.role-user::before{
+  background:radial-gradient(circle at 0% 20%,rgba(34,197,94,.20),transparent 35%);
+}
+.az-admin-reg-row.role-unknown{
+  border-color:rgba(148,163,184,.55)!important;
+}
+.az-admin-reg-title,
+.az-admin-reg-sub,
+.az-admin-reg-time,
+.az-reg-actions{
+  position:relative;
+  z-index:1;
+}
+.az-admin-reg-role-pill,
+.az-admin-reg-pabm-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border-radius:999px;
+  padding:2px 7px;
+  font-size:10px;
+  font-weight:950;
+  line-height:1.25;
+  border:1px solid rgba(148,163,184,.22);
+  background:rgba(2,6,23,.34);
+  color:#dbeafe;
+}
+.az-admin-reg-role-pill.role-admin{color:#fde68a;border-color:rgba(250,204,21,.42);background:rgba(113,63,18,.28)}
+.az-admin-reg-role-pill.role-semiadmin{color:#e9d5ff;border-color:rgba(168,85,247,.46);background:rgba(88,28,135,.30)}
+.az-admin-reg-role-pill.role-staff{color:#bfdbfe;border-color:rgba(59,130,246,.48);background:rgba(30,64,175,.30)}
+.az-admin-reg-role-pill.role-member,
+.az-admin-reg-role-pill.role-user{color:#bbf7d0;border-color:rgba(34,197,94,.42);background:rgba(20,83,45,.27)}
+.az-pabm-dot{
+  width:9px;
+  height:9px;
+  border-radius:999px;
+  display:inline-block;
+  box-shadow:0 0 0 3px rgba(255,255,255,.04);
+}
+.az-pabm-dot.on{
+  background:#22c55e;
+  box-shadow:0 0 0 3px rgba(34,197,94,.12),0 0 12px rgba(34,197,94,.68);
+}
+.az-pabm-dot.off{
+  background:#ef4444;
+  box-shadow:0 0 0 3px rgba(239,68,68,.12),0 0 12px rgba(239,68,68,.48);
+}
+.az-admin-reg-pabm-pill.on{color:#bbf7d0;border-color:rgba(34,197,94,.42);background:rgba(20,83,45,.24)}
+.az-admin-reg-pabm-pill.off{color:#fecaca;border-color:rgba(239,68,68,.38);background:rgba(127,29,29,.22)}
+.az-admin-reg-meta-line{
+  margin-top:3px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  align-items:center;
+}
+</style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -4565,6 +4666,26 @@ function azRegPaAllowed(x){
   return x.paBmAllowed===true||x.paAccessAllowed===true||x.allowPABM===true||x.allowPaBm===true||x.canAccessPaBm===true||x.showPaBmTab===true||x.permissions?.paBmAllowed===true;
 }
 function azRegRole(x){return String(x.role||'member').trim().toLowerCase().replace(/[^a-z]/g,'');}
+function azRegRoleClass(x){
+  const r=azRegRole(x);
+  if(r==='admin')return 'role-admin';
+  if(r==='semiadmin')return 'role-semiadmin';
+  if(r==='staff')return 'role-staff';
+  if(r==='member'||r==='user')return 'role-member';
+  return 'role-unknown';
+}
+function azRegRoleLabel(x){
+  const raw=String(x.role||'member').trim();
+  const r=azRegRole(x);
+  if(r==='admin')return 'admin';
+  if(r==='semiadmin')return 'semiAdmin';
+  if(r==='staff')return 'staff';
+  if(r==='member'||r==='user')return 'member';
+  return raw || 'member';
+}
+function azRegPaDotHtml(pa){
+  return `<span class="az-admin-reg-pabm-pill ${pa?'on':'off'}"><span class="az-pabm-dot ${pa?'on':'off'}"></span>PA/BM ${pa?'allowed':'off'}</span>`;
+}
 function azRegNameEmail(x){return String((azRegUser(x)||'')+' '+(x.email||x.authEmail||'')).toLowerCase();}
 function azRegSearchText(x){
   return [
@@ -4604,16 +4725,22 @@ function renderRegisteredUsersAdmin(){
   box.innerHTML=page.map(x=>{
     const id=esc(x.docId||azRegUser(x));
     const pa=azRegPaAllowed(x);
-    return `<div class="az-admin-reg-row">
-      
+    const roleClass=azRegRoleClass(x);
+    const roleLabel=azRegRoleLabel(x);
+    const sub=esc(azRegSub(x));
+    return `<div class="az-admin-reg-row ${roleClass}">
       <div>
         <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
-        <div class="az-admin-reg-sub">${esc(azRegSub(x))} • ${pa?'PA/BM allowed':'PA/BM off'}</div>
+        <div class="az-admin-reg-sub">${sub}</div>
+        <div class="az-admin-reg-meta-line">
+          <span class="az-admin-reg-role-pill ${roleClass}">Role: ${esc(roleLabel)}</span>
+          ${azRegPaDotHtml(pa)}
+        </div>
       </div>
       <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
       <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
     </div>`;
-  }).join('')||'<div class="az-admin-reg-row"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
+  }).join('')||'<div class="az-admin-reg-row role-unknown"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
   if($('#registeredUsersPageInfo')){
     const loaded = adminRegisteredUsersCache.length;
     const total = adminRegisteredUsersTotalCount;
@@ -5225,8 +5352,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=409"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=409"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=410"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=410"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
