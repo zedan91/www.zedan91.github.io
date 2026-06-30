@@ -3076,6 +3076,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <button class="software-category-btn" type="button" data-software-category="General Tools">🧰 General Tools</button>
   <button class="software-category-btn" type="button" data-software-category="Video Downloaders">⬇️ Video Downloaders</button>
   <button class="software-category-btn" type="button" data-software-category="Remote Tools">🖥️ Remote Tools</button>
+  <button class="software-category-btn" type="button" data-software-category="Live Streaming Tools">📡 Live Streaming Tools</button>
 </div>
 </div>
 <div class="downloads-grid" id="softwareDownloadsGrid">
@@ -3127,6 +3128,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <option value="Office Tools">Office Tools</option>
 <option value="Operating System">Operating System</option>
 <option value="Remote Tools">Remote Tools</option>
+<option value="Live Streaming Tools">Live Streaming Tools</option>
 <option value="Security">Security</option>
 <option value="System Utilities">System Utilities</option>
 <option value="Video Downloaders">Video Downloaders</option>
@@ -12075,6 +12077,38 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
     [500,1200,2500,4500,7000].forEach(ms=>setTimeout(run,ms));
   });
   ['focus','storage','azobss:profile-ready','azobss:user-ready','azobss:auth-ready'].forEach(ev=>window.addEventListener(ev,run));
+})();
+</script>
+
+
+<script id="az-live-streaming-tools-category-414">
+(function(){
+  const CAT='Live Streaming Tools';
+  const ICON='📡';
+  function addLiveStreamingCategory(){
+    try{
+      const filter=document.getElementById('softwareCategoryFilter');
+      if(filter && !filter.querySelector('[data-software-category="Live Streaming Tools"]')){
+        const btn=document.createElement('button');
+        btn.className='software-category-btn';
+        btn.type='button';
+        btn.dataset.softwareCategory=CAT;
+        btn.textContent=ICON+' '+CAT;
+        const remote=filter.querySelector('[data-software-category="Remote Tools"]');
+        if(remote) remote.insertAdjacentElement('afterend',btn); else filter.appendChild(btn);
+      }
+      const sel=document.getElementById('softwareAdminCategory');
+      if(sel && ![...sel.options].some(o=>o.value===CAT)){
+        const opt=document.createElement('option');
+        opt.value=CAT; opt.textContent=CAT;
+        const remote=[...sel.options].find(o=>o.value==='Remote Tools'||/Remote Tools/i.test(o.textContent||''));
+        if(remote) remote.insertAdjacentElement('afterend',opt); else sel.appendChild(opt);
+      }
+    }catch(e){console.warn('AZOBSS Live Streaming Tools category patch failed',e)}
+  }
+  document.addEventListener('DOMContentLoaded',addLiveStreamingCategory);
+  setTimeout(addLiveStreamingCategory,500);
+  setTimeout(addLiveStreamingCategory,1500);
 })();
 </script>
 
