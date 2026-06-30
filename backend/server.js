@@ -619,7 +619,7 @@ async function refreshToyyibOrderStatus(order) {
     const result = await toyyibPost("getBillTransactions", { billCode: order.billCode, billpaymentStatus: "1" });
     const tx = Array.isArray(result) ? result[0] : null;
     if (tx && String(tx.billpaymentStatus || tx.billStatus || "") === "1") {
-      const paid = upsertPremiumOrder({
+      let paid = upsertPremiumOrder({
         ...order,
         status: "paid",
         paymentMethod: "toyyibpay",
@@ -627,6 +627,7 @@ async function refreshToyyibOrderStatus(order) {
         toyyibTransaction: tx,
         paidAt: new Date().toISOString()
       });
+      paid = await azSubEnsurePaidOrderCode(paid);
       const withDownload = makePremiumDownloadForOrder(paid);
       await azFinalizeCommissionForOrder(withDownload);
       await sendDownloadEmailForOrder(withDownload);
@@ -657,7 +658,12 @@ function toyyibPaidResponse(order, req) {
     downloadUrl: `${base}/api/premium/download/${encodeURIComponent(withToken.downloadToken)}`,
     receiptUrl: `${base}/api/premium/receipt/${encodeURIComponent(withToken.orderId)}`,
     expiresAt: withToken.tokenExpiresAt,
-    maxDownload: withToken.maxDownload
+    maxDownload: withToken.maxDownload,
+    activationCode: withToken.activationCode || "",
+    activationCodeStatus: withToken.activationCodeStatus || "",
+    activationCodeExpiresAt: withToken.activationCodeExpiresAt || "",
+    subscriptionPlanLabel: withToken.subscriptionPlanLabel || withToken.subscriptionPlan?.label || "",
+    subscriptionVerifyApi: "https://azobss-backend.onrender.com/api/subscription/verify"
   };
 }
 
@@ -1222,7 +1228,7 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
     const requestedLimit = 1; // auto-expire after first download
     const requestedExpiryHours = Math.max(0, Math.min(24 * 30, Number(product.expiryHours ?? data.expiryHours ?? 24)));
     if (!productName || !amountSen) return res.status(400).json({ ok:false, error:"Missing product name or valid amount." });
-    if (!downloadLink) return res.status(400).json({ ok:false, error:"Premium download link belum diset untuk produk ini." });
+    if (!downloadLink && !azSubIsSaleProduct(product, data)) return res.status(400).json({ ok:false, error:"Premium download link belum diset untuk produk ini." });
 
     const orderId = makePremiumId("tp");
     const apiBase = publicBaseUrl(req);
@@ -1270,6 +1276,7 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
       paymentUrl,
       user,
       product: { ...product, id: productId, name: productName, price: amountText },
+      ...(azSubIsSaleProduct(product, data) ? azSubPatchFromProduct(product, data) : {}),
       staffReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
       shareReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
       productOwner: azProductOwnerFrom(product, { productId }),
@@ -2683,6 +2690,611 @@ app.get("/api/download-stesen-tanda-aras", async (req, res) => {
   } catch (error) {
     console.error("BM/SBM download failed:", error);
     res.status(500).json({ ok: false, error: "BM/SBM download failed" });
+  }
+});
+
+
+
+
+
+// =====================================================
+// AZOBSS PATCH 412: SUBSCRIPTION API MIRROR FOR backend/server.js
+// Reason: Render may be running backend/server.js, not deploy-server.js.
+// =====================================================
+const AZOBSS_BACKEND_SUB_DEVICE_LIMIT = Math.max(1, Number(process.env.AZOBSS_SUBSCRIPTION_DEVICE_LIMIT || 1) || 1);
+const AZOBSS_BACKEND_SUB_TRANSFER_LIMIT = Math.max(0, Number(process.env.AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR || 3) || 3);
+const AZOBSS_BACKEND_SUB_GRACE_DAYS = Math.max(0, Number(process.env.AZOBSS_SUBSCRIPTION_GRACE_DAYS || 3) || 3);
+
+function azSubCleanCode(v = "") {
+  return cleanPremiumText(v || "", 180).toUpperCase().replace(/\s+/g, "").replace(/[^A-Z0-9_-]+/g, "").slice(0, 180);
+}
+function azSubCleanDevice(v = "") {
+  return cleanPremiumText(v || "", 220).replace(/[^a-zA-Z0-9._:@-]+/g, "").slice(0, 180);
+}
+function azSubCleanEmail(v = "") {
+  return cleanPremiumText(v || "", 180).trim().toLowerCase();
+}
+function azSubCleanUsername(v = "") {
+  return cleanPremiumText(v || "", 120).trim().toLowerCase().replace(/[^a-z0-9_.-]+/g, "");
+}
+function azSubHashSecret() {
+  return String(process.env.AZOBSS_SUBSCRIPTION_HASH_SECRET || process.env.AZOBSS_DOWNLOAD_HASH_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || ADMIN_KEY || "azobss-subscription-local-secret").trim();
+}
+function azSubCodeHash(code = "") {
+  const safe = azSubCleanCode(code);
+  if (!safe) return "";
+  return crypto.createHash("sha256").update(safe + "::" + azSubHashSecret()).digest("hex");
+}
+function azSubMakeCode(prefix = "AZOBSS", planId = "1m") {
+  const p = cleanPremiumText(prefix || "AZOBSS", 18).toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "AZOBSS";
+  const plan = cleanPremiumText(planId || "1m", 12).toUpperCase().replace(/[^A-Z0-9]+/g, "") || "1M";
+  return `${p}-${plan}-${crypto.randomBytes(3).toString("hex").toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+}
+function azSubPlanDefs() {
+  return [
+    { id:"1m", months:1, durationDays:31, label:"1 Month Activation Code", price:"RM29.90", priceSen:2990, monthlyText:"RM29.90/month", saveText:"" },
+    { id:"3m", months:3, durationDays:93, label:"3 Months Activation Code", price:"RM69.90", priceSen:6990, monthlyText:"RM23.30/month", saveText:"Save RM19.80" },
+    { id:"12m", months:12, durationDays:366, label:"12 Months Activation Code", price:"RM239.00", priceSen:23900, monthlyText:"RM19.92/month", saveText:"Save RM119.80" }
+  ];
+}
+function azSubPlanId(v = "1m") {
+  const s = String(v || "1m").toLowerCase().replace(/\s+/g, "");
+  if (s.includes("12") || s === "12m" || s === "year" || s === "annual") return "12m";
+  if (s.includes("3") || s === "3m" || s === "quarter") return "3m";
+  return "1m";
+}
+function azSubPlanById(v = "1m") {
+  const id = azSubPlanId(v);
+  return azSubPlanDefs().find(p => p.id === id) || azSubPlanDefs()[0];
+}
+function azSubExpiryMs(value) {
+  const n = Number(value || 0);
+  if (Number.isFinite(n) && n > 0) return n;
+  const t = Date.parse(String(value || ""));
+  return Number.isFinite(t) ? t : 0;
+}
+function azSubBuyerEmail(order = {}) {
+  return azSubCleanEmail(order.buyerEmail || order.email || order.user?.email || order.customerEmail || "");
+}
+function azSubUsername(order = {}) {
+  return azSubCleanUsername(order.username || order.usernameKey || order.user?.username || order.user?.usernameKey || order.buyerUsername || "");
+}
+function azSubMaskDevice(id = "") {
+  const s = String(id || "");
+  if (!s) return "";
+  if (s.length <= 8) return "***" + s.slice(-3);
+  return s.slice(0, 4) + "..." + s.slice(-5);
+}
+function azSubYearKey(ms = Date.now()) {
+  return String(new Date(Number(ms || Date.now()) || Date.now()).getUTCFullYear());
+}
+function azSubTransferCount(order = {}, yearKey = azSubYearKey()) {
+  const byYear = order.transferCountByYear && typeof order.transferCountByYear === "object" ? order.transferCountByYear : {};
+  const explicit = Number(byYear[yearKey] || 0) || 0;
+  const hist = Array.isArray(order.deviceTransferHistory) ? order.deviceTransferHistory : [];
+  const counted = hist.filter(x => azSubYearKey(Number(x.transferAtMs || Date.parse(x.transferAt || "") || 0) || Date.now()) === yearKey).length;
+  return Math.max(explicit, counted);
+}
+function azSubPublic(order = {}, extra = {}) {
+  const nowMs = Date.now();
+  const expMs = Number(order.activationCodeExpiresAtMs || 0) || azSubExpiryMs(order.activationCodeExpiresAt);
+  const yearKey = azSubYearKey(nowMs);
+  return {
+    ok: true,
+    valid: !!extra.valid,
+    pro: !!extra.valid,
+    status: extra.status || "",
+    reason: extra.reason || "",
+    message: extra.message || "",
+    transferRequired: !!extra.transferRequired,
+    transferAllowed: extra.transferAllowed !== false,
+    productId: order.productId || order.product?.productId || order.product?.id || "",
+    productName: order.productName || order.product?.name || "",
+    plan: order.subscriptionPlanLabel || order.subscriptionPlan?.label || "",
+    planId: order.subscriptionPlanId || order.subscriptionPlan?.id || "",
+    months: Number(order.subscriptionMonths || order.subscriptionPlan?.months || 0) || 0,
+    expiresAt: order.activationCodeExpiresAt || (expMs ? new Date(expMs).toISOString() : ""),
+    expiresAtMs: expMs,
+    serverTime: new Date(nowMs).toISOString(),
+    serverTimeMs: nowMs,
+    graceDays: AZOBSS_BACKEND_SUB_GRACE_DAYS,
+    graceUntil: new Date(nowMs + AZOBSS_BACKEND_SUB_GRACE_DAYS * 86400000).toISOString(),
+    graceUntilMs: nowMs + AZOBSS_BACKEND_SUB_GRACE_DAYS * 86400000,
+    deviceLimit: Number(order.deviceLimit || AZOBSS_BACKEND_SUB_DEVICE_LIMIT) || AZOBSS_BACKEND_SUB_DEVICE_LIMIT,
+    activeDeviceMasked: azSubMaskDevice(order.activeDeviceId || ""),
+    currentDeviceMasked: azSubMaskDevice(extra.deviceId || ""),
+    transferCountThisYear: azSubTransferCount(order, yearKey),
+    transferLimitPerYear: Number(order.transferLimitPerYear || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT) || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT,
+    orderId: cleanPremiumText(order.orderId || "", 160)
+  };
+}
+function azSubAdminRow(order = {}) {
+  const expMs = Number(order.activationCodeExpiresAtMs || 0) || azSubExpiryMs(order.activationCodeExpiresAt);
+  const code = azSubCleanCode(order.activationCode || "");
+  const yearKey = azSubYearKey();
+  return {
+    orderId: cleanPremiumText(order.orderId || "", 160),
+    billCode: cleanPremiumText(order.billCode || "", 120),
+    activationCode: code,
+    codeHash: cleanPremiumText(order.activationCodeHash || azSubCodeHash(code), 100),
+    codeStatus: cleanPremiumText(order.activationCodeStatus || order.codeStatus || "active", 40),
+    status: cleanPremiumText(order.status || "", 40),
+    productId: order.productId || order.product?.productId || order.product?.id || "",
+    productName: order.productName || order.product?.name || "",
+    plan: order.subscriptionPlanLabel || order.subscriptionPlan?.label || "",
+    planId: order.subscriptionPlanId || order.subscriptionPlan?.id || "",
+    months: Number(order.subscriptionMonths || order.subscriptionPlan?.months || 0) || 0,
+    buyerEmail: azSubBuyerEmail(order),
+    username: azSubUsername(order),
+    expiresAt: order.activationCodeExpiresAt || (expMs ? new Date(expMs).toISOString() : ""),
+    expiresAtMs: expMs,
+    activeDeviceMasked: azSubMaskDevice(order.activeDeviceId || ""),
+    previousDeviceMasked: azSubMaskDevice(order.previousDeviceId || ""),
+    deviceLimit: Number(order.deviceLimit || AZOBSS_BACKEND_SUB_DEVICE_LIMIT) || AZOBSS_BACKEND_SUB_DEVICE_LIMIT,
+    transferCountThisYear: azSubTransferCount(order, yearKey),
+    transferLimitPerYear: Number(order.transferLimitPerYear || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT) || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT,
+    activatedAt: order.activatedAt || "",
+    lastVerifiedAt: order.lastVerifiedAt || "",
+    createdAt: order.createdAt || "",
+    updatedAt: order.updatedAt || "",
+    source: cleanPremiumText(order.source || "", 80)
+  };
+}
+function azSubIsSaleProduct(product = {}, data = {}) {
+  return !!(
+    product.subscriptionCodeEnabled || product.subscriptionProduct || product.activationCodeSale ||
+    data.subscriptionCodeEnabled || data.subscriptionProduct || data.activationCodeSale ||
+    data.subscriptionPlanId || product.subscriptionPlanId || product.subscriptionPlan
+  );
+}
+function azSubPatchFromProduct(product = {}, data = {}) {
+  const plan = azSubPlanById(data.subscriptionPlanId || product.subscriptionPlanId || data.subscriptionPlan?.id || product.subscriptionPlan?.id || product.subscriptionMonths || data.subscriptionMonths || "1m");
+  const durationDays = Math.max(1, Number(data.subscriptionDurationDays || product.subscriptionDurationDays || plan.durationDays || 31) || 31);
+  const prefix = cleanPremiumText(data.activationCodePrefix || product.activationCodePrefix || product.subscriptionCodePrefix || "AZOBSS", 18).toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "AZOBSS";
+  return {
+    subscriptionCodeEnabled:true,
+    subscriptionProduct:true,
+    activationCodeSale:true,
+    subscriptionPlan:plan,
+    subscriptionPlanId:plan.id,
+    subscriptionPlanLabel:data.subscriptionPlanLabel || product.subscriptionPlanLabel || plan.label,
+    subscriptionMonths:Number(data.subscriptionMonths || product.subscriptionMonths || plan.months || 1) || 1,
+    subscriptionDurationDays:durationDays,
+    subscriptionMonthlyText:data.subscriptionMonthlyText || product.subscriptionMonthlyText || plan.monthlyText,
+    subscriptionSaveText:data.subscriptionSaveText || product.subscriptionSaveText || plan.saveText,
+    activationCodePrefix:prefix,
+    deviceLimit:AZOBSS_BACKEND_SUB_DEVICE_LIMIT,
+    transferLimitPerYear:AZOBSS_BACKEND_SUB_TRANSFER_LIMIT,
+    graceDays:AZOBSS_BACKEND_SUB_GRACE_DAYS
+  };
+}
+function azSubLocalUpsert(order = {}) {
+  const saved = upsertPremiumOrder(order);
+  return saved || order;
+}
+async function azSubPersist(order = {}) {
+  try {
+    const db = getAzobssBackendDb();
+    if (!db) return { ok:false, reason:"firebase-not-ready" };
+    const code = azSubCleanCode(order.activationCode || "");
+    const hash = cleanPremiumText(order.activationCodeHash || azSubCodeHash(code), 100);
+    const docId = hash || cleanPremiumText(order.orderId || code || ("sub_" + Date.now()), 180);
+    const safe = { ...order, activationCode:code, activationCodeHash:hash, updatedAt:new Date().toISOString(), updatedAtMs:Date.now(), subscriptionLicenseVersion:412 };
+    await db.collection("subscriptionCodes").doc(docId).set(safe, { merge:true });
+    if (order.orderId) await db.collection("premiumOrders").doc(cleanPremiumText(order.orderId, 180)).set(safe, { merge:true }).catch(()=>{});
+    return { ok:true, docId };
+  } catch (err) {
+    console.warn("AZOBSS backend/server subscription persist failed:", err && (err.message || err));
+    return { ok:false, error:err && err.message ? err.message : String(err) };
+  }
+}
+async function azSubSave(order = {}, patch = {}) {
+  const merged = {
+    ...order,
+    ...patch,
+    activationCode: azSubCleanCode(patch.activationCode || order.activationCode || ""),
+    activationCodeHash: patch.activationCodeHash || order.activationCodeHash || azSubCodeHash(patch.activationCode || order.activationCode || ""),
+    subscriptionCodeEnabled:true,
+    activationCodeSale:true,
+    deviceLimit:Number(patch.deviceLimit || order.deviceLimit || AZOBSS_BACKEND_SUB_DEVICE_LIMIT) || AZOBSS_BACKEND_SUB_DEVICE_LIMIT,
+    transferLimitPerYear:Number(patch.transferLimitPerYear || order.transferLimitPerYear || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT) || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT,
+    graceDays:AZOBSS_BACKEND_SUB_GRACE_DAYS,
+    updatedAt:new Date().toISOString(),
+    updatedAtMs:Date.now()
+  };
+  const saved = azSubLocalUpsert(merged);
+  azSubPersist(saved);
+  return saved;
+}
+async function azSubFindByCode(code = "") {
+  const safe = azSubCleanCode(code);
+  const hash = azSubCodeHash(safe);
+  const rows = [];
+  const push = (x, source="") => { if (x && typeof x === "object") rows.push({ ...x, _source:source || x._source || "" }); };
+
+  try { readPremiumOrders().forEach(x => push(x, "local-premiumOrders")); } catch (_) {}
+
+  const db = getAzobssBackendDb();
+  if (db) {
+    try {
+      const doc = await db.collection("subscriptionCodes").doc(hash).get();
+      if (doc.exists) push({ docId:doc.id, ...(doc.data() || {}) }, "firestore-subscriptionCodes-doc");
+    } catch (err) { console.warn("subscriptionCodes doc lookup skipped:", err && (err.message || err)); }
+    try {
+      const snap = await db.collection("subscriptionCodes").where("activationCode", "==", safe).limit(5).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-subscriptionCodes-code"));
+    } catch (err) { console.warn("subscriptionCodes code lookup skipped:", err && (err.message || err)); }
+    try {
+      const snap = await db.collection("premiumOrders").where("activationCodeHash", "==", hash).limit(5).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-premiumOrders-hash"));
+    } catch (err) { console.warn("premiumOrders hash lookup skipped:", err && (err.message || err)); }
+    try {
+      const snap = await db.collection("premiumOrders").where("activationCode", "==", safe).limit(5).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-premiumOrders-code"));
+    } catch (err) { console.warn("premiumOrders code lookup skipped:", err && (err.message || err)); }
+  }
+
+  const seen = new Set();
+  const filtered = rows.filter(x => {
+    const ok = azSubCleanCode(x.activationCode || "") === safe || cleanPremiumText(x.activationCodeHash || "", 100) === hash;
+    if (!ok) return false;
+    const key = String(x.orderId || x.billCode || x.docId || x.activationCodeHash || x.activationCode || Math.random());
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  filtered.sort((a,b) => Number(b.updatedAtMs || b.createdAtMs || b.activationCodeIssuedAtMs || 0) - Number(a.updatedAtMs || a.createdAtMs || a.activationCodeIssuedAtMs || 0));
+  return filtered[0] || null;
+}
+async function azSubFindByRef(ref = {}) {
+  const code = azSubCleanCode(ref.activationCode || ref.code || "");
+  if (code) return await azSubFindByCode(code);
+  const orderId = cleanPremiumText(ref.orderId || "", 180);
+  const billCode = cleanPremiumText(ref.billCode || "", 120);
+  if (orderId || billCode) {
+    const local = findPremiumOrderByAny({ orderId, billCode });
+    if (local) return local;
+    const db = getAzobssBackendDb();
+    if (db && orderId) {
+      try {
+        const doc = await db.collection("premiumOrders").doc(orderId).get();
+        if (doc.exists) return { docId:doc.id, ...(doc.data() || {}) };
+      } catch (_) {}
+    }
+  }
+  return null;
+}
+async function azSubAdminList(search = "", limitRows = 300) {
+  const out = [];
+  const push = (x, source="") => { if (x && (x.activationCode || x.activationCodeHash || x.subscriptionCodeEnabled || x.activationCodeSale)) out.push({ ...x, _source:source }); };
+  try { readPremiumOrders().forEach(x => push(x, "local-premiumOrders")); } catch (_) {}
+  const db = getAzobssBackendDb();
+  if (db) {
+    try {
+      const snap = await db.collection("subscriptionCodes").limit(Math.min(500, limitRows)).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-subscriptionCodes"));
+    } catch (err) { console.warn("subscriptionCodes list skipped:", err && (err.message || err)); }
+    try {
+      const snap = await db.collection("premiumOrders").limit(Math.min(500, limitRows)).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-premiumOrders"));
+    } catch (err) { console.warn("premiumOrders list skipped:", err && (err.message || err)); }
+  }
+
+  const q = String(search || "").trim().toLowerCase();
+  const seen = new Set();
+  const filtered = [];
+  for (const x of out) {
+    const key = String(x.orderId || x.billCode || x.docId || x.activationCodeHash || x.activationCode || Math.random());
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const hay = [
+      x.activationCode, x.activationCodeHash, x.orderId, x.billCode, x.productId, x.productName,
+      x.buyerEmail, x.email, x.username, x.usernameKey, x.user?.email, x.user?.username, x.activationCodeStatus
+    ].map(v => String(v || "").toLowerCase()).join(" ");
+    if (q && !hay.includes(q)) continue;
+    filtered.push(x);
+  }
+  filtered.sort((a,b) => Number(b.updatedAtMs || b.createdAtMs || b.activationCodeIssuedAtMs || 0) - Number(a.updatedAtMs || a.createdAtMs || a.activationCodeIssuedAtMs || 0));
+  return filtered.slice(0, limitRows).map(azSubAdminRow);
+}
+async function azSubEnsurePaidOrderCode(order = {}) {
+  if (!order || order.activationCode) return order;
+  const product = order.product || {};
+  if (!azSubIsSaleProduct(product, order)) return order;
+  const patch = azSubPatchFromProduct(product, order);
+  const paidMs = Date.now();
+  const expiresAtMs = paidMs + Math.max(1, Number(patch.subscriptionDurationDays || 31) || 31) * 86400000;
+  const code = azSubMakeCode(patch.activationCodePrefix || "AZOBSS", patch.subscriptionPlanId || "1m");
+  return await azSubSave(order, {
+    ...patch,
+    activationCode:code,
+    activationCodeHash:azSubCodeHash(code),
+    activationCodeStatus:"active",
+    activationCodeIssuedAt:new Date(paidMs).toISOString(),
+    activationCodeIssuedAtMs:paidMs,
+    activationCodeExpiresAt:new Date(expiresAtMs).toISOString(),
+    activationCodeExpiresAtMs:expiresAtMs,
+    activeDeviceId:"",
+    previousDeviceId:"",
+    transferCountByYear:{},
+    deviceTransferHistory:[],
+    subscriptionLicenseVersion:412
+  });
+}
+
+async function azSubVerifyHandler(req, res) {
+  try {
+    const body = req.method === "POST" ? (req.body || {}) : {};
+    const code = azSubCleanCode(body.code || req.query.code || body.activationCode || req.query.activationCode || "");
+    const productId = cleanPremiumText(body.productId || req.query.productId || "", 180);
+    const deviceId = azSubCleanDevice(body.deviceId || body.machineId || body.hardwareId || req.query.deviceId || req.query.machineId || req.query.hardwareId || "");
+    const appVersion = cleanPremiumText(body.appVersion || req.query.appVersion || "", 80);
+    const reqEmail = azSubCleanEmail(body.email || body.buyerEmail || body.userEmail || req.query.email || req.query.buyerEmail || req.query.userEmail || "");
+    const reqUsername = azSubCleanUsername(body.username || body.usernameKey || req.query.username || req.query.usernameKey || "");
+    const transfer = body.transfer === true || body.confirmTransfer === true || ["true","1","yes"].includes(String(body.transfer || req.query.transfer || body.confirmTransfer || req.query.confirmTransfer || "").toLowerCase());
+
+    if (!code) return res.status(400).json({ ok:false, valid:false, pro:false, status:"missing_code", error:"Activation code is required." });
+
+    let order = await azSubFindByCode(code);
+    if (!order) return res.status(404).json({ ok:true, valid:false, pro:false, status:"not_found", reason:"not_found", error:"Activation code not found." });
+
+    if (productId && ![order.productId, order.product?.productId, order.product?.id].some(v => String(v || "") === productId)) {
+      return res.json(azSubPublic(order, { valid:false, status:"product_mismatch", reason:"product_mismatch", message:"This activation code is for a different product.", deviceId }));
+    }
+
+    const orderEmail = azSubBuyerEmail(order);
+    if (orderEmail && reqEmail && orderEmail !== reqEmail) {
+      return res.json(azSubPublic(order, { valid:false, status:"email_mismatch", reason:"email_mismatch", message:"This activation code belongs to a different email/account.", deviceId }));
+    }
+    const orderUsername = azSubUsername(order);
+    if (orderUsername && reqUsername && orderUsername !== reqUsername) {
+      return res.json(azSubPublic(order, { valid:false, status:"account_mismatch", reason:"account_mismatch", message:"This activation code belongs to a different username/account.", deviceId }));
+    }
+
+    const codeStatus = String(order.activationCodeStatus || order.codeStatus || "active").toLowerCase();
+    if (["revoked", "disabled", "blocked", "suspended"].includes(codeStatus)) {
+      return res.json(azSubPublic(order, { valid:false, status:codeStatus, reason:codeStatus, message:"This activation code has been disabled by admin.", deviceId }));
+    }
+
+    const paid = ["paid","active","success","completed","verified"].includes(String(order.status || "").toLowerCase()) || order.isPaid === true || order.manualSubscriptionCode === true;
+    const expMs = Number(order.activationCodeExpiresAtMs || 0) || azSubExpiryMs(order.activationCodeExpiresAt);
+    if (!paid) return res.json(azSubPublic(order, { valid:false, status:"not_paid", reason:"not_paid", message:"Payment is not verified for this activation code.", deviceId }));
+    if (expMs && Date.now() > expMs) return res.json(azSubPublic(order, { valid:false, status:"expired", reason:"expired", message:"Subscription expired.", deviceId }));
+    if (!deviceId) return res.json(azSubPublic(order, { valid:false, status:"device_required", reason:"device_required", message:"Device ID is required to activate Pro version.", deviceId }));
+
+    const nowMs = Date.now();
+    const nowIso = new Date(nowMs).toISOString();
+    const activeDevice = azSubCleanDevice(order.activeDeviceId || "");
+    const yearKey = azSubYearKey(nowMs);
+    const transferLimit = Number(order.transferLimitPerYear || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT) || AZOBSS_BACKEND_SUB_TRANSFER_LIMIT;
+    const transferCount = azSubTransferCount(order, yearKey);
+
+    if (!activeDevice) {
+      order = await azSubSave(order, {
+        activeDeviceId:deviceId,
+        activatedAt:order.activatedAt || nowIso,
+        activatedAtMs:order.activatedAtMs || nowMs,
+        lastVerifiedAt:nowIso,
+        lastVerifiedAtMs:nowMs,
+        lastVerifiedDeviceId:deviceId,
+        lastVerifiedAppVersion:appVersion,
+        activationCodeStatus:"active"
+      });
+      return res.json(azSubPublic(order, { valid:true, status:"active", reason:"activated", message:"Subscription activated on this device.", deviceId }));
+    }
+
+    if (activeDevice === deviceId) {
+      order = await azSubSave(order, {
+        lastVerifiedAt:nowIso,
+        lastVerifiedAtMs:nowMs,
+        lastVerifiedDeviceId:deviceId,
+        lastVerifiedAppVersion:appVersion,
+        activationCodeStatus:"active"
+      });
+      return res.json(azSubPublic(order, { valid:true, status:"active", reason:"same_device", message:"Subscription active on this device.", deviceId }));
+    }
+
+    if (!transfer) {
+      return res.json(azSubPublic(order, {
+        valid:false,
+        status:"transfer_required",
+        reason:"active_on_other_device",
+        message:"This activation code is already active on another device. Confirm transfer to use it on this PC.",
+        transferRequired:true,
+        transferAllowed:transferCount < transferLimit,
+        deviceId
+      }));
+    }
+
+    if (transferCount >= transferLimit) {
+      return res.json(azSubPublic(order, {
+        valid:false,
+        status:"transfer_limit_reached",
+        reason:"transfer_limit_reached",
+        message:"Transfer limit reached for this year. Please contact admin to reset the device.",
+        transferRequired:true,
+        transferAllowed:false,
+        deviceId
+      }));
+    }
+
+    const history = Array.isArray(order.deviceTransferHistory) ? order.deviceTransferHistory.slice(-30) : [];
+    history.push({
+      fromDeviceId:activeDevice,
+      toDeviceId:deviceId,
+      fromDeviceMasked:azSubMaskDevice(activeDevice),
+      toDeviceMasked:azSubMaskDevice(deviceId),
+      transferAt:nowIso,
+      transferAtMs:nowMs,
+      appVersion,
+      requestEmail:reqEmail,
+      requestUsername:reqUsername
+    });
+    const byYear = order.transferCountByYear && typeof order.transferCountByYear === "object" ? { ...order.transferCountByYear } : {};
+    byYear[yearKey] = transferCount + 1;
+
+    order = await azSubSave(order, {
+      previousDeviceId:activeDevice,
+      activeDeviceId:deviceId,
+      lastVerifiedAt:nowIso,
+      lastVerifiedAtMs:nowMs,
+      lastVerifiedDeviceId:deviceId,
+      lastVerifiedAppVersion:appVersion,
+      activationCodeStatus:"active",
+      deviceTransferHistory:history,
+      transferCountByYear:byYear,
+      lastTransferAt:nowIso,
+      lastTransferAtMs:nowMs
+    });
+    return res.json(azSubPublic(order, { valid:true, status:"active", reason:"transferred", message:"Subscription transferred to this device. The old device is revoked.", deviceId }));
+  } catch (err) {
+    return res.status(500).json({ ok:false, valid:false, pro:false, status:"server_error", error:err && err.message ? err.message : String(err) });
+  }
+}
+
+app.all("/api/subscription/verify", azSubVerifyHandler);
+
+app.post("/api/subscription/admin/create-code", requireAdmin, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const productId = cleanPremiumText(body.productId || "", 180);
+    const productName = cleanPremiumText(body.productName || body.name || productId || "AZOBSS Software", 220);
+    const buyerEmail = azSubCleanEmail(body.buyerEmail || body.email || "");
+    const username = azSubCleanUsername(body.username || body.usernameKey || "");
+    if (!productId) return res.status(400).json({ ok:false, error:"Product ID is required." });
+    if (!buyerEmail) return res.status(400).json({ ok:false, error:"Buyer email is required." });
+
+    const plan = azSubPlanById(body.planId || body.subscriptionPlanId || body.months || "1m");
+    const nowMs = Date.now();
+    const expiresAtMs = nowMs + Math.max(1, Number(plan.durationDays || 31) || 31) * 86400000;
+    const prefix = cleanPremiumText(body.activationCodePrefix || body.prefix || "AZOBSS", 18).toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "AZOBSS";
+    const activationCode = azSubMakeCode(prefix, plan.id);
+    const orderId = cleanPremiumText(body.orderId || makePremiumId("sub"), 160);
+
+    const order = await azSubSave({
+      orderId,
+      billCode:cleanPremiumText(body.billCode || "", 120),
+      productId,
+      productName,
+      product:{ productId, id:productId, name:productName, subscriptionCodeEnabled:true, activationCodeSale:true, activationCodePrefix:prefix },
+      amount:plan.price,
+      amountSen:Number(plan.priceSen || 0) || 0,
+      saleAmount:Number(plan.priceSen || 0) / 100,
+      saleAmountText:plan.price,
+      status:"paid",
+      isPaid:true,
+      paymentMethod:"manual-subscription-code",
+      paymentReference:cleanPremiumText(body.paymentReference || "admin-manual-code", 160),
+      source:"admin-manual-subscription-code",
+      manualSubscriptionCode:true,
+      subscriptionCodeEnabled:true,
+      activationCodeSale:true,
+      subscriptionPlan:plan,
+      subscriptionPlanId:plan.id,
+      subscriptionPlanLabel:plan.label,
+      subscriptionDurationDays:plan.durationDays,
+      subscriptionMonths:plan.months,
+      activationCodePrefix:prefix,
+      activationCode,
+      activationCodeHash:azSubCodeHash(activationCode),
+      activationCodeStatus:"active",
+      activationCodeIssuedAt:new Date(nowMs).toISOString(),
+      activationCodeIssuedAtMs:nowMs,
+      activationCodeExpiresAt:new Date(expiresAtMs).toISOString(),
+      activationCodeExpiresAtMs:expiresAtMs,
+      activeDeviceId:"",
+      previousDeviceId:"",
+      deviceLimit:AZOBSS_BACKEND_SUB_DEVICE_LIMIT,
+      transferLimitPerYear:AZOBSS_BACKEND_SUB_TRANSFER_LIMIT,
+      transferCountByYear:{},
+      deviceTransferHistory:[],
+      graceDays:AZOBSS_BACKEND_SUB_GRACE_DAYS,
+      buyerEmail,
+      email:buyerEmail,
+      username,
+      usernameKey:username,
+      user:{ email:buyerEmail, username, usernameKey:username },
+      adminNote:cleanPremiumText(body.note || body.adminNote || "", 500),
+      createdByAdmin:req.azobssAdminIdentity?.username || req.azobssAdminIdentity?.email || "admin",
+      createdAt:new Date(nowMs).toISOString(),
+      createdAtMs:nowMs,
+      paidAt:new Date(nowMs).toISOString(),
+      paidAtMs:nowMs
+    });
+    return res.json({ ok:true, code:activationCode, activationCode, verifyApi:"https://azobss-backend.onrender.com/api/subscription/verify", record:azSubAdminRow(order) });
+  } catch (err) {
+    return res.status(500).json({ ok:false, error:err && err.message ? err.message : String(err) });
+  }
+});
+
+app.get("/api/subscription/admin/list", requireAdmin, async (req, res) => {
+  try {
+    const search = cleanPremiumText(req.query.search || req.query.q || "", 160);
+    const limitRows = Math.max(1, Math.min(500, Number(req.query.limit || 250) || 250));
+    const records = await azSubAdminList(search, limitRows);
+    return res.json({ ok:true, count:records.length, records });
+  } catch (err) {
+    return res.status(500).json({ ok:false, error:err && err.message ? err.message : String(err), records:[] });
+  }
+});
+
+app.post("/api/subscription/admin/reset-device", requireAdmin, async (req, res) => {
+  try {
+    const order = await azSubFindByRef(req.body || {});
+    if (!order) return res.status(404).json({ ok:false, error:"Subscription code not found." });
+    const oldDevice = azSubCleanDevice(order.activeDeviceId || "");
+    const saved = await azSubSave(order, {
+      previousDeviceId:oldDevice || order.previousDeviceId || "",
+      activeDeviceId:"",
+      lastDeviceResetAt:new Date().toISOString(),
+      lastDeviceResetAtMs:Date.now(),
+      lastDeviceResetBy:req.azobssAdminIdentity?.username || req.azobssAdminIdentity?.email || "admin",
+      lastDeviceResetReason:cleanPremiumText(req.body?.reason || "admin reset", 300)
+    });
+    return res.json({ ok:true, action:"reset-device", record:azSubAdminRow(saved) });
+  } catch (err) {
+    return res.status(500).json({ ok:false, error:err && err.message ? err.message : String(err) });
+  }
+});
+
+app.post("/api/subscription/admin/revoke", requireAdmin, async (req, res) => {
+  try {
+    const order = await azSubFindByRef(req.body || {});
+    if (!order) return res.status(404).json({ ok:false, error:"Subscription code not found." });
+    const status = String(req.body?.status || req.body?.activationCodeStatus || "revoked").toLowerCase() === "active" ? "active" : "revoked";
+    const saved = await azSubSave(order, {
+      activationCodeStatus:status,
+      revokedAt:status === "revoked" ? new Date().toISOString() : (order.revokedAt || ""),
+      revokedAtMs:status === "revoked" ? Date.now() : (order.revokedAtMs || 0),
+      revokedBy:status === "revoked" ? (req.azobssAdminIdentity?.username || req.azobssAdminIdentity?.email || "admin") : (order.revokedBy || ""),
+      revokeReason:cleanPremiumText(req.body?.reason || req.body?.revokeReason || "", 300)
+    });
+    return res.json({ ok:true, action:status === "active" ? "reactivate" : "revoke", record:azSubAdminRow(saved) });
+  } catch (err) {
+    return res.status(500).json({ ok:false, error:err && err.message ? err.message : String(err) });
+  }
+});
+
+app.post("/api/subscription/admin/extend", requireAdmin, async (req, res) => {
+  try {
+    const order = await azSubFindByRef(req.body || {});
+    if (!order) return res.status(404).json({ ok:false, error:"Subscription code not found." });
+    const days = Math.max(1, Math.min(3660, Number(req.body?.days || req.body?.extendDays || 0) || 0));
+    if (!days) return res.status(400).json({ ok:false, error:"Enter extend days." });
+    const currentExp = Number(order.activationCodeExpiresAtMs || 0) || azSubExpiryMs(order.activationCodeExpiresAt) || Date.now();
+    const base = Math.max(currentExp, Date.now());
+    const expiresAtMs = base + days * 86400000;
+    const saved = await azSubSave(order, {
+      activationCodeExpiresAt:new Date(expiresAtMs).toISOString(),
+      activationCodeExpiresAtMs:expiresAtMs,
+      lastExtendedAt:new Date().toISOString(),
+      lastExtendedAtMs:Date.now(),
+      lastExtendedBy:req.azobssAdminIdentity?.username || req.azobssAdminIdentity?.email || "admin",
+      lastExtendedDays:days
+    });
+    return res.json({ ok:true, action:"extend", days, record:azSubAdminRow(saved) });
+  } catch (err) {
+    return res.status(500).json({ ok:false, error:err && err.message ? err.message : String(err) });
   }
 });
 
