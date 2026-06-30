@@ -1996,6 +1996,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="payments">📊 Sales Overview</button>
       <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
+      <button data-tab="subscriptions">🔑 Subscription Codes</button>
       <div class="nav-group">System</div>
       <button data-tab="auditlogs">🧾 Audit Logs</button>
       <button data-tab="exports">📦 Backup / Export</button>
@@ -2621,6 +2622,48 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
         <div id="adminPayoutRequestSummary" class="tabs-note"></div>
         <div id="adminPayoutRequestList" class="list"></div>
+      </div>
+    </section>
+
+
+    
+    <section id="subscriptions" class="section">
+      <h2>🔑 Subscription Codes</h2>
+      <p class="az-section-help">Generate, search and manage online Pro activation codes for AZOBSS software subscriptions.</p>
+      <p class="tabs-note">Rule: 1 activation code = 1 active device. Customer may transfer to a new PC after login + code confirmation.</p>
+
+      <div class="grid">
+        <div class="card"><div class="stat-label">Device Limit</div><div class="stat-value">1 PC</div><div class="az-kpi-note">Only one active PC at a time.</div></div>
+        <div class="card"><div class="stat-label">Transfer Limit</div><div class="stat-value">3/year</div><div class="az-kpi-note">After limit, admin reset required.</div></div>
+        <div class="card"><div class="stat-label">Offline Grace</div><div class="stat-value">3 days</div><div class="az-kpi-note">Software should verify online again after grace.</div></div>
+      </div>
+
+      <div class="card az-sub-admin-card">
+        <h2>Generate Activation Code</h2>
+        <div class="toolbar az-sub-admin-toolbar">
+          <input id="subCodeProductId" placeholder="Product ID, e.g. AZSW-372165" style="min-width:220px">
+          <input id="subCodeProductName" placeholder="Product name, e.g. AZOBSS SolatTime" style="min-width:260px">
+          <select id="subCodePlan">
+            <option value="1m">1 Month — RM29.90</option>
+            <option value="3m">3 Months — RM69.90</option>
+            <option value="12m">12 Months — RM239.00</option>
+          </select>
+          <input id="subCodeBuyerEmail" placeholder="Buyer email" style="min-width:220px">
+          <input id="subCodeUsername" placeholder="Username (optional)" style="min-width:160px">
+          <input id="subCodePrefix" placeholder="Prefix e.g. AZOBSS" value="AZOBSS" style="max-width:140px">
+          <button class="btn green" id="generateSubCodeBtn" type="button">Generate Code</button>
+        </div>
+        <div id="subCodeGenerateResult" class="az-sub-code-result" hidden></div>
+      </div>
+
+      <div class="card az-sub-admin-card">
+        <h2>Search Subscription Codes</h2>
+        <div class="toolbar az-sub-admin-toolbar">
+          <input id="subCodeSearch" placeholder="Search code / email / username / product / order ID..." style="flex:1;min-width:280px">
+          <button class="btn" id="refreshSubCodesBtn" type="button">Refresh</button>
+        </div>
+        <div id="subCodeListNotice" class="tabs-note">Ready.</div>
+        <div id="subCodeList" class="list az-sub-code-list"></div>
       </div>
     </section>
 
@@ -5352,8 +5395,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=410"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=410"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=411"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=411"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
@@ -6584,5 +6627,137 @@ document.addEventListener('click', async function(e){
 
 <!-- AZOBSS PATCH 385: Payment Logs pending receipt/PDF/email actions locked. -->
 <!-- AZOBSS PATCH 386: Admin access checking timeout + www canonical redirect. -->
+
+<style id="az-subscription-admin-license-ui-411">
+.az-sub-admin-card{border-color:rgba(250,204,21,.28)}
+.az-sub-admin-toolbar{gap:8px;align-items:center}
+.az-sub-code-result{margin-top:12px;border:1px solid rgba(250,204,21,.45);background:rgba(113,63,18,.25);border-radius:14px;padding:14px;color:#fef3c7;font-weight:900}
+.az-sub-code-big{font-family:Consolas,monospace;font-size:20px;letter-spacing:.06em;background:#020617;color:#facc15;border:1px solid rgba(250,204,21,.35);border-radius:12px;padding:10px;margin:8px 0;word-break:break-all}
+.az-sub-code-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.72);border-radius:15px;padding:12px;margin:8px 0}
+.az-sub-code-title{font-weight:1000;color:#fff}
+.az-sub-code-meta{font-size:12px;color:#cbd5e1;line-height:1.45}
+.az-sub-code-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.az-sub-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:950;border:1px solid rgba(148,163,184,.25);background:rgba(2,6,23,.38)}
+.az-sub-pill.active{color:#bbf7d0;border-color:rgba(34,197,94,.4)}
+.az-sub-pill.revoked{color:#fecaca;border-color:rgba(239,68,68,.45)}
+.az-sub-pill.device{color:#bfdbfe;border-color:rgba(59,130,246,.4)}
+@media(max-width:760px){.az-sub-code-row{grid-template-columns:1fr}.az-sub-code-actions{justify-content:flex-start}}
+</style>
+<script id="az-subscription-admin-license-ui-411">
+(function(){
+  const API = 'https://azobss-backend.onrender.com';
+  function el(id){return document.getElementById(id)}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+  function subNotice(msg){ const n=el('subCodeListNotice'); if(n) n.textContent=msg; }
+  function subCodeRef(row){ return row.activationCode || row.orderId || ''; }
+  async function azSubFetch(path, options={}){
+    if(typeof azAdminFetchJson === 'function') return await azAdminFetchJson(API+path, options);
+    const res = await fetch(API+path, options);
+    const data = await res.json().catch(()=>({ok:false,error:'Invalid response'}));
+    if(!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+  async function generateSubCode(){
+    const body={
+      productId:(el('subCodeProductId')?.value||'').trim(),
+      productName:(el('subCodeProductName')?.value||'').trim(),
+      planId:el('subCodePlan')?.value||'1m',
+      buyerEmail:(el('subCodeBuyerEmail')?.value||'').trim(),
+      username:(el('subCodeUsername')?.value||'').trim(),
+      activationCodePrefix:(el('subCodePrefix')?.value||'AZOBSS').trim()||'AZOBSS',
+      deviceLimit:1,
+      transferLimitPerYear:3
+    };
+    if(!body.productId) return toast?.('Enter Product ID first.');
+    if(!body.buyerEmail) return toast?.('Enter buyer email first.');
+    const box=el('subCodeGenerateResult');
+    if(box){box.hidden=false;box.textContent='Generating activation code...'}
+    try{
+      const j=await azSubFetch('/api/subscription/admin/create-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const code=j.activationCode||j.code||'';
+      if(box){
+        box.innerHTML='<div>Activation code generated:</div><div class="az-sub-code-big">'+esc(code)+'</div><div>Verify API: <b>'+esc(j.verifyApi||'/api/subscription/verify')+'</b></div>';
+      }
+      try{await navigator.clipboard.writeText(code)}catch(_e){}
+      toast?.('Activation code generated.');
+      loadSubCodes();
+    }catch(e){
+      if(box) box.textContent=e?.message||'Generate failed.';
+      toast?.(e?.message||'Generate failed.');
+    }
+  }
+  function renderSubCodes(rows=[]){
+    const box=el('subCodeList'); if(!box) return;
+    if(!rows.length){box.innerHTML='<div class="az-sub-code-row"><div class="az-sub-code-title">No subscription codes found.</div></div>';return}
+    box.innerHTML=rows.map(r=>{
+      const status=String(r.codeStatus||r.status||'active').toLowerCase();
+      const active=status==='active'||status==='paid';
+      const code=esc(r.activationCode||'');
+      return '<div class="az-sub-code-row">'+
+        '<div>'+
+          '<div class="az-sub-code-title">'+esc(r.productName||r.productId||'Subscription Code')+'</div>'+
+          '<div class="az-sub-code-meta">'+
+            '<b>Code:</b> <span style="font-family:Consolas,monospace;color:#facc15">'+code+'</span><br>'+
+            '<b>Plan:</b> '+esc(r.plan||r.planId||'-')+' • <b>Expiry:</b> '+esc(r.expiresAt||'-')+'<br>'+
+            '<b>Email:</b> '+esc(r.buyerEmail||'-')+' • <b>Username:</b> '+esc(r.username||'-')+'<br>'+
+            '<span class="az-sub-pill '+(active?'active':'revoked')+'">'+esc(status||'-')+'</span> '+
+            '<span class="az-sub-pill device">Device: '+esc(r.activeDeviceMasked||'not activated')+'</span> '+
+            '<span class="az-sub-pill">Transfer: '+esc(r.transferCountThisYear||0)+'/'+esc(r.transferLimitPerYear||3)+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<div class="az-sub-code-actions">'+
+          '<button class="btn gray" data-sub-copy="'+code+'" type="button">Copy</button>'+
+          '<button class="btn gray" data-sub-reset="'+code+'" type="button">Reset Device</button>'+
+          '<button class="btn gray" data-sub-extend="'+code+'" type="button">Extend</button>'+
+          '<button class="btn '+(active?'red':'green')+'" data-sub-revoke="'+code+'" data-status="'+(active?'revoked':'active')+'" type="button">'+(active?'Revoke':'Reactivate')+'</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+  async function loadSubCodes(){
+    const q=encodeURIComponent((el('subCodeSearch')?.value||'').trim());
+    subNotice('Loading subscription codes...');
+    try{
+      const j=await azSubFetch('/api/subscription/admin/list?limit=250&search='+q,{cache:'no-store'});
+      renderSubCodes(j.records||[]);
+      subNotice('Loaded '+(j.records?.length||0)+' subscription code(s).');
+    }catch(e){
+      subNotice(e?.message||'Failed to load subscription codes.');
+      renderSubCodes([]);
+    }
+  }
+  async function resetSubDevice(code){
+    if(!confirm('Reset active device for this code? Customer can activate on a new PC after this.')) return;
+    try{ await azSubFetch('/api/subscription/admin/reset-device',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({activationCode:code,reason:'admin dashboard reset'})}); toast?.('Device reset.'); loadSubCodes(); }
+    catch(e){ toast?.(e?.message||'Reset failed.'); }
+  }
+  async function revokeSubCode(code,status){
+    const label=status==='active'?'reactivate':'revoke';
+    if(!confirm('Confirm '+label+' this activation code?')) return;
+    try{ await azSubFetch('/api/subscription/admin/revoke',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({activationCode:code,status})}); toast?.('Code updated.'); loadSubCodes(); }
+    catch(e){ toast?.(e?.message||'Update failed.'); }
+  }
+  async function extendSubCode(code){
+    const days=prompt('Extend by how many days?','30');
+    if(!days) return;
+    try{ await azSubFetch('/api/subscription/admin/extend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({activationCode:code,days:Number(days)||0})}); toast?.('Expiry extended.'); loadSubCodes(); }
+    catch(e){ toast?.(e?.message||'Extend failed.'); }
+  }
+  document.addEventListener('click',function(ev){
+    const t=ev.target;
+    if(t?.id==='generateSubCodeBtn') generateSubCode();
+    if(t?.id==='refreshSubCodesBtn') loadSubCodes();
+    if(t?.dataset?.subCopy){ navigator.clipboard?.writeText(t.dataset.subCopy); toast?.('Code copied.'); }
+    if(t?.dataset?.subReset) resetSubDevice(t.dataset.subReset);
+    if(t?.dataset?.subRevoke) revokeSubCode(t.dataset.subRevoke,t.dataset.status||'revoked');
+    if(t?.dataset?.subExtend) extendSubCode(t.dataset.subExtend);
+  });
+  document.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter' && ev.target?.id==='subCodeSearch') loadSubCodes();
+  });
+  window.loadSubCodes=loadSubCodes;
+})();
+</script>
+
 </body>
 </html>

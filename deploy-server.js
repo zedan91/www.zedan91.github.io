@@ -336,7 +336,7 @@ async function azFindFirestoreProduct(productId = "") {
 
 // AZOBSS PATCH 399: Subscription activation code plans for Software Tools.
 const AZOBSS_SUBSCRIPTION_PLAN_DEFS = [
-  { id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM24.90', priceSen:2490, saveText:'', monthlyText:'RM24.90/month' },
+  { id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM29.90', priceSen:2990, saveText:'', monthlyText:'RM29.90/month' },
   { id:'3m', months:3, durationDays:93, label:'3 Months Activation Code', price:'RM69.90', priceSen:6990, saveText:'Save RM19.80', monthlyText:'RM23.30/month' },
   { id:'12m', months:12, durationDays:366, label:'12 Months Activation Code', price:'RM239.00', priceSen:23900, saveText:'Save RM119.80', monthlyText:'RM19.92/month' }
 ];
@@ -400,17 +400,287 @@ function azEnsureSubscriptionActivation(order = {}){
     subscriptionDurationDays:durationDays,
     subscriptionMonths:Number(plan.months || 1),
     activationCode:code,
+    activationCodeHash:azSubscriptionCodeHash(code),
     activationCodeStatus:'active',
     activationCodeIssuedAt:new Date(paidMs).toISOString(),
     activationCodeIssuedAtMs:paidMs,
     activationCodeExpiresAt:new Date(expiresAtMs).toISOString(),
-    activationCodeExpiresAtMs:expiresAtMs
+    activationCodeExpiresAtMs:expiresAtMs,
+    deviceLimit:AZOBSS_SUBSCRIPTION_DEVICE_LIMIT,
+    activeDeviceId:'',
+    previousDeviceId:'',
+    transferLimitPerYear:AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR,
+    transferCountByYear:{},
+    deviceTransferHistory:[],
+    graceDays:AZOBSS_SUBSCRIPTION_GRACE_DAYS
   });
 }
 function azSubscriptionActivationHtml(order = {}){
   if(!order.activationCode) return '';
   const exp = order.activationCodeExpiresAt || (order.activationCodeExpiresAtMs ? new Date(Number(order.activationCodeExpiresAtMs)).toISOString() : '');
   return `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:14px;padding:16px;margin:16px 0;color:#111"><h3 style="margin:0 0 8px;color:#854d0e">Your Pro Activation Code</h3><div style="font-family:Consolas,monospace;font-size:22px;font-weight:900;letter-spacing:1px;background:#111827;color:#facc15;border-radius:10px;padding:12px;text-align:center">${String(order.activationCode)}</div><p style="margin:10px 0 0"><b>Plan:</b> ${String(order.subscriptionPlanLabel || order.subscriptionPlan?.label || '-')}<br><b>Valid until:</b> ${String(exp || '-')}</p><p style="font-size:13px;color:#713f12;margin:10px 0 0">Open the software, paste this activation code in the Subscription / Pro Version screen, then the software can verify it through the AZOBSS backend.</p></div>`;
+}
+
+// AZOBSS PATCH 411: Online Subscription License Server with one-device binding + transfer.
+const AZOBSS_SUBSCRIPTION_DEVICE_LIMIT = Math.max(1, Number(process.env.AZOBSS_SUBSCRIPTION_DEVICE_LIMIT || 1) || 1);
+const AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR = Math.max(0, Number(process.env.AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR || 3) || 3);
+const AZOBSS_SUBSCRIPTION_GRACE_DAYS = Math.max(0, Number(process.env.AZOBSS_SUBSCRIPTION_GRACE_DAYS || 3) || 3);
+
+function azSubscriptionHashSecret(){
+  return String(process.env.AZOBSS_SUBSCRIPTION_HASH_SECRET || process.env.AZOBSS_DOWNLOAD_HASH_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || process.env.ADMIN_KEY || "azobss-subscription-local-secret").trim();
+}
+function azSubscriptionCleanCode(v=''){
+  return cleanPremiumText(v || "", 180).toUpperCase().replace(/\s+/g, "").replace(/[^A-Z0-9_-]+/g, "").slice(0, 180);
+}
+function azSubscriptionCodeHash(code=''){
+  const safe = azSubscriptionCleanCode(code);
+  if(!safe) return "";
+  return crypto.createHash("sha256").update(safe + "::" + azSubscriptionHashSecret()).digest("hex");
+}
+function azSubscriptionCleanDeviceId(v=''){
+  return cleanPremiumText(v || "", 220).replace(/[^a-zA-Z0-9._:@-]+/g, "").slice(0, 180);
+}
+function azSubscriptionCleanEmail(v=''){
+  return cleanPremiumText(v || "", 180).trim().toLowerCase();
+}
+function azSubscriptionCleanUsername(v=''){
+  return cleanPremiumText(v || "", 100).trim().toLowerCase().replace(/[^a-z0-9_.-]+/g, "");
+}
+function azSubscriptionOrderBuyerEmail(order={}){
+  return azSubscriptionCleanEmail(order.buyerEmail || order.email || order.user?.email || order.customerEmail || order.ownerEmail || "");
+}
+function azSubscriptionOrderUsername(order={}){
+  return azSubscriptionCleanUsername(order.username || order.usernameKey || order.user?.username || order.user?.usernameKey || order.buyerUsername || "");
+}
+function azSubscriptionRequestEmail(body={}, parsedQuery={}){
+  return azSubscriptionCleanEmail(body.email || body.buyerEmail || body.userEmail || body.accountEmail || parsedQuery.email || parsedQuery.buyerEmail || parsedQuery.userEmail || parsedQuery.accountEmail || "");
+}
+function azSubscriptionRequestUsername(body={}, parsedQuery={}){
+  return azSubscriptionCleanUsername(body.username || body.usernameKey || body.accountUsername || parsedQuery.username || parsedQuery.usernameKey || parsedQuery.accountUsername || "");
+}
+function azSubscriptionEmailAllowed(orderEmail='', requestEmail=''){
+  if(!orderEmail || !requestEmail) return true;
+  return String(orderEmail).toLowerCase() === String(requestEmail).toLowerCase();
+}
+function azSubscriptionUsernameAllowed(orderUsername='', requestUsername=''){
+  if(!orderUsername || !requestUsername) return true;
+  return String(orderUsername).toLowerCase() === String(requestUsername).toLowerCase();
+}
+function azSubscriptionMaskDevice(id=''){
+  const s = String(id || "");
+  if(!s) return "";
+  if(s.length <= 8) return "***" + s.slice(-3);
+  return s.slice(0, 4) + "..." + s.slice(-5);
+}
+function azSubscriptionYearKey(ms=Date.now()){
+  const d = new Date(Number(ms || Date.now()) || Date.now());
+  return String(d.getUTCFullYear());
+}
+function azSubscriptionTransferCount(order={}, yearKey=azSubscriptionYearKey()){
+  const byYear = order.transferCountByYear && typeof order.transferCountByYear === "object" ? order.transferCountByYear : {};
+  const explicit = Number(byYear[yearKey] || 0) || 0;
+  const history = Array.isArray(order.deviceTransferHistory) ? order.deviceTransferHistory : [];
+  const counted = history.filter(x => azSubscriptionYearKey(Number(x.transferAtMs || Date.parse(x.transferAt || "") || 0) || Date.now()) === yearKey).length;
+  return Math.max(explicit, counted);
+}
+function azSubscriptionMakeCode(prefix='AZOBSS', planId='1m'){
+  const p = cleanPremiumText(prefix || "AZOBSS", 18).toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "AZOBSS";
+  const plan = cleanPremiumText(planId || "1m", 12).toUpperCase().replace(/[^A-Z0-9]+/g, "") || "1M";
+  const a = crypto.randomBytes(3).toString("hex").toUpperCase();
+  const b = crypto.randomBytes(3).toString("hex").toUpperCase();
+  const c = crypto.randomBytes(2).toString("hex").toUpperCase();
+  return `${p}-${plan}-${a}-${b}-${c}`;
+}
+function azSubscriptionDevicePublic(order={}, extra={}){
+  const nowMs = Date.now();
+  const expiresAtMs = Number(order.activationCodeExpiresAtMs || 0) || azActivationCodeMs(order.activationCodeExpiresAt);
+  const yearKey = azSubscriptionYearKey(nowMs);
+  return {
+    ok: true,
+    valid: !!extra.valid,
+    pro: !!extra.valid,
+    status: extra.status || "",
+    reason: extra.reason || "",
+    message: extra.message || "",
+    transferRequired: !!extra.transferRequired,
+    transferAllowed: extra.transferAllowed !== false,
+    productId: order.productId || order.product?.productId || order.product?.id || "",
+    productName: order.productName || order.product?.name || "",
+    plan: order.subscriptionPlanLabel || order.subscriptionPlan?.label || "",
+    planId: order.subscriptionPlanId || order.subscriptionPlan?.id || "",
+    months: Number(order.subscriptionMonths || order.subscriptionPlan?.months || 0) || 0,
+    expiresAt: order.activationCodeExpiresAt || (expiresAtMs ? new Date(expiresAtMs).toISOString() : ""),
+    expiresAtMs,
+    serverTime: new Date(nowMs).toISOString(),
+    serverTimeMs: nowMs,
+    graceDays: AZOBSS_SUBSCRIPTION_GRACE_DAYS,
+    graceUntil: new Date(nowMs + AZOBSS_SUBSCRIPTION_GRACE_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+    graceUntilMs: nowMs + AZOBSS_SUBSCRIPTION_GRACE_DAYS * 24 * 60 * 60 * 1000,
+    deviceLimit: Number(order.deviceLimit || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT) || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT,
+    activeDeviceMasked: azSubscriptionMaskDevice(order.activeDeviceId || ""),
+    currentDeviceMasked: azSubscriptionMaskDevice(extra.deviceId || ""),
+    transferCountThisYear: azSubscriptionTransferCount(order, yearKey),
+    transferLimitPerYear: Number(order.transferLimitPerYear || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR) || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR,
+    orderId: cleanPremiumText(order.orderId || "", 160)
+  };
+}
+function azSubscriptionAdminRow(order={}){
+  const expiresAtMs = Number(order.activationCodeExpiresAtMs || 0) || azActivationCodeMs(order.activationCodeExpiresAt);
+  const yearKey = azSubscriptionYearKey();
+  const code = azSubscriptionCleanCode(order.activationCode || "");
+  return {
+    orderId: cleanPremiumText(order.orderId || "", 160),
+    billCode: cleanPremiumText(order.billCode || "", 120),
+    activationCode: code,
+    codeHash: cleanPremiumText(order.activationCodeHash || azSubscriptionCodeHash(code), 100),
+    codeStatus: cleanPremiumText(order.activationCodeStatus || "active", 40),
+    status: cleanPremiumText(order.status || "", 40),
+    productId: order.productId || order.product?.productId || order.product?.id || "",
+    productName: order.productName || order.product?.name || "",
+    plan: order.subscriptionPlanLabel || order.subscriptionPlan?.label || "",
+    planId: order.subscriptionPlanId || order.subscriptionPlan?.id || "",
+    months: Number(order.subscriptionMonths || order.subscriptionPlan?.months || 0) || 0,
+    buyerEmail: azSubscriptionOrderBuyerEmail(order),
+    username: azSubscriptionOrderUsername(order),
+    expiresAt: order.activationCodeExpiresAt || (expiresAtMs ? new Date(expiresAtMs).toISOString() : ""),
+    expiresAtMs,
+    activeDeviceMasked: azSubscriptionMaskDevice(order.activeDeviceId || ""),
+    previousDeviceMasked: azSubscriptionMaskDevice(order.previousDeviceId || ""),
+    deviceLimit: Number(order.deviceLimit || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT) || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT,
+    transferCountThisYear: azSubscriptionTransferCount(order, yearKey),
+    transferLimitPerYear: Number(order.transferLimitPerYear || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR) || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR,
+    activatedAt: order.activatedAt || "",
+    lastVerifiedAt: order.lastVerifiedAt || "",
+    createdAt: order.createdAt || "",
+    updatedAt: order.updatedAt || "",
+    source: cleanPremiumText(order.source || "", 80)
+  };
+}
+async function azPersistSubscriptionCodeRecord(order={}){
+  try{
+    const db = getAzobssBackendDb();
+    if(!db) return { ok:false, reason:"firebase-not-ready" };
+    const code = azSubscriptionCleanCode(order.activationCode || "");
+    const hash = cleanPremiumText(order.activationCodeHash || azSubscriptionCodeHash(code), 100);
+    const docId = hash || cleanPremiumText(order.orderId || code || makeId("sub"), 180);
+    if(!docId) return { ok:false, reason:"missing-doc-id" };
+    const safe = azJsonSafe({
+      ...order,
+      activationCode: code,
+      activationCodeHash: hash,
+      subscriptionLicenseVersion: 411,
+      codeStatus: order.activationCodeStatus || "active",
+      updatedAt: new Date().toISOString(),
+      updatedAtMs: Date.now()
+    });
+    await db.collection("subscriptionCodes").doc(docId).set(safe, { merge:true });
+    return { ok:true, docId };
+  }catch(err){
+    console.warn("AZOBSS subscriptionCodes persist failed:", err && (err.message || err));
+    return { ok:false, error:err && err.message ? err.message : String(err) };
+  }
+}
+async function azSaveSubscriptionOrder(order={}, patch={}){
+  const merged = {
+    ...order,
+    ...patch,
+    activationCode: azSubscriptionCleanCode(patch.activationCode || order.activationCode || ""),
+    activationCodeHash: patch.activationCodeHash || order.activationCodeHash || azSubscriptionCodeHash(patch.activationCode || order.activationCode || ""),
+    subscriptionCodeEnabled: true,
+    activationCodeSale: true,
+    deviceLimit: Number(patch.deviceLimit || order.deviceLimit || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT) || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT,
+    transferLimitPerYear: Number(patch.transferLimitPerYear || order.transferLimitPerYear || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR) || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR,
+    graceDays: AZOBSS_SUBSCRIPTION_GRACE_DAYS,
+    updatedAt: new Date().toISOString(),
+    updatedAtMs: Date.now()
+  };
+  const saved = upsertPremiumOrder(merged);
+  azFireAndForget(azPersistSubscriptionCodeRecord(saved), "AZOBSS subscriptionCodes backup failed:");
+  return saved;
+}
+async function azFindSubscriptionOrderByCode(code=''){
+  const safeCode = azSubscriptionCleanCode(code);
+  const hash = azSubscriptionCodeHash(safeCode);
+  const rows = [];
+  const push = (x, source="") => {
+    if(!x || typeof x !== "object") return;
+    rows.push({ ...x, _source: source || x._source || "" });
+  };
+  try { readPremiumOrders().forEach(x => push(x, "local-premiumOrders")); } catch (_) {}
+  const db = getAzobssBackendDb();
+  if(db){
+    try{
+      const snap = await db.collection("premiumOrders").where("activationCodeHash", "==", hash).limit(5).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-premiumOrders-hash"));
+    }catch(err){ console.warn("Subscription premiumOrders hash lookup skipped:", err && (err.message || err)); }
+    try{
+      const snap = await db.collection("premiumOrders").where("activationCode", "==", safeCode).limit(5).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-premiumOrders-code"));
+    }catch(err){ console.warn("Subscription premiumOrders code lookup skipped:", err && (err.message || err)); }
+    try{
+      const doc = await db.collection("subscriptionCodes").doc(hash).get();
+      if(doc.exists) push({ docId:doc.id, ...(doc.data() || {}) }, "firestore-subscriptionCodes-doc");
+    }catch(err){ console.warn("Subscription code doc lookup skipped:", err && (err.message || err)); }
+    try{
+      const snap = await db.collection("subscriptionCodes").where("activationCode", "==", safeCode).limit(5).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-subscriptionCodes-code"));
+    }catch(err){ console.warn("Subscription code direct lookup skipped:", err && (err.message || err)); }
+  }
+  const seen = new Set();
+  const candidates = rows.filter(x => {
+    const codeOk = azSubscriptionCleanCode(x.activationCode || "") === safeCode;
+    const hashOk = cleanPremiumText(x.activationCodeHash || "", 100) === hash;
+    if(!codeOk && !hashOk) return false;
+    const key = String(x.orderId || x.billCode || x.docId || x.activationCodeHash || x.activationCode || Math.random());
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  candidates.sort((a,b) => Number(b.updatedAtMs || b.createdAtMs || 0) - Number(a.updatedAtMs || a.createdAtMs || 0));
+  return candidates[0] || null;
+}
+async function azFindSubscriptionOrderByAdminRef(ref={}){
+  const code = azSubscriptionCleanCode(ref.activationCode || ref.code || "");
+  if(code) return await azFindSubscriptionOrderByCode(code);
+  const orderId = cleanPremiumText(ref.orderId || "", 180);
+  const billCode = cleanPremiumText(ref.billCode || "", 120);
+  if(orderId || billCode){
+    const found = await findPremiumOrderByAnyDeep({ orderId, billCode });
+    if(found && (found.activationCode || found.activationCodeHash || found.subscriptionCodeEnabled)) return found;
+  }
+  return null;
+}
+async function azLoadSubscriptionAdminRows(search='', limitRows=300){
+  const out = [];
+  const push = (x, source="") => { if(x && (x.activationCode || x.activationCodeHash || x.subscriptionCodeEnabled || x.activationCodeSale)) out.push({ ...x, _source: source || x._source || "" }); };
+  try { readPremiumOrders().forEach(x => push(x, "local-premiumOrders")); } catch (_) {}
+  const db = getAzobssBackendDb();
+  if(db){
+    try{
+      const snap = await db.collection("premiumOrders").limit(Math.min(500, limitRows)).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-premiumOrders"));
+    }catch(err){ console.warn("Admin subscription premiumOrders list skipped:", err && (err.message || err)); }
+    try{
+      const snap = await db.collection("subscriptionCodes").limit(Math.min(500, limitRows)).get();
+      snap.forEach(d => push({ docId:d.id, ...(d.data() || {}) }, "firestore-subscriptionCodes"));
+    }catch(err){ console.warn("Admin subscriptionCodes list skipped:", err && (err.message || err)); }
+  }
+  const q = String(search || "").trim().toLowerCase();
+  const seen = new Set();
+  const filtered = [];
+  for(const x of out){
+    const key = String(x.orderId || x.billCode || x.docId || x.activationCodeHash || x.activationCode || Math.random());
+    if(seen.has(key)) continue;
+    seen.add(key);
+    const hay = [
+      x.activationCode, x.activationCodeHash, x.orderId, x.billCode, x.productId, x.productName,
+      x.buyerEmail, x.email, x.username, x.usernameKey, x.user?.email, x.user?.username, x.activationCodeStatus
+    ].map(v => String(v || "").toLowerCase()).join(" ");
+    if(q && !hay.includes(q)) continue;
+    filtered.push(x);
+  }
+  filtered.sort((a,b) => Number(b.updatedAtMs || b.createdAtMs || b.activationCodeIssuedAtMs || 0) - Number(a.updatedAtMs || a.createdAtMs || a.activationCodeIssuedAtMs || 0));
+  return filtered.slice(0, limitRows).map(azSubscriptionAdminRow);
 }
 
 async function azResolveTrustedPremiumProduct(data = {}, req = null) {
@@ -6435,40 +6705,301 @@ async function handler(req, res) {
 
 
 
+    if (pathname === "/api/subscription/admin/create-code" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const body = parseRequestBody(await readBody(req));
+        const productId = cleanPremiumText(body.productId || "", 180);
+        const productName = cleanPremiumText(body.productName || body.name || productId || "AZOBSS Software", 220);
+        const buyerEmail = azSubscriptionCleanEmail(body.buyerEmail || body.email || "");
+        const username = azSubscriptionCleanUsername(body.username || body.usernameKey || "");
+        const prefix = cleanPremiumText(body.activationCodePrefix || body.prefix || productId || "AZOBSS", 18).toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "AZOBSS";
+        const plan = azSubscriptionPlanDefs().find(p => p.id === azSubscriptionPlanId(body.planId || body.subscriptionPlanId || body.months || "1m")) || azSubscriptionPlanDefs()[0];
+        const nowMs = Date.now();
+        const durationDays = Math.max(1, Number(plan.durationDays || 31) || 31);
+        const expiresAtMs = nowMs + durationDays * 24 * 60 * 60 * 1000;
+        const activationCode = azSubscriptionMakeCode(prefix, plan.id);
+        const orderId = cleanPremiumText(body.orderId || makeId("sub"), 160);
+        const deviceLimit = Math.max(1, Math.min(5, Number(body.deviceLimit || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT) || AZOBSS_SUBSCRIPTION_DEVICE_LIMIT));
+        const transferLimitPerYear = Math.max(0, Math.min(20, Number(body.transferLimitPerYear || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR) || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR));
+        const order = await azSaveSubscriptionOrder({
+          orderId,
+          billCode: cleanPremiumText(body.billCode || "", 120),
+          productId,
+          productName,
+          product:{ productId, id:productId, name:productName, subscriptionCodeEnabled:true, activationCodeSale:true, activationCodePrefix:prefix },
+          amount: plan.price,
+          amountSen: Number(plan.priceSen || 0) || 0,
+          saleAmount: Number(plan.priceSen || 0) / 100,
+          saleAmountText: plan.price,
+          status:"paid",
+          isPaid:true,
+          paymentMethod:"manual-subscription-code",
+          paymentReference: cleanPremiumText(body.paymentReference || "admin-manual-code", 160),
+          source:"admin-manual-subscription-code",
+          manualSubscriptionCode:true,
+          subscriptionCodeEnabled:true,
+          activationCodeSale:true,
+          subscriptionPlan:plan,
+          subscriptionPlanId:plan.id,
+          subscriptionPlanLabel:plan.label,
+          subscriptionDurationDays:durationDays,
+          subscriptionMonths:Number(plan.months || 1) || 1,
+          activationCodePrefix:prefix,
+          activationCode,
+          activationCodeHash:azSubscriptionCodeHash(activationCode),
+          activationCodeStatus:"active",
+          activationCodeIssuedAt:new Date(nowMs).toISOString(),
+          activationCodeIssuedAtMs:nowMs,
+          activationCodeExpiresAt:new Date(expiresAtMs).toISOString(),
+          activationCodeExpiresAtMs:expiresAtMs,
+          activeDeviceId:"",
+          previousDeviceId:"",
+          deviceLimit,
+          transferLimitPerYear,
+          transferCountByYear:{},
+          deviceTransferHistory:[],
+          graceDays:AZOBSS_SUBSCRIPTION_GRACE_DAYS,
+          buyerEmail,
+          email:buyerEmail,
+          username,
+          usernameKey:username,
+          user:{ email:buyerEmail, username, usernameKey:username },
+          adminNote: cleanPremiumText(body.note || body.adminNote || "", 500),
+          createdByAdmin: adminIdentity.username || adminIdentity.email || adminIdentity.uid || "admin",
+          createdAt:new Date(nowMs).toISOString(),
+          createdAtMs:nowMs,
+          paidAt:new Date(nowMs).toISOString(),
+          paidAtMs:nowMs
+        });
+        return send(res, 200, JSON.stringify({ ok:true, code:activationCode, activationCode, verifyApi:"https://azobss-backend.onrender.com/api/subscription/verify", record:azSubscriptionAdminRow(order) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/subscription/admin/list" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const search = cleanPremiumText(parsed.query.search || parsed.query.q || "", 160);
+        const limitRows = Math.max(1, Math.min(500, Number(parsed.query.limit || 250) || 250));
+        const records = await azLoadSubscriptionAdminRows(search, limitRows);
+        return send(res, 200, JSON.stringify({ ok:true, count:records.length, records }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), records:[] }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/subscription/admin/reset-device" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const body = parseRequestBody(await readBody(req));
+        const order = await azFindSubscriptionOrderByAdminRef(body);
+        if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Subscription code not found." }, null, 2), "application/json");
+        const oldDevice = azSubscriptionCleanDeviceId(order.activeDeviceId || "");
+        const saved = await azSaveSubscriptionOrder(order, {
+          previousDeviceId: oldDevice || order.previousDeviceId || "",
+          activeDeviceId:"",
+          lastDeviceResetAt:new Date().toISOString(),
+          lastDeviceResetAtMs:Date.now(),
+          lastDeviceResetBy:adminIdentity.username || adminIdentity.email || adminIdentity.uid || "admin",
+          lastDeviceResetReason:cleanPremiumText(body.reason || "admin reset", 300)
+        });
+        return send(res, 200, JSON.stringify({ ok:true, action:"reset-device", record:azSubscriptionAdminRow(saved) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/subscription/admin/revoke" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const body = parseRequestBody(await readBody(req));
+        const order = await azFindSubscriptionOrderByAdminRef(body);
+        if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Subscription code not found." }, null, 2), "application/json");
+        const status = String(body.status || body.activationCodeStatus || "revoked").toLowerCase() === "active" ? "active" : "revoked";
+        const saved = await azSaveSubscriptionOrder(order, {
+          activationCodeStatus:status,
+          revokedAt:status === "revoked" ? new Date().toISOString() : (order.revokedAt || ""),
+          revokedAtMs:status === "revoked" ? Date.now() : (order.revokedAtMs || 0),
+          revokedBy:status === "revoked" ? (adminIdentity.username || adminIdentity.email || adminIdentity.uid || "admin") : (order.revokedBy || ""),
+          revokeReason:cleanPremiumText(body.reason || body.revokeReason || "", 300)
+        });
+        return send(res, 200, JSON.stringify({ ok:true, action:status === "active" ? "reactivate" : "revoke", record:azSubscriptionAdminRow(saved) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/subscription/admin/extend" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const body = parseRequestBody(await readBody(req));
+        const order = await azFindSubscriptionOrderByAdminRef(body);
+        if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Subscription code not found." }, null, 2), "application/json");
+        const days = Math.max(1, Math.min(3660, Number(body.days || body.extendDays || 0) || 0));
+        if (!days) return send(res, 400, JSON.stringify({ ok:false, error:"Enter extend days." }, null, 2), "application/json");
+        const currentExp = Number(order.activationCodeExpiresAtMs || 0) || azActivationCodeMs(order.activationCodeExpiresAt) || Date.now();
+        const base = Math.max(currentExp, Date.now());
+        const expiresAtMs = base + days * 24 * 60 * 60 * 1000;
+        const saved = await azSaveSubscriptionOrder(order, {
+          activationCodeExpiresAt:new Date(expiresAtMs).toISOString(),
+          activationCodeExpiresAtMs:expiresAtMs,
+          lastExtendedAt:new Date().toISOString(),
+          lastExtendedAtMs:Date.now(),
+          lastExtendedBy:adminIdentity.username || adminIdentity.email || adminIdentity.uid || "admin",
+          lastExtendedDays:days
+        });
+        return send(res, 200, JSON.stringify({ ok:true, action:"extend", days, record:azSubscriptionAdminRow(saved) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
     if (pathname === "/api/subscription/verify" && (req.method === "GET" || req.method === "POST")) {
       try {
         let body = {};
         if (req.method === "POST") {
           try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
         }
-        const code = cleanPremiumText(body.code || parsed.query.code || parsed.query.activationCode || "", 140).toUpperCase().replace(/\s+/g, "");
+        const code = azSubscriptionCleanCode(body.code || parsed.query.code || body.activationCode || parsed.query.activationCode || "");
         const productId = cleanPremiumText(body.productId || parsed.query.productId || "", 180);
-        if (!code) return send(res, 400, JSON.stringify({ ok:false, valid:false, error:"Activation code is required." }, null, 2), "application/json");
-        const rows = [];
-        try { readPremiumOrders().forEach(x => rows.push(x)); } catch (_) {}
-        const db = getAzobssBackendDb();
-        if (db) {
-          try {
-            const snap = await db.collection("premiumOrders").where("activationCode", "==", code).limit(3).get();
-            snap.forEach(d => rows.push({ docId:d.id, ...(d.data() || {}) }));
-          } catch (err) { console.warn("Activation code Firestore lookup skipped:", err && (err.message || err)); }
+        const deviceId = azSubscriptionCleanDeviceId(body.deviceId || body.machineId || body.hardwareId || parsed.query.deviceId || parsed.query.machineId || parsed.query.hardwareId || "");
+        const appVersion = cleanPremiumText(body.appVersion || parsed.query.appVersion || "", 80);
+        const requestEmail = azSubscriptionRequestEmail(body, parsed.query);
+        const requestUsername = azSubscriptionRequestUsername(body, parsed.query);
+        const transferRequested = body.transfer === true || body.confirmTransfer === true || String(body.transfer || parsed.query.transfer || body.confirmTransfer || parsed.query.confirmTransfer || "").toLowerCase() === "true" || String(body.transfer || parsed.query.transfer || "").toLowerCase() === "1";
+
+        if (!code) return send(res, 400, JSON.stringify({ ok:false, valid:false, pro:false, status:"missing_code", error:"Activation code is required." }, null, 2), "application/json");
+
+        let order = await azFindSubscriptionOrderByCode(code);
+        if (!order) return send(res, 404, JSON.stringify({ ok:true, valid:false, pro:false, status:"not_found", reason:"not_found", error:"Activation code not found." }, null, 2), "application/json");
+
+        if (productId && ![order.productId, order.product?.productId, order.product?.id].some(v => String(v || "") === productId)) {
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:false, status:"product_mismatch", reason:"product_mismatch", message:"This activation code is for a different product.", deviceId }), null, 2), "application/json");
         }
-        const seen = new Set();
-        const order = rows.find(x => {
-          const key = String(x.orderId || x.billCode || x.docId || x.activationCode || Math.random());
-          if (seen.has(key)) return false; seen.add(key);
-          if (String(x.activationCode || "").toUpperCase().replace(/\s+/g, "") !== code) return false;
-          if (productId && ![x.productId, x.product?.productId, x.product?.id].some(v => String(v || "") === productId)) return false;
-          return true;
-        });
-        if (!order) return send(res, 404, JSON.stringify({ ok:true, valid:false, status:"not_found", error:"Activation code not found." }, null, 2), "application/json");
-        const paid = String(order.status || "").toLowerCase() === "paid";
+
+        const orderEmail = azSubscriptionOrderBuyerEmail(order);
+        const orderUsername = azSubscriptionOrderUsername(order);
+        if (!azSubscriptionEmailAllowed(orderEmail, requestEmail)) {
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:false, status:"email_mismatch", reason:"email_mismatch", message:"This activation code belongs to a different email/account.", deviceId }), null, 2), "application/json");
+        }
+        if (!azSubscriptionUsernameAllowed(orderUsername, requestUsername)) {
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:false, status:"account_mismatch", reason:"account_mismatch", message:"This activation code belongs to a different username/account.", deviceId }), null, 2), "application/json");
+        }
+
+        const codeStatus = String(order.activationCodeStatus || order.codeStatus || "active").toLowerCase();
+        if (["revoked", "disabled", "blocked", "suspended"].includes(codeStatus)) {
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:false, status:codeStatus, reason:codeStatus, message:"This activation code has been disabled by admin.", deviceId }), null, 2), "application/json");
+        }
+
+        const paid = String(order.status || "").toLowerCase() === "paid" || String(order.status || "").toLowerCase() === "active" || order.isPaid === true || order.manualSubscriptionCode === true;
         const expiresAtMs = Number(order.activationCodeExpiresAtMs || 0) || azActivationCodeMs(order.activationCodeExpiresAt);
         const expired = !!expiresAtMs && Date.now() > expiresAtMs;
-        const valid = paid && !expired;
-        return send(res, 200, JSON.stringify({ ok:true, valid, status: valid ? "active" : (expired ? "expired" : "not_paid"), productId: order.productId || order.product?.productId || "", productName: order.productName || order.product?.name || "", plan: order.subscriptionPlanLabel || order.subscriptionPlan?.label || "", months: Number(order.subscriptionMonths || order.subscriptionPlan?.months || 0) || 0, expiresAt: order.activationCodeExpiresAt || (expiresAtMs ? new Date(expiresAtMs).toISOString() : ""), expiresAtMs, orderId: cleanPremiumText(order.orderId || "", 120) }, null, 2), "application/json");
+        if (!paid) return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:false, status:"not_paid", reason:"not_paid", message:"Payment is not verified for this activation code.", deviceId }), null, 2), "application/json");
+        if (expired) return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:false, status:"expired", reason:"expired", message:"Subscription expired.", deviceId }), null, 2), "application/json");
+
+        if (!deviceId) {
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:false, status:"device_required", reason:"device_required", message:"Device ID is required to activate Pro version.", deviceId }), null, 2), "application/json");
+        }
+
+        const nowMs = Date.now();
+        const nowIso = new Date(nowMs).toISOString();
+        const activeDevice = azSubscriptionCleanDeviceId(order.activeDeviceId || "");
+        const yearKey = azSubscriptionYearKey(nowMs);
+        const transferLimit = Number(order.transferLimitPerYear || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR) || AZOBSS_SUBSCRIPTION_TRANSFER_LIMIT_PER_YEAR;
+        const transferCount = azSubscriptionTransferCount(order, yearKey);
+
+        if (!activeDevice) {
+          order = await azSaveSubscriptionOrder(order, {
+            activeDeviceId: deviceId,
+            activatedAt: order.activatedAt || nowIso,
+            activatedAtMs: order.activatedAtMs || nowMs,
+            lastVerifiedAt: nowIso,
+            lastVerifiedAtMs: nowMs,
+            lastVerifiedDeviceId: deviceId,
+            lastVerifiedAppVersion: appVersion,
+            activationCodeStatus:"active",
+            activationCodeHash: order.activationCodeHash || azSubscriptionCodeHash(code),
+            deviceHistory: [{ deviceId, firstActivatedAt: nowIso, firstActivatedAtMs: nowMs, appVersion }]
+          });
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:true, status:"active", reason:"activated", message:"Subscription activated on this device.", deviceId }), null, 2), "application/json");
+        }
+
+        if (activeDevice === deviceId) {
+          order = await azSaveSubscriptionOrder(order, {
+            lastVerifiedAt: nowIso,
+            lastVerifiedAtMs: nowMs,
+            lastVerifiedDeviceId: deviceId,
+            lastVerifiedAppVersion: appVersion,
+            activationCodeStatus:"active",
+            activationCodeHash: order.activationCodeHash || azSubscriptionCodeHash(code)
+          });
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:true, status:"active", reason:"same_device", message:"Subscription active on this device.", deviceId }), null, 2), "application/json");
+        }
+
+        if (!transferRequested) {
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, {
+            valid:false,
+            status:"transfer_required",
+            reason:"active_on_other_device",
+            message:"This activation code is already active on another device. Confirm transfer to use it on this PC.",
+            transferRequired:true,
+            transferAllowed: transferCount < transferLimit,
+            deviceId
+          }), null, 2), "application/json");
+        }
+
+        if (transferCount >= transferLimit) {
+          return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, {
+            valid:false,
+            status:"transfer_limit_reached",
+            reason:"transfer_limit_reached",
+            message:"Transfer limit reached for this year. Please contact admin to reset the device.",
+            transferRequired:true,
+            transferAllowed:false,
+            deviceId
+          }), null, 2), "application/json");
+        }
+
+        const history = Array.isArray(order.deviceTransferHistory) ? order.deviceTransferHistory.slice(-30) : [];
+        history.push({
+          fromDeviceId: activeDevice,
+          toDeviceId: deviceId,
+          fromDeviceMasked: azSubscriptionMaskDevice(activeDevice),
+          toDeviceMasked: azSubscriptionMaskDevice(deviceId),
+          transferAt: nowIso,
+          transferAtMs: nowMs,
+          appVersion,
+          requestEmail,
+          requestUsername
+        });
+        const byYear = order.transferCountByYear && typeof order.transferCountByYear === "object" ? { ...order.transferCountByYear } : {};
+        byYear[yearKey] = transferCount + 1;
+
+        order = await azSaveSubscriptionOrder(order, {
+          previousDeviceId: activeDevice,
+          activeDeviceId: deviceId,
+          lastVerifiedAt: nowIso,
+          lastVerifiedAtMs: nowMs,
+          lastVerifiedDeviceId: deviceId,
+          lastVerifiedAppVersion: appVersion,
+          activationCodeStatus:"active",
+          activationCodeHash: order.activationCodeHash || azSubscriptionCodeHash(code),
+          deviceTransferHistory: history,
+          transferCountByYear: byYear,
+          lastTransferAt: nowIso,
+          lastTransferAtMs: nowMs
+        });
+
+        return send(res, 200, JSON.stringify(azSubscriptionDevicePublic(order, { valid:true, status:"active", reason:"transferred", message:"Subscription transferred to this device. The old device is revoked.", deviceId }), null, 2), "application/json");
       } catch (err) {
-        return send(res, 500, JSON.stringify({ ok:false, valid:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+        return send(res, 500, JSON.stringify({ ok:false, valid:false, pro:false, status:"server_error", error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
     }
 
