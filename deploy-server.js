@@ -7401,6 +7401,8 @@ async function handler(req, res) {
       try {
         const body = parseRequestBody(await readBody(req));
         const result = await azAdminDeletePaymentLogRecords(req, parsed, body);
+        result.patch = result.patch || "423";
+        result.runningFile = result.runningFile || "deploy-server.js";
         return send(res, result.statusCode || 200, JSON.stringify(result, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");

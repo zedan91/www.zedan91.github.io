@@ -3081,16 +3081,29 @@ async function azAdminAuthHeaders(forceRefresh=false){
     return token?{Authorization:'Bearer '+token}:{};
   }catch(_e){return {};}
 }
+async function azAdminParseJsonResponse(res, url=''){
+  const text = await res.text().catch(()=>'');
+  try{
+    return text ? JSON.parse(text) : {};
+  }catch(_){
+    const short = String(text || '').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,220);
+    const isPaymentDelete = String(url||'').includes('/api/admin/payment-logs/delete');
+    const hint = isPaymentDelete
+      ? 'Payment Logs delete endpoint belum aktif / belum deploy di Render backend. Deploy Render backend, kemudian cuba lagi.'
+      : 'Backend returned non-JSON response.';
+    return {ok:false,error: hint + (short ? ' Response: '+short : ''), nonJson:true, status:res.status};
+  }
+}
 async function azAdminFetchJson(url,options={}){
   const baseHeaders=options.headers||{};
   const adminKeyHeaders=azAdminApiKeyHeaders();
   let authHeaders=await azAdminAuthHeaders(false);
   let res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
-  let data=await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+  let data=await azAdminParseJsonResponse(res,url);
   if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
     authHeaders=await azAdminAuthHeaders(true);
     res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
-    data=await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+    data=await azAdminParseJsonResponse(res,url);
   }
   if(!res.ok) throw new Error(azAdminApiErrorMessage(res.status,data));
   return data;
@@ -4498,6 +4511,56 @@ function azAdminSetPaymentLogSelectionByFilter(statusFilter){
   azAdminUpdatePaymentLogSelectionUI();
   return wanted.size;
 }
+
+async function azAdminDeleteByClientFirestoreQuery(collectionName, field, value, max=20){
+  const deleted=[];
+  if(!value) return deleted;
+  try{
+    const qs=await getDocs(query(collection(db,collectionName), where(field,'==',value), limit(max)));
+    for(const snap of qs.docs){
+      await deleteDoc(doc(db,collectionName,snap.id));
+      deleted.push(collectionName+'/'+snap.id+' via '+field);
+    }
+  }catch(err){
+    console.warn('Client delete query skipped', collectionName, field, err && (err.message || err));
+  }
+  return deleted;
+}
+async function azAdminDeletePaymentLogsClientFallback(records=[]){
+  // AZOBSS PATCH 423:
+  // Fallback for GitHub frontend updated before Render backend endpoint is deployed.
+  // This can remove Firestore purchaseLogs/premiumOrders if Firebase Rules allow admin delete.
+  // It cannot remove local premium-orders.json; Render backend deploy is still required for full cleanup.
+  const details=[];
+  const errors=[];
+  const seen=new Set();
+  for(const row of records){
+    const payload=azAdminPaymentLogRecordDeletePayload(row);
+    const collectionName = payload.collection === 'premiumOrders' ? 'premiumOrders' : 'purchaseLogs';
+    const directIds=[payload.docId,payload.id].map(v=>String(v||'').trim()).filter(Boolean);
+    for(const id of directIds){
+      const key=collectionName+'/'+id;
+      if(seen.has(key)) continue;
+      seen.add(key);
+      try{
+        await deleteDoc(doc(db,collectionName,id));
+        details.push(key+' via docId');
+      }catch(err){
+        errors.push(key+': '+(err?.message||String(err)));
+      }
+    }
+    for(const [field,value] of [['orderId',payload.orderId],['billCode',payload.billCode],['billcode',payload.billCode],['paymentReference',payload.paymentReference],['transactionId',payload.paymentReference],['txnId',payload.paymentReference]]){
+      const rows=await azAdminDeleteByClientFirestoreQuery(collectionName, field, value, 20);
+      rows.forEach(x=>{ if(!seen.has(x)){ seen.add(x); details.push(x); } });
+    }
+  }
+  return {ok:details.length>0, deleted:details.length, details, errors};
+}
+function azAdminIsBackendDeleteEndpointNotReady(error){
+  const msg=String(error?.message||error||'').toLowerCase();
+  return msg.includes('endpoint belum aktif') || msg.includes('non-json') || msg.includes('not found') || msg.includes('cannot post') || msg.includes('invalid backend response') || msg.includes('html');
+}
+
 async function azAdminDeleteSelectedPaymentLogs(mode='selected'){
   let keys = azAdminPaymentLogSelectedKeys();
   if(mode && mode !== 'selected'){
@@ -4527,7 +4590,24 @@ async function azAdminDeleteSelectedPaymentLogs(mode='selected'){
     try{ await loadPayments(); }catch(_){}
     try{ await loadOverview(); }catch(_){}
   }catch(e){
-    toast(e?.message || 'Delete payment logs failed.');
+    if(azAdminIsBackendDeleteEndpointNotReady(e)){
+      try{
+        if(btn) btn.textContent='Firebase fallback...';
+        const fb=await azAdminDeletePaymentLogsClientFallback(records);
+        if(fb.ok){
+          toast(`Deleted ${fb.deleted || 0} Firestore item(s) using fallback. Render backend still needs deploy to clear local premium-orders backup.`);
+          try{ await loadPurchases(); }catch(_){}
+          try{ await loadPayments(); }catch(_){}
+          try{ await loadOverview(); }catch(_){}
+        }else{
+          toast((e?.message || 'Backend delete endpoint not ready.') + '\n\nFallback also failed or no Firestore records matched. Deploy Render backend for full delete support.');
+        }
+      }catch(fallbackErr){
+        toast((e?.message || 'Backend delete endpoint not ready.') + '\n\nFirebase fallback failed: ' + (fallbackErr?.message || String(fallbackErr)) + '\n\nDeploy Render backend and try again.');
+      }
+    }else{
+      toast(e?.message || 'Delete payment logs failed.');
+    }
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = oldText || 'Delete'; }
   }
@@ -5796,8 +5876,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=422"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=422"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=423"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=423"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
