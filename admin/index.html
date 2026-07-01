@@ -2051,8 +2051,8 @@ body[data-dashboard-page="admin"] .topbar{
       </details>
 
       <div class="az-overview-net-center-row">
-        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-today-card"><div><div class="stat-label">Today Net Sales</div><div id="statTodayNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih hari ini selepas caj.</div></div>
-        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih bulan ini selepas caj.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-today-card"><div><div class="stat-label">Today Net Sales</div><div id="statTodayNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih hari ini selepas caj ToyyibPay RM1/transaksi.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih bulan ini selepas caj ToyyibPay RM1/transaksi.</div></div>
       </div>
       <div class="grid az-kpi-grid">
         <div class="card az-kpi-card"><div><div class="stat-label">Registered Users</div><div id="statUsers" class="stat-value">0</div></div><div class="az-kpi-note">Jumlah akaun user yang direkodkan.</div></div>
@@ -3456,20 +3456,77 @@ function azAdminPaymentReceiptActions(x,key){
 /* AZOBSS PATCH 297A: Admin dashboard must count Software/CAD premium orders.
    Root cause: Software/CAD ToyyibPay orders are stored in backend/Firestore premiumOrders,
    while older dashboard totals only read purchaseLogs (PA/BM). */
+function azAdminParseFlexibleDateMs(v){
+  if(!v) return 0;
+  if(typeof v==='number' && Number.isFinite(v) && v>0) return v;
+  if(v && typeof v.toDate==='function'){
+    const d=v.toDate();
+    return d && !Number.isNaN(d.getTime()) ? d.getTime() : 0;
+  }
+  if(v && typeof v==='object'){
+    if(Number.isFinite(Number(v.seconds)) && Number(v.seconds)>0) return Number(v.seconds)*1000;
+    if(Number.isFinite(Number(v._seconds)) && Number(v._seconds)>0) return Number(v._seconds)*1000;
+  }
+  const raw=String(v||'').trim();
+  if(!raw) return 0;
+
+  const direct=Date.parse(raw);
+  if(!Number.isNaN(direct) && direct>0) return direct;
+
+  // AZOBSS PATCH 416:
+  // Support Malaysian/common display dates stored in old records:
+  // 28/06/2026, 12:31 am
+  // 28-06-2026 12:31
+  // 28/06/26 12:31 PM
+  const m=raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})(?:[,\s]+(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(am|pm|AM|PM)?)?/);
+  if(m){
+    let day=Number(m[1]);
+    let month=Number(m[2])-1;
+    let year=Number(m[3]);
+    if(year<100) year+=2000;
+    let hour=Number(m[4]||0);
+    const minute=Number(m[5]||0);
+    const second=Number(m[6]||0);
+    const ap=String(m[7]||'').toLowerCase();
+    if(ap==='pm' && hour<12) hour+=12;
+    if(ap==='am' && hour===12) hour=0;
+    const d=new Date(year,month,day,hour,minute,second);
+    if(!Number.isNaN(d.getTime()) && d.getFullYear()===year && d.getMonth()===month && d.getDate()===day) return d.getTime();
+  }
+
+  // Support YYYY/MM/DD or YYYY-MM-DD with optional time if browser failed direct parse.
+  const y=raw.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})(?:[T,\s]+(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(am|pm|AM|PM)?)?/);
+  if(y){
+    let year=Number(y[1]);
+    let month=Number(y[2])-1;
+    let day=Number(y[3]);
+    let hour=Number(y[4]||0);
+    const minute=Number(y[5]||0);
+    const second=Number(y[6]||0);
+    const ap=String(y[7]||'').toLowerCase();
+    if(ap==='pm' && hour<12) hour+=12;
+    if(ap==='am' && hour===12) hour=0;
+    const d=new Date(year,month,day,hour,minute,second);
+    if(!Number.isNaN(d.getTime())) return d.getTime();
+  }
+
+  return 0;
+}
 function azAdminPaymentMs(x){
   if(!x) return 0;
-  const candidates=[x.paidAtMs,x.createdAtMs,x.updatedAtMs,x.paidAt,x.createdAt,x.updatedAt,x.completedAt,x.emailSentAt];
+  const product=x.product||{};
+  const user=x.user||{};
+  const candidates=[
+    x.paidAtMs,x.paymentPaidAtMs,x.paidMs,x.paymentDateMs,x.createdAtMs,x.timeMs,x.updatedAtMs,x.completedAtMs,x.emailSentAtMs,
+    x.billPaidAtMs,x.billCreatedAtMs,x.transactionTimeMs,x.timestampMs,
+    x.paidAt,x.paymentPaidAt,x.paidDate,x.paymentDate,x.createdAt,x.createdDate,x.date,x.time,x.timestamp,x.updatedAt,x.completedAt,x.emailSentAt,
+    x.billPaidAt,x.billCreatedAt,x.transactionTime,x.createdAtText,x.dateText,x.displayDate,x.paidDateText,x.paymentDateText,
+    product.createdAtMs,product.createdAt,product.updatedAtMs,product.updatedAt,
+    user.createdAtMs,user.createdAt
+  ];
   for(const v of candidates){
-    if(!v) continue;
-    if(typeof v==='number' && Number.isFinite(v) && v>0) return v;
-    if(typeof v==='string'){
-      const n=Date.parse(v);
-      if(!Number.isNaN(n) && n>0) return n;
-    }
-    if(v && typeof v.toDate==='function'){
-      const d=v.toDate();
-      if(d && !Number.isNaN(d.getTime())) return d.getTime();
-    }
+    const ms=azAdminParseFlexibleDateMs(v);
+    if(ms>0) return ms;
   }
   return 0;
 }
@@ -3775,7 +3832,8 @@ async function loadOverview(){
   // Previous patch missed amounts stored as strings like "RM20.00".
   function azAdminOverviewNormalizeSaleRecord(x){
     const amount = azAdminPaymentAmount(x);
-    return {...(x||{}), amount};
+    const createdAtMs = azAdminPaymentMs(x);
+    return {...(x||{}), amount, createdAtMs};
   }
   const azOverviewRecords=[];
   purchases?.forEach(d=>azOverviewRecords.push(azAdminPurchaseLogToPaymentRecord(d.id,d.data())));
@@ -3796,9 +3854,21 @@ async function loadOverview(){
   const azOverviewTodaySales=azOverviewTodayPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
   const azOverviewTodayFee=azOverviewTodayPaid.length * azAdminToyyibPayFeePerTransaction();
   const azOverviewTodayNet=Math.max(0, azOverviewTodaySales - azOverviewTodayFee);
-  const azOverviewMonthSales=azOverviewMonthPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
-  const azOverviewMonthFee=azOverviewMonthPaid.length * azAdminToyyibPayFeePerTransaction();
-  const azOverviewMonthNet=Math.max(0, azOverviewMonthSales - azOverviewMonthFee);
+  let azOverviewMonthSales=azOverviewMonthPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
+  let azOverviewMonthFee=azOverviewMonthPaid.length * azAdminToyyibPayFeePerTransaction();
+  let azOverviewMonthNet=Math.max(0, azOverviewMonthSales - azOverviewMonthFee);
+
+  // AZOBSS PATCH 416 fallback:
+  // If legacy paid records have amount but date cannot be parsed, do not show false RM0.00.
+  const azOverviewAllPaid=azAdminPaidRevenueRecords(azOverviewRecords);
+  if(azOverviewMonthSales<=0 && azOverviewMonthPaid.length===0 && azOverviewAllPaid.length>0){
+    const undatedPaid=azOverviewAllPaid.filter(x=>!azAdminPaymentMs(x));
+    if(undatedPaid.length===azOverviewAllPaid.length){
+      azOverviewMonthSales=azOverviewAllPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
+      azOverviewMonthFee=azOverviewAllPaid.length * azAdminToyyibPayFeePerTransaction();
+      azOverviewMonthNet=Math.max(0, azOverviewMonthSales - azOverviewMonthFee);
+    }
+  }
   const azTodayNetSalesEl=$('#statTodayNetSales');
   if(azTodayNetSalesEl) azTodayNetSalesEl.textContent='RM'+azAdminMoney(azOverviewTodayNet);
   const azMonthSalesEl=$('#statThisMonthSales');
@@ -5395,8 +5465,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=415"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=415"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=416"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=416"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
