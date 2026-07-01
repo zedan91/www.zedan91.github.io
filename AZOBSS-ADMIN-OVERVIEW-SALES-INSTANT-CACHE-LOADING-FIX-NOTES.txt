@@ -1,0 +1,37 @@
+AZOBSS PATCH 418 - Admin Overview Sales Instant Cache + Updating State Fix
+
+Request:
+- Net Sales / Gross Sales cards take a few seconds before showing the real value.
+- Make it behave like a professional website.
+
+Fix:
+- Overview Admin now shows last-known successful sales values immediately from localStorage.
+- While fresh data is being fetched, the value stays visible and shows a small "Updating…" label.
+- If there is no previous cache, the card shows "Loading…" instead of misleading RM0.00.
+- After fresh data finishes loading, the true values replace the cached values.
+- Sales Overview also refreshes the same cache, so after visiting Sales Overview once, Overview Admin can instantly show the latest known values.
+
+Affected cards:
+- Today Net Sales
+- Net After Fee
+- All Paid Gross Sales
+
+Expected UI behavior:
+- Before: RM0.00 for a few seconds, then real value.
+- After: RM141.00 (last known) + Updating…, then refreshed value.
+
+Based on:
+- Patch 417 baseline.
+
+Not changed:
+- Sales Overview totals logic remains unchanged.
+- Overview Admin sales totals still mirror Sales Overview primary totals.
+- My Purchases own-account-only fix remains.
+- Subscription verify/health endpoint remains.
+- Live Streaming Tools category remains.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No new ENV required.

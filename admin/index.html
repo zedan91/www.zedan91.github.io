@@ -1601,6 +1601,52 @@ body[data-dashboard-page="admin"] .topbar{
 }
 </style>
 
+
+<style id="az-admin-overview-sales-cache-style-418">
+/* AZOBSS PATCH 418: show last-known sales instantly, then update in background */
+#statTodayNetSales.az-overview-sales-updating::after,
+#statThisMonthNetSales.az-overview-sales-updating::after,
+#statThisMonthSales.az-overview-sales-updating::after{
+  content:"Updating…";
+  display:block;
+  margin-top:3px;
+  font-size:11px;
+  font-weight:900;
+  line-height:1.1;
+  letter-spacing:.02em;
+  color:#93c5fd;
+  text-shadow:none;
+  opacity:.95;
+}
+#statTodayNetSales.az-overview-sales-loading,
+#statThisMonthNetSales.az-overview-sales-loading,
+#statThisMonthSales.az-overview-sales-loading{
+  position:relative;
+  display:inline-block;
+  min-width:96px;
+  border-radius:10px;
+}
+#statTodayNetSales.az-overview-sales-loading::before,
+#statThisMonthNetSales.az-overview-sales-loading::before,
+#statThisMonthSales.az-overview-sales-loading::before{
+  content:"";
+  position:absolute;
+  inset:-3px -8px;
+  border-radius:12px;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.10),transparent);
+  animation:azOverviewSalesCachePulse 1.2s ease-in-out infinite;
+}
+@keyframes azOverviewSalesCachePulse{
+  0%{transform:translateX(-45%);opacity:.2}
+  50%{opacity:.55}
+  100%{transform:translateX(45%);opacity:.2}
+}
+.az-overview-sales-cache-note{
+  color:#93c5fd!important;
+}
+</style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2051,8 +2097,8 @@ body[data-dashboard-page="admin"] .topbar{
       </details>
 
       <div class="az-overview-net-center-row">
-        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-today-card"><div><div class="stat-label">Today Net Sales</div><div id="statTodayNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih hari ini selepas caj ToyyibPay RM1/transaksi.</div></div>
-        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">Net After Fee</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah bersih semua paid/verified selepas caj ToyyibPay RM1/transaksi.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-today-card"><div><div class="stat-label">Today Net Sales</div><div id="statTodayNetSales" class="stat-value">Loading…</div></div><div class="az-kpi-note">Pendapatan bersih hari ini selepas caj ToyyibPay RM1/transaksi.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">Net After Fee</div><div id="statThisMonthNetSales" class="stat-value">Loading…</div></div><div class="az-kpi-note">Jumlah bersih semua paid/verified selepas caj ToyyibPay RM1/transaksi.</div></div>
       </div>
       <div class="grid az-kpi-grid">
         <div class="card az-kpi-card"><div><div class="stat-label">Registered Users</div><div id="statUsers" class="stat-value">0</div></div><div class="az-kpi-note">Jumlah akaun user yang direkodkan.</div></div>
@@ -2066,7 +2112,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Payment Alerts</div><div id="statPaymentAlerts" class="stat-value">0</div></div><div class="az-kpi-note">Bayaran baru yang belum dibaca admin.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
-        <div class="card az-kpi-card is-money"><div><div class="stat-label">All Paid Gross Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah semua paid/verified sebelum caj.</div></div>
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">All Paid Gross Sales</div><div id="statThisMonthSales" class="stat-value">Loading…</div></div><div class="az-kpi-note">Jumlah semua paid/verified sebelum caj.</div></div>
       </div>
 
       <div class="card az-quick-card" style="margin-bottom:16px">
@@ -3736,7 +3782,66 @@ async function azAdminResetPaBmDownloadCount(recordId, btn){
 window.azAdminResetPaBmDownloadCount = azAdminResetPaBmDownloadCount;
 
 
+
+const AZ_ADMIN_OVERVIEW_SALES_CACHE_KEY = 'az_admin_overview_sales_summary_v418';
+function azAdminOverviewSalesMoneyText(v){
+  const n = Number(v || 0);
+  return 'RM' + (Number.isFinite(n) ? n.toFixed(2) : '0.00');
+}
+function azAdminOverviewSalesValueEls(){
+  return [
+    document.getElementById('statTodayNetSales'),
+    document.getElementById('statThisMonthNetSales'),
+    document.getElementById('statThisMonthSales')
+  ].filter(Boolean);
+}
+function azAdminSetOverviewSalesLoading(isLoading){
+  azAdminOverviewSalesValueEls().forEach(el=>{
+    el.classList.toggle('az-overview-sales-updating', !!isLoading);
+    el.classList.toggle('az-overview-sales-loading', !!isLoading);
+  });
+}
+function azAdminApplyOverviewSalesCache(){
+  let cached = null;
+  try{ cached = JSON.parse(localStorage.getItem(AZ_ADMIN_OVERVIEW_SALES_CACHE_KEY) || 'null'); }catch(_){ cached = null; }
+  const hasCache = cached && Number(cached.savedAt || 0) > 0 && (Date.now() - Number(cached.savedAt || 0)) < (30 * 24 * 60 * 60 * 1000);
+  const todayEl = document.getElementById('statTodayNetSales');
+  const netEl = document.getElementById('statThisMonthNetSales');
+  const grossEl = document.getElementById('statThisMonthSales');
+
+  if(hasCache){
+    if(todayEl && cached.todayNet !== undefined) todayEl.textContent = azAdminOverviewSalesMoneyText(cached.todayNet);
+    if(netEl && cached.netAfterFee !== undefined) netEl.textContent = azAdminOverviewSalesMoneyText(cached.netAfterFee);
+    if(grossEl && cached.allGross !== undefined) grossEl.textContent = azAdminOverviewSalesMoneyText(cached.allGross);
+  }else{
+    [todayEl, netEl, grossEl].filter(Boolean).forEach(el=>{
+      if(!/^RM/i.test(String(el.textContent || '').trim())) el.textContent = 'Loading…';
+    });
+  }
+}
+function azAdminSaveOverviewSalesCache(payload = {}){
+  try{
+    const old = JSON.parse(localStorage.getItem(AZ_ADMIN_OVERVIEW_SALES_CACHE_KEY) || 'null') || {};
+    const next = {
+      ...old,
+      ...payload,
+      version:418,
+      savedAt:Date.now(),
+      savedAtText:new Date().toISOString()
+    };
+    localStorage.setItem(AZ_ADMIN_OVERVIEW_SALES_CACHE_KEY, JSON.stringify(next));
+  }catch(e){
+    console.warn('Overview sales cache save skipped:', e);
+  }
+}
+
 async function loadOverview(){
+  try{
+    azAdminApplyOverviewSalesCache();
+    azAdminSetOverviewSalesLoading(true);
+  }catch(e){
+    console.warn('Overview cached sales preload skipped:', e);
+  }
   try{
     if(!window.__azOverviewLoadingOnlineUsers && typeof loadOnlineUsers === 'function'){
       window.__azOverviewLoadingOnlineUsers = true;
@@ -3865,6 +3970,14 @@ async function loadOverview(){
   if(azMonthSalesEl) azMonthSalesEl.textContent='RM'+azAdminMoney(azOverviewAllGross);
   const azMonthNetSalesEl=$('#statThisMonthNetSales');
   if(azMonthNetSalesEl) azMonthNetSalesEl.textContent='RM'+azAdminMoney(azOverviewAllNet);
+  azAdminSaveOverviewSalesCache({
+    todayNet:azOverviewTodayNet,
+    allGross:azOverviewAllGross,
+    netAfterFee:azOverviewAllNet,
+    paidCount:azOverviewAllPaid.length,
+    source:'overview-admin'
+  });
+  azAdminSetOverviewSalesLoading(false);
 
   const supportRows=[];
   support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
@@ -4190,6 +4303,16 @@ async function loadPayments(){
   if($('#payPendingCount')) $('#payPendingCount').textContent = totals.pending;
   if($('#payPaidCount')) $('#payPaidCount').textContent = totals.paid;
   if($('#payRecordCount')) $('#payRecordCount').textContent = records.length;
+  try{
+    azAdminSaveOverviewSalesCache({
+      allGross:totals.all,
+      netAfterFee:totals.net,
+      paidCount:totals.paid,
+      source:'sales-overview'
+    });
+  }catch(e){
+    console.warn('Sales Overview cache bridge skipped:', e);
+  }
 
   const overviewCategory = (filter === 'pending' || filter === 'paid') ? 'all' : filter;
   const overviewStatus = (filter === 'pending' || filter === 'paid') ? filter : 'all';
@@ -5455,8 +5578,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=417"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=417"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=418"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=418"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
