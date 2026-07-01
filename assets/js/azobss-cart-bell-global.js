@@ -31,6 +31,14 @@
 .az-bell-item strong{display:block!important;margin-bottom:5px!important;color:#fff!important;}
 .az-bell-item div{color:#dbeafe!important;line-height:1.35!important;}
 .az-bell-badge{position:absolute!important;right:-6px!important;top:-7px!important;min-width:18px!important;height:18px!important;padding:0 5px!important;border-radius:999px!important;background:#ef4444!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:18px!important;text-align:center!important;display:none!important;box-shadow:0 0 0 2px rgba(2,6,23,.95)!important;}
+
+/* AZOBSS PATCH 421: Software/CAD cart is one quantity per item */
+.az-shop-cart-qty button[disabled]{
+  opacity:.42!important;
+  cursor:not-allowed!important;
+  filter:grayscale(1)!important;
+}
+
 @media(max-width:760px){.az-shop-cart-panel,.az-bell-panel{top:66px!important;right:10px!important;width:calc(100vw - 20px)!important;max-height:78vh!important;border-radius:16px!important;padding:14px!important}.az-shop-cart-item{grid-template-columns:46px 1fr!important}.az-shop-cart-thumb{width:46px!important;height:46px!important}.az-shop-cart-actions{grid-column:2!important;justify-content:flex-start!important}}
 `;
   function addCss(){ if(document.getElementById('azobss-cart-bell-global-css')) return; const s=document.createElement('style'); s.id='azobss-cart-bell-global-css'; s.textContent=css; document.head.appendChild(s); }
@@ -38,11 +46,11 @@
   function moneyVal(v){const m=String(v||'').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]+)?/); return m?Number(m[0]):0;}
   function fmt(n){return 'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});}
   function cartKey(){return window.__azobssCurrentCartKey || 'azobss_shop_cart_guest_v1';}
-  function readCart(){try{return JSON.parse(localStorage.getItem(cartKey())||'[]').filter(Boolean);}catch(e){return[];}}
-  function saveCart(a){localStorage.setItem(cartKey(),JSON.stringify(a)); window.dispatchEvent(new Event('azobss-shop-cart-updated')); renderCart(); updateCartBadge();}
+  function readCart(){try{return JSON.parse(localStorage.getItem(cartKey())||'[]').filter(Boolean).map(i=>({...i,qty:1}));}catch(e){return[];}}
+  function saveCart(a){localStorage.setItem(cartKey(),JSON.stringify((Array.isArray(a)?a:[]).filter(Boolean).map(i=>({...i,qty:1})))); window.dispatchEvent(new Event('azobss-shop-cart-updated')); renderCart(); updateCartBadge();}
   function ensureCart(){let p=document.getElementById('azShopCartPanel'); if(p) return p; p=document.createElement('div'); p.id='azShopCartPanel'; p.className='az-shop-cart-panel'; p.innerHTML='<div class="az-shop-cart-head"><h3>My Cart</h3><button class="az-shop-cart-close" type="button" aria-label="Close cart">×</button></div><div id="azShopCartBody"></div>'; document.body.appendChild(p); return p;}
-  function updateCartBadge(){const n=readCart().reduce((s,i)=>s+Number(i.qty||1),0); document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(b=>{b.textContent=String(n); b.classList.toggle('is-show',n>0); b.style.display=n>0?'inline-block':'none';});}
-  function renderCart(){const p=ensureCart(), body=p.querySelector('#azShopCartBody'), items=readCart(); const qty=items.reduce((s,i)=>s+Number(i.qty||1),0); p.querySelector('h3').textContent='My Cart ('+qty+')'; if(!items.length){body.innerHTML='<div class="az-shop-cart-empty">Cart is empty.<br><small>This cart is for Software and CAD Tools.</small></div>'; return;} const total=items.reduce((s,i)=>s+moneyVal(i.price)*Number(i.qty||1),0); body.innerHTML=items.map((i,idx)=>'<div class="az-shop-cart-item"><div class="az-shop-cart-thumb">'+(i.image?'<img src="'+esc(i.image)+'" alt="" style="width:100%;height:100%;object-fit:cover">':esc((i.name||'?').slice(0,1)))+'</div><div><div class="az-shop-cart-title">'+esc(i.name||'Item')+'</div><div class="az-shop-cart-meta">'+esc(i.category||i.source||'Software/CAD Tools')+'</div><div class="az-shop-cart-price">'+esc(i.price||'RM0')+'</div></div><div class="az-shop-cart-actions"><span class="az-shop-cart-qty"><button type="button" data-az-cart-minus="'+idx+'">−</button><span>'+Number(i.qty||1)+'</span><button type="button" data-az-cart-plus="'+idx+'">+</button></span><button type="button" class="az-shop-cart-remove" data-az-cart-remove="'+idx+'" title="Remove">🗑</button></div></div>').join('')+'<div class="az-shop-cart-total"><span>Total</span><strong>'+fmt(total)+'</strong></div><button class="az-shop-cart-checkout" type="button" data-az-cart-checkout>Go to Cart Checkout</button><div class="az-shop-cart-note">Note: buka Software/CAD page untuk checkout payment penuh jika diperlukan.</div>';}
+  function updateCartBadge(){const n=readCart().length; document.querySelectorAll('[data-az-shop-cart-badge],.az-shop-cart-badge').forEach(b=>{b.textContent=String(n); b.classList.toggle('is-show',n>0); b.style.display=n>0?'inline-block':'none';});}
+  function renderCart(){const p=ensureCart(), body=p.querySelector('#azShopCartBody'), items=readCart(); const qty=items.length; p.querySelector('h3').textContent='My Cart ('+qty+')'; if(!items.length){body.innerHTML='<div class="az-shop-cart-empty">Cart is empty.<br><small>This cart is for Software and CAD Tools.</small></div>'; return;} const total=items.reduce((s,i)=>s+moneyVal(i.price),0); body.innerHTML=items.map((i,idx)=>'<div class="az-shop-cart-item"><div class="az-shop-cart-thumb">'+(i.image?'<img src="'+esc(i.image)+'" alt="" style="width:100%;height:100%;object-fit:cover">':esc((i.name||'?').slice(0,1)))+'</div><div><div class="az-shop-cart-title">'+esc(i.name||'Item')+'</div><div class="az-shop-cart-meta">'+esc(i.category||i.source||'Software/CAD Tools')+'</div><div class="az-shop-cart-price">'+esc(i.price||'RM0')+'</div></div><div class="az-shop-cart-actions"><span class="az-shop-cart-qty"><button type="button" data-az-cart-minus="'+idx+'">−</button><span>'+Number(i.qty||1)+'</span><button type="button" data-az-cart-plus="'+idx+'">+</button></span><button type="button" class="az-shop-cart-remove" data-az-cart-remove="'+idx+'" title="Remove">🗑</button></div></div>').join('')+'<div class="az-shop-cart-total"><span>Total</span><strong>'+fmt(total)+'</strong></div><button class="az-shop-cart-checkout" type="button" data-az-cart-checkout>Go to Cart Checkout</button><div class="az-shop-cart-note">Note: buka Software/CAD page untuk checkout payment penuh jika diperlukan.</div>';}
   function toggleCart(){const p=ensureCart(); renderCart(); updateCartBadge(); p.classList.toggle('is-open'); closeBell();}
   window.azobssOpenShopCart=function(){const p=ensureCart(); renderCart(); updateCartBadge(); p.classList.add('is-open'); closeBell();};
   window.azShopOpenCart=window.azobssOpenShopCart; window.azShopCartToggle=toggleCart; window.azobssRefreshShopCart=function(){renderCart();updateCartBadge();};
@@ -67,8 +75,8 @@
       if(e.target.closest('.az-shop-cart-close')){ensureCart().classList.remove('is-open'); return;}
       if(e.target.closest('.az-bell-close')){closeBell(); return;}
       const rem=e.target.closest('[data-az-cart-remove]'); if(rem){const a=readCart(); a.splice(Number(rem.dataset.azCartRemove),1); saveCart(a); return;}
-      const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=readCart(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=Number(i.qty||1)+1; saveCart(a); return;}
-      const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=readCart(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){i.qty=Number(i.qty||1)-1; if(i.qty<=0)a.splice(Number(minus.dataset.azCartMinus),1);} saveCart(a); return;}
+      const plus=e.target.closest('[data-az-cart-plus]'); if(plus){const a=readCart(); const i=a[Number(plus.dataset.azCartPlus)]; if(i)i.qty=1; saveCart(a); if(window.azShowToast) window.azShowToast('Maximum 1 quantity per item.'); return;}
+      const minus=e.target.closest('[data-az-cart-minus]'); if(minus){const a=readCart(); const i=a[Number(minus.dataset.azCartMinus)]; if(i){a.splice(Number(minus.dataset.azCartMinus),1);} saveCart(a); return;}
       if(e.target.closest('[data-az-cart-checkout]')){const items=readCart(); if(items[0]?.pageUrl) location.href=items[0].pageUrl; else return false; return;}
     }, true);
     window.addEventListener('storage',()=>{updateCartBadge();updateBellBadge();});
