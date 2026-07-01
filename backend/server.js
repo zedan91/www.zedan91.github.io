@@ -577,6 +577,82 @@ async function toyyibPost(endpoint, payload) {
   if (!response.ok) throw new Error(`ToyyibPay API error ${response.status}: ${text.slice(0, 200)}`);
   return json ?? text;
 }
+
+// AZOBSS PATCH 424: Express backend payment logs delete endpoint.
+function azExpressDeleteLogSafeText(v = "", max = 180) {
+  return cleanPremiumText(v || "", max);
+}
+function azExpressDeleteLogRefs(input = {}) {
+  const r = input && typeof input === "object" ? input : {};
+  const refs = {
+    source: azExpressDeleteLogSafeText(r.source || r._azSource || r.collection || "", 80),
+    collection: azExpressDeleteLogSafeText(r.collection || "", 80),
+    docId: azExpressDeleteLogSafeText(r.docId || r.id || r.firestoreId || "", 180),
+    orderId: azExpressDeleteLogSafeText(r.orderId || "", 180),
+    billCode: azExpressDeleteLogSafeText(r.billCode || r.billcode || "", 160),
+    paymentReference: azExpressDeleteLogSafeText(r.paymentReference || r.transactionId || r.txnId || "", 180),
+    productId: azExpressDeleteLogSafeText(r.productId || r.softwareId || r.cadId || "", 180),
+    status: azExpressDeleteLogSafeText(r.status || r.paymentStatus || "", 80)
+  };
+  const src = refs.source.toLowerCase();
+  if (!refs.collection) refs.collection = src === "premiumorders" ? "premiumOrders" : "purchaseLogs";
+  if (refs.collection !== "premiumOrders" && refs.collection !== "purchaseLogs") refs.collection = "purchaseLogs";
+  return refs;
+}
+async function azExpressDeleteFirestoreRecordByRefs(db, collectionName, refs = {}) {
+  const deleted = [];
+  const seen = new Set();
+  async function delDoc(id, why) {
+    const safeId = azExpressDeleteLogSafeText(id || "", 180);
+    if (!safeId || seen.has(safeId)) return;
+    seen.add(safeId);
+    const ref = db.collection(collectionName).doc(safeId);
+    const snap = await ref.get();
+    if (snap.exists) {
+      await ref.delete();
+      deleted.push({ collection:collectionName, docId:safeId, via:why || "docId" });
+    }
+  }
+  await delDoc(refs.docId, "docId");
+  const fields = [
+    ["orderId", refs.orderId],
+    ["billCode", refs.billCode],
+    ["billcode", refs.billCode],
+    ["paymentReference", refs.paymentReference],
+    ["transactionId", refs.paymentReference],
+    ["txnId", refs.paymentReference]
+  ].filter(pair => pair[1]);
+  for (const [field, value] of fields) {
+    try {
+      const qs = await db.collection(collectionName).where(field, "==", value).limit(20).get();
+      for (const docSnap of qs.docs) {
+        if (!seen.has(docSnap.id)) {
+          await docSnap.ref.delete();
+          seen.add(docSnap.id);
+          deleted.push({ collection:collectionName, docId:docSnap.id, via:field });
+        }
+      }
+    } catch (err) {
+      console.warn("Express payment log delete query skipped:", collectionName, field, err && (err.message || err));
+    }
+  }
+  return deleted;
+}
+function azExpressDeleteLocalPremiumOrderByRefs(refs = {}) {
+  let deleted = 0;
+  const orders = readPremiumOrders() || [];
+  const needles = [refs.docId, refs.orderId, refs.billCode, refs.paymentReference].map(v => String(v || "").trim()).filter(Boolean);
+  if (!needles.length) return 0;
+  const next = orders.filter(o => {
+    const vals = [o.docId, o.id, o.orderId, o.billCode, o.billcode, o.paymentReference, o.transactionId, o.txnId].map(v => String(v || "").trim()).filter(Boolean);
+    const match = needles.some(n => vals.includes(n));
+    if (match) deleted++;
+    return !match;
+  });
+  if (deleted) writePremiumOrders(next);
+  return deleted;
+}
+
 function readPremiumOrders() { return readPremiumJson(PREMIUM_ORDERS_FILE, []); }
 function writePremiumOrders(orders) { writePremiumJson(PREMIUM_ORDERS_FILE, (orders || []).slice(0, 500)); }
 function upsertPremiumOrder(order) {
@@ -1152,6 +1228,42 @@ app.get("/api/health", (req, res) => {
 });
 
 
+
+
+
+app.post("/api/admin/payment-logs/delete", requireAdmin, async (req, res) => {
+  try {
+    const db = getAzobssBackendDb();
+    if (!db) return res.status(500).json({ ok:false, error:"Firebase Admin is not configured.", patch:"424", runningFile:"backend/server.js" });
+    const rows = Array.isArray(req.body?.records) ? req.body.records.slice(0, 200) : [];
+    if (!rows.length) return res.status(400).json({ ok:false, error:"No records selected.", patch:"424", runningFile:"backend/server.js" });
+
+    const result = { ok:true, patch:"424", runningFile:"backend/server.js", requested:rows.length, deleted:0, details:[], errors:[] };
+    for (const row of rows) {
+      const refs = azExpressDeleteLogRefs(row);
+      try {
+        let deletedDetails = [];
+        if (refs.collection === "premiumOrders") {
+          deletedDetails = deletedDetails.concat(await azExpressDeleteFirestoreRecordByRefs(db, "premiumOrders", refs));
+          const localDeleted = azExpressDeleteLocalPremiumOrderByRefs(refs);
+          if (localDeleted) deletedDetails.push({ collection:"premium-orders.json", count:localDeleted, via:"local-json" });
+        } else {
+          deletedDetails = deletedDetails.concat(await azExpressDeleteFirestoreRecordByRefs(db, "purchaseLogs", refs));
+        }
+        if (!deletedDetails.length) result.errors.push({ refs, error:"Record not found or already deleted." });
+        else {
+          result.deleted += deletedDetails.reduce((sum, d) => sum + (Number(d.count || 0) || 1), 0);
+          result.details.push({ refs, deleted:deletedDetails });
+        }
+      } catch (err) {
+        result.errors.push({ refs, error:err && err.message ? err.message : String(err) });
+      }
+    }
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ ok:false, error:err && err.message ? err.message : String(err), patch:"424", runningFile:"backend/server.js" });
+  }
+});
 
 
 app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
@@ -3317,7 +3429,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`AZOBSS Lucky Draw Backend running on port ${PORT}`);
-  console.log("AZOBSS_PATCH: 413-subscription-route-diagnostic");
+  console.log("AZOBSS_PATCH: 424-payment-logs-delete-backend-entrypoints");
 });
 
 
