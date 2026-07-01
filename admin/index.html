@@ -2052,7 +2052,7 @@ body[data-dashboard-page="admin"] .topbar{
 
       <div class="az-overview-net-center-row">
         <div class="card az-kpi-card is-money az-net-income-card az-overview-net-today-card"><div><div class="stat-label">Today Net Sales</div><div id="statTodayNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih hari ini selepas caj ToyyibPay RM1/transaksi.</div></div>
-        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">This Month Net Sales</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pendapatan bersih bulan ini selepas caj ToyyibPay RM1/transaksi.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">Net After Fee</div><div id="statThisMonthNetSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah bersih semua paid/verified selepas caj ToyyibPay RM1/transaksi.</div></div>
       </div>
       <div class="grid az-kpi-grid">
         <div class="card az-kpi-card"><div><div class="stat-label">Registered Users</div><div id="statUsers" class="stat-value">0</div></div><div class="az-kpi-note">Jumlah akaun user yang direkodkan.</div></div>
@@ -2066,7 +2066,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Payment Alerts</div><div id="statPaymentAlerts" class="stat-value">0</div></div><div class="az-kpi-note">Bayaran baru yang belum dibaca admin.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
-        <div class="card az-kpi-card is-money"><div><div class="stat-label">This Month Gross Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah paid/verified bulan semasa sebelum caj.</div></div>
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">All Paid Gross Sales</div><div id="statThisMonthSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah semua paid/verified sebelum caj.</div></div>
       </div>
 
       <div class="card az-quick-card" style="margin-bottom:16px">
@@ -3843,38 +3843,28 @@ async function loadOverview(){
   const azOverviewMonthEnd=new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth()+1,1).getTime();
   const azOverviewTodayStart=new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth(),azOverviewNow.getDate()).getTime();
   const azOverviewTomorrowStart=new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth(),azOverviewNow.getDate()+1).getTime();
-  const azOverviewTodayPaid=azAdminPaidRevenueRecords(azOverviewRecords).filter(x=>{
+  const azOverviewAllPaid=azAdminPaidRevenueRecords(azOverviewRecords);
+
+  // AZOBSS PATCH 417:
+  // Overview Admin top sales cards must mirror the primary Sales Overview totals:
+  // All Paid Gross / Net After Fee. They should not reset to RM0.00 simply because
+  // the calendar month changed. Detailed month/today analytics remain in Sales Overview.
+  const azOverviewTodayPaid=azOverviewAllPaid.filter(x=>{
     const ms=azAdminPaymentMs(x);
     return ms && ms>=azOverviewTodayStart && ms<azOverviewTomorrowStart;
   });
-  const azOverviewMonthPaid=azAdminPaidRevenueRecords(azOverviewRecords).filter(x=>{
-    const ms=azAdminPaymentMs(x);
-    return ms && ms>=azOverviewMonthStart && ms<azOverviewMonthEnd;
-  });
   const azOverviewTodaySales=azOverviewTodayPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
-  const azOverviewTodayFee=azOverviewTodayPaid.length * azAdminToyyibPayFeePerTransaction();
-  const azOverviewTodayNet=Math.max(0, azOverviewTodaySales - azOverviewTodayFee);
-  let azOverviewMonthSales=azOverviewMonthPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
-  let azOverviewMonthFee=azOverviewMonthPaid.length * azAdminToyyibPayFeePerTransaction();
-  let azOverviewMonthNet=Math.max(0, azOverviewMonthSales - azOverviewMonthFee);
+  const azOverviewTodayNet=azAdminNetAfterToyyibPay(azOverviewTodaySales, azOverviewTodayPaid.length);
 
-  // AZOBSS PATCH 416 fallback:
-  // If legacy paid records have amount but date cannot be parsed, do not show false RM0.00.
-  const azOverviewAllPaid=azAdminPaidRevenueRecords(azOverviewRecords);
-  if(azOverviewMonthSales<=0 && azOverviewMonthPaid.length===0 && azOverviewAllPaid.length>0){
-    const undatedPaid=azOverviewAllPaid.filter(x=>!azAdminPaymentMs(x));
-    if(undatedPaid.length===azOverviewAllPaid.length){
-      azOverviewMonthSales=azOverviewAllPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
-      azOverviewMonthFee=azOverviewAllPaid.length * azAdminToyyibPayFeePerTransaction();
-      azOverviewMonthNet=Math.max(0, azOverviewMonthSales - azOverviewMonthFee);
-    }
-  }
+  const azOverviewAllGross=azOverviewAllPaid.reduce((sum,x)=>sum+(Number(x.amount||0)||0),0);
+  const azOverviewAllNet=azAdminNetAfterToyyibPay(azOverviewAllGross, azOverviewAllPaid.length);
+
   const azTodayNetSalesEl=$('#statTodayNetSales');
   if(azTodayNetSalesEl) azTodayNetSalesEl.textContent='RM'+azAdminMoney(azOverviewTodayNet);
   const azMonthSalesEl=$('#statThisMonthSales');
-  if(azMonthSalesEl) azMonthSalesEl.textContent='RM'+azAdminMoney(azOverviewMonthSales);
+  if(azMonthSalesEl) azMonthSalesEl.textContent='RM'+azAdminMoney(azOverviewAllGross);
   const azMonthNetSalesEl=$('#statThisMonthNetSales');
-  if(azMonthNetSalesEl) azMonthNetSalesEl.textContent='RM'+azAdminMoney(azOverviewMonthNet);
+  if(azMonthNetSalesEl) azMonthNetSalesEl.textContent='RM'+azAdminMoney(azOverviewAllNet);
 
   const supportRows=[];
   support?.forEach(d=>{if(supportRows.length<5){const x=d.data();supportRows.push(item(esc(x.subject||'Support Request'),`${esc(x.email||'')} • ${esc(x.status||'open')}`))}});
@@ -5465,8 +5455,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=416"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=416"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=417"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=417"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
