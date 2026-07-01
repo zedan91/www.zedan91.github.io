@@ -2659,7 +2659,7 @@ function normalizeItem(item){
       localStorage.setItem('azobss_last_checkout_page', returnUrl);
       const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({product:{...currentProduct,staffReferral:azStaffShareReferralForProduct(currentProduct),premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},staffReferral:azStaffShareReferralForProduct(currentProduct),premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email,resolvedBuyerEmail:email},buyerEmail:email,email:email,authEmail:String(storedUser().authEmail||storedUser().loginEmail||'').trim(),contactEmail:String(storedUser().contactEmail||storedUser().realEmail||storedUser().emailAddress||'').trim(),buyerPhone:'01135600723',returnUrl})
+        body:JSON.stringify({product:{...currentProduct,productId:currentProduct.productId||currentProduct.id||currentProduct.sku,sku:currentProduct.sku||currentProduct.productId||currentProduct.id,staffReferral:azStaffShareReferralForProduct(currentProduct),premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink},productId:currentProduct.productId||currentProduct.id||currentProduct.sku,cartItems:currentProduct.cartItems||[],isCartCheckout:currentProduct.isCartCheckout===true,staffReferral:azStaffShareReferralForProduct(currentProduct),premiumDownloadFileLink:currentProduct.premiumDownloadFileLink||currentProduct.secureDownloadLink||currentProduct.downloadLink,secureDownloadLink:currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink||currentProduct.downloadLink,downloadLink:currentProduct.downloadLink||currentProduct.secureDownloadLink||currentProduct.premiumDownloadFileLink,user:{...storedUser(),email,resolvedBuyerEmail:email},buyerEmail:email,email:email,authEmail:String(storedUser().authEmail||storedUser().loginEmail||'').trim(),contactEmail:String(storedUser().contactEmail||storedUser().realEmail||storedUser().emailAddress||'').trim(),buyerPhone:'01135600723',returnUrl})
       });
       const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
       if(!res.ok || !data.ok || !data.paymentUrl){
@@ -2947,17 +2947,27 @@ if(!items.length)return;
 const totalAmount=items.reduce((s,i)=>s+(parseFloat(String(i.price||0).replace(/[^0-9.]/g,''))||0),0);
 const totalQty=items.length;
 const firstItem=items[0]||{};
-const checkoutItem={
-id:'CART-CHECKOUT',
-name:`${totalQty} Item(s)`,
-price:`RM${totalAmount.toFixed(2)}`,
-qty:totalQty,
-cartItems:items,
+let checkoutItem;
+if(totalQty === 1){
+checkoutItem={
+...firstItem,
+id:firstItem.productId||firstItem.id||firstItem.sku||'',
+productId:firstItem.productId||firstItem.id||firstItem.sku||'',
+sku:firstItem.sku||firstItem.productId||firstItem.id||'',
+name:firstItem.name||firstItem.productName||'Cart Item',
+productName:firstItem.productName||firstItem.name||'Cart Item',
+price:firstItem.price||`RM${totalAmount.toFixed(2)}`,
+qty:1,
+cartItems:[firstItem],
 isCartCheckout:true,
 downloadLink:firstItem.downloadLink||firstItem.secureDownloadLink||firstItem.premiumDownloadFileLink||'',
 secureDownloadLink:firstItem.secureDownloadLink||firstItem.downloadLink||firstItem.premiumDownloadFileLink||'',
 premiumDownloadFileLink:firstItem.premiumDownloadFileLink||firstItem.secureDownloadLink||firstItem.downloadLink||''
 };
+}else{
+alert('Cart checkout currently supports one product per payment. Please checkout one product at a time.');
+return;
+}
 if(typeof window.azobssOpenPremiumPay==='function'){window.azobssOpenPremiumPay(checkoutItem); closePanel();}
 else if(items[0].pageUrl){location.href=items[0].pageUrl;}
 else {alert('Open the Software Tools or CAD Tools page to checkout this item.');}
@@ -3000,7 +3010,7 @@ return;
     const src = sourceName();
     const title = getTitle(card);
     const primary = card.querySelector('[data-azobss-premium-buy="1"],a.download-btn,a.cad-action-btn,a[href],button');
-    const id = primary?.dataset?.productId || primary?.dataset?.productName || card.dataset.productId || card.dataset.id || (src + ':' + title);
+    const id = primary?.dataset?.productId || card.dataset.productId || card.getAttribute('data-product-id') || primary?.dataset?.id || card.dataset.id || primary?.dataset?.productName || (src + ':' + title);
     const price = primary?.dataset?.productPrice || moneyText(card);
     const href = getPrimaryLink(card);
     return {

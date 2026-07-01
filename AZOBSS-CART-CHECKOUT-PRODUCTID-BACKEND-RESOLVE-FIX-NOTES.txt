@@ -1,0 +1,46 @@
+AZOBSS PATCH 422 - Cart Checkout ProductId Backend Resolve Fix
+
+Issue:
+- Add to Cart item appeared correctly.
+- But Go to Cart Checkout / Open Payment showed:
+  "Product not found on backend. Please sync Software/CAD product to Firestore or backend product list before accepting payment."
+
+Root cause:
+- Cart checkout created a pseudo product:
+  id: CART-CHECKOUT
+  name: 1 Item(s)
+- Backend strict payment validation searches trusted Software/CAD product by productId.
+- Since CART-CHECKOUT is not a real productId, backend rejected the payment.
+
+Fix:
+Frontend:
+- If cart has exactly 1 item, checkout now passes the real cart item to payment modal.
+- Cart item now includes productId, sku, productName.
+- Payment request sends productId at top-level and inside product.
+- If cart has more than 1 unique product, checkout shows:
+  "Cart checkout currently supports one product per payment. Please checkout one product at a time."
+
+Backend:
+- /api/toyyib/create-bill detects single-item cart checkout and validates the real item inside cartItems.
+- If pseudo CART-CHECKOUT reaches backend, it falls back to the single real cart item.
+- Multiple cart checkout is blocked clearly until multi-download fulfilment is implemented.
+- Firestore resolver also tries productId/id/sku/name/title/productName with common case variants.
+
+Expected result:
+- Single item cart checkout for AZOBSS SolatTime should no longer show Product not found if productId exists in the product card.
+- For old cart item already saved without productId, remove it from cart and Add to Cart again after deploy.
+
+Based on:
+- Patch 421 baseline.
+
+Not changed:
+- Add to Cart quantity remains max 1 per item.
+- Payment Logs bulk delete remains.
+- PA/BM cart/payment logic not changed.
+- Subscription verify/health endpoint remains.
+
+Firebase Rules:
+- No update required.
+
+Render:
+- Backend deploy is required because deploy-server.js is patched.

@@ -321,14 +321,16 @@ async function azFindFirestoreProduct(productId = "") {
       const docSnap = await db.collection(col).doc(productId).get();
       if (docSnap.exists) return azNormalizeTrustedProduct({ docId: docSnap.id, ...(docSnap.data() || {}) }, "firestore:" + col);
     } catch (_) {}
-    for (const field of ["productId", "id", "sku"]) {
-      try {
-        const qs = await db.collection(col).where(field, "==", productId).limit(1).get();
-        if (!qs.empty) {
-          const doc = qs.docs[0];
-          return azNormalizeTrustedProduct({ docId: doc.id, ...(doc.data() || {}) }, "firestore:" + col);
-        }
-      } catch (_) {}
+    for (const field of ["productId", "id", "sku", "name", "title", "productName"]) {
+      for (const value of Array.from(new Set([productId, String(productId || "").trim(), String(productId || "").trim().toUpperCase(), String(productId || "").trim().toLowerCase()].filter(Boolean)))) {
+        try {
+          const qs = await db.collection(col).where(field, "==", value).limit(1).get();
+          if (!qs.empty) {
+            const doc = qs.docs[0];
+            return azNormalizeTrustedProduct({ docId: doc.id, ...(doc.data() || {}) }, "firestore:" + col);
+          }
+        } catch (_) {}
+      }
     }
   }
   return null;
@@ -684,7 +686,26 @@ async function azLoadSubscriptionAdminRows(search='', limitRows=300){
 }
 
 async function azResolveTrustedPremiumProduct(data = {}, req = null) {
-  const clientProduct = data.product || {};
+  let clientProduct = data.product || {};
+
+  // AZOBSS PATCH 422:
+  // Cart checkout UI used a pseudo product id "CART-CHECKOUT".
+  // For a cart with 1 item, backend must validate the real item inside cartItems.
+  // Multiple-product checkout needs separate multi-download fulfilment, so it is blocked clearly.
+  const isCartCheckout = clientProduct.isCartCheckout === true || data.isCartCheckout === true || Array.isArray(clientProduct.cartItems) || Array.isArray(data.cartItems);
+  const cartItems = Array.isArray(clientProduct.cartItems) ? clientProduct.cartItems : (Array.isArray(data.cartItems) ? data.cartItems : []);
+  if (isCartCheckout) {
+    const cleanItems = cartItems.filter(Boolean);
+    if (cleanItems.length === 1) {
+      clientProduct = { ...cleanItems[0], cartItems:cleanItems, isCartCheckout:true };
+      data = { ...data, product:clientProduct, productId:clientProduct.productId || clientProduct.id || clientProduct.sku || data.productId || "" };
+    } else if (cleanItems.length > 1) {
+      throw new Error("Cart checkout currently supports one product per payment. Please checkout one product at a time.");
+    } else if (String(clientProduct.id || clientProduct.productId || "").toUpperCase() === "CART-CHECKOUT") {
+      throw new Error("Cart item productId missing. Please remove the item and Add to Cart again.");
+    }
+  }
+
   const user = getPremiumUser(data);
   const productId = azProductIdFromAny(clientProduct, data);
   if (!productId) {
@@ -692,6 +713,11 @@ async function azResolveTrustedPremiumProduct(data = {}, req = null) {
   }
 
   let trusted = await azFindFirestoreProduct(productId);
+  if (!trusted && String(productId).toUpperCase() === "CART-CHECKOUT" && cartItems.length === 1) {
+    const realId = azProductIdFromAny(cartItems[0], data);
+    if (realId) trusted = await azFindFirestoreProduct(realId);
+    if (!trusted && realId) trusted = azFindLocalSoftwareProduct(realId);
+  }
   if (!trusted) trusted = azFindLocalSoftwareProduct(productId);
 
   // Admin-only RM1 test purchase: keep real product metadata/file if found, but lock test amount to RM1.
