@@ -1,0 +1,44 @@
+AZOBSS PATCH 419 - Admin Overview Active Pending Payments Fix
+
+Issue:
+- Overview Admin showed "Pending Purchases: 30".
+- User checked other accounts and carts; there were no cart items.
+- The number was misleading.
+
+Root cause:
+- The old Overview KPI counted every payment/purchase log with status:
+  pending / unpaid / waiting / empty status.
+- These are not cart records.
+- They are abandoned/incomplete checkout or ToyyibPay attempts.
+- Old pending records stayed in Firestore/payment logs, so the Overview card kept showing 30.
+
+Fix:
+- Renamed the KPI:
+  Pending Purchases -> Active Pending Payments
+- The card now counts only recent pending/unpaid/waiting payment attempts within the last 24 hours.
+- Old abandoned pending logs no longer affect the Overview KPI.
+- Payment Logs still keep old pending records for audit/history.
+
+New card note:
+- "Pending aktif 24 jam terakhir. Bukan cart."
+
+Expected result:
+- If there are no active pending payments from the last 24 hours, card shows 0.
+- Cart is not counted here.
+- Admin can still view historical pending attempts in Payment Logs.
+
+Based on:
+- Patch 418 baseline.
+
+Not changed:
+- Overview sales instant cache/loading remains.
+- Sales Overview totals remain.
+- My Purchases own-account-only fix remains.
+- Subscription verify/health endpoint remains.
+- Live Streaming Tools category remains.
+
+Firebase Rules:
+- No update required.
+
+Render ENV:
+- No new ENV required.

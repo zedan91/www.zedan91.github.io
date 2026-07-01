@@ -2110,7 +2110,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Messages</div><div id="statSupport" class="stat-value">0</div></div><div class="az-kpi-note">Mesej support yang belum selesai.</div></div>
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Active Notifications</div><div id="statNotifications" class="stat-value">0</div></div><div class="az-kpi-note">Pengumuman/notifikasi aktif.</div></div>
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Unread Payment Alerts</div><div id="statPaymentAlerts" class="stat-value">0</div></div><div class="az-kpi-note">Bayaran baru yang belum dibaca admin.</div></div>
-        <div class="card az-kpi-card is-money"><div><div class="stat-label">Pending Purchases</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pembelian yang belum selesai.</div></div>
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">Active Pending Payments</div><div id="statPurchases" class="stat-value">0</div></div><div class="az-kpi-note">Pending aktif 24 jam terakhir. Bukan cart.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Guest Logs</div><div id="statGuests" class="stat-value">0</div></div><div class="az-kpi-note">Rekod lawatan tanpa login.</div></div>
         <div class="card az-kpi-card is-money"><div><div class="stat-label">All Paid Gross Sales</div><div id="statThisMonthSales" class="stat-value">Loading…</div></div><div class="az-kpi-note">Jumlah semua paid/verified sebelum caj.</div></div>
       </div>
@@ -3784,6 +3784,35 @@ window.azAdminResetPaBmDownloadCount = azAdminResetPaBmDownloadCount;
 
 
 const AZ_ADMIN_OVERVIEW_SALES_CACHE_KEY = 'az_admin_overview_sales_summary_v418';
+
+const AZ_ADMIN_ACTIVE_PENDING_WINDOW_MS = 24 * 60 * 60 * 1000;
+function azAdminIsPendingStatus(status){
+  const s = String(status || '').trim().toLowerCase();
+  return !s || ['pending','unpaid','waiting','processing','created','checkout','initiated'].includes(s);
+}
+function azAdminIsFinalOrPaidStatus(status){
+  const s = String(status || '').trim().toLowerCase();
+  return ['paid','verified','success','successful','completed','complete','settled','approved','cancelled','canceled','failed','fail','expired','void','refunded','deleted'].includes(s);
+}
+function azAdminPendingAgeMs(row){
+  const ms = azAdminPaymentMs(row);
+  return ms ? (Date.now() - ms) : Number.POSITIVE_INFINITY;
+}
+function azAdminIsActivePendingPayment(row){
+  // AZOBSS PATCH 419:
+  // Overview pending KPI should not count abandoned old checkout/payment records.
+  // It counts only pending/unpaid/waiting payments that are still recent and actionable.
+  if(!row) return false;
+  const status = row.status || row.paymentStatus || row.billStatus || row.toyyibStatus || row.raw?.status || row.raw?.paymentStatus;
+  if(azAdminIsFinalOrPaidStatus(status)) return false;
+  if(!azAdminIsPendingStatus(status)) return false;
+
+  const amount = azAdminPaymentAmount(row);
+  // If amount exists, it is a payment attempt; if no amount but status is pending, still allow only if recent.
+  const age = azAdminPendingAgeMs(row);
+  return age >= 0 && age <= AZ_ADMIN_ACTIVE_PENDING_WINDOW_MS && (amount >= 0);
+}
+
 function azAdminOverviewSalesMoneyText(v){
   const n = Number(v || 0);
   return 'RM' + (Number.isFinite(n) ? n.toFixed(2) : '0.00');
@@ -3924,8 +3953,13 @@ async function loadOverview(){
   let openSupportCount=0;
   support?.forEach(d=>{const x=d.data(); const status=String(x.status||'open').toLowerCase(); const reply=String(x.reply||'').trim(); if(status==='open' || !reply) openSupportCount++;});
   let pendingPurchaseCount=0;
-  purchases?.forEach(d=>{const x=d.data(); const status=String(x.status||'').toLowerCase(); if(!status || status==='pending' || status==='unpaid' || status==='waiting') pendingPurchaseCount++;});
-  premiumOverviewOrders.forEach(x=>{ if(x.pending) pendingPurchaseCount++; });
+  purchases?.forEach(d=>{
+    const record=azAdminPurchaseLogToPaymentRecord(d.id,d.data());
+    if(azAdminIsActivePendingPayment(record)) pendingPurchaseCount++;
+  });
+  premiumOverviewOrders.forEach(x=>{
+    if(azAdminIsActivePendingPayment(x)) pendingPurchaseCount++;
+  });
   $('#statSupport').textContent=openSupportCount;
   $('#statNotifications').textContent=notif?.size??0;
   azAdminSetPaymentAlertBadge(paymentAlertOverview?.unreadCount||0);
@@ -5578,8 +5612,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=418"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=418"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=419"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=419"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
