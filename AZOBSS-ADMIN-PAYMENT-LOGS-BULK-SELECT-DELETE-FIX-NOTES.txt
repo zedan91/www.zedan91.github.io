@@ -1,0 +1,52 @@
+AZOBSS PATCH 420 - Admin Payment Logs Bulk Select/Delete Fix
+
+Request:
+- In Payment Logs / Download Control, add tick checkboxes and Select All.
+- Allow admin to delete/clear Pending and other records easily.
+
+Fix:
+Frontend:
+- Added checkbox to every payment log row.
+- Added "Select all filtered".
+- Added "Delete Selected".
+- Added quick clear buttons:
+  - Clear Pending
+  - Clear Cancelled
+  - Clear Failed
+- Paid/Verified records are not cleared by quick buttons; they can only be deleted manually by ticking + Delete Selected, with warning.
+- Selection count is displayed.
+- Selected rows are highlighted.
+
+Backend:
+- Added admin endpoint in deploy-server.js:
+  POST /api/admin/payment-logs/delete
+- Uses Firebase Admin token/admin auth.
+- Can delete:
+  - purchaseLogs records
+  - premiumOrders records
+  - local premium-orders.json backup entries when matching premiumOrders are deleted
+- Writes admin audit log:
+  admin_payment_logs_bulk_delete
+
+Important:
+- This deletes payment log/admin records, not cart items.
+- Payment Logs historical pending/cancelled/failed can now be cleaned safely.
+- Sales Overview and Overview totals refresh after delete.
+- Live Render was previously confirmed running deploy-server.js; backend/server.js is not the active live entrypoint for these admin routes.
+
+Based on:
+- Patch 419 baseline.
+
+Not changed:
+- Cart system not changed.
+- Paid/verified strict unlock logic not changed.
+- My Purchases own-account-only fix remains.
+- Overview sales instant cache/loading remains.
+- Subscription verify/health endpoint remains.
+- Live Streaming Tools category remains.
+
+Firebase Rules:
+- No update required because delete is handled by Render backend using Firebase Admin.
+
+Render ENV:
+- No new ENV required, but Render backend deploy is required for the new delete endpoint.

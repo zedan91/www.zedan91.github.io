@@ -1684,6 +1684,128 @@ function azPremiumOrderMergeKey(row = {}, docId = "") {
 function azPremiumOrderSortMs(row = {}) {
   return Number(row.paidAtMs || row.updatedAtMs || row.createdAtMs || Date.parse(row.paidAt || row.updatedAt || row.createdAt || "") || 0) || 0;
 }
+
+// AZOBSS PATCH 420: Admin Payment Logs bulk delete helpers.
+function azAdminDeleteLogSafeText(v = "", max = 180) {
+  return cleanPremiumText(v || "", max);
+}
+function azAdminDeleteLogRefs(input = {}) {
+  const r = input && typeof input === "object" ? input : {};
+  const refs = {
+    source: azAdminDeleteLogSafeText(r.source || r._azSource || r.collection || "", 80),
+    collection: azAdminDeleteLogSafeText(r.collection || "", 80),
+    docId: azAdminDeleteLogSafeText(r.docId || r.id || r.firestoreId || "", 180),
+    orderId: azAdminDeleteLogSafeText(r.orderId || "", 180),
+    billCode: azAdminDeleteLogSafeText(r.billCode || r.billcode || "", 160),
+    paymentReference: azAdminDeleteLogSafeText(r.paymentReference || r.transactionId || r.txnId || "", 180),
+    productId: azAdminDeleteLogSafeText(r.productId || r.softwareId || r.cadId || "", 180),
+    status: azAdminDeleteLogSafeText(r.status || r.paymentStatus || "", 80)
+  };
+  const src = refs.source.toLowerCase();
+  if (!refs.collection) refs.collection = src === "premiumorders" ? "premiumOrders" : "purchaseLogs";
+  if (refs.collection !== "premiumOrders" && refs.collection !== "purchaseLogs") refs.collection = "purchaseLogs";
+  return refs;
+}
+async function azAdminDeleteFirestoreRecordByRefs(db, collectionName, refs = {}) {
+  const deleted = [];
+  const seen = new Set();
+  async function delDoc(id, why) {
+    const safeId = azAdminDeleteLogSafeText(id || "", 180);
+    if (!safeId || seen.has(safeId)) return;
+    seen.add(safeId);
+    try {
+      const ref = db.collection(collectionName).doc(safeId);
+      const snap = await ref.get();
+      if (snap.exists) {
+        await ref.delete();
+        deleted.push({ collection:collectionName, docId:safeId, via:why || "docId" });
+      }
+    } catch (err) {
+      throw new Error(collectionName + "/" + safeId + ": " + (err && err.message ? err.message : String(err)));
+    }
+  }
+  await delDoc(refs.docId, "docId");
+  const fields = [
+    ["orderId", refs.orderId],
+    ["billCode", refs.billCode],
+    ["billcode", refs.billCode],
+    ["paymentReference", refs.paymentReference],
+    ["transactionId", refs.paymentReference],
+    ["txnId", refs.paymentReference]
+  ].filter(pair => pair[1]);
+  for (const [field, value] of fields) {
+    try {
+      const qs = await db.collection(collectionName).where(field, "==", value).limit(20).get();
+      for (const docSnap of qs.docs) {
+        if (!seen.has(docSnap.id)) {
+          await docSnap.ref.delete();
+          seen.add(docSnap.id);
+          deleted.push({ collection:collectionName, docId:docSnap.id, via:field });
+        }
+      }
+    } catch (err) {
+      console.warn("Admin payment log delete query skipped:", collectionName, field, err && (err.message || err));
+    }
+  }
+  return deleted;
+}
+function azAdminDeleteLocalPremiumOrderByRefs(refs = {}) {
+  let deleted = 0;
+  try {
+    const orders = readPremiumOrders() || [];
+    const match = (o = {}) => {
+      const vals = [
+        o.docId, o.id, o.orderId, o.billCode, o.billcode, o.paymentReference, o.transactionId, o.txnId
+      ].map(v => String(v || "").trim()).filter(Boolean);
+      const needles = [refs.docId, refs.orderId, refs.billCode, refs.paymentReference].map(v => String(v || "").trim()).filter(Boolean);
+      return needles.length && needles.some(n => vals.includes(n));
+    };
+    const next = orders.filter(o => {
+      const m = match(o);
+      if (m) deleted++;
+      return !m;
+    });
+    if (deleted) writePremiumOrders(next);
+  } catch (err) {
+    throw new Error("local premium-orders.json: " + (err && err.message ? err.message : String(err)));
+  }
+  return deleted;
+}
+async function azAdminDeletePaymentLogRecords(req, parsed, body = {}) {
+  const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+  if (!adminIdentity || !adminIdentity.isAdmin) {
+    return { ok:false, statusCode:403, error:"Admin authorization required to delete payment logs." };
+  }
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, statusCode:500, error:"Firebase Admin is not configured." };
+  const rows = Array.isArray(body.records) ? body.records.slice(0, 200) : [];
+  if (!rows.length) return { ok:false, statusCode:400, error:"No records selected." };
+  const result = { ok:true, deleted:0, requested:rows.length, details:[], errors:[] };
+  for (const row of rows) {
+    const refs = azAdminDeleteLogRefs(row);
+    try {
+      let deletedDetails = [];
+      if (refs.collection === "premiumOrders") {
+        deletedDetails = deletedDetails.concat(await azAdminDeleteFirestoreRecordByRefs(db, "premiumOrders", refs));
+        const localDeleted = azAdminDeleteLocalPremiumOrderByRefs(refs);
+        if (localDeleted) deletedDetails.push({ collection:"premium-orders.json", count:localDeleted, via:"local-json" });
+      } else {
+        deletedDetails = deletedDetails.concat(await azAdminDeleteFirestoreRecordByRefs(db, "purchaseLogs", refs));
+      }
+      if (!deletedDetails.length) {
+        result.errors.push({ refs, error:"Record not found or already deleted." });
+      } else {
+        result.deleted += deletedDetails.reduce((sum, d) => sum + (Number(d.count || 0) || 1), 0);
+        result.details.push({ refs, deleted:deletedDetails });
+      }
+    } catch (err) {
+      result.errors.push({ refs, error:err && err.message ? err.message : String(err) });
+    }
+  }
+  azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payment_logs_bulk_delete", "paymentLogs", "bulk", { requested:result.requested, deleted:result.deleted, errors:result.errors.length }, result.errors.length ? "partial" : "success"), "Admin payment log bulk delete audit failed");
+  return result;
+}
+
 async function azLoadPremiumOrdersMerged(maxRows = 500) {
   const limitRows = Math.max(1, Math.min(5000, Number(maxRows || 500) || 500));
   const merged = [];
@@ -6456,6 +6578,7 @@ async function handler(req, res) {
     if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/pa-bm-purchase-records" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-pabm-records-read", 60, 60 * 1000)) return;
+    if (pathname === "/api/admin/payment-logs/delete" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payment-logs-delete", 20, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/export" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-export", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/maintenance-scan" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-maintenance-scan", 40, 10 * 60 * 1000)) return;
@@ -7244,6 +7367,17 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({ ok:true, sent:true, to:maskEmail(to), receiptNo:order.receiptNo, downloadLinkIncluded:!!downloadUrl, messageId:info && (info.messageId || info.messageIdHeader || info.messageId || "") || "" }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+
+    if (pathname === "/api/admin/payment-logs/delete" && req.method === "POST") {
+      try {
+        const body = parseRequestBody(await readBody(req));
+        const result = await azAdminDeletePaymentLogRecords(req, parsed, body);
+        return send(res, result.statusCode || 200, JSON.stringify(result, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
     }
 
