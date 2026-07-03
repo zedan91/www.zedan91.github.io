@@ -4927,8 +4927,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(url);ok=true}}catch(e){}
     if(!ok){try{const ta=document.createElement('textarea');ta.value=url;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();ok=document.execCommand('copy');ta.remove()}catch(e){}}
     if(!silent){
-      if(ok) notifyShare((guestMode||adminMode)?'Link produk copied.':'Link referral copied. Paste dan share kepada orang lain.');
-      else prompt((guestMode||adminMode)?'Copy link produk ini:':'Copy link referral ini:',url);
+      if(ok) notifyShare((guestMode||adminMode)?'Product link copied.':'Referral link copied. Paste and share it with others.');
+      else prompt((guestMode||adminMode)?'Copy this product link:':'Copy this referral link:',url);
     }
     return ok;
   }
@@ -4939,11 +4939,11 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     const url=payload.url, text=payload.text, title=payload.title, guestMode=!!payload.guestMode, adminMode=!!payload.adminMode, ref=payload.ref||'';
     const creditMode = !guestMode && !adminMode;
     const titleText = creditMode ? 'Share for Lucky Draw' : 'Share product link';
-    const subtitleText = guestMode ? 'Guest boleh share link produk biasa. Login untuk aktifkan credit Lucky Draw.' : (adminMode ? 'Admin boleh share link produk biasa.' : ('Credit Lucky Draw aktif untuk ' + (ref || 'akaun anda') + '.'));
+    const subtitleText = guestMode ? 'Guests can share the product link. Log in to activate Lucky Draw credit.' : (adminMode ? 'Admin can share the product link.' : ('Lucky Draw credit is active for ' + (ref || 'your account') + '.'));
     const badgeText = guestMode ? 'Product link only' : (adminMode ? 'Admin product link' : 'Lucky Draw credit active');
     const copyLabel = creditMode ? 'Copy referral link' : 'Copy product link';
     const staffCommissionMode = creditMode && isStaffCommissionSharer();
-    const commissionInfoHtml = staffCommissionMode ? '<div class="az-lucky-share-commission-card"><div class="az-lucky-share-commission-title">💰 Komisen share link staff/semi-admin</div><div class="az-lucky-share-commission-lines"><div><b>20%</b> jika share produk berbayar milik AZOBSS/admin.</div><div><b>10%</b> jika share software/CAD berbayar milik staff lain.</div></div><div class="az-lucky-share-commission-small">Komisen dikira selepas pembelian disahkan dan rekod jualan berjaya dipadankan.</div></div>' : '';
+    const commissionInfoHtml = staffCommissionMode ? '<div class="az-lucky-share-commission-card"><div class="az-lucky-share-commission-title">💰 Staff/semi-admin share link commission</div><div class="az-lucky-share-commission-lines"><div><b>20%</b> when sharing paid AZOBSS/admin products.</div><div><b>10%</b> when sharing paid software/CAD owned by another staff account.</div></div><div class="az-lucky-share-commission-small">Commission is calculated after the purchase is verified and the sales record is matched.</div></div>' : '';
     const encUrl=encodeURIComponent(url), encText=encodeURIComponent(text), encTitle=encodeURIComponent(title);
     const links={
       wa:'https://wa.me/?text='+encodeURIComponent(text+'\n'+url),
@@ -4983,7 +4983,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     wrap.querySelector('.az-lucky-share-modal-close').addEventListener('click',close);
     wrap.addEventListener('click',function(e){if(e.target===wrap)close()});
     wrap.querySelectorAll('[data-share]').forEach(function(btn){btn.addEventListener('click',async function(){const link=links[btn.dataset.share];const ok=openPopup(link); if(!ok){await copyLink(url,true,guestMode,adminMode); note.textContent='Popup blocked. Link sudah auto-copy.';} else if(guestMode){note.textContent='Link produk dibuka untuk share. Login untuk aktifkan credit Lucky Draw.';} else if(adminMode){note.textContent='Link produk dibuka untuk share.';} });});
-    wrap.querySelector('.az-lucky-share-modal-copy-btn').addEventListener('click',async function(){const ok=await copyLink(url,true,guestMode,adminMode);note.textContent=ok?((guestMode)?'Link produk copied. Login untuk aktifkan credit Lucky Draw.':(adminMode?'Link produk copied.':'Link referral copied. Paste dan share kepada orang lain.')):'Sila copy link secara manual.';input.focus();input.select();});
+    wrap.querySelector('.az-lucky-share-modal-copy-btn').addEventListener('click',async function(){const ok=await copyLink(url,true,guestMode,adminMode);note.textContent=ok?((guestMode)?'Product link copied. Login untuk aktifkan credit Lucky Draw.':(adminMode?'Product link copied.':'Referral link copied. Paste and share it with others.')):'Please copy the link manually.';input.focus();input.select();});
     setTimeout(function(){try{input.focus();input.select()}catch(e){}},80);
   }
   async function shareCard(card,e){
@@ -5274,7 +5274,7 @@ html.azobss-shared-product-mode-332 .cad-item{
       note = document.createElement('div');
       note.id = 'azSharedProductFilterNote147';
       note.className = 'az-shared-product-filter-note';
-      note.innerHTML = '<span>Anda sedang melihat produk yang dikongsi: <b></b>'+(refRaw ? ' <small style="opacity:.78"></small>' : '')+'</span><button type="button">Lihat semua produk</button>';
+      note.innerHTML = '<span>You are viewing a shared product: <b></b>'+(refRaw ? ' <small style="opacity:.78"></small>' : '')+'</span><button type="button">View all products</button>';
       note.querySelector('button').addEventListener('click', function(e){
         if(e){ e.preventDefault(); e.stopPropagation(); }
         revealAllSharedProducts294();
@@ -5284,7 +5284,7 @@ html.azobss-shared-product-mode-332 .cad-item{
     var b = note.querySelector('b');
     if(b) b.textContent = name;
     var small = note.querySelector('small');
-    if(small) small.textContent = 'daripada ' + refRaw.replace(/[<>]/g,'');
+    if(small) small.textContent = 'from ' + refRaw.replace(/[<>]/g,'');
   }
   function scrollToMatch(match){
     if(scrolledOnce || !match) return;
