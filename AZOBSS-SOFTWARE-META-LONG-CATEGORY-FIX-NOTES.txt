@@ -1,0 +1,12 @@
+AZOBSS PATCH 428 - Software Meta Long Category Fix
+
+Fix:
+- Product card meta badges now allow the first category badge to show fully.
+- Long categories such as "Live Streaming Tools" no longer get clipped as "ive Streaming Tool".
+- Metadata can wrap to a second compact line on narrow cards.
+
+Scope:
+- Frontend CSS only.
+- No payment/backend logic changed.
+- No Firebase Rules update required.
+- No Render backend deploy required.

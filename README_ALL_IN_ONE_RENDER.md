@@ -246,3 +246,8 @@ Deploy GitHub Pages only.
 - Used Gmail download link now shows Downloaded/expired wording on card.
 - Backend soft-delete endpoint added, so Render deploy is required.
 - No Firebase Rules update required.
+
+
+PATCH 428 - SOFTWARE META LONG CATEGORY FIX
+- Long software category badges such as Live Streaming Tools now display fully on cards.
+- Frontend CSS only; no Firebase Rules or Render backend deploy required.

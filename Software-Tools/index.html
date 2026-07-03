@@ -12139,6 +12139,52 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
 })();
 </script>
 
+
+
+<style id="azobss-software-meta-full-category-fix-428">
+/* AZOBSS 428: show long software category badge fully on product cards */
+html body #softwareGrid > .download-card > .software-meta,
+html body #softwareDownloadsGrid > .download-card > .software-meta,
+html body .downloads-grid > .download-card > .software-meta{
+  height:auto!important;
+  min-height:42px!important;
+  max-height:none!important;
+  max-width:238px!important;
+  flex:0 0 auto!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  align-content:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  overflow:visible!important;
+  white-space:normal!important;
+}
+html body #softwareGrid > .download-card > .software-meta span,
+html body #softwareDownloadsGrid > .download-card > .software-meta span,
+html body .downloads-grid > .download-card > .software-meta span{
+  flex:0 0 auto!important;
+  min-width:max-content!important;
+  width:auto!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+}
+html body #softwareGrid > .download-card > .software-meta span:first-child,
+html body #softwareDownloadsGrid > .download-card > .software-meta span:first-child,
+html body .downloads-grid > .download-card > .software-meta span:first-child{
+  max-width:100%!important;
+  min-width:max-content!important;
+  width:auto!important;
+  padding-left:7px!important;
+  padding-right:7px!important;
+  font-size:9px!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+}
+</style>
+
 </body>
 </html>
 
