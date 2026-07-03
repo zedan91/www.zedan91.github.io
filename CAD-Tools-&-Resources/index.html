@@ -2294,7 +2294,7 @@ function normalizeItem(item){
   function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
   function azEyeSvg287(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';}
   function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'cad-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add to Likes" title="Add to Likes">♡</button>';}
-  function azStableShareHtml287(item,isPremium){var freeAttr=isPremium?'data-az-share-type="paid"':'data-az-share-type="free" data-az-free-share="1" data-az-no-commission="1"';var label=isPremium?'Share product link':'Share free CAD resource';var text=isPremium?' Share Product':' Share Free';return '<button type="button" class="az-lucky-product-share-btn az-share-stable-292 az-share-stable-293" data-az-lucky-main="1" data-az-lucky-product-share="1" data-az-share-inner-ready-292="1" data-az-share-firstpaint-293="1" data-share-mode="guest" ' + freeAttr + ' data-share-label="'+label+'" title="'+label+'" aria-label="'+label+'">'+azShareSvg287()+'<span class="az-lucky-share-text">'+text+'</span></button>';}
+  function azStableShareHtml287(item,isPremium){if(!isPremium)return '';return '<button type="button" class="az-lucky-product-share-btn az-share-stable-292 az-share-stable-293" data-az-lucky-main="1" data-az-lucky-product-share="1" data-az-share-inner-ready-292="1" data-az-share-firstpaint-293="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link">'+azShareSvg287()+'<span class="az-lucky-share-text"> Share Product</span></button>';}
   function azStablePreviewHtml287(item){const src=String(item.gifUrl||'').trim();if(!src)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155 az-preview-stable-292 az-preview-stable-293" data-az-preview-firstpaint-293="1" href="'+esc(src)+'" data-gif-preview="'+esc(src)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo">'+azEyeSvg287()+'</a>';}
 
   function renderCard(item){
@@ -2623,8 +2623,6 @@ function normalizeItem(item){
       const qs = new URLSearchParams(location.search);
       const urlProduct = String(qs.get('product') || '').trim();
       const urlRef = String(qs.get('ref') || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
-      const noCommissionShare = /^(1|true|yes)$/i.test(String(qs.get('nocommission') || '')) || String(qs.get('share') || qs.get('type') || '').toLowerCase() === 'free';
-      if(noCommissionShare) return null;
       if(urlRef && (!urlProduct || !id || urlProduct === id)){
         const r={username:urlRef, productId:id || urlProduct, sourcePage:(/CAD-Tools/i.test(location.pathname)?'CAD Tools':'Software'), openedAt:new Date().toISOString(), source:'url-ref'};
         try{localStorage.setItem('azobssStaffShareReferral_'+(id||urlProduct), JSON.stringify(r));}catch(_e){}
@@ -4913,7 +4911,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(/free|percuma/.test(type) || freeOnly) return false;
     return false;
   }
-  function makeShareUrl(info,ref,shareType){const url=new URL(location.origin+location.pathname);url.searchParams.set('product',info.id);if(ref)url.searchParams.set('ref',ref);url.searchParams.set('source',SOURCE_PAGE);if(shareType)url.searchParams.set('share',shareType);if(shareType==='free')url.searchParams.set('nocommission','1');return url.toString()}
+  function makeShareUrl(info,ref){const url=new URL(location.origin+location.pathname);url.searchParams.set('product',info.id);if(ref)url.searchParams.set('ref',ref);url.searchParams.set('source',SOURCE_PAGE);return url.toString()}
   function notifyShare(message){
     try{
       let toast=document.querySelector('.az-lucky-share-toast');
@@ -4929,8 +4927,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(url);ok=true}}catch(e){}
     if(!ok){try{const ta=document.createElement('textarea');ta.value=url;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();ok=document.execCommand('copy');ta.remove()}catch(e){}}
     if(!silent){
-      if(ok) notifyShare((guestMode||adminMode)?'Link produk copied.':'Link referral copied. Paste dan share kepada orang lain.');
-      else prompt((guestMode||adminMode)?'Copy link produk ini:':'Copy link referral ini:',url);
+      if(ok) notifyShare((guestMode||adminMode)?'Product link copied.':'Referral link copied. Paste and share it with others.');
+      else prompt((guestMode||adminMode)?'Copy this product link:':'Copy this referral link:',url);
     }
     return ok;
   }
@@ -4938,14 +4936,14 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   function openPopup(url){try{const w=window.open(url,'_blank','noopener,noreferrer,width=720,height=620');return !!w}catch(e){return false}}
   function openDesktopShareModal(payload){
     const old=document.querySelector('.az-lucky-share-modal-backdrop'); if(old) old.remove();
-    const url=payload.url, text=payload.text, title=payload.title, guestMode=!!payload.guestMode, adminMode=!!payload.adminMode, freeShareMode=!!payload.freeShareMode, ref=payload.ref||'';
-    const creditMode = !guestMode && !adminMode && !freeShareMode;
-    const titleText = freeShareMode ? (SOURCE_PAGE==='cad' ? 'Share free CAD resource' : 'Share free software') : (creditMode ? 'Share for Lucky Draw' : 'Share product link');
-    const subtitleText = freeShareMode ? 'Free item boleh dikongsi seperti biasa. Tiada komisen dikira kerana tiada transaksi jualan.' : (guestMode ? 'Guest boleh share link produk biasa. Login untuk aktifkan credit Lucky Draw.' : (adminMode ? 'Admin boleh share link produk biasa.' : ('Credit Lucky Draw aktif untuk ' + (ref || 'akaun anda') + '.')));
-    const badgeText = freeShareMode ? 'Free share · No commission' : (guestMode ? 'Product link only' : (adminMode ? 'Admin product link' : 'Lucky Draw credit active'));
-    const copyLabel = freeShareMode ? (SOURCE_PAGE==='cad' ? 'Copy free CAD link' : 'Copy free software link') : (creditMode ? 'Copy referral link' : 'Copy product link');
+    const url=payload.url, text=payload.text, title=payload.title, guestMode=!!payload.guestMode, adminMode=!!payload.adminMode, ref=payload.ref||'';
+    const creditMode = !guestMode && !adminMode;
+    const titleText = creditMode ? 'Share for Lucky Draw' : 'Share product link';
+    const subtitleText = guestMode ? 'Guests can share the product link. Log in to activate Lucky Draw credit.' : (adminMode ? 'Admin can share the product link.' : ('Lucky Draw credit is active for ' + (ref || 'your account') + '.'));
+    const badgeText = guestMode ? 'Product link only' : (adminMode ? 'Admin product link' : 'Lucky Draw credit active');
+    const copyLabel = creditMode ? 'Copy referral link' : 'Copy product link';
     const staffCommissionMode = creditMode && isStaffCommissionSharer();
-    const commissionInfoHtml = staffCommissionMode ? '<div class="az-lucky-share-commission-card"><div class="az-lucky-share-commission-title">💰 Komisen share link staff/semi-admin</div><div class="az-lucky-share-commission-lines"><div><b>20%</b> jika share produk berbayar milik AZOBSS/admin.</div><div><b>10%</b> jika share software/CAD berbayar milik staff lain.</div></div><div class="az-lucky-share-commission-small">Komisen dikira selepas pembelian disahkan dan rekod jualan berjaya dipadankan.</div></div>' : (freeShareMode ? '<div class="az-lucky-share-commission-card" data-az-free-no-commission="1"><div class="az-lucky-share-commission-title">ℹ️ Free share</div><div class="az-lucky-share-commission-small">Share item free tidak masuk rekod komisen kerana bukan jualan berbayar.</div></div>' : '');
+    const commissionInfoHtml = staffCommissionMode ? '<div class="az-lucky-share-commission-card"><div class="az-lucky-share-commission-title">💰 Staff/semi-admin share link commission</div><div class="az-lucky-share-commission-lines"><div><b>20%</b> when sharing paid AZOBSS/admin products.</div><div><b>10%</b> when sharing paid software/CAD owned by another staff account.</div></div><div class="az-lucky-share-commission-small">Commission is calculated after the purchase is verified and the sales record is matched.</div></div>' : '';
     const encUrl=encodeURIComponent(url), encText=encodeURIComponent(text), encTitle=encodeURIComponent(title);
     const links={
       wa:'https://wa.me/?text='+encodeURIComponent(text+'\n'+url),
@@ -4980,12 +4978,12 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     document.body.appendChild(wrap);
     const input=wrap.querySelector('.az-lucky-share-modal-input'); input.value=url;
     const note=wrap.querySelector('.az-lucky-share-modal-note');
-    if(note) note.textContent = freeShareMode ? 'Link free item sahaja. Tiada komisen dikira.' : (guestMode ? 'Link produk sahaja. Login untuk aktifkan credit Lucky Draw.' : (adminMode ? 'Link produk biasa untuk dikongsi.' : ('Credit aktif' + (ref ? ' untuk '+ref : '') + '.')));
+    if(note) note.textContent = guestMode ? 'Link produk sahaja. Login untuk aktifkan credit Lucky Draw.' : (adminMode ? 'Link produk biasa untuk dikongsi.' : ('Credit aktif' + (ref ? ' untuk '+ref : '') + '.'));
     function close(){wrap.remove()}
     wrap.querySelector('.az-lucky-share-modal-close').addEventListener('click',close);
     wrap.addEventListener('click',function(e){if(e.target===wrap)close()});
-    wrap.querySelectorAll('[data-share]').forEach(function(btn){btn.addEventListener('click',async function(){const link=links[btn.dataset.share];const ok=openPopup(link); if(!ok){await copyLink(url,true,guestMode,adminMode); note.textContent='Popup blocked. Link sudah auto-copy.';} else if(freeShareMode){note.textContent='Link free item dibuka untuk share. Tiada komisen dikira.';} else if(guestMode){note.textContent='Link produk dibuka untuk share. Login untuk aktifkan credit Lucky Draw.';} else if(adminMode){note.textContent='Link produk dibuka untuk share.';} });});
-    wrap.querySelector('.az-lucky-share-modal-copy-btn').addEventListener('click',async function(){const ok=await copyLink(url,true,guestMode,adminMode);note.textContent=ok?((freeShareMode)?'Link free item copied. Tiada komisen dikira.':((guestMode)?'Link produk copied. Login untuk aktifkan credit Lucky Draw.':(adminMode?'Link produk copied.':'Link referral copied. Paste dan share kepada orang lain.'))):'Sila copy link secara manual.';input.focus();input.select();});
+    wrap.querySelectorAll('[data-share]').forEach(function(btn){btn.addEventListener('click',async function(){const link=links[btn.dataset.share];const ok=openPopup(link); if(!ok){await copyLink(url,true,guestMode,adminMode); note.textContent='Popup blocked. Link sudah auto-copy.';} else if(guestMode){note.textContent='Link produk dibuka untuk share. Login untuk aktifkan credit Lucky Draw.';} else if(adminMode){note.textContent='Link produk dibuka untuk share.';} });});
+    wrap.querySelector('.az-lucky-share-modal-copy-btn').addEventListener('click',async function(){const ok=await copyLink(url,true,guestMode,adminMode);note.textContent=ok?((guestMode)?'Product link copied. Login untuk aktifkan credit Lucky Draw.':(adminMode?'Product link copied.':'Referral link copied. Paste and share it with others.')):'Please copy the link manually.';input.focus();input.select();});
     setTimeout(function(){try{input.focus();input.select()}catch(e){}},80);
   }
   async function shareCard(card,e){
@@ -4993,15 +4991,13 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     const currentUser=readUser();
     const rawRef=username(currentUser);
     const adminMode=!!rawRef && isAdminShareUser(currentUser);
-    const paidMode=isPaidCard(card);
-    const freeShareMode=!paidMode;
-    const creditMode=!!rawRef && !adminMode && paidMode;
+    const creditMode=!!rawRef && !adminMode;
     const ref=creditMode?rawRef:'';
     const info=productInfo(card);
     const guestMode=!rawRef;
-    const url=makeShareUrl(info,ref,freeShareMode?'free':'paid');
-    const text=freeShareMode?('AZOBSS '+info.name+' — Free '+(SOURCE_PAGE==='cad'?'CAD resource':'software')+' link'):(creditMode?('AZOBSS '+info.name+' — Share for Lucky Draw credit'):('AZOBSS '+info.name+' — Product link'));
-    const payload={title:'AZOBSS '+info.name,text,url,guestMode,adminMode,freeShareMode,ref};
+    const url=makeShareUrl(info,ref);
+    const text=creditMode?('AZOBSS '+info.name+' — Share for Lucky Draw credit'):('AZOBSS '+info.name+' — Product link');
+    const payload={title:'AZOBSS '+info.name,text,url,guestMode,adminMode,ref};
     if(isMobileNativeShare()){
       try{await navigator.share(payload);return}catch(err){await copyLink(url,false,guestMode,adminMode);return}
     }
@@ -5039,12 +5035,15 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   }
   function ensureOneButton(card){
     if(!card) return;
-    var paidMode=isPaidCard(card);
+    if(!isPaidCard(card)){
+      var oldBtn = card.querySelector(':scope > .az-lucky-product-share-btn');
+      if(oldBtn) oldBtn.remove();
+      return;
+    }
     var shareUser=readUser();
     var loggedIn=!!username(shareUser);
     var adminShareMode=loggedIn && isAdminShareUser(shareUser);
-    var freeShareMode=!paidMode;
-    var creditShareMode=loggedIn && !adminShareMode && paidMode;
+    var creditShareMode=loggedIn && !adminShareMode;
     var btn=card.querySelector(':scope > .az-lucky-product-share-btn');
     if(!btn){
       btn=document.createElement('button');
@@ -5062,15 +5061,13 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     btn.setAttribute('data-az-share-inner-ready-292','1');
     var azShareText292 = btn.querySelector('.az-lucky-share-text');
     if(azShareText292){
-      var azNextShareText292 = ' ' + (freeShareMode ? 'Share Free' : (creditShareMode ? 'Lucky Draw Share' : 'Share Product'));
+      var azNextShareText292 = ' ' + (creditShareMode ? 'Lucky Draw Share' : 'Share Product');
       if(azShareText292.textContent !== azNextShareText292) azShareText292.textContent = azNextShareText292;
     }
-    btn.title=freeShareMode?(SOURCE_PAGE==='cad'?'Share free CAD resource':'Share free software'):(creditShareMode?'Share for Lucky Draw credit':'Share product link');
-    btn.dataset.shareMode = freeShareMode ? 'free' : (creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest'));
-    btn.dataset.shareType = freeShareMode ? 'free' : 'paid';
-    if(freeShareMode){btn.dataset.azFreeShare='1';btn.dataset.azNoCommission='1';}else{delete btn.dataset.azFreeShare;delete btn.dataset.azNoCommission;}
-    btn.dataset.shareLabel = freeShareMode ? 'Free share · no commission' : (creditShareMode ? 'Lucky Draw credit' : 'Share product link');
-    btn.setAttribute('aria-label', freeShareMode?'Share this free item link':(creditShareMode?'Share this product with Lucky Draw credit':'Share this product link'));
+    btn.title=creditShareMode?'Share for Lucky Draw credit':'Share product link';
+    btn.dataset.shareMode = creditShareMode ? 'credit' : (adminShareMode ? 'admin' : 'guest');
+    btn.dataset.shareLabel = creditShareMode ? 'Lucky Draw credit' : 'Share product link';
+    btn.setAttribute('aria-label', creditShareMode?'Share this product with Lucky Draw credit':'Share this product link');
     alignShareButton(card, btn);
     card.dataset.azLuckyProductId=productInfo(card).id;
     card.dataset.azLuckyShareReady='1';
@@ -5082,8 +5079,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     collectCards().forEach(ensureOneButton);
   }
   async function recordOpen(){
-    const qs=new URLSearchParams(location.search);const productId=String(qs.get('product')||'').trim().slice(0,120);const ref=username({usernameKey:qs.get('ref')||''});const noCommissionShare=/^(1|true|yes)$/i.test(String(qs.get('nocommission')||''))||String(qs.get('share')||qs.get('type')||'').toLowerCase()==='free';
-    if(!productId||!ref||noCommissionShare) return;
+    const qs=new URLSearchParams(location.search);const productId=String(qs.get('product')||'').trim().slice(0,120);const ref=username({usernameKey:qs.get('ref')||''});
+    if(!productId||!ref) return;
     const visitor=username(readUser());
     try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}));try{localStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));sessionStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));}catch(_e){}}catch(e){}
   }
@@ -5277,7 +5274,7 @@ html.azobss-shared-product-mode-332 .cad-item{
       note = document.createElement('div');
       note.id = 'azSharedProductFilterNote147';
       note.className = 'az-shared-product-filter-note';
-      note.innerHTML = '<span>Anda sedang melihat produk yang dikongsi: <b></b>'+(refRaw ? ' <small style="opacity:.78"></small>' : '')+'</span><button type="button">Lihat semua produk</button>';
+      note.innerHTML = '<span>You are viewing a shared product: <b></b>'+(refRaw ? ' <small style="opacity:.78"></small>' : '')+'</span><button type="button">View all products</button>';
       note.querySelector('button').addEventListener('click', function(e){
         if(e){ e.preventDefault(); e.stopPropagation(); }
         revealAllSharedProducts294();
@@ -5287,7 +5284,7 @@ html.azobss-shared-product-mode-332 .cad-item{
     var b = note.querySelector('b');
     if(b) b.textContent = name;
     var small = note.querySelector('small');
-    if(small) small.textContent = 'daripada ' + refRaw.replace(/[<>]/g,'');
+    if(small) small.textContent = 'from ' + refRaw.replace(/[<>]/g,'');
   }
   function scrollToMatch(match){
     if(scrolledOnce || !match) return;

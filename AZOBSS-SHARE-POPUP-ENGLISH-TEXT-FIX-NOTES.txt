@@ -1,0 +1,10 @@
+Patch 427 - Share Popup English Text Fix
+
+- Converts shared product banner text to English:
+  "You are viewing a shared product" / "View all products".
+- Converts share modal mixed Malay text to English for Software Tools and CAD Tools.
+- Converts copy/share messages to English.
+- Keeps Free Software share logic from patch 426:
+  Free Software can still be shared, but no commission is recorded behind the scenes.
+- No Firebase Rules update required.
+- No Render backend deploy required.
