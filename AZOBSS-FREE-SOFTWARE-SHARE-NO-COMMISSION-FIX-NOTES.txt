@@ -1,0 +1,39 @@
+AZOBSS PATCH 425 - FREE SOFTWARE SHARE NO COMMISSION FIX
+
+Baseline:
+- (424)-AZOBSS-PAYMENT-LOGS-DELETE-BACKEND-ENTRYPOINTS-FIX_20260701.zip
+
+Changes:
+1. Free Software cards now show the share button too.
+   - Previously share button was removed for free items because only paid/premium cards were allowed.
+   - Free share button label: Free share / no commission.
+
+2. Free share link is product-link only.
+   - URL includes share=free and nocommission=1.
+   - No staff/semi-admin commission referral is stored for free share links.
+   - Free share does not create commission-related localStorage/sessionStorage records.
+
+3. Paid product share logic remains unchanged.
+   - Paid logged-in non-admin/staff/semi-admin share still can show Lucky Draw credit / commission info.
+   - Paid share still uses referral behavior as before.
+
+4. Free item share modal now clearly explains:
+   - Free item boleh dikongsi.
+   - Tiada komisen dikira kerana tiada transaksi jualan.
+
+5. Same safe handling also added to Free CAD Resource share because Software/CAD share script is shared.
+
+Files changed:
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+
+Backend:
+- No backend change.
+- Render backend deploy is NOT required.
+
+Firebase:
+- Firebase Rules tidak perlu update.
+
+Validation:
+- node --check passed for extracted share scripts.
+- node --check passed for deploy-server.js and backend/server.js.
