@@ -251,3 +251,10 @@ Deploy GitHub Pages only.
 PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Long software category badges such as Live Streaming Tools now display fully on cards.
 - Frontend CSS only; no Firebase Rules or Render backend deploy required.
+
+
+## AZOBSS Patch 429 - Software Meta Long Category Own Row Fix
+- Fixes long Software category badge clipping on product cards.
+- Category badge (example: Live Streaming Tools) is forced onto its own visible row.
+- Version, file size and platform badges remain below it.
+- Frontend-only change. Firebase Rules and Render backend deploy are not required.

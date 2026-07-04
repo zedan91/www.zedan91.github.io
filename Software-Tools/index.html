@@ -12185,6 +12185,91 @@ html body .downloads-grid > .download-card > .software-meta span:first-child{
 }
 </style>
 
+
+
+<style id="azobss-software-meta-category-own-row-fix-429">
+/* AZOBSS 429: force long Software category badge onto its own full visible row */
+html body #softwareGrid > .download-card > .software-meta,
+html body #softwareDownloadsGrid > .download-card > .software-meta,
+html body .downloads-grid > .download-card > .software-meta{
+  order:3!important;
+  width:100%!important;
+  max-width:238px!important;
+  height:auto!important;
+  min-height:48px!important;
+  max-height:none!important;
+  margin:0 auto 8px!important;
+  padding:0!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  align-content:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  overflow:visible!important;
+  white-space:normal!important;
+}
+html body #softwareGrid > .download-card > .software-meta span,
+html body #softwareDownloadsGrid > .download-card > .software-meta span,
+html body .downloads-grid > .download-card > .software-meta span{
+  flex:0 0 auto!important;
+  min-width:0!important;
+  width:auto!important;
+  max-width:74px!important;
+  height:20px!important;
+  padding:2px 6px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+html body #softwareGrid > .download-card > .software-meta span:first-child,
+html body #softwareDownloadsGrid > .download-card > .software-meta span:first-child,
+html body .downloads-grid > .download-card > .software-meta span:first-child{
+  flex:0 0 calc(100% - 8px)!important;
+  width:calc(100% - 8px)!important;
+  max-width:calc(100% - 8px)!important;
+  height:20px!important;
+  margin:0 auto!important;
+  padding:2px 8px!important;
+  font-size:9.5px!important;
+  line-height:1!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+}
+html body #softwareGrid > .download-card > .software-meta span:nth-child(2),
+html body #softwareDownloadsGrid > .download-card > .software-meta span:nth-child(2),
+html body .downloads-grid > .download-card > .software-meta span:nth-child(2){max-width:52px!important;}
+html body #softwareGrid > .download-card > .software-meta span:nth-child(3),
+html body #softwareDownloadsGrid > .download-card > .software-meta span:nth-child(3),
+html body .downloads-grid > .download-card > .software-meta span:nth-child(3){max-width:58px!important;}
+html body #softwareGrid > .download-card > .software-meta span:nth-child(n+4),
+html body #softwareDownloadsGrid > .download-card > .software-meta span:nth-child(n+4),
+html body .downloads-grid > .download-card > .software-meta span:nth-child(n+4){max-width:72px!important;}
+@media(max-width:760px){
+  html body #softwareGrid > .download-card > .software-meta,
+  html body #softwareDownloadsGrid > .download-card > .software-meta,
+  html body .downloads-grid > .download-card > .software-meta{
+    max-width:230px!important;
+    min-height:48px!important;
+    height:auto!important;
+    max-height:none!important;
+    gap:4px!important;
+  }
+  html body #softwareGrid > .download-card > .software-meta span:first-child,
+  html body #softwareDownloadsGrid > .download-card > .software-meta span:first-child,
+  html body .downloads-grid > .download-card > .software-meta span:first-child{
+    max-width:calc(100% - 8px)!important;
+    width:calc(100% - 8px)!important;
+    flex-basis:calc(100% - 8px)!important;
+    font-size:9px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
