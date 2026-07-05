@@ -5596,7 +5596,8 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   const LIKE_PENDING={};
   function setSoftwareStatLikedKeyLocal(key,liked){const data=readLikedLocal();if(liked)data[key]=true;else delete data[key];writeLikedLocal(data);}
   function syncLikeLocalMapFromRemote(items){try{const voter=softwareLikeVoterId();const liked=readLikedLocal();Object.keys(items||{}).forEach(k=>{const key=slug(k);if(LIKE_PENDING[key])return;const remote=items[k]||{};if(remote.likedBy&&typeof remote.likedBy==='object'){if(remote.likedBy[voter])liked[key]=true;else delete liked[key];}});writeLikedLocal(liked);}catch(e){}}
-  async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists()){applyAll();return;}const local=readLocal();const items=itemsOf(snap.data()||{});syncLikeLocalMapFromRemote(items);Object.keys(items).forEach(k=>{const key=slug(k);if(LIKE_PENDING[key])return;local[key]=norm(items[k]||{});});writeLocal(local);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);applyAll();}}
+  const LIKE_REMOTE_STALE_GUARD_MS=15000;
+  async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists()){applyAll();return;}const local=readLocal();const items=itemsOf(snap.data()||{});syncLikeLocalMapFromRemote(items);const now=Date.now();Object.keys(items).forEach(k=>{const key=slug(k);if(LIKE_PENDING[key])return;const remoteNorm=norm(items[k]||{});const localNorm=local[key]?norm(local[key]||{}):null;const localUpdated=Number(localNorm&&localNorm.updatedAtMs||0);const remoteUpdated=Number(remoteNorm&&remoteNorm.updatedAtMs||0);if(localUpdated&&localUpdated>remoteUpdated&&(now-localUpdated)<LIKE_REMOTE_STALE_GUARD_MS)return;local[key]=remoteNorm;});writeLocal(local);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);applyAll();}}
   function voterId(){try{let id=localStorage.getItem('azobssRatingClientId');if(!id){id='azr_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('azobssRatingClientId',id);}return id;}catch(e){return 'azr_session';}}
   const LIKE_LOCAL='azobssSoftwareStatLikedItems';
   function softwareLikeVoterId(){
@@ -5692,9 +5693,12 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
       }catch(e){
         console.warn('AZOBSS software like stat save skipped:',e);
       }
+      // AZOBSS 438: Do not immediately reload remote stats after the transaction.
+      // Some browsers receive an older cached Firestore document for a moment, which
+      // made the visible like count go up and then drop back down. The transaction
+      // result is already the source of truth for this click.
       setSoftwareStatLikedKeyLocal(key,committedLiked);
       applyCardsForKey(key,committed);
-      setTimeout(loadRemote,650);
     }catch(e){
       console.warn('AZOBSS software like stat count skipped:',e);
     }finally{

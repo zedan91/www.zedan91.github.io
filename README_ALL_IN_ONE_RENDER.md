@@ -321,3 +321,10 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Added pending-lock handling for Software like clicks so older Firestore sync responses do not overwrite the optimistic like/unlike state while saving.
 - Synced local liked state from Firestore `likedBy` per voter/client to avoid mismatch between local state and remote count.
 - No backend/payment changes.
+
+## Patch 438 - Software Like Count No Revert Fix
+- Fixed software like count that could increase by 1 and then suddenly drop back down.
+- Removed the immediate Firestore reload after a like/unlike transaction because some browsers could briefly receive an older cached stats document.
+- Added a short stale-remote guard so newer local click results are not overwritten by older remote stats during sync.
+- Bookmark button remains separate from software likes.
+- Frontend-only fix. Firebase Rules and Render backend deployment are not required.
