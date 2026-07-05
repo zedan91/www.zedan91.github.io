@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Likes | AZOBSS</title>
+  <title>Bookmarks | AZOBSS</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;background:#081426;color:white;font-family:Arial,Helvetica,sans-serif;padding-top:58px;}
@@ -40,7 +40,7 @@
     
     .market-icon-btn{display:inline-grid;place-items:center;width:24px;height:34px;color:#e5e7eb;text-decoration:none;border-radius:999px}
     .market-icon-btn svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-    .market-icon-btn.is-likes-active svg{fill:#ff4d6d;stroke:#ff4d6d}
+    .market-icon-btn.is-likes-active svg{fill:#facc15;stroke:#facc15}
     @media (max-width:760px){
       body{padding-top:112px}
       .market-bar-inner{padding:0 6px}
@@ -86,7 +86,11 @@
     .az-like-loadmore-wrap{display:flex;justify-content:center;margin:18px 0 8px;}
     .az-like-loadmore{border:1px solid rgba(38,108,246,.55);background:#2563eb;color:#fff;border-radius:14px;padding:12px 22px;font-weight:800;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.45);}
     .az-like-loadmore:disabled{opacity:.65;cursor:not-allowed;}
-</style>
+
+    .market-icon-btn .az-market-bookmark-icon{width:23px;height:23px;display:block}
+    .market-icon-btn .az-market-bookmark-icon path{fill:none;stroke:currentColor;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round}
+    .market-icon-btn.is-likes-active .az-market-bookmark-icon path{fill:#facc15;stroke:#facc15}
+  </style>
 
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
@@ -661,14 +665,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
               
               <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-              <a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+              <a class="user-dropdown-item" href="/likes/" role="menuitem">🔖 Bookmarks</a>
               
               <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
               <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log Out</button>
             </div>
           </div>
-          <a aria-label="Likes" class="market-icon-btn is-likes-active" href="/likes/">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+          <a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn is-likes-active" href="/likes/">
+            <svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
           </a>
           <a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
 <span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
@@ -687,14 +691,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <main class="wrap">
     <div class="top">
       <div>
-        <h1>❤️ Likes</h1>
+        <h1>🔖 Bookmarks</h1>
         <p class="muted">Items you liked from Affiliate Shop, CAD Tools and Software Tools.</p>
       </div>
     </div>
     <div class="likes-controls">
       <div class="likes-control">
-        <label for="likesSearchInput">Search likes</label>
-        <input id="likesSearchInput" type="search" placeholder="Search liked items, category or page">
+        <label for="likesSearchInput">Search bookmarks</label>
+        <input id="likesSearchInput" type="search" placeholder="Search saved items, category or page">
       </div>
       <div class="likes-control">
         <label for="likesSortSelect">Sort by</label>
@@ -710,10 +714,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         </select>
       </div>
     </div>
-    <div id="azobssLikesList"><div class="az-like-empty">Loading likes...</div></div>
+    <div id="azobssLikesList"><div class="az-like-empty">Loading bookmarks...</div></div>
   </main>
   <script type="module" src="/assets/js/azobss-global-auth.js?v=385"></script>
-  <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=432"></script>
+  <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=433"></script>
 <script>document.addEventListener("click",e=>{if(e.target.closest('.az-like-unlike-btn'))return; const c=e.target.closest(".liked-item,.like-card,.product-card"); if(!c)return; const url=c.dataset.url||c.getAttribute("data-link")||''; const cat=(c.dataset.type||'').toLowerCase(); if(url){window.location=url;return;} if(cat.includes('cad')) window.location='/CAD-Tools-&-Resources/';});</script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;

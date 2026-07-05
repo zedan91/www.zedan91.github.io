@@ -758,13 +758,13 @@ body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-<a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">🔖 Bookmarks</a>
 
 <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log Out</button></div>
 </div>
-<a aria-label="Likes" class="market-icon-btn" href="/likes/">
-<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/likes/">
+<svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
 <a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
 <span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
@@ -815,7 +815,7 @@ function show(){result.textContent=commands[cmdType.value]}
 function copyCmd(){navigator.clipboard.writeText(commands[cmdType.value]);result.textContent=commands[cmdType.value]+"\n\nCopied!"}
 cmdType.addEventListener("change",show);show();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=432"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=433"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

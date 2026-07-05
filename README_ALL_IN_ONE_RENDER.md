@@ -281,3 +281,11 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Bookmark action no longer changes software like count.
 - No Firebase Rules update required.
 - No Render backend deploy required.
+
+
+## Patch 433 - Bookmark Icon Clarity Fix
+- Top-right software/CAD card control now uses a clearer SVG bookmark icon instead of an emoji.
+- Sticky bar `/likes/` shortcut now shows a bookmark icon and label `Bookmarks`.
+- User dropdown label changed from `Likes` to `Bookmarks` for saved/bookmarked items.
+- Bottom software like count remains the real software-like action and is not changed into bookmark.
+- No backend, payment, Render, or Firebase Rules changes required.

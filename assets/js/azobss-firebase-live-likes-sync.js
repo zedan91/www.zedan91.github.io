@@ -906,7 +906,7 @@ function normalizeUserMenu() {
   dropdown.innerHTML = `
     
     <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-    <a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+    <a class="user-dropdown-item" href="/likes/" role="menuitem">🔖 Bookmarks</a>
     
     <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log Out</button>`;
@@ -4155,7 +4155,7 @@ body{padding-top:58px!important;}
 .market-icon-btn{width:24px!important;height:34px!important;min-width:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;flex:0 0 auto!important;color:#e5e7eb!important;background:transparent!important;border:0!important;margin:0!important;text-decoration:none!important;border-radius:999px!important;}
 .market-icon-btn svg{width:23px!important;height:23px!important;stroke:currentColor!important;fill:none!important;stroke-width:2.2!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
 .market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
-.market-icon-btn.is-likes-active svg path{fill:#ff4d6d!important;stroke:#ff4d6d!important;}
+.market-icon-btn.is-likes-active svg path{fill:#facc15!important;stroke:#facc15!important;}
 
 @media(max-width:980px){
   body{padding-top:92px!important;}
@@ -4369,6 +4369,9 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       .az-item-like-btn:hover{transform:scale(1.07)!important;border-color:#38bdf8!important;background:rgba(14,165,233,.14)!important;}
       .az-item-like-btn.is-liked{background:rgba(250,204,21,.18)!important;border-color:#facc15!important;color:#facc15!important;text-shadow:0 0 14px rgba(250,204,21,.42)!important;}
       .az-item-like-btn[disabled]{opacity:.62!important;cursor:wait!important;transform:none!important;}
+      .az-item-like-btn .az-bookmark-icon{width:20px!important;height:20px!important;display:block!important;pointer-events:none!important;}
+      .az-item-like-btn .az-bookmark-icon path{fill:none!important;stroke:currentColor!important;stroke-width:2.15!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+      .az-item-like-btn.is-liked .az-bookmark-icon path{fill:currentColor!important;stroke:currentColor!important;}
       .card,.download-card,.cad-card{position:relative!important;}
       .az-has-like-btn.card .top{padding-right:54px!important;}
       .az-has-like-btn.card .badge{max-width:calc(100% - 62px)!important;white-space:normal!important;text-align:center!important;overflow-wrap:anywhere!important;}
@@ -4443,10 +4446,13 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     })();
     return state.loading;
   }
+  function azBookmarkIconHtml433(){
+    return '<svg class="az-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>';
+  }
   function setButtonState(btn, liked){
     if(!btn) return;
     btn.classList.toggle('is-liked', !!liked);
-    btn.textContent = '🔖';
+    btn.innerHTML = azBookmarkIconHtml433();
     btn.setAttribute('aria-label', liked ? 'Remove bookmark' : 'Add bookmark');
     btn.title = liked ? 'Remove bookmark' : 'Add bookmark';
   }
@@ -4541,7 +4547,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       if(nextLiked) state.ids.delete(id); else state.ids.add(id);
       setButtonState(btn, !nextLiked);
       saveCache(usernameKey);
-      alert('Unable to update Likes right now. Please try again later.');
+      alert('Unable to update Bookmarks right now. Please try again later.');
     }finally{
       state.busy.delete(id);
       btn.disabled = false;
@@ -4632,7 +4638,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       renderLikesPage(false);
     }catch(err){
       console.warn('AZOBSS unlike failed:', err);
-      alert('Unable to remove this item from Likes right now. Please try again later.');
+      alert('Unable to remove this item from Bookmarks right now. Please try again later.');
     }finally{
       state.busy.delete(id);
       if(btn) btn.disabled = false;
@@ -4683,7 +4689,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       likesPageState.rows = [];
       likesPageState.lastDoc = null;
       likesPageState.hasMore = false;
-      list.innerHTML = '<div class="az-like-empty">Loading likes...</div>';
+      list.innerHTML = '<div class="az-like-empty">Loading bookmarks...</div>';
     }
     try{
       const baseRef = collection(db, 'users', usernameKey, 'likes');
@@ -4721,7 +4727,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       return;
     }
     const usernameKey = getUsernameKey();
-    if(!usernameKey){ list.innerHTML = '<div class="az-like-empty">Please login again to load Likes.</div>'; return; }
+    if(!usernameKey){ list.innerHTML = '<div class="az-like-empty">Please login again to load Bookmarks.</div>'; return; }
     if(!skipLoad) await loadLikesPage(true);
     else renderLikesList();
   }

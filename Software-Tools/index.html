@@ -2961,6 +2961,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-subscription-admin-box{border:1px solid rgba(250,204,21,.35);background:linear-gradient(135deg,rgba(250,204,21,.08),rgba(34,197,94,.08));border-radius:14px;padding:12px;margin:10px 0}.az-subscription-admin-title{display:flex;align-items:center;gap:8px;font-weight:1000;color:#fde68a;margin-bottom:8px}.az-subscription-plans-preview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}.az-sub-plan-preview,.az-sub-plan-card{border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.72);border-radius:12px;padding:10px;text-align:center}.az-sub-plan-preview b,.az-sub-plan-card b{display:block;color:#fff}.az-sub-plan-preview strong,.az-sub-plan-card strong{display:block;color:#facc15;font-size:18px;margin:4px 0}.az-sub-plan-preview small,.az-sub-plan-card small{display:block;color:#bbf7d0;font-weight:800}.az-subscription-card-box{margin:10px 0;border:1px solid rgba(250,204,21,.28);border-radius:14px;padding:10px;background:rgba(2,6,23,.35)}.az-subscription-card-title{font-size:12px;font-weight:1000;color:#fde68a;text-align:center;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}.az-subscription-plan-grid{display:grid;grid-template-columns:1fr;gap:7px}.az-subscribe-plan-btn{width:100%;text-align:center;display:flex!important;flex-direction:column;gap:2px;line-height:1.2}.az-subscribe-plan-btn .az-sub-plan-title{font-weight:1000}.az-subscribe-plan-btn .az-sub-plan-price{font-size:18px;color:#fff}.az-subscribe-plan-btn .az-sub-plan-save{font-size:11px;color:#bbf7d0}.azobss-pay-plan-box{margin-top:8px;border:1px solid rgba(250,204,21,.32);background:rgba(250,204,21,.08);border-radius:12px;padding:10px;color:#fde68a;font-size:13px}.azobss-pay-plan-box b{color:#facc15}@media(max-width:700px){.az-subscription-plans-preview{grid-template-columns:1fr}.az-subscription-plan-grid{grid-template-columns:1fr}}
 </style>
 
+
+<style id="azobss-bookmark-icon-clear-433-css">
+/* AZOBSS 433: clearer bookmark icon. Top-right card control and sticky /likes shortcut are bookmarks, not software likes. */
+.az-item-like-btn .az-bookmark-icon{width:20px!important;height:20px!important;display:block!important;pointer-events:none!important;}
+.az-item-like-btn .az-bookmark-icon path{fill:none!important;stroke:currentColor!important;stroke-width:2.15!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+.az-item-like-btn.is-liked .az-bookmark-icon path{fill:currentColor!important;stroke:currentColor!important;}
+.market-icon-btn .az-market-bookmark-icon{width:23px!important;height:23px!important;display:block!important;}
+.market-icon-btn .az-market-bookmark-icon path{fill:none!important;stroke:currentColor!important;stroke-width:2.15!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+.market-icon-btn.is-likes-active .az-market-bookmark-icon path{fill:#facc15!important;stroke:#facc15!important;}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2990,13 +3001,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-<a class="user-dropdown-item" href="/likes/" role="menuitem">❤️ Likes</a>
+<a class="user-dropdown-item" href="/likes/" role="menuitem">🔖 Bookmarks</a>
 
 <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log Out</button></div>
 </div>
-<a aria-label="Likes" class="market-icon-btn" href="/likes/">
-<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6c-1.8-1.8-4.6-1.7-6.3.2L12 7.4 9.5 4.8C7.8 2.9 5 2.8 3.2 4.6c-1.9 1.9-1.9 5 0 6.9L12 20l8.8-8.5c1.9-1.9 1.9-5 0-6.9Z"></path></svg>
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/likes/">
+<svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
 <a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
 <span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
@@ -4228,7 +4239,7 @@ function normalizeItem(item){
   function azStableFmt287(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
   function azStableStars287(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
   function azStableStatsHtml287(item){const st=statsForItem(item)||{};const downloads=Number(st.downloads||item.downloads||0)||0;const rating=Number(st.rating||item.rating||0)||0;const votes=Number(st.ratingVotes||st.votes||item.ratingVotes||0)||0;const likes=Number(st.likes??item.likes??0)||0;return '<div class="software-stats" data-az-firstpaint-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge">'+azStableDlSvg287()+'</span><strong class="azb-dl-number">'+azStableFmt287(downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-stat-like" role="button" tabindex="0" title="Like this software" aria-label="Like this software"><span class="azb-like-heart">❤</span><strong class="azb-like-number">'+azStableFmt287(likes)+'</strong></span><span class="azb-rating-inner">'+azStableStars287(rating)+'<strong class="azb-rate-value">'+rating.toFixed(1)+'</strong><span class="azb-rate-votes">('+votes+')</span></span></span></div>';}
-  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'software-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add bookmark" title="Add bookmark">🔖</button>';}
+  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'software-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add bookmark" title="Add bookmark"><svg class="az-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></button>';}
   function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
   function azStableShareHtml287(item,isPremium){
     const freeShareAttrs = isPremium ? '' : ' data-share-kind="free" data-share-no-commission="1"';
@@ -5049,7 +5060,7 @@ function normalizeItem(item){
   loadItems();
 </script>
 
-<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=432"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=433"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
