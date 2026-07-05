@@ -13,3 +13,11 @@ Patch 444 fixes the Bookmarks page still showing Add to Cart for Free Software i
 Frontend/GitHub Pages only.
 Firebase Rules do not need updating.
 Render backend does not need redeploy.
+
+
+## Patch 445 - Software Sort Most Likes Fix
+- Removed mistaken `Ebook` option from Software Tools Sort by dropdown.
+- Added `Most Likes` option to Software Tools Sort by dropdown.
+- Uses existing likes sort logic (`sortMode = likes`) so products can be ordered by software like count.
+- No Firebase Rules update required.
+- No Render backend deploy required.
