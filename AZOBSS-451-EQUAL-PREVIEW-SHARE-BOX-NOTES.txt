@@ -1,0 +1,5 @@
+AZOBSS 451
+- Fix Preview button real box size to match Share button.
+- Adds border-box, inline/block size, padding reset and icon size override.
+- Applies to Software and CAD card controls only.
+- No backend, payment, PA/BM, Render or Firebase Rules changes.
