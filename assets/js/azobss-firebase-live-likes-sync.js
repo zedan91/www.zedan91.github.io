@@ -4461,7 +4461,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     btn.setAttribute('aria-label', liked ? 'Remove bookmark' : 'Add bookmark');
     btn.title = liked ? 'Remove bookmark' : 'Add bookmark';
   }
-  function isBookmarksRoute435(){
+  function isBookmarksRoute439(){
     const path = String(location.pathname || '').toLowerCase();
     return path.includes('/bookmarks');
   }
@@ -4491,23 +4491,54 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(pageName.includes('affiliate')) return location.origin + '/affiliate-shop/' + raw.replace(/^\/+/, '');
     return location.origin + '/' + raw.replace(/^\/+/, '');
   }
+  function bookmarkProductUrl439(productId, page, type){
+    const id = String(productId || '').trim();
+    const pageName = String(page || '').toLowerCase();
+    const typeName = String(type || '').toLowerCase();
+    if(!id) return '';
+    const route = (pageName.includes('cad') || typeName.includes('cad'))
+      ? '/CAD-Tools-&-Resources/'
+      : (pageName.includes('affiliate') || typeName.includes('affiliate'))
+        ? '/affiliate-shop/'
+        : '/Software-Tools/';
+    try{
+      const url = new URL(location.origin + route);
+      url.searchParams.set('product', id);
+      url.searchParams.set('source', typeName.includes('cad') ? 'cad' : (typeName.includes('affiliate') ? 'affiliate' : 'software'));
+      return url.toString();
+    }catch(e){
+      return location.origin + route + '?product=' + encodeURIComponent(id) + '&source=' + encodeURIComponent(typeName || 'software');
+    }
+  }
+  function bookmarkOpenUrlForRow439(row){
+    const page = String(row?.page || row?.category || '').toLowerCase();
+    const type = String(row?.type || '').toLowerCase();
+    const id = String(row?.productId || row?.softwareId || row?.cadId || row?.itemId || row?.id || '').trim();
+    if(id && (page.includes('software') || type.includes('software') || page.includes('cad') || type.includes('cad') || page.includes('affiliate') || type.includes('affiliate'))){
+      return bookmarkProductUrl439(id, row.page || row.category || '', row.type || '');
+    }
+    return normalizeLikeUrl(row?.pageUrl || row?.url || row?.downloadUrl || '', row?.page || row?.category || row?.type || '');
+  }
   function getCardInfo(card){
     const isAff = card.matches('.card');
     const isSw = card.matches('.download-card');
     const isCad = card.matches('.cad-card');
-    const id = String(card.dataset.productId || card.dataset.cadId || card.dataset.docId || '').trim() || cleanKey(card.querySelector('h2,h3')?.textContent || 'item');
-    const title = String(card.querySelector('h2,h3')?.textContent || id).trim();
+    const rawId = String(card.dataset.productId || card.dataset.softwareId || card.dataset.cadId || card.dataset.docId || card.dataset.id || '').trim() || cleanKey(card.querySelector('h2,h3')?.textContent || 'item');
+    const id = cleanKey(rawId) || ('item-' + Date.now());
+    const title = String(card.querySelector('h2,h3')?.textContent || rawId || id).trim();
     const desc = String(card.querySelector('p')?.textContent || '').trim();
     const category = String(card.dataset.category || card.querySelector('.badge,.software-badge,.cad-badge,.meta')?.textContent || pageType()).trim();
-    const linkEl = card.querySelector('.card-open,.download-btn,.cad-action-btn,a[href]');
-    const url = linkEl ? (linkEl.getAttribute('href') || '') : '';
     const page = pageType();
+    const type = isAff ? 'affiliate' : (isSw ? 'software' : (isCad ? 'cad' : 'item'));
+    const productPageUrl = bookmarkProductUrl439(rawId || id, page, type);
     return {
-      id: cleanKey(id) || ('item-' + Date.now()),
+      id,
+      productId: rawId || id,
       title, desc, category,
       page,
-      type: isAff ? 'affiliate' : (isSw ? 'software' : (isCad ? 'cad' : 'item')),
-      url: normalizeLikeUrl(url && url !== '#' ? url : location.pathname, page),
+      type,
+      url: productPageUrl || normalizeLikeUrl(location.pathname, page),
+      pageUrl: productPageUrl || normalizeLikeUrl(location.pathname, page),
       savedAt: Date.now()
     };
   }
@@ -4568,7 +4599,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   // This keeps the button usable: guest gets login/register prompt, logged-in users toggle like.
   document.addEventListener('click', function(event){
     const btn = event.target && event.target.closest ? event.target.closest('.az-item-like-btn') : null;
-    if(!btn || isBookmarksRoute435()) return;
+    if(!btn || isBookmarksRoute439()) return;
     // If the normal per-button listener is already bound, it stops propagation before this bubble listener.
     // So reaching here means fallback is needed.
     const card = btn.closest('.card[data-product-id], .download-card, .cad-card');
@@ -4579,7 +4610,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   }, false);
 
   async function injectLikeButtons(){
-    if(isBookmarksRoute435()) return;
+    if(isBookmarksRoute439()) return;
     addLikeStyle();
     const usernameKey = getUsernameKey();
     if(usernameKey && state.loadedFor !== usernameKey) loadCache(usernameKey);
@@ -4617,7 +4648,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   function likeCardHtml(row){
     const title = String(row.title || row.name || row.itemId || 'Bookmarked item');
     const meta = [row.page, row.category, row.type].filter(Boolean).join(' • ');
-    const url = normalizeLikeUrl(row.url || row.downloadUrl || row.pageUrl || '', row.page || row.category || row.type || '');
+    const url = bookmarkOpenUrlForRow439(row);
     const itemId = String(row.itemId || row.id || '');
     return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}" data-like-id="${escapeHtml(itemId)}">
       <div class="az-like-card-main">
@@ -4658,7 +4689,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     let out = [...rows];
     const q = String(document.getElementById('likesSearchInput')?.value || '').trim().toLowerCase();
     if(q){
-      out = out.filter(r=>[r.title,r.category,r.page,r.type,r.url,r.itemId].join(' ').toLowerCase().includes(q));
+      out = out.filter(r=>[r.title,r.category,r.page,r.type,r.url,r.pageUrl,r.productId,r.itemId].join(' ').toLowerCase().includes(q));
     }
     const sort = document.getElementById('likesSortSelect')?.value || 'newest';
     if(sort==='software') out=out.filter(r=>String(r.type||r.category||r.page||'').toLowerCase().includes('software'));

@@ -360,3 +360,11 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Added a short stale-remote guard so newer local click results are not overwritten by older remote stats during sync.
 - Bookmark button remains separate from software likes.
 - Frontend-only fix. Firebase Rules and Render backend deployment are not required.
+
+
+## Patch 439 - Bookmarks product share link fix
+- Bookmarks page now opens product-focused page URLs instead of direct download/GIF links.
+- Software bookmarks open `/Software-Tools/?product=<id>&source=software` so only the selected software card is shown, same behavior as product share links.
+- CAD/Affiliate bookmarks use their own product-focused routes when item IDs are available.
+- Existing old bookmarked rows with direct download links are converted at display/click time when product/item ID exists.
+- No backend or Firebase Rules changes required.
