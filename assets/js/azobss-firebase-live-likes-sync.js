@@ -4463,7 +4463,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   }
   function isBookmarksRoute435(){
     const path = String(location.pathname || '').toLowerCase();
-    return path.includes('/bookmarks') || path.includes('/likes');
+    return path.includes('/bookmarks');
   }
   function pageType(){
     const path = String(location.pathname || '').toLowerCase().replace(/\/$/,'');
@@ -4483,7 +4483,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const lowerRaw = raw.toLowerCase();
     if(lowerRaw.startsWith('software-tools/')) return location.origin + '/' + raw.replace(/^\/+/, '');
     if(lowerRaw.startsWith('cad-tools-&-resources/') || lowerRaw.startsWith('cad-tools-and-resources/')) return location.origin + '/' + raw.replace(/^\/+/, '');
-    if(lowerRaw.startsWith('affiliate-shop/') || lowerRaw.startsWith('likes/') || lowerRaw.startsWith('bookmarks/')) return location.origin + '/' + raw.replace(/^\/+/, '');
+    if(lowerRaw.startsWith('affiliate-shop/') || lowerRaw.startsWith('bookmarks/')) return location.origin + '/' + raw.replace(/^\/+/, '');
 
     const pageName = String(page || pageType() || '').toLowerCase();
     if(pageName.includes('software')) return location.origin + '/Software-Tools/' + raw.replace(/^\/+/, '');

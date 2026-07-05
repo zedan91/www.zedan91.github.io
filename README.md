@@ -334,6 +334,14 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Changed user-facing Bookmarks URL from `/likes/` to `/Bookmarks/`.
 - Updated sticky bar and dropdown links to `/Bookmarks/`.
 - Added `/Bookmarks/index.html` as the active Bookmarks page.
-- Kept `/likes/` as a safe redirect to `/Bookmarks/` so old links do not break.
-- Updated cache versions for bookmark/auth scripts to `v=435`.
+- Removed the old `/likes/` redirect folder completely; only `/Bookmarks/` remains active.
+- Updated cache versions for bookmark/auth scripts to `v=436`.
 - No backend/payment changes.
+
+
+## Patch 436 - Remove Old Likes Route Completely
+- Deleted the old `/likes/` redirect folder entirely.
+- Removed `/likes` page detection from the bookmark script.
+- Removed old `likes/` URL normalization for user-facing links.
+- Active user-facing bookmark page is now `/Bookmarks/` only.
+- Updated cache versions to `v=436`.
