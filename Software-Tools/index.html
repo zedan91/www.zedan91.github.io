@@ -4227,8 +4227,8 @@ function normalizeItem(item){
   function azStableDlSvg287(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
   function azStableFmt287(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
   function azStableStars287(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
-  function azStableStatsHtml287(item){const st=statsForItem(item)||{};const downloads=Number(st.downloads||item.downloads||0)||0;const rating=Number(st.rating||item.rating||0)||0;const votes=Number(st.ratingVotes||st.votes||item.ratingVotes||0)||0;const likes=Number(st.likes??item.likes??0)||0;return '<div class="software-stats" data-az-firstpaint-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge">'+azStableDlSvg287()+'</span><strong class="azb-dl-number">'+azStableFmt287(downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-stat-like" role="button" tabindex="0" title="Like this item" aria-label="Like this item"><span class="azb-like-heart">❤</span><strong class="azb-like-number">'+azStableFmt287(likes)+'</strong></span><span class="azb-rating-inner">'+azStableStars287(rating)+'<strong class="azb-rate-value">'+rating.toFixed(1)+'</strong><span class="azb-rate-votes">('+votes+')</span></span></span></div>';}
-  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'software-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add to Likes" title="Add to Likes">♡</button>';}
+  function azStableStatsHtml287(item){const st=statsForItem(item)||{};const downloads=Number(st.downloads||item.downloads||0)||0;const rating=Number(st.rating||item.rating||0)||0;const votes=Number(st.ratingVotes||st.votes||item.ratingVotes||0)||0;const likes=Number(st.likes??item.likes??0)||0;return '<div class="software-stats" data-az-firstpaint-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge">'+azStableDlSvg287()+'</span><strong class="azb-dl-number">'+azStableFmt287(downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-stat-like" role="button" tabindex="0" title="Like this software" aria-label="Like this software"><span class="azb-like-heart">❤</span><strong class="azb-like-number">'+azStableFmt287(likes)+'</strong></span><span class="azb-rating-inner">'+azStableStars287(rating)+'<strong class="azb-rate-value">'+rating.toFixed(1)+'</strong><span class="azb-rate-votes">('+votes+')</span></span></span></div>';}
+  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'software-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add bookmark" title="Add bookmark">🔖</button>';}
   function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
   function azStableShareHtml287(item,isPremium){
     const freeShareAttrs = isPremium ? '' : ' data-share-kind="free" data-share-no-commission="1"';
@@ -5049,7 +5049,7 @@ function normalizeItem(item){
   loadItems();
 </script>
 
-<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=385"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=432"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -5539,6 +5539,7 @@ all.appendChild(wrap);
 .azb-stat-download{border-right:1px solid rgba(148,163,184,.12)!important;color:#dfffea!important;font-weight:900!important;}
 .azb-stat-like{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;flex:0 0 auto!important;min-width:34px!important;max-width:58px!important;height:24px!important;padding:0 7px!important;border-radius:999px!important;background:rgba(255,77,109,.10)!important;border:1px solid rgba(255,77,109,.26)!important;color:#fff!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;cursor:pointer!important;user-select:none!important;transition:transform .16s ease,background .16s ease,border-color .16s ease!important;}
 .azb-stat-like:hover,.azb-stat-like:focus-visible{transform:translateY(-1px)!important;background:rgba(255,77,109,.18)!important;border-color:rgba(255,77,109,.55)!important;outline:none!important;}
+.azb-stat-like.is-liked{background:rgba(255,77,109,.24)!important;border-color:rgba(255,77,109,.68)!important;box-shadow:0 0 0 1px rgba(255,77,109,.16),0 0 16px rgba(255,77,109,.18)!important;}
 .azb-stat-like:active{transform:scale(.96)!important;}
 .azb-like-heart{font-size:11px!important;line-height:1!important;color:#ff4d6d!important;text-shadow:0 0 8px rgba(255,77,109,.35)!important;}
 .azb-like-number{font-size:11px!important;font-weight:900!important;color:#fff!important;line-height:1!important;max-width:34px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
@@ -5574,14 +5575,27 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   function writeLocal(data){try{localStorage.setItem(LOCAL,JSON.stringify(data||{}));}catch(e){}}
   function itemsOf(data){if(!data||typeof data!=='object')return {};return data.items&&typeof data.items==='object'?data.items:data;}
   function productId(card){return card?.dataset?.productId||card?.querySelector('[data-product-id]')?.dataset?.productId||card?.querySelector('h3')?.textContent||'software-item';}
-  function baseFromCard(card){return {downloads:Number(card?.dataset?.downloads||0)||0,rating:Number(card?.dataset?.rating||0)||0,ratingAverage:Number(card?.dataset?.rating||0)||0,ratingVotes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,votes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,likes:Number(card?.dataset?.likes||0)||0,ratings:{},ratedBy:{}};}
-  function norm(raw,card){raw=raw||{};const base=card?baseFromCard(card):{};const hasRemoteRating=raw.rating!=null||raw.ratingAverage!=null||raw.avgRating!=null||raw.ratingVotes!=null||raw.votes!=null||raw.ratingCount!=null||raw.reviews!=null;const src=hasRemoteRating?{...base,...raw}:{...raw,...base};const rating=Number(src.ratingAverage??src.avgRating??src.rating??0);const votes=Number(src.ratingVotes??src.votes??src.ratingCount??src.reviews??0);const downloads=Number(src.downloads??0);const likes=Number(src.likes??0);return {...src,downloads:Number.isFinite(downloads)?Math.max(0,Math.round(downloads)):0,rating:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingAverage:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingVotes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,votes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,likes:Number.isFinite(likes)?Math.max(0,Math.round(likes)):0,ratings:src.ratings||{},ratedBy:src.ratedBy||{}};}
+  function baseFromCard(card){return {downloads:Number(card?.dataset?.downloads||0)||0,rating:Number(card?.dataset?.rating||0)||0,ratingAverage:Number(card?.dataset?.rating||0)||0,ratingVotes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,votes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,likes:Number(card?.dataset?.likes||0)||0,ratings:{},ratedBy:{},likedBy:{}};}
+  function norm(raw,card){raw=raw||{};const base=card?baseFromCard(card):{};const hasRemoteRating=raw.rating!=null||raw.ratingAverage!=null||raw.avgRating!=null||raw.ratingVotes!=null||raw.votes!=null||raw.ratingCount!=null||raw.reviews!=null;const src=hasRemoteRating?{...base,...raw}:{...raw,...base};const rating=Number(src.ratingAverage??src.avgRating??src.rating??0);const votes=Number(src.ratingVotes??src.votes??src.ratingCount??src.reviews??0);const downloads=Number(src.downloads??0);const likes=Number(src.likes??0);return {...src,downloads:Number.isFinite(downloads)?Math.max(0,Math.round(downloads)):0,rating:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingAverage:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingVotes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,votes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,likes:Number.isFinite(likes)?Math.max(0,Math.round(likes)):0,ratings:src.ratings||{},ratedBy:src.ratedBy||{},likedBy:src.likedBy||{}};}
   function statsFor(card){const key=slug(productId(card));const local=readLocal();return norm(local[key]||{},card);}
   function setStars(wrap,rating){const filled=Math.round(Number(rating)||0);wrap?.querySelectorAll?.('.azb-star').forEach((star,idx)=>star.classList.toggle('is-filled',idx<filled));}
-  function applyCard(card,st){if(!card)return;const box=card.querySelector(':scope > .software-stats');if(!box)return;st=norm(st,card);card.dataset.downloads=String(st.downloads);card.dataset.rating=String(st.rating);card.dataset.ratingVotes=String(st.ratingVotes);card.dataset.likes=String(st.likes||0);const dl=box.querySelector('.azb-dl-number');if(dl&&dl.textContent!==fmt(st.downloads))dl.textContent=fmt(st.downloads);const likeNum=box.querySelector('.azb-like-number');if(likeNum&&likeNum.textContent!==fmt(st.likes||0))likeNum.textContent=fmt(st.likes||0);const val=box.querySelector('.azb-rate-value');const nextVal=Number(st.rating||0).toFixed(1);if(val&&val.textContent!==nextVal)val.textContent=nextVal;const votes=box.querySelector('.azb-rate-votes');const nextVotes='('+Number(st.ratingVotes||0)+')';if(votes&&votes.textContent!==nextVotes)votes.textContent=nextVotes;setStars(box.querySelector('.azb-stars'),st.rating);}
+  function applyCard(card,st){if(!card)return;const box=card.querySelector(':scope > .software-stats');if(!box)return;st=norm(st,card);card.dataset.downloads=String(st.downloads);card.dataset.rating=String(st.rating);card.dataset.ratingVotes=String(st.ratingVotes);card.dataset.likes=String(st.likes||0);const dl=box.querySelector('.azb-dl-number');if(dl&&dl.textContent!==fmt(st.downloads))dl.textContent=fmt(st.downloads);const likeNum=box.querySelector('.azb-like-number');if(likeNum&&likeNum.textContent!==fmt(st.likes||0))likeNum.textContent=fmt(st.likes||0);const likeBtn=box.querySelector('.azb-stat-like');if(likeBtn){const liked=softwareStatIsLiked(card);likeBtn.classList.toggle('is-liked',liked);likeBtn.setAttribute('aria-pressed',liked?'true':'false');likeBtn.title=liked?'Unlike this software':'Like this software';likeBtn.setAttribute('aria-label',liked?'Unlike this software':'Like this software');}const val=box.querySelector('.azb-rate-value');const nextVal=Number(st.rating||0).toFixed(1);if(val&&val.textContent!==nextVal)val.textContent=nextVal;const votes=box.querySelector('.azb-rate-votes');const nextVotes='('+Number(st.ratingVotes||0)+')';if(votes&&votes.textContent!==nextVotes)votes.textContent=nextVotes;setStars(box.querySelector('.azb-stars'),st.rating);}
   function applyAll(){document.querySelectorAll('.download-card').forEach(card=>applyCard(card,statsFor(card)));}
   async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists()){applyAll();return;}const local=readLocal();const items=itemsOf(snap.data()||{});Object.keys(items).forEach(k=>{local[slug(k)]=norm(items[k]||{});});writeLocal(local);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);applyAll();}}
   function voterId(){try{let id=localStorage.getItem('azobssRatingClientId');if(!id){id='azr_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('azobssRatingClientId',id);}return id;}catch(e){return 'azr_session';}}
+  const LIKE_LOCAL='azobssSoftwareStatLikedItems';
+  function softwareLikeVoterId(){
+    try{
+      const saved=JSON.parse(localStorage.getItem('azobssCurrentUser')||localStorage.getItem('azobssUser')||localStorage.getItem('azobssLoggedInUser')||'{}')||{};
+      const userKey=String(saved.username||saved.usernameKey||saved.uid||saved.email||'').trim().toLowerCase();
+      if(userKey) return 'user_'+slug(userKey);
+    }catch(e){}
+    try{let id=localStorage.getItem('azobssSoftwareLikeClientId');if(!id){id='azsl_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('azobssSoftwareLikeClientId',id);}return id;}catch(e){return 'azsl_session';}
+  }
+  function readLikedLocal(){try{return JSON.parse(localStorage.getItem(LIKE_LOCAL)||'{}')||{};}catch(e){return {};}}
+  function writeLikedLocal(data){try{localStorage.setItem(LIKE_LOCAL,JSON.stringify(data||{}));}catch(e){}}
+  function softwareStatIsLiked(card){const key=slug(productId(card));return !!readLikedLocal()[key];}
+  function setSoftwareStatLikedLocal(card,liked){const key=slug(productId(card));const data=readLikedLocal();if(liked)data[key]=true;else delete data[key];writeLikedLocal(data);}
   function saveLocal(card,st){const key=slug(productId(card));const data=readLocal();data[key]=norm(st,card);writeLocal(data);applyCard(card,data[key]);}
   function isPaidProductButton(btn){
     if(!btn) return false;
@@ -5608,52 +5622,60 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
     }catch(e){console.warn('AZOBSS paid download stat count skipped:', e && e.message ? e.message : e);}
   };
   function rateFromEvent(e,wrap){const btn=e.target.closest?.('.azb-star');if(btn)return Math.max(1,Math.min(5,Number(btn.dataset.rate||0)));const r=wrap.getBoundingClientRect();const x=e.clientX||(e.touches&&e.touches[0]?.clientX)||r.left;return Math.max(1,Math.min(5,Math.ceil(((x-r.left)/Math.max(1,r.width))*5)));}
-  window.azobssRecordSoftwareLikeToggle = async function(cardOrProductId, liked){
+  async function recordSoftwareStatLike(cardOrProductId, forceLiked){
     try{
       let card=null;
       if(cardOrProductId && cardOrProductId.nodeType===1) card=cardOrProductId.closest?cardOrProductId.closest('.download-card'):cardOrProductId;
       const id=String((cardOrProductId && cardOrProductId.nodeType===1)?'':(cardOrProductId||'')).trim();
       if(!card && id){
-        const escId=(window.CSS&&CSS.escape)?CSS.escape(id):id.replace(/[^a-zA-Z0-9_-]/g,'\\$&');
+        const escId=(window.CSS&&CSS.escape)?CSS.escape(id):id.replace(/[^a-zA-Z0-9_-]/g,'\$&');
         const found=document.querySelector('.download-card[data-product-id="'+escId+'"], .download-card [data-product-id="'+escId+'"]');
         card=(found&&found.closest?found.closest('.download-card'):found)||document.querySelector('.download-card[data-product-id="'+escId+'"]');
       }
       if(!card) return;
       const key=slug(productId(card));
-      const delta=liked?1:-1;
+      const wasLiked=softwareStatIsLiked(card);
+      const nextLiked=typeof forceLiked==='boolean'?forceLiked:!wasLiked;
+      if(nextLiked===wasLiked){applyCard(card,statsFor(card));return;}
+      const delta=nextLiked?1:-1;
+      setSoftwareStatLikedLocal(card,nextLiked);
       const st=statsFor(card);
       st.likes=Math.max(0,Math.round(Number(st.likes||0)+delta));
       st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';
       st.updatedAtMs=Date.now();
-      st.lastLikeCountSource=liked?'user-like':'user-unlike';
+      st.lastLikeCountSource=nextLiked?'software-like-button':'software-unlike-button';
       saveLocal(card,st);
       try{
+        const voter=softwareLikeVoterId();
         await runTransaction(db,async(tx)=>{
           const snap=await tx.get(STATS_DOC);
           const data=snap.exists()?(snap.data()||{}):{items:{}};
           const items=itemsOf(data);
           const remote=norm(items[key]||{},card);
-          remote.likes=Math.max(0,Math.round(Number(remote.likes||0)+delta));
+          remote.likedBy=remote.likedBy||{};
+          const remoteWas=!!remote.likedBy[voter];
+          if(nextLiked && !remoteWas){remote.likedBy[voter]=true;remote.likes=Math.max(0,Math.round(Number(remote.likes||0)+1));}
+          else if(!nextLiked && remoteWas){delete remote.likedBy[voter];remote.likes=Math.max(0,Math.round(Number(remote.likes||0)-1));}
           remote.name=st.name;
           remote.updatedAtMs=Date.now();
           remote.lastLikeCountSource=st.lastLikeCountSource;
           tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});
         });
         loadRemote();
-      }catch(e){console.warn('AZOBSS like stat save skipped:',e);}
-    }catch(e){console.warn('AZOBSS like stat count skipped:',e);}
-  };
-  function clickCardLikeButtonFromStats(hit,e){
+      }catch(e){console.warn('AZOBSS software like stat save skipped:',e);}
+    }catch(e){console.warn('AZOBSS software like stat count skipped:',e);}
+  }
+  window.azobssRecordSoftwareLikeToggle = recordSoftwareStatLike;
+  function clickSoftwareLikeStat(hit,e){
     const card=hit&&hit.closest?hit.closest('.download-card'):null;
-    const btn=card&&card.querySelector?card.querySelector(':scope > .az-item-like-btn'):null;
-    if(!card||!btn) return;
+    if(!card) return;
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation?.();
-    btn.click();
+    recordSoftwareStatLike(card);
   }
-  document.addEventListener('click',function(e){const hit=e.target.closest?.('.download-card .azb-stat-like');if(!hit)return;clickCardLikeButtonFromStats(hit,e);},true);
-  document.addEventListener('keydown',function(e){const hit=e.target.closest?.('.download-card .azb-stat-like');if(!hit||!['Enter',' '].includes(e.key))return;clickCardLikeButtonFromStats(hit,e);},true);
+  document.addEventListener('click',function(e){const hit=e.target.closest?.('.download-card .azb-stat-like');if(!hit)return;clickSoftwareLikeStat(hit,e);},true);
+  document.addEventListener('keydown',function(e){const hit=e.target.closest?.('.download-card .azb-stat-like');if(!hit||!['Enter',' '].includes(e.key))return;clickSoftwareLikeStat(hit,e);},true);
   async function recordRating(card,rating){const key=slug(productId(card));const voter=voterId();const st=statsFor(card);st.ratings=st.ratings||{};st.ratedBy=st.ratedBy||{};const old=Number(st.ratedBy[voter]||0);if(old>=1&&old<=5)st.ratings[String(old)]=Math.max(0,Number(st.ratings[String(old)]||0)-1);st.ratings[String(rating)]=Math.max(0,Number(st.ratings[String(rating)]||0)+1);st.ratedBy[voter]=rating;let votes=0,total=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(st.ratings[String(i)]||0)));st.ratings[String(i)]=c;votes+=c;total+=i*c;}st.ratingVotes=votes;st.votes=votes;st.ratingTotal=total;st.rating=votes?Math.round((total/votes)*10)/10:Number(st.rating||0);st.ratingAverage=st.rating;st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';st.updatedAtMs=Date.now();saveLocal(card,st);try{await runTransaction(db,async(tx)=>{const snap=await tx.get(STATS_DOC);const data=snap.exists()?(snap.data()||{}):{items:{}};const items=itemsOf(data);const remote=norm(items[key]||{},card);remote.ratings=remote.ratings||{};remote.ratedBy=remote.ratedBy||{};const prev=Number(remote.ratedBy[voter]||0);if(prev>=1&&prev<=5)remote.ratings[String(prev)]=Math.max(0,Number(remote.ratings[String(prev)]||0)-1);remote.ratings[String(rating)]=Math.max(0,Number(remote.ratings[String(rating)]||0)+1);remote.ratedBy[voter]=rating;let rv=0,rt=0;for(let i=1;i<=5;i++){const c=Math.max(0,Math.round(Number(remote.ratings[String(i)]||0)));remote.ratings[String(i)]=c;rv+=c;rt+=i*c;}remote.ratingVotes=rv;remote.votes=rv;remote.ratingTotal=rt;remote.rating=rv?Math.round((rt/rv)*10)/10:remote.rating;remote.ratingAverage=remote.rating;remote.downloads=Math.max(0,Math.round(Number(remote.downloads||0)));remote.name=st.name;remote.updatedAtMs=Date.now();tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});});loadRemote();}catch(e){console.warn('AZOBSS rating save skipped:',e);}}
   document.addEventListener('pointerdown',function(e){const hit=e.target.closest?.('.azb-stars,.azb-star');if(!hit)return;const wrap=hit.classList.contains('azb-stars')?hit:hit.closest('.azb-stars');const card=wrap&&wrap.closest('.download-card');if(!wrap||!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();const now=Date.now();if(wrap.dataset.busyUntil&&now<Number(wrap.dataset.busyUntil))return;wrap.dataset.busyUntil=String(now+300);const rating=rateFromEvent(e,wrap);if(rating)recordRating(card,rating);},true);
   document.addEventListener('click',function(e){if(e.target.closest?.('.azb-stars,.azb-star')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();return;}const btn=e.target.closest?.('.download-card .download-btn');if(btn){if(isPaidProductButton(btn)) return;const card=btn.closest('.download-card');if(card)recordDownload(card,{source:'free-download-click'});}},true);

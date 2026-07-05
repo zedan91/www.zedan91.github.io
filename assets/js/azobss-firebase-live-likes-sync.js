@@ -4365,9 +4365,9 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      .az-item-like-btn{position:absolute!important;top:14px!important;right:14px!important;z-index:20!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(255,77,109,.45)!important;background:rgba(5,10,22,.78)!important;color:#fff!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:22px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;box-shadow:0 10px 26px rgba(0,0,0,.32)!important;backdrop-filter:blur(8px)!important;transition:transform .18s ease, background .18s ease, border-color .18s ease!important;}
-      .az-item-like-btn:hover{transform:scale(1.07)!important;border-color:#ff4d6d!important;background:rgba(255,77,109,.14)!important;}
-      .az-item-like-btn.is-liked{background:rgba(255,77,109,.22)!important;border-color:#ff4d6d!important;color:#ff4d6d!important;text-shadow:0 0 14px rgba(255,77,109,.45)!important;}
+      .az-item-like-btn{position:absolute!important;top:14px!important;right:14px!important;z-index:20!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(14,165,233,.42)!important;background:rgba(5,10,22,.78)!important;color:#e0f2fe!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:20px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;box-shadow:0 10px 26px rgba(0,0,0,.32)!important;backdrop-filter:blur(8px)!important;transition:transform .18s ease, background .18s ease, border-color .18s ease!important;}
+      .az-item-like-btn:hover{transform:scale(1.07)!important;border-color:#38bdf8!important;background:rgba(14,165,233,.14)!important;}
+      .az-item-like-btn.is-liked{background:rgba(250,204,21,.18)!important;border-color:#facc15!important;color:#facc15!important;text-shadow:0 0 14px rgba(250,204,21,.42)!important;}
       .az-item-like-btn[disabled]{opacity:.62!important;cursor:wait!important;transform:none!important;}
       .card,.download-card,.cad-card{position:relative!important;}
       .az-has-like-btn.card .top{padding-right:54px!important;}
@@ -4446,9 +4446,9 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   function setButtonState(btn, liked){
     if(!btn) return;
     btn.classList.toggle('is-liked', !!liked);
-    btn.textContent = liked ? '❤️' : '♡';
-    btn.setAttribute('aria-label', liked ? 'Remove from Likes' : 'Add to Likes');
-    btn.title = liked ? 'Remove from Likes' : 'Add to Likes';
+    btn.textContent = '🔖';
+    btn.setAttribute('aria-label', liked ? 'Remove bookmark' : 'Add bookmark');
+    btn.title = liked ? 'Remove bookmark' : 'Add bookmark';
   }
   function pageType(){
     const path = String(location.pathname || '').toLowerCase().replace(/\/$/,'');
@@ -4534,10 +4534,8 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       }else{
         await deleteDoc(doc(db, 'users', usernameKey, 'likes', id));
       }
-      try{
-        const card = btn && btn.closest ? btn.closest('.download-card') : null;
-        if(card && typeof window.azobssRecordSoftwareLikeToggle === 'function') window.azobssRecordSoftwareLikeToggle(card, nextLiked);
-      }catch(statErr){ console.warn('AZOBSS like count update skipped:', statErr); }
+      // AZOBSS 432: top-right control is bookmark/save only.
+      // Software like count is handled separately by the footer heart button.
     }catch(err){
       console.warn('AZOBSS like save failed:', err);
       if(nextLiked) state.ids.delete(id); else state.ids.add(id);
@@ -4608,7 +4606,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const itemId = String(row.itemId || row.id || '');
     return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}" data-like-id="${escapeHtml(itemId)}">
       <div class="az-like-card-main">
-        <div class="az-like-card-title">❤️ ${escapeHtml(title)}</div>
+        <div class="az-like-card-title">🔖 ${escapeHtml(title)}</div>
         <div class="az-like-card-meta">${escapeHtml(meta || 'AZOBSS')}</div>
         ${url ? `<div class="az-like-card-url">${escapeHtml(url)}</div>` : ''}
       </div>

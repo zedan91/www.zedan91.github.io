@@ -272,3 +272,12 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Like/unlike now updates the visible software like count and syncs to `settings/softwareStats`.
 - Added hover/focus states so the count looks interactive.
 - No backend, payment, ToyyibPay, Firebase Rules, or Render deploy changes required.
+
+
+## PATCH 432 - Software Like vs Bookmark Separation
+- Top-right card button is now Bookmark/Save (🔖), not software like.
+- Footer heart count is the real software like count.
+- Footer like button toggles software like count directly and stores one-like-per-browser/user marker.
+- Bookmark action no longer changes software like count.
+- No Firebase Rules update required.
+- No Render backend deploy required.

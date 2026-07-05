@@ -2293,7 +2293,7 @@ function normalizeItem(item){
   }
   function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
   function azEyeSvg287(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';}
-  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'cad-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add to Likes" title="Add to Likes">♡</button>';}
+  function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'cad-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add bookmark" title="Add bookmark">🔖</button>';}
   function azStableShareHtml287(item,isPremium){if(!isPremium)return '';return '<button type="button" class="az-lucky-product-share-btn az-share-stable-292 az-share-stable-293" data-az-lucky-main="1" data-az-lucky-product-share="1" data-az-share-inner-ready-292="1" data-az-share-firstpaint-293="1" data-share-mode="guest" data-share-label="Share product link" title="Share product link" aria-label="Share this product link">'+azShareSvg287()+'<span class="az-lucky-share-text"> Share Product</span></button>';}
   function azStablePreviewHtml287(item){const src=String(item.gifUrl||'').trim();if(!src)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155 az-preview-stable-292 az-preview-stable-293" data-az-preview-firstpaint-293="1" href="'+esc(src)+'" data-gif-preview="'+esc(src)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo">'+azEyeSvg287()+'</a>';}
 
@@ -2446,7 +2446,7 @@ function normalizeItem(item){
 
 <!-- Old LISP table script removed. CAD Tools search now controls all CAD/LISP items. -->
 
-<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=385"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=432"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
