@@ -39,3 +39,10 @@ Render backend does not need redeploy.
 - Desktop rail: Bookmark top 16px, Share top 64px, Preview top 112px; all 38px.
 - Mobile rail: Bookmark top 16px, Share top 60px, Preview top 104px; all 34px.
 - Front-end only. No Firebase Rules or Render backend changes required.
+
+
+## Patch 449 - Software Mobile Fit + Compact Download Button
+- Fixed mobile Software Tools filter panels so platform/type/category buttons no longer overflow or crop on phone.
+- Made admin toolbar wrap safely on mobile.
+- Reduced mobile Download Now / Buy Now button width and height so it no longer appears too large.
+- Front-end CSS only. No Firebase Rules update. No Render backend deploy required.

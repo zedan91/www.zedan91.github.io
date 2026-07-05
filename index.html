@@ -17451,6 +17451,218 @@ html body .cad-tool-card > .azobss-preview-float-155{
 }
 </style>
 
+
+
+<!-- AZOBSS 449: mobile Software Tools full-width controls + compact download button -->
+<style id="azobss-software-mobile-fit-compact-download-fix-449">
+@media(max-width:760px){
+  html body:has(#softwareDownloadsGrid),
+  html body:has(#softwareGrid){
+    overflow-x:hidden!important;
+  }
+  html body .downloads-section,
+  html body .downloads-inner{
+    width:100%!important;
+    max-width:100%!important;
+    padding-left:12px!important;
+    padding-right:12px!important;
+    box-sizing:border-box!important;
+    overflow-x:hidden!important;
+  }
+
+  /* Keep search, sort and filter boxes fully inside phone screen. */
+  html body .software-admin-toolbar,
+  html body .software-shop-controls,
+  html body .software-platform-card,
+  html body .software-category-card{
+    width:100%!important;
+    max-width:calc(100vw - 24px)!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    box-sizing:border-box!important;
+    overflow:visible!important;
+  }
+  html body .software-admin-toolbar{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    justify-content:center!important;
+    align-items:center!important;
+    gap:10px!important;
+  }
+  html body .software-admin-toolbar button,
+  html body .software-admin-toolbar .software-admin-json-status{
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    white-space:normal!important;
+    text-align:center!important;
+  }
+  html body .software-admin-toolbar .software-admin-apply-btn{
+    flex:1 1 100%!important;
+    width:100%!important;
+  }
+  html body .software-shop-controls{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:12px!important;
+  }
+  html body .software-shop-controls label,
+  html body .software-shop-controls input,
+  html body .software-shop-controls select{
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Platform/type filters: no more cropped left/right buttons on phone. */
+  html body .software-platform-filter{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow:visible!important;
+    align-items:stretch!important;
+  }
+  html body .software-platform-filter > .software-platform-btn{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:38px!important;
+    padding:8px 10px!important;
+    text-align:center!important;
+    white-space:normal!important;
+    line-height:1.12!important;
+  }
+  html body .software-platform-right{
+    grid-column:1 / -1!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    gap:9px!important;
+    overflow:visible!important;
+  }
+  html body .software-platform-right .software-platform-btn{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:38px!important;
+    padding:8px 8px!important;
+    white-space:normal!important;
+    text-align:center!important;
+  }
+  html body .software-platform-right .my-software-filter-btn,
+  html body .software-platform-right .software-owner-account-filter{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+
+  html body .software-category-filter{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow:visible!important;
+    margin-bottom:0!important;
+  }
+  html body .software-category-btn{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:38px!important;
+    padding:8px 10px!important;
+    justify-content:center!important;
+    text-align:center!important;
+    white-space:normal!important;
+    line-height:1.15!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Product card: compact CTA button on phone, not oversized/full width. */
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    width:100%!important;
+    max-width:100%!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
+    box-sizing:border-box!important;
+    overflow:visible!important;
+  }
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn,
+  html body #softwareGrid > .download-card a.download-btn,
+  html body #softwareDownloadsGrid > .download-card a.download-btn,
+  html body .downloads-grid > .download-card a.download-btn{
+    width:min(210px,72%)!important;
+    max-width:210px!important;
+    min-width:0!important;
+    height:44px!important;
+    min-height:44px!important;
+    max-height:44px!important;
+    padding:0 16px!important;
+    font-size:16px!important;
+    line-height:1!important;
+    border-radius:12px!important;
+    margin:0 auto 10px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+    box-sizing:border-box!important;
+  }
+  html body #softwareGrid > .download-card .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row{
+    width:min(235px,82%)!important;
+    max-width:235px!important;
+    min-height:44px!important;
+    margin:0 auto 10px!important;
+  }
+  html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn{
+    height:44px!important;
+    min-height:44px!important;
+    max-height:44px!important;
+    font-size:15px!important;
+    border-radius:12px!important;
+  }
+  html body #softwareGrid > .download-card .az-software-buy-cart-row .az-card-cart-btn,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row .az-card-cart-btn,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row .az-card-cart-btn{
+    width:40px!important;
+    height:40px!important;
+    min-width:40px!important;
+    min-height:40px!important;
+    flex:0 0 40px!important;
+  }
+}
+
+@media(max-width:390px){
+  html body .software-category-filter,
+  html body .software-platform-filter,
+  html body .software-platform-right{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn,
+  html body #softwareGrid > .download-card a.download-btn,
+  html body #softwareDownloadsGrid > .download-card a.download-btn,
+  html body .downloads-grid > .download-card a.download-btn{
+    width:min(200px,78%)!important;
+    max-width:200px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
