@@ -289,3 +289,9 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Category badge (example: Live Streaming Tools) is forced onto its own visible row.
 - Version, file size and platform badges remain below it.
 - Frontend-only change. Firebase Rules and Render backend deploy are not required.
+
+## Patch 430 - Software Like Count Beside Rating
+- Added visible software like count beside the rating area in the card footer.
+- Likes are shown to the left of the star rating using existing manual/live stats value.
+- Footer spacing was tightened for mobile so downloads, likes and rating stay on one line.
+- Frontend only. No Firebase Rules update required. No Render backend deploy required.
