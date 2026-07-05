@@ -378,3 +378,10 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Bookmark button remains separate and does not affect software like count.
 - No backend or payment logic changed.
 - Firebase Rules update is not required.
+
+## Patch 441 - Bookmarks Add to Cart Button
+- Added an `Add to Cart` button beside `Remove` on the `/Bookmarks/` page for saved Software/CAD items.
+- Bookmark cart button uses the same normal product-focused link/id data so bookmarked software can be added from Bookmarks without opening the card first.
+- Click guards prevent the Bookmarks card from redirecting when pressing Add to Cart or Remove.
+- Bookmarks page cart quantity stays limited to 1 per item, matching the Software/CAD cart behavior.
+- Bumped live likes/bookmarks sync asset cache to `v=441`.

@@ -4379,6 +4379,10 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       .az-has-like-btn.download-card h2,.az-has-like-btn.download-card h3,.az-has-like-btn.cad-card h2,.az-has-like-btn.cad-card h3{padding-right:54px!important;}
       .az-like-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;border:1px solid rgba(34,197,94,.22);border-radius:14px;background:rgba(15,23,42,.7);padding:14px;color:#fff;cursor:pointer;}
       .az-like-card-main{min-width:0;}
+      .az-like-card-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+      .az-bookmark-add-cart-btn{border:1px solid rgba(34,197,94,.55);border-radius:999px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16;font-weight:950;padding:9px 16px;cursor:pointer;box-shadow:0 8px 18px rgba(34,197,94,.20);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:7px;}
+      .az-bookmark-add-cart-btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
+      .az-bookmark-add-cart-btn:disabled{opacity:.62;cursor:not-allowed;transform:none;}
       .az-like-card-title{font-weight:950;color:#fff;font-size:16px;display:flex;align-items:center;gap:8px;min-width:0;}
       .az-like-page-bookmark-icon{width:20px!important;height:20px!important;flex:0 0 20px!important;color:#facc15!important;display:inline-block!important;}
       .az-like-page-bookmark-icon path{fill:currentColor!important;stroke:currentColor!important;stroke-width:2.15!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
@@ -4388,7 +4392,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       .az-like-unlike-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
       .az-like-unlike-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
       .az-like-empty{border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:18px;color:#cbd5e1;}
-      @media(max-width:640px){.az-like-card{grid-template-columns:1fr}.az-like-unlike-btn{width:100%;}}
+      @media(max-width:640px){.az-like-card{grid-template-columns:1fr}.az-like-card-actions{width:100%;justify-content:stretch;display:grid;grid-template-columns:1fr 1fr}.az-bookmark-add-cart-btn,.az-like-unlike-btn{width:100%;padding-left:10px;padding-right:10px;}}
     `;
     document.head.appendChild(style);
   }
@@ -4645,6 +4649,51 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       }catch(e){}
     }
   }
+  function bookmarkRowKind(row){
+    const page = String(row?.page || row?.category || '').toLowerCase();
+    const type = String(row?.type || '').toLowerCase();
+    if(page.includes('cad') || type.includes('cad')) return 'cad';
+    if(page.includes('software') || type.includes('software')) return 'software';
+    return '';
+  }
+  function shouldShowBookmarkCartButton(row){
+    const kind = bookmarkRowKind(row);
+    return kind === 'software' || kind === 'cad';
+  }
+  function bookmarkCartPayload441(row){
+    const kind = bookmarkRowKind(row);
+    const id = String(row?.productId || row?.softwareId || row?.cadId || row?.itemId || row?.id || '').trim();
+    const title = String(row?.title || row?.name || id || 'Bookmarked item').trim();
+    const url = bookmarkOpenUrlForRow439(row);
+    const price = String(row?.productPrice || row?.price || row?.priceText || row?.amount || row?.salePrice || 'RM0').trim() || 'RM0';
+    const source = kind === 'cad' ? 'CAD Tools' : 'Software';
+    const category = String(row?.category || row?.page || source).trim() || source;
+    const link = String(row?.secureDownloadLink || row?.premiumDownloadFileLink || row?.downloadLink || row?.url || '').trim();
+    return {
+      id: id || (source + ':' + title),
+      productId: id,
+      name: title,
+      title,
+      price,
+      source,
+      category,
+      type: kind || String(row?.type || ''),
+      image: String(row?.image || row?.img || row?.thumbnail || row?.logo || '').trim(),
+      pageUrl: url || String(row?.pageUrl || ''),
+      paymentLink: String(row?.paymentLink || '').trim(),
+      stripeLink: String(row?.stripeLink || '').trim(),
+      secureDownloadLink: link,
+      premiumDownloadFileLink: String(row?.premiumDownloadFileLink || link).trim(),
+      downloadLink: String(row?.downloadLink || link).trim(),
+      qty: 1,
+      maxQty: 1,
+      fromBookmarks: true
+    };
+  }
+  function encodeBookmarkCartPayload441(row){
+    try{ return encodeURIComponent(JSON.stringify(bookmarkCartPayload441(row))); }catch(e){ return ''; }
+  }
+
   function likeCardHtml(row){
     const title = String(row.title || row.name || row.itemId || 'Bookmarked item');
     const meta = [row.page, row.category, row.type].filter(Boolean).join(' • ');
@@ -4656,12 +4705,58 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
         <div class="az-like-card-meta">${escapeHtml(meta || 'AZOBSS')}</div>
         ${url ? `<div class="az-like-card-url">${escapeHtml(url)}</div>` : ''}
       </div>
-      <button class="az-like-unlike-btn" type="button" data-unlike-id="${escapeHtml(itemId)}" aria-label="Remove bookmark">Remove</button>
+      <div class="az-like-card-actions">
+        ${shouldShowBookmarkCartButton(row) ? `<button class="az-bookmark-add-cart-btn" type="button" data-bookmark-add-cart="${escapeHtml(encodeBookmarkCartPayload441(row))}" aria-label="Add bookmark item to cart">🛒 Add to Cart</button>` : ''}
+        <button class="az-like-unlike-btn" type="button" data-unlike-id="${escapeHtml(itemId)}" aria-label="Remove bookmark">Remove</button>
+      </div>
     </div>`;
   }
   function escapeHtml(value){
     return String(value == null ? '' : value).replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
   }
+  function addBookmarkItemToCart441(btn){
+    if(!btn || btn.dataset.azBookmarkCartBusy === '1') return;
+    btn.dataset.azBookmarkCartBusy = '1';
+    const oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    try{
+      const payload = JSON.parse(decodeURIComponent(String(btn.dataset.bookmarkAddCart || '')) || '{}');
+      if(!payload || !payload.id){ throw new Error('Missing bookmark cart payload'); }
+      payload.qty = 1;
+      payload.maxQty = 1;
+      payload.addedAt = Date.now();
+      if(typeof window.azobssAddShopCart === 'function'){
+        window.azobssAddShopCart(payload);
+      }else{
+        const key = window.__azobssCurrentCartKey || 'azobss_shop_cart_guest_v1';
+        let items = [];
+        try{ items = JSON.parse(localStorage.getItem(key) || '[]').filter(Boolean); }catch(e){ items = []; }
+        const found = items.find(x => String(x.id) === String(payload.id) && String(x.source || '') === String(payload.source || ''));
+        if(found){ found.qty = 1; found.maxQty = 1; found.addedAt = found.addedAt || Date.now(); }
+        else items.push(payload);
+        localStorage.setItem(key, JSON.stringify(items.slice(0,100)));
+        window.dispatchEvent(new Event('azobss-shop-cart-updated'));
+        if(typeof window.azobssOpenShopCart === 'function') window.azobssOpenShopCart();
+      }
+      btn.innerHTML = '✓ Added';
+      setTimeout(()=>{ btn.innerHTML = oldHtml; btn.disabled = false; btn.dataset.azBookmarkCartBusy = '0'; }, 900);
+    }catch(err){
+      console.warn('AZOBSS bookmark add to cart failed:', err);
+      btn.disabled = false;
+      btn.dataset.azBookmarkCartBusy = '0';
+      alert('Unable to add this bookmark to cart. Please open the product page and add it again.');
+    }
+  }
+
+  document.addEventListener('click', function(event){
+    const btn = event.target.closest && event.target.closest('[data-bookmark-add-cart]');
+    if(!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if(event.stopImmediatePropagation) event.stopImmediatePropagation();
+    addBookmarkItemToCart441(btn);
+  }, true);
+
   async function unlikeFromLikesPage(itemId, btn){
     const usernameKey = getUsernameKey();
     const id = String(itemId || '').trim();
