@@ -1,15 +1,15 @@
-# (443)-AZOBSS-BOOKMARKS-HIDE-CART-FOR-FREE-SOFTWARE-FIX
+# (444) AZOBSS Bookmarks Strict Free Cart Hide Fix
 
-Patch 443 changes the Bookmarks page so the Add to Cart button only appears for paid/premium Software/CAD bookmarks.
+Patch 444 fixes the Bookmarks page still showing Add to Cart for Free Software items such as Bandizip.
 
 ## Changes
-- Free Software bookmarks no longer show the Add to Cart button.
-- Future saved bookmarks now store product type/price hints (`free` / `premium`) so Bookmarks can decide correctly.
-- Existing old Software bookmarks with no premium/paid marker will not show Add to Cart, preventing free items from being added to cart incorrectly.
-- Premium items with price/payment metadata can still show Add to Cart.
-- Cache version bumped to `v=443`.
+- Add to Cart in `/Bookmarks/` now requires a clear paid/premium marker or a real RM/MYR price.
+- Free software bookmarks do not show Add to Cart.
+- Old bookmark records with URL/file/version data inside price-like fields are no longer mistaken as paid products.
+- Removed the old fallback that treated `paymentLink`/download URL alone as paid.
+- Cache version updated to `v=444`.
 
 ## Deploy
-- Frontend/GitHub Pages only.
-- No Firebase Rules update required.
-- No Render backend deploy required.
+Frontend/GitHub Pages only.
+Firebase Rules do not need updating.
+Render backend does not need redeploy.

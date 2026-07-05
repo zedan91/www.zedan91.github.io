@@ -4695,10 +4695,20 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   }
   function azText443(value){ return String(value == null ? '' : value).trim(); }
   function azMoneyValue443(value){
-    const text = azText443(value).toLowerCase();
+    const raw = azText443(value);
+    const text = raw.toLowerCase();
     if(!text || /^free$/.test(text) || text === 'rm0' || text === 'rm0.00' || text === '0') return 0;
-    const m = text.replace(/,/g,'').match(/(?:rm|myr)?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
-    return m ? Number(m[1]) : NaN;
+    // AZOBSS 444: Be strict. Do not treat product IDs, version numbers, file sizes,
+    // URLs, or download filenames as prices. Old bookmarks sometimes store a URL in
+    // price-like fields, causing free software to incorrectly show Add to Cart.
+    if(/https?:\/\//i.test(raw) || /[\/]/.test(raw) || /\.(exe|zip|rar|7z|msi|dmg|pkg|gif|png|jpe?g|webp|pdf)(?:$|[?#])/i.test(raw)) return NaN;
+    const cleaned = raw.replace(/,/g,'').trim();
+    let m = cleaned.match(/(?:rm|myr)\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+    if(m) return Number(m[1]);
+    // Plain numeric values are accepted only if the entire field is numeric, not if
+    // it contains text such as v1.0.9, 41MB, AZSW-CMP003 or a file name.
+    if(/^[0-9]+(?:\.[0-9]{1,2})?$/.test(cleaned)) return Number(cleaned);
+    return NaN;
   }
   function azBookmarkIsFreeItem443(row){
     const productType = azText443(row?.productType || row?.softwareType || row?.cadType || row?.planType || row?.saleType || row?.pricingType || '').toLowerCase();
@@ -4714,12 +4724,17 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(azBookmarkIsFreeItem443(row)) return false;
     const productType = azText443(row?.productType || row?.softwareType || row?.cadType || row?.planType || row?.saleType || row?.pricingType || '').toLowerCase();
     const typeText = azText443(row?.type || '').toLowerCase();
-    if(row?.isPremium === true || row?.premium === true || row?.isPaid === true || row?.paid === true) return true;
-    if(productType === 'premium' || productType === 'paid' || productType === 'premium software' || productType === 'premium cad') return true;
-    if(typeText === 'premium' || typeText === 'paid' || typeText === 'premium software' || typeText === 'premium cad') return true;
-    const money = azMoneyValue443(row?.productPrice || row?.price || row?.priceText || row?.amount || row?.salePrice || row?.finalPrice || '');
+    const explicitPremium = row?.isPremium === true || row?.premium === true || row?.isPaid === true || row?.paid === true
+      || productType === 'premium' || productType === 'paid' || productType === 'premium software' || productType === 'premium cad'
+      || typeText === 'premium' || typeText === 'paid' || typeText === 'premium software' || typeText === 'premium cad';
+    if(explicitPremium) return true;
+    const priceFields = [row?.productPrice, row?.price, row?.priceText, row?.amount, row?.salePrice, row?.finalPrice];
+    const money = priceFields.map(azMoneyValue443).find(v => Number.isFinite(v) && v > 0);
     if(Number.isFinite(money) && money > 0) return true;
-    if(azText443(row?.paymentLink || row?.stripeLink || '').length > 0) return true;
+    // AZOBSS 444: Do not mark an old bookmark as paid just because it has paymentLink
+    // or a direct download URL. Premium cart button must require a clear premium flag
+    // or a real RM/MYR price. This prevents Free Software like Bandizip/TBana free from
+    // showing Add to Cart after old bookmark data is reused.
     return false;
   }
   function shouldShowBookmarkCartButton(row){
