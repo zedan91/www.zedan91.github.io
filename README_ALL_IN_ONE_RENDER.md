@@ -263,3 +263,12 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Software card footer now shows like count on the left side of rating.
 - Uses existing software stats/manual likes value.
 - Frontend-only change; Render backend does not need redeploy.
+
+
+## Patch 431 - Software Like Count Click Fix (2026-07-05)
+
+- Made the like count pill beside the rating clickable.
+- Clicking the like count now triggers the existing heart like button on the card.
+- Like/unlike now updates the visible software like count and syncs to `settings/softwareStats`.
+- Added hover/focus states so the count looks interactive.
+- No backend, payment, ToyyibPay, Firebase Rules, or Render deploy changes required.

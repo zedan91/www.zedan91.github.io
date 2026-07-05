@@ -295,3 +295,12 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Likes are shown to the left of the star rating using existing manual/live stats value.
 - Footer spacing was tightened for mobile so downloads, likes and rating stay on one line.
 - Frontend only. No Firebase Rules update required. No Render backend deploy required.
+
+
+## Patch 431 - Software Like Count Click Fix (2026-07-05)
+
+- Made the like count pill beside the rating clickable.
+- Clicking the like count now triggers the existing heart like button on the card.
+- Like/unlike now updates the visible software like count and syncs to `settings/softwareStats`.
+- Added hover/focus states so the count looks interactive.
+- No backend, payment, ToyyibPay, Firebase Rules, or Render deploy changes required.

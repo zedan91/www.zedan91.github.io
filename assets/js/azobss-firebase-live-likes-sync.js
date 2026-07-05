@@ -4534,6 +4534,10 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       }else{
         await deleteDoc(doc(db, 'users', usernameKey, 'likes', id));
       }
+      try{
+        const card = btn && btn.closest ? btn.closest('.download-card') : null;
+        if(card && typeof window.azobssRecordSoftwareLikeToggle === 'function') window.azobssRecordSoftwareLikeToggle(card, nextLiked);
+      }catch(statErr){ console.warn('AZOBSS like count update skipped:', statErr); }
     }catch(err){
       console.warn('AZOBSS like save failed:', err);
       if(nextLiked) state.ids.delete(id); else state.ids.add(id);
