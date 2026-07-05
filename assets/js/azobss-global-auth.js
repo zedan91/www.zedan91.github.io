@@ -1150,7 +1150,7 @@ function normalizeUserMenu() {
   dropdown.innerHTML = `
     
     <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-    <a class="user-dropdown-item" href="/likes/" role="menuitem">🔖 Bookmarks</a>
+    <a class="user-dropdown-item" href="/Bookmarks/" role="menuitem">🔖 Bookmarks</a>
     
     <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log Out</button>`;
@@ -1187,7 +1187,7 @@ function bindUserDropdownActions() {
     menu?.setAttribute('aria-expanded', 'false');
   });
 
-  dropdown?.querySelector('a[href="/likes/"]')?.addEventListener('click', (event) => {
+  dropdown?.querySelector('a[href="/Bookmarks/"]')?.addEventListener('click', (event) => {
     event.stopPropagation();
     menu?.classList.remove('is-open');
     menu?.setAttribute('aria-expanded', 'false');

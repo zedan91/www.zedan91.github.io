@@ -296,3 +296,12 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Updated empty/login text to say bookmarks and bumped likes sync cache to `v=434`.
 - No Firebase Rules update required. No Render backend deploy required.
 
+
+
+## Patch 435 - Bookmarks URL Route Fix
+- Changed user-facing Bookmarks URL from `/likes/` to `/Bookmarks/`.
+- Updated sticky bar and dropdown links to `/Bookmarks/`.
+- Added `/Bookmarks/index.html` as the active Bookmarks page.
+- Kept `/likes/` as a safe redirect to `/Bookmarks/` so old links do not break.
+- Updated cache versions for bookmark/auth scripts to `v=435`.
+- No backend/payment changes.

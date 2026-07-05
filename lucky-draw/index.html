@@ -1252,12 +1252,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
 <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-<a class="user-dropdown-item" href="/likes/" role="menuitem">🔖 Bookmarks</a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem">🔖 Bookmarks</a>
 
 <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ Settings</button>
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 Log Out</button></div>
 </div>
-<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/likes/">
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/Bookmarks/">
 <svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
 <a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
@@ -3509,7 +3509,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (isAdmin(readUser())) loadReferralAudit();
     setInterval(function(){ loadEntries(); loadReferralStatus(readUser()).then(updateInvitePanel); if (isAdmin(readUser())) loadReferralAudit(); }, 30000);
   </script>
-<script src="/assets/js/azobss-global-auth.js?v=385" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=434"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=435" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=435"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

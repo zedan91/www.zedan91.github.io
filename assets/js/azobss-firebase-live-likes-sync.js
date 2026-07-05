@@ -906,7 +906,7 @@ function normalizeUserMenu() {
   dropdown.innerHTML = `
     
     <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-    <a class="user-dropdown-item" href="/likes/" role="menuitem">🔖 Bookmarks</a>
+    <a class="user-dropdown-item" href="/Bookmarks/" role="menuitem">🔖 Bookmarks</a>
     
     <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log Out</button>`;
@@ -4461,6 +4461,10 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     btn.setAttribute('aria-label', liked ? 'Remove bookmark' : 'Add bookmark');
     btn.title = liked ? 'Remove bookmark' : 'Add bookmark';
   }
+  function isBookmarksRoute435(){
+    const path = String(location.pathname || '').toLowerCase();
+    return path.includes('/bookmarks') || path.includes('/likes');
+  }
   function pageType(){
     const path = String(location.pathname || '').toLowerCase().replace(/\/$/,'');
     for(const key of Object.keys(PAGE_MAP)) if(path.includes(key)) return PAGE_MAP[key];
@@ -4479,7 +4483,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const lowerRaw = raw.toLowerCase();
     if(lowerRaw.startsWith('software-tools/')) return location.origin + '/' + raw.replace(/^\/+/, '');
     if(lowerRaw.startsWith('cad-tools-&-resources/') || lowerRaw.startsWith('cad-tools-and-resources/')) return location.origin + '/' + raw.replace(/^\/+/, '');
-    if(lowerRaw.startsWith('affiliate-shop/') || lowerRaw.startsWith('likes/')) return location.origin + '/' + raw.replace(/^\/+/, '');
+    if(lowerRaw.startsWith('affiliate-shop/') || lowerRaw.startsWith('likes/') || lowerRaw.startsWith('bookmarks/')) return location.origin + '/' + raw.replace(/^\/+/, '');
 
     const pageName = String(page || pageType() || '').toLowerCase();
     if(pageName.includes('software')) return location.origin + '/Software-Tools/' + raw.replace(/^\/+/, '');
@@ -4564,7 +4568,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   // This keeps the button usable: guest gets login/register prompt, logged-in users toggle like.
   document.addEventListener('click', function(event){
     const btn = event.target && event.target.closest ? event.target.closest('.az-item-like-btn') : null;
-    if(!btn || location.pathname.toLowerCase().includes('/likes')) return;
+    if(!btn || isBookmarksRoute435()) return;
     // If the normal per-button listener is already bound, it stops propagation before this bubble listener.
     // So reaching here means fallback is needed.
     const card = btn.closest('.card[data-product-id], .download-card, .cad-card');
@@ -4575,7 +4579,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   }, false);
 
   async function injectLikeButtons(){
-    if(location.pathname.toLowerCase().includes('/likes')) return;
+    if(isBookmarksRoute435()) return;
     addLikeStyle();
     const usernameKey = getUsernameKey();
     if(usernameKey && state.loadedFor !== usernameKey) loadCache(usernameKey);
