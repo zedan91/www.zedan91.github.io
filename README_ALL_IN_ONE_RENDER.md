@@ -32,3 +32,10 @@ Render backend does not need redeploy.
 - Uses the same right offset and button size for both controls.
 - Desktop: 38px buttons, right 16px. Mobile: 34px buttons, right 14px.
 - Frontend-only. No Firebase Rules or Render backend changes required.
+
+
+## Patch 448 - Preview Button Align Fix
+- Aligns Preview button with the same right rail as Bookmark and Share buttons.
+- Desktop rail: Bookmark top 16px, Share top 64px, Preview top 112px; all 38px.
+- Mobile rail: Bookmark top 16px, Share top 60px, Preview top 104px; all 34px.
+- Front-end only. No Firebase Rules or Render backend changes required.

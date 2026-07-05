@@ -5053,7 +5053,7 @@ function normalizeItem(item){
   loadItems();
 </script>
 
-<script src="/assets/js/azobss-global-auth.js?v=447" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=447"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=448" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=448"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -12426,6 +12426,61 @@ html body .cad-tool-card > .az-lucky-product-share-btn{
   html body .cad-resource-card > .az-lucky-product-share-btn,
   html body .cad-tool-card > .az-lucky-product-share-btn{
     top:60px!important;
+    right:14px!important;
+    width:34px!important;
+    height:34px!important;
+    min-width:34px!important;
+    min-height:34px!important;
+    max-width:34px!important;
+    max-height:34px!important;
+  }
+}
+</style>
+
+
+
+<!-- AZOBSS 448: align preview button with bookmark and share controls -->
+<style id="azobss-bookmark-share-preview-align-448-css">
+/* Keep card action rail aligned: Bookmark -> Share -> Preview. */
+html body #softwareGrid > .download-card > .azobss-preview-float-155,
+html body #softwareDownloadsGrid > .download-card > .azobss-preview-float-155,
+html body .downloads-grid > .download-card > .azobss-preview-float-155,
+html body .software-card > .azobss-preview-float-155,
+html body .software-product-card > .azobss-preview-float-155,
+html body .cad-card > .azobss-preview-float-155,
+html body .cad-item > .azobss-preview-float-155,
+html body .cad-resource-card > .azobss-preview-float-155,
+html body .cad-tool-card > .azobss-preview-float-155{
+  position:absolute!important;
+  top:112px!important;
+  right:16px!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  max-width:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+  z-index:73!important;
+}
+@media(max-width:700px){
+  html body #softwareGrid > .download-card > .azobss-preview-float-155,
+  html body #softwareDownloadsGrid > .download-card > .azobss-preview-float-155,
+  html body .downloads-grid > .download-card > .azobss-preview-float-155,
+  html body .software-card > .azobss-preview-float-155,
+  html body .software-product-card > .azobss-preview-float-155,
+  html body .cad-card > .azobss-preview-float-155,
+  html body .cad-item > .azobss-preview-float-155,
+  html body .cad-resource-card > .azobss-preview-float-155,
+  html body .cad-tool-card > .azobss-preview-float-155{
+    top:104px!important;
     right:14px!important;
     width:34px!important;
     height:34px!important;
