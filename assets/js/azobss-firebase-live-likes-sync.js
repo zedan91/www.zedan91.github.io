@@ -906,7 +906,7 @@ function normalizeUserMenu() {
   dropdown.innerHTML = `
     
     <a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 My Purchases</a>
-    <a class="user-dropdown-item" href="/Bookmarks/" role="menuitem">🔖 Bookmarks</a>
+    <a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
     
     <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem">⚙️ Settings</button>
     <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem">🚪 Log Out</button>`;

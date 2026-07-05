@@ -353,3 +353,8 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Click guards prevent the Bookmarks card from redirecting when pressing Add to Cart or Remove.
 - Bookmarks page cart quantity stays limited to 1 per item, matching the Software/CAD cart behavior.
 - Bumped live likes/bookmarks sync asset cache to `v=441`.
+
+## Patch 442 - User Menu Bookmark SVG Icon Fix
+- Replaced old Bookmarks emoji inside account dropdown menus with the latest SVG bookmark icon.
+- Updated dynamic dropdown rendering and cache-bust to `v=442`.
+- Frontend-only patch. No Render backend deploy required.

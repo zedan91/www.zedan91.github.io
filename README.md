@@ -385,3 +385,10 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Click guards prevent the Bookmarks card from redirecting when pressing Add to Cart or Remove.
 - Bookmarks page cart quantity stays limited to 1 per item, matching the Software/CAD cart behavior.
 - Bumped live likes/bookmarks sync asset cache to `v=441`.
+
+## Patch 442 - User Menu Bookmark SVG Icon Fix
+- Replaced old emoji/pin-style Bookmarks icon inside account dropdown menus with the latest AZOBSS SVG bookmark icon.
+- Applied to static dropdown HTML copies and dynamic menu renderers in `azobss-global-auth.js` and `azobss-firebase-live-likes-sync.js`.
+- Bumped auth/live-likes script cache to `v=442`.
+- No Firebase Rules update required.
+- No Render backend deploy required.
