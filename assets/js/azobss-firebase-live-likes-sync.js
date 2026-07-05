@@ -4523,6 +4523,30 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     }
     return normalizeLikeUrl(row?.pageUrl || row?.url || row?.downloadUrl || '', row?.page || row?.category || row?.type || '');
   }
+  function azReadCardMonetization443(card){
+    const btn = card?.querySelector?.('.download-btn,[data-azobss-premium-buy],.buy-btn,.premium-buy-btn,.az-card-cart-btn');
+    const typeText = String(card?.dataset?.type || card?.dataset?.softwareType || card?.dataset?.cadType || '').trim().toLowerCase();
+    const cardText = String(card?.innerText || '').toLowerCase();
+    const btnPrice = btn ? String(btn.dataset?.productPrice || btn.dataset?.price || btn.getAttribute('data-product-price') || '').trim() : '';
+    const premiumFlag = !!(btn && (btn.dataset?.azobssPremiumBuy === '1' || btn.getAttribute('data-azobss-premium-buy') === '1'));
+    const hasBuy = /buy\s+now|premium|activation\s+code|rm\s*\d/i.test(cardText);
+    const hasFree = /free|download\s+now/i.test(cardText) && !hasBuy && !premiumFlag;
+    const price = btnPrice || (hasFree ? 'FREE' : '');
+    const isPremium = premiumFlag || typeText === 'premium' || typeText === 'paid' || (!!btnPrice && azMoneyValue443(btnPrice) > 0) || hasBuy;
+    const isFree = !isPremium && (typeText === 'free' || hasFree || /^free$/i.test(price) || azMoneyValue443(price) === 0);
+    return {
+      productType: isPremium ? 'premium' : (isFree ? 'free' : typeText),
+      price: isPremium ? (btnPrice || '') : (isFree ? 'FREE' : price),
+      productPrice: isPremium ? (btnPrice || '') : (isFree ? 'FREE' : price),
+      isPremium,
+      isFree,
+      paymentLink: btn ? String(btn.dataset?.paymentLink || '').trim() : '',
+      stripeLink: btn ? String(btn.dataset?.stripeLink || '').trim() : '',
+      secureDownloadLink: btn ? String(btn.dataset?.downloadLink || btn.dataset?.premiumDownloadFileLink || '').trim() : '',
+      premiumDownloadFileLink: btn ? String(btn.dataset?.premiumDownloadFileLink || '').trim() : '',
+      downloadLink: btn ? String(btn.dataset?.downloadLink || '').trim() : ''
+    };
+  }
   function getCardInfo(card){
     const isAff = card.matches('.card');
     const isSw = card.matches('.download-card');
@@ -4535,12 +4559,25 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const page = pageType();
     const type = isAff ? 'affiliate' : (isSw ? 'software' : (isCad ? 'cad' : 'item'));
     const productPageUrl = bookmarkProductUrl439(rawId || id, page, type);
+    const moneyInfo = (isSw || isCad) ? azReadCardMonetization443(card) : {productType:'',price:'',productPrice:'',isPremium:false,isFree:false,paymentLink:'',stripeLink:'',secureDownloadLink:'',premiumDownloadFileLink:'',downloadLink:''};
     return {
       id,
       productId: rawId || id,
       title, desc, category,
       page,
       type,
+      productType: moneyInfo.productType,
+      softwareType: isSw ? moneyInfo.productType : '',
+      cadType: isCad ? moneyInfo.productType : '',
+      price: moneyInfo.price,
+      productPrice: moneyInfo.productPrice,
+      isPremium: moneyInfo.isPremium,
+      isFree: moneyInfo.isFree,
+      paymentLink: moneyInfo.paymentLink,
+      stripeLink: moneyInfo.stripeLink,
+      secureDownloadLink: moneyInfo.secureDownloadLink,
+      premiumDownloadFileLink: moneyInfo.premiumDownloadFileLink,
+      downloadLink: moneyInfo.downloadLink,
       url: productPageUrl || normalizeLikeUrl(location.pathname, page),
       pageUrl: productPageUrl || normalizeLikeUrl(location.pathname, page),
       savedAt: Date.now()
@@ -4656,9 +4693,41 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(page.includes('software') || type.includes('software')) return 'software';
     return '';
   }
+  function azText443(value){ return String(value == null ? '' : value).trim(); }
+  function azMoneyValue443(value){
+    const text = azText443(value).toLowerCase();
+    if(!text || /^free$/.test(text) || text === 'rm0' || text === 'rm0.00' || text === '0') return 0;
+    const m = text.replace(/,/g,'').match(/(?:rm|myr)?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+    return m ? Number(m[1]) : NaN;
+  }
+  function azBookmarkIsFreeItem443(row){
+    const productType = azText443(row?.productType || row?.softwareType || row?.cadType || row?.planType || row?.saleType || row?.pricingType || '').toLowerCase();
+    const typeText = azText443(row?.type || '').toLowerCase();
+    const priceText = azText443(row?.productPrice || row?.price || row?.priceText || row?.amount || row?.salePrice || row?.finalPrice || '').toLowerCase();
+    if(row?.isFree === true || row?.free === true) return true;
+    if(productType === 'free' || productType === 'free software' || productType === 'free cad') return true;
+    if(typeText === 'free' || typeText === 'free software' || typeText === 'free cad') return true;
+    if(priceText && (/^free$/.test(priceText) || /^rm\s*0(?:\.00)?$/i.test(priceText) || priceText === '0')) return true;
+    return false;
+  }
+  function azBookmarkIsPaidItem443(row){
+    if(azBookmarkIsFreeItem443(row)) return false;
+    const productType = azText443(row?.productType || row?.softwareType || row?.cadType || row?.planType || row?.saleType || row?.pricingType || '').toLowerCase();
+    const typeText = azText443(row?.type || '').toLowerCase();
+    if(row?.isPremium === true || row?.premium === true || row?.isPaid === true || row?.paid === true) return true;
+    if(productType === 'premium' || productType === 'paid' || productType === 'premium software' || productType === 'premium cad') return true;
+    if(typeText === 'premium' || typeText === 'paid' || typeText === 'premium software' || typeText === 'premium cad') return true;
+    const money = azMoneyValue443(row?.productPrice || row?.price || row?.priceText || row?.amount || row?.salePrice || row?.finalPrice || '');
+    if(Number.isFinite(money) && money > 0) return true;
+    if(azText443(row?.paymentLink || row?.stripeLink || '').length > 0) return true;
+    return false;
+  }
   function shouldShowBookmarkCartButton(row){
     const kind = bookmarkRowKind(row);
-    return kind === 'software' || kind === 'cad';
+    if(kind !== 'software' && kind !== 'cad') return false;
+    // AZOBSS 443: Bookmarks Add to Cart is only for paid/premium Software/CAD.
+    // Free items are direct-download/share items, so the cart button is hidden.
+    return azBookmarkIsPaidItem443(row);
   }
   function bookmarkCartPayload441(row){
     const kind = bookmarkRowKind(row);
