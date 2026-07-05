@@ -25,3 +25,10 @@ Render backend does not need redeploy.
 - Uses existing likes sort logic (`sortMode = likes`) so products can be ordered by software like count.
 - No Firebase Rules update required.
 - No Render backend deploy required.
+
+
+## Patch 447 - Bookmark & Share Button Alignment
+- Aligns the top-right Bookmark button with the Share button on Software/CAD cards.
+- Uses the same right offset and button size for both controls.
+- Desktop: 38px buttons, right 16px. Mobile: 34px buttons, right 14px.
+- Frontend-only. No Firebase Rules or Render backend changes required.

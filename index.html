@@ -12617,7 +12617,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=446" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=446"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
+<script src="/assets/js/azobss-global-auth.js?v=447" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=447"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
 /* AZOBSS FINAL FIX: keep purchase rows compact but make Show + Reset fully visible */
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList,
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList *{
@@ -17298,6 +17298,100 @@ html body .downloads-grid > .download-card > .software-meta span:nth-child(n+4){
     width:calc(100% - 8px)!important;
     flex-basis:calc(100% - 8px)!important;
     font-size:9px!important;
+  }
+}
+</style>
+
+
+<!-- AZOBSS 447: align bookmark control with share control on product cards -->
+<style id="azobss-bookmark-share-align-447-css">
+/* AZOBSS 447: use one shared size/right offset so bookmark and share buttons line up vertically. */
+html body #softwareGrid > .download-card > .az-item-like-btn,
+html body #softwareDownloadsGrid > .download-card > .az-item-like-btn,
+html body .downloads-grid > .download-card > .az-item-like-btn,
+html body .software-card > .az-item-like-btn,
+html body .software-product-card > .az-item-like-btn,
+html body .cad-card > .az-item-like-btn,
+html body .cad-item > .az-item-like-btn,
+html body .cad-resource-card > .az-item-like-btn,
+html body .cad-tool-card > .az-item-like-btn{
+  position:absolute!important;
+  top:16px!important;
+  right:16px!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  max-width:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  z-index:75!important;
+}
+html body #softwareGrid > .download-card > .az-lucky-product-share-btn,
+html body #softwareDownloadsGrid > .download-card > .az-lucky-product-share-btn,
+html body .downloads-grid > .download-card > .az-lucky-product-share-btn,
+html body .software-card > .az-lucky-product-share-btn,
+html body .software-product-card > .az-lucky-product-share-btn,
+html body .cad-card > .az-lucky-product-share-btn,
+html body .cad-item > .az-lucky-product-share-btn,
+html body .cad-resource-card > .az-lucky-product-share-btn,
+html body .cad-tool-card > .az-lucky-product-share-btn{
+  position:absolute!important;
+  top:64px!important;
+  right:16px!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  max-width:38px!important;
+  max-height:38px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  z-index:74!important;
+}
+@media(max-width:700px){
+  html body #softwareGrid > .download-card > .az-item-like-btn,
+  html body #softwareDownloadsGrid > .download-card > .az-item-like-btn,
+  html body .downloads-grid > .download-card > .az-item-like-btn,
+  html body .software-card > .az-item-like-btn,
+  html body .software-product-card > .az-item-like-btn,
+  html body .cad-card > .az-item-like-btn,
+  html body .cad-item > .az-item-like-btn,
+  html body .cad-resource-card > .az-item-like-btn,
+  html body .cad-tool-card > .az-item-like-btn{
+    top:16px!important;
+    right:14px!important;
+    width:34px!important;
+    height:34px!important;
+    min-width:34px!important;
+    min-height:34px!important;
+    max-width:34px!important;
+    max-height:34px!important;
+  }
+  html body #softwareGrid > .download-card > .az-lucky-product-share-btn,
+  html body #softwareDownloadsGrid > .download-card > .az-lucky-product-share-btn,
+  html body .downloads-grid > .download-card > .az-lucky-product-share-btn,
+  html body .software-card > .az-lucky-product-share-btn,
+  html body .software-product-card > .az-lucky-product-share-btn,
+  html body .cad-card > .az-lucky-product-share-btn,
+  html body .cad-item > .az-lucky-product-share-btn,
+  html body .cad-resource-card > .az-lucky-product-share-btn,
+  html body .cad-tool-card > .az-lucky-product-share-btn{
+    top:60px!important;
+    right:14px!important;
+    width:34px!important;
+    height:34px!important;
+    min-width:34px!important;
+    min-height:34px!important;
+    max-width:34px!important;
+    max-height:34px!important;
   }
 }
 </style>
