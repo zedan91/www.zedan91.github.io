@@ -1,0 +1,16 @@
+AZOBSS Patch 450 - Compact Preview/Share/Bookmark Buttons
+
+Changes:
+- Preview button is now positioned directly on the left side of the Share button on Software/CAD product cards.
+- Bookmark, Share and Preview buttons are slightly smaller for a cleaner card layout.
+- Desktop size: 34px controls; mobile size: 31px controls.
+- Bookmark remains at the top-right of the card.
+- Share remains on the right side below Bookmark.
+- Preview sits in the same row as Share, immediately to Share's left.
+
+Touched files:
+- index.html
+- Software-Tools/index.html
+- CAD-Tools-&-Resources/index.html
+
+No backend/payment/Firebase Rules changes.

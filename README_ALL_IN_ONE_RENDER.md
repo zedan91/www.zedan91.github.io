@@ -46,3 +46,10 @@ Render backend does not need redeploy.
 - Made admin toolbar wrap safely on mobile.
 - Reduced mobile Download Now / Buy Now button width and height so it no longer appears too large.
 - Front-end CSS only. No Firebase Rules update. No Render backend deploy required.
+
+
+## Patch 450 - Compact Preview/Share/Bookmark Buttons
+
+- Preview now sits on the left side of Share on Software/CAD product cards.
+- Bookmark, Share and Preview controls are slightly smaller and aligned more compactly.
+- No backend, payment or Firebase Rules changes.
