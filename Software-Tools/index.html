@@ -5552,6 +5552,7 @@ all.appendChild(wrap);
 .azb-stat-like:hover,.azb-stat-like:focus-visible{transform:translateY(-1px)!important;background:rgba(255,77,109,.18)!important;border-color:rgba(255,77,109,.55)!important;outline:none!important;}
 .azb-stat-like.is-liked{background:rgba(255,77,109,.24)!important;border-color:rgba(255,77,109,.68)!important;box-shadow:0 0 0 1px rgba(255,77,109,.16),0 0 16px rgba(255,77,109,.18)!important;}
 .azb-stat-like:active{transform:scale(.96)!important;}
+.azb-stat-like.is-busy{opacity:.72!important;pointer-events:none!important;filter:saturate(.85)!important;}
 .azb-like-heart{font-size:11px!important;line-height:1!important;color:#ff4d6d!important;text-shadow:0 0 8px rgba(255,77,109,.35)!important;}
 .azb-like-number{font-size:11px!important;font-weight:900!important;color:#fff!important;line-height:1!important;max-width:34px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .azb-dl-badge{width:30px!important;height:30px!important;min-width:30px!important;border-radius:50%!important;background:rgba(22,163,74,.18)!important;border:1px solid rgba(34,197,94,.32)!important;color:#22c55e!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;}
@@ -5587,12 +5588,15 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   function itemsOf(data){if(!data||typeof data!=='object')return {};return data.items&&typeof data.items==='object'?data.items:data;}
   function productId(card){return card?.dataset?.productId||card?.querySelector('[data-product-id]')?.dataset?.productId||card?.querySelector('h3')?.textContent||'software-item';}
   function baseFromCard(card){return {downloads:Number(card?.dataset?.downloads||0)||0,rating:Number(card?.dataset?.rating||0)||0,ratingAverage:Number(card?.dataset?.rating||0)||0,ratingVotes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,votes:Number(card?.dataset?.ratingVotes||card?.dataset?.votes||0)||0,likes:Number(card?.dataset?.likes||0)||0,ratings:{},ratedBy:{},likedBy:{}};}
-  function norm(raw,card){raw=raw||{};const base=card?baseFromCard(card):{};const hasRemoteRating=raw.rating!=null||raw.ratingAverage!=null||raw.avgRating!=null||raw.ratingVotes!=null||raw.votes!=null||raw.ratingCount!=null||raw.reviews!=null;const src=hasRemoteRating?{...base,...raw}:{...raw,...base};const rating=Number(src.ratingAverage??src.avgRating??src.rating??0);const votes=Number(src.ratingVotes??src.votes??src.ratingCount??src.reviews??0);const downloads=Number(src.downloads??0);const likes=Number(src.likes??0);return {...src,downloads:Number.isFinite(downloads)?Math.max(0,Math.round(downloads)):0,rating:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingAverage:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingVotes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,votes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,likes:Number.isFinite(likes)?Math.max(0,Math.round(likes)):0,ratings:src.ratings||{},ratedBy:src.ratedBy||{},likedBy:src.likedBy||{}};}
+  function norm(raw,card){raw=raw||{};const base=card?baseFromCard(card):{};const hasRemoteStats=raw.downloads!=null||raw.likes!=null||raw.rating!=null||raw.ratingAverage!=null||raw.avgRating!=null||raw.ratingVotes!=null||raw.votes!=null||raw.ratingCount!=null||raw.reviews!=null||raw.ratings!=null||raw.ratedBy!=null||raw.likedBy!=null;const src=hasRemoteStats?{...base,...raw}:{...raw,...base};const rating=Number(src.ratingAverage??src.avgRating??src.rating??0);const votes=Number(src.ratingVotes??src.votes??src.ratingCount??src.reviews??0);const downloads=Number(src.downloads??0);const likes=Number(src.likes??0);return {...src,downloads:Number.isFinite(downloads)?Math.max(0,Math.round(downloads)):0,rating:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingAverage:Number.isFinite(rating)?Math.max(0,Math.min(5,Math.round(rating*10)/10)):0,ratingVotes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,votes:Number.isFinite(votes)?Math.max(0,Math.round(votes)):0,likes:Number.isFinite(likes)?Math.max(0,Math.round(likes)):0,ratings:src.ratings||{},ratedBy:src.ratedBy||{},likedBy:src.likedBy||{}};}
   function statsFor(card){const key=slug(productId(card));const local=readLocal();return norm(local[key]||{},card);}
   function setStars(wrap,rating){const filled=Math.round(Number(rating)||0);wrap?.querySelectorAll?.('.azb-star').forEach((star,idx)=>star.classList.toggle('is-filled',idx<filled));}
   function applyCard(card,st){if(!card)return;const box=card.querySelector(':scope > .software-stats');if(!box)return;st=norm(st,card);card.dataset.downloads=String(st.downloads);card.dataset.rating=String(st.rating);card.dataset.ratingVotes=String(st.ratingVotes);card.dataset.likes=String(st.likes||0);const dl=box.querySelector('.azb-dl-number');if(dl&&dl.textContent!==fmt(st.downloads))dl.textContent=fmt(st.downloads);const likeNum=box.querySelector('.azb-like-number');if(likeNum&&likeNum.textContent!==fmt(st.likes||0))likeNum.textContent=fmt(st.likes||0);const likeBtn=box.querySelector('.azb-stat-like');if(likeBtn){const liked=softwareStatIsLiked(card);likeBtn.classList.toggle('is-liked',liked);likeBtn.setAttribute('aria-pressed',liked?'true':'false');likeBtn.title=liked?'Unlike this software':'Like this software';likeBtn.setAttribute('aria-label',liked?'Unlike this software':'Like this software');}const val=box.querySelector('.azb-rate-value');const nextVal=Number(st.rating||0).toFixed(1);if(val&&val.textContent!==nextVal)val.textContent=nextVal;const votes=box.querySelector('.azb-rate-votes');const nextVotes='('+Number(st.ratingVotes||0)+')';if(votes&&votes.textContent!==nextVotes)votes.textContent=nextVotes;setStars(box.querySelector('.azb-stars'),st.rating);}
   function applyAll(){document.querySelectorAll('.download-card').forEach(card=>applyCard(card,statsFor(card)));}
-  async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists()){applyAll();return;}const local=readLocal();const items=itemsOf(snap.data()||{});Object.keys(items).forEach(k=>{local[slug(k)]=norm(items[k]||{});});writeLocal(local);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);applyAll();}}
+  const LIKE_PENDING={};
+  function setSoftwareStatLikedKeyLocal(key,liked){const data=readLikedLocal();if(liked)data[key]=true;else delete data[key];writeLikedLocal(data);}
+  function syncLikeLocalMapFromRemote(items){try{const voter=softwareLikeVoterId();const liked=readLikedLocal();Object.keys(items||{}).forEach(k=>{const key=slug(k);if(LIKE_PENDING[key])return;const remote=items[k]||{};if(remote.likedBy&&typeof remote.likedBy==='object'){if(remote.likedBy[voter])liked[key]=true;else delete liked[key];}});writeLikedLocal(liked);}catch(e){}}
+  async function loadRemote(){try{const snap=await getDoc(STATS_DOC);if(!snap.exists()){applyAll();return;}const local=readLocal();const items=itemsOf(snap.data()||{});syncLikeLocalMapFromRemote(items);Object.keys(items).forEach(k=>{const key=slug(k);if(LIKE_PENDING[key])return;local[key]=norm(items[k]||{});});writeLocal(local);applyAll();}catch(e){console.warn('AZOBSS software stats sync skipped:',e);applyAll();}}
   function voterId(){try{let id=localStorage.getItem('azobssRatingClientId');if(!id){id='azr_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('azobssRatingClientId',id);}return id;}catch(e){return 'azr_session';}}
   const LIKE_LOCAL='azobssSoftwareStatLikedItems';
   function softwareLikeVoterId(){
@@ -5606,7 +5610,9 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   function readLikedLocal(){try{return JSON.parse(localStorage.getItem(LIKE_LOCAL)||'{}')||{};}catch(e){return {};}}
   function writeLikedLocal(data){try{localStorage.setItem(LIKE_LOCAL,JSON.stringify(data||{}));}catch(e){}}
   function softwareStatIsLiked(card){const key=slug(productId(card));return !!readLikedLocal()[key];}
-  function setSoftwareStatLikedLocal(card,liked){const key=slug(productId(card));const data=readLikedLocal();if(liked)data[key]=true;else delete data[key];writeLikedLocal(data);}
+  function setSoftwareStatLikedLocal(card,liked){const key=slug(productId(card));setSoftwareStatLikedKeyLocal(key,liked);}
+  function applyCardsForKey(key,st){const data=readLocal();data[key]=norm(st);writeLocal(data);document.querySelectorAll('.download-card').forEach(c=>{if(slug(productId(c))===key)applyCard(c,norm(data[key],c));});}
+  function setSoftwareStatLikeBusy(card,busy){try{const key=slug(productId(card));document.querySelectorAll('.download-card').forEach(c=>{if(slug(productId(c))!==key)return;const btn=c.querySelector(':scope > .software-stats .azb-stat-like');if(btn){btn.classList.toggle('is-busy',!!busy);btn.setAttribute('aria-busy',busy?'true':'false');}});}catch(e){}}
   function saveLocal(card,st){const key=slug(productId(card));const data=readLocal();data[key]=norm(st,card);writeLocal(data);applyCard(card,data[key]);}
   function isPaidProductButton(btn){
     if(!btn) return false;
@@ -5634,8 +5640,9 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   };
   function rateFromEvent(e,wrap){const btn=e.target.closest?.('.azb-star');if(btn)return Math.max(1,Math.min(5,Number(btn.dataset.rate||0)));const r=wrap.getBoundingClientRect();const x=e.clientX||(e.touches&&e.touches[0]?.clientX)||r.left;return Math.max(1,Math.min(5,Math.ceil(((x-r.left)/Math.max(1,r.width))*5)));}
   async function recordSoftwareStatLike(cardOrProductId, forceLiked){
+    let card=null;
+    let key='';
     try{
-      let card=null;
       if(cardOrProductId && cardOrProductId.nodeType===1) card=cardOrProductId.closest?cardOrProductId.closest('.download-card'):cardOrProductId;
       const id=String((cardOrProductId && cardOrProductId.nodeType===1)?'':(cardOrProductId||'')).trim();
       if(!card && id){
@@ -5644,37 +5651,56 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
         card=(found&&found.closest?found.closest('.download-card'):found)||document.querySelector('.download-card[data-product-id="'+escId+'"]');
       }
       if(!card) return;
-      const key=slug(productId(card));
-      const wasLiked=softwareStatIsLiked(card);
+      key=slug(productId(card));
+      if(LIKE_PENDING[key]) return;
+      LIKE_PENDING[key]=Date.now();
+      setSoftwareStatLikeBusy(card,true);
+      const voter=softwareLikeVoterId();
+      const current=statsFor(card);
+      const remoteLikedKnown=!!(current.likedBy&&typeof current.likedBy==='object'&&Object.prototype.hasOwnProperty.call(current.likedBy,voter));
+      const wasLiked=remoteLikedKnown?!!current.likedBy[voter]:softwareStatIsLiked(card);
       const nextLiked=typeof forceLiked==='boolean'?forceLiked:!wasLiked;
-      if(nextLiked===wasLiked){applyCard(card,statsFor(card));return;}
-      const delta=nextLiked?1:-1;
-      setSoftwareStatLikedLocal(card,nextLiked);
-      const st=statsFor(card);
-      st.likes=Math.max(0,Math.round(Number(st.likes||0)+delta));
-      st.name=card.querySelector('h3')?.textContent?.trim()||st.name||'';
-      st.updatedAtMs=Date.now();
-      st.lastLikeCountSource=nextLiked?'software-like-button':'software-unlike-button';
-      saveLocal(card,st);
+      const optimistic={...current,likedBy:{...(current.likedBy||{})}};
+      if(nextLiked)optimistic.likedBy[voter]=true;else delete optimistic.likedBy[voter];
+      const localDelta=(nextLiked&&!wasLiked)?1:((!nextLiked&&wasLiked)?-1:0);
+      optimistic.likes=Math.max(0,Math.round(Number(current.likes||0)+localDelta));
+      optimistic.name=card.querySelector('h3')?.textContent?.trim()||optimistic.name||'';
+      optimistic.updatedAtMs=Date.now();
+      optimistic.lastLikeCountSource=nextLiked?'software-like-button':'software-unlike-button';
+      setSoftwareStatLikedKeyLocal(key,nextLiked);
+      saveLocal(card,optimistic);
+      let committed=optimistic;
+      let committedLiked=nextLiked;
       try{
-        const voter=softwareLikeVoterId();
         await runTransaction(db,async(tx)=>{
           const snap=await tx.get(STATS_DOC);
           const data=snap.exists()?(snap.data()||{}):{items:{}};
           const items=itemsOf(data);
           const remote=norm(items[key]||{},card);
-          remote.likedBy=remote.likedBy||{};
+          remote.likedBy=remote.likedBy&&typeof remote.likedBy==='object'?remote.likedBy:{};
           const remoteWas=!!remote.likedBy[voter];
-          if(nextLiked && !remoteWas){remote.likedBy[voter]=true;remote.likes=Math.max(0,Math.round(Number(remote.likes||0)+1));}
-          else if(!nextLiked && remoteWas){delete remote.likedBy[voter];remote.likes=Math.max(0,Math.round(Number(remote.likes||0)-1));}
-          remote.name=st.name;
+          if(nextLiked&&!remoteWas){remote.likedBy[voter]=true;remote.likes=Math.max(0,Math.round(Number(remote.likes||0)+1));}
+          else if(!nextLiked&&remoteWas){delete remote.likedBy[voter];remote.likes=Math.max(0,Math.round(Number(remote.likes||0)-1));}
+          remote.name=optimistic.name;
           remote.updatedAtMs=Date.now();
-          remote.lastLikeCountSource=st.lastLikeCountSource;
+          remote.lastLikeCountSource=optimistic.lastLikeCountSource;
+          remote.likes=Math.max(0,Math.round(Number(remote.likes||0)));
+          committed=norm(remote,card);
+          committedLiked=!!committed.likedBy[voter];
           tx.set(STATS_DOC,{items:{[key]:remote}},{merge:true});
         });
-        loadRemote();
-      }catch(e){console.warn('AZOBSS software like stat save skipped:',e);}
-    }catch(e){console.warn('AZOBSS software like stat count skipped:',e);}
+      }catch(e){
+        console.warn('AZOBSS software like stat save skipped:',e);
+      }
+      setSoftwareStatLikedKeyLocal(key,committedLiked);
+      applyCardsForKey(key,committed);
+      setTimeout(loadRemote,650);
+    }catch(e){
+      console.warn('AZOBSS software like stat count skipped:',e);
+    }finally{
+      if(key){delete LIKE_PENDING[key];}
+      if(card)setSoftwareStatLikeBusy(card,false);
+    }
   }
   window.azobssRecordSoftwareLikeToggle = recordSoftwareStatLike;
   function clickSoftwareLikeStat(hit,e){

@@ -345,3 +345,11 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - Removed old `likes/` URL normalization for user-facing links.
 - Active user-facing bookmark page is now `/Bookmarks/` only.
 - Updated cache versions to `v=436`.
+
+## Patch 437 - Software Like Count Stable Toggle Fix (2026-07-05)
+- Fixed intermittent Software like count issue where like/unlike sometimes did not increase/decrease after clicking.
+- Root cause: software stats normalization only treated rating fields as remote stats, so Firestore `likes` could be overwritten by stale card dataset values.
+- Updated stats normalization to preserve remote `likes`, `downloads`, `likedBy`, `ratings`, and rating fields correctly.
+- Added pending-lock handling for Software like clicks so older Firestore sync responses do not overwrite the optimistic like/unlike state while saving.
+- Synced local liked state from Firestore `likedBy` per voter/client to avoid mismatch between local state and remote count.
+- No backend/payment changes.
