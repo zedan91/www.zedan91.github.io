@@ -797,7 +797,7 @@ const ranges={"HDD":[80,160],"SATA SSD":[400,550],"NVMe Gen3":[1500,3500],"NVMe 
 function calc(){let r=parseFloat(read.value)||0,w=parseFloat(write.value)||0,rg=ranges[type.value];let avg=(r+w)/2;let status=avg<rg[0]*0.75?"Slow / check cable, slot, health or thermal issue":avg<=rg[1]*1.25?"Normal range":"Higher than normal range / good result";result.innerHTML=`Selected: <b>${type.value}</b>\nYour average speed: <b>${avg.toFixed(0)} MB/s</b>\nExpected range: <b>${rg[0]} - ${rg[1]} MB/s</b>\nStatus: <b>${status}</b>\n\nTip: For accurate result, close heavy apps and test using CrystalDiskMark default profile.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=439" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=439"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=440" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=440"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

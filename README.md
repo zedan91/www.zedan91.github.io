@@ -368,3 +368,13 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - CAD/Affiliate bookmarks use their own product-focused routes when item IDs are available.
 - Existing old bookmarked rows with direct download links are converted at display/click time when product/item ID exists.
 - No backend or Firebase Rules changes required.
+
+## Patch 440 - Software Like Count Stable Unique Toggle Fix (2026-07-05)
+
+- Fixed Software Tools bottom like count sometimes reverting after Like/Unlike.
+- Fixed one click sometimes being counted like two likes.
+- Software like count now uses a stable formula: `likesBase + unique likedBy users/devices`.
+- Old remote Firestore snapshots are ignored for 60 seconds after a local like/unlike action so stale data cannot overwrite the new visible count.
+- Bookmark button remains separate and does not affect software like count.
+- No backend or payment logic changed.
+- Firebase Rules update is not required.
