@@ -1,0 +1,9 @@
+AZOBSS Patch 446 - Software Tools remove commission policy cards
+
+Changes:
+- Removed Commission Policy card from /Software-Tools/.
+- Removed Private Sales Access text from /Software-Tools/.
+- Removed empty auto/staff commission note card below the toolbar.
+- Added cleanup to hide the admin toolbar when all controls are hidden/empty.
+- No payment/backend changes.
+- No Firebase Rules update required.

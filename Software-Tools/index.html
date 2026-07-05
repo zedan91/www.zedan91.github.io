@@ -3026,15 +3026,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </header>
 <section class="downloads-section">
 <div class="downloads-inner">
-
-<div id="commissionPolicyCard" class="commission-policy-card" style="display:none" data-role-policy-card="1">
-<div class="title" id="azCommissionPolicyTitle">💰 COMMISSION POLICY</div>
-<div class="row" data-commission-staff style="display:none">🟢 <b>Staff: 70% Commission</b> — You receive 70% commission for each sale of your own software.</div>
-<div class="row" data-commission-staff style="display:none">🔵 <b>Platform Fee</b> — AZOBSS receives 30% for hosting, maintenance and platform development.</div>
-<div class="row" data-commission-semiadmin style="display:none">🟡 <b>Semi-admin: 90% Commission</b> — You receive 90% commission when your own software is sold.</div>
-<div class="row" data-commission-semiadmin style="display:none">🔵 <b>Platform Fee</b> — AZOBSS receives 10% for hosting, maintenance and platform development.</div>
-<div class="row" data-commission-common>🔒 <b>Private Sales Access</b> — Your sales and commission access is private. You can only view your own product records.</div>
-</div>
 <h1>💻 Software Tools & Downloads</h1>
 <p class="downloads-intro">
         Essential software, utilities and resources for productivity, troubleshooting and PC optimization.
@@ -3046,9 +3037,33 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <button class="software-admin-apply-btn" id="softwareApplyJsonButton" type="button" hidden disabled>Apply Import</button>
   <button class="software-admin-stats-btn" id="softwareStatsRefreshButton" type="button" hidden>↻ Refresh Stats</button>
   <input id="softwareImportJsonFile" type="file" accept="application/json,.json" hidden>
-  <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><div id="azStaffCommissionNoteSoftware" class="software-admin-json-status" style="display:none;margin-top:8px"></div><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
+  <span class="software-admin-json-status" id="softwareJsonStatus" hidden></span><span id="az-software-staff-direct-note" class="software-admin-json-status" hidden>Staff/Semi-admin mode</span>
 </div>
-<div id="azSoftwareAutoCommissionNote" class="software-admin-json-status" style="display:none;margin-top:10px;padding:12px 14px;border:1px solid rgba(34,197,94,.55);border-radius:14px;background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(20,83,45,.35));color:#d1fae5;font-weight:800"></div>
+
+<script id="az-software-hide-empty-toolbar-446">
+(function(){
+  function isVisible(el){
+    if(!el || el.hidden) return false;
+    var cs=window.getComputedStyle ? getComputedStyle(el) : null;
+    if(cs && (cs.display==='none' || cs.visibility==='hidden')) return false;
+    if(el.tagName==='INPUT') return false;
+    return !!String(el.textContent||'').trim() || el.matches('button,a,select');
+  }
+  function run(){
+    try{
+      document.querySelectorAll('.software-admin-toolbar').forEach(function(bar){
+        var visible=Array.prototype.some.call(bar.children,isVisible);
+        bar.style.display = visible ? '' : 'none';
+      });
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.readyState!=='loading') run();
+  [200,800,1600,3000].forEach(function(ms){setTimeout(run,ms)});
+  window.addEventListener('storage',run);
+  window.addEventListener('focus',run);
+})();
+</script>
 <div class="software-shop-controls" aria-label="Software search and sorting controls">
   <label>Search
     <input id="softwareSearchInput" type="search" placeholder="Search software name or description...">
@@ -4097,36 +4112,11 @@ function normalizeItem(item){
   }
   function azRenderRoleCommissionPolicy(){
     try{
-      const box=document.getElementById('commissionPolicyCard');
-      const note=document.getElementById('azSoftwareAutoCommissionNote');
-      const roleKey=azSoftwareCurrentRoleKey();
-      const isStaff=roleKey==='staff';
-      const isSemi=roleKey==='semiadmin';
-      if(!box && !note) return;
-      if(!isStaff && !isSemi){
-        try{azSoftwareResolveRoleFromFirestore();}catch(_e){}
-        if(box){
-          box.style.display='none';
-          box.querySelectorAll('[data-commission-staff],[data-commission-semiadmin]').forEach(el=>{ el.style.display='none'; });
-        }
-        if(note) note.style.display='none';
-        return;
-      }
-      if(box){
-        box.style.display='';
-        const title=document.getElementById('azCommissionPolicyTitle');
-        if(title) title.textContent=isSemi ? '💰 SEMI-ADMIN COMMISSION POLICY' : '💰 STAFF COMMISSION POLICY';
-        box.querySelectorAll('[data-commission-staff]').forEach(el=>{ el.style.display=isStaff?'':'none'; });
-        box.querySelectorAll('[data-commission-semiadmin]').forEach(el=>{ el.style.display=isSemi?'':'none'; });
-        box.querySelectorAll('[data-commission-common]').forEach(el=>{ el.style.display=''; });
-      }
-      if(note){
-        note.style.display='';
-        note.innerHTML = isSemi
-          ? '💰 Auto Commission: Your software is auto set to <b>90% owner commission</b> / <b>10% AZOBSS</b>.'
-          : '💰 Auto Commission: Your software is auto set to <b>70% owner commission</b> / <b>30% AZOBSS</b>.';
-      }
-    }catch(e){console.warn('AZOBSS commission policy render failed',e)}
+      ['commissionPolicyCard','azSoftwareAutoCommissionNote','azStaffCommissionNoteSoftware'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el) el.remove();
+      });
+    }catch(e){}
   }
   function azSoftwareCommissionPolicyForRate(rate){
     const r=Number(rate||70)||70;
@@ -5063,7 +5053,7 @@ function normalizeItem(item){
   loadItems();
 </script>
 
-<script src="/assets/js/azobss-global-auth.js?v=445" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=445"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=446" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=446"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -7958,24 +7948,6 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   window.azobssGetCurrentStaffOwner = userIdentity;
 })();
 </script>
-
-
-<script id="az-staff-commission-note-show-software">
-(function(){
-  function show(){
-    var el=document.getElementById('azStaffCommissionNoteSoftware');
-    if(!el) return;
-    var u={};
-    try{u=JSON.parse(localStorage.getItem('azobssCurrentUser')||sessionStorage.getItem('azobssCurrentUser')||'{}')}catch(e){}
-    var role=String(u.role||'').toLowerCase();
-    var ok=role==='admin'||role==='semiadmin'||role==='staff'||String(u.id||u.usernameKey||'').toLowerCase()==='zedan91';
-    el.style.display=ok?'block':'none';
-  }
-  document.addEventListener('DOMContentLoaded',show); if(document.readyState!=='loading')show(); window.addEventListener('storage',show); window.addEventListener('focus',show); setTimeout(show,1000);
-})();
-</script>
-
-
 <script>
 document.addEventListener('DOMContentLoaded',function(){
  let u={};try{u=JSON.parse(localStorage.getItem('azobssCurrentUser')||'{}')}catch(e){}
@@ -8004,31 +7976,6 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(run, 3500);
 })();
 </script>
-
-
-<script id="az-software-auto-commission-note-show">
-(function(){
-  function run(){
-    try{
-      var el=document.getElementById('azSoftwareAutoCommissionNote');
-      if(!el) return;
-      var u={};
-      try{u=JSON.parse(localStorage.getItem('azobssCurrentUser')||sessionStorage.getItem('azobssCurrentUser')||'{}')}catch(e){}
-      var role=String(u.role||'').toLowerCase();
-      var username=String(u.usernameKey||u.username||u.id||'').toLowerCase();
-      var ok=role==='admin'||role==='semiadmin'||role==='staff'||username==='zedan91';
-      el.style.display=ok?'block':'none';
-    }catch(e){}
-  }
-  document.addEventListener('DOMContentLoaded',run);
-  if(document.readyState!=='loading')run();
-  window.addEventListener('focus',run);
-  window.addEventListener('storage',run);
-  setTimeout(run,800);
-})();
-</script>
-
-
 <script id="az-my-software-guest-hide-role-check">
 (function(){
   if(window.__azMySoftwareGuestHideRoleCheck)return;

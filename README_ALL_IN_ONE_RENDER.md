@@ -1,3 +1,7 @@
+# (446)-AZOBSS-SOFTWARE-REMOVE-COMMISSION-CARDS-FIX_20260705
+
+Patch 446 removes the Commission Policy / Private Sales Access card and the empty green commission note card from `/Software-Tools/`. No backend, payment, Render, or Firebase Rules changes are required.
+
 # (444) AZOBSS Bookmarks Strict Free Cart Hide Fix
 
 Patch 444 fixes the Bookmarks page still showing Add to Cart for Free Software items such as Bandizip.
