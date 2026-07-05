@@ -90,6 +90,9 @@
     .market-icon-btn .az-market-bookmark-icon{width:23px;height:23px;display:block}
     .market-icon-btn .az-market-bookmark-icon path{fill:none;stroke:currentColor;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round}
     .market-icon-btn.is-likes-active .az-market-bookmark-icon path{fill:#facc15;stroke:#facc15}
+
+    .az-page-title-bookmark{width:32px;height:32px;vertical-align:-6px;margin-right:8px;color:#facc15}
+    .az-page-title-bookmark path{fill:currentColor;stroke:currentColor;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round}
   </style>
 
 <style id="azobss-admin-compact-pagination-fix">
@@ -691,8 +694,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <main class="wrap">
     <div class="top">
       <div>
-        <h1>🔖 Bookmarks</h1>
-        <p class="muted">Items you liked from Affiliate Shop, CAD Tools and Software Tools.</p>
+        <h1><svg class="az-page-title-bookmark" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg> Bookmarks</h1>
+        <p class="muted">Saved bookmarks from Affiliate Shop, CAD Tools and Software Tools.</p>
       </div>
     </div>
     <div class="likes-controls">
@@ -717,7 +720,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <div id="azobssLikesList"><div class="az-like-empty">Loading bookmarks...</div></div>
   </main>
   <script type="module" src="/assets/js/azobss-global-auth.js?v=385"></script>
-  <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=433"></script>
+  <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=434"></script>
 <script>document.addEventListener("click",e=>{if(e.target.closest('.az-like-unlike-btn'))return; const c=e.target.closest(".liked-item,.like-card,.product-card"); if(!c)return; const url=c.dataset.url||c.getAttribute("data-link")||''; const cat=(c.dataset.type||'').toLowerCase(); if(url){window.location=url;return;} if(cat.includes('cad')) window.location='/CAD-Tools-&-Resources/';});</script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;

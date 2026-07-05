@@ -4345,7 +4345,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
 })();
 
 /* AZOBSS low-quota item likes buttons (restored)
-   - Injects heart buttons into Affiliate / Software / CAD item cards.
+   - Injects bookmark buttons into Affiliate / Software / CAD item cards.
    - Uses one Firestore path only: users/{usernameKey}/likes/{itemId}
    - Reads once, writes only when user toggles a like. No live listener. */
 (function(){
@@ -4379,10 +4379,12 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       .az-has-like-btn.download-card h2,.az-has-like-btn.download-card h3,.az-has-like-btn.cad-card h2,.az-has-like-btn.cad-card h3{padding-right:54px!important;}
       .az-like-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;border:1px solid rgba(34,197,94,.22);border-radius:14px;background:rgba(15,23,42,.7);padding:14px;color:#fff;cursor:pointer;}
       .az-like-card-main{min-width:0;}
-      .az-like-card-title{font-weight:950;color:#fff;font-size:16px;}
+      .az-like-card-title{font-weight:950;color:#fff;font-size:16px;display:flex;align-items:center;gap:8px;min-width:0;}
+      .az-like-page-bookmark-icon{width:20px!important;height:20px!important;flex:0 0 20px!important;color:#facc15!important;display:inline-block!important;}
+      .az-like-page-bookmark-icon path{fill:currentColor!important;stroke:currentColor!important;stroke-width:2.15!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
       .az-like-card-meta{font-size:12px;color:#93c5fd;font-weight:800;margin-top:6px;}
       .az-like-card-url{font-size:12px;color:#86efac;word-break:break-all;margin-top:8px;}
-      .az-like-unlike-btn{border:0;border-radius:999px;background:#ef4444;color:#fff;font-weight:950;padding:9px 14px;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,.22);white-space:normal;}
+      .az-like-unlike-btn{border:0;border-radius:999px;background:#ef4444;color:#fff;font-weight:950;padding:9px 16px;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,.22);white-space:normal;display:inline-flex;align-items:center;justify-content:center;gap:7px;}
       .az-like-unlike-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
       .az-like-unlike-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
       .az-like-empty{border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:18px;color:#cbd5e1;}
@@ -4412,7 +4414,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     try{ if(typeof window.openSiteAuth === 'function'){ window.openSiteAuth('signin'); return; } }catch(e){}
     const btn = document.querySelector('[data-auth-open="login"], #siteLoginButton, .site-auth-actions .site-auth-btn, #openLoginBtn, .login-btn');
     if(btn) btn.click();
-    else alert('Sila login/register dahulu untuk like produk ini.');
+    else alert('Please login/register first to save this bookmark.');
   }
   function cacheKey(usernameKey){ return CACHE_PREFIX + usernameKey; }
   function loadCache(usernameKey){
@@ -4446,13 +4448,16 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     })();
     return state.loading;
   }
-  function azBookmarkIconHtml433(){
+  function azBookmarkIconHtml434(){
     return '<svg class="az-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>';
+  }
+  function bookmarkIconForLikePage(){
+    return '<svg class="az-like-page-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>';
   }
   function setButtonState(btn, liked){
     if(!btn) return;
     btn.classList.toggle('is-liked', !!liked);
-    btn.innerHTML = azBookmarkIconHtml433();
+    btn.innerHTML = azBookmarkIconHtml434();
     btn.setAttribute('aria-label', liked ? 'Remove bookmark' : 'Add bookmark');
     btn.title = liked ? 'Remove bookmark' : 'Add bookmark';
   }
@@ -4541,7 +4546,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
         await deleteDoc(doc(db, 'users', usernameKey, 'likes', id));
       }
       // AZOBSS 432: top-right control is bookmark/save only.
-      // Software like count is handled separately by the footer heart button.
+      // Software like count is handled separately by the footer like button.
     }catch(err){
       console.warn('AZOBSS like save failed:', err);
       if(nextLiked) state.ids.delete(id); else state.ids.add(id);
@@ -4555,7 +4560,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     }
   }
   // AZOBSS 294: delegated fallback for first-paint like buttons.
-  // Some shop cards render the heart immediately before the injector binds per-button events.
+  // Some shop cards render the bookmark button immediately before the injector binds per-button events.
   // This keeps the button usable: guest gets login/register prompt, logged-in users toggle like.
   document.addEventListener('click', function(event){
     const btn = event.target && event.target.closest ? event.target.closest('.az-item-like-btn') : null;
@@ -4606,17 +4611,17 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     }
   }
   function likeCardHtml(row){
-    const title = String(row.title || row.name || row.itemId || 'Liked item');
+    const title = String(row.title || row.name || row.itemId || 'Bookmarked item');
     const meta = [row.page, row.category, row.type].filter(Boolean).join(' • ');
     const url = normalizeLikeUrl(row.url || row.downloadUrl || row.pageUrl || '', row.page || row.category || row.type || '');
     const itemId = String(row.itemId || row.id || '');
     return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}" data-like-id="${escapeHtml(itemId)}">
       <div class="az-like-card-main">
-        <div class="az-like-card-title">🔖 ${escapeHtml(title)}</div>
+        <div class="az-like-card-title">${bookmarkIconForLikePage()}<span>${escapeHtml(title)}</span></div>
         <div class="az-like-card-meta">${escapeHtml(meta || 'AZOBSS')}</div>
         ${url ? `<div class="az-like-card-url">${escapeHtml(url)}</div>` : ''}
       </div>
-      <button class="az-like-unlike-btn" type="button" data-unlike-id="${escapeHtml(itemId)}">💔 Unlike</button>
+      <button class="az-like-unlike-btn" type="button" data-unlike-id="${escapeHtml(itemId)}" aria-label="Remove bookmark">Remove</button>
     </div>`;
   }
   function escapeHtml(value){
@@ -4637,7 +4642,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
       if(card) card.remove();
       renderLikesPage(false);
     }catch(err){
-      console.warn('AZOBSS unlike failed:', err);
+      console.warn('AZOBSS bookmark remove failed:', err);
       alert('Unable to remove this item from Bookmarks right now. Please try again later.');
     }finally{
       state.busy.delete(id);
@@ -4668,7 +4673,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(!list) return;
     const rows = sortAndFilterLikesRows(likesPageState.rows);
     if(!rows.length){
-      list.innerHTML = '<div class="az-like-empty">No liked items yet. Tap the heart button on Software, CAD or Affiliate items.</div>';
+      list.innerHTML = '<div class="az-like-empty">No bookmarks yet. Tap the bookmark button on Software, CAD or Affiliate items.</div>';
       return;
     }
     const more = likesPageState.hasMore
@@ -4723,7 +4728,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(!list) return;
     addLikeStyle();
     if(!isLoggedIn()){
-      list.innerHTML = '<div class="az-like-empty">Please login to view your liked items.</div>';
+      list.innerHTML = '<div class="az-like-empty">Please login to view your bookmarks.</div>';
       return;
     }
     const usernameKey = getUsernameKey();

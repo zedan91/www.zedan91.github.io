@@ -289,3 +289,10 @@ PATCH 428 - SOFTWARE META LONG CATEGORY FIX
 - User dropdown label changed from `Likes` to `Bookmarks` for saved/bookmarked items.
 - Bottom software like count remains the real software-like action and is not changed into bookmark.
 - No backend, payment, Render, or Firebase Rules changes required.
+
+### Patch 434 - Bookmarks page icon and Remove wording
+- Updated `/likes/` saved-item cards to use the current bookmark SVG icon instead of emoji/heart wording.
+- Changed `Unlike` action text to `Remove` because the page is now Bookmarks, not software-like count.
+- Updated empty/login text to say bookmarks and bumped likes sync cache to `v=434`.
+- No Firebase Rules update required. No Render backend deploy required.
+
