@@ -2621,8 +2621,8 @@ function normalizeItem(item){
     try{
       const id = String(product?.id || product?.productId || '').trim();
       const qs = new URLSearchParams(location.search);
-      const urlProduct = String(qs.get('product') || '').trim();
-      const urlRef = String(qs.get('ref') || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+      const urlProduct = String(qs.get('p') || qs.get('product') || '').trim();
+      const urlRef = String(qs.get('r') || qs.get('ref') || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
       if(urlRef && (!urlProduct || !id || urlProduct === id)){
         const r={username:urlRef, productId:id || urlProduct, sourcePage:(/CAD-Tools/i.test(location.pathname)?'CAD Tools':'Software'), openedAt:new Date().toISOString(), source:'url-ref'};
         try{localStorage.setItem('azobssStaffShareReferral_'+(id||urlProduct), JSON.stringify(r));}catch(_e){}
@@ -4911,7 +4911,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(/free|percuma/.test(type) || freeOnly) return false;
     return false;
   }
-  function makeShareUrl(info,ref){const url=new URL(location.origin+location.pathname);url.searchParams.set('product',info.id);if(ref)url.searchParams.set('ref',ref);url.searchParams.set('source',SOURCE_PAGE);return url.toString()}
+  function makeShareUrl(info,ref){const url=new URL(location.origin+location.pathname);url.searchParams.set('p',info.id);if(ref)url.searchParams.set('r',ref);return url.toString()}
   function notifyShare(message){
     try{
       let toast=document.querySelector('.az-lucky-share-toast');
@@ -5079,7 +5079,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     collectCards().forEach(ensureOneButton);
   }
   async function recordOpen(){
-    const qs=new URLSearchParams(location.search);const productId=String(qs.get('product')||'').trim().slice(0,120);const ref=username({usernameKey:qs.get('ref')||''});
+    const qs=new URLSearchParams(location.search);const productId=String(qs.get('p')||qs.get('product')||'').trim().slice(0,120);const ref=username({usernameKey:qs.get('r')||qs.get('ref')||''});
     if(!productId||!ref) return;
     const visitor=username(readUser());
     try{await fetch(API_BASE+'/api/lucky-draw/product-referral-click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthKey:monthKey(),ref,productId,sourcePage:SOURCE_PAGE,visitorUsernameKey:visitor,deviceFingerprint:fingerprint()})});localStorage.setItem('azobssLuckyLastProductShareOpen',JSON.stringify({ref,productId,sourcePage:SOURCE_PAGE,at:new Date().toISOString()}));try{localStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));sessionStorage.setItem('azobssStaffShareReferral_'+productId,JSON.stringify({username:ref,ref,productId,sourcePage:SOURCE_PAGE,openedAt:new Date().toISOString(),source:'product-share-open'}));}catch(_e){}}catch(e){}
@@ -5143,8 +5143,8 @@ html.azobss-shared-product-mode-332 .cad-item{
   window.__azobssSharedProductFilter333 = true;
 
   var qs = new URLSearchParams(location.search || '');
-  var targetRaw = String(qs.get('product') || qs.get('productId') || qs.get('id') || '').trim();
-  var refRaw = String(qs.get('ref') || '').trim();
+  var targetRaw = String(qs.get('p') || qs.get('product') || qs.get('productId') || qs.get('id') || '').trim();
+  var refRaw = String(qs.get('r') || qs.get('ref') || '').trim();
   if(!targetRaw) return;
 
   try{ document.documentElement.classList.add('azobss-shared-product-mode-332','azobss-shared-product-mode-333'); }catch(e){}

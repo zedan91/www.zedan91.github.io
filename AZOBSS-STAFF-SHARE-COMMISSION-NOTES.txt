@@ -15,7 +15,7 @@ Files changed:
 - backend/server.js
 
 How it works:
-- Product share links keep using ?product=PRODUCT_ID&ref=username.
+- Product share links keep using ?p=PRODUCT_ID&r=username.
 - When a buyer opens a shared link, the ref is stored locally for that product.
 - When payment bill is created, Software/CAD sends staffReferral + product owner metadata to backend.
 - When payment is verified/paid, backend creates commissionRecords.

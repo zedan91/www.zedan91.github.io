@@ -248,11 +248,11 @@ function azReferralFromUrl(value = '', product = {}, order = {}){
     const rawUrl = String(value || '').trim();
     if(!rawUrl) return null;
     const u = /^https?:\/\//i.test(rawUrl) ? new URL(rawUrl) : new URL(rawUrl, 'https://www.azobss.com');
-    const ref = azCommissionUsername(u.searchParams.get('ref') || u.searchParams.get('staff') || u.searchParams.get('staffRef') || u.searchParams.get('affiliate') || '');
+    const ref = azCommissionUsername(u.searchParams.get('r') || u.searchParams.get('ref') || u.searchParams.get('staff') || u.searchParams.get('staffRef') || u.searchParams.get('affiliate') || '');
     if(!ref) return null;
     return {
       username: ref,
-      productId: cleanPremiumText(u.searchParams.get('product') || product.id || product.productId || order.productId || '', 160),
+      productId: cleanPremiumText(u.searchParams.get('p') || u.searchParams.get('product') || product.id || product.productId || order.productId || '', 160),
       sourcePage: /cad-tools/i.test(u.pathname) ? 'CAD Tools' : 'Software',
       openedAt: '',
       source: 'return-url-ref'

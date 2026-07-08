@@ -4512,11 +4512,10 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
         : '/Software-Tools/';
     try{
       const url = new URL(location.origin + route);
-      url.searchParams.set('product', id);
-      url.searchParams.set('source', typeName.includes('cad') ? 'cad' : (typeName.includes('affiliate') ? 'affiliate' : 'software'));
+      url.searchParams.set('p', id);
       return url.toString();
     }catch(e){
-      return location.origin + route + '?product=' + encodeURIComponent(id) + '&source=' + encodeURIComponent(typeName || 'software');
+      return location.origin + route + '?p=' + encodeURIComponent(id);
     }
   }
   function bookmarkOpenUrlForRow439(row){

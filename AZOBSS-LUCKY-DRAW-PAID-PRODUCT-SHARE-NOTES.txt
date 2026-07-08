@@ -7,8 +7,8 @@ Changes:
 - Join Lucky Draw now requires at least 1 valid click from a paid Software/CAD product share link for the current month.
 - Added "Share for Lucky Draw" button to paid Software Tools and paid CAD Tools cards.
 - Product share link format:
-  /Software-Tools/?product=<productId>&ref=<username>&source=software
-  /CAD-Tools-&-Resources/?product=<productId>&ref=<username>&source=cad
+  /Software-Tools/?p=<productId>&r=<username>
+  /CAD-Tools-&-Resources/?p=<productId>&r=<username>
 - Visitor opening the paid product share link records a valid product share click.
 - Self-click and duplicate device/IP clicks are not counted.
 - Lucky Draw user status/check now uses product share click status, not normal Lucky Draw invite link.
