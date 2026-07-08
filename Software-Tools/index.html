@@ -2972,6 +2972,22 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .market-icon-btn.is-likes-active .az-market-bookmark-icon path{fill:#facc15!important;stroke:#facc15!important;}
 </style>
 
+
+<style id="azobss-software-promo-free-download-fix-453">
+/* AZOBSS 453: Premium software promo free-download units.
+   When the edited unit limit is used up, the card falls back to the original Buy Now/payment flow. */
+.az-promo-free-admin-row{border:1px solid rgba(34,197,94,.28);background:rgba(34,197,94,.08);border-radius:16px;padding:12px;margin:4px 0 2px;}
+.az-promo-free-admin-row small{display:block;color:#a7f3d0;font-weight:800;line-height:1.35;margin-top:4px;}
+.az-promo-free-switch{display:flex;align-items:center;gap:9px;margin-top:8px;color:#dcfce7;font-weight:1000;}
+.az-promo-free-switch input{width:18px;height:18px;accent-color:#22c55e;}
+.az-promo-free-card-note{display:flex;align-items:center;justify-content:center;gap:7px;margin:8px auto 10px;padding:7px 10px;border:1px solid rgba(34,197,94,.45);background:rgba(16,185,129,.12);color:#bbf7d0;border-radius:999px;font-size:12px;font-weight:1000;text-align:center;line-height:1.2;}
+.az-promo-free-card-note b{color:#ffffff;}
+.download-card .download-btn.az-promo-free-download-btn{background:linear-gradient(135deg,#22c55e,#84cc16)!important;color:#06120b!important;border:1px solid rgba(187,247,208,.75)!important;box-shadow:0 10px 22px rgba(34,197,94,.22)!important;}
+.download-card .download-btn.az-promo-free-download-btn:hover{filter:brightness(1.04);transform:translateY(-1px);}
+.download-card .download-btn.az-promo-free-download-btn[aria-disabled="true"]{opacity:.68;pointer-events:none;}
+@media(max-width:640px){.az-promo-free-admin-row{grid-template-columns:1fr!important}.az-promo-free-card-note{font-size:11px;padding:6px 8px;}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3147,6 +3163,17 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           <input id="softwareAdminOriginalPrice" type="text" placeholder="Optional old price, e.g. RM30">
         </label>
       </div>
+      <div class="software-admin-row az-promo-free-admin-row">
+        <label>Promo Free Download
+          <small>Untuk Premium Software: bagi percuma download sempena promosi sementara unit masih ada.</small>
+          <span class="az-promo-free-switch"><input id="softwareAdminPromoFreeEnabled" type="checkbox"> <strong>Percuma download sempena promosi</strong></span>
+        </label>
+        <label>Free Promo Units
+          <input id="softwareAdminPromoFreeLimit" type="number" min="0" step="1" value="0" placeholder="Example: 10">
+          <small>Bila unit habis, button automatik kembali ke harga / Buy Now asal.</small>
+        </label>
+      </div>
+      <input type="hidden" id="softwareAdminPromoFreeBatchId" value="">
       <label>Software Category
         <select id="softwareAdminCategory">
           <option value="Antivirus">Antivirus</option>
@@ -3363,6 +3390,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
   import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+  import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -3375,6 +3403,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
   const SOFTWARE_COLLECTION = 'softwareTools';
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
@@ -3421,6 +3450,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const badgeInput = document.getElementById('softwareAdminBadge');
   const categoryInput = document.getElementById('softwareAdminCategory');
   const platformBox = document.getElementById('softwareAdminPlatforms');
+  const promoFreeEnabledInput = document.getElementById('softwareAdminPromoFreeEnabled');
+  const promoFreeLimitInput = document.getElementById('softwareAdminPromoFreeLimit');
+  const promoFreeBatchInput = document.getElementById('softwareAdminPromoFreeBatchId');
   const AZOBSS_SUBSCRIPTION_PLANS = [
     {id:'1m', months:1, durationDays:31, label:'1 Month Activation Code', price:'RM29.90', monthlyText:'RM29.90/month', saveText:''},
     {id:'3m', months:3, durationDays:93, label:'3 Months Activation Code', price:'RM69.90', monthlyText:'RM23.30/month', saveText:'Save RM19.80'},
@@ -3528,6 +3560,42 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     const p = azPromoPriceInfo(item);
     if(!p.show) return '';
     return `<div class="az-promo-price-block az-promo-no-sale-text" title="Promotional price"><span class="az-price-old">${esc(p.old)}</span><span class="az-promo-chip">Save ${esc(p.percent)}%</span></div>`;
+  }
+
+  function azBool(v){ return v === true || v === 1 || v === '1' || /^(true|yes|y|on|enabled|aktif)$/i.test(String(v || '').trim()); }
+  function azPromoFreeLimit(item){
+    const n = Number(item?.promoFreeLimit ?? item?.promoFreeUnits ?? item?.freePromoUnits ?? item?.promoDownloadUnits ?? 0);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+  function azPromoFreeEnabled(item){
+    return !!(item && item.type === 'premium' && azBool(item.promoFreeEnabled || item.freePromoEnabled || item.promoFreeDownloadEnabled) && azPromoFreeLimit(item) > 0);
+  }
+  function azPromoFreeBatchId(item){
+    const raw = String(item?.promoFreeBatchId || item?.promoBatchId || item?.promoFreeStartedAtMs || '').trim();
+    return raw || 'default';
+  }
+  function azPromoFreeStatsKey(item){
+    return 'promo-free-' + statsKeyFrom(String(item?.productId || item?.id || item?.name || 'software') + '-' + azPromoFreeBatchId(item));
+  }
+  function azPromoFreeClaimed(item){
+    const key = azPromoFreeStatsKey(item);
+    const stats = readSoftwareStats();
+    const remote = stats[key] || {};
+    const claimed = Number(remote.claimed ?? remote.used ?? item?.promoFreeUsed ?? 0);
+    return Number.isFinite(claimed) ? Math.max(0, Math.floor(claimed)) : 0;
+  }
+  function azPromoFreeInfo(item){
+    const limit = azPromoFreeLimit(item);
+    const claimed = azPromoFreeClaimed(item);
+    const remaining = Math.max(0, limit - claimed);
+    const link = String(item?.secureDownloadLink || item?.downloadLink || '').trim();
+    const enabled = azPromoFreeEnabled(item);
+    return {enabled, limit, claimed, remaining, link, key: azPromoFreeStatsKey(item), batchId: azPromoFreeBatchId(item), active: enabled && remaining > 0 && !!link};
+  }
+  function azPromoFreeCardHtml(item){
+    const p = azPromoFreeInfo(item);
+    if(!p.enabled || p.remaining <= 0) return '';
+    return `<div class="az-promo-free-card-note" title="Free download promo"><span>🎁 Free promo</span><b>${esc(p.remaining)}/${esc(p.limit)}</b><span>unit left</span></div>`;
   }
 function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
   function azSafeLogoFileName(productId, name){
@@ -3654,6 +3722,11 @@ function normalizeItem(item){
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
       originalPrice: type === 'free' ? '' : azPromoOriginalPrice(item),
       promoOriginalPrice: type === 'free' ? '' : azPromoOriginalPrice(item),
+      promoFreeEnabled: type === 'premium' && azBool(item.promoFreeEnabled || item.freePromoEnabled || item.promoFreeDownloadEnabled),
+      promoFreeLimit: azPromoFreeLimit(item),
+      promoFreeUnits: azPromoFreeLimit(item),
+      promoFreeBatchId: String(item.promoFreeBatchId || item.promoBatchId || item.promoFreeStartedAtMs || '').trim(),
+      promoFreeStartedAtMs: Number(item.promoFreeStartedAtMs || item.promoFreeStartAtMs || 0),
       category: item.category || item.softwareCategory || 'Tools',
       productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
       replacesProductId: item.replacesProductId || item.oldProductId || '',
@@ -3711,6 +3784,11 @@ function normalizeItem(item){
       price: n.price,
       originalPrice: n.originalPrice || '',
       promoOriginalPrice: n.originalPrice || '',
+      promoFreeEnabled: !!n.promoFreeEnabled,
+      promoFreeLimit: azPromoFreeLimit(n),
+      promoFreeUnits: azPromoFreeLimit(n),
+      promoFreeBatchId: n.promoFreeBatchId || '',
+      promoFreeStartedAtMs: Number(n.promoFreeStartedAtMs || 0),
       category: n.category,
       status: n.status,
       version: n.version,
@@ -4248,6 +4326,8 @@ function normalizeItem(item){
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
     const usdBadge = isPremium ? azUsdBadge(item.price) : '';
     const promoPriceHtml = isPremium ? azPromoPriceHtml(item) : '';
+    const promoFreeInfo = isPremium ? azPromoFreeInfo(item) : {enabled:false, active:false, remaining:0, limit:0, link:'', key:'', batchId:''};
+    const promoFreeHtml = isPremium ? azPromoFreeCardHtml(item) : '';
     const stableLikeHtml = azStableLikeHtml287(item);
     const stableShareHtml = azStableShareHtml287(item, isPremium);
     const stablePreviewHtml = azStablePreviewHtml287(item);
@@ -4263,10 +4343,12 @@ function normalizeItem(item){
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
-    const actionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
-    const subscriptionHtml = isPremium ? azSubscriptionPlanButtonsHtml(item) : '';
-    const actionHtml = subscriptionHtml || (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml);
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
+    const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
+    const promoFreeActionBtnHtml = `<a class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(item.price || '')}" data-download-link="${esc(promoFreeInfo.link)}" data-premium-download-file-link="${esc(promoFreeInfo.link)}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" href="${esc(promoFreeInfo.link || '#')}" rel="noopener" target="_blank"><span class="download-text">🎁 Free Promo Download</span></a>`;
+    const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
+    const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
+    const actionHtml = subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
       ${stableLikeHtml}${stableShareHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
@@ -4276,6 +4358,7 @@ function normalizeItem(item){
       ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Video</a></div>` : ''}
       ${productIdMeta}
       ${promoPriceHtml}
+      ${promoFreeHtml}
       ${actionHtml}
       ${adminEdit}
       ${stableStatsHtml}
@@ -4651,6 +4734,14 @@ function normalizeItem(item){
     }
     if(paymentLinkInput) paymentLinkInput.required = false;
     if(stripeLinkInput) stripeLinkInput.required = false;
+    if(promoFreeEnabledInput){
+      promoFreeEnabledInput.disabled = !premium;
+      if(!premium) promoFreeEnabledInput.checked = false;
+    }
+    if(promoFreeLimitInput){
+      promoFreeLimitInput.disabled = !premium || !promoFreeEnabledInput?.checked;
+      if(!premium) promoFreeLimitInput.value = '0';
+    }
   }
 
   async function azSaveSoftwareItemToFirestore(item, options = {}){
@@ -4691,6 +4782,9 @@ function normalizeItem(item){
     if(typeSelect) typeSelect.value = item?.type || 'free';
     if(priceInput) priceInput.value = item?.price || 'FREE';
     if(originalPriceInput) originalPriceInput.value = item?.originalPrice || item?.promoOriginalPrice || '';
+    if(promoFreeEnabledInput) promoFreeEnabledInput.checked = !!item?.promoFreeEnabled;
+    if(promoFreeLimitInput) promoFreeLimitInput.value = String(azPromoFreeLimit(item || {}) || 0);
+    if(promoFreeBatchInput) promoFreeBatchInput.value = item?.promoFreeBatchId || '';
     if(buttonInput) buttonInput.value = item?.buttonText || 'Download Now';
     if(iconInput) iconInput.value = item?.icon || 'FREE';
     if(productIdInput) productIdInput.value = item?.productId || makeProductId('AZSW');
@@ -4951,10 +5045,81 @@ function normalizeItem(item){
       closeModal();
     }
   });
-  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = subscriptionEnabledInput?.checked ? 'RM29.90' : 'RM10'; buttonInput.value = subscriptionEnabledInput?.checked ? 'Buy Activation Code' : 'Buy Now'; iconInput.value = subscriptionEnabledInput?.checked ? 'PRO' : '🛒'; } else { priceInput.value = 'FREE'; if(originalPriceInput) originalPriceInput.value = ''; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; if(subscriptionEnabledInput) subscriptionEnabledInput.checked=false; } syncTypeDefaults(); });
+  typeSelect?.addEventListener('change', () => { if(typeSelect.value === 'premium'){ priceInput.value = subscriptionEnabledInput?.checked ? 'RM29.90' : 'RM10'; buttonInput.value = subscriptionEnabledInput?.checked ? 'Buy Activation Code' : 'Buy Now'; iconInput.value = subscriptionEnabledInput?.checked ? 'PRO' : '🛒'; } else { priceInput.value = 'FREE'; if(originalPriceInput) originalPriceInput.value = ''; buttonInput.value = 'Download Now'; iconInput.value = 'FREE'; if(subscriptionEnabledInput) subscriptionEnabledInput.checked=false; if(promoFreeEnabledInput) promoFreeEnabledInput.checked=false; if(promoFreeLimitInput) promoFreeLimitInput.value='0'; } syncTypeDefaults(); });
   subscriptionEnabledInput?.addEventListener('change', () => { syncSubscriptionAdminDefaults(); syncTypeDefaults(); });
+  promoFreeEnabledInput?.addEventListener('change', syncTypeDefaults);
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
+
+  async function azClaimPromoFreeDownload453(btn){
+    const productId = String(btn?.dataset?.productId || '').trim();
+    const name = String(btn?.dataset?.productName || productId || 'Software').trim();
+    const link = String(btn?.dataset?.downloadLink || btn?.getAttribute('href') || '').trim();
+    const key = String(btn?.dataset?.promoFreeKey || '').trim();
+    const limit = Math.max(0, Math.floor(Number(btn?.dataset?.promoFreeLimit || 0)));
+    const batchId = String(btn?.dataset?.promoFreeBatchId || 'default').trim();
+    if(!link || link === '#') return alert('Download link promo belum diset. Edit item dan isi Premium Download File Link.');
+    if(!key || !limit) return alert('Tetapan unit promo tidak lengkap. Edit item dan save semula.');
+    const authUser = auth?.currentUser || null;
+    if(!authUser){
+      return alert('Login/Register dulu untuk claim free promo download supaya kuota unit boleh dikira dengan tepat.');
+    }
+    const oldText = btn.innerHTML;
+    btn.setAttribute('aria-disabled','true');
+    btn.innerHTML = '<span class="download-text">Claiming...</span>';
+    let nextClaimed = null;
+    try{
+      const statsRef = doc(db, 'settings', 'softwareStats');
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(statsRef);
+        const data = snap.exists() ? (snap.data() || {}) : {};
+        const items = {...(data.items || {})};
+        const current = {...(items[key] || {})};
+        const claimed = Math.max(0, Math.floor(Number(current.claimed ?? current.used ?? 0) || 0));
+        if(claimed >= limit){ throw new Error('PROMO_FREE_EXHAUSTED'); }
+        nextClaimed = claimed + 1;
+        items[key] = {
+          ...current,
+          claimed: nextClaimed,
+          used: nextClaimed,
+          limit,
+          productId,
+          name,
+          batchId,
+          updatedAtMs: Date.now(),
+          lastClaimUid: authUser.uid || '',
+          lastClaimEmail: authUser.email || ''
+        };
+        if(snap.exists()) tx.update(statsRef, {items});
+        else tx.set(statsRef, {items});
+      });
+      const stats = readSoftwareStats();
+      stats[key] = {...(stats[key] || {}), claimed: nextClaimed, used: nextClaimed, limit, productId, name, batchId, updatedAtMs: Date.now()};
+      saveSoftwareStats(stats);
+      try{ recordDownload(btn.closest('.download-card'), {source:'promo-free-download'}); }catch(_){ }
+      window.open(link, '_blank', 'noopener');
+      setTimeout(() => loadItems(), 450);
+    }catch(err){
+      console.warn('Promo free claim failed:', err);
+      if(String(err?.message || '').includes('PROMO_FREE_EXHAUSTED')){
+        alert('Unit percuma promo sudah habis. Button akan kembali kepada harga / Buy Now asal.');
+        setTimeout(() => loadItems(), 250);
+      }else{
+        alert('Tak berjaya claim free promo download. Pastikan sudah login dan Firestore softwareStats rules aktif.');
+      }
+    }finally{
+      btn.removeAttribute('aria-disabled');
+      btn.innerHTML = oldText;
+    }
+  }
+  document.addEventListener('click', e => {
+    const btn = e.target.closest?.('[data-azobss-promo-free="1"]');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation?.();
+    azClaimPromoFreeDownload453(btn);
+  }, true);
 
   form?.addEventListener('submit', async e => {
     if(downloadLinkInput){downloadLinkInput.setCustomValidity('');}
@@ -4963,6 +5128,13 @@ function normalizeItem(item){
     syncTypeDefaults();
     const uploadedImage = await readMediaFile(imageFileInput);
     const uploadedGif = await readMediaFile(gifFileInput);
+    const existingPromoItem = editingSoftwareProductId ? softwareDynamicItems.find(x => String(x.productId || x.id) === String(editingSoftwareProductId)) : null;
+    const promoFreeLimitValue = Math.max(0, Math.floor(Number(promoFreeLimitInput?.value || 0) || 0));
+    const promoFreeEnabledValue = typeSelect.value === 'premium' && !!promoFreeEnabledInput?.checked && promoFreeLimitValue > 0;
+    const oldPromoLimitValue = azPromoFreeLimit(existingPromoItem || {});
+    const oldPromoBatchValue = String(promoFreeBatchInput?.value || existingPromoItem?.promoFreeBatchId || '').trim();
+    const promoBatchNeedsReset = promoFreeEnabledValue && (!oldPromoBatchValue || !existingPromoItem?.promoFreeEnabled || oldPromoLimitValue !== promoFreeLimitValue);
+    const promoFreeBatchValue = promoFreeEnabledValue ? (promoBatchNeedsReset ? String(Date.now()) : oldPromoBatchValue) : '';
     let item = azApplySoftwareCommissionOwner(normalizeItem({
       id: productIdInput?.value.trim() || makeProductId('AZSW'),
       productId: productIdInput?.value.trim() || makeProductId('AZSW'),
@@ -4980,6 +5152,11 @@ function normalizeItem(item){
       price: priceInput.value.trim(),
       originalPrice: originalPriceInput?.value.trim() || '',
       promoOriginalPrice: originalPriceInput?.value.trim() || '',
+      promoFreeEnabled: promoFreeEnabledValue,
+      promoFreeLimit: promoFreeLimitValue,
+      promoFreeUnits: promoFreeLimitValue,
+      promoFreeBatchId: promoFreeBatchValue,
+      promoFreeStartedAtMs: promoFreeEnabledValue ? (promoBatchNeedsReset ? Date.now() : Number(existingPromoItem?.promoFreeStartedAtMs || Date.now())) : 0,
       icon: iconInput.value.trim(),
       imageUrl: uploadedImage || imageUrlInput?.value.trim(),
       gifUrl: uploadedGif || gifUrlInput?.value.trim(),

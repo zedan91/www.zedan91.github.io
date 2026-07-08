@@ -1,0 +1,20 @@
+AZOBSS 453 - Software Tools Promo Free Download Units
+
+Based on: (452)-AZOBSS-AFFILIATE-SHOP-ADMIN-ACTIONS-JSON-MODAL-FIX_20260706.zip
+
+Scope touched:
+- Software-Tools/index.html only
+
+Changes:
+1. Added admin edit fields for Premium Software:
+   - Promo Free Download checkbox
+   - Free Promo Units number input
+2. Premium item can temporarily show a green "Free Promo Download" button while units remain.
+3. Remaining unit counter is shown on the card, e.g. 3/10 unit left.
+4. After the free units are exhausted, the card falls back to the original Buy Now / price/payment flow.
+5. Changing the unit limit in Edit starts a new promo batch/counter.
+6. Promo claim uses settings/softwareStats.items through Firestore transaction for global quota counting.
+
+Notes:
+- User must be logged in to claim promo free download so quota can be counted reliably.
+- Uses existing softwareStats Firestore rules; no new backend/payment/PA-BM changes.
