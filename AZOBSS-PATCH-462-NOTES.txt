@@ -1,0 +1,7 @@
+AZOBSS PATCH 462
+
+- Software Tools: turunkan kumpulan button khas admin/semiadmin/staff.
+- Button role tools kini bermula di bawah baris Preview/Share.
+- Desktop top: 100px; mobile top: 92px.
+- Guest/user biasa tidak terjejas kerana kumpulan button ini hanya wujud untuk role dibenarkan.
+- Tiada Firebase Rules atau backend berubah.

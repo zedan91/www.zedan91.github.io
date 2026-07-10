@@ -13923,6 +13923,27 @@ html body .downloads-grid > .download-card > .az-promo-free-normal-price{
 }
 </style>
 
+
+<!-- AZOBSS 462: lower role-only card tools below Preview/Share -->
+<style id="azobss-role-card-tools-below-share-462-css">
+/* Admin, semiadmin and staff tools exist only for authorised roles.
+   Start the vertical tool stack below the Preview/Share row to avoid overlap. */
+html body #softwareGrid > .download-card > .software-card-admin-actions,
+html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions,
+html body .downloads-grid > .download-card > .software-card-admin-actions{
+  top:100px!important;
+  right:14px!important;
+}
+@media(max-width:700px){
+  html body #softwareGrid > .download-card > .software-card-admin-actions,
+  html body #softwareDownloadsGrid > .download-card > .software-card-admin-actions,
+  html body .downloads-grid > .download-card > .software-card-admin-actions{
+    top:92px!important;
+    right:12px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
