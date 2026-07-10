@@ -6672,6 +6672,9 @@ return;
   };
   function isPremiumSoftwareCard(card){
     if(isCADPage()) return true;
+    // AZOBSS 457: an active free-promo premium item behaves like a free download.
+    // Do not wrap its compact promo button with the paid Add-to-Cart row.
+    if(card?.querySelector?.('[data-azobss-promo-free="1"], .az-promo-free-download-btn')) return false;
     const type = String(card?.dataset?.type || card?.getAttribute('data-type') || '').toLowerCase().trim();
     if(type === 'premium') return true;
     if(type === 'free') return false;
@@ -13329,6 +13332,140 @@ html body .download-card > .az-promo-free-normal-price del{
   }
   html body .download-card > .az-promo-free-normal-price del{
     font-size:11px!important;
+  }
+}
+</style>
+
+
+<!-- AZOBSS 457: free-promo price no-overlap + truly compact CTA -->
+<style id="azobss-free-promo-price-button-final-457-css">
+/* Keep the crossed normal price on the free left side of the top controls. */
+html body #softwareGrid > .download-card > .az-promo-free-normal-price,
+html body #softwareDownloadsGrid > .download-card > .az-promo-free-normal-price,
+html body .downloads-grid > .download-card > .az-promo-free-normal-price{
+  position:absolute!important;
+  top:56px!important;
+  left:14px!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:132px!important;
+  height:28px!important;
+  min-height:28px!important;
+  max-height:28px!important;
+  margin:0!important;
+  padding:0 8px!important;
+  gap:5px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  border-radius:10px!important;
+  font-size:9.5px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  z-index:83!important;
+  box-sizing:border-box!important;
+}
+html body .download-card > .az-promo-free-normal-price > span,
+html body .download-card > .az-promo-free-normal-price > del{
+  display:inline-block!important;
+  min-width:0!important;
+  margin:0!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+html body .download-card > .az-promo-free-normal-price del{
+  font-size:10.5px!important;
+}
+
+/* Active free promo must not keep the paid cart button beside it. */
+html body .download-card > .az-software-buy-cart-row:has(> .az-promo-free-download-btn) .az-card-cart-slot{
+  display:none!important;
+}
+html body .download-card > .az-software-buy-cart-row:has(> .az-promo-free-download-btn){
+  width:auto!important;
+  min-width:0!important;
+  max-width:148px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  gap:0!important;
+}
+
+/* Final compact Free Promo Download CTA, whether direct or briefly wrapped. */
+html body #softwareGrid > .download-card > .download-btn.az-promo-free-download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn.az-promo-free-download-btn,
+html body .downloads-grid > .download-card > .download-btn.az-promo-free-download-btn,
+html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn{
+  width:auto!important;
+  min-width:132px!important;
+  max-width:148px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  flex:0 0 auto!important;
+  margin:0 auto!important;
+  padding:0 10px!important;
+  gap:4px!important;
+  border-radius:10px!important;
+  font-size:11.5px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  box-sizing:border-box!important;
+}
+html body .download-card .download-btn.az-promo-free-download-btn .download-text{
+  width:auto!important;
+  max-width:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:inherit!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+
+@media(max-width:700px){
+  html body #softwareGrid > .download-card > .az-promo-free-normal-price,
+  html body #softwareDownloadsGrid > .download-card > .az-promo-free-normal-price,
+  html body .downloads-grid > .download-card > .az-promo-free-normal-price{
+    top:52px!important;
+    left:12px!important;
+    max-width:122px!important;
+    height:27px!important;
+    min-height:27px!important;
+    max-height:27px!important;
+    padding:0 7px!important;
+    font-size:9px!important;
+  }
+  html body .download-card > .az-promo-free-normal-price del{
+    font-size:10px!important;
+  }
+  html body #softwareGrid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body .downloads-grid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn{
+    min-width:128px!important;
+    max-width:142px!important;
+    height:32px!important;
+    min-height:32px!important;
+    max-height:32px!important;
+    padding:0 8px!important;
+    border-radius:9px!important;
+    font-size:10.5px!important;
   }
 }
 </style>
