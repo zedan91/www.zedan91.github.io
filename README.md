@@ -53,3 +53,11 @@ Render backend does not need redeploy.
 - Preview now sits on the left side of Share on Software/CAD product cards.
 - Bookmark, Share and Preview controls are slightly smaller and aligned more compactly.
 - No backend, payment or Firebase Rules changes.
+
+
+## Patch 460 — Free Promo card layout
+- Prevents the Free promo unit badge from overlapping the Bookmark control.
+- Enlarges the Normal Price card and normalizes numeric prices, e.g. `RM30`.
+- Uses a thinner diagonal strike so the original price remains readable.
+- Expands Free Promo Download to the available card width so the full label is visible.
+- No Firebase Rules or backend changes required.

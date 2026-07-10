@@ -3600,10 +3600,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   function azPromoFreeNormalPriceHtml(item){
     const p = azPromoFreeInfo(item);
     if(!p.active) return '';
-    // Show the normal payable price (item.price) crossed out while the free promo is active.
-    // This lets visitors know the real price that returns after the free units are finished.
-    const normalPrice = String(item?.price || azPromoOriginalPrice(item) || '').trim();
-    if(!normalPrice || /^free$/i.test(normalPrice)) return '';
+    // Show the normal payable price crossed out while the free promo is active.
+    // Normalize numeric prices so values such as 30 / RM30.00 are displayed clearly as RM30.
+    const rawNormalPrice = String(item?.price || azPromoOriginalPrice(item) || '').trim();
+    if(!rawNormalPrice || /^free$/i.test(rawNormalPrice)) return '';
+    const amount = azExtractMyrAmount(rawNormalPrice);
+    const formattedAmount = Number.isFinite(amount)
+      ? (Number.isInteger(amount) ? amount.toFixed(0) : amount.toFixed(2).replace(/0+$/,'').replace(/\.$/,''))
+      : '';
+    const normalPrice = formattedAmount ? ('RM' + formattedAmount) : rawNormalPrice;
     return `<div class="az-promo-free-normal-price" title="Normal price after the free promotion"><span>Normal Price</span><del>${esc(normalPrice)}</del></div>`;
   }
 function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
@@ -13651,6 +13656,159 @@ html body .download-card > .az-promo-free-normal-price > del{
   }
   html body .download-card > .az-promo-free-normal-price > del{
     font-size:11.5px!important;
+  }
+}
+</style>
+
+
+<!-- AZOBSS 460: free-promo top layout, readable normal price, full CTA text -->
+<style id="azobss-free-promo-layout-readable-price-full-button-460-css">
+/* Reserve the top-right area for Bookmark so the free-promo pill never sits beneath it. */
+html body #softwareGrid > .download-card > .az-promo-free-card-note,
+html body #softwareDownloadsGrid > .download-card > .az-promo-free-card-note,
+html body .downloads-grid > .download-card > .az-promo-free-card-note{
+  width:auto!important;
+  max-width:calc(100% - 76px)!important;
+  min-height:32px!important;
+  margin:8px 58px 10px 14px!important;
+  padding:6px 9px!important;
+  gap:5px!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  font-size:11px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+}
+html body .download-card > .az-promo-free-card-note > span,
+html body .download-card > .az-promo-free-card-note > b{
+  flex:0 0 auto!important;
+  min-width:0!important;
+  white-space:nowrap!important;
+}
+
+/* Larger square price card with a clearly readable normalized price such as RM30. */
+html body #softwareGrid > .download-card > .az-promo-free-normal-price,
+html body #softwareDownloadsGrid > .download-card > .az-promo-free-normal-price,
+html body .downloads-grid > .download-card > .az-promo-free-normal-price{
+  top:56px!important;
+  left:14px!important;
+  width:78px!important;
+  min-width:78px!important;
+  max-width:78px!important;
+  height:62px!important;
+  min-height:62px!important;
+  max-height:62px!important;
+  padding:7px 6px!important;
+  gap:5px!important;
+  border-radius:13px!important;
+  overflow:visible!important;
+}
+html body .download-card > .az-promo-free-normal-price > span{
+  font-size:9px!important;
+  line-height:1.05!important;
+  letter-spacing:0!important;
+}
+html body .download-card > .az-promo-free-normal-price > del{
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:22px!important;
+  color:#ffffff!important;
+  font-size:16px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  letter-spacing:.1px!important;
+  text-decoration:none!important;
+  overflow:visible!important;
+}
+html body .download-card > .az-promo-free-normal-price > del::after{
+  content:""!important;
+  position:absolute!important;
+  left:7%!important;
+  top:52%!important;
+  width:86%!important;
+  height:2px!important;
+  border-radius:99px!important;
+  background:#ef4444!important;
+  transform:rotate(-8deg)!important;
+  transform-origin:center!important;
+  box-shadow:0 0 0 1px rgba(127,29,29,.18)!important;
+  pointer-events:none!important;
+}
+
+/* Use the available card width so the complete Free Promo Download wording is visible. */
+html body #softwareGrid > .download-card > .download-btn.az-promo-free-download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn.az-promo-free-download-btn,
+html body .downloads-grid > .download-card > .download-btn.az-promo-free-download-btn,
+html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  margin:0 auto 10px!important;
+  padding:0 10px!important;
+  font-size:14px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+}
+html body .download-card .download-btn.az-promo-free-download-btn .download-text{
+  width:100%!important;
+  max-width:100%!important;
+  justify-content:center!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+
+@media(max-width:700px){
+  html body #softwareGrid > .download-card > .az-promo-free-card-note,
+  html body #softwareDownloadsGrid > .download-card > .az-promo-free-card-note,
+  html body .downloads-grid > .download-card > .az-promo-free-card-note{
+    max-width:calc(100% - 68px)!important;
+    min-height:30px!important;
+    margin:8px 52px 10px 12px!important;
+    padding:5px 7px!important;
+    gap:4px!important;
+    font-size:10.3px!important;
+  }
+  html body #softwareGrid > .download-card > .az-promo-free-normal-price,
+  html body #softwareDownloadsGrid > .download-card > .az-promo-free-normal-price,
+  html body .downloads-grid > .download-card > .az-promo-free-normal-price{
+    top:54px!important;
+    left:12px!important;
+    width:74px!important;
+    min-width:74px!important;
+    max-width:74px!important;
+    height:60px!important;
+    min-height:60px!important;
+    max-height:60px!important;
+    padding:6px 5px!important;
+    gap:4px!important;
+  }
+  html body .download-card > .az-promo-free-normal-price > span{
+    font-size:8.7px!important;
+  }
+  html body .download-card > .az-promo-free-normal-price > del{
+    font-size:15px!important;
+  }
+  html body #softwareGrid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body .downloads-grid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body #softwareGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+  html body #softwareDownloadsGrid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn,
+  html body .downloads-grid > .download-card .az-software-buy-cart-row > .download-btn.az-promo-free-download-btn{
+    width:100%!important;
+    max-width:100%!important;
+    padding:0 8px!important;
+    font-size:13.5px!important;
   }
 }
 </style>
