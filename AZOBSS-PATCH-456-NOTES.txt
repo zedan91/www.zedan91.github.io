@@ -1,0 +1,13 @@
+AZOBSS Patch 456
+
+Software Tools active free promotion:
+- Shows the normal payable price crossed out while free promo units remain.
+- Uses the product's current normal price (item.price), so visitors know what the price returns to after the free units finish.
+- Keeps the Free Promo Download button compact.
+- The crossed price disappears automatically when the free promo ends, and the normal Buy Now flow returns.
+
+Changed file:
+- Software-Tools/index.html
+
+No Firebase Rules update required.
+No backend, payment, PA/BM, CAD, or Lucky Draw changes.

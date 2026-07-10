@@ -3597,6 +3597,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if(!p.enabled || p.remaining <= 0) return '';
     return `<div class="az-promo-free-card-note" title="Free download promo"><span>🎁 Free promo</span><b>${esc(p.remaining)}/${esc(p.limit)}</b><span>unit left</span></div>`;
   }
+  function azPromoFreeNormalPriceHtml(item){
+    const p = azPromoFreeInfo(item);
+    if(!p.active) return '';
+    // Show the normal payable price (item.price) crossed out while the free promo is active.
+    // This lets visitors know the real price that returns after the free units are finished.
+    const normalPrice = String(item?.price || azPromoOriginalPrice(item) || '').trim();
+    if(!normalPrice || /^free$/i.test(normalPrice)) return '';
+    return `<div class="az-promo-free-normal-price" title="Normal price after the free promotion"><span>Normal Price</span><del>${esc(normalPrice)}</del></div>`;
+  }
 function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
   function azSafeLogoFileName(productId, name){
     const raw = String(productId || name || 'software-logo').trim();
@@ -4325,9 +4334,12 @@ function normalizeItem(item){
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
     const usdBadge = isPremium ? azUsdBadge(item.price) : '';
-    const promoPriceHtml = isPremium ? azPromoPriceHtml(item) : '';
     const promoFreeInfo = isPremium ? azPromoFreeInfo(item) : {enabled:false, active:false, remaining:0, limit:0, link:'', key:'', batchId:''};
+    // AZOBSS 455: while the free-download promo is active, hide the normal price-discount badge.
+    // The original discount badge returns automatically after the free units are exhausted/disabled.
+    const promoPriceHtml = isPremium && !promoFreeInfo.active ? azPromoPriceHtml(item) : '';
     const promoFreeHtml = isPremium ? azPromoFreeCardHtml(item) : '';
+    const promoFreeNormalPriceHtml = isPremium && promoFreeInfo.active ? azPromoFreeNormalPriceHtml(item) : '';
     const stableLikeHtml = azStableLikeHtml287(item);
     const stableShareHtml = azStableShareHtml287(item, isPremium);
     const stablePreviewHtml = azStablePreviewHtml287(item);
@@ -4359,6 +4371,7 @@ function normalizeItem(item){
       ${productIdMeta}
       ${promoPriceHtml}
       ${promoFreeHtml}
+      ${promoFreeNormalPriceHtml}
       ${actionHtml}
       ${adminEdit}
       ${stableStatsHtml}
@@ -13221,6 +13234,105 @@ html body .az-item-like-btn .az-bookmark-icon{
   }
 }
 </style>
+
+
+<!-- AZOBSS 455: free-promo card visual cleanup -->
+<style id="azobss-free-promo-compact-button-hide-discount-455-css">
+/* During an active free promo, the normal discount badge is omitted by renderItem().
+   Keep the free promo action compact so it does not dominate or overlap the card. */
+html body #softwareGrid > .download-card > .download-btn.az-promo-free-download-btn,
+html body #softwareDownloadsGrid > .download-card > .download-btn.az-promo-free-download-btn,
+html body .downloads-grid > .download-card > .download-btn.az-promo-free-download-btn{
+  width:auto!important;
+  min-width:154px!important;
+  max-width:176px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  margin:2px auto 9px!important;
+  padding:0 12px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  border-radius:11px!important;
+  font-size:13px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+html body .download-card > .download-btn.az-promo-free-download-btn .download-text{
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:inherit!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+@media(max-width:390px){
+  html body #softwareGrid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn.az-promo-free-download-btn,
+  html body .downloads-grid > .download-card > .download-btn.az-promo-free-download-btn{
+    min-width:148px!important;
+    max-width:168px!important;
+    height:37px!important;
+    min-height:37px!important;
+    max-height:37px!important;
+    padding:0 10px!important;
+    font-size:12.5px!important;
+  }
+}
+</style>
+
+<!-- AZOBSS 456: show crossed normal price during active free promo -->
+<style id="azobss-free-promo-normal-price-strikethrough-456-css">
+html body .download-card > .az-promo-free-normal-price{
+  width:max-content!important;
+  max-width:calc(100% - 24px)!important;
+  margin:-4px auto 5px!important;
+  padding:2px 8px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  border-radius:999px!important;
+  background:rgba(15,23,42,.54)!important;
+  border:1px solid rgba(148,163,184,.24)!important;
+  color:#cbd5e1!important;
+  font-size:11px!important;
+  line-height:1.15!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+html body .download-card > .az-promo-free-normal-price del{
+  color:#fca5a5!important;
+  font-size:12px!important;
+  font-weight:1000!important;
+  text-decoration-line:line-through!important;
+  text-decoration-thickness:2px!important;
+  text-decoration-color:#ef4444!important;
+  text-decoration-skip-ink:none!important;
+}
+@media(max-width:390px){
+  html body .download-card > .az-promo-free-normal-price{
+    margin:-4px auto 4px!important;
+    padding:2px 7px!important;
+    gap:5px!important;
+    font-size:10px!important;
+  }
+  html body .download-card > .az-promo-free-normal-price del{
+    font-size:11px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
