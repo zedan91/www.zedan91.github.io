@@ -69,3 +69,11 @@ Render backend does not need redeploy.
 - Firestore software item load no longer waits for the separate softwareStats document before showing cards.
 - Live stats, rating and promo quota refresh immediately after the stats request completes.
 - Only `Software-Tools/index.html` changed. No Firebase Rules or Render redeploy required.
+
+## Patch 464 — Free Promo Login Gate
+- Free Promo Download is blocked for guests and anonymous Firebase sessions.
+- The promo control is now a real button with no direct download URL in `href` or card data attributes.
+- The download link is resolved only after a valid AZOBSS login and a successful quota transaction.
+- Guest clicks show Login/Register prompt and do not reduce the free unit quota.
+- Fast-card cache key bumped to v464 to discard old cached cards containing the previous direct link.
+- No Firebase Rules or Render redeploy is required for this frontend patch.

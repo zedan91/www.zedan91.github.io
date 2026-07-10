@@ -3133,9 +3133,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="downloads-grid" id="softwareDownloadsGrid">
 
 </div>
-<script id="az-software-fast-first-paint-cache-463">
+<script id="az-software-fast-first-paint-cache-464">
 (function(){
-  var CACHE_KEY='azobss_software_fast_card_html_v463';
+  var CACHE_KEY='azobss_software_fast_card_html_v464';
   var MAX_AGE=48*60*60*1000;
   var grid=document.getElementById('softwareDownloadsGrid');
   if(!grid) return;
@@ -3424,7 +3424,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
-  const SOFTWARE_FAST_HTML_CACHE_KEY_463 = 'azobss_software_fast_card_html_v463';
+  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v464';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -4379,7 +4379,7 @@ function normalizeItem(item){
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
-    const promoFreeActionBtnHtml = `<a class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-download-link="${esc(promoFreeInfo.link)}" data-premium-download-file-link="${esc(promoFreeInfo.link)}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" href="${esc(promoFreeInfo.link || '#')}" rel="noopener" target="_blank"><span class="download-text">🎁 Free Promo Download</span></a>`;
+    const promoFreeActionBtnHtml = `<button type="button" class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" aria-label="Claim free promotional download after login"><span class="download-text">🎁 Free Promo Download</span></button>`;
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
     const actionHtml = subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
@@ -4412,7 +4412,7 @@ function normalizeItem(item){
   }
   function getDeletedStaticIds(){ try { return new Set(JSON.parse(localStorage.getItem(STATIC_DELETED_KEY) || '[]')); } catch(e){ return new Set(); } }
   function saveDeletedStaticIds(set){ localStorage.setItem(STATIC_DELETED_KEY, JSON.stringify(Array.from(set))); }
-  function saveFastSoftwareCardHtml463(){
+  function saveFastSoftwareCardHtml464(){
     if(!grid) return;
     try{
       const cards = Array.from(grid.querySelectorAll(':scope > .download-card'))
@@ -4427,7 +4427,7 @@ function normalizeItem(item){
           return clone.outerHTML;
         });
       if(!cards.length) return;
-      localStorage.setItem(SOFTWARE_FAST_HTML_CACHE_KEY_463, JSON.stringify({
+      localStorage.setItem(SOFTWARE_FAST_HTML_CACHE_KEY_464, JSON.stringify({
         savedAt: Date.now(),
         html: cards.join('')
       }));
@@ -4706,7 +4706,7 @@ function normalizeItem(item){
     sortedStatic.forEach(card => grid.appendChild(card));
 
     syncStaticAdminButtons();
-    saveFastSoftwareCardHtml463();
+    saveFastSoftwareCardHtml464();
     grid.removeAttribute('data-az-fast-cache');
     const hasVisibleStatic = selectedSoftwareOwnerFilter === 'mine' ? false : staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
@@ -5126,21 +5126,55 @@ function normalizeItem(item){
   [imageUrlInput, gifUrlInput, imageFileInput, gifFileInput].forEach(el => el?.addEventListener('input', updateMediaPreview));
   [imageFileInput, gifFileInput].forEach(el => el?.addEventListener('change', updateMediaPreview));
 
-  async function azClaimPromoFreeDownload453(btn){
-    const productId = String(btn?.dataset?.productId || '').trim();
-    const name = String(btn?.dataset?.productName || productId || 'Software').trim();
-    const link = String(btn?.dataset?.downloadLink || btn?.getAttribute('href') || '').trim();
-    const key = String(btn?.dataset?.promoFreeKey || '').trim();
-    const limit = Math.max(0, Math.floor(Number(btn?.dataset?.promoFreeLimit || 0)));
-    const batchId = String(btn?.dataset?.promoFreeBatchId || 'default').trim();
-    if(!link || link === '#') return alert('Download link promo belum diset. Edit item dan isi Premium Download File Link.');
-    if(!key || !limit) return alert('Tetapan unit promo tidak lengkap. Edit item dan save semula.');
-    const authUser = auth?.currentUser || null;
-    if(!authUser){
-      return alert('Login/Register dulu untuk claim free promo download supaya kuota unit boleh dikira dengan tepat.');
+  function azPromoSignedInUser464(){
+    const authUser = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+    if(!authUser || authUser.isAnonymous === true) return null;
+    let saved = {};
+    try{ saved = (typeof getCurrentUserObject === 'function' && getCurrentUserObject()) || {}; }catch(_e){}
+    const loggedFlag = sessionStorage.getItem('azobssLoggedIn') === '1' || localStorage.getItem('azobssLoggedIn') === '1';
+    const username = String(saved.usernameKey || saved.username || saved.id || saved.name || saved.displayName || localStorage.getItem('azobssUsername') || sessionStorage.getItem('azobssUsername') || '').trim();
+    const email = String(authUser.email || saved.email || saved.authEmail || saved.contactEmail || '').trim();
+    return (loggedFlag || username || email) ? authUser : null;
+  }
+
+  function azOpenLoginForPromo464(){
+    const candidates = [
+      '#loginButton','#loginBtn','#openLogin','#openLoginModal','[data-open-login]','[data-auth-action="login"]',
+      '.login-button','.btn-login','.az-login-btn'
+    ];
+    for(const selector of candidates){
+      const el = document.querySelector(selector);
+      if(el && typeof el.click === 'function'){
+        try{ el.click(); return true; }catch(_e){}
+      }
     }
+    return false;
+  }
+
+  async function azClaimPromoFreeDownload464(btn){
+    if(!btn || btn.getAttribute('aria-disabled') === 'true') return;
+    const productId = String(btn.dataset.productId || '').trim();
+    const name = String(btn.dataset.productName || productId || 'Software').trim();
+    const key = String(btn.dataset.promoFreeKey || '').trim();
+    const limit = Math.max(0, Math.floor(Number(btn.dataset.promoFreeLimit || 0)));
+    const batchId = String(btn.dataset.promoFreeBatchId || 'default').trim();
+    const authUser = azPromoSignedInUser464();
+    if(!authUser){
+      alert('Sila Login/Register dahulu untuk menggunakan Free Promo Download.');
+      azOpenLoginForPromo464();
+      return;
+    }
+
+    // Do not expose the direct promo file URL in the card HTML. Resolve it only after a valid login.
+    const item = softwareDynamicItems.find(x => String(x.productId || x.id) === productId);
+    const promoInfo = item ? azPromoFreeInfo(item) : null;
+    const link = String(promoInfo?.link || '').trim();
+    if(!link || link === '#') return alert('Download link promo belum tersedia. Tunggu data selesai dimuatkan atau hubungi admin.');
+    if(!key || !limit) return alert('Tetapan unit promo tidak lengkap. Edit item dan save semula.');
+
     const oldText = btn.innerHTML;
     btn.setAttribute('aria-disabled','true');
+    btn.disabled = true;
     btn.innerHTML = '<span class="download-text">Claiming...</span>';
     let nextClaimed = null;
     try{
@@ -5171,7 +5205,7 @@ function normalizeItem(item){
       const stats = readSoftwareStats();
       stats[key] = {...(stats[key] || {}), claimed: nextClaimed, used: nextClaimed, limit, productId, name, batchId, updatedAtMs: Date.now()};
       saveSoftwareStats(stats);
-      try{ recordDownload(btn.closest('.download-card'), {source:'promo-free-download'}); }catch(_){ }
+      try{ recordDownload(btn.closest('.download-card'), {source:'promo-free-download'}); }catch(_e){}
       window.open(link, '_blank', 'noopener');
       setTimeout(() => loadItems(), 450);
     }catch(err){
@@ -5180,10 +5214,11 @@ function normalizeItem(item){
         alert('Unit percuma promo sudah habis. Button akan kembali kepada harga / Buy Now asal.');
         setTimeout(() => loadItems(), 250);
       }else{
-        alert('Tak berjaya claim free promo download. Pastikan sudah login dan Firestore softwareStats rules aktif.');
+        alert('Tak berjaya claim free promo download. Pastikan akaun masih login dan cuba semula.');
       }
     }finally{
       btn.removeAttribute('aria-disabled');
+      btn.disabled = false;
       btn.innerHTML = oldText;
     }
   }
@@ -5193,7 +5228,7 @@ function normalizeItem(item){
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation?.();
-    azClaimPromoFreeDownload453(btn);
+    azClaimPromoFreeDownload464(btn);
   }, true);
 
   form?.addEventListener('submit', async e => {
@@ -14000,6 +14035,22 @@ html body .downloads-grid > .download-card > .software-card-admin-actions{
 }
 </style>
 
+
+<style id="azobss-promo-login-lock-464">
+/* Promo claim is a real button so a guest cannot follow a direct file href. */
+button.az-promo-free-download-btn{
+  appearance:none;
+  -webkit-appearance:none;
+  font:inherit;
+  border:0;
+  cursor:pointer;
+}
+button.az-promo-free-download-btn[aria-disabled="true"],
+button.az-promo-free-download-btn:disabled{
+  cursor:wait;
+  opacity:.78;
+}
+</style>
 </body>
 </html>
 
