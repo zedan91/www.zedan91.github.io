@@ -3595,14 +3595,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   function azPromoFreeCardHtml(item){
     const p = azPromoFreeInfo(item);
     if(!p.enabled || p.remaining <= 0) return '';
-    return `<div class="az-promo-free-card-note" title="Free download promo"><span>🎁 Free promo</span><b>${esc(p.remaining)}/${esc(p.limit)}</b><span>unit left</span></div>`;
+    return `<div class="az-promo-free-card-note" title="Free download promo"><span class="az-promo-free-card-label">🎁 Free Promo</span><b class="az-promo-free-card-count">${esc(p.remaining)}/${esc(p.limit)}</b><span class="az-promo-free-card-unit">unit left</span></div>`;
   }
   function azPromoFreeNormalPriceHtml(item){
     const p = azPromoFreeInfo(item);
     if(!p.active) return '';
     // Show the normal payable price crossed out while the free promo is active.
     // Normalize numeric prices so values such as 30 / RM30.00 are displayed clearly as RM30.
-    const rawNormalPrice = String(item?.price || azPromoOriginalPrice(item) || '').trim();
+    // Prefer the true original/list price. item.price may currently be a discounted promo price.
+    const rawNormalPrice = String(azPromoOriginalPrice(item) || item?.price || '').trim();
     if(!rawNormalPrice || /^free$/i.test(rawNormalPrice)) return '';
     const amount = azExtractMyrAmount(rawNormalPrice);
     const formattedAmount = Number.isFinite(amount)
@@ -4361,7 +4362,7 @@ function normalizeItem(item){
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
-    const promoFreeActionBtnHtml = `<a class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(item.price || '')}" data-download-link="${esc(promoFreeInfo.link)}" data-premium-download-file-link="${esc(promoFreeInfo.link)}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" href="${esc(promoFreeInfo.link || '#')}" rel="noopener" target="_blank"><span class="download-text">🎁 Free Promo Download</span></a>`;
+    const promoFreeActionBtnHtml = `<a class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-download-link="${esc(promoFreeInfo.link)}" data-premium-download-file-link="${esc(promoFreeInfo.link)}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" href="${esc(promoFreeInfo.link || '#')}" rel="noopener" target="_blank"><span class="download-text">🎁 Free Promo Download</span></a>`;
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
     const actionHtml = subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
@@ -13809,6 +13810,115 @@ html body .download-card .download-btn.az-promo-free-download-btn .download-text
     max-width:100%!important;
     padding:0 8px!important;
     font-size:13.5px!important;
+  }
+}
+</style>
+
+
+<!-- AZOBSS 461: square free-promo quota card + true original price -->
+<style id="azobss-free-promo-square-quota-true-original-price-461-css">
+/* Match the Free Promo quota display to the square Normal Price card. */
+html body #softwareGrid > .download-card > .az-promo-free-card-note,
+html body #softwareDownloadsGrid > .download-card > .az-promo-free-card-note,
+html body .downloads-grid > .download-card > .az-promo-free-card-note{
+  position:absolute!important;
+  top:14px!important;
+  left:14px!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:78px!important;
+  min-width:78px!important;
+  max-width:78px!important;
+  height:62px!important;
+  min-height:62px!important;
+  max-height:62px!important;
+  margin:0!important;
+  padding:6px 5px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:2px!important;
+  border-radius:13px!important;
+  box-sizing:border-box!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  text-align:center!important;
+  z-index:84!important;
+}
+html body .download-card > .az-promo-free-card-note > .az-promo-free-card-label{
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:8.7px!important;
+  line-height:1.05!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+}
+html body .download-card > .az-promo-free-card-note > .az-promo-free-card-count{
+  display:block!important;
+  width:100%!important;
+  margin:1px 0 0!important;
+  padding:0!important;
+  color:#ffffff!important;
+  font-size:15px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+}
+html body .download-card > .az-promo-free-card-note > .az-promo-free-card-unit{
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  color:#bbf7d0!important;
+  font-size:8.4px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+}
+
+/* Stack the true Normal Price card underneath the quota card. */
+html body #softwareGrid > .download-card > .az-promo-free-normal-price,
+html body #softwareDownloadsGrid > .download-card > .az-promo-free-normal-price,
+html body .downloads-grid > .download-card > .az-promo-free-normal-price{
+  top:82px!important;
+  left:14px!important;
+}
+
+@media(max-width:700px){
+  html body #softwareGrid > .download-card > .az-promo-free-card-note,
+  html body #softwareDownloadsGrid > .download-card > .az-promo-free-card-note,
+  html body .downloads-grid > .download-card > .az-promo-free-card-note{
+    top:12px!important;
+    left:12px!important;
+    width:74px!important;
+    min-width:74px!important;
+    max-width:74px!important;
+    height:60px!important;
+    min-height:60px!important;
+    max-height:60px!important;
+    padding:5px 4px!important;
+    border-radius:12px!important;
+  }
+  html body .download-card > .az-promo-free-card-note > .az-promo-free-card-label{
+    font-size:8.3px!important;
+  }
+  html body .download-card > .az-promo-free-card-note > .az-promo-free-card-count{
+    font-size:14.5px!important;
+  }
+  html body .download-card > .az-promo-free-card-note > .az-promo-free-card-unit{
+    font-size:8px!important;
+  }
+  html body #softwareGrid > .download-card > .az-promo-free-normal-price,
+  html body #softwareDownloadsGrid > .download-card > .az-promo-free-normal-price,
+  html body .downloads-grid > .download-card > .az-promo-free-normal-price{
+    top:78px!important;
+    left:12px!important;
   }
 }
 </style>
