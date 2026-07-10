@@ -61,3 +61,11 @@ Render backend does not need redeploy.
 - Uses a thinner diagonal strike so the original price remains readable.
 - Expands Free Promo Download to the available card width so the full label is visible.
 - No Firebase Rules or backend changes required.
+
+
+## Patch 463 — Software card fast first paint
+- Shows up to 8 cached Software cards immediately on repeat visits while Firestore refreshes in the background.
+- Does not cache admin/staff edit/delete action buttons.
+- Firestore software item load no longer waits for the separate softwareStats document before showing cards.
+- Live stats, rating and promo quota refresh immediately after the stats request completes.
+- Only `Software-Tools/index.html` changed. No Firebase Rules or Render redeploy required.

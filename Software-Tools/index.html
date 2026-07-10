@@ -3133,6 +3133,22 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="downloads-grid" id="softwareDownloadsGrid">
 
 </div>
+<script id="az-software-fast-first-paint-cache-463">
+(function(){
+  var CACHE_KEY='azobss_software_fast_card_html_v463';
+  var MAX_AGE=48*60*60*1000;
+  var grid=document.getElementById('softwareDownloadsGrid');
+  if(!grid) return;
+  try{
+    var raw=localStorage.getItem(CACHE_KEY);
+    if(!raw) return;
+    var saved=JSON.parse(raw);
+    if(!saved || !saved.html || !saved.savedAt || (Date.now()-Number(saved.savedAt)>MAX_AGE)) return;
+    grid.innerHTML=String(saved.html);
+    grid.setAttribute('data-az-fast-cache','1');
+  }catch(_e){}
+})();
+</script>
 </div>
 </section>
 
@@ -3408,6 +3424,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
+  const SOFTWARE_FAST_HTML_CACHE_KEY_463 = 'azobss_software_fast_card_html_v463';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -4395,6 +4412,29 @@ function normalizeItem(item){
   }
   function getDeletedStaticIds(){ try { return new Set(JSON.parse(localStorage.getItem(STATIC_DELETED_KEY) || '[]')); } catch(e){ return new Set(); } }
   function saveDeletedStaticIds(set){ localStorage.setItem(STATIC_DELETED_KEY, JSON.stringify(Array.from(set))); }
+  function saveFastSoftwareCardHtml463(){
+    if(!grid) return;
+    try{
+      const cards = Array.from(grid.querySelectorAll(':scope > .download-card'))
+        .filter(card => String(card.dataset.status || 'active').toLowerCase() !== 'draft')
+        .slice(0, 8)
+        .map(card => {
+          const clone = card.cloneNode(true);
+          clone.querySelectorAll('.software-card-admin-actions,.software-empty-state').forEach(el => el.remove());
+          clone.style.removeProperty('display');
+          clone.hidden = false;
+          clone.removeAttribute('aria-hidden');
+          return clone.outerHTML;
+        });
+      if(!cards.length) return;
+      localStorage.setItem(SOFTWARE_FAST_HTML_CACHE_KEY_463, JSON.stringify({
+        savedAt: Date.now(),
+        html: cards.join('')
+      }));
+    }catch(err){
+      console.warn('AZOBSS fast software card cache skipped:', err);
+    }
+  }
   function getStaticCards(){
     const deleted = getDeletedStaticIds();
     return Array.from(grid?.querySelectorAll('[data-software-static="1"]') || []).filter(card => !deleted.has(staticProductId(card)));
@@ -4666,17 +4706,33 @@ function normalizeItem(item){
     sortedStatic.forEach(card => grid.appendChild(card));
 
     syncStaticAdminButtons();
+    saveFastSoftwareCardHtml463();
+    grid.removeAttribute('data-az-fast-cache');
     const hasVisibleStatic = selectedSoftwareOwnerFilter === 'mine' ? false : staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
       grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software yang ditambah selepas owner auto-set akan muncul. Item lama tanpa owner tidak akan muncul; edit & save sekali untuk assign owner.</div>');
     }
   }
+  let azSoftwareLoadSequence463 = 0;
   async function loadItems(){
     if(!grid) return;
-    const [remoteItems] = await Promise.all([loadFirestore(), azPrefetchSoftwareStatsForFirstPaint290()]);
+    const loadSequence = ++azSoftwareLoadSequence463;
+
+    // Start both requests together, but do not block the first real card paint on stats.
+    const statsPromise = azPrefetchSoftwareStatsForFirstPaint290();
+    const remoteItems = await loadFirestore();
+    if(loadSequence !== azSoftwareLoadSequence463) return;
+
     softwareDynamicItems = dedupeSoftwareItems([...remoteItems, ...loadLocal()]);
     applySoftwareFilters();
     try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
+
+    // Refresh counts/rating/promo quota after stats arrive without delaying cards.
+    statsPromise.then(() => {
+      if(loadSequence !== azSoftwareLoadSequence463) return;
+      applySoftwareFilters();
+      try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
+    }).catch(() => {});
   }
   function azGetSoftwareRoleInfo(){
     const currentUser = (typeof getCurrentUserObject === 'function' ? getCurrentUserObject() : {}) || {};
