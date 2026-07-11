@@ -77,9 +77,3 @@ Render backend does not need redeploy.
 - Guest clicks show Login/Register prompt and do not reduce the free unit quota.
 - Fast-card cache key bumped to v464 to discard old cached cards containing the previous direct link.
 - No Firebase Rules or Render redeploy is required for this frontend patch.
-
-## Patch 467 – Software More Description Clean Modal Fix
-- Normalizes extra spaces and line breaks before the full description is shown.
-- Keeps the description modal tidy, scrollable, and mobile-safe.
-- Prevents the page behind the modal from scrolling while it is open.
-- No Firebase Rules or Render backend update is required.
