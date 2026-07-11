@@ -4366,6 +4366,7 @@ function normalizeItem(item){
     const stableLikeHtml = azStableLikeHtml287(item);
     const stableShareHtml = azStableShareHtml287(item, isPremium);
     const stablePreviewHtml = azStablePreviewHtml287(item);
+    const stableWatchVideoHtml = item.demoVideoUrl ? `<div class="software-media-links az-watch-video-below-share-465"><a class="software-media-demo" href="${esc(item.demoVideoUrl)}" target="_blank" rel="noopener">▶ Watch Video</a></div>` : '';
     const stableStatsHtml = azStableStatsHtml287(item);
     const descHtml = azDescHtml287(item);
     const mediaSrc = item.imageUrl || item.gifUrl;
@@ -4383,14 +4384,14 @@ function normalizeItem(item){
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
     const actionHtml = subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}">
-      ${stableLikeHtml}${stableShareHtml}${stablePreviewHtml}
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
+      ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
       ${metaHtml}
       ${descHtml}
-      ${gifHtml}${item.demoVideoUrl ? `<div class='software-media-links'><a class='software-media-demo' href='${esc(item.demoVideoUrl)}' target='_blank' rel='noopener'>▶ Watch Video</a></div>` : ''}
+      ${gifHtml}
       ${productIdMeta}
       ${promoPriceHtml}
       ${promoFreeHtml}
@@ -14049,6 +14050,79 @@ button.az-promo-free-download-btn[aria-disabled="true"],
 button.az-promo-free-download-btn:disabled{
   cursor:wait;
   opacity:.78;
+}
+</style>
+
+
+<!-- AZOBSS 465: Watch Video directly below Share -->
+<style id="azobss-watch-video-below-share-465-css">
+/* Keep the existing Watch Video pill and move it into the right-side control stack,
+   directly underneath Share. No video URL or click behaviour is changed. */
+html body #softwareGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
+html body #softwareDownloadsGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
+html body .downloads-grid > .download-card > .software-media-links.az-watch-video-below-share-465,
+html body #softwareGrid > .download-card > .software-media-links:has(> .software-media-demo),
+html body #softwareDownloadsGrid > .download-card > .software-media-links:has(> .software-media-demo),
+html body .downloads-grid > .download-card > .software-media-links:has(> .software-media-demo){
+  position:absolute!important;
+  top:98px!important;
+  right:14px!important;
+  z-index:64!important;
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  flex:0 0 auto!important;
+  overflow:visible!important;
+}
+html body .download-card > .software-media-links.az-watch-video-below-share-465 > .software-media-demo,
+html body .download-card > .software-media-links:has(> .software-media-demo) > .software-media-demo{
+  box-sizing:border-box!important;
+  min-height:28px!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  box-shadow:0 8px 18px rgba(16,185,129,.16)!important;
+}
+/* Authorised-role tools already use the same right-side column. Lower them only
+   on cards that contain a demo video so the controls never overlap. */
+html body #softwareGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
+html body #softwareDownloadsGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
+html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
+html body #softwareGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
+html body #softwareDownloadsGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
+html body .downloads-grid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions{
+  top:136px!important;
+}
+@media(max-width:700px){
+  html body #softwareGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
+  html body #softwareDownloadsGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
+  html body .downloads-grid > .download-card > .software-media-links.az-watch-video-below-share-465,
+  html body #softwareGrid > .download-card > .software-media-links:has(> .software-media-demo),
+  html body #softwareDownloadsGrid > .download-card > .software-media-links:has(> .software-media-demo),
+  html body .downloads-grid > .download-card > .software-media-links:has(> .software-media-demo){
+    top:90px!important;
+    right:12px!important;
+  }
+  html body .download-card > .software-media-links.az-watch-video-below-share-465 > .software-media-demo,
+  html body .download-card > .software-media-links:has(> .software-media-demo) > .software-media-demo{
+    min-height:27px!important;
+    padding:4px 9px!important;
+    font-size:11px!important;
+  }
+  html body #softwareGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
+  html body #softwareDownloadsGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
+  html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
+  html body #softwareGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
+  html body #softwareDownloadsGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
+  html body .downloads-grid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions{
+    top:125px!important;
+  }
 }
 </style>
 </body>
