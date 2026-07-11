@@ -8892,7 +8892,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 (function(){
  if(window.__azobssSoftwareDescInlineMore097)return;window.__azobssSoftwareDescInlineMore097=true;
  function modal(){var m=document.getElementById('azobssSwDescModal097');if(m)return m;m=document.createElement('div');m.id='azobssSwDescModal097';m.className='azobss-sw-desc-modal-097';m.innerHTML='<div class="azobss-sw-desc-box-097"><div class="azobss-sw-desc-head-097"><div class="azobss-sw-desc-title-097"></div><button type="button" class="azobss-sw-desc-close-097">×</button></div><div class="azobss-sw-desc-text-097"></div></div>';document.body.appendChild(m);m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('is-open')});m.querySelector('.azobss-sw-desc-close-097').onclick=function(){m.classList.remove('is-open')};document.addEventListener('keydown',function(e){if(e.key==='Escape')m.classList.remove('is-open')});return m}
- function openM(t,x){var m=modal();m.querySelector('.azobss-sw-desc-title-097').textContent=t||'Software Description';m.querySelector('.azobss-sw-desc-text-097').textContent=x||'';m.classList.add('is-open')}
+ function cleanDesc467(v){return String(v||'').replace(/\r\n?/g,'\n').split('\n').map(function(line){return line.replace(/\s+/g,' ').trim()}).filter(Boolean).join(' ').replace(/\s+/g,' ').trim()}
+ function openM(t,x){var m=modal();var cleanTitle=cleanDesc467(t)||'Software Description';var cleanText=cleanDesc467(x);m.querySelector('.azobss-sw-desc-title-097').textContent=cleanTitle;m.querySelector('.azobss-sw-desc-text-097').textContent=cleanText;m.classList.add('is-open');document.documentElement.classList.add('az-desc-modal-open-467');if(document.body)document.body.classList.add('az-desc-modal-open-467')}
  function title(c){var h=c.querySelector('h1,h2,h3,h4,.software-title,.tool-title,.card-title,.title');return h?(h.textContent||'').trim():'Software Description'}
  function isDesc(e){var t=(e.textContent||'').replace(/\bMore\b$/,'').trim(),c=String(e.className||'');return t.length>55&&(/desc|description|software-desc|tool-description|card-description/i.test(c)||(e.tagName&&e.tagName.toLowerCase()==='p'&&/software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(t)))}
  function desc(c){return Array.from(c.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.description,.desc,p')).find(isDesc)}
@@ -14163,6 +14164,116 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
   }
 }
 </style>
+
+
+<!-- AZOBSS PATCH 467: Software More description clean modal layout -->
+<style id="azobss-software-more-desc-clean-modal-fix-467">
+html.az-desc-modal-open-467,
+body.az-desc-modal-open-467{
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+}
+html body .azobss-sw-desc-modal-097{
+  box-sizing:border-box!important;
+  width:100vw!important;
+  height:100dvh!important;
+  min-height:100vh!important;
+  padding:16px!important;
+  overflow:hidden!important;
+}
+html body .azobss-sw-desc-box-097{
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  width:min(620px,calc(100vw - 32px))!important;
+  max-width:620px!important;
+  max-height:calc(100dvh - 32px)!important;
+  margin:auto!important;
+  padding:18px!important;
+  overflow:hidden!important;
+}
+html body .azobss-sw-desc-head-097{
+  flex:0 0 auto!important;
+  min-width:0!important;
+  margin:0 0 12px!important;
+  padding:0 0 11px!important;
+  border-bottom:1px solid rgba(148,163,184,.2)!important;
+}
+html body .azobss-sw-desc-title-097{
+  min-width:0!important;
+  flex:1 1 auto!important;
+  margin:0!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+}
+html body .azobss-sw-desc-close-097{
+  flex:0 0 34px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+}
+html body .azobss-sw-desc-text-097{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0 4px 2px 0!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  white-space:normal!important;
+  text-align:left!important;
+  text-align-last:auto!important;
+  line-height:1.62!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  hyphens:auto!important;
+  scrollbar-width:thin!important;
+}
+@media(max-width:520px){
+  html body .azobss-sw-desc-modal-097{
+    padding:10px!important;
+  }
+  html body .azobss-sw-desc-box-097{
+    width:calc(100vw - 20px)!important;
+    max-height:calc(100dvh - 20px)!important;
+    padding:15px!important;
+    border-radius:15px!important;
+  }
+  html body .azobss-sw-desc-title-097{
+    font-size:16px!important;
+    line-height:1.3!important;
+  }
+  html body .azobss-sw-desc-text-097{
+    font-size:14px!important;
+    line-height:1.58!important;
+  }
+}
+</style>
+<script id="azobss-software-more-desc-clean-modal-fix-467">
+(function(){
+  if(window.__azobssSoftwareMoreDescCleanModal467) return;
+  window.__azobssSoftwareMoreDescCleanModal467=true;
+  function syncLock(){
+    var modal=document.getElementById('azobssSwDescModal097');
+    var open=!!(modal&&modal.classList.contains('is-open'));
+    document.documentElement.classList.toggle('az-desc-modal-open-467',open);
+    if(document.body) document.body.classList.toggle('az-desc-modal-open-467',open);
+  }
+  document.addEventListener('click',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('.azobss-sw-desc-more-097,.azobss-sw-desc-close-097,.azobss-sw-desc-modal-097')){
+      requestAnimationFrame(syncLock);
+    }
+  },true);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')requestAnimationFrame(syncLock)},true);
+  document.addEventListener('DOMContentLoaded',syncLock);
+  if(document.readyState!=='loading') syncLock();
+})();
+</script>
+<!-- /AZOBSS PATCH 467 -->
+
 </body>
 </html>
 
