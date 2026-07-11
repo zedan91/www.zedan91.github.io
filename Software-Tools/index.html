@@ -4366,7 +4366,7 @@ function normalizeItem(item){
     const stableLikeHtml = azStableLikeHtml287(item);
     const stableShareHtml = azStableShareHtml287(item, isPremium);
     const stablePreviewHtml = azStablePreviewHtml287(item);
-    const stableWatchVideoHtml = item.demoVideoUrl ? `<div class="software-media-links az-watch-video-below-share-465"><a class="software-media-demo" href="${esc(item.demoVideoUrl)}" target="_blank" rel="noopener">▶ Watch Video</a></div>` : '';
+    const stableWatchVideoHtml = item.demoVideoUrl ? `<div class="software-media-links az-watch-video-icon-below-share-466"><a class="software-media-demo az-watch-video-icon-btn-466" href="${esc(item.demoVideoUrl)}" target="_blank" rel="noopener" title="Watch Video" aria-label="Watch Video"><svg class="az-watch-video-play-icon-466" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.8v12.4c0 .8.9 1.3 1.6.8l9.2-6.2c.6-.4.6-1.3 0-1.7L9.6 5c-.7-.5-1.6 0-1.6.8Z"></path></svg></a></div>` : '';
     const stableStatsHtml = azStableStatsHtml287(item);
     const descHtml = azDescHtml287(item);
     const mediaSrc = item.imageUrl || item.gifUrl;
@@ -14054,73 +14054,111 @@ button.az-promo-free-download-btn:disabled{
 </style>
 
 
-<!-- AZOBSS 465: Watch Video directly below Share -->
-<style id="azobss-watch-video-below-share-465-css">
-/* Keep the existing Watch Video pill and move it into the right-side control stack,
-   directly underneath Share. No video URL or click behaviour is changed. */
-html body #softwareGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
-html body #softwareDownloadsGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
-html body .downloads-grid > .download-card > .software-media-links.az-watch-video-below-share-465,
-html body #softwareGrid > .download-card > .software-media-links:has(> .software-media-demo),
-html body #softwareDownloadsGrid > .download-card > .software-media-links:has(> .software-media-demo),
-html body .downloads-grid > .download-card > .software-media-links:has(> .software-media-demo){
+<!-- AZOBSS 466: icon-only Watch Video directly below Share -->
+<style id="azobss-watch-video-icon-below-share-466-css">
+/* Icon-only Watch Video control: same compact square format as Share,
+   positioned directly underneath it. Video URL and click behaviour are unchanged. */
+html body #softwareGrid > .download-card > .software-media-links.az-watch-video-icon-below-share-466,
+html body #softwareDownloadsGrid > .download-card > .software-media-links.az-watch-video-icon-below-share-466,
+html body .downloads-grid > .download-card > .software-media-links.az-watch-video-icon-below-share-466{
   position:absolute!important;
   top:98px!important;
   right:14px!important;
-  z-index:64!important;
-  width:auto!important;
-  min-width:0!important;
-  height:auto!important;
-  min-height:0!important;
-  max-height:none!important;
+  z-index:84!important;
+  box-sizing:border-box!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  max-width:34px!important;
+  max-height:34px!important;
   margin:0!important;
   padding:0!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  flex:0 0 auto!important;
+  display:block!important;
   overflow:visible!important;
 }
-html body .download-card > .software-media-links.az-watch-video-below-share-465 > .software-media-demo,
-html body .download-card > .software-media-links:has(> .software-media-demo) > .software-media-demo{
+html body .download-card > .software-media-links.az-watch-video-icon-below-share-466 > .software-media-demo.az-watch-video-icon-btn-466{
+  position:relative!important;
   box-sizing:border-box!important;
-  min-height:28px!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  max-width:34px!important;
+  max-height:34px!important;
   margin:0!important;
-  white-space:nowrap!important;
-  box-shadow:0 8px 18px rgba(16,185,129,.16)!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  border:1px solid rgba(52,211,153,.86)!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,#047857,#10b981)!important;
+  color:#ecfdf5!important;
+  box-shadow:0 10px 22px rgba(16,185,129,.28)!important;
+  overflow:hidden!important;
+  transition:filter .16s ease,transform .16s ease!important;
 }
-/* Authorised-role tools already use the same right-side column. Lower them only
-   on cards that contain a demo video so the controls never overlap. */
+html body .download-card > .software-media-links.az-watch-video-icon-below-share-466 > .software-media-demo.az-watch-video-icon-btn-466:hover,
+html body .download-card > .software-media-links.az-watch-video-icon-below-share-466 > .software-media-demo.az-watch-video-icon-btn-466:focus-visible{
+  filter:brightness(1.08)!important;
+  transform:translateY(-1px)!important;
+}
+html body .az-watch-video-play-icon-466{
+  box-sizing:border-box!important;
+  width:17px!important;
+  height:17px!important;
+  min-width:17px!important;
+  min-height:17px!important;
+  max-width:17px!important;
+  max-height:17px!important;
+  display:block!important;
+  fill:currentColor!important;
+}
+/* Authorised-role tools use the same right-side column. Lower them only on cards
+   with a video control so there is no overlap. */
 html body #softwareGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
 html body #softwareDownloadsGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
-html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
-html body #softwareGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
-html body #softwareDownloadsGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
-html body .downloads-grid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions{
+html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card-admin-actions{
   top:136px!important;
 }
 @media(max-width:700px){
-  html body #softwareGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
-  html body #softwareDownloadsGrid > .download-card > .software-media-links.az-watch-video-below-share-465,
-  html body .downloads-grid > .download-card > .software-media-links.az-watch-video-below-share-465,
-  html body #softwareGrid > .download-card > .software-media-links:has(> .software-media-demo),
-  html body #softwareDownloadsGrid > .download-card > .software-media-links:has(> .software-media-demo),
-  html body .downloads-grid > .download-card > .software-media-links:has(> .software-media-demo){
+  html body #softwareGrid > .download-card > .software-media-links.az-watch-video-icon-below-share-466,
+  html body #softwareDownloadsGrid > .download-card > .software-media-links.az-watch-video-icon-below-share-466,
+  html body .downloads-grid > .download-card > .software-media-links.az-watch-video-icon-below-share-466{
     top:90px!important;
     right:12px!important;
+    width:31px!important;
+    height:31px!important;
+    min-width:31px!important;
+    min-height:31px!important;
+    max-width:31px!important;
+    max-height:31px!important;
   }
-  html body .download-card > .software-media-links.az-watch-video-below-share-465 > .software-media-demo,
-  html body .download-card > .software-media-links:has(> .software-media-demo) > .software-media-demo{
-    min-height:27px!important;
-    padding:4px 9px!important;
-    font-size:11px!important;
+  html body .download-card > .software-media-links.az-watch-video-icon-below-share-466 > .software-media-demo.az-watch-video-icon-btn-466{
+    width:31px!important;
+    height:31px!important;
+    min-width:31px!important;
+    min-height:31px!important;
+    max-width:31px!important;
+    max-height:31px!important;
+    border-radius:11px!important;
+  }
+  html body .az-watch-video-play-icon-466{
+    width:15px!important;
+    height:15px!important;
+    min-width:15px!important;
+    min-height:15px!important;
+    max-width:15px!important;
+    max-height:15px!important;
   }
   html body #softwareGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
   html body #softwareDownloadsGrid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
-  html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card-admin-actions,
-  html body #softwareGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
-  html body #softwareDownloadsGrid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions,
-  html body .downloads-grid > .download-card:has(> .software-media-links > .software-media-demo) > .software-card-admin-actions{
+  html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card-admin-actions{
     top:125px!important;
   }
 }
