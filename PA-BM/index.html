@@ -1172,6 +1172,62 @@
       display: block;
     }
 
+    .pa-bm-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin: 0 auto 18px;
+      max-width: 760px;
+    }
+
+    .pa-bm-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 16px;
+      border: 1px solid rgba(148,163,184,0.35);
+      border-radius: 999px;
+      background: #0f172a;
+      color: #e5e7eb;
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+      transition: border-color .2s ease, background .2s ease, color .2s ease;
+    }
+
+    .pa-bm-tab:hover,
+    .pa-bm-tab.is-active {
+      border-color: #22c55e;
+      background: #22c55e;
+      color: #052e16;
+    }
+
+    .pa-bm-panel {
+      display: none;
+    }
+
+    .pa-bm-panel.is-active {
+      display: block;
+    }
+
+    .storage-path-note {
+      margin: 0 auto 14px;
+      padding: 9px 12px;
+      border: 1px solid rgba(34,197,94,0.28);
+      border-radius: 10px;
+      background: rgba(15,23,42,0.7);
+      color: #dbeafe;
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    .storage-path-note strong {
+      color: #facc15;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -8027,7 +8083,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <a class="azobss-nav-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>
 <a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>
 <a class="azobss-nav-chip" href="/lucky-draw/">Lucky Draw</a>
-<a class="azobss-nav-chip" href="/PA-BM/#request">Request PA / Info Lot</a>
+<a class="azobss-nav-chip" href="/PA-BM/#pa">Request PA</a>
 <a class="azobss-nav-chip" href="#contact">Contact</a>
 </div>
 <button aria-label="Scroll menu right" class="azobss-nav-arrow azobss-nav-right" type="button">›</button>
@@ -8479,8 +8535,15 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 </div>
 <div class="section" id="request">
-<h2>PA / BM / Lot Kadaster Berdigit</h2>
+<h2>Folder Simpanan Utama</h2>
+<div class="pa-bm-tabs" aria-label="PA BM storage tabs">
+<a class="pa-bm-tab is-active" data-pa-bm-tab="pa" href="/PA-BM/#pa">PA</a>
+<a class="pa-bm-tab" data-pa-bm-tab="bm-sbm" href="/PA-BM/#bm-sbm">BM / SBM</a>
+<a class="pa-bm-tab" data-pa-bm-tab="lot-kadaster" href="/PA-BM/#lot-kadaster">Lot Kadaster</a>
+</div>
 <div class="card" id="requestCard" style="max-width:700px;margin:auto;">
+<div class="pa-bm-panel is-active" data-pa-bm-panel="pa">
+<p class="storage-path-note"><strong>Path:</strong> /PA-BM/#pa</p>
 <h3>Pelan Akui</h3>
 <p class="login-info" id="loginInfo"></p>
 <form action="" class="request-form" id="paForm" onsubmit="return azobssDirectPaDownload(event);">
@@ -8526,6 +8589,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-status" id="paStatus"></p>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
 </form>
+</div>
+<div class="pa-bm-panel" data-pa-bm-panel="bm-sbm">
+<p class="storage-path-note"><strong>Path:</strong> /PA-BM/#bm-sbm</p>
 <div class="benchmark-panel" id="benchmarkPanel">
 <h3>BM / SBM - Stesen Tanda Aras</h3>
 <p class="request-note">
@@ -8589,6 +8655,44 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <div class="benchmark-pagination" hidden="" id="benchmarkPagination"></div>
 <div class="benchmark-cart-list" id="benchmarkCartList" style="display:none;"></div>
+</div>
+</div>
+<div class="pa-bm-panel" data-pa-bm-panel="lot-kadaster">
+<p class="storage-path-note"><strong>Path:</strong> /PA-BM/#lot-kadaster</p>
+<h3>Lot Kadaster</h3>
+<p class="request-note">
+          Tab ini diasingkan daripada PA untuk carian dan permintaan berkaitan Lot Kadaster.
+</p>
+<div class="benchmark-form">
+<label for="lotKadasterSearch">
+            Lot / Mukim / Daerah
+            <input id="lotKadasterSearch" placeholder="Contoh: Lot 1234 / Mukim / Daerah" type="search"/>
+</label>
+<label for="lotKadasterState">
+            Negeri
+            <select id="lotKadasterState">
+<option value="">-- Select State --</option>
+<option value="JOHOR">JOHOR</option>
+<option value="KEDAH">KEDAH</option>
+<option value="KELANTAN">KELANTAN</option>
+<option value="MELAKA">MELAKA</option>
+<option value="NEGERI SEMBILAN">NEGERI SEMBILAN</option>
+<option value="PAHANG">PAHANG</option>
+<option value="PERAK">PERAK</option>
+<option value="PERLIS">PERLIS</option>
+<option value="PULAU PINANG">PULAU PINANG</option>
+<option value="SABAH">SABAH</option>
+<option value="SARAWAK">SARAWAK</option>
+<option value="SELANGOR">SELANGOR</option>
+<option value="TERENGGANU">TERENGGANU</option>
+<option value="WILAYAH PERSEKUTUAN KUALA LUMPUR">WILAYAH PERSEKUTUAN KUALA LUMPUR</option>
+<option value="WILAYAH PERSEKUTUAN LABUAN">WILAYAH PERSEKUTUAN LABUAN</option>
+<option value="WILAYAH PERSEKUTUAN PUTRAJAYA">WILAYAH PERSEKUTUAN PUTRAJAYA</option>
+</select>
+</label>
+<button class="btn blue" id="lotKadasterWhatsappButton" type="button">Request Lot Kadaster</button>
+</div>
+<p class="request-status" id="lotKadasterStatus">Masukkan maklumat lot dan negeri, kemudian hantar permintaan.</p>
 </div>
 </div>
 <div class="payment-cta-wrap login-only toyyibpay-payment-top" id="paymentCtaWrap">
@@ -9567,6 +9671,59 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   }else{
     init();
   }
+})();
+</script>
+<script>
+/* PA/BM dedicated folder tab paths */
+(function(){
+  const TAB_KEYS = ['pa', 'bm-sbm', 'lot-kadaster'];
+
+  function getRequestedTab(){
+    const hash = String(window.location.hash || '').replace(/^#/, '').toLowerCase();
+    if (TAB_KEYS.includes(hash)) return hash;
+    if (hash === 'request') return 'pa';
+    return 'pa';
+  }
+
+  function activateTab(key){
+    const activeKey = TAB_KEYS.includes(key) ? key : 'pa';
+    document.querySelectorAll('[data-pa-bm-tab]').forEach(tab => {
+      const isActive = tab.getAttribute('data-pa-bm-tab') === activeKey;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-current', isActive ? 'page' : 'false');
+    });
+    document.querySelectorAll('[data-pa-bm-panel]').forEach(panel => {
+      panel.classList.toggle('is-active', panel.getAttribute('data-pa-bm-panel') === activeKey);
+    });
+  }
+
+  function handleHashChange(){
+    activateTab(getRequestedTab());
+  }
+
+  function bindLotKadasterRequest(){
+    const button = document.getElementById('lotKadasterWhatsappButton');
+    if (!button) return;
+    button.addEventListener('click', () => {
+      const lot = document.getElementById('lotKadasterSearch')?.value.trim() || '-';
+      const state = document.getElementById('lotKadasterState')?.value.trim() || '-';
+      const message = `Hi AZOBSS, saya nak request Lot Kadaster.\n\nMaklumat: ${lot}\nNegeri: ${state}`;
+      window.open(`https://wa.me/60109591012?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+      const status = document.getElementById('lotKadasterStatus');
+      if (status) status.textContent = 'Permintaan Lot Kadaster dibuka di WhatsApp.';
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      handleHashChange();
+      bindLotKadasterRequest();
+    });
+  } else {
+    handleHashChange();
+    bindLotKadasterRequest();
+  }
+  window.addEventListener('hashchange', handleHashChange);
 })();
 </script>
 <script>
@@ -14713,7 +14870,3 @@ function confirmDeleteProgram(id){
  }
 }
 </script>
-
-
-
-
