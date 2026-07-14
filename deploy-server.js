@@ -7008,7 +7008,8 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:2,
+        version:3,
+        paidDownloadRouting:"category-specific-v1",
         runningFile:"deploy-server.js",
         productTypes:["PA","BM","SBM","GPS","NDCDB","NDCDB_C3","SYIT_PIAWAI"],
         prices:{
