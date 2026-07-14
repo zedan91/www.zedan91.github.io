@@ -8553,11 +8553,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div class="pabm-store-layout">
 <div class="card" id="requestCard" style="max-width:700px;margin:auto;">
 <div class="pa-bm-panel is-active" data-pa-bm-panel="pa">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Pelan Akui (PA)</h3></div><strong>RM5 / document</strong></div>
+<div class="pabm-product-heading"><div><h3>Pelan Akui (PA)</h3></div><strong>RM5 / document</strong></div>
 <p class="login-info" id="loginInfo"></p>
 <form action="" class="request-form" id="paForm" onsubmit="return azobssDirectPaDownload(event);">
 <label for="negeri">
-          <span class="pabm-field-title"><span class="pabm-step">2</span>Select State</span>
+          <span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
           <select id="negeri" required="">
 <option value="">-- Select State --</option>
 <option value="JOHOR">JOHOR</option>
@@ -8580,7 +8580,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <span class="pabm-state-grid" data-state-picker-for="negeri"></span>
 </label>
 <label for="paNumber">
-          <span class="pabm-field-title"><span class="pabm-step">3</span>PA Number</span>
+          <span class="pabm-field-title"><span class="pabm-step">2</span>PA Number</span>
           <span class="pabm-input-prefix"><strong>PA</strong><input id="paNumber" inputmode="numeric" placeholder="Example: 2131" required="" type="text"/></span>
 </label>
 <p class="request-error" id="paError"></p>
@@ -8602,7 +8602,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="bm-sbm">
 <div class="benchmark-panel" id="benchmarkPanel">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3 id="benchmarkProductTitle">BM</h3></div><strong>RM3 / document</strong></div>
+<div class="pabm-product-heading"><div><h3 id="benchmarkProductTitle">BM</h3></div><strong>RM3 / document</strong></div>
 <p class="request-note">Search using a station number such as 0109. The system also checks H 0109 automatically.</p>
 <form class="benchmark-form" id="benchmarkForm">
 <label class="pabm-hidden-product-control" for="benchmarkProduct">
@@ -8614,7 +8614,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <span class="pabm-product-switch" data-product-picker-for="benchmarkProduct"></span>
 </label>
 <label for="benchmarkState">
-            <span class="pabm-field-title"><span class="pabm-step">2</span>Select State</span>
+            <span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
             <select id="benchmarkState" required="">
 <option value="">-- Select State --</option>
 <option value="JOHOR">JOHOR</option>
@@ -8637,7 +8637,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <span class="pabm-state-grid" data-state-picker-for="benchmarkState"></span>
 </label>
 <label for="benchmarkSearch">
-            <span class="pabm-field-title"><span class="pabm-step">3</span>Station Number</span>
+            <span class="pabm-field-title"><span class="pabm-step">2</span>Station Number</span>
             <input id="benchmarkSearch" placeholder="Example: 0109 / H 0109" type="search"/>
 </label>
 <button class="btn blue" id="benchmarkSearchButton" type="submit">Search BM / SBM</button>
@@ -8667,11 +8667,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="ndcdb">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Lot Kadaster Berdigit</h3></div><strong>RM15 - RM50</strong></div>
+<div class="pabm-product-heading"><div><h3>Lot Kadaster Berdigit</h3></div><strong>RM15 - RM50</strong></div>
 <p class="request-note">Choose one full sheet area or one quarter of a sheet, then enter the lot reference.</p>
 <div class="benchmark-form">
 <label for="lotKadasterState">
-            <span class="pabm-field-title"><span class="pabm-step">2</span>Select State</span>
+            <span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
             <select id="lotKadasterState">
 <option value="">-- Select State --</option>
 <option value="JOHOR">JOHOR</option>
@@ -8694,14 +8694,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <span class="pabm-state-grid" data-state-picker-for="lotKadasterState"></span>
 </label>
 <button class="pabm-map-button" data-jupem-lot-map="" data-state-id="lotKadasterState" type="button">Open Selection Map</button>
-<label for="lotKadasterArea"><span class="pabm-field-title"><span class="pabm-step">3</span>Area Size</span>
+<label for="lotKadasterArea"><span class="pabm-field-title"><span class="pabm-step">2</span>Area Size</span>
 <select id="lotKadasterArea">
 <option value="FULL_SHEET">1 Sheet Area - RM50</option>
 <option value="QUARTER_SHEET">1/4 Sheet Area - RM15</option>
 </select>
 <span class="pabm-product-switch pabm-area-switch" data-product-picker-for="lotKadasterArea"></span>
 </label>
-<label for="lotKadasterSearch"><span class="pabm-field-title"><span class="pabm-step">4</span>Lot / Mukim / District</span>
+<label for="lotKadasterSearch"><span class="pabm-field-title"><span class="pabm-step">3</span>Lot / Mukim / District</span>
 <input id="lotKadasterSearch" placeholder="Example: Lot 1234 / Mukim / District" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" data-input-id="lotKadasterSearch" data-pabm-product-add="" data-product-type="NDCDB" data-state-id="lotKadasterState" data-variant-id="lotKadasterArea" type="button"><span>Add to Cart</span><span class="pabm-button-price">RM50</span></button>
@@ -8710,14 +8710,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-status" id="lotKadasterStatus">Select the area size before adding this document to your cart.</p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="gps">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>GPS Station</h3></div><strong>RM9 / document</strong></div>
+<div class="pabm-product-heading"><div><h3>GPS Station</h3></div><strong>RM9 / document</strong></div>
 <p class="request-note">Enter the GPS station code and select its state.</p>
 <div class="benchmark-form">
-<label for="gpsState"><span class="pabm-field-title"><span class="pabm-step">2</span>Select State</span>
+<label for="gpsState"><span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
 <select data-copy-states="" id="gpsState"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="gpsState"></span>
 </label>
-<label for="gpsStation"><span class="pabm-field-title"><span class="pabm-step">3</span>GPS Station</span>
+<label for="gpsStation"><span class="pabm-field-title"><span class="pabm-step">2</span>GPS Station</span>
 <input id="gpsStation" placeholder="Example: GP00" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" data-input-id="gpsStation" data-pabm-product-add="" data-product-type="GPS" data-state-id="gpsState" type="button"><span>Add GPS to Cart</span><span class="pabm-button-price">RM9</span></button>
@@ -8726,22 +8726,22 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-status">GPS price: RM9 per document.</p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="ndcdb-c3">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Lot Kadaster Berdigit C3</h3></div><strong>RM15 - RM50</strong></div>
+<div class="pabm-product-heading"><div><h3>Lot Kadaster Berdigit C3</h3></div><strong>RM15 - RM50</strong></div>
 <p class="request-note">Choose one full sheet area or one quarter of a sheet, then enter the C3 reference.</p>
 <div class="benchmark-form">
-<label for="ndcdbC3State"><span class="pabm-field-title"><span class="pabm-step">2</span>Select State</span>
+<label for="ndcdbC3State"><span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
 <select data-copy-states="" id="ndcdbC3State"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="ndcdbC3State"></span>
 </label>
 <button class="pabm-map-button" data-jupem-lot-map="" data-state-id="ndcdbC3State" type="button">Open Selection Map</button>
-<label for="ndcdbC3Area"><span class="pabm-field-title"><span class="pabm-step">3</span>Area Size</span>
+<label for="ndcdbC3Area"><span class="pabm-field-title"><span class="pabm-step">2</span>Area Size</span>
 <select id="ndcdbC3Area">
 <option value="FULL_SHEET">1 Sheet Area - RM50</option>
 <option value="QUARTER_SHEET">1/4 Sheet Area - RM15</option>
 </select>
 <span class="pabm-product-switch pabm-area-switch" data-product-picker-for="ndcdbC3Area"></span>
 </label>
-<label for="ndcdbC3Reference"><span class="pabm-field-title"><span class="pabm-step">4</span>Job ID / Lot Reference</span>
+<label for="ndcdbC3Reference"><span class="pabm-field-title"><span class="pabm-step">3</span>Job ID / Lot Reference</span>
 <input id="ndcdbC3Reference" placeholder="Enter job ID, URL or lot reference" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" data-input-id="ndcdbC3Reference" data-pabm-product-add="" data-product-type="NDCDB_C3" data-state-id="ndcdbC3State" data-variant-id="ndcdbC3Area" type="button"><span>Add to Cart</span><span class="pabm-button-price">RM50</span></button>
@@ -8750,14 +8750,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-status">Select the area size before adding this document to your cart.</p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="syit-piawai">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Syit Piawai (Gambar)</h3></div><strong>RM7 / document</strong></div>
+<div class="pabm-product-heading"><div><h3>Syit Piawai (Gambar)</h3></div><strong>RM7 / document</strong></div>
 <p class="request-note">Enter the sheet name or product ID and select its state.</p>
 <div class="benchmark-form">
-<label for="syitPiawaiState"><span class="pabm-field-title"><span class="pabm-step">2</span>Select State</span>
+<label for="syitPiawaiState"><span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
 <select data-copy-states="" id="syitPiawaiState"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="syitPiawaiState"></span>
 </label>
-<label for="syitPiawaiReference"><span class="pabm-field-title"><span class="pabm-step">3</span>Sheet Name / Product ID</span>
+<label for="syitPiawaiReference"><span class="pabm-field-title"><span class="pabm-step">2</span>Sheet Name / Product ID</span>
 <input id="syitPiawaiReference" placeholder="Example: 70C_20200904 or 42464661" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" data-input-id="syitPiawaiReference" data-pabm-product-add="" data-product-type="SYIT_PIAWAI" data-state-id="syitPiawaiState" type="button"><span>Add Sheet to Cart</span><span class="pabm-button-price">RM7</span></button>
@@ -8768,7 +8768,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <aside class="pabm-cart-panel" aria-labelledby="pabmCartTitle">
 <div class="pabm-cart-head">
-<div><span class="pabm-step" id="pabmCartStep">4</span><h3 id="pabmCartTitle">Your Cart</h3></div>
+<div><span class="pabm-step" id="pabmCartStep">3</span><h3 id="pabmCartTitle">Your Cart</h3></div>
 <span class="pabm-cart-count" id="pabmStoreCartCount">0 items</span>
 </div>
 <div class="pabm-cart-items" id="pabmStoreCartItems">
@@ -9782,7 +9782,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       panel.classList.toggle('is-active', panel.getAttribute('data-pa-bm-panel') === panelKey);
     });
     const cartStep = document.getElementById('pabmCartStep');
-    if (cartStep) cartStep.textContent = activeKey === 'ndcdb' || activeKey === 'ndcdb-c3' ? '5' : '4';
+    if (cartStep) cartStep.textContent = activeKey === 'ndcdb' || activeKey === 'ndcdb-c3' ? '4' : '3';
     if (activeKey === 'bm' || activeKey === 'sbm') {
       const type = activeKey.toUpperCase();
       const product = document.getElementById('benchmarkProduct');
