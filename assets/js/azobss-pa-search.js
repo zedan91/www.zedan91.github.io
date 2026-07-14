@@ -44,7 +44,7 @@
   }
 
   function normalize(value) {
-    return String(value || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   }
 
   function cleanNumber(value) {
@@ -149,8 +149,10 @@
 
   function renderResults(page) {
     if (!filteredRows.length) {
-      resultsBody.innerHTML = '';
-      resultWrap.hidden = true;
+      resultsBody.innerHTML = allRows.length
+        ? '<tr><td colspan="9" style="padding:18px;text-align:center;">No matching PA record found.</td></tr>'
+        : '';
+      resultWrap.hidden = !allRows.length;
       renderPagination(1);
       return;
     }
@@ -251,8 +253,13 @@
 
   form.addEventListener('submit', search);
   generalEl.addEventListener('input', applyGeneralFilter);
+  generalEl.addEventListener('change', applyGeneralFilter);
+  generalEl.addEventListener('search', applyGeneralFilter);
   generalEl.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') event.preventDefault();
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyGeneralFilter();
+    }
   });
   stateEl.addEventListener('change', () => {
     clearResults();
