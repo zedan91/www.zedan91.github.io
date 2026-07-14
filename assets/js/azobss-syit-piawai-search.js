@@ -46,6 +46,67 @@
     }));
   }
 
+  function ensureSheetModal() {
+    let modal = document.getElementById('syitPiawaiViewModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'syitPiawaiViewModal';
+    modal.className = 'syit-sheet-modal';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+      <button class="syit-sheet-modal-backdrop" type="button" aria-label="Close sheet preview"></button>
+      <div class="syit-sheet-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="syitSheetModalTitle">
+        <div class="syit-sheet-modal-head">
+          <strong id="syitSheetModalTitle">View Sheet</strong>
+          <button class="syit-sheet-modal-close" type="button" aria-label="Close sheet preview">&times;</button>
+        </div>
+        <div class="syit-sheet-modal-body">
+          <span class="syit-sheet-modal-loading">Loading sheet...</span>
+          <img alt="" hidden>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    const close = () => {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    };
+    modal.querySelector('.syit-sheet-modal-close').addEventListener('click', close);
+    modal.querySelector('.syit-sheet-modal-backdrop').addEventListener('click', close);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.classList.contains('is-open')) close();
+    });
+    return modal;
+  }
+
+  function openSheetPreview(button) {
+    const productId = String(button.dataset.syitView || '').trim();
+    const stateCode = String(button.dataset.syitStateCode || '').trim();
+    const sheetName = String(button.dataset.syitSheetName || '').trim();
+    if (!productId || !stateCode) return;
+    const modal = ensureSheetModal();
+    const title = modal.querySelector('#syitSheetModalTitle');
+    const loading = modal.querySelector('.syit-sheet-modal-loading');
+    const image = modal.querySelector('img');
+    title.textContent = sheetName || 'View Sheet';
+    loading.hidden = false;
+    loading.textContent = 'Loading sheet...';
+    image.hidden = true;
+    image.alt = `${sheetName || 'Syit Piawai'} sheet preview`;
+    image.onload = () => {
+      loading.hidden = true;
+      image.hidden = false;
+    };
+    image.onerror = () => {
+      image.hidden = true;
+      loading.hidden = false;
+      loading.textContent = 'Unable to load this sheet preview.';
+    };
+    image.src = 'https://ebiz.jupem.gov.my/Produk/RenderImageSyit/' + encodeURIComponent(productId) + '?negeri=' + encodeURIComponent(stateCode);
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.querySelector('.syit-sheet-modal-close').focus();
+  }
+
   async function loadRecords() {
     if (recordsCache) return recordsCache;
     const response = await fetch(DATA_URL, { cache: 'no-store' });
@@ -98,7 +159,7 @@
         <td><button class="btn blue" type="button" data-syit-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;">Add to Cart</button></td>
         <td><strong>${escapeHtml(record.sheetName || '-')}</strong></td>
         <td>${escapeHtml(record.negeri || '-')}</td>
-        <td>${escapeHtml(record.productId || '-')}</td>
+        <td><button class="btn blue" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" style="padding:6px 10px;font-size:12px;margin:0;border-radius:8px;">View Sheet</button></td>
         <td>${mapLink}</td>
         <td>RM7</td>
       </tr>`;
@@ -168,6 +229,11 @@
   });
 
   resultsBody.addEventListener('click', async (event) => {
+    const viewButton = event.target.closest('[data-syit-view]');
+    if (viewButton) {
+      openSheetPreview(viewButton);
+      return;
+    }
     const button = event.target.closest('[data-syit-record]');
     if (!button) return;
     if (errorEl) errorEl.textContent = '';

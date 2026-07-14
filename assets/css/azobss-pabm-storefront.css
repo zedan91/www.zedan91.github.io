@@ -323,6 +323,103 @@ body.pa-bm-page .pabm-map-button {
   }
 }
 
+body.pa-bm-page .syit-sheet-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+body.pa-bm-page .syit-sheet-modal.is-open {
+  display: flex;
+}
+
+body.pa-bm-page .syit-sheet-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(2, 6, 23, .78);
+  cursor: pointer;
+}
+
+body.pa-bm-page .syit-sheet-modal-dialog {
+  position: relative;
+  width: min(760px, calc(100vw - 28px));
+  max-height: calc(100vh - 28px);
+  overflow: hidden;
+  border: 1px solid #52647d;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .62);
+}
+
+body.pa-bm-page .syit-sheet-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #d5dbe4;
+  color: #172033;
+}
+
+body.pa-bm-page .syit-sheet-modal-head strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.pa-bm-page .syit-sheet-modal-close {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid #aab4c2;
+  border-radius: 6px;
+  background: #eef2f7;
+  color: #172033;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+body.pa-bm-page .syit-sheet-modal-body {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+  padding: 14px;
+  background: #f4f6f8;
+}
+
+body.pa-bm-page .syit-sheet-modal-body img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: calc(100vh - 130px);
+  object-fit: contain;
+  background: #fff;
+}
+
+body.pa-bm-page .syit-sheet-modal-loading {
+  position: absolute;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+body.pa-bm-page .syit-sheet-modal-loading[hidden] {
+  display: none;
+}
+
 body.pa-bm-page #downloadTifButton {
   display: grid;
   grid-template-columns: 1fr auto;
