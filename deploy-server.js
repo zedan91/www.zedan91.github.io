@@ -6867,6 +6867,27 @@ async function handler(req, res) {
     // TOYYIBPAY DYNAMIC PAYMENT ROUTES (Render deploy-server.js)
     // =========================
 
+    if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
+      return send(res, 200, JSON.stringify({
+        ok:true,
+        version:2,
+        runningFile:"deploy-server.js",
+        productTypes:["PA","BM","SBM","GPS","NDCDB","NDCDB_C3","SYIT_PIAWAI"],
+        prices:{
+          PA:5,
+          BM:3,
+          SBM:3,
+          GPS:9,
+          NDCDB_FULL_SHEET:50,
+          NDCDB_QUARTER_SHEET:15,
+          NDCDB_C3_FULL_SHEET:50,
+          NDCDB_C3_QUARTER_SHEET:15,
+          SYIT_PIAWAI:7
+        },
+        adminTestPayment:true
+      }, null, 2), "application/json");
+    }
+
 
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST") {
       let data = {};
