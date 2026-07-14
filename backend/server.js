@@ -212,6 +212,176 @@ function cleanPremiumText(value, max = 300) { return String(value || "").replace
 function cleanPremiumUrl(value) { const v = String(value || "").trim(); if (!v) return ""; if (/^https?:\/\//i.test(v)) return v; if (v.startsWith("/")) return v; return ""; }
 function getPremiumUser(data) { const user = data.user || {}; return { uid: cleanPremiumText(user.uid || data.uid, 120), username: cleanPremiumText(user.username || user.usernameKey || data.username, 80), email: cleanPremiumText(user.email || data.email, 160), phone: cleanPremiumText(user.phone || data.phone, 40) }; }
 
+const AZOBSS_JUPEM_PRODUCT_TYPES = new Set(["PA", "BM", "SBM", "GPS", "NDCDB", "NDCDB_C3", "SYIT_PIAWAI"]);
+const AZOBSS_JUPEM_AREA_TYPES = new Set(["NDCDB", "NDCDB_C3"]);
+const AZOBSS_JUPEM_STATES = new Set([
+  "JOHOR", "KEDAH", "KELANTAN", "MELAKA", "NEGERI SEMBILAN", "PAHANG", "PERAK", "PERLIS",
+  "PULAU PINANG", "SABAH", "SARAWAK", "SELANGOR", "TERENGGANU",
+  "WILAYAH PERSEKUTUAN KUALA LUMPUR", "WILAYAH PERSEKUTUAN LABUAN", "WILAYAH PERSEKUTUAN PUTRAJAYA"
+]);
+const AZOBSS_PA_BM_MAX_DOWNLOADS = 5;
+const AZOBSS_PA_BM_VALID_MS = 7 * 24 * 60 * 60 * 1000;
+
+function azobssCheckoutError(message, statusCode = 400) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  throw error;
+}
+
+function azobssJupemItemAmount(productType, variant) {
+  if (productType === "PA") return 5;
+  if (productType === "BM" || productType === "SBM") return 3;
+  if (productType === "GPS") return 9;
+  if (productType === "SYIT_PIAWAI") return 7;
+  if (AZOBSS_JUPEM_AREA_TYPES.has(productType)) return variant === "QUARTER_SHEET" ? 15 : 50;
+  azobssCheckoutError("Unsupported JUPEM document category.");
+}
+
+function azobssBuildJupemCheckout(data = {}, identity = {}) {
+  if (!identity || !identity.uid) azobssCheckoutError("Please login again before proceeding to payment.", 401);
+  const submittedUser = getPremiumUser(data);
+  const user = {
+    uid: cleanPremiumText(identity.uid, 120),
+    username: cleanPremiumText(identity.username || data.usernameKey || submittedUser.username || "", 80).toLowerCase(),
+    email: cleanPremiumText(identity.authEmail || identity.email || submittedUser.email || "", 160),
+    authEmail: cleanPremiumText(identity.authEmail || identity.email || "", 160),
+    phone: cleanPremiumText(submittedUser.phone || "", 40)
+  };
+  const rawItems = Array.isArray(data.items) ? data.items : [];
+  if (!rawItems.length || rawItems.length > 50) azobssCheckoutError("Cart must contain between 1 and 50 documents.");
+
+  const seen = new Set();
+  const items = [];
+  for (const rawItem of rawItems) {
+    const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
+    if (!AZOBSS_JUPEM_PRODUCT_TYPES.has(productType)) azobssCheckoutError("Unsupported JUPEM document category.");
+    const negeri = cleanPremiumText(rawItem.negeri || "", 80).toUpperCase();
+    if (!AZOBSS_JUPEM_STATES.has(negeri)) azobssCheckoutError("Please select a valid state for every document.");
+    let itemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80).toUpperCase();
+    if (productType === "PA") itemCode = itemCode.replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
+    if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) {
+      azobssCheckoutError("A valid document number is required for every cart item.");
+    }
+    const variant = AZOBSS_JUPEM_AREA_TYPES.has(productType)
+      ? cleanPremiumText(rawItem.variant || rawItem.areaSize || "", 30).toUpperCase()
+      : "";
+    if (AZOBSS_JUPEM_AREA_TYPES.has(productType) && variant !== "FULL_SHEET" && variant !== "QUARTER_SHEET") {
+      azobssCheckoutError("Select either 1 sheet area or 1/4 sheet area.");
+    }
+    const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
+    if (seen.has(uniqueKey)) continue;
+    seen.add(uniqueKey);
+    items.push({
+      productType,
+      itemCode,
+      negeri,
+      variant,
+      amount: azobssJupemItemAmount(productType, variant),
+      productId: cleanPremiumText(rawItem.productId || "", 120),
+      stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
+      jenis: productType === "SBM" ? "2" : "1",
+      downloadUrl: cleanPremiumUrl(rawItem.downloadUrl || ""),
+      filename: cleanPremiumText(rawItem.filename || "", 180),
+      createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
+    });
+  }
+  if (!items.length) azobssCheckoutError("No valid JUPEM documents were found in the cart.");
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  return { user, items, totalAmount, amountSen: totalAmount * 100 };
+}
+
+async function azobssPersistJupemOrder(order = {}) {
+  const saved = upsertPremiumOrder(order);
+  const db = getAzobssBackendDb();
+  if (!db || !saved.orderId) return saved;
+  try {
+    const safe = JSON.parse(JSON.stringify(saved));
+    safe.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    await db.collection("premiumOrders").doc(cleanPremiumText(saved.orderId, 180)).set(safe, { merge: true });
+  } catch (error) {
+    console.warn("JUPEM premium order Firestore persist skipped:", error && (error.message || error));
+  }
+  return saved;
+}
+
+async function azobssSyncJupemPurchaseLogs(order = {}, status = "pending", extra = {}) {
+  if (!Array.isArray(order.paBmItems) || !order.paBmItems.length) return { ok: false, updated: 0 };
+  const db = getAzobssBackendDb();
+  if (!db) return { ok: false, updated: 0, reason: "firebase_not_configured" };
+  const nowMs = Number(extra.nowMs || Date.now());
+  const paid = ["paid", "verified", "success", "completed"].includes(String(status || "").toLowerCase());
+  const paidAtMs = Number(extra.paidAtMs || nowMs);
+  let updated = 0;
+
+  for (let index = 0; index < order.paBmItems.length; index += 1) {
+    const item = order.paBmItems[index] || {};
+    const itemCode = String(item.itemCode || "").trim().toUpperCase();
+    if (!itemCode) continue;
+    let targetRef = null;
+    try {
+      const snap = await db.collection("purchaseLogs").where("itemCode", "==", itemCode).limit(30).get();
+      snap.forEach((docSnap) => {
+        if (targetRef) return;
+        const row = docSnap.data() || {};
+        const sameUser = (order.user?.uid && String(row.uid || "") === String(order.user.uid))
+          || (order.user?.username && String(row.usernameKey || row.username || "").toLowerCase() === String(order.user.username).toLowerCase());
+        const sameType = String(row.productType || row.product || "").toUpperCase() === String(item.productType || "").toUpperCase();
+        const sameState = String(row.negeri || row.state || "").toUpperCase() === String(item.negeri || "").toUpperCase();
+        if (sameUser && sameType && sameState) targetRef = docSnap.ref;
+      });
+    } catch (error) {
+      console.warn("JUPEM purchase log lookup skipped:", error && (error.message || error));
+    }
+    if (!targetRef) targetRef = db.collection("purchaseLogs").doc(`${cleanPremiumText(order.orderId, 120)}-${index + 1}`);
+
+    const payload = {
+      uid: String(order.user?.uid || ""),
+      usernameKey: String(order.user?.username || "").trim().toLowerCase(),
+      displayName: String(order.user?.username || "").trim(),
+      email: String(order.user?.email || "").trim(),
+      phone: String(order.user?.phone || "").trim(),
+      productType: String(item.productType || "").toUpperCase(),
+      itemCode,
+      negeri: String(item.negeri || "").toUpperCase(),
+      variant: String(item.variant || "").toUpperCase(),
+      amount: Number(item.amount || 0),
+      productId: String(item.productId || ""),
+      stationNo: String(item.stationNo || ""),
+      jenis: String(item.jenis || ""),
+      downloadUrl: String(item.downloadUrl || ""),
+      filename: String(item.filename || ""),
+      status: String(status || "pending").toLowerCase(),
+      orderId: String(order.orderId || ""),
+      paymentOrderId: String(order.orderId || ""),
+      billCode: String(order.billCode || ""),
+      paymentUrl: String(order.paymentUrl || ""),
+      paymentMethod: String(order.paymentMethod || "toyyibpay"),
+      paymentReference: String(extra.paymentReference || order.paymentReference || ""),
+      createdAtMs: Number(item.createdAtMs || nowMs),
+      createdAtClient: new Date(Number(item.createdAtMs || nowMs)).toISOString(),
+      maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    if (paid) {
+      payload.paidAtMs = paidAtMs;
+      payload.paidAtClient = new Date(paidAtMs).toISOString();
+      payload.downloadCount = 0;
+      payload.downloadExpiresAtMs = paidAtMs + AZOBSS_PA_BM_VALID_MS;
+      payload.downloadExpiresAtClient = new Date(paidAtMs + AZOBSS_PA_BM_VALID_MS).toISOString();
+    }
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === "" || payload[key] === undefined) delete payload[key];
+    });
+    try {
+      await targetRef.set(payload, { merge: true });
+      updated += 1;
+    } catch (error) {
+      console.error("JUPEM purchase log sync failed:", error && (error.message || error));
+    }
+  }
+  return { ok: updated > 0, updated };
+}
+
 function azCommissionUsername(v){ return String(v || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 80); }
 function azCommissionMoney(v){ const m = String(v || '').replace(/,/g,'').match(/[0-9]+(?:\.[0-9]{1,2})?/); return m ? Number(m[0]) : 0; }
 function azCommissionAmountText(n){ return 'RM' + Number(n || 0).toFixed(2); }
@@ -703,6 +873,14 @@ async function refreshToyyibOrderStatus(order) {
         toyyibTransaction: tx,
         paidAt: new Date().toISOString()
       });
+      if (Array.isArray(paid.paBmItems) && paid.paBmItems.length) {
+        paid = await azobssPersistJupemOrder(paid);
+        await azobssSyncJupemPurchaseLogs(paid, "paid", {
+          paymentReference: paid.paymentReference,
+          paidAtMs: Date.now(),
+          toyyibTransaction: tx
+        });
+      }
       paid = await azSubEnsurePaidOrderCode(paid);
       const withDownload = makePremiumDownloadForOrder(paid);
       await azFinalizeCommissionForOrder(withDownload);
@@ -1266,26 +1444,85 @@ app.post("/api/admin/payment-logs/delete", requireAdmin, async (req, res) => {
 });
 
 
+app.get("/api/pa-bm-checkout-capabilities", (req, res) => {
+  res.json({
+    ok: true,
+    version: 2,
+    runningFile: "backend/server.js",
+    productTypes: Array.from(AZOBSS_JUPEM_PRODUCT_TYPES),
+    prices: { PA: 5, BM: 3, SBM: 3, GPS: 9, NDCDB_FULL_SHEET: 50, NDCDB_QUARTER_SHEET: 15, NDCDB_C3_FULL_SHEET: 50, NDCDB_C3_QUARTER_SHEET: 15, SYIT_PIAWAI: 7 },
+    adminTestPayment: true
+  });
+});
+
+app.post("/api/admin/test-pa-bm-payment", requireAdmin, async (req, res) => {
+  try {
+    const checkout = azobssBuildJupemCheckout(req.body || {}, req.azobssAdminIdentity || {});
+    const nowMs = Date.now();
+    const nowIso = new Date(nowMs).toISOString();
+    const orderId = makePremiumId("pabmtest");
+    const paymentReference = `ADMIN-TEST-${nowMs}`;
+    let order = await azobssPersistJupemOrder({
+      orderId,
+      productId: "pa-bm-purchase-records",
+      productName: `JUPEM Document Test Purchase (${checkout.items.length} unit)`,
+      amount: `RM${checkout.totalAmount}`,
+      amountSen: checkout.amountSen,
+      status: "paid",
+      paymentMethod: "admin-test",
+      paymentReference,
+      user: checkout.user,
+      usernameKey: checkout.user.username,
+      paBmItems: checkout.items,
+      maxDownload: 0,
+      expiryHours: 0,
+      isAdminTestPayment: true,
+      source: "admin-test-payment",
+      createdByAdmin: req.azobssAdminIdentity?.username || req.azobssAdminIdentity?.email || req.azobssAdminIdentity?.uid || "admin",
+      createdAt: nowIso,
+      createdAtMs: nowMs,
+      paidAt: nowIso,
+      paidAtMs: nowMs,
+      paymentVerifiedAt: nowIso,
+      paymentVerificationSource: "admin-test-endpoint",
+      commissionSkippedReason: "admin-test-payment",
+      emailSkippedForPaBm: true
+    });
+    const sync = await azobssSyncJupemPurchaseLogs(order, "paid", { paymentReference, paidAtMs: nowMs, nowMs });
+    order = await azobssPersistJupemOrder({ ...order, paBmPaidSyncedAt: nowIso, paBmPaidSyncedCount: Number(sync.updated || 0) });
+    return res.json({
+      ok: true,
+      success: true,
+      paid: true,
+      status: "paid",
+      testPayment: true,
+      orderId,
+      paymentReference,
+      amount: checkout.totalAmount,
+      amountSen: checkout.amountSen,
+      unit: checkout.items.length,
+      updatedCount: Number(sync.updated || 0)
+    });
+  } catch (error) {
+    const statusCode = Math.max(400, Math.min(500, Number(error?.statusCode || 500)));
+    console.error("Admin JUPEM test payment failed:", error && (error.stack || error.message || error));
+    return res.status(statusCode).json({ ok: false, success: false, error: error.message || "Admin test payment failed." });
+  }
+});
+
 app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
   try {
+    const identity = await getFirebaseAdminIdentity(req);
+    if (!identity || !identity.uid) {
+      return res.status(401).json({ ok:false, success:false, error:"Please login again before proceeding to payment." });
+    }
     if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
       return res.status(500).json({ ok:false, error:"ToyyibPay env belum diset. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." });
     }
     const data = req.body || {};
-    const user = getPremiumUser(data);
-    const usernameKey = cleanPremiumText(data.usernameKey || user.username || "", 80).toLowerCase();
-    const rawItems = Array.isArray(data.items) ? data.items : [];
-    const items = rawItems.map((item) => ({
-      id: cleanPremiumText(item.id || "", 120),
-      productType: cleanPremiumText(item.productType || "PA", 20).toUpperCase(),
-      itemCode: cleanPremiumText(item.itemCode || "", 80),
-      negeri: cleanPremiumText(item.negeri || "", 80),
-      amount: Math.max(0, Math.round(Number(item.amount || 0))),
-      createdAtMs: Number(item.createdAtMs || 0) || 0
-    })).filter((item) => item.itemCode && (item.amount === 3 || item.amount === 5));
-    if (!items.length) return res.status(400).json({ ok:false, error:"Tiada rekod PA/BM yang sah untuk dibayar." });
-    const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-    const amountSen = totalAmount * 100;
+    const checkout = azobssBuildJupemCheckout(data, identity);
+    const { user, items, totalAmount, amountSen } = checkout;
+    const usernameKey = user.username;
     const orderId = makePremiumId("pabm");
     const apiBase = publicBaseUrl(req);
     const returnUrl = TOYYIB_RETURN_URL || `${frontendBaseUrl(req)}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
@@ -1293,8 +1530,8 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const billPayload = {
       userSecretKey: TOYYIB_SECRET_KEY,
       categoryCode: TOYYIB_CATEGORY_CODE,
-      billName: toyyibClean("AZOBSS PA BM", 30),
-      billDescription: toyyibClean(`AZOBSS PA/BM Payment - ${items.length} unit - RM${totalAmount}`, 100),
+      billName: toyyibClean("AZOBSS JUPEM", 30),
+      billDescription: toyyibClean(`AZOBSS JUPEM Payment - ${items.length} unit - RM${totalAmount}`, 100),
       billPriceSetting: 1,
       billPayorInfo: 1,
       billAmount: amountSen,
@@ -1307,7 +1544,7 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
       billSplitPayment: 0,
       billSplitPaymentArgs: "",
       billPaymentChannel: 0,
-      billContentEmail: `Thank you for your AZOBSS PA/BM payment. Total: RM${totalAmount}.`,
+      billContentEmail: `Thank you for your AZOBSS JUPEM document payment. Total: RM${totalAmount}.`,
       billChargeToCustomer: 1,
       billExpiryDays: 3,
       enableDuitNowQR: 1,
@@ -1317,10 +1554,12 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const billCode = Array.isArray(apiResult) ? (apiResult[0]?.BillCode || apiResult[0]?.billCode) : apiResult?.BillCode;
     if (!billCode) return res.status(502).json({ ok:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult });
     const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName:`PA/BM Purchase Records (${items.length} unit)`, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+    const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName:`JUPEM Document Purchase (${items.length} unit)`, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
+    await azobssSyncJupemPurchaseLogs(order, "pending");
     res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, unit:items.length });
   } catch (err) {
-    res.status(500).json({ ok:false, error: err.message || "Failed create PA/BM ToyyibPay bill" });
+    const statusCode = Math.max(400, Math.min(500, Number(err?.statusCode || 500)));
+    res.status(statusCode).json({ ok:false, error: err.message || "Failed to create JUPEM ToyyibPay bill" });
   }
 });
 
@@ -1490,6 +1729,13 @@ app.post("/api/toyyib-callback", async (req, res) => {
     };
     if (update.status === "paid") update.paidAt = new Date().toISOString();
     order = upsertPremiumOrder(update);
+    if (Array.isArray(order.paBmItems) && order.paBmItems.length) {
+      order = await azobssPersistJupemOrder(order);
+      await azobssSyncJupemPurchaseLogs(order, order.status, {
+        paymentReference: order.paymentReference,
+        paidAtMs: Date.now()
+      });
+    }
     if (order.status === "paid") {
       const withDownload = makePremiumDownloadForOrder(order);
       await azFinalizeCommissionForOrder(withDownload);
@@ -3431,7 +3677,4 @@ app.listen(PORT, () => {
   console.log(`AZOBSS Lucky Draw Backend running on port ${PORT}`);
   console.log("AZOBSS_PATCH: 424-payment-logs-delete-backend-entrypoints");
 });
-
-
-
 

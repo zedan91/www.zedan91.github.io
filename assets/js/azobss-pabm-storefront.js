@@ -2,6 +2,8 @@ import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
+const BACKEND_BASE = 'https://azobss-backend.onrender.com';
+const CHECKOUT_API_VERSION = 2;
 const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const MAX_CART_ITEMS = 50;
 const PRODUCT_TYPES = new Set(['PA', 'BM', 'SBM', 'GPS', 'NDCDB', 'NDCDB_C3', 'SYIT_PIAWAI']);
@@ -386,6 +388,32 @@ function checkoutPayload(items) {
   };
 }
 
+async function ensureCheckoutBackend(items) {
+  let response;
+  try {
+    response = await fetch(`${BACKEND_BASE}/api/pa-bm-checkout-capabilities?_=${Date.now()}`, { cache: 'no-store' });
+  } catch (_) {
+    throw new Error('Payment service is temporarily unavailable. Please try again shortly.');
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok || Number(data.version || 0) < CHECKOUT_API_VERSION) {
+    throw new Error('Payment service is being updated. No payment was created. Please try again shortly.');
+  }
+  const supported = new Set(Array.isArray(data.productTypes) ? data.productTypes.map((type) => String(type || '').toUpperCase()) : []);
+  const missing = items.map((item) => item.productType).filter((type) => !supported.has(String(type || '').toUpperCase()));
+  if (missing.length) throw new Error(`Payment service does not support: ${Array.from(new Set(missing)).join(', ')}.`);
+  return data;
+}
+
+function assertCheckoutResponse(data, items) {
+  const expectedAmountSen = Math.round(cartTotal(items) * 100);
+  const receivedAmountSen = Number(data.amountSen || 0) || Math.round(Number(data.amount || 0) * 100);
+  const receivedUnits = Number(data.unit || 0);
+  if (receivedAmountSen !== expectedAmountSen || receivedUnits !== items.length) {
+    throw new Error(`Payment total mismatch. Expected ${formatMoney(expectedAmountSen / 100)} for ${items.length} items. No redirect was made.`);
+  }
+}
+
 async function proceedToPayment() {
   if (!requireLogin()) return;
   const items = readCart();
@@ -399,14 +427,16 @@ async function proceedToPayment() {
       paymentButton.textContent = 'Preparing Payment...';
     }
     if (status) status.textContent = 'Verifying cart and creating a secure payment bill...';
+    await ensureCheckoutBackend(items);
     const token = await auth.currentUser.getIdToken();
-    const response = await fetch('https://azobss-backend.onrender.com/api/toyyib/create-pa-bm-bill', {
+    const response = await fetch(`${BACKEND_BASE}/api/toyyib/create-pa-bm-bill`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify(checkoutPayload(items))
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to create the payment bill.');
+    assertCheckoutResponse(data, items);
     if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
     if (data.billCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', String(data.billCode));
     if (status) status.textContent = 'Redirecting to ToyyibPay...';
@@ -436,14 +466,17 @@ async function proceedAdminTestPayment() {
       adminTestPaymentButton.textContent = 'Creating Test Payment...';
     }
     if (status) status.textContent = 'Creating an admin-only paid test order...';
+    const capabilities = await ensureCheckoutBackend(items);
+    if (!capabilities.adminTestPayment) throw new Error('Admin test payment is not available on the current payment server.');
     const token = await auth.currentUser.getIdToken(true);
-    const response = await fetch('https://azobss-backend.onrender.com/api/admin/test-pa-bm-payment', {
+    const response = await fetch(`${BACKEND_BASE}/api/admin/test-pa-bm-payment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify(checkoutPayload(items))
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok || !data.paid) throw new Error(data.error || 'Unable to complete the admin test payment.');
+    assertCheckoutResponse(data, items);
     localStorage.removeItem(cartKey());
     renderCart();
     if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
