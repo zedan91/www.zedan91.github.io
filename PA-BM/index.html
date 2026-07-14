@@ -8640,7 +8640,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
             <span class="pabm-field-title"><span class="pabm-step">2</span>Station Number</span>
             <input id="benchmarkSearch" placeholder="Example: 0109 / H 0109" type="search"/>
 </label>
-<button class="btn blue" id="benchmarkSearchButton" type="submit">Search BM / SBM</button>
+<button class="btn blue pabm-add-product-button" id="benchmarkSearchButton" type="submit"><span id="benchmarkSearchButtonLabel">Search BM</span><span class="pabm-button-price">RM3</span></button>
 </form>
 <p class="request-error" id="benchmarkError"></p>
 <p class="request-status" id="benchmarkStatus"></p>
@@ -9788,12 +9788,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       const product = document.getElementById('benchmarkProduct');
       const title = document.getElementById('benchmarkProductTitle');
       const searchButton = document.getElementById('benchmarkSearchButton');
+      const searchButtonLabel = document.getElementById('benchmarkSearchButtonLabel');
       if (product) {
         product.value = type;
         product.dispatchEvent(new Event('change', { bubbles: true }));
       }
       if (title) title.textContent = type;
-      if (searchButton) searchButton.textContent = `Search ${type}`;
+      if (searchButtonLabel) searchButtonLabel.textContent = `Search ${type}`;
+      else if (searchButton) searchButton.textContent = `Search ${type}`;
     }
   }
 
