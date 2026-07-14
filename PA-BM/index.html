@@ -8589,10 +8589,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
           <input id="paNumber" inputmode="numeric" placeholder="Example: 2131" required="" type="search"/>
 </label>
 <p class="request-error" id="paError"></p>
-<button class="btn blue download-pdf-btn" id="paSearchButton" type="submit">
-<span class="download-pa-main">Search PA</span>
-<span class="pdf-price-tag">RM5</span>
-</button>
+<button class="btn blue pabm-add-product-button" id="paSearchButton" type="submit"><span>Search PA</span><span class="pabm-button-price">RM5</span></button>
+<label for="paGeneralSearch">
+          <span class="pabm-field-title">General Search</span>
+          <input disabled="" id="paGeneralSearch" placeholder="PA Number / District / Mukim / Section" type="search"/>
+</label>
 <p class="request-status" id="paStatus"></p>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
 <div class="benchmark-result-wrap" hidden="" id="paResultWrap">
@@ -8603,13 +8604,17 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th>ADD TO CART</th>
 <th>PA NUMBER</th>
 <th>STATE</th>
-<th>STATUS</th>
+<th>DISTRICT</th>
+<th>MUKIM</th>
+<th>SECTION</th>
+<th>VIEW PA</th>
 <th>PRICE</th>
 </tr>
 </thead>
 <tbody id="paResultsBody"></tbody>
 </table>
 </div>
+<div class="benchmark-pagination" hidden="" id="paPagination"></div>
 </form>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="bm-sbm">
@@ -14882,7 +14887,7 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=4"></script>
-<script src="/assets/js/azobss-pa-search.js?v=1" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=2" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=3" defer></script>
 <script src="/assets/js/azobss-gps-search.js?v=1" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=2" defer></script>

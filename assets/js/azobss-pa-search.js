@@ -1,22 +1,50 @@
 (function () {
   'use strict';
 
-  const CHECK_API = 'https://azobss-backend.onrender.com/api/check-pa';
+  const JUPEM_SEARCH_URL = 'https://ebiz.jupem.gov.my/Produk/PelanAkui';
   const PDF_API = 'https://azobss-backend.onrender.com/api/pa-pdf';
+  const ROWS_PER_PAGE = 5;
+  const JUPEM_STATE_CODES = Object.freeze({
+    JOHOR: '01',
+    KEDAH: '02',
+    KELANTAN: '03',
+    MELAKA: '04',
+    'NEGERI SEMBILAN': '05',
+    PAHANG: '06',
+    'PULAU PINANG': '07',
+    PERAK: '08',
+    PERLIS: '09',
+    SELANGOR: '10',
+    TERENGGANU: '11',
+    'WILAYAH PERSEKUTUAN KUALA LUMPUR': '14',
+    'WILAYAH PERSEKUTUAN LABUAN': '15',
+    'WILAYAH PERSEKUTUAN PUTRAJAYA': '16'
+  });
+
   const form = document.getElementById('paSearchForm');
   const stateEl = document.getElementById('negeri');
   const inputEl = document.getElementById('paNumber');
+  const generalEl = document.getElementById('paGeneralSearch');
   const searchButton = document.getElementById('paSearchButton');
   const errorEl = document.getElementById('paError');
   const statusEl = document.getElementById('paStatus');
   const resultWrap = document.getElementById('paResultWrap');
   const resultsBody = document.getElementById('paResultsBody');
-  if (!form || !stateEl || !inputEl || !searchButton || !resultWrap || !resultsBody) return;
+  const pagination = document.getElementById('paPagination');
+  if (!form || !stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
+
+  let allRows = [];
+  let filteredRows = [];
+  let currentPage = 1;
 
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
     })[char]);
+  }
+
+  function normalize(value) {
+    return String(value || '').trim().toUpperCase().replace(/\s+/g, ' ');
   }
 
   function cleanNumber(value) {
@@ -28,50 +56,158 @@
       .replace(/[^0-9]/g, '');
   }
 
-  function buildUrls(number, state) {
-    const paFile = `PA${number}.TIF`;
-    const params = new URLSearchParams({ noPA: paFile, negeri: state });
-    return {
-      checkUrl: `${CHECK_API}?${params.toString()}`,
-      downloadUrl: `${PDF_API}?${params.toString()}`
-    };
+  function absoluteJupemUrl(value) {
+    const path = String(value || '').trim();
+    if (!path) return '';
+    try {
+      return new URL(path, JUPEM_SEARCH_URL).href;
+    } catch (_) {
+      return '';
+    }
   }
 
-  function clearResults() {
-    resultWrap.hidden = true;
-    resultsBody.innerHTML = '';
+  function buildDownloadUrl(paNo, state) {
+    const params = new URLSearchParams({ noPA: `${paNo}.TIF`, negeri: state });
+    return `${PDF_API}?${params.toString()}`;
   }
 
   function encodeRecord(record) {
     return encodeURIComponent(JSON.stringify(record));
   }
 
-  function renderResult(number, state, downloadUrl) {
-    const record = {
-      productType: 'PA',
-      itemCode: number,
-      negeri: state,
-      amount: 5,
-      downloadUrl,
-      filename: `PA${number}.pdf`,
-      azobssCartValidated: true,
-      azobssCartValidatedBy: 'pa-search-check'
-    };
-    resultsBody.innerHTML = `<tr>
-      <td>1</td>
-      <td><button class="btn blue" type="button" data-pa-search-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;">Add to Cart</button></td>
-      <td><strong>PA${escapeHtml(number)}</strong></td>
-      <td>${escapeHtml(state)}</td>
-      <td>Available</td>
-      <td>RM5</td>
-    </tr>`;
+  function parseOfficialResults(html) {
+    const documentResult = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    const table = documentResult.querySelector('table#example');
+    if (!table) return [];
+    return Array.from(table.querySelectorAll('tr')).map((row) => {
+      const cells = Array.from(row.querySelectorAll('td'));
+      if (cells.length < 7) return null;
+      const paNo = cells[1]?.textContent.trim().toUpperCase() || '';
+      const viewPaTrigger = row.querySelector('[onclick*="PelanAkuiDetail"]');
+      const viewPaMatch = String(viewPaTrigger?.getAttribute('onclick') || '').match(/createModal\(\s*['"]([^'"]+)['"]/i);
+      return {
+        paNo,
+        negeri: cells[2]?.textContent.trim() || '',
+        daerah: cells[3]?.textContent.trim() || '',
+        mukim: cells[4]?.textContent.trim() || '',
+        seksyen: cells[5]?.textContent.trim() || '',
+        viewPaUrl: absoluteJupemUrl(viewPaMatch?.[1])
+      };
+    }).filter((record) => record && /^PA\d+$/i.test(record.paNo));
+  }
+
+  async function fetchOfficialResults(number, stateCode, signal) {
+    const body = new URLSearchParams({
+      negeri: String(Number(stateCode)),
+      noPa: number,
+      cetak: '0'
+    });
+    const response = await fetch(JUPEM_SEARCH_URL, {
+      method: 'POST',
+      cache: 'no-store',
+      mode: 'cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+      signal
+    });
+    if (!response.ok) throw new Error(`JUPEM returned HTTP ${response.status}.`);
+    return parseOfficialResults(await response.text());
+  }
+
+  function clearResults() {
+    allRows = [];
+    filteredRows = [];
+    currentPage = 1;
+    resultWrap.hidden = true;
+    resultsBody.innerHTML = '';
+    pagination.hidden = true;
+    pagination.innerHTML = '';
+    generalEl.value = '';
+    generalEl.disabled = true;
+  }
+
+  function renderPagination(totalPages) {
+    if (totalPages <= 1) {
+      pagination.hidden = true;
+      pagination.innerHTML = '';
+      return;
+    }
+    const buttons = [];
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-pa-page="first" ${currentPage === 1 ? 'disabled' : ''}>&lt;&lt;</button>`);
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-pa-page="prev" ${currentPage === 1 ? 'disabled' : ''}>P</button>`);
+    let start = Math.max(1, currentPage - 4);
+    let end = Math.min(totalPages, start + 9);
+    start = Math.max(1, end - 9);
+    for (let page = start; page <= end; page += 1) {
+      buttons.push(`<button class="benchmark-page-btn${page === currentPage ? ' is-active' : ''}" type="button" data-pa-page="${page}">${page}</button>`);
+    }
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-pa-page="next" ${currentPage === totalPages ? 'disabled' : ''}>N</button>`);
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-pa-page="last" ${currentPage === totalPages ? 'disabled' : ''}>&gt;&gt;</button>`);
+    pagination.hidden = false;
+    pagination.innerHTML = buttons.join('');
+  }
+
+  function renderResults(page) {
+    if (!filteredRows.length) {
+      resultsBody.innerHTML = '';
+      resultWrap.hidden = true;
+      renderPagination(1);
+      return;
+    }
+    const totalPages = Math.max(1, Math.ceil(filteredRows.length / ROWS_PER_PAGE));
+    currentPage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    const selectedState = String(stateEl.value || '').trim().toUpperCase();
+    resultsBody.innerHTML = filteredRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((row, index) => {
+      const itemCode = row.paNo.replace(/^PA/i, '');
+      const record = {
+        productType: 'PA',
+        itemCode,
+        negeri: selectedState,
+        amount: 5,
+        downloadUrl: buildDownloadUrl(row.paNo, selectedState),
+        filename: `${row.paNo}.pdf`,
+        azobssCartValidated: true,
+        azobssCartValidatedBy: 'jupem-pa-search'
+      };
+      return `<tr>
+        <td>${startIndex + index + 1}</td>
+        <td><button class="btn blue" type="button" data-pa-search-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;">Add to Cart</button></td>
+        <td><strong>${escapeHtml(row.paNo)}</strong></td>
+        <td>${escapeHtml(row.negeri || '-')}</td>
+        <td>${escapeHtml(row.daerah || '-')}</td>
+        <td>${escapeHtml(row.mukim || '-')}</td>
+        <td>${escapeHtml(row.seksyen || '-')}</td>
+        <td>${row.viewPaUrl ? `<a class="btn blue" href="${escapeHtml(row.viewPaUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;text-decoration:none;border-radius:8px;white-space:nowrap;">View PA</a>` : '-'}</td>
+        <td>RM5</td>
+      </tr>`;
+    }).join('');
     resultWrap.hidden = false;
+    renderPagination(totalPages);
+  }
+
+  function updateStatus() {
+    if (!statusEl) return;
+    const query = normalize(generalEl.value);
+    statusEl.textContent = query
+      ? `${filteredRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} PA records found`
+      : `${allRows.length.toLocaleString('en-MY')} PA records found`;
+  }
+
+  function applyGeneralFilter() {
+    const query = normalize(generalEl.value);
+    filteredRows = !query ? allRows.slice() : allRows.filter((record) => [
+      record.paNo, record.negeri, record.daerah, record.mukim, record.seksyen
+    ].some((value) => normalize(value).includes(query)));
+    renderResults(1);
+    updateStatus();
   }
 
   async function search(event) {
     if (event) event.preventDefault();
     const number = cleanNumber(inputEl.value);
     const state = String(stateEl.value || '').trim().toUpperCase();
+    const stateCode = JUPEM_STATE_CODES[state] || '';
     if (errorEl) {
       errorEl.textContent = '';
       errorEl.removeAttribute('style');
@@ -79,29 +215,27 @@
     if (statusEl) statusEl.textContent = '';
     clearResults();
 
-    if (!state) {
-      if (errorEl) errorEl.textContent = 'Select a state before searching.';
+    if (!state || !stateCode) {
+      if (errorEl) errorEl.textContent = 'Select a supported state before searching.';
       return;
     }
-    if (!number) {
-      if (errorEl) errorEl.textContent = 'Enter a PA number before searching.';
+    if (number.length < 3) {
+      if (errorEl) errorEl.textContent = 'Enter at least 3 digits of a PA number.';
       return;
     }
 
-    const urls = buildUrls(number, state);
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 90000);
     searchButton.disabled = true;
-    if (statusEl) statusEl.textContent = `Searching for PA${number}...`;
+    if (statusEl) statusEl.textContent = `Searching for PA ${number}...`;
     try {
-      const response = await fetch(urls.checkUrl, { cache: 'no-store', signal: controller.signal });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data || data.ok !== true) {
-        if (statusEl) statusEl.textContent = 'No PA record found';
-        return;
-      }
-      renderResult(number, state, urls.downloadUrl);
-      if (statusEl) statusEl.textContent = '1 PA record found';
+      allRows = await fetchOfficialResults(number, stateCode, controller.signal);
+      filteredRows = allRows.slice();
+      generalEl.disabled = !allRows.length;
+      renderResults(1);
+      if (statusEl) statusEl.textContent = allRows.length
+        ? `${allRows.length.toLocaleString('en-MY')} PA records found`
+        : 'No PA record found';
     } catch (error) {
       if (errorEl) {
         errorEl.textContent = error && error.name === 'AbortError'
@@ -116,6 +250,10 @@
   }
 
   form.addEventListener('submit', search);
+  generalEl.addEventListener('input', applyGeneralFilter);
+  generalEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') event.preventDefault();
+  });
   stateEl.addEventListener('change', () => {
     clearResults();
     if (errorEl) errorEl.textContent = '';
@@ -125,6 +263,20 @@
     clearResults();
     if (errorEl) errorEl.textContent = '';
     if (statusEl) statusEl.textContent = '';
+  });
+
+  pagination.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-pa-page]');
+    if (!button || button.disabled) return;
+    const totalPages = Math.max(1, Math.ceil(filteredRows.length / ROWS_PER_PAGE));
+    const target = button.dataset.paPage;
+    if (target === 'first') currentPage = 1;
+    else if (target === 'prev') currentPage -= 1;
+    else if (target === 'next') currentPage += 1;
+    else if (target === 'last') currentPage = totalPages;
+    else currentPage = Number(target) || currentPage;
+    renderResults(currentPage);
+    resultWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
 
   resultsBody.addEventListener('click', async (event) => {
