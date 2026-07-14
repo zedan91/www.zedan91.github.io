@@ -108,6 +108,14 @@
     let allRows = [];
     let filteredRows = [];
     let currentPage = 1;
+    const lotSorter = window.azobssTableSort && window.azobssTableSort.create({
+      root: resultWrap,
+      attribute: 'data-lot-sort',
+      onChange: () => {
+        filteredRows = lotSorter.sort(filteredRows);
+        renderResults(1);
+      }
+    });
 
     function clearResults() {
       allRows = [];
@@ -148,6 +156,7 @@
     }
 
     function renderResults(page) {
+      if (lotSorter) filteredRows = lotSorter.sort(filteredRows);
       if (!filteredRows.length) {
         resultsBody.innerHTML = '';
         resultWrap.hidden = true;
@@ -212,6 +221,7 @@
         } catch (officialError) {
           allRows = await fetchFallbackResults(productCode, state, lotNo, controller.signal);
         }
+        allRows = allRows.map((record, index) => ({ ...record, _sourceIndex: index }));
         filteredRows = allRows.slice();
         generalEl.disabled = !allRows.length;
         renderResults(1);

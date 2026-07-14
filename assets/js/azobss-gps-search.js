@@ -18,6 +18,14 @@
   let allRows = [];
   let matchingRows = [];
   let currentPage = 1;
+  const gpsSorter = window.azobssTableSort && window.azobssTableSort.create({
+    root: resultWrap,
+    attribute: 'data-gps-sort',
+    onChange: () => {
+      matchingRows = gpsSorter.sort(matchingRows);
+      renderResults(1);
+    }
+  });
 
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -77,6 +85,7 @@
   }
 
   function renderResults(page) {
+    if (gpsSorter) matchingRows = gpsSorter.sort(matchingRows);
     const totalPages = Math.max(1, Math.ceil(matchingRows.length / ROWS_PER_PAGE));
     currentPage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
     if (!matchingRows.length) {
@@ -94,7 +103,7 @@
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
-        <td><button class="btn blue" type="button" data-gps-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;">Add to Cart</button></td>
+        <td class="pabm-action-cell"><button class="btn blue" type="button" data-gps-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;white-space:nowrap;">Add to Cart</button></td>
         <td><strong>${escapeHtml(record.stationNo || '-')}</strong></td>
         <td>${escapeHtml(record.negeri || '-')}</td>
         <td>${escapeHtml(record.daerah || '-')}</td>
@@ -150,7 +159,7 @@
         if (!query) return true;
         return [record.stationNo, record.daerah, record.tempat]
           .some((value) => normalize(value).includes(query));
-      });
+      }).map((record, index) => ({ ...record, _sourceIndex: index, harga: 9 }));
       matchingRows = allRows.slice();
       generalEl.disabled = !allRows.length;
       renderResults(1);

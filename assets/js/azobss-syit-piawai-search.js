@@ -18,6 +18,14 @@
   let allRows = [];
   let matchingRows = [];
   let currentPage = 1;
+  const syitSorter = window.azobssTableSort && window.azobssTableSort.create({
+    root: resultWrap,
+    attribute: 'data-syit-sort',
+    onChange: () => {
+      matchingRows = syitSorter.sort(matchingRows);
+      renderResults(1);
+    }
+  });
 
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -141,6 +149,7 @@
   }
 
   function renderResults(page) {
+    if (syitSorter) matchingRows = syitSorter.sort(matchingRows);
     const totalPages = Math.max(1, Math.ceil(matchingRows.length / ROWS_PER_PAGE));
     currentPage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
     if (!matchingRows.length) {
@@ -158,7 +167,7 @@
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
-        <td><button class="btn blue" type="button" data-syit-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;">Add to Cart</button></td>
+        <td class="pabm-action-cell"><button class="btn blue" type="button" data-syit-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;white-space:nowrap;">Add to Cart</button></td>
         <td><strong>${escapeHtml(record.sheetName || '-')}</strong></td>
         <td>${escapeHtml(record.negeri || '-')}</td>
         <td><button class="btn blue" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" style="padding:6px 10px;font-size:12px;margin:0;border-radius:8px;">View Sheet</button></td>
@@ -212,7 +221,7 @@
         if (String(record.negeri || '').trim().toUpperCase() !== selectedState) return false;
         if (!query) return true;
         return normalize(record.sheetName).includes(query) || normalize(record.productId).includes(query);
-      });
+      }).map((record, index) => ({ ...record, _sourceIndex: index, harga: 7 }));
       matchingRows = allRows.slice();
       generalEl.disabled = !allRows.length;
       renderResults(1);

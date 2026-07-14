@@ -1718,6 +1718,15 @@
       font-size: 13px;
     }
 
+    .benchmark-table.pabm-results-table {
+      min-width: 920px;
+      table-layout: fixed;
+    }
+
+    .benchmark-table.pabm-wide-results-table {
+      min-width: 1080px;
+    }
+
     .benchmark-table th,
     .benchmark-table td {
       padding: 10px 9px;
@@ -1731,6 +1740,51 @@
       color: #93c5fd;
       font-size: 12px;
       text-transform: uppercase;
+    }
+
+    .benchmark-table .pabm-index-col {
+      width: 54px;
+    }
+
+    .benchmark-table .pabm-action-col,
+    .benchmark-table .pabm-action-cell {
+      width: 112px;
+      min-width: 112px;
+      max-width: 112px;
+    }
+
+    .benchmark-table .pabm-action-col {
+      white-space: nowrap;
+    }
+
+    .benchmark-table .pabm-code-col {
+      width: 112px;
+    }
+
+    .benchmark-table .pabm-view-col {
+      width: 94px;
+    }
+
+    .benchmark-table .pabm-price-col {
+      width: 76px;
+    }
+
+    .benchmark-table .pabm-action-cell > .btn,
+    .benchmark-table .pabm-action-cell > button {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 92px !important;
+      min-width: 92px !important;
+      max-width: 92px !important;
+      height: 34px !important;
+      min-height: 34px !important;
+      max-height: 34px !important;
+      padding: 6px 8px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+      overflow: hidden;
     }
 
     .pa-sort-button {
@@ -1747,6 +1801,7 @@
       text-align: left;
       text-transform: inherit;
       cursor: pointer;
+      white-space: nowrap;
     }
 
     .pa-sort-button:hover,
@@ -8636,18 +8691,18 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-status" id="paStatus"></p>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
 <div class="benchmark-result-wrap" hidden="" id="paResultWrap">
-<table class="benchmark-table">
+<table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
-<th aria-sort="ascending"><button class="pa-sort-button" data-pa-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th>ADD TO CART</th>
-<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="paNo" type="button"><span>PA NUMBER</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-pa-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col">ADD TO CART</th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-pa-sort="paNo" type="button"><span>PA NUMBER</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="mukim" type="button"><span>MUKIM</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="seksyen" type="button"><span>SECTION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th>VIEW PA</th>
-<th>PRICE</th>
+<th class="pabm-view-col">VIEW PA</th>
+<th class="pabm-price-col">PRICE</th>
 </tr>
 </thead>
 <tbody id="paResultsBody"></tbody>
@@ -8705,17 +8760,17 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-status" id="benchmarkStatus"></p>
 <div class="benchmark-actions" style="display:none;"></div>
 <div class="benchmark-result-wrap" hidden="" id="benchmarkResultWrap">
-<table class="benchmark-table">
+<table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
-<th>NO.</th>
-<th>ADD TO CART</th>
-<th>NO. STESEN</th>
-<th>NEGERI</th>
-<th>DAERAH</th>
-<th>BANDAR</th>
-<th>HURAIAN</th>
-<th>HARGA</th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-benchmark-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col">ADD TO CART</th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-benchmark-sort="stationNo" type="button"><span>NO. STESEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-benchmark-sort="harga" type="button"><span>HARGA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 </tr>
 </thead>
 <tbody id="benchmarkResultsBody"></tbody>
@@ -8744,8 +8799,16 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-error" data-lot-error=""></p>
 <p class="request-status" data-lot-status="" id="lotKadasterStatus"></p>
 <div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
-<table class="benchmark-table">
-<thead><tr><th>NO.</th><th>LOT NO.</th><th>PA NO.</th><th>STATE</th><th>DISTRICT</th><th>MUKIM / BANDAR</th><th>SECTION</th><th>VIEW PA</th><th>VIEW MAP</th></tr></thead>
+<table class="benchmark-table pabm-results-table pabm-wide-results-table">
+<thead><tr>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-lot-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="lotNo" type="button"><span>LOT NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="paNo" type="button"><span>PA NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="mukim" type="button"><span>MUKIM / BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="seksyen" type="button"><span>SECTION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-view-col">VIEW PA</th><th class="pabm-view-col">VIEW MAP</th></tr></thead>
 <tbody data-lot-results=""></tbody>
 </table>
 </div>
@@ -8770,17 +8833,17 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-error" id="gpsSearchError"></p>
 <p class="request-status" id="gpsSearchStatus"></p>
 <div class="benchmark-result-wrap" hidden="" id="gpsResultWrap">
-<table class="benchmark-table">
+<table class="benchmark-table pabm-results-table">
 <thead>
 <tr>
-<th>NO.</th>
-<th>ADD TO CART</th>
-<th>STATION NO.</th>
-<th>STATE</th>
-<th>DISTRICT</th>
-<th>LOCATION</th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-gps-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col">ADD TO CART</th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-gps-sort="stationNo" type="button"><span>STATION NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-gps-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-gps-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>LOCATION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th>MAP</th>
-<th>PRICE</th>
+<th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-gps-sort="harga" type="button"><span>PRICE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 </tr>
 </thead>
 <tbody id="gpsResultsBody"></tbody>
@@ -8806,8 +8869,16 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-error" data-lot-error=""></p>
 <p class="request-status" data-lot-status=""></p>
 <div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
-<table class="benchmark-table">
-<thead><tr><th>NO.</th><th>LOT NO.</th><th>PA NO.</th><th>STATE</th><th>DISTRICT</th><th>MUKIM / BANDAR</th><th>SECTION</th><th>VIEW PA</th><th>VIEW MAP</th></tr></thead>
+<table class="benchmark-table pabm-results-table pabm-wide-results-table">
+<thead><tr>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-lot-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="lotNo" type="button"><span>LOT NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="paNo" type="button"><span>PA NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="mukim" type="button"><span>MUKIM / BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="seksyen" type="button"><span>SECTION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-view-col">VIEW PA</th><th class="pabm-view-col">VIEW MAP</th></tr></thead>
 <tbody data-lot-results=""></tbody>
 </table>
 </div>
@@ -8832,16 +8903,16 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="request-error" id="syitPiawaiError"></p>
 <p class="request-status" id="syitPiawaiStatus"></p>
 <div class="benchmark-result-wrap" hidden="" id="syitPiawaiResultWrap">
-<table class="benchmark-table">
+<table class="benchmark-table pabm-results-table">
 <thead>
 <tr>
-<th>NO.</th>
-<th>ADD TO CART</th>
-<th>SHEET NAME</th>
-<th>STATE</th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-syit-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col">ADD TO CART</th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-syit-sort="sheetName" type="button"><span>SHEET NAME</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-syit-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th>VIEW SHEET</th>
 <th>MAP</th>
-<th>PRICE</th>
+<th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-syit-sort="harga" type="button"><span>PRICE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 </tr>
 </thead>
 <tbody id="syitPiawaiResultsBody"></tbody>
@@ -10161,6 +10232,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   window.azobssRefreshAffiliateProducts = initAffiliateFinal;
 })();
 </script>
+<script src="/assets/js/azobss-table-sort.js?v=1"></script>
 <script>
 (function(){
   const CART_KEY = 'azobss_benchmark_cart_v1';
@@ -10338,7 +10410,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   function renderResults(rows, page){
     if (!resultsBody || !resultsWrap) return;
 
-    benchmarkLastRows = Array.isArray(rows) ? rows : [];
+    benchmarkLastRows = benchmarkSorter
+      ? benchmarkSorter.sort(Array.isArray(rows) ? rows : [])
+      : (Array.isArray(rows) ? rows : []);
     benchmarkCurrentPage = Number(page) || 1;
 
     if (!benchmarkLastRows.length) {
@@ -10365,13 +10439,13 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       const downloadUrl = productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''; // always use backend link
 
       const downloadButton = downloadUrl
-        ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download" style="padding:6px 12px;font-size:12px;margin:0;display:inline-block;white-space:normal;text-decoration:none;border-radius:8px;">Add to Cart</button>`
+        ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download" style="padding:6px 12px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">Add to Cart</button>`
         : '-';
 
       return `
         <tr>
           <td>${startIndex + index + 1}</td>
-          <td>${downloadButton}</td>
+          <td class="pabm-action-cell">${downloadButton}</td>
           <td><strong>${esc(row.stationNo || row.stesen || '-')}</strong></td>
           <td>${esc(row.negeri || '-')}</td>
           <td>${esc(row.daerah || '-')}</td>
@@ -10422,6 +10496,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   let benchmarkLastRows = [];
   const benchmarkRowsPerPage = 5;
   const benchmarkPagination = document.getElementById('benchmarkPagination');
+  const benchmarkSorter = window.azobssTableSort && window.azobssTableSort.create({
+    root: resultsWrap,
+    attribute: 'data-benchmark-sort',
+    onChange: function(){
+      benchmarkLastRows = benchmarkSorter.sort(benchmarkLastRows);
+      renderResults(benchmarkLastRows, 1);
+    }
+  });
 
   function normalizeBenchmarkText(value){
     return String(value || '')
@@ -10533,7 +10615,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     if (searchBtn) searchBtn.disabled = true;
     try {
       const db = await loadBenchmarkDb();
-      const rows = searchBenchmarkDb(db);
+      const rows = searchBenchmarkDb(db).map(function(row, index){
+        return { ...row, _sourceIndex: index };
+      });
       benchmarkAllRows = rows.slice();
       if (generalSearchEl) {
         generalSearchEl.value = '';
@@ -14978,10 +15062,10 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=5"></script>
-<script src="/assets/js/azobss-pa-search.js?v=4" defer></script>
-<script src="/assets/js/azobss-lot-kadaster-search.js?v=3" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=2" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=3" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=5" defer></script>
+<script src="/assets/js/azobss-lot-kadaster-search.js?v=4" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=3" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=4" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>
