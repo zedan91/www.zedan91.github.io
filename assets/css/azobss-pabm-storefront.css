@@ -5,6 +5,13 @@ body.pa-bm-page #request {
   padding: 0;
 }
 
+body.pa-bm-page .pabm-store-note {
+  margin: 0 0 10px;
+  color: #aebdd0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 body.pa-bm-page .pa-bm-tabs {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
