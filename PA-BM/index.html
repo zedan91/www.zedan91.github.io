@@ -1785,7 +1785,8 @@
       display: none !important;
     }
 
-    .has-pa-access #paForm {
+    .has-pa-access #paForm,
+    .has-pa-access #paSearchForm {
       display: grid !important;
     }
 
@@ -3223,7 +3224,8 @@ body:not(.is-admin) .affiliate-card-admin-actions{
 
 
 /* FINAL Download PA button layout */
-#downloadTifButton.download-pdf-btn{
+#downloadTifButton.download-pdf-btn,
+#paSearchButton.download-pdf-btn{
   position: relative !important;
   display: flex !important;
   align-items: center;
@@ -3237,14 +3239,16 @@ body:not(.is-admin) .affiliate-card-admin-actions{
   font-weight: 800 !important;
 }
 
-#downloadTifButton .download-pa-main{
+#downloadTifButton .download-pa-main,
+#paSearchButton .download-pa-main{
   flex: 1 1 auto;
   min-width: 0;
   text-align: center;
   line-height: 1.15;
 }
 
-#downloadTifButton .pdf-price-tag{
+#downloadTifButton .pdf-price-tag,
+#paSearchButton .pdf-price-tag{
   flex: 0 0 auto;
   font-size: 18px;
   font-weight: 800;
@@ -3255,7 +3259,8 @@ body:not(.is-admin) .affiliate-card-admin-actions{
 }
 
 @media(max-width:560px){
-  #downloadTifButton.download-pdf-btn{
+  #downloadTifButton.download-pdf-btn,
+  #paSearchButton.download-pdf-btn{
     flex-direction: column;
     gap: 4px;
     min-height: 76px;
@@ -3263,18 +3268,21 @@ body:not(.is-admin) .affiliate-card-admin-actions{
     font-size: 20px !important;
   }
 
-  #downloadTifButton .pdf-price-tag{
+  #downloadTifButton .pdf-price-tag,
+  #paSearchButton .pdf-price-tag{
     font-size: 16px;
     line-height: 1.1;
   }
 }
 
 @media(max-width:360px){
-  #downloadTifButton.download-pdf-btn{
+  #downloadTifButton.download-pdf-btn,
+  #paSearchButton.download-pdf-btn{
     font-size: 18px !important;
   }
 
-  #downloadTifButton .pdf-price-tag{
+  #downloadTifButton .pdf-price-tag,
+  #paSearchButton .pdf-price-tag{
     font-size: 15px;
   }
 }
@@ -6950,6 +6958,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 body:not(.has-pa-access) main,
 body:not(.has-pa-access) .pa-section,
 body:not(.has-pa-access) #paForm,
+body:not(.has-pa-access) #paSearchForm,
 body:not(.has-pa-access) #adminPurchasePanel{display:none!important;}
 
 
@@ -8551,7 +8560,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div class="pa-bm-panel is-active" data-pa-bm-panel="pa">
 <div class="pabm-product-heading"><div><h3>Pelan Akui (PA)</h3></div><strong>RM5 / document</strong></div>
 <p class="login-info" id="loginInfo"></p>
-<form action="" class="request-form" id="paForm" onsubmit="return azobssDirectPaDownload(event);">
+<form class="request-form" id="paSearchForm">
 <label for="negeri">
           <span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
           <select id="negeri" required="">
@@ -8577,23 +8586,30 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </label>
 <label for="paNumber">
           <span class="pabm-field-title"><span class="pabm-step">2</span>PA Number</span>
-          <input id="paNumber" inputmode="numeric" placeholder="Example: 2131" required="" type="text"/>
+          <input id="paNumber" inputmode="numeric" placeholder="Example: 2131" required="" type="search"/>
 </label>
 <p class="request-error" id="paError"></p>
-<button class="btn blue download-pdf-btn" id="downloadTifButton" onclick="return azobssDirectPaDownload(event);" type="button">
-<span class="download-pa-main">Add PA to Cart</span>
+<button class="btn blue download-pdf-btn" id="paSearchButton" type="submit">
+<span class="download-pa-main">Search PA</span>
 <span class="pdf-price-tag">RM5</span>
 </button>
-<div hidden="" id="downloadResultActions">
-<button class="btn" id="confirmDownloadButton" type="button">
-            Successful Download
-          </button>
-<button class="btn orange" id="failedDownloadButton" type="button">
-            Failed Download
-          </button>
-</div>
 <p class="request-status" id="paStatus"></p>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
+<div class="benchmark-result-wrap" hidden="" id="paResultWrap">
+<table class="benchmark-table">
+<thead>
+<tr>
+<th>NO.</th>
+<th>ADD TO CART</th>
+<th>PA NUMBER</th>
+<th>STATE</th>
+<th>STATUS</th>
+<th>PRICE</th>
+</tr>
+</thead>
+<tbody id="paResultsBody"></tbody>
+</table>
+</div>
 </form>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="bm-sbm">
@@ -14856,6 +14872,7 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=4"></script>
+<script src="/assets/js/azobss-pa-search.js?v=1" defer></script>
 <script src="/assets/js/azobss-gps-search.js?v=1" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=2" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
