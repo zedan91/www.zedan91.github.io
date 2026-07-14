@@ -8729,10 +8729,27 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <label for="syitPiawaiReference"><span class="pabm-field-title"><span class="pabm-step">2</span>Sheet Name / Product ID</span>
 <input id="syitPiawaiReference" placeholder="Example: 70C" type="search"/>
 </label>
-<button class="btn blue pabm-add-product-button" data-input-id="syitPiawaiReference" data-pabm-product-add="" data-product-type="SYIT_PIAWAI" data-state-id="syitPiawaiState" type="button"><span>Add Sheet to Cart</span><span class="pabm-button-price">RM7</span></button>
+<button class="btn blue pabm-add-product-button" id="syitPiawaiSearchButton" type="button"><span>Search Sheet</span><span class="pabm-button-price">RM7</span></button>
 </div>
-<p class="request-error"></p>
-<p class="request-status">Sheet image price: RM7 per document.</p>
+<p class="request-error" id="syitPiawaiError"></p>
+<p class="request-status" id="syitPiawaiStatus"></p>
+<div class="benchmark-result-wrap" hidden="" id="syitPiawaiResultWrap">
+<table class="benchmark-table">
+<thead>
+<tr>
+<th>NO.</th>
+<th>ADD TO CART</th>
+<th>SHEET NAME</th>
+<th>STATE</th>
+<th>PRODUCT ID</th>
+<th>MAP</th>
+<th>PRICE</th>
+</tr>
+</thead>
+<tbody id="syitPiawaiResultsBody"></tbody>
+</table>
+</div>
+<div class="benchmark-pagination" hidden="" id="syitPiawaiPagination"></div>
 </div>
 </div>
 <aside class="pabm-cart-panel" aria-labelledby="pabmCartTitle">
@@ -14821,6 +14838,7 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=4"></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=1" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>
