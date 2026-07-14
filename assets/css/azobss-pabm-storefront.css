@@ -1,36 +1,8 @@
 body.pa-bm-page #request {
   width: min(1280px, calc(100% - 32px));
   max-width: none;
-  margin: 28px auto 56px;
+  margin: 10px auto 56px;
   padding: 0;
-}
-
-body.pa-bm-page .pabm-store-heading {
-  max-width: 760px;
-  margin-bottom: 18px;
-}
-
-body.pa-bm-page .pabm-store-kicker {
-  display: inline-block;
-  margin-bottom: 7px;
-  color: #facc15;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0;
-}
-
-body.pa-bm-page .pabm-store-heading h2 {
-  margin: 0 0 8px;
-  color: #f8fafc;
-  font-size: 30px;
-  line-height: 1.2;
-}
-
-body.pa-bm-page .pabm-store-heading p {
-  margin: 0;
-  color: #aebdd0;
-  font-size: 15px;
-  line-height: 1.55;
 }
 
 body.pa-bm-page .pa-bm-tabs {
@@ -517,7 +489,7 @@ body.pa-bm-page #adminPurchasePanel {
 @media (max-width: 640px) {
   body.pa-bm-page #request {
     width: calc(100% - 20px);
-    margin-top: 18px;
+    margin-top: 10px;
   }
 
   body.pa-bm-page .pabm-store-heading h2 {
