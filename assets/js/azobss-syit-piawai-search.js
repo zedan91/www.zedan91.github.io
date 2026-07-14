@@ -1,19 +1,21 @@
 (function () {
   'use strict';
 
-  const ROWS_PER_PAGE = 3;
+  const ROWS_PER_PAGE = 5;
   const DATA_URL = '/lembar-piawai-records.json';
   const stateEl = document.getElementById('syitPiawaiState');
   const inputEl = document.getElementById('syitPiawaiReference');
+  const generalEl = document.getElementById('syitPiawaiGeneralSearch');
   const searchButton = document.getElementById('syitPiawaiSearchButton');
   const errorEl = document.getElementById('syitPiawaiError');
   const statusEl = document.getElementById('syitPiawaiStatus');
   const resultWrap = document.getElementById('syitPiawaiResultWrap');
   const resultsBody = document.getElementById('syitPiawaiResultsBody');
   const pagination = document.getElementById('syitPiawaiPagination');
-  if (!stateEl || !inputEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
+  if (!stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
 
   let recordsCache = null;
+  let allRows = [];
   let matchingRows = [];
   let currentPage = 1;
 
@@ -167,6 +169,32 @@
     renderPagination(totalPages);
   }
 
+  function clearResults() {
+    allRows = [];
+    matchingRows = [];
+    currentPage = 1;
+    generalEl.value = '';
+    generalEl.disabled = true;
+    renderResults(1);
+  }
+
+  function updateStatus() {
+    if (!statusEl) return;
+    const query = normalize(generalEl.value);
+    statusEl.textContent = query
+      ? `${matchingRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} Syit Piawai records found`
+      : `${allRows.length.toLocaleString('en-MY')} Syit Piawai records found`;
+  }
+
+  function applyGeneralFilter() {
+    const query = normalize(generalEl.value);
+    matchingRows = !query ? allRows.slice() : allRows.filter((record) => [
+      record.sheetName, record.productId, record.negeri
+    ].some((value) => normalize(value).includes(query)));
+    renderResults(1);
+    updateStatus();
+  }
+
   async function search() {
     const selectedState = String(stateEl.value || '').trim().toUpperCase();
     const query = normalize(inputEl.value);
@@ -180,20 +208,21 @@
     if (statusEl) statusEl.textContent = 'Searching Syit Piawai database...';
     try {
       const records = await loadRecords();
-      matchingRows = records.filter((record) => {
+      allRows = records.filter((record) => {
         if (String(record.negeri || '').trim().toUpperCase() !== selectedState) return false;
         if (!query) return true;
         return normalize(record.sheetName).includes(query) || normalize(record.productId).includes(query);
       });
+      matchingRows = allRows.slice();
+      generalEl.disabled = !allRows.length;
       renderResults(1);
       if (statusEl) {
-        statusEl.textContent = matchingRows.length
-          ? `${matchingRows.length.toLocaleString('en-MY')} Syit Piawai record found`
+        statusEl.textContent = allRows.length
+          ? `${allRows.length.toLocaleString('en-MY')} Syit Piawai records found`
           : 'No Syit Piawai record found';
       }
     } catch (error) {
-      matchingRows = [];
-      renderResults(1);
+      clearResults();
       if (errorEl) errorEl.textContent = error.message || 'Syit Piawai search failed.';
       if (statusEl) statusEl.textContent = '';
     } finally {
@@ -202,14 +231,22 @@
   }
 
   searchButton.addEventListener('click', search);
+  generalEl.addEventListener('input', applyGeneralFilter);
+  generalEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') event.preventDefault();
+  });
   inputEl.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
     search();
   });
   stateEl.addEventListener('change', () => {
-    matchingRows = [];
-    renderResults(1);
+    clearResults();
+    if (errorEl) errorEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+  });
+  inputEl.addEventListener('input', () => {
+    clearResults();
     if (errorEl) errorEl.textContent = '';
     if (statusEl) statusEl.textContent = '';
   });

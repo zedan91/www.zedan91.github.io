@@ -8657,6 +8657,10 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
             <input id="benchmarkSearch" placeholder="Example: 0109 / H 0109" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" id="benchmarkSearchButton" type="submit"><span id="benchmarkSearchButtonLabel">Search BM</span><span class="pabm-button-price">RM3</span></button>
+<label for="benchmarkGeneralSearch">
+            <span class="pabm-field-title">General Search</span>
+            <input disabled="" id="benchmarkGeneralSearch" placeholder="Station / District / Town / Description" type="search"/>
+</label>
 </form>
 <p class="request-error" id="benchmarkError"></p>
 <p class="request-status" id="benchmarkStatus"></p>
@@ -8720,6 +8724,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <input id="gpsStation" placeholder="Example: GP00" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" id="gpsSearchButton" type="button"><span>Search GPS</span><span class="pabm-button-price">RM9</span></button>
+<label for="gpsGeneralSearch"><span class="pabm-field-title">General Search</span>
+<input disabled="" id="gpsGeneralSearch" placeholder="Station / District / Location" type="search"/>
+</label>
 </div>
 <p class="request-error" id="gpsSearchError"></p>
 <p class="request-status" id="gpsSearchStatus"></p>
@@ -8779,6 +8786,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <input id="syitPiawaiReference" placeholder="Example: 70C" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" id="syitPiawaiSearchButton" type="button"><span>Search Sheet</span><span class="pabm-button-price">RM7</span></button>
+<label for="syitPiawaiGeneralSearch"><span class="pabm-field-title">General Search</span>
+<input disabled="" id="syitPiawaiGeneralSearch" placeholder="Sheet Name / Product ID / State" type="search"/>
+</label>
 </div>
 <p class="request-error" id="syitPiawaiError"></p>
 <p class="request-status" id="syitPiawaiStatus"></p>
@@ -10118,6 +10128,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   const productEl = document.getElementById('benchmarkProduct');
   const stateEl = document.getElementById('benchmarkState');
   const searchEl = document.getElementById('benchmarkSearch');
+  const generalSearchEl = document.getElementById('benchmarkGeneralSearch');
   const searchBtn = document.getElementById('benchmarkSearchButton');
   const statusEl = document.getElementById('benchmarkStatus');
   const errorEl = document.getElementById('benchmarkError');
@@ -10367,8 +10378,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 
   let benchmarkDbCache = null;
   let benchmarkCurrentPage = 1;
+  let benchmarkAllRows = [];
   let benchmarkLastRows = [];
-  const benchmarkRowsPerPage = 3;
+  const benchmarkRowsPerPage = 5;
   const benchmarkPagination = document.getElementById('benchmarkPagination');
 
   function normalizeBenchmarkText(value){
@@ -10446,6 +10458,30 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     }).slice(0, 50).map(toBenchmarkRow);
   }
 
+  function resetBenchmarkResults(){
+    benchmarkAllRows = [];
+    renderResults([], 1);
+    if (generalSearchEl) {
+      generalSearchEl.value = '';
+      generalSearchEl.disabled = true;
+    }
+  }
+
+  function applyBenchmarkGeneralFilter(){
+    if (!generalSearchEl) return;
+    const query = normalizeBenchmarkText(generalSearchEl.value);
+    const rows = !query ? benchmarkAllRows.slice() : benchmarkAllRows.filter(function(item){
+      return [item.stationNo, item.stesen, item.negeri, item.daerah, item.bandar, item.huraian, item.productId]
+        .some(function(value){ return normalizeBenchmarkText(value).includes(query); });
+    });
+    renderResults(rows, 1);
+    if (statusEl) {
+      statusEl.textContent = query
+        ? `${rows.length} of ${benchmarkAllRows.length} BM/SBM records found`
+        : `${benchmarkAllRows.length} BM/SBM records found`;
+    }
+  }
+
   form.addEventListener('submit', async function(event){
     event.preventDefault();
     updateOpenEbizLink();
@@ -10458,20 +10494,32 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     try {
       const db = await loadBenchmarkDb();
       const rows = searchBenchmarkDb(db);
+      benchmarkAllRows = rows.slice();
+      if (generalSearchEl) {
+        generalSearchEl.value = '';
+        generalSearchEl.disabled = !rows.length;
+      }
       renderResults(rows, 1);
       if (statusEl) {
         statusEl.textContent = rows.length
-          ? `${rows.length} BM/SBM record found`
+          ? `${rows.length} BM/SBM records found`
           : 'No BM/SBM record found';
       }
     } catch (error) {
-      renderResults([]);
+      resetBenchmarkResults();
       if (errorEl) errorEl.textContent = error.message || 'BM/SBM search failed.';
       if (statusEl) statusEl.textContent = 'Search gagal. Pastikan /stesen-tanda-aras-records.json ada dalam GitHub root.';
     } finally {
       if (searchBtn) searchBtn.disabled = false;
     }
   });
+
+  if (generalSearchEl) {
+    generalSearchEl.addEventListener('input', applyBenchmarkGeneralFilter);
+    generalSearchEl.addEventListener('keydown', function(event){
+      if (event.key === 'Enter') event.preventDefault();
+    });
+  }
 
   document.addEventListener('click', function(event){
     const benchmarkDownload = event.target.closest('[data-benchmark-record]');
@@ -10568,6 +10616,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     stateEl.addEventListener(evt, updateOpenEbizLink);
     searchEl.addEventListener(evt, updateOpenEbizLink);
   });
+  productEl.addEventListener('change', resetBenchmarkResults);
+  stateEl.addEventListener('change', resetBenchmarkResults);
+  searchEl.addEventListener('input', resetBenchmarkResults);
 
   updateOpenEbizLink();
   renderCart();
@@ -14889,8 +14940,8 @@ body:not(.pa-bm-page) button{
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=4"></script>
 <script src="/assets/js/azobss-pa-search.js?v=2" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=3" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=1" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=2" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=2" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=3" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>

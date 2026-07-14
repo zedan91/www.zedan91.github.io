@@ -1,19 +1,21 @@
 (function () {
   'use strict';
 
-  const ROWS_PER_PAGE = 3;
+  const ROWS_PER_PAGE = 5;
   const DATA_URL = '/stesen-gps-records.json';
   const stateEl = document.getElementById('gpsState');
   const inputEl = document.getElementById('gpsStation');
+  const generalEl = document.getElementById('gpsGeneralSearch');
   const searchButton = document.getElementById('gpsSearchButton');
   const errorEl = document.getElementById('gpsSearchError');
   const statusEl = document.getElementById('gpsSearchStatus');
   const resultWrap = document.getElementById('gpsResultWrap');
   const resultsBody = document.getElementById('gpsResultsBody');
   const pagination = document.getElementById('gpsPagination');
-  if (!stateEl || !inputEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
+  if (!stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
 
   let recordsCache = null;
+  let allRows = [];
   let matchingRows = [];
   let currentPage = 1;
 
@@ -104,6 +106,32 @@
     renderPagination(totalPages);
   }
 
+  function clearResults() {
+    allRows = [];
+    matchingRows = [];
+    currentPage = 1;
+    generalEl.value = '';
+    generalEl.disabled = true;
+    renderResults(1);
+  }
+
+  function updateStatus() {
+    if (!statusEl) return;
+    const query = normalize(generalEl.value);
+    statusEl.textContent = query
+      ? `${matchingRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} GPS station records found`
+      : `${allRows.length.toLocaleString('en-MY')} GPS station records found`;
+  }
+
+  function applyGeneralFilter() {
+    const query = normalize(generalEl.value);
+    matchingRows = !query ? allRows.slice() : allRows.filter((record) => [
+      record.stationNo, record.negeri, record.daerah, record.tempat, record.productId
+    ].some((value) => normalize(value).includes(query)));
+    renderResults(1);
+    updateStatus();
+  }
+
   async function search() {
     const selectedState = String(stateEl.value || '').trim().toUpperCase();
     const query = normalize(inputEl.value);
@@ -117,21 +145,22 @@
     if (statusEl) statusEl.textContent = 'Searching GPS station database...';
     try {
       const records = await loadRecords();
-      matchingRows = records.filter((record) => {
+      allRows = records.filter((record) => {
         if (String(record.negeri || '').trim().toUpperCase() !== selectedState) return false;
         if (!query) return true;
         return [record.stationNo, record.daerah, record.tempat]
           .some((value) => normalize(value).includes(query));
       });
+      matchingRows = allRows.slice();
+      generalEl.disabled = !allRows.length;
       renderResults(1);
       if (statusEl) {
-        statusEl.textContent = matchingRows.length
-          ? `${matchingRows.length.toLocaleString('en-MY')} GPS station record found`
+        statusEl.textContent = allRows.length
+          ? `${allRows.length.toLocaleString('en-MY')} GPS station records found`
           : 'No GPS station record found';
       }
     } catch (error) {
-      matchingRows = [];
-      renderResults(1);
+      clearResults();
       if (errorEl) errorEl.textContent = error.message || 'GPS station search failed.';
       if (statusEl) statusEl.textContent = '';
     } finally {
@@ -140,14 +169,22 @@
   }
 
   searchButton.addEventListener('click', search);
+  generalEl.addEventListener('input', applyGeneralFilter);
+  generalEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') event.preventDefault();
+  });
   inputEl.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
     search();
   });
   stateEl.addEventListener('change', () => {
-    matchingRows = [];
-    renderResults(1);
+    clearResults();
+    if (errorEl) errorEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+  });
+  inputEl.addEventListener('input', () => {
+    clearResults();
     if (errorEl) errorEl.textContent = '';
     if (statusEl) statusEl.textContent = '';
   });
