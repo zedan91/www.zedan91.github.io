@@ -3500,6 +3500,11 @@ async function azobssResetCurrentPurchaseTotalAfterPaid(orderId){
 
 function azobssShowPaBmPaymentSuccessPopup(){
   try{
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
+    if(typeof window.azobssShowPaBmPaymentSuccessPopup === 'function'){
+      window.azobssShowPaBmPaymentSuccessPopup();
+      return;
+    }
     let modal = document.getElementById('azobssPaBmPaymentSuccessModal');
     if(!modal){
       modal = document.createElement('div');
