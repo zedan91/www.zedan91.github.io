@@ -3084,10 +3084,39 @@ function azobssPaidStatus(value) {
   return ["paid", "success", "completed", "settled"].includes(String(value || "").trim().toLowerCase());
 }
 function azobssPaBmRecordType(record) {
-  return String(record && (record.productType || record.product || record.type) || "").trim().toUpperCase();
+  const raw = String(record && (record.productType || record.product || record.type) || "").trim().toUpperCase();
+  const compact = raw.replace(/[\s-]+/g, "_");
+  if (["SYIT_PIAWAI", "SYIT_PIAWAI_(GAMBAR)", "SYIT_PIAWAI_GAMBAR"].includes(compact)) return "SYIT_PIAWAI";
+  if (["NDCDB_C3", "LOT_KADASTER_BERDIGIT_C3"].includes(compact)) return "NDCDB_C3";
+  if (["NDCDB", "LOT_KADASTER_BERDIGIT"].includes(compact)) return "NDCDB";
+  return compact;
 }
 function azobssPaBmRecordCode(record) {
   return String(record && (record.itemCode || record.pa || record.noPA || record.stesen || record.stationNo || record.code) || "").trim().toUpperCase();
+}
+
+function azobssSafeJupemDownloadUrl(rawUrl, productType) {
+  const raw = String(rawUrl || "").trim();
+  if (!raw) return "";
+  const type = azobssPaBmRecordType({ productType });
+  const allowedPaths = {
+    PA: ["/MuatTurunPembelian/MuatTurunPelanAkui"],
+    BM: ["/MuatTurunPembelian/MuatTurunStesenTandaAras/"],
+    SBM: ["/MuatTurunPembelian/MuatTurunStesenTandaAras/"],
+    GPS: ["/MuatTurunPembelian/MuatTurunStesenGPS/"],
+    SYIT_PIAWAI: ["/MuatTurunPembelian/MuatTurunLembarPiawai/"],
+    NDCDB: ["/MuatTurunPembelian/MuatTurunLotKadasterBerdigitCrop/"],
+    NDCDB_C3: ["/MuatTurunPembelian/MuatTurunLotKadasterBerdigitCropc3/"]
+  };
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:" || url.hostname.toLowerCase() !== "ebiz.jupem.gov.my") return "";
+    const prefixes = allowedPaths[type] || [];
+    if (!prefixes.some(prefix => url.pathname.startsWith(prefix))) return "";
+    return url.href;
+  } catch (_error) {
+    return "";
+  }
 }
 function azobssFirestoreMs(value) {
   if (!value) return 0;
@@ -3411,6 +3440,7 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
       stationNo: String(item.stationNo || "") || undefined,
       jenis: String(item.jenis || "") || undefined,
       filename: String(item.filename || "") || undefined,
+      downloadUrl: azobssSafeJupemDownloadUrl(item.downloadUrl || item.url, item.productType || item.product) || undefined,
       variant: String(item.variant || item.areaSize || "").toUpperCase() || undefined
     };
     Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
@@ -3633,6 +3663,7 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
       stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
       jenis: productType === "SBM" ? "2" : "1",
       filename: cleanPremiumText(rawItem.filename || "", 180),
+      downloadUrl: azobssSafeJupemDownloadUrl(rawItem.downloadUrl || rawItem.url, productType),
       createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
     });
   }
@@ -6016,6 +6047,113 @@ async function azobssFetchValidFileCandidates(candidates, label) {
   return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
 }
 
+function azobssBufferIsPdf(buffer) {
+  return Buffer.isBuffer(buffer) && buffer.length >= 5 && buffer.slice(0, 5).toString("ascii") === "%PDF-";
+}
+
+function azobssBufferIsTiff(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 4) return false;
+  return (buffer[0] === 0x49 && buffer[1] === 0x49 && buffer[2] === 0x2a && buffer[3] === 0x00)
+    || (buffer[0] === 0x4d && buffer[1] === 0x4d && buffer[2] === 0x00 && buffer[3] === 0x2a);
+}
+
+function azobssBufferIsPng(buffer) {
+  return Buffer.isBuffer(buffer) && buffer.length >= 8
+    && buffer.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+}
+
+function azobssBufferIsJpeg(buffer) {
+  return Buffer.isBuffer(buffer) && buffer.length >= 3
+    && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+}
+
+function azobssBufferIsZip(buffer) {
+  return Buffer.isBuffer(buffer) && buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4b
+    && ((buffer[2] === 0x03 && buffer[3] === 0x04)
+      || (buffer[2] === 0x05 && buffer[3] === 0x06)
+      || (buffer[2] === 0x07 && buffer[3] === 0x08));
+}
+
+function azobssBufferIsConvertibleImage(buffer) {
+  return azobssBufferIsTiff(buffer) || azobssBufferIsPng(buffer) || azobssBufferIsJpeg(buffer);
+}
+
+const azobssPaidIndexCache = new Map();
+function azobssReadPaidIndex(filename) {
+  if (azobssPaidIndexCache.has(filename)) return azobssPaidIndexCache.get(filename);
+  try {
+    const rows = JSON.parse(fs.readFileSync(path.join(__dirname, filename), "utf8"));
+    const safeRows = Array.isArray(rows) ? rows : [];
+    azobssPaidIndexCache.set(filename, safeRows);
+    return safeRows;
+  } catch (error) {
+    console.warn("AZOBSS paid index could not be read:", filename, error && (error.message || error));
+    return [];
+  }
+}
+
+function azobssFindGpsRecordForPurchase(record) {
+  const code = String(record && (record.stationNo || record.itemCode || record.code) || "").trim().toUpperCase();
+  const productId = String(record && (record.productId || record.id) || "").trim();
+  const state = String(record && (record.negeri || record.state) || "").trim().toUpperCase();
+  return azobssReadPaidIndex("stesen-gps-records.json").find((row) => {
+    const codeOk = code && String(row.stationNo || row.itemCode || "").trim().toUpperCase() === code;
+    const idOk = productId && String(row.productId || row.id || "").trim() === productId;
+    const stateOk = !state || String(row.negeri || row.state || "").trim().toUpperCase() === state;
+    return stateOk && (codeOk || idOk);
+  }) || null;
+}
+
+function azobssBuildGpsDownloadCandidates(record) {
+  const local = azobssFindGpsRecordForPurchase(record) || {};
+  const code = String(record && (record.stationNo || record.itemCode || record.code) || local.stationNo || "").trim().toUpperCase();
+  return azobssUnique([
+    azobssSafeJupemDownloadUrl(record && (record.downloadUrl || record.url), "GPS"),
+    azobssSafeJupemDownloadUrl(local.downloadUrl || local.url, "GPS"),
+    code ? `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunStesenGPS/${encodeURIComponent(code)}` : ""
+  ]);
+}
+
+async function azobssFetchGpsRecordFile(record) {
+  return await azobssFetchValidFileCandidates(azobssBuildGpsDownloadCandidates(record), "GPS");
+}
+
+function azobssFindSyitRecordForPurchase(record) {
+  const sheetName = String(record && (record.itemCode || record.sheetName || record.code) || "").trim().toUpperCase();
+  const productId = String(record && (record.productId || record.id) || "").trim();
+  const state = String(record && (record.negeri || record.state) || "").trim().toUpperCase();
+  return azobssReadPaidIndex("lembar-piawai-records.json").find((row) => {
+    const nameOk = sheetName && String(row.sheetName || row.itemCode || "").trim().toUpperCase() === sheetName;
+    const idOk = productId && String(row.productId || row.id || "").trim() === productId;
+    const stateOk = !state || String(row.negeri || row.state || "").trim().toUpperCase() === state;
+    return stateOk && (nameOk || idOk);
+  }) || null;
+}
+
+function azobssBuildSyitDownloadCandidates(record) {
+  const local = azobssFindSyitRecordForPurchase(record) || {};
+  const productId = String(record && (record.productId || record.id) || local.productId || local.id || "").trim();
+  const sheetName = String(record && (record.itemCode || record.sheetName || record.code) || local.sheetName || "").trim().toUpperCase();
+  const negeri = String(record && (record.negeri || record.state) || local.negeri || "").trim().toUpperCase();
+  const direct = productId && sheetName && negeri
+    ? `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunLembarPiawai/${encodeURIComponent(productId)}?piawai=${encodeURIComponent(sheetName + "_20200904")}&negeri=${encodeURIComponent(negeri)}`
+    : "";
+  return azobssUnique([
+    azobssSafeJupemDownloadUrl(record && (record.downloadUrl || record.url), "SYIT_PIAWAI"),
+    direct
+  ]);
+}
+
+async function azobssFetchSyitRecordFile(record) {
+  return await azobssFetchValidFileCandidates(azobssBuildSyitDownloadCandidates(record), "Syit Piawai");
+}
+
+function azobssBuildLotDownloadCandidates(record, type) {
+  return azobssUnique([
+    azobssSafeJupemDownloadUrl(record && (record.downloadUrl || record.url), type)
+  ]);
+}
+
 function azobssBuildBmDownloadCandidates(record) {
   const local = azobssFindStesenRecordForPurchase(record) || {};
   const rawUrls = azobssUnique([
@@ -7042,6 +7180,7 @@ async function handler(req, res) {
             stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
             jenis: productType === "SBM" ? "2" : "1",
             filename: cleanPremiumText(rawItem.filename || "", 180),
+            downloadUrl: azobssSafeJupemDownloadUrl(rawItem.downloadUrl || rawItem.url, productType),
             createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
           });
         }
@@ -9079,7 +9218,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     if (!itemCode || !negeri) return azobssPaBmDownloadError(res, 400, "Invalid PA record.");
 
     const paResult = await azobssFetchPaRecordFile(record, itemCode, negeri);
-    if (!paResult || !paResult.validFile || !paResult.buffer || !paResult.buffer.length) {
+    if (!paResult || !paResult.validFile || !azobssBufferIsConvertibleImage(paResult.buffer)) {
       const fallbackUrl = azobssFirstPaFallbackUrl(record, itemCode, negeri);
       const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`);
       if (fallbackSent) return;
@@ -9094,6 +9233,9 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       console.error("PA controlled PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
       return azobssPaBmDownloadError(res, 500, "PA PDF conversion failed.");
     }
+    if (!azobssBufferIsPdf(pdfBuffer)) {
+      return azobssPaBmDownloadError(res, 500, "PA PDF conversion produced an invalid file. Your download quota was not used.");
+    }
 
     try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
 
@@ -9104,6 +9246,88 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     }));
     res.end(pdfBuffer);
     return;
+  }
+
+  if (type === "GPS") {
+    let gpsResult;
+    try {
+      gpsResult = await azobssFetchGpsRecordFile(record);
+    } catch (fetchError) {
+      console.error("GPS controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+    }
+    if (!gpsResult || !gpsResult.validFile || !azobssBufferIsPdf(gpsResult.buffer)) {
+      return azobssPaBmDownloadError(res, 502, "GPS PDF is temporarily unavailable from JUPEM. Please try again in a moment. Your download quota was not used.");
+    }
+
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    const safeCode = String(code || record.stationNo || record.itemCode || "GPS").replace(/[^A-Z0-9_-]/gi, "-");
+    res.writeHead(200, azSecurityHeaders({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${safeCode}.pdf"`,
+      "Access-Control-Expose-Headers": "Content-Disposition"
+    }));
+    res.end(gpsResult.buffer);
+    return;
+  }
+
+  if (type === "SYIT_PIAWAI") {
+    let syitResult;
+    try {
+      syitResult = await azobssFetchSyitRecordFile(record);
+    } catch (fetchError) {
+      console.error("Syit Piawai controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+    }
+    if (!syitResult || !syitResult.validFile || (!azobssBufferIsPdf(syitResult.buffer) && !azobssBufferIsConvertibleImage(syitResult.buffer))) {
+      return azobssPaBmDownloadError(res, 502, "Syit Piawai source image is temporarily unavailable from JUPEM. Please try again in a moment. Your download quota was not used.");
+    }
+
+    const safeCode = String(code || record.itemCode || record.productId || "Syit-Piawai").replace(/[^A-Z0-9_-]/gi, "-");
+    let syitPdf = syitResult.buffer;
+    if (!azobssBufferIsPdf(syitPdf)) {
+      try {
+        syitPdf = await convertTifBufferToPdfBuffer(syitResult.buffer, safeCode);
+      } catch (convertError) {
+        console.error("Syit Piawai PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
+        return azobssPaBmDownloadError(res, 500, "Syit Piawai PDF conversion failed. Your download quota was not used.");
+      }
+    }
+    if (!azobssBufferIsPdf(syitPdf)) {
+      return azobssPaBmDownloadError(res, 500, "Syit Piawai conversion produced an invalid PDF. Your download quota was not used.");
+    }
+
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    res.writeHead(200, azSecurityHeaders({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${safeCode}.pdf"`,
+      "Access-Control-Expose-Headers": "Content-Disposition"
+    }));
+    res.end(syitPdf);
+    return;
+  }
+
+  if (type === "NDCDB" || type === "NDCDB_C3") {
+    let lotResult;
+    try {
+      lotResult = await azobssFetchValidFileCandidates(azobssBuildLotDownloadCandidates(record, type), type);
+    } catch (fetchError) {
+      console.error(type + " controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+    }
+    if (!lotResult || !lotResult.validFile || !azobssBufferIsZip(lotResult.buffer)) {
+      return azobssPaBmDownloadError(res, 502, "Lot Kadaster source ZIP is not available for this purchase. Your download quota was not used.");
+    }
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    const safeCode = String(code || record.itemCode || type).replace(/[^A-Z0-9_-]/gi, "-");
+    res.writeHead(200, azSecurityHeaders({
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${type}-${safeCode}.zip"`,
+      "Access-Control-Expose-Headers": "Content-Disposition"
+    }));
+    res.end(lotResult.buffer);
+    return;
+  }
+
+  if (type !== "BM" && type !== "SBM") {
+    return azobssPaBmDownloadError(res, 400, "Unsupported JUPEM document category. Your download quota was not used.");
   }
 
   // Rebuild BM/SBM candidates from the paid record + local stesen JSON.
@@ -9119,22 +9343,21 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
-  if (!bmResult || !bmResult.validFile || !bmResult.buffer || !bmResult.buffer.length) {
+  if (!bmResult || !bmResult.validFile || !azobssBufferIsPdf(bmResult.buffer)) {
     const fallbackUrl = azobssFirstBmFallbackUrl(record);
     const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
     if (fallbackSent) return;
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
-  const bmResponse = bmResult.response;
   const bmBuffer = bmResult.buffer;
 
   try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
 
-  const contentType = bmResponse.headers.get("content-type") || "application/octet-stream";
+  const contentType = "application/pdf";
   const productType = String(record.productType || record.product || type || "BM").trim().toUpperCase();
   const safeCode = String(code || record.itemCode || record.stesen || "download").replace(/[^A-Z0-9_-]/gi, "-");
-  const ext = contentType.includes("pdf") ? "pdf" : (contentType.includes("zip") ? "zip" : (contentType.includes("tif") ? "tif" : "dat"));
+  const ext = "pdf";
   const safePrefix = productType === "SBM" ? "SBM" : "BM";
 
   res.writeHead(200, azSecurityHeaders({
