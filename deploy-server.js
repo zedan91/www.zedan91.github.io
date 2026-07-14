@@ -3372,6 +3372,7 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     if (!itemCode) return [];
     const productType = String(item && (item.productType || item.product) || "").trim().toUpperCase();
     const negeri = String(item && (item.negeri || item.state) || "").trim().toUpperCase();
+    const variant = String(item && (item.variant || item.areaSize) || "").trim().toUpperCase();
     const uid = String(order.user && order.user.uid || order.uid || "").trim();
     const usernameKey = String(order.user && (order.user.username || order.user.usernameKey) || order.usernameKey || "").trim().toLowerCase();
     try {
@@ -3381,12 +3382,14 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
         const x = docSnap.data() || {};
         const xType = String(x.productType || x.product || "").trim().toUpperCase();
         const xNegeri = String(x.negeri || x.state || "").trim().toUpperCase();
+        const xVariant = String(x.variant || x.areaSize || "").trim().toUpperCase();
         const xUid = String(x.uid || "").trim();
         const xUsername = String(x.usernameKey || x.username || "").trim().toLowerCase();
         const userOk = (uid && xUid === uid) || (usernameKey && xUsername === usernameKey) || (!uid && !usernameKey);
         const typeOk = !productType || !xType || xType === productType;
         const negeriOk = !negeri || !xNegeri || xNegeri === negeri;
-        if (userOk && typeOk && negeriOk) matches.push(docSnap.ref);
+        const variantOk = !variant || !xVariant || xVariant === variant;
+        if (userOk && typeOk && negeriOk && variantOk) matches.push(docSnap.ref);
       });
       return matches.slice(0, 1);
     } catch (err) {
@@ -3407,7 +3410,8 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
       productId: String(item.productId || "") || undefined,
       stationNo: String(item.stationNo || "") || undefined,
       jenis: String(item.jenis || "") || undefined,
-      filename: String(item.filename || "") || undefined
+      filename: String(item.filename || "") || undefined,
+      variant: String(item.variant || item.areaSize || "").toUpperCase() || undefined
     };
     Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
     if (!refs.length) {
@@ -6678,13 +6682,14 @@ async function handler(req, res) {
           "PULAU PINANG","SABAH","SARAWAK","SELANGOR","TERENGGANU",
           "WILAYAH PERSEKUTUAN KUALA LUMPUR","WILAYAH PERSEKUTUAN LABUAN","WILAYAH PERSEKUTUAN PUTRAJAYA"
         ]);
-        const allowedProductTypes = new Set(["PA","BM","SBM"]);
+        const allowedProductTypes = new Set(["PA","BM","SBM","GPS","NDCDB","NDCDB_C3","SYIT_PIAWAI"]);
+        const areaProductTypes = new Set(["NDCDB","NDCDB_C3"]);
         const seenItems = new Set();
         const items = [];
         for (const rawItem of rawItems) {
           const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
           if (!allowedProductTypes.has(productType)) {
-            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Unsupported PA/BM product type." }, null, 2), "application/json");
+            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Unsupported JUPEM document category." }, null, 2), "application/json");
           }
           const negeri = cleanPremiumText(rawItem.negeri || "", 80).toUpperCase();
           if (!allowedStates.has(negeri)) {
@@ -6695,14 +6700,27 @@ async function handler(req, res) {
           if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) {
             return send(res, 400, JSON.stringify({ ok:false, success:false, error:"A valid document number is required for every cart item." }, null, 2), "application/json");
           }
-          const uniqueKey = `${productType}|${itemCode}|${negeri}`;
+          const variant = areaProductTypes.has(productType)
+            ? cleanPremiumText(rawItem.variant || rawItem.areaSize || "", 30).toUpperCase()
+            : "";
+          if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "QUARTER_SHEET") {
+            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Select either 1 sheet area or 1/4 sheet area." }, null, 2), "application/json");
+          }
+          let amount = 0;
+          if (productType === "PA") amount = 5;
+          else if (productType === "BM" || productType === "SBM") amount = 3;
+          else if (productType === "GPS") amount = 9;
+          else if (productType === "SYIT_PIAWAI") amount = 7;
+          else if (areaProductTypes.has(productType)) amount = variant === "QUARTER_SHEET" ? 15 : 50;
+          const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
           if (seenItems.has(uniqueKey)) continue;
           seenItems.add(uniqueKey);
           items.push({
             productType,
             itemCode,
             negeri,
-            amount: productType === "PA" ? 5 : 3,
+            amount,
+            variant,
             productId: cleanPremiumText(rawItem.productId || "", 120),
             stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
             jenis: productType === "SBM" ? "2" : "1",
@@ -6710,7 +6728,7 @@ async function handler(req, res) {
             createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
           });
         }
-        if (!items.length) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Tiada rekod PA/BM yang sah untuk dibayar." }, null, 2), "application/json");
+        if (!items.length) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"No valid JUPEM documents were found in the cart." }, null, 2), "application/json");
         const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
         if (totalAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Total bayaran tidak sah." }, null, 2), "application/json");
         const amountSen = totalAmount * 100;
@@ -6718,12 +6736,12 @@ async function handler(req, res) {
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
         const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
-        const productName = `PA/BM Purchase Records (${items.length} unit)`;
+        const productName = `JUPEM Document Purchase (${items.length} unit)`;
         const billPayload = {
           userSecretKey: TOYYIB_SECRET_KEY,
           categoryCode: TOYYIB_CATEGORY_CODE,
-          billName: cleanForToyyib("AZOBSS PA BM", 30),
-          billDescription: cleanForToyyib(`AZOBSS PA/BM Payment - ${items.length} unit - RM${totalAmount}`, 100),
+          billName: cleanForToyyib("AZOBSS JUPEM", 30),
+          billDescription: cleanForToyyib(`AZOBSS JUPEM Payment - ${items.length} unit - RM${totalAmount}`, 100),
           billPriceSetting: 1,
           billPayorInfo: 1,
           billAmount: amountSen,
@@ -6736,7 +6754,7 @@ async function handler(req, res) {
           billSplitPayment: 0,
           billSplitPaymentArgs: "",
           billPaymentChannel: 0,
-          billContentEmail: `Thank you for your AZOBSS PA/BM payment. Total: RM${totalAmount}.`,
+          billContentEmail: `Thank you for your AZOBSS JUPEM document payment. Total: RM${totalAmount}.`,
           billChargeToCustomer: 1,
           billExpiryDays: 3,
           enableDuitNowQR: 1,

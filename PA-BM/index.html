@@ -8069,7 +8069,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=2"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=3"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8549,7 +8549,6 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <a class="pa-bm-tab" data-pa-bm-tab="ndcdb" href="/PA-BM/#ndcdb">Lot Kadaster Berdigit</a>
 <a class="pa-bm-tab" data-pa-bm-tab="ndcdb-c3" href="/PA-BM/#ndcdb-c3">NDCDB C3</a>
 <a class="pa-bm-tab" data-pa-bm-tab="syit-piawai" href="/PA-BM/#syit-piawai">Syit Piawai (Gambar)</a>
-<a class="pa-bm-tab" data-pa-bm-tab="custom-url" href="/PA-BM/#custom-url">Custom URL</a>
 </div>
 <div class="pabm-store-layout">
 <div class="card" id="requestCard" style="max-width:700px;margin:auto;">
@@ -8668,13 +8667,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="ndcdb">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Lot Kadaster Berdigit</h3></div><strong>Request quote</strong></div>
-<p class="request-note">Provide the lot, mukim or district reference and select its state.</p>
+<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Lot Kadaster Berdigit</h3></div><strong>RM15 - RM50</strong></div>
+<p class="request-note">Choose one full sheet area or one quarter of a sheet, then enter the lot reference.</p>
 <div class="benchmark-form">
-<label for="lotKadasterSearch">
-            Lot / Mukim / District
-            <input id="lotKadasterSearch" placeholder="Example: Lot 1234 / Mukim / District" type="search"/>
-</label>
 <label for="lotKadasterState">
             Select State
             <select id="lotKadasterState">
@@ -8698,12 +8693,23 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </select>
 <span class="pabm-state-grid" data-state-picker-for="lotKadasterState"></span>
 </label>
-<button class="btn blue pabm-request-button" id="lotKadasterWhatsappButton" type="button" data-category-request="Lot Kadaster Berdigit" data-input-id="lotKadasterSearch" data-state-id="lotKadasterState">Request Quote</button>
+<label for="lotKadasterArea">Area Size
+<select id="lotKadasterArea">
+<option value="FULL_SHEET">1 Sheet Area - RM50</option>
+<option value="QUARTER_SHEET">1/4 Sheet Area - RM15</option>
+</select>
+<span class="pabm-product-switch pabm-area-switch" data-product-picker-for="lotKadasterArea"></span>
+</label>
+<label for="lotKadasterSearch">Lot / Mukim / District
+<input id="lotKadasterSearch" placeholder="Example: Lot 1234 / Mukim / District" type="search"/>
+</label>
+<button class="btn blue pabm-add-product-button" data-input-id="lotKadasterSearch" data-pabm-product-add="" data-product-type="NDCDB" data-state-id="lotKadasterState" data-variant-id="lotKadasterArea" type="button"><span>Add to Cart</span><span class="pabm-button-price">RM50</span></button>
 </div>
-<p class="request-status" id="lotKadasterStatus">Enter the document details to request a quotation.</p>
+<p class="request-error"></p>
+<p class="request-status" id="lotKadasterStatus">Select the area size before adding this document to your cart.</p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="gps">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>GPS Station</h3></div><strong>Request quote</strong></div>
+<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>GPS Station</h3></div><strong>RM9 / document</strong></div>
 <p class="request-note">Enter the GPS station code and select its state.</p>
 <div class="benchmark-form">
 <label for="gpsState">Select State
@@ -8713,27 +8719,36 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <label for="gpsStation">GPS Station
 <input id="gpsStation" placeholder="Example: GP00" type="search"/>
 </label>
-<button class="btn blue pabm-request-button" data-category-request="GPS" data-input-id="gpsStation" data-state-id="gpsState" type="button">Request Quote</button>
+<button class="btn blue pabm-add-product-button" data-input-id="gpsStation" data-pabm-product-add="" data-product-type="GPS" data-state-id="gpsState" type="button"><span>Add GPS to Cart</span><span class="pabm-button-price">RM9</span></button>
 </div>
-<p class="request-status">Enter the GPS station details to request a quotation.</p>
+<p class="request-error"></p>
+<p class="request-status">GPS price: RM9 per document.</p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="ndcdb-c3">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Lot Kadaster Berdigit C3</h3></div><strong>Request quote</strong></div>
-<p class="request-note">Provide the NDCDB C3 download job ID, URL or lot reference.</p>
+<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Lot Kadaster Berdigit C3</h3></div><strong>RM15 - RM50</strong></div>
+<p class="request-note">Choose one full sheet area or one quarter of a sheet, then enter the C3 reference.</p>
 <div class="benchmark-form">
 <label for="ndcdbC3State">Select State
 <select data-copy-states="" id="ndcdbC3State"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="ndcdbC3State"></span>
 </label>
+<label for="ndcdbC3Area">Area Size
+<select id="ndcdbC3Area">
+<option value="FULL_SHEET">1 Sheet Area - RM50</option>
+<option value="QUARTER_SHEET">1/4 Sheet Area - RM15</option>
+</select>
+<span class="pabm-product-switch pabm-area-switch" data-product-picker-for="ndcdbC3Area"></span>
+</label>
 <label for="ndcdbC3Reference">Job ID / Lot Reference
 <input id="ndcdbC3Reference" placeholder="Enter job ID, URL or lot reference" type="search"/>
 </label>
-<button class="btn blue pabm-request-button" data-category-request="NDCDB C3" data-input-id="ndcdbC3Reference" data-state-id="ndcdbC3State" type="button">Request Quote</button>
+<button class="btn blue pabm-add-product-button" data-input-id="ndcdbC3Reference" data-pabm-product-add="" data-product-type="NDCDB_C3" data-state-id="ndcdbC3State" data-variant-id="ndcdbC3Area" type="button"><span>Add to Cart</span><span class="pabm-button-price">RM50</span></button>
 </div>
-<p class="request-status">Enter the NDCDB C3 details to request a quotation.</p>
+<p class="request-error"></p>
+<p class="request-status">Select the area size before adding this document to your cart.</p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="syit-piawai">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Syit Piawai (Gambar)</h3></div><strong>Request quote</strong></div>
+<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Syit Piawai (Gambar)</h3></div><strong>RM7 / document</strong></div>
 <p class="request-note">Enter the sheet name or product ID and select its state.</p>
 <div class="benchmark-form">
 <label for="syitPiawaiState">Select State
@@ -8743,20 +8758,10 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <label for="syitPiawaiReference">Sheet Name / Product ID
 <input id="syitPiawaiReference" placeholder="Example: 70C_20200904 or 42464661" type="search"/>
 </label>
-<button class="btn blue pabm-request-button" data-category-request="Syit Piawai (Gambar)" data-input-id="syitPiawaiReference" data-state-id="syitPiawaiState" type="button">Request Quote</button>
+<button class="btn blue pabm-add-product-button" data-input-id="syitPiawaiReference" data-pabm-product-add="" data-product-type="SYIT_PIAWAI" data-state-id="syitPiawaiState" type="button"><span>Add Sheet to Cart</span><span class="pabm-button-price">RM7</span></button>
 </div>
-<p class="request-status">Enter the sheet details to request a quotation.</p>
-</div>
-<div class="pa-bm-panel" data-pa-bm-panel="custom-url">
-<div class="pabm-product-heading"><div><span class="pabm-step">1</span><h3>Custom URL</h3></div><strong>Request quote</strong></div>
-<p class="request-note">Paste a JUPEM document URL that is not covered by the categories above.</p>
-<div class="benchmark-form">
-<label for="customJupemUrl">JUPEM URL
-<input id="customJupemUrl" placeholder="https://ebiz.jupem.gov.my/..." type="url"/>
-</label>
-<button class="btn blue pabm-request-button" data-category-request="Custom URL" data-input-id="customJupemUrl" type="button">Request Quote</button>
-</div>
-<p class="request-status">Paste the document URL to request a quotation.</p>
+<p class="request-error"></p>
+<p class="request-status">Sheet image price: RM7 per document.</p>
 </div>
 </div>
 <aside class="pabm-cart-panel" aria-labelledby="pabmCartTitle">
@@ -8794,7 +8799,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div>
 <h3 id="purchasePanelTitle">Purchase Records</h3>
 <p class="request-note" id="purchasePanelNote">
-              Price: RM5 for 1 PA.
+              PA RM5, BM/SBM RM3, GPS RM9, Syit Piawai RM7, Lot Kadaster RM15 or RM50.
             </p>
 <div class="purchase-record-actions">
 <button class="btn blue" id="refreshPurchaseButton" type="button">
@@ -8833,16 +8838,16 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p class="az-download-limit-note">Each paid document can be downloaded up to 5 times and expires after 7 days.</p>
 <div class="user-pa-tools" id="userPaPurchaseTools">
 <label for="userPaPurchaseSearch">
-                  Search PA / BM / SBM / negeri
-                  <input id="userPaPurchaseSearch" placeholder="Search PA, BM/SBM station or state" type="search"/>
+                  Search document / category / state
+                  <input id="userPaPurchaseSearch" placeholder="Search document reference, category or state" type="search"/>
 </label>
 <label for="userPaPurchaseSort">
                   Sort by
                   <select id="userPaPurchaseSort">
 <option value="newest">Newest first</option>
 <option value="oldest">Oldest first</option>
-<option value="paAsc">PA number A-Z</option>
-<option value="paDesc">PA number Z-A</option>
+<option value="paAsc">Document reference A-Z</option>
+<option value="paDesc">Document reference Z-A</option>
 <option value="state">State A-Z</option>
 </select>
 </label>
@@ -9754,7 +9759,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <script>
 /* PA/BM dedicated folder tab paths */
 (function(){
-  const TAB_KEYS = ['pa', 'bm', 'sbm', 'gps', 'ndcdb', 'ndcdb-c3', 'syit-piawai', 'custom-url'];
+  const TAB_KEYS = ['pa', 'bm', 'sbm', 'gps', 'ndcdb', 'ndcdb-c3', 'syit-piawai'];
 
   function getRequestedTab(){
     const hash = String(window.location.hash || '').replace(/^#/, '').toLowerCase();
@@ -9792,30 +9797,12 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     activateTab(getRequestedTab());
   }
 
-  function bindCategoryRequests(){
-    document.querySelectorAll('[data-category-request]').forEach(button => {
-      button.addEventListener('click', () => {
-        const category = button.dataset.categoryRequest || 'JUPEM document';
-        const input = document.getElementById(button.dataset.inputId || '');
-        const state = document.getElementById(button.dataset.stateId || '');
-        const reference = input?.value.trim() || '-';
-        const stateValue = state?.value.trim() || '-';
-        const message = `Hi AZOBSS, I would like to request a quotation.\n\nCategory: ${category}\nReference: ${reference}\nState: ${stateValue}`;
-        window.open(`https://wa.me/60109591012?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
-        const status = button.closest('[data-pa-bm-panel]')?.querySelector('.request-status');
-        if (status) status.textContent = `${category} quotation request opened in WhatsApp.`;
-      });
-    });
-  }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       handleHashChange();
-      bindCategoryRequests();
     });
   } else {
     handleHashChange();
-    bindCategoryRequests();
   }
   window.addEventListener('hashchange', handleHashChange);
 })();
@@ -14956,7 +14943,7 @@ body:not(.pa-bm-page) button{
 </script>
 
 
-<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=2"></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=3"></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>

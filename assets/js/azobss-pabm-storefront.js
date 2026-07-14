@@ -4,6 +4,20 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const MAX_CART_ITEMS = 50;
+const PRODUCT_TYPES = new Set(['PA', 'BM', 'SBM', 'GPS', 'NDCDB', 'NDCDB_C3', 'SYIT_PIAWAI']);
+const PRODUCT_LABELS = {
+  PA: 'PA',
+  BM: 'BM',
+  SBM: 'SBM',
+  GPS: 'GPS',
+  NDCDB: 'Lot Kadaster Berdigit',
+  NDCDB_C3: 'NDCDB C3',
+  SYIT_PIAWAI: 'Syit Piawai (Gambar)'
+};
+const AREA_LABELS = {
+  FULL_SHEET: '1 Sheet Area',
+  QUARTER_SHEET: '1/4 Sheet Area'
+};
 const STATE_LABELS = {
   JOHOR: 'Johor',
   KEDAH: 'Kedah',
@@ -61,14 +75,16 @@ function requireLogin() {
 }
 
 function guardCartAction(event) {
-  const target = event.target.closest('#downloadTifButton, [data-benchmark-record]');
+  const target = event.target.closest('#downloadTifButton, [data-benchmark-record], [data-pabm-product-add]');
   if (!target || (auth && auth.currentUser)) return;
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
   const message = target.id === 'downloadTifButton'
     ? document.getElementById('paError')
-    : document.getElementById('benchmarkError');
+    : target.matches('[data-pabm-product-add]')
+      ? target.closest('[data-pa-bm-panel]')?.querySelector('.request-error')
+      : document.getElementById('benchmarkError');
   if (message) message.textContent = 'Please login before adding an item to your cart.';
   openLogin();
 }
@@ -81,7 +97,8 @@ function escapeHtml(value) {
 
 function normalizeType(value) {
   const type = String(value || 'PA').trim().toUpperCase();
-  return type === 'SBM' ? 'SBM' : type === 'BM' ? 'BM' : 'PA';
+  if (!PRODUCT_TYPES.has(type)) throw new Error('Unsupported document category.');
+  return type;
 }
 
 function normalizeCode(value, type) {
@@ -90,17 +107,37 @@ function normalizeCode(value, type) {
   return raw.replace(/\s+/g, ' ');
 }
 
+function normalizeVariant(value, type) {
+  if (type !== 'NDCDB' && type !== 'NDCDB_C3') return '';
+  const variant = String(value || '').trim().toUpperCase();
+  if (variant !== 'FULL_SHEET' && variant !== 'QUARTER_SHEET') {
+    throw new Error('Select either 1 sheet area or 1/4 sheet area.');
+  }
+  return variant;
+}
+
+function productPrice(type, variant = '') {
+  if (type === 'PA') return 5;
+  if (type === 'BM' || type === 'SBM') return 3;
+  if (type === 'GPS') return 9;
+  if (type === 'SYIT_PIAWAI') return 7;
+  if (type === 'NDCDB' || type === 'NDCDB_C3') return variant === 'QUARTER_SHEET' ? 15 : 50;
+  throw new Error('Unsupported document category.');
+}
+
 function normalizeItem(payload) {
   const type = normalizeType(payload && (payload.productType || payload.product || payload.type));
   const code = normalizeCode(payload && (payload.itemCode || payload.stationNo || payload.stesen || payload.productId || payload.id), type);
   const negeri = String(payload && (payload.negeri || payload.state) || '').trim().toUpperCase();
+  const variant = normalizeVariant(payload && (payload.variant || payload.areaSize), type);
   if (!code || !negeri) throw new Error('Select a state and enter a valid document number.');
   return {
-    id: [type, code, negeri].join('|'),
+    id: [type, code, negeri, variant].filter(Boolean).join('|'),
     productType: type,
     itemCode: code,
     negeri,
-    amount: type === 'PA' ? 5 : 3,
+    variant,
+    amount: productPrice(type, variant),
     productId: String(payload && (payload.productId || payload.id) || '').trim(),
     stationNo: String(payload && (payload.stationNo || payload.stesen) || '').trim().toUpperCase(),
     jenis: String(payload && payload.jenis || (type === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
@@ -153,8 +190,8 @@ function renderCart() {
     list.innerHTML = items.length ? items.map((item, index) => `
       <div class="pabm-cart-item">
         <div>
-          <strong>${escapeHtml(item.productType)} ${escapeHtml(item.itemCode)}</strong>
-          <small>${escapeHtml(STATE_LABELS[item.negeri] || item.negeri)}</small>
+          <strong>${escapeHtml(PRODUCT_LABELS[item.productType] || item.productType)} ${escapeHtml(item.itemCode)}</strong>
+          <small>${escapeHtml(STATE_LABELS[item.negeri] || item.negeri)}${item.variant ? ' &middot; ' + escapeHtml(AREA_LABELS[item.variant] || item.variant) : ''}</small>
         </div>
         <div class="pabm-cart-item-side">
           <span class="pabm-cart-item-price">${formatMoney(item.amount)}</span>
@@ -221,7 +258,7 @@ function setupProductPicker(holder) {
   const select = document.getElementById(holder.dataset.productPickerFor || '');
   if (!select) return;
   holder.innerHTML = Array.from(select.options).map((option) => `
-    <button class="pabm-product-button${select.value === option.value ? ' is-active' : ''}" type="button" data-product-value="${escapeHtml(option.value)}">${escapeHtml(option.value)}</button>
+    <button class="pabm-product-button${select.value === option.value ? ' is-active' : ''}" type="button" data-product-value="${escapeHtml(option.value)}">${escapeHtml(option.textContent || option.value)}</button>
   `).join('');
   holder.addEventListener('click', (event) => {
     const button = event.target.closest('[data-product-value]');
@@ -230,6 +267,44 @@ function setupProductPicker(holder) {
     select.dispatchEvent(new Event('change', { bubbles: true }));
     holder.querySelectorAll('.pabm-product-button').forEach((row) => row.classList.toggle('is-active', row === button));
   });
+}
+
+function updateConfiguredPrice(button) {
+  const type = normalizeType(button.dataset.productType || 'PA');
+  const variantSelect = document.getElementById(button.dataset.variantId || '');
+  const variant = variantSelect ? variantSelect.value : '';
+  const price = productPrice(type, variant);
+  const priceNode = button.querySelector('.pabm-button-price');
+  if (priceNode) priceNode.textContent = formatMoney(price).replace('.00', '');
+}
+
+async function addConfiguredProduct(button) {
+  const panel = button.closest('[data-pa-bm-panel]');
+  const error = panel?.querySelector('.request-error');
+  const status = panel?.querySelector('.request-status');
+  const input = document.getElementById(button.dataset.inputId || '');
+  const state = document.getElementById(button.dataset.stateId || '');
+  const variant = document.getElementById(button.dataset.variantId || '');
+  if (error) error.textContent = '';
+  try {
+    button.disabled = true;
+    const item = await addToStoreCart({
+      productType: button.dataset.productType || '',
+      itemCode: input?.value || '',
+      negeri: state?.value || '',
+      variant: variant?.value || ''
+    });
+    if (status) {
+      status.textContent = item.__azobssAlreadyInCart
+        ? 'This document is already in your cart.'
+        : `${PRODUCT_LABELS[item.productType] || item.productType} added to your cart.`;
+    }
+  } catch (addError) {
+    if (error) error.textContent = addError.message || 'Unable to add this document to your cart.';
+  } finally {
+    button.disabled = false;
+    updateConfiguredPrice(button);
+  }
 }
 
 function checkoutPayload(items) {
@@ -248,6 +323,7 @@ function checkoutPayload(items) {
       jenis: item.jenis,
       downloadUrl: item.downloadUrl,
       filename: item.filename,
+      variant: item.variant,
       createdAtMs: item.addedAtMs
     }))
   };
@@ -332,11 +408,22 @@ function init() {
   hydrateStateSelects();
   document.querySelectorAll('[data-state-picker-for]').forEach(setupStatePicker);
   document.querySelectorAll('[data-product-picker-for]').forEach(setupProductPicker);
+  document.querySelectorAll('[data-pabm-product-add]').forEach((button) => {
+    updateConfiguredPrice(button);
+    const variant = document.getElementById(button.dataset.variantId || '');
+    if (variant) variant.addEventListener('change', () => updateConfiguredPrice(button));
+  });
   bindPaymentButton();
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', (event) => {
+    const addButton = event.target.closest('[data-pabm-product-add]');
+    if (addButton) {
+      event.preventDefault();
+      addConfiguredProduct(addButton);
+      return;
+    }
     const button = event.target.closest('[data-pabm-remove]');
     if (!button) return;
     const items = readCart();

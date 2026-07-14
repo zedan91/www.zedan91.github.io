@@ -35,7 +35,7 @@ body.pa-bm-page .pabm-store-heading p {
 
 body.pa-bm-page .pa-bm-tabs {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
   margin: 0 0 14px;
 }
@@ -206,6 +206,12 @@ body.pa-bm-page .pabm-product-switch {
   gap: 8px;
 }
 
+body.pa-bm-page .pabm-area-switch .pabm-product-button {
+  min-height: 48px;
+  padding: 7px 10px;
+  line-height: 1.25;
+}
+
 body.pa-bm-page .pabm-input-prefix {
   min-height: 46px;
   display: grid;
@@ -253,7 +259,7 @@ body.pa-bm-page a:focus-visible {
 
 body.pa-bm-page #downloadTifButton,
 body.pa-bm-page #benchmarkSearchButton,
-body.pa-bm-page .pabm-request-button {
+body.pa-bm-page .pabm-add-product-button {
   width: 100%;
   min-height: 48px;
   border: 1px solid #4f8cff;
@@ -262,6 +268,23 @@ body.pa-bm-page .pabm-request-button {
   color: #fff;
   font-weight: 900;
   box-shadow: 0 4px 0 #123a8a;
+}
+
+body.pa-bm-page .pabm-add-product-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+body.pa-bm-page .pabm-button-price {
+  min-width: 50px;
+  padding: 6px 9px;
+  border-radius: 4px;
+  background: #facc15;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 body.pa-bm-page #downloadTifButton {
