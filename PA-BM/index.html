@@ -8677,36 +8677,32 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div class="benchmark-cart-list" id="benchmarkCartList" style="display:none;"></div>
 </div>
 </div>
-<div class="pa-bm-panel" data-pa-bm-panel="ndcdb">
+<div class="pa-bm-panel" data-lot-search-panel="" data-pa-bm-panel="ndcdb" data-product-code="1">
 <div class="pabm-product-heading"><div><h3>Lot Kadaster Berdigit</h3></div><strong>RM15 - RM50</strong></div>
 <div class="benchmark-form">
 <label for="lotKadasterState">
             <span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
-            <select id="lotKadasterState">
-<option value="">-- Select State --</option>
-<option value="JOHOR">JOHOR</option>
-<option value="KEDAH">KEDAH</option>
-<option value="KELANTAN">KELANTAN</option>
-<option value="MELAKA">MELAKA</option>
-<option value="NEGERI SEMBILAN">NEGERI SEMBILAN</option>
-<option value="PAHANG">PAHANG</option>
-<option value="PERAK">PERAK</option>
-<option value="PERLIS">PERLIS</option>
-<option value="PULAU PINANG">PULAU PINANG</option>
-<option value="SABAH">SABAH</option>
-<option value="SARAWAK">SARAWAK</option>
-<option value="SELANGOR">SELANGOR</option>
-<option value="TERENGGANU">TERENGGANU</option>
-<option value="WILAYAH PERSEKUTUAN KUALA LUMPUR">WILAYAH PERSEKUTUAN KUALA LUMPUR</option>
-<option value="WILAYAH PERSEKUTUAN LABUAN">WILAYAH PERSEKUTUAN LABUAN</option>
-<option value="WILAYAH PERSEKUTUAN PUTRAJAYA">WILAYAH PERSEKUTUAN PUTRAJAYA</option>
-</select>
+            <select data-copy-states="" data-lot-state="" id="lotKadasterState"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="lotKadasterState"></span>
 </label>
-<button class="pabm-map-button" data-jupem-lot-map="" data-state-id="lotKadasterState" type="button"><span class="pabm-step">2</span>Open Selection Map</button>
+<label><span class="pabm-field-title"><span class="pabm-step">2</span>Lot Number</span>
+<input data-lot-number="" inputmode="text" placeholder="Example: 1122" type="search"/>
+</label>
+<button class="btn blue pabm-add-product-button" data-lot-search="" type="button"><span>Search Lot</span></button>
+<label><span class="pabm-field-title"><span class="pabm-step">3</span>General Search</span>
+<input data-lot-general-search="" disabled="" placeholder="Lot No. / PA No. / District / Mukim / Section" type="search"/>
+</label>
 </div>
-<p class="request-error"></p>
-<p class="request-status" id="lotKadasterStatus"></p>
+<p class="request-error" data-lot-error=""></p>
+<p class="request-status" data-lot-status="" id="lotKadasterStatus"></p>
+<div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
+<table class="benchmark-table">
+<thead><tr><th>NO.</th><th>LOT NO.</th><th>PA NO.</th><th>STATE</th><th>DISTRICT</th><th>MUKIM / BANDAR</th><th>SECTION</th><th>VIEW PA</th><th>VIEW MAP</th></tr></thead>
+<tbody data-lot-results=""></tbody>
+</table>
+</div>
+<div class="benchmark-pagination" data-lot-pagination="" hidden=""></div>
+<button class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="1" data-state-id="lotKadasterState" type="button"><span class="pabm-step">4</span>Open Selection Map</button>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="gps">
 <div class="pabm-product-heading"><div><h3>GPS Station</h3></div><strong>RM9 / document</strong></div>
@@ -8741,17 +8737,31 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <div class="benchmark-pagination" hidden="" id="gpsPagination"></div>
 </div>
-<div class="pa-bm-panel" data-pa-bm-panel="ndcdb-c3">
+<div class="pa-bm-panel" data-lot-search-panel="" data-pa-bm-panel="ndcdb-c3" data-product-code="2">
 <div class="pabm-product-heading"><div><h3>Lot Kadaster Berdigit C3</h3></div><strong>RM15 - RM50</strong></div>
 <div class="benchmark-form">
 <label for="ndcdbC3State"><span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
-<select data-copy-states="" id="ndcdbC3State"><option value="">-- Select State --</option></select>
+<select data-copy-states="" data-lot-state="" id="ndcdbC3State"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="ndcdbC3State"></span>
 </label>
-<button class="pabm-map-button" data-jupem-lot-map="" data-state-id="ndcdbC3State" type="button"><span class="pabm-step">2</span>Open Selection Map</button>
+<label><span class="pabm-field-title"><span class="pabm-step">2</span>Lot Number</span>
+<input data-lot-number="" inputmode="text" placeholder="Example: 1122" type="search"/>
+</label>
+<button class="btn blue pabm-add-product-button" data-lot-search="" type="button"><span>Search Lot</span></button>
+<label><span class="pabm-field-title"><span class="pabm-step">3</span>General Search</span>
+<input data-lot-general-search="" disabled="" placeholder="Lot No. / PA No. / District / Mukim / Section" type="search"/>
+</label>
 </div>
-<p class="request-error"></p>
-<p class="request-status"></p>
+<p class="request-error" data-lot-error=""></p>
+<p class="request-status" data-lot-status=""></p>
+<div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
+<table class="benchmark-table">
+<thead><tr><th>NO.</th><th>LOT NO.</th><th>PA NO.</th><th>STATE</th><th>DISTRICT</th><th>MUKIM / BANDAR</th><th>SECTION</th><th>VIEW PA</th><th>VIEW MAP</th></tr></thead>
+<tbody data-lot-results=""></tbody>
+</table>
+</div>
+<div class="benchmark-pagination" data-lot-pagination="" hidden=""></div>
+<button class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="2" data-state-id="ndcdbC3State" type="button"><span class="pabm-step">4</span>Open Selection Map</button>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="syit-piawai">
 <div class="pabm-product-heading"><div><h3>Syit Piawai (Gambar)</h3></div><strong>RM7 / document</strong></div>
@@ -14873,6 +14883,7 @@ body:not(.pa-bm-page) button{
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=4"></script>
 <script src="/assets/js/azobss-pa-search.js?v=1" defer></script>
+<script src="/assets/js/azobss-lot-kadaster-search.js?v=2" defer></script>
 <script src="/assets/js/azobss-gps-search.js?v=1" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=2" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>

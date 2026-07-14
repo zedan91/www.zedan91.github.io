@@ -5509,6 +5509,151 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback) {
   return rows.slice(0, 60);
 }
 
+const AZOBSS_JUPEM_LOT_STATE_CODES = Object.freeze({
+  JOHOR: "01",
+  KEDAH: "02",
+  KELANTAN: "03",
+  MELAKA: "04",
+  "NEGERI SEMBILAN": "05",
+  PAHANG: "06",
+  "PULAU PINANG": "07",
+  PERAK: "08",
+  PERLIS: "09",
+  SELANGOR: "10",
+  TERENGGANU: "11",
+  SABAH: "12",
+  SARAWAK: "13",
+  "WILAYAH PERSEKUTUAN KUALA LUMPUR": "14",
+  "WILAYAH PERSEKUTUAN LABUAN": "15",
+  "WILAYAH PERSEKUTUAN PUTRAJAYA": "16"
+});
+
+const AZOBSS_JUPEM_LOT_STATE_NAMES = Object.freeze(
+  Object.fromEntries(Object.entries(AZOBSS_JUPEM_LOT_STATE_CODES).map(([name, code]) => [code, name]))
+);
+
+const azobssLotSearchCache = new Map();
+
+function cleanLotProduct(value) {
+  return String(value || "").trim() === "2" || String(value || "").trim().toUpperCase() === "NDCDB_C3" ? "2" : "1";
+}
+
+function cleanLotStateCode(value) {
+  const raw = String(value || "").trim().toUpperCase();
+  if (/^(0[1-9]|1[0-6])$/.test(raw)) return raw;
+  return AZOBSS_JUPEM_LOT_STATE_CODES[cleanState(raw)] || "";
+}
+
+function cleanLotNumber(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9/_-]/g, "")
+    .slice(0, 48);
+}
+
+function extractJupemAttributeUrl(rowHtml, pattern) {
+  const match = String(rowHtml || "").match(pattern);
+  return match && match[1] ? absolutizeJupemUrl(decodeHtmlEntities(match[1])) : "";
+}
+
+function parseJupemLotRows(html, productCode, stateCode) {
+  const tableMatch = String(html || "").match(/<table[^>]+id=["']example["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (!tableMatch) return [];
+  const rows = [];
+  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
+  while ((rowMatch = rowPattern.exec(tableMatch[1]))) {
+    const rowHtml = rowMatch[1];
+    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((match) => stripHtml(match[1]));
+    if (cells.length < 9 || /^no\.?\s*lot$/i.test(cells[1] || "")) continue;
+    const lotNo = String(cells[1] || "").trim();
+    const paNo = String(cells[2] || "").trim().toUpperCase();
+    if (!lotNo || !paNo) continue;
+
+    const viewPaUrl = extractJupemAttributeUrl(
+      rowHtml,
+      /createModal\(\s*["']([^"']*\/Produk\/PelanAkuiDetail\/[^"']+)["']/i
+    );
+    const mapUrl = extractJupemAttributeUrl(
+      rowHtml,
+      /href=["']([^"']*\/PetaInteraktif\?[^"']+)["']/i
+    );
+    const selectionUrl = extractJupemAttributeUrl(
+      rowHtml,
+      /href=["']([^"']*\/Produk\/ExtractLotPage\?[^"']+)["']/i
+    );
+    const objectMatch = (viewPaUrl || mapUrl || selectionUrl).match(/(?:PelanAkuiDetail\/|[?&](?:no|code)=)(\d+)/i);
+
+    rows.push({
+      lotNo,
+      paNo,
+      negeri: String(cells[3] || AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "").replace(/^Negeri\s+/i, "").trim(),
+      daerah: String(cells[4] || "").replace(/^Daerah\s+/i, "").trim(),
+      mukim: String(cells[5] || "").trim(),
+      seksyen: String(cells[6] || "").trim(),
+      objectId: objectMatch ? objectMatch[1] : "",
+      productCode,
+      stateCode,
+      viewPaUrl,
+      mapUrl,
+      selectionUrl
+    });
+  }
+  return rows.slice(0, 500);
+}
+
+async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
+  const cacheKey = [productCode, stateCode, lotNo].join("|");
+  const cached = azobssLotSearchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const sourceUrl = "https://ebiz.jupem.gov.my/Produk/LotKadasterBerdigit";
+  const commonHeaders = azobssJupemBaseHeaders({
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Referer": sourceUrl
+  });
+  const pageResponse = await fetch(sourceUrl, azJupemFetchOptions({
+    redirect: "follow",
+    headers: commonHeaders
+  }));
+  if (!pageResponse.ok) throw new Error(`JUPEM lot search page returned HTTP ${pageResponse.status}.`);
+  const cookie = azobssExtractCookieHeader(pageResponse.headers);
+  const pageHtml = await pageResponse.text();
+  const formMatch = pageHtml.match(/<form[^>]+action=["']\/Produk\/LotKadasterBerdigit["'][\s\S]*?<\/form>/i);
+  const tokenMatch = formMatch && formMatch[0].match(/<input[^>]+name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i);
+  if (!tokenMatch || !tokenMatch[1]) throw new Error("JUPEM lot search token is unavailable.");
+
+  const body = new URLSearchParams({
+    __RequestVerificationToken: decodeHtmlEntities(tokenMatch[1]),
+    produk: productCode,
+    negeri: stateCode,
+    searchString: lotNo
+  });
+  const postHeaders = azobssJupemBaseHeaders({
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Referer": sourceUrl,
+    "Origin": "https://ebiz.jupem.gov.my"
+  });
+  if (cookie) postHeaders.Cookie = cookie;
+  const resultResponse = await fetch(sourceUrl, azJupemFetchOptions({
+    method: "POST",
+    redirect: "follow",
+    headers: postHeaders,
+    body: body.toString()
+  }));
+  if (!resultResponse.ok) throw new Error(`JUPEM lot search returned HTTP ${resultResponse.status}.`);
+  const resultHtml = await resultResponse.text();
+  const value = {
+    sourceUrl,
+    results: parseJupemLotRows(resultHtml, productCode, stateCode)
+  };
+  if (azobssLotSearchCache.size > 120) azobssLotSearchCache.clear();
+  azobssLotSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return value;
+}
+
 function azobssJupemBaseHeaders(extraHeaders = {}) {
   return Object.assign({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
@@ -8315,6 +8460,45 @@ async function handler(req, res) {
       );
     }
 
+
+    // =========================
+    // JUPEM LOT KADASTER SEARCH
+    // =========================
+
+    if (
+      pathname === "/api/search-lot-kadaster" &&
+      req.method === "GET"
+    ) {
+      if (azRateLimitOrSend(req, res, "jupem-lot-search", 30, 60 * 1000)) return;
+      const productCode = cleanLotProduct(parsed.query.produk || parsed.query.product || parsed.query.type);
+      const stateCode = cleanLotStateCode(parsed.query.negeri || parsed.query.state || parsed.query.stateCode);
+      const lotNo = cleanLotNumber(parsed.query.lot || parsed.query.noLot || parsed.query.q);
+      if (!stateCode) {
+        return send(res, 400, JSON.stringify({ ok: false, error: "Missing or unsupported state." }), "application/json");
+      }
+      if (!lotNo) {
+        return send(res, 400, JSON.stringify({ ok: false, error: "Enter a lot number." }), "application/json");
+      }
+      try {
+        const found = await searchJupemLotCadastre(productCode, stateCode, lotNo);
+        return send(res, 200, JSON.stringify({
+          ok: true,
+          productCode,
+          productType: productCode === "2" ? "NDCDB_C3" : "NDCDB",
+          negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
+          stateCode,
+          lotNo,
+          sourceUrl: found.sourceUrl,
+          results: found.results
+        }), "application/json");
+      } catch (error) {
+        console.error("JUPEM lot search failed:", error && (error.stack || error.message || error));
+        return send(res, 502, JSON.stringify({
+          ok: false,
+          error: "JUPEM lot search is temporarily unavailable. Please try again."
+        }), "application/json");
+      }
+    }
 
     // =========================
     // JUPEM STESEN TANDA ARAS SEARCH

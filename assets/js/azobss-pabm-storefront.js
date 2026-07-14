@@ -332,16 +332,17 @@ function openJupemLotMap(button) {
   const state = document.getElementById(button.dataset.stateId || '');
   const stateName = String(state?.value || '').trim().toUpperCase();
   const stateCode = JUPEM_STATE_CODES[stateName] || '';
+  const productCode = String(button.dataset.jupemProduct || '1') === '2' ? '2' : '1';
   if (error) error.textContent = '';
   if (!stateCode) {
     if (error) error.textContent = 'Select a state before opening the selection map.';
     return;
   }
   const params = new URLSearchParams({
-    type: `${stateCode}lot`,
+    type: `${stateCode}lot${productCode === '2' ? 'C3' : ''}`,
     c: 'pl',
     jenis: 'Lot',
-    produk: '1',
+    produk: productCode,
     neg: stateCode
   });
   const popup = window.open(
