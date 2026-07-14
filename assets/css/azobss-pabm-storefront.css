@@ -195,8 +195,10 @@ body.pa-bm-page .pabm-area-switch .pabm-product-button {
 }
 
 body.pa-bm-page .pabm-map-button {
+  position: relative;
   width: 100%;
   min-height: 44px;
+  padding: 7px 44px;
   border: 1px solid #4c6b91;
   border-radius: 6px;
   background: #203451;
@@ -204,6 +206,13 @@ body.pa-bm-page .pabm-map-button {
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 3px 0 #07101d;
+}
+
+body.pa-bm-page .pabm-map-button .pabm-step {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 body.pa-bm-page .pabm-map-button:hover {
