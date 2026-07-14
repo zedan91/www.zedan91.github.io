@@ -1420,9 +1420,12 @@ function getPaMemberCodes(user){
   ].map(normalizePaMemberCode).filter(Boolean);
 }
 function hasPaBmTabAccess(user){
-  // PA/BM is a public storefront. Login is enforced when adding to cart or
-  // starting payment instead of hiding the whole page behind a member code.
-  return true;
+  if (!user) return false;
+  if (isAzobssAdmin(user)) return true;
+  const adminAllowed = getAdminPaBmAllowed(user);
+  if(adminAllowed !== null) return adminAllowed === true;
+  if (getPaBmFlagAllowed(user)) return true;
+  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
 }
 
 function isPaBmProtectedPage(){
@@ -1448,9 +1451,8 @@ function enforcePaBmPageAccess(user, settled){
     if(settled) showMemberLoginRequired();
     return;
   }
-  if(!isPaBmProtectedPage()) return;
-  if(hasPaBmTabAccess(user)) return;
-  if(settled) showPaBmDeniedAndRedirect();
+  // The storefront may still be opened from a direct purchase link. The
+  // PA/BM navigation button itself remains limited by hasPaBmTabAccess().
 }
 function showAccessDeniedMessage(){
   let msg = '';
@@ -4535,7 +4537,7 @@ body{padding-top:58px!important;}
   background:#0e1729!important;border:1px solid rgba(148,163,184,.28)!important;color:#e5e7eb!important;text-shadow:0 1px 8px rgba(0,0,0,.45)!important;
 }
 .market-nav a:hover,.market-icon-btn:hover{color:#14b8a6!important;}
-.market-nav .nav-pa-bm-link[hidden],.market-nav .nav-pa-bm-link.is-hidden,a#paBmNavButton[hidden],a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body:not(.has-pa-access) .market-nav .nav-pa-bm-link,body:not(.has-pa-access) a#paBmNavButton,.market-nav .nav-pa-bm-link[hidden],.market-nav .nav-pa-bm-link.is-hidden,a#paBmNavButton[hidden],a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 .market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;}
 .nav-whatsapp-circle{position:relative!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;box-shadow:0 8px 20px rgba(34,197,94,.25)!important;overflow:visible!important;}
 .nav-whatsapp-circle::before{content:""!important;display:block!important;width:18px!important;height:14px!important;border-radius:999px!important;background:#fff!important;line-height:1!important;}

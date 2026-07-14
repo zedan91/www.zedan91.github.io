@@ -8069,7 +8069,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=3"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=4"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8547,7 +8547,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <a class="pa-bm-tab" data-pa-bm-tab="sbm" href="/PA-BM/#sbm">SBM</a>
 <a class="pa-bm-tab" data-pa-bm-tab="gps" href="/PA-BM/#gps">GPS</a>
 <a class="pa-bm-tab" data-pa-bm-tab="ndcdb" href="/PA-BM/#ndcdb">Lot Kadaster Berdigit</a>
-<a class="pa-bm-tab" data-pa-bm-tab="ndcdb-c3" href="/PA-BM/#ndcdb-c3">NDCDB C3</a>
+<a class="pa-bm-tab" data-pa-bm-tab="ndcdb-c3" href="/PA-BM/#ndcdb-c3">Lot Kadaster Berdigit C3</a>
 <a class="pa-bm-tab" data-pa-bm-tab="syit-piawai" href="/PA-BM/#syit-piawai">Syit Piawai (Gambar)</a>
 </div>
 <div class="pabm-store-layout">
@@ -8693,6 +8693,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </select>
 <span class="pabm-state-grid" data-state-picker-for="lotKadasterState"></span>
 </label>
+<button class="pabm-map-button" data-jupem-lot-map="" data-state-id="lotKadasterState" type="button">Open Selection Map</button>
 <label for="lotKadasterArea">Area Size
 <select id="lotKadasterArea">
 <option value="FULL_SHEET">1 Sheet Area - RM50</option>
@@ -8732,6 +8733,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <select data-copy-states="" id="ndcdbC3State"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="ndcdbC3State"></span>
 </label>
+<button class="pabm-map-button" data-jupem-lot-map="" data-state-id="ndcdbC3State" type="button">Open Selection Map</button>
 <label for="ndcdbC3Area">Area Size
 <select id="ndcdbC3Area">
 <option value="FULL_SHEET">1 Sheet Area - RM50</option>
@@ -12040,7 +12042,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=444" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=444"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=449" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=449"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -14943,7 +14945,7 @@ body:not(.pa-bm-page) button{
 </script>
 
 
-<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=3"></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=4"></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>

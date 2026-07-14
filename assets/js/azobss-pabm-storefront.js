@@ -11,7 +11,7 @@ const PRODUCT_LABELS = {
   SBM: 'SBM',
   GPS: 'GPS',
   NDCDB: 'Lot Kadaster Berdigit',
-  NDCDB_C3: 'NDCDB C3',
+  NDCDB_C3: 'Lot Kadaster Berdigit C3',
   SYIT_PIAWAI: 'Syit Piawai (Gambar)'
 };
 const AREA_LABELS = {
@@ -35,6 +35,24 @@ const STATE_LABELS = {
   'WILAYAH PERSEKUTUAN KUALA LUMPUR': 'W.P. KL',
   'WILAYAH PERSEKUTUAN LABUAN': 'W.P. Labuan',
   'WILAYAH PERSEKUTUAN PUTRAJAYA': 'W.P. Putrajaya'
+};
+const JUPEM_STATE_CODES = {
+  JOHOR: '01',
+  KEDAH: '02',
+  KELANTAN: '03',
+  MELAKA: '04',
+  'NEGERI SEMBILAN': '05',
+  PAHANG: '06',
+  'PULAU PINANG': '07',
+  PERAK: '08',
+  PERLIS: '09',
+  SELANGOR: '10',
+  TERENGGANU: '11',
+  SABAH: '12',
+  SARAWAK: '13',
+  'WILAYAH PERSEKUTUAN KUALA LUMPUR': '14',
+  'WILAYAH PERSEKUTUAN LABUAN': '15',
+  'WILAYAH PERSEKUTUAN PUTRAJAYA': '16'
 };
 
 let auth = null;
@@ -307,6 +325,38 @@ async function addConfiguredProduct(button) {
   }
 }
 
+function openJupemLotMap(button) {
+  const panel = button.closest('[data-pa-bm-panel]');
+  const error = panel?.querySelector('.request-error');
+  const status = panel?.querySelector('.request-status');
+  const state = document.getElementById(button.dataset.stateId || '');
+  const stateName = String(state?.value || '').trim().toUpperCase();
+  const stateCode = JUPEM_STATE_CODES[stateName] || '';
+  if (error) error.textContent = '';
+  if (!stateCode) {
+    if (error) error.textContent = 'Select a state before opening the selection map.';
+    return;
+  }
+  const params = new URLSearchParams({
+    type: `${stateCode}lot`,
+    c: 'pl',
+    jenis: 'Lot',
+    produk: '1',
+    neg: stateCode
+  });
+  const popup = window.open(
+    `https://ebiz.jupem.gov.my/PetaInteraktif?${params.toString()}`,
+    'azobssJupemLotSelection',
+    'popup=yes,width=1200,height=800,resizable=yes,scrollbars=yes'
+  );
+  if (!popup) {
+    if (error) error.textContent = 'Allow popups for AZOBSS, then open the selection map again.';
+    return;
+  }
+  try { popup.focus(); } catch (_) {}
+  if (status) status.textContent = 'JUPEM selection map opened. Your existing JUPEM session will be reused.';
+}
+
 function checkoutPayload(items) {
   const user = savedUser() || {};
   return {
@@ -418,6 +468,12 @@ function init() {
   window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', (event) => {
+    const mapButton = event.target.closest('[data-jupem-lot-map]');
+    if (mapButton) {
+      event.preventDefault();
+      openJupemLotMap(mapButton);
+      return;
+    }
     const addButton = event.target.closest('[data-pabm-product-add]');
     if (addButton) {
       event.preventDefault();
