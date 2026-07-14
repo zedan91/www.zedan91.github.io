@@ -8770,6 +8770,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col">VIEW LOCATION</th>
 <th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-benchmark-sort="harga" type="button"><span>HARGA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 </tr>
 </thead>
@@ -8841,8 +8842,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-gps-sort="stationNo" type="button"><span>STATION NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>LOCATION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th>MAP</th>
+<th aria-sort="none"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>PLACE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col">VIEW LOCATION</th>
 <th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-gps-sort="harga" type="button"><span>PRICE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 </tr>
 </thead>
@@ -10262,6 +10263,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     return `${BM_SBM_BACKEND_BASE}?productId=${encodeURIComponent(productId)}&jenis=${encodeURIComponent(jenis)}`;
   }
 
+  function buildBenchmarkLocationUrl(productId, jenis){
+    productId = String(productId || '').trim();
+    jenis = String(jenis || '1').trim() === '2' ? '2' : '1';
+    if (!productId) return '';
+    const type = jenis === '2' ? 'sbm' : 'bm';
+    return `https://ebiz.jupem.gov.my/PetaInteraktif?no=${encodeURIComponent(productId)}&type=${type}&c=pt`;
+  }
+
   function esc(value){
     return String(value || '').replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];
@@ -10437,9 +10446,13 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       const jenis = String(row.jenis || (row.product === 'SBM' ? '2' : '1'));
       const productId = row.productId || row.id || '';
       const downloadUrl = productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''; // always use backend link
+      const locationUrl = row.locationUrl || buildBenchmarkLocationUrl(productId, jenis);
 
       const downloadButton = downloadUrl
         ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download" style="padding:6px 12px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">Add to Cart</button>`
+        : '-';
+      const locationButton = locationUrl
+        ? `<a class="btn blue" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">View Location</a>`
         : '-';
 
       return `
@@ -10451,6 +10464,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
           <td>${esc(row.daerah || '-')}</td>
           <td>${esc(row.bandar || '-')}</td>
           <td>${esc(row.huraian || '-')}</td>
+          <td class="pabm-action-cell">${locationButton}</td>
           <td>${esc(row.harga || '-')}</td>
         </tr>`;
     }).join('');
@@ -10553,7 +10567,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       bandar: item.bandar || '',
       huraian: item.huraian || '',
       harga: item.harga || 'RM3',
-      locationUrl: item.locationUrl || '',
+      locationUrl: item.locationUrl || buildBenchmarkLocationUrl(productId, jenis),
       downloadUrl: productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''
     };
   }
@@ -15069,7 +15083,7 @@ body:not(.pa-bm-page) button{
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=6"></script>
 <script src="/assets/js/azobss-pa-search.js?v=5" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=4" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=3" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=4" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=4" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
