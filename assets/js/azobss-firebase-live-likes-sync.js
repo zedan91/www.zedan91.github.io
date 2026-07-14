@@ -1109,10 +1109,9 @@ function getPaMemberCodes(user){
   ].map(normalizePaMemberCode).filter(Boolean);
 }
 function hasPaBmTabAccess(user){
-  if (!user) return false;
-  if (isAzobssAdmin(user)) return true;
-  if (getPaBmFlagAllowed(user)) return true;
-  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
+  // PA/BM is a public storefront. Login is enforced when adding to cart or
+  // starting payment instead of hiding the whole page behind a member code.
+  return true;
 }
 
 function isPaBmProtectedPage(){
@@ -3074,27 +3073,8 @@ async function azobssResetCurrentPurchaseTotalAfterPaid(orderId){
   }catch(e){ console.warn('Firebase payment reset failed:', e); }
   const totalEl = document.getElementById('paBmToyyibTotal');
   if(totalEl) totalEl.textContent = 'RM0.00';
-  try{
-    const records = await loadAzobssPurchaseRecords();
-    const unpaidRows = azobssPurchasePaymentRows(records, { [key]: 0 }).filter(r => !azobssIsPurchasePaidForDownload(r));
-    for(const r of unpaidRows){
-      if(r.firestoreId){
-        try{
-          await setDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, r.firestoreId), {
-            status: 'paid',
-            paidAtMs: resetAtMs,
-            paidAtClient: resetAtClient,
-            paymentOrderId: String(orderId || ''),
-            downloadCount: 0,
-            maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS,
-            downloadExpiresAtMs: resetAtMs + AZOBSS_PA_BM_VALID_MS,
-            downloadExpiresAtClient: new Date(resetAtMs + AZOBSS_PA_BM_VALID_MS).toISOString(),
-            updatedAt: serverTimestamp()
-          }, { merge:true });
-        }catch(e){}
-      }
-    }
-  }catch(e){ console.warn('Mark purchaseLogs paid failed:', e); }
+  // Only the backend may mark the purchaseLogs contained in the verified
+  // ToyyibPay order as paid. Never promote every pending row in the browser.
   try{ await renderAzobssPurchaseRecords(); }catch(e){}
   try{ azobssSchedulePurchaseRecordsRefresh('payment paid'); }catch(e){}
 }

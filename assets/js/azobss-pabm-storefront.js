@@ -1,0 +1,355 @@
+import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+
+const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
+const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
+const MAX_CART_ITEMS = 50;
+const STATE_LABELS = {
+  JOHOR: 'Johor',
+  KEDAH: 'Kedah',
+  KELANTAN: 'Kelantan',
+  MELAKA: 'Melaka',
+  'NEGERI SEMBILAN': 'N. Sembilan',
+  PAHANG: 'Pahang',
+  PERAK: 'Perak',
+  PERLIS: 'Perlis',
+  'PULAU PINANG': 'P. Pinang',
+  SABAH: 'Sabah',
+  SARAWAK: 'Sarawak',
+  SELANGOR: 'Selangor',
+  TERENGGANU: 'Terengganu',
+  'WILAYAH PERSEKUTUAN KUALA LUMPUR': 'W.P. KL',
+  'WILAYAH PERSEKUTUAN LABUAN': 'W.P. Labuan',
+  'WILAYAH PERSEKUTUAN PUTRAJAYA': 'W.P. Putrajaya'
+};
+
+let auth = null;
+let paymentButton = null;
+let totalObserver = null;
+
+function savedUser() {
+  try {
+    return typeof window.getSavedUser === 'function' ? (window.getSavedUser() || null) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function userKey() {
+  const firebaseUser = auth && auth.currentUser;
+  const localUser = savedUser() || {};
+  return String((firebaseUser && firebaseUser.uid) || localUser.uid || localUser.usernameKey || localUser.username || '').trim();
+}
+
+function cartKey() {
+  return CART_PREFIX + (userKey() || 'guest');
+}
+
+function openLogin() {
+  if (typeof window.openSiteAuth === 'function') {
+    window.openSiteAuth('signin');
+    return;
+  }
+  const button = document.getElementById('siteSignInButton');
+  if (button) button.click();
+}
+
+function requireLogin() {
+  if (auth && auth.currentUser) return true;
+  openLogin();
+  return false;
+}
+
+function guardCartAction(event) {
+  const target = event.target.closest('#downloadTifButton, [data-benchmark-record]');
+  if (!target || (auth && auth.currentUser)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+  const message = target.id === 'downloadTifButton'
+    ? document.getElementById('paError')
+    : document.getElementById('benchmarkError');
+  if (message) message.textContent = 'Please login before adding an item to your cart.';
+  openLogin();
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  })[char]);
+}
+
+function normalizeType(value) {
+  const type = String(value || 'PA').trim().toUpperCase();
+  return type === 'SBM' ? 'SBM' : type === 'BM' ? 'BM' : 'PA';
+}
+
+function normalizeCode(value, type) {
+  const raw = String(value || '').trim().toUpperCase();
+  if (type === 'PA') return raw.replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+  return raw.replace(/\s+/g, ' ');
+}
+
+function normalizeItem(payload) {
+  const type = normalizeType(payload && (payload.productType || payload.product || payload.type));
+  const code = normalizeCode(payload && (payload.itemCode || payload.stationNo || payload.stesen || payload.productId || payload.id), type);
+  const negeri = String(payload && (payload.negeri || payload.state) || '').trim().toUpperCase();
+  if (!code || !negeri) throw new Error('Select a state and enter a valid document number.');
+  return {
+    id: [type, code, negeri].join('|'),
+    productType: type,
+    itemCode: code,
+    negeri,
+    amount: type === 'PA' ? 5 : 3,
+    productId: String(payload && (payload.productId || payload.id) || '').trim(),
+    stationNo: String(payload && (payload.stationNo || payload.stesen) || '').trim().toUpperCase(),
+    jenis: String(payload && payload.jenis || (type === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
+    downloadUrl: String(payload && (payload.downloadUrl || payload.url) || '').trim(),
+    filename: String(payload && payload.filename || '').trim(),
+    addedAtMs: Date.now()
+  };
+}
+
+function readCart() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(cartKey()) || '[]');
+    const now = Date.now();
+    return Array.isArray(rows)
+      ? rows.filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS).slice(0, MAX_CART_ITEMS)
+      : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function writeCart(items) {
+  const clean = Array.isArray(items) ? items.filter(Boolean).slice(0, MAX_CART_ITEMS) : [];
+  localStorage.setItem(cartKey(), JSON.stringify(clean));
+  renderCart();
+  window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated', { detail: { count: clean.length } }));
+}
+
+function formatMoney(value) {
+  return 'RM' + Number(value || 0).toFixed(2);
+}
+
+function cartTotal(items = readCart()) {
+  return items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+}
+
+function renderCart() {
+  const items = readCart();
+  const list = document.getElementById('pabmStoreCartItems');
+  const count = document.getElementById('pabmStoreCartCount');
+  const total = document.getElementById('pabmStoreCartTotal');
+  const paymentTotal = document.getElementById('paBmToyyibTotal');
+  const amount = cartTotal(items);
+
+  if (count) count.textContent = items.length + (items.length === 1 ? ' item' : ' items');
+  if (total) total.textContent = formatMoney(amount);
+  if (paymentTotal && paymentTotal.textContent !== formatMoney(amount)) paymentTotal.textContent = formatMoney(amount);
+
+  if (list) {
+    list.innerHTML = items.length ? items.map((item, index) => `
+      <div class="pabm-cart-item">
+        <div>
+          <strong>${escapeHtml(item.productType)} ${escapeHtml(item.itemCode)}</strong>
+          <small>${escapeHtml(STATE_LABELS[item.negeri] || item.negeri)}</small>
+        </div>
+        <div class="pabm-cart-item-side">
+          <span class="pabm-cart-item-price">${formatMoney(item.amount)}</span>
+          <button class="pabm-cart-remove" type="button" data-pabm-remove="${index}" aria-label="Remove ${escapeHtml(item.productType)} ${escapeHtml(item.itemCode)}" title="Remove">&times;</button>
+        </div>
+      </div>`).join('') : '<div class="pabm-cart-empty">Your cart is empty.</div>';
+  }
+
+  if (paymentButton) {
+    const loggedIn = !!(auth && auth.currentUser);
+    paymentButton.disabled = !items.length;
+    paymentButton.textContent = loggedIn ? 'Proceed to Payment' : 'Login to Checkout';
+    if (!items.length) paymentButton.textContent = 'Cart is Empty';
+  }
+}
+
+async function addToStoreCart(payload) {
+  if (!requireLogin()) throw new Error('Please login before adding an item to your cart.');
+  const item = normalizeItem(payload || {});
+  const items = readCart();
+  const exists = items.some((row) => row.id === item.id);
+  if (!exists) {
+    if (items.length >= MAX_CART_ITEMS) throw new Error('Cart limit reached. Remove an item before adding another.');
+    items.push(item);
+    writeCart(items);
+  } else {
+    renderCart();
+  }
+  return { ...item, __azobssAlreadyInCart: exists };
+}
+
+function hydrateStateSelects() {
+  const source = document.getElementById('negeri');
+  if (!source) return;
+  const sourceOptions = Array.from(source.options).filter((option) => option.value);
+  document.querySelectorAll('select[data-copy-states]').forEach((select) => {
+    if (select.options.length > 1) return;
+    sourceOptions.forEach((sourceOption) => {
+      const option = document.createElement('option');
+      option.value = sourceOption.value;
+      option.textContent = sourceOption.textContent;
+      select.appendChild(option);
+    });
+  });
+}
+
+function setupStatePicker(holder) {
+  const select = document.getElementById(holder.dataset.statePickerFor || '');
+  if (!select) return;
+  const options = Array.from(select.options).filter((option) => option.value);
+  holder.innerHTML = options.map((option) => `
+    <button class="pabm-state-button${select.value === option.value ? ' is-active' : ''}" type="button" data-state-value="${escapeHtml(option.value)}">${escapeHtml(STATE_LABELS[option.value] || option.textContent)}</button>
+  `).join('');
+  holder.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-state-value]');
+    if (!button) return;
+    select.value = button.dataset.stateValue || '';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    holder.querySelectorAll('.pabm-state-button').forEach((row) => row.classList.toggle('is-active', row === button));
+  });
+}
+
+function setupProductPicker(holder) {
+  const select = document.getElementById(holder.dataset.productPickerFor || '');
+  if (!select) return;
+  holder.innerHTML = Array.from(select.options).map((option) => `
+    <button class="pabm-product-button${select.value === option.value ? ' is-active' : ''}" type="button" data-product-value="${escapeHtml(option.value)}">${escapeHtml(option.value)}</button>
+  `).join('');
+  holder.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-product-value]');
+    if (!button) return;
+    select.value = button.dataset.productValue || 'BM';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    holder.querySelectorAll('.pabm-product-button').forEach((row) => row.classList.toggle('is-active', row === button));
+  });
+}
+
+function checkoutPayload(items) {
+  const user = savedUser() || {};
+  return {
+    usernameKey: String(user.usernameKey || user.username || user.displayName || '').trim().toLowerCase(),
+    uid: String(user.uid || (auth && auth.currentUser && auth.currentUser.uid) || ''),
+    user,
+    items: items.map((item) => ({
+      productType: item.productType,
+      itemCode: item.itemCode,
+      negeri: item.negeri,
+      amount: item.amount,
+      productId: item.productId,
+      stationNo: item.stationNo,
+      jenis: item.jenis,
+      downloadUrl: item.downloadUrl,
+      filename: item.filename,
+      createdAtMs: item.addedAtMs
+    }))
+  };
+}
+
+async function proceedToPayment() {
+  if (!requireLogin()) return;
+  const items = readCart();
+  if (!items.length) return;
+  const status = document.getElementById('paBmToyyibStatus');
+  const oldText = paymentButton ? paymentButton.textContent : '';
+  try {
+    if (!auth || !auth.currentUser) throw new Error('Your login session is not ready. Please login again.');
+    if (paymentButton) {
+      paymentButton.disabled = true;
+      paymentButton.textContent = 'Preparing Payment...';
+    }
+    if (status) status.textContent = 'Verifying cart and creating a secure payment bill...';
+    const token = await auth.currentUser.getIdToken();
+    const response = await fetch('https://azobss-backend.onrender.com/api/toyyib/create-pa-bm-bill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify(checkoutPayload(items))
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to create the payment bill.');
+    if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
+    if (data.billCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', String(data.billCode));
+    if (status) status.textContent = 'Redirecting to ToyyibPay...';
+    window.location.href = data.paymentUrl || data.url || data.redirectUrl;
+  } catch (error) {
+    if (status) status.textContent = error.message || 'Unable to create the payment bill.';
+    alert(error.message || 'Unable to create the payment bill.');
+  } finally {
+    if (paymentButton) {
+      paymentButton.disabled = false;
+      paymentButton.textContent = oldText || 'Proceed to Payment';
+      renderCart();
+    }
+  }
+}
+
+function bindPaymentButton() {
+  const current = document.getElementById('payPaBmToyyibButton');
+  if (!current) return;
+  const clone = current.cloneNode(true);
+  current.replaceWith(clone);
+  paymentButton = clone;
+  paymentButton.addEventListener('click', proceedToPayment);
+}
+
+async function clearCartAfterPaidReturn() {
+  const params = new URLSearchParams(window.location.search || '');
+  const orderId = params.get('orderId') || params.get('order_id') || sessionStorage.getItem('azobss_pa_bm_pending_order_id') || '';
+  const billCode = params.get('billCode') || params.get('billcode') || sessionStorage.getItem('azobss_pa_bm_pending_bill_code') || '';
+  if (!orderId && !billCode) return;
+  try {
+    const response = await fetch('https://azobss-backend.onrender.com/api/verify-payment?orderId=' + encodeURIComponent(orderId) + '&billCode=' + encodeURIComponent(billCode), { cache: 'no-store' });
+    const data = await response.json().catch(() => ({}));
+    if (data && (data.paid || data.status === 'paid' || data.status === 'success')) {
+      localStorage.removeItem(cartKey());
+      renderCart();
+    }
+  } catch (_) {}
+}
+
+function watchPaymentTotal() {
+  const total = document.getElementById('paBmToyyibTotal');
+  if (!total || !window.MutationObserver) return;
+  if (totalObserver) totalObserver.disconnect();
+  totalObserver = new MutationObserver(() => {
+    const expected = formatMoney(cartTotal());
+    if (total.textContent !== expected) total.textContent = expected;
+  });
+  totalObserver.observe(total, { childList: true, characterData: true, subtree: true });
+}
+
+function init() {
+  const apps = getApps();
+  auth = apps.length ? getAuth(apps[0]) : null;
+  document.body.classList.add('pabm-store-ready');
+  hydrateStateSelects();
+  document.querySelectorAll('[data-state-picker-for]').forEach(setupStatePicker);
+  document.querySelectorAll('[data-product-picker-for]').forEach(setupProductPicker);
+  bindPaymentButton();
+  window.azobssRecordPurchase = addToStoreCart;
+  window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
+  document.addEventListener('click', guardCartAction, true);
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-pabm-remove]');
+    if (!button) return;
+    const items = readCart();
+    items.splice(Number(button.dataset.pabmRemove), 1);
+    writeCart(items);
+  });
+  window.addEventListener('storage', renderCart);
+  window.addEventListener('azobss:pabm-cart-updated', renderCart);
+  watchPaymentTotal();
+  renderCart();
+  if (auth) onAuthStateChanged(auth, () => renderCart());
+  [1200, 3500, 7000].forEach((delay) => setTimeout(clearCartAfterPaidReturn, delay));
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();

@@ -3403,11 +3403,34 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
       productType: String(item.productType || item.product || "").toUpperCase() || undefined,
       itemCode: String(item.itemCode || item.code || "").toUpperCase() || undefined,
       negeri: String(item.negeri || item.state || "") || undefined,
-      amount: Number(item.amount || 0) || undefined
+      amount: Number(item.amount || 0) || undefined,
+      productId: String(item.productId || "") || undefined,
+      stationNo: String(item.stationNo || "") || undefined,
+      jenis: String(item.jenis || "") || undefined,
+      filename: String(item.filename || "") || undefined
     };
     Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
     if (!refs.length) {
-      console.warn("PA/BM purchaseLogs item not matched for sync:", JSON.stringify({ orderId: order.orderId || "", itemCode:update.itemCode || "", productType:update.productType || "", negeri:update.negeri || "" }).slice(0, 500));
+      try {
+        const orderUser = order.user || {};
+        const createdRef = db.collection("purchaseLogs").doc();
+        await createdRef.set({
+          ...update,
+          uid: String(orderUser.uid || order.uid || ""),
+          usernameKey: String(orderUser.username || orderUser.usernameKey || order.usernameKey || "").trim().toLowerCase(),
+          displayName: String(orderUser.username || orderUser.usernameKey || order.usernameKey || "").trim(),
+          email: String(orderUser.email || order.email || "").trim(),
+          phone: String(orderUser.phone || order.phone || "").trim(),
+          createdAtMs: Number(item.createdAtMs || nowMs),
+          createdAtClient: new Date(Number(item.createdAtMs || nowMs)).toISOString(),
+          createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+          downloadCount: paid ? 0 : Number(item.downloadCount || 0),
+          maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS
+        }, { merge: true });
+        updated += 1;
+      } catch (error) {
+        console.error("PA/BM purchaseLogs item create failed:", error && (error.stack || error.message || error));
+      }
       continue;
     }
     for (const ref of refs) {
@@ -6632,18 +6655,61 @@ async function handler(req, res) {
         if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
           return send(res, 500, JSON.stringify({ ok:false, success:false, error:"ToyyibPay env belum lengkap. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." }, null, 2), "application/json");
         }
-        const user = getPremiumUser(data);
-        const usernameKey = cleanPremiumText(data.usernameKey || user.username || "", 80).toLowerCase();
-        const uid = cleanPremiumText(data.uid || user.uid || "", 120);
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) {
+          return send(res, 401, JSON.stringify({ ok:false, success:false, error:"Please login again before proceeding to payment." }, null, 2), "application/json");
+        }
+        const submittedUser = getPremiumUser(data);
+        const user = {
+          uid: cleanPremiumText(identity.uid, 120),
+          username: cleanPremiumText(identity.username || data.usernameKey || submittedUser.username || "", 80).toLowerCase(),
+          email: cleanPremiumText(identity.authEmail || identity.email || submittedUser.email || "", 160),
+          authEmail: cleanPremiumText(identity.authEmail || identity.email || "", 160),
+          phone: cleanPremiumText(submittedUser.phone || "", 40)
+        };
+        const usernameKey = user.username;
+        const uid = user.uid;
         const rawItems = Array.isArray(data.items) ? data.items : [];
-        const items = rawItems.map((item) => ({
-          id: cleanPremiumText(item.id || "", 120),
-          productType: cleanPremiumText(item.productType || "PA", 20).toUpperCase(),
-          itemCode: cleanPremiumText(item.itemCode || "", 80),
-          negeri: cleanPremiumText(item.negeri || "", 80),
-          amount: Math.max(0, Math.round(Number(item.amount || 0))),
-          createdAtMs: Number(item.createdAtMs || 0) || 0
-        })).filter((item) => item.itemCode && (item.amount === 3 || item.amount === 5));
+        if (!rawItems.length || rawItems.length > 50) {
+          return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Cart must contain between 1 and 50 documents." }, null, 2), "application/json");
+        }
+        const allowedStates = new Set([
+          "JOHOR","KEDAH","KELANTAN","MELAKA","NEGERI SEMBILAN","PAHANG","PERAK","PERLIS",
+          "PULAU PINANG","SABAH","SARAWAK","SELANGOR","TERENGGANU",
+          "WILAYAH PERSEKUTUAN KUALA LUMPUR","WILAYAH PERSEKUTUAN LABUAN","WILAYAH PERSEKUTUAN PUTRAJAYA"
+        ]);
+        const allowedProductTypes = new Set(["PA","BM","SBM"]);
+        const seenItems = new Set();
+        const items = [];
+        for (const rawItem of rawItems) {
+          const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
+          if (!allowedProductTypes.has(productType)) {
+            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Unsupported PA/BM product type." }, null, 2), "application/json");
+          }
+          const negeri = cleanPremiumText(rawItem.negeri || "", 80).toUpperCase();
+          if (!allowedStates.has(negeri)) {
+            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Please select a valid state for every document." }, null, 2), "application/json");
+          }
+          let itemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80).toUpperCase();
+          if (productType === "PA") itemCode = itemCode.replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
+          if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) {
+            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"A valid document number is required for every cart item." }, null, 2), "application/json");
+          }
+          const uniqueKey = `${productType}|${itemCode}|${negeri}`;
+          if (seenItems.has(uniqueKey)) continue;
+          seenItems.add(uniqueKey);
+          items.push({
+            productType,
+            itemCode,
+            negeri,
+            amount: productType === "PA" ? 5 : 3,
+            productId: cleanPremiumText(rawItem.productId || "", 120),
+            stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
+            jenis: productType === "SBM" ? "2" : "1",
+            filename: cleanPremiumText(rawItem.filename || "", 180),
+            createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
+          });
+        }
         if (!items.length) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Tiada rekod PA/BM yang sah untuk dibayar." }, null, 2), "application/json");
         const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
         if (totalAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Total bayaran tidak sah." }, null, 2), "application/json");
@@ -9264,6 +9330,3 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("");
 
 });
-
-
-
