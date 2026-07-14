@@ -8124,6 +8124,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
+          jupemStoreVersion: 3,
           port: PORT
         }, null, 2),
         "application/json"
