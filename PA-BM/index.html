@@ -8669,7 +8669,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div class="pabm-product-heading"><div><h3>Lot Kadaster Berdigit</h3></div><strong>RM15 - RM50</strong></div>
 <div class="benchmark-form">
 <label for="lotKadasterState">
-            <span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
+            <span class="pabm-field-title">Select State</span>
             <select id="lotKadasterState">
 <option value="">-- Select State --</option>
 <option value="JOHOR">JOHOR</option>
@@ -8692,20 +8692,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <span class="pabm-state-grid" data-state-picker-for="lotKadasterState"></span>
 </label>
 <button class="pabm-map-button" data-jupem-lot-map="" data-state-id="lotKadasterState" type="button">Open Selection Map</button>
-<label for="lotKadasterArea"><span class="pabm-field-title"><span class="pabm-step">2</span>Area Size</span>
-<select id="lotKadasterArea">
-<option value="FULL_SHEET">1 Sheet Area - RM50</option>
-<option value="QUARTER_SHEET">1/4 Sheet Area - RM15</option>
-</select>
-<span class="pabm-product-switch pabm-area-switch" data-product-picker-for="lotKadasterArea"></span>
-</label>
-<label for="lotKadasterSearch"><span class="pabm-field-title"><span class="pabm-step">3</span>Lot / Mukim / District</span>
-<input id="lotKadasterSearch" placeholder="Example: Lot 1234 / Mukim / District" type="search"/>
-</label>
-<button class="btn blue pabm-add-product-button" data-input-id="lotKadasterSearch" data-pabm-product-add="" data-product-type="NDCDB" data-state-id="lotKadasterState" data-variant-id="lotKadasterArea" type="button"><span>Add to Cart</span><span class="pabm-button-price">RM50</span></button>
 </div>
 <p class="request-error"></p>
-<p class="request-status" id="lotKadasterStatus">Select the area size before adding this document to your cart.</p>
+<p class="request-status" id="lotKadasterStatus"></p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="gps">
 <div class="pabm-product-heading"><div><h3>GPS Station</h3></div><strong>RM9 / document</strong></div>
@@ -8725,25 +8714,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div class="pa-bm-panel" data-pa-bm-panel="ndcdb-c3">
 <div class="pabm-product-heading"><div><h3>Lot Kadaster Berdigit C3</h3></div><strong>RM15 - RM50</strong></div>
 <div class="benchmark-form">
-<label for="ndcdbC3State"><span class="pabm-field-title"><span class="pabm-step">1</span>Select State</span>
+<label for="ndcdbC3State"><span class="pabm-field-title">Select State</span>
 <select data-copy-states="" id="ndcdbC3State"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="ndcdbC3State"></span>
 </label>
 <button class="pabm-map-button" data-jupem-lot-map="" data-state-id="ndcdbC3State" type="button">Open Selection Map</button>
-<label for="ndcdbC3Area"><span class="pabm-field-title"><span class="pabm-step">2</span>Area Size</span>
-<select id="ndcdbC3Area">
-<option value="FULL_SHEET">1 Sheet Area - RM50</option>
-<option value="QUARTER_SHEET">1/4 Sheet Area - RM15</option>
-</select>
-<span class="pabm-product-switch pabm-area-switch" data-product-picker-for="ndcdbC3Area"></span>
-</label>
-<label for="ndcdbC3Reference"><span class="pabm-field-title"><span class="pabm-step">3</span>Job ID / Lot Reference</span>
-<input id="ndcdbC3Reference" placeholder="Enter job ID, URL or lot reference" type="search"/>
-</label>
-<button class="btn blue pabm-add-product-button" data-input-id="ndcdbC3Reference" data-pabm-product-add="" data-product-type="NDCDB_C3" data-state-id="ndcdbC3State" data-variant-id="ndcdbC3Area" type="button"><span>Add to Cart</span><span class="pabm-button-price">RM50</span></button>
 </div>
 <p class="request-error"></p>
-<p class="request-status">Select the area size before adding this document to your cart.</p>
+<p class="request-status"></p>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="syit-piawai">
 <div class="pabm-product-heading"><div><h3>Syit Piawai (Gambar)</h3></div><strong>RM7 / document</strong></div>
@@ -9777,7 +9755,12 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       panel.classList.toggle('is-active', panel.getAttribute('data-pa-bm-panel') === panelKey);
     });
     const cartStep = document.getElementById('pabmCartStep');
-    if (cartStep) cartStep.textContent = activeKey === 'ndcdb' || activeKey === 'ndcdb-c3' ? '4' : '3';
+    const isLotMapTab = activeKey === 'ndcdb' || activeKey === 'ndcdb-c3';
+    if (cartStep) {
+      cartStep.hidden = isLotMapTab;
+      cartStep.style.display = isLotMapTab ? 'none' : '';
+      cartStep.textContent = '3';
+    }
     if (activeKey === 'bm' || activeKey === 'sbm') {
       const type = activeKey.toUpperCase();
       const product = document.getElementById('benchmarkProduct');
