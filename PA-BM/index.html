@@ -1733,6 +1733,45 @@
       text-transform: uppercase;
     }
 
+    .pa-sort-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 7px;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      text-transform: inherit;
+      cursor: pointer;
+    }
+
+    .pa-sort-button:hover,
+    .pa-sort-button:focus-visible {
+      color: #ffffff;
+    }
+
+    .pa-sort-indicator {
+      display: inline-flex;
+      flex-direction: column;
+      flex: 0 0 auto;
+      font-size: 7px;
+      line-height: 0.72;
+    }
+
+    .pa-sort-indicator span {
+      opacity: 0.28;
+    }
+
+    .pa-sort-button[data-sort-direction="asc"] .pa-sort-up,
+    .pa-sort-button[data-sort-direction="desc"] .pa-sort-down {
+      opacity: 1;
+      color: #ffffff;
+    }
+
     .benchmark-cart-list {
       display: grid;
       gap: 8px;
@@ -8600,13 +8639,13 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <table class="benchmark-table">
 <thead>
 <tr>
-<th>NO.</th>
+<th aria-sort="ascending"><button class="pa-sort-button" data-pa-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th>ADD TO CART</th>
-<th>PA NUMBER</th>
-<th>STATE</th>
-<th>DISTRICT</th>
-<th>MUKIM</th>
-<th>SECTION</th>
+<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="paNo" type="button"><span>PA NUMBER</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="mukim" type="button"><span>MUKIM</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="seksyen" type="button"><span>SECTION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th>VIEW PA</th>
 <th>PRICE</th>
 </tr>
@@ -14938,7 +14977,7 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=4"></script>
-<script src="/assets/js/azobss-pa-search.js?v=3" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=4" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=3" defer></script>
 <script src="/assets/js/azobss-gps-search.js?v=2" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=3" defer></script>

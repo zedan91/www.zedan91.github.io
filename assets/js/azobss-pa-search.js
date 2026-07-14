@@ -31,11 +31,15 @@
   const resultWrap = document.getElementById('paResultWrap');
   const resultsBody = document.getElementById('paResultsBody');
   const pagination = document.getElementById('paPagination');
+  const sortButtons = Array.from(form?.querySelectorAll('[data-pa-sort]') || []);
   if (!form || !stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
 
   let allRows = [];
   let filteredRows = [];
   let currentPage = 1;
+  let sortKey = '_sourceIndex';
+  let sortDirection = 'asc';
+  const textCollator = new Intl.Collator('en-MY', { numeric: true, sensitivity: 'base' });
 
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -118,12 +122,40 @@
     allRows = [];
     filteredRows = [];
     currentPage = 1;
+    sortKey = '_sourceIndex';
+    sortDirection = 'asc';
     resultWrap.hidden = true;
     resultsBody.innerHTML = '';
     pagination.hidden = true;
     pagination.innerHTML = '';
     generalEl.value = '';
     generalEl.disabled = true;
+    updateSortHeaders();
+  }
+
+  function sortRows(rows) {
+    const direction = sortDirection === 'desc' ? -1 : 1;
+    return rows.sort((left, right) => {
+      if (sortKey === '_sourceIndex') {
+        return (Number(left._sourceIndex) - Number(right._sourceIndex)) * direction;
+      }
+      if (sortKey === 'paNo') {
+        const leftNumber = Number(String(left.paNo || '').replace(/\D/g, ''));
+        const rightNumber = Number(String(right.paNo || '').replace(/\D/g, ''));
+        if (leftNumber !== rightNumber) return (leftNumber - rightNumber) * direction;
+      }
+      return textCollator.compare(String(left[sortKey] || ''), String(right[sortKey] || '')) * direction;
+    });
+  }
+
+  function updateSortHeaders() {
+    sortButtons.forEach((button) => {
+      const active = button.dataset.paSort === sortKey;
+      const heading = button.closest('th');
+      button.dataset.sortDirection = active ? sortDirection : '';
+      button.setAttribute('aria-pressed', String(active));
+      if (heading) heading.setAttribute('aria-sort', active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none');
+    });
   }
 
   function renderPagination(totalPages) {
@@ -201,6 +233,7 @@
     filteredRows = !query ? allRows.slice() : allRows.filter((record) => [
       record.paNo, record.negeri, record.daerah, record.mukim, record.seksyen
     ].some((value) => normalize(value).includes(query)));
+    sortRows(filteredRows);
     renderResults(1);
     updateStatus();
   }
@@ -231,8 +264,9 @@
     searchButton.disabled = true;
     if (statusEl) statusEl.textContent = `Searching for PA ${number}...`;
     try {
-      allRows = await fetchOfficialResults(number, stateCode, controller.signal);
-      filteredRows = allRows.slice();
+      allRows = (await fetchOfficialResults(number, stateCode, controller.signal))
+        .map((row, index) => ({ ...row, _sourceIndex: index }));
+      filteredRows = sortRows(allRows.slice());
       generalEl.disabled = !allRows.length;
       renderResults(1);
       if (statusEl) statusEl.textContent = allRows.length
@@ -271,6 +305,23 @@
     if (errorEl) errorEl.textContent = '';
     if (statusEl) statusEl.textContent = '';
   });
+
+  sortButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const nextKey = button.dataset.paSort;
+      if (!nextKey) return;
+      if (sortKey === nextKey) sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      else {
+        sortKey = nextKey;
+        sortDirection = 'asc';
+      }
+      sortRows(filteredRows);
+      updateSortHeaders();
+      renderResults(1);
+    });
+  });
+
+  updateSortHeaders();
 
   pagination.addEventListener('click', (event) => {
     const button = event.target.closest('[data-pa-page]');
