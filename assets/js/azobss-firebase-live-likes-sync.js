@@ -3218,6 +3218,15 @@ function filterPurchaseRows(records, keyword){
   return records.filter(r => [r.usernameKey,r.displayName,r.phone,r.email,r.productType,r.itemCode,r.negeri,formatPurchaseDate(r)].join(' ').toLowerCase().includes(q));
 }
 
+function azobssPurchaseBelongsToCurrentUser(record, current){
+  const currentUid = String(current?.uid || '').trim();
+  const recordUid = String(record?.uid || record?.userUid || '').trim();
+  if(currentUid && recordUid && currentUid === recordUid) return true;
+  const currentKey = getUserKey(current);
+  const recordKey = String(record?.usernameKey || record?.username || record?.displayName || '').trim().toLowerCase();
+  return !!(currentKey && recordKey && currentKey === recordKey);
+}
+
 async function resetAzobssPurchaseRecordsForUser(usernameKey){
   const current = getSavedUser();
   if(!isAzobssAdmin(current)) return;
@@ -3498,10 +3507,28 @@ async function renderAzobssPurchaseRecords(){
       azobssAdminPurchasePage = page;
       renderAzobssPurchaseRecords();
     });
-    if(userList) userList.innerHTML = '';
+    const ownRecords = applyPurchaseSort(
+      filterPurchaseRows(records.filter(record => azobssPurchaseBelongsToCurrentUser(record, current)), userSearch),
+      userSort
+    );
+    const ownTotalPages = Math.max(1, Math.ceil(ownRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    azobssUserPurchasePage = clampPage(azobssUserPurchasePage, ownTotalPages);
+    const ownVisibleRecords = ownRecords.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    if(userList){
+      window.__azPurchaseRowIndex = (azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE;
+      userList.innerHTML = ownVisibleRecords.length
+        ? (azobssPurchaseTableHeaderHtml() + ownVisibleRecords.map(purchaseDetailRowHtml).join(''))
+        : '<div class="purchase-summary-item">No PA purchase list yet.</div>';
+    }
     const userPanelForAdmin = document.getElementById('userPaPurchasePanel');
-    if(userPanelForAdmin) userPanelForAdmin.style.display = 'none';
-    renderAzobssPager(document.getElementById('userPaPurchasePagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
+    if(userPanelForAdmin){
+      userPanelForAdmin.hidden = false;
+      userPanelForAdmin.style.display = '';
+    }
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, ownRecords.length, AZOBSS_PURCHASE_PAGE_SIZE, page => {
+      azobssUserPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    });
   }else{
     const userPanelForUser = document.getElementById('userPaPurchasePanel');
     if(userPanelForUser) userPanelForUser.style.display = '';

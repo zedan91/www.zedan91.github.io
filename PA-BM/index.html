@@ -12261,7 +12261,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=450" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=450"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=451" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=451"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -14878,7 +14878,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-delete-all-bt
     var userPanel = document.getElementById('userPaPurchasePanel');
     if(userPanel){
       userPanel.hidden = false;
-      userPanel.style.display = isOwner ? 'none' : 'block';
+      userPanel.style.display = 'block';
     }
 
     try{
@@ -14954,7 +14954,12 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList{
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList{display:grid!important;}
 body.pa-bm-page.pabm-owner-admin #purchaseRecordTools{display:grid!important;}
 body.pa-bm-page.pabm-owner-admin .purchase-record-actions{display:block!important;}
-body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
+body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
 </style>
 <script id="azobss-pabm-final-owner-only-admin-panel-guard-215">
 (function(){
@@ -15004,7 +15009,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     show(panel, 'block');
     if(owner){
       if(title){ title.textContent = 'Purchase Records Users'; show(title, 'block'); }
-      show(note, 'block'); show(actions, 'block'); show(tools, 'grid'); show(summary, 'grid'); show(pag, ''); hide(userPanel);
+      show(note, 'block'); show(actions, 'block'); show(tools, 'grid'); show(summary, 'grid'); show(pag, ''); show(userPanel, 'block');
     }else{
       if(title){ title.textContent = 'Purchase Records Saya'; hide(title); }
       hide(note); hide(actions); hide(tools); hide(summary); hide(pag); show(userPanel, 'block');
