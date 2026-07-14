@@ -1,8 +1,25 @@
 (function () {
   'use strict';
 
-  const API_URL = 'https://azobss-backend.onrender.com/api/search-lot-kadaster';
+  const JUPEM_SEARCH_URL = 'https://ebiz.jupem.gov.my/Produk/LotKadasterBerdigit';
+  const FALLBACK_API_URL = 'https://azobss-backend.onrender.com/api/search-lot-kadaster';
   const ROWS_PER_PAGE = 5;
+  const JUPEM_STATE_CODES = Object.freeze({
+    JOHOR: '01',
+    KEDAH: '02',
+    KELANTAN: '03',
+    MELAKA: '04',
+    'NEGERI SEMBILAN': '05',
+    PAHANG: '06',
+    'PULAU PINANG': '07',
+    PERAK: '08',
+    PERLIS: '09',
+    SELANGOR: '10',
+    TERENGGANU: '11',
+    'WILAYAH PERSEKUTUAN KUALA LUMPUR': '14',
+    'WILAYAH PERSEKUTUAN LABUAN': '15',
+    'WILAYAH PERSEKUTUAN PUTRAJAYA': '16'
+  });
 
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -12,6 +29,67 @@
 
   function normalize(value) {
     return String(value || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  }
+
+  function absoluteJupemUrl(value) {
+    const path = String(value || '').trim();
+    if (!path) return '';
+    try {
+      return new URL(path, JUPEM_SEARCH_URL).href;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function parseOfficialResults(html, productCode, stateCode) {
+    const documentResult = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    const table = documentResult.querySelector('table#example');
+    if (!table) return [];
+    return Array.from(table.querySelectorAll('tr')).map((row) => {
+      const cells = Array.from(row.querySelectorAll('td'));
+      if (cells.length < 9) return null;
+      const viewPaTrigger = row.querySelector('[onclick*="PelanAkuiDetail"]');
+      const viewPaMatch = String(viewPaTrigger?.getAttribute('onclick') || '').match(/createModal\(\s*['"]([^'"]+)['"]/i);
+      const mapLink = row.querySelector('a[href*="/PetaInteraktif"]');
+      return {
+        lotNo: cells[1]?.textContent.trim() || '',
+        paNo: cells[2]?.textContent.trim().toUpperCase() || '',
+        negeri: cells[3]?.textContent.trim() || '',
+        daerah: cells[4]?.textContent.trim() || '',
+        mukim: cells[5]?.textContent.trim() || '',
+        seksyen: cells[6]?.textContent.trim() || '',
+        productCode,
+        stateCode,
+        viewPaUrl: absoluteJupemUrl(viewPaMatch?.[1]),
+        mapUrl: absoluteJupemUrl(mapLink?.getAttribute('href'))
+      };
+    }).filter((record) => record && record.lotNo && record.paNo);
+  }
+
+  async function fetchOfficialResults(productCode, stateCode, lotNo, signal) {
+    const params = new URLSearchParams({
+      produk: productCode,
+      negeri: stateCode,
+      searchString: lotNo
+    });
+    const response = await fetch(`${JUPEM_SEARCH_URL}?${params.toString()}`, {
+      cache: 'no-store',
+      mode: 'cors',
+      signal
+    });
+    if (!response.ok) throw new Error(`JUPEM returned HTTP ${response.status}.`);
+    return parseOfficialResults(await response.text(), productCode, stateCode);
+  }
+
+  async function fetchFallbackResults(productCode, state, lotNo, signal) {
+    const params = new URLSearchParams({ produk: productCode, negeri: state, lot: lotNo });
+    const response = await fetch(`${FALLBACK_API_URL}?${params.toString()}`, {
+      cache: 'no-store',
+      signal
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Lot search failed.');
+    return Array.isArray(data.results) ? data.results : [];
   }
 
   function setupPanel(panel) {
@@ -110,11 +188,12 @@
 
     async function search() {
       const state = String(stateEl.value || '').trim().toUpperCase();
+      const stateCode = JUPEM_STATE_CODES[state] || '';
       const lotNo = String(lotEl.value || '').trim();
       if (errorEl) errorEl.textContent = '';
       if (statusEl) statusEl.textContent = '';
       clearResults();
-      if (!state) {
+      if (!state || !stateCode) {
         if (errorEl) errorEl.textContent = 'Select a state before searching.';
         return;
       }
@@ -125,14 +204,14 @@
 
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 90000);
-      const params = new URLSearchParams({ produk: productCode, negeri: state, lot: lotNo });
       searchButton.disabled = true;
       if (statusEl) statusEl.textContent = `Searching lot ${lotNo}...`;
       try {
-        const response = await fetch(`${API_URL}?${params.toString()}`, { cache: 'no-store', signal: controller.signal });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.ok) throw new Error(data.error || 'Lot search failed.');
-        allRows = Array.isArray(data.results) ? data.results : [];
+        try {
+          allRows = await fetchOfficialResults(productCode, stateCode, lotNo, controller.signal);
+        } catch (officialError) {
+          allRows = await fetchFallbackResults(productCode, state, lotNo, controller.signal);
+        }
         filteredRows = allRows.slice();
         generalEl.disabled = !allRows.length;
         renderResults(1);
