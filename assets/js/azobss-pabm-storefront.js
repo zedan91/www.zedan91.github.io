@@ -57,6 +57,7 @@ const JUPEM_STATE_CODES = {
 
 let auth = null;
 let paymentButton = null;
+let adminTestPaymentButton = null;
 let totalObserver = null;
 
 function savedUser() {
@@ -223,6 +224,11 @@ function renderCart() {
     paymentButton.disabled = !items.length;
     paymentButton.textContent = loggedIn ? 'Proceed to Payment' : 'Login to Checkout';
     if (!items.length) paymentButton.textContent = 'Cart is Empty';
+  }
+  if (adminTestPaymentButton) {
+    const loggedIn = !!(auth && auth.currentUser);
+    adminTestPaymentButton.disabled = !items.length || !loggedIn;
+    adminTestPaymentButton.textContent = items.length ? 'Test Payment (Admin)' : 'Test Payment (Empty Cart)';
   }
 }
 
@@ -417,6 +423,49 @@ async function proceedToPayment() {
   }
 }
 
+async function proceedAdminTestPayment() {
+  if (!requireLogin()) return;
+  const items = readCart();
+  if (!items.length) return;
+  const status = document.getElementById('paBmToyyibStatus');
+  const oldText = adminTestPaymentButton ? adminTestPaymentButton.textContent : '';
+  try {
+    if (!auth || !auth.currentUser) throw new Error('Your admin login session is not ready. Please login again.');
+    if (adminTestPaymentButton) {
+      adminTestPaymentButton.disabled = true;
+      adminTestPaymentButton.textContent = 'Creating Test Payment...';
+    }
+    if (status) status.textContent = 'Creating an admin-only paid test order...';
+    const token = await auth.currentUser.getIdToken(true);
+    const response = await fetch('https://azobss-backend.onrender.com/api/admin/test-pa-bm-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify(checkoutPayload(items))
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok || !data.paid) throw new Error(data.error || 'Unable to complete the admin test payment.');
+    localStorage.removeItem(cartKey());
+    renderCart();
+    if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
+    sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+    if (status) status.textContent = 'Admin test payment successful. Loading the paid purchase record...';
+    const returnUrl = new URL('/PA-BM/', window.location.origin);
+    returnUrl.searchParams.set('payment', 'success');
+    returnUrl.searchParams.set('orderId', String(data.orderId || ''));
+    returnUrl.searchParams.set('test', '1');
+    window.location.href = returnUrl.href;
+  } catch (error) {
+    if (status) status.textContent = error.message || 'Unable to complete the admin test payment.';
+    alert(error.message || 'Unable to complete the admin test payment.');
+  } finally {
+    if (adminTestPaymentButton) {
+      adminTestPaymentButton.disabled = false;
+      adminTestPaymentButton.textContent = oldText || 'Test Payment (Admin)';
+      renderCart();
+    }
+  }
+}
+
 function bindPaymentButton() {
   const current = document.getElementById('payPaBmToyyibButton');
   if (!current) return;
@@ -424,6 +473,15 @@ function bindPaymentButton() {
   current.replaceWith(clone);
   paymentButton = clone;
   paymentButton.addEventListener('click', proceedToPayment);
+}
+
+function bindAdminTestPaymentButton() {
+  const current = document.getElementById('adminTestPaBmPaymentButton');
+  if (!current) return;
+  const clone = current.cloneNode(true);
+  current.replaceWith(clone);
+  adminTestPaymentButton = clone;
+  adminTestPaymentButton.addEventListener('click', proceedAdminTestPayment);
 }
 
 async function clearCartAfterPaidReturn() {
@@ -465,6 +523,7 @@ function init() {
     if (variant) variant.addEventListener('change', () => updateConfiguredPrice(button));
   });
   bindPaymentButton();
+  bindAdminTestPaymentButton();
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
   document.addEventListener('click', guardCartAction, true);

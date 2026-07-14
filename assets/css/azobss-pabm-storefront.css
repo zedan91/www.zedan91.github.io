@@ -605,6 +605,37 @@ body.pa-bm-page #payPaBmToyyibButton:disabled {
   cursor: not-allowed;
 }
 
+body.pa-bm-page #adminTestPaBmPaymentButton {
+  display: none;
+  width: fit-content;
+  min-height: 32px;
+  margin: 10px auto 0;
+  padding: 6px 12px;
+  border: 1px solid #facc15;
+  border-radius: 5px;
+  background: #713f12;
+  color: #fef08a;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 3px 0 #422006;
+  cursor: pointer;
+}
+
+body.pa-bm-page.is-admin #adminTestPaBmPaymentButton,
+body.pa-bm-page.az-role-is-admin #adminTestPaBmPaymentButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.pa-bm-page #adminTestPaBmPaymentButton:disabled {
+  border-color: #40516a;
+  background: #263449;
+  color: #8495aa;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 body.pa-bm-page #paBmToyyibStatus {
   min-height: 17px;
   margin: 9px 0 0 !important;

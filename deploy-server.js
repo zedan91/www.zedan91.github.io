@@ -3347,7 +3347,7 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     orderId: String(order.orderId || ""),
     billCode: String(order.billCode || ""),
     paymentUrl: String(order.paymentUrl || ""),
-    paymentMethod: "toyyibpay",
+    paymentMethod: String(order.paymentMethod || "toyyibpay"),
     updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
   };
 
@@ -3570,6 +3570,77 @@ function getPremiumUser(data) {
     rawEmail: cleanPremiumText(user.email || data.buyerEmail || data.email || data.customerEmail || data.billEmail || "", 160),
     phone: cleanPremiumText(user.phone || data.phone || data.buyerPhone || '01135600723', 40)
   };
+}
+
+function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
+  const checkoutError = (message, statusCode = 400) => {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    throw error;
+  };
+  if (!identity || !identity.uid) checkoutError("Admin login session is not ready.", 401);
+  const submittedUser = getPremiumUser(data);
+  const user = {
+    uid: cleanPremiumText(identity.uid, 120),
+    username: cleanPremiumText(identity.username || data.usernameKey || submittedUser.username || "", 80).toLowerCase(),
+    email: cleanPremiumText(identity.authEmail || identity.email || submittedUser.email || "", 160),
+    authEmail: cleanPremiumText(identity.authEmail || identity.email || "", 160),
+    phone: cleanPremiumText(submittedUser.phone || "", 40)
+  };
+  const rawItems = Array.isArray(data.items) ? data.items : [];
+  if (!rawItems.length || rawItems.length > 50) checkoutError("Cart must contain between 1 and 50 documents.");
+
+  const allowedStates = new Set([
+    "JOHOR","KEDAH","KELANTAN","MELAKA","NEGERI SEMBILAN","PAHANG","PERAK","PERLIS",
+    "PULAU PINANG","SABAH","SARAWAK","SELANGOR","TERENGGANU",
+    "WILAYAH PERSEKUTUAN KUALA LUMPUR","WILAYAH PERSEKUTUAN LABUAN","WILAYAH PERSEKUTUAN PUTRAJAYA"
+  ]);
+  const allowedProductTypes = new Set(["PA","BM","SBM","GPS","NDCDB","NDCDB_C3","SYIT_PIAWAI"]);
+  const areaProductTypes = new Set(["NDCDB","NDCDB_C3"]);
+  const seenItems = new Set();
+  const items = [];
+
+  for (const rawItem of rawItems) {
+    const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
+    if (!allowedProductTypes.has(productType)) checkoutError("Unsupported JUPEM document category.");
+    const negeri = cleanPremiumText(rawItem.negeri || "", 80).toUpperCase();
+    if (!allowedStates.has(negeri)) checkoutError("Please select a valid state for every document.");
+    let itemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80).toUpperCase();
+    if (productType === "PA") itemCode = itemCode.replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
+    if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) checkoutError("A valid document number is required for every cart item.");
+    const variant = areaProductTypes.has(productType)
+      ? cleanPremiumText(rawItem.variant || rawItem.areaSize || "", 30).toUpperCase()
+      : "";
+    if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "QUARTER_SHEET") {
+      checkoutError("Select either 1 sheet area or 1/4 sheet area.");
+    }
+    let amount = 0;
+    if (productType === "PA") amount = 5;
+    else if (productType === "BM" || productType === "SBM") amount = 3;
+    else if (productType === "GPS") amount = 9;
+    else if (productType === "SYIT_PIAWAI") amount = 7;
+    else if (areaProductTypes.has(productType)) amount = variant === "QUARTER_SHEET" ? 15 : 50;
+    const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
+    if (seenItems.has(uniqueKey)) continue;
+    seenItems.add(uniqueKey);
+    items.push({
+      productType,
+      itemCode,
+      negeri,
+      amount,
+      variant,
+      productId: cleanPremiumText(rawItem.productId || "", 120),
+      stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
+      jenis: productType === "SBM" ? "2" : "1",
+      filename: cleanPremiumText(rawItem.filename || "", 180),
+      createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
+    });
+  }
+
+  if (!items.length) checkoutError("No valid JUPEM documents were found in the cart.");
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  if (totalAmount <= 0) checkoutError("Invalid cart total.");
+  return { user, items, totalAmount, amountSen: totalAmount * 100 };
 }
 
 
@@ -6756,6 +6827,7 @@ async function handler(req, res) {
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
     // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
     if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-pa-bm-bill", 10, 5 * 60 * 1000)) return;
+    if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
     if (pathname === "/api/premium/complete-purchase" && req.method === "POST" && azRateLimitOrSend(req, res, "premium-complete-purchase", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/status" && req.method === "GET" && parsed.query && parsed.query.records && azRateLimitOrSend(req, res, "commission-records", 60, 60 * 1000)) return;
@@ -6794,6 +6866,85 @@ async function handler(req, res) {
     // =========================
     // TOYYIBPAY DYNAMIC PAYMENT ROUTES (Render deploy-server.js)
     // =========================
+
+
+    if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST") {
+      let data = {};
+      try { data = parseRequestBody(await readBody(req)); }
+      catch (_error) { return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Invalid request body" }), "application/json"); }
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, success:false, error:"Admin authorization required." }, null, 2), "application/json");
+        }
+        const checkout = azBuildAdminPaBmTestCheckout(data, adminIdentity);
+        const nowMs = Date.now();
+        const nowIso = new Date(nowMs).toISOString();
+        const orderId = makeId("pabmtest");
+        const paymentReference = `ADMIN-TEST-${nowMs}`;
+        let order = upsertPremiumOrder({
+          orderId,
+          productId:"pa-bm-purchase-records",
+          productName:`JUPEM Document Test Purchase (${checkout.items.length} unit)`,
+          amount:`RM${checkout.totalAmount}`,
+          amountSen:checkout.amountSen,
+          status:"paid",
+          paymentMethod:"admin-test",
+          paymentReference,
+          user:checkout.user,
+          usernameKey:checkout.user.username,
+          paBmItems:checkout.items,
+          maxDownload:0,
+          expiryHours:0,
+          isAdminTestPayment:true,
+          source:"admin-test-payment",
+          createdByAdmin:adminIdentity.username || adminIdentity.email || adminIdentity.uid,
+          createdAt:nowIso,
+          createdAtMs:nowMs,
+          paidAt:nowIso,
+          paidAtMs:nowMs,
+          paidFinalizedAt:nowIso,
+          paymentVerifiedAt:nowIso,
+          paymentVerificationSource:"admin-test-endpoint",
+          commissionCheckedAt:nowIso,
+          commissionSkippedReason:"admin-test-payment",
+          emailSkippedForPaBm:true
+        });
+        await azPersistPremiumOrder(order);
+        const syncResult = await azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference, paidAtMs:nowMs, nowMs });
+        order = upsertPremiumOrder({
+          ...order,
+          paBmPaidSyncedAt:nowIso,
+          paBmPaidSyncedCount:Number(syncResult && syncResult.updated || 0)
+        });
+        await azPersistPremiumOrder(order);
+        azFireAndForget(
+          azWriteAdminAuditLog(req, adminIdentity, "admin_test_pa_bm_payment", "premiumOrders", orderId, {
+            itemCount:checkout.items.length,
+            totalAmount:checkout.totalAmount,
+            paymentReference
+          }, "success"),
+          "Admin PA/BM test payment audit log failed"
+        );
+        return send(res, 200, JSON.stringify({
+          ok:true,
+          success:true,
+          paid:true,
+          status:"paid",
+          testPayment:true,
+          orderId,
+          paymentReference,
+          amount:checkout.totalAmount,
+          amountSen:checkout.amountSen,
+          unit:checkout.items.length,
+          updatedCount:Number(syncResult && syncResult.updated || 0)
+        }, null, 2), "application/json");
+      } catch (error) {
+        const statusCode = Math.max(400, Math.min(500, Number(error && error.statusCode || 500)));
+        console.error("Admin PA/BM test payment failed:", error && (error.stack || error.message || error));
+        return send(res, statusCode, JSON.stringify({ ok:false, success:false, error:error.message || "Admin test payment failed." }, null, 2), "application/json");
+      }
+    }
 
 
     if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST") {
