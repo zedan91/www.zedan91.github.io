@@ -115,11 +115,11 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
       const mapLink = record.mapUrl
-        ? `<a class="btn blue pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></a>`
+        ? `<a class="btn pabm-location-text-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM eBiz" title="JUPEM eBiz">View Location</a>`
         : '-';
       const googleMapsUrl = buildGoogleMapsUrl(record);
       const googleMapsLink = googleMapsUrl
-        ? `<a class="btn pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="/assets/custom-icons/google-maps-pin.png"></a>`
+        ? `<a class="btn pabm-location-text-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Google Maps">View Location</a>`
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
@@ -128,8 +128,8 @@
         <td>${escapeHtml(record.negeri || '-')}</td>
         <td>${escapeHtml(record.daerah || '-')}</td>
         <td>${escapeHtml(record.tempat || '-')}</td>
-        <td class="pabm-action-cell pabm-location-action-cell">${mapLink}</td>
-        <td class="pabm-action-cell pabm-location-action-cell">${googleMapsLink}</td>
+        <td class="pabm-action-cell pabm-location-text-cell">${mapLink}</td>
+        <td class="pabm-action-cell pabm-location-text-cell">${googleMapsLink}</td>
       </tr>`;
     }).join('');
     renderPagination(totalPages);

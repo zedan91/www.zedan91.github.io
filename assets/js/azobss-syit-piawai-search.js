@@ -172,15 +172,15 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
       const mapLink = record.mapUrl
-        ? `<a class="btn blue pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.sheetName || 'sheet')} map in JUPEM" title="View JUPEM Map"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></a>`
+        ? `<a class="btn pabm-location-text-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.sheetName || 'sheet')} map in JUPEM eBiz" title="JUPEM eBiz">View Map</a>`
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
         <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-syit-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(record.sheetName || 'sheet')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(record.sheetName || '-')}</strong></td>
         <td>${escapeHtml(record.negeri || '-')}</td>
-        <td class="pabm-action-cell pabm-location-action-cell"><button class="btn blue pabm-location-icon-button" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" aria-label="View ${escapeHtml(record.sheetName || 'sheet')}" title="View Sheet"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></button></td>
-        <td class="pabm-action-cell pabm-location-action-cell">${mapLink}</td>
+        <td class="pabm-action-cell pabm-preview-action-cell"><button class="btn pabm-preview-icon-button" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" aria-label="View ${escapeHtml(record.sheetName || 'sheet')}" title="View Sheet"><span aria-hidden="true">&#128269;</span></button></td>
+        <td class="pabm-action-cell pabm-location-text-cell">${mapLink}</td>
       </tr>`;
     }).join('');
     renderPagination(totalPages);
