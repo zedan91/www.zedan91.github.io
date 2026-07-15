@@ -353,6 +353,26 @@ body.pa-bm-page .pabm-primary-actions .pabm-quick-add-button:disabled {
   cursor: wait;
 }
 
+body.pa-bm-page .pabm-direct-status {
+  min-height: 20px;
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+body.pa-bm-page .pabm-direct-status.is-checking {
+  color: #7dd3fc;
+}
+
+body.pa-bm-page .pabm-direct-status.is-success {
+  color: #4ade80;
+}
+
+body.pa-bm-page .pabm-direct-status.is-unavailable {
+  color: #fca5a5;
+}
+
 body.pa-bm-page .pabm-button-price {
   min-width: 50px;
   padding: 6px 9px;

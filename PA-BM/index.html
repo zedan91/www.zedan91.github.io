@@ -8172,7 +8172,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=13"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=14"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8687,11 +8687,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <button class="btn blue pabm-add-product-button" id="paSearchButton" type="submit"><span>Search PA</span></button>
 <button class="btn pabm-add-product-button pabm-quick-add-button" id="paQuickAddButton" type="button"><span>Quick Add to Cart</span></button>
 </div>
+<p aria-live="polite" class="request-status pabm-direct-status" id="paStatus" role="status"></p>
 <label for="paGeneralSearch">
           <span class="pabm-field-title">General Search</span>
           <input disabled="" id="paGeneralSearch" placeholder="PA Number / State / District / Mukim / Section" type="search"/>
 </label>
-<p class="request-status" id="paStatus"></p>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
 <div class="benchmark-result-wrap" hidden="" id="paResultWrap">
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
@@ -8757,13 +8757,13 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <button class="btn blue pabm-add-product-button" id="benchmarkSearchButton" type="submit"><span id="benchmarkSearchButtonLabel">Search BM</span></button>
 <button class="btn pabm-add-product-button pabm-quick-add-button" id="benchmarkQuickAddButton" type="button"><span>Quick Add to Cart</span></button>
 </div>
+<p aria-live="polite" class="request-status pabm-direct-status" id="benchmarkStatus" role="status"></p>
 <label for="benchmarkGeneralSearch">
             <span class="pabm-field-title">General Search</span>
             <input disabled="" id="benchmarkGeneralSearch" placeholder="Station / District / Town / Description" type="search"/>
 </label>
 </form>
 <p class="request-error" id="benchmarkError"></p>
-<p class="request-status" id="benchmarkStatus"></p>
 <div class="benchmark-actions" style="display:none;"></div>
 <div class="benchmark-result-wrap" hidden="" id="benchmarkResultWrap">
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
@@ -8836,12 +8836,12 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <button class="btn blue pabm-add-product-button" id="gpsSearchButton" type="button"><span>Search GPS</span></button>
 <button class="btn pabm-add-product-button pabm-quick-add-button" id="gpsQuickAddButton" type="button"><span>Quick Add to Cart</span></button>
 </div>
+<p aria-live="polite" class="request-status pabm-direct-status" id="gpsSearchStatus" role="status"></p>
 <label for="gpsGeneralSearch"><span class="pabm-field-title">General Search</span>
 <input disabled="" id="gpsGeneralSearch" placeholder="Station / District / Location" type="search"/>
 </label>
 </div>
 <p class="request-error" id="gpsSearchError"></p>
-<p class="request-status" id="gpsSearchStatus"></p>
 <div class="benchmark-result-wrap" hidden="" id="gpsResultWrap">
 <table class="benchmark-table pabm-results-table">
 <thead>
@@ -8909,12 +8909,12 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <button class="btn blue pabm-add-product-button" id="syitPiawaiSearchButton" type="button"><span>Search Sheet</span></button>
 <button class="btn pabm-add-product-button pabm-quick-add-button" id="syitPiawaiQuickAddButton" type="button"><span>Quick Add to Cart</span></button>
 </div>
+<p aria-live="polite" class="request-status pabm-direct-status" id="syitPiawaiStatus" role="status"></p>
 <label for="syitPiawaiGeneralSearch"><span class="pabm-field-title">General Search</span>
 <input disabled="" id="syitPiawaiGeneralSearch" placeholder="Sheet Name / Product ID / State" type="search"/>
 </label>
 </div>
 <p class="request-error" id="syitPiawaiError"></p>
-<p class="request-status" id="syitPiawaiStatus"></p>
 <div class="benchmark-result-wrap" hidden="" id="syitPiawaiResultWrap">
 <table class="benchmark-table pabm-results-table">
 <thead>
@@ -10273,6 +10273,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 
   if (!form) return;
 
+  function setBenchmarkQuickStatus(message, state){
+    if (!statusEl) return;
+    statusEl.style.display = 'block';
+    statusEl.textContent = message || '';
+    statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
+    if (state) statusEl.classList.add('is-' + state);
+  }
+
 
   const BM_SBM_BACKEND_BASE = 'https://azobss-backend.onrender.com/api/download-stesen-tanda-aras';
 
@@ -10633,17 +10641,17 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     const raw = String(searchEl.value || '').trim();
     const product = wantedJenis() === '2' ? 'SBM' : 'BM';
     if (errorEl) errorEl.textContent = '';
-    if (statusEl) statusEl.textContent = '';
+    setBenchmarkQuickStatus('', '');
     if (!String(stateEl.value || '').trim()) {
-      if (errorEl) errorEl.textContent = 'Select a state before using Quick Add.';
+      setBenchmarkQuickStatus('Select a state before using Quick Add.', 'unavailable');
       return;
     }
     if (!raw) {
-      if (errorEl) errorEl.textContent = `Enter a ${product} station number before using Quick Add.`;
+      setBenchmarkQuickStatus(`Enter a ${product} station number before using Quick Add.`, 'unavailable');
       return;
     }
     if (typeof window.azobssRecordPurchase !== 'function') {
-      if (errorEl) errorEl.textContent = 'Cart is not ready. Refresh the page and try again.';
+      setBenchmarkQuickStatus('Cart is not ready. Refresh the page and try again.', 'unavailable');
       return;
     }
     const label = quickAddBtn && quickAddBtn.querySelector('span');
@@ -10651,23 +10659,26 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     try {
       if (quickAddBtn) quickAddBtn.disabled = true;
       if (label) label.textContent = `Checking ${product}...`;
-      if (statusEl) statusEl.textContent = `Checking ${product} ${raw.toUpperCase()}...`;
+      setBenchmarkQuickStatus(`Checking ${product} ${raw.toUpperCase()} availability. Please wait...`, 'checking');
       const db = await loadBenchmarkDb();
       const row = findExactBenchmarkRow(db);
-      if (!row) throw new Error(`${product} station ${raw.toUpperCase()} was not found in ${stateEl.value}.`);
+      if (!row) {
+        const unavailable = new Error(`${product} station ${raw.toUpperCase()} is not available in ${stateEl.value}.`);
+        unavailable.isUnavailable = true;
+        throw unavailable;
+      }
       const payload = JSON.parse(decodeURIComponent(benchmarkRecordPayload(row)));
       const saved = await window.azobssRecordPurchase(payload);
-      if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = saved && saved.__azobssAlreadyInCart
-          ? benchmarkCartAlreadyText(payload)
-          : `${benchmarkCartLabel(payload)} added directly to your cart.`;
-      }
+      setBenchmarkQuickStatus(saved && saved.__azobssAlreadyInCart
+        ? `${benchmarkCartLabel(payload)} is already in your cart.`
+        : `${benchmarkCartLabel(payload)} added directly to your cart.`, 'success');
       if (typeof window.azobssRenderPurchaseRecords === 'function') {
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 250);
       }
     } catch (error) {
-      if (errorEl) errorEl.textContent = error.message || `Unable to add this ${product} directly to cart.`;
+      setBenchmarkQuickStatus(error && error.isUnavailable
+        ? error.message
+        : `Unable to check ${product} availability right now. Please try again.`, 'unavailable');
     } finally {
       if (quickAddBtn) quickAddBtn.disabled = false;
       if (label) label.textContent = oldText;
@@ -10702,6 +10713,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     event.preventDefault();
     updateOpenEbizLink();
     if (errorEl) errorEl.textContent = '';
+    setBenchmarkQuickStatus('', '');
     if (statusEl) {
       statusEl.style.display = 'block';
       statusEl.textContent = 'Searching BM/SBM database...';
@@ -15180,10 +15192,10 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=7"></script>
-<script src="/assets/js/azobss-pa-search.js?v=7" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=8" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=4" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=5" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=5" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=6" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=6" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>

@@ -80,6 +80,13 @@
     return encodeURIComponent(JSON.stringify(record));
   }
 
+  function setQuickStatus(message, state) {
+    if (!statusEl) return;
+    statusEl.textContent = message || '';
+    statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
+    if (state) statusEl.classList.add(`is-${state}`);
+  }
+
   function buildPaCartRecord(row, state) {
     const paNo = String(row?.paNo || '').trim().toUpperCase();
     const itemCode = paNo.replace(/^PA/i, '');
@@ -253,7 +260,7 @@
       errorEl.textContent = '';
       errorEl.removeAttribute('style');
     }
-    if (statusEl) statusEl.textContent = '';
+    setQuickStatus('', '');
     clearResults();
 
     if (!state || !stateCode) {
@@ -296,17 +303,17 @@
     const state = String(stateEl.value || '').trim().toUpperCase();
     const stateCode = JUPEM_STATE_CODES[state] || '';
     if (errorEl) errorEl.textContent = '';
-    if (statusEl) statusEl.textContent = '';
+    setQuickStatus('', '');
     if (!state || !stateCode) {
-      if (errorEl) errorEl.textContent = 'Select a supported state before using Quick Add.';
+      setQuickStatus('Select a supported state before using Quick Add.', 'unavailable');
       return;
     }
     if (number.length < 3) {
-      if (errorEl) errorEl.textContent = 'Enter a complete PA number before using Quick Add.';
+      setQuickStatus('Enter a complete PA number before using Quick Add.', 'unavailable');
       return;
     }
     if (typeof window.azobssRecordPurchase !== 'function') {
-      if (errorEl) errorEl.textContent = 'Cart is not ready. Refresh the page and try again.';
+      setQuickStatus('Cart is not ready. Refresh the page and try again.', 'unavailable');
       return;
     }
 
@@ -319,24 +326,27 @@
         const label = quickAddButton.querySelector('span');
         if (label) label.textContent = 'Checking PA...';
       }
-      if (statusEl) statusEl.textContent = `Checking PA${number}...`;
+      setQuickStatus(`Checking PA${number} availability. Please wait...`, 'checking');
       const rows = await fetchOfficialResults(number, stateCode, controller.signal);
       const wanted = normalize(`PA${number}`);
       const exact = rows.find((row) => normalize(row.paNo) === wanted);
-      if (!exact) throw new Error(`PA${number} was not found in ${state}.`);
+      if (!exact) {
+        const unavailable = new Error(`PA${number} is not available in ${state}.`);
+        unavailable.isUnavailable = true;
+        throw unavailable;
+      }
       const payload = buildPaCartRecord(exact, state);
       const saved = await window.azobssRecordPurchase(payload);
-      if (statusEl) {
-        statusEl.textContent = saved && saved.__azobssAlreadyInCart
-          ? `PA${payload.itemCode} is already in your cart.`
-          : `PA${payload.itemCode} added directly to your cart.`;
-      }
+      setQuickStatus(saved && saved.__azobssAlreadyInCart
+        ? `PA${payload.itemCode} is already in your cart.`
+        : `PA${payload.itemCode} added directly to your cart.`, 'success');
     } catch (error) {
-      if (errorEl) {
-        errorEl.textContent = error && error.name === 'AbortError'
-          ? 'PA verification took too long. Please try again.'
-          : (error.message || 'Unable to add this PA directly to cart.');
-      }
+      const message = error?.isUnavailable
+        ? error.message
+        : (error && error.name === 'AbortError'
+          ? 'PA availability check timed out. Please try again.'
+          : 'Unable to check PA availability right now. Please try again.');
+      setQuickStatus(message, 'unavailable');
     } finally {
       window.clearTimeout(timeout);
       if (quickAddButton) {

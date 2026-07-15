@@ -54,6 +54,13 @@
     }));
   }
 
+  function setQuickStatus(message, state) {
+    if (!statusEl) return;
+    statusEl.textContent = message || '';
+    statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
+    if (state) statusEl.classList.add(`is-${state}`);
+  }
+
   async function loadRecords() {
     if (recordsCache) return recordsCache;
     const response = await fetch(DATA_URL, { cache: 'no-store' });
@@ -146,11 +153,9 @@
     if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
     const payload = JSON.parse(decodeURIComponent(encodeRecord(record)));
     const saved = await window.azobssRecordPurchase(payload);
-    if (statusEl) {
-      statusEl.textContent = saved && saved.__azobssAlreadyInCart
-        ? 'This GPS station is already in your cart.'
-        : `${payload.itemCode} added ${direct ? 'directly ' : ''}to your cart.`;
-    }
+    setQuickStatus(saved && saved.__azobssAlreadyInCart
+      ? 'This GPS station is already in your cart.'
+      : `${payload.itemCode} added ${direct ? 'directly ' : ''}to your cart.`, 'success');
     return saved;
   }
 
@@ -158,6 +163,7 @@
     const selectedState = String(stateEl.value || '').trim().toUpperCase();
     const query = normalize(inputEl.value);
     if (errorEl) errorEl.textContent = '';
+    setQuickStatus('', '');
     if (!selectedState) {
       if (errorEl) errorEl.textContent = 'Select a state before searching.';
       return;
@@ -194,13 +200,13 @@
     const selectedState = String(stateEl.value || '').trim().toUpperCase();
     const query = normalize(inputEl.value);
     if (errorEl) errorEl.textContent = '';
-    if (statusEl) statusEl.textContent = '';
+    setQuickStatus('', '');
     if (!selectedState) {
-      if (errorEl) errorEl.textContent = 'Select a state before using Quick Add.';
+      setQuickStatus('Select a state before using Quick Add.', 'unavailable');
       return;
     }
     if (!query) {
-      if (errorEl) errorEl.textContent = 'Enter a GPS station code before using Quick Add.';
+      setQuickStatus('Enter a GPS station code before using Quick Add.', 'unavailable');
       return;
     }
     const label = quickAddButton?.querySelector('span');
@@ -208,16 +214,23 @@
     try {
       if (quickAddButton) quickAddButton.disabled = true;
       if (label) label.textContent = 'Checking GPS...';
-      if (statusEl) statusEl.textContent = `Checking GPS ${String(inputEl.value || '').trim().toUpperCase()}...`;
+      const requestedCode = String(inputEl.value || '').trim().toUpperCase();
+      setQuickStatus(`Checking GPS ${requestedCode} availability. Please wait...`, 'checking');
       const records = await loadRecords();
       const exact = records.find((record) =>
         String(record.negeri || '').trim().toUpperCase() === selectedState
         && (normalize(record.stationNo) === query || normalize(record.productId) === query)
       );
-      if (!exact) throw new Error(`GPS station ${String(inputEl.value || '').trim().toUpperCase()} was not found in ${selectedState}.`);
+      if (!exact) {
+        const unavailable = new Error(`GPS station ${requestedCode} is not available in ${selectedState}.`);
+        unavailable.isUnavailable = true;
+        throw unavailable;
+      }
       await addGpsRecord(exact, true);
     } catch (error) {
-      if (errorEl) errorEl.textContent = error.message || 'Unable to add this GPS station directly to cart.';
+      setQuickStatus(error?.isUnavailable
+        ? error.message
+        : 'Unable to check GPS availability right now. Please try again.', 'unavailable');
     } finally {
       if (quickAddButton) quickAddButton.disabled = false;
       if (label) label.textContent = oldText;
