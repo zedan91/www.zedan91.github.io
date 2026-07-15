@@ -187,6 +187,42 @@ function writeCart(items) {
   window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated', { detail: { count: clean.length } }));
 }
 
+function hasStoredCartSnapshot() {
+  try {
+    return localStorage.getItem(cartKey()) !== null;
+  } catch (_) {
+    return false;
+  }
+}
+
+function setCartSyncStatus(message) {
+  const status = document.getElementById('paBmToyyibStatus');
+  if (status) status.textContent = message || '';
+}
+
+async function waitForPendingCartRemover(attempts = 10) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (typeof window.azobssRemovePendingCartItems === 'function') return window.azobssRemovePendingCartItems;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  return null;
+}
+
+async function removePendingPurchaseItems(payload) {
+  const remover = await waitForPendingCartRemover();
+  if (!remover) throw new Error('Sistem rekod pembelian belum tersedia. Sila muat semula halaman.');
+  return remover(payload);
+}
+
+async function reconcileEmptyStoredCart() {
+  if (!hasStoredCartSnapshot() || readCart().length || !(auth && auth.currentUser)) return 0;
+  const remover = await waitForPendingCartRemover();
+  if (!remover) return 0;
+  const count = await remover({ all: true });
+  if (count) setCartSyncStatus(`${count} rekod Pending Payment telah dibuang.`);
+  return count;
+}
+
 function formatMoney(value) {
   return 'RM' + Number(value || 0).toFixed(2);
 }
@@ -576,7 +612,7 @@ function init() {
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
   document.addEventListener('click', guardCartAction, true);
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const mapButton = event.target.closest('[data-jupem-lot-map]');
     if (mapButton) {
       event.preventDefault();
@@ -592,14 +628,30 @@ function init() {
     const button = event.target.closest('[data-pabm-remove]');
     if (!button) return;
     const items = readCart();
-    items.splice(Number(button.dataset.pabmRemove), 1);
+    const index = Number(button.dataset.pabmRemove);
+    const removedItem = items[index];
+    if (!removedItem) return;
+    items.splice(index, 1);
     writeCart(items);
+    setCartSyncStatus('Sedang membuang rekod Pending Payment...');
+    try {
+      const removedCount = await removePendingPurchaseItems(items.length ? removedItem : { all: true });
+      setCartSyncStatus(removedCount
+        ? 'Item dan rekod Pending Payment telah dibuang.'
+        : 'Item telah dibuang daripada troli.');
+    } catch (error) {
+      setCartSyncStatus(error.message || 'Troli telah dikemas kini, tetapi rekod pembelian belum dapat disegerakkan.');
+    }
   });
   window.addEventListener('storage', renderCart);
   window.addEventListener('azobss:pabm-cart-updated', renderCart);
   watchPaymentTotal();
   renderCart();
-  if (auth) onAuthStateChanged(auth, () => renderCart());
+  if (auth) onAuthStateChanged(auth, (user) => {
+    renderCart();
+    if (user) setTimeout(() => reconcileEmptyStoredCart().catch(() => {}), 500);
+  });
+  [1500, 4000].forEach((delay) => setTimeout(() => reconcileEmptyStoredCart().catch(() => {}), delay));
   [1200, 3500, 7000].forEach((delay) => setTimeout(clearCartAfterPaidReturn, delay));
 }
 

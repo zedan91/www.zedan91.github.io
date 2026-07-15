@@ -3408,6 +3408,29 @@ async function azobssUncartPurchaseRecord(rawPayload){
     if(status) status.textContent = 'Item telah dibuang daripada cart. Total telah dikemaskini.';
   }
 }
+async function azobssRemovePendingCartItems(rawPayload){
+  const current = getSavedUser();
+  if(!current) return 0;
+  let target = null;
+  try{ target = typeof rawPayload === 'string' ? JSON.parse(decodeURIComponent(rawPayload)) : rawPayload; }catch(e){ target = null; }
+  const removeAll = target?.all === true;
+  const normalizedTarget = removeAll ? null : normalizePurchasePayload(target || {});
+  const records = await loadAzobssPurchaseRecords();
+  const pending = records.filter(record => {
+    const status = String(record.status || 'pending').trim().toLowerCase();
+    if(!azobssPurchaseBelongsToCurrentUser(record, current)) return false;
+    if(['paid','cancelled','deleted'].includes(status) || azobssIsPurchasePaidForDownload(record)) return false;
+    return removeAll || azobssSameCartItem(record, normalizedTarget);
+  });
+  for(const record of pending){
+    await azobssDeletePurchaseRecordByPayload(azobssPurchaseDeletePayload(record), true);
+  }
+  if(pending.length){
+    await renderAzobssPurchaseRecords();
+    window.dispatchEvent(new CustomEvent('azobssPendingCartRemoved', { detail:{ count:pending.length } }));
+  }
+  return pending.length;
+}
 async function azobssDeletePendingPurchaseRecordsForUser(usernameKey){
   const current = getSavedUser();
   if(!isAzobssAdmin(current)) return;
@@ -3595,6 +3618,7 @@ async function azobssDeleteSelectedPurchaseRecords(button){
 }
 window.azobssDeleteOnePurchaseRecord = azobssDeleteOnePurchaseRecord;
 window.azobssUncartPurchaseRecord = azobssUncartPurchaseRecord;
+window.azobssRemovePendingCartItems = azobssRemovePendingCartItems;
 window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRecordsForUser;
 window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
 window.azobssDeleteSelectedPurchaseRecords = azobssDeleteSelectedPurchaseRecords;
