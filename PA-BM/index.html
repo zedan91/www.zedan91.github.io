@@ -8196,7 +8196,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=30"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=31"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8798,9 +8798,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-benchmark-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none" class="pabm-district-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none" class="pabm-place-data-col"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-location-text-col">eBiz</th>
+<th class="pabm-location-text-col">Maps</th>
 <th aria-sort="none" class="pabm-description-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th class="pabm-location-text-col">JUPEM eBiz</th>
-<th class="pabm-location-text-col">Google Maps</th>
 </tr>
 </thead>
 <tbody id="benchmarkResultsBody"></tbody>
@@ -8875,8 +8875,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-gps-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none" class="pabm-district-data-col"><button class="pa-sort-button" data-gps-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none" class="pabm-place-data-col"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>PLACE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th class="pabm-location-text-col">JUPEM eBiz</th>
-<th class="pabm-location-text-col">Google Maps</th>
+<th class="pabm-location-text-col">eBiz</th>
+<th class="pabm-location-text-col">Maps</th>
 </tr>
 </thead>
 <tbody id="gpsResultsBody"></tbody>
@@ -8947,7 +8947,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-syit-sort="sheetName" type="button"><span>SHEET NAME</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-syit-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-preview-action-col">VIEW SHEET</th>
-<th class="pabm-location-text-col">JUPEM eBiz</th>
+<th class="pabm-location-text-col">eBiz</th>
 </tr>
 </thead>
 <tbody id="syitPiawaiResultsBody"></tbody>
@@ -10526,9 +10526,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
           <td class="pabm-state-data-cell">${esc(row.negeri || '-')}</td>
           <td class="pabm-district-data-cell pabm-benchmark-sbm-hidden-col">${esc(row.daerah || '-')}</td>
           <td class="pabm-place-data-cell">${esc(row.bandar || '-')}</td>
-          <td class="pabm-description-data-cell pabm-benchmark-sbm-hidden-col">${esc(row.huraian || '-')}</td>
           <td class="pabm-action-cell pabm-location-text-cell">${locationButton}</td>
           <td class="pabm-action-cell pabm-location-text-cell">${mapsButton}</td>
+          <td class="pabm-description-data-cell pabm-benchmark-sbm-hidden-col">${esc(row.huraian || '-')}</td>
         </tr>`;
     }).join('');
 

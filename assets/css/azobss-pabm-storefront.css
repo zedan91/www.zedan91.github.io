@@ -285,9 +285,9 @@ body.pa-bm-page .pabm-location-brand-icon.is-google-maps {
 
 body.pa-bm-page .benchmark-table .pabm-location-text-col,
 body.pa-bm-page .benchmark-table .pabm-location-text-cell {
-  width: 102px !important;
-  min-width: 102px !important;
-  max-width: 102px !important;
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
   padding-left: 6px !important;
   padding-right: 6px !important;
   text-align: center;
