@@ -268,7 +268,11 @@
       if (errorEl) errorEl.textContent = 'Select a supported state before searching.';
       return;
     }
-    if (number && number.length < 3) {
+    if (!number) {
+      setQuickStatus('Enter a PA number before searching.', 'unavailable');
+      return;
+    }
+    if (number.length < 3) {
       if (errorEl) errorEl.textContent = 'Enter at least 3 digits of a PA number.';
       return;
     }
@@ -276,7 +280,7 @@
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 90000);
     searchButton.disabled = true;
-    if (statusEl) statusEl.textContent = number ? `Searching for PA ${number}...` : 'Searching all PA records for this state...';
+    if (statusEl) statusEl.textContent = `Searching for PA ${number}...`;
     try {
       allRows = (await fetchOfficialResults(number, stateCode, controller.signal))
         .map((row, index) => ({ ...row, _sourceIndex: index }));
