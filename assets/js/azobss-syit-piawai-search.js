@@ -174,7 +174,7 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
       const mapLink = record.mapUrl
-        ? `<a class="btn pabm-location-text-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.sheetName || 'sheet')} map in JUPEM eBiz" title="JUPEM eBiz">View Map</a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.sheetName || 'sheet')} map in JUPEM eBiz" title="JUPEM eBiz"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
