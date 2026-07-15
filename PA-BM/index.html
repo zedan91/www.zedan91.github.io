@@ -10267,7 +10267,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     productId = String(productId || '').trim();
     jenis = String(jenis || '1').trim() === '2' ? '2' : '1';
     if (!productId) return '';
-    const type = jenis === '2' ? 'sbm' : 'bm';
+    const type = jenis === '2' ? 'bmpiawai' : 'bm';
     return `https://ebiz.jupem.gov.my/PetaInteraktif?no=${encodeURIComponent(productId)}&type=${type}&c=pt`;
   }
 
