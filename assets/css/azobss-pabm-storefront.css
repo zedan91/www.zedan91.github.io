@@ -291,6 +291,14 @@ body.pa-bm-page a:focus-visible {
   outline-offset: 2px;
 }
 
+body.pa-bm-page #paError:empty {
+  display: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 body.pa-bm-page #downloadTifButton,
 body.pa-bm-page #benchmarkSearchButton,
 body.pa-bm-page .pabm-add-product-button {
