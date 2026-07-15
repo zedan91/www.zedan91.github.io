@@ -122,7 +122,7 @@
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
-        <td class="pabm-action-cell"><button class="btn blue" type="button" data-gps-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;white-space:nowrap;">Add to Cart</button></td>
+        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-gps-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(record.stationNo || 'GPS station')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(record.stationNo || '-')}</strong></td>
         <td>${escapeHtml(record.negeri || '-')}</td>
         <td>${escapeHtml(record.daerah || '-')}</td>

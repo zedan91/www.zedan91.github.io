@@ -239,7 +239,7 @@
       const record = buildPaCartRecord(row, selectedState);
       return `<tr>
         <td>${startIndex + index + 1}</td>
-        <td class="pabm-action-cell"><button class="btn blue" type="button" data-pa-search-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;white-space:nowrap;">Add to Cart</button></td>
+        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-pa-search-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(row.paNo || 'PA item')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(row.paNo)}</strong></td>
         <td>${escapeHtml(row.negeri || '-')}</td>
         <td>${escapeHtml(row.daerah || '-')}</td>

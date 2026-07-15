@@ -176,7 +176,7 @@
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
-        <td class="pabm-action-cell"><button class="btn blue" type="button" data-syit-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;white-space:nowrap;">Add to Cart</button></td>
+        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-syit-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(record.sheetName || 'sheet')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(record.sheetName || '-')}</strong></td>
         <td>${escapeHtml(record.negeri || '-')}</td>
         <td><button class="btn blue" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" style="padding:6px 10px;font-size:12px;margin:0;border-radius:8px;">View Sheet</button></td>

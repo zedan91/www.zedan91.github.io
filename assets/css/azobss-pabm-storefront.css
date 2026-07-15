@@ -105,6 +105,57 @@ body.pa-bm-page .pabm-cart-head h3 {
   font-size: 19px;
 }
 
+body.pa-bm-page .pabm-cart-title-icon,
+body.pa-bm-page .pabm-cart-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+body.pa-bm-page .pabm-cart-title-icon {
+  font-size: 20px;
+}
+
+body.pa-bm-page .pabm-cart-glyph {
+  width: 100%;
+  font-size: 17px;
+}
+
+body.pa-bm-page .pabm-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-cart-action-col,
+body.pa-bm-page .benchmark-table .pabm-cart-action-cell {
+  width: 54px !important;
+  min-width: 54px !important;
+  max-width: 54px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  text-align: center;
+}
+
+body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-button {
+  width: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  padding: 0 !important;
+  font-size: 17px !important;
+  border-radius: 7px !important;
+}
+
 body.pa-bm-page .pabm-product-heading > strong {
   color: #4ade80;
   font-size: 14px;
