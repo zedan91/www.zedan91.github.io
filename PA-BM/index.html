@@ -10604,6 +10604,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       bandar: item.bandar || '',
       huraian: item.huraian || '',
       harga: item.harga || 'RM3',
+      latitude: item.latitude,
+      longitude: item.longitude,
       locationUrl: item.locationUrl || buildBenchmarkLocationUrl(productId, jenis),
       downloadUrl: productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''
     };
