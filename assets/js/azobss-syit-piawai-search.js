@@ -172,15 +172,15 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
       const mapLink = record.mapUrl
-        ? `<a class="btn blue" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;text-decoration:none;border-radius:8px;">View Map</a>`
+        ? `<a class="btn blue pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.sheetName || 'sheet')} map in JUPEM" title="View JUPEM Map"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></a>`
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
         <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-syit-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(record.sheetName || 'sheet')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(record.sheetName || '-')}</strong></td>
         <td>${escapeHtml(record.negeri || '-')}</td>
-        <td><button class="btn blue" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" style="padding:6px 10px;font-size:12px;margin:0;border-radius:8px;">View Sheet</button></td>
-        <td>${mapLink}</td>
+        <td class="pabm-action-cell pabm-location-action-cell"><button class="btn blue pabm-location-icon-button" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" aria-label="View ${escapeHtml(record.sheetName || 'sheet')}" title="View Sheet"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></button></td>
+        <td class="pabm-action-cell pabm-location-action-cell">${mapLink}</td>
       </tr>`;
     }).join('');
     renderPagination(totalPages);

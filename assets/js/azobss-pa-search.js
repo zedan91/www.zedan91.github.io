@@ -245,7 +245,7 @@
         <td>${escapeHtml(row.daerah || '-')}</td>
         <td>${escapeHtml(row.mukim || '-')}</td>
         <td>${escapeHtml(row.seksyen || '-')}</td>
-        <td>${row.viewPaUrl ? `<a class="btn blue" href="${escapeHtml(row.viewPaUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;text-decoration:none;border-radius:8px;white-space:nowrap;">View PA</a>` : '-'}</td>
+        <td class="pabm-action-cell pabm-location-action-cell">${row.viewPaUrl ? `<a class="btn blue pabm-location-icon-button" href="${escapeHtml(row.viewPaUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(row.paNo || 'PA item')} in JUPEM" title="View PA"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></a>` : '-'}</td>
       </tr>`;
     }).join('');
     resultWrap.hidden = false;

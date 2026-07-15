@@ -8196,7 +8196,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=21"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=22"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8728,7 +8728,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="mukim" type="button"><span>MUKIM</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="seksyen" type="button"><span>SECTION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th class="pabm-view-col">VIEW PA</th>
+<th class="pabm-action-col pabm-location-action-col" title="View PA"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"/><span class="pabm-visually-hidden">View PA</span></th>
 </tr>
 </thead>
 <tbody id="paResultsBody"></tbody>
@@ -8866,7 +8866,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <p class="request-error" id="gpsSearchError"></p>
 <div class="benchmark-result-wrap" hidden="" id="gpsResultWrap">
-<table class="benchmark-table pabm-results-table">
+<table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
 <th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-gps-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
@@ -8939,15 +8939,15 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <p class="request-error" id="syitPiawaiError"></p>
 <div class="benchmark-result-wrap" hidden="" id="syitPiawaiResultWrap">
-<table class="benchmark-table pabm-results-table">
+<table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
 <th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-syit-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">&#128722;</span><span class="pabm-visually-hidden">Add to Cart</span></th>
 <th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-syit-sort="sheetName" type="button"><span>SHEET NAME</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-syit-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th>VIEW SHEET</th>
-<th>MAP</th>
+<th class="pabm-action-col pabm-location-action-col" title="View Sheet"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"/><span class="pabm-visually-hidden">View Sheet</span></th>
+<th class="pabm-action-col pabm-location-action-col" title="View JUPEM Map"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"/><span class="pabm-visually-hidden">View JUPEM Map</span></th>
 </tr>
 </thead>
 <tbody id="syitPiawaiResultsBody"></tbody>
@@ -15228,10 +15228,10 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=8"></script>
-<script src="/assets/js/azobss-pa-search.js?v=17" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=18" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=5" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=12" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=11" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=13" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=12" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>
