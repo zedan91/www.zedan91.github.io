@@ -143,9 +143,11 @@
 
   function applyGeneralFilter() {
     const query = normalize(generalEl.value);
-    matchingRows = !query ? allRows.slice() : allRows.filter((record) => [
-      record.stationNo, record.negeri, record.daerah, record.tempat, record.productId
-    ].some((value) => normalize(value).includes(query)));
+    matchingRows = !query ? allRows.slice() : allRows.filter((record) => {
+      const stationNo = normalize(record.stationNo);
+      return stationNo.startsWith(query)
+        || (/^\d+$/.test(query) && stationNo.replace(/^[A-Z]+/, '').startsWith(query));
+    });
     renderResults(1);
     updateStatus();
   }

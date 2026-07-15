@@ -206,9 +206,8 @@
 
   function applyGeneralFilter() {
     const query = normalize(generalEl.value);
-    matchingRows = !query ? allRows.slice() : allRows.filter((record) => [
-      record.sheetName, record.productId, record.negeri
-    ].some((value) => normalize(value).includes(query)));
+    matchingRows = !query ? allRows.slice() : allRows.filter((record) =>
+      normalize(record.sheetName).startsWith(query));
     renderResults(1);
     updateStatus();
   }

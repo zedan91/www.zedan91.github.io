@@ -262,10 +262,9 @@
   }
 
   function applyGeneralFilter() {
-    const query = normalize(generalEl.value);
-    filteredRows = !query ? allRows.slice() : allRows.filter((record) => [
-      record.paNo, record.negeri, record.daerah, record.mukim, record.seksyen
-    ].some((value) => normalize(value).includes(query)));
+    const query = normalize(generalEl.value).replace(/^PA/, '');
+    filteredRows = !query ? allRows.slice() : allRows.filter((record) =>
+      normalize(record.paNo).replace(/^PA/, '').startsWith(query));
     sortRows(filteredRows);
     renderResults(1);
     updateStatus();

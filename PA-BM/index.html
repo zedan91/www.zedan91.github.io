@@ -8690,7 +8690,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p aria-live="polite" class="request-status pabm-direct-status" id="paStatus" role="status"></p>
 <label for="paGeneralSearch">
           <span class="pabm-field-title">General Search</span>
-          <input disabled="" id="paGeneralSearch" placeholder="PA Number / State / District / Mukim / Section" type="search"/>
+          <input disabled="" id="paGeneralSearch" placeholder="PA Number - starts with" type="search"/>
 </label>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
 <div class="benchmark-result-wrap" hidden="" id="paResultWrap">
@@ -8760,7 +8760,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p aria-live="polite" class="request-status pabm-direct-status" id="benchmarkStatus" role="status"></p>
 <label for="benchmarkGeneralSearch">
             <span class="pabm-field-title">General Search</span>
-            <input disabled="" id="benchmarkGeneralSearch" placeholder="Station / District / Town / Description" type="search"/>
+            <input disabled="" id="benchmarkGeneralSearch" placeholder="Station Number - starts with" type="search"/>
 </label>
 </form>
 <p class="request-error" id="benchmarkError"></p>
@@ -8838,7 +8838,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="gpsSearchStatus" role="status"></p>
 <label for="gpsGeneralSearch"><span class="pabm-field-title">General Search</span>
-<input disabled="" id="gpsGeneralSearch" placeholder="Station / District / Location" type="search"/>
+<input disabled="" id="gpsGeneralSearch" placeholder="Station Number - starts with" type="search"/>
 </label>
 </div>
 <p class="request-error" id="gpsSearchError"></p>
@@ -8911,7 +8911,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="syitPiawaiStatus" role="status"></p>
 <label for="syitPiawaiGeneralSearch"><span class="pabm-field-title">General Search</span>
-<input disabled="" id="syitPiawaiGeneralSearch" placeholder="Sheet Name / Product ID / State" type="search"/>
+<input disabled="" id="syitPiawaiGeneralSearch" placeholder="Sheet Name - starts with" type="search"/>
 </label>
 </div>
 <p class="request-error" id="syitPiawaiError"></p>
@@ -10698,8 +10698,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     if (!generalSearchEl) return;
     const query = normalizeBenchmarkText(generalSearchEl.value);
     const rows = !query ? benchmarkAllRows.slice() : benchmarkAllRows.filter(function(item){
-      return [item.stationNo, item.stesen, item.negeri, item.daerah, item.bandar, item.huraian, item.productId]
-        .some(function(value){ return normalizeBenchmarkText(value).includes(query); });
+      const stationNo = normalizeBenchmarkText(item.stationNo || item.stesen);
+      return stationNo.startsWith(query)
+        || (/^\d+$/.test(query) && stationNo.replace(/^[A-Z]+/, '').startsWith(query));
     });
     renderResults(rows, 1);
     if (statusEl) {
@@ -15192,10 +15193,10 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=8"></script>
-<script src="/assets/js/azobss-pa-search.js?v=12" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=13" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=5" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=8" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=8" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=9" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=9" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>
