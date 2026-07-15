@@ -108,6 +108,15 @@
     let allRows = [];
     let filteredRows = [];
     let currentPage = 1;
+
+    function setLotStatus(message, state) {
+      if (!statusEl) return;
+      statusEl.style.removeProperty('display');
+      statusEl.textContent = message || '';
+      statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
+      if (state) statusEl.classList.add(`is-${state}`);
+    }
+
     const lotSorter = window.azobssTableSort && window.azobssTableSort.create({
       root: resultWrap,
       attribute: 'data-lot-sort',
@@ -188,11 +197,10 @@
       ].some((value) => normalize(value).includes(query)));
       currentPage = 1;
       renderResults(1);
-      if (statusEl) {
-        statusEl.textContent = query
-          ? `${filteredRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} lot records found`
-          : `${allRows.length.toLocaleString('en-MY')} lot records found`;
-      }
+      const message = query
+        ? `${filteredRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} lot records found`
+        : `${allRows.length.toLocaleString('en-MY')} lot records found`;
+      setLotStatus(message, filteredRows.length ? 'success' : 'unavailable');
     }
 
     async function search() {
@@ -200,21 +208,21 @@
       const stateCode = JUPEM_STATE_CODES[state] || '';
       const lotNo = String(lotEl.value || '').trim();
       if (errorEl) errorEl.textContent = '';
-      if (statusEl) statusEl.textContent = '';
+      setLotStatus('', '');
       clearResults();
       if (!state || !stateCode) {
-        if (errorEl) errorEl.textContent = 'Select a state before searching.';
+        setLotStatus('Select a state before searching.', 'unavailable');
         return;
       }
       if (!lotNo) {
-        if (errorEl) errorEl.textContent = 'Enter a lot number before searching.';
+        setLotStatus('Enter a lot number before searching.', 'unavailable');
         return;
       }
 
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 90000);
       searchButton.disabled = true;
-      if (statusEl) statusEl.textContent = `Searching lot ${lotNo}...`;
+      setLotStatus(`Searching lot ${lotNo}. Please wait...`, 'checking');
       try {
         try {
           allRows = await fetchOfficialResults(productCode, stateCode, lotNo, controller.signal);
@@ -225,16 +233,13 @@
         filteredRows = allRows.slice();
         generalEl.disabled = !allRows.length;
         renderResults(1);
-        if (statusEl) statusEl.textContent = allRows.length
+        setLotStatus(allRows.length
           ? `${allRows.length.toLocaleString('en-MY')} lot records found`
-          : 'No lot record found';
+          : 'No lot record found', allRows.length ? 'success' : 'unavailable');
       } catch (error) {
-        if (errorEl) {
-          errorEl.textContent = error && error.name === 'AbortError'
-            ? 'Lot search took too long. Please try again.'
-            : (error.message || 'Lot search is temporarily unavailable.');
-        }
-        if (statusEl) statusEl.textContent = '';
+        setLotStatus(error && error.name === 'AbortError'
+          ? 'Lot search took too long. Please try again.'
+          : (error.message || 'Lot search is temporarily unavailable.'), 'unavailable');
       } finally {
         window.clearTimeout(timeout);
         searchButton.disabled = false;
@@ -250,12 +255,12 @@
     lotEl.addEventListener('input', () => {
       clearResults();
       if (errorEl) errorEl.textContent = '';
-      if (statusEl) statusEl.textContent = '';
+      setLotStatus('', '');
     });
     stateEl.addEventListener('change', () => {
       clearResults();
       if (errorEl) errorEl.textContent = '';
-      if (statusEl) statusEl.textContent = '';
+      setLotStatus('', '');
     });
     generalEl.addEventListener('input', applyGeneralFilter);
 

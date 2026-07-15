@@ -354,11 +354,23 @@ body.pa-bm-page .pabm-primary-actions .pabm-quick-add-button:disabled {
 }
 
 body.pa-bm-page .pabm-direct-status {
-  min-height: 20px;
-  margin: 2px 0 0;
+  display: none;
+  min-height: 0;
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(249, 115, 22, .45);
+  border-radius: 10px;
+  background: rgba(249, 115, 22, .12);
+  color: #fed7aa;
   font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+body.pa-bm-page .pabm-direct-status:not(:empty) {
+  display: block;
 }
 
 body.pa-bm-page .pabm-direct-status.is-checking {

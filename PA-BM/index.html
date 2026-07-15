@@ -8172,7 +8172,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=16"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=17"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8804,7 +8804,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </label>
 </div>
 <p class="request-error" data-lot-error=""></p>
-<p class="request-status" data-lot-status="" id="lotKadasterStatus"></p>
+<p aria-live="polite" class="request-status pabm-direct-status" data-lot-status="" id="lotKadasterStatus" role="status"></p>
 <div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead><tr>
@@ -8877,7 +8877,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </label>
 </div>
 <p class="request-error" data-lot-error=""></p>
-<p class="request-status" data-lot-status=""></p>
+<p aria-live="polite" class="request-status pabm-direct-status" data-lot-status="" id="lotKadasterC3Status" role="status"></p>
 <div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead><tr>
@@ -10275,7 +10275,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 
   function setBenchmarkQuickStatus(message, state){
     if (!statusEl) return;
-    statusEl.style.display = 'block';
+    statusEl.style.removeProperty('display');
     statusEl.textContent = message || '';
     statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
     if (state) statusEl.classList.add('is-' + state);
@@ -15191,11 +15191,11 @@ body:not(.pa-bm-page) button{
 </script>
 
 
-<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=7"></script>
-<script src="/assets/js/azobss-pa-search.js?v=9" defer></script>
-<script src="/assets/js/azobss-lot-kadaster-search.js?v=4" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=7" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=7" defer></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=8"></script>
+<script src="/assets/js/azobss-pa-search.js?v=10" defer></script>
+<script src="/assets/js/azobss-lot-kadaster-search.js?v=5" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=8" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=8" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>

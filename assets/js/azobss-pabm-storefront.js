@@ -304,6 +304,13 @@ function updateConfiguredPrice(button) {
   if (priceNode) priceNode.textContent = formatMoney(price).replace('.00', '');
 }
 
+function setPanelStatus(status, message, state) {
+  if (!status) return;
+  status.textContent = message || '';
+  status.classList.remove('is-checking', 'is-success', 'is-unavailable');
+  if (state) status.classList.add(`is-${state}`);
+}
+
 async function addConfiguredProduct(button) {
   const panel = button.closest('[data-pa-bm-panel]');
   const error = panel?.querySelector('.request-error');
@@ -320,13 +327,12 @@ async function addConfiguredProduct(button) {
       negeri: state?.value || '',
       variant: variant?.value || ''
     });
-    if (status) {
-      status.textContent = item.__azobssAlreadyInCart
-        ? 'This document is already in your cart.'
-        : `${PRODUCT_LABELS[item.productType] || item.productType} added to your cart.`;
-    }
+    setPanelStatus(status, item.__azobssAlreadyInCart
+      ? 'This document is already in your cart.'
+      : `${PRODUCT_LABELS[item.productType] || item.productType} added to your cart.`, 'success');
   } catch (addError) {
     if (error) error.textContent = addError.message || 'Unable to add this document to your cart.';
+    setPanelStatus(status, addError.message || 'Unable to add this document to your cart.', 'unavailable');
   } finally {
     button.disabled = false;
     updateConfiguredPrice(button);
@@ -342,8 +348,9 @@ function openJupemLotMap(button) {
   const stateCode = JUPEM_STATE_CODES[stateName] || '';
   const productCode = String(button.dataset.jupemProduct || '1') === '2' ? '2' : '1';
   if (error) error.textContent = '';
+  setPanelStatus(status, '', '');
   if (!stateCode) {
-    if (error) error.textContent = 'Select a state before opening the selection map.';
+    setPanelStatus(status, 'Select a state before opening the selection map.', 'unavailable');
     return;
   }
   const params = new URLSearchParams({
@@ -359,11 +366,11 @@ function openJupemLotMap(button) {
     'popup=yes,width=1200,height=800,resizable=yes,scrollbars=yes'
   );
   if (!popup) {
-    if (error) error.textContent = 'Allow popups for AZOBSS, then open the selection map again.';
+    setPanelStatus(status, 'Allow popups for AZOBSS, then open the selection map again.', 'unavailable');
     return;
   }
   try { popup.focus(); } catch (_) {}
-  if (status) status.textContent = 'JUPEM selection map opened. Your existing JUPEM session will be reused.';
+  setPanelStatus(status, 'JUPEM selection map opened successfully. Your existing JUPEM session will be reused.', 'success');
 }
 
 function checkoutPayload(items) {

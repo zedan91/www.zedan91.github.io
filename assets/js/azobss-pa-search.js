@@ -82,6 +82,7 @@
 
   function setQuickStatus(message, state) {
     if (!statusEl) return;
+    statusEl.style.removeProperty('display');
     statusEl.textContent = message || '';
     statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
     if (state) statusEl.classList.add(`is-${state}`);
