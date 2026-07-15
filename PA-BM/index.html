@@ -10484,7 +10484,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     benchmarkCurrentPage = Number(page) || 1;
 
     if (!benchmarkLastRows.length) {
-      resultsWrap.hidden = true;
+      const keepEmptyFilterVisible = !!(benchmarkAllRows.length && generalSearchEl && generalSearchEl.value.trim());
+      resultsWrap.hidden = !keepEmptyFilterVisible;
+      resultsBody.innerHTML = keepEmptyFilterVisible
+        ? '<tr><td colspan="9" style="padding:22px;text-align:center;color:#94a3b8;font-weight:700;">Tiada rekod BM/SBM yang sepadan ditemui.</td></tr>'
+        : '';
       if (benchmarkPagination) {
         benchmarkPagination.hidden = true;
         benchmarkPagination.innerHTML = '';
@@ -10749,11 +10753,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       });
     });
     renderResults(rows, 1);
-    if (statusEl) {
-      statusEl.textContent = query
-        ? `${rows.length.toLocaleString('en-MY')} daripada ${benchmarkAllRows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui`
-        : `${benchmarkAllRows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui`;
-    }
+    setBenchmarkQuickStatus(query
+      ? `${rows.length.toLocaleString('en-MY')} daripada ${benchmarkAllRows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui`
+      : `${benchmarkAllRows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui`, rows.length ? 'success' : 'unavailable');
   }
 
   form.addEventListener('submit', async function(event){
