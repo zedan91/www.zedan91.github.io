@@ -7,16 +7,11 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="Windows utility downloads for repairing, troubleshooting and optimizing Windows PCs by AZOBSS." name="description"/>
 <style id="azobss-shared-product-first-paint-334-css">
-  /* Keep product grids out of the first paint until a shared product is isolated. */
-  html.azobss-shared-product-pending-334 #softwareDownloadsGrid,
-  html.azobss-shared-product-pending-334 #softwareGrid,
-  html.azobss-shared-product-pending-334 .downloads-grid,
-  html.azobss-shared-product-pending-334 .software-grid,
-  html.azobss-shared-product-pending-334 .software-products-grid,
-  html.azobss-shared-product-pending-334 .software-list,
-  html.azobss-shared-product-pending-334 .products-grid,
-  html.azobss-shared-product-pending-334 .cards-grid {
-    visibility: hidden !important;
+  /* Shared links use a stable first paint; the target-card lock is generated below. */
+  html.azobss-shared-product-lock-335 .downloads-section,
+  html.azobss-shared-product-lock-335 .downloads-section * {
+    animation: none !important;
+    transition: none !important;
   }
 </style>
 <script id="azobss-shared-product-first-paint-334-js">
@@ -25,10 +20,22 @@
     var params = new URLSearchParams(location.search || '');
     var productId = String(params.get('p') || params.get('product') || params.get('productId') || params.get('id') || '').trim();
     if(!productId) return;
-    document.documentElement.classList.add('azobss-shared-product-pending-334');
+    document.documentElement.classList.add('azobss-shared-product-pending-334','azobss-shared-product-lock-335');
     document.documentElement.setAttribute('data-azobss-shared-product', productId);
+    var escapedProductId = productId.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/[\r\n\f]/g,' ');
+    var lockStyle = document.createElement('style');
+    lockStyle.id = 'azobss-shared-product-target-lock-335-css';
+    lockStyle.textContent =
+      'html.azobss-shared-product-lock-335 #softwareDownloadsGrid > .download-card:not([data-product-id="'+escapedProductId+'" i]):not([data-software-id="'+escapedProductId+'" i]):not([data-id="'+escapedProductId+'" i]),' +
+      'html.azobss-shared-product-lock-335 #softwareGrid > .download-card:not([data-product-id="'+escapedProductId+'" i]):not([data-software-id="'+escapedProductId+'" i]):not([data-id="'+escapedProductId+'" i]),' +
+      'html.azobss-shared-product-lock-335 .software-grid > .software-card:not([data-product-id="'+escapedProductId+'" i]):not([data-software-id="'+escapedProductId+'" i]):not([data-id="'+escapedProductId+'" i]),' +
+      'html.azobss-shared-product-lock-335 #softwareDownloadsGrid > .software-empty-state{display:none!important;}';
+    (document.head || document.documentElement).appendChild(lockStyle);
     window.__azobssSharedProductGuardTimer334 = setTimeout(function(){
       document.documentElement.classList.remove('azobss-shared-product-pending-334');
+      document.documentElement.classList.remove('azobss-shared-product-lock-335');
+      var style = document.getElementById('azobss-shared-product-target-lock-335-css');
+      if(style) style.remove();
     }, 12000);
   }catch(e){}
 })();
@@ -9422,9 +9429,17 @@ html.azobss-shared-product-mode-332 .cad-item{
       document.documentElement.classList.remove('azobss-shared-product-pending-334');
     }catch(e){}
   }
+  function releaseProductLock(){
+    try{
+      document.documentElement.classList.remove('azobss-shared-product-lock-335');
+      var style = document.getElementById('azobss-shared-product-target-lock-335-css');
+      if(style) style.remove();
+    }catch(e){}
+  }
   function revealAllSharedProducts294(){
     showAllMode = true;
     releaseFirstPaint();
+    releaseProductLock();
     try{ document.documentElement.classList.remove('azobss-shared-product-mode-332','azobss-shared-product-mode-333'); }catch(e){}
     try{ history.replaceState(null, '', location.pathname); }catch(e){}
     document.querySelectorAll('.az-shared-product-hidden,[data-az-shared-hidden="1"]').forEach(function(el){ setHidden(el, false); });
@@ -9486,6 +9501,7 @@ html.azobss-shared-product-mode-332 .cad-item{
       if(stableMissCount > 8){
         console.warn('AZOBSS shared product not found for:', targetRaw);
         releaseFirstPaint();
+        releaseProductLock();
       }
       return;
     }
@@ -14203,6 +14219,5 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 </style>
 </body>
 </html>
-
 
 
