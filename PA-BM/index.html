@@ -10297,11 +10297,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     return `https://ebiz.jupem.gov.my/PetaInteraktif?no=${encodeURIComponent(productId)}&type=${type}&c=pt`;
   }
 
-  function buildBenchmarkGoogleMapsUrl(productId, jenis){
-    productId = String(productId || '').trim();
-    jenis = String(jenis || '1').trim() === '2' ? '2' : '1';
-    if (!productId) return '';
-    return `https://azobss-backend.onrender.com/api/stesen-tanda-aras/maps?productId=${encodeURIComponent(productId)}&jenis=${encodeURIComponent(jenis)}`;
+  function buildBenchmarkGoogleMapsUrl(row){
+    const latitude = Number(row && row.latitude);
+    const longitude = Number(row && row.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return '';
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude.toFixed(7)},${longitude.toFixed(7)}`)}`;
   }
 
   function esc(value){
@@ -10480,7 +10480,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       const productId = row.productId || row.id || '';
       const downloadUrl = productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''; // always use backend link
       const locationUrl = row.locationUrl || buildBenchmarkLocationUrl(productId, jenis);
-      const mapsUrl = buildBenchmarkGoogleMapsUrl(productId, jenis);
+      const mapsUrl = buildBenchmarkGoogleMapsUrl(row);
 
       const downloadButton = downloadUrl
         ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download pabm-table-cart-button" aria-label="Add ${esc(row.stationNo || row.stesen || 'BM/SBM item')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button>`

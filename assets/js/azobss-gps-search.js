@@ -54,10 +54,11 @@
     }));
   }
 
-  function buildGoogleMapsUrl(productId) {
-    const id = String(productId || '').trim();
-    if (!id) return '';
-    return `https://azobss-backend.onrender.com/api/stesen-gps/maps?productId=${encodeURIComponent(id)}`;
+  function buildGoogleMapsUrl(record) {
+    const latitude = Number(record && record.latitude);
+    const longitude = Number(record && record.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return '';
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude.toFixed(7)},${longitude.toFixed(7)}`)}`;
   }
 
   function setQuickStatus(message, state) {
@@ -116,7 +117,7 @@
       const mapLink = record.mapUrl
         ? `<a class="btn blue pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"></a>`
         : '-';
-      const googleMapsUrl = buildGoogleMapsUrl(record.productId);
+      const googleMapsUrl = buildGoogleMapsUrl(record);
       const googleMapsLink = googleMapsUrl
         ? `<a class="btn pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"></a>`
         : '-';
