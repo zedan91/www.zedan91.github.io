@@ -115,11 +115,11 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
       const mapLink = record.mapUrl
-        ? `<a class="btn pabm-location-text-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM eBiz" title="JUPEM eBiz">View Location</a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM eBiz" title="JUPEM eBiz"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
       const googleMapsUrl = buildGoogleMapsUrl(record);
       const googleMapsLink = googleMapsUrl
-        ? `<a class="btn pabm-location-text-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Google Maps">View Location</a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Google Maps"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>

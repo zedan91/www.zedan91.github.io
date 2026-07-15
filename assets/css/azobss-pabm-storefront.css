@@ -323,6 +323,14 @@ body.pa-bm-page .benchmark-table .pabm-location-text-cell > .pabm-location-text-
   background: #14233b !important;
 }
 
+body.pa-bm-page .benchmark-table .pabm-location-text-cell > .pabm-location-icon-button {
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  padding: 0 !important;
+  font-size: 19px !important;
+}
+
 body.pa-bm-page .benchmark-table .pabm-preview-action-col,
 body.pa-bm-page .benchmark-table .pabm-preview-action-cell {
   width: 74px !important;

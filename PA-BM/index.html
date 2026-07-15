@@ -8196,7 +8196,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=27"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=28"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -10512,10 +10512,10 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
         ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download pabm-table-cart-button" aria-label="Add ${esc(row.stationNo || row.stesen || 'BM/SBM item')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button>`
         : '-';
       const locationButton = locationUrl
-        ? `<a class="btn pabm-location-text-button" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${esc(row.stationNo || row.stesen || 'station')} location in JUPEM eBiz" title="JUPEM eBiz">View Location</a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${esc(row.stationNo || row.stesen || 'station')} location in JUPEM eBiz" title="JUPEM eBiz"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
       const mapsButton = mapsUrl
-        ? `<a class="btn pabm-location-text-button" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(row.stationNo || row.stesen || 'station')} in Google Maps" title="Google Maps">View Location</a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(row.stationNo || row.stesen || 'station')} in Google Maps" title="Google Maps"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
 
       return `
@@ -15241,7 +15241,7 @@ body:not(.pa-bm-page) button{
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=8"></script>
 <script src="/assets/js/azobss-pa-search.js?v=22" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=5" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=16" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=17" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=15" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
