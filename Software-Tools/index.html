@@ -6,6 +6,33 @@
 <title>Software Tools | AZOBSS</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="Windows utility downloads for repairing, troubleshooting and optimizing Windows PCs by AZOBSS." name="description"/>
+<style id="azobss-shared-product-first-paint-334-css">
+  /* Keep product grids out of the first paint until a shared product is isolated. */
+  html.azobss-shared-product-pending-334 #softwareDownloadsGrid,
+  html.azobss-shared-product-pending-334 #softwareGrid,
+  html.azobss-shared-product-pending-334 .downloads-grid,
+  html.azobss-shared-product-pending-334 .software-grid,
+  html.azobss-shared-product-pending-334 .software-products-grid,
+  html.azobss-shared-product-pending-334 .software-list,
+  html.azobss-shared-product-pending-334 .products-grid,
+  html.azobss-shared-product-pending-334 .cards-grid {
+    visibility: hidden !important;
+  }
+</style>
+<script id="azobss-shared-product-first-paint-334-js">
+(function(){
+  try{
+    var params = new URLSearchParams(location.search || '');
+    var productId = String(params.get('p') || params.get('product') || params.get('productId') || params.get('id') || '').trim();
+    if(!productId) return;
+    document.documentElement.classList.add('azobss-shared-product-pending-334');
+    document.documentElement.setAttribute('data-azobss-shared-product', productId);
+    window.__azobssSharedProductGuardTimer334 = setTimeout(function(){
+      document.documentElement.classList.remove('azobss-shared-product-pending-334');
+    }, 12000);
+  }catch(e){}
+})();
+</script>
 <style>
     body {
       margin: 0;
@@ -9389,8 +9416,15 @@ html.azobss-shared-product-mode-332 .cad-item{
     var note = document.getElementById('azSharedProductFilterNote147');
     if(note) note.remove();
   }
+  function releaseFirstPaint(){
+    try{
+      clearTimeout(window.__azobssSharedProductGuardTimer334);
+      document.documentElement.classList.remove('azobss-shared-product-pending-334');
+    }catch(e){}
+  }
   function revealAllSharedProducts294(){
     showAllMode = true;
+    releaseFirstPaint();
     try{ document.documentElement.classList.remove('azobss-shared-product-mode-332','azobss-shared-product-mode-333'); }catch(e){}
     try{ history.replaceState(null, '', location.pathname); }catch(e){}
     document.querySelectorAll('.az-shared-product-hidden,[data-az-shared-hidden="1"]').forEach(function(el){ setHidden(el, false); });
@@ -9449,7 +9483,10 @@ html.azobss-shared-product-mode-332 .cad-item{
     if(!matches.length){
       stableMissCount++;
       // Do not show a wrong all-products page as final. Keep retrying; if product still not rendered, leave page untouched temporarily.
-      if(stableMissCount > 8) console.warn('AZOBSS shared product not found for:', targetRaw);
+      if(stableMissCount > 8){
+        console.warn('AZOBSS shared product not found for:', targetRaw);
+        releaseFirstPaint();
+      }
       return;
     }
     stableMissCount = 0;
@@ -9462,6 +9499,7 @@ html.azobss-shared-product-mode-332 .cad-item{
       setHidden(card, shouldHide);
     });
     addNote(matches[0], matches.length);
+    releaseFirstPaint();
     var key = matches.map(function(c){return cardIds(c).join('|');}).join('||');
     if(changed || key !== lastMatchKey){
       lastMatchKey = key;
@@ -14165,7 +14203,6 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 </style>
 </body>
 </html>
-
 
 
 
