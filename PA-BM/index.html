@@ -1719,13 +1719,15 @@
     }
 
     .benchmark-table.pabm-results-table {
-      width: max-content;
-      min-width: 100%;
+      display: inline-table;
+      width: min-content;
+      min-width: 0;
+      max-width: none;
       table-layout: auto;
     }
 
     .benchmark-table.pabm-wide-results-table {
-      min-width: 960px;
+      min-width: 0;
     }
 
     .benchmark-table th,
@@ -1755,6 +1757,11 @@
       text-transform: uppercase;
       width: 1%;
       white-space: nowrap;
+    }
+
+    .benchmark-table.pabm-results-table td:not(.pabm-action-cell) {
+      width: 1%;
+      max-width: 14ch;
     }
 
     .benchmark-table .pabm-index-col {
@@ -1800,8 +1807,8 @@
     }
 
     #benchmarkResultWrap .benchmark-table td:nth-child(7) {
-      width: 240px;
-      max-width: 240px;
+      width: 10ch;
+      max-width: 10ch;
     }
 
     .pa-sort-button {
