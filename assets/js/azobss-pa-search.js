@@ -40,6 +40,7 @@
   let currentPage = 1;
   let sortKey = '_sourceIndex';
   let sortDirection = 'asc';
+  let activeSearchTask = null;
   const textCollator = new Intl.Collator('en-MY', { numeric: true, sensitivity: 'base' });
 
   function escapeHtml(value) {
@@ -86,6 +87,24 @@
     statusEl.textContent = message || '';
     statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
     if (state) statusEl.classList.add(`is-${state}`);
+  }
+
+  function setSearchBusy(isBusy) {
+    searchButton.disabled = false;
+    searchButton.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+    const label = searchButton.querySelector('span');
+    if (label) label.textContent = isBusy ? 'Cancel PA Search' : 'Search PA';
+  }
+
+  function cancelActiveSearch(message) {
+    const task = activeSearchTask;
+    if (!task) return false;
+    activeSearchTask = null;
+    window.clearTimeout(task.timeout);
+    task.controller.abort();
+    setSearchBusy(false);
+    if (message) setQuickStatus(message, 'unavailable');
+    return true;
   }
 
   function buildPaCartRecord(row, state) {
@@ -254,6 +273,10 @@
 
   async function search(event) {
     if (event) event.preventDefault();
+    if (activeSearchTask) {
+      cancelActiveSearch('PA search cancelled. Enter a PA number and search again.');
+      return;
+    }
     const number = cleanNumber(inputEl.value);
     const state = String(stateEl.value || '').trim().toUpperCase();
     const stateCode = JUPEM_STATE_CODES[state] || '';
@@ -278,28 +301,33 @@
     }
 
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 90000);
-    searchButton.disabled = true;
-    if (statusEl) statusEl.textContent = `Searching for PA ${number}...`;
+    const task = { controller, timeout: 0 };
+    task.timeout = window.setTimeout(() => controller.abort(), 30000);
+    activeSearchTask = task;
+    setSearchBusy(true);
+    setQuickStatus(`Searching for PA ${number}. Click Cancel PA Search to stop.`, 'checking');
     try {
-      allRows = (await fetchOfficialResults(number, stateCode, controller.signal))
+      const rows = await fetchOfficialResults(number, stateCode, controller.signal);
+      if (activeSearchTask !== task) return;
+      allRows = rows
         .map((row, index) => ({ ...row, _sourceIndex: index }));
       filteredRows = sortRows(allRows.slice());
       generalEl.disabled = !allRows.length;
       renderResults(1);
-      if (statusEl) statusEl.textContent = allRows.length
+      setQuickStatus(allRows.length
         ? `${allRows.length.toLocaleString('en-MY')} PA records found`
-        : 'No PA record found';
+        : 'No PA record found', allRows.length ? 'success' : 'unavailable');
     } catch (error) {
-      if (errorEl) {
-        errorEl.textContent = error && error.name === 'AbortError'
-          ? 'PA search took too long. Please try again.'
-          : 'PA search is temporarily unavailable. Please try again.';
-      }
-      if (statusEl) statusEl.textContent = '';
+      if (activeSearchTask !== task) return;
+      setQuickStatus(error && error.name === 'AbortError'
+        ? 'PA search was cancelled after 30 seconds. Enter a PA number and try again.'
+        : 'PA search is temporarily unavailable. Please try again.', 'unavailable');
     } finally {
-      window.clearTimeout(timeout);
-      searchButton.disabled = false;
+      window.clearTimeout(task.timeout);
+      if (activeSearchTask === task) {
+        activeSearchTask = null;
+        setSearchBusy(false);
+      }
     }
   }
 
@@ -363,6 +391,7 @@
   }
 
   form.addEventListener('submit', search);
+  setSearchBusy(false);
   quickAddButton?.addEventListener('click', quickAdd);
   generalEl.addEventListener('input', applyGeneralFilter);
   generalEl.addEventListener('change', applyGeneralFilter);
@@ -374,14 +403,22 @@
     }
   });
   stateEl.addEventListener('change', () => {
+    const wasActive = cancelActiveSearch();
     clearResults();
     if (errorEl) errorEl.textContent = '';
-    if (statusEl) statusEl.textContent = '';
+    setQuickStatus(wasActive ? 'PA search cancelled because the state changed.' : '', wasActive ? 'unavailable' : '');
   });
   inputEl.addEventListener('input', () => {
+    const wasActive = cancelActiveSearch();
     clearResults();
     if (errorEl) errorEl.textContent = '';
-    if (statusEl) statusEl.textContent = '';
+    if (wasActive) {
+      setQuickStatus(cleanNumber(inputEl.value)
+        ? 'PA search cancelled because the PA number changed.'
+        : 'Enter a PA number before searching.', 'unavailable');
+    } else {
+      setQuickStatus('', '');
+    }
   });
 
   sortButtons.forEach((button) => {
