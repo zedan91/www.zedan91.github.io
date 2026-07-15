@@ -357,6 +357,9 @@ async function azobssSyncJupemPurchaseLogs(order = {}, status = "pending", extra
       paymentUrl: String(order.paymentUrl || ""),
       paymentMethod: String(order.paymentMethod || "toyyibpay"),
       paymentReference: String(extra.paymentReference || order.paymentReference || ""),
+      isAdminTestPayment: order.isAdminTestPayment === true,
+      testPayment: order.isAdminTestPayment === true,
+      paymentSource: String(order.source || ""),
       createdAtMs: Number(item.createdAtMs || nowMs),
       createdAtClient: new Date(Number(item.createdAtMs || nowMs)).toISOString(),
       maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS,
@@ -3677,4 +3680,3 @@ app.listen(PORT, () => {
   console.log(`AZOBSS Lucky Draw Backend running on port ${PORT}`);
   console.log("AZOBSS_PATCH: 424-payment-logs-delete-backend-entrypoints");
 });
-

@@ -3716,8 +3716,24 @@ function azAdminPaymentAmount(x){
   if(Number.isFinite(sen) && sen>0) return Math.round(sen)/100;
   return 0;
 }
+function azAdminIsTestPaymentRecord(x){
+  x=x||{};
+  if(x.isAdminTestPayment===true || x.testPayment===true || x.isTestPayment===true) return true;
+  const product=x.product||{};
+  const hay=[
+    x.orderId,x.id,x.docId,x.paymentOrderId,x.paymentReference,x.billCode,
+    x.paymentMethod,x.paymentSource,x.source,x.createdBy,x.createdByAdmin,
+    x.productName,x.productTitle,x.itemName,x.title,x.name,
+    product.id,product.name,product.title
+  ].map(v=>String(v||'').trim().toLowerCase()).join(' ');
+  return /(^|\s)pabmtest[-_a-z0-9]*/.test(hay)
+    || hay.includes('admin-test')
+    || hay.includes('admin test')
+    || hay.includes('jupem document test purchase');
+}
 function azAdminPurchaseLogToPaymentRecord(id, data){
   const x = {id:id || data?.id || '', ...(data||{}), _azSource:'purchaseLogs'};
+  if(azAdminIsTestPaymentRecord(x)) return null;
   const category = azAdminDetectPaymentCategory(x, 'Others');
 
   const amount = azAdminPaymentAmount(x);
@@ -3781,6 +3797,7 @@ function azAdminFilterPaymentRecords(records, categoryFilter, statusFilter, sear
   const dateRange = azAdminPaymentLogDateRange(dateFilter || 'all');
   const terms = q.split(/\s+/).filter(Boolean);
   return (records||[]).filter(x=>{
+    if(azAdminIsTestPaymentRecord(x)) return false;
     if(filter === 'pabm' && x.category !== 'PA/BM') return false;
     if(filter === 'software' && x.category !== 'Software') return false;
     if(filter === 'cad' && x.category !== 'CAD Tools') return false;
@@ -3804,6 +3821,7 @@ function azAdminSetPaymentLogCustomDateState(){
 }
 function azAdminPremiumToPaymentRecord(x){
   x=x||{};
+  if(azAdminIsTestPaymentRecord(x)) return null;
   const user=x.user||{};
   const status=String(x.status||'pending').toLowerCase();
   const paid=['paid','verified','success','completed','approved','confirmed'].includes(status);
@@ -3830,7 +3848,7 @@ async function azAdminLoadPremiumOrdersViaBackend(limitRows=300){
   try{
     const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/export?type=premiumOrders&format=json&limit='+encodeURIComponent(limitRows),{cache:'no-store'});
     const rows=Array.isArray(j?.records)?j.records:[];
-    return rows.map(azAdminPremiumToPaymentRecord);
+    return rows.map(azAdminPremiumToPaymentRecord).filter(Boolean);
   }catch(e){
     console.warn('Admin premiumOrders backend read failed:', e);
     azAdminReportQueryError('Sales Overview/Payment Logs: premiumOrders backend', e);
@@ -4034,7 +4052,7 @@ async function loadOverview(){
   let pendingPurchaseCount=0;
   purchases?.forEach(d=>{
     const record=azAdminPurchaseLogToPaymentRecord(d.id,d.data());
-    if(azAdminIsActivePendingPayment(record)) pendingPurchaseCount++;
+    if(record && azAdminIsActivePendingPayment(record)) pendingPurchaseCount++;
   });
   premiumOverviewOrders.forEach(x=>{
     if(azAdminIsActivePendingPayment(x)) pendingPurchaseCount++;
@@ -4054,7 +4072,10 @@ async function loadOverview(){
     return {...(x||{}), amount, createdAtMs};
   }
   const azOverviewRecords=[];
-  purchases?.forEach(d=>azOverviewRecords.push(azAdminPurchaseLogToPaymentRecord(d.id,d.data())));
+  purchases?.forEach(d=>{
+    const record=azAdminPurchaseLogToPaymentRecord(d.id,d.data());
+    if(record) azOverviewRecords.push(record);
+  });
   premiumOverviewOrders.forEach(x=>azOverviewRecords.push(azAdminOverviewNormalizeSaleRecord(x)));
   const azOverviewNow=new Date();
   const azOverviewMonthStart=new Date(azOverviewNow.getFullYear(),azOverviewNow.getMonth(),1).getTime();
@@ -4278,7 +4299,7 @@ function azAdminNetAfterToyyibPay(gross, transactionCount){
   return Math.max(0, (Number(gross||0)||0) - fee);
 }
 function azAdminPaidRevenueRecords(records){
-  return (records||[]).filter(x=>azAdminStatusBucket(x)==='paid' && (Number(x.amount||0)||0)>0);
+  return (records||[]).filter(x=>!azAdminIsTestPaymentRecord(x) && azAdminStatusBucket(x)==='paid' && (Number(x.amount||0)||0)>0);
 }
 function azAdminSalesProductName(x){
   return String(x?.title || x?.name || x?.itemName || x?.filename || x?.itemCode || x?.productName || x?.productTitle || x?.product?.name || x?.product?.title || x?.productId || 'Purchase').trim() || 'Purchase';
@@ -4381,7 +4402,10 @@ async function loadPayments(){
   const premiumRecords = await azAdminLoadPremiumOrdersViaBackend(300);
   const records = [];
 
-  logs?.forEach(d=>records.push(azAdminPurchaseLogToPaymentRecord(d.id, d.data())));
+  logs?.forEach(d=>{
+    const record=azAdminPurchaseLogToPaymentRecord(d.id,d.data());
+    if(record) records.push(record);
+  });
   premiumRecords.forEach(x=>records.push(x));
   records.sort((a,b)=>azAdminPaymentMs(b)-azAdminPaymentMs(a));
   azAdminRenderSalesOverviewCharts(records);
@@ -4620,11 +4644,13 @@ async function loadPurchases(){
   const dateFilter = ($('#paymentLogsDateFilter')?.value || 'all');
   const searchText = $('#paymentLogsSearch')?.value || '';
   const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(300)),'Payment Logs: purchaseLogs');
-  const sums=await safeGet(query(collection(db,'purchaseSummaries'),limit(100)),'Payment Logs: purchaseSummaries');
   const premiumRecords=await azAdminLoadPremiumOrdersViaBackend(500);
   const records=[];
 
-  logs?.forEach(d=>records.push(azAdminPurchaseLogToPaymentRecord(d.id, d.data())));
+  logs?.forEach(d=>{
+    const record=azAdminPurchaseLogToPaymentRecord(d.id,d.data());
+    if(record) records.push(record);
+  });
   premiumRecords.forEach(x=>records.push(x));
   records.forEach(x=>{
     const bucket=azAdminStatusBucket(x);
@@ -4661,7 +4687,17 @@ async function loadPurchases(){
     return `<div class="item az-payment-log-row" data-paylog-row="${esc(key)}"><div class="item-row"><label class="az-paylog-check" title="Select record"><input class="az-paylog-select" type="checkbox" data-paylog-select="${esc(key)}"></label><div class="az-payment-log-main"><div class="item-title">${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)} <span class="az-pay-badge ${esc(bucket)}">${esc(bucket.toUpperCase())}</span></div><div class="item-meta">${buyer}${buyerEmail} • ${itemName}${productId?' • Product ID: '+productId:''} • ${sourceBadge}${orderId?' • Order/Bill: '+orderId:''} • ${dateText}</div></div><div class="item-actions">${actions}</div></div></div>`;
   });
 
-  const sr=[]; sums?.forEach(d=>{const x=d.data();sr.push(item(esc(d.id),`Total: RM${esc(x.totalAmount||x.total||0)} • Unit: ${esc(x.totalUnit||x.unit||0)}`))});
+  const summaryMap=new Map();
+  records.filter(x=>x.category==='PA/BM' && azAdminStatusBucket(x)==='paid').forEach(x=>{
+    const key=String(x.usernameKey||x.username||x.email||'Unknown').trim()||'Unknown';
+    const old=summaryMap.get(key)||{total:0,unit:0};
+    old.total+=Number(x.amount||0)||0;
+    old.unit+=1;
+    summaryMap.set(key,old);
+  });
+  const sr=[...summaryMap.entries()]
+    .sort((a,b)=>(b[1].total-a[1].total)||a[0].localeCompare(b[0]))
+    .map(([key,x])=>item(esc(key),`Total: RM${esc(Number(x.total||0).toFixed(2))} • Unit: ${esc(x.unit)}`));
   $('#purchaseLogsList').innerHTML=lr.join('')||'<div class="item">No payment logs found.</div>';
   $('#purchaseSummariesList').innerHTML=sr.join('')||'<div class="item">No PA/BM purchase summaries.</div>';
   azAdminApplyPager('#purchaseLogsList',{key:'purchaseLogsList',pageSize:8,label:'payment logs',reset:true});
@@ -5434,10 +5470,13 @@ async function azReportLoadPaymentSummary(){
     const logs=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(300)),'Website Report: purchaseLogs');
     const premium=await azAdminLoadPremiumOrdersViaBackend(500);
     const records=[];
-    logs?.forEach(d=>records.push(azAdminPurchaseLogToPaymentRecord(d.id,d.data())));
+    logs?.forEach(d=>{
+      const record=azAdminPurchaseLogToPaymentRecord(d.id,d.data());
+      if(record) records.push(record);
+    });
     premium.forEach(x=>records.push(x));
     out.premiumOrders=premium.length;
-    out.purchaseLogs=logs?.size||0;
+    out.purchaseLogs=records.filter(x=>x._azSource==='purchaseLogs').length;
     out.totalRecords=records.length;
     records.forEach(x=>{
       const bucket=azAdminStatusBucket(x);

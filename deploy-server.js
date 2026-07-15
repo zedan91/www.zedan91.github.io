@@ -3411,6 +3411,9 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     billCode: String(order.billCode || ""),
     paymentUrl: String(order.paymentUrl || ""),
     paymentMethod: String(order.paymentMethod || "toyyibpay"),
+    isAdminTestPayment: order.isAdminTestPayment === true,
+    testPayment: order.isAdminTestPayment === true,
+    paymentSource: String(order.source || ""),
     updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
   };
 
