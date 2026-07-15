@@ -82,7 +82,6 @@ body.pa-bm-page .pabm-results-card .benchmark-result-wrap {
   margin-top: 0;
 }
 
-body.pa-bm-page .pabm-inline-status-proxy[hidden],
 body.pa-bm-page .pabm-full-results[hidden] {
   display: none !important;
 }
