@@ -966,8 +966,10 @@ body.pa-bm-page .pabm-cart-count {
 body.pa-bm-page .pabm-cart-items {
   display: grid;
   gap: 8px;
-  max-height: 280px;
-  overflow: auto;
+  max-height: 232px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 12px 0;
 }
 
@@ -985,23 +987,35 @@ body.pa-bm-page .pabm-cart-item {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
+  height: 52px;
   padding: 10px;
   border: 1px solid #2b3a50;
   border-radius: 6px;
   background: #152136;
+  box-sizing: border-box;
+}
+
+body.pa-bm-page .pabm-cart-item > div:first-child {
+  min-width: 0;
 }
 
 body.pa-bm-page .pabm-cart-item strong {
   display: block;
+  overflow: hidden;
   color: #f8fafc;
   font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 body.pa-bm-page .pabm-cart-item small {
   display: block;
+  overflow: hidden;
   margin-top: 3px;
   color: #91a3ba;
   font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 body.pa-bm-page .pabm-cart-item-side {
