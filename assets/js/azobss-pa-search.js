@@ -308,7 +308,10 @@
     try {
       const rows = await fetchOfficialResults(number, stateCode, controller.signal);
       if (activeSearchTask !== task) return;
-      allRows = rows
+      const prefixRows = rows
+        .filter((row) => cleanNumber(row.paNo).startsWith(number))
+        .sort((left, right) => textCollator.compare(cleanNumber(left.paNo), cleanNumber(right.paNo)));
+      allRows = prefixRows
         .map((row, index) => ({ ...row, _sourceIndex: index }));
       filteredRows = sortRows(allRows.slice());
       generalEl.disabled = !allRows.length;
