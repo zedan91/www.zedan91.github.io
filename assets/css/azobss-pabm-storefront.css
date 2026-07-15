@@ -145,6 +145,7 @@ body.pa-bm-page .benchmark-table .pabm-cart-action-cell {
 }
 
 body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-button {
+  position: relative !important;
   width: 38px !important;
   min-width: 38px !important;
   max-width: 38px !important;
@@ -154,6 +155,30 @@ body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-butto
   padding: 0 !important;
   font-size: 17px !important;
   border-radius: 7px !important;
+  overflow: visible !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-button::after {
+  content: "+";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #172235;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 body.pa-bm-page .benchmark-table .pabm-location-action-col,
