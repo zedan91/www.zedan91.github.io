@@ -2891,6 +2891,23 @@ function azobssShortStateNameForPurchaseMobile(state){
   return raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/\bWp\b/g,'W.P').replace(/\bW\.p\b/g,'W.P');
 }
 
+function azobssPurchaseSelectionMap(){
+  if(!(window.__AZOBSS_ADMIN_PURCHASE_SELECTIONS__ instanceof Map)) window.__AZOBSS_ADMIN_PURCHASE_SELECTIONS__ = new Map();
+  return window.__AZOBSS_ADMIN_PURCHASE_SELECTIONS__;
+}
+function azobssPurchaseSelectionKey(r){
+  const direct = String(r?.firestoreId || r?.id || r?.purchaseLogId || '').trim();
+  if(direct) return 'id:' + direct;
+  return ['record', r?.usernameKey, r?.uid, r?.productType, r?.itemCode, r?.negeri, r?.createdAtMs, r?.amount]
+    .map(v => String(v || '').trim().toLowerCase()).join('|');
+}
+function azobssPurchaseSelectionCellHtml(r){
+  if(!isAzobssAdmin(getSavedUser && getSavedUser() || {})) return '<div class="col-select" aria-hidden="true"></div>';
+  const key = azobssPurchaseSelectionKey(r);
+  const selected = azobssPurchaseSelectionMap().has(key);
+  return `<div class="col-select"><input class="purchase-row-select" type="checkbox" aria-label="Select ${escHtml(String(r?.productType || 'item'))} ${escHtml(String(r?.itemCode || ''))}" data-record-key="${escHtml(key)}" data-record-payload="${azobssPurchaseDeletePayload(r)}"${selected ? ' checked' : ''}></div>`;
+}
+
 function purchaseDetailRowHtml(r){
   const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
   const amount = Number(r.amount || 0);
@@ -2920,6 +2937,7 @@ function purchaseDetailRowHtml(r){
   const idx = (window.__azPurchaseRowIndex = (window.__azPurchaseRowIndex||0)+1);
   return `
     <div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-row">
+      ${azobssPurchaseSelectionCellHtml(r)}
       <div class="col-no">${idx}</div>
       <div class="col-item"><strong>${escHtml(item)}</strong></div>
       <div class="col-state"><strong>${escHtml(azobssShortStateNameForPurchaseMobile(r.negeri || r.state || '-'))}</strong></div>
@@ -2932,6 +2950,7 @@ function purchaseDetailRowHtml(r){
 
 function azobssPurchaseTableHeaderHtml(){
   return `<div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-header">
+    <div class="col-select"><input class="purchase-table-select-all" type="checkbox" aria-label="Select all records on this page"></div>
     <div class="col-no">#</div>
     <div class="col-item">Item</div>
     <div class="col-state">📍 Negeri</div>
@@ -3415,10 +3434,170 @@ async function azobssDeleteAllPurchaseRecordsForUser(usernameKey){
   azobssAdminPurchasePage = 1;
   await renderAzobssPurchaseRecords();
 }
+function azobssUpdatePurchaseBulkControls(){
+  const selections = azobssPurchaseSelectionMap();
+  const visible = Array.isArray(window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ : [];
+  const allRecords = Array.isArray(window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ : [];
+  const selectedVisible = visible.filter(item => selections.has(item.key)).length;
+  const allVisible = visible.length > 0 && selectedVisible === visible.length;
+  const partialVisible = selectedVisible > 0 && !allVisible;
+  const selectedAll = allRecords.filter(item => selections.has(item.key)).length;
+  const everyRecordSelected = allRecords.length > 0 && selectedAll === allRecords.length;
+  const master = document.getElementById('userPaSelectAllRecords');
+  const tableMaster = document.querySelector('#userPaPurchaseList .purchase-table-select-all');
+  if(master){
+    master.checked = everyRecordSelected;
+    master.indeterminate = selectedAll > 0 && !everyRecordSelected;
+    master.disabled = !allRecords.length;
+  }
+  if(tableMaster){
+    tableMaster.checked = allVisible;
+    tableMaster.indeterminate = partialVisible;
+    tableMaster.disabled = !visible.length;
+  }
+  const button = document.getElementById('userPaDeleteSelectedRecords');
+  if(button){
+    button.disabled = selections.size < 1;
+    button.textContent = `Delete Selected (${selections.size})`;
+  }
+}
+function azobssSetVisiblePurchaseSelection(checked){
+  const selections = azobssPurchaseSelectionMap();
+  const visible = Array.isArray(window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ : [];
+  visible.forEach(item => checked ? selections.set(item.key, item.payload) : selections.delete(item.key));
+  document.querySelectorAll('#userPaPurchaseList .purchase-row-select').forEach(input => { input.checked = !!checked; });
+  azobssUpdatePurchaseBulkControls();
+}
+function azobssSetAllPurchaseSelection(checked){
+  const selections = azobssPurchaseSelectionMap();
+  const allRecords = Array.isArray(window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ : [];
+  allRecords.forEach(item => checked ? selections.set(item.key, item.payload) : selections.delete(item.key));
+  document.querySelectorAll('#userPaPurchaseList .purchase-row-select').forEach(input => { input.checked = !!checked; });
+  azobssUpdatePurchaseBulkControls();
+}
+function azobssSyncPurchaseBulkControls(visibleRecords, isAdminUser, allRecords){
+  const tools = document.getElementById('userPaBulkDeleteTools');
+  if(tools) tools.hidden = !isAdminUser;
+  if(!isAdminUser){
+    azobssPurchaseSelectionMap().clear();
+    window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ = [];
+    window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ = [];
+    return;
+  }
+  window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ = (visibleRecords || []).map(r => ({
+    key: azobssPurchaseSelectionKey(r),
+    payload: azobssPurchaseDeletePayload(r)
+  }));
+  window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ = (allRecords || visibleRecords || []).map(r => ({
+    key: azobssPurchaseSelectionKey(r),
+    payload: azobssPurchaseDeletePayload(r)
+  }));
+  const allowedKeys = new Set(window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__.map(item => item.key));
+  azobssPurchaseSelectionMap().forEach((_payload, key) => { if(!allowedKeys.has(key)) azobssPurchaseSelectionMap().delete(key); });
+  const list = document.getElementById('userPaPurchaseList');
+  if(list && !list.dataset.azobssBulkSelectBound){
+    list.dataset.azobssBulkSelectBound = '1';
+    list.addEventListener('change', event => {
+      const input = event.target;
+      if(input?.classList?.contains('purchase-table-select-all')){
+        azobssSetVisiblePurchaseSelection(input.checked);
+        return;
+      }
+      if(!input?.classList?.contains('purchase-row-select')) return;
+      const key = String(input.dataset.recordKey || '');
+      const payload = String(input.dataset.recordPayload || '');
+      if(key) input.checked ? azobssPurchaseSelectionMap().set(key, payload) : azobssPurchaseSelectionMap().delete(key);
+      azobssUpdatePurchaseBulkControls();
+    });
+  }
+  const master = document.getElementById('userPaSelectAllRecords');
+  if(master && !master.dataset.azobssBulkSelectBound){
+    master.dataset.azobssBulkSelectBound = '1';
+    master.addEventListener('change', () => azobssSetAllPurchaseSelection(master.checked));
+  }
+  const button = document.getElementById('userPaDeleteSelectedRecords');
+  if(button && !button.dataset.azobssBulkDeleteBound){
+    button.dataset.azobssBulkDeleteBound = '1';
+    button.addEventListener('click', () => azobssDeleteSelectedPurchaseRecords(button));
+  }
+  azobssUpdatePurchaseBulkControls();
+}
+async function azobssDeleteSelectedPurchaseRecords(button){
+  const current = getSavedUser && getSavedUser() || {};
+  if(!isAzobssAdmin(current)){ alert('Admin sahaja boleh memadam rekod pembelian.'); return; }
+  const selections = azobssPurchaseSelectionMap();
+  const targets = Array.from(selections.values()).map(raw => {
+    try{ return JSON.parse(decodeURIComponent(String(raw || ''))); }catch(e){ return null; }
+  }).filter(Boolean);
+  if(!targets.length) return;
+  if(!confirm(`Delete ${targets.length} selected purchase record(s)?\n\nThis action cannot be undone.`)) return;
+  const oldText = button?.textContent || '';
+  const errors = [];
+  try{
+    if(button){ button.disabled = true; button.textContent = 'Deleting...'; }
+    const stableRows = readStablePurchaseRecords().filter(row => !targets.some(target => azobssPurchaseSameForDelete(row, target)));
+    window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__ = stableRows;
+    try{
+      if(stableRows.length) sessionStorage.setItem('azobssPaBmPurchaseStableCacheV2', JSON.stringify({ at:Date.now(), rows:stableRows }));
+      else sessionStorage.removeItem('azobssPaBmPurchaseStableCacheV2');
+    }catch(e){}
+
+    const directIds = Array.from(new Set(targets.map(target => String(target.firestoreId || target.id || '').trim()).filter(Boolean)));
+    const directResults = await Promise.allSettled(directIds.map(id => deleteDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, id))));
+    directResults.forEach(result => { if(result.status === 'rejected') errors.push(result.reason); });
+
+    const noDirectId = targets.filter(target => !String(target.firestoreId || target.id || '').trim());
+    if(noDirectId.length){
+      try{
+        const snap = await getDocs(collection(db, AZOBSS_PURCHASE_COLLECTION));
+        const fallbackDeletes = [];
+        snap.forEach(d => {
+          const data = d.data() || {};
+          const candidate = { id:d.id, firestoreId:d.id, ...data, createdAtMs:Number(data.createdAtMs || (data.createdAtClient ? Date.parse(data.createdAtClient) : 0) || 0) };
+          if(noDirectId.some(target => azobssPurchaseSameForDelete(candidate, target))) fallbackDeletes.push(deleteDoc(d.ref));
+        });
+        const fallbackResults = await Promise.allSettled(fallbackDeletes);
+        fallbackResults.forEach(result => { if(result.status === 'rejected') errors.push(result.reason); });
+      }catch(error){ errors.push(error); }
+    }
+
+    const targetGroups = new Map();
+    targets.forEach(target => {
+      const key = String(target.usernameKey || target.displayName || '').trim().toLowerCase();
+      if(!key) return;
+      if(!targetGroups.has(key)) targetGroups.set(key, []);
+      targetGroups.get(key).push(target);
+    });
+    const embeddedResults = await Promise.allSettled(Array.from(targetGroups.entries()).map(async ([key, userTargets]) => {
+      const userRef = doc(db, 'users', key);
+      const snap = await getDoc(userRef);
+      if(!snap.exists()) return;
+      const data = snap.data() || {};
+      const embedded = Array.isArray(data.purchaseRecords) ? data.purchaseRecords : [];
+      const filtered = embedded.filter(row => !userTargets.some(target => azobssPurchaseSameForDelete({ ...row, usernameKey:row.usernameKey || key }, target)));
+      if(filtered.length !== embedded.length){
+        await setDoc(userRef, { purchaseRecords:filtered, purchaseRecordsUpdatedAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true });
+      }
+    }));
+    embeddedResults.forEach(result => { if(result.status === 'rejected') errors.push(result.reason); });
+
+    selections.clear();
+    azobssUserPurchasePage = 1;
+    await renderAzobssPurchaseRecords();
+    alert(errors.length ? `Deleted with ${errors.length} cleanup warning(s). Please refresh and check the list.` : `${targets.length} purchase record(s) deleted.`);
+  }catch(error){
+    console.error('Bulk purchase delete failed:', error);
+    alert('Unable to delete the selected records. Please try again.');
+  }finally{
+    if(button){ button.disabled = false; button.textContent = oldText || 'Delete Selected (0)'; }
+    azobssUpdatePurchaseBulkControls();
+  }
+}
 window.azobssDeleteOnePurchaseRecord = azobssDeleteOnePurchaseRecord;
 window.azobssUncartPurchaseRecord = azobssUncartPurchaseRecord;
 window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRecordsForUser;
 window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
+window.azobssDeleteSelectedPurchaseRecords = azobssDeleteSelectedPurchaseRecords;
 
 function toggleAzobssPurchaseDetails(button){
   const card = button && button.closest('.admin-purchase-user-card');
@@ -3551,6 +3730,7 @@ async function renderAzobssPurchaseRecords(){
         ? (azobssPurchaseTableHeaderHtml() + ownVisibleRecords.map(purchaseDetailRowHtml).join(''))
         : '<div class="purchase-summary-item">No PA purchase list yet.</div>';
     }
+    azobssSyncPurchaseBulkControls(ownVisibleRecords, true, ownRecords);
     const userPanelForAdmin = document.getElementById('userPaPurchasePanel');
     if(userPanelForAdmin){
       userPanelForAdmin.hidden = false;
@@ -3574,6 +3754,7 @@ async function renderAzobssPurchaseRecords(){
     if(userList){ window.__azPurchaseRowIndex=(azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE;
       userList.innerHTML = visibleRecords.length ? (azobssPurchaseTableHeaderHtml() + visibleRecords.map(purchaseDetailRowHtml).join('')) : '<div class="purchase-summary-item">No PA purchase list yet.</div>';
     }
+    azobssSyncPurchaseBulkControls(visibleRecords, false);
     const onUserPage = page => {
       azobssUserPurchasePage = page;
       renderAzobssPurchaseRecords();
