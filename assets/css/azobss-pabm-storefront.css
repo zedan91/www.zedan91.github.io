@@ -156,6 +156,53 @@ body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-butto
   border-radius: 7px !important;
 }
 
+body.pa-bm-page .benchmark-table .pabm-location-action-col,
+body.pa-bm-page .benchmark-table .pabm-location-action-cell {
+  width: 54px !important;
+  min-width: 54px !important;
+  max-width: 54px !important;
+  padding-left: 7px !important;
+  padding-right: 7px !important;
+  text-align: center;
+}
+
+body.pa-bm-page .pabm-location-action-col .pabm-location-brand-icon {
+  margin: 0 auto;
+}
+
+body.pa-bm-page .benchmark-table .pabm-location-action-cell > .pabm-location-icon-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 4px !important;
+  border-radius: 7px !important;
+  background: #f8fafc !important;
+  border: 1px solid #475569 !important;
+}
+
+body.pa-bm-page .pabm-location-brand-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+body.pa-bm-page .pabm-location-brand-icon.is-jupem {
+  width: 29px;
+  height: 26px;
+}
+
+body.pa-bm-page .pabm-location-brand-icon.is-google-maps {
+  width: 30px;
+  height: 30px;
+}
+
 body.pa-bm-page .pabm-product-heading > strong {
   color: #4ade80;
   font-size: 14px;

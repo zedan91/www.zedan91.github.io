@@ -181,7 +181,6 @@
         <td>${escapeHtml(record.negeri || '-')}</td>
         <td><button class="btn blue" type="button" data-syit-view="${escapeHtml(record.productId)}" data-syit-state-code="${escapeHtml(record.stateCode)}" data-syit-sheet-name="${escapeHtml(record.sheetName)}" style="padding:6px 10px;font-size:12px;margin:0;border-radius:8px;">View Sheet</button></td>
         <td>${mapLink}</td>
-        <td>RM7</td>
       </tr>`;
     }).join('');
     renderPagination(totalPages);

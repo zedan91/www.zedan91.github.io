@@ -8172,7 +8172,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=20"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=21"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8705,7 +8705,6 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="mukim" type="button"><span>MUKIM</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-pa-sort="seksyen" type="button"><span>SECTION</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-view-col">VIEW PA</th>
-<th class="pabm-price-col">PRICE</th>
 </tr>
 </thead>
 <tbody id="paResultsBody"></tbody>
@@ -8776,9 +8775,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th class="pabm-action-col">VIEW LOCATION</th>
-<th class="pabm-action-col">MAPS LOCATION</th>
-<th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-benchmark-sort="harga" type="button"><span>HARGA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col pabm-location-action-col" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"/><span class="pabm-visually-hidden">View Location</span></th>
+<th class="pabm-action-col pabm-location-action-col" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"/><span class="pabm-visually-hidden">Maps Location</span></th>
 </tr>
 </thead>
 <tbody id="benchmarkResultsBody"></tbody>
@@ -8853,9 +8851,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>PLACE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th class="pabm-action-col">VIEW LOCATION</th>
-<th class="pabm-action-col">MAPS LOCATION</th>
-<th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-gps-sort="harga" type="button"><span>PRICE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col pabm-location-action-col" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"/><span class="pabm-visually-hidden">View Location</span></th>
+<th class="pabm-action-col pabm-location-action-col" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"/><span class="pabm-visually-hidden">Maps Location</span></th>
 </tr>
 </thead>
 <tbody id="gpsResultsBody"></tbody>
@@ -8927,7 +8924,6 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-syit-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th>VIEW SHEET</th>
 <th>MAP</th>
-<th aria-sort="none" class="pabm-price-col"><button class="pa-sort-button" data-syit-sort="harga" type="button"><span>PRICE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 </tr>
 </thead>
 <tbody id="syitPiawaiResultsBody"></tbody>
@@ -10490,10 +10486,10 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
         ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download pabm-table-cart-button" aria-label="Add ${esc(row.stationNo || row.stesen || 'BM/SBM item')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button>`
         : '-';
       const locationButton = locationUrl
-        ? `<a class="btn blue" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">View Location</a>`
+        ? `<a class="btn blue pabm-location-icon-button" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${esc(row.stationNo || row.stesen || 'station')} location in JUPEM" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"></a>`
         : '-';
       const mapsButton = mapsUrl
-        ? `<a class="btn" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;background:#0f9f76;color:#fff;">Maps Location</a>`
+        ? `<a class="btn pabm-location-icon-button" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(row.stationNo || row.stesen || 'station')} in Google Maps" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"></a>`
         : '-';
 
       return `
@@ -10505,9 +10501,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
           <td>${esc(row.daerah || '-')}</td>
           <td>${esc(row.bandar || '-')}</td>
           <td>${esc(row.huraian || '-')}</td>
-          <td class="pabm-action-cell">${locationButton}</td>
-          <td class="pabm-action-cell">${mapsButton}</td>
-          <td>${esc(row.harga || '-')}</td>
+          <td class="pabm-action-cell pabm-location-action-cell">${locationButton}</td>
+          <td class="pabm-action-cell pabm-location-action-cell">${mapsButton}</td>
         </tr>`;
     }).join('');
 
@@ -15207,10 +15202,10 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=8"></script>
-<script src="/assets/js/azobss-pa-search.js?v=15" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=16" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=5" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=11" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=10" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=12" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=11" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>
