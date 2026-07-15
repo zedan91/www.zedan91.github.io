@@ -94,15 +94,22 @@
 
   function setupPanel(panel) {
     const productCode = String(panel.dataset.productCode || '1') === '2' ? '2' : '1';
+    const panelKey = String(panel.dataset.paBmPanel || '').trim();
+    const resultCard = Array.from(document.querySelectorAll('[data-pa-bm-results]'))
+      .find((card) => String(card.dataset.paBmResults || '').trim() === panelKey);
     const stateEl = panel.querySelector('[data-lot-state]');
     const lotEl = panel.querySelector('[data-lot-number]');
-    const generalEl = panel.querySelector('[data-lot-general-search]');
+    const generalEl = panel.querySelector('[data-lot-general-search]')
+      || resultCard?.querySelector('[data-lot-general-search]');
     const searchButton = panel.querySelector('[data-lot-search]');
     const errorEl = panel.querySelector('[data-lot-error]');
     const statusEl = panel.querySelector('[data-lot-status]');
-    const resultWrap = panel.querySelector('[data-lot-result-wrap]');
-    const resultsBody = panel.querySelector('[data-lot-results]');
-    const pagination = panel.querySelector('[data-lot-pagination]');
+    const resultWrap = panel.querySelector('[data-lot-result-wrap]')
+      || resultCard?.querySelector('[data-lot-result-wrap]');
+    const resultsBody = panel.querySelector('[data-lot-results]')
+      || resultCard?.querySelector('[data-lot-results]');
+    const pagination = panel.querySelector('[data-lot-pagination]')
+      || resultCard?.querySelector('[data-lot-pagination]');
     if (!stateEl || !lotEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
 
     let allRows = [];
