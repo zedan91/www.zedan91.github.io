@@ -72,9 +72,9 @@
   async function loadRecords() {
     if (recordsCache) return recordsCache;
     const response = await fetch(DATA_URL, { cache: 'no-store' });
-    if (!response.ok) throw new Error('GPS station database is unavailable.');
+    if (!response.ok) throw new Error('Pangkalan data stesen GPS tidak tersedia.');
     const data = await response.json();
-    if (!Array.isArray(data)) throw new Error('GPS station database format is invalid.');
+    if (!Array.isArray(data)) throw new Error('Format pangkalan data stesen GPS tidak sah.');
     recordsCache = data;
     return recordsCache;
   }
@@ -115,15 +115,15 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
       const mapLink = record.mapUrl
-        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM eBiz" title="JUPEM eBiz"><span aria-hidden="true">&#128269;</span></a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat lokasi ${escapeHtml(record.stationNo || 'stesen GPS')} dalam JUPEM eBiz" title="JUPEM eBiz"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
       const googleMapsUrl = buildGoogleMapsUrl(record);
       const googleMapsLink = googleMapsUrl
-        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Google Maps"><span aria-hidden="true">&#128269;</span></a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Buka ${escapeHtml(record.stationNo || 'stesen GPS')} dalam Google Maps" title="Google Maps"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
-        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-gps-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(record.stationNo || 'GPS station')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
+        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-gps-record="${encodeRecord(record)}" aria-label="Tambah ${escapeHtml(record.stationNo || 'stesen GPS')} ke troli" title="Tambah ke Troli"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(record.stationNo || '-')}</strong></td>
         <td class="pabm-state-data-cell">${escapeHtml(record.negeri || '-')}</td>
         <td class="pabm-district-data-cell">${escapeHtml(record.daerah || '-')}</td>
@@ -148,8 +148,8 @@
     if (!statusEl) return;
     const query = normalize(generalEl.value);
     statusEl.textContent = query
-      ? `${matchingRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} GPS station records found`
-      : `${allRows.length.toLocaleString('en-MY')} GPS station records found`;
+      ? `${matchingRows.length.toLocaleString('en-MY')} daripada ${allRows.length.toLocaleString('en-MY')} rekod stesen GPS ditemui`
+      : `${allRows.length.toLocaleString('en-MY')} rekod stesen GPS ditemui`;
   }
 
   function applyGeneralFilter() {
@@ -171,10 +171,10 @@
     const payload = JSON.parse(decodeURIComponent(encodeRecord(record)));
     const saved = await window.azobssRecordPurchase(payload);
     setQuickStatus(saved && saved.__azobssAlreadyInCart
-      ? 'This GPS station is already in your cart.'
+      ? 'Stesen GPS ini sudah ada dalam troli anda.'
       : (direct
-        ? `Success: ${payload.itemCode} has been added to your cart.`
-        : `${payload.itemCode} added to your cart.`), 'success');
+        ? `Berjaya: ${payload.itemCode} telah ditambah ke troli anda.`
+        : `${payload.itemCode} ditambah ke troli anda.`), 'success');
     return saved;
   }
 
@@ -184,12 +184,12 @@
     if (errorEl) errorEl.textContent = '';
     setQuickStatus('', '');
     if (!selectedState) {
-      if (errorEl) errorEl.textContent = 'Select a state before searching.';
+      if (errorEl) errorEl.textContent = 'Pilih negeri sebelum membuat carian.';
       return;
     }
 
     searchButton.disabled = true;
-    if (statusEl) statusEl.textContent = 'Searching GPS station database...';
+    if (statusEl) statusEl.textContent = 'Sedang mencari dalam pangkalan data stesen GPS...';
     try {
       const records = await loadRecords();
       allRows = records.filter((record) => {
@@ -203,12 +203,12 @@
       renderResults(1);
       if (statusEl) {
         statusEl.textContent = allRows.length
-          ? `${allRows.length.toLocaleString('en-MY')} GPS station records found`
-          : 'No GPS station record found';
+          ? `${allRows.length.toLocaleString('en-MY')} rekod stesen GPS ditemui`
+          : 'Tiada rekod stesen GPS ditemui';
       }
     } catch (error) {
       clearResults();
-      if (errorEl) errorEl.textContent = error.message || 'GPS station search failed.';
+      if (errorEl) errorEl.textContent = error.message || 'Carian stesen GPS gagal.';
       if (statusEl) statusEl.textContent = '';
     } finally {
       searchButton.disabled = false;
@@ -221,27 +221,27 @@
     if (errorEl) errorEl.textContent = '';
     setQuickStatus('', '');
     if (!selectedState) {
-      setQuickStatus('Select a state before using Quick Add.', 'unavailable');
+      setQuickStatus('Pilih negeri sebelum menambah terus ke troli.', 'unavailable');
       return;
     }
     if (!query) {
-      setQuickStatus('Enter a GPS station code before using Quick Add.', 'unavailable');
+      setQuickStatus('Masukkan kod stesen GPS sebelum menambah terus ke troli.', 'unavailable');
       return;
     }
     const label = quickAddButton?.querySelector('span');
-    const oldText = label?.textContent || 'Quick Add to Cart';
+    const oldText = label?.textContent || 'Tambah Terus ke Troli';
     try {
       if (quickAddButton) quickAddButton.disabled = true;
       if (label) label.textContent = 'Checking GPS...';
       const requestedCode = String(inputEl.value || '').trim().toUpperCase();
-      setQuickStatus(`Checking GPS ${requestedCode} availability. Please wait...`, 'checking');
+      setQuickStatus(`Sedang menyemak ketersediaan GPS ${requestedCode}. Sila tunggu...`, 'checking');
       const records = await loadRecords();
       const exact = records.find((record) =>
         String(record.negeri || '').trim().toUpperCase() === selectedState
         && (normalize(record.stationNo) === query || normalize(record.productId) === query)
       );
       if (!exact) {
-        const unavailable = new Error(`GPS station ${requestedCode} is not available in ${selectedState}.`);
+        const unavailable = new Error(`Stesen GPS ${requestedCode} tidak tersedia di ${selectedState}.`);
         unavailable.isUnavailable = true;
         throw unavailable;
       }
@@ -301,7 +301,7 @@
       const payload = JSON.parse(decodeURIComponent(button.dataset.gpsRecord || ''));
       await addGpsRecord(payload, false);
     } catch (error) {
-      if (errorEl) errorEl.textContent = error.message || 'Unable to add this GPS station to your cart.';
+      if (errorEl) errorEl.textContent = error.message || 'Stesen GPS ini tidak dapat ditambah ke troli anda.';
     } finally {
       button.disabled = false;
     }

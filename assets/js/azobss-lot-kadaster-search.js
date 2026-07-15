@@ -183,8 +183,8 @@
         <td>${escapeHtml(record.daerah || '-')}</td>
         <td>${escapeHtml(record.mukim || '-')}</td>
         <td>${escapeHtml(record.seksyen || '-')}</td>
-        <td>${actionLink(record.viewPaUrl, 'View PA')}</td>
-        <td>${actionLink(record.mapUrl, 'View Map')}</td>
+        <td>${actionLink(record.viewPaUrl, 'Lihat PA')}</td>
+        <td>${actionLink(record.mapUrl, 'Lihat Peta')}</td>
       </tr>`).join('');
       resultWrap.hidden = false;
       renderPagination(totalPages);
@@ -198,8 +198,8 @@
       currentPage = 1;
       renderResults(1);
       const message = query
-        ? `${filteredRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} lot records found`
-        : `${allRows.length.toLocaleString('en-MY')} lot records found`;
+        ? `${filteredRows.length.toLocaleString('en-MY')} daripada ${allRows.length.toLocaleString('en-MY')} rekod lot ditemui`
+        : `${allRows.length.toLocaleString('en-MY')} rekod lot ditemui`;
       setLotStatus(message, filteredRows.length ? 'success' : 'unavailable');
     }
 
@@ -211,18 +211,18 @@
       setLotStatus('', '');
       clearResults();
       if (!state || !stateCode) {
-        setLotStatus('Select a state before searching.', 'unavailable');
+        setLotStatus('Pilih negeri sebelum membuat carian.', 'unavailable');
         return;
       }
       if (!lotNo) {
-        setLotStatus('Enter a lot number before searching.', 'unavailable');
+        setLotStatus('Masukkan nombor lot sebelum membuat carian.', 'unavailable');
         return;
       }
 
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 90000);
       searchButton.disabled = true;
-      setLotStatus(`Searching lot ${lotNo}. Please wait...`, 'checking');
+      setLotStatus(`Sedang mencari lot ${lotNo}. Sila tunggu...`, 'checking');
       try {
         try {
           allRows = await fetchOfficialResults(productCode, stateCode, lotNo, controller.signal);
@@ -234,12 +234,12 @@
         generalEl.disabled = !allRows.length;
         renderResults(1);
         setLotStatus(allRows.length
-          ? `${allRows.length.toLocaleString('en-MY')} lot records found`
-          : 'No lot record found', allRows.length ? 'success' : 'unavailable');
+          ? `${allRows.length.toLocaleString('en-MY')} rekod lot ditemui`
+          : 'Tiada rekod lot ditemui', allRows.length ? 'success' : 'unavailable');
       } catch (error) {
         setLotStatus(error && error.name === 'AbortError'
-          ? 'Lot search took too long. Please try again.'
-          : (error.message || 'Lot search is temporarily unavailable.'), 'unavailable');
+          ? 'Carian lot mengambil masa terlalu lama. Sila cuba lagi.'
+          : (error.message || 'Carian lot tidak tersedia buat sementara waktu.'), 'unavailable');
       } finally {
         window.clearTimeout(timeout);
         searchButton.disabled = false;

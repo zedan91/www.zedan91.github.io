@@ -106,7 +106,7 @@ function guardCartAction(event) {
     : target.matches('[data-pabm-product-add]')
       ? target.closest('[data-pa-bm-panel]')?.querySelector('.request-error')
       : document.getElementById('benchmarkError');
-  if (message) message.textContent = 'Please login before adding an item to your cart.';
+  if (message) message.textContent = 'Sila log masuk sebelum menambah item ke troli anda.';
   openLogin();
 }
 
@@ -203,7 +203,7 @@ function renderCart() {
   const paymentTotal = document.getElementById('paBmToyyibTotal');
   const amount = cartTotal(items);
 
-  if (count) count.textContent = items.length + (items.length === 1 ? ' item' : ' items');
+  if (count) count.textContent = items.length + ' item';
   if (total) total.textContent = formatMoney(amount);
   if (paymentTotal && paymentTotal.textContent !== formatMoney(amount)) paymentTotal.textContent = formatMoney(amount);
 
@@ -216,16 +216,16 @@ function renderCart() {
         </div>
         <div class="pabm-cart-item-side">
           <span class="pabm-cart-item-price">${formatMoney(item.amount)}</span>
-          <button class="pabm-cart-remove" type="button" data-pabm-remove="${index}" aria-label="Remove ${escapeHtml(item.productType)} ${escapeHtml(item.itemCode)}" title="Remove">&times;</button>
+          <button class="pabm-cart-remove" type="button" data-pabm-remove="${index}" aria-label="Buang ${escapeHtml(item.productType)} ${escapeHtml(item.itemCode)}" title="Buang">&times;</button>
         </div>
-      </div>`).join('') : '<div class="pabm-cart-empty">Your cart is empty.</div>';
+      </div>`).join('') : '<div class="pabm-cart-empty">Troli anda kosong.</div>';
   }
 
   if (paymentButton) {
     const loggedIn = !!(auth && auth.currentUser);
     paymentButton.disabled = !items.length;
-    paymentButton.textContent = loggedIn ? 'Proceed to Payment' : 'Login to Checkout';
-    if (!items.length) paymentButton.textContent = 'Cart is Empty';
+    paymentButton.textContent = loggedIn ? 'Teruskan Pembayaran' : 'Log Masuk untuk Membayar';
+    if (!items.length) paymentButton.textContent = 'Troli Kosong';
   }
   if (adminTestPaymentButton) {
     const loggedIn = !!(auth && auth.currentUser);
@@ -235,7 +235,7 @@ function renderCart() {
 }
 
 async function addToStoreCart(payload) {
-  if (!requireLogin()) throw new Error('Please login before adding an item to your cart.');
+  if (!requireLogin()) throw new Error('Sila log masuk sebelum menambah item ke troli anda.');
   const item = normalizeItem(payload || {});
   const items = readCart();
   const exists = items.some((row) => row.id === item.id);
@@ -328,11 +328,11 @@ async function addConfiguredProduct(button) {
       variant: variant?.value || ''
     });
     setPanelStatus(status, item.__azobssAlreadyInCart
-      ? 'This document is already in your cart.'
-      : `${PRODUCT_LABELS[item.productType] || item.productType} added to your cart.`, 'success');
+      ? 'Dokumen ini sudah ada dalam troli anda.'
+      : `${PRODUCT_LABELS[item.productType] || item.productType} ditambah ke troli anda.`, 'success');
   } catch (addError) {
-    if (error) error.textContent = addError.message || 'Unable to add this document to your cart.';
-    setPanelStatus(status, addError.message || 'Unable to add this document to your cart.', 'unavailable');
+    if (error) error.textContent = addError.message || 'Dokumen ini tidak dapat ditambah ke troli anda.';
+    setPanelStatus(status, addError.message || 'Dokumen ini tidak dapat ditambah ke troli anda.', 'unavailable');
   } finally {
     button.disabled = false;
     updateConfiguredPrice(button);
@@ -401,15 +401,15 @@ async function ensureCheckoutBackend(items) {
   try {
     response = await fetch(`${BACKEND_BASE}/api/pa-bm-checkout-capabilities?_=${Date.now()}`, { cache: 'no-store' });
   } catch (_) {
-    throw new Error('Payment service is temporarily unavailable. Please try again shortly.');
+    throw new Error('Perkhidmatan pembayaran tidak tersedia buat sementara waktu. Sila cuba sebentar lagi.');
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.ok || Number(data.version || 0) < CHECKOUT_API_VERSION) {
-    throw new Error('Payment service is being updated. No payment was created. Please try again shortly.');
+    throw new Error('Perkhidmatan pembayaran sedang dikemas kini. Tiada pembayaran dibuat. Sila cuba sebentar lagi.');
   }
   const supported = new Set(Array.isArray(data.productTypes) ? data.productTypes.map((type) => String(type || '').toUpperCase()) : []);
   const missing = items.map((item) => item.productType).filter((type) => !supported.has(String(type || '').toUpperCase()));
-  if (missing.length) throw new Error(`Payment service does not support: ${Array.from(new Set(missing)).join(', ')}.`);
+  if (missing.length) throw new Error(`Perkhidmatan pembayaran tidak menyokong: ${Array.from(new Set(missing)).join(', ')}.`);
   return data;
 }
 
@@ -418,7 +418,7 @@ function assertCheckoutResponse(data, items) {
   const receivedAmountSen = Number(data.amountSen || 0) || Math.round(Number(data.amount || 0) * 100);
   const receivedUnits = Number(data.unit || 0);
   if (receivedAmountSen !== expectedAmountSen || receivedUnits !== items.length) {
-    throw new Error(`Payment total mismatch. Expected ${formatMoney(expectedAmountSen / 100)} for ${items.length} items. No redirect was made.`);
+    throw new Error(`Jumlah pembayaran tidak sepadan. Jumlah sepatutnya ${formatMoney(expectedAmountSen / 100)} untuk ${items.length} item. Tiada pengalihan dibuat.`);
   }
 }
 
@@ -429,12 +429,12 @@ async function proceedToPayment() {
   const status = document.getElementById('paBmToyyibStatus');
   const oldText = paymentButton ? paymentButton.textContent : '';
   try {
-    if (!auth || !auth.currentUser) throw new Error('Your login session is not ready. Please login again.');
+    if (!auth || !auth.currentUser) throw new Error('Sesi log masuk anda belum tersedia. Sila log masuk semula.');
     if (paymentButton) {
       paymentButton.disabled = true;
-      paymentButton.textContent = 'Preparing Payment...';
+      paymentButton.textContent = 'Menyediakan Pembayaran...';
     }
-    if (status) status.textContent = 'Verifying cart and creating a secure payment bill...';
+    if (status) status.textContent = 'Menyemak troli dan menyediakan bil pembayaran selamat...';
     await ensureCheckoutBackend(items);
     const token = await auth.currentUser.getIdToken();
     const response = await fetch(`${BACKEND_BASE}/api/toyyib/create-pa-bm-bill`, {
@@ -443,19 +443,19 @@ async function proceedToPayment() {
       body: JSON.stringify(checkoutPayload(items))
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to create the payment bill.');
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Bil pembayaran tidak dapat dibuat.');
     assertCheckoutResponse(data, items);
     if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
     if (data.billCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', String(data.billCode));
-    if (status) status.textContent = 'Redirecting to ToyyibPay...';
+    if (status) status.textContent = 'Sedang pergi ke ToyyibPay...';
     window.location.href = data.paymentUrl || data.url || data.redirectUrl;
   } catch (error) {
-    if (status) status.textContent = error.message || 'Unable to create the payment bill.';
-    alert(error.message || 'Unable to create the payment bill.');
+    if (status) status.textContent = error.message || 'Bil pembayaran tidak dapat dibuat.';
+    alert(error.message || 'Bil pembayaran tidak dapat dibuat.');
   } finally {
     if (paymentButton) {
       paymentButton.disabled = false;
-      paymentButton.textContent = oldText || 'Proceed to Payment';
+      paymentButton.textContent = oldText || 'Teruskan Pembayaran';
       renderCart();
     }
   }

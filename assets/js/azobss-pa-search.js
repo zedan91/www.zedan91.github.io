@@ -97,14 +97,14 @@
     modal.className = 'syit-sheet-modal pabm-pa-modal';
     modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML = `
-      <button class="syit-sheet-modal-backdrop" type="button" aria-label="Close PA preview"></button>
+      <button class="syit-sheet-modal-backdrop" type="button" aria-label="Tutup pratonton PA"></button>
       <div class="syit-sheet-modal-dialog pabm-pa-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="paViewModalTitle">
         <div class="syit-sheet-modal-head">
-          <strong id="paViewModalTitle">View PA</strong>
-          <button class="syit-sheet-modal-close" type="button" aria-label="Close PA preview">&times;</button>
+          <strong id="paViewModalTitle">Lihat PA</strong>
+          <button class="syit-sheet-modal-close" type="button" aria-label="Tutup pratonton PA">&times;</button>
         </div>
         <div class="syit-sheet-modal-body pabm-pa-modal-body">
-          <span class="syit-sheet-modal-loading">Loading PA details...</span>
+          <span class="syit-sheet-modal-loading">Sedang memuatkan butiran PA...</span>
           <div class="pabm-pa-modal-content" hidden>
             <div class="pabm-pa-preview-image"><img alt="" hidden></div>
             <section class="pabm-pa-preview-details" aria-label="PA details"></section>
@@ -131,7 +131,7 @@
     const image = detailDocument.querySelector('.modal-body img.loading, .modal-body img[src*="RenderImage"]');
     const detailColumn = Array.from(detailDocument.querySelectorAll('.modal-body .col-md-3'))
       .find((column) => column.querySelector('h3'));
-    const title = detailColumn?.querySelector('h3')?.textContent.replace(/\s+/g, ' ').trim() || fallbackName || 'View PA';
+    const title = detailColumn?.querySelector('h3')?.textContent.replace(/\s+/g, ' ').trim() || fallbackName || 'Lihat PA';
     const details = Array.from(detailColumn?.querySelectorAll('h5') || [])
       .map((node) => node.textContent.replace(/\s+/g, ' ').trim())
       .filter((text) => text && !/^Beli Pelan Akui/i.test(text));
@@ -158,9 +158,9 @@
     const image = modal.querySelector('.pabm-pa-preview-image img');
     const details = modal.querySelector('.pabm-pa-preview-details');
     const lots = modal.querySelector('.pabm-pa-preview-lots');
-    title.textContent = fallbackName ? `View ${fallbackName}` : 'View PA';
+    title.textContent = fallbackName ? `Lihat ${fallbackName}` : 'Lihat PA';
     loading.hidden = false;
-    loading.textContent = 'Loading PA details...';
+    loading.textContent = 'Sedang memuatkan butiran PA...';
     content.hidden = true;
     image.hidden = true;
     image.removeAttribute('src');
@@ -178,7 +178,7 @@
       details.innerHTML = `<h3>${escapeHtml(preview.title)}</h3>` + (preview.details.length
         ? preview.details.map((line) => `<p>${escapeHtml(line)}</p>`).join('')
         : '<p>PA details are unavailable.</p>');
-      lots.innerHTML = '<h3>Lot List</h3>' + (preview.lots.length
+      lots.innerHTML = '<h3>Senarai Lot</h3>' + (preview.lots.length
         ? `<ol>${preview.lots.map((lot) => `<li>${lot.url ? `<a href="${escapeHtml(lot.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(lot.number)}</a>` : escapeHtml(lot.number)}</li>`).join('')}</ol>`
         : '<p>No lot list is available.</p>');
       if (preview.imageUrl) {
@@ -192,7 +192,7 @@
     } catch (_) {
       content.hidden = true;
       loading.hidden = false;
-      loading.textContent = 'Unable to load this PA preview. Please try again.';
+      loading.textContent = 'Pratonton PA ini tidak dapat dimuatkan. Sila cuba lagi.';
     }
   }
 
@@ -200,7 +200,7 @@
     searchButton.disabled = false;
     searchButton.setAttribute('aria-busy', isBusy ? 'true' : 'false');
     const label = searchButton.querySelector('span');
-    if (label) label.textContent = isBusy ? 'Cancel PA Search' : 'Search PA';
+    if (label) label.textContent = isBusy ? 'Batal Carian PA' : 'Cari PA';
   }
 
   function cancelActiveSearch(message) {
@@ -332,7 +332,7 @@
   function renderResults(page) {
     if (!filteredRows.length) {
       resultsBody.innerHTML = allRows.length
-        ? '<tr><td colspan="8" style="padding:18px;text-align:center;">No matching PA record found.</td></tr>'
+        ? '<tr><td colspan="8" style="padding:18px;text-align:center;">Tiada rekod PA yang sepadan ditemui.</td></tr>'
         : '';
       resultWrap.hidden = !allRows.length;
       renderPagination(1);
@@ -346,13 +346,13 @@
       const record = buildPaCartRecord(row, selectedState);
       return `<tr>
         <td>${startIndex + index + 1}</td>
-        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-pa-search-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(row.paNo || 'PA item')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
+        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-pa-search-record="${encodeRecord(record)}" aria-label="Tambah ${escapeHtml(row.paNo || 'item PA')} ke troli" title="Tambah ke Troli"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(row.paNo)}</strong></td>
         <td class="pabm-state-data-cell">${escapeHtml(row.negeri || '-')}</td>
         <td class="pabm-district-data-cell">${escapeHtml(row.daerah || '-')}</td>
         <td class="pabm-area-data-cell">${escapeHtml(row.mukim || '-')}</td>
         <td>${escapeHtml(row.seksyen || '-')}</td>
-        <td class="pabm-action-cell pabm-preview-action-cell">${row.viewPaUrl ? `<button class="btn pabm-preview-icon-button" type="button" data-pa-view-url="${escapeHtml(row.viewPaUrl)}" data-pa-view-name="${escapeHtml(row.paNo || '')}" aria-label="View ${escapeHtml(row.paNo || 'PA item')}" title="View PA"><span aria-hidden="true">&#128269;</span></button>` : '-'}</td>
+        <td class="pabm-action-cell pabm-preview-action-cell">${row.viewPaUrl ? `<button class="btn pabm-preview-icon-button" type="button" data-pa-view-url="${escapeHtml(row.viewPaUrl)}" data-pa-view-name="${escapeHtml(row.paNo || '')}" aria-label="Lihat ${escapeHtml(row.paNo || 'item PA')}" title="Lihat PA"><span aria-hidden="true">&#128269;</span></button>` : '-'}</td>
       </tr>`;
     }).join('');
     resultWrap.hidden = false;
@@ -363,8 +363,8 @@
     if (!statusEl) return;
     const query = normalize(generalEl.value);
     statusEl.textContent = query
-      ? `${filteredRows.length.toLocaleString('en-MY')} of ${allRows.length.toLocaleString('en-MY')} PA records found`
-      : `${allRows.length.toLocaleString('en-MY')} PA records found`;
+      ? `${filteredRows.length.toLocaleString('en-MY')} daripada ${allRows.length.toLocaleString('en-MY')} rekod PA ditemui`
+      : `${allRows.length.toLocaleString('en-MY')} rekod PA ditemui`;
   }
 
   function applyGeneralFilter() {
@@ -384,7 +384,7 @@
   async function search(event) {
     if (event) event.preventDefault();
     if (activeSearchTask) {
-      cancelActiveSearch('PA search cancelled. Enter a PA number and search again.');
+      cancelActiveSearch('Carian PA dibatalkan. Masukkan nombor PA dan cari semula.');
       return;
     }
     const number = cleanNumber(inputEl.value);
@@ -398,15 +398,15 @@
     clearResults();
 
     if (!state || !stateCode) {
-      if (errorEl) errorEl.textContent = 'Select a supported state before searching.';
+      if (errorEl) errorEl.textContent = 'Pilih negeri yang disokong sebelum membuat carian.';
       return;
     }
     if (!number) {
-      setQuickStatus('Enter a PA number before searching.', 'unavailable');
+      setQuickStatus('Masukkan nombor PA sebelum membuat carian.', 'unavailable');
       return;
     }
     if (number.length < 3) {
-      if (errorEl) errorEl.textContent = 'Enter at least 3 digits of a PA number.';
+      if (errorEl) errorEl.textContent = 'Masukkan sekurang-kurangnya 3 digit nombor PA.';
       return;
     }
 
@@ -415,7 +415,7 @@
     task.timeout = window.setTimeout(() => controller.abort(), 30000);
     activeSearchTask = task;
     setSearchBusy(true);
-    setQuickStatus(`Searching for PA ${number}. Click Cancel PA Search to stop.`, 'checking');
+    setQuickStatus(`Sedang mencari PA ${number}. Tekan Batal Carian PA untuk berhenti.`, 'checking');
     try {
       const rows = await fetchOfficialResults(number, stateCode, controller.signal);
       if (activeSearchTask !== task) return;
@@ -428,13 +428,13 @@
       generalEl.disabled = !allRows.length;
       renderResults(1);
       setQuickStatus(allRows.length
-        ? `${allRows.length.toLocaleString('en-MY')} PA records found`
-        : 'No PA record found', allRows.length ? 'success' : 'unavailable');
+        ? `${allRows.length.toLocaleString('en-MY')} rekod PA ditemui`
+        : 'Tiada rekod PA ditemui', allRows.length ? 'success' : 'unavailable');
     } catch (error) {
       if (activeSearchTask !== task) return;
       setQuickStatus(error && error.name === 'AbortError'
-        ? 'PA search was cancelled after 30 seconds. Enter a PA number and try again.'
-        : 'PA search is temporarily unavailable. Please try again.', 'unavailable');
+        ? 'Carian PA dibatalkan selepas 30 saat. Masukkan nombor PA dan cuba lagi.'
+        : 'Carian PA tidak tersedia buat sementara waktu. Sila cuba lagi.', 'unavailable');
     } finally {
       window.clearTimeout(task.timeout);
       if (activeSearchTask === task) {
@@ -451,11 +451,11 @@
     if (errorEl) errorEl.textContent = '';
     setQuickStatus('', '');
     if (!state || !stateCode) {
-      setQuickStatus('Select a supported state before using Quick Add.', 'unavailable');
+      setQuickStatus('Pilih negeri yang disokong sebelum menambah terus ke troli.', 'unavailable');
       return;
     }
     if (number.length < 3) {
-      setQuickStatus('Enter a complete PA number before using Quick Add.', 'unavailable');
+      setQuickStatus('Masukkan nombor PA yang lengkap sebelum menambah terus ke troli.', 'unavailable');
       return;
     }
     if (typeof window.azobssRecordPurchase !== 'function') {
@@ -465,27 +465,27 @@
 
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 90000);
-    const oldText = quickAddButton?.querySelector('span')?.textContent || 'Quick Add to Cart';
+    const oldText = quickAddButton?.querySelector('span')?.textContent || 'Tambah Terus ke Troli';
     try {
       if (quickAddButton) {
         quickAddButton.disabled = true;
         const label = quickAddButton.querySelector('span');
         if (label) label.textContent = 'Checking PA...';
       }
-      setQuickStatus(`Checking PA${number} availability. Please wait...`, 'checking');
+      setQuickStatus(`Sedang menyemak ketersediaan PA${number}. Sila tunggu...`, 'checking');
       const rows = await fetchOfficialResults(number, stateCode, controller.signal);
       const wanted = normalize(`PA${number}`);
       const exact = rows.find((row) => normalize(row.paNo) === wanted);
       if (!exact) {
-        const unavailable = new Error(`PA${number} is not available in ${state}.`);
+        const unavailable = new Error(`PA${number} tidak tersedia di ${state}.`);
         unavailable.isUnavailable = true;
         throw unavailable;
       }
       const payload = buildPaCartRecord(exact, state);
       const saved = await window.azobssRecordPurchase(payload);
       setQuickStatus(saved && saved.__azobssAlreadyInCart
-        ? `PA${payload.itemCode} is already in your cart.`
-        : `Success: PA${payload.itemCode} has been added to your cart.`, 'success');
+        ? `PA${payload.itemCode} sudah ada dalam troli anda.`
+        : `Berjaya: PA${payload.itemCode} telah ditambah ke troli anda.`, 'success');
     } catch (error) {
       const message = error?.isUnavailable
         ? error.message
@@ -519,7 +519,7 @@
     const wasActive = cancelActiveSearch();
     clearResults();
     if (errorEl) errorEl.textContent = '';
-    setQuickStatus(wasActive ? 'PA search cancelled because the state changed.' : '', wasActive ? 'unavailable' : '');
+    setQuickStatus(wasActive ? 'Carian PA dibatalkan kerana negeri telah berubah.' : '', wasActive ? 'unavailable' : '');
   });
   inputEl.addEventListener('input', () => {
     const wasActive = cancelActiveSearch();
@@ -527,8 +527,8 @@
     if (errorEl) errorEl.textContent = '';
     if (wasActive) {
       setQuickStatus(cleanNumber(inputEl.value)
-        ? 'PA search cancelled because the PA number changed.'
-        : 'Enter a PA number before searching.', 'unavailable');
+        ? 'Carian PA dibatalkan kerana nombor PA telah berubah.'
+        : 'Masukkan nombor PA sebelum membuat carian.', 'unavailable');
     } else {
       setQuickStatus('', '');
     }
@@ -583,11 +583,11 @@
       const saved = await window.azobssRecordPurchase(payload);
       if (statusEl) {
         statusEl.textContent = saved && saved.__azobssAlreadyInCart
-          ? `PA${payload.itemCode} is already in your cart.`
-          : `PA${payload.itemCode} added to your cart.`;
+          ? `PA${payload.itemCode} sudah ada dalam troli anda.`
+          : `PA${payload.itemCode} ditambah ke troli anda.`;
       }
     } catch (error) {
-      if (errorEl) errorEl.textContent = error.message || 'Unable to add this PA to your cart.';
+      if (errorEl) errorEl.textContent = error.message || 'PA ini tidak dapat ditambah ke troli anda.';
     } finally {
       button.disabled = false;
     }
