@@ -339,7 +339,7 @@
       const saved = await window.azobssRecordPurchase(payload);
       setQuickStatus(saved && saved.__azobssAlreadyInCart
         ? `PA${payload.itemCode} is already in your cart.`
-        : `PA${payload.itemCode} added directly to your cart.`, 'success');
+        : `Success: PA${payload.itemCode} has been added to your cart.`, 'success');
     } catch (error) {
       const message = error?.isUnavailable
         ? error.message

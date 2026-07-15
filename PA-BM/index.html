@@ -10671,7 +10671,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       const saved = await window.azobssRecordPurchase(payload);
       setBenchmarkQuickStatus(saved && saved.__azobssAlreadyInCart
         ? `${benchmarkCartLabel(payload)} is already in your cart.`
-        : `${benchmarkCartLabel(payload)} added directly to your cart.`, 'success');
+        : `Success: ${benchmarkCartLabel(payload)} has been added to your cart.`, 'success');
       if (typeof window.azobssRenderPurchaseRecords === 'function') {
         setTimeout(function(){ window.azobssRenderPurchaseRecords(); }, 250);
       }
@@ -15192,10 +15192,10 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=7"></script>
-<script src="/assets/js/azobss-pa-search.js?v=8" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=9" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=4" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=6" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=6" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=7" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=7" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>

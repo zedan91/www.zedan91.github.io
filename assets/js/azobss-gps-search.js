@@ -155,7 +155,9 @@
     const saved = await window.azobssRecordPurchase(payload);
     setQuickStatus(saved && saved.__azobssAlreadyInCart
       ? 'This GPS station is already in your cart.'
-      : `${payload.itemCode} added ${direct ? 'directly ' : ''}to your cart.`, 'success');
+      : (direct
+        ? `Success: ${payload.itemCode} has been added to your cart.`
+        : `${payload.itemCode} added to your cart.`), 'success');
     return saved;
   }
 
