@@ -58,6 +58,35 @@ body.pa-bm-page .pabm-store-layout {
   align-items: start;
 }
 
+body.pa-bm-page .pabm-full-results {
+  width: 100%;
+  margin-top: 16px;
+}
+
+body.pa-bm-page .pabm-results-card {
+  display: none !important;
+  width: 100%;
+  padding: 20px;
+  border: 1px solid #2b3a50;
+  border-radius: 8px;
+  background: #111c2e;
+  box-sizing: border-box;
+}
+
+body.pa-bm-page .pabm-results-card.is-active.has-results {
+  display: grid !important;
+}
+
+body.pa-bm-page .pabm-results-card .benchmark-result-wrap {
+  width: 100%;
+  margin-top: 0;
+}
+
+body.pa-bm-page .pabm-inline-status-proxy[hidden],
+body.pa-bm-page .pabm-full-results[hidden] {
+  display: none !important;
+}
+
 body.pa-bm-page #requestCard {
   width: 100%;
   max-width: none !important;
