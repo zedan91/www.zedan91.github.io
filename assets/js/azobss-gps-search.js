@@ -125,9 +125,9 @@
         <td>${startIndex + index + 1}</td>
         <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-gps-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(record.stationNo || 'GPS station')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(record.stationNo || '-')}</strong></td>
-        <td>${escapeHtml(record.negeri || '-')}</td>
-        <td>${escapeHtml(record.daerah || '-')}</td>
-        <td>${escapeHtml(record.tempat || '-')}</td>
+        <td class="pabm-state-data-cell">${escapeHtml(record.negeri || '-')}</td>
+        <td class="pabm-district-data-cell">${escapeHtml(record.daerah || '-')}</td>
+        <td class="pabm-place-data-cell">${escapeHtml(record.tempat || '-')}</td>
         <td class="pabm-action-cell pabm-location-text-cell">${mapLink}</td>
         <td class="pabm-action-cell pabm-location-text-cell">${googleMapsLink}</td>
       </tr>`;

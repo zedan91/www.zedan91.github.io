@@ -241,9 +241,9 @@
         <td>${startIndex + index + 1}</td>
         <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-pa-search-record="${encodeRecord(record)}" aria-label="Add ${escapeHtml(row.paNo || 'PA item')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button></td>
         <td><strong>${escapeHtml(row.paNo)}</strong></td>
-        <td>${escapeHtml(row.negeri || '-')}</td>
-        <td>${escapeHtml(row.daerah || '-')}</td>
-        <td>${escapeHtml(row.mukim || '-')}</td>
+        <td class="pabm-state-data-cell">${escapeHtml(row.negeri || '-')}</td>
+        <td class="pabm-district-data-cell">${escapeHtml(row.daerah || '-')}</td>
+        <td class="pabm-area-data-cell">${escapeHtml(row.mukim || '-')}</td>
         <td>${escapeHtml(row.seksyen || '-')}</td>
         <td class="pabm-action-cell pabm-preview-action-cell">${row.viewPaUrl ? `<a class="btn pabm-preview-icon-button" href="${escapeHtml(row.viewPaUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(row.paNo || 'PA item')}" title="View PA"><span aria-hidden="true">&#128269;</span></a>` : '-'}</td>
       </tr>`;

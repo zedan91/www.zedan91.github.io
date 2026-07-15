@@ -134,6 +134,57 @@ body.pa-bm-page .pabm-visually-hidden {
   border: 0 !important;
 }
 
+body.pa-bm-page .benchmark-result-wrap {
+  text-align: left !important;
+}
+
+body.pa-bm-page .benchmark-table.pabm-results-table {
+  margin: 0 auto 0 0 !important;
+}
+
+body.pa-bm-page .benchmark-table.pabm-results-table th,
+body.pa-bm-page .benchmark-table.pabm-results-table td {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-state-data-col,
+body.pa-bm-page .benchmark-table .pabm-state-data-cell {
+  width: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-district-data-col,
+body.pa-bm-page .benchmark-table .pabm-district-data-cell {
+  width: 122px !important;
+  min-width: 122px !important;
+  max-width: 122px !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-place-data-col,
+body.pa-bm-page .benchmark-table .pabm-place-data-cell {
+  width: 138px !important;
+  min-width: 138px !important;
+  max-width: 138px !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-area-data-col,
+body.pa-bm-page .benchmark-table .pabm-area-data-cell {
+  width: 154px !important;
+  min-width: 154px !important;
+  max-width: 154px !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-description-data-col,
+body.pa-bm-page .benchmark-table .pabm-description-data-cell {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+  white-space: normal !important;
+}
+
 body.pa-bm-page .benchmark-table .pabm-cart-action-col,
 body.pa-bm-page .benchmark-table .pabm-cart-action-cell {
   width: 54px !important;
