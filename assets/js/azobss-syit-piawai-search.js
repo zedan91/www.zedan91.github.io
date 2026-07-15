@@ -88,6 +88,7 @@
     const close = () => {
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('pabm-modal-open');
     };
     modal.querySelector('.syit-sheet-modal-close').addEventListener('click', close);
     modal.querySelector('.syit-sheet-modal-backdrop').addEventListener('click', close);
@@ -123,6 +124,7 @@
     image.src = 'https://ebiz.jupem.gov.my/Produk/RenderImageSyit/' + encodeURIComponent(productId) + '?negeri=' + encodeURIComponent(stateCode);
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('pabm-modal-open');
     modal.querySelector('.syit-sheet-modal-close').focus();
   }
 

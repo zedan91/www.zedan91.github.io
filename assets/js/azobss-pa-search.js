@@ -89,6 +89,113 @@
     if (state) statusEl.classList.add(`is-${state}`);
   }
 
+  function ensurePaPreviewModal() {
+    let modal = document.getElementById('paViewModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'paViewModal';
+    modal.className = 'syit-sheet-modal pabm-pa-modal';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+      <button class="syit-sheet-modal-backdrop" type="button" aria-label="Close PA preview"></button>
+      <div class="syit-sheet-modal-dialog pabm-pa-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="paViewModalTitle">
+        <div class="syit-sheet-modal-head">
+          <strong id="paViewModalTitle">View PA</strong>
+          <button class="syit-sheet-modal-close" type="button" aria-label="Close PA preview">&times;</button>
+        </div>
+        <div class="syit-sheet-modal-body pabm-pa-modal-body">
+          <span class="syit-sheet-modal-loading">Loading PA details...</span>
+          <div class="pabm-pa-modal-content" hidden>
+            <div class="pabm-pa-preview-image"><img alt="" hidden></div>
+            <section class="pabm-pa-preview-details" aria-label="PA details"></section>
+            <section class="pabm-pa-preview-lots" aria-label="Lot list"></section>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    const close = () => {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('pabm-modal-open');
+    };
+    modal.querySelector('.syit-sheet-modal-close').addEventListener('click', close);
+    modal.querySelector('.syit-sheet-modal-backdrop').addEventListener('click', close);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.classList.contains('is-open')) close();
+    });
+    return modal;
+  }
+
+  function parsePaPreview(html, fallbackName) {
+    const detailDocument = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    const image = detailDocument.querySelector('.modal-body img.loading, .modal-body img[src*="RenderImage"]');
+    const detailColumn = Array.from(detailDocument.querySelectorAll('.modal-body .col-md-3'))
+      .find((column) => column.querySelector('h3'));
+    const title = detailColumn?.querySelector('h3')?.textContent.replace(/\s+/g, ' ').trim() || fallbackName || 'View PA';
+    const details = Array.from(detailColumn?.querySelectorAll('h5') || [])
+      .map((node) => node.textContent.replace(/\s+/g, ' ').trim())
+      .filter((text) => text && !/^Beli Pelan Akui/i.test(text));
+    const lots = Array.from(detailDocument.querySelectorAll('#exampleMini tbody a')).map((link) => ({
+      number: link.textContent.replace(/\s+/g, ' ').trim(),
+      url: absoluteJupemUrl(link.getAttribute('href'))
+    })).filter((lot) => lot.number);
+    return {
+      title,
+      imageUrl: absoluteJupemUrl(image?.getAttribute('src')),
+      details,
+      lots
+    };
+  }
+
+  async function openPaPreview(button) {
+    const detailUrl = String(button.dataset.paViewUrl || '').trim();
+    const fallbackName = String(button.dataset.paViewName || '').trim();
+    if (!detailUrl) return;
+    const modal = ensurePaPreviewModal();
+    const title = modal.querySelector('#paViewModalTitle');
+    const loading = modal.querySelector('.syit-sheet-modal-loading');
+    const content = modal.querySelector('.pabm-pa-modal-content');
+    const image = modal.querySelector('.pabm-pa-preview-image img');
+    const details = modal.querySelector('.pabm-pa-preview-details');
+    const lots = modal.querySelector('.pabm-pa-preview-lots');
+    title.textContent = fallbackName ? `View ${fallbackName}` : 'View PA';
+    loading.hidden = false;
+    loading.textContent = 'Loading PA details...';
+    content.hidden = true;
+    image.hidden = true;
+    image.removeAttribute('src');
+    details.innerHTML = '';
+    lots.innerHTML = '';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('pabm-modal-open');
+    modal.querySelector('.syit-sheet-modal-close').focus();
+    try {
+      const response = await fetch(detailUrl, { cache: 'no-store', mode: 'cors' });
+      if (!response.ok) throw new Error(`JUPEM returned HTTP ${response.status}.`);
+      const preview = parsePaPreview(await response.text(), fallbackName);
+      title.textContent = preview.title;
+      details.innerHTML = `<h3>${escapeHtml(preview.title)}</h3>` + (preview.details.length
+        ? preview.details.map((line) => `<p>${escapeHtml(line)}</p>`).join('')
+        : '<p>PA details are unavailable.</p>');
+      lots.innerHTML = '<h3>Lot List</h3>' + (preview.lots.length
+        ? `<ol>${preview.lots.map((lot) => `<li>${lot.url ? `<a href="${escapeHtml(lot.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(lot.number)}</a>` : escapeHtml(lot.number)}</li>`).join('')}</ol>`
+        : '<p>No lot list is available.</p>');
+      if (preview.imageUrl) {
+        image.alt = `${preview.title} preview`;
+        image.onload = () => { image.hidden = false; };
+        image.onerror = () => { image.hidden = true; };
+        image.src = preview.imageUrl;
+      }
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (_) {
+      content.hidden = true;
+      loading.hidden = false;
+      loading.textContent = 'Unable to load this PA preview. Please try again.';
+    }
+  }
+
   function setSearchBusy(isBusy) {
     searchButton.disabled = false;
     searchButton.setAttribute('aria-busy', isBusy ? 'true' : 'false');
@@ -245,7 +352,7 @@
         <td class="pabm-district-data-cell">${escapeHtml(row.daerah || '-')}</td>
         <td class="pabm-area-data-cell">${escapeHtml(row.mukim || '-')}</td>
         <td>${escapeHtml(row.seksyen || '-')}</td>
-        <td class="pabm-action-cell pabm-preview-action-cell">${row.viewPaUrl ? `<a class="btn pabm-preview-icon-button" href="${escapeHtml(row.viewPaUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(row.paNo || 'PA item')}" title="View PA"><span aria-hidden="true">&#128269;</span></a>` : '-'}</td>
+        <td class="pabm-action-cell pabm-preview-action-cell">${row.viewPaUrl ? `<button class="btn pabm-preview-icon-button" type="button" data-pa-view-url="${escapeHtml(row.viewPaUrl)}" data-pa-view-name="${escapeHtml(row.paNo || '')}" aria-label="View ${escapeHtml(row.paNo || 'PA item')}" title="View PA"><span aria-hidden="true">&#128269;</span></button>` : '-'}</td>
       </tr>`;
     }).join('');
     resultWrap.hidden = false;
@@ -454,6 +561,11 @@
   });
 
   resultsBody.addEventListener('click', async (event) => {
+    const previewButton = event.target.closest('[data-pa-view-url]');
+    if (previewButton) {
+      openPaPreview(previewButton);
+      return;
+    }
     const button = event.target.closest('[data-pa-search-record]');
     if (!button) return;
     if (errorEl) errorEl.textContent = '';
