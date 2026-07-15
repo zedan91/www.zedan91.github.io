@@ -1336,11 +1336,11 @@
       .az-radio-player > .az-radio-pill{align-self:flex-end;}
       .az-radio-player > .az-radio-panel{align-self:flex-end;}
       .az-radio-player *{box-sizing:border-box;}
-      .az-radio-pill{border:1px solid rgba(34,197,94,.46);background:rgba(2,6,23,.72);color:#f8fafc;border-radius:50%;width:30px;height:30px;min-width:30px;min-height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;gap:0;font-weight:900;font-size:0;letter-spacing:0;box-shadow:0 4px 10px rgba(0,0,0,.26),0 0 8px rgba(34,197,94,.10),inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;overflow:hidden;position:relative;}
-      .az-radio-pill img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;filter:saturate(1.08) contrast(1.04) brightness(.98);}
-      .az-radio-pill::after{content:'';position:absolute;right:2px;top:2px;width:5px;height:5px;border-radius:50%;background:#64748b;box-shadow:0 0 0 2px rgba(100,116,139,.15);}
-      .az-radio-player.is-playing .az-radio-pill::after{background:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.22),0 0 9px rgba(34,197,94,.75);}
-      .az-radio-pill:hover{border-color:#22c55e;transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,.34),0 0 14px rgba(34,197,94,.18),inset 0 0 0 1px rgba(255,255,255,.08);}
+      .az-radio-pill{border:1px solid #475569;background:#111827;color:#facc15;border-radius:50%;width:30px;height:30px;min-width:30px;min-height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;gap:0;font-weight:900;font-size:0;letter-spacing:0;box-shadow:0 1px 2px rgba(0,0,0,.35);cursor:pointer;overflow:hidden;position:relative;}
+      .az-radio-pill .az-radio-icon{width:18px;height:18px;display:block;color:currentColor;pointer-events:none;}
+      .az-radio-pill::after{content:'';position:absolute;right:2px;bottom:2px;width:4px;height:4px;border-radius:50%;background:#64748b;box-shadow:0 0 0 1px #111827;}
+      .az-radio-player.is-playing .az-radio-pill::after{background:#22c55e;}
+      .az-radio-pill:hover{border-color:#facc15;background:#172033;box-shadow:0 2px 5px rgba(0,0,0,.38);}
       .az-radio-player.is-open .az-radio-pill{opacity:0;visibility:hidden;pointer-events:none;min-height:0!important;height:0!important;max-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;transform:translateY(4px) scale(.96);box-shadow:none!important;}
       .az-radio-player.is-open .az-radio-panel{margin-top:0;}
       .az-radio-dot{display:none;}
@@ -1376,7 +1376,7 @@
       .az-radio-status.ok{color:#bbf7d0;border-color:rgba(34,197,94,.22);}
       .az-radio-status.err{color:#fecaca;border-color:rgba(248,113,113,.22);}
       .az-radio-note{margin-top:7px;color:#94a3b8;font-size:10px;line-height:1.22;text-align:center;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;}
-      @media(max-width:720px){.az-radio-player.az-radio-floating{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-player.az-radio-navbar{margin-right:3px;min-width:26px;max-width:26px;width:26px}.az-radio-pill{width:28px;height:28px;min-width:28px;min-height:28px;padding:0;font-size:0;border-radius:50%}.az-radio-pill img{border-radius:50%}.az-radio-player.az-radio-navbar .az-radio-pill{width:26px;height:26px;min-width:26px;min-height:26px;padding:0;font-size:0;border-radius:50%}.az-radio-player.az-radio-navbar .az-radio-panel{position:fixed;top:54px;right:8px;width:min(330px,calc(100vw - 16px));}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}}
+      @media(max-width:720px){.az-radio-player.az-radio-floating{right:6px;bottom:76px;max-width:calc(100vw - 12px)}.az-radio-player.az-radio-navbar{margin-right:3px;min-width:26px;max-width:26px;width:26px}.az-radio-pill{width:28px;height:28px;min-width:28px;min-height:28px;padding:0;font-size:0;border-radius:50%}.az-radio-pill .az-radio-icon{width:17px;height:17px}.az-radio-player.az-radio-navbar .az-radio-pill{width:26px;height:26px;min-width:26px;min-height:26px;padding:0;font-size:0;border-radius:50%}.az-radio-player.az-radio-navbar .az-radio-panel{position:fixed;top:54px;right:8px;width:min(330px,calc(100vw - 16px));}.az-radio-panel{border-radius:16px;padding:10px}.az-radio-btns{grid-template-columns:1fr 1fr}}
     `;
     const style=document.createElement('style');
     style.id='azobss-radio-player-css';
@@ -1394,7 +1394,7 @@
     el.id='azobssRadioPlayer';
     el.className='az-radio-player';
     el.innerHTML=`
-      <button type="button" class="az-radio-pill" id="azRadioToggle" aria-expanded="false" aria-controls="azRadioPanel" aria-label="Open AZOBSS Radio" title="AZOBSS Radio"><span class="az-radio-dot"></span><img src="/assets/img/azobss-radio-headphone.png" alt="Radio"></button>
+      <button type="button" class="az-radio-pill" id="azRadioToggle" aria-expanded="false" aria-controls="azRadioPanel" aria-label="Open AZOBSS Radio" title="AZOBSS Radio"><span class="az-radio-dot"></span><svg class="az-radio-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.247 7.761a6 6 0 0 1 0 8.478"/><path d="M19.075 4.933a10 10 0 0 1 0 14.134"/><path d="M4.925 19.067a10 10 0 0 1 0-14.134"/><path d="M7.753 16.239a6 6 0 0 1 0-8.478"/><circle cx="12" cy="12" r="2"/></svg></button>
       <div class="az-radio-panel" id="azRadioPanel" role="dialog" aria-label="AZOBSS Radio Player">
         <div class="az-radio-head">
           <div><div class="az-radio-title">AZOBSS Radio</div><div class="az-radio-sub">Mini online radio player</div></div>
