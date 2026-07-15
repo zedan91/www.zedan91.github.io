@@ -5872,7 +5872,7 @@ async function fetchJupemWithSession(jupemUrl) {
 
 let azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 };
 let azobssJupemMapAuthPending = null;
-const azobssBenchmarkLocationCache = new Map();
+const azobssJupemPointLocationCache = new Map();
 
 async function azobssGetJupemMapAuth(force = false) {
   const now = Date.now();
@@ -5943,17 +5943,19 @@ function azobssDmsToDecimal(degrees, minutes, seconds) {
   return sign * (Math.abs(d) + (Math.abs(m) / 60) + (Math.abs(s) / 3600));
 }
 
-async function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = false) {
+async function azobssResolveJupemPointCoordinates(productId, pointType, forceAuth = false) {
   const id = String(productId || "").replace(/\D/g, "").slice(0, 20);
-  const normalizedJenis = String(jenis || "1") === "2" ? "2" : "1";
-  if (!id) throw new Error("A valid BM/SBM product ID is required");
+  const normalizedType = ["bm", "bmpiawai", "gps"].includes(String(pointType || "").toLowerCase())
+    ? String(pointType).toLowerCase()
+    : "bm";
+  if (!id) throw new Error("A valid JUPEM product ID is required");
 
-  const cacheKey = `${normalizedJenis}|${id}`;
-  const cached = azobssBenchmarkLocationCache.get(cacheKey);
+  const cacheKey = `${normalizedType}|${id}`;
+  const cached = azobssJupemPointLocationCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
   const auth = await azobssGetJupemMapAuth(forceAuth);
-  const layer = normalizedJenis === "2" ? "2" : "1";
+  const layer = normalizedType === "gps" ? "0" : (normalizedType === "bmpiawai" ? "2" : "1");
   const queryUrl = new URL(`https://ebiz.jupem.gov.my/arcgis/rest/services/Geodetik/Produk_Geodetik/MapServer/${layer}/query`);
   queryUrl.search = new URLSearchParams({
     where: `IdStn=${id}`,
@@ -5969,7 +5971,7 @@ async function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = f
     headers: azobssJupemBaseHeaders({
       "Accept": "application/json,*/*",
       "Cookie": auth.cookie,
-      "Referer": `https://ebiz.jupem.gov.my/PetaInteraktif?no=${encodeURIComponent(id)}&type=${normalizedJenis === "2" ? "bmpiawai" : "bm"}&c=pt`
+      "Referer": `https://ebiz.jupem.gov.my/PetaInteraktif?no=${encodeURIComponent(id)}&type=${encodeURIComponent(normalizedType)}&c=pt`
     })
   }));
   if (!queryResponse.ok) throw new Error(`JUPEM coordinate query returned HTTP ${queryResponse.status}`);
@@ -5977,10 +5979,10 @@ async function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = f
   const payload = await queryResponse.json();
   if (payload && payload.error && !forceAuth && [498, 499].includes(Number(payload.error.code))) {
     azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 };
-    return azobssResolveBenchmarkCoordinates(id, normalizedJenis, true);
+    return azobssResolveJupemPointCoordinates(id, normalizedType, true);
   }
   const feature = payload && Array.isArray(payload.features) ? payload.features[0] : null;
-  if (!feature) throw new Error("BM/SBM coordinates were not found");
+  if (!feature) throw new Error("JUPEM station coordinates were not found");
 
   const attributes = feature.attributes || {};
   let latitude = azobssDmsToDecimal(attributes.WGS_LatD, attributes.WGS_LatM, attributes.WGS_LatS);
@@ -5989,7 +5991,7 @@ async function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = f
     latitude = Number(feature.geometry && feature.geometry.y);
     longitude = Number(feature.geometry && feature.geometry.x);
   }
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error("BM/SBM coordinates are invalid");
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error("JUPEM station coordinates are invalid");
 
   const value = {
     latitude,
@@ -5998,9 +6000,14 @@ async function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = f
     negeri: String(attributes.Negeri || "").trim(),
     mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude.toFixed(7)},${longitude.toFixed(7)}`)}`
   };
-  if (azobssBenchmarkLocationCache.size > 5000) azobssBenchmarkLocationCache.clear();
-  azobssBenchmarkLocationCache.set(cacheKey, { value, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
+  if (azobssJupemPointLocationCache.size > 5000) azobssJupemPointLocationCache.clear();
+  azobssJupemPointLocationCache.set(cacheKey, { value, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
   return value;
+}
+
+function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = false) {
+  const pointType = String(jenis || "1") === "2" ? "bmpiawai" : "bm";
+  return azobssResolveJupemPointCoordinates(productId, pointType, forceAuth);
 }
 
 // =========================
@@ -7151,6 +7158,7 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
     if (pathname === "/api/my-purchases" && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-read", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/stesen-tanda-aras/maps" && req.method === "GET" && azRateLimitOrSend(req, res, "benchmark-maps", 120, 10 * 60 * 1000)) return;
+    if (pathname === "/api/stesen-gps/maps" && req.method === "GET" && azRateLimitOrSend(req, res, "gps-maps", 120, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/my-purchases/delete/") && req.method === "DELETE" && azRateLimitOrSend(req, res, "my-purchases-delete", 40, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/my-purchases/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-receipt", 60, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats" && req.method === "GET" && azRateLimitOrSend(req, res, "software-stats-read", 240, 60 * 1000)) return;
@@ -9094,6 +9102,25 @@ async function handler(req, res) {
       } catch (error) {
         console.error("JUPEM BM/SBM Google Maps redirect failed:", error && (error.stack || error.message || error));
         return send(res, 502, "The station coordinates are temporarily unavailable. Please try again.", "text/plain; charset=utf-8");
+      }
+    }
+
+    if (pathname === "/api/stesen-gps/maps" && req.method === "GET") {
+      const productId = String(parsed.query.productId || "").replace(/\D/g, "").slice(0, 20);
+      if (!productId) {
+        return send(res, 400, "A valid GPS product ID is required.", "text/plain; charset=utf-8");
+      }
+      try {
+        const location = await azobssResolveJupemPointCoordinates(productId, "gps");
+        res.writeHead(302, azSecurityHeaders({
+          "Location": location.mapsUrl,
+          "Cache-Control": "private, max-age=86400"
+        }));
+        res.end();
+        return;
+      } catch (error) {
+        console.error("JUPEM GPS Google Maps redirect failed:", error && (error.stack || error.message || error));
+        return send(res, 502, "The GPS station coordinates are temporarily unavailable. Please try again.", "text/plain; charset=utf-8");
       }
     }
 

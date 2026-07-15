@@ -54,6 +54,12 @@
     }));
   }
 
+  function buildGoogleMapsUrl(productId) {
+    const id = String(productId || '').trim();
+    if (!id) return '';
+    return `https://azobss-backend.onrender.com/api/stesen-gps/maps?productId=${encodeURIComponent(id)}`;
+  }
+
   function setQuickStatus(message, state) {
     if (!statusEl) return;
     statusEl.style.removeProperty('display');
@@ -110,6 +116,10 @@
       const mapLink = record.mapUrl
         ? `<a class="btn blue" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;">View Location</a>`
         : '-';
+      const googleMapsUrl = buildGoogleMapsUrl(record.productId);
+      const googleMapsLink = googleMapsUrl
+        ? `<a class="btn" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;white-space:nowrap;text-decoration:none;border-radius:8px;background:#0f9f76;color:#fff;">Maps Location</a>`
+        : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>
         <td class="pabm-action-cell"><button class="btn blue" type="button" data-gps-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;white-space:nowrap;">Add to Cart</button></td>
@@ -118,6 +128,7 @@
         <td>${escapeHtml(record.daerah || '-')}</td>
         <td>${escapeHtml(record.tempat || '-')}</td>
         <td>${mapLink}</td>
+        <td>${googleMapsLink}</td>
         <td>RM9</td>
       </tr>`;
     }).join('');
