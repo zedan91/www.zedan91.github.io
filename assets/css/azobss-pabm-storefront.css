@@ -753,6 +753,11 @@ body.pa-bm-page #adminPurchasePanel {
     margin-top: 10px;
   }
 
+  body.pa-bm-page .request-form input::placeholder,
+  body.pa-bm-page .benchmark-form input::placeholder {
+    font-size: 13px;
+  }
+
   body.pa-bm-page .pabm-store-heading h2 {
     font-size: 24px;
   }
