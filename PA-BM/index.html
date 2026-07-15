@@ -8196,7 +8196,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=26"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=27"/>
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -8796,9 +8796,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">&#128722;</span><span class="pabm-visually-hidden">Add to Cart</span></th>
 <th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-benchmark-sort="stationNo" type="button"><span>NO. STESEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-benchmark-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th aria-sort="none" class="pabm-district-data-col"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-district-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none" class="pabm-place-data-col"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th aria-sort="none" class="pabm-description-data-col"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-description-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-location-text-col">JUPEM eBiz</th>
 <th class="pabm-location-text-col">Google Maps</th>
 </tr>
@@ -10476,6 +10476,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   function renderResults(rows, page){
     if (!resultsBody || !resultsWrap) return;
 
+    resultsWrap.classList.toggle('is-sbm-results', wantedJenis() === '2');
+
     benchmarkLastRows = benchmarkSorter
       ? benchmarkSorter.sort(Array.isArray(rows) ? rows : [])
       : (Array.isArray(rows) ? rows : []);
@@ -10522,9 +10524,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
           <td class="pabm-action-cell pabm-cart-action-cell">${downloadButton}</td>
           <td><strong>${esc(row.stationNo || row.stesen || '-')}</strong></td>
           <td class="pabm-state-data-cell">${esc(row.negeri || '-')}</td>
-          <td class="pabm-district-data-cell">${esc(row.daerah || '-')}</td>
+          <td class="pabm-district-data-cell pabm-benchmark-sbm-hidden-col">${esc(row.daerah || '-')}</td>
           <td class="pabm-place-data-cell">${esc(row.bandar || '-')}</td>
-          <td class="pabm-description-data-cell">${esc(row.huraian || '-')}</td>
+          <td class="pabm-description-data-cell pabm-benchmark-sbm-hidden-col">${esc(row.huraian || '-')}</td>
           <td class="pabm-action-cell pabm-location-text-cell">${locationButton}</td>
           <td class="pabm-action-cell pabm-location-text-cell">${mapsButton}</td>
         </tr>`;

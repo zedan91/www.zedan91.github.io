@@ -185,6 +185,10 @@ body.pa-bm-page .benchmark-table .pabm-description-data-cell {
   white-space: normal !important;
 }
 
+body.pa-bm-page #benchmarkResultWrap.is-sbm-results .pabm-benchmark-sbm-hidden-col {
+  display: none;
+}
+
 body.pa-bm-page .benchmark-table .pabm-cart-action-col,
 body.pa-bm-page .benchmark-table .pabm-cart-action-cell {
   width: 54px !important;
