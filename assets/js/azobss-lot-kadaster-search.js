@@ -166,9 +166,14 @@
       pagination.innerHTML = buttons.join('');
     }
 
-    function actionLink(url, label) {
+    function previewButton(url, paNo) {
       if (!url) return '-';
-      return `<a class="btn blue" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="padding:6px 10px;font-size:12px;margin:0;display:inline-block;text-decoration:none;border-radius:8px;white-space:nowrap;">${label}</a>`;
+      return `<button class="btn pabm-preview-icon-button" type="button" data-pa-view-url="${escapeHtml(url)}" data-pa-view-name="${escapeHtml(paNo || '')}" aria-label="Lihat ${escapeHtml(paNo || 'PA')}" title="Lihat PA"><span aria-hidden="true">&#128269;</span></button>`;
+    }
+
+    function mapLink(url) {
+      if (!url) return '-';
+      return `<a class="btn pabm-preview-icon-button" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat peta JUPEM" title="Lihat Peta"><span aria-hidden="true">&#128269;</span></a>`;
     }
 
     function renderResults(page) {
@@ -190,8 +195,8 @@
         <td>${escapeHtml(record.daerah || '-')}</td>
         <td>${escapeHtml(record.mukim || '-')}</td>
         <td>${escapeHtml(record.seksyen || '-')}</td>
-        <td>${actionLink(record.viewPaUrl, 'Lihat PA')}</td>
-        <td>${actionLink(record.mapUrl, 'Lihat Peta')}</td>
+        <td class="pabm-action-cell pabm-preview-action-cell">${previewButton(record.viewPaUrl, record.paNo)}</td>
+        <td class="pabm-action-cell pabm-preview-action-cell">${mapLink(record.mapUrl)}</td>
       </tr>`).join('');
       resultWrap.hidden = false;
       renderPagination(totalPages);
@@ -270,6 +275,13 @@
       setLotStatus('', '');
     });
     generalEl.addEventListener('input', applyGeneralFilter);
+
+    resultsBody.addEventListener('click', (event) => {
+      const preview = event.target.closest('[data-pa-view-url]');
+      if (!preview) return;
+      event.preventDefault();
+      if (typeof window.azobssOpenPaPreview === 'function') window.azobssOpenPaPreview(preview);
+    });
 
     pagination.addEventListener('click', (event) => {
       const button = event.target.closest('[data-lot-page]');

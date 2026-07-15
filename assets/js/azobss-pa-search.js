@@ -33,7 +33,6 @@
   const resultsBody = document.getElementById('paResultsBody');
   const pagination = document.getElementById('paPagination');
   const sortButtons = Array.from(form?.querySelectorAll('[data-pa-sort]') || []);
-  if (!form || !stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
 
   let allRows = [];
   let filteredRows = [];
@@ -195,6 +194,10 @@
       loading.textContent = 'Pratonton PA ini tidak dapat dimuatkan. Sila cuba lagi.';
     }
   }
+
+  window.azobssOpenPaPreview = openPaPreview;
+
+  if (!form || !stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
 
   function setSearchBusy(isBusy) {
     searchButton.disabled = false;
