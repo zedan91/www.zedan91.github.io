@@ -3149,6 +3149,29 @@ function azobssRecordExpiresAtMs(record) {
     || azobssFirestoreMs(record.expiresAt);
   return explicit || (azobssRecordPaidAtMs(record) + AZOBSS_PA_BM_VALID_MS);
 }
+
+function azobssFirestoreReadRetryable(error) {
+  const code = String(error && error.code || "").trim().toLowerCase();
+  const message = String(error && (error.message || error.details) || error || "").toLowerCase();
+  return ["4", "8", "10", "13", "14", "deadline-exceeded", "resource-exhausted", "aborted", "internal", "unavailable"].includes(code)
+    || /deadline|resource.?exhausted|quota|too many requests|unavailable|temporar|econnreset|socket hang up|network|429|500|502|503|504/.test(message);
+}
+
+async function azobssFirestoreReadWithRetry(read, label, attempts = 3) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await read();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || !azobssFirestoreReadRetryable(error)) throw error;
+      console.warn("PA/BM Firestore read retry:", JSON.stringify({ label, attempt, code:error && error.code || "", message:String(error && error.message || error || "").slice(0, 180) }));
+      await new Promise(resolve => setTimeout(resolve, attempt === 1 ? 250 : 750));
+    }
+  }
+  throw lastError || new Error("Firestore read failed");
+}
+
 async function azobssGetPurchaseRecord(recordId) {
   if (!initFirebaseAdmin()) {
     throw new Error("Firebase Admin is not configured on backend. " + (firebaseAdminInitError || ""));
@@ -3161,7 +3184,7 @@ async function azobssGetPurchaseRecord(recordId) {
   if (!id) return { ref, record: null };
 
   // 1) Normal path: purchaseLogs/{recordId}
-  const snap = await ref.get();
+  const snap = await azobssFirestoreReadWithRetry(() => ref.get(), "purchaseLogs/" + id);
   if (snap.exists) {
     return { ref, record: Object.assign({ firestoreId: snap.id }, snap.data() || {}) };
   }
@@ -3173,7 +3196,7 @@ async function azobssGetPurchaseRecord(recordId) {
   let found = null;
   let foundUser = null;
 
-  const usersSnap = await db.collection("users").get();
+  const usersSnap = await azobssFirestoreReadWithRetry(() => db.collection("users").get(), "users embedded purchase fallback");
   usersSnap.forEach((userDoc) => {
     if (found) return;
     const userData = userDoc.data() || {};
@@ -7008,8 +7031,9 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:3,
+        version:4,
         paidDownloadRouting:"category-specific-v1",
+        firestoreReadRetry:3,
         runningFile:"deploy-server.js",
         productTypes:["PA","BM","SBM","GPS","NDCDB","NDCDB_C3","SYIT_PIAWAI"],
         prices:{
@@ -9196,7 +9220,10 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     record = result.record;
   } catch (error) {
     console.error("PA/BM controlled download Firebase error:", error && (error.stack || error.message || error));
-    return azobssPaBmDownloadError(res, 500, "Download verification failed.");
+    const message = azobssFirestoreReadRetryable(error)
+      ? "Download verification is temporarily busy. Please try again in a moment. Your download quota was not used."
+      : "Download verification failed because backend Firebase access is unavailable. Your download quota was not used.";
+    return azobssPaBmDownloadError(res, 500, message);
   }
 
   if (!record) return azobssPaBmDownloadError(res, 404, "Purchase record not found.");
