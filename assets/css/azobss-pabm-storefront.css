@@ -311,6 +311,48 @@ body.pa-bm-page .pabm-add-product-button {
   gap: 12px;
 }
 
+body.pa-bm-page .pabm-primary-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+body.pa-bm-page .pabm-primary-actions .pabm-add-product-button {
+  min-width: 0;
+  height: 52px;
+  min-height: 52px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.pa-bm-page .pabm-primary-actions .pabm-add-product-button > span:first-child {
+  font-size: 16px;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+body.pa-bm-page .pabm-primary-actions .pabm-quick-add-button {
+  border-color: #34d399;
+  background: #059669;
+  color: #fff;
+  box-shadow: 0 4px 0 #065f46;
+}
+
+body.pa-bm-page .pabm-primary-actions .pabm-quick-add-button:hover:not(:disabled) {
+  background: #047857;
+}
+
+body.pa-bm-page .pabm-primary-actions .pabm-quick-add-button:disabled {
+  border-color: #475569;
+  background: #334155;
+  color: #94a3b8;
+  box-shadow: none;
+  cursor: wait;
+}
+
 body.pa-bm-page .pabm-button-price {
   min-width: 50px;
   padding: 6px 9px;
@@ -329,6 +371,20 @@ body.pa-bm-page .pabm-map-button {
 }
 
 @media (max-width: 560px) {
+  body.pa-bm-page .pabm-primary-actions {
+    gap: 7px;
+  }
+
+  body.pa-bm-page .pabm-primary-actions .pabm-add-product-button {
+    height: 50px;
+    min-height: 50px;
+    padding: 0 8px;
+  }
+
+  body.pa-bm-page .pabm-primary-actions .pabm-add-product-button > span:first-child {
+    font-size: 14px;
+  }
+
   body.pa-bm-page .pabm-add-product-button > span:first-child,
   body.pa-bm-page .pabm-map-button {
     font-size: 20px;

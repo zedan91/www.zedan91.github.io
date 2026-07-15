@@ -26,6 +26,7 @@
   const inputEl = document.getElementById('paNumber');
   const generalEl = document.getElementById('paGeneralSearch');
   const searchButton = document.getElementById('paSearchButton');
+  const quickAddButton = document.getElementById('paQuickAddButton');
   const errorEl = document.getElementById('paError');
   const statusEl = document.getElementById('paStatus');
   const resultWrap = document.getElementById('paResultWrap');
@@ -77,6 +78,21 @@
 
   function encodeRecord(record) {
     return encodeURIComponent(JSON.stringify(record));
+  }
+
+  function buildPaCartRecord(row, state) {
+    const paNo = String(row?.paNo || '').trim().toUpperCase();
+    const itemCode = paNo.replace(/^PA/i, '');
+    return {
+      productType: 'PA',
+      itemCode,
+      negeri: state,
+      amount: 5,
+      downloadUrl: buildDownloadUrl(paNo, state),
+      filename: `${paNo}.pdf`,
+      azobssCartValidated: true,
+      azobssCartValidatedBy: 'jupem-pa-search'
+    };
   }
 
   function parseOfficialResults(html) {
@@ -193,17 +209,7 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     const selectedState = String(stateEl.value || '').trim().toUpperCase();
     resultsBody.innerHTML = filteredRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((row, index) => {
-      const itemCode = row.paNo.replace(/^PA/i, '');
-      const record = {
-        productType: 'PA',
-        itemCode,
-        negeri: selectedState,
-        amount: 5,
-        downloadUrl: buildDownloadUrl(row.paNo, selectedState),
-        filename: `${row.paNo}.pdf`,
-        azobssCartValidated: true,
-        azobssCartValidatedBy: 'jupem-pa-search'
-      };
+      const record = buildPaCartRecord(row, selectedState);
       return `<tr>
         <td>${startIndex + index + 1}</td>
         <td class="pabm-action-cell"><button class="btn blue" type="button" data-pa-search-record="${encodeRecord(record)}" style="padding:6px 12px;font-size:12px;margin:0;border-radius:8px;white-space:nowrap;">Add to Cart</button></td>
@@ -285,7 +291,64 @@
     }
   }
 
+  async function quickAdd() {
+    const number = cleanNumber(inputEl.value);
+    const state = String(stateEl.value || '').trim().toUpperCase();
+    const stateCode = JUPEM_STATE_CODES[state] || '';
+    if (errorEl) errorEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+    if (!state || !stateCode) {
+      if (errorEl) errorEl.textContent = 'Select a supported state before using Quick Add.';
+      return;
+    }
+    if (number.length < 3) {
+      if (errorEl) errorEl.textContent = 'Enter a complete PA number before using Quick Add.';
+      return;
+    }
+    if (typeof window.azobssRecordPurchase !== 'function') {
+      if (errorEl) errorEl.textContent = 'Cart is not ready. Refresh the page and try again.';
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 90000);
+    const oldText = quickAddButton?.querySelector('span')?.textContent || 'Quick Add to Cart';
+    try {
+      if (quickAddButton) {
+        quickAddButton.disabled = true;
+        const label = quickAddButton.querySelector('span');
+        if (label) label.textContent = 'Checking PA...';
+      }
+      if (statusEl) statusEl.textContent = `Checking PA${number}...`;
+      const rows = await fetchOfficialResults(number, stateCode, controller.signal);
+      const wanted = normalize(`PA${number}`);
+      const exact = rows.find((row) => normalize(row.paNo) === wanted);
+      if (!exact) throw new Error(`PA${number} was not found in ${state}.`);
+      const payload = buildPaCartRecord(exact, state);
+      const saved = await window.azobssRecordPurchase(payload);
+      if (statusEl) {
+        statusEl.textContent = saved && saved.__azobssAlreadyInCart
+          ? `PA${payload.itemCode} is already in your cart.`
+          : `PA${payload.itemCode} added directly to your cart.`;
+      }
+    } catch (error) {
+      if (errorEl) {
+        errorEl.textContent = error && error.name === 'AbortError'
+          ? 'PA verification took too long. Please try again.'
+          : (error.message || 'Unable to add this PA directly to cart.');
+      }
+    } finally {
+      window.clearTimeout(timeout);
+      if (quickAddButton) {
+        quickAddButton.disabled = false;
+        const label = quickAddButton.querySelector('span');
+        if (label) label.textContent = oldText;
+      }
+    }
+  }
+
   form.addEventListener('submit', search);
+  quickAddButton?.addEventListener('click', quickAdd);
   generalEl.addEventListener('input', applyGeneralFilter);
   generalEl.addEventListener('change', applyGeneralFilter);
   generalEl.addEventListener('search', applyGeneralFilter);

@@ -7,6 +7,7 @@
   const inputEl = document.getElementById('syitPiawaiReference');
   const generalEl = document.getElementById('syitPiawaiGeneralSearch');
   const searchButton = document.getElementById('syitPiawaiSearchButton');
+  const quickAddButton = document.getElementById('syitPiawaiQuickAddButton');
   const errorEl = document.getElementById('syitPiawaiError');
   const statusEl = document.getElementById('syitPiawaiStatus');
   const resultWrap = document.getElementById('syitPiawaiResultWrap');
@@ -204,6 +205,20 @@
     updateStatus();
   }
 
+  async function addSheetRecord(record, direct) {
+    if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
+    const payload = record?.productType === 'SYIT_PIAWAI'
+      ? record
+      : JSON.parse(decodeURIComponent(encodeRecord(record)));
+    const saved = await window.azobssRecordPurchase(payload);
+    if (statusEl) {
+      statusEl.textContent = saved && saved.__azobssAlreadyInCart
+        ? 'This Syit Piawai is already in your cart.'
+        : `${payload.itemCode} added ${direct ? 'directly ' : ''}to your cart.`;
+    }
+    return saved;
+  }
+
   async function search() {
     const selectedState = String(stateEl.value || '').trim().toUpperCase();
     const query = normalize(inputEl.value);
@@ -239,7 +254,42 @@
     }
   }
 
+  async function quickAdd() {
+    const selectedState = String(stateEl.value || '').trim().toUpperCase();
+    const query = normalize(inputEl.value);
+    if (errorEl) errorEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+    if (!selectedState) {
+      if (errorEl) errorEl.textContent = 'Select a state before using Quick Add.';
+      return;
+    }
+    if (!query) {
+      if (errorEl) errorEl.textContent = 'Enter a sheet name or product ID before using Quick Add.';
+      return;
+    }
+    const label = quickAddButton?.querySelector('span');
+    const oldText = label?.textContent || 'Quick Add to Cart';
+    try {
+      if (quickAddButton) quickAddButton.disabled = true;
+      if (label) label.textContent = 'Checking Sheet...';
+      if (statusEl) statusEl.textContent = `Checking ${String(inputEl.value || '').trim().toUpperCase()}...`;
+      const records = await loadRecords();
+      const exact = records.find((record) =>
+        String(record.negeri || '').trim().toUpperCase() === selectedState
+        && (normalize(record.sheetName) === query || normalize(record.productId) === query)
+      );
+      if (!exact) throw new Error(`${String(inputEl.value || '').trim().toUpperCase()} was not found in ${selectedState}.`);
+      await addSheetRecord(exact, true);
+    } catch (error) {
+      if (errorEl) errorEl.textContent = error.message || 'Unable to add this sheet directly to cart.';
+    } finally {
+      if (quickAddButton) quickAddButton.disabled = false;
+      if (label) label.textContent = oldText;
+    }
+  }
+
   searchButton.addEventListener('click', search);
+  quickAddButton?.addEventListener('click', quickAdd);
   generalEl.addEventListener('input', applyGeneralFilter);
   generalEl.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') event.preventDefault();
@@ -285,14 +335,8 @@
     if (errorEl) errorEl.textContent = '';
     try {
       button.disabled = true;
-      if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
       const payload = JSON.parse(decodeURIComponent(button.dataset.syitRecord || ''));
-      const saved = await window.azobssRecordPurchase(payload);
-      if (statusEl) {
-        statusEl.textContent = saved && saved.__azobssAlreadyInCart
-          ? 'This Syit Piawai is already in your cart.'
-          : `${payload.itemCode} added to your cart.`;
-      }
+      await addSheetRecord(payload, false);
     } catch (error) {
       if (errorEl) errorEl.textContent = error.message || 'Unable to add this Syit Piawai to your cart.';
     } finally {
