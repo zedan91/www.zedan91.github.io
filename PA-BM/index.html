@@ -10619,7 +10619,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       const matchQuery = !qPlain || itemStation === qNorm || itemStation.includes(qNorm) || itemText.includes(qPlain) || itemText.includes(qNorm);
 
       return matchProduct && matchState && matchQuery;
-    }).slice(0, 50).map(toBenchmarkRow);
+    }).map(toBenchmarkRow);
   }
 
   function findExactBenchmarkRow(data){
@@ -10704,8 +10704,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     renderResults(rows, 1);
     if (statusEl) {
       statusEl.textContent = query
-        ? `${rows.length} of ${benchmarkAllRows.length} BM/SBM records found`
-        : `${benchmarkAllRows.length} BM/SBM records found`;
+        ? `${rows.length.toLocaleString('en-MY')} of ${benchmarkAllRows.length.toLocaleString('en-MY')} BM/SBM records found`
+        : `${benchmarkAllRows.length.toLocaleString('en-MY')} BM/SBM records found`;
     }
   }
 
@@ -10732,7 +10732,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       renderResults(rows, 1);
       if (statusEl) {
         statusEl.textContent = rows.length
-          ? `${rows.length} BM/SBM records found`
+          ? `${rows.length.toLocaleString('en-MY')} BM/SBM records found`
           : 'No BM/SBM record found';
       }
     } catch (error) {
