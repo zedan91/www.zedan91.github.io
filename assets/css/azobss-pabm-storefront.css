@@ -291,7 +291,7 @@ body.pa-bm-page a:focus-visible {
   outline-offset: 2px;
 }
 
-body.pa-bm-page #paError:empty {
+body.pa-bm-page .request-error:empty {
   display: none;
   min-height: 0;
   margin: 0;
