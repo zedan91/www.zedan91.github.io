@@ -9,7 +9,7 @@
     host.id = 'pabmFullWidthResults';
     host.className = 'pabm-full-results';
     host.hidden = true;
-    storeLayout.insertAdjacentElement('afterend', host);
+    storeLayout.append(host);
 
     function syncHost() {
       host.hidden = !host.querySelector('.pabm-results-card.is-active.has-results');

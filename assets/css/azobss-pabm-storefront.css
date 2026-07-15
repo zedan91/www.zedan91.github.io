@@ -59,8 +59,9 @@ body.pa-bm-page .pabm-store-layout {
 }
 
 body.pa-bm-page .pabm-full-results {
+  grid-column: 1 / -1;
   width: 100%;
-  margin-top: 16px;
+  margin-top: 0;
 }
 
 body.pa-bm-page .pabm-results-card {
@@ -1197,5 +1198,17 @@ body.pa-bm-page #adminPurchasePanel {
   body.pa-bm-page #requestCard,
   body.pa-bm-page .pabm-cart-panel {
     padding: 14px !important;
+  }
+
+  body.pa-bm-page #requestCard {
+    order: 1;
+  }
+
+  body.pa-bm-page .pabm-full-results {
+    order: 2;
+  }
+
+  body.pa-bm-page .pabm-cart-panel {
+    order: 3;
   }
 }
