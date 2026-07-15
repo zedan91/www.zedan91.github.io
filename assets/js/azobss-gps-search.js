@@ -115,11 +115,11 @@
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
       const mapLink = record.mapUrl
-        ? `<a class="btn blue pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"></a>`
+        ? `<a class="btn blue pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(record.stationNo || 'GPS station')} location in JUPEM" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></a>`
         : '-';
       const googleMapsUrl = buildGoogleMapsUrl(record);
       const googleMapsLink = googleMapsUrl
-        ? `<a class="btn pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"></a>`
+        ? `<a class="btn pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(record.stationNo || 'GPS station')} in Google Maps" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="/assets/custom-icons/google-maps-pin.png"></a>`
         : '-';
       return `<tr>
         <td>${startIndex + index + 1}</td>

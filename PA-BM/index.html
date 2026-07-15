@@ -8799,8 +8799,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th class="pabm-action-col pabm-location-action-col" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"/><span class="pabm-visually-hidden">View Location</span></th>
-<th class="pabm-action-col pabm-location-action-col" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"/><span class="pabm-visually-hidden">Maps Location</span></th>
+<th class="pabm-action-col pabm-location-action-col" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"/><span class="pabm-visually-hidden">View Location</span></th>
+<th class="pabm-action-col pabm-location-action-col" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="/assets/custom-icons/google-maps-pin.png"/><span class="pabm-visually-hidden">Maps Location</span></th>
 </tr>
 </thead>
 <tbody id="benchmarkResultsBody"></tbody>
@@ -8875,8 +8875,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="negeri" type="button"><span>STATE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="daerah" type="button"><span>DISTRICT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th aria-sort="none"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>PLACE</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
-<th class="pabm-action-col pabm-location-action-col" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"/><span class="pabm-visually-hidden">View Location</span></th>
-<th class="pabm-action-col pabm-location-action-col" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"/><span class="pabm-visually-hidden">Maps Location</span></th>
+<th class="pabm-action-col pabm-location-action-col" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"/><span class="pabm-visually-hidden">View Location</span></th>
+<th class="pabm-action-col pabm-location-action-col" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="/assets/custom-icons/google-maps-pin.png"/><span class="pabm-visually-hidden">Maps Location</span></th>
 </tr>
 </thead>
 <tbody id="gpsResultsBody"></tbody>
@@ -10510,10 +10510,10 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
         ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download pabm-table-cart-button" aria-label="Add ${esc(row.stationNo || row.stesen || 'BM/SBM item')} to cart" title="Add to Cart"><span aria-hidden="true">&#128722;</span></button>`
         : '-';
       const locationButton = locationUrl
-        ? `<a class="btn blue pabm-location-icon-button" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${esc(row.stationNo || row.stesen || 'station')} location in JUPEM" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="https://ebiz.jupem.gov.my/Content/theme/eBizV2_Design_Set2/img/icon/icon_show_map.png"></a>`
+        ? `<a class="btn blue pabm-location-icon-button" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${esc(row.stationNo || row.stesen || 'station')} location in JUPEM" title="View Location"><img alt="" class="pabm-location-brand-icon is-jupem" src="/assets/custom-icons/jupem-map-pin.png"></a>`
         : '-';
       const mapsButton = mapsUrl
-        ? `<a class="btn pabm-location-icon-button" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(row.stationNo || row.stesen || 'station')} in Google Maps" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png"></a>`
+        ? `<a class="btn pabm-location-icon-button" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(row.stationNo || row.stesen || 'station')} in Google Maps" title="Maps Location"><img alt="" class="pabm-location-brand-icon is-google-maps" src="/assets/custom-icons/google-maps-pin.png"></a>`
         : '-';
 
       return `
