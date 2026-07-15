@@ -8818,7 +8818,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
             <select data-copy-states="" data-lot-state="" id="lotKadasterState"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="lotKadasterState"></span>
 </label>
-<label><span class="pabm-field-title"><span class="pabm-step">2</span>Lot Number</span>
+<label><span class="pabm-field-title"><span class="pabm-step">2</span>Lot Number <small>(for search only)</small></span>
 <input data-lot-number="" inputmode="text" placeholder="Example: 1122" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" data-lot-search="" type="button"><span>Search Lot</span></button>
@@ -8843,7 +8843,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </table>
 </div>
 <div class="benchmark-pagination" data-lot-pagination="" hidden=""></div>
-<button class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="1" data-state-id="lotKadasterState" type="button"><span class="pabm-step">4</span>Open Selection Map</button>
+<button aria-label="Open Selection Map. Lot number is not required." class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="1" data-state-id="lotKadasterState" title="Lot number is not required" type="button"><span class="pabm-step">4</span>Open Selection Map</button>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="gps">
 <div class="pabm-product-heading"><div><h3>GPS Station</h3></div><strong class="pabm-heading-price">RM9</strong></div>
@@ -8891,7 +8891,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <select data-copy-states="" data-lot-state="" id="ndcdbC3State"><option value="">-- Select State --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="ndcdbC3State"></span>
 </label>
-<label><span class="pabm-field-title"><span class="pabm-step">2</span>Lot Number</span>
+<label><span class="pabm-field-title"><span class="pabm-step">2</span>Lot Number <small>(for search only)</small></span>
 <input data-lot-number="" inputmode="text" placeholder="Example: 1122" type="search"/>
 </label>
 <button class="btn blue pabm-add-product-button" data-lot-search="" type="button"><span>Search Lot</span></button>
@@ -8916,7 +8916,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </table>
 </div>
 <div class="benchmark-pagination" data-lot-pagination="" hidden=""></div>
-<button class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="2" data-state-id="ndcdbC3State" type="button"><span class="pabm-step">4</span>Open Selection Map</button>
+<button aria-label="Open Selection Map. Lot number is not required." class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="2" data-state-id="ndcdbC3State" title="Lot number is not required" type="button"><span class="pabm-step">4</span>Open Selection Map</button>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="syit-piawai">
 <div class="pabm-product-heading"><div><h3>Syit Piawai (Gambar)</h3></div><strong class="pabm-heading-price">RM7</strong></div>
@@ -15238,7 +15238,7 @@ body:not(.pa-bm-page) button{
 </script>
 
 
-<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=8"></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=9"></script>
 <script src="/assets/js/azobss-pa-search.js?v=22" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=5" defer></script>
 <script src="/assets/js/azobss-gps-search.js?v=17" defer></script>

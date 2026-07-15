@@ -341,8 +341,8 @@ async function addConfiguredProduct(button) {
 
 function openJupemLotMap(button) {
   const panel = button.closest('[data-pa-bm-panel]');
-  const error = panel?.querySelector('.request-error');
-  const status = panel?.querySelector('.request-status');
+  const error = panel?.querySelector('[data-lot-error]');
+  const status = panel?.querySelector('[data-lot-status]');
   const state = document.getElementById(button.dataset.stateId || '');
   const stateName = String(state?.value || '').trim().toUpperCase();
   const stateCode = JUPEM_STATE_CODES[stateName] || '';
@@ -353,6 +353,7 @@ function openJupemLotMap(button) {
     setPanelStatus(status, 'Select a state before opening the selection map.', 'unavailable');
     return;
   }
+  setPanelStatus(status, 'Opening JUPEM selection map...', 'checking');
   const params = new URLSearchParams({
     type: `${stateCode}lot${productCode === '2' ? 'C3' : ''}`,
     c: 'pl',
