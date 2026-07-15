@@ -225,7 +225,7 @@
   function renderResults(page) {
     if (!filteredRows.length) {
       resultsBody.innerHTML = allRows.length
-        ? '<tr><td colspan="9" style="padding:18px;text-align:center;">No matching PA record found.</td></tr>'
+        ? '<tr><td colspan="8" style="padding:18px;text-align:center;">No matching PA record found.</td></tr>'
         : '';
       resultWrap.hidden = !allRows.length;
       renderPagination(1);
