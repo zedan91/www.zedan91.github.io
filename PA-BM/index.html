@@ -1719,20 +1719,33 @@
     }
 
     .benchmark-table.pabm-results-table {
-      min-width: 920px;
-      table-layout: fixed;
+      width: max-content;
+      min-width: 100%;
+      table-layout: auto;
     }
 
     .benchmark-table.pabm-wide-results-table {
-      min-width: 1080px;
+      min-width: 960px;
     }
 
     .benchmark-table th,
     .benchmark-table td {
-      padding: 10px 9px;
+      padding: 8px 7px;
       border-bottom: 1px solid rgba(148,163,184,0.16);
+      border-right: 1px solid rgba(148,163,184,0.13);
       text-align: left;
       vertical-align: top;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .benchmark-table th:last-child,
+    .benchmark-table td:last-child {
+      border-right: 0;
+    }
+
+    .benchmark-table tbody tr:last-child td {
+      border-bottom: 0;
     }
 
     .benchmark-table th {
@@ -1740,17 +1753,20 @@
       color: #93c5fd;
       font-size: 12px;
       text-transform: uppercase;
+      width: 1%;
+      white-space: nowrap;
     }
 
     .benchmark-table .pabm-index-col {
-      width: 54px;
+      width: 44px;
     }
 
     .benchmark-table .pabm-action-col,
     .benchmark-table .pabm-action-cell {
-      width: 112px;
-      min-width: 112px;
-      max-width: 112px;
+      width: 48px;
+      min-width: 48px;
+      max-width: 48px;
+      text-align: center;
     }
 
     .benchmark-table .pabm-action-col {
@@ -1758,11 +1774,11 @@
     }
 
     .benchmark-table .pabm-code-col {
-      width: 112px;
+      width: 98px;
     }
 
     .benchmark-table .pabm-view-col {
-      width: 94px;
+      width: 82px;
     }
 
     .benchmark-table .pabm-action-cell > .btn,
@@ -1770,9 +1786,9 @@
       display: inline-flex !important;
       align-items: center;
       justify-content: center;
-      width: 92px !important;
-      min-width: 92px !important;
-      max-width: 92px !important;
+      width: 34px !important;
+      min-width: 34px !important;
+      max-width: 34px !important;
       height: 34px !important;
       min-height: 34px !important;
       max-height: 34px !important;
@@ -1781,6 +1797,11 @@
       line-height: 1 !important;
       white-space: nowrap !important;
       overflow: hidden;
+    }
+
+    #benchmarkResultWrap .benchmark-table td:nth-child(7) {
+      width: 240px;
+      max-width: 240px;
     }
 
     .pa-sort-button {
