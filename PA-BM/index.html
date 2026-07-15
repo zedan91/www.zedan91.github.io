@@ -10577,7 +10577,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 
   async function loadBenchmarkDb(){
     if (benchmarkDbCache) return benchmarkDbCache;
-    const response = await fetch('/stesen-tanda-aras-records.json', { cache: 'no-store' });
+    const response = await fetch('/stesen-tanda-aras-records.json?v=20260715-maps-1', { cache: 'no-store' });
     if (!response.ok) {
       throw new Error('Database BM/SBM tidak dijumpai. Pastikan /stesen-tanda-aras-records.json ada dalam GitHub root.');
     }

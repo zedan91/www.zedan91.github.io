@@ -2,7 +2,7 @@
   'use strict';
 
   const ROWS_PER_PAGE = 5;
-  const DATA_URL = '/stesen-gps-records.json';
+  const DATA_URL = '/stesen-gps-records.json?v=20260715-maps-1';
   const stateEl = document.getElementById('gpsState');
   const inputEl = document.getElementById('gpsStation');
   const generalEl = document.getElementById('gpsGeneralSearch');
