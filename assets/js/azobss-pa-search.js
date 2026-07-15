@@ -369,8 +369,13 @@
 
   function applyGeneralFilter() {
     const query = normalize(generalEl.value).replace(/^PA/, '');
-    filteredRows = !query ? allRows.slice() : allRows.filter((record) =>
-      normalize(record.paNo).replace(/^PA/, '').startsWith(query));
+    filteredRows = !query ? allRows.slice() : allRows.filter((record) => [
+      normalize(record.paNo).replace(/^PA/, ''),
+      normalize(record.negeri),
+      normalize(record.daerah),
+      normalize(record.mukim),
+      normalize(record.seksyen)
+    ].some((value) => value.includes(query)));
     sortRows(filteredRows);
     renderResults(1);
     updateStatus();

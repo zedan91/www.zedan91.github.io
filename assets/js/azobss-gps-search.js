@@ -154,11 +154,14 @@
 
   function applyGeneralFilter() {
     const query = normalize(generalEl.value);
-    matchingRows = !query ? allRows.slice() : allRows.filter((record) => {
-      const stationNo = normalize(record.stationNo);
-      return stationNo.startsWith(query)
-        || (/^\d+$/.test(query) && stationNo.replace(/^[A-Z]+/, '').startsWith(query));
-    });
+    matchingRows = !query ? allRows.slice() : allRows.filter((record) => [
+      normalize(record.stationNo),
+      normalize(record.stationNo).replace(/^[A-Z]+/, ''),
+      normalize(record.negeri),
+      normalize(record.daerah),
+      normalize(record.tempat),
+      normalize(record.productId)
+    ].some((value) => value.includes(query)));
     renderResults(1);
     updateStatus();
   }

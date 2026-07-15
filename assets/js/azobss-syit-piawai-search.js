@@ -207,8 +207,12 @@
 
   function applyGeneralFilter() {
     const query = normalize(generalEl.value);
-    matchingRows = !query ? allRows.slice() : allRows.filter((record) =>
-      normalize(record.sheetName).startsWith(query));
+    matchingRows = !query ? allRows.slice() : allRows.filter((record) => [
+      normalize(record.sheetName),
+      normalize(record.negeri),
+      normalize(record.productId),
+      normalize(record.stateCode)
+    ].some((value) => value.includes(query)));
     renderResults(1);
     updateStatus();
   }

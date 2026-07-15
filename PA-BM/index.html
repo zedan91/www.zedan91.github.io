@@ -8714,7 +8714,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p aria-live="polite" class="request-status pabm-direct-status" id="paStatus" role="status"></p>
 <label for="paGeneralSearch">
           <span class="pabm-field-title">General Search</span>
-          <input disabled="" id="paGeneralSearch" placeholder="PA Number - starts with" type="search"/>
+          <input disabled="" id="paGeneralSearch" placeholder="No. PA / Negeri / Daerah / Mukim / Seksyen" type="search"/>
 </label>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
 <div class="benchmark-result-wrap" hidden="" id="paResultWrap">
@@ -8783,7 +8783,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p aria-live="polite" class="request-status pabm-direct-status" id="benchmarkStatus" role="status"></p>
 <label for="benchmarkGeneralSearch">
             <span class="pabm-field-title">General Search</span>
-            <input disabled="" id="benchmarkGeneralSearch" placeholder="Station Number - starts with" type="search"/>
+            <input disabled="" id="benchmarkGeneralSearch" placeholder="No. Stesen / Negeri / Daerah / Bandar / Huraian" type="search"/>
 </label>
 </form>
 <p class="request-error" id="benchmarkError"></p>
@@ -8861,7 +8861,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="gpsSearchStatus" role="status"></p>
 <label for="gpsGeneralSearch"><span class="pabm-field-title">General Search</span>
-<input disabled="" id="gpsGeneralSearch" placeholder="Station Number - starts with" type="search"/>
+<input disabled="" id="gpsGeneralSearch" placeholder="No. Stesen / Negeri / Daerah / Tempat" type="search"/>
 </label>
 </div>
 <p class="request-error" id="gpsSearchError"></p>
@@ -8934,7 +8934,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="syitPiawaiStatus" role="status"></p>
 <label for="syitPiawaiGeneralSearch"><span class="pabm-field-title">General Search</span>
-<input disabled="" id="syitPiawaiGeneralSearch" placeholder="Sheet Name - starts with" type="search"/>
+<input disabled="" id="syitPiawaiGeneralSearch" placeholder="Nama Syit / Negeri / ID Produk" type="search"/>
 </label>
 </div>
 <p class="request-error" id="syitPiawaiError"></p>
@@ -10735,9 +10735,18 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     if (!generalSearchEl) return;
     const query = normalizeBenchmarkText(generalSearchEl.value);
     const rows = !query ? benchmarkAllRows.slice() : benchmarkAllRows.filter(function(item){
-      const stationNo = normalizeBenchmarkText(item.stationNo || item.stesen);
-      return stationNo.startsWith(query)
-        || (/^\d+$/.test(query) && stationNo.replace(/^[A-Z]+/, '').startsWith(query));
+      return [
+        item.stationNo || item.stesen,
+        normalizeBenchmarkText(item.stationNo || item.stesen).replace(/^[A-Z]+/, ''),
+        item.negeri,
+        item.daerah,
+        item.bandar,
+        item.huraian,
+        item.productId,
+        item.product
+      ].map(normalizeBenchmarkText).some(function(value){
+        return value.includes(query);
+      });
     });
     renderResults(rows, 1);
     if (statusEl) {
@@ -15230,10 +15239,10 @@ body:not(.pa-bm-page) button{
 
 
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=8"></script>
-<script src="/assets/js/azobss-pa-search.js?v=21" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=22" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=5" defer></script>
-<script src="/assets/js/azobss-gps-search.js?v=15" defer></script>
-<script src="/assets/js/azobss-syit-piawai-search.js?v=14" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=16" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=15" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=368" defer></script>
 </body>
 </html>
