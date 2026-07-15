@@ -1506,20 +1506,30 @@ async function azLoadAdminPaBmPurchaseRecords(maxRows = 1000) {
     seen.add(key);
     merged.push(clean);
   }
-  let errors = [];
-  try {
-    let snap;
-    try { snap = await db.collection("purchaseLogs").orderBy("createdAtMs", "desc").limit(limitRows).get(); }
-    catch (_) { snap = await db.collection("purchaseLogs").limit(limitRows).get(); }
-    snap.forEach(doc => add(doc.data() || {}, doc.id, "purchaseLogs"));
-  } catch (err) {
+  const loadPurchaseLogs = async () => {
+    try { return await db.collection("purchaseLogs").orderBy("createdAtMs", "desc").limit(limitRows).get(); }
+    catch (_) { return db.collection("purchaseLogs").limit(limitRows).get(); }
+  };
+  const [purchaseResult, usersResult] = await Promise.allSettled([
+    loadPurchaseLogs(),
+    db.collection("users").limit(2000).get()
+  ]);
+  const errors = [];
+  const resetMap = {};
+  if (purchaseResult.status === "fulfilled") {
+    purchaseResult.value.forEach(doc => add(doc.data() || {}, doc.id, "purchaseLogs"));
+  } else {
+    const err = purchaseResult.reason;
     errors.push("purchaseLogs: " + (err && err.message ? err.message : String(err)));
   }
   // Compatibility: older PA/BM records may live inside users/{username}.purchaseRecords only.
-  try {
-    const usersSnap = await db.collection("users").limit(2000).get();
+  if (usersResult.status === "fulfilled") {
+    const usersSnap = usersResult.value;
     usersSnap.forEach(userDoc => {
       const userData = userDoc.data() || {};
+      const userKey = String(userData.usernameKey || userData.username || userDoc.id || "").trim().toLowerCase();
+      const resetAtMs = Number(userData.purchaseTotalResetAtMs || 0) || (userData.purchaseTotalResetAtClient ? Date.parse(userData.purchaseTotalResetAtClient) : 0) || 0;
+      if (userKey && resetAtMs) resetMap[userKey] = resetAtMs;
       const records = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
       records.forEach((r, idx) => {
         const docId = String(r && (r.firestoreId || r.purchaseLogId || r.id || r.recordId) || `${userDoc.id}-embedded-${idx}`);
@@ -1534,11 +1544,12 @@ async function azLoadAdminPaBmPurchaseRecords(maxRows = 1000) {
         }), docId, "users.purchaseRecords");
       });
     });
-  } catch (err) {
+  } else {
+    const err = usersResult.reason;
     errors.push("users.purchaseRecords: " + (err && err.message ? err.message : String(err)));
   }
   merged.sort((a, b) => azPaBmPurchaseRecordSortMs(b) - azPaBmPurchaseRecordSortMs(a));
-  return { firestoreOk: errors.length === 0 || merged.length > 0, source: merged.length ? "firestore-admin" : "empty", records: merged.slice(0, limitRows), error: errors.join(" | ") };
+  return { firestoreOk: errors.length === 0 || merged.length > 0, source: merged.length ? "firestore-admin" : "empty", records: merged.slice(0, limitRows), resetMap, error: errors.join(" | ") };
 }
 
 const AZOBSS_ADMIN_EXPORT_TYPES = {
@@ -3450,9 +3461,22 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     }
   };
 
+  const preparedItems = [];
+  const lookupConcurrency = 8;
+  for (let offset = 0; offset < order.paBmItems.length; offset += lookupConcurrency) {
+    const chunk = order.paBmItems.slice(offset, offset + lookupConcurrency);
+    const preparedChunk = await Promise.all(chunk.map(async (item) => ({
+      item,
+      refs: await findPurchaseLogRefs(item)
+    })));
+    preparedItems.push(...preparedChunk);
+  }
+
+  const batch = db.batch();
   let updated = 0;
-  for (const item of order.paBmItems) {
-    const refs = await findPurchaseLogRefs(item);
+  for (const prepared of preparedItems) {
+    const item = prepared.item;
+    const refs = prepared.refs;
     const update = {
       ...baseUpdate,
       productType: String(item.productType || item.product || "").toUpperCase() || undefined,
@@ -3468,37 +3492,31 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     };
     Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
     if (!refs.length) {
-      try {
-        const orderUser = order.user || {};
-        const createdRef = db.collection("purchaseLogs").doc();
-        await createdRef.set({
-          ...update,
-          uid: String(orderUser.uid || order.uid || ""),
-          usernameKey: String(orderUser.username || orderUser.usernameKey || order.usernameKey || "").trim().toLowerCase(),
-          displayName: String(orderUser.username || orderUser.usernameKey || order.usernameKey || "").trim(),
-          email: String(orderUser.email || order.email || "").trim(),
-          phone: String(orderUser.phone || order.phone || "").trim(),
-          createdAtMs: Number(item.createdAtMs || nowMs),
-          createdAtClient: new Date(Number(item.createdAtMs || nowMs)).toISOString(),
-          createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
-          downloadCount: paid ? 0 : Number(item.downloadCount || 0),
-          maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS
-        }, { merge: true });
-        updated += 1;
-      } catch (error) {
-        console.error("PA/BM purchaseLogs item create failed:", error && (error.stack || error.message || error));
-      }
+      const orderUser = order.user || {};
+      const createdRef = db.collection("purchaseLogs").doc();
+      batch.set(createdRef, {
+        ...update,
+        uid: String(orderUser.uid || order.uid || ""),
+        usernameKey: String(orderUser.username || orderUser.usernameKey || order.usernameKey || "").trim().toLowerCase(),
+        displayName: String(orderUser.username || orderUser.usernameKey || order.usernameKey || "").trim(),
+        email: String(orderUser.email || order.email || "").trim(),
+        phone: String(orderUser.phone || order.phone || "").trim(),
+        createdAtMs: Number(item.createdAtMs || nowMs),
+        createdAtClient: new Date(Number(item.createdAtMs || nowMs)).toISOString(),
+        createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+        downloadCount: paid ? 0 : Number(item.downloadCount || 0),
+        maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS
+      }, { merge: true });
+      updated += 1;
       continue;
     }
     for (const ref of refs) {
-      try {
-        await ref.set(update, { merge: true });
-        updated += 1;
-      } catch (error) {
-        console.error("PA/BM purchaseLogs item update failed:", ref.id, error && (error.stack || error.message || error));
-      }
+      batch.set(ref, update, { merge: true });
+      updated += 1;
     }
   }
+
+  if (updated) await batch.commit();
 
   console.log("PA/BM purchaseLogs order sync:", JSON.stringify({ orderId: order.orderId || "", billCode: order.billCode || "", status, updated }).slice(0, 500));
   return { ok: updated > 0, updated };
@@ -7031,9 +7049,10 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:4,
+        version:5,
         paidDownloadRouting:"category-specific-v1",
         firestoreReadRetry:3,
+        fastAdminTestPayment:true,
         runningFile:"deploy-server.js",
         productTypes:["PA","BM","SBM","GPS","NDCDB","NDCDB_C3","SYIT_PIAWAI"],
         prices:{
@@ -7094,8 +7113,12 @@ async function handler(req, res) {
           commissionSkippedReason:"admin-test-payment",
           emailSkippedForPaBm:true
         });
-        await azPersistPremiumOrder(order);
-        const syncResult = await azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference, paidAtMs:nowMs, nowMs });
+        const startedAtMs = Date.now();
+        const [, syncResult] = await Promise.all([
+          azPersistPremiumOrder(order),
+          azobssUpdatePaBmPurchaseLogsForOrder(order, "paid", { paymentReference, paidAtMs:nowMs, nowMs })
+        ]);
+        const purchaseSyncMs = Date.now() - startedAtMs;
         order = upsertPremiumOrder({
           ...order,
           paBmPaidSyncedAt:nowIso,
@@ -7121,7 +7144,9 @@ async function handler(req, res) {
           amount:checkout.totalAmount,
           amountSen:checkout.amountSen,
           unit:checkout.items.length,
-          updatedCount:Number(syncResult && syncResult.updated || 0)
+          updatedCount:Number(syncResult && syncResult.updated || 0),
+          processingMs:Date.now() - startedAtMs,
+          purchaseSyncMs
         }, null, 2), "application/json");
       } catch (error) {
         const statusCode = Math.max(400, Math.min(500, Number(error && error.statusCode || 500)));
@@ -7889,7 +7914,7 @@ async function handler(req, res) {
         }
         const maxRows = Math.max(1, Math.min(5000, Number(parsed.query.limit || 1000) || 1000));
         const result = await azLoadAdminPaBmPurchaseRecords(maxRows);
-        return send(res, 200, JSON.stringify({ ok:true, count:result.records.length, source:result.source, firestoreOk:result.firestoreOk, error:result.error || "", records:result.records }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, count:result.records.length, source:result.source, firestoreOk:result.firestoreOk, error:result.error || "", resetMap:result.resetMap || {}, records:result.records }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }

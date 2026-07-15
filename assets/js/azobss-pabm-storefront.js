@@ -466,14 +466,16 @@ async function proceedAdminTestPayment() {
       adminTestPaymentButton.textContent = 'Creating Test Payment...';
     }
     if (status) status.textContent = 'Creating an admin-only paid test order...';
-    const capabilities = await ensureCheckoutBackend(items);
-    if (!capabilities.adminTestPayment) throw new Error('Admin test payment is not available on the current payment server.');
-    const token = await auth.currentUser.getIdToken(true);
-    const response = await fetch(`${BACKEND_BASE}/api/admin/test-pa-bm-payment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify(checkoutPayload(items))
-    });
+    const sendTestPayment = async (forceTokenRefresh = false) => {
+      const token = await auth.currentUser.getIdToken(forceTokenRefresh);
+      return fetch(`${BACKEND_BASE}/api/admin/test-pa-bm-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify(checkoutPayload(items))
+      });
+    };
+    let response = await sendTestPayment(false);
+    if (response.status === 401 || response.status === 403) response = await sendTestPayment(true);
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok || !data.paid) throw new Error(data.error || 'Unable to complete the admin test payment.');
     assertCheckoutResponse(data, items);
@@ -481,12 +483,18 @@ async function proceedAdminTestPayment() {
     renderCart();
     if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
     sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
-    if (status) status.textContent = 'Admin test payment successful. Loading the paid purchase record...';
-    const returnUrl = new URL('/PA-BM/', window.location.origin);
-    returnUrl.searchParams.set('payment', 'success');
-    returnUrl.searchParams.set('orderId', String(data.orderId || ''));
-    returnUrl.searchParams.set('test', '1');
-    window.location.href = returnUrl.href;
+    if (status) status.textContent = 'Admin test payment successful. Refreshing Latest Purchase List...';
+    if (typeof window.azobssRenderPurchaseRecords === 'function') {
+      await window.azobssRenderPurchaseRecords();
+    } else if (typeof window.azobssRefreshPaBmPurchasesNow === 'function') {
+      window.azobssRefreshPaBmPurchasesNow();
+    }
+    const latestPurchase = document.getElementById('userPaPurchasePanel') || document.getElementById('purchaseSummaryList');
+    if (latestPurchase) latestPurchase.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (status) {
+      const seconds = Number(data.processingMs || 0) > 0 ? ` in ${(Number(data.processingMs) / 1000).toFixed(1)}s` : '';
+      status.textContent = `Admin test payment successful${seconds}. Latest Purchase List is ready.`;
+    }
   } catch (error) {
     if (status) status.textContent = error.message || 'Unable to complete the admin test payment.';
     alert(error.message || 'Unable to complete the admin test payment.');

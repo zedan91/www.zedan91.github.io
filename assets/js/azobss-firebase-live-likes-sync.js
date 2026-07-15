@@ -2214,12 +2214,20 @@ async function loadAzobssPurchaseRecords(){
   const current = getSavedUser();
   const isAdminUser = isAzobssAdmin(current);
   const merged = [];
+  const mergedIds = new Set();
   function push(record){
     if(!record) return;
     const normalized = { ...record };
     normalized.createdAtMs = Number(normalized.createdAtMs || (normalized.createdAtClient ? Date.parse(normalized.createdAtClient) : 0) || 0);
     normalized.usernameKey = String(normalized.usernameKey || '').trim().toLowerCase();
     normalized.uid = String(normalized.uid || '');
+    const recordId = String(normalized.firestoreId || normalized.id || normalized.purchaseLogId || '').trim();
+    if(recordId){
+      if(mergedIds.has(recordId)) return;
+      mergedIds.add(recordId);
+      merged.push(normalized);
+      return;
+    }
     if(!merged.some(item => isSamePurchase(item, normalized))) merged.push(normalized);
   }
   function pushSnap(snap){
@@ -2236,11 +2244,19 @@ async function loadAzobssPurchaseRecords(){
   // Firestore/admin records are the only source for Purchase Records Saya and Total.
   clearLegacyPurchaseBrowserCache();
 
+  let adminUsersSnap = null;
   try{
     const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
     if(isAdminUser){
-      // Admin can read all purchase records if Firestore rules allow it.
-      pushSnap(await getDocs(purchaseCol));
+      // These were previously awaited one after another, which made admin load time grow quickly.
+      const [purchaseResult, usersResult] = await Promise.allSettled([
+        getDocs(purchaseCol),
+        getDocs(collection(db, 'users'))
+      ]);
+      if(purchaseResult.status === 'fulfilled') pushSnap(purchaseResult.value);
+      else console.warn('Firestore admin purchase collection read failed:', purchaseResult.reason);
+      if(usersResult.status === 'fulfilled') adminUsersSnap = usersResult.value;
+      else console.warn('Firestore admin users collection read failed:', usersResult.reason);
     }else if(current?.uid){
       // Normal users should only query their own records. This works with stricter Firestore rules.
       pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
@@ -2262,9 +2278,12 @@ async function loadAzobssPurchaseRecords(){
   // Robust persistence path: read embedded records from user profile docs too.
   try{
     if(isAdminUser){
-      const usersSnap = await getDocs(collection(db, 'users'));
-      usersSnap.forEach(userDoc => {
+      const resetMap = {};
+      if(adminUsersSnap) adminUsersSnap.forEach(userDoc => {
         const userData = userDoc.data() || {};
+        const userKey = String(userData.usernameKey || userData.username || userDoc.id || '').trim().toLowerCase();
+        const resetAtMs = Number(userData.purchaseTotalResetAtMs || 0) || (userData.purchaseTotalResetAtClient ? Date.parse(userData.purchaseTotalResetAtClient) : 0) || 0;
+        if(userKey && resetAtMs) resetMap[userKey] = resetAtMs;
         const embedded = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
         embedded.forEach(r => push({
           ...r,
@@ -2274,6 +2293,8 @@ async function loadAzobssPurchaseRecords(){
           email: r.email || userData.email || ''
         }));
       });
+      window.__AZOBSS_ADMIN_PURCHASE_RESET_MAP__ = resetMap;
+      window.__AZOBSS_ADMIN_USERS_SNAPSHOT_READY__ = !!adminUsersSnap;
     }else{
       const docId = purchasePersistDocId(current);
       if(docId){
@@ -2293,7 +2314,7 @@ async function loadAzobssPurchaseRecords(){
     console.warn('Firestore embedded purchase records read fallback:', error);
   }
 
-  if(isAdminUser){
+  if(isAdminUser && !merged.length){
     try{
       const backendRows = await azobssLoadAdminPaBmPurchaseRecordsFromBackend(false);
       backendRows.forEach(push);
@@ -2533,6 +2554,10 @@ async function azobssLoadAdminPaBmPurchaseRecordsFromBackend(forceRefresh){
     if(!response.ok || !data || data.ok === false){
       console.warn('Admin PA/BM purchase backend fallback failed:', data && (data.error || data.message) || response.status);
       return [];
+    }
+    if(data.resetMap && typeof data.resetMap === 'object'){
+      window.__AZOBSS_ADMIN_PURCHASE_RESET_MAP__ = data.resetMap;
+      window.__AZOBSS_ADMIN_USERS_SNAPSHOT_READY__ = true;
     }
     const rows = Array.isArray(data.records) ? data.records : [];
     return rows.map(function(r){
@@ -2957,6 +2982,12 @@ async function loadAzobssPurchaseTotalResetMap(){
   const map = readAzobssPurchaseTotalResetMap();
   const current = getSavedUser() || {};
   const isAdminUser = isAzobssAdmin(current);
+
+  if(isAdminUser && window.__AZOBSS_ADMIN_USERS_SNAPSHOT_READY__){
+    Object.assign(map, window.__AZOBSS_ADMIN_PURCHASE_RESET_MAP__ || {});
+    writeAzobssPurchaseTotalResetMap(map);
+    return map;
+  }
 
   function applyUserDoc(docSnap){
     if(!docSnap || !docSnap.exists || !docSnap.exists()) return;
