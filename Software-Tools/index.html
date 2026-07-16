@@ -3861,7 +3861,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     categoryFilter.appendChild(nav);
 
     const title=categoryFilter.closest('.software-category-card')?.querySelector('.software-category-title');
-    if(title) title.innerHTML=`<span>▦ Browse by Category</span><span class="software-category-title-count-473">${groups.length} groups · ${stats.categories.length} categories</span>`;
+    if(title) title.innerHTML='<span>▦ Browse by Category</span>';
     if(categoryInput){
       const current=String(categoryInput.value||'');
       const present=new Set(Array.from(categoryInput.options||[]).map(option=>option.value));
@@ -14576,7 +14576,6 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 .software-directory-notice-470{max-width:1180px;margin:-4px auto 16px;padding:10px 14px;border:1px solid rgba(56,189,248,.24);border-radius:12px;background:rgba(14,116,144,.10);color:#bae6fd;font-size:12px;font-weight:750;line-height:1.45;text-align:center}
 .software-category-card{padding:16px!important;position:relative;overflow:visible!important;z-index:40}
 .software-category-title{justify-content:space-between;flex-wrap:wrap;margin-bottom:13px!important}
-.software-category-title-count-473{padding:5px 9px;border:1px solid rgba(96,165,250,.24);border-radius:999px;background:rgba(59,130,246,.08);color:#93c5fd;font-size:10px;letter-spacing:.03em;text-transform:none}
 .software-category-filter{display:block!important;overflow:visible!important;margin:0!important;position:relative}
 .software-category-loading-473{padding:12px;border:1px dashed rgba(148,163,184,.28);border-radius:13px;color:#94a3b8;font-size:12px;text-align:center}
 .software-category-tools-474{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:center;margin-bottom:12px;position:relative;z-index:4}
