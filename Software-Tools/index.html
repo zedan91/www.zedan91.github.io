@@ -3469,7 +3469,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
   const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v464';
-  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=470';
+  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=471';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -4496,7 +4496,7 @@ function normalizeItem(item){
     const meta = [item.category, item.version, item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
-    const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
+    const badgeExtra = (!item.bundledDirectory && item.badge) ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const bundledDeleteBtn470 = item.bundledDirectory ? '' : `<button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button>`;
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="${item.bundledDirectory ? 'Edit by creating a Firestore override' : 'Edit software'}" aria-label="Edit">✏️</button>${bundledDeleteBtn470}<button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : `<span class="download-text">${esc(item.buttonText || 'Download Now')}</span>`}</a>`;
@@ -6332,7 +6332,6 @@ line-height:1.6;
       if(p === '...') parts.push('<span class="az-page-dots">…</span>');
       else parts.push(`<button type="button" class="az-page-btn ${p===currentPage?'is-active':''}" data-page="${p}">${p}</button>`);
     });
-    parts.push(`<button type="button" class="az-page-btn" data-page="next" ${currentPage>=totalPages?'disabled':''}>Next ›</button>`);
     controls.innerHTML = parts.join('');
   }
 

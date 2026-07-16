@@ -1,11 +1,11 @@
 {
   "generatedAt": "2026-07-17T00:00:00.000Z",
   "source": "AZOBSS Bundled Official Software Directory",
-  "version": 470,
+  "version": 2,
   "baseFirestoreItemsExpected": 102,
   "bundledCount": 525,
   "totalExpected": 627,
-  "notice": "Third-party entries link to official publisher or project pages. AZOBSS does not host or modify these third-party installers.",
+  "notice": "Bundled third-party software directory using official publisher or project pages. Promotional directory labels are hidden on cards.",
   "items": [
     {
       "productId": "AZSW-DIR360092",
@@ -29,7 +29,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -93,7 +93,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -156,7 +156,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -219,7 +219,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -282,7 +282,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -344,7 +344,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -406,7 +406,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -467,7 +467,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -531,7 +531,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -594,7 +594,7 @@
         "Mac",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -656,7 +656,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -719,7 +719,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -782,7 +782,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -847,7 +847,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -912,7 +912,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -976,7 +976,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1041,7 +1041,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1105,7 +1105,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1170,7 +1170,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1234,7 +1234,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1298,7 +1298,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1363,7 +1363,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1428,7 +1428,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1491,7 +1491,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1554,7 +1554,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1617,7 +1617,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1679,7 +1679,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1744,7 +1744,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1806,7 +1806,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1869,7 +1869,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1930,7 +1930,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -1991,7 +1991,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2052,7 +2052,7 @@
       "platforms": [
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2113,7 +2113,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2175,7 +2175,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2239,7 +2239,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2304,7 +2304,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2367,7 +2367,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2432,7 +2432,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2496,7 +2496,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2559,7 +2559,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2622,7 +2622,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2686,7 +2686,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2751,7 +2751,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2816,7 +2816,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2879,7 +2879,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -2942,7 +2942,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3006,7 +3006,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3067,7 +3067,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3128,7 +3128,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3191,7 +3191,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3253,7 +3253,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3318,7 +3318,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3383,7 +3383,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3446,7 +3446,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3509,7 +3509,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3572,7 +3572,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3635,7 +3635,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3698,7 +3698,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3760,7 +3760,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3823,7 +3823,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3886,7 +3886,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -3947,7 +3947,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4009,7 +4009,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4070,7 +4070,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4131,7 +4131,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4193,7 +4193,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4254,7 +4254,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4315,7 +4315,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4378,7 +4378,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4441,7 +4441,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4504,7 +4504,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4567,7 +4567,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4628,7 +4628,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4691,7 +4691,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4754,7 +4754,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4817,7 +4817,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4880,7 +4880,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -4942,7 +4942,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5003,7 +5003,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5064,7 +5064,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5127,7 +5127,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5190,7 +5190,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5253,7 +5253,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5316,7 +5316,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5379,7 +5379,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5442,7 +5442,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5505,7 +5505,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5568,7 +5568,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5631,7 +5631,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5694,7 +5694,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5755,7 +5755,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5816,7 +5816,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5879,7 +5879,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -5941,7 +5941,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6004,7 +6004,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6067,7 +6067,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6128,7 +6128,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6191,7 +6191,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6254,7 +6254,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6317,7 +6317,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6380,7 +6380,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6443,7 +6443,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6506,7 +6506,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6569,7 +6569,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6632,7 +6632,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6694,7 +6694,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6755,7 +6755,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6818,7 +6818,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6881,7 +6881,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -6944,7 +6944,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7007,7 +7007,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7070,7 +7070,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7133,7 +7133,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7196,7 +7196,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7259,7 +7259,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7322,7 +7322,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7385,7 +7385,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7446,7 +7446,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7509,7 +7509,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7572,7 +7572,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7635,7 +7635,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7696,7 +7696,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7759,7 +7759,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7822,7 +7822,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7885,7 +7885,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -7948,7 +7948,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8011,7 +8011,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8074,7 +8074,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8137,7 +8137,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8200,7 +8200,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8264,7 +8264,7 @@
         "Linux",
         "iOS"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8327,7 +8327,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8390,7 +8390,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8451,7 +8451,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8512,7 +8512,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8574,7 +8574,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8637,7 +8637,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8700,7 +8700,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8763,7 +8763,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8824,7 +8824,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8887,7 +8887,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -8948,7 +8948,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9009,7 +9009,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9072,7 +9072,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9135,7 +9135,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9198,7 +9198,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9259,7 +9259,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9321,7 +9321,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9384,7 +9384,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9449,7 +9449,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9512,7 +9512,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9575,7 +9575,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9638,7 +9638,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9703,7 +9703,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9764,7 +9764,7 @@
       "platforms": [
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9827,7 +9827,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9890,7 +9890,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -9953,7 +9953,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10016,7 +10016,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10079,7 +10079,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10141,7 +10141,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10204,7 +10204,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10269,7 +10269,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10330,7 +10330,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10393,7 +10393,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10456,7 +10456,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10519,7 +10519,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10581,7 +10581,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10645,7 +10645,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10706,7 +10706,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10769,7 +10769,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10830,7 +10830,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10893,7 +10893,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -10957,7 +10957,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11020,7 +11020,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11085,7 +11085,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11150,7 +11150,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11215,7 +11215,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11280,7 +11280,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11344,7 +11344,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11409,7 +11409,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11474,7 +11474,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11537,7 +11537,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11602,7 +11602,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11665,7 +11665,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11730,7 +11730,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11795,7 +11795,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11860,7 +11860,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11924,7 +11924,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -11989,7 +11989,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12054,7 +12054,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12118,7 +12118,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12183,7 +12183,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12246,7 +12246,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12307,7 +12307,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12369,7 +12369,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12434,7 +12434,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12499,7 +12499,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12564,7 +12564,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12627,7 +12627,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12690,7 +12690,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12753,7 +12753,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12814,7 +12814,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12875,7 +12875,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -12936,7 +12936,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13001,7 +13001,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13064,7 +13064,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13128,7 +13128,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13189,7 +13189,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13254,7 +13254,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13316,7 +13316,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13381,7 +13381,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13442,7 +13442,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13503,7 +13503,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13568,7 +13568,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13633,7 +13633,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13696,7 +13696,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13759,7 +13759,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13822,7 +13822,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13887,7 +13887,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -13950,7 +13950,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14013,7 +14013,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14075,7 +14075,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14138,7 +14138,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14200,7 +14200,7 @@
         "Mac",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14261,7 +14261,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14322,7 +14322,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14385,7 +14385,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14448,7 +14448,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14511,7 +14511,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14574,7 +14574,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14636,7 +14636,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14697,7 +14697,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14758,7 +14758,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14821,7 +14821,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14884,7 +14884,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -14945,7 +14945,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15006,7 +15006,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15067,7 +15067,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15128,7 +15128,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15189,7 +15189,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15250,7 +15250,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15313,7 +15313,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15374,7 +15374,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15435,7 +15435,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15496,7 +15496,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15558,7 +15558,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15619,7 +15619,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15682,7 +15682,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15745,7 +15745,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15808,7 +15808,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15871,7 +15871,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15934,7 +15934,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -15995,7 +15995,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16058,7 +16058,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16120,7 +16120,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16183,7 +16183,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16246,7 +16246,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16307,7 +16307,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16368,7 +16368,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16429,7 +16429,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16490,7 +16490,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16551,7 +16551,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16612,7 +16612,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16675,7 +16675,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16736,7 +16736,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16797,7 +16797,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16858,7 +16858,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16919,7 +16919,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -16981,7 +16981,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17043,7 +17043,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17108,7 +17108,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17169,7 +17169,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17231,7 +17231,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17294,7 +17294,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17357,7 +17357,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17420,7 +17420,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17481,7 +17481,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17543,7 +17543,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17605,7 +17605,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17667,7 +17667,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17729,7 +17729,7 @@
         "Windows",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17790,7 +17790,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17853,7 +17853,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17914,7 +17914,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -17975,7 +17975,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18036,7 +18036,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18097,7 +18097,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18158,7 +18158,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18220,7 +18220,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18283,7 +18283,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18344,7 +18344,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18405,7 +18405,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18466,7 +18466,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18527,7 +18527,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18589,7 +18589,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18650,7 +18650,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18711,7 +18711,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18772,7 +18772,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18833,7 +18833,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18896,7 +18896,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -18959,7 +18959,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19020,7 +19020,7 @@
       "platforms": [
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19081,7 +19081,7 @@
       "platforms": [
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19142,7 +19142,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19203,7 +19203,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19264,7 +19264,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19325,7 +19325,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19386,7 +19386,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19447,7 +19447,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19508,7 +19508,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19569,7 +19569,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19630,7 +19630,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19691,7 +19691,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19754,7 +19754,7 @@
         "Mac",
         "Android"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19815,7 +19815,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19876,7 +19876,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19937,7 +19937,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -19998,7 +19998,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20061,7 +20061,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20122,7 +20122,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20185,7 +20185,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20247,7 +20247,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20310,7 +20310,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20371,7 +20371,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20432,7 +20432,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20495,7 +20495,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20556,7 +20556,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20617,7 +20617,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20680,7 +20680,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20743,7 +20743,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20806,7 +20806,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20868,7 +20868,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20931,7 +20931,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -20992,7 +20992,7 @@
       "platforms": [
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21055,7 +21055,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21116,7 +21116,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21181,7 +21181,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21246,7 +21246,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21311,7 +21311,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21376,7 +21376,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21440,7 +21440,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21504,7 +21504,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21569,7 +21569,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21632,7 +21632,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21695,7 +21695,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21758,7 +21758,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21823,7 +21823,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21888,7 +21888,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -21953,7 +21953,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22018,7 +22018,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22083,7 +22083,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22147,7 +22147,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22211,7 +22211,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22274,7 +22274,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22339,7 +22339,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22402,7 +22402,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22465,7 +22465,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22528,7 +22528,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22593,7 +22593,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22657,7 +22657,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22722,7 +22722,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22785,7 +22785,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22848,7 +22848,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22913,7 +22913,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -22976,7 +22976,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23039,7 +23039,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23102,7 +23102,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23164,7 +23164,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23226,7 +23226,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23290,7 +23290,7 @@
         "Linux",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23353,7 +23353,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23416,7 +23416,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23477,7 +23477,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23542,7 +23542,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23606,7 +23606,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23669,7 +23669,7 @@
         "Mac",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23733,7 +23733,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23798,7 +23798,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23861,7 +23861,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23925,7 +23925,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -23990,7 +23990,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24055,7 +24055,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24118,7 +24118,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24181,7 +24181,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24244,7 +24244,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24307,7 +24307,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24370,7 +24370,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24433,7 +24433,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24496,7 +24496,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24559,7 +24559,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24622,7 +24622,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24685,7 +24685,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24748,7 +24748,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24811,7 +24811,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24874,7 +24874,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -24937,7 +24937,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25000,7 +25000,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25063,7 +25063,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25126,7 +25126,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25189,7 +25189,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25252,7 +25252,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25314,7 +25314,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25377,7 +25377,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25440,7 +25440,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25503,7 +25503,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25566,7 +25566,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25628,7 +25628,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25691,7 +25691,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25754,7 +25754,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25817,7 +25817,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25879,7 +25879,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -25942,7 +25942,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26005,7 +26005,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26067,7 +26067,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26131,7 +26131,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26194,7 +26194,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26256,7 +26256,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26319,7 +26319,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26380,7 +26380,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26443,7 +26443,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26506,7 +26506,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26569,7 +26569,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26632,7 +26632,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26695,7 +26695,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26758,7 +26758,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26821,7 +26821,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26884,7 +26884,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -26947,7 +26947,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27010,7 +27010,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27073,7 +27073,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27136,7 +27136,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27198,7 +27198,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27261,7 +27261,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27324,7 +27324,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27385,7 +27385,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27448,7 +27448,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27509,7 +27509,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27571,7 +27571,7 @@
         "Windows",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27634,7 +27634,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27697,7 +27697,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27760,7 +27760,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27823,7 +27823,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27886,7 +27886,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -27949,7 +27949,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28012,7 +28012,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28075,7 +28075,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28138,7 +28138,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28201,7 +28201,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28264,7 +28264,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28327,7 +28327,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28390,7 +28390,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28453,7 +28453,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28516,7 +28516,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28581,7 +28581,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28643,7 +28643,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28705,7 +28705,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28766,7 +28766,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28828,7 +28828,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28890,7 +28890,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -28953,7 +28953,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29016,7 +29016,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29077,7 +29077,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29138,7 +29138,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29203,7 +29203,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29266,7 +29266,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29329,7 +29329,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29392,7 +29392,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29455,7 +29455,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29518,7 +29518,7 @@
         "Mac",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29579,7 +29579,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29640,7 +29640,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29704,7 +29704,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29766,7 +29766,7 @@
         "Windows",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29829,7 +29829,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29890,7 +29890,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -29951,7 +29951,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30012,7 +30012,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30073,7 +30073,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE / PAID",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30134,7 +30134,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30195,7 +30195,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30256,7 +30256,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30317,7 +30317,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30378,7 +30378,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30440,7 +30440,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30502,7 +30502,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30564,7 +30564,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30626,7 +30626,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30688,7 +30688,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30750,7 +30750,7 @@
         "Windows",
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30811,7 +30811,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30872,7 +30872,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30933,7 +30933,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -30995,7 +30995,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31056,7 +31056,7 @@
       "platforms": [
         "Mac"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31117,7 +31117,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31178,7 +31178,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31240,7 +31240,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31301,7 +31301,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31362,7 +31362,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31423,7 +31423,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31486,7 +31486,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31549,7 +31549,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31612,7 +31612,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31673,7 +31673,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31736,7 +31736,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31801,7 +31801,7 @@
         "Android",
         "iOS"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31862,7 +31862,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31923,7 +31923,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -31984,7 +31984,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32048,7 +32048,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32109,7 +32109,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32173,7 +32173,7 @@
         "Linux",
         "Android"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32234,7 +32234,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32295,7 +32295,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link · FREE TRIAL",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32358,7 +32358,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32419,7 +32419,7 @@
       "platforms": [
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32482,7 +32482,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32543,7 +32543,7 @@
       "platforms": [
         "Windows"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32606,7 +32606,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32669,7 +32669,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32732,7 +32732,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32795,7 +32795,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
@@ -32858,7 +32858,7 @@
         "Mac",
         "Linux"
       ],
-      "badge": "Official Link",
+      "badge": "",
       "downloadLimit": 3,
       "expiryHours": 24,
       "linkExpiryHours": 24,
