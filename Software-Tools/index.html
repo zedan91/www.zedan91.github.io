@@ -3150,7 +3150,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   </div>
 </div>
 <div class="software-category-card" aria-label="Software categories card">
-  <div class="software-category-title">▦ Browse by Category</div>
 <div class="software-category-filter" id="softwareCategoryFilter" aria-label="Software category filter">
   <div class="software-category-loading-473">Loading categories…</div>
 </div>
@@ -3860,8 +3859,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     groups.forEach(group=>nav.appendChild(createSoftwareCategoryGroup475(group,stats,selectedGroup)));
     categoryFilter.appendChild(nav);
 
-    const title=categoryFilter.closest('.software-category-card')?.querySelector('.software-category-title');
-    if(title) title.innerHTML='<span>▦ Browse by Category</span>';
     if(categoryInput){
       const current=String(categoryInput.value||'');
       const present=new Set(Array.from(categoryInput.options||[]).map(option=>option.value));
