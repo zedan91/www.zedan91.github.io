@@ -2,7 +2,11 @@ import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
-const BACKEND_BASE = 'https://azobss-backend.onrender.com';
+const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
+  /^(?:127\.0\.0\.1|localhost)$/.test(window.location.hostname)
+    ? window.location.origin
+    : 'https://azobss-backend.onrender.com'
+);
 const CHECKOUT_API_VERSION = 2;
 const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const MAX_CART_ITEMS = 50;
@@ -164,6 +168,7 @@ function normalizeItem(payload) {
     jenis: String(payload && payload.jenis || (type === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
     downloadUrl: String(payload && (payload.downloadUrl || payload.url) || '').trim(),
     filename: String(payload && payload.filename || '').trim(),
+    selectionToken: String(payload && payload.selectionToken || '').trim(),
     addedAtMs: Date.now()
   };
 }
@@ -375,7 +380,7 @@ async function addConfiguredProduct(button) {
   }
 }
 
-function openJupemLotMap(button) {
+async function openJupemLotMap(button) {
   const panel = button.closest('[data-pa-bm-panel]');
   const error = panel?.querySelector('[data-lot-error]');
   const status = panel?.querySelector('[data-lot-status]');
@@ -386,10 +391,43 @@ function openJupemLotMap(button) {
   if (error) error.textContent = '';
   setPanelStatus(status, '', '');
   if (!stateCode) {
-    setPanelStatus(status, 'Select a state before opening the selection map.', 'unavailable');
+    setPanelStatus(status, 'Pilih negeri sebelum membuka peta pilihan.', 'unavailable');
     return;
   }
-  setPanelStatus(status, 'Opening JUPEM selection map...', 'checking');
+  if (typeof window.azobssOpenLotSelectionMap === 'function') {
+    button.disabled = true;
+    setPanelStatus(status, 'Menyediakan peta pilihan Lot Kadaster...', 'checking');
+    try {
+      const prepared = await window.azobssOpenLotSelectionMap({
+        productCode,
+        stateCode,
+        stateName,
+        getAuthToken: async () => auth && auth.currentUser ? auth.currentUser.getIdToken() : ''
+      });
+      const item = await addToStoreCart({
+        productType: prepared.productType,
+        itemCode: prepared.jobId,
+        negeri: stateName,
+        variant: prepared.variant,
+        productId: prepared.jobId,
+        downloadUrl: prepared.downloadUrl,
+        filename: prepared.filename,
+        selectionToken: prepared.selectionToken
+      });
+      setPanelStatus(status, item.__azobssAlreadyInCart
+        ? 'Pilihan Lot Kadaster ini sudah ada dalam troli anda.'
+        : `${prepared.lotCount.toLocaleString('ms-MY')} lot berjaya disediakan dan ditambah ke troli pada harga RM${prepared.amount}.`, 'success');
+    } catch (mapError) {
+      if (mapError && mapError.code !== 'MAP_CLOSED') {
+        setPanelStatus(status, mapError.message || 'Peta pilihan tidak dapat dibuka.', 'unavailable');
+      }
+    } finally {
+      button.disabled = false;
+    }
+    return;
+  }
+
+  setPanelStatus(status, 'Membuka peta pilihan JUPEM...', 'checking');
   const params = new URLSearchParams({
     type: `${stateCode}lot${productCode === '2' ? 'C3' : ''}`,
     c: 'pl',
@@ -407,7 +445,7 @@ function openJupemLotMap(button) {
     return;
   }
   try { popup.focus(); } catch (_) {}
-  setPanelStatus(status, 'JUPEM selection map opened successfully. Your existing JUPEM session will be reused.', 'success');
+  setPanelStatus(status, 'Peta JUPEM dibuka. Sesi JUPEM sedia ada akan digunakan.', 'success');
 }
 
 function checkoutPayload(items) {
@@ -426,6 +464,7 @@ function checkoutPayload(items) {
       jenis: item.jenis,
       downloadUrl: item.downloadUrl,
       filename: item.filename,
+      selectionToken: item.selectionToken,
       variant: item.variant,
       createdAtMs: item.addedAtMs
     }))

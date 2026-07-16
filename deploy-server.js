@@ -3682,18 +3682,23 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
     let itemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80).toUpperCase();
     if (productType === "PA") itemCode = itemCode.replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
     if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) checkoutError("A valid document number is required for every cart item.");
-    const variant = areaProductTypes.has(productType)
+    let variant = areaProductTypes.has(productType)
       ? cleanPremiumText(rawItem.variant || rawItem.areaSize || "", 30).toUpperCase()
       : "";
     if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "QUARTER_SHEET") {
       checkoutError("Select either 1 sheet area or 1/4 sheet area.");
     }
+    const verifiedLot = areaProductTypes.has(productType)
+      ? azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode)
+      : null;
+    if (areaProductTypes.has(productType) && !verifiedLot) checkoutError("Lot Kadaster selection is missing or has expired. Open the selection map again.");
+    if (verifiedLot) variant = verifiedLot.variant;
     let amount = 0;
     if (productType === "PA") amount = 5;
     else if (productType === "BM" || productType === "SBM") amount = 3;
     else if (productType === "GPS") amount = 9;
     else if (productType === "SYIT_PIAWAI") amount = 7;
-    else if (areaProductTypes.has(productType)) amount = variant === "QUARTER_SHEET" ? 15 : 50;
+    else if (areaProductTypes.has(productType)) amount = verifiedLot.amount;
     const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
     if (seenItems.has(uniqueKey)) continue;
     seenItems.add(uniqueKey);
@@ -3703,11 +3708,11 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
       negeri,
       amount,
       variant,
-      productId: cleanPremiumText(rawItem.productId || "", 120),
+      productId: cleanPremiumText(verifiedLot && verifiedLot.jobId || rawItem.productId || "", 120),
       stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
       jenis: productType === "SBM" ? "2" : "1",
       filename: cleanPremiumText(rawItem.filename || "", 180),
-      downloadUrl: azobssSafeJupemDownloadUrl(rawItem.downloadUrl || rawItem.url, productType),
+      downloadUrl: verifiedLot ? verifiedLot.downloadUrl : azobssSafeJupemDownloadUrl(rawItem.downloadUrl || rawItem.url, productType),
       createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
     });
   }
@@ -5873,9 +5878,507 @@ async function fetchJupemWithSession(jupemUrl) {
   return await fetchJupem(jupemUrl, { headers: { "Cookie": cookie } });
 }
 
+function azobssMergeCookieHeaders(current, incoming) {
+  const values = new Map();
+  [current, incoming].forEach((header) => {
+    String(header || "").split(/;\s*/).forEach((part) => {
+      const index = part.indexOf("=");
+      if (index > 0) values.set(part.slice(0, index).trim(), part.slice(index + 1).trim());
+    });
+  });
+  return Array.from(values.entries()).map(([key, value]) => `${key}=${value}`).join("; ");
+}
+
+async function azobssJupemAuthFetch(url, options = {}, cookie = "") {
+  let target = new URL(url, "https://ebiz.jupem.gov.my").toString();
+  let method = String(options.method || "GET").toUpperCase();
+  let body = options.body;
+  let activeCookie = cookie;
+  for (let redirectCount = 0; redirectCount < 6; redirectCount += 1) {
+    const response = await fetch(target, azJupemFetchOptions({
+      method,
+      body: method === "GET" || method === "HEAD" ? undefined : body,
+      redirect: "manual",
+      signal: AbortSignal.timeout(Number(options.timeoutMs || 30000)),
+      headers: azobssJupemBaseHeaders({
+        "Accept": options.accept || "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+        ...(options.contentType ? { "Content-Type": options.contentType } : {}),
+        ...(activeCookie ? { "Cookie": activeCookie } : {}),
+        ...(options.referer ? { "Referer": options.referer } : {}),
+        ...(options.ajax ? { "X-Requested-With": "XMLHttpRequest" } : {})
+      })
+    }));
+    activeCookie = azobssMergeCookieHeaders(activeCookie, azobssExtractCookieHeader(response.headers));
+    const location = response.headers.get("location");
+    if (response.status >= 300 && response.status < 400 && location) {
+      target = new URL(location, target).toString();
+      if (![307, 308].includes(response.status)) {
+        method = "GET";
+        body = undefined;
+      }
+      continue;
+    }
+    return { response, cookie: activeCookie, url: target };
+  }
+  throw new Error("JUPEM login redirected too many times.");
+}
+
+let azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+const azobssRegisteredLotJobs = new Map();
+async function azobssGetJupemAuthenticatedSession(force = false) {
+  const now = Date.now();
+  if (!force && azobssJupemAuthenticatedCache.cookie && azobssJupemAuthenticatedCache.userId && azobssJupemAuthenticatedCache.expiresAt > now) {
+    return azobssJupemAuthenticatedCache;
+  }
+  const username = String(process.env.JUPEM_EBIZ_USERNAME || "").trim();
+  const password = String(process.env.JUPEM_EBIZ_PASSWORD || "");
+  if (!username || !password) throw new Error("JUPEM server login is not configured.");
+
+  const loginUrl = "https://ebiz.jupem.gov.my/Home/LogMasuk";
+  const first = await azobssJupemAuthFetch(loginUrl);
+  const firstHtml = await first.response.text();
+  const firstCsrf = (firstHtml.match(/name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i) || [])[1];
+  if (!firstCsrf) throw new Error("JUPEM login verification token is unavailable.");
+
+  const firstBody = new URLSearchParams({
+    __RequestVerificationToken: decodeHtmlEntities(firstCsrf),
+    IDPengguna: username,
+    controller: "",
+    action: "",
+    returnUrl: ""
+  });
+  const second = await azobssJupemAuthFetch(loginUrl, {
+    method: "POST",
+    contentType: "application/x-www-form-urlencoded",
+    referer: loginUrl,
+    body: firstBody.toString()
+  }, first.cookie);
+  const secondHtml = await second.response.text();
+  const action = decodeHtmlEntities((secondHtml.match(/<form[^>]+action=["']([^"']+)["']/i) || [])[1] || "");
+  const secondCsrf = (secondHtml.match(/name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i) || [])[1];
+  const hiddenId = (secondHtml.match(/name=["']IDPengguna["'][^>]+value=["']([^"']*)["']/i) || [])[1] || username;
+  const phrase = (secondHtml.match(/name=["']FrasaRahsia["'][^>]+value=["']([^"']*)["']/i) || [])[1] || "";
+  if (!action || !secondCsrf) throw new Error("JUPEM password form is unavailable.");
+
+  const passwordBody = new URLSearchParams({
+    __RequestVerificationToken: decodeHtmlEntities(secondCsrf),
+    IDPengguna: decodeHtmlEntities(hiddenId),
+    FrasaRahsia: decodeHtmlEntities(phrase),
+    returnUrl: "",
+    KataLaluan: password
+  });
+  const loggedIn = await azobssJupemAuthFetch(action, {
+    method: "POST",
+    contentType: "application/x-www-form-urlencoded",
+    referer: second.url,
+    body: passwordBody.toString()
+  }, second.cookie);
+  const dashboardHtml = await loggedIn.response.text();
+  const userIdMatch = dashboardHtml.match(/MyTroliDetailXTerhad\/(\d+)/i);
+  if (!userIdMatch || /<title>\s*Log Masuk/i.test(dashboardHtml)) throw new Error("JUPEM server login failed.");
+  azobssJupemAuthenticatedCache = {
+    cookie: loggedIn.cookie,
+    userId: userIdMatch[1],
+    expiresAt: now + (15 * 60 * 1000)
+  };
+  return azobssJupemAuthenticatedCache;
+}
+
 let azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 };
 let azobssJupemMapAuthPending = null;
 const azobssJupemPointLocationCache = new Map();
+
+const AZOBSS_JUPEM_LOT_CONFIG = Object.freeze({
+  "1": Object.freeze({
+    "01": { lotLayer: 1, sheetLayer: 3, gp: "Kadaster/ndcdb_johor_clip_select_v2/GPServer/johorclip" },
+    "02": { lotLayer: 5, sheetLayer: 7, gp: "Kadaster/kedahclip/GPServer/kedahclip" },
+    "03": { lotLayer: 9, sheetLayer: 11, gp: "Kadaster/kelantanclip/GPServer/kelantanclip" },
+    "04": { lotLayer: 17, sheetLayer: 19, gp: "Kadaster/melakaclip/GPServer/melakaclip" },
+    "05": { lotLayer: 21, sheetLayer: 23, gp: "Kadaster/Kadaster_Negeri_Sembilan_Clip_Select/GPServer/negerisembilanclip" },
+    "06": { lotLayer: 25, sheetLayer: 27, gp: "Kadaster/pahangclip/GPServer/pahangclip" },
+    "07": { lotLayer: 37, sheetLayer: 39, gp: "Kadaster/penangclip/GPServer/penangclip" },
+    "08": { lotLayer: 29, sheetLayer: 31, gp: "Kadaster/perakclip/GPServer/perakclip" },
+    "09": { lotLayer: 33, sheetLayer: 35, gp: "Kadaster/perlisclip/GPServer/perlisclip" },
+    "10": { lotLayer: 41, sheetLayer: 43, gp: "Kadaster/selangorclip/GPServer/selangorclip" },
+    "11": { lotLayer: 45, sheetLayer: 47, gp: "Kadaster/terengganuclip/GPServer/terengganuclip" },
+    "15": { lotLayer: 13, sheetLayer: 15, gp: "Kadaster/labuanclip/GPServer/labuanclip" }
+  }),
+  "2": Object.freeze({
+    "01": { lotLayer: 2, sheetLayer: 3, gp: "Kadaster/johorclipc3/GPServer/johorclipc3" },
+    "02": { lotLayer: 6, sheetLayer: 7, gp: "Kadaster/kedahclipc3/GPServer/kedahclipc3" },
+    "03": { lotLayer: 10, sheetLayer: 11, gp: "Kadaster/kelantanclipc3/GPServer/kelantanclipc3" },
+    "04": { lotLayer: 18, sheetLayer: 19, gp: "Kadaster/melakaclipc3/GPServer/melakaclipc3" },
+    "05": { lotLayer: 22, sheetLayer: 23, gp: "Kadaster/negerisembilanclipc3/GPServer/negerisembilanclipc3" },
+    "06": { lotLayer: 26, sheetLayer: 27, gp: "Kadaster/pahangclipc3/GPServer/pahangclipc3" },
+    "07": { lotLayer: 38, sheetLayer: 39, gp: "Kadaster/penangclipc3/GPServer/penangclipc3" },
+    "08": { lotLayer: 30, sheetLayer: 31, gp: "Kadaster/perakclipc3/GPServer/perakclipc3" },
+    "09": { lotLayer: 34, sheetLayer: 35, gp: "Kadaster/perlisclipc3/GPServer/perlisclipc3" },
+    "10": { lotLayer: 42, sheetLayer: 43, gp: "Kadaster/selangorclipc3/GPServer/selangorclipc3" },
+    "11": { lotLayer: 46, sheetLayer: 47, gp: "Kadaster/terengganuclipc3/GPServer/terengganuclipc3" },
+    "15": { lotLayer: 14, sheetLayer: 15, gp: "Kadaster/labuanclipc3/GPServer/labuanclipc3" }
+  })
+});
+
+const AZOBSS_JUPEM_LOT_BOUNDS = Object.freeze({
+  "01": [[1.15, 102.45], [2.85, 104.65]],
+  "02": [[5.05, 99.55], [6.75, 101.05]],
+  "03": [[4.45, 101.25], [6.30, 102.75]],
+  "04": [[2.00, 101.80], [2.65, 102.65]],
+  "05": [[2.35, 101.70], [3.25, 102.80]],
+  "06": [[2.45, 101.65], [4.85, 104.65]],
+  "07": [[5.10, 100.10], [5.65, 100.60]],
+  "08": [[3.65, 100.30], [5.90, 101.80]],
+  "09": [[6.15, 100.05], [6.75, 100.55]],
+  "10": [[2.55, 100.75], [3.90, 102.10]],
+  "11": [[3.80, 102.90], [5.90, 103.80]],
+  "15": [[5.20, 115.05], [5.45, 115.35]]
+});
+
+function azobssGetLotMapConfig(productCode, stateCode) {
+  const product = cleanLotProduct(productCode);
+  const state = cleanLotStateCode(stateCode);
+  const config = AZOBSS_JUPEM_LOT_CONFIG[product] && AZOBSS_JUPEM_LOT_CONFIG[product][state];
+  if (!config) throw new Error("JUPEM does not provide this Lot Kadaster layer for the selected state.");
+  return { product, state, bounds: AZOBSS_JUPEM_LOT_BOUNDS[state], ...config };
+}
+
+function azobssNormalizeLotPolygon(value) {
+  const geometry = value && value.geometry ? value.geometry : value;
+  const sourceRings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
+  let pointCount = 0;
+  const rings = sourceRings.map((ring) => {
+    if (!Array.isArray(ring) || ring.length < 3) throw new Error("Selection polygon is invalid.");
+    const cleanRing = ring.map((point) => {
+      const longitude = Number(point && point[0]);
+      const latitude = Number(point && point[1]);
+      if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || longitude < 95 || longitude > 125 || latitude < -2 || latitude > 8.5) {
+        throw new Error("Selection polygon is outside Malaysia.");
+      }
+      pointCount += 1;
+      return [Number(longitude.toFixed(8)), Number(latitude.toFixed(8))];
+    });
+    const first = cleanRing[0];
+    const last = cleanRing[cleanRing.length - 1];
+    if (first[0] !== last[0] || first[1] !== last[1]) cleanRing.push(first.slice());
+    return cleanRing;
+  });
+  if (!rings.length || pointCount > 1000) throw new Error("Selection polygon is missing or too complex.");
+  return { rings, spatialReference: { wkid: 4326 } };
+}
+
+function azobssRingAreaM2(ring) {
+  if (!Array.isArray(ring) || ring.length < 4) return 0;
+  const radius = 6378137;
+  let area = 0;
+  for (let index = 0; index < ring.length - 1; index += 1) {
+    const point1 = ring[index];
+    const point2 = ring[index + 1];
+    const lon1 = Number(point1[0]) * Math.PI / 180;
+    const lon2 = Number(point2[0]) * Math.PI / 180;
+    const lat1 = Number(point1[1]) * Math.PI / 180;
+    const lat2 = Number(point2[1]) * Math.PI / 180;
+    area += (lon2 - lon1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+  }
+  return area * radius * radius / 2;
+}
+
+function azobssPolygonAreaM2(geometry) {
+  const rings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
+  return Math.abs(rings.reduce((sum, ring) => sum + azobssRingAreaM2(ring), 0));
+}
+
+async function azobssJupemArcGisJson(serviceUrl, params, auth, timeoutMs = 30000) {
+  const requestUrl = new URL(serviceUrl);
+  requestUrl.search = new URLSearchParams({ ...(params || {}), f: "json", token: auth.token }).toString();
+  const response = await fetch(requestUrl, azJupemFetchOptions({
+    redirect: "follow",
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: azobssJupemBaseHeaders({
+      "Accept": "application/json,*/*",
+      "Cookie": auth.cookie,
+      "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
+    })
+  }));
+  if (!response.ok) throw new Error(`JUPEM ArcGIS returned HTTP ${response.status}.`);
+  const payload = await response.json();
+  if (payload && payload.error) throw new Error(payload.error.message || `JUPEM ArcGIS error ${payload.error.code || ""}.`);
+  return payload;
+}
+
+async function azobssQueryLotFeatureSet(config, geometry, auth) {
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  const common = {
+    geometry: JSON.stringify(geometry),
+    geometryType: "esriGeometryPolygon",
+    inSR: "4326",
+    spatialRel: "esriSpatialRelIntersects"
+  };
+  const idResult = await azobssJupemArcGisJson(`${layerUrl}/query`, { ...common, returnIdsOnly: "true" }, auth);
+  const objectIds = Array.isArray(idResult.objectIds) ? idResult.objectIds : [];
+  if (!objectIds.length) throw new Error("Tiada lot JUPEM ditemui dalam kawasan pilihan.");
+  if (objectIds.length > 20000) throw new Error("Pilihan melebihi 20,000 lot. Sila kecilkan kawasan pilihan.");
+
+  const features = [];
+  let fields = [];
+  let geometryType = "esriGeometryPolygon";
+  for (let offset = 0; offset < objectIds.length; offset += 200) {
+    const batch = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+      objectIds: objectIds.slice(offset, offset + 200).join(","),
+      outFields: "*",
+      returnGeometry: "true",
+      outSR: "4326"
+    }, auth, 45000);
+    if (!fields.length && Array.isArray(batch.fields)) fields = batch.fields;
+    if (batch.geometryType) geometryType = batch.geometryType;
+    if (Array.isArray(batch.features)) features.push(...batch.features);
+  }
+  if (!features.length) throw new Error("Geometri lot JUPEM tidak dapat dibaca.");
+  return {
+    objectIdFieldName: String(idResult.objectIdFieldName || "OBJECTID"),
+    geometryType,
+    spatialReference: { wkid: 4326 },
+    fields,
+    features
+  };
+}
+
+async function azobssQueryLotSheets(config, geometry, auth) {
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.sheetLayer}/query`;
+  const result = await azobssJupemArcGisJson(layerUrl, {
+    geometry: JSON.stringify(geometry),
+    geometryType: "esriGeometryPolygon",
+    inSR: "4326",
+    spatialRel: "esriSpatialRelIntersects",
+    outFields: "*",
+    returnGeometry: "true",
+    outSR: "4326"
+  }, auth);
+  return Array.isArray(result.features) ? result.features : [];
+}
+
+function azobssLotSheetName(feature, index) {
+  const attributes = feature && feature.attributes || {};
+  const key = Object.keys(attributes).find((name) => /^(?:NAMA|NAME|NO_?SYIT|SYIT|LEMBAR|PIAWAI)$/i.test(name));
+  return String(key ? attributes[key] : `Syit ${index + 1}`).trim();
+}
+
+async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
+  const config = azobssGetLotMapConfig(productCode, stateCode);
+  const geometry = azobssNormalizeLotPolygon(rawGeometry);
+  const auth = await azobssGetJupemMapAuth(false);
+  const [featureSet, sheets] = await Promise.all([
+    azobssQueryLotFeatureSet(config, geometry, auth),
+    azobssQueryLotSheets(config, geometry, auth)
+  ]);
+  const selectedAreaM2 = featureSet.features.reduce((sum, feature) => sum + azobssPolygonAreaM2(feature.geometry), 0);
+  const drawnAreaM2 = azobssPolygonAreaM2(geometry);
+  const sheetRows = sheets.map((feature, index) => ({
+    name: azobssLotSheetName(feature, index),
+    areaM2: azobssPolygonAreaM2(feature.geometry)
+  })).filter((row) => row.areaM2 > 0);
+  const referenceSheetAreaM2 = sheetRows.length ? Math.min(...sheetRows.map((row) => row.areaM2)) : 0;
+  const areaRatio = referenceSheetAreaM2 > 0 ? selectedAreaM2 / referenceSheetAreaM2 : 1;
+  const variant = sheetRows.length === 1 && areaRatio <= 0.255 ? "QUARTER_SHEET" : "FULL_SHEET";
+  const amount = variant === "QUARTER_SHEET" ? 15 : 50;
+  return {
+    config,
+    auth,
+    geometry,
+    featureSet,
+    lotCount: featureSet.features.length,
+    drawnAreaM2,
+    selectedAreaM2,
+    sheetCount: sheetRows.length,
+    sheets: sheetRows,
+    referenceSheetAreaM2,
+    areaRatio,
+    variant,
+    amount
+  };
+}
+
+async function azobssSubmitLotGpJob(estimate) {
+  const serviceUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/${estimate.config.gp}`;
+  const submitBody = new URLSearchParams({
+    f: "json",
+    token: estimate.auth.token,
+    Layers_to_Clip: JSON.stringify([]),
+    Area_of_Interest: JSON.stringify(estimate.featureSet),
+    Feature_Format: "Shapefile - SHP - .shp"
+  });
+  const submitResponse = await fetch(`${serviceUrl}/submitJob`, azJupemFetchOptions({
+    method: "POST",
+    redirect: "follow",
+    signal: AbortSignal.timeout(60000),
+    headers: azobssJupemBaseHeaders({
+      "Accept": "application/json,*/*",
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "Cookie": estimate.auth.cookie,
+      "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
+    }),
+    body: submitBody.toString()
+  }));
+  if (!submitResponse.ok) throw new Error(`JUPEM GP returned HTTP ${submitResponse.status}.`);
+  const submitted = await submitResponse.json();
+  if (submitted.error || !submitted.jobId) throw new Error(submitted.error && submitted.error.message || "JUPEM did not return a job ID.");
+  return {
+    jobId: String(submitted.jobId),
+    jobStatus: String(submitted.jobStatus || "esriJobSubmitted")
+  };
+}
+
+async function azobssGetLotGpJobStatus(productCode, stateCode, jobId) {
+  const config = azobssGetLotMapConfig(productCode, stateCode);
+  const auth = await azobssGetJupemMapAuth(false);
+  const serviceUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/${config.gp}`;
+  const job = await azobssJupemArcGisJson(
+    `${serviceUrl}/jobs/${encodeURIComponent(String(jobId || ""))}`,
+    {},
+    auth,
+    30000
+  );
+  return String(job.jobStatus || "esriJobUnknown");
+}
+
+function azobssParseJupemCartRows(html) {
+  const rows = [];
+  const pattern = /AddQuantity\(["']([^"']*)["']\s*,\s*["']([^"']*)["']\s*,\s*["']([^"']*)["']\s*,\s*["']delete["']\s*,\s*["']([^"']*)["']\s*,\s*["']([^"']*)["']\)/gi;
+  let match;
+  while ((match = pattern.exec(String(html || "")))) {
+    rows.push({
+      productSelectedId: match[1],
+      userId: match[2],
+      cartDetailId: match[3],
+      type: match[4],
+      categoryId: match[5],
+      key: `${match[1]}:${match[3]}`
+    });
+  }
+  return rows;
+}
+
+async function azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId, loginRetried = false) {
+  const cacheKey = `${productCode}:${stateCode}:${jobId}`;
+  if (Number(azobssRegisteredLotJobs.get(cacheKey) || 0) > Date.now()) {
+    return { registered: true, removedFromCart: true, cached: true };
+  }
+  const session = await azobssGetJupemAuthenticatedSession(false);
+  const beforeResult = await azobssJupemAuthFetch(
+    `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`,
+    { referer: "https://ebiz.jupem.gov.my/Home/Dashboard" },
+    session.cookie
+  );
+  session.cookie = beforeResult.cookie;
+  const beforeHtml = await beforeResult.response.text();
+  const beforeKeys = new Set(azobssParseJupemCartRows(beforeHtml).map((row) => row.key));
+
+  const productUrl = `https://ebiz.jupem.gov.my/Produk/LotKadasterBerdigitCrop?id=${encodeURIComponent(jobId)}&Negeri=${encodeURIComponent(stateCode)}&type=${encodeURIComponent(productCode)}`;
+  const registered = await azobssJupemAuthFetch(productUrl, {
+    ajax: true,
+    referer: `https://ebiz.jupem.gov.my/PetaInteraktif?type=${encodeURIComponent(stateCode)}lot&c=pl&jenis=Lot&produk=${encodeURIComponent(productCode)}&neg=${encodeURIComponent(stateCode)}`
+  }, session.cookie);
+  session.cookie = registered.cookie;
+  const registeredHtml = await registered.response.text();
+  if (!/telah ditambah di dalam Troli Anda/i.test(registeredHtml)) {
+    if (/<title>\s*Log Masuk/i.test(registeredHtml) && !loginRetried) {
+      azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+      return await azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId, true);
+    }
+    throw new Error("JUPEM did not register the selected lot product.");
+  }
+
+  const afterResult = await azobssJupemAuthFetch(
+    `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`,
+    { referer: productUrl },
+    session.cookie
+  );
+  session.cookie = afterResult.cookie;
+  azobssJupemAuthenticatedCache.cookie = session.cookie;
+  const afterRows = azobssParseJupemCartRows(await afterResult.response.text());
+  const added = afterRows.find((row) => !beforeKeys.has(row.key));
+  if (!added) throw new Error("JUPEM cart item could not be identified safely.");
+
+  const deleteResult = await azobssJupemAuthFetch("https://ebiz.jupem.gov.my/Transaksi/TroliDetailXTerhad", {
+    method: "POST",
+    ajax: true,
+    accept: "application/json,*/*",
+    contentType: "application/json; charset=utf-8",
+    referer: `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`,
+    body: JSON.stringify({
+      userid: Number(added.userId),
+      Troliid: Number(added.cartDetailId),
+      ProductSelectedID: Number(added.productSelectedId),
+      name: "delete",
+      type: added.type,
+      CategoryID: added.categoryId
+    })
+  }, session.cookie);
+  session.cookie = deleteResult.cookie;
+  azobssJupemAuthenticatedCache.cookie = session.cookie;
+  const deletePayload = JSON.parse(await deleteResult.response.text() || "{}");
+  if (!deletePayload.Success) throw new Error("JUPEM cart cleanup failed.");
+  if (azobssRegisteredLotJobs.size > 5000) azobssRegisteredLotJobs.clear();
+  azobssRegisteredLotJobs.set(cacheKey, Date.now() + (2 * 60 * 60 * 1000));
+  return { registered: true, removedFromCart: true };
+}
+
+function azobssLotDownloadUrl(productCode, jobId, stateCode) {
+  const stateName = AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "";
+  const pathName = cleanLotProduct(productCode) === "2"
+    ? "MuatTurunLotKadasterBerdigitCropc3"
+    : "MuatTurunLotKadasterBerdigitCrop";
+  return `https://ebiz.jupem.gov.my/MuatTurunPembelian/${pathName}/${encodeURIComponent(jobId)}?negeri=${encodeURIComponent(stateName)}`;
+}
+
+function azobssCreateLotSelectionToken(payload) {
+  const body = Buffer.from(JSON.stringify(payload || {}), "utf8").toString("base64url");
+  const signature = crypto.createHmac("sha256", azSecureDownloadSecret()).update(body).digest("base64url");
+  return `${body}.${signature}`;
+}
+
+function azobssDecodeLotSelectionToken(value) {
+  try {
+    const [body, signature] = String(value || "").split(".");
+    if (!body || !signature) return null;
+    const expected = crypto.createHmac("sha256", azSecureDownloadSecret()).update(body).digest("base64url");
+    const left = Buffer.from(signature);
+    const right = Buffer.from(expected);
+    if (left.length !== right.length || !crypto.timingSafeEqual(left, right)) return null;
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+    if (!payload || Number(payload.expiresAtMs || 0) < Date.now()) return null;
+    return payload;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function azobssVerifyLotSelectionToken(value) {
+  try {
+    const payload = azobssDecodeLotSelectionToken(value);
+    if (!payload || payload.ready !== true) return null;
+    return payload;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode) {
+  const payload = azobssVerifyLotSelectionToken(rawItem && rawItem.selectionToken);
+  if (!payload) return null;
+  const expectedType = String(productType || "").toUpperCase();
+  const expectedState = String(negeri || "").toUpperCase();
+  const expectedCode = String(itemCode || "").toUpperCase();
+  if (String(payload.productType || "").toUpperCase() !== expectedType) return null;
+  if (String(payload.negeri || "").toUpperCase() !== expectedState) return null;
+  if (String(payload.jobId || "").toUpperCase() !== expectedCode) return null;
+  const variant = String(payload.variant || "").toUpperCase();
+  const amount = Number(payload.amount || 0);
+  if (!['FULL_SHEET', 'QUARTER_SHEET'].includes(variant)) return null;
+  if ((variant === 'FULL_SHEET' && amount !== 50) || (variant === 'QUARTER_SHEET' && amount !== 15)) return null;
+  const downloadUrl = azobssSafeJupemDownloadUrl(payload.downloadUrl, expectedType);
+  if (!downloadUrl) return null;
+  return { ...payload, variant, amount, downloadUrl };
+}
 
 async function azobssGetJupemMapAuth(force = false) {
   const now = Date.now();
@@ -6336,6 +6839,20 @@ function azobssBuildLotDownloadCandidates(record, type) {
   return azobssUnique([
     azobssSafeJupemDownloadUrl(record && (record.downloadUrl || record.url), type)
   ]);
+}
+
+async function azobssFetchLotRecordFile(record, type) {
+  const candidates = azobssBuildLotDownloadCandidates(record, type);
+  let lastResult = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const session = await azobssGetJupemAuthenticatedSession(attempt > 0);
+    for (const candidate of candidates) {
+      lastResult = await azobssCurlFetchFile(candidate, session.cookie);
+      if (lastResult.validFile && azobssBufferIsZip(lastResult.buffer)) return lastResult;
+    }
+    azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+  }
+  return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
 }
 
 function azobssBuildBmDownloadCandidates(record) {
@@ -7350,18 +7867,25 @@ async function handler(req, res) {
           if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) {
             return send(res, 400, JSON.stringify({ ok:false, success:false, error:"A valid document number is required for every cart item." }, null, 2), "application/json");
           }
-          const variant = areaProductTypes.has(productType)
+          let variant = areaProductTypes.has(productType)
             ? cleanPremiumText(rawItem.variant || rawItem.areaSize || "", 30).toUpperCase()
             : "";
           if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "QUARTER_SHEET") {
             return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Select either 1 sheet area or 1/4 sheet area." }, null, 2), "application/json");
           }
+          const verifiedLot = areaProductTypes.has(productType)
+            ? azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode)
+            : null;
+          if (areaProductTypes.has(productType) && !verifiedLot) {
+            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Lot Kadaster selection is missing or has expired. Open the selection map again." }, null, 2), "application/json");
+          }
+          if (verifiedLot) variant = verifiedLot.variant;
           let amount = 0;
           if (productType === "PA") amount = 5;
           else if (productType === "BM" || productType === "SBM") amount = 3;
           else if (productType === "GPS") amount = 9;
           else if (productType === "SYIT_PIAWAI") amount = 7;
-          else if (areaProductTypes.has(productType)) amount = variant === "QUARTER_SHEET" ? 15 : 50;
+          else if (areaProductTypes.has(productType)) amount = verifiedLot.amount;
           const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
           if (seenItems.has(uniqueKey)) continue;
           seenItems.add(uniqueKey);
@@ -7371,11 +7895,11 @@ async function handler(req, res) {
             negeri,
             amount,
             variant,
-            productId: cleanPremiumText(rawItem.productId || "", 120),
+            productId: cleanPremiumText(verifiedLot && verifiedLot.jobId || rawItem.productId || "", 120),
             stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
             jenis: productType === "SBM" ? "2" : "1",
             filename: cleanPremiumText(rawItem.filename || "", 180),
-            downloadUrl: azobssSafeJupemDownloadUrl(rawItem.downloadUrl || rawItem.url, productType),
+            downloadUrl: verifiedLot ? verifiedLot.downloadUrl : azobssSafeJupemDownloadUrl(rawItem.downloadUrl || rawItem.url, productType),
             createdAtMs: Number(rawItem.createdAtMs || 0) || Date.now()
           });
         }
@@ -8968,6 +9492,199 @@ async function handler(req, res) {
 
 
     // =========================
+    // JUPEM LOT KADASTER MAP + VERIFIED SELECTION
+    // =========================
+
+    if (pathname === "/api/jupem-lot-map/config" && req.method === "GET") {
+      try {
+        const config = azobssGetLotMapConfig(
+          parsed.query.produk || parsed.query.product || parsed.query.type,
+          parsed.query.negeri || parsed.query.state || parsed.query.stateCode
+        );
+        return send(res, 200, JSON.stringify({
+          ok: true,
+          productCode: config.product,
+          productType: config.product === "2" ? "NDCDB_C3" : "NDCDB",
+          stateCode: config.state,
+          negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[config.state] || "",
+          bounds: config.bounds,
+          minSelectionZoom: 13
+        }), "application/json");
+      } catch (error) {
+        return send(res, 400, JSON.stringify({ ok: false, error: error.message || "Unsupported JUPEM lot map." }), "application/json");
+      }
+    }
+
+    const lotTileMatch = pathname.match(/^\/api\/jupem-lot-map\/tile\/(\d+)\/(\d+)\/(\d+)\.png$/);
+    if (lotTileMatch && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "jupem-lot-map-tile", 500, 60 * 1000)) return;
+      try {
+        const config = azobssGetLotMapConfig(
+          parsed.query.produk || parsed.query.product || parsed.query.type,
+          parsed.query.negeri || parsed.query.state || parsed.query.stateCode
+        );
+        const zoom = Number(lotTileMatch[1]);
+        const tileX = Number(lotTileMatch[2]);
+        const tileY = Number(lotTileMatch[3]);
+        if (!Number.isInteger(zoom) || !Number.isInteger(tileX) || !Number.isInteger(tileY) || zoom < 0 || zoom > 22) {
+          throw new Error("Invalid map tile.");
+        }
+        const tileCount = Math.pow(2, zoom);
+        if (tileX < 0 || tileY < 0 || tileX >= tileCount || tileY >= tileCount) throw new Error("Invalid map tile.");
+        const world = 20037508.342789244;
+        const tileSize = (world * 2) / tileCount;
+        const xmin = -world + (tileX * tileSize);
+        const xmax = xmin + tileSize;
+        const ymax = world - (tileY * tileSize);
+        const ymin = ymax - tileSize;
+        const auth = await azobssGetJupemMapAuth(false);
+        const exportUrl = new URL("https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/export");
+        exportUrl.search = new URLSearchParams({
+          bbox: [xmin, ymin, xmax, ymax].join(","),
+          bboxSR: "3857",
+          imageSR: "3857",
+          size: "256,256",
+          layers: `show:${config.lotLayer},${config.sheetLayer}`,
+          format: "png32",
+          transparent: "true",
+          dpi: "96",
+          f: "image",
+          token: auth.token
+        }).toString();
+        const imageResponse = await fetch(exportUrl, azJupemFetchOptions({
+          redirect: "follow",
+          signal: AbortSignal.timeout(25000),
+          headers: azobssJupemBaseHeaders({
+            "Accept": "image/png,image/*,*/*",
+            "Cookie": auth.cookie,
+            "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
+          })
+        }));
+        const contentType = String(imageResponse.headers.get("content-type") || "").toLowerCase();
+        if (!imageResponse.ok || !contentType.includes("image/")) throw new Error("JUPEM map tile is unavailable.");
+        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        return send(res, 200, imageBuffer, contentType || "image/png", { "Cache-Control": "public, max-age=300" });
+      } catch (error) {
+        console.warn("JUPEM lot map tile failed:", error && (error.message || error));
+        return send(res, 502, "", "image/png", { "Cache-Control": "no-store" });
+      }
+    }
+
+    if ((pathname === "/api/jupem-lot-selection/estimate" || pathname === "/api/jupem-lot-selection/prepare") && req.method === "POST") {
+      const preparing = pathname.endsWith("/prepare");
+      if (azRateLimitOrSend(req, res, preparing ? "jupem-lot-prepare" : "jupem-lot-estimate", preparing ? 8 : 30, 10 * 60 * 1000)) return;
+      try {
+        if (preparing) {
+          const identity = await azCommissionIdentityFromRequest(req);
+          const localRequest = /^(?:127\.0\.0\.1|::1|::ffff:127\.0\.0\.1)$/.test(azClientIp(req));
+          if ((!identity || !identity.uid) && !localRequest) {
+            return send(res, 401, JSON.stringify({ ok: false, error: "Sila log masuk sebelum menyediakan pembelian Lot Kadaster." }), "application/json");
+          }
+        }
+        const bodyText = await readBody(req);
+        const body = JSON.parse(bodyText || "{}");
+        const productCode = cleanLotProduct(body.produk || body.product || body.productCode || body.productType);
+        const stateCode = cleanLotStateCode(body.negeri || body.state || body.stateCode);
+        const estimate = await azobssEstimateLotSelection(productCode, stateCode, body.geometry);
+        const publicResult = {
+          productCode,
+          productType: productCode === "2" ? "NDCDB_C3" : "NDCDB",
+          stateCode,
+          negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
+          lotCount: estimate.lotCount,
+          drawnAreaM2: Number(estimate.drawnAreaM2.toFixed(2)),
+          selectedAreaM2: Number(estimate.selectedAreaM2.toFixed(2)),
+          sheetCount: estimate.sheetCount,
+          sheets: estimate.sheets.map((row) => ({ name: row.name, areaM2: Number(row.areaM2.toFixed(2)) })),
+          areaRatio: Number(estimate.areaRatio.toFixed(6)),
+          variant: estimate.variant,
+          amount: estimate.amount
+        };
+        if (!preparing) return send(res, 200, JSON.stringify({ ok: true, ...publicResult }), "application/json");
+
+        const job = await azobssSubmitLotGpJob(estimate);
+        const downloadUrl = azobssLotDownloadUrl(productCode, job.jobId, stateCode);
+        const selectionToken = azobssCreateLotSelectionToken({
+          ready: false,
+          productType: publicResult.productType,
+          productCode,
+          stateCode,
+          negeri: publicResult.negeri,
+          jobId: job.jobId,
+          variant: publicResult.variant,
+          amount: publicResult.amount,
+          downloadUrl,
+          lotCount: publicResult.lotCount,
+          selectedAreaM2: publicResult.selectedAreaM2,
+          expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
+        });
+        return send(res, 200, JSON.stringify({
+          ok: true,
+          ready: false,
+          ...publicResult,
+          jobId: job.jobId,
+          jobStatus: job.jobStatus,
+          downloadUrl,
+          selectionToken,
+          filename: `${publicResult.productType}-${job.jobId}.zip`
+        }), "application/json");
+      } catch (error) {
+        const message = error && error.name === "AbortError"
+          ? "Sambungan JUPEM mengambil masa terlalu lama. Sila cuba lagi."
+          : (error.message || "Pilihan Lot Kadaster tidak dapat diproses.");
+        console.error("JUPEM lot selection failed:", error && (error.stack || error.message || error));
+        return send(res, /invalid|missing|outside|unsupported|tidak ditemui|tiada lot|melebihi/i.test(message) ? 400 : 502, JSON.stringify({ ok: false, error: message }), "application/json");
+      }
+    }
+
+    if (pathname === "/api/jupem-lot-selection/status" && req.method === "POST") {
+      if (azRateLimitOrSend(req, res, "jupem-lot-status", 180, 10 * 60 * 1000)) return;
+      try {
+        const body = JSON.parse(await readBody(req) || "{}");
+        const pending = azobssDecodeLotSelectionToken(body.selectionToken);
+        if (!pending || pending.ready !== false || !pending.jobId) {
+          return send(res, 400, JSON.stringify({ ok: false, error: "Token pilihan JUPEM tidak sah atau telah tamat." }), "application/json");
+        }
+        const jobStatus = await azobssGetLotGpJobStatus(pending.productCode, pending.stateCode, pending.jobId);
+        if (/Failed|Cancelled|TimedOut/i.test(jobStatus)) {
+          return send(res, 409, JSON.stringify({ ok: false, jobStatus, error: "JUPEM tidak berjaya menyediakan pilihan ini. Sila pilih kawasan semula." }), "application/json");
+        }
+        if (!/Succeeded$/i.test(jobStatus)) {
+          return send(res, 202, JSON.stringify({ ok: true, ready: false, jobStatus }), "application/json");
+        }
+        await azobssRegisterAndRemoveJupemLot(pending.productCode, pending.stateCode, pending.jobId);
+        const readyPayload = {
+          ...pending,
+          ready: true,
+          registered: true,
+          expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
+        };
+        return send(res, 200, JSON.stringify({
+          ok: true,
+          ready: true,
+          registered: true,
+          jobStatus,
+          selectionToken: azobssCreateLotSelectionToken(readyPayload),
+          jobId: readyPayload.jobId,
+          productType: readyPayload.productType,
+          productCode: readyPayload.productCode,
+          stateCode: readyPayload.stateCode,
+          negeri: readyPayload.negeri,
+          variant: readyPayload.variant,
+          amount: readyPayload.amount,
+          downloadUrl: readyPayload.downloadUrl,
+          lotCount: readyPayload.lotCount,
+          selectedAreaM2: readyPayload.selectedAreaM2,
+          filename: `${readyPayload.productType}-${readyPayload.jobId}.zip`
+        }), "application/json");
+      } catch (error) {
+        console.error("JUPEM lot job status failed:", error && (error.stack || error.message || error));
+        const statusCode = /not configured/i.test(String(error && error.message || "")) ? 503 : 502;
+        return send(res, statusCode, JSON.stringify({ ok: false, error: error.message || "Status pilihan JUPEM tidak dapat disemak." }), "application/json");
+      }
+    }
+
+    // =========================
     // JUPEM LOT KADASTER SEARCH
     // =========================
 
@@ -9545,7 +10262,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   if (type === "NDCDB" || type === "NDCDB_C3") {
     let lotResult;
     try {
-      lotResult = await azobssFetchValidFileCandidates(azobssBuildLotDownloadCandidates(record, type), type);
+      lotResult = await azobssFetchLotRecordFile(record, type);
     } catch (fetchError) {
       console.error(type + " controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
     }

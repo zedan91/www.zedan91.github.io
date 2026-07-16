@@ -1168,9 +1168,28 @@ body.pa-bm-page #adminPurchasePanel {
 }
 
 @media (max-width: 640px) {
+  html,
+  body.pa-bm-page {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   body.pa-bm-page #request {
-    width: calc(100% - 20px);
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    min-width: 0 !important;
     margin-top: 10px;
+  }
+
+  body.pa-bm-page .pabm-store-layout,
+  body.pa-bm-page #requestCard,
+  body.pa-bm-page #benchmarkPanel,
+  body.pa-bm-page .pa-bm-tabs,
+  body.pa-bm-page .pabm-state-grid {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   body.pa-bm-page .request-form input::placeholder,
@@ -1191,8 +1210,16 @@ body.pa-bm-page #adminPurchasePanel {
   }
 
   body.pa-bm-page .pabm-product-heading {
+    flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  body.pa-bm-page .pabm-product-heading > .pabm-heading-price {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    text-align: center;
   }
 
   body.pa-bm-page #requestCard,
