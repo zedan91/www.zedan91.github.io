@@ -3152,25 +3152,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="software-category-card" aria-label="Software categories card">
   <div class="software-category-title">▦ Browse by Category</div>
 <div class="software-category-filter" id="softwareCategoryFilter" aria-label="Software category filter">
-  <button class="software-category-btn is-active" type="button" data-software-category="all">▦ All Categories</button>
-  <button class="software-category-btn" type="button" data-software-category="Antivirus">🛡️ Antivirus</button>
-  <button class="software-category-btn" type="button" data-software-category="Backup & Recovery">💾 Backup & Recovery</button>
-  <button class="software-category-btn" type="button" data-software-category="Burning">🔥 Burning</button>
-  <button class="software-category-btn" type="button" data-software-category="Graphic Design">🎨 Graphic Design</button>
-  <button class="software-category-btn" type="button" data-software-category="Emulators">🎮 Emulators</button>
-  <button class="software-category-btn" type="button" data-software-category="Internet">🌐 Internet</button>
-  <button class="software-category-btn" type="button" data-software-category="Media Tools">🎬 Media Tools</button>
-  <button class="software-category-btn" type="button" data-software-category="Office Tools">📄 Office Tools</button>
-  <button class="software-category-btn" type="button" data-software-category="Data Recovery,Compression">♻️ Data Recovery</button>
-  <button class="software-category-btn" type="button" data-software-category="Security">🔐 Security</button>
-  <button class="software-category-btn" type="button" data-software-category="Operating System">💻 Operating System</button>
-  <button class="software-category-btn" type="button" data-software-category="System Utilities">⚙️ System Utilities</button>
-  <button class="software-category-btn" type="button" data-software-category="Compression">📦 Compression</button>
-  <button class="software-category-btn" type="button" data-software-category="Ebook">📚 Ebook</button>
-  <button class="software-category-btn" type="button" data-software-category="General Tools">🧰 General Tools</button>
-  <button class="software-category-btn" type="button" data-software-category="Video Downloaders">⬇️ Video Downloaders</button>
-  <button class="software-category-btn" type="button" data-software-category="Remote Tools">🖥️ Remote Tools</button>
-  <button class="software-category-btn" type="button" data-software-category="Live Streaming Tools">📡 Live Streaming Tools</button>
+  <div class="software-category-loading-473">Loading categories…</div>
 </div>
 </div>
 <div class="software-directory-notice-470" role="note">ℹ️ Third-party software buttons open official publisher or project pages. AZOBSS does not host or modify these third-party installers.</div>
@@ -3588,66 +3570,249 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     return (aliases[v] || v) === (aliases[s] || s);
   }
 
-  const SOFTWARE_CATEGORY_CORE_470 = [
-    'Antivirus','Backup & Recovery','Burning','Graphic Design','Emulators','Internet','Media Tools','Office Tools',
-    'Data Recovery','Security','Operating System','System Utilities','Compression','Ebook','General Tools',
-    'Video Downloaders','Remote Tools','Live Streaming Tools'
+  const SOFTWARE_CATEGORY_POPULAR_473 = [
+    'System Utilities','Antivirus','Office Tools','Graphic Design','Media Tools','Internet',
+    'Backup & Recovery','Data Recovery','Remote Tools','Operating System','Compression'
+  ];
+  const SOFTWARE_CATEGORY_GROUPS_473 = [
+    { title:'System & Maintenance', icon:'⚙️', categories:[
+      'System Utilities','Drivers & Device Tools','Disk & Partition','Hardware Monitoring','Uninstallers & Cleanup',
+      'System Rescue','Backup & Recovery','Backup & Imaging','Data Recovery','Benchmark & Testing','Burning',
+      'Compression','File Managers','Search & Launchers'
+    ]},
+    { title:'Internet & Communication', icon:'🌐', categories:[
+      'Internet','Web Browsers','Messaging & Meetings','Email Clients','Download Managers','Video Downloaders',
+      'Remote Tools','Remote & Server Admin','Network Tools','Cloud Storage & Sync','File Transfer','Torrent Clients'
+    ]},
+    { title:'Creative & Media', icon:'🎨', categories:[
+      'Graphic Design','Media Tools','Video Editing','Audio Production','Screen Capture & Recording',
+      'Screen Capture','Fonts & Typography','Live Streaming Tools'
+    ]},
+    { title:'Business & Productivity', icon:'📚', categories:[
+      'Office Tools','PDF Tools','Project & Tasks','Notes & Knowledge','OCR & Scanning','Automation & Macros',
+      'Automation','Ebook','Ebooks & Reference','General Tools'
+    ]},
+    { title:'Developer & Technical', icon:'🧑‍💻', categories:[
+      'Developer Tools','Database Tools','Web & Server','Terminal & Shell','Terminal & SSH','Runtimes & SDKs',
+      'Package Managers','Virtualization & Containers','AI & Local Models','Android & Mobile Tools',
+      'Code Editors & IDE','Version Control'
+    ]},
+    { title:'Security & Privacy', icon:'🔐', categories:[
+      'Antivirus','Security','Privacy & VPN','Password Managers'
+    ]},
+    { title:'Engineering & Specialist', icon:'🧭', categories:[
+      'CAD & Engineering','GIS & Mapping','3D Printing','Science & Statistics','Accessibility','Education',
+      'Operating System','Emulators','Games & Launchers','Finance & Accounting'
+    ]}
   ];
   const SOFTWARE_CATEGORY_ICONS_470 = {
-    'Antivirus':'🛡️','Backup & Recovery':'💾','Burning':'🔥','Graphic Design':'🎨','Emulators':'🎮','Internet':'🌐',
+    'Antivirus':'🛡️','Backup & Recovery':'💾','Backup & Imaging':'💾','Burning':'🔥','Graphic Design':'🎨','Emulators':'🎮','Internet':'🌐',
     'Media Tools':'🎬','Office Tools':'📄','Data Recovery':'♻️','Security':'🔐','Operating System':'💻',
-    'System Utilities':'⚙️','Compression':'📦','Ebook':'📚','General Tools':'🧰','Video Downloaders':'⬇️',
-    'Remote Tools':'🖥️','Live Streaming Tools':'📡','Web Browsers':'🌍','AI & Local Models':'🤖',
+    'System Utilities':'⚙️','Compression':'📦','Ebook':'📚','Ebooks & Reference':'📚','General Tools':'🧰','Video Downloaders':'⬇️',
+    'Remote Tools':'🖥️','Remote & Server Admin':'🖥️','Live Streaming Tools':'📡','Web Browsers':'🌍','AI & Local Models':'🤖',
     'Developer Tools':'🧑‍💻','Messaging & Meetings':'💬','Privacy & VPN':'🕵️','Cloud Storage & Sync':'☁️',
     'PDF Tools':'📕','Video Editing':'🎞️','Audio Production':'🎵','Virtualization & Containers':'📦',
     'Drivers & Device Tools':'🔌','GIS & Mapping':'🗺️','CAD & Engineering':'📐','3D Printing':'🖨️',
     'Network Tools':'📡','Password Managers':'🔑','Package Managers':'📥','System Rescue':'🧯',
     'Database Tools':'🗄️','Web & Server':'🌐','Notes & Knowledge':'📝','Project & Tasks':'✅',
     'Science & Statistics':'🔬','Games & Launchers':'🎮','Runtimes & SDKs':'🧩','Email Clients':'✉️',
-    'File Managers':'🗂️','Screen Capture':'📸','OCR & Scanning':'🔎','Accessibility':'♿','Education':'🎓',
-    'Finance & Accounting':'🧾','Benchmark & Monitoring':'📊','Disk & Partition':'💽','Automation':'⚡',
-    'Terminal & SSH':'⌨️','Code Editors & IDE':'🧑‍💻','Version Control':'🌿','Download Managers':'⬇️'
+    'File Managers':'🗂️','File Transfer':'🔁','Screen Capture':'📸','Screen Capture & Recording':'📸',
+    'OCR & Scanning':'🔎','Accessibility':'♿','Education':'🎓','Finance & Accounting':'🧾',
+    'Benchmark & Monitoring':'📊','Benchmark & Testing':'📊','Disk & Partition':'💽','Automation':'⚡','Automation & Macros':'⚡',
+    'Terminal & SSH':'⌨️','Terminal & Shell':'⌨️','Code Editors & IDE':'🧑‍💻','Version Control':'🌿',
+    'Download Managers':'⬇️','Android & Mobile Tools':'🤖','Fonts & Typography':'🔤','Hardware Monitoring':'🌡️',
+    'Search & Launchers':'🔎','Torrent Clients':'🧲','Uninstallers & Cleanup':'🧹'
   };
+  let softwareCategorySearch473 = '';
   function azSoftwareCategoryIcon470(category){ return SOFTWARE_CATEGORY_ICONS_470[category] || '🧩'; }
+  function azSoftwareDirectoryCategoryStats473(){
+    const counts = new Map();
+    const seen = new Set();
+    const add = (category, key) => {
+      const c = String(category || '').trim();
+      if(!c) return;
+      const unique = String(key || c).trim().toLowerCase();
+      if(seen.has(unique)) return;
+      seen.add(unique);
+      counts.set(c, (counts.get(c) || 0) + 1);
+    };
+    softwareDynamicItems.forEach((item,index) => {
+      const category = item?.category || 'General Tools';
+      const key = item?.productId || item?.id || item?.docId || `${item?.name || 'item'}|${category}|${index}`;
+      add(category, `dynamic:${key}`);
+    });
+    try{
+      getStaticCards().forEach((card,index) => {
+        const category = card?.dataset?.category || 'General Tools';
+        const name = card?.dataset?.name || card?.querySelector('h3')?.textContent || `card-${index}`;
+        const key = card?.dataset?.productId || card?.dataset?.id || name;
+        add(category, `static:${key}`);
+      });
+    }catch(_e){}
+    const categories = Array.from(counts.keys()).sort((a,b)=>a.localeCompare(b));
+    const total = Array.from(counts.values()).reduce((sum,n)=>sum+n,0);
+    return { categories, counts, total };
+  }
   function azSoftwareDirectoryCategoryNames470(){
-    const names = new Set();
-    softwareDynamicItems.forEach(item => { const c=String(item?.category || '').trim(); if(c) names.add(c); });
-    try{ getStaticCards().forEach(card => { const c=String(card?.dataset?.category || '').trim(); if(c) names.add(c); }); }catch(_e){}
-    const all = Array.from(names);
-    const core = SOFTWARE_CATEGORY_CORE_470.filter(c => names.has(c));
-    const extra = all.filter(c => !SOFTWARE_CATEGORY_CORE_470.includes(c)).sort((a,b)=>a.localeCompare(b));
-    return [...core, ...extra];
+    return azSoftwareDirectoryCategoryStats473().categories;
+  }
+  function azCategoryButton473(category, count, active, className='software-category-btn'){
+    const btn=document.createElement('button');
+    btn.className=className + (active ? ' is-active' : '');
+    btn.type='button';
+    btn.dataset.softwareCategory=category;
+    const label=document.createElement('span');
+    label.className='software-category-label-473';
+    label.textContent=(category==='all' ? '▦' : azSoftwareCategoryIcon470(category))+' '+(category==='all' ? 'All Categories' : category);
+    const badge=document.createElement('span');
+    badge.className='software-category-count-473';
+    badge.textContent=String(count || 0);
+    btn.append(label,badge);
+    return btn;
+  }
+  function renderSoftwareQuickCategories473(stats){
+    const list=categoryFilter?.querySelector('.software-category-quick-list-473');
+    if(!list) return;
+    list.innerHTML='';
+    const query=softwareCategorySearch473.trim().toLowerCase();
+    let categories;
+    if(query){
+      categories=stats.categories.filter(c=>c.toLowerCase().includes(query)).slice(0,16);
+    }else{
+      categories=SOFTWARE_CATEGORY_POPULAR_473.filter(c=>stats.counts.has(c));
+      if(selectedSoftwareCategory!=='all' && stats.counts.has(selectedSoftwareCategory) && !categories.includes(selectedSoftwareCategory)){
+        categories=[selectedSoftwareCategory,...categories].slice(0,12);
+      }
+    }
+    list.appendChild(azCategoryButton473('all',stats.total,selectedSoftwareCategory==='all'));
+    categories.forEach(category=>list.appendChild(azCategoryButton473(category,stats.counts.get(category),selectedSoftwareCategory===category)));
+    if(query && !categories.length){
+      const empty=document.createElement('div');
+      empty.className='software-category-search-empty-473';
+      empty.textContent='No matching category found.';
+      list.appendChild(empty);
+    }
+  }
+  function renderSoftwareCategoryModal473(stats, searchTerm=''){
+    const modal=document.getElementById('softwareCategoryModal473');
+    const body=modal?.querySelector('.software-category-modal-body-473');
+    const summary=modal?.querySelector('.software-category-modal-summary-473');
+    if(!body) return;
+    body.innerHTML='';
+    const query=String(searchTerm||'').trim().toLowerCase();
+    const makeGroup=(title,icon,categories)=>{
+      if(!categories.length) return;
+      const section=document.createElement('section');
+      section.className='software-category-modal-group-473';
+      const heading=document.createElement('h3');
+      heading.textContent=`${icon} ${title}`;
+      const grid=document.createElement('div');
+      grid.className='software-category-modal-grid-473';
+      categories.forEach(category=>grid.appendChild(azCategoryButton473(category,stats.counts.get(category),selectedSoftwareCategory===category,'software-category-modal-btn-473')));
+      section.append(heading,grid);
+      body.appendChild(section);
+    };
+    if(query){
+      const matches=stats.categories.filter(c=>c.toLowerCase().includes(query));
+      makeGroup(`Search Results (${matches.length})`,'🔎',matches);
+      if(!matches.length){
+        const empty=document.createElement('div');
+        empty.className='software-category-modal-empty-473';
+        empty.textContent='No matching category found. Try a shorter keyword.';
+        body.appendChild(empty);
+      }
+    }else{
+      const remaining=new Set(stats.categories);
+      SOFTWARE_CATEGORY_GROUPS_473.forEach(group=>{
+        const available=group.categories.filter(c=>remaining.has(c));
+        available.forEach(c=>remaining.delete(c));
+        makeGroup(group.title,group.icon,available);
+      });
+      makeGroup('More Categories','🧩',Array.from(remaining).sort((a,b)=>a.localeCompare(b)));
+    }
+    if(summary) summary.textContent=`${stats.categories.length} categories · ${stats.total} software`;
+  }
+  function ensureSoftwareCategoryModal473(){
+    let modal=document.getElementById('softwareCategoryModal473');
+    if(modal) return modal;
+    modal=document.createElement('div');
+    modal.id='softwareCategoryModal473';
+    modal.className='software-category-modal-473';
+    modal.setAttribute('aria-hidden','true');
+    modal.innerHTML=`<div class="software-category-modal-backdrop-473" data-category-modal-close="1"></div>
+      <div class="software-category-modal-panel-473" role="dialog" aria-modal="true" aria-labelledby="softwareCategoryModalTitle473">
+        <div class="software-category-modal-header-473">
+          <div><div class="software-category-modal-kicker-473">Software Directory</div><h2 id="softwareCategoryModalTitle473">Browse All Categories</h2></div>
+          <button type="button" class="software-category-modal-close-473" data-category-modal-close="1" aria-label="Close categories">×</button>
+        </div>
+        <div class="software-category-modal-search-wrap-473"><span>🔎</span><input type="search" class="software-category-modal-search-473" placeholder="Search all categories..." autocomplete="off"></div>
+        <div class="software-category-modal-body-473"></div>
+        <div class="software-category-modal-footer-473"><span class="software-category-modal-summary-473"></span><button type="button" class="software-category-clear-473" data-software-category="all">Show all software</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{
+      if(e.target.closest('[data-category-modal-close]')){ closeSoftwareCategoryModal473(); return; }
+      const btn=e.target.closest('[data-software-category]');
+      if(btn){ selectSoftwareCategory473(btn.dataset.softwareCategory || 'all'); }
+    });
+    const input=modal.querySelector('.software-category-modal-search-473');
+    input?.addEventListener('input',()=>renderSoftwareCategoryModal473(azSoftwareDirectoryCategoryStats473(),input.value));
+    return modal;
+  }
+  function openSoftwareCategoryModal473(){
+    const modal=ensureSoftwareCategoryModal473();
+    const input=modal.querySelector('.software-category-modal-search-473');
+    if(input) input.value='';
+    renderSoftwareCategoryModal473(azSoftwareDirectoryCategoryStats473(),'');
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.classList.add('software-category-modal-open-473');
+    setTimeout(()=>input?.focus(),80);
+  }
+  function closeSoftwareCategoryModal473(){
+    const modal=document.getElementById('softwareCategoryModal473');
+    modal?.classList.remove('is-open');
+    modal?.setAttribute('aria-hidden','true');
+    document.body.classList.remove('software-category-modal-open-473');
+  }
+  function selectSoftwareCategory473(category){
+    selectedSoftwareCategory=category || 'all';
+    softwareCategorySearch473='';
+    syncSoftwareDirectoryCategories470();
+    applySoftwareFilters();
+    closeSoftwareCategoryModal473();
   }
   function syncSoftwareDirectoryCategories470(){
     if(!categoryFilter) return;
-    const categories = azSoftwareDirectoryCategoryNames470();
-    categoryFilter.innerHTML = '';
-    const allBtn=document.createElement('button');
-    allBtn.className='software-category-btn' + (selectedSoftwareCategory==='all' ? ' is-active' : '');
-    allBtn.type='button'; allBtn.dataset.softwareCategory='all'; allBtn.textContent='▦ All Categories';
-    categoryFilter.appendChild(allBtn);
-    const visibleLimit=SOFTWARE_CATEGORY_CORE_470.length;
-    categories.forEach((category,index)=>{
-      const btn=document.createElement('button');
-      btn.className='software-category-btn' + (selectedSoftwareCategory===category ? ' is-active' : '');
-      btn.type='button'; btn.dataset.softwareCategory=category;
-      btn.textContent=azSoftwareCategoryIcon470(category)+' '+category;
-      btn.dataset.azDirectoryCategory='1';
-      if(!softwareCategoryExpanded470 && index>=visibleLimit) btn.hidden=true;
-      categoryFilter.appendChild(btn);
+    const stats=azSoftwareDirectoryCategoryStats473();
+    categoryFilter.innerHTML='';
+    const tools=document.createElement('div');
+    tools.className='software-category-tools-473';
+    const searchWrap=document.createElement('label');
+    searchWrap.className='software-category-search-wrap-473';
+    searchWrap.innerHTML='<span>🔎</span>';
+    const search=document.createElement('input');
+    search.type='search'; search.placeholder='Search categories...'; search.autocomplete='off'; search.value=softwareCategorySearch473;
+    search.setAttribute('aria-label','Search software categories');
+    search.addEventListener('input',()=>{
+      softwareCategorySearch473=search.value;
+      renderSoftwareQuickCategories473(stats);
     });
-    const hiddenCount=Math.max(0,categories.length-visibleLimit);
-    if(hiddenCount){
-      const toggle=document.createElement('button');
-      toggle.className='software-category-btn software-category-toggle-btn-470';
-      toggle.type='button'; toggle.dataset.softwareCategoryToggle='1';
-      toggle.textContent=softwareCategoryExpanded470 ? '− Show Fewer Categories' : `＋ Show ${hiddenCount} More Categories`;
-      categoryFilter.appendChild(toggle);
-    }
+    searchWrap.appendChild(search);
+    const viewAll=document.createElement('button');
+    viewAll.type='button'; viewAll.className='software-category-view-all-473'; viewAll.dataset.softwareCategoryOpen='1';
+    viewAll.innerHTML=`<span>▦ View All Categories</span><strong>${stats.categories.length}</strong>`;
+    tools.append(searchWrap,viewAll);
+    const list=document.createElement('div');
+    list.className='software-category-quick-list-473';
+    categoryFilter.append(tools,list);
+    renderSoftwareQuickCategories473(stats);
+    const title=categoryFilter.closest('.software-category-card')?.querySelector('.software-category-title');
+    if(title) title.innerHTML=`<span>▦ Browse by Category</span><span class="software-category-title-count-473">${stats.categories.length} categories</span>`;
     if(categoryInput){
       const current=String(categoryInput.value||'');
       const present=new Set(Array.from(categoryInput.options||[]).map(o=>o.value));
-      categories.forEach(category=>{
+      stats.categories.forEach(category=>{
         if(!present.has(category)){
           const opt=document.createElement('option'); opt.value=category; opt.textContent=category; categoryInput.appendChild(opt);
         }
@@ -3655,7 +3820,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if(current) categoryInput.value=current;
     }
   }
-  
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSoftwareCategoryModal473(); });
+
   const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
   function azExtractMyrAmount(price){
     const text = String(price || '').replace(/,/g,'').trim();
@@ -5048,17 +5214,13 @@ function normalizeItem(item){
   searchInput?.addEventListener('input', applySoftwareFilters);
   sortSelect?.addEventListener('change', applySoftwareFilters);
   categoryFilter?.addEventListener('click', e => {
-    const toggle=e.target.closest('[data-software-category-toggle]');
-    if(toggle){
-      softwareCategoryExpanded470=!softwareCategoryExpanded470;
-      syncSoftwareDirectoryCategories470();
+    if(e.target.closest('[data-software-category-open]')){
+      openSoftwareCategoryModal473();
       return;
     }
     const btn = e.target.closest('[data-software-category]');
     if(!btn) return;
-    selectedSoftwareCategory = btn.getAttribute('data-software-category') || 'all';
-    categoryFilter.querySelectorAll('[data-software-category]').forEach(b => b.classList.toggle('is-active', b === btn));
-    applySoftwareFilters();
+    selectSoftwareCategory473(btn.getAttribute('data-software-category') || 'all');
   });
 
 
@@ -12656,7 +12818,7 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
   function addLiveStreamingCategory(){
     try{
       const filter=document.getElementById('softwareCategoryFilter');
-      if(filter && !filter.querySelector('[data-software-category="Live Streaming Tools"]')){
+      if(false && filter && !filter.querySelector('[data-software-category="Live Streaming Tools"]')){
         const btn=document.createElement('button');
         btn.className='software-category-btn';
         btn.type='button';
@@ -14341,13 +14503,66 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 }
 </style>
 
-<style id="azobss-software-official-directory-470-css">
+<style id="azobss-software-category-professional-473-css">
 .software-directory-notice-470{max-width:1180px;margin:-4px auto 16px;padding:10px 14px;border:1px solid rgba(56,189,248,.24);border-radius:12px;background:rgba(14,116,144,.10);color:#bae6fd;font-size:12px;font-weight:750;line-height:1.45;text-align:center}
-.software-category-btn[hidden]{display:none!important}
-.software-category-toggle-btn-470{border-style:dashed!important;color:#86efac!important;background:rgba(34,197,94,.08)!important}
+.software-category-card{padding:16px!important}
+.software-category-title{justify-content:space-between;flex-wrap:wrap;margin-bottom:13px!important}
+.software-category-title-count-473{padding:5px 9px;border:1px solid rgba(96,165,250,.24);border-radius:999px;background:rgba(59,130,246,.08);color:#93c5fd;font-size:10px;letter-spacing:.03em;text-transform:none}
+.software-category-filter{display:block!important;overflow:visible!important;margin:0!important}
+.software-category-loading-473{padding:12px;border:1px dashed rgba(148,163,184,.28);border-radius:13px;color:#94a3b8;font-size:12px;text-align:center}
+.software-category-tools-473{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:center;margin-bottom:12px}
+.software-category-search-wrap-473,.software-category-modal-search-wrap-473{display:flex;align-items:center;gap:9px;border:1px solid rgba(148,163,184,.28);border-radius:13px;background:rgba(2,6,23,.82);padding:0 12px;min-height:42px;transition:.18s ease}
+.software-category-search-wrap-473:focus-within,.software-category-modal-search-wrap-473:focus-within{border-color:rgba(34,197,94,.66);box-shadow:0 0 0 3px rgba(34,197,94,.10)}
+.software-category-search-wrap-473 input,.software-category-modal-search-wrap-473 input{width:100%;border:0!important;outline:0!important;background:transparent!important;color:#f8fafc!important;font:inherit;padding:10px 0!important;box-shadow:none!important}
+.software-category-search-wrap-473 input::placeholder,.software-category-modal-search-wrap-473 input::placeholder{color:#64748b}
+.software-category-view-all-473{min-height:42px;border:1px solid rgba(34,197,94,.45);border-radius:13px;background:linear-gradient(135deg,rgba(22,163,74,.18),rgba(16,185,129,.10));color:#86efac;padding:0 14px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.software-category-view-all-473:hover{border-color:#22c55e;background:linear-gradient(135deg,rgba(22,163,74,.28),rgba(16,185,129,.16));transform:translateY(-1px)}
+.software-category-view-all-473 strong{min-width:26px;height:24px;border-radius:999px;background:#22c55e;color:#052e16;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.software-category-quick-list-473{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.software-category-quick-list-473 .software-category-btn{min-height:38px!important;border-radius:12px!important;padding:0 11px 0 13px!important;gap:9px!important;font-size:12px!important;justify-content:space-between!important}
+.software-category-label-473{display:inline-flex;align-items:center;gap:5px;min-width:0}
+.software-category-count-473{min-width:24px;height:22px;padding:0 6px;border-radius:999px;background:rgba(148,163,184,.12);color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:950}
+.software-category-btn.is-active .software-category-count-473{background:rgba(5,46,22,.16);color:#052e16}
+.software-category-search-empty-473{width:100%;padding:11px 12px;border:1px dashed rgba(148,163,184,.25);border-radius:12px;color:#94a3b8;font-size:12px;text-align:center}
+body.software-category-modal-open-473{overflow:hidden}
+.software-category-modal-473{position:fixed;inset:0;z-index:2147483200;display:none;align-items:center;justify-content:center;padding:24px}
+.software-category-modal-473.is-open{display:flex}
+.software-category-modal-backdrop-473{position:absolute;inset:0;background:rgba(2,6,23,.82);backdrop-filter:blur(8px)}
+.software-category-modal-panel-473{position:relative;width:min(1040px,96vw);max-height:min(820px,90vh);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(34,197,94,.30);border-radius:22px;background:linear-gradient(180deg,#111c31,#07101f);box-shadow:0 30px 90px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05)}
+.software-category-modal-header-473{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 20px 14px;border-bottom:1px solid rgba(148,163,184,.13)}
+.software-category-modal-kicker-473{color:#4ade80;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}
+.software-category-modal-header-473 h2{margin:0;color:#f8fafc;font-size:21px;line-height:1.2}
+.software-category-modal-close-473{width:38px;height:38px;border:1px solid rgba(148,163,184,.25);border-radius:12px;background:rgba(15,23,42,.9);color:#e2e8f0;font-size:25px;line-height:1;cursor:pointer}
+.software-category-modal-close-473:hover{border-color:#f87171;color:#fca5a5}
+.software-category-modal-search-wrap-473{margin:14px 20px 4px;min-height:44px}
+.software-category-modal-body-473{overflow:auto;padding:12px 20px 18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;scrollbar-width:thin}
+.software-category-modal-group-473{border:1px solid rgba(148,163,184,.14);border-radius:16px;background:rgba(2,6,23,.34);padding:13px}
+.software-category-modal-group-473 h3{margin:0 0 10px;color:#cbd5e1;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.05em}
+.software-category-modal-grid-473{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.software-category-modal-btn-473{width:100%;min-height:38px;border:1px solid rgba(148,163,184,.20);border-radius:11px;background:rgba(15,23,42,.78);color:#e2e8f0;padding:7px 9px;font-weight:850;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;font-size:11px}
+.software-category-modal-btn-473:hover{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(15,23,42,.98)}
+.software-category-modal-btn-473.is-active{border-color:#22c55e;background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16}
+.software-category-modal-btn-473 .software-category-label-473{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.software-category-modal-empty-473{grid-column:1/-1;padding:35px 18px;border:1px dashed rgba(148,163,184,.25);border-radius:15px;color:#94a3b8;text-align:center}
+.software-category-modal-footer-473{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-top:1px solid rgba(148,163,184,.13);background:rgba(2,6,23,.36);color:#94a3b8;font-size:11px;font-weight:800}
+.software-category-clear-473{border:1px solid rgba(34,197,94,.38);border-radius:10px;background:rgba(34,197,94,.10);color:#86efac;padding:8px 11px;font-weight:900;cursor:pointer}
+@media(max-width:760px){
+  .software-category-tools-473{grid-template-columns:1fr}.software-category-view-all-473{justify-content:center}
+  .software-category-quick-list-473{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .software-category-quick-list-473 .software-category-btn{width:100%;min-width:0!important;text-align:left!important}
+  .software-category-modal-473{padding:10px}.software-category-modal-panel-473{width:100%;max-height:94vh;border-radius:18px}
+  .software-category-modal-body-473{grid-template-columns:1fr;padding:10px 12px 14px}.software-category-modal-grid-473{grid-template-columns:1fr 1fr}
+  .software-category-modal-header-473{padding:15px 14px 12px}.software-category-modal-search-wrap-473{margin:12px 12px 3px}.software-category-modal-footer-473{padding:10px 12px}
+}
+@media(max-width:460px){
+  .software-category-quick-list-473{grid-template-columns:1fr}.software-category-modal-grid-473{grid-template-columns:1fr}
+  .software-category-modal-footer-473{align-items:flex-start;flex-direction:column}.software-category-clear-473{width:100%}
+}
 @media(max-width:640px){.software-directory-notice-470{margin-top:-6px;font-size:11px;text-align:left}}
 </style>
 
+
+<!-- AZOBSS 473: Professional category selector — 12 quick categories, search, grouped modal, counts -->
 </body>
 </html>
 
