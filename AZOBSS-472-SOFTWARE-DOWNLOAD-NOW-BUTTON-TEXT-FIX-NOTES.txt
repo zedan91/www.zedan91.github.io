@@ -1,0 +1,10 @@
+AZOBSS 472 - Software Download Now Button Text Fix
+Date: 2026-07-17
+Baseline: (471)-AZOBSS-SOFTWARE-OFFICIAL-LABEL-NEXT-REMOVE-FIX_20260717.zip
+
+Changes:
+- Changed all 525 built-in third-party directory button labels from "Official Download" to "Download Now".
+- Kept each button's existing official publisher/project URL unchanged.
+- Existing AZOBSS premium Buy Now buttons and original Firestore product button text remain unchanged.
+- No Firebase Rules update required.
+- No Render backend deployment required.
