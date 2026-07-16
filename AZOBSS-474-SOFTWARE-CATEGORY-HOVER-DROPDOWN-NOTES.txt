@@ -1,0 +1,12 @@
+AZOBSS 474 - Software Category Hover Dropdown
+Date: 2026-07-17
+Baseline: 473
+
+Changes:
+- Replaced the click-only "View All Categories" modal with a professional hover mega-dropdown.
+- Desktop: move the cursor over "All Categories" to open grouped categories automatically.
+- Keyboard: focusing the control opens it; Escape closes it.
+- Mobile/touch: tap "All Categories" to open or close it.
+- Kept category search, 12 quick categories, live item counts and grouped category sections.
+- Selecting a category closes the dropdown and applies the filter immediately.
+- No Firebase Rules or Render backend changes required.

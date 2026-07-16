@@ -3693,22 +3693,23 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       list.appendChild(empty);
     }
   }
-  function renderSoftwareCategoryModal473(stats, searchTerm=''){
-    const modal=document.getElementById('softwareCategoryModal473');
-    const body=modal?.querySelector('.software-category-modal-body-473');
-    const summary=modal?.querySelector('.software-category-modal-summary-473');
+  let softwareCategoryDropdownCloseTimer474 = 0;
+  function renderSoftwareCategoryDropdown474(stats, searchTerm=''){
+    const dropdown=categoryFilter?.querySelector('.software-category-dropdown-474');
+    const body=dropdown?.querySelector('.software-category-dropdown-body-474');
+    const summary=dropdown?.querySelector('.software-category-dropdown-summary-474');
     if(!body) return;
     body.innerHTML='';
     const query=String(searchTerm||'').trim().toLowerCase();
     const makeGroup=(title,icon,categories)=>{
       if(!categories.length) return;
       const section=document.createElement('section');
-      section.className='software-category-modal-group-473';
+      section.className='software-category-dropdown-group-474';
       const heading=document.createElement('h3');
       heading.textContent=`${icon} ${title}`;
       const grid=document.createElement('div');
-      grid.className='software-category-modal-grid-473';
-      categories.forEach(category=>grid.appendChild(azCategoryButton473(category,stats.counts.get(category),selectedSoftwareCategory===category,'software-category-modal-btn-473')));
+      grid.className='software-category-dropdown-grid-474';
+      categories.forEach(category=>grid.appendChild(azCategoryButton473(category,stats.counts.get(category),selectedSoftwareCategory===category,'software-category-dropdown-btn-474')));
       section.append(heading,grid);
       body.appendChild(section);
     };
@@ -3717,7 +3718,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       makeGroup(`Search Results (${matches.length})`,'🔎',matches);
       if(!matches.length){
         const empty=document.createElement('div');
-        empty.className='software-category-modal-empty-473';
+        empty.className='software-category-dropdown-empty-474';
         empty.textContent='No matching category found. Try a shorter keyword.';
         body.appendChild(empty);
       }
@@ -3732,64 +3733,43 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
     if(summary) summary.textContent=`${stats.categories.length} categories · ${stats.total} software`;
   }
-  function ensureSoftwareCategoryModal473(){
-    let modal=document.getElementById('softwareCategoryModal473');
-    if(modal) return modal;
-    modal=document.createElement('div');
-    modal.id='softwareCategoryModal473';
-    modal.className='software-category-modal-473';
-    modal.setAttribute('aria-hidden','true');
-    modal.innerHTML=`<div class="software-category-modal-backdrop-473" data-category-modal-close="1"></div>
-      <div class="software-category-modal-panel-473" role="dialog" aria-modal="true" aria-labelledby="softwareCategoryModalTitle473">
-        <div class="software-category-modal-header-473">
-          <div><div class="software-category-modal-kicker-473">Software Directory</div><h2 id="softwareCategoryModalTitle473">Browse All Categories</h2></div>
-          <button type="button" class="software-category-modal-close-473" data-category-modal-close="1" aria-label="Close categories">×</button>
-        </div>
-        <div class="software-category-modal-search-wrap-473"><span>🔎</span><input type="search" class="software-category-modal-search-473" placeholder="Search all categories..." autocomplete="off"></div>
-        <div class="software-category-modal-body-473"></div>
-        <div class="software-category-modal-footer-473"><span class="software-category-modal-summary-473"></span><button type="button" class="software-category-clear-473" data-software-category="all">Show all software</button></div>
-      </div>`;
-    document.body.appendChild(modal);
-    modal.addEventListener('click',e=>{
-      if(e.target.closest('[data-category-modal-close]')){ closeSoftwareCategoryModal473(); return; }
-      const btn=e.target.closest('[data-software-category]');
-      if(btn){ selectSoftwareCategory473(btn.dataset.softwareCategory || 'all'); }
-    });
-    const input=modal.querySelector('.software-category-modal-search-473');
-    input?.addEventListener('input',()=>renderSoftwareCategoryModal473(azSoftwareDirectoryCategoryStats473(),input.value));
-    return modal;
+  function setSoftwareCategoryDropdownOpen474(open, focusSearch=false){
+    const wrap=categoryFilter?.querySelector('.software-category-hover-wrap-474');
+    const dropdown=wrap?.querySelector('.software-category-dropdown-474');
+    const trigger=wrap?.querySelector('.software-category-hover-trigger-474');
+    if(!wrap || !dropdown || !trigger) return;
+    window.clearTimeout(softwareCategoryDropdownCloseTimer474);
+    wrap.classList.toggle('is-open',!!open);
+    dropdown.setAttribute('aria-hidden',open?'false':'true');
+    trigger.setAttribute('aria-expanded',open?'true':'false');
+    if(open){
+      renderSoftwareCategoryDropdown474(azSoftwareDirectoryCategoryStats473(),dropdown.querySelector('.software-category-dropdown-search-474')?.value||'');
+      if(focusSearch) setTimeout(()=>dropdown.querySelector('.software-category-dropdown-search-474')?.focus(),40);
+    }
   }
-  function openSoftwareCategoryModal473(){
-    const modal=ensureSoftwareCategoryModal473();
-    const input=modal.querySelector('.software-category-modal-search-473');
-    if(input) input.value='';
-    renderSoftwareCategoryModal473(azSoftwareDirectoryCategoryStats473(),'');
-    modal.classList.add('is-open');
-    modal.setAttribute('aria-hidden','false');
-    document.body.classList.add('software-category-modal-open-473');
-    setTimeout(()=>input?.focus(),80);
+  function scheduleSoftwareCategoryDropdownClose474(){
+    window.clearTimeout(softwareCategoryDropdownCloseTimer474);
+    softwareCategoryDropdownCloseTimer474=window.setTimeout(()=>setSoftwareCategoryDropdownOpen474(false),220);
   }
-  function closeSoftwareCategoryModal473(){
-    const modal=document.getElementById('softwareCategoryModal473');
-    modal?.classList.remove('is-open');
-    modal?.setAttribute('aria-hidden','true');
-    document.body.classList.remove('software-category-modal-open-473');
+  function toggleSoftwareCategoryDropdown474(){
+    const wrap=categoryFilter?.querySelector('.software-category-hover-wrap-474');
+    setSoftwareCategoryDropdownOpen474(!wrap?.classList.contains('is-open'));
   }
   function selectSoftwareCategory473(category){
     selectedSoftwareCategory=category || 'all';
     softwareCategorySearch473='';
+    setSoftwareCategoryDropdownOpen474(false);
     syncSoftwareDirectoryCategories470();
     applySoftwareFilters();
-    closeSoftwareCategoryModal473();
   }
   function syncSoftwareDirectoryCategories470(){
     if(!categoryFilter) return;
     const stats=azSoftwareDirectoryCategoryStats473();
     categoryFilter.innerHTML='';
     const tools=document.createElement('div');
-    tools.className='software-category-tools-473';
+    tools.className='software-category-tools-474';
     const searchWrap=document.createElement('label');
-    searchWrap.className='software-category-search-wrap-473';
+    searchWrap.className='software-category-search-wrap-474';
     searchWrap.innerHTML='<span>🔎</span>';
     const search=document.createElement('input');
     search.type='search'; search.placeholder='Search categories...'; search.autocomplete='off'; search.value=softwareCategorySearch473;
@@ -3799,14 +3779,46 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       renderSoftwareQuickCategories473(stats);
     });
     searchWrap.appendChild(search);
-    const viewAll=document.createElement('button');
-    viewAll.type='button'; viewAll.className='software-category-view-all-473'; viewAll.dataset.softwareCategoryOpen='1';
-    viewAll.innerHTML=`<span>▦ View All Categories</span><strong>${stats.categories.length}</strong>`;
-    tools.append(searchWrap,viewAll);
+
+    const hoverWrap=document.createElement('div');
+    hoverWrap.className='software-category-hover-wrap-474';
+    const trigger=document.createElement('button');
+    trigger.type='button';
+    trigger.className='software-category-hover-trigger-474';
+    trigger.dataset.softwareCategoryDropdownToggle='1';
+    trigger.setAttribute('aria-haspopup','true');
+    trigger.setAttribute('aria-expanded','false');
+    trigger.innerHTML=`<span>▦ All Categories</span><strong>${stats.categories.length}</strong><span class="software-category-chevron-474" aria-hidden="true">⌄</span>`;
+    const dropdown=document.createElement('div');
+    dropdown.className='software-category-dropdown-474';
+    dropdown.setAttribute('aria-hidden','true');
+    dropdown.innerHTML=`<div class="software-category-dropdown-head-474">
+        <div><b>Browse all categories</b><span>Move your cursor here and choose a category</span></div>
+        <label class="software-category-dropdown-search-wrap-474"><span>🔎</span><input type="search" class="software-category-dropdown-search-474" placeholder="Search all categories..." autocomplete="off" aria-label="Search all software categories"></label>
+      </div>
+      <div class="software-category-dropdown-body-474"></div>
+      <div class="software-category-dropdown-footer-474"><span class="software-category-dropdown-summary-474"></span><button type="button" class="software-category-clear-474" data-software-category="all">Show all software</button></div>`;
+    hoverWrap.append(trigger,dropdown);
+    tools.append(searchWrap,hoverWrap);
+
     const list=document.createElement('div');
     list.className='software-category-quick-list-473';
     categoryFilter.append(tools,list);
     renderSoftwareQuickCategories473(stats);
+    renderSoftwareCategoryDropdown474(stats,'');
+
+    hoverWrap.addEventListener('mouseenter',()=>{
+      if(window.matchMedia('(hover:hover) and (pointer:fine)').matches) setSoftwareCategoryDropdownOpen474(true);
+    });
+    hoverWrap.addEventListener('mouseleave',()=>{
+      if(window.matchMedia('(hover:hover) and (pointer:fine)').matches) scheduleSoftwareCategoryDropdownClose474();
+    });
+    hoverWrap.addEventListener('focusin',()=>setSoftwareCategoryDropdownOpen474(true));
+    hoverWrap.addEventListener('focusout',e=>{
+      if(!hoverWrap.contains(e.relatedTarget)) scheduleSoftwareCategoryDropdownClose474();
+    });
+    dropdown.querySelector('.software-category-dropdown-search-474')?.addEventListener('input',e=>renderSoftwareCategoryDropdown474(stats,e.target.value));
+
     const title=categoryFilter.closest('.software-category-card')?.querySelector('.software-category-title');
     if(title) title.innerHTML=`<span>▦ Browse by Category</span><span class="software-category-title-count-473">${stats.categories.length} categories</span>`;
     if(categoryInput){
@@ -3820,7 +3832,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if(current) categoryInput.value=current;
     }
   }
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSoftwareCategoryModal473(); });
+  document.addEventListener('click',e=>{
+    const wrap=categoryFilter?.querySelector('.software-category-hover-wrap-474');
+    if(wrap && !wrap.contains(e.target)) setSoftwareCategoryDropdownOpen474(false);
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape') setSoftwareCategoryDropdownOpen474(false);
+  });
 
   const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
   function azExtractMyrAmount(price){
@@ -5214,8 +5232,9 @@ function normalizeItem(item){
   searchInput?.addEventListener('input', applySoftwareFilters);
   sortSelect?.addEventListener('change', applySoftwareFilters);
   categoryFilter?.addEventListener('click', e => {
-    if(e.target.closest('[data-software-category-open]')){
-      openSoftwareCategoryModal473();
+    if(e.target.closest('[data-software-category-dropdown-toggle]')){
+      e.preventDefault();
+      toggleSoftwareCategoryDropdown474();
       return;
     }
     const btn = e.target.closest('[data-software-category]');
@@ -14503,66 +14522,62 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 }
 </style>
 
-<style id="azobss-software-category-professional-473-css">
+<style id="azobss-software-category-hover-dropdown-474-css">
 .software-directory-notice-470{max-width:1180px;margin:-4px auto 16px;padding:10px 14px;border:1px solid rgba(56,189,248,.24);border-radius:12px;background:rgba(14,116,144,.10);color:#bae6fd;font-size:12px;font-weight:750;line-height:1.45;text-align:center}
-.software-category-card{padding:16px!important}
+.software-category-card{padding:16px!important;position:relative;overflow:visible!important;z-index:40}
 .software-category-title{justify-content:space-between;flex-wrap:wrap;margin-bottom:13px!important}
 .software-category-title-count-473{padding:5px 9px;border:1px solid rgba(96,165,250,.24);border-radius:999px;background:rgba(59,130,246,.08);color:#93c5fd;font-size:10px;letter-spacing:.03em;text-transform:none}
-.software-category-filter{display:block!important;overflow:visible!important;margin:0!important}
+.software-category-filter{display:block!important;overflow:visible!important;margin:0!important;position:relative}
 .software-category-loading-473{padding:12px;border:1px dashed rgba(148,163,184,.28);border-radius:13px;color:#94a3b8;font-size:12px;text-align:center}
-.software-category-tools-473{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:center;margin-bottom:12px}
-.software-category-search-wrap-473,.software-category-modal-search-wrap-473{display:flex;align-items:center;gap:9px;border:1px solid rgba(148,163,184,.28);border-radius:13px;background:rgba(2,6,23,.82);padding:0 12px;min-height:42px;transition:.18s ease}
-.software-category-search-wrap-473:focus-within,.software-category-modal-search-wrap-473:focus-within{border-color:rgba(34,197,94,.66);box-shadow:0 0 0 3px rgba(34,197,94,.10)}
-.software-category-search-wrap-473 input,.software-category-modal-search-wrap-473 input{width:100%;border:0!important;outline:0!important;background:transparent!important;color:#f8fafc!important;font:inherit;padding:10px 0!important;box-shadow:none!important}
-.software-category-search-wrap-473 input::placeholder,.software-category-modal-search-wrap-473 input::placeholder{color:#64748b}
-.software-category-view-all-473{min-height:42px;border:1px solid rgba(34,197,94,.45);border-radius:13px;background:linear-gradient(135deg,rgba(22,163,74,.18),rgba(16,185,129,.10));color:#86efac;padding:0 14px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.software-category-view-all-473:hover{border-color:#22c55e;background:linear-gradient(135deg,rgba(22,163,74,.28),rgba(16,185,129,.16));transform:translateY(-1px)}
-.software-category-view-all-473 strong{min-width:26px;height:24px;border-radius:999px;background:#22c55e;color:#052e16;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
-.software-category-quick-list-473{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.software-category-tools-474{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:center;margin-bottom:12px;position:relative;z-index:4}
+.software-category-search-wrap-474,.software-category-dropdown-search-wrap-474{display:flex;align-items:center;gap:9px;border:1px solid rgba(148,163,184,.28);border-radius:13px;background:rgba(2,6,23,.82);padding:0 12px;min-height:42px;transition:.18s ease}
+.software-category-search-wrap-474:focus-within,.software-category-dropdown-search-wrap-474:focus-within{border-color:rgba(34,197,94,.66);box-shadow:0 0 0 3px rgba(34,197,94,.10)}
+.software-category-search-wrap-474 input,.software-category-dropdown-search-wrap-474 input{width:100%;border:0!important;outline:0!important;background:transparent!important;color:#f8fafc!important;font:inherit;padding:10px 0!important;box-shadow:none!important}
+.software-category-search-wrap-474 input::placeholder,.software-category-dropdown-search-wrap-474 input::placeholder{color:#64748b}
+.software-category-hover-wrap-474{position:relative;display:inline-flex;justify-content:flex-end}
+.software-category-hover-trigger-474{min-height:42px;border:1px solid rgba(34,197,94,.45);border-radius:13px;background:linear-gradient(135deg,rgba(22,163,74,.18),rgba(16,185,129,.10));color:#86efac;padding:0 12px 0 14px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:9px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:.18s ease}
+.software-category-hover-trigger-474:hover,.software-category-hover-wrap-474.is-open .software-category-hover-trigger-474{border-color:#22c55e;background:linear-gradient(135deg,rgba(22,163,74,.30),rgba(16,185,129,.17));box-shadow:0 0 0 3px rgba(34,197,94,.09),inset 0 1px 0 rgba(255,255,255,.05)}
+.software-category-hover-trigger-474 strong{min-width:27px;height:24px;padding:0 5px;border-radius:999px;background:#22c55e;color:#052e16;display:inline-flex;align-items:center;justify-content:center;font-size:10px}
+.software-category-chevron-474{font-size:16px;line-height:1;transition:transform .18s ease}.software-category-hover-wrap-474.is-open .software-category-chevron-474{transform:rotate(180deg)}
+.software-category-dropdown-474{position:absolute;top:calc(100% + 5px);right:0;width:min(1000px,calc(100vw - 42px));max-height:min(690px,72vh);display:flex;flex-direction:column;visibility:hidden;opacity:0;pointer-events:none;transform:translateY(-7px) scale(.992);transform-origin:top right;border:1px solid rgba(34,197,94,.31);border-radius:18px;background:linear-gradient(180deg,#111c31 0%,#07101f 100%);box-shadow:0 26px 70px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;z-index:2147482000;transition:opacity .16s ease,transform .16s ease,visibility .16s ease}
+.software-category-hover-wrap-474.is-open .software-category-dropdown-474,.software-category-hover-wrap-474:focus-within .software-category-dropdown-474{visibility:visible;opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
+.software-category-dropdown-474::before{content:"";position:absolute;right:52px;top:-7px;width:13px;height:13px;background:#111c31;border-left:1px solid rgba(34,197,94,.31);border-top:1px solid rgba(34,197,94,.31);transform:rotate(45deg);z-index:2}
+.software-category-dropdown-head-474{display:grid;grid-template-columns:minmax(190px,.75fr) minmax(250px,1fr);gap:14px;align-items:center;padding:14px 16px 11px;border-bottom:1px solid rgba(148,163,184,.13);background:rgba(2,6,23,.22)}
+.software-category-dropdown-head-474>div{display:flex;flex-direction:column;gap:2px;min-width:0}.software-category-dropdown-head-474 b{color:#f8fafc;font-size:14px}.software-category-dropdown-head-474>div span{color:#94a3b8;font-size:10px;font-weight:750}
+.software-category-dropdown-search-wrap-474{min-height:39px;border-radius:11px}
+.software-category-dropdown-body-474{overflow:auto;padding:12px 14px 15px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;scrollbar-width:thin;overscroll-behavior:contain}
+.software-category-dropdown-group-474{border:1px solid rgba(148,163,184,.14);border-radius:14px;background:rgba(2,6,23,.34);padding:11px;min-width:0}
+.software-category-dropdown-group-474 h3{margin:0 0 9px;color:#cbd5e1;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.045em}
+.software-category-dropdown-grid-474{display:grid;grid-template-columns:1fr;gap:6px}
+.software-category-dropdown-btn-474{width:100%;min-height:34px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:rgba(15,23,42,.72);color:#e2e8f0;padding:6px 8px;font-weight:820;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:7px;text-align:left;font-size:10px;transition:.15s ease}
+.software-category-dropdown-btn-474:hover{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(15,23,42,.98);transform:translateX(2px)}
+.software-category-dropdown-btn-474.is-active{border-color:#22c55e;background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16}
+.software-category-dropdown-btn-474 .software-category-label-473{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.software-category-dropdown-btn-474 .software-category-count-473{height:19px;min-width:21px;font-size:9px;flex:0 0 auto}
+.software-category-dropdown-empty-474{grid-column:1/-1;padding:34px 18px;border:1px dashed rgba(148,163,184,.25);border-radius:14px;color:#94a3b8;text-align:center}
+.software-category-dropdown-footer-474{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-top:1px solid rgba(148,163,184,.13);background:rgba(2,6,23,.40);color:#94a3b8;font-size:10px;font-weight:800}
+.software-category-clear-474{border:1px solid rgba(34,197,94,.38);border-radius:9px;background:rgba(34,197,94,.10);color:#86efac;padding:7px 10px;font-weight:900;cursor:pointer}
+.software-category-quick-list-473{display:flex;flex-wrap:wrap;gap:9px;align-items:center;position:relative;z-index:1}
 .software-category-quick-list-473 .software-category-btn{min-height:38px!important;border-radius:12px!important;padding:0 11px 0 13px!important;gap:9px!important;font-size:12px!important;justify-content:space-between!important}
 .software-category-label-473{display:inline-flex;align-items:center;gap:5px;min-width:0}
 .software-category-count-473{min-width:24px;height:22px;padding:0 6px;border-radius:999px;background:rgba(148,163,184,.12);color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:950}
 .software-category-btn.is-active .software-category-count-473{background:rgba(5,46,22,.16);color:#052e16}
 .software-category-search-empty-473{width:100%;padding:11px 12px;border:1px dashed rgba(148,163,184,.25);border-radius:12px;color:#94a3b8;font-size:12px;text-align:center}
-body.software-category-modal-open-473{overflow:hidden}
-.software-category-modal-473{position:fixed;inset:0;z-index:2147483200;display:none;align-items:center;justify-content:center;padding:24px}
-.software-category-modal-473.is-open{display:flex}
-.software-category-modal-backdrop-473{position:absolute;inset:0;background:rgba(2,6,23,.82);backdrop-filter:blur(8px)}
-.software-category-modal-panel-473{position:relative;width:min(1040px,96vw);max-height:min(820px,90vh);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(34,197,94,.30);border-radius:22px;background:linear-gradient(180deg,#111c31,#07101f);box-shadow:0 30px 90px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05)}
-.software-category-modal-header-473{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 20px 14px;border-bottom:1px solid rgba(148,163,184,.13)}
-.software-category-modal-kicker-473{color:#4ade80;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}
-.software-category-modal-header-473 h2{margin:0;color:#f8fafc;font-size:21px;line-height:1.2}
-.software-category-modal-close-473{width:38px;height:38px;border:1px solid rgba(148,163,184,.25);border-radius:12px;background:rgba(15,23,42,.9);color:#e2e8f0;font-size:25px;line-height:1;cursor:pointer}
-.software-category-modal-close-473:hover{border-color:#f87171;color:#fca5a5}
-.software-category-modal-search-wrap-473{margin:14px 20px 4px;min-height:44px}
-.software-category-modal-body-473{overflow:auto;padding:12px 20px 18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;scrollbar-width:thin}
-.software-category-modal-group-473{border:1px solid rgba(148,163,184,.14);border-radius:16px;background:rgba(2,6,23,.34);padding:13px}
-.software-category-modal-group-473 h3{margin:0 0 10px;color:#cbd5e1;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.05em}
-.software-category-modal-grid-473{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.software-category-modal-btn-473{width:100%;min-height:38px;border:1px solid rgba(148,163,184,.20);border-radius:11px;background:rgba(15,23,42,.78);color:#e2e8f0;padding:7px 9px;font-weight:850;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;font-size:11px}
-.software-category-modal-btn-473:hover{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(15,23,42,.98)}
-.software-category-modal-btn-473.is-active{border-color:#22c55e;background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16}
-.software-category-modal-btn-473 .software-category-label-473{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.software-category-modal-empty-473{grid-column:1/-1;padding:35px 18px;border:1px dashed rgba(148,163,184,.25);border-radius:15px;color:#94a3b8;text-align:center}
-.software-category-modal-footer-473{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-top:1px solid rgba(148,163,184,.13);background:rgba(2,6,23,.36);color:#94a3b8;font-size:11px;font-weight:800}
-.software-category-clear-473{border:1px solid rgba(34,197,94,.38);border-radius:10px;background:rgba(34,197,94,.10);color:#86efac;padding:8px 11px;font-weight:900;cursor:pointer}
+@media(max-width:900px){.software-category-dropdown-body-474{grid-template-columns:repeat(2,minmax(0,1fr))}.software-category-dropdown-474{width:min(760px,calc(100vw - 34px))}}
 @media(max-width:760px){
-  .software-category-tools-473{grid-template-columns:1fr}.software-category-view-all-473{justify-content:center}
+  .software-category-tools-474{grid-template-columns:1fr}.software-category-hover-wrap-474{display:flex;width:100%;justify-content:stretch}.software-category-hover-trigger-474{width:100%;justify-content:center}
+  .software-category-dropdown-474{right:0;left:auto;width:min(620px,calc(100vw - 34px));max-height:70vh}
+  .software-category-dropdown-head-474{grid-template-columns:1fr;padding:12px}.software-category-dropdown-body-474{grid-template-columns:1fr;padding:10px 11px 13px}
   .software-category-quick-list-473{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .software-category-quick-list-473 .software-category-btn{width:100%;min-width:0!important;text-align:left!important}
-  .software-category-modal-473{padding:10px}.software-category-modal-panel-473{width:100%;max-height:94vh;border-radius:18px}
-  .software-category-modal-body-473{grid-template-columns:1fr;padding:10px 12px 14px}.software-category-modal-grid-473{grid-template-columns:1fr 1fr}
-  .software-category-modal-header-473{padding:15px 14px 12px}.software-category-modal-search-wrap-473{margin:12px 12px 3px}.software-category-modal-footer-473{padding:10px 12px}
 }
-@media(max-width:460px){
-  .software-category-quick-list-473{grid-template-columns:1fr}.software-category-modal-grid-473{grid-template-columns:1fr}
-  .software-category-modal-footer-473{align-items:flex-start;flex-direction:column}.software-category-clear-473{width:100%}
-}
+@media(max-width:460px){.software-category-quick-list-473{grid-template-columns:1fr}.software-category-dropdown-footer-474{align-items:flex-start;flex-direction:column}.software-category-clear-474{width:100%}.software-category-dropdown-474{width:calc(100vw - 28px);right:-2px}}
+@media(hover:none),(pointer:coarse){.software-category-dropdown-head-474>div span{display:none}.software-category-hover-trigger-474{touch-action:manipulation}}
 @media(max-width:640px){.software-directory-notice-470{margin-top:-6px;font-size:11px;text-align:left}}
 </style>
 
 
-<!-- AZOBSS 473: Professional category selector — 12 quick categories, search, grouped modal, counts -->
+<!-- AZOBSS 474: Hover category mega-dropdown — desktop hover, keyboard focus and mobile tap -->
 </body>
 </html>
 
