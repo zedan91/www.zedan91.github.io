@@ -3173,6 +3173,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <button class="software-category-btn" type="button" data-software-category="Live Streaming Tools">📡 Live Streaming Tools</button>
 </div>
 </div>
+<div class="software-directory-notice-470" role="note">ℹ️ Third-party software buttons open official publisher or project pages. AZOBSS does not host or modify these third-party installers.</div>
 <div class="downloads-grid" id="softwareDownloadsGrid">
 
 </div>
@@ -3468,6 +3469,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
   const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v464';
+  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=470';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -3545,6 +3547,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   let selectedSoftwareOwnerFilter = 'all';
   let selectedSoftwareOwnerAccount = 'all';
   let softwareDynamicItems = [];
+  let softwareBundledDirectoryItems470 = [];
+  let softwareCategoryExpanded470 = false;
   let editingSoftwareDocId = null;
   let editingSoftwareProductId = null;
   let pendingSoftwareImportItems = [];
@@ -3582,6 +3586,74 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       backuprecovery: 'backupandrecovery'
     };
     return (aliases[v] || v) === (aliases[s] || s);
+  }
+
+  const SOFTWARE_CATEGORY_CORE_470 = [
+    'Antivirus','Backup & Recovery','Burning','Graphic Design','Emulators','Internet','Media Tools','Office Tools',
+    'Data Recovery','Security','Operating System','System Utilities','Compression','Ebook','General Tools',
+    'Video Downloaders','Remote Tools','Live Streaming Tools'
+  ];
+  const SOFTWARE_CATEGORY_ICONS_470 = {
+    'Antivirus':'🛡️','Backup & Recovery':'💾','Burning':'🔥','Graphic Design':'🎨','Emulators':'🎮','Internet':'🌐',
+    'Media Tools':'🎬','Office Tools':'📄','Data Recovery':'♻️','Security':'🔐','Operating System':'💻',
+    'System Utilities':'⚙️','Compression':'📦','Ebook':'📚','General Tools':'🧰','Video Downloaders':'⬇️',
+    'Remote Tools':'🖥️','Live Streaming Tools':'📡','Web Browsers':'🌍','AI & Local Models':'🤖',
+    'Developer Tools':'🧑‍💻','Messaging & Meetings':'💬','Privacy & VPN':'🕵️','Cloud Storage & Sync':'☁️',
+    'PDF Tools':'📕','Video Editing':'🎞️','Audio Production':'🎵','Virtualization & Containers':'📦',
+    'Drivers & Device Tools':'🔌','GIS & Mapping':'🗺️','CAD & Engineering':'📐','3D Printing':'🖨️',
+    'Network Tools':'📡','Password Managers':'🔑','Package Managers':'📥','System Rescue':'🧯',
+    'Database Tools':'🗄️','Web & Server':'🌐','Notes & Knowledge':'📝','Project & Tasks':'✅',
+    'Science & Statistics':'🔬','Games & Launchers':'🎮','Runtimes & SDKs':'🧩','Email Clients':'✉️',
+    'File Managers':'🗂️','Screen Capture':'📸','OCR & Scanning':'🔎','Accessibility':'♿','Education':'🎓',
+    'Finance & Accounting':'🧾','Benchmark & Monitoring':'📊','Disk & Partition':'💽','Automation':'⚡',
+    'Terminal & SSH':'⌨️','Code Editors & IDE':'🧑‍💻','Version Control':'🌿','Download Managers':'⬇️'
+  };
+  function azSoftwareCategoryIcon470(category){ return SOFTWARE_CATEGORY_ICONS_470[category] || '🧩'; }
+  function azSoftwareDirectoryCategoryNames470(){
+    const names = new Set();
+    softwareDynamicItems.forEach(item => { const c=String(item?.category || '').trim(); if(c) names.add(c); });
+    try{ getStaticCards().forEach(card => { const c=String(card?.dataset?.category || '').trim(); if(c) names.add(c); }); }catch(_e){}
+    const all = Array.from(names);
+    const core = SOFTWARE_CATEGORY_CORE_470.filter(c => names.has(c));
+    const extra = all.filter(c => !SOFTWARE_CATEGORY_CORE_470.includes(c)).sort((a,b)=>a.localeCompare(b));
+    return [...core, ...extra];
+  }
+  function syncSoftwareDirectoryCategories470(){
+    if(!categoryFilter) return;
+    const categories = azSoftwareDirectoryCategoryNames470();
+    categoryFilter.innerHTML = '';
+    const allBtn=document.createElement('button');
+    allBtn.className='software-category-btn' + (selectedSoftwareCategory==='all' ? ' is-active' : '');
+    allBtn.type='button'; allBtn.dataset.softwareCategory='all'; allBtn.textContent='▦ All Categories';
+    categoryFilter.appendChild(allBtn);
+    const visibleLimit=SOFTWARE_CATEGORY_CORE_470.length;
+    categories.forEach((category,index)=>{
+      const btn=document.createElement('button');
+      btn.className='software-category-btn' + (selectedSoftwareCategory===category ? ' is-active' : '');
+      btn.type='button'; btn.dataset.softwareCategory=category;
+      btn.textContent=azSoftwareCategoryIcon470(category)+' '+category;
+      btn.dataset.azDirectoryCategory='1';
+      if(!softwareCategoryExpanded470 && index>=visibleLimit) btn.hidden=true;
+      categoryFilter.appendChild(btn);
+    });
+    const hiddenCount=Math.max(0,categories.length-visibleLimit);
+    if(hiddenCount){
+      const toggle=document.createElement('button');
+      toggle.className='software-category-btn software-category-toggle-btn-470';
+      toggle.type='button'; toggle.dataset.softwareCategoryToggle='1';
+      toggle.textContent=softwareCategoryExpanded470 ? '− Show Fewer Categories' : `＋ Show ${hiddenCount} More Categories`;
+      categoryFilter.appendChild(toggle);
+    }
+    if(categoryInput){
+      const current=String(categoryInput.value||'');
+      const present=new Set(Array.from(categoryInput.options||[]).map(o=>o.value));
+      categories.forEach(category=>{
+        if(!present.has(category)){
+          const opt=document.createElement('option'); opt.value=category; opt.textContent=category; categoryInput.appendChild(opt);
+        }
+      });
+      if(current) categoryInput.value=current;
+    }
   }
   
   const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
@@ -3846,6 +3918,8 @@ function normalizeItem(item){
       ownerShare: item.ownerShare ?? item.commissionRate ?? '',
       platformShare: item.platformShare ?? '',
       commissionPolicy: item.commissionPolicy || '',
+      bundledDirectory: item.bundledDirectory === true || item.directorySource === 'AZOBSS bundled official directory',
+      directorySource: item.directorySource || '',
       createdAtMs: item.createdAtMs || (item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : (Number(item.createdAt) || 0)))
     };
   }
@@ -3906,6 +3980,8 @@ function normalizeItem(item){
       ownerShare: n.ownerShare || '',
       platformShare: n.platformShare || '',
       commissionPolicy: n.commissionPolicy || '',
+      bundledDirectory: !!n.bundledDirectory,
+      directorySource: n.directorySource || '',
       createdAtMs: n.createdAtMs || Date.now()
     };
   }
@@ -4421,8 +4497,9 @@ function normalizeItem(item){
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = item.badge ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
-    const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button><button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
-    const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : '<span class="download-text">Download Now</span>'}</a>`;
+    const bundledDeleteBtn470 = item.bundledDirectory ? '' : `<button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button>`;
+    const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="${item.bundledDirectory ? 'Edit by creating a Firestore override' : 'Edit software'}" aria-label="Edit">✏️</button>${bundledDeleteBtn470}<button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
+    const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : `<span class="download-text">${esc(item.buttonText || 'Download Now')}</span>`}</a>`;
     const promoFreeActionBtnHtml = `<button type="button" class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" aria-label="Claim free promotional download after login"><span class="download-text">🎁 Free Promo Download</span></button>`;
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
@@ -4445,6 +4522,36 @@ function normalizeItem(item){
     </div>`;
   }
   function loadLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]').map(normalizeItem); } catch(e){ return []; } }
+  async function loadBundledSoftwareDirectory470(){
+    try{
+      const response=await fetch(SOFTWARE_BUNDLED_DIRECTORY_URL_470,{cache:'no-store'});
+      if(!response.ok) throw new Error('HTTP '+response.status);
+      const payload=await response.json();
+      return normalizeImportedSoftwarePayload(payload).map(item=>normalizeItem({...item,bundledDirectory:true,directorySource:'AZOBSS bundled official directory'}));
+    }catch(err){
+      console.warn('AZOBSS bundled software directory load skipped:',err);
+      return [];
+    }
+  }
+  function azSoftwareItemKeys470(item){
+    return [
+      normalizeSoftwareKey(item?.productId || item?.id || ''),
+      normalizeSoftwareKey((item?.name||'')+'|'+(item?.downloadLink||item?.link||'')+'|'+(item?.category||''))
+    ].filter(Boolean);
+  }
+  function mergeSoftwareDirectorySources470(remoteItems,localItems,bundledItems){
+    const live=dedupeSoftwareItems([...(remoteItems||[]),...(localItems||[])]);
+    const seen=new Set();
+    live.forEach(item=>azSoftwareItemKeys470(item).forEach(k=>seen.add(k)));
+    const additions=[];
+    (bundledItems||[]).forEach(item=>{
+      const keys=azSoftwareItemKeys470(item);
+      if(keys.some(k=>seen.has(k))) return;
+      keys.forEach(k=>seen.add(k));
+      additions.push(item);
+    });
+    return dedupeSoftwareItems([...live,...additions]);
+  }
   async function loadFirestore(){
     try{
       const snap = await getDocs(query(collection(db, SOFTWARE_COLLECTION), orderBy('createdAt','desc')));
@@ -4764,10 +4871,12 @@ function normalizeItem(item){
 
     // Start both requests together, but do not block the first real card paint on stats.
     const statsPromise = azPrefetchSoftwareStatsForFirstPaint290();
-    const remoteItems = await loadFirestore();
+    const [remoteItems,bundledItems470] = await Promise.all([loadFirestore(),loadBundledSoftwareDirectory470()]);
     if(loadSequence !== azSoftwareLoadSequence463) return;
 
-    softwareDynamicItems = dedupeSoftwareItems([...remoteItems, ...loadLocal()]);
+    softwareBundledDirectoryItems470 = bundledItems470;
+    softwareDynamicItems = mergeSoftwareDirectorySources470(remoteItems,loadLocal(),bundledItems470);
+    syncSoftwareDirectoryCategories470();
     applySoftwareFilters();
     try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
 
@@ -4939,6 +5048,12 @@ function normalizeItem(item){
   searchInput?.addEventListener('input', applySoftwareFilters);
   sortSelect?.addEventListener('change', applySoftwareFilters);
   categoryFilter?.addEventListener('click', e => {
+    const toggle=e.target.closest('[data-software-category-toggle]');
+    if(toggle){
+      softwareCategoryExpanded470=!softwareCategoryExpanded470;
+      syncSoftwareDirectoryCategories470();
+      return;
+    }
     const btn = e.target.closest('[data-software-category]');
     if(!btn) return;
     selectedSoftwareCategory = btn.getAttribute('data-software-category') || 'all';
@@ -14226,6 +14341,14 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
   }
 }
 </style>
+
+<style id="azobss-software-official-directory-470-css">
+.software-directory-notice-470{max-width:1180px;margin:-4px auto 16px;padding:10px 14px;border:1px solid rgba(56,189,248,.24);border-radius:12px;background:rgba(14,116,144,.10);color:#bae6fd;font-size:12px;font-weight:750;line-height:1.45;text-align:center}
+.software-category-btn[hidden]{display:none!important}
+.software-category-toggle-btn-470{border-style:dashed!important;color:#86efac!important;background:rgba(34,197,94,.08)!important}
+@media(max-width:640px){.software-directory-notice-470{margin-top:-6px;font-size:11px;text-align:left}}
+</style>
+
 </body>
 </html>
 
