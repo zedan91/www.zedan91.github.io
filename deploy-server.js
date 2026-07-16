@@ -9299,7 +9299,11 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 3,
+          jupemStoreVersion: 4,
+          jupemSelectionReady: Boolean(
+            String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
+            String(process.env.JUPEM_EBIZ_PASSWORD || "")
+          ),
           port: PORT
         }, null, 2),
         "application/json"

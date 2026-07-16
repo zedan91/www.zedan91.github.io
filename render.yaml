@@ -18,6 +18,10 @@ services:
         value: "1"
       - key: AZOBSS_STRICT_JUPEM_TLS
         value: "0"
+      - key: JUPEM_EBIZ_USERNAME
+        sync: false
+      - key: JUPEM_EBIZ_PASSWORD
+        sync: false
       - key: AZOBSS_COMMISSION_API_SECRET
         sync: false
       - key: AZOBSS_ADMIN_API_SECRET
