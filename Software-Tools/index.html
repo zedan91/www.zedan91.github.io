@@ -3662,10 +3662,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     const label=document.createElement('span');
     label.className='software-category-label-473';
     label.textContent=(category==='all' ? '▦' : azSoftwareCategoryIcon470(category))+' '+(category==='all' ? 'All Categories' : category);
-    const badge=document.createElement('span');
-    badge.className='software-category-count-473';
-    badge.textContent=String(count || 0);
-    btn.append(label,badge);
+    btn.append(label);
     return btn;
   }
   function renderSoftwareQuickCategories473(stats){
@@ -3812,7 +3809,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     trigger.dataset.softwareGroupToggle=group.title;
     trigger.setAttribute('aria-haspopup','true');
     trigger.setAttribute('aria-expanded','false');
-    trigger.innerHTML=`<span class="software-category-group-label-475"><span aria-hidden="true">${group.icon}</span>${esc(group.title)}</span><span class="software-category-count-473">${azSoftwareGroupItemCount475(group,stats)}</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span>`;
+    trigger.innerHTML=`<span class="software-category-group-label-475"><span aria-hidden="true">${group.icon}</span>${esc(group.title)}</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span>`;
 
     const dropdown=document.createElement('div');
     dropdown.className='software-category-group-dropdown-475';
@@ -14667,6 +14664,7 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 </style>
 
 <!-- AZOBSS 475: Grouped hover category menus — group labels reveal their own subcategories -->
+<!-- AZOBSS 480: Removed category quantity badges from group buttons and dropdown category items -->
 </body>
 </html>
 

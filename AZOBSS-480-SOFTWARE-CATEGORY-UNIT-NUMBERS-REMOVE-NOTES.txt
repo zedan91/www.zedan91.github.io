@@ -1,0 +1,10 @@
+AZOBSS PATCH 480
+
+Change:
+- Removed the numeric software totals from all category group buttons.
+- Removed the numeric totals from every category item inside the hover dropdowns.
+- Removed the numeric total from All Categories.
+- Category filtering, hover dropdowns, fixed down arrows, platform filters, and all existing software data remain unchanged.
+
+No Firebase Rules update required.
+No Render redeploy required.
