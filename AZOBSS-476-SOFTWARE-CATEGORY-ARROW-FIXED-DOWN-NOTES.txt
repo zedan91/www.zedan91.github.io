@@ -1,0 +1,6 @@
+AZOBSS (476) Software Category Arrow Fixed Down
+
+- Based on stable baseline (475).
+- Category group dropdown arrow now always points downward.
+- Arrow no longer rotates or changes direction when the dropdown opens.
+- No Firebase Rules or Render backend update required.
