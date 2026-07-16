@@ -3542,6 +3542,19 @@ html body .downloads-section{
   let editingSoftwareProductId = null;
   let pendingSoftwareImportItems = [];
 
+  // AZOBSS 482: keep rendered software cards in a reusable DOM pool.
+  // Filtering 627 items now hides/shows existing nodes instead of destroying
+  // and rebuilding hundreds of complex cards on every category click.
+  let softwareDynamicDataRevision482 = 0;
+  let softwareDynamicPoolRevision482 = -1;
+  let softwareDynamicCardPool482 = new Map();
+  let softwareStatsSnapshot482 = null;
+  let softwareOwnerFilterRevision482 = -1;
+  let softwareDedupedRevision482 = -1;
+  let softwareDedupedItems482 = [];
+  let softwareCategoryStatsRevision482 = -1;
+  let softwareCategoryStatsCache482 = null;
+
   function clean(v){ return String(v || '').trim().toLowerCase(); }
 
   function normalizeSoftwareCategory(v){
@@ -3633,6 +3646,9 @@ html body .downloads-section{
   let softwareCategorySearch473 = '';
   function azSoftwareCategoryIcon470(category){ return SOFTWARE_CATEGORY_ICONS_470[category] || '🧩'; }
   function azSoftwareDirectoryCategoryStats473(){
+    if(softwareCategoryStatsRevision482 === softwareDynamicDataRevision482 && softwareCategoryStatsCache482){
+      return softwareCategoryStatsCache482;
+    }
     const counts = new Map();
     const seen = new Set();
     const add = (category, key) => {
@@ -3658,7 +3674,9 @@ html body .downloads-section{
     }catch(_e){}
     const categories = Array.from(counts.keys()).sort((a,b)=>a.localeCompare(b));
     const total = Array.from(counts.values()).reduce((sum,n)=>sum+n,0);
-    return { categories, counts, total };
+    softwareCategoryStatsRevision482 = softwareDynamicDataRevision482;
+    softwareCategoryStatsCache482 = { categories, counts, total };
+    return softwareCategoryStatsCache482;
   }
   function azSoftwareDirectoryCategoryNames470(){
     return azSoftwareDirectoryCategoryStats473().categories;
@@ -4333,7 +4351,7 @@ function normalizeItem(item){
     };
   }
   function statsForItem(item){
-    const stats = readSoftwareStats();
+    const stats = softwareStatsSnapshot482 || readSoftwareStats();
     const key = statsKeyFrom(item?.productId || item?.id || item?.name);
     const remote = stats[key] || {};
     const hasRemoteRating = remote && (remote.rating != null || remote.ratingAverage != null || remote.avgRating != null || remote.ratingVotes != null || remote.votes != null || remote.ratingCount != null);
@@ -4696,7 +4714,7 @@ function normalizeItem(item){
   function azStableDlSvg287(){return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></svg>';}
   function azStableFmt287(n){n=Number(n)||0;if(n>=1000000)return(n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';if(n>=1000)return(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'K';return String(Math.round(n));}
   function azStableStars287(avg){const filled=Math.round(Number(avg)||0);let out='<span class="azb-stars" role="radiogroup" aria-label="Rate this software" tabindex="0">';for(let i=1;i<=5;i++)out+='<button type="button" class="azb-star '+(i<=filled?'is-filled':'')+'" data-rate="'+i+'" aria-label="Rate '+i+' star" title="Rate '+i+' star">★</button>';return out+'</span>';}
-  function azStableStatsHtml287(item){const st=statsForItem(item)||{};const downloads=Number(st.downloads||item.downloads||0)||0;const rating=Number(st.rating||item.rating||0)||0;const votes=Number(st.ratingVotes||st.votes||item.ratingVotes||0)||0;const likes=Number(st.likes??item.likes??0)||0;return '<div class="software-stats" data-az-firstpaint-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge">'+azStableDlSvg287()+'</span><strong class="azb-dl-number">'+azStableFmt287(downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-stat-like" role="button" tabindex="0" title="Like this software" aria-label="Like this software"><span class="azb-like-heart">❤</span><strong class="azb-like-number">'+azStableFmt287(likes)+'</strong></span><span class="azb-rating-inner">'+azStableStars287(rating)+'<strong class="azb-rate-value">'+rating.toFixed(1)+'</strong><span class="azb-rate-votes">('+votes+')</span></span></span></div>';}
+  function azStableStatsHtml287(item,cachedStats){const st=cachedStats||statsForItem(item)||{};const downloads=Number(st.downloads||item.downloads||0)||0;const rating=Number(st.rating||item.rating||0)||0;const votes=Number(st.ratingVotes||st.votes||item.ratingVotes||0)||0;const likes=Number(st.likes??item.likes??0)||0;return '<div class="software-stats" data-az-firstpaint-stats="1"><span class="azb-stat-download"><span class="azb-dl-badge">'+azStableDlSvg287()+'</span><strong class="azb-dl-number">'+azStableFmt287(downloads)+'</strong></span><span class="azb-stat-rating"><span class="azb-stat-like" role="button" tabindex="0" title="Like this software" aria-label="Like this software"><span class="azb-like-heart">❤</span><strong class="azb-like-number">'+azStableFmt287(likes)+'</strong></span><span class="azb-rating-inner">'+azStableStars287(rating)+'<strong class="azb-rate-value">'+rating.toFixed(1)+'</strong><span class="azb-rate-votes">('+votes+')</span></span></span></div>';}
   function azStableLikeHtml287(item){const id=esc(item.productId||item.id||item.name||'software-item');return '<button type="button" class="az-item-like-btn" data-like-item-id="'+id+'" aria-label="Add bookmark" title="Add bookmark"><svg class="az-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></button>';}
   function azShareSvg287(){return '<svg class="az-lucky-share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.07.41-.07.62a2.91 2.91 0 1 0 2.91-2.9Z"></path></svg>';}
   function azStableShareHtml287(item,isPremium){
@@ -4709,6 +4727,7 @@ function normalizeItem(item){
   function azDescHtml287(item){const raw=String(item.desc||'');const safe=esc(raw);const more=raw.length>90?'<button type="button" class="azobss-sw-desc-more-097 az-desc-more-outside-322" data-azobss-full-desc-097="'+safe+'" aria-label="Read full description">More</button>':'';return '<div class="azobss-sw-desc-target-097 az-desc-stable-293 az-desc-text-only-322" role="paragraph" data-azobss-full-desc-097="'+safe+'"><span class="az-desc-copy-293">'+safe+'</span></div>'+more;}
 
   function renderItem(item){
+    const itemStats482 = statsForItem(item);
     const isPremium = item.type === 'premium';
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
     const usdBadge = isPremium ? azUsdBadge(item.price) : '';
@@ -4722,7 +4741,7 @@ function normalizeItem(item){
     const stableShareHtml = azStableShareHtml287(item, isPremium);
     const stablePreviewHtml = azStablePreviewHtml287(item);
     const stableWatchVideoHtml = item.demoVideoUrl ? `<div class="software-media-links az-watch-video-icon-below-share-466"><a class="software-media-demo az-watch-video-icon-btn-466" href="${esc(item.demoVideoUrl)}" target="_blank" rel="noopener" title="Watch Video" aria-label="Watch Video"><svg class="az-watch-video-play-icon-466" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.8v12.4c0 .8.9 1.3 1.6.8l9.2-6.2c.6-.4.6-1.3 0-1.7L9.6 5c-.7-.5-1.6 0-1.6.8Z"></path></svg></a></div>` : '';
-    const stableStatsHtml = azStableStatsHtml287(item);
+    const stableStatsHtml = azStableStatsHtml287(item,itemStats482);
     const descHtml = azDescHtml287(item);
     const mediaSrc = item.imageUrl || item.gifUrl;
     const logoSrc = azLogoSrcForItem(item);
@@ -4740,7 +4759,7 @@ function normalizeItem(item){
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
     const actionHtml = subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(statsForItem(item).views)}" data-downloads="${esc(statsForItem(item).downloads)}" data-rating="${esc(statsForItem(item).rating)}" data-rating-votes="${esc(statsForItem(item).ratingVotes || statsForItem(item).votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(statsForItem(item).likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
@@ -4988,12 +5007,68 @@ function normalizeItem(item){
   });
 
 
+  function azSoftwarePoolKey482(item){
+    return String(item?.productId || item?.id || item?.name || '').toLowerCase();
+  }
+
+  function rebuildSoftwareDynamicCardPool482(items){
+    grid.querySelectorAll('[data-admin-software="1"]').forEach(el => el.remove());
+    softwareDynamicCardPool482.clear();
+    if(items.length){
+      grid.insertAdjacentHTML('afterbegin', items.map(renderItem).join(''));
+      grid.querySelectorAll('[data-admin-software="1"]').forEach(card => {
+        const key=String(card.dataset.productId || card.dataset.name || '').toLowerCase();
+        if(key) softwareDynamicCardPool482.set(key,card);
+      });
+    }
+    softwareDynamicPoolRevision482 = softwareDynamicDataRevision482;
+  }
+
+  function refreshSoftwarePooledCardStats482(card,item){
+    if(!card || !item) return;
+    const st=statsForItem(item);
+    card.dataset.views=String(st.views||0);
+    card.dataset.downloads=String(st.downloads||0);
+    card.dataset.rating=String(st.rating||0);
+    card.dataset.ratingVotes=String(st.ratingVotes||st.votes||0);
+    card.dataset.likes=String(st.likes||0);
+    const current=card.querySelector('.software-stats');
+    if(current) current.outerHTML=azStableStatsHtml287(item,st);
+  }
+
+  function syncSoftwareDynamicCardVisibility482(visibleItems){
+    const visibleKeys=new Set(visibleItems.map(azSoftwarePoolKey482));
+    softwareDynamicCardPool482.forEach((card,key)=>{
+      const visible=visibleKeys.has(key);
+      card.dataset.azFilterHidden482=visible?'0':'1';
+      card.dataset.azPage='0';
+      if(visible) card.style.removeProperty('display');
+      else card.style.setProperty('display','none','important');
+    });
+
+    // Move only the selected cards into their sorted order. Hidden cards stay pooled
+    // in the DOM and are reused on the next category/platform/search selection.
+    const fragment=document.createDocumentFragment();
+    visibleItems.forEach(item=>{
+      const card=softwareDynamicCardPool482.get(azSoftwarePoolKey482(item));
+      if(card){
+        refreshSoftwarePooledCardStats482(card,item);
+        fragment.appendChild(card);
+      }
+    });
+    if(fragment.childNodes.length) grid.insertBefore(fragment,grid.firstChild);
+  }
+
     function applySoftwareFilters(){
     if(!grid) return;
-    refreshSoftwareOwnerAccountFilter();
+    softwareStatsSnapshot482 = readSoftwareStats();
+    if(softwareOwnerFilterRevision482 !== softwareDynamicDataRevision482){
+      refreshSoftwareOwnerAccountFilter();
+      softwareOwnerFilterRevision482 = softwareDynamicDataRevision482;
+    }
     const deletedStaticIds = getDeletedStaticIds();
     Array.from(grid.querySelectorAll('[data-software-static="1"]')).forEach(card => { if(deletedStaticIds.has(staticProductId(card))) card.style.display = 'none'; });
-    grid.querySelectorAll('[data-admin-software="1"], .software-empty-state').forEach(el => el.remove());
+    grid.querySelectorAll('.software-empty-state').forEach(el => el.remove());
     const keyword = clean(searchInput?.value || '');
     let sortMode = sortSelect?.value || 'newest';
     sortMode = String(sortMode).trim();
@@ -5019,7 +5094,14 @@ function normalizeItem(item){
       card.style.display = (selectedSoftwareOwnerFilter === 'mine' || isOverridden) ? 'none' : '';
     });
 
-    let dynamic = dedupeSoftwareItems([...softwareDynamicItems]).filter(item => isAdmin() || (item.status || 'active') === 'active');
+    if(softwareDedupedRevision482 !== softwareDynamicDataRevision482){
+      softwareDedupedItems482 = dedupeSoftwareItems([...softwareDynamicItems]);
+      softwareDedupedRevision482 = softwareDynamicDataRevision482;
+    }
+    let dynamic = softwareDedupedItems482.filter(item => isAdmin() || (item.status || 'active') === 'active');
+    if(softwareDynamicPoolRevision482 !== softwareDynamicDataRevision482 || softwareDynamicCardPool482.size !== dynamic.length){
+      rebuildSoftwareDynamicCardPool482(dynamic);
+    }
     if(selectedSoftwareOwnerFilter === 'mine'){
       dynamic = dynamic.filter(item => azIsOwnSoftwareItemStrict(item));
     }
@@ -5069,9 +5151,7 @@ function normalizeItem(item){
       return (b.createdAtMs || 0) - (a.createdAtMs || 0);
     });
 
-    if(dynamic.length){
-      grid.insertAdjacentHTML('afterbegin', dynamic.map(renderItem).join(''));
-    }
+    syncSoftwareDynamicCardVisibility482(dynamic);
 
     // Sort static cards visually too, so dropdown affects ALL cards, not only Firebase/admin items.
     const staticTypeRank = card => String(card.dataset.type || 'free').toLowerCase() === 'premium' ? 1 : 0;
@@ -5093,8 +5173,8 @@ function normalizeItem(item){
     sortedStatic.forEach(card => grid.appendChild(card));
 
     syncStaticAdminButtons();
-    saveFastSoftwareCardHtml464();
     grid.removeAttribute('data-az-fast-cache');
+    softwareStatsSnapshot482 = null;
     const hasVisibleStatic = selectedSoftwareOwnerFilter === 'mine' ? false : staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
       grid.insertAdjacentHTML('beforeend', '<div class="software-empty-state">No software item found. Jika filter My Software aktif, hanya software yang ditambah selepas owner auto-set akan muncul. Item lama tanpa owner tidak akan muncul; edit & save sekali untuk assign owner.</div>');
@@ -5112,6 +5192,8 @@ function normalizeItem(item){
 
     softwareBundledDirectoryItems470 = bundledItems470;
     softwareDynamicItems = mergeSoftwareDirectorySources470(remoteItems,loadLocal(),bundledItems470);
+    softwareDynamicDataRevision482++;
+    softwareCategoryStatsCache482 = null;
     syncSoftwareDirectoryCategories470();
     applySoftwareFilters();
     try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
@@ -6477,6 +6559,12 @@ line-height:1.6;
 }
 .commission-policy-card .title{font-weight:800;color:#facc15;margin-bottom:8px}
 .commission-policy-card .row{margin:4px 0}
+
+  /* AZOBSS 482 performance: off-screen pooled cards skip paint/layout work. */
+  #softwareDownloadsGrid > .download-card[data-admin-software="1"]{
+    content-visibility:auto;
+    contain-intrinsic-size:430px;
+  }
 </style>
 <script id="azobss-pagination-8-final-js">
 (function(){
@@ -6516,7 +6604,7 @@ line-height:1.6;
     cards.forEach(card => {
       if(card.dataset.azPage === '1'){
         card.dataset.azPage = '0';
-        if(!card.classList.contains('az-shared-product-hidden') && card.dataset.azSharedHidden !== '1'){
+        if(card.dataset.azFilterHidden482 !== '1' && !card.classList.contains('az-shared-product-hidden') && card.dataset.azSharedHidden !== '1'){
           card.style.removeProperty('display');
         }
       }
@@ -6524,12 +6612,16 @@ line-height:1.6;
   }
 
   function cardIsFilterVisible(card){
+    if(card.dataset.azFilterHidden482 === '1') return false;
     if(card.classList.contains('az-shared-product-hidden') || card.dataset.azSharedHidden === '1') return false;
     if(card.dataset.azPage === '1') return true;
     if(card.hidden) return false;
     if(card.classList.contains('software-empty-state')) return false;
     const inline = (card.getAttribute('style') || '').toLowerCase();
     if(/display\s*:\s*none/.test(inline)) return false;
+    // Dynamic directory cards use explicit inline visibility, so avoid hundreds
+    // of forced getComputedStyle/layout reads on every category selection.
+    if(card.dataset.adminSoftware === '1') return true;
     const cs = window.getComputedStyle(card);
     return cs.display !== 'none' && cs.visibility !== 'hidden';
   }
