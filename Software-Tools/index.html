@@ -14888,6 +14888,37 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 <!-- AZOBSS 483: Instant grouped dropdown + lightweight category selection performance fix -->
 <!-- AZOBSS 475: Grouped hover category menus — group labels reveal their own subcategories -->
 <!-- AZOBSS 480: Removed category quantity badges from group buttons and dropdown category items -->
+
+
+<!-- AZOBSS 489: Keep hovered category dropdown above sibling group buttons and software cards -->
+<style id="azobss-software-category-dropdown-front-layer-fix-489">
+/* The dropdown is nested inside one flex item. During CSS-only hover the wrapper did
+   not receive .is-open, so later category buttons were painted above it. */
+html body .software-category-card{
+  position:relative!important;
+  z-index:300!important;
+  overflow:visible!important;
+}
+html body #softwareCategoryFilter,
+html body .software-category-group-nav-475{
+  position:relative!important;
+  overflow:visible!important;
+}
+html body .software-category-group-wrap-475:hover,
+html body .software-category-group-wrap-475:focus-within,
+html body .software-category-group-wrap-475.is-open{
+  z-index:500!important;
+}
+html body .software-category-group-dropdown-475{
+  z-index:501!important;
+}
+html body #softwareDownloadsGrid,
+html body .downloads-grid{
+  position:relative!important;
+  z-index:1!important;
+}
+</style>
+
 </body>
 </html>
 

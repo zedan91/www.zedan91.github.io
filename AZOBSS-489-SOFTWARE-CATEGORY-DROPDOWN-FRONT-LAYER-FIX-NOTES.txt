@@ -1,0 +1,12 @@
+AZOBSS 489 - Software Category Dropdown Front Layer Fix
+
+Baseline: (488)-AZOBSS-SOFTWARE-DROPDOWN-FILTER-INSTANT-PERFORMANCE-FIX_20260717.zip
+
+Fixes:
+- Hovered category wrapper now gets a higher stacking layer even without the JavaScript is-open class.
+- Dropdown appears above category buttons on the next row.
+- Category card remains above software cards while the dropdown is open.
+- Sticky top navigation remains above the category dropdown.
+
+Firebase Rules: No update required.
+Render backend: No deploy required.
