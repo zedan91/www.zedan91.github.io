@@ -1,0 +1,15 @@
+AZOBSS 484 - SOFTWARE HOVER DROPDOWN RESTORE
+
+Baseline: (483)-AZOBSS-SOFTWARE-INSTANT-CATEGORY-DROPDOWN-NO-DELAY-FIX_20260717.zip
+
+Fixes:
+- Restores category group dropdowns that did not appear on mouse hover.
+- Corrects CSS conflict where the dropdown remained display:none even when is-open was applied.
+- Adds a CSS :hover fallback, so the dropdown works even if JavaScript hover detection is unavailable.
+- Removes dependency on (hover:hover) and (pointer:fine), which can be false on Windows PCs with touch-capable hardware.
+- Keeps the dropdown arrow permanently pointing downward.
+- Opens and closes immediately without animation delay.
+- Adds a 1px trigger/dropdown overlap to prevent a hover gap.
+
+No Firebase Rules update required.
+No Render backend deployment required.
