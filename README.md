@@ -80,3 +80,10 @@ Render backend does not need redeploy.
 
 ## Patch (486)
 - Removed the third-party software informational notice card above the software grid.
+
+## Patch (490)
+- Desktop category group dropdowns now open only when the cursor hovers over the group button.
+- Normal mouse clicks no longer toggle or lock a dropdown open.
+- Tap-to-open remains available on phones, tablets and coarse-pointer devices.
+- Keyboard focus remains supported.
+- Frontend only; no Firebase Rules or Render backend changes.

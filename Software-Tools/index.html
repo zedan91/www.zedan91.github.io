@@ -3961,18 +3961,31 @@ html body .downloads-section{
     dropdown.append(head,grid);
     wrap.append(trigger,dropdown);
 
-    // Open on every real mouse hover. Do not depend on the primary-pointer
-    // media query because some Windows PCs with touch support report a
-    // coarse primary pointer even while the user is using a mouse.
-    // Desktop hover is handled purely by CSS to avoid JavaScript/layout work on every pointer movement.
-    wrap.addEventListener('focusin',()=>setSoftwareCategoryGroupOpen475(wrap,true));
+    // Desktop uses hover only. Click/tap toggling is reserved for touch or
+    // coarse-pointer devices so a normal mouse click does not reopen/lock
+    // the dropdown after the cursor has already left the group button.
+    const categoryTouchMode475 = () => window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    wrap.addEventListener('focusin',()=>{
+      // Keep keyboard accessibility without treating a mouse click focus as
+      // a command to open the menu on desktop.
+      if(categoryTouchMode475() || trigger.matches(':focus-visible')){
+        setSoftwareCategoryGroupOpen475(wrap,true);
+      }
+    });
     wrap.addEventListener('focusout',event=>{
       if(!wrap.contains(event.relatedTarget)) setSoftwareCategoryGroupOpen475(wrap,false);
     });
     trigger.addEventListener('click',event=>{
       event.preventDefault();
       event.stopPropagation();
-      setSoftwareCategoryGroupOpen475(wrap,!wrap.classList.contains('is-open'));
+      if(categoryTouchMode475()){
+        setSoftwareCategoryGroupOpen475(wrap,!wrap.classList.contains('is-open'));
+      }else{
+        // Mouse desktop: dropdown is hover-only. Remove any stale JS-open
+        // state left from an earlier touch/click interaction.
+        setSoftwareCategoryGroupOpen475(wrap,false);
+        trigger.blur();
+      }
     });
     return wrap;
   }
@@ -14890,6 +14903,7 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 <!-- AZOBSS 480: Removed category quantity badges from group buttons and dropdown category items -->
 
 
+<!-- AZOBSS 490: Desktop category groups open by cursor hover only; click/tap toggle remains for touch devices -->
 <!-- AZOBSS 489: Keep hovered category dropdown above sibling group buttons and software cards -->
 <style id="azobss-software-category-dropdown-front-layer-fix-489">
 /* The dropdown is nested inside one flex item. During CSS-only hover the wrapper did
