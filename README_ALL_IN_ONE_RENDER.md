@@ -53,3 +53,6 @@ Render backend does not need redeploy.
 - Preview now sits on the left side of Share on Software/CAD product cards.
 - Bookmark, Share and Preview controls are slightly smaller and aligned more compactly.
 - No backend, payment or Firebase Rules changes.
+
+## Patch (486)
+- Removed the third-party software informational notice card above the software grid.

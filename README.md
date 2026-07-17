@@ -77,3 +77,6 @@ Render backend does not need redeploy.
 - Guest clicks show Login/Register prompt and do not reduce the free unit quota.
 - Fast-card cache key bumped to v464 to discard old cached cards containing the previous direct link.
 - No Firebase Rules or Render redeploy is required for this frontend patch.
+
+## Patch (486)
+- Removed the third-party software informational notice card above the software grid.
