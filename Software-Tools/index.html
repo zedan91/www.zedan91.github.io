@@ -3989,7 +3989,6 @@ html body .downloads-section{
 
     const nav=document.createElement('div');
     nav.className='software-category-group-nav-475';
-    nav.appendChild(azCategoryButton473('all',stats.total,selectedSoftwareCategory==='all','software-category-all-btn-475'));
     groups.forEach(group=>nav.appendChild(createSoftwareCategoryGroup475(group,stats,selectedGroup)));
     categoryFilter.appendChild(nav);
 
@@ -5487,7 +5486,10 @@ function normalizeItem(item){
     }
     const btn = e.target.closest('[data-software-category]');
     if(!btn) return;
-    selectSoftwareCategory473(btn.getAttribute('data-software-category') || 'all');
+    const clickedCategory = btn.getAttribute('data-software-category') || 'all';
+    // With the separate “All Categories” button removed, clicking the
+    // currently active category again returns the list to all software.
+    selectSoftwareCategory473(clickedCategory === selectedSoftwareCategory ? 'all' : clickedCategory);
   });
 
 
