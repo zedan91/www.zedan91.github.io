@@ -4990,7 +4990,7 @@ function normalizeItem(item){
       ${promoPriceHtml}
       ${promoFreeHtml}
       ${promoFreeNormalPriceHtml}
-      <div class="az-card-bottom-actions-497">${moreHtml497}${actionHtml}</div>
+      <div class="az-card-bottom-actions-498">${moreHtml497}${actionHtml}</div>
       ${adminEdit}
       ${stableStatsHtml}
     </div>`;
@@ -15055,6 +15055,89 @@ html body .software-category-group-option-475{
   /* Prevent old direct-child pin rules from reserving another fake CTA area. */
   html body .download-card > .az-card-bottom-actions-497 + .software-card-admin-actions{
     margin-top:0!important;
+  }
+}
+</style>
+
+
+<!-- AZOBSS 498: Correct CTA flex order after 497 wrapper regression -->
+<style id="azobss-software-cta-correct-flex-order-fix-498">
+/* Root cause of 497 regression:
+   the card is a flex column and its existing children use positive order values.
+   The new 497 wrapper had the default order:0, so the whole More/CTA block was
+   moved above the logo, title and description. This replacement wrapper is
+   explicitly placed after content/promo (order 90) and before admin/stats. */
+html body #softwareGrid > .download-card,
+html body #softwareDownloadsGrid > .download-card,
+html body .downloads-grid > .download-card{
+  padding-bottom:0!important;
+}
+html body .download-card > .az-card-bottom-actions-498{
+  order:90!important;
+  width:100%!important;
+  min-width:0!important;
+  margin-top:auto!important;
+  margin-bottom:0!important;
+  padding:6px 0 10px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:7px!important;
+  flex:0 0 auto!important;
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  z-index:20!important;
+  box-sizing:border-box!important;
+}
+html body .download-card > .az-card-bottom-actions-498 > .az-desc-more-outside-322{
+  order:1!important;
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  margin:0!important;
+  flex:0 0 auto!important;
+}
+html body .download-card > .az-card-bottom-actions-498 > .download-btn,
+html body .download-card > .az-card-bottom-actions-498 > .az-software-buy-cart-row,
+html body .download-card > .az-card-bottom-actions-498 > .az-subscription-card-box{
+  order:2!important;
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  margin:0!important;
+  flex:0 0 auto!important;
+}
+html body .download-card > .az-card-bottom-actions-498 > .download-btn{
+  width:min(238px,92%)!important;
+  max-width:92%!important;
+}
+html body .download-card > .az-card-bottom-actions-498 > .az-software-buy-cart-row{
+  width:min(252px,94%)!important;
+  max-width:94%!important;
+}
+html body .download-card > .software-card-admin-actions{
+  order:95!important;
+  flex:0 0 auto!important;
+}
+html body .download-card > .software-stats{
+  order:100!important;
+}
+@media(max-width:760px){
+  html body .download-card > .az-card-bottom-actions-498{
+    order:90!important;
+    width:100%!important;
+    margin-top:auto!important;
+    padding:6px 0 10px!important;
+  }
+  html body .download-card > .az-card-bottom-actions-498 > .download-btn{
+    width:min(210px,72%)!important;
+    max-width:210px!important;
+  }
+  html body .download-card > .az-card-bottom-actions-498 > .az-software-buy-cart-row{
+    width:min(235px,82%)!important;
+    max-width:235px!important;
   }
 }
 </style>
