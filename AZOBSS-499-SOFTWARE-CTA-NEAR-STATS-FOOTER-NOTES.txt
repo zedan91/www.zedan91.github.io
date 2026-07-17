@@ -1,0 +1,7 @@
+AZOBSS 499
+- Base: 498
+- Docks the complete More + CTA wrapper directly above the statistics/rating footer on desktop.
+- Covers Download Now, Buy Now + Cart, Free Promo Download and subscription CTA.
+- Removes the visible empty gap and prevents overlap with the footer.
+- Mobile layout remains unchanged.
+- No Firebase Rules or Render update required.

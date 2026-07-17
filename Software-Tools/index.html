@@ -15141,6 +15141,86 @@ html body .download-card > .software-stats{
   }
 }
 </style>
+
+
+<!-- AZOBSS 499: CTA truly docked immediately above rating/statistics footer -->
+<style id="azobss-software-cta-near-stats-footer-fix-499">
+/* 498 fixed the flex order, but the action wrapper remained in normal flex flow
+   while the statistics footer is absolutely positioned. That produced a visible
+   empty gap on real cards and could also let the CTA overlap the footer.
+   Dock the complete More + CTA block at a measured position directly above the
+   47px footer. This applies to Download Now, Buy Now + Cart and Free Promo Download. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    position:relative!important;
+    padding-bottom:0!important;
+  }
+
+  html body #softwareGrid > .download-card > .az-card-bottom-actions-498,
+  html body #softwareDownloadsGrid > .download-card > .az-card-bottom-actions-498,
+  html body .downloads-grid > .download-card > .az-card-bottom-actions-498{
+    position:absolute!important;
+    left:0!important;
+    right:0!important;
+    top:auto!important;
+    bottom:52px!important;
+    width:100%!important;
+    min-width:0!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:5px!important;
+    transform:none!important;
+    z-index:82!important;
+    box-sizing:border-box!important;
+  }
+
+  html body #softwareGrid > .download-card > .az-card-bottom-actions-498 > .az-desc-more-outside-322,
+  html body #softwareDownloadsGrid > .download-card > .az-card-bottom-actions-498 > .az-desc-more-outside-322,
+  html body .downloads-grid > .download-card > .az-card-bottom-actions-498 > .az-desc-more-outside-322{
+    position:static!important;
+    inset:auto!important;
+    transform:none!important;
+    margin:0!important;
+    flex:0 0 auto!important;
+  }
+
+  html body #softwareGrid > .download-card > .az-card-bottom-actions-498 > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .az-card-bottom-actions-498 > .download-btn,
+  html body .downloads-grid > .download-card > .az-card-bottom-actions-498 > .download-btn,
+  html body #softwareGrid > .download-card > .az-card-bottom-actions-498 > .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card > .az-card-bottom-actions-498 > .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card > .az-card-bottom-actions-498 > .az-software-buy-cart-row,
+  html body #softwareGrid > .download-card > .az-card-bottom-actions-498 > .az-subscription-card-box,
+  html body #softwareDownloadsGrid > .download-card > .az-card-bottom-actions-498 > .az-subscription-card-box,
+  html body .downloads-grid > .download-card > .az-card-bottom-actions-498 > .az-subscription-card-box{
+    position:static!important;
+    inset:auto!important;
+    transform:none!important;
+    margin:0!important;
+    flex:0 0 auto!important;
+  }
+
+  html body #softwareGrid > .download-card > .software-stats,
+  html body #softwareDownloadsGrid > .download-card > .software-stats,
+  html body .downloads-grid > .download-card > .software-stats{
+    position:absolute!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    top:auto!important;
+    margin:0!important;
+    z-index:80!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
