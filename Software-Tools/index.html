@@ -3225,24 +3225,41 @@ html body .downloads-section{
       <input type="hidden" id="softwareAdminPromoFreeBatchId" value="">
       <label>Software Category
         <select id="softwareAdminCategory">
-          <option value="Antivirus">Antivirus</option>
+<option value="System Utilities & Maintenance">System Utilities & Maintenance</option>
+<option value="Hardware & Benchmark">Hardware & Benchmark</option>
 <option value="Backup & Recovery">Backup & Recovery</option>
-<option value="Burning">Burning</option>
-<option value="Compression">Compression</option>
+<option value="Disk & Partition">Disk & Partition</option>
 <option value="Data Recovery">Data Recovery</option>
-<option value="Ebook">Ebook</option>
-<option value="Emulators">Emulators</option>
-<option value="General Tools">General Tools</option>
-<option value="Graphic Design">Graphic Design</option>
-<option value="Internet">Internet</option>
-<option value="Media Tools">Media Tools</option>
-<option value="Office Tools">Office Tools</option>
+<option value="Compression">Compression</option>
+<option value="Burning">Burning</option>
 <option value="Operating System">Operating System</option>
-<option value="Remote Tools">Remote Tools</option>
-<option value="Live Streaming Tools">Live Streaming Tools</option>
-<option value="Security">Security</option>
-<option value="System Utilities">System Utilities</option>
-<option value="Video Downloaders">Video Downloaders</option>
+<option value="Internet & Browsers">Internet & Browsers</option>
+<option value="Communication & Email">Communication & Email</option>
+<option value="Downloads & Torrents">Downloads & Torrents</option>
+<option value="Remote Access & Server">Remote Access & Server</option>
+<option value="Network Tools">Network Tools</option>
+<option value="File & Cloud Management">File & Cloud Management</option>
+<option value="Design & Typography">Design & Typography</option>
+<option value="Audio, Video & Media">Audio, Video & Media</option>
+<option value="Productivity & Office">Productivity & Office</option>
+<option value="PDF, OCR & Scanning">PDF, OCR & Scanning</option>
+<option value="Automation & Macros">Automation & Macros</option>
+<option value="Education & Reference">Education & Reference</option>
+<option value="Developer Tools">Developer Tools</option>
+<option value="Web & Database">Web & Database</option>
+<option value="Terminal & Shell">Terminal & Shell</option>
+<option value="Runtimes & Packages">Runtimes & Packages</option>
+<option value="Virtualization & Containers">Virtualization & Containers</option>
+<option value="AI & Local Models">AI & Local Models</option>
+<option value="Android & Mobile Tools">Android & Mobile Tools</option>
+<option value="Security & Antivirus">Security & Antivirus</option>
+<option value="Privacy & Passwords">Privacy & Passwords</option>
+<option value="CAD, Engineering & 3D Printing">CAD, Engineering & 3D Printing</option>
+<option value="GIS & Mapping">GIS & Mapping</option>
+<option value="Science & Statistics">Science & Statistics</option>
+<option value="Accessibility">Accessibility</option>
+<option value="Games & Emulators">Games & Emulators</option>
+<option value="Finance & Accounting">Finance & Accounting</option>
         </select>
       </label>
       <div class="software-admin-row">
@@ -3458,7 +3475,7 @@ html body .downloads-section{
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
   const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v464';
-  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=471';
+  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=485';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -3570,10 +3587,74 @@ html body .downloads-section{
       .replace(/\s+/g, '');
   }
 
+  const SOFTWARE_CATEGORY_MERGE_MAP_485 = Object.freeze({
+    'Internet':'Internet & Browsers',
+    'Web Browsers':'Internet & Browsers',
+    'Messaging & Meetings':'Communication & Email',
+    'Email Clients':'Communication & Email',
+    'Backup & Imaging':'Backup & Recovery',
+    'System Utilities':'System Utilities & Maintenance',
+    'Drivers & Device Tools':'System Utilities & Maintenance',
+    'Uninstallers & Cleanup':'System Utilities & Maintenance',
+    'System Rescue':'System Utilities & Maintenance',
+    'Search & Launchers':'System Utilities & Maintenance',
+    'Benchmark & Monitoring':'Hardware & Benchmark',
+    'Benchmark & Testing':'Hardware & Benchmark',
+    'Hardware Monitoring':'Hardware & Benchmark',
+    'Download Managers':'Downloads & Torrents',
+    'Video Downloaders':'Downloads & Torrents',
+    'Torrent Clients':'Downloads & Torrents',
+    'Remote Tools':'Remote Access & Server',
+    'Remote & Server Admin':'Remote Access & Server',
+    'Media Tools':'Audio, Video & Media',
+    'Video Editing':'Audio, Video & Media',
+    'Audio Production':'Audio, Video & Media',
+    'Screen Capture & Recording':'Audio, Video & Media',
+    'Screen Capture':'Audio, Video & Media',
+    'Live Streaming Tools':'Audio, Video & Media',
+    'Graphic Design':'Design & Typography',
+    'Fonts & Typography':'Design & Typography',
+    'Office Tools':'Productivity & Office',
+    'General Tools':'Productivity & Office',
+    'Project & Tasks':'Productivity & Office',
+    'Notes & Knowledge':'Productivity & Office',
+    'PDF Tools':'PDF, OCR & Scanning',
+    'OCR & Scanning':'PDF, OCR & Scanning',
+    'Automation':'Automation & Macros',
+    'Ebook':'Education & Reference',
+    'Ebooks & Reference':'Education & Reference',
+    'Education':'Education & Reference',
+    'Code Editors & IDE':'Developer Tools',
+    'Version Control':'Developer Tools',
+    'Web & Server':'Web & Database',
+    'Database Tools':'Web & Database',
+    'Terminal & SSH':'Terminal & Shell',
+    'Runtimes & SDKs':'Runtimes & Packages',
+    'Package Managers':'Runtimes & Packages',
+    'Cloud Storage & Sync':'File & Cloud Management',
+    'File Transfer':'File & Cloud Management',
+    'File Managers':'File & Cloud Management',
+    'Antivirus':'Security & Antivirus',
+    'Security':'Security & Antivirus',
+    'Privacy & VPN':'Privacy & Passwords',
+    'Password Managers':'Privacy & Passwords',
+    'CAD & Engineering':'CAD, Engineering & 3D Printing',
+    '3D Printing':'CAD, Engineering & 3D Printing',
+    'Games & Launchers':'Games & Emulators',
+    'Emulators':'Games & Emulators'
+  });
+  const SOFTWARE_CATEGORY_MERGE_KEYS_485 = new Map(
+    Object.entries(SOFTWARE_CATEGORY_MERGE_MAP_485).map(([from,to])=>[normalizeSoftwareCategory(from),to])
+  );
+  function canonicalSoftwareCategory485(value){
+    const raw=String(value || '').trim() || 'Productivity & Office';
+    return SOFTWARE_CATEGORY_MERGE_MAP_485[raw] || SOFTWARE_CATEGORY_MERGE_KEYS_485.get(normalizeSoftwareCategory(raw)) || raw;
+  }
+
   function softwareCategoryMatches(value, selected){
-    const s = normalizeSoftwareCategory(selected);
+    const s = normalizeSoftwareCategory(canonicalSoftwareCategory485(selected));
     if(!s || s === 'all' || s === 'allcategories') return true;
-    const v = normalizeSoftwareCategory(value || 'General Tools');
+    const v = normalizeSoftwareCategory(canonicalSoftwareCategory485(value || 'Productivity & Office'));
     if(v === s) return true;
     if(v + 's' === s || v === s + 's') return true;
     const aliases = {
@@ -3595,41 +3676,44 @@ html body .downloads-section{
   }
 
   const SOFTWARE_CATEGORY_POPULAR_473 = [
-    'System Utilities','Antivirus','Office Tools','Graphic Design','Media Tools','Internet',
-    'Backup & Recovery','Data Recovery','Remote Tools','Operating System','Compression'
+    'System Utilities & Maintenance','Security & Antivirus','Productivity & Office','Design & Typography',
+    'Audio, Video & Media','Internet & Browsers','Backup & Recovery','Data Recovery',
+    'Remote Access & Server','Operating System','Compression'
   ];
   const SOFTWARE_CATEGORY_GROUPS_473 = [
     { title:'System & Maintenance', icon:'⚙️', categories:[
-      'System Utilities','Drivers & Device Tools','Disk & Partition','Hardware Monitoring','Uninstallers & Cleanup',
-      'System Rescue','Backup & Recovery','Backup & Imaging','Data Recovery','Benchmark & Testing','Burning',
-      'Compression','File Managers','Search & Launchers'
+      'System Utilities & Maintenance','Hardware & Benchmark','Backup & Recovery','Disk & Partition',
+      'Data Recovery','Compression','Burning','Operating System'
     ]},
     { title:'Internet & Communication', icon:'🌐', categories:[
-      'Internet','Web Browsers','Messaging & Meetings','Email Clients','Download Managers','Video Downloaders',
-      'Remote Tools','Remote & Server Admin','Network Tools','Cloud Storage & Sync','File Transfer','Torrent Clients'
+      'Internet & Browsers','Communication & Email','Downloads & Torrents','Remote Access & Server',
+      'Network Tools','File & Cloud Management'
     ]},
     { title:'Creative & Media', icon:'🎨', categories:[
-      'Graphic Design','Media Tools','Video Editing','Audio Production','Screen Capture & Recording',
-      'Screen Capture','Fonts & Typography','Live Streaming Tools'
+      'Design & Typography','Audio, Video & Media'
     ]},
     { title:'Business & Productivity', icon:'📚', categories:[
-      'Office Tools','PDF Tools','Project & Tasks','Notes & Knowledge','OCR & Scanning','Automation & Macros',
-      'Automation','Ebook','Ebooks & Reference','General Tools'
+      'Productivity & Office','PDF, OCR & Scanning','Automation & Macros','Education & Reference'
     ]},
     { title:'Developer & Technical', icon:'🧑‍💻', categories:[
-      'Developer Tools','Database Tools','Web & Server','Terminal & Shell','Terminal & SSH','Runtimes & SDKs',
-      'Package Managers','Virtualization & Containers','AI & Local Models','Android & Mobile Tools',
-      'Code Editors & IDE','Version Control'
+      'Developer Tools','Web & Database','Terminal & Shell','Runtimes & Packages',
+      'Virtualization & Containers','AI & Local Models','Android & Mobile Tools'
     ]},
     { title:'Security & Privacy', icon:'🔐', categories:[
-      'Antivirus','Security','Privacy & VPN','Password Managers'
+      'Security & Antivirus','Privacy & Passwords'
     ]},
     { title:'Engineering & Specialist', icon:'🧭', categories:[
-      'CAD & Engineering','GIS & Mapping','3D Printing','Science & Statistics','Accessibility','Education',
-      'Operating System','Emulators','Games & Launchers','Finance & Accounting'
+      'CAD, Engineering & 3D Printing','GIS & Mapping','Science & Statistics','Accessibility',
+      'Games & Emulators','Finance & Accounting'
     ]}
   ];
   const SOFTWARE_CATEGORY_ICONS_470 = {
+    'System Utilities & Maintenance':'⚙️','Hardware & Benchmark':'📊','Internet & Browsers':'🌐',
+    'Communication & Email':'💬','Downloads & Torrents':'⬇️','Remote Access & Server':'🖥️',
+    'File & Cloud Management':'☁️','Design & Typography':'🎨','Audio, Video & Media':'🎬',
+    'Productivity & Office':'📄','PDF, OCR & Scanning':'📕','Education & Reference':'📚',
+    'Web & Database':'🗄️','Runtimes & Packages':'🧩','Security & Antivirus':'🛡️',
+    'Privacy & Passwords':'🔐','CAD, Engineering & 3D Printing':'📐','Games & Emulators':'🎮',
     'Antivirus':'🛡️','Backup & Recovery':'💾','Backup & Imaging':'💾','Burning':'🔥','Graphic Design':'🎨','Emulators':'🎮','Internet':'🌐',
     'Media Tools':'🎬','Office Tools':'📄','Data Recovery':'♻️','Security':'🔐','Operating System':'💻',
     'System Utilities':'⚙️','Compression':'📦','Ebook':'📚','Ebooks & Reference':'📚','General Tools':'🧰','Video Downloaders':'⬇️',
@@ -3656,7 +3740,7 @@ html body .downloads-section{
     const counts = new Map();
     const seen = new Set();
     const add = (category, key) => {
-      const c = String(category || '').trim();
+      const c = canonicalSoftwareCategory485(category);
       if(!c) return;
       const unique = String(key || c).trim().toLowerCase();
       if(seen.has(unique)) return;
@@ -4155,7 +4239,7 @@ function normalizeItem(item){
       promoFreeUnits: azPromoFreeLimit(item),
       promoFreeBatchId: String(item.promoFreeBatchId || item.promoBatchId || item.promoFreeStartedAtMs || '').trim(),
       promoFreeStartedAtMs: Number(item.promoFreeStartedAtMs || item.promoFreeStartAtMs || 0),
-      category: item.category || item.softwareCategory || 'Tools',
+      category: canonicalSoftwareCategory485(item.category || item.softwareCategory || 'Productivity & Office'),
       productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
       replacesProductId: item.replacesProductId || item.oldProductId || '',
       status: item.status || 'active',
