@@ -87,3 +87,10 @@ Render backend does not need redeploy.
 - Tap-to-open remains available on phones, tablets and coarse-pointer devices.
 - Keyboard focus remains supported.
 - Frontend only; no Firebase Rules or Render backend changes.
+
+## Patch 491 - True Virtual Pagination Performance
+- Only 8 software cards are inserted into the live DOM at one time.
+- The full directory remains as JavaScript data for filtering and sorting.
+- Prevents loading/rendering hundreds of hidden logos and complex cards.
+- Replaces the old DOM-scanning pagination with data-based pagination.
+- Category hover and filter clicks remain responsive even with 627 items.

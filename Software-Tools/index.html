@@ -3475,7 +3475,7 @@ html body .downloads-section{
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
   const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v464';
-  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=485';
+  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=491';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -3571,6 +3571,83 @@ html body .downloads-section{
   let softwareDedupedItems482 = [];
   let softwareCategoryStatsRevision482 = -1;
   let softwareCategoryStatsCache482 = null;
+
+  // AZOBSS 491: true virtual pagination. Only the current 8 cards exist in
+  // the live DOM. The full directory stays as lightweight JavaScript data.
+  // This removes the main source of lag: 627 complex cards, images, shadows,
+  // observers and hidden elements being processed on every hover/filter.
+  const SOFTWARE_VIRTUAL_PER_PAGE_491 = 8;
+  let softwareVirtualVisibleItems491 = [];
+  let softwareVirtualPage491 = 1;
+  let softwareVirtualSignature491 = '';
+
+  function ensureSoftwareVirtualPagination491(){
+    let controls=document.getElementById('softwarePagination');
+    if(!controls){
+      controls=document.createElement('div');
+      controls.id='softwarePagination';
+      controls.className='az-pagination-final';
+      controls.setAttribute('aria-label','Software pagination');
+    }
+    if(grid && controls.previousElementSibling!==grid) grid.insertAdjacentElement('afterend',controls);
+    return controls;
+  }
+
+  function softwareVirtualPages491(total,current){
+    const out=[];
+    for(let i=1;i<=total;i++){
+      if(i===1 || i===total || Math.abs(i-current)<=1) out.push(i);
+      else if(out[out.length-1]!=='...') out.push('...');
+    }
+    return out;
+  }
+
+  function renderSoftwareVirtualControls491(){
+    const controls=ensureSoftwareVirtualPagination491();
+    const totalPages=Math.max(1,Math.ceil(softwareVirtualVisibleItems491.length/SOFTWARE_VIRTUAL_PER_PAGE_491));
+    if(totalPages<=1){ controls.hidden=true; controls.innerHTML=''; return; }
+    controls.hidden=false;
+    const parts=[];
+    parts.push(`<button type="button" class="az-page-btn" data-az-virtual-page="prev" ${softwareVirtualPage491<=1?'disabled':''}>‹ Prev</button>`);
+    softwareVirtualPages491(totalPages,softwareVirtualPage491).forEach(page=>{
+      if(page==='...') parts.push('<span class="az-page-dots">…</span>');
+      else parts.push(`<button type="button" class="az-page-btn ${page===softwareVirtualPage491?'is-active':''}" data-az-virtual-page="${page}">${page}</button>`);
+    });
+    controls.innerHTML=parts.join('');
+  }
+
+  function renderSoftwareVirtualPage491(resetPage=false){
+    if(!grid) return;
+    const signature=softwareVirtualVisibleItems491.map(azSoftwarePoolKey482).join('|');
+    if(resetPage || signature!==softwareVirtualSignature491){
+      softwareVirtualPage491=1;
+      softwareVirtualSignature491=signature;
+    }
+    const totalPages=Math.max(1,Math.ceil(softwareVirtualVisibleItems491.length/SOFTWARE_VIRTUAL_PER_PAGE_491));
+    if(softwareVirtualPage491>totalPages) softwareVirtualPage491=totalPages;
+    const start=(softwareVirtualPage491-1)*SOFTWARE_VIRTUAL_PER_PAGE_491;
+    const pageItems=softwareVirtualVisibleItems491.slice(start,start+SOFTWARE_VIRTUAL_PER_PAGE_491);
+
+    // Replacing a maximum of eight cards is dramatically cheaper and also
+    // prevents the browser from fetching hundreds of off-screen logos.
+    grid.innerHTML=pageItems.map(renderItem).join('');
+    softwareDynamicCardPool482.clear();
+    grid.querySelectorAll('[data-admin-software="1"]').forEach(card=>{
+      const key=String(card.dataset.productId||card.dataset.name||'').toLowerCase();
+      if(key) softwareDynamicCardPool482.set(key,card);
+    });
+    renderSoftwareVirtualControls491();
+    try{ window.dispatchEvent(new CustomEvent('azobss-software-rendered')); }catch(e){}
+  }
+
+  window.azSoftwareVirtualGoPage491=function(action){
+    const totalPages=Math.max(1,Math.ceil(softwareVirtualVisibleItems491.length/SOFTWARE_VIRTUAL_PER_PAGE_491));
+    if(action==='prev') softwareVirtualPage491=Math.max(1,softwareVirtualPage491-1);
+    else softwareVirtualPage491=Math.min(totalPages,Math.max(1,Number(action)||1));
+    const keepY=window.scrollY;
+    renderSoftwareVirtualPage491(false);
+    requestAnimationFrame(()=>window.scrollTo({top:keepY,left:window.scrollX,behavior:'auto'}));
+  };
 
   // AZOBSS 483: refresh statistic HTML only when data really changes.
   // Category/platform selections should not rebuild the stats row for every card.
@@ -5131,16 +5208,11 @@ function normalizeItem(item){
   }
 
   function rebuildSoftwareDynamicCardPool482(items){
-    grid.querySelectorAll('[data-admin-software="1"]').forEach(el => el.remove());
+    // Do not build all 627 cards. Keep only the data; the current page is
+    // rendered later by renderSoftwareVirtualPage491().
+    grid.querySelectorAll('[data-admin-software="1"]').forEach(el=>el.remove());
     softwareDynamicCardPool482.clear();
-    if(items.length){
-      grid.insertAdjacentHTML('afterbegin', items.map(renderItem).join(''));
-      grid.querySelectorAll('[data-admin-software="1"]').forEach(card => {
-        const key=String(card.dataset.productId || card.dataset.name || '').toLowerCase();
-        if(key) softwareDynamicCardPool482.set(key,card);
-      });
-    }
-    softwareDynamicPoolRevision482 = softwareDynamicDataRevision482;
+    softwareDynamicPoolRevision482=softwareDynamicDataRevision482;
   }
 
   function refreshSoftwarePooledCardStats482(card,item){
@@ -5156,29 +5228,8 @@ function normalizeItem(item){
   }
 
   function syncSoftwareDynamicCardVisibility482(visibleItems){
-    const visibleKeys=new Set(visibleItems.map(azSoftwarePoolKey482));
-    softwareDynamicCardPool482.forEach((card,key)=>{
-      const visible=visibleKeys.has(key);
-      const nextHidden=visible?'0':'1';
-      if(card.dataset.azFilterHidden482!==nextHidden){
-        card.dataset.azFilterHidden482=nextHidden;
-        if(visible) card.style.removeProperty('display');
-        else card.style.setProperty('display','none','important');
-      }
-      if(card.dataset.azPage!=='0') card.dataset.azPage='0';
-    });
-
-    // Move only the selected cards into their sorted order. Hidden cards stay pooled
-    // in the DOM and are reused on the next category/platform/search selection.
-    const fragment=document.createDocumentFragment();
-    visibleItems.forEach(item=>{
-      const card=softwareDynamicCardPool482.get(azSoftwarePoolKey482(item));
-      if(card){
-        if(softwareStatsDomRefreshNeeded483) refreshSoftwarePooledCardStats482(card,item);
-        fragment.appendChild(card);
-      }
-    });
-    if(fragment.childNodes.length) grid.insertBefore(fragment,grid.firstChild);
+    softwareVirtualVisibleItems491=visibleItems.slice();
+    renderSoftwareVirtualPage491(false);
   }
 
     function applySoftwareFilters(){
@@ -5221,7 +5272,7 @@ function normalizeItem(item){
       softwareDedupedRevision482 = softwareDynamicDataRevision482;
     }
     let dynamic = softwareDedupedItems482.filter(item => isAdmin() || (item.status || 'active') === 'active');
-    if(softwareDynamicPoolRevision482 !== softwareDynamicDataRevision482 || softwareDynamicCardPool482.size !== dynamic.length){
+    if(softwareDynamicPoolRevision482 !== softwareDynamicDataRevision482){
       rebuildSoftwareDynamicCardPool482(dynamic);
     }
     if(selectedSoftwareOwnerFilter === 'mine'){
@@ -5316,6 +5367,8 @@ function normalizeItem(item){
     softwareBundledDirectoryItems470 = bundledItems470;
     softwareDynamicItems = mergeSoftwareDirectorySources470(remoteItems,loadLocal(),bundledItems470);
     softwareDynamicDataRevision482++;
+    softwareVirtualSignature491='';
+    softwareVirtualPage491=1;
     softwareStatsDomRefreshNeeded483 = true;
     softwareCategoryStatsCache482 = null;
     syncSoftwareDirectoryCategories470();
@@ -6688,188 +6741,23 @@ line-height:1.6;
 .commission-policy-card .title{font-weight:800;color:#facc15;margin-bottom:8px}
 .commission-policy-card .row{margin:4px 0}
 
-  /* AZOBSS 482 performance: off-screen pooled cards skip paint/layout work. */
+  /* AZOBSS 491: only eight live cards; isolate their layout/paint. */
   #softwareDownloadsGrid > .download-card[data-admin-software="1"]{
-    content-visibility:auto;
-    contain-intrinsic-size:430px;
-    contain:layout style paint;
+    contain:layout paint style;
   }
 </style>
 <script id="azobss-pagination-8-final-js">
 (function(){
-  if(window.__AZOBSS_PAGINATION_8_FINAL__) return;
-  window.__AZOBSS_PAGINATION_8_FINAL__ = true;
-
-  const PER_PAGE = 8;
-  let currentPage = 1;
-  let running = false;
-  let lastSignature = '';
-
-  function getGrid(){
-    return document.querySelector('#softwareGrid') || document.querySelector('#softwareDownloadsGrid') || document.querySelector('.downloads-grid');
-  }
-
-  function ensureControls(grid){
-    let controls = document.getElementById('softwarePagination');
-    if(!controls){
-      controls = document.createElement('div');
-      controls.id = 'softwarePagination';
-      controls.className = 'az-pagination-final';
-      controls.setAttribute('aria-label','Software pagination');
+  if(window.__AZOBSS_PAGINATION_491__) return;
+  window.__AZOBSS_PAGINATION_491__=true;
+  document.addEventListener('click',function(event){
+    const btn=event.target.closest('#softwarePagination [data-az-virtual-page]');
+    if(!btn) return;
+    event.preventDefault();
+    if(typeof window.azSoftwareVirtualGoPage491==='function'){
+      window.azSoftwareVirtualGoPage491(btn.getAttribute('data-az-virtual-page'));
     }
-    if(grid && controls.parentNode !== grid.parentNode){
-      grid.insertAdjacentElement('afterend', controls);
-    }else if(grid && controls.previousElementSibling !== grid){
-      grid.insertAdjacentElement('afterend', controls);
-    }
-    return controls;
-  }
-
-  function isRealCard(el){
-    return el && el.nodeType === 1 && el.matches('.download-card,.software-card,.software-product-card') && !el.classList.contains('software-empty-state');
-  }
-
-  function clearPaginationHide(cards){
-    cards.forEach(card => {
-      if(card.dataset.azPage === '1'){
-        card.dataset.azPage = '0';
-        if(card.dataset.azFilterHidden482 !== '1' && !card.classList.contains('az-shared-product-hidden') && card.dataset.azSharedHidden !== '1'){
-          card.style.removeProperty('display');
-        }
-      }
-    });
-  }
-
-  function cardIsFilterVisible(card){
-    if(card.dataset.azFilterHidden482 === '1') return false;
-    if(card.classList.contains('az-shared-product-hidden') || card.dataset.azSharedHidden === '1') return false;
-    if(card.dataset.azPage === '1') return true;
-    if(card.hidden) return false;
-    if(card.classList.contains('software-empty-state')) return false;
-    const inline = (card.getAttribute('style') || '').toLowerCase();
-    if(/display\s*:\s*none/.test(inline)) return false;
-    // Dynamic directory cards use explicit inline visibility, so avoid hundreds
-    // of forced getComputedStyle/layout reads on every category selection.
-    if(card.dataset.adminSoftware === '1') return true;
-    const cs = window.getComputedStyle(card);
-    return cs.display !== 'none' && cs.visibility !== 'hidden';
-  }
-
-  function visibleCards(grid){
-    const all = Array.from(grid.children).filter(isRealCard);
-    clearPaginationHide(all);
-    return all.filter(cardIsFilterVisible);
-  }
-
-  function makePages(total, current){
-    const out = [];
-    for(let i=1;i<=total;i++){
-      if(i===1 || i===total || Math.abs(i-current)<=1){
-        out.push(i);
-      }else if(out[out.length-1] !== '...'){
-        out.push('...');
-      }
-    }
-    return out;
-  }
-
-  function renderControls(controls, totalPages){
-    if(totalPages <= 1){
-      controls.hidden = true;
-      controls.innerHTML = '';
-      return;
-    }
-    controls.hidden = false;
-    const parts = [];
-    parts.push(`<button type="button" class="az-page-btn" data-page="prev" ${currentPage<=1?'disabled':''}>‹ Prev</button>`);
-    makePages(totalPages,currentPage).forEach(p => {
-      if(p === '...') parts.push('<span class="az-page-dots">…</span>');
-      else parts.push(`<button type="button" class="az-page-btn ${p===currentPage?'is-active':''}" data-page="${p}">${p}</button>`);
-    });
-    controls.innerHTML = parts.join('');
-  }
-
-  function apply(reset){
-    const grid = getGrid();
-    if(!grid) return;
-    const controls = ensureControls(grid);
-    const cards = visibleCards(grid);
-    const signature = cards.map(c => c.dataset.productId || c.dataset.name || c.querySelector('h3')?.textContent?.trim() || '').join('|');
-    if(reset || signature !== lastSignature){
-      currentPage = 1;
-      lastSignature = signature;
-    }
-    const totalPages = Math.max(1, Math.ceil(cards.length / PER_PAGE));
-    if(currentPage > totalPages) currentPage = totalPages;
-    const start = (currentPage - 1) * PER_PAGE;
-    const end = start + PER_PAGE;
-    cards.forEach((card, i) => {
-      if(i >= start && i < end){
-        card.dataset.azPage = '0';
-        card.style.removeProperty('display');
-      }else{
-        card.dataset.azPage = '1';
-        card.style.setProperty('display','none','important');
-      }
-    });
-    renderControls(controls, totalPages);
-  }
-
-  let pendingReset=false;
-  function schedule(reset=false){
-    pendingReset = pendingReset || reset;
-    if(running) return;
-    running = true;
-    requestAnimationFrame(() => {
-      const doReset=pendingReset;
-      pendingReset=false;
-      running = false;
-      apply(doReset);
-    });
-  }
-
-  document.addEventListener('click', function(e){
-    const pageBtn = e.target.closest('#softwarePagination .az-page-btn');
-    if(pageBtn){
-      e.preventDefault();
-      const grid = getGrid();
-      const cards = grid ? visibleCards(grid) : [];
-      const totalPages = Math.max(1, Math.ceil(cards.length / PER_PAGE));
-      const action = pageBtn.dataset.page;
-      if(action === 'prev') currentPage = Math.max(1, currentPage - 1);
-      else if(action === 'next') currentPage = Math.min(totalPages, currentPage + 1);
-      else currentPage = Number(action) || 1;
-      const keepY = window.scrollY;
-      apply(false);
-      // Do not auto-scroll when user clicks pagination. Keep the page position stable.
-      requestAnimationFrame(() => window.scrollTo({ top: keepY, left: window.scrollX, behavior: 'auto' }));
-      return;
-    }
-    if(e.target.closest('[data-software-category],[data-software-platform],[data-software-type]')){
-      schedule(true);
-    }
-  }, true);
-
-  document.addEventListener('input', function(e){
-    if(e.target.matches('#softwareSearch, [type="search"], input[name*="search" i]')) schedule(true);
-  }, true);
-  document.addEventListener('change', function(e){
-    if(e.target.matches('select, input, textarea')) schedule(true);
-  }, true);
-
-  window.addEventListener('azobss-shared-product-filtered', () => schedule(true));
-
-  document.addEventListener('DOMContentLoaded', function(){
-    const grid = getGrid();
-    if(grid){
-      const obs = new MutationObserver(() => schedule(false));
-      obs.observe(grid,{childList:true,subtree:false});
-    }
-    schedule(true);
-    setTimeout(()=>schedule(true),400);
-    setTimeout(()=>schedule(true),1200);
-    setTimeout(()=>schedule(true),2500);
-  });
+  },true);
 })();
 </script>
 
