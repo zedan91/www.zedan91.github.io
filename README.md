@@ -94,3 +94,8 @@ Render backend does not need redeploy.
 - Prevents loading/rendering hundreds of hidden logos and complex cards.
 - Replaces the old DOM-scanning pagination with data-based pagination.
 - Category hover and filter clicks remain responsive even with 627 items.
+
+AZOBSS 492
+- Enlarged category group button labels slightly.
+- Enlarged dropdown group heading and all subcategory labels.
+- Increased dropdown row height slightly for easier reading.
