@@ -1,0 +1,9 @@
+AZOBSS Patch 493
+
+- Desktop category dropdowns now use pointer enter/leave JavaScript instead of CSS-only hover.
+- Opening a new category group closes every previously open group first.
+- Removed the CSS focus-within visibility path that could keep the old dropdown visible.
+- Blurs a clicked category option before updating filters to clear stale focus.
+- Touch click/tap and keyboard accessibility remain supported.
+- Based on patch 492 and preserves patch 491 virtual pagination performance.
+- Firebase Rules and Render backend changes are not required.

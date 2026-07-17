@@ -3966,7 +3966,14 @@ html body .downloads-section{
     selectedSoftwareCategory=category || 'all';
     softwareCategorySearch473='';
     setSoftwareCategoryDropdownOpen474(false);
-    // Do not rebuild all 7 groups + 63 nested category buttons on every click.
+    // Remove focus from the category item that was clicked. Otherwise the old
+    // group can remain visually open through :focus-within while a new group
+    // is being hovered.
+    const focusedCategoryElement=document.activeElement;
+    if(focusedCategoryElement && typeof focusedCategoryElement.blur==='function' && focusedCategoryElement.closest?.('.software-category-group-wrap-475')){
+      focusedCategoryElement.blur();
+    }
+    // Do not rebuild all grouped category buttons on every click.
     updateSoftwareCategorySelectionUI483();
     applySoftwareFilters();
   }
@@ -4042,6 +4049,21 @@ html body .downloads-section{
     // coarse-pointer devices so a normal mouse click does not reopen/lock
     // the dropdown after the cursor has already left the group button.
     const categoryTouchMode475 = () => window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+    // Desktop hover is controlled by JavaScript so opening a new group always
+    // closes the previous group first. CSS-only :hover/:focus-within allowed
+    // two sibling dropdowns to remain visible at the same time.
+    wrap.addEventListener('pointerenter',event=>{
+      if(!categoryTouchMode475() && event.pointerType!=='touch'){
+        setSoftwareCategoryGroupOpen475(wrap,true);
+      }
+    });
+    wrap.addEventListener('pointerleave',event=>{
+      if(!categoryTouchMode475() && event.pointerType!=='touch'){
+        setSoftwareCategoryGroupOpen475(wrap,false);
+      }
+    });
+
     wrap.addEventListener('focusin',()=>{
       // Keep keyboard accessibility without treating a mouse click focus as
       // a command to open the menu on desktop.
@@ -14761,7 +14783,7 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 .software-category-group-wrap-475.is-open .software-category-group-chevron-475{transform:none!important}
 .software-category-group-dropdown-475{position:absolute;left:0;top:calc(100% - 1px);width:330px;max-height:min(520px,68vh);display:block;visibility:hidden;opacity:1;pointer-events:none;transform:none;transform-origin:top left;border:1px solid rgba(34,197,94,.34);border-radius:15px;background:linear-gradient(180deg,#111c31 0%,#07101f 100%);box-shadow:0 24px 58px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;transition:none;z-index:2147482000}
 .software-category-group-wrap-475:nth-last-child(-n+2) .software-category-group-dropdown-475{left:auto;right:0;transform-origin:top right}
-.software-category-group-wrap-475.is-open .software-category-group-dropdown-475,.software-category-group-wrap-475:hover .software-category-group-dropdown-475,.software-category-group-wrap-475:focus-within .software-category-group-dropdown-475{visibility:visible;opacity:1;pointer-events:auto;transform:none}
+.software-category-group-wrap-475.is-open .software-category-group-dropdown-475{visibility:visible;opacity:1;pointer-events:auto;transform:none}
 .software-category-group-head-475{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-bottom:1px solid rgba(148,163,184,.14);background:rgba(2,6,23,.28)}
 .software-category-group-head-475 b{color:#f8fafc;font-size:12px}.software-category-group-head-475 span{color:#94a3b8;font-size:9px;font-weight:850;white-space:nowrap}
 .software-category-group-grid-475{display:grid;grid-template-columns:1fr;gap:6px;padding:9px;overflow:auto;max-height:calc(min(520px,68vh) - 44px);scrollbar-width:thin;overscroll-behavior:contain}
@@ -14843,6 +14865,8 @@ html body .software-category-group-option-475{
   html body .software-category-group-option-475{font-size:11.5px!important;}
 }
 </style>
+
+<!-- AZOBSS 493: Single active category dropdown; moving to another group closes the previous menu instantly -->
 
 </body>
 </html>
