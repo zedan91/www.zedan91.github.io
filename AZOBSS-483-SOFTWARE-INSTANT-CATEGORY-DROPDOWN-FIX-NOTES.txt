@@ -1,0 +1,21 @@
+AZOBSS 483 - SOFTWARE INSTANT CATEGORY DROPDOWN FIX
+Date: 2026-07-17
+Baseline: (482)-AZOBSS-SOFTWARE-CATEGORY-FILTER-PERFORMANCE-FIX_20260717.zip
+
+Video audit finding:
+- Group dropdown previously used a 180 ms JavaScript close timer.
+- CSS also used a 140 ms opacity/transform transition.
+- Combined, the old dropdown could remain/fade for roughly 0.3 seconds while moving between category groups, creating the visible delayed/ghosted response.
+
+Fixes:
+1. Reduced hover-leave safety delay from 180 ms to 24 ms.
+2. Removed dropdown fade/slide/scale animation; dropdown opens and closes immediately.
+3. Removed the physical gap between group trigger and its dropdown to avoid accidental close while entering submenu.
+4. Removed submenu hover movement animation to reduce repainting.
+5. Category selection no longer rebuilds all 7 groups and 63 nested category buttons.
+6. Active category/group classes are updated in place.
+7. Card statistics HTML is refreshed only when underlying data changes, not on every category/platform selection.
+8. Existing 482 reusable card-pool filtering remains active.
+
+No Firebase Rules update required.
+No Render backend deploy required.

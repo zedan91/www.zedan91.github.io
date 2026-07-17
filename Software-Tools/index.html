@@ -3555,6 +3555,10 @@ html body .downloads-section{
   let softwareCategoryStatsRevision482 = -1;
   let softwareCategoryStatsCache482 = null;
 
+  // AZOBSS 483: refresh statistic HTML only when data really changes.
+  // Category/platform selections should not rebuild the stats row for every card.
+  let softwareStatsDomRefreshNeeded483 = true;
+
   function clean(v){ return String(v || '').trim().toLowerCase(); }
 
   function normalizeSoftwareCategory(v){
@@ -3777,11 +3781,32 @@ html body .downloads-section{
     const wrap=categoryFilter?.querySelector('.software-category-hover-wrap-474');
     setSoftwareCategoryDropdownOpen474(!wrap?.classList.contains('is-open'));
   }
+  function updateSoftwareCategorySelectionUI483(){
+    if(!categoryFilter) return;
+    const groups=azSoftwareCategoryGroups475(azSoftwareDirectoryCategoryStats473());
+    const selectedGroup=azSoftwareSelectedGroup475(groups);
+
+    categoryFilter.querySelectorAll('[data-software-category]').forEach(btn=>{
+      const category=btn.getAttribute('data-software-category') || 'all';
+      const active=category===selectedSoftwareCategory;
+      btn.classList.toggle('is-active',active);
+      btn.setAttribute('aria-pressed',active?'true':'false');
+    });
+
+    categoryFilter.querySelectorAll('.software-category-group-wrap-475').forEach(wrap=>{
+      const title=wrap.querySelector('.software-category-group-trigger-475')?.dataset.softwareGroupToggle || '';
+      wrap.classList.toggle('has-active-category',!!selectedGroup && title===selectedGroup);
+    });
+
+    closeSoftwareCategoryGroups475();
+  }
+
   function selectSoftwareCategory473(category){
     selectedSoftwareCategory=category || 'all';
     softwareCategorySearch473='';
     setSoftwareCategoryDropdownOpen474(false);
-    syncSoftwareDirectoryCategories470();
+    // Do not rebuild all 7 groups + 63 nested category buttons on every click.
+    updateSoftwareCategorySelectionUI483();
     applySoftwareFilters();
   }
   let softwareCategoryGroupCloseTimer475 = 0;
@@ -3824,7 +3849,9 @@ html body .downloads-section{
   }
   function scheduleSoftwareCategoryGroupClose475(wrap){
     window.clearTimeout(softwareCategoryGroupCloseTimer475);
-    softwareCategoryGroupCloseTimer475=window.setTimeout(()=>setSoftwareCategoryGroupOpen475(wrap,false),180);
+    // Near-instant close. A tiny guard avoids accidental flicker while crossing
+    // the trigger edge, without the previous visible 180 ms lag.
+    softwareCategoryGroupCloseTimer475=window.setTimeout(()=>setSoftwareCategoryGroupOpen475(wrap,false),24);
   }
   function createSoftwareCategoryGroup475(group,stats,selectedGroup){
     const wrap=document.createElement('div');
@@ -5052,7 +5079,7 @@ function normalizeItem(item){
     visibleItems.forEach(item=>{
       const card=softwareDynamicCardPool482.get(azSoftwarePoolKey482(item));
       if(card){
-        refreshSoftwarePooledCardStats482(card,item);
+        if(softwareStatsDomRefreshNeeded483) refreshSoftwarePooledCardStats482(card,item);
         fragment.appendChild(card);
       }
     });
@@ -5174,6 +5201,7 @@ function normalizeItem(item){
 
     syncStaticAdminButtons();
     grid.removeAttribute('data-az-fast-cache');
+    softwareStatsDomRefreshNeeded483 = false;
     softwareStatsSnapshot482 = null;
     const hasVisibleStatic = selectedSoftwareOwnerFilter === 'mine' ? false : staticCards.some(card => card.style.display !== 'none');
     if(!dynamic.length && !hasVisibleStatic){
@@ -5193,6 +5221,7 @@ function normalizeItem(item){
     softwareBundledDirectoryItems470 = bundledItems470;
     softwareDynamicItems = mergeSoftwareDirectorySources470(remoteItems,loadLocal(),bundledItems470);
     softwareDynamicDataRevision482++;
+    softwareStatsDomRefreshNeeded483 = true;
     softwareCategoryStatsCache482 = null;
     syncSoftwareDirectoryCategories470();
     applySoftwareFilters();
@@ -5201,6 +5230,7 @@ function normalizeItem(item){
     // Refresh counts/rating/promo quota after stats arrive without delaying cards.
     statsPromise.then(() => {
       if(loadSequence !== azSoftwareLoadSequence463) return;
+      softwareStatsDomRefreshNeeded483 = true;
       applySoftwareFilters();
       try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
     }).catch(() => {});
@@ -14683,7 +14713,7 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 .software-category-hover-trigger-474 strong{min-width:27px;height:24px;padding:0 5px;border-radius:999px;background:#22c55e;color:#052e16;display:inline-flex;align-items:center;justify-content:center;font-size:10px}
 .software-category-chevron-474{font-size:16px;line-height:1;transition:transform .18s ease}.software-category-hover-wrap-474.is-open .software-category-chevron-474{transform:rotate(180deg)}
 .software-category-dropdown-474{position:absolute;top:calc(100% + 5px);right:0;width:min(1000px,calc(100vw - 42px));max-height:min(690px,72vh);display:flex;flex-direction:column;visibility:hidden;opacity:0;pointer-events:none;transform:translateY(-7px) scale(.992);transform-origin:top right;border:1px solid rgba(34,197,94,.31);border-radius:18px;background:linear-gradient(180deg,#111c31 0%,#07101f 100%);box-shadow:0 26px 70px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;z-index:2147482000;transition:opacity .16s ease,transform .16s ease,visibility .16s ease}
-.software-category-hover-wrap-474.is-open .software-category-dropdown-474,.software-category-hover-wrap-474:focus-within .software-category-dropdown-474{visibility:visible;opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
+.software-category-hover-wrap-474.is-open .software-category-dropdown-474,.software-category-hover-wrap-474:focus-within .software-category-dropdown-474{display:block;visibility:visible;opacity:1;pointer-events:auto;transform:none}
 .software-category-dropdown-474::before{content:"";position:absolute;right:52px;top:-7px;width:13px;height:13px;background:#111c31;border-left:1px solid rgba(34,197,94,.31);border-top:1px solid rgba(34,197,94,.31);transform:rotate(45deg);z-index:2}
 .software-category-dropdown-head-474{display:grid;grid-template-columns:minmax(190px,.75fr) minmax(250px,1fr);gap:14px;align-items:center;padding:14px 16px 11px;border-bottom:1px solid rgba(148,163,184,.13);background:rgba(2,6,23,.22)}
 .software-category-dropdown-head-474>div{display:flex;flex-direction:column;gap:2px;min-width:0}.software-category-dropdown-head-474 b{color:#f8fafc;font-size:14px}.software-category-dropdown-head-474>div span{color:#94a3b8;font-size:10px;font-weight:750}
@@ -14727,7 +14757,7 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 .software-category-tools-474,.software-category-quick-list-473{display:none!important}
 .software-category-filter{display:block!important;overflow:visible!important;position:relative!important}
 .software-category-group-nav-475{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start;position:relative;z-index:6}
-.software-category-all-btn-475,.software-category-group-trigger-475{min-height:40px;border:1px solid rgba(148,163,184,.28);border-radius:13px;background:rgba(11,18,34,.94);color:#e5e7eb;padding:0 11px 0 13px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:1.15;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:.16s ease;white-space:nowrap}
+.software-category-all-btn-475,.software-category-group-trigger-475{min-height:40px;border:1px solid rgba(148,163,184,.28);border-radius:13px;background:rgba(11,18,34,.94);color:#e5e7eb;padding:0 11px 0 13px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:1.15;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:none;white-space:nowrap}
 .software-category-all-btn-475:hover,.software-category-group-trigger-475:hover,.software-category-group-wrap-475.is-open .software-category-group-trigger-475{border-color:rgba(34,197,94,.64);color:#86efac;background:rgba(15,23,42,.99);box-shadow:0 0 0 3px rgba(34,197,94,.08),inset 0 1px 0 rgba(255,255,255,.04)}
 .software-category-all-btn-475.is-active{background:linear-gradient(135deg,#16a34a,#22c55e);border-color:#22c55e;color:#052e16;box-shadow:0 10px 22px rgba(34,197,94,.18)}
 .software-category-all-btn-475.is-active .software-category-count-473{background:rgba(5,46,22,.16);color:#052e16}
@@ -14738,14 +14768,14 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 .software-category-group-label-475{display:inline-flex;align-items:center;gap:6px}
 .software-category-group-chevron-475{font-size:15px;line-height:1;transform:none!important;transition:none!important}
 .software-category-group-wrap-475.is-open .software-category-group-chevron-475{transform:none!important}
-.software-category-group-dropdown-475{position:absolute;left:0;top:calc(100% + 6px);width:330px;max-height:min(520px,68vh);visibility:hidden;opacity:0;pointer-events:none;transform:translateY(-6px) scale(.99);transform-origin:top left;border:1px solid rgba(34,197,94,.34);border-radius:15px;background:linear-gradient(180deg,#111c31 0%,#07101f 100%);box-shadow:0 24px 58px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;transition:opacity .14s ease,transform .14s ease,visibility .14s ease;z-index:2147482000}
+.software-category-group-dropdown-475{position:absolute;left:0;top:100%;width:330px;max-height:min(520px,68vh);display:none;visibility:hidden;opacity:1;pointer-events:none;transform:none;transform-origin:top left;border:1px solid rgba(34,197,94,.34);border-radius:15px;background:linear-gradient(180deg,#111c31 0%,#07101f 100%);box-shadow:0 24px 58px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;transition:none;z-index:2147482000;contain:layout paint style}
 .software-category-group-wrap-475:nth-last-child(-n+2) .software-category-group-dropdown-475{left:auto;right:0;transform-origin:top right}
 .software-category-group-wrap-475.is-open .software-category-group-dropdown-475,.software-category-group-wrap-475:focus-within .software-category-group-dropdown-475{visibility:visible;opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
 .software-category-group-head-475{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-bottom:1px solid rgba(148,163,184,.14);background:rgba(2,6,23,.28)}
 .software-category-group-head-475 b{color:#f8fafc;font-size:12px}.software-category-group-head-475 span{color:#94a3b8;font-size:9px;font-weight:850;white-space:nowrap}
 .software-category-group-grid-475{display:grid;grid-template-columns:1fr;gap:6px;padding:9px;overflow:auto;max-height:calc(min(520px,68vh) - 44px);scrollbar-width:thin;overscroll-behavior:contain}
-.software-category-group-option-475{width:100%;min-height:35px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:rgba(15,23,42,.76);color:#e2e8f0;padding:6px 8px;font-weight:820;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:7px;text-align:left;font-size:10px;transition:.14s ease}
-.software-category-group-option-475:hover{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(15,23,42,.99);transform:translateX(2px)}
+.software-category-group-option-475{width:100%;min-height:35px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:rgba(15,23,42,.76);color:#e2e8f0;padding:6px 8px;font-weight:820;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:7px;text-align:left;font-size:10px;transition:none}
+.software-category-group-option-475:hover{border-color:rgba(34,197,94,.55);color:#86efac;background:rgba(15,23,42,.99);transform:none}
 .software-category-group-option-475.is-active{border-color:#22c55e;background:linear-gradient(135deg,#16a34a,#22c55e);color:#052e16}
 .software-category-group-option-475 .software-category-label-473{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .software-category-group-option-475 .software-category-count-473{height:19px;min-width:21px;font-size:9px;flex:0 0 auto}
@@ -14764,6 +14794,7 @@ html body .downloads-grid > .download-card[data-demo-video="1"] > .software-card
 @media(hover:none),(pointer:coarse){.software-category-group-trigger-475{touch-action:manipulation}}
 </style>
 
+<!-- AZOBSS 483: Instant grouped dropdown + lightweight category selection performance fix -->
 <!-- AZOBSS 475: Grouped hover category menus — group labels reveal their own subcategories -->
 <!-- AZOBSS 480: Removed category quantity badges from group buttons and dropdown category items -->
 </body>
