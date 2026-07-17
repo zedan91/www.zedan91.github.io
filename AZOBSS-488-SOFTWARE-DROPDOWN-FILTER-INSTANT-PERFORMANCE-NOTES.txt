@@ -1,0 +1,8 @@
+AZOBSS 488
+- Removes JavaScript work on every desktop category hover; CSS handles hover directly.
+- Removes the intentional 80 ms pagination delay and batches pagination in requestAnimationFrame.
+- Stops pagination MutationObserver from reacting to hundreds of card style changes.
+- Avoids repeated display writes when a card visibility state did not change.
+- Refreshes static statistics/admin controls only when statistics actually changed.
+- Adds layout/style/paint containment to software cards.
+- Firebase Rules and Render backend are unchanged.

@@ -3964,11 +3964,7 @@ html body .downloads-section{
     // Open on every real mouse hover. Do not depend on the primary-pointer
     // media query because some Windows PCs with touch support report a
     // coarse primary pointer even while the user is using a mouse.
-    wrap.addEventListener('mouseenter',()=>setSoftwareCategoryGroupOpen475(wrap,true));
-    // The dropdown is a child of this wrapper and overlaps the trigger by
-    // one pixel, so moving from the trigger into the dropdown does not fire
-    // mouseleave. Close immediately only after leaving the whole wrapper.
-    wrap.addEventListener('mouseleave',()=>setSoftwareCategoryGroupOpen475(wrap,false));
+    // Desktop hover is handled purely by CSS to avoid JavaScript/layout work on every pointer movement.
     wrap.addEventListener('focusin',()=>setSoftwareCategoryGroupOpen475(wrap,true));
     wrap.addEventListener('focusout',event=>{
       if(!wrap.contains(event.relatedTarget)) setSoftwareCategoryGroupOpen475(wrap,false);
@@ -5150,10 +5146,13 @@ function normalizeItem(item){
     const visibleKeys=new Set(visibleItems.map(azSoftwarePoolKey482));
     softwareDynamicCardPool482.forEach((card,key)=>{
       const visible=visibleKeys.has(key);
-      card.dataset.azFilterHidden482=visible?'0':'1';
-      card.dataset.azPage='0';
-      if(visible) card.style.removeProperty('display');
-      else card.style.setProperty('display','none','important');
+      const nextHidden=visible?'0':'1';
+      if(card.dataset.azFilterHidden482!==nextHidden){
+        card.dataset.azFilterHidden482=nextHidden;
+        if(visible) card.style.removeProperty('display');
+        else card.style.setProperty('display','none','important');
+      }
+      if(card.dataset.azPage!=='0') card.dataset.azPage='0';
     });
 
     // Move only the selected cards into their sorted order. Hidden cards stay pooled
@@ -5265,7 +5264,7 @@ function normalizeItem(item){
 
     // Sort static cards visually too, so dropdown affects ALL cards, not only Firebase/admin items.
     const staticTypeRank = card => String(card.dataset.type || 'free').toLowerCase() === 'premium' ? 1 : 0;
-    staticCards.forEach(applyStatsToCard);
+    if(softwareStatsDomRefreshNeeded483) staticCards.forEach(applyStatsToCard);
     const sortedStatic = staticCards.slice().sort((a,b) => {
       const an = String(a.dataset.name || a.querySelector('h3')?.textContent || '').toLowerCase();
       const bn = String(b.dataset.name || b.querySelector('h3')?.textContent || '').toLowerCase();
@@ -5282,7 +5281,7 @@ function normalizeItem(item){
     });
     sortedStatic.forEach(card => grid.appendChild(card));
 
-    syncStaticAdminButtons();
+    if(softwareStatsDomRefreshNeeded483) syncStaticAdminButtons();
     grid.removeAttribute('data-az-fast-cache');
     softwareStatsDomRefreshNeeded483 = false;
     softwareStatsSnapshot482 = null;
@@ -6680,6 +6679,7 @@ line-height:1.6;
   #softwareDownloadsGrid > .download-card[data-admin-software="1"]{
     content-visibility:auto;
     contain-intrinsic-size:430px;
+    contain:layout style paint;
   }
 </style>
 <script id="azobss-pagination-8-final-js">
@@ -6802,13 +6802,17 @@ line-height:1.6;
     renderControls(controls, totalPages);
   }
 
+  let pendingReset=false;
   function schedule(reset=false){
+    pendingReset = pendingReset || reset;
     if(running) return;
     running = true;
-    setTimeout(() => {
+    requestAnimationFrame(() => {
+      const doReset=pendingReset;
+      pendingReset=false;
       running = false;
-      apply(reset);
-    }, 80);
+      apply(doReset);
+    });
   }
 
   document.addEventListener('click', function(e){
@@ -6846,7 +6850,7 @@ line-height:1.6;
     const grid = getGrid();
     if(grid){
       const obs = new MutationObserver(() => schedule(false));
-      obs.observe(grid,{childList:true,subtree:false,attributes:true,attributeFilter:['style','class','hidden']});
+      obs.observe(grid,{childList:true,subtree:false});
     }
     schedule(true);
     setTimeout(()=>schedule(true),400);
