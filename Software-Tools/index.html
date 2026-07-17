@@ -14869,6 +14869,23 @@ html body .software-category-group-option-475{
 <!-- AZOBSS 494: Removed repeated dropdown group heading and category-count text -->
 
 
+
+<style id="azobss-software-download-button-bottom-pin-fix-495">
+/* AZOBSS 495: keep Download Now / Buy Now near the stats footer on desktop cards.
+   Short descriptions must not leave the action button floating high in the card. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn,
+  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card > .az-software-buy-cart-row{
+    margin-top:auto!important;
+    margin-bottom:6px!important;
+    flex-shrink:0!important;
+  }
+}
+</style>
 </body>
 </html>
 
