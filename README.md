@@ -99,3 +99,8 @@ AZOBSS 492
 - Enlarged category group button labels slightly.
 - Enlarged dropdown group heading and all subcategory labels.
 - Increased dropdown row height slightly for easier reading.
+
+
+## Patch 496
+- Keeps the More chip above Download Now / Buy Now after card bottom alignment.
+- Normalizes dynamically rendered More chips as direct card children without rebuilding the software list.

@@ -14886,6 +14886,96 @@ html body .software-category-group-option-475{
   }
 }
 </style>
+
+
+<!-- AZOBSS 496: keep More above CTA after desktop bottom-pin alignment -->
+<style id="azobss-software-more-above-cta-fix-496">
+/* The 495 flex bottom pin exposed cards where the outside More chip was nested
+   inside another wrapper. Anchor the normalized direct-child chip to the card,
+   always above Download Now / Buy Now. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    position:relative!important;
+    padding-bottom:98px!important;
+  }
+
+  html body #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html body #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html body .downloads-grid > .download-card > .az-desc-more-outside-322{
+    position:absolute!important;
+    left:50%!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:103px!important;
+    transform:translateX(-50%)!important;
+    margin:0!important;
+    order:0!important;
+    z-index:91!important;
+  }
+
+  html body #softwareGrid > .download-card > .download-btn,
+  html body #softwareDownloadsGrid > .download-card > .download-btn,
+  html body .downloads-grid > .download-card > .download-btn,
+  html body #softwareGrid > .download-card > .az-software-buy-cart-row,
+  html body #softwareDownloadsGrid > .download-card > .az-software-buy-cart-row,
+  html body .downloads-grid > .download-card > .az-software-buy-cart-row{
+    position:absolute!important;
+    left:50%!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:52px!important;
+    transform:translateX(-50%)!important;
+    margin:0!important;
+    z-index:90!important;
+  }
+}
+</style>
+<script id="azobss-software-more-direct-child-normalizer-496">
+(function(){
+  if(window.__azobssMoreDirectChild496) return;
+  window.__azobssMoreDirectChild496=true;
+
+  function normalizeCard(card){
+    if(!card || !card.matches || !card.matches('.download-card')) return;
+    var more=card.querySelector('.az-desc-more-outside-322');
+    if(more && more.parentElement!==card){
+      card.appendChild(more);
+    }
+  }
+
+  function normalizeRoot(root){
+    if(!root) return;
+    if(root.matches && root.matches('.download-card')) normalizeCard(root);
+    if(root.querySelectorAll){
+      root.querySelectorAll('.download-card').forEach(normalizeCard);
+    }
+  }
+
+  function start(){
+    var grids=[
+      document.getElementById('softwareGrid'),
+      document.getElementById('softwareDownloadsGrid'),
+      document.querySelector('.downloads-grid')
+    ].filter(Boolean);
+    grids.forEach(function(grid){
+      normalizeRoot(grid);
+      new MutationObserver(function(records){
+        records.forEach(function(record){
+          record.addedNodes.forEach(function(node){
+            if(node && node.nodeType===1) normalizeRoot(node);
+          });
+        });
+      }).observe(grid,{childList:true,subtree:true});
+    });
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
+</script>
+
 </body>
 </html>
 
