@@ -15425,6 +15425,70 @@ html body .download-card > .software-stats{
 })();
 </script>
 
+
+<!-- AZOBSS 501: logo/title spacing and top breathing room -->
+<style id="azobss-software-logo-title-spacing-fix-501">
+/* Keep the software logo clear of the card top and reserve a real gap before the title. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    padding-top:28px!important;
+  }
+
+  html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
+  html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+  html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
+    width:72px!important;
+    height:72px!important;
+    min-height:72px!important;
+    flex:0 0 72px!important;
+    margin:2px auto 14px!important;
+  }
+
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    position:relative!important;
+    z-index:2!important;
+    width:100%!important;
+    max-width:220px!important;
+    min-height:50px!important;
+    margin:0 auto 8px!important;
+    padding:0!important;
+    line-height:1.1!important;
+    transform:none!important;
+  }
+}
+
+@media (max-width:760px){
+  html body #softwareGrid > .download-card,
+  html body #softwareDownloadsGrid > .download-card,
+  html body .downloads-grid > .download-card{
+    padding-top:24px!important;
+  }
+
+  html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
+  html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+  html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
+    margin:2px auto 12px!important;
+  }
+
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    margin:0 auto 8px!important;
+    transform:none!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
