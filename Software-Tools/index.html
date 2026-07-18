@@ -15489,6 +15489,33 @@ html body .download-card > .software-stats{
 }
 </style>
 
+
+<!-- AZOBSS 503: move title through description slightly lower -->
+<style id="azobss-software-title-desc-down-spacing-fix-503">
+/* Shift the content group from the software title through its description downward, while keeping the logo and bottom CTA/footer fixed. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    margin-top:7px!important;
+  }
+}
+
+@media (max-width:760px){
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    margin-top:6px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
