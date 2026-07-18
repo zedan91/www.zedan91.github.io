@@ -15489,6 +15489,63 @@ html body .download-card > .software-stats{
 }
 </style>
 
+<!-- AZOBSS 502: extra gap between software logo and title -->
+<style id="azobss-software-logo-title-extra-gap-fix-502">
+/* Reset any old offset on the title and give it its own clear space below the logo. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
+  html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+  html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
+    position:relative!important;
+    top:auto!important;
+    bottom:auto!important;
+    transform:none!important;
+    margin:2px auto 18px!important;
+  }
+
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    position:relative!important;
+    inset:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    left:auto!important;
+    right:auto!important;
+    translate:none!important;
+    transform:none!important;
+    flex:0 0 auto!important;
+    clear:both!important;
+    margin:6px auto 8px!important;
+  }
+}
+
+@media (max-width:760px){
+  html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
+  html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+  html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
+    margin:2px auto 15px!important;
+  }
+
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    inset:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    translate:none!important;
+    transform:none!important;
+    margin:4px auto 8px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
