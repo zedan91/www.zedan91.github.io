@@ -1,0 +1,8 @@
+AZOBSS 503 - Software True Logo/Title Separation Fix
+
+- Disabled the obsolete runtime grid-lock script that forced a 72px logo into a 42px grid row and caused visual overlap with the title.
+- Removed spacing patches 501 and 502 to avoid stacked conflicting rules.
+- Added a final flex-based logo/title layout with a real 14px logo margin and a dedicated 70px title area.
+- Added cleanup for legacy inline !important styles on dynamically rendered/virtual-paginated cards.
+- Preserves baseline 500 cart, CTA, More button, rating footer, categories and virtual pagination behavior.
+- No Firebase Rules or Render backend update required.
