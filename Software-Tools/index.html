@@ -6416,9 +6416,77 @@ all.appendChild(wrap);
 
 
 
-<script id="azobss-real-final-force-card-center-js-disabled-503">
-/* AZOBSS 503: legacy inline grid lock disabled. Modern card layout is controlled by the final CSS below. */
-window.__azobssRealFinalForceCardCenterDisabled503 = true;
+<script id="azobss-real-final-force-card-center-js">
+/* Lightweight runtime lock: cards are added by Firestore/localStorage after page load,
+   so this reapplies the same grid position to new cards only. */
+(function(){
+  function setImp(el, prop, val){ if(el) el.style.setProperty(prop, val, 'important'); }
+  function fixCard(card){
+    if(!card || card.dataset.azobssRealFinalCentered === '1') return;
+    card.dataset.azobssRealFinalCentered = '1';
+    setImp(card,'display','grid');
+    setImp(card,'grid-template-columns','1fr');
+    setImp(card,'grid-template-rows','42px 76px 50px 88px 54px');
+    setImp(card,'grid-template-areas','"badge" "title" "meta" "desc" "button"');
+    setImp(card,'justify-items','stretch');
+    setImp(card,'align-items','center');
+    setImp(card,'text-align','center');
+    setImp(card,'height','430px');
+    setImp(card,'min-height','430px');
+    setImp(card,'max-height','430px');
+    setImp(card,'position','relative');
+
+    const badge = card.querySelector('.software-badge.free,.software-badge.premium,.software-badge');
+    setImp(badge,'grid-area','badge');
+    setImp(badge,'justify-self','center');
+
+    const title = card.querySelector('h3,.software-title');
+    setImp(title,'grid-area','title');
+    setImp(title,'display','grid');
+    setImp(title,'place-items','center');
+    setImp(title,'justify-self','stretch');
+    setImp(title,'align-self','stretch');
+    setImp(title,'width','100%');
+    setImp(title,'max-width','none');
+    setImp(title,'height','76px');
+    setImp(title,'min-height','76px');
+    setImp(title,'max-height','76px');
+    setImp(title,'margin','0 auto');
+    setImp(title,'padding','0 8px');
+    setImp(title,'text-align','center');
+    setImp(title,'line-height','1.08');
+    setImp(title,'word-break','normal');
+    setImp(title,'overflow-wrap','break-word');
+    setImp(title,'transform','none');
+
+    const meta = card.querySelector('.software-meta');
+    setImp(meta,'grid-area','meta');
+    setImp(meta,'justify-content','center');
+    setImp(meta,'width','100%');
+
+    const desc = card.querySelector('p');
+    setImp(desc,'grid-area','desc');
+    setImp(desc,'display','flex');
+    setImp(desc,'align-items','center');
+    setImp(desc,'justify-content','center');
+    setImp(desc,'text-align','center');
+    setImp(desc,'width','100%');
+    setImp(desc,'max-width','none');
+
+    const btn = card.querySelector('.download-btn');
+    setImp(btn,'grid-area','button');
+    setImp(btn,'justify-self','center');
+    setImp(btn,'margin','0 auto');
+  }
+  function run(){ document.querySelectorAll('#softwareGrid .download-card,.downloads-grid .download-card').forEach(fixCard); }
+  document.addEventListener('DOMContentLoaded', function(){
+    run();
+    setTimeout(run, 250);
+    setTimeout(run, 1000);
+    const grid = document.querySelector('#softwareGrid,.downloads-grid');
+    if(grid){ new MutationObserver(run).observe(grid,{childList:true,subtree:false}); }
+  });
+})();
 </script>
 
 
@@ -15357,28 +15425,25 @@ html body .download-card > .software-stats{
 })();
 </script>
 
-<!-- AZOBSS 503: true logo/title separation; removes obsolete inline grid lock -->
-<style id="azobss-software-logo-title-true-separation-fix-503">
+
+<!-- AZOBSS 501: logo/title spacing and top breathing room -->
+<style id="azobss-software-logo-title-spacing-fix-501">
+/* Keep the software logo clear of the card top and reserve a real gap before the title. */
 @media (min-width:761px){
   html body #softwareGrid > .download-card,
   html body #softwareDownloadsGrid > .download-card,
   html body .downloads-grid > .download-card{
-    padding-top:26px!important;
+    padding-top:28px!important;
   }
 
   html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
   html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
   html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
-    position:relative!important;
-    inset:auto!important;
-    transform:none!important;
-    order:1!important;
-    flex:0 0 72px!important;
     width:72px!important;
     height:72px!important;
     min-height:72px!important;
-    max-height:72px!important;
-    margin:0 auto 14px!important;
+    flex:0 0 72px!important;
+    margin:2px auto 14px!important;
   }
 
   html body #softwareGrid > .download-card > h3,
@@ -15387,26 +15452,15 @@ html body .download-card > .software-stats{
   html body #softwareGrid > .download-card > .software-title,
   html body #softwareDownloadsGrid > .download-card > .software-title,
   html body .downloads-grid > .download-card > .software-title{
-    position:static!important;
-    inset:auto!important;
-    translate:none!important;
-    transform:none!important;
-    order:2!important;
-    flex:0 0 70px!important;
-    display:flex!important;
-    align-items:flex-start!important;
-    justify-content:center!important;
+    position:relative!important;
+    z-index:2!important;
     width:100%!important;
-    max-width:230px!important;
-    height:70px!important;
-    min-height:70px!important;
-    max-height:70px!important;
-    margin:0 auto 7px!important;
-    padding:7px 4px 0!important;
-    box-sizing:border-box!important;
-    line-height:1.08!important;
-    text-align:center!important;
-    overflow:hidden!important;
+    max-width:220px!important;
+    min-height:50px!important;
+    margin:0 auto 8px!important;
+    padding:0!important;
+    line-height:1.1!important;
+    transform:none!important;
   }
 }
 
@@ -15414,17 +15468,13 @@ html body .download-card > .software-stats{
   html body #softwareGrid > .download-card,
   html body #softwareDownloadsGrid > .download-card,
   html body .downloads-grid > .download-card{
-    padding-top:22px!important;
+    padding-top:24px!important;
   }
 
   html body #softwareGrid > .download-card > .software-card-media.az-logo-media,
   html body #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
   html body .downloads-grid > .download-card > .software-card-media.az-logo-media{
-    position:relative!important;
-    inset:auto!important;
-    transform:none!important;
-    order:1!important;
-    margin:0 auto 12px!important;
+    margin:2px auto 12px!important;
   }
 
   html body #softwareGrid > .download-card > h3,
@@ -15433,62 +15483,11 @@ html body .download-card > .software-stats{
   html body #softwareGrid > .download-card > .software-title,
   html body #softwareDownloadsGrid > .download-card > .software-title,
   html body .downloads-grid > .download-card > .software-title{
-    position:static!important;
-    inset:auto!important;
-    translate:none!important;
+    margin:0 auto 8px!important;
     transform:none!important;
-    order:2!important;
-    flex:0 0 66px!important;
-    display:flex!important;
-    align-items:flex-start!important;
-    justify-content:center!important;
-    width:100%!important;
-    max-width:220px!important;
-    height:66px!important;
-    min-height:66px!important;
-    max-height:66px!important;
-    margin:0 auto 6px!important;
-    padding:6px 4px 0!important;
-    box-sizing:border-box!important;
-    line-height:1.08!important;
-    text-align:center!important;
-    overflow:hidden!important;
   }
 }
 </style>
-<script id="azobss-software-remove-legacy-inline-grid-503">
-(function(){
-  const CARD_PROPS=['display','grid-template-columns','grid-template-rows','grid-template-areas','justify-items','align-items','text-align','height','min-height','max-height','position'];
-  const TITLE_PROPS=['grid-area','display','place-items','justify-self','align-self','width','max-width','height','min-height','max-height','margin','padding','text-align','line-height','word-break','overflow-wrap','transform'];
-  const BADGE_PROPS=['grid-area','justify-self'];
-  const META_PROPS=['grid-area','justify-content','width'];
-  const DESC_PROPS=['grid-area','display','align-items','justify-content','text-align','width','max-width'];
-  const BTN_PROPS=['grid-area','justify-self','margin'];
-  function clearProps(el,props){ if(!el)return; props.forEach(p=>el.style.removeProperty(p)); }
-  function clean(card){
-    if(!card || !card.matches('.download-card'))return;
-    clearProps(card,CARD_PROPS);
-    clearProps(card.querySelector('h3,.software-title'),TITLE_PROPS);
-    clearProps(card.querySelector('.software-badge.free,.software-badge.premium,.software-badge'),BADGE_PROPS);
-    clearProps(card.querySelector('.software-meta'),META_PROPS);
-    clearProps(card.querySelector('p'),DESC_PROPS);
-    card.querySelectorAll('.download-btn').forEach(btn=>clearProps(btn,BTN_PROPS));
-    delete card.dataset.azobssRealFinalCentered;
-  }
-  function run(root){
-    if(root?.matches?.('.download-card')) clean(root);
-    root?.querySelectorAll?.('.download-card').forEach(clean);
-  }
-  function start(){
-    const grids=[document.getElementById('softwareGrid'),document.getElementById('softwareDownloadsGrid'),document.querySelector('.downloads-grid')].filter(Boolean);
-    grids.forEach(grid=>{
-      run(grid);
-      new MutationObserver(records=>records.forEach(r=>r.addedNodes.forEach(n=>{if(n?.nodeType===1)run(n)}))).observe(grid,{childList:true,subtree:true});
-    });
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-})();
-</script>
 
 </body>
 </html>

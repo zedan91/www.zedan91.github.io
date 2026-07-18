@@ -1,7 +1,0 @@
-AZOBSS 502 - Software Logo/Title Extra Gap Fix
-
-- Adds a clear visual gap between the software logo and product title.
-- Resets old top/bottom/transform offsets that could pull the title upward.
-- Keeps the logo size and all AZOBSS 500/501 card functions unchanged.
-- Includes a smaller corresponding spacing adjustment for mobile.
-- No Firebase Rules or Render backend changes are required.
