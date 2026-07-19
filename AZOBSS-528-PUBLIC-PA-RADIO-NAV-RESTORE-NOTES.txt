@@ -1,0 +1,20 @@
+AZOBSS Patch (528) - Public PA Radio Navbar Restore
+
+Baseline:
+(527)-AZOBSS-AUTH-BUTTONS-MATCH-PUBLIC-PA-FIX_20260720.zip
+
+Change:
+- Restores the existing AZOBSS Radio navbar player on /Beli-Pelan-Akui/.
+- Uses the existing /assets/js/azobss-radio-player.js?v=369 script.
+- Radio button is injected before the signed-in user tools, matching other AZOBSS pages.
+
+Preserved:
+- Login/Register styling from (527).
+- Role-based Admin/Staff button visibility.
+- Green chat button and user header tools.
+- Carian Map, MyLot, PA validation, payment flow and backend files.
+
+Deployment:
+- Frontend upload/GitHub Pages update only.
+- No Firebase Rules update required.
+- No Render redeploy required.
