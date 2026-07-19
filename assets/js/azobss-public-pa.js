@@ -3,9 +3,16 @@ import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth
 
 const BACKEND = String(window.AZOBSS_BACKEND_URL || (/^(?:localhost|127\.0\.0\.1)$/.test(location.hostname) ? location.origin : 'https://azobss-backend.onrender.com')).replace(/\/+$/, '');
 const PRICE_SEN = 5000;
+const MYLOT_BASE = 'https://jupem2u.kul.jupem.gov.my/mylot/negeri.html';
+const MYLOT_STATE_CODES = Object.freeze({'JOHOR':'01','KEDAH':'02','KELANTAN':'03','MELAKA':'04','NEGERI SEMBILAN':'05','PAHANG':'06','PULAU PINANG':'07','PERAK':'08','PERLIS':'09','SELANGOR':'10','TERENGGANU':'11','WILAYAH PERSEKUTUAN KUALA LUMPUR':'14','WILAYAH PERSEKUTUAN LABUAN':'15','WILAYAH PERSEKUTUAN PUTRAJAYA':'16'});
+const MYLOT_UNSUPPORTED_STATES = new Set(['SABAH','SARAWAK']);
 const states = new Set(['JOHOR','KEDAH','KELANTAN','MELAKA','NEGERI SEMBILAN','PAHANG','PERAK','PERLIS','PULAU PINANG','SABAH','SARAWAK','SELANGOR','TERENGGANU','WILAYAH PERSEKUTUAN KUALA LUMPUR','WILAYAH PERSEKUTUAN LABUAN','WILAYAH PERSEKUTUAN PUTRAJAYA']);
 let verifiedKey = '';
 let verifyingReturn = false;
+let myLotInputTimer = 0;
+let myLotLastAutoKey = '';
+let myLotCurrentUrl = MYLOT_BASE;
+let myLotCurrentPayload = null;
 
 const $ = (id) => document.getElementById(id);
 function cleanPa(v){ return String(v||'').toUpperCase().replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'').slice(0,12); }
@@ -18,6 +25,78 @@ function isAdminUser(user){ const r=roleKey(user), key=userKey(user), email=Stri
 function isStaffish(user){ const r=roleKey(user); return r.includes('staff') || r==='semiadmin' || r==='admin'; }
 function isRestricted(user){ if(isAdminUser(user)) return false; try{ if(user && typeof window.azobssHasPaBmAccess==='function' && window.azobssHasPaBmAccess(user)) return true; }catch(_){} return !!(user && isStaffish(user)); }
 function showStatus(type,text){ const el=$('publicPaStatus'); if(!el)return; el.className='public-pa-status show '+type; el.textContent=text; }
+function showMyLotStatus(type,text){ const el=$('publicPaMyLotStatus'); if(!el)return; if(!text){el.className='public-pa-coordinate-status';el.textContent='';return;} el.className='public-pa-coordinate-status show '+type; el.textContent=text; }
+function parseCoordinates(value){
+  const raw=String(value||'').trim().replace(/[º°]/g,' ');
+  if(!raw)return null;
+  const matches=raw.match(/[-+]?\d{1,3}(?:\.\d+)?/g);
+  if(!matches||matches.length<2)return null;
+  let lat=Number(matches[0]),lng=Number(matches[1]);
+  if(Math.abs(lat)>90&&Math.abs(lng)<=90){const swap=lat;lat=lng;lng=swap;}
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return null;
+  return {lat:Number(lat.toFixed(7)),lng:Number(lng.toFixed(7))};
+}
+function currentMyLotState(){ return String($('publicPaState')?.value||'').trim().toUpperCase(); }
+function myLotPayload(){ const state=currentMyLotState(),coords=parseCoordinates($('publicPaCoordinates')?.value); return {state,stateCode:MYLOT_STATE_CODES[state]||'',coords}; }
+function buildMyLotUrl(payload){
+  const {state,stateCode,coords}=payload;
+  const url=new URL(MYLOT_BASE);
+  const lat=String(coords.lat),lng=String(coords.lng),coordinate=`${lat},${lng}`;
+  [['negeri',state],['state',state],['kodNegeri',stateCode],['stateCode',stateCode],['lat',lat],['latitude',lat],['lng',lng],['lon',lng],['longitude',lng],['q',coordinate],['coordinate',coordinate],['zoom','19']].forEach(([key,value])=>{if(value)url.searchParams.set(key,value);});
+  url.hash=`lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&zoom=19`;
+  return url.toString();
+}
+function validateMyLotPayload(payload,{quiet=false}={}){
+  if(!payload.state){if(!quiet)showMyLotStatus('info','Pilih negeri dahulu sebelum memasukkan koordinat.');return false;}
+  if(MYLOT_UNSUPPORTED_STATES.has(payload.state)){if(!quiet)showMyLotStatus('error','MyLot JUPEM tidak menyediakan liputan Sabah atau Sarawak. Pilih negeri yang mempunyai liputan MyLot.');return false;}
+  if(!payload.stateCode){if(!quiet)showMyLotStatus('error','Negeri ini belum mempunyai kod MyLot yang disokong.');return false;}
+  if(!payload.coords){if(!quiet)showMyLotStatus('info','Masukkan koordinat lengkap, contoh: 3.139003, 101.686855');return false;}
+  return true;
+}
+function updateMyLotButton(){ const payload=myLotPayload(),button=$('publicPaOpenMyLotButton'); const valid=validateMyLotPayload(payload,{quiet:true}); if(button)button.disabled=!valid; return {payload,valid}; }
+function postCoordinateToMyLot(){
+  const frame=$('publicPaMyLotFrame');
+  if(!frame?.contentWindow||!myLotCurrentPayload)return;
+  const {state,stateCode,coords}=myLotCurrentPayload;
+  const messages=[
+    {type:'AZOBSS_MYLOT_COORDINATE',negeri:state,state,stateCode,lat:coords.lat,lng:coords.lng,latitude:coords.lat,longitude:coords.lng,zoom:19},
+    {type:'SET_COORDINATE',state,stateCode,latitude:coords.lat,longitude:coords.lng,zoom:19},
+    {action:'searchCoordinate',negeri:state,kodNegeri:stateCode,lat:coords.lat,lon:coords.lng,zoom:19}
+  ];
+  messages.forEach(message=>{try{frame.contentWindow.postMessage(message,'https://jupem2u.kul.jupem.gov.my');}catch(_){}});
+}
+function openMyLotFloat({automatic=false}={}){
+  const payload=myLotPayload();
+  if(!validateMyLotPayload(payload))return;
+  const key=`${payload.state}|${payload.coords.lat}|${payload.coords.lng}`;
+  if(automatic&&key===myLotLastAutoKey)return;
+  myLotLastAutoKey=key;
+  myLotCurrentPayload=payload;
+  myLotCurrentUrl=buildMyLotUrl(payload);
+  const modal=$('publicPaMyLotModal'),frame=$('publicPaMyLotFrame'),newTab=$('publicPaMyLotNewTab');
+  if($('publicPaMyLotSummary'))$('publicPaMyLotSummary').textContent=`${payload.state} • ${payload.coords.lat}, ${payload.coords.lng}`;
+  if($('publicPaMyLotCoordinateText'))$('publicPaMyLotCoordinateText').textContent=`Lat ${payload.coords.lat} • Long ${payload.coords.lng}`;
+  if(newTab)newTab.href=myLotCurrentUrl;
+  if(frame){frame.classList.remove('is-loaded');frame.src=myLotCurrentUrl;}
+  if(modal)modal.hidden=false;
+  document.body.classList.add('public-pa-mylot-open');
+  showMyLotStatus('success',`MyLot dibuka untuk ${payload.state} pada koordinat ${payload.coords.lat}, ${payload.coords.lng}.`);
+  try{navigator.clipboard?.writeText(`${payload.coords.lat}, ${payload.coords.lng}`).catch(()=>{});}catch(_){}
+  setTimeout(postCoordinateToMyLot,1200);setTimeout(postCoordinateToMyLot,3000);
+}
+function closeMyLotFloat(){ const modal=$('publicPaMyLotModal'),frame=$('publicPaMyLotFrame'); if(modal)modal.hidden=true; if(frame){frame.src='about:blank';frame.classList.remove('is-loaded');} document.body.classList.remove('public-pa-mylot-open'); }
+function handleCoordinateInput(){
+  clearTimeout(myLotInputTimer);
+  const {payload,valid}=updateMyLotButton();
+  const raw=String($('publicPaCoordinates')?.value||'').trim();
+  if(!raw){showMyLotStatus('','');return;}
+  if(!payload.state){showMyLotStatus('info','Pilih negeri dahulu. MyLot hanya akan dibuka selepas negeri ditetapkan.');return;}
+  if(MYLOT_UNSUPPORTED_STATES.has(payload.state)){showMyLotStatus('error','MyLot JUPEM tidak menyediakan liputan Sabah atau Sarawak.');return;}
+  if(!payload.coords){showMyLotStatus('info','Lengkapkan koordinat dalam format latitud, longitud.');return;}
+  if(valid){showMyLotStatus('info','Koordinat sah. MyLot akan dibuka secara automatik…');myLotInputTimer=setTimeout(()=>openMyLotFloat({automatic:true}),850);}
+}
+function handleMyLotStateChange(){ clearTimeout(myLotInputTimer); const {payload,valid}=updateMyLotButton(); if(!$('publicPaCoordinates')?.value?.trim())return; if(!validateMyLotPayload(payload))return; if(valid){showMyLotStatus('info','Negeri ditetapkan. Membuka MyLot pada koordinat yang dimasukkan…');myLotInputTimer=setTimeout(()=>openMyLotFloat({automatic:true}),450);} }
+
 function setBusy(busy,text=''){ const check=$('publicPaCheckButton'),pay=$('publicPaPayButton'),test=$('publicPaTestPaymentButton'); if(check)check.disabled=busy; if(pay)pay.disabled=busy || !verifiedKey; if(test)test.disabled=busy || !verifiedKey; if(text)showStatus('info',text); }
 function formData(){ return { paNumber:cleanPa($('publicPaNumber')?.value), negeri:String($('publicPaState')?.value||'').trim().toUpperCase(), buyerName:String($('publicPaName')?.value||'').trim(), buyerEmail:String($('publicPaEmail')?.value||'').trim().toLowerCase(), buyerPhone:cleanPhone($('publicPaPhone')?.value) }; }
 function validatePa(data){ if(!/^\d{1,12}$/.test(data.paNumber)) throw new Error('Masukkan nombor PA yang sah.'); if(!states.has(data.negeri)) throw new Error('Pilih negeri yang sah.'); }
@@ -47,7 +126,7 @@ async function sendAdminPublicPaTest(data,forceRefresh=false){
     response=await fetch(`${BACKEND}/api/admin/test-public-pa-payment`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({...data,sourcePage:location.href,frontendPatch:'516'}),
+      body:JSON.stringify({...data,sourcePage:location.href,frontendPatch:'517'}),
       cache:'no-store'
     });
   }catch(_){
@@ -107,5 +186,5 @@ async function testPayment(){
 
 function returnRefs(){ const p=new URLSearchParams(location.search); return {orderId:p.get('orderId')||p.get('order_id')||sessionStorage.getItem('azobss_public_pa_pending_order_id')||'',billCode:p.get('billCode')||p.get('billcode')||sessionStorage.getItem('azobss_public_pa_pending_bill_code')||''}; }
 async function verifyReturn(){ if(verifyingReturn)return; const refs=returnRefs(); if(!refs.orderId&&!refs.billCode)return; verifyingReturn=true; showStatus('info','Mengesahkan pembayaran dengan ToyyibPay...'); for(let i=0;i<8;i++){ try{ const url=`${BACKEND}/api/verify-payment?orderId=${encodeURIComponent(refs.orderId)}&billCode=${encodeURIComponent(refs.billCode)}`; const response=await fetch(url,{cache:'no-store'}); const data=await response.json().catch(()=>({})); if(response.ok&&data.paid&&data.publicPa&&data.downloadUrl){ $('publicPaResult')?.classList.add('show'); if($('publicPaResultTitle'))$('publicPaResultTitle').textContent='Pembayaran Berjaya ✅'; $('publicPaDownload').href=data.downloadUrl; $('publicPaReceipt').href=data.receiptUrl||'#'; $('publicPaResultText').textContent=data.emailSent ? 'PDF sudah tersedia dan link turut dihantar ke e-mel anda.' : 'PDF sudah tersedia. Simpan link ini; penghantaran e-mel mungkin masih diproses.'; showStatus('success','Pembayaran berjaya disahkan. Pelan Akui anda sudah tersedia.'); sessionStorage.removeItem('azobss_public_pa_pending_order_id');sessionStorage.removeItem('azobss_public_pa_pending_bill_code'); $('publicPaResult')?.scrollIntoView({behavior:'smooth',block:'center'}); verifyingReturn=false; return; } if(data.status==='failed'||data.status==='cancelled')throw new Error('Pembayaran tidak berjaya atau telah dibatalkan.'); }catch(error){ if(i===7){showStatus('error',error.message||'Pengesahan pembayaran belum selesai. Cuba muat semula halaman sebentar lagi.');verifyingReturn=false;return;} } await new Promise(r=>setTimeout(r,1800+i*600)); } showStatus('info','Pembayaran masih diproses. Muat semula halaman sebentar lagi.'); verifyingReturn=false; }
-function init(){ applyUser(); $('publicPaCheckButton')?.addEventListener('click',checkPa); $('publicPaTestPaymentButton')?.addEventListener('click',testPayment); $('publicPaForm')?.addEventListener('submit',pay); ['publicPaNumber','publicPaState'].forEach(id=>$(id)?.addEventListener('input',invalidate)); window.addEventListener('storage',()=>setTimeout(applyUser,80)); window.addEventListener('azobss-auth-changed',()=>setTimeout(applyUser,80)); [300,900,1800].forEach(ms=>setTimeout(applyUser,ms)); verifyReturn(); }
+function init(){ applyUser(); $('publicPaCheckButton')?.addEventListener('click',checkPa); $('publicPaTestPaymentButton')?.addEventListener('click',testPayment); $('publicPaForm')?.addEventListener('submit',pay); ['publicPaNumber','publicPaState'].forEach(id=>$(id)?.addEventListener('input',invalidate)); $('publicPaCoordinates')?.addEventListener('input',handleCoordinateInput); $('publicPaCoordinates')?.addEventListener('paste',()=>setTimeout(handleCoordinateInput,0)); $('publicPaState')?.addEventListener('change',handleMyLotStateChange); $('publicPaOpenMyLotButton')?.addEventListener('click',()=>openMyLotFloat({automatic:false})); $('publicPaMyLotClose')?.addEventListener('click',closeMyLotFloat); $('publicPaMyLotModal')?.addEventListener('click',event=>{if(event.target===$('publicPaMyLotModal'))closeMyLotFloat();}); $('publicPaMyLotFrame')?.addEventListener('load',()=>{$('publicPaMyLotFrame')?.classList.add('is-loaded');postCoordinateToMyLot();}); document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('publicPaMyLotModal')?.hidden)closeMyLotFloat();}); updateMyLotButton(); window.addEventListener('storage',()=>setTimeout(applyUser,80)); window.addEventListener('azobss-auth-changed',()=>setTimeout(applyUser,80)); [300,900,1800].forEach(ms=>setTimeout(applyUser,ms)); verifyReturn(); }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();

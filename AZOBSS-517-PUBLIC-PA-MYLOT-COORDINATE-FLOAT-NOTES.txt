@@ -1,0 +1,19 @@
+AZOBSS PATCH (517) - PUBLIC PA MYLOT COORDINATE FLOAT
+
+Baseline: (516)
+
+Perubahan:
+1. Tambah carian PA melalui koordinat pada /Beli-Pelan-Akui/.
+2. Pengguna wajib memilih negeri dahulu.
+3. Input menerima koordinat WGS84 decimal seperti 3.139003, 101.686855.
+4. Selepas koordinat lengkap, modal terapung MyLot JUPEM dibuka secara automatik.
+5. URL MyLot dihantar bersama nama/kod negeri, latitud, longitud dan zoom 19.
+6. Koordinat turut dihantar kepada iframe menggunakan postMessage sebagai sokongan tambahan.
+7. Ada butang Buka tab baru jika JUPEM menyekat iframe.
+8. Sabah dan Sarawak diberi mesej tidak disokong kerana liputan rasmi MyLot ialah Semenanjung Malaysia dan W.P. Labuan.
+9. Tiada perubahan pada pembayaran, ToyyibPay, semakan PA, backend atau Firebase Rules.
+
+Deploy:
+- Static website sahaja.
+- Render backend tidak perlu redeploy.
+- Firebase Rules tidak perlu diubah.
