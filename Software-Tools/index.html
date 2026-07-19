@@ -3044,6 +3044,56 @@ html body .downloads-section{
 }
 </style>
 
+
+<style id="azobss-auth-buttons-match-public-pa-fix-527">
+/* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
+.site-auth-actions{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin-left:auto!important;
+  margin-right:0!important;
+  flex:0 0 auto!important;
+}
+.site-auth-actions .site-auth-btn,
+.site-auth-actions .site-auth-btn:link,
+.site-auth-actions .site-auth-btn:visited{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:34px!important;
+  min-height:34px!important;
+  padding:0 13px!important;
+  border:1px solid rgba(148,163,184,.4)!important;
+  border-radius:999px!important;
+  background:#111c2f!important;
+  color:#fff!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+  box-shadow:none!important;
+}
+.site-auth-actions .site-auth-btn.primary,
+.site-auth-actions .site-auth-btn.primary:link,
+.site-auth-actions .site-auth-btn.primary:visited{
+  background:#16a34a!important;
+  border-color:#22c55e!important;
+  color:#fff!important;
+}
+.site-auth-actions .site-auth-btn:hover,
+.site-auth-actions .site-auth-btn:focus-visible{
+  color:#fff!important;
+  filter:brightness(1.08);
+  outline:none!important;
+}
+@media(max-width:620px){
+  .site-auth-actions{gap:7px!important;}
+  .site-auth-actions .site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:12px!important;}
+}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">

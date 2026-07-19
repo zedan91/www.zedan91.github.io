@@ -1,0 +1,27 @@
+AZOBSS Patch 527 - Auth Buttons Match Public PA
+
+Changes:
+- Register buttons on other AZOBSS pages now use the same green pill style as /Beli-Pelan-Akui/.
+- Login buttons on other AZOBSS pages now use the same dark pill style as /Beli-Pelan-Akui/.
+- Applied to every HTML page that contains the shared Register and Login controls, except /Beli-Pelan-Akui/ which was already the reference style.
+- Login state, role visibility, payment, MyLot, Firestore and backend logic were not changed.
+
+Files updated:
+- index.html
+- admin/index.html
+- affiliate-shop/index.html
+- Bookmarks/index.html
+- CAD-Tools-&-Resources/index.html
+- lucky-draw/index.html
+- PA-BM/index.html
+- Software-Tools/index.html
+- staff/index.html
+- tools/BMI-Calculator.html
+- tools/Currency-Converter.html
+- tools/index.html
+- tools/Internet-Speed-Converter.html
+- tools/PC-Bottleneck-Checker.html
+- tools/PSU-Calculator.html
+- tools/RAM-Usage-Checker.html
+- tools/SSD-Speed-Checker-guide.html
+- tools/Windows-Command-Generator.html

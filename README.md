@@ -106,7 +106,7 @@ AZOBSS 492
 - Normalizes dynamically rendered More chips as direct card children without rebuilding the software list.
 
 
-## Patch 527 — Public PA Auth Buttons Match Navbar
-- Register and Login on `/Beli-Pelan-Akui/` now use the same navy pill style, sizing, border, text weight and hover treatment as the Beli Pelan Akui navigation button.
-- Removed the special green Register appearance on this page.
-- Frontend only; no Firebase Rules or Render backend changes required.
+## Patch 527 - Register/Login Buttons Match Beli Pelan Akui
+- Standardized Register as a green rounded pill and Login as a dark rounded pill across all pages that use the shared auth controls.
+- The /Beli-Pelan-Akui/ page remains the visual reference and was not altered.
+- Frontend CSS only. No Firebase Rules or Render redeploy required.
