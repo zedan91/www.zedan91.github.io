@@ -1,0 +1,12 @@
+AZOBSS PATCH 512
+
+Change:
+- Moves the conditional "Beli Pelan Akui" navigation button to the first normal storefront-tab position.
+- The button now appears immediately before "Software" on every market sticky bar.
+- Existing guest/normal-user visibility rules are unchanged.
+- PA/BM-allowed users, admin, staff, and semi-admin still do not see this button.
+- Updated global-auth cache version to v=512 so browsers load the new navbar order.
+
+Baseline: (511)-AZOBSS-PUBLIC-PA-RM50-GUEST-USER-PURCHASE-FIX_20260719.zip
+Firebase Rules: No change required.
+Render backend: No redeploy required for this navbar-only patch.

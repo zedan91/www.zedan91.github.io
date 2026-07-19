@@ -1479,8 +1479,20 @@ function azobssEnsurePublicPaNavButtons(){
       link.className = 'nav-public-pa-link';
       link.href = '/Beli-Pelan-Akui/';
       link.textContent = 'Beli Pelan Akui';
-      const mini = Array.from(nav.querySelectorAll('a')).find(a => /\/tools\/?$/i.test(a.getAttribute('href') || ''));
-      if(mini) nav.insertBefore(link, mini); else nav.appendChild(link);
+    }
+
+    // Keep the public PA button as the first normal storefront tab,
+    // immediately before Software. This also repositions older cached/static
+    // markup where the button previously appeared near Mini Web Tools.
+    const software = Array.from(nav.querySelectorAll('a')).find((a)=>{
+      const href = String(a.getAttribute('href') || '').replace(/\?.*$/, '').replace(/#.*$/, '');
+      return /\/Software-Tools\/?(?:index\.html)?$/i.test(href)
+        || String(a.textContent || '').trim().toLowerCase() === 'software';
+    });
+    if(software){
+      nav.insertBefore(link, software);
+    }else if(!link.isConnected || link.parentElement !== nav){
+      nav.appendChild(link);
     }
     found.push(link);
   });
