@@ -73,7 +73,7 @@ function openMyLotFloat({automatic=false}={}){
   if(frame){frame.classList.remove('is-loaded');frame.src=myLotCurrentUrl;}
   if(modal)modal.hidden=false;
   document.body.classList.add('public-pa-mylot-open');
-  showMyLotStatus('success',`MyLot dibuka pada koordinat ${payload.coords.lat}, ${payload.coords.lng}.`);
+  showMyLotStatus('success',`Carian lokasi dibuka pada koordinat ${payload.coords.lat}, ${payload.coords.lng}.`);
   try{navigator.clipboard?.writeText(`${payload.coords.lat}, ${payload.coords.lng}`).catch(()=>{});}catch(_){}
   setTimeout(postCoordinateToMyLot,1200);setTimeout(postCoordinateToMyLot,3000);
 }

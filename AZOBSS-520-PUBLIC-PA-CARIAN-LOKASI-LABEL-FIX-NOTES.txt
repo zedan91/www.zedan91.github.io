@@ -1,0 +1,14 @@
+AZOBSS Patch (520)
+
+Baseline: (519)-AZOBSS-PUBLIC-PA-MYLOT-COORDINATE-ENTER-NO-STATE-FIX_20260720.zip
+
+Scope:
+- Beli-Pelan-Akui/index.html
+- assets/js/azobss-public-pa.js
+
+Changes:
+1. Tajuk kad koordinat ditukar daripada “Cari PA melalui koordinat (MyLot)” kepada “Carian Lokasi”.
+2. Badge “JUPEM MyLot” dibuang daripada kad.
+3. Butang “Buka MyLot” dikekalkan.
+4. Status selepas buka ditukar kepada “Carian lokasi dibuka pada koordinat ...”.
+5. Tiada perubahan pada fungsi pembelian, pembayaran, pilihan negeri pembelian PA atau modal MyLot.
