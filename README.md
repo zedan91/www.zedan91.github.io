@@ -104,3 +104,9 @@ AZOBSS 492
 ## Patch 496
 - Keeps the More chip above Download Now / Buy Now after card bottom alignment.
 - Normalizes dynamically rendered More chips as direct card children without rebuilding the software list.
+
+
+## Patch 527 — Public PA Auth Buttons Match Navbar
+- Register and Login on `/Beli-Pelan-Akui/` now use the same navy pill style, sizing, border, text weight and hover treatment as the Beli Pelan Akui navigation button.
+- Removed the special green Register appearance on this page.
+- Frontend only; no Firebase Rules or Render backend changes required.
