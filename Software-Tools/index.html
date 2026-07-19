@@ -3222,6 +3222,16 @@ html body .downloads-section{
   var MAX_AGE=48*60*60*1000;
   var grid=document.getElementById('softwareDownloadsGrid');
   if(!grid) return;
+  /* AZOBSS 530: a shared-product URL must never display an older cached card.
+     Wait for the current renderItem() template so shared and normal links match. */
+  try{
+    var sharedParams530=new URLSearchParams(location.search||'');
+    var sharedProduct530=String(sharedParams530.get('p')||sharedParams530.get('product')||sharedParams530.get('productId')||sharedParams530.get('id')||'').trim();
+    if(sharedProduct530){
+      try{ localStorage.removeItem(CACHE_KEY); }catch(_cacheRemoveErr530){}
+      return;
+    }
+  }catch(_sharedCacheErr530){}
   try{
     var raw=localStorage.getItem(CACHE_KEY);
     if(!raw) return;
@@ -5281,6 +5291,34 @@ function normalizeItem(item){
     return String(item?.productId || item?.id || item?.name || '').toLowerCase();
   }
 
+  /* AZOBSS 530: virtual pagination normally keeps only eight cards in the DOM.
+     Resolve shared-product URLs at the data layer first, so the requested item
+     is rendered with the exact same current card template as a normal visit. */
+  function azSharedSoftwareTarget530(){
+    try{
+      const qs=new URLSearchParams(location.search||'');
+      return String(qs.get('p')||qs.get('product')||qs.get('productId')||qs.get('id')||'').trim();
+    }catch(_e){ return ''; }
+  }
+  function azSharedSoftwareNorm530(value){
+    return String(value||'').trim().toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,'');
+  }
+  function azSharedSoftwareItemMatch530(item,targetRaw){
+    const target=azSharedSoftwareNorm530(targetRaw);
+    if(!target) return false;
+    const values=[item?.productId,item?.id,item?.sku,item?.docId,item?.name,item?.title].filter(Boolean);
+    return values.some(value=>azSharedSoftwareNorm530(value)===target);
+  }
+  function azSharedSoftwareCardMatch530(card,targetRaw){
+    const target=azSharedSoftwareNorm530(targetRaw);
+    if(!target||!card) return false;
+    const values=[
+      card.dataset?.productId,card.dataset?.softwareId,card.dataset?.id,card.dataset?.docId,
+      card.getAttribute?.('data-id'),card.querySelector?.('h3')?.textContent
+    ].filter(Boolean);
+    return values.some(value=>azSharedSoftwareNorm530(value)===target);
+  }
+
   function rebuildSoftwareDynamicCardPool482(items){
     // Do not build all 627 cards. Keep only the data; the current page is
     // rendered later by renderSoftwareVirtualPage491().
@@ -5383,6 +5421,14 @@ function normalizeItem(item){
         const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
         const typeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
         card.style.display = (selectedSoftwareOwnerFilter !== 'mine' && !isOverridden && categoryOk && cardPlatformOk(card) && typeOk && text.includes(keyword)) ? '' : 'none';
+      });
+    }
+
+    const sharedTarget530=azSharedSoftwareTarget530();
+    if(sharedTarget530){
+      dynamic=dynamic.filter(item=>azSharedSoftwareItemMatch530(item,sharedTarget530));
+      staticCards.forEach(card=>{
+        if(!azSharedSoftwareCardMatch530(card,sharedTarget530)) card.style.display='none';
       });
     }
 
@@ -10086,6 +10132,8 @@ html.azobss-shared-product-mode-332 .cad-item{
     });
     addNote(matches[0], matches.length);
     releaseFirstPaint();
+    /* AZOBSS 530: remove the temporary first-paint lock after the real card exists. */
+    releaseProductLock();
     var key = matches.map(function(c){return cardIds(c).join('|');}).join('||');
     if(changed || key !== lastMatchKey){
       lastMatchKey = key;
