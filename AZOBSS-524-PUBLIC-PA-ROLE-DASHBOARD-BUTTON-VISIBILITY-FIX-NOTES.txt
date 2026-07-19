@@ -1,0 +1,14 @@
+AZOBSS (524) PUBLIC PA ROLE DASHBOARD BUTTON VISIBILITY FIX
+
+Baseline:
+- (523)-AZOBSS-PUBLIC-PA-MYLOT-REMOVE-NEW-TAB-FIX_20260720.zip
+
+Changed:
+- Beli-Pelan-Akui/index.html only.
+- Admin and Staff dashboard shortcut icons are now hidden by default on first paint.
+- Admin shortcut is revealed only for the Admin role.
+- Staff shortcut is revealed only for Staff / Semi-admin roles.
+- Guest, public user and normal member accounts see neither shortcut.
+- Existing Carian Map, PA validation, payment, MyLot modal, auth and backend behavior are unchanged.
+
+No Firebase Rules or Render backend deployment is required.
