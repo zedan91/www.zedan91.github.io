@@ -15555,6 +15555,34 @@ html body .download-card > .software-stats{
 }
 </style>
 
+
+
+<!-- AZOBSS 507: lower software title only a little more -->
+<style id="azobss-software-title-only-slightly-lower-fix-507">
+/* Keep category, metadata, description and lower controls at the 506 position.
+   Only the software title receives an extra 4px downward visual offset. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    transform:translateY(18px)!important;
+  }
+}
+@media (max-width:760px){
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title{
+    transform:translateY(16px)!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
