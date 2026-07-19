@@ -1,0 +1,18 @@
+AZOBSS PATCH (521) — PUBLIC PA MYLOT BUTTON ONLY
+Date: 2026-07-20
+Baseline: (520)-AZOBSS-PUBLIC-PA-CARIAN-LOKASI-LABEL-FIX_20260720.zip
+
+Scope
+- Beli-Pelan-Akui frontend sahaja.
+
+Changes
+1. Buang tajuk Carian Lokasi.
+2. Buang penerangan koordinat.
+3. Buang input koordinat.
+4. Buang status koordinat.
+5. Tinggalkan satu butang penuh: Buka MyLot.
+6. Butang terus membuka paparan terapung MyLot tanpa memerlukan koordinat.
+7. Teks modal diselaraskan supaya tidak lagi menyebut koordinat yang ditaip.
+
+Not changed
+- Flow semakan PA, pembelian RM50, ToyyibPay, backend, admin Test Payment, auth dan akses PA/BM tidak diubah.

@@ -58,24 +58,15 @@ function postCoordinateToMyLot(){
   ];
   messages.forEach(message=>{try{frame.contentWindow.postMessage(message,'https://jupem2u.kul.jupem.gov.my');}catch(_){}});
 }
-function openMyLotFloat({automatic=false}={}){
-  const payload=myLotPayload();
-  if(!validateMyLotPayload(payload))return;
-  const key=`${payload.coords.lat}|${payload.coords.lng}`;
-  if(automatic&&key===myLotLastAutoKey)return;
-  myLotLastAutoKey=key;
-  myLotCurrentPayload=payload;
-  myLotCurrentUrl=buildMyLotUrl(payload);
+function openMyLotFloat(){
+  myLotCurrentPayload=null;
+  myLotCurrentUrl=MYLOT_BASE;
   const modal=$('publicPaMyLotModal'),frame=$('publicPaMyLotFrame'),newTab=$('publicPaMyLotNewTab');
-  if($('publicPaMyLotSummary'))$('publicPaMyLotSummary').textContent=`${payload.coords.lat}, ${payload.coords.lng}`;
-  if($('publicPaMyLotCoordinateText'))$('publicPaMyLotCoordinateText').textContent=`Lat ${payload.coords.lat} • Long ${payload.coords.lng}`;
+  if($('publicPaMyLotSummary'))$('publicPaMyLotSummary').textContent='Carian lokasi dan lot';
   if(newTab)newTab.href=myLotCurrentUrl;
   if(frame){frame.classList.remove('is-loaded');frame.src=myLotCurrentUrl;}
   if(modal)modal.hidden=false;
   document.body.classList.add('public-pa-mylot-open');
-  showMyLotStatus('success',`Carian lokasi dibuka pada koordinat ${payload.coords.lat}, ${payload.coords.lng}.`);
-  try{navigator.clipboard?.writeText(`${payload.coords.lat}, ${payload.coords.lng}`).catch(()=>{});}catch(_){}
-  setTimeout(postCoordinateToMyLot,1200);setTimeout(postCoordinateToMyLot,3000);
 }
 function closeMyLotFloat(){ const modal=$('publicPaMyLotModal'),frame=$('publicPaMyLotFrame'); if(modal)modal.hidden=true; if(frame){frame.src='about:blank';frame.classList.remove('is-loaded');} document.body.classList.remove('public-pa-mylot-open'); }
 function handleCoordinateInput(){
@@ -181,5 +172,5 @@ async function testPayment(){
 
 function returnRefs(){ const p=new URLSearchParams(location.search); return {orderId:p.get('orderId')||p.get('order_id')||sessionStorage.getItem('azobss_public_pa_pending_order_id')||'',billCode:p.get('billCode')||p.get('billcode')||sessionStorage.getItem('azobss_public_pa_pending_bill_code')||''}; }
 async function verifyReturn(){ if(verifyingReturn)return; const refs=returnRefs(); if(!refs.orderId&&!refs.billCode)return; verifyingReturn=true; showStatus('info','Mengesahkan pembayaran dengan ToyyibPay...'); for(let i=0;i<8;i++){ try{ const url=`${BACKEND}/api/verify-payment?orderId=${encodeURIComponent(refs.orderId)}&billCode=${encodeURIComponent(refs.billCode)}`; const response=await fetch(url,{cache:'no-store'}); const data=await response.json().catch(()=>({})); if(response.ok&&data.paid&&data.publicPa&&data.downloadUrl){ $('publicPaResult')?.classList.add('show'); if($('publicPaResultTitle'))$('publicPaResultTitle').textContent='Pembayaran Berjaya ✅'; $('publicPaDownload').href=data.downloadUrl; $('publicPaReceipt').href=data.receiptUrl||'#'; $('publicPaResultText').textContent=data.emailSent ? 'PDF sudah tersedia dan link turut dihantar ke e-mel anda.' : 'PDF sudah tersedia. Simpan link ini; penghantaran e-mel mungkin masih diproses.'; showStatus('success','Pembayaran berjaya disahkan. Pelan Akui anda sudah tersedia.'); sessionStorage.removeItem('azobss_public_pa_pending_order_id');sessionStorage.removeItem('azobss_public_pa_pending_bill_code'); $('publicPaResult')?.scrollIntoView({behavior:'smooth',block:'center'}); verifyingReturn=false; return; } if(data.status==='failed'||data.status==='cancelled')throw new Error('Pembayaran tidak berjaya atau telah dibatalkan.'); }catch(error){ if(i===7){showStatus('error',error.message||'Pengesahan pembayaran belum selesai. Cuba muat semula halaman sebentar lagi.');verifyingReturn=false;return;} } await new Promise(r=>setTimeout(r,1800+i*600)); } showStatus('info','Pembayaran masih diproses. Muat semula halaman sebentar lagi.'); verifyingReturn=false; }
-function init(){ applyUser(); $('publicPaCheckButton')?.addEventListener('click',checkPa); $('publicPaTestPaymentButton')?.addEventListener('click',testPayment); $('publicPaForm')?.addEventListener('submit',pay); ['publicPaNumber','publicPaState'].forEach(id=>$(id)?.addEventListener('input',invalidate)); $('publicPaCoordinates')?.addEventListener('input',handleCoordinateInput); $('publicPaCoordinates')?.addEventListener('paste',()=>setTimeout(handleCoordinateInput,0)); $('publicPaCoordinates')?.addEventListener('keydown',handleCoordinateKeydown); $('publicPaOpenMyLotButton')?.addEventListener('click',()=>openMyLotFloat({automatic:false})); $('publicPaMyLotClose')?.addEventListener('click',closeMyLotFloat); $('publicPaMyLotModal')?.addEventListener('click',event=>{if(event.target===$('publicPaMyLotModal'))closeMyLotFloat();}); $('publicPaMyLotFrame')?.addEventListener('load',()=>{$('publicPaMyLotFrame')?.classList.add('is-loaded');postCoordinateToMyLot();}); document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('publicPaMyLotModal')?.hidden)closeMyLotFloat();}); updateMyLotButton(); window.addEventListener('storage',()=>setTimeout(applyUser,80)); window.addEventListener('azobss-auth-changed',()=>setTimeout(applyUser,80)); [300,900,1800].forEach(ms=>setTimeout(applyUser,ms)); verifyReturn(); }
+function init(){ applyUser(); $('publicPaCheckButton')?.addEventListener('click',checkPa); $('publicPaTestPaymentButton')?.addEventListener('click',testPayment); $('publicPaForm')?.addEventListener('submit',pay); ['publicPaNumber','publicPaState'].forEach(id=>$(id)?.addEventListener('input',invalidate)); $('publicPaOpenMyLotButton')?.addEventListener('click',openMyLotFloat); $('publicPaMyLotClose')?.addEventListener('click',closeMyLotFloat); $('publicPaMyLotModal')?.addEventListener('click',event=>{if(event.target===$('publicPaMyLotModal'))closeMyLotFloat();}); $('publicPaMyLotFrame')?.addEventListener('load',()=>{$('publicPaMyLotFrame')?.classList.add('is-loaded');}); document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('publicPaMyLotModal')?.hidden)closeMyLotFloat();}); window.addEventListener('storage',()=>setTimeout(applyUser,80)); window.addEventListener('azobss-auth-changed',()=>setTimeout(applyUser,80)); [300,900,1800].forEach(ms=>setTimeout(applyUser,ms)); verifyReturn(); }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
