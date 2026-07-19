@@ -13,8 +13,10 @@ function cleanPhone(v){ return String(v||'').replace(/[^0-9+]/g,'').slice(0,20);
 function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim()); }
 function currentSavedUser(){ try{return typeof window.getSavedUser==='function' ? (window.getSavedUser()||null) : JSON.parse(localStorage.getItem('azobssCurrentUser')||'null');}catch(_){return null;} }
 function roleKey(user){ return String(user?.role||user?.userRole||user?.accountRole||'').toLowerCase().replace(/[\s_-]+/g,''); }
+function userKey(user){ return String(user?.usernameKey||user?.username||user?.name||(user?.email?String(user.email).split('@')[0]:'')||'').trim().toLowerCase(); }
+function isAdminUser(user){ const r=roleKey(user), key=userKey(user), email=String(user?.email||user?.authEmail||'').trim().toLowerCase(); return !!(user && (r==='admin' || key==='zedan91' || key==='zedan9107' || email==='zedan91@azobss.local' || email==='zedan9107@gmail.com')); }
 function isStaffish(user){ const r=roleKey(user); return r.includes('staff') || r==='semiadmin' || r==='admin'; }
-function isRestricted(user){ try{ if(user && typeof window.azobssHasPaBmAccess==='function' && window.azobssHasPaBmAccess(user)) return true; }catch(_){} return !!(user && isStaffish(user)); }
+function isRestricted(user){ if(isAdminUser(user)) return false; try{ if(user && typeof window.azobssHasPaBmAccess==='function' && window.azobssHasPaBmAccess(user)) return true; }catch(_){} return !!(user && isStaffish(user)); }
 function showStatus(type,text){ const el=$('publicPaStatus'); if(!el)return; el.className='public-pa-status show '+type; el.textContent=text; }
 function setBusy(busy,text=''){ const check=$('publicPaCheckButton'),pay=$('publicPaPayButton'); if(check)check.disabled=busy; if(pay)pay.disabled=busy || !verifiedKey; if(text)showStatus('info',text); }
 function formData(){ return { paNumber:cleanPa($('publicPaNumber')?.value), negeri:String($('publicPaState')?.value||'').trim().toUpperCase(), buyerName:String($('publicPaName')?.value||'').trim(), buyerEmail:String($('publicPaEmail')?.value||'').trim().toLowerCase(), buyerPhone:cleanPhone($('publicPaPhone')?.value) }; }
