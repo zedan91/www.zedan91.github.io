@@ -5519,6 +5519,7 @@ async function maybeSendPublicPaEmail(order = {}, req = null) {
   try {
     let current = await azReloadPremiumOrder(order || {});
     if (!isPublicPaPremiumOrder(current) || current.emailSentAt) return current;
+    if (current.isAdminTestPayment === true && current.emailSkippedForPaBm === true) return upsertPremiumOrder({ ...current, publicPaEmailSkipped:true, emailError:null });
     if (!(current.toyyibVerifiedAt || current.paymentVerificationSource === 'toyyibpay-api' || current.isAdminTestPayment === true)) {
       return upsertPremiumOrder({ ...current, emailError:'Blocked: ToyyibPay payment not verified by API', emailErrorAt:new Date().toISOString() });
     }
@@ -7707,6 +7708,7 @@ async function handler(req, res) {
     if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-pa-bm-bill", 10, 5 * 60 * 1000)) return;
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-public-pa-bill", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
     if (pathname === "/api/premium/complete-purchase" && req.method === "POST" && azRateLimitOrSend(req, res, "premium-complete-purchase", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/status" && req.method === "GET" && parsed.query && parsed.query.records && azRateLimitOrSend(req, res, "commission-records", 60, 60 * 1000)) return;
@@ -7857,6 +7859,70 @@ async function handler(req, res) {
       }
     }
 
+
+    if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST") {
+      let data = {};
+      try { data = parseRequestBody(await readBody(req)); }
+      catch (_) { return send(res, 400, JSON.stringify({ok:false,success:false,error:"Invalid request body"}), "application/json"); }
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ok:false,success:false,error:"Admin authorization required."}), "application/json");
+
+        const paNumber = String(data.paNumber || data.noPA || data.pa || '').replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'').slice(0,12);
+        const negeri = cleanState(data.negeri || data.state || '');
+        const allowedStates = new Set(["JOHOR","KEDAH","KELANTAN","MELAKA","NEGERI SEMBILAN","PAHANG","PERAK","PERLIS","PULAU PINANG","SABAH","SARAWAK","SELANGOR","TERENGGANU","WILAYAH PERSEKUTUAN KUALA LUMPUR","WILAYAH PERSEKUTUAN LABUAN","WILAYAH PERSEKUTUAN PUTRAJAYA"]);
+        if (!/^\d{1,12}$/.test(paNumber)) return send(res, 400, JSON.stringify({ok:false,error:"Masukkan nombor PA yang sah."}), "application/json");
+        if (!allowedStates.has(negeri)) return send(res, 400, JSON.stringify({ok:false,error:"Pilih negeri yang sah."}), "application/json");
+        const check = await fetchPelanAkuiCandidates(`PA${paNumber}.TIF`, negeri);
+        if (!check || !check.validFile) return send(res, 404, JSON.stringify({ok:false,error:`PA ${paNumber} tidak ditemui untuk negeri yang dipilih.`}), "application/json");
+
+        const submitted = getPremiumUser(data);
+        const buyerName = cleanPremiumText(data.buyerName || data.name || adminIdentity.username || submitted.username || 'Admin Test',80);
+        const buyerEmail = cleanPremiumText(data.buyerEmail || data.email || adminIdentity.authEmail || adminIdentity.email || submitted.email || '',180).toLowerCase();
+        const buyerPhone = cleanPremiumText(data.buyerPhone || data.phone || submitted.phone || '',30).replace(/[^0-9+]/g,'');
+        if (buyerName.length < 2) return send(res, 400, JSON.stringify({ok:false,error:"Masukkan nama pembeli."}), "application/json");
+        if (!azValidEmailLike(buyerEmail) || azIsLocalEmail(buyerEmail)) return send(res, 400, JSON.stringify({ok:false,error:"Masukkan alamat e-mel sebenar yang sah."}), "application/json");
+        if (buyerPhone.replace(/\D/g,'').length < 8) return send(res, 400, JSON.stringify({ok:false,error:"Masukkan nombor telefon yang sah."}), "application/json");
+
+        const nowMs = Date.now();
+        const nowIso = new Date(nowMs).toISOString();
+        const orderId = makeId('publicpatest');
+        const recordId = `${orderId}-1`;
+        const paymentReference = `ADMIN-PUBLIC-PA-TEST-${nowMs}`;
+        const apiBase = publicBaseUrlFromReq(req);
+        const usernameKey = cleanPremiumText(adminIdentity.username || submitted.username || 'admin',80).toLowerCase();
+        const uid = cleanPremiumText(adminIdentity.uid || 'admin-test',120);
+        const item = {id:recordId,firestoreId:recordId,productType:'PA',itemCode:paNumber,negeri,amount:50,filename:`PA${paNumber}.pdf`,downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${encodeURIComponent(paNumber)}.TIF&negeri=${encodeURIComponent(negeri)}`,createdAtMs:nowMs,publicPaPurchase:true};
+        let order = upsertPremiumOrder({
+          orderId,productId:'public-pa-rm50',productName:`Pelan Akui PA${paNumber}`,amount:'RM50',amountSen:5000,saleAmount:50,saleAmountText:'RM50.00',
+          status:'paid',paymentMethod:'admin-test',paymentReference,billCode:'',paymentUrl:'',returnUrl:'',
+          user:{uid,username:usernameKey,usernameKey,email:buyerEmail,authEmail:adminIdentity.authEmail || adminIdentity.email || '',phone:buyerPhone,displayName:buyerName},
+          email:buyerEmail,buyerEmail,phone:buyerPhone,paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:50,
+          source:'admin-test-public-pa',maxDownload:5,maxDownloads:5,expiryHours:168,isAdminTestPayment:true,testPayment:true,
+          createdByAdmin:adminIdentity.username || adminIdentity.email || adminIdentity.uid || 'admin',createdAt:nowIso,createdAtMs:nowMs,paidAt:nowIso,paidAtMs:nowMs,
+          paidFinalizedAt:nowIso,paymentVerifiedAt:nowIso,paymentVerificationSource:'admin-test-endpoint',commissionCheckedAt:nowIso,
+          commissionSkippedReason:'admin-test-payment',emailSkippedForPaBm:true,publicPaEmailSkipped:true
+        });
+        const startedAtMs = Date.now();
+        const [, syncResult] = await Promise.all([
+          azPersistPremiumOrder(order),
+          azobssUpdatePaBmPurchaseLogsForOrder(order,'paid',{paymentReference,paidAtMs:nowMs,nowMs})
+        ]);
+        order = upsertPremiumOrder({...order,paBmPaidSyncedAt:nowIso,paBmPaidSyncedCount:Number(syncResult && syncResult.updated || 0)});
+        await azPersistPremiumOrder(order);
+        azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,'admin_test_public_pa_payment','premiumOrders',orderId,{paNumber,negeri,amount:50,paymentReference},'success'),'Admin public PA test payment audit log failed');
+        return send(res, 200, JSON.stringify({
+          ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,orderId,paymentReference,
+          amount:50,amountSen:5000,unit:1,updatedCount:Number(syncResult && syncResult.updated || 0),
+          downloadUrl:azPublicPaDownloadUrl(order,req),receiptUrl:azReceiptUrl(apiBase,order),emailSent:false,commissionCreated:false,
+          processingMs:Date.now()-startedAtMs
+        }, null, 2), "application/json");
+      } catch (error) {
+        const statusCode = Math.max(400, Math.min(500, Number(error && error.statusCode || 500)));
+        console.error("Admin public PA test payment failed:", error && (error.stack || error.message || error));
+        return send(res, statusCode, JSON.stringify({ok:false,success:false,error:error && error.message ? error.message : "Admin public PA test payment failed."}, null, 2), "application/json");
+      }
+    }
 
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST") {
       let data = {};

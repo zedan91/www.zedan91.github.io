@@ -693,6 +693,7 @@ function publicPaDownloadUrl(order = {}, req = null) {
 async function sendPublicPaEmailForOrder(order, req) {
   try {
     if (!order || order.emailSentAt) return order;
+    if (order.isAdminTestPayment === true && order.emailSkippedForPaBm === true) return upsertPremiumOrder({ ...order, publicPaEmailSkipped:true, emailError:null });
     const email = cleanPremiumText(order.user?.email || order.email || '', 180).toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || /@azobss\.local$/i.test(email)) return order;
     if (!mailEnabled()) return upsertPremiumOrder({ ...order, emailError:'Email service is not configured.' });
@@ -1543,6 +1544,76 @@ app.post("/api/admin/test-pa-bm-payment", requireAdmin, async (req, res) => {
     const statusCode = Math.max(400, Math.min(500, Number(error?.statusCode || 500)));
     console.error("Admin JUPEM test payment failed:", error && (error.stack || error.message || error));
     return res.status(statusCode).json({ ok: false, success: false, error: error.message || "Admin test payment failed." });
+  }
+});
+
+app.post("/api/admin/test-public-pa-payment", requireAdmin, async (req, res) => {
+  try {
+    const data = req.body || {};
+    const paNumber = String(data.paNumber || data.noPA || data.pa || '').replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'').slice(0,12);
+    const negeri = cleanPaState(data.negeri || data.state || '');
+    if (!/^\d{1,12}$/.test(paNumber)) return res.status(400).json({ok:false,error:"Masukkan nombor PA yang sah."});
+    if (!AZOBSS_JUPEM_STATES.has(negeri)) return res.status(400).json({ok:false,error:"Pilih negeri yang sah."});
+
+    const fileName = `PA${paNumber}.TIF`;
+    const candidates = [
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`,
+      `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(fileName)}&negeri=${encodeURIComponent(negeri)}`
+    ];
+    let exists = false;
+    for (const u of candidates) {
+      const r = await fetchJupemFile(u);
+      if (!r.ok) continue;
+      const b = Buffer.from(await r.arrayBuffer());
+      const t = b.slice(0,160).toString('utf8').toLowerCase();
+      if (b.length > 100 && !t.includes('<html')) { exists = true; break; }
+    }
+    if (!exists) return res.status(404).json({ok:false,error:`PA ${paNumber} tidak ditemui untuk negeri yang dipilih.`});
+
+    const identity = req.azobssAdminIdentity || {};
+    const submitted = getPremiumUser(data);
+    const buyerName = cleanPremiumText(data.buyerName || data.name || identity.username || submitted.username || 'Admin Test',80);
+    const buyerEmail = cleanPremiumText(data.buyerEmail || data.email || identity.authEmail || identity.email || submitted.email || '',180).toLowerCase();
+    const buyerPhone = cleanPremiumText(data.buyerPhone || data.phone || submitted.phone || '',30).replace(/[^0-9+]/g,'');
+    if (buyerName.length < 2) return res.status(400).json({ok:false,error:"Masukkan nama pembeli."});
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail) || /@azobss\.local$/i.test(buyerEmail)) return res.status(400).json({ok:false,error:"Masukkan alamat e-mel sebenar yang sah."});
+    if (buyerPhone.replace(/\D/g,'').length < 8) return res.status(400).json({ok:false,error:"Masukkan nombor telefon yang sah."});
+
+    const nowMs = Date.now();
+    const nowIso = new Date(nowMs).toISOString();
+    const orderId = makePremiumId('publicpatest');
+    const recordId = `${orderId}-1`;
+    const paymentReference = `ADMIN-PUBLIC-PA-TEST-${nowMs}`;
+    const apiBase = publicBaseUrl(req);
+    const user = {
+      uid:cleanPremiumText(identity.uid || 'admin-test',120),
+      username:cleanPremiumText(identity.username || submitted.username || 'admin',80).toLowerCase(),
+      usernameKey:cleanPremiumText(identity.username || submitted.username || 'admin',80).toLowerCase(),
+      email:buyerEmail,
+      authEmail:identity.authEmail || identity.email || '',
+      phone:buyerPhone,
+      displayName:buyerName
+    };
+    const item = {id:recordId,firestoreId:recordId,productType:'PA',itemCode:paNumber,negeri,amount:50,filename:`PA${paNumber}.pdf`,downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${paNumber}.TIF&negeri=${encodeURIComponent(negeri)}`,createdAtMs:nowMs,publicPaPurchase:true};
+    let order = await azobssPersistJupemOrder({
+      orderId,productId:'public-pa-rm50',productName:`Pelan Akui PA${paNumber}`,amount:'RM50',amountSen:5000,saleAmount:50,saleAmountText:'RM50.00',
+      status:'paid',paymentMethod:'admin-test',paymentReference,billCode:'',paymentUrl:'',returnUrl:'',user,email:buyerEmail,buyerEmail,phone:buyerPhone,
+      paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:50,source:'admin-test-public-pa',maxDownload:5,maxDownloads:5,expiryHours:168,
+      isAdminTestPayment:true,testPayment:true,createdByAdmin:identity.username || identity.email || identity.uid || 'admin',
+      createdAt:nowIso,createdAtMs:nowMs,paidAt:nowIso,paidAtMs:nowMs,paidFinalizedAt:nowIso,paymentVerifiedAt:nowIso,paymentVerificationSource:'admin-test-endpoint',
+      commissionCheckedAt:nowIso,commissionSkippedReason:'admin-test-payment',emailSkippedForPaBm:true,publicPaEmailSkipped:true
+    });
+    const sync = await azobssSyncJupemPurchaseLogs(order,'paid',{paymentReference,paidAtMs:nowMs,nowMs});
+    order = await azobssPersistJupemOrder({...order,paBmPaidSyncedAt:nowIso,paBmPaidSyncedCount:Number(sync.updated || 0)});
+    return res.json({
+      ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,orderId,paymentReference,
+      amount:50,amountSen:5000,unit:1,updatedCount:Number(sync.updated || 0),downloadUrl:publicPaDownloadUrl(order,req),
+      receiptUrl:`${apiBase}/api/premium/receipt/${encodeURIComponent(orderId)}`,emailSent:false,commissionCreated:false
+    });
+  } catch (error) {
+    const statusCode = Math.max(400, Math.min(500, Number(error?.statusCode || 500)));
+    console.error("Admin public PA test payment failed:", error && (error.stack || error.message || error));
+    return res.status(statusCode).json({ok:false,success:false,error:error.message || "Admin public PA test payment failed."});
   }
 });
 
