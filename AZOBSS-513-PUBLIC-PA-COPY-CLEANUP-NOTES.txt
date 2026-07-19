@@ -1,0 +1,12 @@
+AZOBSS Patch 513 - Public PA Copy Cleanup
+Date: 2026-07-20
+
+Changed file:
+- Beli-Pelan-Akui/index.html
+
+Changes:
+- Removed: Guest dan pengguna biasa boleh membeli satu Pelan Akui tanpa akses penuh PA/BM.
+- Kept: Fail disediakan dalam format PDF selepas pembayaran disahkan.
+- Removed the blue RM50 PA/BM access note box.
+
+No payment, authentication, navigation, pricing, backend, Firebase Rules, or other page logic was changed.
