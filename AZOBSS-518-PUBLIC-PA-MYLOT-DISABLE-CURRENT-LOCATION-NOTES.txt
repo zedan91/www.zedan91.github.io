@@ -1,0 +1,16 @@
+AZOBSS PATCH (518) - PUBLIC PA MYLOT DISABLE CURRENT LOCATION
+
+BASELINE
+- (517)-AZOBSS-PUBLIC-PA-MYLOT-COORDINATE-FLOAT-FIX_20260720.zip
+
+PERUBAHAN
+1. Menyekat akses geolocation pada iframe MyLot melalui Permissions Policy iframe.
+2. Paparan MyLot terapung tidak lagi dibenarkan menggunakan lokasi semasa peranti.
+3. Carian hanya menggunakan negeri dan koordinat WGS84 yang ditaip oleh pengguna.
+4. Akses clipboard pihak ketiga dalam iframe turut disekat kerana tidak diperlukan.
+5. Nota bawah modal dikemas kini untuk menerangkan bahawa lokasi semasa dinyahaktifkan.
+
+NOTA
+- Sekatan ini terpakai pada paparan MyLot yang dibuka di dalam laman AZOBSS.
+- Tab baharu ialah laman JUPEM secara terus dan tertakluk kepada tetapan kebenaran pelayar bagi domain JUPEM.
+- Tiada perubahan pada backend, ToyyibPay atau Firebase Rules.
