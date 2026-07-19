@@ -1,0 +1,12 @@
+AZOBSS PATCH (522) — PUBLIC PA CARIAN MAP NOTE
+
+Baseline:
+- (521)-AZOBSS-PUBLIC-PA-MYLOT-BUTTON-ONLY-FIX_20260720.zip
+
+Perubahan:
+1. Tukar teks butang “Buka MyLot” kepada “Carian Map”.
+2. Tambah nota kecil di bawah butang: “Carian Pelan Akui / Lot melalui map”.
+3. Fungsi membuka MyLot, modal, pembayaran PA dan bahagian lain tidak diubah.
+
+Fail disentuh:
+- Beli-Pelan-Akui/index.html
