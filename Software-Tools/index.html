@@ -15589,6 +15589,24 @@ html body .download-card > .software-stats{
 }
 </style>
 
+
+
+<!-- AZOBSS 509: verified title-only lower fix -->
+<style id="azobss-software-title-only-verified-lower-fix-509">
+/* Move only the actual direct-child software title. Relative positioning makes
+   the movement visible without shifting category, metadata, description or
+   the bottom controls. This rule is intentionally the final CSS rule. */
+html body #softwareGrid > .download-card > h3,
+html body #softwareDownloadsGrid > .download-card > h3,
+html body .downloads-grid > .download-card > h3,
+html body #softwareGrid > .download-card > .software-title,
+html body #softwareDownloadsGrid > .download-card > .software-title,
+html body .downloads-grid > .download-card > .software-title{
+  position:relative!important;
+  top:8px!important;
+}
+</style>
+
 </body>
 </html>
 
