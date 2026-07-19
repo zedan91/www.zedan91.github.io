@@ -8798,6 +8798,44 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 .market-icon-btn.is-likes-active .az-market-bookmark-icon path{fill:#facc15!important;stroke:#facc15!important;}
 </style>
 
+
+<style id="azobss-home-lucky-draw-floating-510">
+.hero{position:relative!important;}
+.az-home-lucky-float{
+  position:absolute!important;
+  top:18px!important;
+  right:34px!important;
+  z-index:12!important;
+  display:block!important;
+  width:150px!important;
+  height:auto!important;
+  text-decoration:none!important;
+  transform-origin:50% 22%!important;
+  animation:azLuckyDrawShake510 3.8s ease-in-out infinite!important;
+  filter:drop-shadow(0 12px 18px rgba(0,0,0,.38))!important;
+}
+.az-home-lucky-float img{display:block!important;width:100%!important;height:auto!important;pointer-events:none!important;}
+.az-home-lucky-float:hover{animation-play-state:paused!important;transform:translateY(-4px) scale(1.04)!important;}
+.az-home-lucky-float:focus-visible{outline:3px solid #facc15!important;outline-offset:5px!important;border-radius:28px!important;}
+@keyframes azLuckyDrawShake510{
+  0%,68%,100%{transform:translateY(0) rotate(0deg) scale(1);}
+  72%{transform:translateY(-3px) rotate(-5deg) scale(1.02);}
+  76%{transform:translateY(1px) rotate(5deg) scale(1.02);}
+  80%{transform:translateY(-2px) rotate(-4deg) scale(1.02);}
+  84%{transform:translateY(0) rotate(4deg) scale(1.02);}
+  88%{transform:translateY(-1px) rotate(-2deg) scale(1.01);}
+  92%{transform:translateY(0) rotate(2deg) scale(1.01);}
+  96%{transform:translateY(0) rotate(0deg) scale(1);}
+}
+@media(max-width:900px){
+  .az-home-lucky-float{top:16px!important;right:14px!important;width:112px!important;}
+}
+@media(max-width:600px){
+  .hero{padding-top:88px!important;}
+  .az-home-lucky-float{top:8px!important;right:10px!important;width:84px!important;}
+}
+@media(prefers-reduced-motion:reduce){.az-home-lucky-float{animation:none!important;}}
+</style>
 </head>
 <body id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -9144,6 +9182,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <a aria-label="Carousell" href="https://www.carousell.com.my/u/azobss_07/" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/carousell.svg"/></a>
 <a aria-label="Gmail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=zedan9107@gmail.com" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/email.svg"/></a>
 </div>
+<a class="az-home-lucky-float" href="/lucky-draw/" aria-label="Open Monthly Lucky Draw">
+<img src="images/lucky-draw-floating.svg" alt="Monthly Lucky Draw" loading="eager" decoding="async"/>
+</a>
 <div class="hero-actions">
 <a aria-label="WhatsApp" class="hero-whatsapp" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
 <span class="hero-whatsapp-icon">

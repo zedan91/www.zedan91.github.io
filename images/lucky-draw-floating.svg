@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="190" viewBox="0 0 220 190" role="img" aria-labelledby="title desc">
+  <title id="title">Lucky Draw</title>
+  <desc id="desc">Gift box icon for the AZOBSS monthly lucky draw</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111c3c" stop-opacity=".98"/>
+      <stop offset="1" stop-color="#071021" stop-opacity=".98"/>
+    </linearGradient>
+    <linearGradient id="gift" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff3b68"/>
+      <stop offset="1" stop-color="#d90846"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe66a"/>
+      <stop offset="1" stop-color="#ffad0d"/>
+    </linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity=".52"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#22d3ee" flood-opacity=".34"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="18" y="18" width="184" height="154" rx="34" fill="url(#panel)" stroke="#18d9ae" stroke-width="2"/>
+    <circle cx="46" cy="44" r="4" fill="#facc15"/>
+    <circle cx="177" cy="50" r="5" fill="#22d3ee"/>
+    <path d="M38 73l8-13 8 13-8 4z" fill="#fb7185"/>
+    <path d="M174 85l6-11 6 11-6 4z" fill="#facc15"/>
+    <path d="M68 44l4-10 4 10-4 7z" fill="#22d3ee"/>
+    <path d="M148 39l4-11 5 11-5 7z" fill="#fb7185"/>
+
+    <g transform="translate(61 42)">
+      <path d="M11 39h86v65H11z" rx="7" fill="url(#gift)"/>
+      <rect x="3" y="27" width="102" height="25" rx="8" fill="#ff4d72"/>
+      <rect x="46" y="27" width="17" height="77" fill="url(#ribbon)"/>
+      <path d="M53 28C35 27 25 20 27 11c2-9 14-10 21-3 5 5 6 13 5 20z" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round"/>
+      <path d="M56 28c18-1 28-8 26-17-2-9-14-10-21-3-5 5-6 13-5 20z" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round"/>
+      <path d="M18 65h72" stroke="#ffffff" stroke-opacity=".18" stroke-width="3"/>
+    </g>
+
+    <text x="110" y="159" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="900" text-anchor="middle" letter-spacing="1.2">LUCKY DRAW</text>
+  </g>
+</svg>
