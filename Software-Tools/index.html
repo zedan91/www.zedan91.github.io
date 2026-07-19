@@ -15516,6 +15516,45 @@ html body .download-card > .software-stats{
 }
 </style>
 
+<!-- AZOBSS 506: visually lower only title, metadata and description -->
+<style id="azobss-software-title-meta-desc-visual-down-fix-506">
+/* Move only the requested content group visually downward.
+   More, Buy/Download, cart and statistics remain anchored, so flex spacing
+   cannot pull the content back upward or move the bottom controls. */
+@media (min-width:761px){
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title,
+  html body #softwareGrid > .download-card > .software-meta,
+  html body #softwareDownloadsGrid > .download-card > .software-meta,
+  html body .downloads-grid > .download-card > .software-meta,
+  html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-target-097{
+    transform:translateY(14px)!important;
+  }
+}
+@media (max-width:760px){
+  html body #softwareGrid > .download-card > h3,
+  html body #softwareDownloadsGrid > .download-card > h3,
+  html body .downloads-grid > .download-card > h3,
+  html body #softwareGrid > .download-card > .software-title,
+  html body #softwareDownloadsGrid > .download-card > .software-title,
+  html body .downloads-grid > .download-card > .software-title,
+  html body #softwareGrid > .download-card > .software-meta,
+  html body #softwareDownloadsGrid > .download-card > .software-meta,
+  html body .downloads-grid > .download-card > .software-meta,
+  html body #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+  html body #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+  html body .downloads-grid > .download-card > .azobss-sw-desc-target-097{
+    transform:translateY(12px)!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
