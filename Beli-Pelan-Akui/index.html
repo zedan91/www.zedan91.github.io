@@ -39,7 +39,7 @@
         <div class="public-pa-field"><label for="publicPaNumber">Nombor PA</label><input id="publicPaNumber" inputmode="numeric" autocomplete="off" placeholder="Contoh: 123456" required></div>
         <div class="public-pa-field"><label for="publicPaState">Negeri</label><select id="publicPaState" required><option value="">-- Pilih Negeri --</option><option>JOHOR</option><option>KEDAH</option><option>KELANTAN</option><option>MELAKA</option><option>NEGERI SEMBILAN</option><option>PAHANG</option><option>PERAK</option><option>PERLIS</option><option>PULAU PINANG</option><option>SABAH</option><option>SARAWAK</option><option>SELANGOR</option><option>TERENGGANU</option><option>WILAYAH PERSEKUTUAN KUALA LUMPUR</option><option>WILAYAH PERSEKUTUAN LABUAN</option><option>WILAYAH PERSEKUTUAN PUTRAJAYA</option></select></div>
         <section class="public-pa-coordinate" aria-labelledby="publicPaCoordinateTitle">
-          <div class="public-pa-coordinate-head"><div><strong id="publicPaCoordinateTitle">📍 Cari PA melalui koordinat (MyLot)</strong><span>Pilih negeri dahulu, kemudian taip koordinat WGS84 dalam format latitud, longitud. MyLot akan muncul secara automatik selepas koordinat lengkap.</span></div><b class="public-pa-coordinate-badge">JUPEM MyLot</b></div>
+          <div class="public-pa-coordinate-head"><div><strong id="publicPaCoordinateTitle">📍 Cari PA melalui koordinat (MyLot)</strong><span>Taip koordinat WGS84 dalam format latitud, longitud, kemudian tekan Enter. Tidak perlu pilih negeri.</span></div><b class="public-pa-coordinate-badge">JUPEM MyLot</b></div>
           <div class="public-pa-coordinate-row"><input id="publicPaCoordinates" inputmode="decimal" autocomplete="off" placeholder="Contoh: 3.139003, 101.686855" aria-describedby="publicPaMyLotStatus"><button class="public-pa-coordinate-open" id="publicPaOpenMyLotButton" type="button" disabled>Buka MyLot</button></div>
           <p class="public-pa-coordinate-status" id="publicPaMyLotStatus" aria-live="polite"></p>
         </section>
@@ -57,11 +57,11 @@
 </main>
 <div class="public-pa-mylot-modal" id="publicPaMyLotModal" hidden role="dialog" aria-modal="true" aria-labelledby="publicPaMyLotTitle">
   <div class="public-pa-mylot-panel">
-    <header class="public-pa-mylot-head"><div class="public-pa-mylot-title"><strong id="publicPaMyLotTitle">MyLot JUPEM</strong><span id="publicPaMyLotSummary">Pilih negeri dan masukkan koordinat.</span></div><div class="public-pa-mylot-actions"><a class="public-pa-mylot-newtab" id="publicPaMyLotNewTab" href="https://jupem2u.kul.jupem.gov.my/mylot/negeri.html" target="_blank" rel="noopener noreferrer">Buka tab baru ↗</a><button class="public-pa-mylot-close" id="publicPaMyLotClose" type="button" aria-label="Tutup MyLot">×</button></div></header>
+    <header class="public-pa-mylot-head"><div class="public-pa-mylot-title"><strong id="publicPaMyLotTitle">MyLot JUPEM</strong><span id="publicPaMyLotSummary">Masukkan koordinat dan tekan Enter.</span></div><div class="public-pa-mylot-actions"><a class="public-pa-mylot-newtab" id="publicPaMyLotNewTab" href="https://jupem2u.kul.jupem.gov.my/mylot/negeri.html" target="_blank" rel="noopener noreferrer">Buka tab baru ↗</a><button class="public-pa-mylot-close" id="publicPaMyLotClose" type="button" aria-label="Tutup MyLot">×</button></div></header>
     <div class="public-pa-mylot-frame-wrap"><iframe class="public-pa-mylot-frame" id="publicPaMyLotFrame" title="MyLot JUPEM" src="about:blank" allow="geolocation 'none'; clipboard-read 'none'; clipboard-write 'none'" referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="public-pa-mylot-loading" id="publicPaMyLotLoading">Memuatkan MyLot pada koordinat dipilih…</div></div>
-    <footer class="public-pa-mylot-foot"><span><strong>Lokasi semasa dinyahaktifkan.</strong> MyLot terapung hanya menggunakan negeri dan koordinat yang ditaip. Jika paparan disekat oleh pelayan JUPEM, gunakan “Buka tab baru”.</span><span class="public-pa-mylot-coordinate" id="publicPaMyLotCoordinateText"></span></footer>
+    <footer class="public-pa-mylot-foot"><span><strong>Lokasi semasa dinyahaktifkan.</strong> MyLot terapung hanya menggunakan koordinat yang ditaip. Jika paparan disekat oleh pelayan JUPEM, gunakan “Buka tab baru”.</span><span class="public-pa-mylot-coordinate" id="publicPaMyLotCoordinateText"></span></footer>
   </div>
 </div>
 <script src="/assets/js/azobss-global-auth.js?v=512" type="module"></script>
-<script src="/assets/js/azobss-public-pa.js?v=517" type="module"></script>
+<script src="/assets/js/azobss-public-pa.js?v=519" type="module"></script>
 </body></html>

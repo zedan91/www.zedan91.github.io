@@ -1,0 +1,19 @@
+AZOBSS PATCH (519)
+
+Baseline:
+- (518)-AZOBSS-PUBLIC-PA-MYLOT-DISABLE-CURRENT-LOCATION-FIX_20260720.zip
+
+Skop perubahan:
+- Halaman /Beli-Pelan-Akui/ sahaja.
+- Carian MyLot melalui koordinat tidak lagi memerlukan pilihan negeri.
+- Pengguna terus taip koordinat WGS84 dalam format latitud, longitud.
+- Tekan Enter untuk membuka MyLot.
+- Butang Buka MyLot kekal sebagai pilihan kedua.
+- Auto-buka semasa masih menaip dibuang supaya longitud tidak terpotong.
+- URL, ringkasan modal, status dan postMessage MyLot kini menggunakan koordinat sahaja.
+- Pilihan negeri untuk proses pembelian PA masih kekal dan tidak diubah.
+- Sekatan lokasi semasa daripada patch (518) dikekalkan.
+
+Fail diubah:
+- Beli-Pelan-Akui/index.html
+- assets/js/azobss-public-pa.js
