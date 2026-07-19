@@ -1,0 +1,9 @@
+AZOBSS Patch (523) - Buang Butang Buka Tab Baru MyLot
+
+Perubahan:
+1. Butang “Buka tab baru ↗” dibuang daripada header modal MyLot.
+2. Nota footer yang menyuruh pengguna menggunakan “Buka tab baru” dibersihkan.
+3. Kod JavaScript dan CSS khusus butang tersebut turut dibuang.
+4. Butang tutup, paparan MyLot terapung, Carian Map, pembelian PA dan fungsi lain dikekalkan.
+
+Baseline sumber: (522)-AZOBSS-PUBLIC-PA-CARIAN-MAP-NOTE-FIX_20260720.zip

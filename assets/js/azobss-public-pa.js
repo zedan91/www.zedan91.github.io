@@ -61,9 +61,8 @@ function postCoordinateToMyLot(){
 function openMyLotFloat(){
   myLotCurrentPayload=null;
   myLotCurrentUrl=MYLOT_BASE;
-  const modal=$('publicPaMyLotModal'),frame=$('publicPaMyLotFrame'),newTab=$('publicPaMyLotNewTab');
+  const modal=$('publicPaMyLotModal'),frame=$('publicPaMyLotFrame');
   if($('publicPaMyLotSummary'))$('publicPaMyLotSummary').textContent='Carian lokasi dan lot';
-  if(newTab)newTab.href=myLotCurrentUrl;
   if(frame){frame.classList.remove('is-loaded');frame.src=myLotCurrentUrl;}
   if(modal)modal.hidden=false;
   document.body.classList.add('public-pa-mylot-open');
