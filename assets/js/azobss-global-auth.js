@@ -1466,16 +1466,38 @@ function showAccessDeniedMessage(){
   setTimeout(()=>{ box.classList.remove('is-visible'); setTimeout(()=>box.remove(), 350); }, 4200);
 }
 
+function azobssPublicPaRoleBlocked(user){
+  const role = String(user && (user.role || user.userRole || user.accountRole || user.staffRole) || '').toLowerCase().replace(/[\s_-]+/g,'');
+  return role.includes('staff') || role === 'semiadmin' || role === 'admin';
+}
+function azobssEnsurePublicPaNavButtons(){
+  const found = [];
+  document.querySelectorAll('.market-nav').forEach((nav)=>{
+    let link = nav.querySelector('.nav-public-pa-link');
+    if(!link){
+      link = document.createElement('a');
+      link.className = 'nav-public-pa-link';
+      link.href = '/Beli-Pelan-Akui/';
+      link.textContent = 'Beli Pelan Akui';
+      const mini = Array.from(nav.querySelectorAll('a')).find(a => /\/tools\/?$/i.test(a.getAttribute('href') || ''));
+      if(mini) nav.insertBefore(link, mini); else nav.appendChild(link);
+    }
+    found.push(link);
+  });
+  return found;
+}
 function syncHeader(user){
   const authActions = $('siteAuthActions');
   const tools = $('marketUserTools');
   const name = $('signedInName');
   const avatar = $('userAvatar');
   const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link, a[href="/PA-BM/"].nav-pa-bm-link'));
+  const publicPaButtons = azobssEnsurePublicPaNavButtons();
   const storedUser = azobssNormalizeSavedUser(user || (typeof getSavedUser === 'function' ? getSavedUser() : null));
   const display = storedUser && azobssResolveUsername(storedUser);
   const canShowPaBm = hasPaBmTabAccess(storedUser);
   const isAdminUser = isAzobssAdmin(storedUser);
+  const canShowPublicPa = !canShowPaBm && !isAdminUser && !azobssPublicPaRoleBlocked(storedUser);
   document.body.classList.toggle('is-admin', !!isAdminUser);
   document.body.classList.toggle('has-pa-access', !!canShowPaBm);
   paBmButtons.forEach((paBm) => {
@@ -1485,6 +1507,14 @@ function syncHeader(user){
     paBm.style.setProperty('visibility', canShowPaBm ? 'visible' : 'hidden', 'important');
     paBm.style.setProperty('pointer-events', canShowPaBm ? 'auto' : 'none', 'important');
   });
+  publicPaButtons.forEach((publicPa) => {
+    publicPa.hidden = !canShowPublicPa;
+    publicPa.classList.toggle('is-hidden', !canShowPublicPa);
+    publicPa.style.setProperty('display', canShowPublicPa ? 'inline-flex' : 'none', 'important');
+    publicPa.style.setProperty('visibility', canShowPublicPa ? 'visible' : 'hidden', 'important');
+    publicPa.style.setProperty('pointer-events', canShowPublicPa ? 'auto' : 'none', 'important');
+  });
+  document.body.classList.toggle('can-buy-public-pa', !!canShowPublicPa);
   if (display) {
     document.body.classList.add('is-authenticated');
     if (name) name.textContent = display;
@@ -4806,6 +4836,7 @@ body{padding-top:58px!important;}
 }
 .market-nav a:hover,.market-icon-btn:hover{color:#14b8a6!important;}
 body:not(.has-pa-access) .market-nav .nav-pa-bm-link,body:not(.has-pa-access) a#paBmNavButton,.market-nav .nav-pa-bm-link[hidden],.market-nav .nav-pa-bm-link.is-hidden,a#paBmNavButton[hidden],a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body:not(.can-buy-public-pa) .market-nav .nav-public-pa-link,.market-nav .nav-public-pa-link[hidden],.market-nav .nav-public-pa-link.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 .market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;}
 .nav-whatsapp-circle{position:relative!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;box-shadow:0 8px 20px rgba(34,197,94,.25)!important;overflow:visible!important;}
 .nav-whatsapp-circle::before{content:""!important;display:block!important;width:18px!important;height:14px!important;border-radius:999px!important;background:#fff!important;line-height:1!important;}
