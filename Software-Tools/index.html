@@ -15557,10 +15557,12 @@ html body .download-card > .software-stats{
 
 
 
-<!-- AZOBSS 507: lower software title only a little more -->
-<style id="azobss-software-title-only-slightly-lower-fix-507">
-/* Keep category, metadata, description and lower controls at the 506 position.
-   Only the software title receives an extra 4px downward visual offset. */
+<!-- AZOBSS 508: lower title only using real compensated spacing -->
+<style id="azobss-software-title-only-real-spacing-fix-508">
+/* 507 used only a 4px transform difference, which was hard to see and did not
+   participate in layout. This fix moves the title 8px lower in normal flow,
+   while reducing its bottom margin by the same amount so category, metadata,
+   description and lower controls stay exactly where they were in 506. */
 @media (min-width:761px){
   html body #softwareGrid > .download-card > h3,
   html body #softwareDownloadsGrid > .download-card > h3,
@@ -15568,7 +15570,9 @@ html body .download-card > .software-stats{
   html body #softwareGrid > .download-card > .software-title,
   html body #softwareDownloadsGrid > .download-card > .software-title,
   html body .downloads-grid > .download-card > .software-title{
-    transform:translateY(18px)!important;
+    margin-top:30px!important;
+    margin-bottom:0!important;
+    transform:translateY(14px)!important;
   }
 }
 @media (max-width:760px){
@@ -15578,7 +15582,9 @@ html body .download-card > .software-stats{
   html body #softwareGrid > .download-card > .software-title,
   html body #softwareDownloadsGrid > .download-card > .software-title,
   html body .downloads-grid > .download-card > .software-title{
-    transform:translateY(16px)!important;
+    margin-top:28px!important;
+    margin-bottom:0!important;
+    transform:translateY(12px)!important;
   }
 }
 </style>
