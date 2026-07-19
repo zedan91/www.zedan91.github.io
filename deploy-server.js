@@ -7770,7 +7770,9 @@ async function handler(req, res) {
           NDCDB_C3_QUARTER_SHEET:15,
           SYIT_PIAWAI:7
         },
-        adminTestPayment:true
+        adminTestPayment:true,
+        publicPaAdminTestPayment:true,
+        publicPaAdminTestPaymentPatch:"516"
       }, null, 2), "application/json");
     }
 
@@ -7912,7 +7914,7 @@ async function handler(req, res) {
         await azPersistPremiumOrder(order);
         azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,'admin_test_public_pa_payment','premiumOrders',orderId,{paNumber,negeri,amount:50,paymentReference},'success'),'Admin public PA test payment audit log failed');
         return send(res, 200, JSON.stringify({
-          ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,orderId,paymentReference,
+          ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,routeVersion:'516',orderId,recordId,paymentReference,
           amount:50,amountSen:5000,unit:1,updatedCount:Number(syncResult && syncResult.updated || 0),
           downloadUrl:azPublicPaDownloadUrl(order,req),receiptUrl:azReceiptUrl(apiBase,order),emailSent:false,commissionCreated:false,
           processingMs:Date.now()-startedAtMs

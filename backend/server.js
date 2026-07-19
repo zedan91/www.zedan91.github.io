@@ -1484,11 +1484,13 @@ app.post("/api/admin/payment-logs/delete", requireAdmin, async (req, res) => {
 app.get("/api/pa-bm-checkout-capabilities", (req, res) => {
   res.json({
     ok: true,
-    version: 2,
+    version: 3,
     runningFile: "backend/server.js",
     productTypes: Array.from(AZOBSS_JUPEM_PRODUCT_TYPES),
     prices: { PA: 5, BM: 3, SBM: 3, GPS: 9, NDCDB_FULL_SHEET: 50, NDCDB_QUARTER_SHEET: 15, NDCDB_C3_FULL_SHEET: 50, NDCDB_C3_QUARTER_SHEET: 15, SYIT_PIAWAI: 7 },
-    adminTestPayment: true
+    adminTestPayment: true,
+    publicPaAdminTestPayment: true,
+    publicPaAdminTestPaymentPatch: "516"
   });
 });
 
@@ -1606,7 +1608,7 @@ app.post("/api/admin/test-public-pa-payment", requireAdmin, async (req, res) => 
     const sync = await azobssSyncJupemPurchaseLogs(order,'paid',{paymentReference,paidAtMs:nowMs,nowMs});
     order = await azobssPersistJupemOrder({...order,paBmPaidSyncedAt:nowIso,paBmPaidSyncedCount:Number(sync.updated || 0)});
     return res.json({
-      ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,orderId,paymentReference,
+      ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,routeVersion:'516',orderId,recordId,paymentReference,
       amount:50,amountSen:5000,unit:1,updatedCount:Number(sync.updated || 0),downloadUrl:publicPaDownloadUrl(order,req),
       receiptUrl:`${apiBase}/api/premium/receipt/${encodeURIComponent(orderId)}`,emailSent:false,commissionCreated:false
     });

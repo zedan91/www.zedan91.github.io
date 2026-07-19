@@ -1,0 +1,18 @@
+AZOBSS PATCH 516
+
+Fixes Admin Test Payment failure diagnostics and reliability on /Beli-Pelan-Akui/.
+
+Changes:
+- Normalizes backend URL to prevent accidental double slash.
+- Waits for Firebase Auth readiness before requesting the admin ID token.
+- Retries once with a forced fresh Firebase token after HTTP 401/403.
+- Reads text/JSON backend responses safely and shows the exact backend error.
+- Detects missing Render endpoint (404/405/HTML response) and instructs backend redeploy instead of generic failure.
+- Derives PDF and receipt URLs safely from orderId/recordId when needed.
+- Backend response now includes routeVersion 516 and recordId.
+- PA/BM checkout capabilities now advertise publicPaAdminTestPayment patch 516.
+
+Deployment:
+1. Deploy the static website files.
+2. Redeploy Render backend from this same ZIP because deploy-server.js/backend/server.js changed.
+3. Firebase Rules do not need changes.
