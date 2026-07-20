@@ -16325,6 +16325,28 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 
+
+
+<!-- AZOBSS 543: shared product More button slightly higher -->
+<style id="azobss-software-shared-more-button-slightly-higher-fix-543">
+/* Step 5 adjustment only: move the shared-product More button a little higher.
+   Preserve every other element and retain the Beli Pelan Akui glow from 542. */
+@media (min-width:761px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .az-desc-more-outside-322{
+    top:-38px!important;
+  }
+}
+@media (max-width:760px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .az-desc-more-outside-322{
+    top:-32px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
