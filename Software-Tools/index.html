@@ -16299,6 +16299,32 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 
+
+<!-- AZOBSS 541: shared product More-button-only raise -->
+<style id="azobss-software-shared-more-button-only-raise-fix-541">
+/* Step 5 only: raise the shared-product More button so it follows the already
+   raised description. Preserve logo, title, metadata, description, CTA, stats,
+   card sizing and observer logic. */
+@media (min-width:761px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .az-desc-more-outside-322{
+    position:relative!important;
+    top:-32px!important;
+    transform:none!important;
+  }
+}
+@media (max-width:760px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .az-desc-more-outside-322{
+    position:relative!important;
+    top:-27px!important;
+    transform:none!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
