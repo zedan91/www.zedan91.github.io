@@ -16157,138 +16157,26 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 </style>
 
 
-<!-- AZOBSS 535: shared card real-flow vertical compaction fix -->
-<style id="azobss-software-shared-card-real-flow-raise-fix-535">
-/*
-  Patch 533 reset visual offsets, but legacy fixed zones still reserved 90px for
-  the title, 58px for metadata and extra top space around the logo. This patch
-  compacts the real flex-flow boxes for the shared product card, so the logo and
-  the complete title-to-More group genuinely move upward without touching the
-  bottom CTA/statistics dock or reintroducing a MutationObserver loop.
-*/
+
+<!-- AZOBSS 536: shared product logo-only raise test -->
+<style id="azobss-software-shared-logo-only-raise-fix-536">
+/* Step 1 only: move the shared-product logo upward visually.
+   Do not alter card padding, title, metadata, description, More, CTA or stats. */
 @media (min-width:761px){
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532{
-    padding-top:6px!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-card-media.az-logo-media{
-    width:72px!important;
-    height:72px!important;
-    min-height:72px!important;
-    max-height:72px!important;
-    flex:0 0 72px!important;
-    margin:0 auto 2px!important;
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-card-media.az-logo-media,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-card-media.az-logo-media{
     position:relative!important;
-    top:0!important;
-    transform:none!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > h3,
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-title{
-    width:100%!important;
-    height:auto!important;
-    min-height:42px!important;
-    max-height:none!important;
-    flex:0 0 auto!important;
-    margin:0 auto 3px!important;
-    padding:0 10px!important;
-    position:relative!important;
-    top:0!important;
-    transform:none!important;
-    line-height:1.08!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-meta{
-    width:100%!important;
-    height:auto!important;
-    min-height:0!important;
-    max-height:none!important;
-    flex:0 0 auto!important;
-    margin:0 auto 4px!important;
-    padding:0!important;
-    transform:none!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .azobss-sw-desc-target-097{
-    width:100%!important;
-    height:72px!important;
-    min-height:72px!important;
-    max-height:72px!important;
-    flex:0 0 72px!important;
-    margin:0 auto 1px!important;
-    padding-left:0!important;
-    padding-right:0!important;
-    line-height:18px!important;
-    transform:none!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .az-desc-more-outside-322,
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532.azobss-shared-more-docked-532 > .az-desc-more-outside-322{
-    position:static!important;
-    inset:auto!important;
-    flex:0 0 auto!important;
-    margin:3px auto 0!important;
+    top:-20px!important;
     transform:none!important;
   }
 }
-
 @media (max-width:760px){
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532{
-    padding-top:6px!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-card-media.az-logo-media{
-    margin:0 auto 2px!important;
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-card-media.az-logo-media,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-card-media.az-logo-media,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-card-media.az-logo-media{
     position:relative!important;
-    top:0!important;
-    transform:none!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > h3,
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-title{
-    width:100%!important;
-    height:auto!important;
-    min-height:40px!important;
-    max-height:none!important;
-    flex:0 0 auto!important;
-    margin:0 auto 3px!important;
-    padding:0 8px!important;
-    position:relative!important;
-    top:0!important;
-    transform:none!important;
-    line-height:1.08!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-meta{
-    width:100%!important;
-    height:auto!important;
-    min-height:0!important;
-    max-height:none!important;
-    flex:0 0 auto!important;
-    margin:0 auto 4px!important;
-    padding:0!important;
-    transform:none!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .azobss-sw-desc-target-097{
-    width:100%!important;
-    height:74px!important;
-    min-height:74px!important;
-    max-height:74px!important;
-    flex:0 0 74px!important;
-    margin:0 auto 1px!important;
-    padding-left:0!important;
-    padding-right:0!important;
-    line-height:18.5px!important;
-    transform:none!important;
-  }
-
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .az-desc-more-outside-322,
-  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532.azobss-shared-more-docked-532 > .az-desc-more-outside-322{
-    position:static!important;
-    inset:auto!important;
-    flex:0 0 auto!important;
-    margin:3px auto 2px!important;
+    top:-16px!important;
     transform:none!important;
   }
 }

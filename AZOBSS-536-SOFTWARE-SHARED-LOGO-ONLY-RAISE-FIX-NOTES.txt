@@ -1,0 +1,9 @@
+AZOBSS 536 - SOFTWARE SHARED LOGO ONLY RAISE FIX
+
+Baseline:
+(534)-AZOBSS-SOFTWARE-CATEGORIES-INFINITE-LOADING-OBSERVER-LOOP-FIX_20260720_20260720_132954.zip
+
+Scope:
+- Shared-product URL card only.
+- Raise logo visually: desktop 20px, mobile 16px.
+- No changes to title, metadata, description, More, CTA, stats, card padding, or observer logic.
