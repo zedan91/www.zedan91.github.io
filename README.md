@@ -110,3 +110,9 @@ AZOBSS 492
 - Standardized Register as a green rounded pill and Login as a dark rounded pill across all pages that use the shared auth controls.
 - The /Beli-Pelan-Akui/ page remains the visual reference and was not altered.
 - Frontend CSS only. No Firebase Rules or Render redeploy required.
+
+
+## Patch 542 - Beli Pelan Akui Navbar Glow Fix
+- Restores the animated gold glow on the conditional Beli Pelan Akui navbar button only.
+- Keeps all visibility/access rules and existing page layouts unchanged.
+- Cache-busts `azobss-global-auth.js` to `v=542`.

@@ -1,0 +1,11 @@
+AZOBSS PATCH 542
+
+Change:
+- Restores a clearly visible animated gold glow on the conditional “Beli Pelan Akui” navbar button.
+- Applies only to `.nav-public-pa-link`; no position, access logic, card layout, description, More button, CTA, or backend behavior is changed.
+- Includes bright pulse, moving highlight and a static fallback for reduced-motion users.
+- Updates global-auth cache version from v=512 to v=542 so browsers load the new CSS immediately.
+
+Baseline: (541)-AZOBSS-SOFTWARE-SHARED-MORE-BUTTON-ONLY-RAISE-FIX_20260720.zip
+Firebase Rules: No change required.
+Render backend: No redeploy required.
