@@ -15717,7 +15717,7 @@ html body .download-card > .az-desc-more-outside-322{
   opacity:1!important;
 }
 </style>
-<script id="azobss-software-share-description-overflow-more-fix-531-js">
+<script id="azobss-software-share-description-overflow-more-fix-531-js" type="application/x-azobss-disabled">
 (function(){
   'use strict';
   if(window.__azobssSoftwareShareDescOverflowMore531) return;
@@ -15787,6 +15787,270 @@ html body .download-card > .az-desc-more-outside-322{
   window.addEventListener('azobss-software-rendered',function(){run(document);});
   window.addEventListener('azobss-shared-product-filtered',function(){run(document);});
   [80,250,600,1200,2200,4000].forEach(function(ms){setTimeout(function(){run(document);},ms);});
+})();
+</script>
+
+
+<!-- AZOBSS 532: shared product deterministic card + single More + CTA separation fix -->
+<style id="azobss-software-shared-card-deterministic-layout-fix-532">
+/* The shared URL uses the same renderItem() card as a normal visit. This final
+   layer only reconciles the requested card after it exists in the DOM. */
+html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532{
+  position:relative!important;
+  overflow:hidden!important;
+}
+html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .azobss-sw-desc-target-097{
+  overflow:hidden!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:4!important;
+  line-clamp:4!important;
+}
+html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .az-desc-more-outside-322{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:static!important;
+  inset:auto!important;
+  order:5!important;
+  align-self:center!important;
+  transform:none!important;
+  margin:19px auto 0!important;
+  flex:0 0 auto!important;
+  z-index:88!important;
+}
+html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532.azobss-shared-more-docked-532 > .az-desc-more-outside-322{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:108px!important;
+  transform:translateX(-50%)!important;
+  margin:0!important;
+}
+html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .az-card-bottom-actions-498{
+  z-index:82!important;
+}
+@media(max-width:760px){
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .az-desc-more-outside-322{
+    position:static!important;
+    inset:auto!important;
+    transform:none!important;
+    margin:17px auto 7px!important;
+  }
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532.azobss-shared-more-docked-532 > .az-desc-more-outside-322{
+    position:static!important;
+    inset:auto!important;
+    transform:none!important;
+    margin:17px auto 7px!important;
+  }
+}
+</style>
+<script id="azobss-software-shared-card-deterministic-layout-fix-532-js">
+(function(){
+  'use strict';
+  if(window.__azobssSoftwareSharedCardDeterministic532) return;
+  window.__azobssSoftwareSharedCardDeterministic532=true;
+
+  function sharedTarget(){
+    try{
+      var qs=new URLSearchParams(location.search||'');
+      return String(qs.get('p')||qs.get('product')||qs.get('productId')||qs.get('id')||'').trim();
+    }catch(_e){ return ''; }
+  }
+  var targetRaw=sharedTarget();
+  if(!targetRaw) return;
+
+  function clean(value){ return String(value==null?'':value).replace(/\s+/g,' ').trim(); }
+  function norm(value){ return clean(value).toLowerCase().replace(/&amp;/g,'and').replace(/[^a-z0-9]+/g,''); }
+  var target=norm(targetRaw);
+
+  try{ document.documentElement.classList.add('azobss-shared-product-mode-532'); }catch(_e){}
+
+  function cardMatches(card){
+    if(!card || !target) return false;
+    var values=[
+      card.dataset&&card.dataset.productId,
+      card.dataset&&card.dataset.softwareId,
+      card.dataset&&card.dataset.id,
+      card.dataset&&card.dataset.docId,
+      card.getAttribute&&card.getAttribute('data-id')
+    ].filter(Boolean);
+    var action=card.querySelector&&card.querySelector('[data-product-id],[data-software-id],[data-id]');
+    if(action){
+      values.push(action.dataset.productId,action.dataset.softwareId,action.dataset.id,action.getAttribute('data-id'));
+    }
+    return values.filter(Boolean).some(function(value){ return norm(value)===target; });
+  }
+
+  function fullDescription(desc){
+    if(!desc) return '';
+    var copy=desc.querySelector(':scope > .az-desc-copy-293');
+    return clean(
+      desc.getAttribute('data-azobss-full-desc-097') ||
+      (copy&&copy.textContent) ||
+      desc.textContent || ''
+    ).replace(/\s*More\s*$/i,'').trim();
+  }
+
+  function naturalDescriptionHeight(desc){
+    if(!desc || !desc.isConnected) return 0;
+    var clone=desc.cloneNode(true);
+    clone.querySelectorAll('.azobss-sw-desc-more-097').forEach(function(node){ node.remove(); });
+    clone.querySelectorAll('.az-desc-copy-293').forEach(function(copy){
+      copy.style.setProperty('display','block','important');
+      copy.style.setProperty('height','auto','important');
+      copy.style.setProperty('min-height','0','important');
+      copy.style.setProperty('max-height','none','important');
+      copy.style.setProperty('overflow','visible','important');
+      copy.style.setProperty('-webkit-line-clamp','unset','important');
+      copy.style.setProperty('line-clamp','unset','important');
+      copy.style.setProperty('-webkit-box-orient','initial','important');
+    });
+    clone.removeAttribute('id');
+    clone.style.setProperty('position','fixed','important');
+    clone.style.setProperty('left','-10000px','important');
+    clone.style.setProperty('top','0','important');
+    clone.style.setProperty('visibility','hidden','important');
+    clone.style.setProperty('pointer-events','none','important');
+    clone.style.setProperty('display','block','important');
+    clone.style.setProperty('width',Math.max(1,Math.round(desc.getBoundingClientRect().width))+'px','important');
+    clone.style.setProperty('height','auto','important');
+    clone.style.setProperty('min-height','0','important');
+    clone.style.setProperty('max-height','none','important');
+    clone.style.setProperty('overflow','visible','important');
+    clone.style.setProperty('-webkit-line-clamp','unset','important');
+    clone.style.setProperty('line-clamp','unset','important');
+    clone.style.setProperty('-webkit-box-orient','initial','important');
+    clone.style.setProperty('transform','none','important');
+    document.body.appendChild(clone);
+    var height=clone.scrollHeight||clone.getBoundingClientRect().height||0;
+    clone.remove();
+    return height;
+  }
+
+  function needsMore(desc,full){
+    if(!full) return false;
+    var cs=getComputedStyle(desc);
+    var lineHeight=parseFloat(cs.lineHeight)||18;
+    var natural=naturalDescriptionHeight(desc);
+    return full.length>55 || natural>(lineHeight*4)+2;
+  }
+
+  function reconcile(card){
+    if(!cardMatches(card)) return false;
+    card.classList.add('azobss-shared-card-layout-532');
+    card.setAttribute('data-azobss-shared-layout','532');
+
+    var desc=card.querySelector(':scope > .azobss-sw-desc-target-097');
+    if(!desc) return false;
+    var full=fullDescription(desc);
+    if(full){
+      desc.setAttribute('data-azobss-full-desc-097',full);
+      var copy=desc.querySelector(':scope > .az-desc-copy-293');
+      if(copy && clean(copy.textContent)!==full) copy.textContent=full;
+    }
+
+    var buttons=Array.from(card.querySelectorAll('.azobss-sw-desc-more-097'));
+    var more=buttons.find(function(btn){ return btn.parentElement===card; }) || buttons[0] || null;
+    buttons.forEach(function(btn){ if(btn!==more) btn.remove(); });
+
+    if(more && more.parentElement!==card){ desc.insertAdjacentElement('afterend',more); }
+
+    if(!needsMore(desc,full)){
+      if(more) more.remove();
+      card.classList.remove('azobss-shared-needs-more-532','azobss-shared-more-docked-532');
+      return true;
+    }
+
+    if(!more){
+      more=document.createElement('button');
+      more.type='button';
+      more.className='azobss-sw-desc-more-097 az-desc-more-outside-322';
+      desc.insertAdjacentElement('afterend',more);
+    }
+    more.type='button';
+    more.classList.add('azobss-sw-desc-more-097','az-desc-more-outside-322');
+    more.textContent='More';
+    more.setAttribute('data-azobss-full-desc-097',full);
+    more.setAttribute('aria-label','Read full description');
+    more.removeAttribute('aria-hidden');
+    more.style.removeProperty('display');
+    card.classList.add('azobss-shared-needs-more-532');
+
+    requestAnimationFrame(function(){
+      if(!card.isConnected || !more.isConnected) return;
+      card.classList.remove('azobss-shared-more-docked-532');
+      requestAnimationFrame(function(){
+        var action=card.querySelector(':scope > .az-card-bottom-actions-498');
+        if(!action) return;
+        var moreRect=more.getBoundingClientRect();
+        var actionRect=action.getBoundingClientRect();
+        if(moreRect.bottom > actionRect.top-8){
+          card.classList.add('azobss-shared-more-docked-532');
+        }
+      });
+    });
+    return true;
+  }
+
+  function targetCards(root){
+    var scope=root&&root.querySelectorAll?root:document;
+    var cards=[];
+    if(root&&root.matches&&root.matches('.download-card')) cards.push(root);
+    scope.querySelectorAll('.download-card').forEach(function(card){ cards.push(card); });
+    return cards.filter(function(card,index,list){ return list.indexOf(card)===index && cardMatches(card); });
+  }
+
+  function run(root){
+    var cards=targetCards(root);
+    cards.forEach(function(card){ reconcile(card); });
+    requestAnimationFrame(function(){ cards.forEach(function(card){ reconcile(card); }); });
+    return cards.length;
+  }
+
+  function start(){
+    run(document);
+    var grids=[
+      document.getElementById('softwareGrid'),
+      document.getElementById('softwareDownloadsGrid'),
+      document.querySelector('.downloads-grid')
+    ].filter(Boolean);
+    grids.forEach(function(grid){
+      try{
+        new MutationObserver(function(records){
+          records.forEach(function(record){
+            record.addedNodes.forEach(function(node){ if(node&&node.nodeType===1) run(node); });
+          });
+          run(grid);
+        }).observe(grid,{childList:true,subtree:true});
+      }catch(_e){}
+    });
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+  window.addEventListener('azobss-software-rendered',function(){ run(document); });
+  window.addEventListener('azobss-shared-product-filtered',function(){ run(document); });
+  [60,180,420,850,1500,2600,4200,7000].forEach(function(ms){ setTimeout(function(){ run(document); },ms); });
+
+  window.azobssSoftwareSharedCardDebug532=function(){
+    return targetCards(document).map(function(card){
+      var desc=card.querySelector(':scope > .azobss-sw-desc-target-097');
+      var more=card.querySelectorAll(':scope > .azobss-sw-desc-more-097');
+      var action=card.querySelector(':scope > .az-card-bottom-actions-498');
+      return {
+        productId:card.dataset.productId||'',
+        layout:card.getAttribute('data-azobss-shared-layout')||'',
+        description:fullDescription(desc),
+        moreCount:more.length,
+        moreDocked:card.classList.contains('azobss-shared-more-docked-532'),
+        descriptionBottom:desc?Math.round(desc.getBoundingClientRect().bottom):null,
+        moreTop:more[0]?Math.round(more[0].getBoundingClientRect().top):null,
+        moreBottom:more[0]?Math.round(more[0].getBoundingClientRect().bottom):null,
+        actionTop:action?Math.round(action.getBoundingClientRect().top):null
+      };
+    });
+  };
 })();
 </script>
 

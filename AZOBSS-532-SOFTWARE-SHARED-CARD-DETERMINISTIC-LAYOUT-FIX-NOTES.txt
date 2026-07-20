@@ -1,0 +1,20 @@
+AZOBSS 532 - Software Shared Card Deterministic Layout Fix
+Date: 2026-07-20
+Baseline: (531)-AZOBSS-SOFTWARE-SHARE-DESCRIPTION-OVERFLOW-MORE-FIX_20260720.zip
+
+Scope
+- Software-Tools/index.html only.
+
+Fix
+- Keeps the shared-product URL data-layer filter introduced in 530, so ?p=AZSW-372165 is resolved before virtual pagination and rendered by the normal renderItem() card builder.
+- Disables the older 531 reconciler to prevent two observers from competing.
+- Waits for the requested shared card to exist, then processes it again after requestAnimationFrame.
+- Removes old/nested/duplicate More buttons and keeps exactly one direct-child More button.
+- Measures the description at its real card width without the 4-line clamp, so visual wrapping is detected reliably.
+- Compensates for the existing 14px title/meta/description visual shift, keeping More below the visible description.
+- If More would approach or overlap the CTA, it is docked safely above the CTA.
+- Adds a MutationObserver and render/filter event hooks for late Firestore and virtual-pagination renders.
+- Debug helper: window.azobssSoftwareSharedCardDebug532().
+
+Not changed
+- Product data, promo quota, download/payment flow, cart, likes, ratings, share/referral logic, Firebase Rules and Render backend.
