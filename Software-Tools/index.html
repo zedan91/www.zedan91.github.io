@@ -16273,6 +16273,32 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 
+
+<!-- AZOBSS 540: shared product description-only raise -->
+<style id="azobss-software-shared-description-only-raise-fix-540">
+/* Step 4 only: raise the shared-product description so it follows the already
+   raised metadata group. Preserve logo, title, metadata, More, CTA, stats,
+   card sizing and observer logic. */
+@media (min-width:761px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .azobss-sw-desc-target-097{
+    position:relative!important;
+    top:-32px!important;
+    transform:none!important;
+  }
+}
+@media (max-width:760px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .azobss-sw-desc-target-097,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .azobss-sw-desc-target-097,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .azobss-sw-desc-target-097{
+    position:relative!important;
+    top:-27px!important;
+    transform:none!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
