@@ -16054,6 +16054,92 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 })();
 </script>
 
+
+<!-- AZOBSS 533: shared card vertical content raise and logo spacing fix -->
+<style id="azobss-software-shared-card-content-raise-fix-533">
+/* Root cause: patches 505/506/508/509 cumulatively pushed the direct-child
+   title down with margin-top, translateY and top offsets. On a shared-product
+   card this also made the following metadata, description and More control
+   appear too low. Reset those old offsets only for the reconciled shared card. */
+@media (min-width:761px){
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532{
+    padding-top:18px!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-card-media.az-logo-media{
+    margin:0 auto 4px!important;
+    transform:translateY(-4px)!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > h3,
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-title{
+    margin:0 auto 4px!important;
+    top:0!important;
+    transform:none!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-meta{
+    margin:0 auto 5px!important;
+    transform:none!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .azobss-sw-desc-target-097{
+    flex:0 0 auto!important;
+    min-height:78px!important;
+    max-height:96px!important;
+    margin:0 auto 2px!important;
+    transform:none!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532.azobss-shared-more-docked-532 > .az-desc-more-outside-322{
+    position:static!important;
+    inset:auto!important;
+    transform:none!important;
+    margin:6px auto 0!important;
+  }
+}
+
+@media (max-width:760px){
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532{
+    padding-top:17px!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-card-media.az-logo-media{
+    margin:0 auto 4px!important;
+    transform:translateY(-3px)!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > h3,
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-title{
+    margin:0 auto 4px!important;
+    top:0!important;
+    transform:none!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .software-meta{
+    margin:0 auto 6px!important;
+    transform:none!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .azobss-sw-desc-target-097{
+    flex:0 0 auto!important;
+    min-height:82px!important;
+    max-height:104px!important;
+    margin:0 auto 3px!important;
+    transform:none!important;
+  }
+
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532 > .az-desc-more-outside-322,
+  html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532.azobss-shared-more-docked-532 > .az-desc-more-outside-322{
+    position:static!important;
+    inset:auto!important;
+    transform:none!important;
+    margin:7px auto 4px!important;
+  }
+}
+</style>
+
 </body>
 </html>
 

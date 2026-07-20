@@ -1,0 +1,19 @@
+AZOBSS 533 - Software Shared Card Content Raise Fix
+Date: 2026-07-20
+Baseline: (532)-AZOBSS-SOFTWARE-SHARED-CARD-DETERMINISTIC-LAYOUT-FIX_20260720.zip
+
+Scope
+- Software-Tools shared-product card only.
+- No backend, Firebase Rules, payment, promotion quota, referral, download, or admin logic changes.
+
+Root cause corrected
+- Older patches 505, 506, 508 and 509 cumulatively applied margin-top, translateY and top offsets to the title/content flow.
+- This made the title, metadata, description and More control sit too low relative to the logo.
+
+Changes
+- Raises the logo slightly and reduces the logo-to-title gap.
+- Resets the old title margin/top/transform offsets on the reconciled shared card.
+- Raises and compacts the metadata and description flow.
+- Makes the description use its real content area instead of stretching vertically.
+- Keeps More directly below the description and disables the old docked visual position for this shared card.
+- Includes proportional desktop and mobile spacing.
