@@ -1481,6 +1481,13 @@ function azobssEnsurePublicPaNavButtons(){
       link.textContent = 'Beli Pelan Akui';
     }
 
+    // Match the normal storefront tabs: no permanent glow. The button is
+    // highlighted only while the public PA page is currently open.
+    const isPublicPaPage = /\/Beli-Pelan-Akui\/?(?:index\.html)?$/i.test(String(location.pathname || ''));
+    link.classList.toggle('market-nav-active', isPublicPaPage);
+    link.classList.toggle('is-active', isPublicPaPage);
+    link.classList.toggle('is-current', isPublicPaPage);
+
     // Keep the public PA button as the first normal storefront tab,
     // immediately before Software. This also repositions older cached/static
     // markup where the button previously appeared near Mini Web Tools.
@@ -5768,75 +5775,4 @@ document.addEventListener('click',function(e){
     var shown=clean((document.getElementById('signedInName')||{}).textContent||'');
     return keys.indexOf(key)!==-1 || keys.indexOf(shown)!==-1 || emails.indexOf(email)!==-1;
   };
-})();
-
-
-// AZOBSS_542_PUBLIC_PA_NAV_GLOW_FIX
-(function injectAzobssPublicPaNavGlowFix(){
-  try{
-    var css = `
-/* AZOBSS 542 - Beli Pelan Akui navbar glow only */
-.market-nav .nav-public-pa-link:not([hidden]):not(.is-hidden){
-  position:relative!important;
-  isolation:isolate!important;
-  overflow:hidden!important;
-  background:linear-gradient(110deg,#f59e0b 0%,#fde047 42%,#fff7ae 50%,#fde047 58%,#f59e0b 100%)!important;
-  background-size:220% 100%!important;
-  border-color:#fff08a!important;
-  color:#301900!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.55),0 0 8px rgba(255,248,185,.95)!important;
-  box-shadow:
-    0 0 0 1px rgba(255,238,103,.42),
-    0 0 9px rgba(250,204,21,.78),
-    0 0 18px rgba(245,158,11,.50),
-    inset 0 1px 0 rgba(255,255,255,.92),
-    inset 0 0 13px rgba(255,255,255,.38)!important;
-  animation:azobssPublicPaGlow542 1.65s ease-in-out infinite,azobssPublicPaShine542 2.8s linear infinite!important;
-  will-change:filter,box-shadow,background-position!important;
-}
-.market-nav .nav-public-pa-link:not([hidden]):not(.is-hidden)::after{
-  content:""!important;
-  position:absolute!important;
-  top:-45%!important;
-  bottom:-45%!important;
-  left:-42%!important;
-  width:30%!important;
-  z-index:-1!important;
-  pointer-events:none!important;
-  transform:skewX(-22deg)!important;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.92),transparent)!important;
-  animation:azobssPublicPaSweep542 2.35s ease-in-out infinite!important;
-}
-.market-nav .nav-public-pa-link:not([hidden]):not(.is-hidden):hover{
-  color:#1f1200!important;
-  filter:brightness(1.12) saturate(1.08)!important;
-  box-shadow:
-    0 0 0 1px rgba(255,245,157,.72),
-    0 0 13px rgba(253,224,71,.95),
-    0 0 26px rgba(245,158,11,.72),
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 0 15px rgba(255,255,255,.48)!important;
-}
-@keyframes azobssPublicPaGlow542{
-  0%,100%{filter:brightness(1) saturate(1);box-shadow:0 0 0 1px rgba(255,238,103,.38),0 0 7px rgba(250,204,21,.62),0 0 14px rgba(245,158,11,.38),inset 0 1px 0 rgba(255,255,255,.88),inset 0 0 11px rgba(255,255,255,.30)}
-  50%{filter:brightness(1.15) saturate(1.12);box-shadow:0 0 0 1px rgba(255,245,157,.68),0 0 13px rgba(253,224,71,.96),0 0 25px rgba(245,158,11,.68),inset 0 1px 0 rgba(255,255,255,1),inset 0 0 16px rgba(255,255,255,.48)}
-}
-@keyframes azobssPublicPaShine542{0%{background-position:100% 0}100%{background-position:-120% 0}}
-@keyframes azobssPublicPaSweep542{0%,36%{left:-42%;opacity:0}47%{opacity:.95}64%,100%{left:122%;opacity:0}}
-@media (prefers-reduced-motion:reduce){
-  .market-nav .nav-public-pa-link:not([hidden]):not(.is-hidden),
-  .market-nav .nav-public-pa-link:not([hidden]):not(.is-hidden)::after{animation:none!important}
-}
-`;
-    function apply(){
-      var old=document.getElementById('azobss-542-public-pa-nav-glow-fix');
-      if(old) old.remove();
-      var style=document.createElement('style');
-      style.id='azobss-542-public-pa-nav-glow-fix';
-      style.textContent=css;
-      document.head.appendChild(style);
-    }
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply,{once:true});
-    else apply();
-  }catch(e){}
 })();
