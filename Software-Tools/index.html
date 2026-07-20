@@ -4156,6 +4156,18 @@ html body .downloads-section{
 
     const nav=document.createElement('div');
     nav.className='software-category-group-nav-475';
+
+    // AZOBSS 548: Provide a visible reset button before the grouped category
+    // menus. Selecting it clears the active category and shows all software.
+    const allButton=document.createElement('button');
+    allButton.type='button';
+    allButton.className='software-category-all-btn-475'+(selectedSoftwareCategory==='all'?' is-active':'');
+    allButton.setAttribute('data-software-category','all');
+    allButton.setAttribute('aria-pressed',selectedSoftwareCategory==='all'?'true':'false');
+    allButton.setAttribute('aria-label','Show all software categories');
+    allButton.innerHTML='<span class="software-category-group-label-475"><span aria-hidden="true">▦</span>All</span>';
+    nav.appendChild(allButton);
+
     groups.forEach(group=>nav.appendChild(createSoftwareCategoryGroup475(group,stats,selectedGroup)));
     categoryFilter.appendChild(nav);
 
@@ -5672,8 +5684,8 @@ function normalizeItem(item){
     const btn = e.target.closest('[data-software-category]');
     if(!btn) return;
     const clickedCategory = btn.getAttribute('data-software-category') || 'all';
-    // With the separate “All Categories” button removed, clicking the
-    // currently active category again returns the list to all software.
+    // The All button explicitly resets the category filter. Clicking an
+    // already-selected nested category also keeps the convenient reset action.
     selectSoftwareCategory473(clickedCategory === selectedSoftwareCategory ? 'all' : clickedCategory);
   });
 
