@@ -1,0 +1,18 @@
+AZOBSS 549 - Software shared-product mobile real-flow fix
+
+Baseline: (548)-AZOBSS-SOFTWARE-ALL-CATEGORY-RESET-BUTTON-FIX_20260720.zip
+
+Changed file:
+- Software-Tools/index.html
+
+Fixes only product cards opened through a shared URL (?p=...) on phone widths:
+- Removes accumulated relative top offsets from logo, title, metadata and description.
+- Restores real compact flex flow instead of visual-only positioning.
+- Centres More directly below the description.
+- Prevents More from appearing at the top-right edge of the card.
+- Keeps the Free Promo/Download/Buy action clear of the statistics footer.
+- Reserves a real bottom footer area.
+- Desktop shared-card layout and normal product cards are unchanged.
+- Observer-loop fix from 534 and all changes through 548 are retained.
+
+No Firebase Rules update or Render redeploy is required.
