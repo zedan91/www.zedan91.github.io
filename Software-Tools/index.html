@@ -16182,6 +16182,38 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 
+
+<!-- AZOBSS 537: shared product title-only raise test -->
+<style id="azobss-software-shared-title-only-raise-fix-537">
+/* Step 2 only: move the shared-product title upward visually.
+   Preserve the 536 logo position and do not alter metadata, description,
+   More, CTA, stats, card padding or observer logic. */
+@media (min-width:761px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > h3,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-title{
+    position:relative!important;
+    top:-20px!important;
+    transform:none!important;
+  }
+}
+@media (max-width:760px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > h3,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-title{
+    position:relative!important;
+    top:-16px!important;
+    transform:none!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
