@@ -1,0 +1,14 @@
+AZOBSS PATCH 551
+
+Baseline: (550)-AZOBSS-SOFTWARE-NORMAL-MOBILE-CTA-BOTTOM-DOCK-FIX_20260720.zip
+
+Fix:
+- The Software card More button is no longer controlled by description character count.
+- More is shown only when the unclamped rendered text is genuinely taller than the visible description box.
+- More is hidden when the entire description is already visible.
+- Rechecks after card rendering, responsive width changes, orientation changes and font loading.
+- MutationObserver reacts only to newly added cards to avoid an observer loop.
+- Shared-link layout, promo layout, CTA docking, payment/download functions and desktop layout remain unchanged.
+
+Changed file:
+- Software-Tools/index.html
