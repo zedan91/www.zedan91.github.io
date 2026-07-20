@@ -1,0 +1,10 @@
+AZOBSS PATCH 538
+
+Baseline: (537)-AZOBSS-SOFTWARE-SHARED-TITLE-ONLY-RAISE-FIX_20260720_20260720_145646.zip
+
+Change scope:
+- Shared-product title only.
+- Desktop title offset: -32px (12px higher than patch 537).
+- Mobile title offset: -27px (11px higher than patch 537).
+- Logo position from patch 536 remains unchanged.
+- Metadata, description, More, CTA, stats, card sizing and observer logic remain unchanged.

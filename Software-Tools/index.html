@@ -16214,6 +16214,37 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 
+
+<!-- AZOBSS 538: shared product title closer to logo -->
+<style id="azobss-software-shared-title-closer-logo-fix-538">
+/* Step 2 refinement only: raise the shared-product title farther than the logo
+   so the visual gap becomes compact. No other card element is changed. */
+@media (min-width:761px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > h3,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-title{
+    position:relative!important;
+    top:-32px!important;
+    transform:none!important;
+  }
+}
+@media (max-width:760px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > h3,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-title,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > h3,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-title{
+    position:relative!important;
+    top:-27px!important;
+    transform:none!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
