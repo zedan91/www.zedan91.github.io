@@ -15970,7 +15970,10 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
     }
     more.type='button';
     more.classList.add('azobss-sw-desc-more-097','az-desc-more-outside-322');
-    more.textContent='More';
+    /* AZOBSS 534: Do not rewrite the same text on every reconciliation.
+       Replacing textContent creates a childList mutation and previously
+       retriggered the grid observer forever. */
+    if(clean(more.textContent)!=='More') more.textContent='More';
     more.setAttribute('data-azobss-full-desc-097',full);
     more.setAttribute('aria-label','Read full description');
     more.removeAttribute('aria-hidden');
@@ -16017,11 +16020,24 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
     ].filter(Boolean);
     grids.forEach(function(grid){
       try{
+        var observerRunPending=false;
         new MutationObserver(function(records){
-          records.forEach(function(record){
-            record.addedNodes.forEach(function(node){ if(node&&node.nodeType===1) run(node); });
+          /* AZOBSS 534: Only react when a card (or a wrapper containing a card)
+             is added. Ignore text/button mutations created by reconciliation. */
+          var hasNewCard=records.some(function(record){
+            return Array.from(record.addedNodes||[]).some(function(node){
+              return !!(node && node.nodeType===1 && (
+                (node.matches && node.matches('.download-card')) ||
+                (node.querySelector && node.querySelector('.download-card'))
+              ));
+            });
           });
-          run(grid);
+          if(!hasNewCard || observerRunPending) return;
+          observerRunPending=true;
+          requestAnimationFrame(function(){
+            observerRunPending=false;
+            run(grid);
+          });
         }).observe(grid,{childList:true,subtree:true});
       }catch(_e){}
     });
