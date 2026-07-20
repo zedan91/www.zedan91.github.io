@@ -5002,7 +5002,7 @@ function normalizeItem(item){
   function azEyeSvg287(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.2 0 9.4 4.5 10.7 6.4.3.4.3.8 0 1.2C21.4 14.5 17.2 19 12 19S2.6 14.5 1.3 12.6c-.3-.4-.3-.8 0-1.2C2.6 9.5 6.8 5 12 5Zm0 2C8.1 7 4.8 10 3.4 12 4.8 14 8.1 17 12 17s7.2-3 8.6-5C19.2 10 15.9 7 12 7Zm0 2.2A2.8 2.8 0 1 1 12 14.8 2.8 2.8 0 0 1 12 9.2Z"/></svg>';}
   function azStablePreviewHtml287(item){const src=String(item.gifUrl||'').trim();if(!src)return '';return '<a class="azobss-gif-preview-link azobss-preview-float-155 az-preview-stable-292 az-preview-stable-293" data-az-preview-firstpaint-293="1" href="'+esc(src)+'" data-gif-preview="'+esc(src)+'" target="_blank" rel="noopener" title="Preview" aria-label="Preview GIF demo">'+azEyeSvg287()+'</a>';}
   function azDescHtml287(item){const raw=String(item.desc||'');const safe=esc(raw);return '<div class="azobss-sw-desc-target-097 az-desc-stable-293 az-desc-text-only-322" role="paragraph" data-azobss-full-desc-097="'+safe+'"><span class="az-desc-copy-293">'+safe+'</span></div>';}
-  function azMoreHtml497(item){const raw=String(item.desc||'');if(raw.length<=90)return '';const safe=esc(raw);return '<button type="button" class="azobss-sw-desc-more-097 az-desc-more-outside-322" data-azobss-full-desc-097="'+safe+'" aria-label="Read full description">More</button>';}
+  function azMoreHtml497(item){const raw=String(item.desc||'');if(raw.length<=55)return '';const safe=esc(raw);return '<button type="button" class="azobss-sw-desc-more-097 az-desc-more-outside-322" data-azobss-full-desc-097="'+safe+'" aria-label="Read full description">More</button>';}
 
   function renderItem(item){
     const itemStats482 = statsForItem(item);
@@ -15704,6 +15704,91 @@ html body .downloads-grid > .download-card > .software-title{
   top:8px!important;
 }
 </style>
+
+
+
+<!-- AZOBSS 531: shared product description visual-overflow More fix -->
+<style id="azobss-software-share-description-overflow-more-fix-531">
+/* Keep shared-product cards on the same description rhythm as normal cards.
+   The CTA must never cover a visually wrapped description. */
+html body .download-card > .az-desc-more-outside-322{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+</style>
+<script id="azobss-software-share-description-overflow-more-fix-531-js">
+(function(){
+  'use strict';
+  if(window.__azobssSoftwareShareDescOverflowMore531) return;
+  window.__azobssSoftwareShareDescOverflowMore531=true;
+
+  function escAttr(value){
+    return String(value==null?'':value)
+      .replace(/&/g,'&amp;')
+      .replace(/"/g,'&quot;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+
+  function ensureCard(card){
+    if(!card || !card.matches || !card.matches('.download-card')) return;
+    var desc=card.querySelector(':scope > .azobss-sw-desc-target-097');
+    if(!desc) return;
+    var full=String(desc.getAttribute('data-azobss-full-desc-097') || desc.textContent || '').trim();
+    if(!full) return;
+    var more=card.querySelector(':scope > .az-desc-more-outside-322');
+    var visuallyOverflowing=false;
+    try{ visuallyOverflowing=(desc.scrollHeight > desc.clientHeight + 2); }catch(_e){}
+    var needsMore=full.length>55 || visuallyOverflowing;
+    if(!needsMore) return;
+    if(!more){
+      more=document.createElement('button');
+      more.type='button';
+      more.className='azobss-sw-desc-more-097 az-desc-more-outside-322';
+      more.setAttribute('aria-label','Read full description');
+      desc.insertAdjacentElement('afterend',more);
+    }
+    more.textContent='More';
+    more.setAttribute('data-azobss-full-desc-097',full);
+    more.style.removeProperty('display');
+    more.removeAttribute('aria-hidden');
+  }
+
+  function run(root){
+    var scope=root && root.querySelectorAll ? root : document;
+    if(root && root.matches && root.matches('.download-card')) ensureCard(root);
+    scope.querySelectorAll('.download-card').forEach(ensureCard);
+    requestAnimationFrame(function(){
+      if(root && root.matches && root.matches('.download-card')) ensureCard(root);
+      scope.querySelectorAll('.download-card').forEach(ensureCard);
+    });
+  }
+
+  function start(){
+    run(document);
+    var grids=[document.getElementById('softwareGrid'),document.getElementById('softwareDownloadsGrid'),document.querySelector('.downloads-grid')].filter(Boolean);
+    grids.forEach(function(grid){
+      try{
+        new MutationObserver(function(records){
+          records.forEach(function(record){
+            record.addedNodes.forEach(function(node){
+              if(node && node.nodeType===1) run(node);
+            });
+          });
+          run(grid);
+        }).observe(grid,{childList:true,subtree:true});
+      }catch(_e){}
+    });
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+  window.addEventListener('azobss-software-rendered',function(){run(document);});
+  window.addEventListener('azobss-shared-product-filtered',function(){run(document);});
+  [80,250,600,1200,2200,4000].forEach(function(ms){setTimeout(function(){run(document);},ms);});
+})();
+</script>
 
 </body>
 </html>
