@@ -16245,6 +16245,34 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 
+
+
+<!-- AZOBSS 539: shared product metadata group raise -->
+<style id="azobss-software-shared-meta-group-raise-fix-539">
+/* Step 3 only: raise the full Software metadata group shown below the title
+   (category row plus version, file size and platform badges).
+   Preserve logo/title positions and do not alter description, More, CTA,
+   stats, card sizing or observer logic. */
+@media (min-width:761px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-meta,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-meta,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-meta{
+    position:relative!important;
+    top:-32px!important;
+    transform:none!important;
+  }
+}
+@media (max-width:760px){
+  html.azobss-shared-product-mode-532 #softwareGrid > .download-card > .software-meta,
+  html.azobss-shared-product-mode-532 #softwareDownloadsGrid > .download-card > .software-meta,
+  html.azobss-shared-product-mode-532 .downloads-grid > .download-card > .software-meta{
+    position:relative!important;
+    top:-27px!important;
+    transform:none!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
