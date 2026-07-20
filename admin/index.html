@@ -5688,58 +5688,29 @@ function printWebsiteReport(){
   if(!azWebsiteReportLast){ toast('Run Full Website Check first.'); return; }
   const w=window.open('','_blank','noopener,noreferrer,width=900,height=700');
   if(!w){ window.print(); return; }
-  w.document.write('<!doctype html><html><head><title>AZOBSS Health Report</title><style>body{font-family:Arial,sans-serif;margin:24px;white-space:pre-wrap;line-height:1.45}pre{font-family:Consolas,monospace}</style>
-<style id="azobss-auth-buttons-match-public-pa-fix-527">
-/* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
-.site-auth-actions{
-  display:flex!important;
-  align-items:center!important;
-  gap:8px!important;
-  margin-left:auto!important;
-  margin-right:0!important;
-  flex:0 0 auto!important;
-}
-.site-auth-actions .site-auth-btn,
-.site-auth-actions .site-auth-btn:link,
-.site-auth-actions .site-auth-btn:visited{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  height:34px!important;
-  min-height:34px!important;
-  padding:0 13px!important;
-  border:1px solid rgba(148,163,184,.4)!important;
-  border-radius:999px!important;
-  background:#111c2f!important;
-  color:#fff!important;
-  font-size:13px!important;
-  font-weight:900!important;
-  line-height:1!important;
-  text-decoration:none!important;
-  white-space:nowrap!important;
-  cursor:pointer!important;
-  box-shadow:none!important;
-}
-.site-auth-actions .site-auth-btn.primary,
-.site-auth-actions .site-auth-btn.primary:link,
-.site-auth-actions .site-auth-btn.primary:visited{
-  background:#16a34a!important;
-  border-color:#22c55e!important;
-  color:#fff!important;
-}
-.site-auth-actions .site-auth-btn:hover,
-.site-auth-actions .site-auth-btn:focus-visible{
-  color:#fff!important;
-  filter:brightness(1.08);
-  outline:none!important;
-}
-@media(max-width:620px){
-  .site-auth-actions{gap:7px!important;}
-  .site-auth-actions .site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:12px!important;}
-}
-</style>
-</head><body><pre>'+esc(azWebsiteReportLast.text||'')+'</pre></body></html>');
-  w.document.close(); w.focus(); setTimeout(()=>w.print(),250);
+
+  // Keep the printable report HTML self-contained. Do not inject global page styles
+  // into this JavaScript string because an unescaped newline can break the whole
+  // admin module and leave the dashboard stuck at "Checking admin access...".
+  const reportText = esc(azWebsiteReportLast.text || '');
+  const reportHtml = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AZOBSS Health Report</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:24px;white-space:pre-wrap;line-height:1.45}
+    pre{font-family:Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+  </style>
+</head>
+<body><pre>${reportText}</pre></body>
+</html>`;
+
+  w.document.open();
+  w.document.write(reportHtml);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(),250);
 }
 
 async function initSection(id){

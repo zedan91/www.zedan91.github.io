@@ -1,0 +1,26 @@
+AZOBSS PATCH 552 - Admin Checking Access JavaScript Recovery Fix
+
+Baseline:
+- (551)-AZOBSS-SOFTWARE-MORE-REAL-OVERFLOW-ONLY-FIX_20260720.zip
+
+Punca sebenar:
+- CSS patch untuk butang Register/Login terselit di dalam string JavaScript
+  w.document.write(...) pada fungsi printWebsiteReport() dalam admin/index.html.
+- String tersebut mengandungi newline tanpa escape lalu menghasilkan SyntaxError.
+- Disebabkan skrip module utama admin gagal dibaca, onAuthStateChanged utama tidak
+  dijalankan dan loginCover kekal pada "Checking admin access...".
+
+Pembaikan:
+- Buang CSS yang terselit daripada fungsi cetak laporan.
+- Bina semula HTML cetakan menggunakan template literal yang lengkap dan selamat.
+- Kekalkan fungsi cetak AZOBSS Health Report.
+- Semak syntax semua inline JavaScript dan ES module dalam admin/index.html.
+
+Skop:
+- Hanya admin/index.html diubah.
+- Software Tools, Beli Pelan Akui, pembayaran, Firebase Rules dan Render backend
+  tidak diubah.
+
+Selepas upload:
+- Buka https://www.azobss.com/admin/
+- Buat hard refresh Ctrl+F5 sekali.
