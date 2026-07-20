@@ -16477,6 +16477,57 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 
+
+
+<!-- AZOBSS 550: normal Software mobile CTA docked above stats footer -->
+<style id="azobss-software-normal-mobile-cta-bottom-dock-fix-550">
+/* Phone-only fix for the normal Software listing (opened from the Software nav).
+   Shared-product mode already has its own real-flow layout in patch 549.
+   Dock Download Now, Buy Now and Free Promo Download immediately above the
+   statistics footer without changing their size, text or click behaviour. */
+@media (max-width:760px){
+  html:not(.azobss-shared-product-mode-532) body #softwareGrid > .download-card,
+  html:not(.azobss-shared-product-mode-532) body #softwareDownloadsGrid > .download-card,
+  html:not(.azobss-shared-product-mode-532) body .downloads-grid > .download-card{
+    position:relative!important;
+    padding-bottom:96px!important;
+  }
+
+  html:not(.azobss-shared-product-mode-532) body #softwareGrid > .download-card > .az-card-bottom-actions-498,
+  html:not(.azobss-shared-product-mode-532) body #softwareDownloadsGrid > .download-card > .az-card-bottom-actions-498,
+  html:not(.azobss-shared-product-mode-532) body .downloads-grid > .download-card > .az-card-bottom-actions-498{
+    position:absolute!important;
+    left:0!important;
+    right:0!important;
+    top:auto!important;
+    bottom:46px!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0 14px!important;
+    transform:none!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:0!important;
+    box-sizing:border-box!important;
+    z-index:82!important;
+  }
+
+  html:not(.azobss-shared-product-mode-532) body #softwareGrid > .download-card > .software-stats,
+  html:not(.azobss-shared-product-mode-532) body #softwareDownloadsGrid > .download-card > .software-stats,
+  html:not(.azobss-shared-product-mode-532) body .downloads-grid > .download-card > .software-stats{
+    position:absolute!important;
+    left:0!important;
+    right:0!important;
+    top:auto!important;
+    bottom:0!important;
+    margin:0!important;
+    z-index:80!important;
+  }
+}
+</style>
 </body>
 </html>
 
