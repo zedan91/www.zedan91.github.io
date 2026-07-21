@@ -233,11 +233,11 @@ function syncTableCartButtons() {
     const isInCart = !!itemId && cartIds.has(itemId);
     button.classList.toggle('is-in-cart', isInCart);
     button.setAttribute('aria-pressed', isInCart ? 'true' : 'false');
-    button.title = isInCart ? 'Sudah dalam Troli' : 'Tambah ke Troli';
+    button.title = isInCart ? 'Tekan lagi untuk buang daripada Troli' : 'Tambah ke Troli';
     const currentLabel = String(button.getAttribute('aria-label') || '').trim();
     if (isInCart) {
       if (!button.dataset.cartOriginalAriaLabel) button.dataset.cartOriginalAriaLabel = currentLabel || 'Tambah ke Troli';
-      button.setAttribute('aria-label', 'Berjaya dimasukkan. Item sudah dalam troli');
+      button.setAttribute('aria-label', 'Item sudah dalam troli. Tekan lagi untuk buang daripada troli');
     } else {
       button.setAttribute('aria-label', button.dataset.cartOriginalAriaLabel || currentLabel || 'Tambah ke Troli');
       delete button.dataset.cartOriginalAriaLabel;
@@ -251,6 +251,55 @@ function scheduleTableCartButtonSync() {
     cartButtonSyncTimer = null;
     syncTableCartButtons();
   }, 20);
+}
+
+async function toggleTableCartButton(event) {
+  const button = event.target.closest && event.target.closest(TABLE_CART_BUTTON_SELECTOR);
+  if (!button || button.dataset.cartToggleBusy === '1') return;
+
+  const payload = decodeCartButtonPayload(button);
+  if (!payload) return;
+
+  let itemId = '';
+  try {
+    itemId = normalizeItem(payload).id;
+  } catch (_) {
+    return;
+  }
+
+  const items = readCart();
+  const index = items.findIndex((item) => String(item && item.id || '') === itemId);
+  if (index < 0) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+
+  const removedItem = items[index];
+  items.splice(index, 1);
+  button.dataset.cartToggleBusy = '1';
+  button.disabled = true;
+  writeCart(items);
+  setCartSyncStatus('Item berjaya dibuang daripada troli.');
+
+  if (typeof window.azShowToast === 'function') {
+    window.azShowToast('Item berjaya dibuang daripada troli.');
+  }
+
+  try {
+    const removedCount = await removePendingPurchaseItems(removedItem);
+    setCartSyncStatus(removedCount
+      ? 'Item dan rekod Pending Payment berjaya dibuang.'
+      : 'Item berjaya dibuang daripada troli.');
+  } catch (error) {
+    setCartSyncStatus(error && error.message
+      ? error.message
+      : 'Item telah dibuang daripada troli, tetapi rekod Pending Payment belum dapat disegerakkan.');
+  } finally {
+    delete button.dataset.cartToggleBusy;
+    button.disabled = false;
+    scheduleTableCartButtonSync();
+  }
 }
 
 function watchTableCartButtons() {
@@ -726,6 +775,7 @@ function init() {
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
   document.addEventListener('click', guardCartAction, true);
+  document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {
     const mapButton = event.target.closest('[data-jupem-lot-map]');
     if (mapButton) {
