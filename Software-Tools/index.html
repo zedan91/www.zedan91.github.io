@@ -3334,6 +3334,10 @@ html body .downloads-section{
           </select>
         </label>
       </div>
+      <label class="az-featured-admin-toggle-553">
+        <span><input id="softwareAdminFeatured" type="checkbox"> <strong>⭐ Featured / Pin to Top</strong></span>
+        <small>Featured software appears before normal items and receives a highlighted card.</small>
+      </label>
       <div class="software-admin-row">
         <label>Version
           <input id="softwareAdminVersion" type="text" placeholder="v1.0.0">
@@ -3534,7 +3538,7 @@ html body .downloads-section{
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
-  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v464';
+  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v553';
   const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=491';
 
   const grid = document.getElementById('softwareDownloadsGrid');
@@ -3571,6 +3575,7 @@ html body .downloads-section{
   const ratingInput = document.getElementById('softwareAdminRating');
   const likesInput = document.getElementById('softwareAdminLikes');
   const statusInput = document.getElementById('softwareAdminStatus');
+  const featuredInput = document.getElementById('softwareAdminFeatured');
   const versionInput = document.getElementById('softwareAdminVersion');
   const fileSizeInput = document.getElementById('softwareAdminFileSize');
   const downloadLimitInput = document.getElementById('softwareAdminDownloadLimit');
@@ -4400,6 +4405,16 @@ function esc(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&
     if (Number.isFinite(n) && n >= 0) return Math.max(0, Math.min(24 * 30, n));
     return fallback;
   }
+function azSoftwareFeaturedValue553(item){
+    const source = item || {};
+    const keys = ['featured','isFeatured','pinToTop','pinned','highlighted'];
+    for(const key of keys){
+      if(Object.prototype.hasOwnProperty.call(source,key)) return azBool(source[key]);
+    }
+    // Preserve the user's current priority item on first deployment. Once the
+    // admin saves the item, the explicit featured field becomes authoritative.
+    return clean(source.name || source.title || '') === 'azobss solattime';
+  }
 function normalizeItem(item){
     const type = item.type === 'premium' ? 'premium' : 'free';
     const price = String(item.price || (type === 'free' ? 'FREE' : '')).trim();
@@ -4421,6 +4436,7 @@ function normalizeItem(item){
       productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
       replacesProductId: item.replacesProductId || item.oldProductId || '',
       status: item.status || 'active',
+      featured: azSoftwareFeaturedValue553(item),
       version: item.version || '',
       fileSize: item.fileSize || '',
       platforms: Array.isArray(item.platforms) ? item.platforms : (item.platform ? [item.platform] : ['Windows']),
@@ -4483,6 +4499,7 @@ function normalizeItem(item){
       promoFreeStartedAtMs: Number(n.promoFreeStartedAtMs || 0),
       category: n.category,
       status: n.status,
+      featured: !!n.featured,
       version: n.version,
       fileSize: n.fileSize,
       platforms: n.platforms || ['Windows'],
@@ -5043,6 +5060,7 @@ function normalizeItem(item){
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = (!item.bundledDirectory && item.badge) ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
+    const featuredHtml553 = item.featured ? '<div class="az-software-featured-pill-553">⭐ Featured Software</div>' : '';
     const bundledDeleteBtn470 = item.bundledDirectory ? '' : `<button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button>`;
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="${item.bundledDirectory ? 'Edit by creating a Firestore override' : 'Edit software'}" aria-label="Edit">✏️</button>${bundledDeleteBtn470}<button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
     const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : `<span class="download-text">${esc(item.buttonText || 'Download Now')}</span>`}</a>`;
@@ -5050,9 +5068,10 @@ function normalizeItem(item){
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
     const actionHtml = subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')} ${item.featured ? 'az-software-featured-553' : ''}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top highlighted priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
+      ${featuredHtml553}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
       ${metaHtml}
@@ -5446,6 +5465,8 @@ function normalizeItem(item){
 
     const typeRank = item => String(item.type || '').toLowerCase() === 'premium' ? 1 : 0;
     dynamic.sort((a,b) => {
+      const featuredDiff553 = Number(!!b.featured) - Number(!!a.featured);
+      if(featuredDiff553) return featuredDiff553;
       if(sortMode === 'freeOnly') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'premiumOnly') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'nameAZ') return String(a.name).localeCompare(String(b.name));
@@ -5462,6 +5483,8 @@ function normalizeItem(item){
     const staticTypeRank = card => String(card.dataset.type || 'free').toLowerCase() === 'premium' ? 1 : 0;
     if(softwareStatsDomRefreshNeeded483) staticCards.forEach(applyStatsToCard);
     const sortedStatic = staticCards.slice().sort((a,b) => {
+      const featuredDiff553 = Number(b.dataset.featured === '1') - Number(a.dataset.featured === '1');
+      if(featuredDiff553) return featuredDiff553;
       const an = String(a.dataset.name || a.querySelector('h3')?.textContent || '').toLowerCase();
       const bn = String(b.dataset.name || b.querySelector('h3')?.textContent || '').toLowerCase();
       const ac = Number(a.dataset.created || 0);
@@ -5645,6 +5668,7 @@ function normalizeItem(item){
     if(iconInput) iconInput.value = item?.icon || 'FREE';
     if(productIdInput) productIdInput.value = item?.productId || makeProductId('AZSW');
     if(statusInput) statusInput.value = item?.status || 'active';
+    if(featuredInput) featuredInput.checked = !!item?.featured;
     if(versionInput) versionInput.value = item?.version || '';
     if(fileSizeInput) fileSizeInput.value = item?.fileSize || '';
     if(downloadLimitInput) downloadLimitInput.value = String(item?.downloadLimit || 3);
@@ -6036,6 +6060,7 @@ function normalizeItem(item){
       id: productIdInput?.value.trim() || makeProductId('AZSW'),
       productId: productIdInput?.value.trim() || makeProductId('AZSW'),
       status: statusInput?.value || 'active',
+      featured: !!featuredInput?.checked,
       version: versionInput?.value.trim(),
       fileSize: fileSizeInput?.value.trim(),
       platforms: selectedPlatforms(),
@@ -6126,6 +6151,64 @@ function normalizeItem(item){
   refreshAdminState();
   loadItems();
 </script>
+
+
+<!-- AZOBSS 553: Featured / Pin to Top software control and highlight -->
+<style id="azobss-software-featured-pin-highlight-553">
+.az-featured-admin-toggle-553{
+  border:1px solid rgba(250,204,21,.46)!important;
+  border-radius:14px!important;
+  padding:12px 14px!important;
+  background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(34,197,94,.07))!important;
+}
+.az-featured-admin-toggle-553 > span{display:flex;align-items:center;gap:9px;color:#fde68a}
+.az-featured-admin-toggle-553 input{width:auto!important;accent-color:#facc15}
+.az-featured-admin-toggle-553 small{color:#cbd5e1;font-weight:700;line-height:1.4}
+
+#softwareDownloadsGrid > .download-card.az-software-featured-553{
+  border:2px solid rgba(250,204,21,.92)!important;
+  background:
+    radial-gradient(circle at 50% 0,rgba(250,204,21,.12),transparent 34%),
+    linear-gradient(180deg,rgba(30,45,70,.98),rgba(19,31,51,.98))!important;
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.24),
+    0 0 22px rgba(250,204,21,.28),
+    0 16px 36px rgba(0,0,0,.28)!important;
+}
+#softwareDownloadsGrid > .download-card.az-software-featured-553:hover{
+  transform:translateY(-3px)!important;
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.38),
+    0 0 30px rgba(250,204,21,.40),
+    0 20px 42px rgba(0,0,0,.34)!important;
+}
+.az-software-featured-pill-553{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  align-self:center;
+  width:max-content;
+  max-width:calc(100% - 92px);
+  margin:5px auto -4px;
+  padding:5px 11px;
+  border:1px solid rgba(250,204,21,.88);
+  border-radius:999px;
+  background:linear-gradient(135deg,#facc15,#f59e0b);
+  color:#241500;
+  font-size:11px;
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:.02em;
+  box-shadow:0 5px 16px rgba(245,158,11,.24);
+}
+@media(max-width:640px){
+  #softwareDownloadsGrid > .download-card.az-software-featured-553{box-shadow:0 0 20px rgba(250,204,21,.25)!important}
+  .az-software-featured-pill-553{font-size:10px;padding:5px 9px;margin-top:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  #softwareDownloadsGrid > .download-card.az-software-featured-553:hover{transform:none!important}
+}
+</style>
 
 <script src="/assets/js/azobss-global-auth.js?v=544" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=450"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
