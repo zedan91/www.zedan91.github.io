@@ -680,7 +680,7 @@ function buildDownloadEmailHtml(order, downloadUrl, receiptUrl) {
 }
 
 function isPublicPaPremiumOrder(order = {}) {
-  return !!(order && (order.publicPaPurchase === true || String(order.productId || '') === 'public-pa-rm50'));
+  return !!(order && (order.publicPaPurchase === true || ['public-pa-rm30','public-pa-rm50'].includes(String(order.productId || ''))));
 }
 function publicPaRecordId(order = {}) {
   return cleanPremiumText(order.publicPaRecordId || (order.orderId ? `${order.orderId}-1` : ''), 180);
@@ -704,7 +704,7 @@ async function sendPublicPaEmailForOrder(order, req) {
     const item = Array.isArray(order.paBmItems) ? (order.paBmItems[0] || {}) : {};
     const paLabel = `PA${String(item.itemCode || '').replace(/^PA/i,'')}`;
     const transporter = createMailer();
-    await transporter.sendMail({ from:mailFrom(), to:email, subject:`AZOBSS Pelan Akui Ready - ${paLabel}`, html:`<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f3f6fb;padding:24px"><div style="max-width:680px;margin:auto;background:#fff;border-radius:16px;padding:24px"><h2 style="color:#15803d">Pelan Akui Sedia ✅</h2><p><b>${paLabel}</b> (${item.negeri || '-'}) telah tersedia selepas pembayaran RM50 disahkan.</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:11px;font-weight:700">Download PA PDF</a></p><p>Maksimum 5 kali download dalam 7 hari.</p><p><a href="${receiptUrl}">Lihat resit</a></p></div></body></html>`, text:`AZOBSS Pelan Akui Sedia\n${paLabel}\nDownload: ${downloadUrl}\nResit: ${receiptUrl}\nMaksimum 5 kali download dalam 7 hari.` });
+    await transporter.sendMail({ from:mailFrom(), to:email, subject:`AZOBSS Pelan Akui Ready - ${paLabel}`, html:`<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f3f6fb;padding:24px"><div style="max-width:680px;margin:auto;background:#fff;border-radius:16px;padding:24px"><h2 style="color:#15803d">Pelan Akui Sedia ✅</h2><p><b>${paLabel}</b> (${item.negeri || '-'}) telah tersedia selepas pembayaran RM30 disahkan.</p><p><a href="${downloadUrl}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:13px 18px;border-radius:11px;font-weight:700">Download PA PDF</a></p><p>Maksimum 5 kali download dalam 7 hari.</p><p><a href="${receiptUrl}">Lihat resit</a></p></div></body></html>`, text:`AZOBSS Pelan Akui Sedia\n${paLabel}\nDownload: ${downloadUrl}\nResit: ${receiptUrl}\nMaksimum 5 kali download dalam 7 hari.` });
     return upsertPremiumOrder({ ...order, emailSentAt:new Date().toISOString(), emailTo:email, emailError:null, publicPaEmailSent:true });
   } catch (err) { return upsertPremiumOrder({ ...order, emailError:err.message, emailErrorAt:new Date().toISOString() }); }
 }
@@ -938,7 +938,7 @@ function verifyToyyibHash(data) {
 function toyyibPaidResponse(order, req) {
   const base = publicBaseUrl(req);
   if (isPublicPaPremiumOrder(order)) {
-    return { ok:true, paid:true, publicPa:true, paBm:true, orderId:order.orderId, status:order.status, amountSen:5000, unit:1, downloadUrl:publicPaDownloadUrl(order, req), receiptUrl:`${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}`, emailSent:!!order.emailSentAt, emailError:order.emailError || null };
+    return { ok:true, paid:true, publicPa:true, paBm:true, orderId:order.orderId, status:order.status, amountSen:Number(order.amountSen || 3000), unit:1, downloadUrl:publicPaDownloadUrl(order, req), receiptUrl:`${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}`, emailSent:!!order.emailSentAt, emailError:order.emailError || null };
   }
   const withToken = makePremiumDownloadForOrder(order);
   return {
@@ -1596,11 +1596,11 @@ app.post("/api/admin/test-public-pa-payment", requireAdmin, async (req, res) => 
       phone:buyerPhone,
       displayName:buyerName
     };
-    const item = {id:recordId,firestoreId:recordId,productType:'PA',itemCode:paNumber,negeri,amount:50,filename:`PA${paNumber}.pdf`,downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${paNumber}.TIF&negeri=${encodeURIComponent(negeri)}`,createdAtMs:nowMs,publicPaPurchase:true};
+    const item = {id:recordId,firestoreId:recordId,productType:'PA',itemCode:paNumber,negeri,amount:30,filename:`PA${paNumber}.pdf`,downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${paNumber}.TIF&negeri=${encodeURIComponent(negeri)}`,createdAtMs:nowMs,publicPaPurchase:true};
     let order = await azobssPersistJupemOrder({
-      orderId,productId:'public-pa-rm50',productName:`Pelan Akui PA${paNumber}`,amount:'RM50',amountSen:5000,saleAmount:50,saleAmountText:'RM50.00',
+      orderId,productId:'public-pa-rm30',productName:`Pelan Akui PA${paNumber}`,amount:'RM30',amountSen:3000,saleAmount:30,saleAmountText:'RM30.00',
       status:'paid',paymentMethod:'admin-test',paymentReference,billCode:'',paymentUrl:'',returnUrl:'',user,email:buyerEmail,buyerEmail,phone:buyerPhone,
-      paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:50,source:'admin-test-public-pa',maxDownload:5,maxDownloads:5,expiryHours:168,
+      paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:30,source:'admin-test-public-pa',maxDownload:5,maxDownloads:5,expiryHours:168,
       isAdminTestPayment:true,testPayment:true,createdByAdmin:identity.username || identity.email || identity.uid || 'admin',
       createdAt:nowIso,createdAtMs:nowMs,paidAt:nowIso,paidAtMs:nowMs,paidFinalizedAt:nowIso,paymentVerifiedAt:nowIso,paymentVerificationSource:'admin-test-endpoint',
       commissionCheckedAt:nowIso,commissionSkippedReason:'admin-test-payment',emailSkippedForPaBm:true,publicPaEmailSkipped:true
@@ -1608,8 +1608,8 @@ app.post("/api/admin/test-public-pa-payment", requireAdmin, async (req, res) => 
     const sync = await azobssSyncJupemPurchaseLogs(order,'paid',{paymentReference,paidAtMs:nowMs,nowMs});
     order = await azobssPersistJupemOrder({...order,paBmPaidSyncedAt:nowIso,paBmPaidSyncedCount:Number(sync.updated || 0)});
     return res.json({
-      ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,routeVersion:'516',orderId,recordId,paymentReference,
-      amount:50,amountSen:5000,unit:1,updatedCount:Number(sync.updated || 0),downloadUrl:publicPaDownloadUrl(order,req),
+      ok:true,success:true,paid:true,status:'paid',testPayment:true,publicPa:true,paBm:true,routeVersion:'559',orderId,recordId,paymentReference,
+      amount:30,amountSen:3000,unit:1,updatedCount:Number(sync.updated || 0),downloadUrl:publicPaDownloadUrl(order,req),
       receiptUrl:`${apiBase}/api/premium/receipt/${encodeURIComponent(orderId)}`,emailSent:false,commissionCreated:false
     });
   } catch (error) {
@@ -1641,16 +1641,16 @@ app.post("/api/toyyib/create-public-pa-bill", async (req, res) => {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)||/@azobss\.local$/i.test(buyerEmail)) return res.status(400).json({ok:false,error:"Masukkan alamat e-mel sebenar yang sah."});
     if (buyerPhone.replace(/\D/g,'').length<8) return res.status(400).json({ok:false,error:"Masukkan nombor telefon yang sah."});
     const emailHash=crypto.createHash('sha256').update(buyerEmail).digest('hex').slice(0,18);
-    const orderId=makePremiumId('publicpa'); const recordId=`${orderId}-1`; const amountSen=5000; const amount=50; const apiBase=publicBaseUrl(req);
+    const orderId=makePremiumId('publicpa'); const recordId=`${orderId}-1`; const amountSen=3000; const amount=30; const apiBase=publicBaseUrl(req);
     const returnUrl=`${frontendBaseUrl(req)}/Beli-Pelan-Akui/?payment=return&orderId=${encodeURIComponent(orderId)}`; const callbackUrl=TOYYIB_CALLBACK_URL||`${apiBase}/api/toyyib-callback`;
     const user={uid:cleanPremiumText(identity?.uid||`guest_${emailHash}`,120),username:cleanPremiumText(identity?.username||submitted.username||`publicpa_${emailHash}`,80).toLowerCase(),email:buyerEmail,authEmail:identity?.authEmail||'',phone:buyerPhone,displayName:buyerName};
     const item={id:recordId,firestoreId:recordId,productType:'PA',itemCode:paNumber,negeri,amount,filename:`PA${paNumber}.pdf`,downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${paNumber}.TIF&negeri=${encodeURIComponent(negeri)}`,createdAtMs:Date.now(),publicPaPurchase:true};
-    const billPayload={userSecretKey:TOYYIB_SECRET_KEY,categoryCode:TOYYIB_CATEGORY_CODE,billName:toyyibClean(`Pelan Akui PA${paNumber}`,30),billDescription:toyyibClean(`AZOBSS Public Pelan Akui PA${paNumber} - RM50`,100),billPriceSetting:1,billPayorInfo:1,billAmount:amountSen,billReturnUrl:returnUrl,billCallbackUrl:callbackUrl,billExternalReferenceNo:orderId,billTo:toyyibClean(buyerName,30),billEmail:toyyibClean(buyerEmail,80),billPhone:toyyibClean(buyerPhone,20),billSplitPayment:0,billSplitPaymentArgs:'',billPaymentChannel:0,billContentEmail:`Pembelian Pelan Akui PA${paNumber} RM50.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0};
+    const billPayload={userSecretKey:TOYYIB_SECRET_KEY,categoryCode:TOYYIB_CATEGORY_CODE,billName:toyyibClean(`Pelan Akui PA${paNumber}`,30),billDescription:toyyibClean(`AZOBSS Public Pelan Akui PA${paNumber} - RM30`,100),billPriceSetting:1,billPayorInfo:1,billAmount:amountSen,billReturnUrl:returnUrl,billCallbackUrl:callbackUrl,billExternalReferenceNo:orderId,billTo:toyyibClean(buyerName,30),billEmail:toyyibClean(buyerEmail,80),billPhone:toyyibClean(buyerPhone,20),billSplitPayment:0,billSplitPaymentArgs:'',billPaymentChannel:0,billContentEmail:`Pembelian Pelan Akui PA${paNumber} RM30.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0};
     const apiResult=await toyyibPost('createBill',billPayload); const billCode=Array.isArray(apiResult)?(apiResult[0]?.BillCode||apiResult[0]?.billCode):(apiResult?.BillCode||apiResult?.billCode); if(!billCode)return res.status(502).json({ok:false,error:"ToyyibPay tidak return BillCode.",raw:apiResult});
     const paymentUrl=`${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    const order=await azobssPersistJupemOrder({orderId,productId:'public-pa-rm50',productName:`Pelan Akui PA${paNumber}`,amount:'RM50',amountSen,status:'pending',paymentMethod:'toyyibpay',paymentReference:'',billCode,paymentUrl,returnUrl,user,email:buyerEmail,buyerEmail,paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:50,source:'public-pa-rm50',maxDownload:5,maxDownloads:5,expiryHours:168,createdAt:new Date().toISOString(),createdAtMs:Date.now(),commissionSkippedReason:'public-pa-service'});
+    const order=await azobssPersistJupemOrder({orderId,productId:'public-pa-rm30',productName:`Pelan Akui PA${paNumber}`,amount:'RM30',amountSen,status:'pending',paymentMethod:'toyyibpay',paymentReference:'',billCode,paymentUrl,returnUrl,user,email:buyerEmail,buyerEmail,paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:30,source:'public-pa-rm30',maxDownload:5,maxDownloads:5,expiryHours:168,createdAt:new Date().toISOString(),createdAtMs:Date.now(),commissionSkippedReason:'public-pa-service'});
     await azobssSyncJupemPurchaseLogs(order,'pending');
-    return res.json({ok:true,success:true,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,status:'pending',amount,amountSen,unit:1,productId:'public-pa-rm50'});
+    return res.json({ok:true,success:true,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,status:'pending',amount,amountSen,unit:1,productId:'public-pa-rm30'});
   } catch (err) { console.error('Create public PA bill failed:',err); return res.status(500).json({ok:false,error:err.message||'Failed create public PA bill'}); }
 });
 

@@ -2,7 +2,7 @@ import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
 const BACKEND = String(window.AZOBSS_BACKEND_URL || (/^(?:localhost|127\.0\.0\.1)$/.test(location.hostname) ? location.origin : 'https://azobss-backend.onrender.com')).replace(/\/+$/, '');
-const PRICE_SEN = 5000;
+const PRICE_SEN = 3000;
 const MYLOT_BASE = 'https://jupem2u.kul.jupem.gov.my/mylot/negeri.html';
 const states = new Set(['JOHOR','KEDAH','KELANTAN','MELAKA','NEGERI SEMBILAN','PAHANG','PERAK','PERLIS','PULAU PINANG','SABAH','SARAWAK','SELANGOR','TERENGGANU','WILAYAH PERSEKUTUAN KUALA LUMPUR','WILAYAH PERSEKUTUAN LABUAN','WILAYAH PERSEKUTUAN PUTRAJAYA']);
 let verifiedKey = '';
@@ -111,7 +111,7 @@ async function sendAdminPublicPaTest(data,forceRefresh=false){
     response=await fetch(`${BACKEND}/api/admin/test-public-pa-payment`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({...data,sourcePage:location.href,frontendPatch:'517'}),
+      body:JSON.stringify({...data,sourcePage:location.href,frontendPatch:'559'}),
       cache:'no-store'
     });
   }catch(_){
@@ -120,7 +120,7 @@ async function sendAdminPublicPaTest(data,forceRefresh=false){
   return parseBackendResponse(response);
 }
 function applyUser(){ const user=currentSavedUser(); const workspace=$('publicPaWorkspace'),restricted=$('publicPaRestricted'),test=$('publicPaTestPaymentButton'); const admin=isAdminUser(user); if(test){test.hidden=!admin;test.classList.toggle('show',admin);test.disabled=!admin||!verifiedKey;} if(isRestricted(user)){ if(workspace)workspace.style.display='none'; if(restricted)restricted.classList.add('show'); return; } if(workspace)workspace.style.removeProperty('display'); if(restricted)restricted.classList.remove('show'); if(!user)return; const name=String(user.usernameKey||user.username||user.displayName||user.name||'').trim(); const email=String(user.email||user.authEmail||'').trim(); const phone=String(user.phone||user.phoneNumber||'').trim(); if(name && !$('publicPaName').value)$('publicPaName').value=name; if(email && !/@azobss\.local$/i.test(email) && !$('publicPaEmail').value){$('publicPaEmail').value=email;$('publicPaEmail').readOnly=true;} if(phone && !$('publicPaPhone').value)$('publicPaPhone').value=phone; }
-async function checkPa(){ try{ const data=formData(); validatePa(data); setBusy(true,'Menyemak kewujudan PA...'); const url=`${BACKEND}/api/check-pa?noPA=${encodeURIComponent('PA'+data.paNumber+'.TIF')}&negeri=${encodeURIComponent(data.negeri)}`; const response=await fetch(url,{cache:'no-store'}); const result=await response.json().catch(()=>({})); if(!response.ok||!result.ok)throw new Error('PA '+data.paNumber+' tidak ditemui untuk negeri yang dipilih.'); verifiedKey=data.paNumber+'|'+data.negeri; showStatus('success','PA '+data.paNumber+' ditemui. Anda boleh teruskan pembayaran RM50.'); }catch(error){invalidate();showStatus('error',error.message||'Semakan PA gagal.');}finally{setBusy(false);} }
+async function checkPa(){ try{ const data=formData(); validatePa(data); setBusy(true,'Menyemak kewujudan PA...'); const url=`${BACKEND}/api/check-pa?noPA=${encodeURIComponent('PA'+data.paNumber+'.TIF')}&negeri=${encodeURIComponent(data.negeri)}`; const response=await fetch(url,{cache:'no-store'}); const result=await response.json().catch(()=>({})); if(!response.ok||!result.ok)throw new Error('PA '+data.paNumber+' tidak ditemui untuk negeri yang dipilih.'); verifiedKey=data.paNumber+'|'+data.negeri; showStatus('success','PA '+data.paNumber+' ditemui. Anda boleh teruskan pembayaran RM30.'); }catch(error){invalidate();showStatus('error',error.message||'Semakan PA gagal.');}finally{setBusy(false);} }
 async function pay(event){ event?.preventDefault(); try{ const data=formData(); validate(data); if(verifiedKey!==data.paNumber+'|'+data.negeri)throw new Error('Tekan Semak PA semula sebelum membuat bayaran.'); setBusy(true,'Menyediakan bil FPX yang selamat...'); const token=await firebaseToken(); const headers={'Content-Type':'application/json'}; if(token)headers.Authorization='Bearer '+token; const response=await fetch(`${BACKEND}/api/toyyib/create-public-pa-bill`,{method:'POST',headers,body:JSON.stringify({...data,sourcePage:location.href})}); const result=await response.json().catch(()=>({})); if(!response.ok||!result.ok)throw new Error(result.error||'Bil pembayaran tidak dapat dibuat.'); if(Number(result.amountSen)!==PRICE_SEN||Number(result.unit)!==1)throw new Error('Jumlah pembayaran backend tidak sepadan. Pengalihan dibatalkan.'); if(result.orderId)sessionStorage.setItem('azobss_public_pa_pending_order_id',String(result.orderId)); if(result.billCode)sessionStorage.setItem('azobss_public_pa_pending_bill_code',String(result.billCode)); location.href=result.paymentUrl||result.url||result.redirectUrl; }catch(error){showStatus('error',error.message||'Pembayaran tidak dapat dimulakan.');setBusy(false);} }
 async function testPayment(){
   try{
@@ -138,15 +138,15 @@ async function testPayment(){
     const {response,resultRaw}= {response:packet.response,resultRaw:packet.raw};
     const result=packet.data||{};
     if(response.status===404||response.status===405){
-      throw new Error('Endpoint Test Payment belum aktif di Render. Redeploy backend menggunakan versi (516), kemudian cuba semula.');
+      throw new Error('Endpoint Test Payment belum aktif di Render. Redeploy backend menggunakan versi (559), kemudian cuba semula.');
     }
     if(!response.ok){
       const htmlResponse=/^\s*</.test(resultRaw||'');
-      if(htmlResponse)throw new Error(`Backend Render belum menggunakan endpoint Test Payment versi baharu (HTTP ${response.status}). Redeploy backend (516).`);
+      if(htmlResponse)throw new Error(`Backend Render belum menggunakan endpoint Test Payment versi baharu (HTTP ${response.status}). Redeploy backend (559).`);
       throw new Error(result.error||result.message||`Test Payment admin gagal (HTTP ${response.status}).`);
     }
     if(!result.ok||!result.paid||!result.publicPa)throw new Error(result.error||result.message||'Backend tidak mengesahkan rekod Test Payment.');
-    if(Number(result.amountSen)!==PRICE_SEN||Number(result.unit)!==1)throw new Error('Rekod Test Payment backend tidak sepadan dengan RM50 untuk satu Pelan Akui.');
+    if(Number(result.amountSen)!==PRICE_SEN||Number(result.unit)!==1)throw new Error('Rekod Test Payment backend tidak sepadan dengan RM30 untuk satu Pelan Akui.');
 
     const orderId=String(result.orderId||'').trim();
     const recordId=String(result.recordId||(orderId?`${orderId}-1`: '')).trim();

@@ -1,0 +1,9 @@
+AZOBSS (559) Public Pelan Akui RM30 Price Fix
+
+- Public Pelan Akui price changed from RM50 to RM30.
+- Frontend display, payment button and price validation changed to RM30 / 3000 sen.
+- Both backend entrypoints now create ToyyibPay bills for 3000 sen.
+- Admin Test Payment, receipts, email wording and saved order values use RM30.
+- New product ID/source: public-pa-rm30. Legacy public-pa-rm50 orders remain recognized for compatibility.
+- Render backend redeploy is required.
+- Firebase Rules do not need changes.
