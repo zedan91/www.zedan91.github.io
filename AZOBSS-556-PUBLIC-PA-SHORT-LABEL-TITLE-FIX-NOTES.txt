@@ -1,0 +1,7 @@
+AZOBSS Patch 556 - Public PA Short Label and Title Fix
+
+Changes:
+- Navbar button text changed from 'Beli Pelan Akui' to 'Pelan Akui'.
+- Main public PA page heading changed from 'Beli Pelan Akui' to 'Pelan Akui'.
+- URL, payment flow, form fields and page functions are unchanged.
+- Global auth script cache query updated from v544 to v556 across 24 HTML pages.

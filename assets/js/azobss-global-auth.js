@@ -1478,7 +1478,7 @@ function azobssEnsurePublicPaNavButtons(){
       link = document.createElement('a');
       link.className = 'nav-public-pa-link';
       link.href = '/Beli-Pelan-Akui/';
-      link.textContent = 'Beli Pelan Akui';
+      link.textContent = 'Pelan Akui';
     }
 
     // Match the normal storefront tabs: no permanent glow. The button is

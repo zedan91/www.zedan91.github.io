@@ -855,7 +855,7 @@ body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent
 function calc(){let c=+cpu.value,g=+gpu.value,r=+ram.value,u=use.value,msg=[];if(g-c>=2)msg.push("GPU is much stronger than CPU. Possible CPU bottleneck, especially at 1080p.");else if(c-g>=2)msg.push("CPU is stronger than GPU. Gaming performance may be GPU limited.");else msg.push("CPU and GPU look fairly balanced.");if(r<16 && u!=="Office")msg.push("8GB RAM may cause stutter. 16GB is minimum recommended for gaming.");if(r>=32)msg.push("RAM capacity is comfortable for heavy multitasking.");if(u==="Gaming 1440p/4K")msg.push("At higher resolution, GPU matters more than CPU.");if(u==="Editing / rendering")msg.push("For editing/rendering, CPU cores, RAM and SSD speed also matter.");result.innerHTML=msg.map(x=>"- "+x).join("\n")}
 document.querySelectorAll("select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=544" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=450"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=556" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=450"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
