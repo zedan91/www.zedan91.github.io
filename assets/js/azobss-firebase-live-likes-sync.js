@@ -3038,11 +3038,11 @@ async function loadAzobssPurchaseTotalResetMap(){
 
 function sortAdminPurchaseGroups(groupedRows, sort, resetMap){
   const metric = (key, rows) => {
-    const countable = countablePurchaseRows(rows, key, resetMap);
+    const paidRows = (rows || []).filter(r => azobssIsPurchasePaidForDownload(r));
     return {
-      units: countable.length,
-      amount: countable.reduce((sum,r)=>sum + (Number(r.amount)||0), 0),
-      updated: Math.max(...rows.map(r=>Number(r.createdAtMs||0)))
+      units: paidRows.length,
+      amount: paidRows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0),
+      updated: Math.max(0, ...paidRows.map(r=>Number(r.paidAtMs || r.verifiedAtMs || r.createdAtMs || 0)))
     };
   };
   return groupedRows.slice().sort((a,b)=>{
@@ -3662,9 +3662,12 @@ async function renderAzobssPurchaseRecords(){
   if(renderSeq !== Number(window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ || 0)) return;
 
   if(isAdminUser){
-    records = filterPurchaseRows(records, adminSearch);
+    const adminPaidRecords = filterPurchaseRows(
+      records.filter(r => azobssIsPurchasePaidForDownload(r)),
+      adminSearch
+    );
     const groups = new Map();
-    records.forEach(r => {
+    adminPaidRecords.forEach(r => {
       const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
       if(!groups.has(k)) groups.set(k, []);
       groups.get(k).push(r);
@@ -3675,8 +3678,8 @@ async function renderAzobssPurchaseRecords(){
     const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE);
     if(list){
       if(!pageRows.length){
-        const hasExistingGoodRows = !!list.querySelector('.admin-purchase-user-card');
-        const stableRows = readStablePurchaseRecords();
+        const hasExistingGoodRows = !!list.querySelector('.admin-purchase-user-card[data-paid-only="1"]');
+        const stableRows = readStablePurchaseRecords().filter(r => azobssIsPurchasePaidForDownload(r));
         if(hasExistingGoodRows || stableRows.length){
           if(!hasExistingGoodRows && stableRows.length){
             records = stableRows;
@@ -3691,6 +3694,7 @@ async function renderAzobssPurchaseRecords(){
             if(stablePageRows.length){ pageRows.splice(0, pageRows.length, ...stablePageRows); }
           }
           if(!pageRows.length){
+            list.innerHTML = '<div class="purchase-summary-item">No successful / verified purchase records yet.</div>';
             renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, 0, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, page => { azobssAdminPurchasePage = page; renderAzobssPurchaseRecords(); });
             return;
           }
@@ -3699,12 +3703,12 @@ async function renderAzobssPurchaseRecords(){
       list.innerHTML = pageRows.map(([key, rows]) => {
         rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
         const first = rows[0] || {};
-        const countableRowsForTotal = countablePurchaseRows(rows, key, purchaseResetMap);
-        const total = countableRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
-        const unitCount = countableRowsForTotal.length;
+        const paidRowsForTotal = rows.filter(r => azobssIsPurchasePaidForDownload(r));
+        const total = paidRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+        const unitCount = paidRowsForTotal.length;
         const lastItem = first.itemCode ? `${first.productType || 'PA'} ${first.itemCode}` : '-';
         const isDetailOpen = !!azobssPurchaseOpenKeys[key];
-        return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card${isDetailOpen ? ' is-open' : ''}" data-user-key="${escHtml(key)}">
+        return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card${isDetailOpen ? ' is-open' : ''}" data-paid-only="1" data-user-key="${escHtml(key)}">
           <div class="admin-purchase-user-top az-purchase-mini-top">
             <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong></div>
             <span class="az-purchase-mini-date">Last buy: <strong>${escHtml(formatPurchaseDate(first)||'-')}</strong></span>
@@ -3713,8 +3717,6 @@ async function renderAzobssPurchaseRecords(){
             <span class="az-purchase-mini-total">Total: <strong>RM${total}</strong></span>
             <div class="az-purchase-mini-actions">
               <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">${isDetailOpen ? 'Hide' : 'Show'}</button>
-              <button type="button" class="az-purchase-pending-btn" onclick="window.azobssDeletePendingPurchaseRecordsForUser && window.azobssDeletePendingPurchaseRecordsForUser('${escHtml(key)}')">Pending</button>
-              <button type="button" class="az-purchase-reset-btn" onclick="window.azobssResetPurchaseRecordsForUser && window.azobssResetPurchaseRecordsForUser('${escHtml(key)}')">Reset</button>
               <button type="button" class="az-purchase-delete-all-btn" onclick="window.azobssDeleteAllPurchaseRecordsForUser && window.azobssDeleteAllPurchaseRecordsForUser('${escHtml(key)}')">All</button>
             </div>
           </div>
@@ -3727,7 +3729,7 @@ async function renderAzobssPurchaseRecords(){
             })()}
           </div>
         </div>`;
-      }).join('') || '<div class="purchase-summary-item">No purchase records yet.</div>';
+      }).join('') || '<div class="purchase-summary-item">No successful / verified purchase records yet.</div>';
     }
     list?.querySelectorAll('.az-purchase-detail-pagination button[data-page]').forEach(btn => {
       btn.addEventListener('click', (event) => {

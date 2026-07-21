@@ -1,0 +1,9 @@
+AZOBSS PATCH 561
+
+- Purchase Records Users now shows only successful / verified PA/BM/SBM/GPS/Syit Piawai/Lot Kadaster purchases.
+- Pending, cancelled and failed payment attempts remain stored internally for callback verification and can be checked in Payment Logs.
+- Pending-only users no longer create misleading Purchase Records Users cards, totals or Last buy entries.
+- Unit and Total are calculated from paid / verified rows only.
+- Pending and Reset buttons were removed from the paid purchase summary card.
+- No Firebase Rules change is required.
+- No Render backend redeploy is required because this patch changes admin display logic only.

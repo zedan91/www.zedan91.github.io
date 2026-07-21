@@ -9080,7 +9080,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div>
 <h3 id="purchasePanelTitle">Rekod Pembelian</h3>
 <p class="request-note" id="purchasePanelNote">
-              PA RM5, BM/SBM RM3, GPS RM9, Syit Piawai RM7, Lot Kadaster RM15 atau RM50.
+              Hanya pembelian yang berjaya / verified dipaparkan di sini. Pending, cancelled dan failed boleh disemak melalui Payment Logs.
             </p>
 <div class="purchase-record-actions">
 <button class="btn blue" id="refreshPurchaseButton" type="button">
@@ -11065,7 +11065,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     if(note){
       note.style.display = isAdmin ? 'block' : 'none';
       if(isAdmin && !note.textContent.trim()){
-        note.textContent = 'Price: PA RM5/unit, BM/SBM RM3/unit. Admin can view all active user purchase records.';
+        note.textContent = 'Only successful / verified purchases are shown here. Pending, cancelled and failed attempts remain in Payment Logs.';
       }
     }
 
@@ -12506,7 +12506,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=556" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=454"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=561" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=561"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
