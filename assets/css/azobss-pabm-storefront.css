@@ -237,9 +237,18 @@ body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-butto
   min-height: 34px !important;
   max-height: 34px !important;
   padding: 0 !important;
-  font-size: 17px !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
   border-radius: 7px !important;
   overflow: visible !important;
+}
+
+body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-button > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
 }
 
 body.pa-bm-page .benchmark-table .pabm-cart-action-cell > .pabm-table-cart-button::after {
