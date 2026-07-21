@@ -65,6 +65,8 @@ let auth = null;
 let paymentButton = null;
 let adminTestPaymentButton = null;
 let totalObserver = null;
+let cartButtonObserver = null;
+let cartButtonSyncTimer = null;
 
 function savedUser() {
   try {
@@ -192,6 +194,77 @@ function writeCart(items) {
   window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated', { detail: { count: clean.length } }));
 }
 
+const TABLE_CART_BUTTON_SELECTOR = [
+  '.pabm-table-cart-button[data-benchmark-record]',
+  '.pabm-table-cart-button[data-pa-search-record]',
+  '.pabm-table-cart-button[data-gps-record]',
+  '.pabm-table-cart-button[data-syit-record]'
+].join(',');
+
+function decodeCartButtonPayload(button) {
+  if (!button) return null;
+  const raw = button.dataset.benchmarkRecord
+    || button.dataset.paSearchRecord
+    || button.dataset.gpsRecord
+    || button.dataset.syitRecord
+    || '';
+  if (!raw) return null;
+  try {
+    return JSON.parse(decodeURIComponent(raw));
+  } catch (_) {
+    return null;
+  }
+}
+
+function cartButtonItemId(button) {
+  const payload = decodeCartButtonPayload(button);
+  if (!payload) return '';
+  try {
+    return normalizeItem(payload).id;
+  } catch (_) {
+    return '';
+  }
+}
+
+function syncTableCartButtons() {
+  const cartIds = new Set(readCart().map((item) => String(item && item.id || '')).filter(Boolean));
+  document.querySelectorAll(TABLE_CART_BUTTON_SELECTOR).forEach((button) => {
+    const itemId = cartButtonItemId(button);
+    const isInCart = !!itemId && cartIds.has(itemId);
+    button.classList.toggle('is-in-cart', isInCart);
+    button.setAttribute('aria-pressed', isInCart ? 'true' : 'false');
+    button.title = isInCart ? 'Sudah dalam Troli' : 'Tambah ke Troli';
+    const currentLabel = String(button.getAttribute('aria-label') || '').trim();
+    if (isInCart) {
+      if (!button.dataset.cartOriginalAriaLabel) button.dataset.cartOriginalAriaLabel = currentLabel || 'Tambah ke Troli';
+      button.setAttribute('aria-label', 'Berjaya dimasukkan. Item sudah dalam troli');
+    } else {
+      button.setAttribute('aria-label', button.dataset.cartOriginalAriaLabel || currentLabel || 'Tambah ke Troli');
+      delete button.dataset.cartOriginalAriaLabel;
+    }
+  });
+}
+
+function scheduleTableCartButtonSync() {
+  if (cartButtonSyncTimer) window.clearTimeout(cartButtonSyncTimer);
+  cartButtonSyncTimer = window.setTimeout(() => {
+    cartButtonSyncTimer = null;
+    syncTableCartButtons();
+  }, 20);
+}
+
+function watchTableCartButtons() {
+  if (!window.MutationObserver || cartButtonObserver) return;
+  cartButtonObserver = new MutationObserver((mutations) => {
+    const hasRelevantAddition = mutations.some((mutation) => Array.from(mutation.addedNodes || []).some((node) => {
+      if (!(node instanceof Element)) return false;
+      return node.matches?.(TABLE_CART_BUTTON_SELECTOR) || !!node.querySelector?.(TABLE_CART_BUTTON_SELECTOR);
+    }));
+    if (hasRelevantAddition) scheduleTableCartButtonSync();
+  });
+  cartButtonObserver.observe(document.body, { childList: true, subtree: true });
+}
+
 function hasStoredCartSnapshot() {
   try {
     return localStorage.getItem(cartKey()) !== null;
@@ -273,6 +346,7 @@ function renderCart() {
     adminTestPaymentButton.disabled = !items.length || !loggedIn;
     adminTestPaymentButton.textContent = items.length ? 'Test Payment (Admin)' : 'Test Payment (Empty Cart)';
   }
+  scheduleTableCartButtonSync();
 }
 
 async function addToStoreCart(payload) {
@@ -638,6 +712,7 @@ function init() {
   const apps = getApps();
   auth = apps.length ? getAuth(apps[0]) : null;
   document.body.classList.add('pabm-store-ready');
+  watchTableCartButtons();
   hydrateStateSelects();
   document.querySelectorAll('[data-state-picker-for]').forEach(setupStatePicker);
   document.querySelectorAll('[data-product-picker-for]').forEach(setupProductPicker);
