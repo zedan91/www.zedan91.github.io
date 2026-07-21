@@ -3538,7 +3538,7 @@ html body .downloads-section{
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
-  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v554';
+  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v555';
   const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=491';
 
   const grid = document.getElementById('softwareDownloadsGrid');
@@ -16705,6 +16705,39 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
   [80,250,700,1500].forEach(function(ms){setTimeout(function(){schedule(document);},ms);});
 })();
 </script>
+
+<!-- AZOBSS 555: smaller Normal Price card on normal Software mobile cards -->
+<style id="azobss-software-mobile-normal-price-card-smaller-fix-555">
+/* Keep shared/promo-link cards unchanged. On the normal Software listing,
+   reduce only the crossed Normal Price card so it has a clear gap from the
+   centred software title. */
+@media (max-width:760px){
+  html:not(.azobss-shared-product-mode-532) body #softwareGrid > .download-card > .az-promo-free-normal-price,
+  html:not(.azobss-shared-product-mode-532) body #softwareDownloadsGrid > .download-card > .az-promo-free-normal-price,
+  html:not(.azobss-shared-product-mode-532) body .downloads-grid > .download-card > .az-promo-free-normal-price{
+    top:78px!important;
+    left:18px!important;
+    width:62px!important;
+    min-width:62px!important;
+    max-width:62px!important;
+    height:50px!important;
+    min-height:50px!important;
+    max-height:50px!important;
+    padding:4px 3px!important;
+    gap:2px!important;
+    border-radius:10px!important;
+  }
+  html:not(.azobss-shared-product-mode-532) body .download-card > .az-promo-free-normal-price > span{
+    font-size:7.5px!important;
+    line-height:1!important;
+  }
+  html:not(.azobss-shared-product-mode-532) body .download-card > .az-promo-free-normal-price > del{
+    min-height:18px!important;
+    font-size:13px!important;
+    line-height:1!important;
+  }
+}
+</style>
 
 </body>
 </html>
