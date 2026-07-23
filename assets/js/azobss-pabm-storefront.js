@@ -185,7 +185,10 @@ function readCart() {
     const rows = JSON.parse(localStorage.getItem(cartKey()) || '[]');
     const now = Date.now();
     return Array.isArray(rows)
-      ? rows.filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS).slice(0, MAX_CART_ITEMS)
+      ? rows
+        .filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS)
+        .sort((a, b) => Number(b.addedAtMs || 0) - Number(a.addedAtMs || 0))
+        .slice(0, MAX_CART_ITEMS)
       : [];
   } catch (_) {
     return [];
@@ -410,7 +413,7 @@ async function addToStoreCart(payload) {
   const exists = items.some((row) => row.id === item.id);
   if (!exists) {
     if (items.length >= MAX_CART_ITEMS) throw new Error('Cart limit reached. Remove an item before adding another.');
-    items.push(item);
+    items.unshift(item);
     writeCart(items);
   } else {
     renderCart();
