@@ -6137,12 +6137,17 @@ function azobssPolygonAreaM2(geometry) {
 
 async function azobssJupemArcGisJson(serviceUrl, params, auth, timeoutMs = 30000) {
   const requestUrl = new URL(serviceUrl);
-  requestUrl.search = new URLSearchParams({ ...(params || {}), f: "json", token: auth.token }).toString();
+  const requestParams = new URLSearchParams({ ...(params || {}), f: "json", token: auth.token });
+  const usePost = /\/query\/?$/i.test(requestUrl.pathname) || requestParams.toString().length > 1800;
+  if (!usePost) requestUrl.search = requestParams.toString();
   const response = await fetch(requestUrl, azJupemFetchOptions({
+    method: usePost ? "POST" : "GET",
+    body: usePost ? requestParams.toString() : undefined,
     redirect: "follow",
     signal: AbortSignal.timeout(timeoutMs),
     headers: azobssJupemBaseHeaders({
       "Accept": "application/json,*/*",
+      ...(usePost ? { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" } : {}),
       "Cookie": auth.cookie,
       "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
     })
@@ -9488,7 +9493,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 5,
+          jupemStoreVersion: 6,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
