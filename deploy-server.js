@@ -9567,7 +9567,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 7,
+          jupemStoreVersion: 8,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -9924,17 +9924,18 @@ async function handler(req, res) {
         if (!/Succeeded$/i.test(jobStatus)) {
           return send(res, 202, JSON.stringify({ ok: true, ready: false, jobStatus }), "application/json");
         }
-        await azobssRegisterAndRemoveJupemLot(pending.productCode, pending.stateCode, pending.jobId);
+        const downloadUrl = azobssLotDownloadUrl(pending.productCode, pending.jobId, pending.stateCode);
         const readyPayload = {
           ...pending,
           ready: true,
-          registered: true,
+          directDownload: true,
+          downloadUrl,
           expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
         };
         return send(res, 200, JSON.stringify({
           ok: true,
           ready: true,
-          registered: true,
+          directDownload: true,
           jobStatus,
           selectionToken: azobssCreateLotSelectionToken(readyPayload),
           jobId: readyPayload.jobId,
