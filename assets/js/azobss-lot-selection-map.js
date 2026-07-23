@@ -321,20 +321,23 @@
           }, token, operationController.signal);
           let ready = prepared;
           let checks = 0;
-          while (!ready.ready && checks < 180) {
+          const preparationStartedAt = Date.now();
+          while (!ready.ready && checks < 120 && Date.now() - preparationStartedAt < 4 * 60 * 1000) {
             checks += 1;
-            const cacheMessage = ready.cacheStatus === 'downloading'
-              ? 'Backend sedang memuat turun dan mengesahkan fail ZIP...'
+            const elapsedSeconds = Math.max(1, Math.round((Date.now() - preparationStartedAt) / 1000));
+            const cacheMessage = ready.cacheStatus === 'downloading' || ready.cacheStatus === 'retrying'
+              ? `Backend sedang memuat turun dan mengesahkan fail ZIP (percubaan ${ready.cacheAttempt || 1})...`
               : ready.transient
                 ? 'Sambungan JUPEM terputus sementara. Mencuba semula...'
               : 'JUPEM sedang menyediakan fail ZIP...';
-            setStatus(status, `${cacheMessage} (${checks})`, 'loading');
+            addButton.textContent = ready.phase === 'cache' ? 'Memuat turun ZIP...' : 'Menyediakan fail ZIP...';
+            setStatus(status, `${cacheMessage} ${elapsedSeconds}s`, 'loading');
             await new Promise((done) => window.setTimeout(done, 2000));
             ready = await postJson('/api/jupem-lot-selection/status', {
               selectionToken: prepared.selectionToken
             }, token, operationController.signal);
           }
-          if (!ready.ready) throw new Error('JUPEM masih memproses fail. Sila cuba semula sebentar lagi.');
+          if (!ready.ready) throw new Error('Penyediaan fail melebihi 4 minit. Sila padam pilihan dan cuba kawasan yang lebih kecil atau cuba semula.');
           settled = true;
           cleanup();
           resolve(ready);

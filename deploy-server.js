@@ -3566,6 +3566,7 @@ const AZOBSS_LOT_CACHE_TTL_MS = Math.max(
   Number(process.env.AZOBSS_LOT_CACHE_TTL_MS || 8 * 24 * 60 * 60 * 1000) || 8 * 24 * 60 * 60 * 1000
 );
 const azobssLotCachePending = new Map();
+const azobssLotCacheTasks = new Map();
 const DOWNLOAD_TOKENS = new Map();
 
 const PREMIUM_ORDERS_FILE = path.join(ROOT, "premium-orders.json");
@@ -7037,6 +7038,59 @@ async function azobssEnsureLotCachedZip(record, type) {
   }
 }
 
+function azobssStartLotCacheTask(record, type) {
+  const productCode = type === "NDCDB_C3" ? "2" : "1";
+  const jobId = azobssLotRecordJobId(record);
+  const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || "");
+  if (!jobId || !stateCode) return { status: "failed", attempts: 3, error: "Maklumat fail Lot Kadaster tidak lengkap." };
+
+  if (azobssReadLotCachedZip(productCode, stateCode, jobId)) {
+    return { status: "ready", attempts: 1 };
+  }
+
+  const cacheKey = azobssLotCacheKey(productCode, stateCode, jobId);
+  let current = azobssLotCacheTasks.get(cacheKey) || null;
+  if (current && current.status === "downloading") return current;
+  if (current && current.status === "failed" && current.attempts >= 3) return current;
+  if (current && current.status === "failed" && Number(current.nextRetryAt || 0) > Date.now()) return current;
+  if (current && current.status === "ready") current = null;
+
+  const task = {
+    status: "downloading",
+    attempts: Number(current && current.attempts || 0) + 1,
+    startedAt: Number(current && current.startedAt || 0) || Date.now(),
+    attemptStartedAt: Date.now(),
+    error: ""
+  };
+  azobssLotCacheTasks.set(cacheKey, task);
+
+  Promise.resolve()
+    .then(() => azobssEnsureLotCachedZip(record, type))
+    .then((buffer) => {
+      if (buffer && azobssBufferIsZip(buffer)) {
+        azobssLotCacheTasks.set(cacheKey, { ...task, status: "ready", completedAt: Date.now() });
+        return;
+      }
+      azobssLotCacheTasks.set(cacheKey, {
+        ...task,
+        status: "failed",
+        error: "Fail ZIP JUPEM belum tersedia.",
+        nextRetryAt: Date.now() + 5000
+      });
+    })
+    .catch((error) => {
+      console.warn("Background Lot ZIP cache failed:", error && (error.stack || error.message || error));
+      azobssLotCacheTasks.set(cacheKey, {
+        ...task,
+        status: "failed",
+        error: azobssIsTransientJupemError(error) ? "Sambungan JUPEM terputus sementara." : String(error && error.message || "Fail ZIP JUPEM belum tersedia."),
+        nextRetryAt: Date.now() + 5000
+      });
+    });
+
+  return task;
+}
+
 function cleanupLotCacheFiles() {
   try {
     if (!fs.existsSync(AZOBSS_LOT_CACHE_DIR)) return;
@@ -9756,7 +9810,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 15,
+          jupemStoreVersion: 16,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10081,6 +10135,7 @@ async function handler(req, res) {
           downloadUrl,
           lotCount: publicResult.lotCount,
           selectedAreaM2: publicResult.selectedAreaM2,
+          preparedAtMs: Date.now(),
           expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
         });
         return send(res, 202, JSON.stringify({
@@ -10118,7 +10173,16 @@ async function handler(req, res) {
           return send(res, 409, JSON.stringify({ ok: false, jobStatus, error: "JUPEM tidak berjaya menyediakan pilihan ini. Sila pilih kawasan semula." }), "application/json");
         }
         if (!/Succeeded$/i.test(jobStatus)) {
-          return send(res, 202, JSON.stringify({ ok: true, ready: false, jobStatus }), "application/json");
+          const elapsedMs = Date.now() - Number(pending.preparedAtMs || Date.now());
+          if (elapsedMs > 4 * 60 * 1000) {
+            return send(res, 408, JSON.stringify({
+              ok: false,
+              ready: false,
+              jobStatus,
+              error: "JUPEM mengambil masa melebihi 4 minit untuk menyediakan fail. Sila padam pilihan dan cuba kawasan yang lebih kecil atau cuba semula."
+            }), "application/json");
+          }
+          return send(res, 202, JSON.stringify({ ok: true, ready: false, jobStatus, phase: "jupem", elapsedMs }), "application/json");
         }
         const downloadUrl = azobssLotDownloadUrl(pending.productCode, pending.jobId, pending.stateCode);
         const cacheRecord = {
@@ -10130,19 +10194,28 @@ async function handler(req, res) {
           state: pending.negeri,
           downloadUrl
         };
-        let cachedZip = null;
-        try {
-          cachedZip = await azobssEnsureLotCachedZip(cacheRecord, pending.productType);
-        } catch (cacheError) {
-          console.warn("JUPEM lot ZIP pre-cache failed:", cacheError && (cacheError.stack || cacheError.message || cacheError));
-        }
+        const cachedZip = azobssReadLotCachedZip(pending.productCode, pending.stateCode, pending.jobId);
         if (!cachedZip) {
+          const cacheTask = azobssStartLotCacheTask(cacheRecord, pending.productType);
+          if (cacheTask.status === "failed" && cacheTask.attempts >= 3) {
+            return send(res, 409, JSON.stringify({
+              ok: false,
+              ready: false,
+              cacheStatus: "failed",
+              error: "Backend tidak berjaya mendapatkan fail ZIP JUPEM selepas 3 percubaan. Sila padam pilihan dan cuba semula."
+            }), "application/json");
+          }
           return send(res, 202, JSON.stringify({
             ok: true,
             ready: false,
             jobStatus,
-            cacheStatus: "downloading",
-            message: "Backend sedang memuat turun dan mengesahkan fail ZIP JUPEM."
+            phase: "cache",
+            cacheStatus: cacheTask.status === "failed" ? "retrying" : "downloading",
+            cacheAttempt: cacheTask.attempts,
+            elapsedMs: Date.now() - Number(cacheTask.startedAt || Date.now()),
+            message: cacheTask.status === "failed"
+              ? "Fail ZIP belum tersedia. Backend akan mencuba semula."
+              : "Backend sedang memuat turun dan mengesahkan fail ZIP JUPEM."
           }), "application/json");
         }
         const readyPayload = {
