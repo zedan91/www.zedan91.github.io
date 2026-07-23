@@ -3688,8 +3688,8 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
     let variant = areaProductTypes.has(productType)
       ? cleanPremiumText(rawItem.variant || rawItem.areaSize || "", 30).toUpperCase()
       : "";
-    if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "QUARTER_SHEET") {
-      checkoutError("Select either 1 sheet area or 1/4 sheet area.");
+    if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "AREA_BASED") {
+      checkoutError("Lot Kadaster area pricing is invalid. Open the selection map again.");
     }
     const verifiedLot = areaProductTypes.has(productType)
       ? azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode)
@@ -3721,9 +3721,9 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
   }
 
   if (!items.length) checkoutError("No valid JUPEM documents were found in the cart.");
-  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  const totalAmount = Math.round((items.reduce((sum, item) => sum + item.amount, 0) + Number.EPSILON) * 100) / 100;
   if (totalAmount <= 0) checkoutError("Invalid cart total.");
-  return { user, items, totalAmount, amountSen: totalAmount * 100 };
+  return { user, items, totalAmount, amountSen: Math.round(totalAmount * 100) };
 }
 
 
@@ -6209,6 +6209,17 @@ async function azobssQueryLotSheets(config, geometry, auth) {
   return Array.isArray(result.features) ? result.features : [];
 }
 
+function azobssLotPricingForRatio(value) {
+  const areaRatio = Number(value);
+  if (!Number.isFinite(areaRatio) || areaRatio <= 0 || areaRatio > 1.1) return null;
+  if (areaRatio >= 0.9) return { variant: "FULL_SHEET", amount: 50 };
+  const proportionalAmount = (areaRatio / 0.25) * 15;
+  return {
+    variant: "AREA_BASED",
+    amount: Math.max(1, Math.round((proportionalAmount + Number.EPSILON) * 100) / 100)
+  };
+}
+
 function azobssLotSheetName(feature, index) {
   const attributes = feature && feature.attributes || {};
   const key = Object.keys(attributes).find((name) => /^(?:NAMA|NAME|NO_?SYIT|SYIT|LEMBAR|PIAWAI)$/i.test(name));
@@ -6236,11 +6247,11 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     ? sheetAreas[middle]
     : (sheetAreas[middle - 1] + sheetAreas[middle]) / 2;
   const areaRatio = drawnAreaM2 / referenceSheetAreaM2;
-  if (areaRatio > 1.1) {
+  const pricing = azobssLotPricingForRatio(areaRatio);
+  if (!pricing) {
     throw new Error("Kawasan pilihan melebihi anggaran keluasan satu syit. Sila kecilkan kawasan pilihan.");
   }
-  const variant = areaRatio <= 0.3 ? "QUARTER_SHEET" : "FULL_SHEET";
-  const amount = variant === "QUARTER_SHEET" ? 15 : 50;
+  const { variant, amount } = pricing;
   return {
     config,
     auth,
@@ -6523,11 +6534,11 @@ function azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode) {
   if (String(payload.jobId || "").toUpperCase() !== expectedCode) return null;
   const variant = String(payload.variant || "").toUpperCase();
   const amount = Number(payload.amount || 0);
-  if (!['FULL_SHEET', 'QUARTER_SHEET'].includes(variant)) return null;
-  if ((variant === 'FULL_SHEET' && amount !== 50) || (variant === 'QUARTER_SHEET' && amount !== 15)) return null;
+  const pricing = azobssLotPricingForRatio(payload.areaRatio);
+  if (!pricing || variant !== pricing.variant || Math.abs(amount - pricing.amount) > 0.001) return null;
   const downloadUrl = azobssSafeJupemDownloadUrl(payload.downloadUrl, expectedType);
   if (!downloadUrl) return null;
-  return { ...payload, variant, amount, downloadUrl };
+  return { ...payload, variant: pricing.variant, amount: pricing.amount, downloadUrl };
 }
 
 async function azobssGetJupemMapAuth(force = false) {
@@ -7874,10 +7885,10 @@ async function handler(req, res) {
           BM:3,
           SBM:3,
           GPS:9,
-          NDCDB_FULL_SHEET:50,
-          NDCDB_QUARTER_SHEET:15,
-          NDCDB_C3_FULL_SHEET:50,
-          NDCDB_C3_QUARTER_SHEET:15,
+          NDCDB_AREA_REFERENCE:{ ratioPercent:25, amount:15 },
+          NDCDB_FULL_SHEET_DISCOUNT:{ minimumRatioPercent:90, amount:50 },
+          NDCDB_C3_AREA_REFERENCE:{ ratioPercent:25, amount:15 },
+          NDCDB_C3_FULL_SHEET_DISCOUNT:{ minimumRatioPercent:90, amount:50 },
           SYIT_PIAWAI:7
         },
         adminTestPayment:true,
@@ -8136,8 +8147,8 @@ async function handler(req, res) {
           let variant = areaProductTypes.has(productType)
             ? cleanPremiumText(rawItem.variant || rawItem.areaSize || "", 30).toUpperCase()
             : "";
-          if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "QUARTER_SHEET") {
-            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Select either 1 sheet area or 1/4 sheet area." }, null, 2), "application/json");
+          if (areaProductTypes.has(productType) && variant !== "FULL_SHEET" && variant !== "AREA_BASED") {
+            return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Lot Kadaster area pricing is invalid. Open the selection map again." }, null, 2), "application/json");
           }
           const verifiedLot = areaProductTypes.has(productType)
             ? azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode)
@@ -8170,9 +8181,9 @@ async function handler(req, res) {
           });
         }
         if (!items.length) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"No valid JUPEM documents were found in the cart." }, null, 2), "application/json");
-        const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+        const totalAmount = Math.round((items.reduce((sum, item) => sum + item.amount, 0) + Number.EPSILON) * 100) / 100;
         if (totalAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Total bayaran tidak sah." }, null, 2), "application/json");
-        const amountSen = totalAmount * 100;
+        const amountSen = Math.round(totalAmount * 100);
         const orderId = makeId("pabm");
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
@@ -9575,7 +9586,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 10,
+          jupemStoreVersion: 11,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -9894,6 +9905,9 @@ async function handler(req, res) {
           jobId: job.jobId,
           variant: publicResult.variant,
           amount: publicResult.amount,
+          areaRatio: estimate.areaRatio,
+          drawnAreaM2: estimate.drawnAreaM2,
+          referenceSheetAreaM2: estimate.referenceSheetAreaM2,
           downloadUrl,
           lotCount: publicResult.lotCount,
           selectedAreaM2: publicResult.selectedAreaM2,

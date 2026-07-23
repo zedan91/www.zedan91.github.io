@@ -21,8 +21,8 @@ const PRODUCT_LABELS = {
   SYIT_PIAWAI: 'Syit Piawai (Gambar)'
 };
 const AREA_LABELS = {
-  FULL_SHEET: '1 Sheet Area',
-  QUARTER_SHEET: '1/4 Sheet Area'
+  FULL_SHEET: '90%+ keluasan 1 syit',
+  AREA_BASED: 'Harga mengikut peratus keluasan'
 };
 const STATE_LABELS = {
   JOHOR: 'Johor',
@@ -137,18 +137,22 @@ function normalizeCode(value, type) {
 function normalizeVariant(value, type) {
   if (type !== 'NDCDB' && type !== 'NDCDB_C3') return '';
   const variant = String(value || '').trim().toUpperCase();
-  if (variant !== 'FULL_SHEET' && variant !== 'QUARTER_SHEET') {
-    throw new Error('Select either 1 sheet area or 1/4 sheet area.');
+  if (variant !== 'FULL_SHEET' && variant !== 'AREA_BASED') {
+    throw new Error('Harga keluasan Lot Kadaster tidak sah. Buka semula peta pilihan.');
   }
   return variant;
 }
 
-function productPrice(type, variant = '') {
+function productPrice(type, variant = '', suppliedAmount = 0) {
   if (type === 'PA') return 5;
   if (type === 'BM' || type === 'SBM') return 3;
   if (type === 'GPS') return 9;
   if (type === 'SYIT_PIAWAI') return 7;
-  if (type === 'NDCDB' || type === 'NDCDB_C3') return variant === 'QUARTER_SHEET' ? 15 : 50;
+  if (type === 'NDCDB' || type === 'NDCDB_C3') {
+    const dynamicAmount = Number(suppliedAmount);
+    if (Number.isFinite(dynamicAmount) && dynamicAmount > 0) return Math.round((dynamicAmount + Number.EPSILON) * 100) / 100;
+    return variant === 'FULL_SHEET' ? 50 : 15;
+  }
   throw new Error('Unsupported document category.');
 }
 
@@ -164,7 +168,7 @@ function normalizeItem(payload) {
     itemCode: code,
     negeri,
     variant,
-    amount: productPrice(type, variant),
+    amount: productPrice(type, variant, payload && payload.amount),
     productId: String(payload && (payload.productId || payload.id) || '').trim(),
     stationNo: String(payload && (payload.stationNo || payload.stesen) || '').trim().toUpperCase(),
     jenis: String(payload && payload.jenis || (type === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
@@ -532,6 +536,7 @@ async function openJupemLotMap(button) {
         itemCode: prepared.jobId,
         negeri: stateName,
         variant: prepared.variant,
+        amount: prepared.amount,
         productId: prepared.jobId,
         downloadUrl: prepared.downloadUrl,
         filename: prepared.filename,

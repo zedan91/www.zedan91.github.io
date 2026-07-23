@@ -236,7 +236,10 @@
           areaNode.textContent = `${formatNumber(estimate.drawnAreaM2, 2)} m2`;
           sheetNode.textContent = formatNumber(estimate.sheetCount, 0);
           ratioNode.textContent = `${formatNumber(Number(estimate.areaRatio || 0) * 100, 2)}%`;
-          priceNode.textContent = estimate.variant === 'QUARTER_SHEET' ? '1/4 Syit - RM15' : '1 Syit - RM50';
+          const ratioPercent = Number(estimate.areaRatio || 0) * 100;
+          priceNode.textContent = estimate.variant === 'FULL_SHEET'
+            ? `${formatNumber(ratioPercent, 2)}% - Harga 1 Syit RM50`
+            : `${formatNumber(ratioPercent, 2)}% - RM${formatNumber(estimate.amount, 2)}`;
           addButton.disabled = false;
           setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan. Harga berdasarkan saiz kawasan pilihan, bukan garisan syit.`, 'success');
         } catch (error) {
