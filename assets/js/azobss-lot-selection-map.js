@@ -155,13 +155,15 @@
       let estimate = null;
       let estimateController = null;
       let operationController = null;
+      let activeStateCode = stateCode;
+      let activeStateName = stateName || config.negeri;
 
       const modal = document.createElement('div');
       modal.className = 'az-lot-map-modal';
       modal.innerHTML = `
         <section class="az-lot-map-dialog" role="dialog" aria-modal="true" aria-labelledby="azLotMapTitle">
           <header class="az-lot-map-head">
-            <div><h2 id="azLotMapTitle">Peta Pilihan Lot Kadaster</h2><small>${stateName || config.negeri} &middot; ${productCode === '2' ? 'Lot Kadaster Berdigit C3' : 'Lot Kadaster Berdigit'}</small></div>
+            <div><h2 id="azLotMapTitle">Peta Pilihan Lot Kadaster</h2><small data-map-state>${activeStateName} &middot; ${productCode === '2' ? 'Lot Kadaster Berdigit C3' : 'Lot Kadaster Berdigit'}</small></div>
             <button class="az-lot-map-close" type="button" aria-label="Tutup" title="Tutup">&times;</button>
           </header>
           <div class="az-lot-map-body">
@@ -192,6 +194,7 @@
       const sheetNode = modal.querySelector('[data-sheet-count]');
       const ratioNode = modal.querySelector('[data-sheet-ratio]');
       const priceNode = modal.querySelector('[data-lot-price]');
+      const mapStateNode = modal.querySelector('[data-map-state]');
       const drawnItems = new window.L.FeatureGroup();
 
       function cleanup() {
@@ -229,9 +232,15 @@
         try {
           estimate = await postJson('/api/jupem-lot-selection/estimate', {
             productCode,
-            stateCode,
+            stateCode: activeStateCode,
             geometry: selectedGeometry
           });
+          const previousStateCode = activeStateCode;
+          activeStateCode = String(estimate.stateCode || activeStateCode).padStart(2, '0');
+          activeStateName = String(estimate.negeri || activeStateName).trim();
+          if (mapStateNode) {
+            mapStateNode.textContent = `${activeStateName} · ${productCode === '2' ? 'Lot Kadaster Berdigit C3' : 'Lot Kadaster Berdigit'}`;
+          }
           countNode.textContent = formatNumber(estimate.lotCount, 0);
           areaNode.textContent = `${formatNumber(estimate.drawnAreaM2, 2)} m2`;
           sheetNode.textContent = formatNumber(estimate.sheetCount, 0);
@@ -241,7 +250,10 @@
             ? `${formatNumber(ratioPercent, 2)}% - Harga 1 Syit RM50`
             : `${formatNumber(ratioPercent, 2)}% - RM${formatNumber(estimate.amount, 2)}`;
           addButton.disabled = false;
-          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan. Harga berdasarkan saiz kawasan pilihan, bukan garisan syit.`, 'success');
+          const stateNotice = activeStateCode !== previousStateCode
+            ? ` Negeri dikesan secara automatik: ${activeStateName}.`
+            : '';
+          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan.${stateNotice} Harga berdasarkan saiz kawasan pilihan, bukan garisan syit.`, 'success');
         } catch (error) {
           clearSummary();
           setStatus(status, error.message || 'Kawasan pilihan tidak dapat disemak.', 'error');
@@ -323,7 +335,7 @@
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
-            stateCode,
+            stateCode: activeStateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
           if (!prepared.ready || !prepared.jobId || !prepared.selectionToken) {

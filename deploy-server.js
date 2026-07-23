@@ -6206,7 +6206,7 @@ async function azobssJupemArcGisJson(serviceUrl, params, auth, timeoutMs = 30000
   return payload;
 }
 
-async function azobssQueryLotFeatureSet(config, geometry, auth) {
+async function azobssQueryLotObjectIds(config, geometry, auth) {
   const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
   const common = {
     geometry: JSON.stringify(geometry),
@@ -6214,7 +6214,12 @@ async function azobssQueryLotFeatureSet(config, geometry, auth) {
     inSR: "4326",
     spatialRel: "esriSpatialRelIntersects"
   };
-  const idResult = await azobssJupemArcGisJson(`${layerUrl}/query`, { ...common, returnIdsOnly: "true" }, auth);
+  return await azobssJupemArcGisJson(`${layerUrl}/query`, { ...common, returnIdsOnly: "true" }, auth);
+}
+
+async function azobssQueryLotFeatureSet(config, geometry, auth, knownIdResult) {
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  const idResult = knownIdResult || await azobssQueryLotObjectIds(config, geometry, auth);
   const objectIds = Array.isArray(idResult.objectIds) ? idResult.objectIds : [];
   if (!objectIds.length) throw new Error("Tiada lot JUPEM ditemui dalam kawasan pilihan.");
   if (objectIds.length > 20000) throw new Error("Pilihan melebihi 20,000 lot. Sila kecilkan kawasan pilihan.");
@@ -6241,6 +6246,35 @@ async function azobssQueryLotFeatureSet(config, geometry, auth) {
     fields,
     features
   };
+}
+
+async function azobssDetectLotMapConfig(productCode, requestedStateCode, geometry, auth) {
+  const product = cleanLotProduct(productCode);
+  const requestedConfig = azobssGetLotMapConfig(product, requestedStateCode);
+  const seenLayers = new Set([requestedConfig.lotLayer]);
+  const candidates = Object.keys(AZOBSS_JUPEM_LOT_CONFIG[product] || {})
+    .map((state) => azobssGetLotMapConfig(product, state))
+    .filter((config) => {
+      if (seenLayers.has(config.lotLayer)) return false;
+      seenLayers.add(config.lotLayer);
+      return true;
+    });
+  let bestMatch = null;
+  for (let offset = 0; offset < candidates.length; offset += 4) {
+    const batch = await Promise.all(candidates.slice(offset, offset + 4).map(async (config) => {
+      try {
+        const idResult = await azobssQueryLotObjectIds(config, geometry, auth);
+        const count = Array.isArray(idResult.objectIds) ? idResult.objectIds.length : 0;
+        return count ? { config, idResult, count } : null;
+      } catch (_) {
+        return null;
+      }
+    }));
+    batch.filter(Boolean).forEach((match) => {
+      if (!bestMatch || match.count > bestMatch.count) bestMatch = match;
+    });
+  }
+  return bestMatch;
 }
 
 async function azobssQueryLotSheets(config, geometry, auth) {
@@ -6275,11 +6309,19 @@ function azobssLotSheetName(feature, index) {
 }
 
 async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
-  const config = azobssGetLotMapConfig(productCode, stateCode);
+  const requestedConfig = azobssGetLotMapConfig(productCode, stateCode);
+  let config = requestedConfig;
   const geometry = azobssNormalizeLotPolygon(rawGeometry);
   const auth = await azobssGetJupemMapAuth(false);
+  let idResult = await azobssQueryLotObjectIds(config, geometry, auth);
+  if (!Array.isArray(idResult.objectIds) || !idResult.objectIds.length) {
+    const detected = await azobssDetectLotMapConfig(productCode, stateCode, geometry, auth);
+    if (!detected) throw new Error("Tiada lot JUPEM ditemui dalam kawasan pilihan.");
+    config = detected.config;
+    idResult = detected.idResult;
+  }
   const [featureSet, sheets] = await Promise.all([
-    azobssQueryLotFeatureSet(config, geometry, auth),
+    azobssQueryLotFeatureSet(config, geometry, auth, idResult),
     azobssQueryLotSheets(config, geometry, auth)
   ]);
   const selectedAreaM2 = featureSet.features.reduce((sum, feature) => sum + azobssPolygonAreaM2(feature.geometry), 0);
@@ -6313,7 +6355,9 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     referenceSheetAreaM2,
     areaRatio,
     variant,
-    amount
+    amount,
+    requestedStateCode: requestedConfig.state,
+    stateAutoDetected: config.state !== requestedConfig.state
   };
 }
 
@@ -9887,7 +9931,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 24,
+          jupemStoreVersion: 25,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10185,8 +10229,9 @@ async function handler(req, res) {
         const bodyText = await readBody(req);
         const body = JSON.parse(bodyText || "{}");
         const productCode = cleanLotProduct(body.produk || body.product || body.productCode || body.productType);
-        const stateCode = cleanLotStateCode(body.negeri || body.state || body.stateCode);
-        const estimate = await azobssEstimateLotSelection(productCode, stateCode, body.geometry);
+        const requestedStateCode = cleanLotStateCode(body.negeri || body.state || body.stateCode);
+        const estimate = await azobssEstimateLotSelection(productCode, requestedStateCode, body.geometry);
+        const stateCode = estimate.config.state;
         const publicResult = {
           productCode,
           productType: productCode === "2" ? "NDCDB_C3" : "NDCDB",
@@ -10199,7 +10244,9 @@ async function handler(req, res) {
           sheets: estimate.sheets.map((row) => ({ name: row.name, areaM2: Number(row.areaM2.toFixed(2)) })),
           areaRatio: Number(estimate.areaRatio.toFixed(6)),
           variant: estimate.variant,
-          amount: estimate.amount
+          amount: estimate.amount,
+          requestedStateCode: estimate.requestedStateCode,
+          stateAutoDetected: estimate.stateAutoDetected
         };
         if (!preparing) return send(res, 200, JSON.stringify({ ok: true, ...publicResult }), "application/json");
 
