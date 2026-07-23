@@ -5990,7 +5990,6 @@ async function azobssJupemAuthFetch(url, options = {}, cookie = "") {
 }
 
 let azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
-const azobssRegisteredLotJobs = new Map();
 let azobssJupemCartMutationQueue = Promise.resolve();
 
 function azobssWithJupemCartMutationLock(task) {
@@ -6430,11 +6429,7 @@ function azobssParseJupemPurchaseForm(html, baseUrl) {
   return forms[0] || null;
 }
 
-async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, loginRetried = false) {
-  const cacheKey = `${productCode}:${stateCode}:${jobId}`;
-  if (Number(azobssRegisteredLotJobs.get(cacheKey) || 0) > Date.now()) {
-    return { registered: true, removedFromCart: true, cached: true };
-  }
+async function azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, loginRetried = false) {
   const session = await azobssGetJupemAuthenticatedSession(false);
   const beforeResult = await azobssJupemAuthFetch(
     `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`,
@@ -6454,7 +6449,7 @@ async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, j
   const registeredHtml = await registered.response.text();
   if (/<title>\s*Log Masuk/i.test(registeredHtml) && !loginRetried) {
     azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
-    return await azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, true);
+    return await azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, true);
   }
 
   const purchaseForm = azobssParseJupemPurchaseForm(registeredHtml, registered.url || productUrl);
@@ -6503,6 +6498,13 @@ async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, j
     throw new Error(message);
   }
 
+  return { registered: true, session, added };
+}
+
+async function azobssRemoveRegisteredJupemLotUnlocked(registration) {
+  const session = registration && registration.session;
+  const added = registration && registration.added;
+  if (!session || !added) return { removedFromCart: false };
   const deleteResult = await azobssJupemAuthFetch("https://ebiz.jupem.gov.my/Transaksi/TroliDetailXTerhad", {
     method: "POST",
     ajax: true,
@@ -6522,15 +6524,22 @@ async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, j
   azobssJupemAuthenticatedCache.cookie = session.cookie;
   const deletePayload = JSON.parse(await deleteResult.response.text() || "{}");
   if (!deletePayload.Success) throw new Error("JUPEM cart cleanup failed.");
-  if (azobssRegisteredLotJobs.size > 5000) azobssRegisteredLotJobs.clear();
-  azobssRegisteredLotJobs.set(cacheKey, Date.now() + (2 * 60 * 60 * 1000));
-  return { registered: true, removedFromCart: true };
+  return { removedFromCart: true };
 }
 
-async function azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId) {
-  return await azobssWithJupemCartMutationLock(
-    () => azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, false)
-  );
+async function azobssWithRegisteredJupemLot(productCode, stateCode, jobId, task) {
+  return await azobssWithJupemCartMutationLock(async () => {
+    const registration = await azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, false);
+    try {
+      return await task(registration.session.cookie);
+    } finally {
+      try {
+        await azobssRemoveRegisteredJupemLotUnlocked(registration);
+      } catch (error) {
+        console.warn("JUPEM temporary lot cart cleanup failed:", error && (error.message || error));
+      }
+    }
+  });
 }
 
 function azobssLotDownloadUrl(productCode, jobId, stateCode) {
@@ -7011,7 +7020,7 @@ function azobssWriteLotCachedZip(productCode, stateCode, jobId, buffer) {
   return cachePath;
 }
 
-async function azobssEnsureLotCachedZip(record, type) {
+async function azobssEnsureLotCachedZip(record, type, sessionCookie = "") {
   const productCode = type === "NDCDB_C3" ? "2" : "1";
   const jobId = azobssLotRecordJobId(record);
   const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || "");
@@ -7024,7 +7033,7 @@ async function azobssEnsureLotCachedZip(record, type) {
   if (azobssLotCachePending.has(cacheKey)) return await azobssLotCachePending.get(cacheKey);
 
   const pending = (async () => {
-    const result = await azobssFetchLotRecordFile(record, type);
+    const result = await azobssFetchLotRecordFile(record, type, sessionCookie);
     if (!result || !result.validFile || !azobssBufferIsZip(result.buffer)) return null;
     azobssWriteLotCachedZip(productCode, stateCode, jobId, result.buffer);
     return result.buffer;
@@ -7048,22 +7057,24 @@ async function azobssWaitForLotJobAndCache(record, type) {
     throw new Error("Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
   }
 
-  while (Date.now() < deadline) {
-    const cached = azobssReadLotCachedZip(productCode, stateCode, jobId);
-    if (cached) return cached;
+  return await azobssWithRegisteredJupemLot(productCode, stateCode, jobId, async (sessionCookie) => {
+    while (Date.now() < deadline) {
+      const cached = azobssReadLotCachedZip(productCode, stateCode, jobId);
+      if (cached) return cached;
 
-    try {
-      const buffer = await azobssEnsureLotCachedZip(record, type);
-      if (buffer && azobssBufferIsZip(buffer)) return buffer;
-      lastError = new Error("Pautan ID pilihan belum memulangkan fail ZIP.");
-    } catch (error) {
-      lastError = error;
+      try {
+        const buffer = await azobssEnsureLotCachedZip(record, type, sessionCookie);
+        if (buffer && azobssBufferIsZip(buffer)) return buffer;
+        lastError = new Error("Pautan ID pilihan belum memulangkan fail ZIP.");
+      } catch (error) {
+        lastError = error;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 2500));
     }
 
-    await new Promise(resolve => setTimeout(resolve, 2500));
-  }
-
-  throw lastError || new Error("Backend AZOBSS tidak sempat menyediakan fail ZIP dalam tempoh yang ditetapkan.");
+    throw lastError || new Error("Backend AZOBSS tidak sempat menyediakan fail ZIP dalam tempoh yang ditetapkan.");
+  });
 }
 
 function azobssStartLotCacheTask(record, type) {
@@ -7249,7 +7260,7 @@ function azobssLotRecordJobId(record) {
   return String(record && (record.productId || record.jobId || record.itemCode || record.code) || "").trim();
 }
 
-async function azobssFetchLotRecordFile(record, type) {
+async function azobssFetchLotRecordFile(record, type, sessionCookie = "") {
   const candidates = azobssBuildLotDownloadCandidates(record, type);
   let lastResult = null;
   const retryDelays = [0, 1200, 3000];
@@ -7257,7 +7268,9 @@ async function azobssFetchLotRecordFile(record, type) {
     if (retryDelays[attempt]) {
       await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
     }
-    const session = await azobssGetJupemAuthenticatedSession(attempt > 0);
+    const session = sessionCookie
+      ? { cookie: sessionCookie }
+      : await azobssGetJupemAuthenticatedSession(attempt > 0);
     for (const candidate of candidates) {
       lastResult = await azobssCurlFetchFile(candidate, session.cookie);
       if (lastResult.validFile && azobssBufferIsZip(lastResult.buffer)) return lastResult;
@@ -7270,7 +7283,7 @@ async function azobssFetchLotRecordFile(record, type) {
         head: String(lastResult.firstText || "").replace(/\s+/g, " ").slice(0, 140)
       }).slice(0, 850));
     }
-    azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+    if (!sessionCookie) azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
   }
   return lastResult || { response: null, buffer: Buffer.alloc(0), url: "", firstText: "", validFile: false };
 }
@@ -9846,7 +9859,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 19,
+          jupemStoreVersion: 20,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
