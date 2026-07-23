@@ -538,7 +538,7 @@ async function openJupemLotMap(button) {
       const item = await addToStoreCart({
         productType: prepared.productType,
         itemCode: prepared.jobId,
-        negeri: stateName,
+        negeri: prepared.negeri || stateName,
         variant: prepared.variant,
         amount: prepared.amount,
         productId: prepared.jobId,

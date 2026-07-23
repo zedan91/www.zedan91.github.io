@@ -6628,7 +6628,9 @@ function azobssCreateLotSelectionToken(payload) {
   return `${body}.${signature}`;
 }
 
-function azobssDecodeLotSelectionToken(value) {
+const AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function azobssDecodeSignedLotSelectionToken(value) {
   try {
     const [body, signature] = String(value || "").split(".");
     if (!body || !signature) return null;
@@ -6636,12 +6638,16 @@ function azobssDecodeLotSelectionToken(value) {
     const left = Buffer.from(signature);
     const right = Buffer.from(expected);
     if (left.length !== right.length || !crypto.timingSafeEqual(left, right)) return null;
-    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
-    if (!payload || Number(payload.expiresAtMs || 0) < Date.now()) return null;
-    return payload;
+    return JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
   } catch (_err) {
     return null;
   }
+}
+
+function azobssDecodeLotSelectionToken(value) {
+  const payload = azobssDecodeSignedLotSelectionToken(value);
+  if (!payload || Number(payload.expiresAtMs || 0) < Date.now()) return null;
+  return payload;
 }
 
 function azobssVerifyLotSelectionToken(value) {
@@ -6655,8 +6661,10 @@ function azobssVerifyLotSelectionToken(value) {
 }
 
 function azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode) {
-  const payload = azobssVerifyLotSelectionToken(rawItem && rawItem.selectionToken);
-  if (!payload) return null;
+  const payload = azobssDecodeSignedLotSelectionToken(rawItem && rawItem.selectionToken);
+  if (!payload || payload.ready !== true) return null;
+  const preparedAtMs = Number(payload.preparedAtMs || 0);
+  if (!preparedAtMs || Date.now() - preparedAtMs > AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS) return null;
   const expectedType = String(productType || "").toUpperCase();
   const expectedState = String(negeri || "").toUpperCase();
   const expectedCode = String(itemCode || "").toUpperCase();
@@ -8218,10 +8226,11 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:5,
+        version:6,
         paidDownloadRouting:"category-specific-v1",
         firestoreReadRetry:3,
         fastAdminTestPayment:true,
+        lotSelectionCheckoutTtlDays:7,
         runningFile:"deploy-server.js",
         productTypes:["PA","BM","SBM","GPS","NDCDB","NDCDB_C3","SYIT_PIAWAI"],
         prices:{
@@ -10270,7 +10279,7 @@ async function handler(req, res) {
           lotCount: publicResult.lotCount,
           selectedAreaM2: publicResult.selectedAreaM2,
           preparedAtMs: Date.now(),
-          expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
+          expiresAtMs: Date.now() + AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS
         };
         const cacheRecord = {
           productType: publicResult.productType,
@@ -10355,7 +10364,7 @@ async function handler(req, res) {
           directDownload: true,
           cached: true,
           downloadUrl,
-          expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
+          expiresAtMs: Date.now() + AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS
         };
         return send(res, 200, JSON.stringify({
           ok: true,
