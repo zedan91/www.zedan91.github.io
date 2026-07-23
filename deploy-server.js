@@ -5965,6 +5965,14 @@ async function azobssJupemAuthFetch(url, options = {}, cookie = "") {
 
 let azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
 const azobssRegisteredLotJobs = new Map();
+let azobssJupemCartMutationQueue = Promise.resolve();
+
+function azobssWithJupemCartMutationLock(task) {
+  const current = azobssJupemCartMutationQueue.then(task, task);
+  azobssJupemCartMutationQueue = current.catch(() => undefined);
+  return current;
+}
+
 async function azobssGetJupemAuthenticatedSession(force = false) {
   const now = Date.now();
   if (!force && azobssJupemAuthenticatedCache.cookie && azobssJupemAuthenticatedCache.userId && azobssJupemAuthenticatedCache.expiresAt > now) {
@@ -6297,7 +6305,7 @@ function azobssParseJupemCartRows(html) {
   return rows;
 }
 
-async function azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId, loginRetried = false) {
+async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, loginRetried = false) {
   const cacheKey = `${productCode}:${stateCode}:${jobId}`;
   if (Number(azobssRegisteredLotJobs.get(cacheKey) || 0) > Date.now()) {
     return { registered: true, removedFromCart: true, cached: true };
@@ -6319,24 +6327,33 @@ async function azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId, lo
   }, session.cookie);
   session.cookie = registered.cookie;
   const registeredHtml = await registered.response.text();
-  if (!/telah ditambah di dalam Troli Anda/i.test(registeredHtml)) {
-    if (/<title>\s*Log Masuk/i.test(registeredHtml) && !loginRetried) {
-      azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
-      return await azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId, true);
-    }
-    throw new Error("JUPEM did not register the selected lot product.");
+  if (/<title>\s*Log Masuk/i.test(registeredHtml) && !loginRetried) {
+    azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+    return await azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, true);
   }
 
-  const afterResult = await azobssJupemAuthFetch(
-    `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`,
-    { referer: productUrl },
-    session.cookie
-  );
-  session.cookie = afterResult.cookie;
-  azobssJupemAuthenticatedCache.cookie = session.cookie;
-  const afterRows = azobssParseJupemCartRows(await afterResult.response.text());
-  const added = afterRows.find((row) => !beforeKeys.has(row.key));
-  if (!added) throw new Error("JUPEM cart item could not be identified safely.");
+  let added = null;
+  const cartUrl = `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`;
+  const retryDelaysMs = [0, 500, 1000, 2000, 3500];
+  for (const delayMs of retryDelaysMs) {
+    if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
+    const afterResult = await azobssJupemAuthFetch(
+      cartUrl,
+      { referer: productUrl },
+      session.cookie
+    );
+    session.cookie = afterResult.cookie;
+    azobssJupemAuthenticatedCache.cookie = session.cookie;
+    const afterRows = azobssParseJupemCartRows(await afterResult.response.text());
+    added = afterRows.find((row) => !beforeKeys.has(row.key)) || null;
+    if (added) break;
+  }
+  if (!added) {
+    const message = /telah ditambah di dalam Troli Anda/i.test(registeredHtml)
+      ? "JUPEM cart item could not be identified safely."
+      : "JUPEM did not add the selected lot product to its cart.";
+    throw new Error(message);
+  }
 
   const deleteResult = await azobssJupemAuthFetch("https://ebiz.jupem.gov.my/Transaksi/TroliDetailXTerhad", {
     method: "POST",
@@ -6360,6 +6377,12 @@ async function azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId, lo
   if (azobssRegisteredLotJobs.size > 5000) azobssRegisteredLotJobs.clear();
   azobssRegisteredLotJobs.set(cacheKey, Date.now() + (2 * 60 * 60 * 1000));
   return { registered: true, removedFromCart: true };
+}
+
+async function azobssRegisterAndRemoveJupemLot(productCode, stateCode, jobId) {
+  return await azobssWithJupemCartMutationLock(
+    () => azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, false)
+  );
 }
 
 function azobssLotDownloadUrl(productCode, jobId, stateCode) {
@@ -9465,7 +9488,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 4,
+          jupemStoreVersion: 5,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
