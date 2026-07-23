@@ -254,7 +254,7 @@
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        const jupemLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all`, {
+        const jupemLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerSet=2`, {
           minZoom: Number(config.minSelectionZoom || 13),
           maxZoom: 20,
           opacity: 0.88,

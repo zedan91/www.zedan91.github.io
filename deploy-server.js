@@ -6074,7 +6074,9 @@ const AZOBSS_JUPEM_LOT_CONFIG = Object.freeze({
     "09": { lotLayer: 33, sheetLayer: 35, gp: "Kadaster/perlisclip/GPServer/perlisclip" },
     "10": { lotLayer: 41, sheetLayer: 43, gp: "Kadaster/selangorclip/GPServer/selangorclip" },
     "11": { lotLayer: 45, sheetLayer: 47, gp: "Kadaster/terengganuclip/GPServer/terengganuclip" },
-    "15": { lotLayer: 13, sheetLayer: 15, gp: "Kadaster/labuanclip/GPServer/labuanclip" }
+    "14": { lotLayer: 49, sheetLayer: 51, gp: "Kadaster/wpklclip/GPServer/wpklclip" },
+    "15": { lotLayer: 13, sheetLayer: 15, gp: "Kadaster/labuanclip/GPServer/labuanclip" },
+    "16": { lotLayer: 49, sheetLayer: 51, gp: "Kadaster/wpklclip/GPServer/wpklclip" }
   }),
   "2": Object.freeze({
     "01": { lotLayer: 2, sheetLayer: 3, gp: "Kadaster/johorclipc3/GPServer/johorclipc3" },
@@ -6088,7 +6090,9 @@ const AZOBSS_JUPEM_LOT_CONFIG = Object.freeze({
     "09": { lotLayer: 34, sheetLayer: 35, gp: "Kadaster/perlisclipc3/GPServer/perlisclipc3" },
     "10": { lotLayer: 42, sheetLayer: 43, gp: "Kadaster/selangorclipc3/GPServer/selangorclipc3" },
     "11": { lotLayer: 46, sheetLayer: 47, gp: "Kadaster/terengganuclipc3/GPServer/terengganuclipc3" },
-    "15": { lotLayer: 14, sheetLayer: 15, gp: "Kadaster/labuanclipc3/GPServer/labuanclipc3" }
+    "14": { lotLayer: 50, sheetLayer: 51, gp: "Kadaster/wpklclipc3/GPServer/wpklclipc3" },
+    "15": { lotLayer: 14, sheetLayer: 15, gp: "Kadaster/labuanclipc3/GPServer/labuanclipc3" },
+    "16": { lotLayer: 50, sheetLayer: 51, gp: "Kadaster/wpklclipc3/GPServer/wpklclipc3" }
   })
 });
 
@@ -6104,7 +6108,9 @@ const AZOBSS_JUPEM_LOT_BOUNDS = Object.freeze({
   "09": [[6.15, 100.05], [6.75, 100.55]],
   "10": [[2.55, 100.75], [3.90, 102.10]],
   "11": [[3.80, 102.90], [5.90, 103.80]],
-  "15": [[5.20, 115.05], [5.45, 115.35]]
+  "14": [[2.849, 101.578], [3.259, 101.790]],
+  "15": [[5.20, 115.05], [5.45, 115.35]],
+  "16": [[2.849, 101.578], [3.259, 101.790]]
 });
 
 function azobssGetLotMapConfig(productCode, stateCode) {
@@ -9872,7 +9878,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 22,
+          jupemStoreVersion: 23,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
