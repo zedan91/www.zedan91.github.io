@@ -9567,7 +9567,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 8,
+          jupemStoreVersion: 9,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -9877,7 +9877,8 @@ async function handler(req, res) {
         const job = await azobssSubmitLotGpJob(estimate);
         const downloadUrl = azobssLotDownloadUrl(productCode, job.jobId, stateCode);
         const selectionToken = azobssCreateLotSelectionToken({
-          ready: false,
+          ready: true,
+          directDownload: true,
           productType: publicResult.productType,
           productCode,
           stateCode,
@@ -9892,7 +9893,8 @@ async function handler(req, res) {
         });
         return send(res, 200, JSON.stringify({
           ok: true,
-          ready: false,
+          ready: true,
+          directDownload: true,
           ...publicResult,
           jobId: job.jobId,
           jobStatus: job.jobStatus,

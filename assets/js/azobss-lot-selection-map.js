@@ -305,8 +305,8 @@
       addButton.addEventListener('click', async () => {
         if (!selectedGeometry || !estimate || addButton.disabled) return;
         addButton.disabled = true;
-        addButton.textContent = 'JUPEM sedang menyediakan fail...';
-        setStatus(status, 'Menghantar lot terpilih kepada JUPEM dan menunggu job ID...', 'loading');
+        addButton.textContent = 'Menghasilkan ID pilihan...';
+        setStatus(status, 'Menghantar lot terpilih kepada JUPEM untuk mendapatkan job ID...', 'loading');
         try {
           operationController = new AbortController();
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
