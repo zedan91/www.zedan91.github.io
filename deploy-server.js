@@ -6229,9 +6229,17 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     name: azobssLotSheetName(feature, index),
     areaM2: azobssPolygonAreaM2(feature.geometry)
   })).filter((row) => row.areaM2 > 0);
-  const referenceSheetAreaM2 = sheetRows.length ? Math.min(...sheetRows.map((row) => row.areaM2)) : 0;
-  const areaRatio = referenceSheetAreaM2 > 0 ? selectedAreaM2 / referenceSheetAreaM2 : 1;
-  const variant = sheetRows.length === 1 && areaRatio <= 0.255 ? "QUARTER_SHEET" : "FULL_SHEET";
+  if (!sheetRows.length) throw new Error("Keluasan rujukan satu syit JUPEM tidak dapat ditentukan.");
+  const sheetAreas = sheetRows.map((row) => row.areaM2).sort((left, right) => left - right);
+  const middle = Math.floor(sheetAreas.length / 2);
+  const referenceSheetAreaM2 = sheetAreas.length % 2
+    ? sheetAreas[middle]
+    : (sheetAreas[middle - 1] + sheetAreas[middle]) / 2;
+  const areaRatio = drawnAreaM2 / referenceSheetAreaM2;
+  if (areaRatio > 1.1) {
+    throw new Error("Kawasan pilihan melebihi anggaran keluasan satu syit. Sila kecilkan kawasan pilihan.");
+  }
+  const variant = areaRatio <= 0.3 ? "QUARTER_SHEET" : "FULL_SHEET";
   const amount = variant === "QUARTER_SHEET" ? 15 : 50;
   return {
     config,
@@ -9567,7 +9575,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 9,
+          jupemStoreVersion: 10,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")

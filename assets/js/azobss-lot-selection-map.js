@@ -170,9 +170,9 @@
               <p class="az-lot-map-status" role="status" aria-live="polite">Zum masuk, kemudian pilih kawasan menggunakan alat polygon atau segi empat.</p>
               <dl class="az-lot-map-summary">
                 <dt>Jumlah lot</dt><dd data-lot-count>-</dd>
-                <dt>Keluasan lot</dt><dd data-lot-area>-</dd>
-                <dt>Syit terlibat</dt><dd data-sheet-count>-</dd>
-                <dt>Nisbah syit</dt><dd data-sheet-ratio>-</dd>
+                <dt>Keluasan pilihan</dt><dd data-lot-area>-</dd>
+                <dt>Garisan syit dilintasi</dt><dd data-sheet-count>-</dd>
+                <dt>Nisbah saiz 1 syit</dt><dd data-sheet-ratio>-</dd>
               </dl>
               <div class="az-lot-map-price" data-lot-price>Harga akan dikira automatik</div>
               <button class="az-lot-map-add" type="button" disabled>Sediakan &amp; Tambah ke Troli</button>
@@ -233,12 +233,12 @@
             geometry: selectedGeometry
           });
           countNode.textContent = formatNumber(estimate.lotCount, 0);
-          areaNode.textContent = `${formatNumber(estimate.selectedAreaM2, 2)} m2`;
+          areaNode.textContent = `${formatNumber(estimate.drawnAreaM2, 2)} m2`;
           sheetNode.textContent = formatNumber(estimate.sheetCount, 0);
           ratioNode.textContent = `${formatNumber(Number(estimate.areaRatio || 0) * 100, 2)}%`;
           priceNode.textContent = estimate.variant === 'QUARTER_SHEET' ? '1/4 Syit - RM15' : '1 Syit - RM50';
           addButton.disabled = false;
-          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan. Harga ditentukan oleh keluasan sebenar.`, 'success');
+          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan. Harga berdasarkan saiz kawasan pilihan, bukan garisan syit.`, 'success');
         } catch (error) {
           clearSummary();
           setStatus(status, error.message || 'Kawasan pilihan tidak dapat disemak.', 'error');
