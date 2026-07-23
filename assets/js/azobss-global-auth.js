@@ -3091,6 +3091,21 @@ function azobssCanShowPaBmAdminReset(){
 }
 window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
 
+function azobssSetPaBmDownloadUiLock(active, owner){
+  try{
+    if(document.body) document.body.classList.toggle('az-pabm-download-active', !!active);
+    document.querySelectorAll('.user-pa-download').forEach(function(candidate){
+      if(active && candidate !== owner){
+        candidate.dataset.downloadLocked = '1';
+        candidate.setAttribute('aria-disabled', 'true');
+      }else if(!active && candidate.dataset.downloadLocked === '1'){
+        delete candidate.dataset.downloadLocked;
+        candidate.removeAttribute('aria-disabled');
+      }
+    });
+  }catch(_){ }
+}
+
 async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
   try{
     const ev = clickEvent || (window.event || null);
@@ -3105,6 +3120,12 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
   const link = linkEl || (window.event && window.event.currentTarget) || null;
   const originalText = link ? link.textContent : '';
+  if(window.__azobssPaBmActiveDownload){
+    if(window.__azobssPaBmActiveDownload !== link){
+      alert('Satu muat turun sedang berjalan. Tunggu sehingga selesai sebelum memuat turun fail lain.');
+    }
+    return false;
+  }
   if(link && link.dataset && link.dataset.busy === '1') return false;
   const used = azobssPurchaseDownloadCount(r);
   const max = azobssPurchaseDownloadMax(r);
@@ -3128,6 +3149,8 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     return false;
   }
 
+  const downloadOwner = link || true;
+  window.__azobssPaBmActiveDownload = downloadOwner;
   try{
     if(link){
       link.dataset.busy = '1';
@@ -3138,6 +3161,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       link.removeAttribute('download');
       link.removeAttribute('target');
     }
+    azobssSetPaBmDownloadUiLock(true, link);
 
     let response = null;
     let lastPreparingData = null;
@@ -3272,6 +3296,10 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
     return false;
   }finally{
+    if(window.__azobssPaBmActiveDownload === downloadOwner){
+      window.__azobssPaBmActiveDownload = null;
+      azobssSetPaBmDownloadUiLock(false, null);
+    }
     if(link){
       link.dataset.busy = '';
       link.textContent = originalText || 'Download';

@@ -12506,7 +12506,16 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=566" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=566"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<style id="azobssSingleDownloadLockStyles">
+body.az-pabm-download-active .user-pa-download:not([data-busy="1"]){
+  pointer-events:none !important;
+  cursor:not-allowed !important;
+  opacity:.42 !important;
+  filter:grayscale(.55);
+  box-shadow:none !important;
+}
+</style>
+<script src="/assets/js/azobss-global-auth.js?v=567" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=567"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
