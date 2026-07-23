@@ -2694,10 +2694,32 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       link.removeAttribute('target');
     }
 
-    const response = await fetch(directUrl, {
-      method: 'GET',
-      cache: 'no-store'
-    });
+    let response = null;
+    let lastPreparingData = null;
+    for(let attempt = 0; attempt < 75; attempt += 1){
+      response = await fetch(directUrl, {
+        method: 'GET',
+        cache: 'no-store'
+      });
+      const pollType = String(response.headers.get('content-type') || '').toLowerCase();
+      if(response.status !== 202 || !pollType.includes('application/json')) break;
+
+      try{ lastPreparingData = await response.clone().json(); }catch(e){ lastPreparingData = null; }
+      if(!lastPreparingData || !lastPreparingData.preparing) break;
+      if(link){
+        const statusText = String(lastPreparingData.jobStatus || '').replace(/^esriJob/i, '');
+        link.textContent = statusText && !/unknown/i.test(statusText)
+          ? 'JUPEM ' + statusText + '...'
+          : 'JUPEM Preparing ZIP...';
+      }
+      const waitMs = Math.max(1500, Math.min(10000, Number(lastPreparingData.retryAfterMs || 4000)));
+      await new Promise(function(resolve){ setTimeout(resolve, waitMs); });
+    }
+
+    if(response && response.status === 202){
+      alert((lastPreparingData && (lastPreparingData.error || lastPreparingData.message)) || 'JUPEM masih menyediakan fail ZIP. Sila cuba semula sebentar lagi. Kuota muat turun tidak digunakan.');
+      return false;
+    }
 
     const fallbackFlag = String(response.headers.get('x-azobss-browser-fallback') || '').trim();
     if(fallbackFlag === '1'){

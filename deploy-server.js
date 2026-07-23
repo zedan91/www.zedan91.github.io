@@ -3532,6 +3532,19 @@ function azobssPaBmDownloadError(res, status, message) {
   return send(res, status, JSON.stringify({ ok: false, error: message }, null, 2), "application/json");
 }
 
+function azobssPaBmDownloadPreparing(res, jobStatus, message) {
+  return send(res, 202, JSON.stringify({
+    ok: false,
+    preparing: true,
+    jobStatus: String(jobStatus || "esriJobUnknown"),
+    retryAfterMs: 4000,
+    error: message || "JUPEM sedang menyediakan fail ZIP. Muat turun akan dicuba semula secara automatik."
+  }, null, 2), "application/json", {
+    "Cache-Control": "no-store",
+    "Retry-After": "4"
+  });
+}
+
 function buildUserEmail(usernameKey) {
   return `${usernameKey}@azobss.local`;
 }
@@ -7005,7 +7018,11 @@ function azobssBuildLotDownloadCandidates(record, type) {
 async function azobssFetchLotRecordFile(record, type) {
   const candidates = azobssBuildLotDownloadCandidates(record, type);
   let lastResult = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  const retryDelays = [0, 1200, 3000];
+  for (let attempt = 0; attempt < retryDelays.length; attempt += 1) {
+    if (retryDelays[attempt]) {
+      await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
+    }
     const session = await azobssGetJupemAuthenticatedSession(attempt > 0);
     for (const candidate of candidates) {
       lastResult = await azobssCurlFetchFile(candidate, session.cookie);
@@ -9586,7 +9603,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 11,
+          jupemStoreVersion: 12,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10557,6 +10574,25 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   }
 
   if (type === "NDCDB" || type === "NDCDB_C3") {
+    const productCode = type === "NDCDB_C3" ? "2" : "1";
+    const jobId = String(record.productId || record.jobId || record.itemCode || record.code || "").trim();
+    const stateCode = cleanLotStateCode(record.negeri || record.state || "");
+    let jobStatus = "esriJobUnknown";
+
+    if (jobId && stateCode) {
+      try {
+        jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
+        if (/Failed|Cancelled|TimedOut/i.test(jobStatus)) {
+          return azobssPaBmDownloadError(res, 409, "JUPEM tidak berjaya menyediakan fail Lot Kadaster ini. Kuota muat turun anda tidak digunakan.");
+        }
+        if (!/Succeeded$/i.test(jobStatus)) {
+          return azobssPaBmDownloadPreparing(res, jobStatus);
+        }
+      } catch (statusError) {
+        console.warn(type + " job status check failed; trying the direct ZIP URL:", statusError && (statusError.message || statusError));
+      }
+    }
+
     let lotResult;
     try {
       lotResult = await azobssFetchLotRecordFile(record, type);
@@ -10564,7 +10600,11 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       console.error(type + " controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
     }
     if (!lotResult || !lotResult.validFile || !azobssBufferIsZip(lotResult.buffer)) {
-      return azobssPaBmDownloadError(res, 502, "Lot Kadaster source ZIP is not available for this purchase. Your download quota was not used.");
+      return azobssPaBmDownloadPreparing(
+        res,
+        jobStatus,
+        "JUPEM telah menerima pilihan ini tetapi fail ZIP masih sedang disediakan. Muat turun akan dicuba semula secara automatik dan kuota anda belum digunakan."
+      );
     }
     try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
     const safeCode = String(code || record.itemCode || type).replace(/[^A-Z0-9_-]/gi, "-");
