@@ -323,7 +323,10 @@
           let checks = 0;
           while (!ready.ready && checks < 180) {
             checks += 1;
-            setStatus(status, `Job ID ${prepared.jobId} diterima. JUPEM sedang memproses fail (${checks})...`, 'loading');
+            const cacheMessage = ready.cacheStatus === 'downloading'
+              ? 'Backend sedang memuat turun dan mengesahkan fail ZIP...'
+              : 'JUPEM sedang menyediakan fail ZIP...';
+            setStatus(status, `${cacheMessage} (${checks})`, 'loading');
             await new Promise((done) => window.setTimeout(done, 2000));
             ready = await postJson('/api/jupem-lot-selection/status', {
               selectionToken: prepared.selectionToken

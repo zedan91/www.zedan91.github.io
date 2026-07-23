@@ -3560,6 +3560,12 @@ const ROOT = process.cwd();
 
 const AFFILIATE_JSON = path.join(ROOT, "affiliate-products.json");
 const TEMP_DIR = path.join(ROOT, "temp");
+const AZOBSS_LOT_CACHE_DIR = path.join(TEMP_DIR, "jupem-lot-cache");
+const AZOBSS_LOT_CACHE_TTL_MS = Math.max(
+  24 * 60 * 60 * 1000,
+  Number(process.env.AZOBSS_LOT_CACHE_TTL_MS || 8 * 24 * 60 * 60 * 1000) || 8 * 24 * 60 * 60 * 1000
+);
+const azobssLotCachePending = new Map();
 const DOWNLOAD_TOKENS = new Map();
 
 const PREMIUM_ORDERS_FILE = path.join(ROOT, "premium-orders.json");
@@ -6941,6 +6947,90 @@ function azobssBufferIsZip(buffer) {
       || (buffer[2] === 0x07 && buffer[3] === 0x08));
 }
 
+function azobssLotCacheKey(productCode, stateCode, jobId) {
+  return crypto.createHash("sha256")
+    .update(`${cleanLotProduct(productCode)}|${cleanLotStateCode(stateCode)}|${String(jobId || "").trim()}`)
+    .digest("hex");
+}
+
+function azobssLotCachePath(productCode, stateCode, jobId) {
+  return path.join(AZOBSS_LOT_CACHE_DIR, `${azobssLotCacheKey(productCode, stateCode, jobId)}.zip`);
+}
+
+function azobssReadLotCachedZip(productCode, stateCode, jobId) {
+  try {
+    const cachePath = azobssLotCachePath(productCode, stateCode, jobId);
+    if (!fs.existsSync(cachePath)) return null;
+    const buffer = fs.readFileSync(cachePath);
+    if (!azobssBufferIsZip(buffer)) {
+      try { fs.unlinkSync(cachePath); } catch (_) {}
+      return null;
+    }
+    return buffer;
+  } catch (error) {
+    console.warn("Lot ZIP cache read failed:", error && (error.message || error));
+    return null;
+  }
+}
+
+function azobssWriteLotCachedZip(productCode, stateCode, jobId, buffer) {
+  if (!azobssBufferIsZip(buffer)) throw new Error("JUPEM did not return a valid ZIP file.");
+  fs.mkdirSync(AZOBSS_LOT_CACHE_DIR, { recursive: true });
+  const cachePath = azobssLotCachePath(productCode, stateCode, jobId);
+  const temporaryPath = `${cachePath}.${process.pid}.${crypto.randomBytes(5).toString("hex")}.tmp`;
+  try {
+    fs.writeFileSync(temporaryPath, buffer);
+    fs.renameSync(temporaryPath, cachePath);
+  } finally {
+    try { if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath); } catch (_) {}
+  }
+  return cachePath;
+}
+
+async function azobssEnsureLotCachedZip(record, type) {
+  const productCode = type === "NDCDB_C3" ? "2" : "1";
+  const jobId = azobssLotRecordJobId(record);
+  const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || "");
+  if (!jobId || !stateCode) return null;
+
+  const cached = azobssReadLotCachedZip(productCode, stateCode, jobId);
+  if (cached) return cached;
+
+  const cacheKey = azobssLotCacheKey(productCode, stateCode, jobId);
+  if (azobssLotCachePending.has(cacheKey)) return await azobssLotCachePending.get(cacheKey);
+
+  const pending = (async () => {
+    const result = await azobssFetchLotRecordFile(record, type);
+    if (!result || !result.validFile || !azobssBufferIsZip(result.buffer)) return null;
+    azobssWriteLotCachedZip(productCode, stateCode, jobId, result.buffer);
+    return result.buffer;
+  })();
+  azobssLotCachePending.set(cacheKey, pending);
+  try {
+    return await pending;
+  } finally {
+    azobssLotCachePending.delete(cacheKey);
+  }
+}
+
+function cleanupLotCacheFiles() {
+  try {
+    if (!fs.existsSync(AZOBSS_LOT_CACHE_DIR)) return;
+    const now = Date.now();
+    for (const file of fs.readdirSync(AZOBSS_LOT_CACHE_DIR)) {
+      const fullPath = path.join(AZOBSS_LOT_CACHE_DIR, file);
+      try {
+        const stat = fs.statSync(fullPath);
+        if (stat.isFile() && now - stat.mtimeMs > AZOBSS_LOT_CACHE_TTL_MS) fs.unlinkSync(fullPath);
+      } catch (error) {
+        console.warn("Lot ZIP cache cleanup failed:", file, error && (error.message || error));
+      }
+    }
+  } catch (error) {
+    console.warn("Lot ZIP cache directory cleanup failed:", error && (error.message || error));
+  }
+}
+
 function azobssBufferIsConvertibleImage(buffer) {
   return azobssBufferIsTiff(buffer) || azobssBufferIsPng(buffer) || azobssBufferIsJpeg(buffer);
 }
@@ -9642,7 +9732,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 13,
+          jupemStoreVersion: 14,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -9952,8 +10042,8 @@ async function handler(req, res) {
         const job = await azobssSubmitLotGpJob(estimate);
         const downloadUrl = azobssLotDownloadUrl(productCode, job.jobId, stateCode);
         const selectionToken = azobssCreateLotSelectionToken({
-          ready: true,
-          directDownload: true,
+          ready: false,
+          directDownload: false,
           productType: publicResult.productType,
           productCode,
           stateCode,
@@ -9969,10 +10059,10 @@ async function handler(req, res) {
           selectedAreaM2: publicResult.selectedAreaM2,
           expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
         });
-        return send(res, 200, JSON.stringify({
+        return send(res, 202, JSON.stringify({
           ok: true,
-          ready: true,
-          directDownload: true,
+          ready: false,
+          directDownload: false,
           ...publicResult,
           jobId: job.jobId,
           jobStatus: job.jobStatus,
@@ -10005,10 +10095,35 @@ async function handler(req, res) {
           return send(res, 202, JSON.stringify({ ok: true, ready: false, jobStatus }), "application/json");
         }
         const downloadUrl = azobssLotDownloadUrl(pending.productCode, pending.jobId, pending.stateCode);
+        const cacheRecord = {
+          productType: pending.productType,
+          productId: pending.jobId,
+          jobId: pending.jobId,
+          itemCode: pending.jobId,
+          negeri: pending.negeri,
+          state: pending.negeri,
+          downloadUrl
+        };
+        let cachedZip = null;
+        try {
+          cachedZip = await azobssEnsureLotCachedZip(cacheRecord, pending.productType);
+        } catch (cacheError) {
+          console.warn("JUPEM lot ZIP pre-cache failed:", cacheError && (cacheError.stack || cacheError.message || cacheError));
+        }
+        if (!cachedZip) {
+          return send(res, 202, JSON.stringify({
+            ok: true,
+            ready: false,
+            jobStatus,
+            cacheStatus: "downloading",
+            message: "Backend sedang memuat turun dan mengesahkan fail ZIP JUPEM."
+          }), "application/json");
+        }
         const readyPayload = {
           ...pending,
           ready: true,
           directDownload: true,
+          cached: true,
           downloadUrl,
           expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
         };
@@ -10016,6 +10131,7 @@ async function handler(req, res) {
           ok: true,
           ready: true,
           directDownload: true,
+          cached: true,
           jobStatus,
           selectionToken: azobssCreateLotSelectionToken(readyPayload),
           jobId: readyPayload.jobId,
@@ -10617,8 +10733,11 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     const jobId = azobssLotRecordJobId(record);
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
     let jobStatus = "esriJobUnknown";
+    let lotBuffer = jobId && stateCode
+      ? azobssReadLotCachedZip(productCode, stateCode, jobId)
+      : null;
 
-    if (jobId && stateCode) {
+    if (!lotBuffer && jobId && stateCode) {
       try {
         jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
         if (/Failed|Cancelled|TimedOut/i.test(jobStatus)) {
@@ -10632,13 +10751,14 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       }
     }
 
-    let lotResult;
-    try {
-      lotResult = await azobssFetchLotRecordFile(record, type);
-    } catch (fetchError) {
-      console.error(type + " controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+    if (!lotBuffer) {
+      try {
+        lotBuffer = await azobssEnsureLotCachedZip(record, type);
+      } catch (fetchError) {
+        console.error(type + " controlled cache/fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
+      }
     }
-    if (!lotResult || !lotResult.validFile || !azobssBufferIsZip(lotResult.buffer)) {
+    if (!lotBuffer || !azobssBufferIsZip(lotBuffer)) {
       return azobssPaBmDownloadPreparing(
         res,
         jobStatus,
@@ -10652,7 +10772,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       "Content-Disposition": `attachment; filename="${type}-${safeCode}.zip"`,
       "Access-Control-Expose-Headers": "Content-Disposition"
     }));
-    res.end(lotResult.buffer);
+    res.end(lotBuffer);
     return;
   }
 
@@ -11184,7 +11304,7 @@ function cleanupTempFiles() {
           now - stat.mtimeMs;
 
         // DELETE FILE > 30 DAYS
-        if (age > FILE_EXPIRE_MS) {
+        if (stat.isFile() && age > FILE_EXPIRE_MS) {
 
           fs.unlinkSync(fullPath);
 
@@ -11215,12 +11335,16 @@ function cleanupTempFiles() {
 
 // RUN EVERY 12 HOURS
 setInterval(
-  cleanupTempFiles,
+  () => {
+    cleanupTempFiles();
+    cleanupLotCacheFiles();
+  },
   12 * 60 * 60 * 1000
 );
 
 // RUN ON STARTUP
 cleanupTempFiles();
+cleanupLotCacheFiles();
 
 const HOST = "0.0.0.0";
 const SERVER_PORT = Number(process.env.PORT || PORT || 10000);
