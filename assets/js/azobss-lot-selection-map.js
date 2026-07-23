@@ -254,13 +254,13 @@
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        const jupemLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}`, {
+        const jupemLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all`, {
           minZoom: Number(config.minSelectionZoom || 13),
           maxZoom: 20,
           opacity: 0.88,
           attribution: 'JUPEM eBiz'
         }).addTo(map);
-        window.L.control.layers(null, { 'Sempadan JUPEM': jupemLayer }, { collapsed: false }).addTo(map);
+        window.L.control.layers(null, { 'Sempadan JUPEM (Semua Negeri)': jupemLayer }, { collapsed: false }).addTo(map);
         drawnItems.addTo(map);
         map.addControl(new window.L.Control.Draw({
           position: 'topleft',

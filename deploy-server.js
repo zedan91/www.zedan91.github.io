@@ -6115,6 +6115,14 @@ function azobssGetLotMapConfig(productCode, stateCode) {
   return { product, state, bounds: AZOBSS_JUPEM_LOT_BOUNDS[state], ...config };
 }
 
+function azobssGetAllLotMapLayerIds(productCode) {
+  const product = cleanLotProduct(productCode);
+  const stateConfigs = Object.values(AZOBSS_JUPEM_LOT_CONFIG[product] || {});
+  return [...new Set(stateConfigs.flatMap((config) => [config.lotLayer, config.sheetLayer]))]
+    .filter(Number.isInteger)
+    .sort((left, right) => left - right);
+}
+
 function azobssNormalizeLotPolygon(value) {
   const geometry = value && value.geometry ? value.geometry : value;
   const sourceRings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
@@ -9864,7 +9872,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 21,
+          jupemStoreVersion: 22,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10092,6 +10100,10 @@ async function handler(req, res) {
           parsed.query.produk || parsed.query.product || parsed.query.type,
           parsed.query.negeri || parsed.query.state || parsed.query.stateCode
         );
+        const showAllStates = /^(?:1|true|all)$/i.test(String(parsed.query.allStates || parsed.query.scope || ""));
+        const layerIds = showAllStates
+          ? azobssGetAllLotMapLayerIds(config.product)
+          : [config.lotLayer, config.sheetLayer];
         const zoom = Number(lotTileMatch[1]);
         const tileX = Number(lotTileMatch[2]);
         const tileY = Number(lotTileMatch[3]);
@@ -10113,7 +10125,7 @@ async function handler(req, res) {
           bboxSR: "3857",
           imageSR: "3857",
           size: "256,256",
-          layers: `show:${config.lotLayer},${config.sheetLayer}`,
+          layers: `show:${layerIds.join(",")}`,
           format: "png32",
           transparent: "true",
           dpi: "96",
