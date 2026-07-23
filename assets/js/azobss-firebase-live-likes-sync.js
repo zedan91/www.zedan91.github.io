@@ -2939,7 +2939,9 @@ function purchaseDetailRowHtml(r){
   const itemLabel = itemType === 'NDCDB'
     ? 'Lot Kadaster Berdigit'
     : (itemType === 'NDCDB_C3' ? 'Lot Kadaster Berdigit C3' : (r.productType || 'PA'));
-  const item = `${itemLabel} ${itemCode}`.trim();
+  const item = itemType === 'NDCDB' || itemType === 'NDCDB_C3'
+    ? itemLabel
+    : `${itemLabel} ${itemCode}`.trim();
   const amount = Number(r.amount || 0);
   const canUncart = azobssCanUncartPurchase(r);
   const paidDownloadUrl = azobssBuildControlledPurchaseDownloadUrl(r);
