@@ -306,7 +306,6 @@
       }
 
       modal.querySelector('.az-lot-map-close').addEventListener('click', close);
-      modal.addEventListener('click', (event) => { if (event.target === modal) close(); });
       resetButton.addEventListener('click', () => {
         drawnItems.clearLayers();
         clearSummary();
