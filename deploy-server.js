@@ -6310,6 +6310,57 @@ function azobssParseJupemCartRows(html) {
   return rows;
 }
 
+function azobssHtmlAttribute(attributes, name) {
+  const match = String(attributes || "").match(new RegExp(`\\b${name}\\s*=\\s*(?:["']([^"']*)["']|([^\\s>]+))`, "i"));
+  return decodeHtmlEntities(match ? (match[1] !== undefined ? match[1] : match[2]) : "");
+}
+
+function azobssParseJupemPurchaseForm(html, baseUrl) {
+  const forms = [];
+  const formPattern = /<form\b([^>]*)>([\s\S]*?)<\/form>/gi;
+  let formMatch;
+  while ((formMatch = formPattern.exec(String(html || "")))) {
+    const attributes = formMatch[1] || "";
+    const content = formMatch[2] || "";
+    if (!/Tambah\s*(?:Ke|ke)?\s*Troli|ProductID|KadasterLotBerdigit/i.test(content + " " + attributes)) continue;
+    const body = new URLSearchParams();
+    const inputPattern = /<input\b([^>]*)>/gi;
+    let inputMatch;
+    while ((inputMatch = inputPattern.exec(content))) {
+      const inputAttributes = inputMatch[1] || "";
+      const name = azobssHtmlAttribute(inputAttributes, "name");
+      const type = azobssHtmlAttribute(inputAttributes, "type").toLowerCase();
+      if (!name || ["button", "reset", "file", "image"].includes(type)) continue;
+      if (["checkbox", "radio"].includes(type) && !/\bchecked(?:\s*=|\s|$)/i.test(inputAttributes)) continue;
+      body.append(name, azobssHtmlAttribute(inputAttributes, "value"));
+    }
+    const selectPattern = /<select\b([^>]*)>([\s\S]*?)<\/select>/gi;
+    let selectMatch;
+    while ((selectMatch = selectPattern.exec(content))) {
+      const name = azobssHtmlAttribute(selectMatch[1], "name");
+      if (!name) continue;
+      const options = Array.from(String(selectMatch[2] || "").matchAll(/<option\b([^>]*)>([\s\S]*?)<\/option>/gi));
+      const selected = options.find((option) => /\bselected(?:\s*=|\s|$)/i.test(option[1])) || options[0];
+      if (selected) body.append(name, azobssHtmlAttribute(selected[1], "value") || decodeHtmlEntities(String(selected[2] || "").replace(/<[^>]+>/g, "").trim()));
+    }
+    const textAreaPattern = /<textarea\b([^>]*)>([\s\S]*?)<\/textarea>/gi;
+    let textAreaMatch;
+    while ((textAreaMatch = textAreaPattern.exec(content))) {
+      const name = azobssHtmlAttribute(textAreaMatch[1], "name");
+      if (name) body.append(name, decodeHtmlEntities(textAreaMatch[2] || ""));
+    }
+    const action = azobssHtmlAttribute(attributes, "action");
+    const actionUrl = new URL(action || baseUrl, baseUrl);
+    if (actionUrl.protocol !== "https:" || actionUrl.hostname.toLowerCase() !== "ebiz.jupem.gov.my") continue;
+    forms.push({
+      action: actionUrl.toString(),
+      method: String(azobssHtmlAttribute(attributes, "method") || "POST").toUpperCase() === "GET" ? "GET" : "POST",
+      body
+    });
+  }
+  return forms[0] || null;
+}
+
 async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, loginRetried = false) {
   const cacheKey = `${productCode}:${stateCode}:${jobId}`;
   if (Number(azobssRegisteredLotJobs.get(cacheKey) || 0) > Date.now()) {
@@ -6337,6 +6388,23 @@ async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, j
     return await azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, jobId, true);
   }
 
+  const purchaseForm = azobssParseJupemPurchaseForm(registeredHtml, registered.url || productUrl);
+  if (purchaseForm) {
+    const submitUrl = purchaseForm.method === "GET"
+      ? `${purchaseForm.action}${purchaseForm.action.includes("?") ? "&" : "?"}${purchaseForm.body.toString()}`
+      : purchaseForm.action;
+    const submitted = await azobssJupemAuthFetch(submitUrl, {
+      method: purchaseForm.method,
+      ajax: true,
+      contentType: purchaseForm.method === "GET" ? "" : "application/x-www-form-urlencoded; charset=UTF-8",
+      referer: registered.url || productUrl,
+      body: purchaseForm.method === "GET" ? undefined : purchaseForm.body.toString()
+    }, session.cookie);
+    session.cookie = submitted.cookie;
+    azobssJupemAuthenticatedCache.cookie = session.cookie;
+    try { await submitted.response.arrayBuffer(); } catch (_error) {}
+  }
+
   let added = null;
   const cartUrl = `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`;
   const retryDelaysMs = [0, 500, 1000, 2000, 3500];
@@ -6354,6 +6422,12 @@ async function azobssRegisterAndRemoveJupemLotUnlocked(productCode, stateCode, j
     if (added) break;
   }
   if (!added) {
+    console.warn("JUPEM lot purchase form did not create a cart row:", {
+      responseUrl: registered.url || productUrl,
+      responseStatus: registered.response.status,
+      purchaseFormFound: Boolean(purchaseForm),
+      purchaseFormAction: purchaseForm ? new URL(purchaseForm.action).pathname : ""
+    });
     const message = /telah ditambah di dalam Troli Anda/i.test(registeredHtml)
       ? "JUPEM cart item could not be identified safely."
       : "JUPEM did not add the selected lot product to its cart.";
@@ -9493,7 +9567,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 6,
+          jupemStoreVersion: 7,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
