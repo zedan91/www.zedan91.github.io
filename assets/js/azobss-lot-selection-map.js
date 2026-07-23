@@ -254,13 +254,20 @@
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        const jupemLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerSet=2`, {
+        const jupemLotsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerMode=lots&layerSet=3`, {
           minZoom: Number(config.minSelectionZoom || 13),
           maxZoom: 20,
           opacity: 0.88,
           attribution: 'JUPEM eBiz'
-        }).addTo(map);
-        window.L.control.layers(null, { 'Sempadan JUPEM (Semua Negeri)': jupemLayer }, { collapsed: false }).addTo(map);
+        });
+        const jupemSheetsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerMode=sheets&layerSet=3`, {
+          minZoom: Number(config.minSelectionZoom || 13),
+          maxZoom: 20,
+          opacity: 1,
+          attribution: 'JUPEM eBiz'
+        });
+        const jupemLayer = window.L.layerGroup([jupemLotsLayer, jupemSheetsLayer]).addTo(map);
+        window.L.control.layers(null, { 'Lot & Garisan Syit JUPEM (Semua Negeri)': jupemLayer }, { collapsed: false }).addTo(map);
         drawnItems.addTo(map);
         map.addControl(new window.L.Control.Draw({
           position: 'topleft',

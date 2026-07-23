@@ -6129,6 +6129,15 @@ function azobssGetAllLotMapLayerIds(productCode) {
     .sort((left, right) => left - right);
 }
 
+function azobssGetAllLotMapLayerIdsByType(productCode, layerType) {
+  const product = cleanLotProduct(productCode);
+  const stateConfigs = Object.values(AZOBSS_JUPEM_LOT_CONFIG[product] || {});
+  const key = layerType === "sheets" ? "sheetLayer" : "lotLayer";
+  return [...new Set(stateConfigs.map((config) => config[key]))]
+    .filter(Number.isInteger)
+    .sort((left, right) => left - right);
+}
+
 function azobssNormalizeLotPolygon(value) {
   const geometry = value && value.geometry ? value.geometry : value;
   const sourceRings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
@@ -9878,7 +9887,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 23,
+          jupemStoreVersion: 24,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10107,9 +10116,14 @@ async function handler(req, res) {
           parsed.query.negeri || parsed.query.state || parsed.query.stateCode
         );
         const showAllStates = /^(?:1|true|all)$/i.test(String(parsed.query.allStates || parsed.query.scope || ""));
+        const layerMode = String(parsed.query.layerMode || "").trim().toLowerCase();
         const layerIds = showAllStates
-          ? azobssGetAllLotMapLayerIds(config.product)
-          : [config.lotLayer, config.sheetLayer];
+          ? (layerMode === "sheets" || layerMode === "lots"
+            ? azobssGetAllLotMapLayerIdsByType(config.product, layerMode)
+            : azobssGetAllLotMapLayerIds(config.product))
+          : (layerMode === "sheets"
+            ? [config.sheetLayer]
+            : (layerMode === "lots" ? [config.lotLayer] : [config.lotLayer, config.sheetLayer]));
         const zoom = Number(lotTileMatch[1]);
         const tileX = Number(lotTileMatch[2]);
         const tileY = Number(lotTileMatch[3]);
