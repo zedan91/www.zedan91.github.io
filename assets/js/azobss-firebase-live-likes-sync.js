@@ -2707,10 +2707,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       try{ lastPreparingData = await response.clone().json(); }catch(e){ lastPreparingData = null; }
       if(!lastPreparingData || !lastPreparingData.preparing) break;
       if(link){
-        const statusText = String(lastPreparingData.jobStatus || '').replace(/^esriJob/i, '');
-        link.textContent = statusText && !/unknown/i.test(statusText)
-          ? 'JUPEM ' + statusText + '...'
-          : 'JUPEM Preparing ZIP...';
+        link.textContent = 'Downloading...';
       }
       const waitMs = Math.max(1500, Math.min(10000, Number(lastPreparingData.retryAfterMs || 4000)));
       await new Promise(function(resolve){ setTimeout(resolve, waitMs); });
