@@ -6492,10 +6492,11 @@ async function azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, log
       purchaseFormFound: Boolean(purchaseForm),
       purchaseFormAction: purchaseForm ? new URL(purchaseForm.action).pathname : ""
     });
-    const message = /telah ditambah di dalam Troli Anda/i.test(registeredHtml)
-      ? "JUPEM cart item could not be identified safely."
-      : "JUPEM did not add the selected lot product to its cart.";
-    throw new Error(message);
+    const registrationAccepted = /\/Transaksi\/KadasterLotBerdigitCrop/i.test(registered.url || "")
+      || /telah ditambah di dalam Troli Anda/i.test(registeredHtml);
+    if (!registrationAccepted) {
+      throw new Error("JUPEM did not register the selected lot product.");
+    }
   }
 
   return { registered: true, session, added };
@@ -6528,18 +6529,22 @@ async function azobssRemoveRegisteredJupemLotUnlocked(registration) {
 }
 
 async function azobssWithRegisteredJupemLot(productCode, stateCode, jobId, task) {
-  return await azobssWithJupemCartMutationLock(async () => {
-    const registration = await azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, false);
-    try {
-      return await task(registration.session.cookie);
-    } finally {
+  const registration = await azobssWithJupemCartMutationLock(
+    () => azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, false)
+  );
+  try {
+    return await task(registration.session.cookie);
+  } finally {
+    if (registration.added) {
       try {
-        await azobssRemoveRegisteredJupemLotUnlocked(registration);
+        await azobssWithJupemCartMutationLock(
+          () => azobssRemoveRegisteredJupemLotUnlocked(registration)
+        );
       } catch (error) {
         console.warn("JUPEM temporary lot cart cleanup failed:", error && (error.message || error));
       }
     }
-  });
+  }
 }
 
 function azobssLotDownloadUrl(productCode, jobId, stateCode) {
@@ -7050,7 +7055,6 @@ async function azobssWaitForLotJobAndCache(record, type) {
   const productCode = type === "NDCDB_C3" ? "2" : "1";
   const jobId = azobssLotRecordJobId(record);
   const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || "");
-  const deadline = Date.now() + (4 * 60 * 1000);
   let lastError = null;
 
   if (!jobId || !stateCode) {
@@ -7058,6 +7062,7 @@ async function azobssWaitForLotJobAndCache(record, type) {
   }
 
   return await azobssWithRegisteredJupemLot(productCode, stateCode, jobId, async (sessionCookie) => {
+    const deadline = Date.now() + (4 * 60 * 1000);
     while (Date.now() < deadline) {
       const cached = azobssReadLotCachedZip(productCode, stateCode, jobId);
       if (cached) return cached;
@@ -7090,8 +7095,8 @@ function azobssStartLotCacheTask(record, type) {
   const cacheKey = azobssLotCacheKey(productCode, stateCode, jobId);
   let current = azobssLotCacheTasks.get(cacheKey) || null;
   if (current && current.status === "downloading") return current;
-  if (current && current.status === "failed" && current.attempts >= 3) return current;
   if (current && current.status === "failed" && Number(current.nextRetryAt || 0) > Date.now()) return current;
+  if (current && current.status === "failed" && current.attempts >= 3) current = null;
   if (current && current.status === "ready") current = null;
 
   const task = {
@@ -7114,7 +7119,7 @@ function azobssStartLotCacheTask(record, type) {
         ...task,
         status: "failed",
         error: "Backend AZOBSS belum selesai menyediakan fail ZIP.",
-        nextRetryAt: Date.now() + 5000
+        nextRetryAt: Date.now() + 15000
       });
     })
     .catch((error) => {
@@ -7123,7 +7128,7 @@ function azobssStartLotCacheTask(record, type) {
         ...task,
         status: "failed",
         error: azobssIsTransientJupemError(error) ? "Sambungan sumber data terputus sementara." : String(error && error.message || "Backend AZOBSS belum selesai menyediakan fail ZIP."),
-        nextRetryAt: Date.now() + 5000
+        nextRetryAt: Date.now() + 15000
       });
     });
 
@@ -9859,7 +9864,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 20,
+          jupemStoreVersion: 21,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10900,13 +10905,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       );
     }
 
-    if (!lotBuffer) {
-      try {
-        lotBuffer = await azobssEnsureLotCachedZip(record, type);
-      } catch (fetchError) {
-        console.error(type + " controlled cache/fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
-      }
-    }
     if (!lotBuffer || !azobssBufferIsZip(lotBuffer)) {
       azobssStartLotCacheTask(record, type);
       return azobssPaBmDownloadPreparing(
