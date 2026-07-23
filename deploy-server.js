@@ -6876,10 +6876,9 @@ async function azobssCurlFetchFile(candidate, cookie) {
     "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
     "-H", "Accept: application/zip,application/x-zip-compressed,application/pdf,image/tiff,image/*,application/octet-stream,*/*",
     "-H", "Accept-Language: ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
-    "-H", "Referer: https://ebiz.jupem.gov.my/",
-    "-H", "Origin: https://ebiz.jupem.gov.my"
+    "-H", "Referer: https://ebiz.jupem.gov.my/"
   ];
-  if (cookie) args.push("-H", "Cookie: " + cookie);
+  if (cookie) args.push("--cookie", cookie);
   args.push(candidate);
 
   try {
@@ -7262,6 +7261,14 @@ async function azobssFetchLotRecordFile(record, type) {
     for (const candidate of candidates) {
       lastResult = await azobssCurlFetchFile(candidate, session.cookie);
       if (lastResult.validFile && azobssBufferIsZip(lastResult.buffer)) return lastResult;
+      console.warn("AZOBSS Lot direct download invalid:", JSON.stringify({
+        attempt: attempt + 1,
+        status: lastResult.response && lastResult.response.status,
+        contentType: lastResult.contentType,
+        bytes: lastResult.buffer && lastResult.buffer.length || 0,
+        url: candidate,
+        head: String(lastResult.firstText || "").replace(/\s+/g, " ").slice(0, 140)
+      }).slice(0, 850));
     }
     azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
   }
@@ -9839,7 +9846,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 18,
+          jupemStoreVersion: 19,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
