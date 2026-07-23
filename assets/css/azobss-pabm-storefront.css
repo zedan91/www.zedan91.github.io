@@ -1169,6 +1169,22 @@ body.pa-bm-page #paBmToyyibStatus {
   font-size: 11px !important;
 }
 
+body.pa-bm-page #pabmStoreCartPanel.is-cart-updated {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, .28), 0 0 22px rgba(34, 197, 94, .22) !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.pa-bm-page #pabmStoreCartPanel.is-cart-updated {
+    animation: pabmCartConfirmed .55s ease-out 2 alternate;
+  }
+}
+
+@keyframes pabmCartConfirmed {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2px); }
+}
+
 body.pa-bm-page .toyyibpay-method-logos {
   margin-top: 9px !important;
 }

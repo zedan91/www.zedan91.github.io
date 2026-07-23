@@ -537,9 +537,18 @@ async function openJupemLotMap(button) {
         filename: prepared.filename,
         selectionToken: prepared.selectionToken
       });
-      setPanelStatus(status, item.__azobssAlreadyInCart
+      const confirmationMessage = item.__azobssAlreadyInCart
         ? 'Pilihan Lot Kadaster ini sudah ada dalam troli anda.'
-        : `${prepared.lotCount.toLocaleString('ms-MY')} lot berjaya disediakan dan ditambah ke troli pada harga RM${prepared.amount}.`, 'success');
+        : `Berjaya: ${prepared.lotCount.toLocaleString('ms-MY')} lot telah dimasukkan ke Troli AZOBSS pada harga RM${prepared.amount}.`;
+      setPanelStatus(status, confirmationMessage, 'success');
+      setCartSyncStatus(confirmationMessage);
+      if (typeof window.azShowToast === 'function') window.azShowToast(confirmationMessage);
+      const cartPanel = document.getElementById('pabmStoreCartPanel');
+      if (cartPanel) {
+        cartPanel.classList.remove('is-cart-updated');
+        window.requestAnimationFrame(() => cartPanel.classList.add('is-cart-updated'));
+        window.setTimeout(() => cartPanel.classList.remove('is-cart-updated'), 1800);
+      }
     } catch (mapError) {
       if (mapError && mapError.code !== 'MAP_CLOSED') {
         setPanelStatus(status, mapError.message || 'Peta pilihan tidak dapat dibuka.', 'unavailable');
