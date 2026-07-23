@@ -6296,32 +6296,56 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
 
 async function azobssSubmitLotGpJob(estimate) {
   const serviceUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/${estimate.config.gp}`;
-  const submitBody = new URLSearchParams({
-    f: "json",
-    token: estimate.auth.token,
-    Layers_to_Clip: JSON.stringify([]),
-    Area_of_Interest: JSON.stringify(estimate.featureSet),
-    Feature_Format: "Shapefile - SHP - .shp"
-  });
-  const submitResponse = await fetch(`${serviceUrl}/submitJob`, azJupemFetchOptions({
-    method: "POST",
-    redirect: "follow",
-    signal: AbortSignal.timeout(60000),
-    headers: azobssJupemBaseHeaders({
-      "Accept": "application/json,*/*",
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      "Cookie": estimate.auth.cookie,
-      "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
-    }),
-    body: submitBody.toString()
-  }));
-  if (!submitResponse.ok) throw new Error(`JUPEM GP returned HTTP ${submitResponse.status}.`);
-  const submitted = await submitResponse.json();
-  if (submitted.error || !submitted.jobId) throw new Error(submitted.error && submitted.error.message || "JUPEM did not return a job ID.");
-  return {
-    jobId: String(submitted.jobId),
-    jobStatus: String(submitted.jobStatus || "esriJobSubmitted")
-  };
+  let auth = estimate.auth;
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt) {
+      await new Promise(resolve => setTimeout(resolve, attempt === 1 ? 1200 : 3000));
+      try { auth = await azobssGetJupemMapAuth(true); } catch (_) {}
+    }
+    const submitBody = new URLSearchParams({
+      f: "json",
+      token: auth.token,
+      Layers_to_Clip: JSON.stringify([]),
+      Area_of_Interest: JSON.stringify(estimate.featureSet),
+      Feature_Format: "Shapefile - SHP - .shp"
+    });
+    try {
+      const submitResponse = await fetch(`${serviceUrl}/submitJob`, azJupemFetchOptions({
+        method: "POST",
+        redirect: "follow",
+        signal: AbortSignal.timeout(60000),
+        headers: azobssJupemBaseHeaders({
+          "Accept": "application/json,*/*",
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "Cookie": auth.cookie,
+          "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
+        }),
+        body: submitBody.toString()
+      }));
+      if (!submitResponse.ok) {
+        const responseError = new Error(`JUPEM GP returned HTTP ${submitResponse.status}.`);
+        responseError.status = submitResponse.status;
+        throw responseError;
+      }
+      const submitted = await submitResponse.json();
+      if (submitted.error || !submitted.jobId) throw new Error(submitted.error && submitted.error.message || "JUPEM did not return a job ID.");
+      return {
+        jobId: String(submitted.jobId),
+        jobStatus: String(submitted.jobStatus || "esriJobSubmitted")
+      };
+    } catch (error) {
+      lastError = error;
+      const status = Number(error && error.status || 0);
+      if (status >= 400 && status < 500 && status !== 401 && status !== 403 && status !== 408 && status !== 429) break;
+    }
+  }
+  throw lastError || new Error("Sambungan JUPEM terputus sebelum Job ID diterima.");
+}
+
+function azobssIsTransientJupemError(error) {
+  const message = String(error && (error.message || error) || "");
+  return /fetch failed|network|socket|timed?\s*out|timeout|ECONN|EAI_AGAIN|ENOTFOUND|UND_ERR/i.test(message);
 }
 
 async function azobssGetLotGpJobStatus(productCode, stateCode, jobId) {
@@ -9732,7 +9756,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 14,
+          jupemStoreVersion: 15,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10073,7 +10097,9 @@ async function handler(req, res) {
       } catch (error) {
         const message = error && error.name === "AbortError"
           ? "Sambungan JUPEM mengambil masa terlalu lama. Sila cuba lagi."
-          : (error.message || "Pilihan Lot Kadaster tidak dapat diproses.");
+          : (azobssIsTransientJupemError(error)
+              ? "Sambungan JUPEM terputus sementara selepas beberapa percubaan. Sila tekan semula Sediakan & Tambah ke Troli."
+              : (error.message || "Pilihan Lot Kadaster tidak dapat diproses."));
         console.error("JUPEM lot selection failed:", error && (error.stack || error.message || error));
         return send(res, /invalid|missing|outside|unsupported|tidak ditemui|tiada lot|melebihi/i.test(message) ? 400 : 502, JSON.stringify({ ok: false, error: message }), "application/json");
       }
@@ -10148,6 +10174,14 @@ async function handler(req, res) {
         }), "application/json");
       } catch (error) {
         console.error("JUPEM lot job status failed:", error && (error.stack || error.message || error));
+        if (azobssIsTransientJupemError(error)) {
+          return send(res, 202, JSON.stringify({
+            ok: true,
+            ready: false,
+            transient: true,
+            message: "Sambungan JUPEM terputus sementara. Semakan akan dicuba semula."
+          }), "application/json", { "Retry-After": "3" });
+        }
         const statusCode = /not configured/i.test(String(error && error.message || "")) ? 503 : 502;
         return send(res, statusCode, JSON.stringify({ ok: false, error: error.message || "Status pilihan JUPEM tidak dapat disemak." }), "application/json");
       }

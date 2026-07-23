@@ -325,6 +325,8 @@
             checks += 1;
             const cacheMessage = ready.cacheStatus === 'downloading'
               ? 'Backend sedang memuat turun dan mengesahkan fail ZIP...'
+              : ready.transient
+                ? 'Sambungan JUPEM terputus sementara. Mencuba semula...'
               : 'JUPEM sedang menyediakan fail ZIP...';
             setStatus(status, `${cacheMessage} (${checks})`, 'loading');
             await new Promise((done) => window.setTimeout(done, 2000));
