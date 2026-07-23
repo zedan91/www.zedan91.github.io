@@ -2413,7 +2413,8 @@ function purchaseRecordUser(user){
 function normalizePurchasePayload(payload){
   const userInfo = purchaseRecordUser();
   const type = String(payload?.productType || payload?.product || payload?.type || 'PA').trim().toUpperCase();
-  const code = String(payload?.itemCode || payload?.code || payload?.station || payload?.stationNo || payload?.stesen || payload?.pa || payload?.noPA || payload?.productId || payload?.id || '').trim().toUpperCase();
+  const rawCode = String(payload?.itemCode || payload?.code || payload?.station || payload?.stationNo || payload?.stesen || payload?.pa || payload?.noPA || payload?.productId || payload?.id || '').trim();
+  const code = type === 'NDCDB' || type === 'NDCDB_C3' ? rawCode : rawCode.toUpperCase();
   const negeri = String(payload?.negeri || payload?.state || payload?.stateName || '').trim();
   const amount = Number(payload?.amount || payload?.price || (type === 'PA' ? 5 : 3));
   const now = new Date();
@@ -2888,7 +2889,10 @@ function azobssPaidPurchaseDownloadFilename(r){
     const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
     return itemCode ? ('PA' + itemCode + '.pdf') : 'PA.pdf';
   }
-  const code = String(r.itemCode || r.stationNo || r.stesen || r.productId || '').trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
+  const sourceCode = type === 'NDCDB' || type === 'NDCDB_C3'
+    ? (r.productId || r.itemCode || '')
+    : (r.itemCode || r.stationNo || r.stesen || r.productId || '');
+  const code = String(sourceCode).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
   const prefix = type || (String(r.jenis || '1') === '2' ? 'SBM' : 'BM');
   return (prefix + (code ? '-' + code : '') + '.pdf').replace(/-+/g, '-');
 }
@@ -3369,7 +3373,11 @@ function azobssPurchaseSelectionCellHtml(r){
 }
 
 function purchaseDetailRowHtml(r){
-  const item = `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim();
+  const itemType = String(r.productType || r.product || 'PA').trim().toUpperCase();
+  const itemCode = (itemType === 'NDCDB' || itemType === 'NDCDB_C3') && r.productId
+    ? r.productId
+    : (r.itemCode || '-');
+  const item = `${r.productType || 'PA'} ${itemCode}`.trim();
   const amount = Number(r.amount || 0);
   const canUncart = azobssCanUncartPurchase(r);
   const paidDownloadUrl = azobssBuildControlledPurchaseDownloadUrl(r);

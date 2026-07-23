@@ -129,9 +129,10 @@ function normalizeType(value) {
 }
 
 function normalizeCode(value, type) {
-  const raw = String(value || '').trim().toUpperCase();
-  if (type === 'PA') return raw.replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
-  return raw.replace(/\s+/g, ' ');
+  const raw = String(value || '').trim();
+  if (type === 'PA') return raw.toUpperCase().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+  if (type === 'NDCDB' || type === 'NDCDB_C3') return raw.replace(/\s+/g, ' ');
+  return raw.toUpperCase().replace(/\s+/g, ' ');
 }
 
 function normalizeVariant(value, type) {

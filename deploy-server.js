@@ -3106,7 +3106,9 @@ function azobssPaBmRecordType(record) {
   return compact;
 }
 function azobssPaBmRecordCode(record) {
-  return String(record && (record.itemCode || record.pa || record.noPA || record.stesen || record.stationNo || record.code) || "").trim().toUpperCase();
+  const value = String(record && (record.itemCode || record.pa || record.noPA || record.stesen || record.stationNo || record.code) || "").trim();
+  const type = azobssPaBmRecordType(record);
+  return type === "NDCDB" || type === "NDCDB_C3" ? value : value.toUpperCase();
 }
 
 function azobssSafeJupemDownloadUrl(rawUrl, productType) {
@@ -3437,9 +3439,10 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     const id = String(item && (item.id || item.firestoreId || item.purchaseLogId || item.recordId) || "").trim();
     if (id && !id.startsWith("local-")) return [db.collection("purchaseLogs").doc(id)];
 
-    const itemCode = String(item && (item.itemCode || item.code) || "").trim().toUpperCase();
-    if (!itemCode) return [];
     const productType = String(item && (item.productType || item.product) || "").trim().toUpperCase();
+    const rawItemCode = String(item && (item.itemCode || item.code) || "").trim();
+    const itemCode = productType === "NDCDB" || productType === "NDCDB_C3" ? rawItemCode : rawItemCode.toUpperCase();
+    if (!itemCode) return [];
     const negeri = String(item && (item.negeri || item.state) || "").trim().toUpperCase();
     const variant = String(item && (item.variant || item.areaSize) || "").trim().toUpperCase();
     const uid = String(order.user && order.user.uid || order.uid || "").trim();
@@ -3483,10 +3486,12 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
   for (const prepared of preparedItems) {
     const item = prepared.item;
     const refs = prepared.refs;
+    const updateProductType = String(item.productType || item.product || "").toUpperCase();
+    const updateItemCodeRaw = String(item.itemCode || item.code || "");
     const update = {
       ...baseUpdate,
-      productType: String(item.productType || item.product || "").toUpperCase() || undefined,
-      itemCode: String(item.itemCode || item.code || "").toUpperCase() || undefined,
+      productType: updateProductType || undefined,
+      itemCode: (updateProductType === "NDCDB" || updateProductType === "NDCDB_C3" ? updateItemCodeRaw : updateItemCodeRaw.toUpperCase()) || undefined,
       negeri: String(item.negeri || item.state || "") || undefined,
       amount: Number(item.amount || 0) || undefined,
       productId: String(item.productId || "") || undefined,
@@ -3695,7 +3700,8 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
     if (!allowedProductTypes.has(productType)) checkoutError("Unsupported JUPEM document category.");
     const negeri = cleanPremiumText(rawItem.negeri || "", 80).toUpperCase();
     if (!allowedStates.has(negeri)) checkoutError("Please select a valid state for every document.");
-    let itemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80).toUpperCase();
+    const rawItemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80);
+    let itemCode = areaProductTypes.has(productType) ? rawItemCode : rawItemCode.toUpperCase();
     if (productType === "PA") itemCode = itemCode.replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
     if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) checkoutError("A valid document number is required for every cart item.");
     let variant = areaProductTypes.has(productType)
@@ -7010,9 +7016,41 @@ async function azobssFetchSyitRecordFile(record) {
 }
 
 function azobssBuildLotDownloadCandidates(record, type) {
-  return azobssUnique([
-    azobssSafeJupemDownloadUrl(record && (record.downloadUrl || record.url), type)
+  const rawUrls = azobssUnique([
+    record && record.downloadUrl,
+    record && record.url
   ]);
+  let urlJobId = "";
+  for (const rawUrl of rawUrls) {
+    try {
+      const url = new URL(String(rawUrl || ""));
+      const match = url.pathname.match(/\/MuatTurunLotKadasterBerdigitCrop(?:c3)?\/([^/?#]+)/i);
+      if (match && match[1]) {
+        urlJobId = decodeURIComponent(match[1]);
+        break;
+      }
+    } catch (_) {}
+  }
+  const jobId = String(urlJobId || record && (record.productId || record.jobId || record.itemCode || record.code) || "").trim();
+  const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || "");
+  const productCode = type === "NDCDB_C3" ? "2" : "1";
+  const generatedUrl = jobId && stateCode ? azobssLotDownloadUrl(productCode, jobId, stateCode) : "";
+  return azobssUnique([
+    ...rawUrls.map((rawUrl) => azobssSafeJupemDownloadUrl(rawUrl, type)),
+    azobssSafeJupemDownloadUrl(generatedUrl, type)
+  ]);
+}
+
+function azobssLotRecordJobId(record) {
+  const candidates = azobssBuildLotDownloadCandidates(record, azobssPaBmRecordType(record));
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(candidate);
+      const match = url.pathname.match(/\/MuatTurunLotKadasterBerdigitCrop(?:c3)?\/([^/?#]+)/i);
+      if (match && match[1]) return decodeURIComponent(match[1]);
+    } catch (_) {}
+  }
+  return String(record && (record.productId || record.jobId || record.itemCode || record.code) || "").trim();
 }
 
 async function azobssFetchLotRecordFile(record, type) {
@@ -8156,7 +8194,8 @@ async function handler(req, res) {
           if (!allowedStates.has(negeri)) {
             return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Please select a valid state for every document." }, null, 2), "application/json");
           }
-          let itemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80).toUpperCase();
+          const rawItemCode = cleanPremiumText(rawItem.itemCode || rawItem.stationNo || rawItem.productId || "", 80);
+          let itemCode = areaProductTypes.has(productType) ? rawItemCode : rawItemCode.toUpperCase();
           if (productType === "PA") itemCode = itemCode.replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
           if (!itemCode || (productType === "PA" && !/^\d{1,12}$/.test(itemCode))) {
             return send(res, 400, JSON.stringify({ ok:false, success:false, error:"A valid document number is required for every cart item." }, null, 2), "application/json");
@@ -9603,7 +9642,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 12,
+          jupemStoreVersion: 13,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10575,7 +10614,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
   if (type === "NDCDB" || type === "NDCDB_C3") {
     const productCode = type === "NDCDB_C3" ? "2" : "1";
-    const jobId = String(record.productId || record.jobId || record.itemCode || record.code || "").trim();
+    const jobId = azobssLotRecordJobId(record);
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
     let jobStatus = "esriJobUnknown";
 
