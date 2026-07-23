@@ -260,14 +260,15 @@
           opacity: 0.88,
           attribution: 'JUPEM eBiz'
         });
-        const jupemSheetsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerMode=sheets&layerSet=3`, {
+        const jupemSheetsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&layerMode=sheets&layerSet=4`, {
           minZoom: Number(config.minSelectionZoom || 13),
           maxZoom: 20,
           opacity: 1,
           attribution: 'JUPEM eBiz'
         });
         const jupemLayer = window.L.layerGroup([jupemLotsLayer, jupemSheetsLayer]).addTo(map);
-        window.L.control.layers(null, { 'Lot & Garisan Syit JUPEM (Semua Negeri)': jupemLayer }, { collapsed: false }).addTo(map);
+        const selectedStateLabel = stateName || config.negeri || 'Negeri Dipilih';
+        window.L.control.layers(null, { [`Lot Semua Negeri & Garisan Syit ${selectedStateLabel}`]: jupemLayer }, { collapsed: false }).addTo(map);
         drawnItems.addTo(map);
         map.addControl(new window.L.Control.Draw({
           position: 'topleft',
