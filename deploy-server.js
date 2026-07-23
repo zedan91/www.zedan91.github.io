@@ -3543,7 +3543,7 @@ function azobssPaBmDownloadPreparing(res, jobStatus, message) {
     preparing: true,
     jobStatus: String(jobStatus || "esriJobUnknown"),
     retryAfterMs: 4000,
-    error: message || "JUPEM sedang menyediakan fail ZIP. Muat turun akan dicuba semula secara automatik."
+    error: message || "Backend AZOBSS sedang menyediakan fail ZIP. Muat turun akan dicuba semula secara automatik."
   }, null, 2), "application/json", {
     "Cache-Control": "no-store",
     "Retry-After": "4"
@@ -7038,6 +7038,40 @@ async function azobssEnsureLotCachedZip(record, type) {
   }
 }
 
+async function azobssWaitForLotJobAndCache(record, type) {
+  const productCode = type === "NDCDB_C3" ? "2" : "1";
+  const jobId = azobssLotRecordJobId(record);
+  const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || "");
+  const deadline = Date.now() + (4 * 60 * 1000);
+  let lastError = null;
+
+  while (Date.now() < deadline) {
+    const cached = azobssReadLotCachedZip(productCode, stateCode, jobId);
+    if (cached) return cached;
+
+    try {
+      const jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
+      if (/Failed|Cancelled|TimedOut/i.test(jobStatus)) {
+        throw new Error("JUPEM tidak berjaya menghasilkan ID pilihan Lot Kadaster.");
+      }
+      if (/Succeeded$/i.test(jobStatus)) {
+        const buffer = await azobssEnsureLotCachedZip(record, type);
+        if (buffer && azobssBufferIsZip(buffer)) return buffer;
+        lastError = new Error("Fail ZIP belum tersedia melalui pautan ID pilihan.");
+      }
+    } catch (error) {
+      lastError = error;
+      if (!azobssIsTransientJupemError(error) && /tidak berjaya menghasilkan ID/i.test(String(error && error.message || ""))) {
+        throw error;
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 2500));
+  }
+
+  throw lastError || new Error("Backend AZOBSS tidak sempat menyediakan fail ZIP dalam tempoh yang ditetapkan.");
+}
+
 function azobssStartLotCacheTask(record, type) {
   const productCode = type === "NDCDB_C3" ? "2" : "1";
   const jobId = azobssLotRecordJobId(record);
@@ -7065,7 +7099,7 @@ function azobssStartLotCacheTask(record, type) {
   azobssLotCacheTasks.set(cacheKey, task);
 
   Promise.resolve()
-    .then(() => azobssEnsureLotCachedZip(record, type))
+    .then(() => azobssWaitForLotJobAndCache(record, type))
     .then((buffer) => {
       if (buffer && azobssBufferIsZip(buffer)) {
         azobssLotCacheTasks.set(cacheKey, { ...task, status: "ready", completedAt: Date.now() });
@@ -7074,7 +7108,7 @@ function azobssStartLotCacheTask(record, type) {
       azobssLotCacheTasks.set(cacheKey, {
         ...task,
         status: "failed",
-        error: "Fail ZIP JUPEM belum tersedia.",
+        error: "Backend AZOBSS belum selesai menyediakan fail ZIP.",
         nextRetryAt: Date.now() + 5000
       });
     })
@@ -7083,7 +7117,7 @@ function azobssStartLotCacheTask(record, type) {
       azobssLotCacheTasks.set(cacheKey, {
         ...task,
         status: "failed",
-        error: azobssIsTransientJupemError(error) ? "Sambungan JUPEM terputus sementara." : String(error && error.message || "Fail ZIP JUPEM belum tersedia."),
+        error: azobssIsTransientJupemError(error) ? "Sambungan sumber data terputus sementara." : String(error && error.message || "Backend AZOBSS belum selesai menyediakan fail ZIP."),
         nextRetryAt: Date.now() + 5000
       });
     });
@@ -9810,7 +9844,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 16,
+          jupemStoreVersion: 17,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10119,9 +10153,10 @@ async function handler(req, res) {
 
         const job = await azobssSubmitLotGpJob(estimate);
         const downloadUrl = azobssLotDownloadUrl(productCode, job.jobId, stateCode);
-        const selectionToken = azobssCreateLotSelectionToken({
-          ready: false,
-          directDownload: false,
+        const readyPayload = {
+          ready: true,
+          directDownload: true,
+          cached: false,
           productType: publicResult.productType,
           productCode,
           stateCode,
@@ -10137,11 +10172,23 @@ async function handler(req, res) {
           selectedAreaM2: publicResult.selectedAreaM2,
           preparedAtMs: Date.now(),
           expiresAtMs: Date.now() + (2 * 60 * 60 * 1000)
-        });
-        return send(res, 202, JSON.stringify({
+        };
+        const cacheRecord = {
+          productType: publicResult.productType,
+          productId: job.jobId,
+          jobId: job.jobId,
+          itemCode: job.jobId,
+          negeri: publicResult.negeri,
+          state: publicResult.negeri,
+          downloadUrl
+        };
+        azobssStartLotCacheTask(cacheRecord, publicResult.productType);
+        const selectionToken = azobssCreateLotSelectionToken(readyPayload);
+        return send(res, 200, JSON.stringify({
           ok: true,
-          ready: false,
-          directDownload: false,
+          ready: true,
+          directDownload: true,
+          cached: false,
           ...publicResult,
           jobId: job.jobId,
           jobStatus: job.jobStatus,
@@ -10179,7 +10226,7 @@ async function handler(req, res) {
               ok: false,
               ready: false,
               jobStatus,
-              error: "JUPEM mengambil masa melebihi 4 minit untuk menyediakan fail. Sila padam pilihan dan cuba kawasan yang lebih kecil atau cuba semula."
+              error: "Backend AZOBSS mengambil masa melebihi 4 minit untuk menyediakan fail. Sila cuba semula."
             }), "application/json");
           }
           return send(res, 202, JSON.stringify({ ok: true, ready: false, jobStatus, phase: "jupem", elapsedMs }), "application/json");
@@ -10202,7 +10249,7 @@ async function handler(req, res) {
               ok: false,
               ready: false,
               cacheStatus: "failed",
-              error: "Backend tidak berjaya mendapatkan fail ZIP JUPEM selepas 3 percubaan. Sila padam pilihan dan cuba semula."
+              error: "Backend AZOBSS tidak berjaya menyediakan fail ZIP selepas 3 percubaan. Sila cuba semula."
             }), "application/json");
           }
           return send(res, 202, JSON.stringify({
@@ -10214,8 +10261,8 @@ async function handler(req, res) {
             cacheAttempt: cacheTask.attempts,
             elapsedMs: Date.now() - Number(cacheTask.startedAt || Date.now()),
             message: cacheTask.status === "failed"
-              ? "Fail ZIP belum tersedia. Backend akan mencuba semula."
-              : "Backend sedang memuat turun dan mengesahkan fail ZIP JUPEM."
+              ? "Fail ZIP belum tersedia. Backend AZOBSS akan mencuba semula."
+              : "Backend AZOBSS sedang memuat turun dan mengesahkan fail ZIP."
           }), "application/json");
         }
         const readyPayload = {
@@ -10848,7 +10895,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       try {
         jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
         if (/Failed|Cancelled|TimedOut/i.test(jobStatus)) {
-          return azobssPaBmDownloadError(res, 409, "JUPEM tidak berjaya menyediakan fail Lot Kadaster ini. Kuota muat turun anda tidak digunakan.");
+          return azobssPaBmDownloadError(res, 409, "ID pilihan Lot Kadaster ini tidak dapat diproses. Kuota muat turun anda tidak digunakan.");
         }
         if (!/Succeeded$/i.test(jobStatus)) {
           return azobssPaBmDownloadPreparing(res, jobStatus);
@@ -10869,7 +10916,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadPreparing(
         res,
         jobStatus,
-        "JUPEM telah menerima pilihan ini tetapi fail ZIP masih sedang disediakan. Muat turun akan dicuba semula secara automatik dan kuota anda belum digunakan."
+        "Backend AZOBSS masih sedang menyediakan fail ZIP. Muat turun akan dicuba semula secara automatik dan kuota anda belum digunakan."
       );
     }
     try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }

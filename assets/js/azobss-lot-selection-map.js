@@ -309,7 +309,7 @@
         if (!selectedGeometry || !estimate || addButton.disabled) return;
         addButton.disabled = true;
         addButton.textContent = 'Menghasilkan ID pilihan...';
-        setStatus(status, 'Menghantar lot terpilih kepada JUPEM untuk mendapatkan job ID...', 'loading');
+        setStatus(status, 'Mendapatkan ID pilihan Lot Kadaster...', 'loading');
         try {
           operationController = new AbortController();
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
@@ -319,28 +319,12 @@
             stateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
-          let ready = prepared;
-          let checks = 0;
-          const preparationStartedAt = Date.now();
-          while (!ready.ready && checks < 120 && Date.now() - preparationStartedAt < 4 * 60 * 1000) {
-            checks += 1;
-            const elapsedSeconds = Math.max(1, Math.round((Date.now() - preparationStartedAt) / 1000));
-            const cacheMessage = ready.cacheStatus === 'downloading' || ready.cacheStatus === 'retrying'
-              ? `Backend sedang memuat turun dan mengesahkan fail ZIP (percubaan ${ready.cacheAttempt || 1})...`
-              : ready.transient
-                ? 'Sambungan JUPEM terputus sementara. Mencuba semula...'
-              : 'JUPEM sedang menyediakan fail ZIP...';
-            addButton.textContent = ready.phase === 'cache' ? 'Memuat turun ZIP...' : 'Menyediakan fail ZIP...';
-            setStatus(status, `${cacheMessage} ${elapsedSeconds}s`, 'loading');
-            await new Promise((done) => window.setTimeout(done, 2000));
-            ready = await postJson('/api/jupem-lot-selection/status', {
-              selectionToken: prepared.selectionToken
-            }, token, operationController.signal);
+          if (!prepared.ready || !prepared.jobId || !prepared.selectionToken) {
+            throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
           }
-          if (!ready.ready) throw new Error('Penyediaan fail melebihi 4 minit. Sila padam pilihan dan cuba kawasan yang lebih kecil atau cuba semula.');
           settled = true;
           cleanup();
-          resolve(ready);
+          resolve(prepared);
         } catch (error) {
           addButton.disabled = false;
           addButton.textContent = 'Sediakan & Tambah ke Troli';
