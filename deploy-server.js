@@ -6428,21 +6428,116 @@ async function azobssGetLotGpJobStatus(productCode, stateCode, jobId) {
   return String(job.jobStatus || "esriJobUnknown");
 }
 
+function azobssSplitJupemCallArguments(source) {
+  const args = [];
+  let value = "";
+  let quote = "";
+  let escaped = false;
+  for (const character of String(source || "")) {
+    if (quote) {
+      if (escaped) {
+        value += character;
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === quote) {
+        quote = "";
+      } else {
+        value += character;
+      }
+      continue;
+    }
+    if (character === "\"" || character === "'") {
+      quote = character;
+      continue;
+    }
+    if (character === ",") {
+      args.push(decodeHtmlEntities(value.trim()));
+      value = "";
+      continue;
+    }
+    value += character;
+  }
+  args.push(decodeHtmlEntities(value.trim()));
+  return args;
+}
+
 function azobssParseJupemCartRows(html) {
   const rows = [];
-  const pattern = /AddQuantity\(["']([^"']*)["']\s*,\s*["']([^"']*)["']\s*,\s*["']([^"']*)["']\s*,\s*["']delete["']\s*,\s*["']([^"']*)["']\s*,\s*["']([^"']*)["']\)/gi;
+  const pattern = /AddQuantity\s*\(([\s\S]*?)\)/gi;
   let match;
   while ((match = pattern.exec(String(html || "")))) {
+    const args = azobssSplitJupemCallArguments(match[1]);
+    if (args.length < 6 || !/^delete$/i.test(String(args[3] || "").trim())) continue;
+    const productSelectedId = String(args[0] || "").trim();
+    const userId = String(args[1] || "").trim();
+    const cartDetailId = String(args[2] || "").trim();
+    const type = String(args[4] || "").trim();
+    const categoryId = String(args[5] || "").trim();
+    if (!productSelectedId || !cartDetailId) continue;
     rows.push({
-      productSelectedId: match[1],
-      userId: match[2],
-      cartDetailId: match[3],
-      type: match[4],
-      categoryId: match[5],
-      key: `${match[1]}:${match[3]}`
+      productSelectedId,
+      userId,
+      cartDetailId,
+      type,
+      categoryId,
+      key: `${productSelectedId}:${cartDetailId}`
     });
   }
   return rows;
+}
+
+function azobssJupemIsLoginPage(html, url = "") {
+  const source = String(html || "");
+  return /\/Home\/LogMasuk(?:[/?#]|$)/i.test(String(url || ""))
+    || /<title>\s*Log\s*Masuk/i.test(source)
+    || (/name=["']KataLaluan["']/i.test(source) && /name=["']IDPengguna["']/i.test(source));
+}
+
+function azobssJupemRegistrationAccepted(html, url = "", status = 0) {
+  const source = String(html || "");
+  const responseStatus = Number(status || 0);
+  if (azobssJupemIsLoginPage(source, url)) return false;
+  if (responseStatus && (responseStatus < 200 || responseStatus >= 400)) return false;
+  return /\/Transaksi\/KadasterLotBerdigitCrop/i.test(String(url || ""))
+    || /telah\s+ditambah\s+(?:ke|di\s+dalam)\s+Troli/i.test(source)
+    || /berjaya[^<\r\n]{0,100}(?:tambah|daftar)[^<\r\n]{0,100}Troli/i.test(source)
+    || /(?:"|')?Success(?:"|')?\s*:\s*true/i.test(source);
+}
+
+function azobssJupemSubmissionLooksUsable(html, url = "", status = 0) {
+  const source = String(html || "");
+  const responseStatus = Number(status || 0);
+  if (responseStatus < 200 || responseStatus >= 400) return false;
+  if (azobssJupemIsLoginPage(source, url)) return false;
+  return !/(?:ralat|gagal|tidak\s+berjaya|invalid|exception)[^<\r\n]{0,120}(?:troli|produk|kadaster|lot)/i.test(source);
+}
+
+function azobssJupemPurchaseCandidateIds(purchaseForm, jobId, ...htmlSources) {
+  const candidates = new Set([String(jobId || "").trim()].filter(Boolean));
+  if (purchaseForm && purchaseForm.body) {
+    for (const [name, value] of purchaseForm.body.entries()) {
+      if (/Product(?:Selected)?ID|ProductID|KadasterLotBerdigit/i.test(String(name || ""))) {
+        const cleaned = String(value || "").trim();
+        if (cleaned) candidates.add(cleaned);
+      }
+    }
+  }
+  for (const html of htmlSources) {
+    const source = String(html || "");
+    const pattern = /(?:ProductSelectedID|ProductID)\s*(?:[=:]|value\s*=)\s*["']?([A-Za-z0-9_-]+)/gi;
+    let match;
+    while ((match = pattern.exec(source))) {
+      if (match[1]) candidates.add(String(match[1]).trim());
+    }
+  }
+  return candidates;
+}
+
+function azobssFindJupemCartRowByCandidates(rows, candidates) {
+  if (!candidates || !candidates.size) return null;
+  return rows.find((row) => candidates.has(String(row.productSelectedId || ""))
+    || candidates.has(String(row.cartDetailId || ""))) || null;
 }
 
 function azobssHtmlAttribute(attributes, name) {
@@ -6498,14 +6593,21 @@ function azobssParseJupemPurchaseForm(html, baseUrl) {
 
 async function azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, loginRetried = false) {
   const session = await azobssGetJupemAuthenticatedSession(false);
+  const cartUrl = `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`;
   const beforeResult = await azobssJupemAuthFetch(
-    `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`,
+    cartUrl,
     { referer: "https://ebiz.jupem.gov.my/Home/Dashboard" },
     session.cookie
   );
   session.cookie = beforeResult.cookie;
+  azobssJupemAuthenticatedCache.cookie = session.cookie;
   const beforeHtml = await beforeResult.response.text();
-  const beforeKeys = new Set(azobssParseJupemCartRows(beforeHtml).map((row) => row.key));
+  if (azobssJupemIsLoginPage(beforeHtml, beforeResult.url) && !loginRetried) {
+    azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+    return await azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, true);
+  }
+  const beforeRows = azobssParseJupemCartRows(beforeHtml);
+  const beforeKeys = new Set(beforeRows.map((row) => row.key));
 
   const productUrl = `https://ebiz.jupem.gov.my/Produk/LotKadasterBerdigitCrop?id=${encodeURIComponent(jobId)}&Negeri=${encodeURIComponent(stateCode)}&type=${encodeURIComponent(productCode)}`;
   const registered = await azobssJupemAuthFetch(productUrl, {
@@ -6513,13 +6615,17 @@ async function azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, log
     referer: `https://ebiz.jupem.gov.my/PetaInteraktif?type=${encodeURIComponent(stateCode)}lot&c=pl&jenis=Lot&produk=${encodeURIComponent(productCode)}&neg=${encodeURIComponent(stateCode)}`
   }, session.cookie);
   session.cookie = registered.cookie;
+  azobssJupemAuthenticatedCache.cookie = session.cookie;
   const registeredHtml = await registered.response.text();
-  if (/<title>\s*Log Masuk/i.test(registeredHtml) && !loginRetried) {
+  if (azobssJupemIsLoginPage(registeredHtml, registered.url) && !loginRetried) {
     azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
     return await azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, true);
   }
 
   const purchaseForm = azobssParseJupemPurchaseForm(registeredHtml, registered.url || productUrl);
+  let submittedHtml = "";
+  let submittedUrl = "";
+  let submittedStatus = 0;
   if (purchaseForm) {
     const submitUrl = purchaseForm.method === "GET"
       ? `${purchaseForm.action}${purchaseForm.action.includes("?") ? "&" : "?"}${purchaseForm.body.toString()}`
@@ -6533,40 +6639,90 @@ async function azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, log
     }, session.cookie);
     session.cookie = submitted.cookie;
     azobssJupemAuthenticatedCache.cookie = session.cookie;
-    try { await submitted.response.arrayBuffer(); } catch (_error) {}
+    submittedUrl = submitted.url || submitUrl;
+    submittedStatus = submitted.response.status;
+    submittedHtml = await submitted.response.text();
+    if (azobssJupemIsLoginPage(submittedHtml, submittedUrl) && !loginRetried) {
+      azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+      return await azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, true);
+    }
   }
 
+  const candidateIds = azobssJupemPurchaseCandidateIds(
+    purchaseForm,
+    jobId,
+    registeredHtml,
+    submittedHtml
+  );
   let added = null;
-  const cartUrl = `https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad/${encodeURIComponent(session.userId)}`;
-  const retryDelaysMs = [0, 500, 1000, 2000, 3500];
+  let existing = null;
+  let afterRows = [];
+  const retryDelaysMs = [0, 500, 1000, 2000, 3500, 5000, 7000, 9000];
   for (const delayMs of retryDelaysMs) {
     if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
     const afterResult = await azobssJupemAuthFetch(
       cartUrl,
-      { referer: productUrl },
+      { referer: submittedUrl || registered.url || productUrl },
       session.cookie
     );
     session.cookie = afterResult.cookie;
     azobssJupemAuthenticatedCache.cookie = session.cookie;
-    const afterRows = azobssParseJupemCartRows(await afterResult.response.text());
+    const afterHtml = await afterResult.response.text();
+    if (azobssJupemIsLoginPage(afterHtml, afterResult.url) && !loginRetried) {
+      azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+      return await azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, true);
+    }
+    afterRows = azobssParseJupemCartRows(afterHtml);
     added = afterRows.find((row) => !beforeKeys.has(row.key)) || null;
-    if (added) break;
+    existing = azobssFindJupemCartRowByCandidates(afterRows, candidateIds);
+    if (added || existing) break;
   }
-  if (!added) {
-    console.warn("JUPEM lot purchase form did not create a cart row:", {
+
+  const registrationAccepted = azobssJupemRegistrationAccepted(
+    submittedHtml || registeredHtml,
+    submittedUrl || registered.url || productUrl,
+    submittedStatus || registered.response.status
+  ) || azobssJupemRegistrationAccepted(
+    registeredHtml,
+    registered.url || productUrl,
+    registered.response.status
+  );
+  const submissionCompleted = Boolean(purchaseForm)
+    && azobssJupemSubmissionLooksUsable(submittedHtml, submittedUrl, submittedStatus);
+
+  if (!added && !existing && !registrationAccepted && !submissionCompleted) {
+    console.warn("JUPEM lot purchase form did not create a verifiable cart row:", {
       responseUrl: registered.url || productUrl,
       responseStatus: registered.response.status,
       purchaseFormFound: Boolean(purchaseForm),
-      purchaseFormAction: purchaseForm ? new URL(purchaseForm.action).pathname : ""
+      purchaseFormAction: purchaseForm ? new URL(purchaseForm.action).pathname : "",
+      submittedUrl,
+      submittedStatus,
+      beforeRows: beforeRows.length,
+      afterRows: afterRows.length,
+      candidateIds: Array.from(candidateIds)
     });
-    const registrationAccepted = /\/Transaksi\/KadasterLotBerdigitCrop/i.test(registered.url || "")
-      || /telah ditambah di dalam Troli Anda/i.test(registeredHtml);
-    if (!registrationAccepted) {
-      throw new Error("JUPEM did not register the selected lot product.");
-    }
+    throw new Error("JUPEM did not register the selected lot product.");
   }
 
-  return { registered: true, session, added };
+  if (!added && !existing) {
+    console.warn("JUPEM lot registration accepted without a visible cart row; continuing with download verification:", {
+      submittedUrl: submittedUrl || registered.url || productUrl,
+      submittedStatus: submittedStatus || registered.response.status,
+      registrationAccepted,
+      submissionCompleted,
+      beforeRows: beforeRows.length,
+      afterRows: afterRows.length
+    });
+  }
+
+  return {
+    registered: true,
+    session,
+    added,
+    existing: Boolean(existing && beforeKeys.has(existing.key)),
+    registrationAccepted: Boolean(registrationAccepted || submissionCompleted)
+  };
 }
 
 async function azobssRemoveRegisteredJupemLotUnlocked(registration) {
