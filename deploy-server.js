@@ -10366,7 +10366,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 29,
+          jupemStoreVersion: 30,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10740,8 +10740,10 @@ async function handler(req, res) {
 
     if (pathname === "/api/jupem-lot-selection/status" && req.method === "POST") {
       if (azRateLimitOrSend(req, res, "jupem-lot-status", 240, 10 * 60 * 1000)) return;
+      let bodyTextForStatus = "";
       try {
-        const body = JSON.parse(await readBody(req) || "{}");
+        bodyTextForStatus = await readBody(req);
+        const body = JSON.parse(bodyTextForStatus || "{}");
         const pending = azobssDecodeLotSelectionToken(body.selectionToken);
         if (!pending || !pending.jobId) {
           return send(res, 400, JSON.stringify({ ok: false, error: "Token pilihan JUPEM tidak sah atau telah tamat." }), "application/json");
@@ -10790,11 +10792,31 @@ async function handler(req, res) {
       } catch (error) {
         console.error("JUPEM lot job status failed:", error && (error.stack || error.message || error));
         if (azobssIsTransientJupemError(error)) {
+          // 570: Never drop the signed selection token during a temporary JUPEM delay.
+          // The frontend needs the same token for the next status poll.
+          let retryToken = "";
+          let retryPayload = null;
+          try {
+            const retryBody = JSON.parse(bodyTextForStatus || "{}");
+            retryToken = String(retryBody.selectionToken || "").trim();
+            retryPayload = azobssDecodeLotSelectionToken(retryToken);
+          } catch (_retryTokenError) {}
           return send(res, 202, JSON.stringify({
             ok: true,
             ready: false,
             preparing: true,
             transient: true,
+            selectionToken: retryToken,
+            jobId: retryPayload && retryPayload.jobId || "",
+            jobStatus: error && error.jobStatus || retryPayload && retryPayload.jobStatus || "esriJobExecuting",
+            productType: retryPayload && retryPayload.productType || "",
+            productCode: retryPayload && retryPayload.productCode || "",
+            stateCode: retryPayload && retryPayload.stateCode || "",
+            negeri: retryPayload && retryPayload.negeri || "",
+            variant: retryPayload && retryPayload.variant || "",
+            amount: retryPayload && retryPayload.amount || 0,
+            lotCount: retryPayload && retryPayload.lotCount || 0,
+            selectedAreaM2: retryPayload && retryPayload.selectedAreaM2 || 0,
             message: "Tengah Proses..."
           }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
         }

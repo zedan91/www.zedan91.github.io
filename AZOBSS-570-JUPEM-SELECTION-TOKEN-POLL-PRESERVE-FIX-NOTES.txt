@@ -1,0 +1,10 @@
+AZOBSS 570 - JUPEM Selection Token Poll Preserve Fix
+
+Fixes:
+- Preserve selectionToken when JUPEM status returns temporary HTTP 202.
+- Backend echoes the same signed token and pending job metadata during transient delays.
+- Frontend merges status responses instead of replacing trusted prepared data.
+- Prevents false "Token pilihan JUPEM tidak sah atau telah tamat" after one slow status poll.
+- Cache version azobss-lot-selection-map.js bumped to v19.
+- Render backend redeploy and GitHub Pages deploy required.
+- No Firebase Rules change required.

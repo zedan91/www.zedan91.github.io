@@ -425,9 +425,23 @@
                 }, { once: true });
               }
             });
-            prepared = await postJson('/api/jupem-lot-selection/status', {
-              selectionToken: prepared.selectionToken
+            const previousPrepared = prepared;
+            const statusUpdate = await postJson('/api/jupem-lot-selection/status', {
+              selectionToken: previousPrepared.selectionToken
             }, token, operationController.signal);
+            // 570: A temporary 202 response may contain only status fields. Merge it
+            // instead of replacing the signed token and trusted selection metadata.
+            prepared = {
+              ...previousPrepared,
+              ...statusUpdate,
+              selectionToken: String(statusUpdate.selectionToken || previousPrepared.selectionToken || '').trim(),
+              jobId: String(statusUpdate.jobId || previousPrepared.jobId || '').trim(),
+              productCode: String(statusUpdate.productCode || previousPrepared.productCode || productCode || '').trim(),
+              stateCode: String(statusUpdate.stateCode || previousPrepared.stateCode || activeStateCode || '').trim()
+            };
+            if (!prepared.selectionToken) {
+              throw new Error('Token pilihan Lot Kadaster hilang semasa semakan status. Sila cuba semula.');
+            }
           }
 
           if (!/^esriJobSucceeded$/i.test(String(prepared.jobStatus || '')) || !prepared.downloadUrl) {
