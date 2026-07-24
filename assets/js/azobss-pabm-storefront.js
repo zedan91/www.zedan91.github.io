@@ -151,7 +151,9 @@ function productPrice(type, variant = '', suppliedAmount = 0) {
   if (type === 'SYIT_PIAWAI') return 7;
   if (type === 'NDCDB' || type === 'NDCDB_C3') {
     const dynamicAmount = Number(suppliedAmount);
-    if (Number.isFinite(dynamicAmount) && dynamicAmount > 0) return Math.round((dynamicAmount + Number.EPSILON) * 100) / 100;
+    if (Number.isFinite(dynamicAmount) && dynamicAmount > 0) {
+      return Math.max(5, Math.floor(dynamicAmount + 0.5 + Number.EPSILON));
+    }
     return variant === 'FULL_SHEET' ? 50 : 15;
   }
   throw new Error('Unsupported document category.');
@@ -184,12 +186,22 @@ function readCart() {
   try {
     const rows = JSON.parse(localStorage.getItem(cartKey()) || '[]');
     const now = Date.now();
-    return Array.isArray(rows)
-      ? rows
-        .filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS)
-        .sort((a, b) => Number(b.addedAtMs || 0) - Number(a.addedAtMs || 0))
-        .slice(0, MAX_CART_ITEMS)
-      : [];
+    if (!Array.isArray(rows)) return [];
+    let migrated = false;
+    const cleanRows = rows
+      .filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS)
+      .map((item) => {
+        const type = String(item.productType || '').trim().toUpperCase();
+        if (type !== 'NDCDB' && type !== 'NDCDB_C3') return item;
+        const roundedAmount = productPrice(type, item.variant, item.amount);
+        if (Number(item.amount) === roundedAmount) return item;
+        migrated = true;
+        return { ...item, amount: roundedAmount };
+      })
+      .sort((a, b) => Number(b.addedAtMs || 0) - Number(a.addedAtMs || 0))
+      .slice(0, MAX_CART_ITEMS);
+    if (migrated) localStorage.setItem(cartKey(), JSON.stringify(cleanRows));
+    return cleanRows;
   } catch (_) {
     return [];
   }
@@ -359,7 +371,8 @@ async function reconcileEmptyStoredCart() {
 }
 
 function formatMoney(value) {
-  return 'RM' + Number(value || 0).toFixed(2);
+  const amount = Number(value || 0);
+  return 'RM' + (Number.isInteger(amount) ? String(amount) : amount.toFixed(2));
 }
 
 function cartTotal(items = readCart()) {

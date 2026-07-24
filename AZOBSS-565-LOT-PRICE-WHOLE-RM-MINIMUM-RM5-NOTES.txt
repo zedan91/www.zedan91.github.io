@@ -1,0 +1,16 @@
+AZOBSS 565 - Lot Kadaster Whole-Ringgit Price + RM5 Minimum
+
+Changes
+- Area-based Lot Kadaster price is rounded to the nearest whole Ringgit.
+- Decimal .50 and above rounds up; below .50 rounds down.
+- Minimum price is RM5 for any valid selected area.
+- Examples: RM34.16 -> RM34, RM34.50 -> RM35, RM0.60 -> RM5.
+- Backend recalculates the trusted amount from the signed area ratio.
+- Existing valid selection tokens with old decimal prices are migrated safely.
+- Existing Lot Kadaster cart entries are normalized to the new whole-RM price.
+- Map and cart display omit unnecessary .00.
+
+Deployment
+- GitHub Pages/site files: deploy required.
+- Render backend: redeploy required because deploy-server.js changed.
+- Firebase Rules: no change required.

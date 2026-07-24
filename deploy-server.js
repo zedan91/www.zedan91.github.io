@@ -6296,9 +6296,12 @@ function azobssLotPricingForRatio(value) {
   if (!Number.isFinite(areaRatio) || areaRatio <= 0 || areaRatio > 1.1) return null;
   if (areaRatio >= 0.9) return { variant: "FULL_SHEET", amount: 50 };
   const proportionalAmount = (areaRatio / 0.25) * 15;
+  // AZOBSS 565: Lot Kadaster uses whole-ringgit half-up rounding and a RM5 minimum.
+  // Examples: RM34.16 -> RM34, RM34.50 -> RM35, any smaller selection -> at least RM5.
+  const roundedAmount = Math.floor(proportionalAmount + 0.5 + Number.EPSILON);
   return {
     variant: "AREA_BASED",
-    amount: Math.max(1, Math.round((proportionalAmount + Number.EPSILON) * 100) / 100)
+    amount: Math.max(5, roundedAmount)
   };
 }
 
@@ -6919,9 +6922,10 @@ function azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode) {
   if (String(payload.negeri || "").toUpperCase() !== expectedState) return null;
   if (String(payload.jobId || "").toUpperCase() !== expectedCode) return null;
   const variant = String(payload.variant || "").toUpperCase();
-  const amount = Number(payload.amount || 0);
   const pricing = azobssLotPricingForRatio(payload.areaRatio);
-  if (!pricing || variant !== pricing.variant || Math.abs(amount - pricing.amount) > 0.001) return null;
+  // Always recalculate the trusted price from the signed area ratio. This also migrates
+  // valid pre-565 selection tokens that stored a decimal amount such as RM34.16.
+  if (!pricing || variant !== pricing.variant) return null;
   const downloadUrl = azobssSafeJupemDownloadUrl(payload.downloadUrl, expectedType);
   if (!downloadUrl) return null;
   return { ...payload, variant: pricing.variant, amount: pricing.amount, downloadUrl };
@@ -8485,9 +8489,9 @@ async function handler(req, res) {
           BM:3,
           SBM:3,
           GPS:9,
-          NDCDB_AREA_REFERENCE:{ ratioPercent:25, amount:15 },
+          NDCDB_AREA_REFERENCE:{ ratioPercent:25, amount:15, minimumAmount:5, rounding:"nearest-ringgit-half-up" },
           NDCDB_FULL_SHEET_DISCOUNT:{ minimumRatioPercent:90, amount:50 },
-          NDCDB_C3_AREA_REFERENCE:{ ratioPercent:25, amount:15 },
+          NDCDB_C3_AREA_REFERENCE:{ ratioPercent:25, amount:15, minimumAmount:5, rounding:"nearest-ringgit-half-up" },
           NDCDB_C3_FULL_SHEET_DISCOUNT:{ minimumRatioPercent:90, amount:50 },
           SYIT_PIAWAI:7
         },

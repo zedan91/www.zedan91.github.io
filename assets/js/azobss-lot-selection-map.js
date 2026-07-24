@@ -311,7 +311,7 @@
           const ratioPercent = Number(estimate.areaRatio || 0) * 100;
           priceNode.textContent = estimate.variant === 'FULL_SHEET'
             ? `${formatNumber(ratioPercent, 2)}% - Harga 1 Syit RM50`
-            : `${formatNumber(ratioPercent, 2)}% - RM${formatNumber(estimate.amount, 2)}`;
+            : `${formatNumber(ratioPercent, 2)}% - RM${formatNumber(estimate.amount, 0)}`;
           addButton.disabled = false;
           const stateNotice = activeStateCode !== previousStateCode
             ? ` Negeri dikesan secara automatik: ${activeStateName}.`
