@@ -1,0 +1,12 @@
+AZOBSS (568) NDCDB OUTPUT READY BUTTON LOCK FIX
+
+- Fixes Download button unlocking too early when ArcGIS only reports esriJobSucceeded.
+- Backend now also reads the asynchronous ArcGIS job result parameter and requires a real output file result.
+- Button stays disabled as "Tengah Proses..." until both conditions are true:
+  1) ArcGIS status is esriJobSucceeded
+  2) the ArcGIS job exposes a completed output file result (GPDataFile / result URL)
+- Frontend requires explicit zipReady=true, so an older Render backend cannot unlock the button accidentally.
+- Download quota is not incremented during readiness polling.
+- The final ZIP is still downloaded directly by the customer's browser from JUPEM; Render does not fetch, cache, or proxy the ZIP.
+- Render health jupemStoreVersion is now 28.
+- Deploy GitHub Pages and Render backend. Firebase Rules unchanged.
