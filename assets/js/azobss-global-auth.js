@@ -3193,7 +3193,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
     if(isLotDownload){
-      // 568: never expose the JUPEM direct URL until ArcGIS succeeds AND the public endpoint returns a real ZIP.
+      // 567: never expose the JUPEM direct URL until ArcGIS reports esriJobSucceeded.
       downloadOwner.phase = 'preparing';
       downloadOwner.label = 'Tengah Proses...';
       if(link) link.textContent = downloadOwner.label;
@@ -3204,7 +3204,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       for(let attempt = 0; attempt < 160; attempt += 1){
         const statusResponse = await fetch(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' });
         readiness = await statusResponse.json().catch(function(){ return {}; });
-        if(statusResponse.ok && readiness && readiness.ready === true && readiness.zipReady === true && /^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
+        if(statusResponse.ok && readiness && readiness.ready === true && /^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
           break;
         }
         if(statusResponse.status === 409 || (readiness && readiness.ok === false)){
@@ -3215,7 +3215,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         if(link) link.textContent = downloadOwner.label;
         await new Promise(function(resolve){ window.setTimeout(resolve, attempt < 12 ? 2500 : 5000); });
       }
-      if(!readiness || readiness.ready !== true || readiness.zipReady !== true || !/^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
+      if(!readiness || readiness.ready !== true || !/^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
         alert('JUPEM masih menyediakan fail Lot Kadaster. Kuota download tidak digunakan.');
         return false;
       }
@@ -3537,7 +3537,7 @@ function azobssQueueLotPurchaseReadiness(r){
       const response = await fetch(url, { method:'GET', cache:'no-store' });
       const data = await response.json().catch(function(){ return {}; });
       entry.jobStatus = String(data && data.jobStatus || '');
-      if(response.ok && data && data.ready === true && data.zipReady === true && /^esriJobSucceeded$/i.test(entry.jobStatus)){
+      if(response.ok && data && data.ready === true && /^esriJobSucceeded$/i.test(entry.jobStatus)){
         entry.status = 'ready';
         entry.readyAt = Date.now();
         try{ azobssSchedulePurchaseRecordsRefresh('NDCDB job succeeded'); }catch(e){}

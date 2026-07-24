@@ -6872,49 +6872,6 @@ function azobssLotDownloadUrl(productCode, jobId, stateCode) {
   return `https://ebiz.jupem.gov.my/MuatTurunPembelian/${pathName}/${encodeURIComponent(jobId)}?negeri=${encodeURIComponent(stateName)}`;
 }
 
-
-async function azobssGetLotGpOutputReadiness(productCode, stateCode, jobId) {
-  const config = azobssGetLotMapConfig(productCode, stateCode);
-  const auth = await azobssGetJupemMapAuth(false);
-  const serviceUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/${config.gp}`;
-  const jobUrl = `${serviceUrl}/jobs/${encodeURIComponent(String(jobId || ""))}`;
-  const job = await azobssJupemArcGisJson(jobUrl, {}, auth, 30000);
-  const jobStatus = String(job && job.jobStatus || "esriJobUnknown");
-  if (!/^esriJobSucceeded$/i.test(jobStatus)) {
-    return { jobStatus, outputReady: false, outputParam: "", outputUrl: "" };
-  }
-
-  const results = job && job.results && typeof job.results === "object" ? job.results : {};
-  const resultEntries = Object.entries(results)
-    .filter(([, descriptor]) => descriptor && typeof descriptor === "object" && descriptor.paramUrl)
-    .sort(([left], [right]) => {
-      const score = name => /zip/i.test(name) ? 0 : /file|output/i.test(name) ? 1 : 2;
-      return score(left) - score(right);
-    });
-
-  for (const [paramName, descriptor] of resultEntries) {
-    try {
-      const paramUrl = new URL(String(descriptor.paramUrl), jobUrl.endsWith("/") ? jobUrl : `${jobUrl}/`).toString();
-      const result = await azobssJupemArcGisJson(paramUrl, {}, auth, 30000);
-      const value = result && result.value;
-      const outputUrl = String(
-        result && result.url
-        || value && typeof value === "object" && value.url
-        || typeof value === "string" && value
-        || ""
-      ).trim();
-      const dataType = String(result && (result.dataType || result.paramDataType) || "");
-      if (outputUrl || /GPDataFile/i.test(dataType)) {
-        return { jobStatus, outputReady: true, outputParam: String(paramName), outputUrl };
-      }
-    } catch (error) {
-      console.warn("JUPEM Lot GP result parameter is not ready yet:", paramName, error && (error.message || error));
-    }
-  }
-
-  return { jobStatus, outputReady: false, outputParam: "", outputUrl: "" };
-}
-
 function azobssCreateLotSelectionToken(payload) {
   const body = Buffer.from(JSON.stringify(payload || {}), "utf8").toString("base64url");
   const signature = crypto.createHmac("sha256", azSecureDownloadSecret()).update(body).digest("base64url");
@@ -10234,7 +10191,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 28,
+          jupemStoreVersion: 27,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -11182,8 +11139,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
     if (!jobId || !stateCode) return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
     try {
-      const gpReady = await azobssGetLotGpOutputReadiness(productCode, stateCode, jobId);
-      const jobStatus = gpReady.jobStatus;
+      const jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
       if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(jobStatus)) {
         return send(res, 409, JSON.stringify({
           ok: false,
@@ -11199,17 +11155,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
           ready: false,
           preparing: true,
           jobStatus,
-          zipReady: false,
-          message: "Tengah Proses..."
-        }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
-      }
-      if (!gpReady.outputReady) {
-        return send(res, 202, JSON.stringify({
-          ok: true,
-          ready: false,
-          preparing: true,
-          jobStatus,
-          zipReady: false,
           message: "Tengah Proses..."
         }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
       }
@@ -11220,7 +11165,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
         preparing: false,
         delivery: "jupem-direct",
         jobStatus,
-        zipReady: true,
         jobId,
         stateCode,
         directUrl,
@@ -11332,8 +11276,8 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   }
 
   if (type === "NDCDB" || type === "NDCDB_C3") {
-    // 568: direct JUPEM delivery is issued only after ArcGIS succeeds and exposes its output file result.
-    // No quota is consumed while the job or its output file is still being prepared.
+    // 567: direct JUPEM delivery is issued only after ArcGIS reports esriJobSucceeded.
+    // No quota is consumed while the job is Submitted/Executing or while status checking is unavailable.
     const productCode = type === "NDCDB_C3" ? "2" : "1";
     const jobId = azobssLotRecordJobId(record);
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
@@ -11341,10 +11285,8 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
     }
     let jobStatus = "esriJobUnknown";
-    let gpReady = { jobStatus, outputReady: false };
     try {
-      gpReady = await azobssGetLotGpOutputReadiness(productCode, stateCode, jobId);
-      jobStatus = gpReady.jobStatus;
+      jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
     } catch (error) {
       console.warn("NDCDB final readiness check failed:", error && (error.message || error));
       return send(res, 202, JSON.stringify({
@@ -11353,7 +11295,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
         preparing: true,
         transient: true,
         jobStatus,
-        zipReady: false,
         message: "Tengah Proses..."
       }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
     }
@@ -11372,17 +11313,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
         ready: false,
         preparing: true,
         jobStatus,
-        zipReady: false,
-        message: "Tengah Proses..."
-      }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
-    }
-    if (!gpReady.outputReady) {
-      return send(res, 202, JSON.stringify({
-        ok: true,
-        ready: false,
-        preparing: true,
-        jobStatus,
-        zipReady: false,
         message: "Tengah Proses..."
       }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
     }
@@ -11399,7 +11329,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       preparing: false,
       delivery: "jupem-direct",
       jobStatus,
-      zipReady: true,
       openUrl: directUrl,
       directUrl,
       jobId,

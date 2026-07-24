@@ -3096,7 +3096,7 @@ function azobssQueueLotPurchaseReadiness(r){
       const response = await fetch(url, { method:'GET', cache:'no-store' });
       const data = await response.json().catch(function(){ return {}; });
       entry.jobStatus = String(data && data.jobStatus || '');
-      if(response.ok && data && data.ready === true && data.zipReady === true && /^esriJobSucceeded$/i.test(entry.jobStatus)){
+      if(response.ok && data && data.ready === true && /^esriJobSucceeded$/i.test(entry.jobStatus)){
         entry.status = 'ready';
         entry.readyAt = Date.now();
         try{ azobssSchedulePurchaseRecordsRefresh('NDCDB job succeeded'); }catch(e){}
