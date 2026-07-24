@@ -3193,35 +3193,42 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
     if(isLotDownload){
-      let readinessResponse = null;
-      let readinessData = null;
-      const readinessUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'prepare=1';
-      for(let attempt = 0; attempt < 225; attempt += 1){
-        readinessResponse = await fetch(readinessUrl, { method: 'GET', cache: 'no-store' });
-        try{ readinessData = await readinessResponse.clone().json(); }catch(e){ readinessData = null; }
-        if(readinessResponse.ok && readinessData && readinessData.ready === true) break;
-        if(readinessResponse.status !== 202 || !readinessData || !readinessData.preparing){
-          lotReadinessMap[downloadKey] = { status: 'failed', checkedAt: Date.now() };
-          alert((readinessData && (readinessData.error || readinessData.message)) || 'ZIP Lot Kadaster tidak dapat disediakan sekarang. Kuota muat turun tidak digunakan.');
-          return false;
-        }
-        lotReadinessMap[downloadKey] = { status: 'preparing', checkedAt: Date.now() };
-        downloadOwner.phase = 'preparing';
-        downloadOwner.label = 'Sedang Proses...';
-        if(link) link.textContent = downloadOwner.label;
-        azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
-        const waitMs = Math.max(1500, Math.min(10000, Number(readinessData.retryAfterMs || 4000)));
-        await new Promise(function(resolve){ setTimeout(resolve, waitMs); });
-      }
-      if(!readinessResponse || !readinessResponse.ok || !readinessData || readinessData.ready !== true){
-        lotReadinessMap[downloadKey] = { status: 'failed', checkedAt: Date.now() };
-        alert('ZIP Lot Kadaster masih belum tersedia selepas beberapa percubaan. Kuota muat turun tidak digunakan.');
+      // 566: ask AZOBSS only to verify payment/expiry/quota and return the JUPEM URL.
+      // The ZIP itself is downloaded by the browser directly from ebiz.jupem.gov.my.
+      downloadOwner.phase = 'downloading';
+      downloadOwner.label = 'Opening Download...';
+      if(link) link.textContent = downloadOwner.label;
+      azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+
+      const response = await fetch(directUrl, { method: 'GET', cache: 'no-store' });
+      let data = null;
+      try{ data = await response.json(); }catch(e){ data = null; }
+      if(!response.ok || !data || data.ok === false){
+        alert((data && (data.error || data.message)) || 'Pengesahan download gagal. Sila cuba lagi.');
         return false;
       }
-      lotReadinessMap[downloadKey] = { status: 'ready', checkedAt: Date.now() };
-      downloadOwner.phase = 'downloading';
-      downloadOwner.label = 'Downloading...';
-      azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+      const openUrl = String(data.openUrl || data.directUrl || data.url || '').trim();
+      if(!openUrl || !/^https:\/\/ebiz\.jupem\.gov\.my\/MuatTurunPembelian\/MuatTurunLotKadasterBerdigitCrop(?:c3)?\//i.test(openUrl)){
+        alert('Link terus JUPEM tidak tersedia. Kuota download tidak digunakan.');
+        return false;
+      }
+      try{
+        // Same-tab navigation is not blocked after an asynchronous verification call.
+        // A JUPEM attachment response downloads normally without Render proxying the ZIP.
+        window.location.href = openUrl;
+      }catch(e){
+        const a = document.createElement('a');
+        a.href = openUrl;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+      try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download'); }catch(e){}
+      setTimeout(function(){
+        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download delayed'); }catch(e){}
+      }, 1600);
+      return false;
     }
 
     let response = null;

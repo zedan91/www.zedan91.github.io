@@ -1,0 +1,17 @@
+AZOBSS 566 - NDCDB Direct JUPEM Download
+
+Changes
+- Lot Kadaster Berdigit and C3 ZIP files are no longer fetched, cached, buffered or proxied by Render.
+- /api/pa-bm-download still verifies paid status, 7-day validity and the 5-download quota.
+- After successful verification and counter update, the endpoint returns the direct JUPEM URL built from Job ID + state.
+- Browser opens https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunLotKadasterBerdigitCrop... directly.
+- Removed NDCDB frontend prepare/poll loop.
+- PA, BM/SBM, GPS and Syit Piawai flows are unchanged.
+
+Deployment
+- Redeploy Render because deploy-server.js changed.
+- Deploy GitHub Pages because frontend bundles and cache versions changed.
+- Firebase Rules and Environment Variables do not need changes.
+
+Trade-off
+- The download counter is consumed when AZOBSS issues the direct link because Render cannot observe whether the external JUPEM transfer completes.

@@ -11138,23 +11138,23 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     if (type !== "NDCDB" && type !== "NDCDB_C3") {
       return send(res, 200, JSON.stringify({ ok: true, ready: true, preparing: false }), "application/json");
     }
+    // 566: NDCDB no longer waits for Render to fetch/cache the JUPEM ZIP.
+    // Validate the paid record only, then expose the exact JUPEM URL built from Job ID + state.
     const productCode = type === "NDCDB_C3" ? "2" : "1";
     const jobId = azobssLotRecordJobId(record);
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
     if (!jobId || !stateCode) return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
-    const cachedZip = azobssReadLotCachedZip(productCode, stateCode, jobId);
-    if (cachedZip && azobssBufferIsZip(cachedZip)) {
-      return send(res, 200, JSON.stringify({ ok: true, ready: true, preparing: false, jobId, stateCode }), "application/json", { "Cache-Control": "no-store" });
-    }
-    const cacheTask = azobssStartLotCacheTask(record, type);
-    if (cacheTask.status === "failed" && cacheTask.attempts >= 6) {
-      return azobssPaBmDownloadError(res, 502, cacheTask.error || "Backend AZOBSS tidak berjaya menyediakan ZIP selepas 6 percubaan. Kuota muat turun tidak digunakan.");
-    }
-    return azobssPaBmDownloadPreparing(
-      res,
-      "direct-download",
-      "ZIP Lot Kadaster sedang disiapkan oleh backend AZOBSS. Kuota muat turun belum digunakan."
-    );
+    const directUrl = azobssLotDownloadUrl(productCode, jobId, stateCode);
+    return send(res, 200, JSON.stringify({
+      ok: true,
+      ready: true,
+      preparing: false,
+      delivery: "jupem-direct",
+      jobId,
+      stateCode,
+      directUrl,
+      openUrl: directUrl
+    }), "application/json", { "Cache-Control": "no-store" });
   }
 
   if (type === "PA") {
@@ -11251,47 +11251,37 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   }
 
   if (type === "NDCDB" || type === "NDCDB_C3") {
+    // 566: direct JUPEM delivery. Render does not login to eBiz, register a cart item,
+    // fetch, cache, buffer or proxy the ZIP. It only verifies payment/expiry/quota,
+    // increments the controlled counter, and returns the exact JUPEM download URL.
     const productCode = type === "NDCDB_C3" ? "2" : "1";
     const jobId = azobssLotRecordJobId(record);
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
-    const cacheKey = jobId && stateCode ? azobssLotCacheKey(productCode, stateCode, jobId) : "";
-    let lotBuffer = jobId && stateCode
-      ? azobssReadLotCachedZip(productCode, stateCode, jobId)
-      : null;
-
-    const activeCacheTask = cacheKey ? azobssLotCacheTasks.get(cacheKey) : null;
-    if (!lotBuffer && activeCacheTask && activeCacheTask.status === "downloading") {
-      return azobssPaBmDownloadPreparing(
-        res,
-        "direct-download",
-        "Backend AZOBSS sedang memuat turun fail ZIP terus menggunakan ID pilihan dan negeri. Kuota anda belum digunakan."
-      );
+    if (!jobId || !stateCode) {
+      return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
     }
-
-    if (!lotBuffer || !azobssBufferIsZip(lotBuffer)) {
-      const cacheTask = azobssStartLotCacheTask(record, type);
-      if (cacheTask.status === "failed" && cacheTask.attempts >= 6) {
-        return azobssPaBmDownloadError(
-          res,
-          502,
-          cacheTask.error || "Backend AZOBSS tidak berjaya memuat turun fail ZIP selepas 6 percubaan. Kuota muat turun tidak digunakan."
-        );
-      }
-      return azobssPaBmDownloadPreparing(
-        res,
-        "direct-download",
-        "Backend AZOBSS sedang memuat turun fail ZIP terus menggunakan ID pilihan dan negeri. Muat turun akan dicuba semula secara automatik dan kuota anda belum digunakan."
-      );
+    const directUrl = azobssLotDownloadUrl(productCode, jobId, stateCode);
+    try {
+      await azobssIncrementPurchaseDownload(ref, record, nowMs);
+    } catch (error) {
+      console.error("NDCDB direct-link counter update failed:", error && (error.stack || error.message || error));
+      return azobssPaBmDownloadError(res, 500, "Pengesahan kuota download gagal. Sila cuba semula; kuota tidak digunakan.");
     }
-    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
-    const safeCode = String(code || record.itemCode || type).replace(/[^A-Z0-9_-]/gi, "-");
-    res.writeHead(200, azSecurityHeaders({
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${type}-${safeCode}.zip"`,
+    return send(res, 200, JSON.stringify({
+      ok: true,
+      ready: true,
+      delivery: "jupem-direct",
+      openUrl: directUrl,
+      directUrl,
+      jobId,
+      stateCode,
+      downloadCount: used + 1,
+      maxDownloads: max,
+      expiresAtMs
+    }), "application/json", {
+      "Cache-Control": "no-store",
       "Access-Control-Expose-Headers": "Content-Disposition"
-    }));
-    res.end(lotBuffer);
-    return;
+    });
   }
 
   if (type !== "BM" && type !== "SBM") {
