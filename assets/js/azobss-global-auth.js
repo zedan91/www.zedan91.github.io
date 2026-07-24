@@ -3195,7 +3195,6 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     if(isLotDownload){
       let readinessResponse = null;
       let readinessData = null;
-      let waitedForPreparation = false;
       const readinessUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'prepare=1';
       for(let attempt = 0; attempt < 225; attempt += 1){
         readinessResponse = await fetch(readinessUrl, { method: 'GET', cache: 'no-store' });
@@ -3206,7 +3205,6 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           alert((readinessData && (readinessData.error || readinessData.message)) || 'ZIP Lot Kadaster tidak dapat disediakan sekarang. Kuota muat turun tidak digunakan.');
           return false;
         }
-        waitedForPreparation = true;
         lotReadinessMap[downloadKey] = { status: 'preparing', checkedAt: Date.now() };
         downloadOwner.phase = 'preparing';
         downloadOwner.label = 'Sedang Proses...';
@@ -3221,12 +3219,6 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         return false;
       }
       lotReadinessMap[downloadKey] = { status: 'ready', checkedAt: Date.now() };
-      if(waitedForPreparation){
-        downloadOwner.phase = 'ready';
-        downloadOwner.label = 'Download';
-        try{ azobssSchedulePurchaseRecordsRefresh('lot ZIP ready'); }catch(e){}
-        return false;
-      }
       downloadOwner.phase = 'downloading';
       downloadOwner.label = 'Downloading...';
       azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
