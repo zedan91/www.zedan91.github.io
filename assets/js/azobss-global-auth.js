@@ -3172,19 +3172,18 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   const recordType = String(r.productType || r.product || '').trim().toUpperCase();
   const isLotDownload = recordType === 'NDCDB' || recordType === 'NDCDB_C3';
   const lotReadinessMap = window.__azobssLotZipReadiness || (window.__azobssLotZipReadiness = {});
-  const wasLotReady = isLotDownload && lotReadinessMap[downloadKey] && lotReadinessMap[downloadKey].status === 'ready';
   const downloadOwner = {
     key: downloadKey || directUrl,
     link: link || null,
     startedAt: Date.now(),
     phase: isLotDownload ? 'preparing' : 'downloading',
-    label: isLotDownload ? 'Sedang Disiapkan' : 'Downloading...'
+    label: isLotDownload ? 'Sedang Proses...' : 'Downloading...'
   };
   window.__azobssPaBmActiveDownload = downloadOwner;
   try{
     if(link){
       link.dataset.busy = '1';
-      link.textContent = 'Preparing Download...';
+      link.textContent = isLotDownload ? 'Sedang Proses...' : 'Downloading...';
       link.style.pointerEvents = 'none';
       link.setAttribute('aria-busy', 'true');
       link.setAttribute('href', '#');
@@ -3210,8 +3209,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         waitedForPreparation = true;
         lotReadinessMap[downloadKey] = { status: 'preparing', checkedAt: Date.now() };
         downloadOwner.phase = 'preparing';
-        const elapsedSeconds = Math.max(0, Math.floor((Date.now() - downloadOwner.startedAt) / 1000));
-        downloadOwner.label = `Sedang Disiapkan ${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, '0')}`;
+        downloadOwner.label = 'Sedang Proses...';
         if(link) link.textContent = downloadOwner.label;
         azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
         const waitMs = Math.max(1500, Math.min(10000, Number(readinessData.retryAfterMs || 4000)));
@@ -3223,9 +3221,9 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         return false;
       }
       lotReadinessMap[downloadKey] = { status: 'ready', checkedAt: Date.now() };
-      if(waitedForPreparation || !wasLotReady){
+      if(waitedForPreparation){
         downloadOwner.phase = 'ready';
-        downloadOwner.label = 'ZIP Siap - Download';
+        downloadOwner.label = 'Download';
         try{ azobssSchedulePurchaseRecordsRefresh('lot ZIP ready'); }catch(e){}
         return false;
       }
@@ -3494,10 +3492,6 @@ function purchaseDetailRowHtml(r){
   const activeDownload = window.__azobssPaBmActiveDownload;
   const isActiveDownload = !!(activeDownload && activeDownload.key === paidDownloadPayload);
   const isOtherDownloadActive = !!(activeDownload && !isActiveDownload);
-  const isLotItem = itemType === 'NDCDB' || itemType === 'NDCDB_C3';
-  const lotReadiness = isLotItem && window.__azobssLotZipReadiness && window.__azobssLotZipReadiness[paidDownloadPayload]
-    ? String(window.__azobssLotZipReadiness[paidDownloadPayload].status || '')
-    : '';
   const paid = azobssIsPurchasePaidForDownload(r);
   const allowed = azobssPurchaseDownloadAllowed(r);
   const expired = paid && azobssPurchaseDownloadExpired(r);
@@ -3511,7 +3505,7 @@ function purchaseDetailRowHtml(r){
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
   if(paid && paidDownloadUrl && allowed){
-    const readyLabel = isLotItem ? (lotReadiness === 'ready' ? 'ZIP Siap - Download' : (lotReadiness === 'failed' ? 'Cuba Sediakan ZIP' : 'Semak & Sediakan ZIP')) : 'Download';
+    const readyLabel = 'Download';
     actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? escHtml(activeDownload.label || 'Downloading...') : readyLabel}</a>${dlMetaHtml}${adminResetHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
