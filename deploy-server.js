@@ -6412,7 +6412,9 @@ async function azobssSubmitLotGpJob(estimate) {
 
 function azobssIsTransientJupemError(error) {
   const message = String(error && (error.message || error) || "");
-  return /fetch failed|network|socket|timed?\s*out|timeout|ECONN|EAI_AGAIN|ENOTFOUND|UND_ERR/i.test(message);
+  const code = String(error && error.code || "");
+  return /fetch failed|network|socket|timed?\s*out|timeout|ECONN|EAI_AGAIN|ENOTFOUND|UND_ERR|did not register|not register|masih (?:menyediakan|menyelaraskan)/i.test(message)
+    || /^AZOBSS_JUPEM_LOT_/i.test(code);
 }
 
 async function azobssGetLotGpJobStatus(productCode, stateCode, jobId) {
@@ -6426,6 +6428,54 @@ async function azobssGetLotGpJobStatus(productCode, stateCode, jobId) {
     30000
   );
   return String(job.jobStatus || "esriJobUnknown");
+}
+
+
+async function azobssWaitForLotGpJobReady(productCode, stateCode, jobId, timeoutMs = 4 * 60 * 1000) {
+  const startedAt = Date.now();
+  let lastStatus = "esriJobUnknown";
+  let lastError = null;
+  let pollCount = 0;
+
+  while (Date.now() - startedAt < timeoutMs) {
+    pollCount += 1;
+    try {
+      lastStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
+      if (/^esriJobSucceeded$/i.test(lastStatus)) {
+        console.log("JUPEM Lot GP job ready:", {
+          jobId: String(jobId || ""),
+          stateCode: String(stateCode || ""),
+          productCode: String(productCode || ""),
+          status: lastStatus,
+          elapsedMs: Date.now() - startedAt,
+          polls: pollCount
+        });
+        return lastStatus;
+      }
+      if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(lastStatus)) {
+        throw new Error(`JUPEM gagal menyediakan Lot Kadaster (${lastStatus}).`);
+      }
+      lastError = null;
+    } catch (error) {
+      if (/JUPEM gagal menyediakan Lot Kadaster/i.test(String(error && error.message || ""))) throw error;
+      lastError = error;
+      // A stale ArcGIS token can make a valid job look unavailable. Force a fresh map session on the next poll.
+      azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 };
+    }
+
+    const elapsed = Date.now() - startedAt;
+    const delayMs = elapsed < 15000 ? 1500 : elapsed < 60000 ? 3000 : 5000;
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+
+  const timeoutError = new Error(
+    lastError
+      ? `JUPEM masih menyediakan Lot Kadaster dan semakan status terakhir gagal: ${lastError.message || lastError}`
+      : `JUPEM masih menyediakan Lot Kadaster (${lastStatus}). Sila tunggu dan cuba semula.`
+  );
+  timeoutError.code = "AZOBSS_JUPEM_LOT_JOB_NOT_READY";
+  timeoutError.jobStatus = lastStatus;
+  throw timeoutError;
 }
 
 function azobssSplitJupemCallArguments(source) {
@@ -6464,24 +6514,30 @@ function azobssSplitJupemCallArguments(source) {
 
 function azobssParseJupemCartRows(html) {
   const rows = [];
+  const seen = new Set();
   const pattern = /AddQuantity\s*\(([\s\S]*?)\)/gi;
   let match;
   while ((match = pattern.exec(String(html || "")))) {
     const args = azobssSplitJupemCallArguments(match[1]);
-    if (args.length < 6 || !/^delete$/i.test(String(args[3] || "").trim())) continue;
+    if (args.length < 3) continue;
+    const deleteIndex = args.findIndex((value) => /^delete$/i.test(String(value || "").trim()));
+    if (deleteIndex < 0) continue;
     const productSelectedId = String(args[0] || "").trim();
     const userId = String(args[1] || "").trim();
     const cartDetailId = String(args[2] || "").trim();
-    const type = String(args[4] || "").trim();
-    const categoryId = String(args[5] || "").trim();
+    const type = String(args[deleteIndex + 1] || args[4] || "").trim();
+    const categoryId = String(args[deleteIndex + 2] || args[5] || "").trim();
     if (!productSelectedId || !cartDetailId) continue;
+    const key = `${productSelectedId}:${cartDetailId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     rows.push({
       productSelectedId,
       userId,
       cartDetailId,
       type,
       categoryId,
-      key: `${productSelectedId}:${cartDetailId}`
+      key
     });
   }
   return rows;
@@ -6496,13 +6552,22 @@ function azobssJupemIsLoginPage(html, url = "") {
 
 function azobssJupemRegistrationAccepted(html, url = "", status = 0) {
   const source = String(html || "");
+  const responseUrl = String(url || "");
   const responseStatus = Number(status || 0);
-  if (azobssJupemIsLoginPage(source, url)) return false;
+  if (azobssJupemIsLoginPage(source, responseUrl)) return false;
   if (responseStatus && (responseStatus < 200 || responseStatus >= 400)) return false;
-  return /\/Transaksi\/KadasterLotBerdigitCrop/i.test(String(url || ""))
+
+  const explicitFailure = /(?:ralat|gagal|tidak\s+berjaya|invalid|exception)[^<\r\n]{0,160}(?:troli|produk|kadaster|lot)/i.test(source);
+  if (explicitFailure) return false;
+
+  return /\/Transaksi\/KadasterLotBerdigitCrop/i.test(responseUrl)
     || /telah\s+ditambah\s+(?:ke|di\s+dalam)\s+Troli/i.test(source)
-    || /berjaya[^<\r\n]{0,100}(?:tambah|daftar)[^<\r\n]{0,100}Troli/i.test(source)
-    || /(?:"|')?Success(?:"|')?\s*:\s*true/i.test(source);
+    || /berjaya[^<\r\n]{0,120}(?:tambah|daftar)[^<\r\n]{0,120}Troli/i.test(source)
+    || /["']?(?:Success|success|Succeeded|succeeded)["']?\s*:\s*true/i.test(source)
+    // JUPEM also uses this authenticated product endpoint as the registration trigger.
+    // A successful non-login response is usable even when it returns an empty/partial body.
+    || (/\/Produk\/LotKadasterBerdigitCrop/i.test(responseUrl)
+      && (!responseStatus || (responseStatus >= 200 && responseStatus < 300)));
 }
 
 function azobssJupemSubmissionLooksUsable(html, url = "", status = 0) {
@@ -6657,7 +6722,7 @@ async function azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, log
   let added = null;
   let existing = null;
   let afterRows = [];
-  const retryDelaysMs = [0, 500, 1000, 2000, 3500, 5000, 7000, 9000];
+  const retryDelaysMs = [0, 1000, 2500, 5000, 7500];
   for (const delayMs of retryDelaysMs) {
     if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
     const afterResult = await azobssJupemAuthFetch(
@@ -6702,7 +6767,9 @@ async function azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, log
       afterRows: afterRows.length,
       candidateIds: Array.from(candidateIds)
     });
-    throw new Error("JUPEM did not register the selected lot product.");
+    const registrationError = new Error("JUPEM masih menyelaraskan produk Lot Kadaster dengan troli. Backend akan cuba semula.");
+    registrationError.code = "AZOBSS_JUPEM_LOT_REGISTRATION_PENDING";
+    throw registrationError;
   }
 
   if (!added && !existing) {
@@ -6752,9 +6819,33 @@ async function azobssRemoveRegisteredJupemLotUnlocked(registration) {
 }
 
 async function azobssWithRegisteredJupemLot(productCode, stateCode, jobId, task) {
-  const registration = await azobssWithJupemCartMutationLock(
-    () => azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, false)
-  );
+  // ArcGIS returns a Job ID before the ZIP job is actually complete. Registering that ID too early
+  // is the main cause of intermittent "did not register" failures, so wait outside the cart lock.
+  await azobssWaitForLotGpJobReady(productCode, stateCode, jobId);
+
+  let registration = null;
+  let registrationError = null;
+  const registrationRetryDelaysMs = [0, 3000, 7000];
+  for (const delayMs of registrationRetryDelaysMs) {
+    if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
+    try {
+      registration = await azobssWithJupemCartMutationLock(
+        () => azobssRegisterJupemLotUnlocked(productCode, stateCode, jobId, false)
+      );
+      break;
+    } catch (error) {
+      registrationError = error;
+      if (!azobssIsTransientJupemError(error)) throw error;
+      console.warn("JUPEM Lot registration pending; retrying:", {
+        jobId: String(jobId || ""),
+        stateCode: String(stateCode || ""),
+        productCode: String(productCode || ""),
+        error: String(error && error.message || error)
+      });
+    }
+  }
+  if (!registration) throw registrationError || new Error("JUPEM Lot registration is unavailable.");
+
   try {
     return await task(registration.session.cookie);
   } finally {
@@ -7327,7 +7418,7 @@ function azobssStartLotCacheTask(record, type) {
   let current = azobssLotCacheTasks.get(cacheKey) || null;
   if (current && current.status === "downloading") return current;
   if (current && current.status === "failed" && Number(current.nextRetryAt || 0) > Date.now()) return current;
-  if (current && current.status === "failed" && current.attempts >= 3) return current;
+  if (current && current.status === "failed" && current.attempts >= 6) return current;
   if (current && current.status === "ready") current = null;
 
   const task = {
@@ -10493,12 +10584,12 @@ async function handler(req, res) {
         const cachedZip = azobssReadLotCachedZip(pending.productCode, pending.stateCode, pending.jobId);
         if (!cachedZip) {
           const cacheTask = azobssStartLotCacheTask(cacheRecord, pending.productType);
-          if (cacheTask.status === "failed" && cacheTask.attempts >= 3) {
+          if (cacheTask.status === "failed" && cacheTask.attempts >= 6) {
             return send(res, 409, JSON.stringify({
               ok: false,
               ready: false,
               cacheStatus: "failed",
-              error: "Backend AZOBSS tidak berjaya menyediakan fail ZIP selepas 3 percubaan. Sila cuba semula."
+              error: "Backend AZOBSS tidak berjaya menyediakan fail ZIP selepas 6 percubaan. Sila cuba semula."
             }), "application/json");
           }
           return send(res, 202, JSON.stringify({
@@ -11052,8 +11143,8 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return send(res, 200, JSON.stringify({ ok: true, ready: true, preparing: false, jobId, stateCode }), "application/json", { "Cache-Control": "no-store" });
     }
     const cacheTask = azobssStartLotCacheTask(record, type);
-    if (cacheTask.status === "failed" && cacheTask.attempts >= 3) {
-      return azobssPaBmDownloadError(res, 502, cacheTask.error || "Backend AZOBSS tidak berjaya menyediakan ZIP selepas 3 percubaan. Kuota muat turun tidak digunakan.");
+    if (cacheTask.status === "failed" && cacheTask.attempts >= 6) {
+      return azobssPaBmDownloadError(res, 502, cacheTask.error || "Backend AZOBSS tidak berjaya menyediakan ZIP selepas 6 percubaan. Kuota muat turun tidak digunakan.");
     }
     return azobssPaBmDownloadPreparing(
       res,
@@ -11175,11 +11266,11 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
     if (!lotBuffer || !azobssBufferIsZip(lotBuffer)) {
       const cacheTask = azobssStartLotCacheTask(record, type);
-      if (cacheTask.status === "failed" && cacheTask.attempts >= 3) {
+      if (cacheTask.status === "failed" && cacheTask.attempts >= 6) {
         return azobssPaBmDownloadError(
           res,
           502,
-          cacheTask.error || "Backend AZOBSS tidak berjaya memuat turun fail ZIP selepas 3 percubaan. Kuota muat turun tidak digunakan."
+          cacheTask.error || "Backend AZOBSS tidak berjaya memuat turun fail ZIP selepas 6 percubaan. Kuota muat turun tidak digunakan."
         );
       }
       return azobssPaBmDownloadPreparing(
