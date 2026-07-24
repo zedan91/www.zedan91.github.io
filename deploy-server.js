@@ -6872,6 +6872,181 @@ function azobssLotDownloadUrl(productCode, jobId, stateCode) {
   return `https://ebiz.jupem.gov.my/MuatTurunPembelian/${pathName}/${encodeURIComponent(jobId)}?negeri=${encodeURIComponent(stateName)}`;
 }
 
+
+// 569: Register the completed JUPEM Job ID in eBiz, then verify the public direct URL
+// by reading only the first bytes. The complete ZIP is still downloaded by the user's
+// browser directly from JUPEM and is never buffered/proxied through Render.
+const azobssLotDirectReadyCache = new Map();
+const azobssLotCleanupTimers = new Map();
+
+function azobssLotDirectReadyKey(productCode, stateCode, jobId) {
+  return `${cleanLotProduct(productCode)}|${cleanLotStateCode(stateCode)}|${String(jobId || "").trim()}`;
+}
+
+async function azobssProbeJupemLotDirectZip(directUrl, timeoutMs = 25000) {
+  const response = await fetch(directUrl, azJupemFetchOptions({
+    method: "GET",
+    redirect: "follow",
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: azobssJupemBaseHeaders({
+      "Accept": "application/zip,application/x-zip-compressed,application/octet-stream,*/*",
+      "Accept-Language": "ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
+      "Range": "bytes=0-31",
+      "Referer": "https://ebiz.jupem.gov.my/"
+    })
+  }));
+
+  const finalUrl = String(response.url || directUrl);
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  const disposition = String(response.headers.get("content-disposition") || "").toLowerCase();
+  const chunks = [];
+  let total = 0;
+  try {
+    if (response.body && typeof response.body.getReader === "function") {
+      const reader = response.body.getReader();
+      try {
+        while (total < 32) {
+          const part = await reader.read();
+          if (part.done) break;
+          if (part.value && part.value.length) {
+            const value = Buffer.from(part.value);
+            chunks.push(value);
+            total += value.length;
+          }
+        }
+      } finally {
+        try { await reader.cancel(); } catch (_) {}
+      }
+    } else {
+      const smallBuffer = Buffer.from(await response.arrayBuffer());
+      chunks.push(smallBuffer.slice(0, 32));
+      total = Math.min(smallBuffer.length, 32);
+    }
+  } catch (error) {
+    try { if (response.body && typeof response.body.cancel === "function") await response.body.cancel(); } catch (_) {}
+    throw error;
+  }
+
+  const head = Buffer.concat(chunks).slice(0, 32);
+  const isZip = azobssBufferIsZip(head);
+  const looksLogin = /\/Home\/LogMasuk(?:[/?#]|$)/i.test(finalUrl);
+  const looksHtml = contentType.includes("text/html") || /^\s*(?:<!doctype|<html|<head|<body)/i.test(head.toString("utf8"));
+  const headerLooksZip = /(?:application\/(?:zip|x-zip-compressed)|application\/octet-stream)/i.test(contentType)
+    || /filename[^;=]*=\s*["']?[^"';]+\.zip/i.test(disposition);
+  // Do not trust HTTP 200 or an octet-stream header alone: JUPEM's Error page can
+  // still be returned successfully. A real ZIP must begin with the PK signature.
+  const ready = Boolean(response.ok && !looksLogin && !looksHtml && isZip);
+
+  return {
+    ready,
+    status: response.status,
+    contentType,
+    disposition,
+    finalUrl,
+    isZip,
+    headHex: head.slice(0, 8).toString("hex")
+  };
+}
+
+function azobssScheduleRegisteredLotCleanup(registration, cacheKey, delayMs = 15 * 60 * 1000) {
+  if (!registration || !registration.added || azobssLotCleanupTimers.has(cacheKey)) return;
+  const timer = setTimeout(async () => {
+    azobssLotCleanupTimers.delete(cacheKey);
+    try {
+      await azobssWithJupemCartMutationLock(
+        () => azobssRemoveRegisteredJupemLotUnlocked(registration)
+      );
+    } catch (error) {
+      console.warn("JUPEM delayed Lot cart cleanup failed:", error && (error.message || error));
+    }
+  }, delayMs);
+  if (timer && typeof timer.unref === "function") timer.unref();
+  azobssLotCleanupTimers.set(cacheKey, timer);
+}
+
+async function azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId) {
+  const cleanProduct = cleanLotProduct(productCode);
+  const cleanStateCode = cleanLotStateCode(stateCode);
+  const cleanJobId = String(jobId || "").trim();
+  const cacheKey = azobssLotDirectReadyKey(cleanProduct, cleanStateCode, cleanJobId);
+  const cached = azobssLotDirectReadyCache.get(cacheKey);
+  if (cached && cached.ready && cached.expiresAt > Date.now()) return cached.result;
+  if (cached && cached.promise) return await cached.promise;
+
+  const promise = (async () => {
+    const jobStatus = await azobssGetLotGpJobStatus(cleanProduct, cleanStateCode, cleanJobId);
+    if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(jobStatus)) {
+      throw new Error(`JUPEM gagal menyediakan Lot Kadaster (${jobStatus}).`);
+    }
+    if (!/^esriJobSucceeded$/i.test(jobStatus)) {
+      const waitingError = new Error(`JUPEM masih menyediakan Lot Kadaster (${jobStatus}).`);
+      waitingError.code = "AZOBSS_JUPEM_LOT_JOB_NOT_READY";
+      waitingError.jobStatus = jobStatus;
+      throw waitingError;
+    }
+    const directUrl = azobssLotDownloadUrl(cleanProduct, cleanJobId, cleanStateCode);
+
+    // Already registered/public from an earlier attempt: avoid touching the shared cart.
+    try {
+      const initialProbe = await azobssProbeJupemLotDirectZip(directUrl, 10000);
+      if (initialProbe.ready) {
+        return { ready: true, directUrl, jobStatus, registered: false, probe: initialProbe };
+      }
+    } catch (error) {
+      console.warn("JUPEM direct ZIP pre-registration probe failed:", error && (error.message || error));
+    }
+
+    let registration = null;
+    try {
+      registration = await azobssWithJupemCartMutationLock(
+        () => azobssRegisterJupemLotUnlocked(cleanProduct, cleanStateCode, cleanJobId, false)
+      );
+    } catch (error) {
+      if (!azobssIsTransientJupemError(error)) throw error;
+      error.code = error.code || "AZOBSS_JUPEM_LOT_REGISTRATION_PENDING";
+      error.jobStatus = jobStatus;
+      throw error;
+    }
+
+    // Keep a newly created cart row temporarily. Removing it immediately can make the
+    // public direct URL return JUPEM's HTML Error page before the user's browser opens it.
+    azobssScheduleRegisteredLotCleanup(registration, cacheKey);
+
+    let lastProbe = null;
+    for (const delayMs of [0, 1200, 3000]) {
+      if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
+      try {
+        lastProbe = await azobssProbeJupemLotDirectZip(directUrl, 12000);
+        if (lastProbe.ready) {
+          return { ready: true, directUrl, jobStatus, registered: true, probe: lastProbe };
+        }
+      } catch (error) {
+        lastProbe = { ready: false, error: String(error && error.message || error) };
+      }
+    }
+
+    const pendingError = new Error("JUPEM masih menyelaraskan fail ZIP Lot Kadaster. Sila tunggu sebentar.");
+    pendingError.code = "AZOBSS_JUPEM_LOT_DIRECT_NOT_READY";
+    pendingError.jobStatus = jobStatus;
+    pendingError.probe = lastProbe;
+    throw pendingError;
+  })();
+
+  azobssLotDirectReadyCache.set(cacheKey, { promise });
+  try {
+    const result = await promise;
+    azobssLotDirectReadyCache.set(cacheKey, {
+      ready: true,
+      result,
+      expiresAt: Date.now() + 10 * 60 * 1000
+    });
+    return result;
+  } catch (error) {
+    azobssLotDirectReadyCache.delete(cacheKey);
+    throw error;
+  }
+}
+
 function azobssCreateLotSelectionToken(payload) {
   const body = Buffer.from(JSON.stringify(payload || {}), "utf8").toString("base64url");
   const signature = crypto.createHmac("sha256", azSecureDownloadSecret()).update(body).digest("base64url");
@@ -10191,7 +10366,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 27,
+          jupemStoreVersion: 29,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10513,7 +10688,9 @@ async function handler(req, res) {
         const job = await azobssSubmitLotGpJob(estimate);
         const downloadUrl = azobssLotDownloadUrl(productCode, job.jobId, stateCode);
         const initialJobStatus = String(job.jobStatus || "esriJobSubmitted");
-        const jobReady = /^esriJobSucceeded$/i.test(initialJobStatus);
+        // 569: even an immediately succeeded ArcGIS job is not considered downloadable
+        // until the status endpoint completes eBiz registration and verifies the public ZIP.
+        const jobReady = false;
         const selectionPayload = {
           ready: jobReady,
           directDownload: true,
@@ -10570,39 +10747,17 @@ async function handler(req, res) {
           return send(res, 400, JSON.stringify({ ok: false, error: "Token pilihan JUPEM tidak sah atau telah tamat." }), "application/json");
         }
 
-        const jobStatus = await azobssGetLotGpJobStatus(pending.productCode, pending.stateCode, pending.jobId);
-        if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(jobStatus)) {
-          return send(res, 409, JSON.stringify({
-            ok: false,
-            ready: false,
-            preparing: false,
-            jobStatus,
-            error: `JUPEM gagal menyediakan Lot Kadaster (${jobStatus}). Sila buat pilihan semula.`
-          }), "application/json", { "Cache-Control": "no-store" });
-        }
-
-        if (!/^esriJobSucceeded$/i.test(jobStatus)) {
-          const pendingPayload = {
-            ...pending,
-            ready: false,
-            jobStatus,
-            expiresAtMs: Date.now() + AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS
-          };
-          return send(res, 202, JSON.stringify({
-            ok: true,
-            ready: false,
-            preparing: true,
-            directDownload: true,
-            jobStatus,
-            selectionToken: azobssCreateLotSelectionToken(pendingPayload),
-            message: "Tengah Proses..."
-          }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
-        }
-
-        const downloadUrl = azobssLotDownloadUrl(pending.productCode, pending.jobId, pending.stateCode);
+        const directReady = await azobssEnsureJupemLotDirectReady(
+          pending.productCode,
+          pending.stateCode,
+          pending.jobId
+        );
+        const jobStatus = directReady.jobStatus || "esriJobSucceeded";
+        const downloadUrl = directReady.directUrl;
         const readyPayload = {
           ...pending,
           ready: true,
+          zipReady: true,
           directDownload: true,
           cached: false,
           jobStatus,
@@ -10613,6 +10768,7 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({
           ok: true,
           ready: true,
+          zipReady: true,
           preparing: false,
           directDownload: true,
           cached: false,
@@ -11139,31 +11295,16 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
     if (!jobId || !stateCode) return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
     try {
-      const jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
-      if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(jobStatus)) {
-        return send(res, 409, JSON.stringify({
-          ok: false,
-          ready: false,
-          preparing: false,
-          jobStatus,
-          error: `JUPEM gagal menyediakan Lot Kadaster (${jobStatus}).`
-        }), "application/json", { "Cache-Control": "no-store" });
-      }
-      if (!/^esriJobSucceeded$/i.test(jobStatus)) {
-        return send(res, 202, JSON.stringify({
-          ok: true,
-          ready: false,
-          preparing: true,
-          jobStatus,
-          message: "Tengah Proses..."
-        }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
-      }
-      const directUrl = azobssLotDownloadUrl(productCode, jobId, stateCode);
+      const directReady = await azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId);
+      const jobStatus = directReady.jobStatus || "esriJobSucceeded";
+      const directUrl = directReady.directUrl;
       return send(res, 200, JSON.stringify({
         ok: true,
         ready: true,
         preparing: false,
         delivery: "jupem-direct",
+        registered: Boolean(directReady.registered),
+        zipVerified: true,
         jobStatus,
         jobId,
         stateCode,
@@ -11276,7 +11417,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   }
 
   if (type === "NDCDB" || type === "NDCDB_C3") {
-    // 567: direct JUPEM delivery is issued only after ArcGIS reports esriJobSucceeded.
+    // 569: direct JUPEM delivery is issued only after eBiz registration and public ZIP signature verification.
     // No quota is consumed while the job is Submitted/Executing or while status checking is unavailable.
     const productCode = type === "NDCDB_C3" ? "2" : "1";
     const jobId = azobssLotRecordJobId(record);
@@ -11284,39 +11425,22 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     if (!jobId || !stateCode) {
       return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
     }
-    let jobStatus = "esriJobUnknown";
+    let directReady;
     try {
-      jobStatus = await azobssGetLotGpJobStatus(productCode, stateCode, jobId);
+      directReady = await azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId);
     } catch (error) {
-      console.warn("NDCDB final readiness check failed:", error && (error.message || error));
+      console.warn("NDCDB final registration/readiness check failed:", error && (error.message || error));
       return send(res, 202, JSON.stringify({
         ok: true,
         ready: false,
         preparing: true,
         transient: true,
-        jobStatus,
+        jobStatus: String(error && error.jobStatus || "esriJobUnknown"),
         message: "Tengah Proses..."
       }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
     }
-    if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(jobStatus)) {
-      return send(res, 409, JSON.stringify({
-        ok: false,
-        ready: false,
-        preparing: false,
-        jobStatus,
-        error: `JUPEM gagal menyediakan Lot Kadaster (${jobStatus}).`
-      }), "application/json", { "Cache-Control": "no-store" });
-    }
-    if (!/^esriJobSucceeded$/i.test(jobStatus)) {
-      return send(res, 202, JSON.stringify({
-        ok: true,
-        ready: false,
-        preparing: true,
-        jobStatus,
-        message: "Tengah Proses..."
-      }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
-    }
-    const directUrl = azobssLotDownloadUrl(productCode, jobId, stateCode);
+    const jobStatus = directReady.jobStatus || "esriJobSucceeded";
+    const directUrl = directReady.directUrl;
     try {
       await azobssIncrementPurchaseDownload(ref, record, nowMs);
     } catch (error) {
@@ -11326,8 +11450,10 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     return send(res, 200, JSON.stringify({
       ok: true,
       ready: true,
+      zipReady: true,
       preparing: false,
       delivery: "jupem-direct",
+      registered: Boolean(directReady.registered),
       jobStatus,
       openUrl: directUrl,
       directUrl,

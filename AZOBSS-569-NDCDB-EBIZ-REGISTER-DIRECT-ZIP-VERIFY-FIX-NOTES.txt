@@ -1,0 +1,17 @@
+AZOBSS 569 - NDCDB eBiz Registration + Direct ZIP Verification Fix
+
+Baseline: (567). Version (568) remains rejected and is not used.
+
+Fix:
+- Wait for ArcGIS esriJobSucceeded.
+- Register the Job ID in JUPEM eBiz using JUPEM_EBIZ_USERNAME / JUPEM_EBIZ_PASSWORD.
+- Probe only the first bytes of the public JUPEM URL and require a ZIP signature (PK) or valid ZIP headers.
+- Keep the Download button locked as Tengah Proses... while JUPEM returns an HTML Error page.
+- Return the direct JUPEM URL only after ZIP verification.
+- Full ZIP is downloaded by the customer browser directly from JUPEM, not proxied/buffered through Render.
+- Newly added temporary cart rows are cleaned after 15 minutes instead of immediately.
+- Download quota increments only after the direct ZIP URL is verified.
+
+Deploy required: GitHub Pages and Render backend.
+Firebase Rules: no change.
+Render env: keep JUPEM_EBIZ_USERNAME and JUPEM_EBIZ_PASSWORD.
