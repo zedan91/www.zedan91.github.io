@@ -403,14 +403,38 @@
           operationController = new AbortController();
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
-          const prepared = await postJson('/api/jupem-lot-selection/prepare', {
+          let prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
-          if (!prepared.ready || !prepared.jobId || !prepared.selectionToken) {
+          if (!prepared.jobId || !prepared.selectionToken) {
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
           }
+
+          while (!prepared.ready) {
+            addButton.disabled = true;
+            addButton.textContent = 'Tengah Proses...';
+            setStatus(status, 'Tengah Proses... JUPEM sedang menyediakan fail Lot Kadaster.', 'loading');
+            await new Promise((resolveDelay, rejectDelay) => {
+              const timer = window.setTimeout(resolveDelay, 2500);
+              if (operationController && operationController.signal) {
+                operationController.signal.addEventListener('abort', () => {
+                  window.clearTimeout(timer);
+                  rejectDelay(new DOMException('Operasi dibatalkan.', 'AbortError'));
+                }, { once: true });
+              }
+            });
+            prepared = await postJson('/api/jupem-lot-selection/status', {
+              selectionToken: prepared.selectionToken
+            }, token, operationController.signal);
+          }
+
+          if (!/^esriJobSucceeded$/i.test(String(prepared.jobStatus || '')) || !prepared.downloadUrl) {
+            throw new Error('Fail Lot Kadaster belum berjaya disediakan. Sila tunggu dan cuba semula.');
+          }
+          addButton.textContent = 'Berjaya Disediakan';
+          setStatus(status, 'Fail Lot Kadaster berjaya disediakan dan sedia dimasukkan ke troli.', 'success');
           settled = true;
           cleanup();
           resolve(prepared);

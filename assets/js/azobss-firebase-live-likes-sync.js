@@ -2752,16 +2752,43 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
     if(isLotDownload){
-      // 566: ask AZOBSS only to verify payment/expiry/quota and return the JUPEM URL.
-      // The ZIP itself is downloaded by the browser directly from ebiz.jupem.gov.my.
-      downloadOwner.phase = 'downloading';
-      downloadOwner.label = 'Opening Download...';
+      // 567: never expose the JUPEM direct URL until ArcGIS reports esriJobSucceeded.
+      downloadOwner.phase = 'preparing';
+      downloadOwner.label = 'Tengah Proses...';
       if(link) link.textContent = downloadOwner.label;
       azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
+      let readiness = null;
+      const statusUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'prepare=1';
+      for(let attempt = 0; attempt < 160; attempt += 1){
+        const statusResponse = await fetch(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' });
+        readiness = await statusResponse.json().catch(function(){ return {}; });
+        if(statusResponse.ok && readiness && readiness.ready === true && /^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
+          break;
+        }
+        if(statusResponse.status === 409 || (readiness && readiness.ok === false)){
+          alert((readiness && (readiness.error || readiness.message)) || 'JUPEM gagal menyediakan fail Lot Kadaster.');
+          return false;
+        }
+        downloadOwner.label = 'Tengah Proses...';
+        if(link) link.textContent = downloadOwner.label;
+        await new Promise(function(resolve){ window.setTimeout(resolve, attempt < 12 ? 2500 : 5000); });
+      }
+      if(!readiness || readiness.ready !== true || !/^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
+        alert('JUPEM masih menyediakan fail Lot Kadaster. Kuota download tidak digunakan.');
+        return false;
+      }
+
+      downloadOwner.phase = 'downloading';
+      downloadOwner.label = 'Opening Download...';
+      if(link) link.textContent = downloadOwner.label;
       const response = await fetch(directUrl, { method: 'GET', cache: 'no-store' });
       let data = null;
       try{ data = await response.json(); }catch(e){ data = null; }
+      if(response.status === 202 || (data && data.ready === false)){
+        alert('JUPEM masih menyediakan fail Lot Kadaster. Kuota download tidak digunakan.');
+        return false;
+      }
       if(!response.ok || !data || data.ok === false){
         alert((data && (data.error || data.message)) || 'Pengesahan download gagal. Sila cuba lagi.');
         return false;
@@ -3031,6 +3058,73 @@ function azobssPurchaseSelectionCellHtml(r){
   return `<div class="col-select"><input class="purchase-row-select" type="checkbox" aria-label="Select ${escHtml(String(r?.productType || 'item'))} ${escHtml(String(r?.itemCode || ''))}" data-record-key="${escHtml(key)}" data-record-payload="${azobssPurchaseDeletePayload(r)}"${selected ? ' checked' : ''}></div>`;
 }
 
+
+
+function azobssLotPurchaseReadinessKey(r){
+  const recordId = String(r && (r.firestoreId || r.id || r.purchaseLogId || r.recordId) || '').trim();
+  if(recordId) return 'id:' + recordId;
+  return ['lot-ready', r && (r.productType || r.product), r && (r.productId || r.itemCode || r.jobId), r && (r.negeri || r.state)]
+    .map(function(v){ return String(v || '').trim().toLowerCase(); }).join('|');
+}
+function azobssIsLotPurchaseRecord(r){
+  const type = String(r && (r.productType || r.product) || '').trim().toUpperCase();
+  return type === 'NDCDB' || type === 'NDCDB_C3';
+}
+function azobssLotPurchaseReadinessMap(){
+  if(!window.__azobssLotPurchaseReadiness) window.__azobssLotPurchaseReadiness = Object.create(null);
+  return window.__azobssLotPurchaseReadiness;
+}
+function azobssLotPurchaseStatusUrl(r){
+  const base = azobssBuildControlledPurchaseDownloadUrl(r);
+  if(!base) return '';
+  return base + (base.includes('?') ? '&' : '?') + 'prepare=1&_=' + Date.now();
+}
+function azobssQueueLotPurchaseReadiness(r){
+  if(!azobssIsLotPurchaseRecord(r)) return;
+  const key = azobssLotPurchaseReadinessKey(r);
+  const map = azobssLotPurchaseReadinessMap();
+  const existing = map[key];
+  if(existing && (existing.status === 'checking' || existing.status === 'ready')) return;
+  const entry = map[key] = { status:'checking', attempts:0, jobStatus:'', timer:0 };
+
+  const check = async function(){
+    if(entry.status === 'ready') return;
+    entry.attempts += 1;
+    try{
+      const url = azobssLotPurchaseStatusUrl(r);
+      if(!url) throw new Error('Status URL unavailable');
+      const response = await fetch(url, { method:'GET', cache:'no-store' });
+      const data = await response.json().catch(function(){ return {}; });
+      entry.jobStatus = String(data && data.jobStatus || '');
+      if(response.ok && data && data.ready === true && /^esriJobSucceeded$/i.test(entry.jobStatus)){
+        entry.status = 'ready';
+        entry.readyAt = Date.now();
+        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB job succeeded'); }catch(e){}
+        return;
+      }
+      if(response.status === 409 || (data && data.ok === false && /Failed|Cancelled|TimedOut|Deleted/i.test(entry.jobStatus))){
+        entry.status = 'failed';
+        entry.error = String(data.error || data.message || 'JUPEM job failed');
+        return;
+      }
+      entry.status = 'checking';
+    }catch(error){
+      entry.status = 'checking';
+      entry.error = String(error && error.message || error || '');
+    }
+    const delay = entry.attempts < 10 ? 2500 : 5000;
+    entry.timer = window.setTimeout(check, delay);
+  };
+  check();
+}
+function azobssLotPurchaseIsReady(r){
+  if(!azobssIsLotPurchaseRecord(r)) return true;
+  const entry = azobssLotPurchaseReadinessMap()[azobssLotPurchaseReadinessKey(r)];
+  if(entry && entry.status === 'ready') return true;
+  azobssQueueLotPurchaseReadiness(r);
+  return false;
+}
+
 function purchaseDetailRowHtml(r){
   const itemType = String(r.productType || r.product || 'PA').trim().toUpperCase();
   const itemCode = (itemType === 'NDCDB' || itemType === 'NDCDB_C3') && r.productId
@@ -3062,9 +3156,13 @@ function purchaseDetailRowHtml(r){
   const adminResetHtml = (paid && (window.azobssCanShowPaBmAdminReset ? window.azobssCanShowPaBmAdminReset() : isAzobssAdmin(getSavedUser && getSavedUser() || {})))
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
-  if(paid && paidDownloadUrl && allowed){
+  const isLotRecord = itemType === 'NDCDB' || itemType === 'NDCDB_C3';
+  const lotJobReady = !isLotRecord ? true : (paid && allowed ? azobssLotPurchaseIsReady(r) : false);
+  if(paid && paidDownloadUrl && allowed && lotJobReady){
     const readyLabel = 'Download';
     actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? escHtml(activeDownload.label || 'Downloading...') : readyLabel}</a>${dlMetaHtml}${adminResetHtml}</div>`;
+  }else if(paid && paidDownloadUrl && allowed && isLotRecord && !lotJobReady){
+    actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked is-pending-status" aria-disabled="true">Tengah Proses...</span>${dlMetaHtml}${adminResetHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
     actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
