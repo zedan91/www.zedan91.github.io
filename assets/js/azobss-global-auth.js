@@ -3102,7 +3102,7 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
         delete candidate.dataset.downloadLocked;
         candidate.removeAttribute('aria-disabled');
         candidate.setAttribute('aria-busy', 'true');
-        candidate.textContent = 'Downloading...';
+        candidate.textContent = String(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.label || 'Downloading...');
         candidate.style.pointerEvents = 'none';
       }else if(active){
         candidate.dataset.downloadLocked = '1';
@@ -3166,7 +3166,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     return false;
   }
 
-  const downloadOwner = { key: downloadKey || directUrl, link: link || null };
+  const downloadOwner = { key: downloadKey || directUrl, link: link || null, startedAt: Date.now(), label: 'Downloading...' };
   window.__azobssPaBmActiveDownload = downloadOwner;
   try{
     if(link){
@@ -3182,7 +3182,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
     let response = null;
     let lastPreparingData = null;
-    for(let attempt = 0; attempt < 75; attempt += 1){
+    for(let attempt = 0; attempt < 225; attempt += 1){
       response = await fetch(directUrl, {
         method: 'GET',
         cache: 'no-store'
@@ -3192,8 +3192,12 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
       try{ lastPreparingData = await response.clone().json(); }catch(e){ lastPreparingData = null; }
       if(!lastPreparingData || !lastPreparingData.preparing) break;
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - downloadOwner.startedAt) / 1000));
+      const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+      const elapsedRemainder = String(elapsedSeconds % 60).padStart(2, '0');
+      downloadOwner.label = `Downloading... ${elapsedMinutes}:${elapsedRemainder}`;
       if(link){
-        link.textContent = 'Downloading...';
+        link.textContent = downloadOwner.label;
       }
       const waitMs = Math.max(1500, Math.min(10000, Number(lastPreparingData.retryAfterMs || 4000)));
       await new Promise(function(resolve){ setTimeout(resolve, waitMs); });
@@ -3449,7 +3453,7 @@ function purchaseDetailRowHtml(r){
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? 'Downloading...' : 'Download'}</a>${dlMetaHtml}${adminResetHtml}</div>`;
+    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? escHtml(activeDownload.label || 'Downloading...') : 'Download'}</a>${dlMetaHtml}${adminResetHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
     actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;

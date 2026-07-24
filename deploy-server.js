@@ -7171,7 +7171,7 @@ function azobssStartLotCacheTask(record, type) {
   let current = azobssLotCacheTasks.get(cacheKey) || null;
   if (current && current.status === "downloading") return current;
   if (current && current.status === "failed" && Number(current.nextRetryAt || 0) > Date.now()) return current;
-  if (current && current.status === "failed" && current.attempts >= 3) current = null;
+  if (current && current.status === "failed" && current.attempts >= 3) return current;
   if (current && current.status === "ready") current = null;
 
   const task = {
@@ -10994,7 +10994,14 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     }
 
     if (!lotBuffer || !azobssBufferIsZip(lotBuffer)) {
-      azobssStartLotCacheTask(record, type);
+      const cacheTask = azobssStartLotCacheTask(record, type);
+      if (cacheTask.status === "failed" && cacheTask.attempts >= 3) {
+        return azobssPaBmDownloadError(
+          res,
+          502,
+          cacheTask.error || "Backend AZOBSS tidak berjaya memuat turun fail ZIP selepas 3 percubaan. Kuota muat turun tidak digunakan."
+        );
+      }
       return azobssPaBmDownloadPreparing(
         res,
         "direct-download",
