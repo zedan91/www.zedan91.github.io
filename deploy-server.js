@@ -9940,7 +9940,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 26,
+          jupemStoreVersion: 27,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -10881,6 +10881,30 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
   const type = azobssPaBmRecordType(record);
   const code = azobssPaBmRecordCode(record);
+  const prepareOnly = String(parsed.query.prepare || parsed.query.status || "") === "1";
+
+  if (prepareOnly) {
+    if (type !== "NDCDB" && type !== "NDCDB_C3") {
+      return send(res, 200, JSON.stringify({ ok: true, ready: true, preparing: false }), "application/json");
+    }
+    const productCode = type === "NDCDB_C3" ? "2" : "1";
+    const jobId = azobssLotRecordJobId(record);
+    const stateCode = cleanLotStateCode(record.negeri || record.state || "");
+    if (!jobId || !stateCode) return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
+    const cachedZip = azobssReadLotCachedZip(productCode, stateCode, jobId);
+    if (cachedZip && azobssBufferIsZip(cachedZip)) {
+      return send(res, 200, JSON.stringify({ ok: true, ready: true, preparing: false, jobId, stateCode }), "application/json", { "Cache-Control": "no-store" });
+    }
+    const cacheTask = azobssStartLotCacheTask(record, type);
+    if (cacheTask.status === "failed" && cacheTask.attempts >= 3) {
+      return azobssPaBmDownloadError(res, 502, cacheTask.error || "Backend AZOBSS tidak berjaya menyediakan ZIP selepas 3 percubaan. Kuota muat turun tidak digunakan.");
+    }
+    return azobssPaBmDownloadPreparing(
+      res,
+      "direct-download",
+      "ZIP Lot Kadaster sedang disiapkan oleh backend AZOBSS. Kuota muat turun belum digunakan."
+    );
+  }
 
   if (type === "PA") {
     const itemCode = String(code || "").replace(/^PA/i, "").replace(/\.TIF$/i, "").replace(/[^0-9]/g, "");
