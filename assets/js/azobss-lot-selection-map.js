@@ -26,6 +26,15 @@
       .az-lot-map-body{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px}
       .az-lot-map-stage{position:relative;min-width:0;min-height:420px;background:#172033}
       .az-lot-map-canvas{position:absolute;inset:0}
+      .az-lot-coordinate-search{position:absolute;z-index:1000;top:10px;left:52px;width:min(390px,calc(100% - 170px));padding:6px;border:1px solid rgba(51,65,85,.9);border-radius:6px;background:rgba(255,255,255,.96);box-shadow:0 2px 8px rgba(15,23,42,.3)}
+      .az-lot-coordinate-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+      .az-lot-coordinate-input{width:100%;min-width:0;height:34px;padding:0 10px;border:1px solid #94a3b8;border-radius:4px;background:#fff;color:#0f172a;font-size:13px;letter-spacing:0;outline:none}
+      .az-lot-coordinate-input:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.2)}
+      .az-lot-coordinate-input[aria-invalid="true"]{border-color:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.15)}
+      .az-lot-coordinate-submit{height:34px;padding:0 13px;border:1px solid #1d4ed8;border-radius:4px;background:#2563eb;color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 0 #1e3a8a}
+      .az-lot-coordinate-submit:active{transform:translateY(1px);box-shadow:0 1px 0 #1e3a8a}
+      .az-lot-coordinate-feedback{display:none;margin:5px 2px 0;color:#b91c1c;font-size:11px;font-weight:700;line-height:1.25}
+      .az-lot-coordinate-feedback.is-visible{display:block}
       .az-lot-map-side{min-height:0;overflow:auto;padding:14px;border-left:1px solid #2d405b;background:#101c2f}
       .az-lot-map-status{min-height:42px;margin:0 0 12px;padding:10px 11px;border:1px solid #405574;border-radius:6px;background:#15233a;color:#d9e8ff;font-size:13px;line-height:1.45}
       .az-lot-map-status.is-loading{border-color:#b97713;color:#ffe0a3;background:#2a2118}
@@ -47,6 +56,7 @@
         .az-lot-map-dialog{width:100vw;height:100dvh;border:0;border-radius:0}
         .az-lot-map-body{display:flex;flex-direction:column;overflow:auto}
         .az-lot-map-stage{flex:0 0 56vh;min-height:360px}
+        .az-lot-coordinate-search{top:58px;left:52px;width:calc(100% - 64px)}
         .az-lot-map-side{overflow:visible;border-left:0;border-top:1px solid #2d405b}
         .az-lot-map-head h2{font-size:16px}
       }
@@ -115,6 +125,16 @@
     };
   }
 
+  function parseWgs84Coordinates(value) {
+    const match = String(value || '').trim().match(/^([+-]?(?:\d+(?:\.\d+)?|\.\d+))\s*(?:,\s*|\s+)([+-]?(?:\d+(?:\.\d+)?|\.\d+))$/);
+    if (!match) return null;
+    const latitude = Number(match[1]);
+    const longitude = Number(match[2]);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
+    return { latitude, longitude };
+  }
+
   function setStatus(node, message, state) {
     node.textContent = message || '';
     node.classList.remove('is-loading', 'is-error', 'is-success');
@@ -167,7 +187,16 @@
             <button class="az-lot-map-close" type="button" aria-label="Tutup" title="Tutup">&times;</button>
           </header>
           <div class="az-lot-map-body">
-            <div class="az-lot-map-stage"><div class="az-lot-map-canvas"></div></div>
+            <div class="az-lot-map-stage">
+              <div class="az-lot-map-canvas"></div>
+              <div class="az-lot-coordinate-search">
+                <form class="az-lot-coordinate-form" role="search">
+                  <input class="az-lot-coordinate-input" type="text" inputmode="decimal" autocomplete="off" aria-label="Cari koordinat WGS84" placeholder="WGS84: 3.23232, 101.21312">
+                  <button class="az-lot-coordinate-submit" type="submit" title="Cari koordinat WGS84">Cari</button>
+                </form>
+                <div class="az-lot-coordinate-feedback" role="status" aria-live="polite"></div>
+              </div>
+            </div>
             <aside class="az-lot-map-side">
               <p class="az-lot-map-status" role="status" aria-live="polite">Zum masuk, kemudian pilih kawasan menggunakan alat polygon atau segi empat.</p>
               <dl class="az-lot-map-summary">
@@ -186,6 +215,9 @@
       document.body.style.overflow = 'hidden';
 
       const canvas = modal.querySelector('.az-lot-map-canvas');
+      const coordinateForm = modal.querySelector('.az-lot-coordinate-form');
+      const coordinateInput = modal.querySelector('.az-lot-coordinate-input');
+      const coordinateFeedback = modal.querySelector('.az-lot-coordinate-feedback');
       const status = modal.querySelector('.az-lot-map-status');
       const addButton = modal.querySelector('.az-lot-map-add');
       const resetButton = modal.querySelector('.az-lot-map-reset');
@@ -196,6 +228,37 @@
       const priceNode = modal.querySelector('[data-lot-price]');
       const mapStateNode = modal.querySelector('[data-map-state]');
       const drawnItems = new window.L.FeatureGroup();
+      let coordinateMarker = null;
+
+      function setCoordinateFeedback(message) {
+        coordinateFeedback.textContent = message || '';
+        coordinateFeedback.classList.toggle('is-visible', Boolean(message));
+        coordinateInput.setAttribute('aria-invalid', message ? 'true' : 'false');
+      }
+
+      function findCoordinate() {
+        const coordinate = parseWgs84Coordinates(coordinateInput.value);
+        if (!coordinate) {
+          setCoordinateFeedback('Masukkan koordinat WGS84 seperti 3.23232 101.21312 atau 3.23232,101.21312.');
+          coordinateInput.focus();
+          return;
+        }
+        setCoordinateFeedback('');
+        const point = [coordinate.latitude, coordinate.longitude];
+        if (coordinateMarker) map.removeLayer(coordinateMarker);
+        coordinateMarker = window.L.circleMarker(point, {
+          radius: 8,
+          color: '#ffffff',
+          weight: 3,
+          fillColor: '#dc2626',
+          fillOpacity: 1
+        }).addTo(map);
+        coordinateMarker.bindTooltip(`${coordinate.latitude.toFixed(6)}, ${coordinate.longitude.toFixed(6)}`, {
+          direction: 'top',
+          offset: [0, -8]
+        }).openTooltip();
+        map.setView(point, Math.max(17, map.getZoom()), { animate: true });
+      }
 
       function cleanup() {
         if (estimateController) estimateController.abort();
@@ -319,6 +382,13 @@
       }
 
       modal.querySelector('.az-lot-map-close').addEventListener('click', close);
+      coordinateForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        findCoordinate();
+      });
+      coordinateInput.addEventListener('input', () => {
+        if (coordinateFeedback.textContent) setCoordinateFeedback('');
+      });
       resetButton.addEventListener('click', () => {
         drawnItems.clearLayers();
         clearSummary();
