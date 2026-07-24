@@ -3091,16 +3091,31 @@ function azobssCanShowPaBmAdminReset(){
 }
 window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
 
-function azobssSetPaBmDownloadUiLock(active, owner){
+function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
   try{
     if(document.body) document.body.classList.toggle('az-pabm-download-active', !!active);
     document.querySelectorAll('.user-pa-download').forEach(function(candidate){
-      if(active && candidate !== owner){
-        candidate.dataset.downloadLocked = '1';
-        candidate.setAttribute('aria-disabled', 'true');
-      }else if(!active && candidate.dataset.downloadLocked === '1'){
+      const candidateKey = String(candidate.getAttribute('data-download-payload') || candidate.getAttribute('data-download-url') || '');
+      const isOwner = !!active && (candidate === owner || (!!activeKey && candidateKey === activeKey));
+      if(isOwner){
+        candidate.dataset.busy = '1';
         delete candidate.dataset.downloadLocked;
         candidate.removeAttribute('aria-disabled');
+        candidate.setAttribute('aria-busy', 'true');
+        candidate.textContent = 'Downloading...';
+        candidate.style.pointerEvents = 'none';
+      }else if(active){
+        candidate.dataset.downloadLocked = '1';
+        candidate.setAttribute('aria-disabled', 'true');
+      }else{
+        delete candidate.dataset.downloadLocked;
+        candidate.removeAttribute('aria-disabled');
+        if(candidate.dataset.busy === '1'){
+          delete candidate.dataset.busy;
+          candidate.removeAttribute('aria-busy');
+          candidate.textContent = 'Download';
+          candidate.style.pointerEvents = '';
+        }
       }
     });
   }catch(_){ }
@@ -3120,8 +3135,10 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
   const link = linkEl || (window.event && window.event.currentTarget) || null;
   const originalText = link ? link.textContent : '';
-  if(window.__azobssPaBmActiveDownload){
-    if(window.__azobssPaBmActiveDownload !== link){
+  const downloadKey = String(encodedPayload || (link && (link.getAttribute('data-download-payload') || link.getAttribute('data-download-url'))) || '');
+  const activeDownload = window.__azobssPaBmActiveDownload;
+  if(activeDownload){
+    if(activeDownload.key !== downloadKey){
       alert('Satu muat turun sedang berjalan. Tunggu sehingga selesai sebelum memuat turun fail lain.');
     }
     return false;
@@ -3149,7 +3166,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     return false;
   }
 
-  const downloadOwner = link || true;
+  const downloadOwner = { key: downloadKey || directUrl, link: link || null };
   window.__azobssPaBmActiveDownload = downloadOwner;
   try{
     if(link){
@@ -3161,7 +3178,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       link.removeAttribute('download');
       link.removeAttribute('target');
     }
-    azobssSetPaBmDownloadUiLock(true, link);
+    azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
     let response = null;
     let lastPreparingData = null;
@@ -3298,7 +3315,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   }finally{
     if(window.__azobssPaBmActiveDownload === downloadOwner){
       window.__azobssPaBmActiveDownload = null;
-      azobssSetPaBmDownloadUiLock(false, null);
+      azobssSetPaBmDownloadUiLock(false, null, '');
     }
     if(link){
       link.dataset.busy = '';
@@ -3415,6 +3432,10 @@ function purchaseDetailRowHtml(r){
   const canUncart = azobssCanUncartPurchase(r);
   const paidDownloadUrl = azobssBuildControlledPurchaseDownloadUrl(r);
   const paidDownloadName = azobssPaidPurchaseDownloadFilename(r);
+  const paidDownloadPayload = azobssPurchaseDownloadPayload(r);
+  const activeDownload = window.__azobssPaBmActiveDownload;
+  const isActiveDownload = !!(activeDownload && activeDownload.key === paidDownloadPayload);
+  const isOtherDownloadActive = !!(activeDownload && !isActiveDownload);
   const paid = azobssIsPurchasePaidForDownload(r);
   const allowed = azobssPurchaseDownloadAllowed(r);
   const expired = paid && azobssPurchaseDownloadExpired(r);
@@ -3428,7 +3449,7 @@ function purchaseDetailRowHtml(r){
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
   if(paid && paidDownloadUrl && allowed){
-    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${azobssPurchaseDownloadPayload(r)}" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${azobssPurchaseDownloadPayload(r)}', this, event); } return false;">Download</a>${dlMetaHtml}${adminResetHtml}</div>`;
+    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? 'Downloading...' : 'Download'}</a>${dlMetaHtml}${adminResetHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
     actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
