@@ -5800,7 +5800,7 @@ function parseJupemLotRows(html, productCode, stateCode) {
       rowHtml,
       /href=["']([^"']*\/Produk\/ExtractLotPage\?[^"']+)["']/i
     );
-    const objectMatch = (viewPaUrl || mapUrl || selectionUrl).match(/(?:PelanAkuiDetail\/|[?&](?:no|code)=)(\d+)/i);
+    const objectMatch = (mapUrl || selectionUrl || viewPaUrl).match(/(?:PelanAkuiDetail\/|[?&](?:no|code)=)(\d+)/i);
 
     rows.push({
       lotNo,
@@ -6119,6 +6119,250 @@ function azobssGetLotMapConfig(productCode, stateCode) {
   const config = AZOBSS_JUPEM_LOT_CONFIG[product] && AZOBSS_JUPEM_LOT_CONFIG[product][state];
   if (!config) throw new Error("JUPEM does not provide this Lot Kadaster layer for the selected state.");
   return { product, state, bounds: AZOBSS_JUPEM_LOT_BOUNDS[state], ...config };
+}
+
+
+// 574: Resolve one exact JUPEM lot and return its geometry for the internal
+// focused-lot viewer. The map URL is parsed only for identifiers; it is never
+// fetched directly, so arbitrary URLs cannot turn this endpoint into a proxy.
+function azobssParseFocusedLotMapTarget(rawUrl) {
+  const value = String(rawUrl || "").trim().slice(0, 1200);
+  if (!value) return {};
+  try {
+    const target = new URL(value, "https://ebiz.jupem.gov.my/");
+    if (!/(^|\.)ebiz\.jupem\.gov\.my$/i.test(target.hostname)) return {};
+    const type = String(target.searchParams.get("type") || "").trim();
+    const typeMatch = type.match(/^(\d{2})lot/i);
+    return {
+      objectId: String(
+        target.searchParams.get("no") ||
+        target.searchParams.get("id") ||
+        target.searchParams.get("objectId") ||
+        ""
+      ).trim(),
+      productCode: String(
+        target.searchParams.get("produk") ||
+        (/c3/i.test(type) ? "2" : "1")
+      ).trim(),
+      stateCode: String(
+        target.searchParams.get("neg") ||
+        target.searchParams.get("negeri") ||
+        target.searchParams.get("state") ||
+        (typeMatch && typeMatch[1]) ||
+        ""
+      ).trim()
+    };
+  } catch (_) {
+    return {};
+  }
+}
+
+function azobssCleanLotObjectId(value) {
+  const clean = String(value || "").trim();
+  return /^\d{1,18}$/.test(clean) ? clean : "";
+}
+
+function azobssNormalizeFieldToken(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function azobssFindFocusedLotAttribute(attributes, patterns) {
+  const source = attributes && typeof attributes === "object" ? attributes : {};
+  const entries = Object.entries(source);
+  for (const pattern of patterns) {
+    const wanted = azobssNormalizeFieldToken(pattern);
+    const match = entries.find(([key]) => azobssNormalizeFieldToken(key) === wanted);
+    if (match && String(match[1] ?? "").trim()) return String(match[1]).trim();
+  }
+  for (const pattern of patterns) {
+    const wanted = azobssNormalizeFieldToken(pattern);
+    if (wanted.length < 4) continue;
+    const match = entries.find(([key]) => {
+      const token = azobssNormalizeFieldToken(key);
+      return token.startsWith(wanted) || token.endsWith(wanted);
+    });
+    if (match && String(match[1] ?? "").trim()) return String(match[1]).trim();
+  }
+  return "";
+}
+
+
+function azobssFocusedLotComparable(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function azobssFocusedLotFeatureScore(feature, context = {}) {
+  const attributes = feature && feature.attributes || {};
+  const checks = [
+    [context.lotNo, azobssFindFocusedLotAttribute(attributes, ["NO_LOT", "NOLOT", "LOT_NO", "LOTNO", "NOMBOR_LOT", "LOT"]), 20],
+    [context.paNo, azobssFindFocusedLotAttribute(attributes, ["NO_PA", "NOPA", "PA_NO", "PANO", "PELAN_AKUI"]), 12],
+    [context.daerah, azobssFindFocusedLotAttribute(attributes, ["DAERAH", "DISTRICT"]), 5],
+    [context.mukim, azobssFindFocusedLotAttribute(attributes, ["MUKIM", "BANDAR", "PEKAN"]), 4],
+    [context.seksyen, azobssFindFocusedLotAttribute(attributes, ["SEKSYEN", "SECTION"]), 3]
+  ];
+  let score = 0;
+  for (const [wantedRaw, actualRaw, weight] of checks) {
+    const wanted = azobssFocusedLotComparable(wantedRaw);
+    const actual = azobssFocusedLotComparable(actualRaw);
+    if (!wanted || !actual) continue;
+    if (wanted === actual) score += weight;
+    else if (wanted.includes(actual) || actual.includes(wanted)) score += Math.max(1, Math.floor(weight / 2));
+    else if (weight >= 12) score -= weight * 2;
+  }
+  return score;
+}
+
+function azobssChooseFocusedLotFeature(features, context = {}) {
+  const rows = Array.isArray(features) ? features.filter(Boolean) : [];
+  if (!rows.length) return null;
+  return rows
+    .map((feature, index) => ({ feature, index, score: azobssFocusedLotFeatureScore(feature, context) }))
+    .sort((left, right) => right.score - left.score || left.index - right.index)[0].feature;
+}
+
+function azobssFocusedLotBounds(geometry) {
+  const rings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
+  let west = Infinity;
+  let south = Infinity;
+  let east = -Infinity;
+  let north = -Infinity;
+  rings.forEach((ring) => {
+    if (!Array.isArray(ring)) return;
+    ring.forEach((point) => {
+      const longitude = Number(point && point[0]);
+      const latitude = Number(point && point[1]);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+      west = Math.min(west, longitude);
+      south = Math.min(south, latitude);
+      east = Math.max(east, longitude);
+      north = Math.max(north, latitude);
+    });
+  });
+  if (![west, south, east, north].every(Number.isFinite)) {
+    throw new Error("Geometri lot JUPEM tidak dapat dibaca.");
+  }
+  return {
+    bounds: [[south, west], [north, east]],
+    center: {
+      latitude: Number(((south + north) / 2).toFixed(8)),
+      longitude: Number(((west + east) / 2).toFixed(8))
+    }
+  };
+}
+
+async function azobssQueryFocusedLotByObjectId(config, objectId, auth) {
+  const cleanObjectId = azobssCleanLotObjectId(objectId);
+  if (!cleanObjectId) return null;
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  const result = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+    objectIds: cleanObjectId,
+    outFields: "*",
+    returnGeometry: "true",
+    outSR: "4326"
+  }, auth, 30000);
+  return Array.isArray(result.features) && result.features[0] ? result.features[0] : null;
+}
+
+async function azobssQueryFocusedLotByNumber(config, lotNo, auth, context = {}) {
+  const cleanNumber = cleanLotNumber(lotNo);
+  if (!cleanNumber) return null;
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  const metadata = await azobssJupemArcGisJson(layerUrl, {}, auth, 30000);
+  const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
+  const candidates = fields.filter((field) => {
+    const token = azobssNormalizeFieldToken(`${field && field.name || ""} ${field && field.alias || ""}`);
+    return /(?:^|NO)(?:LOT|LOTT|LOTNUMBER)|LOTNO|NOMBORLOT/.test(token);
+  }).slice(0, 8);
+  const escaped = cleanNumber.replace(/'/g, "''");
+  for (const field of candidates) {
+    const fieldName = String(field && field.name || "").trim();
+    if (!fieldName) continue;
+    const numeric = /Integer|Double|Single|SmallInteger/i.test(String(field.type || ""));
+    if (numeric && !/^\d+(?:\.\d+)?$/.test(cleanNumber)) continue;
+    const where = numeric ? `${fieldName} = ${cleanNumber}` : `${fieldName} = '${escaped}'`;
+    try {
+      const result = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+        where,
+        outFields: "*",
+        returnGeometry: "true",
+        outSR: "4326",
+        resultRecordCount: "50"
+      }, auth, 30000);
+      const features = Array.isArray(result.features) ? result.features : [];
+      const selected = azobssChooseFocusedLotFeature(features, { ...context, lotNo: cleanNumber });
+      if (selected) return selected;
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, context = {}) {
+  const config = azobssGetLotMapConfig(productCode, stateCode);
+  const auth = await azobssGetJupemMapAuth(false);
+  let resolvedObjectId = azobssCleanLotObjectId(objectId);
+  let feature = null;
+  if (resolvedObjectId) {
+    try {
+      const byObjectId = await azobssQueryFocusedLotByObjectId(config, resolvedObjectId, auth);
+      if (!byObjectId || azobssFocusedLotFeatureScore(byObjectId, { ...context, lotNo }) >= 0) feature = byObjectId;
+    } catch (_) {}
+  }
+
+  if (!feature && lotNo) {
+    try { feature = await azobssQueryFocusedLotByNumber(config, lotNo, auth, context); } catch (_) {}
+  }
+
+  if (!feature && lotNo) {
+    try {
+      const search = await searchJupemLotCadastre(config.product, config.state, cleanLotNumber(lotNo));
+      const wanted = cleanLotNumber(lotNo);
+      const row = (search.results || []).find((item) => cleanLotNumber(item && item.lotNo) === wanted)
+        || (search.results || [])[0];
+      const rowTarget = azobssParseFocusedLotMapTarget(row && row.mapUrl);
+      resolvedObjectId = azobssCleanLotObjectId(rowTarget.objectId || (row && row.objectId));
+      if (resolvedObjectId) feature = await azobssQueryFocusedLotByObjectId(config, resolvedObjectId, auth);
+    } catch (_) {}
+  }
+
+  if (!feature || !feature.geometry || !Array.isArray(feature.geometry.rings)) {
+    throw new Error("Lot JUPEM yang dipilih tidak dapat dikenal pasti pada peta.");
+  }
+
+  const attributes = feature.attributes || {};
+  const objectIdFromAttributes = azobssFindFocusedLotAttribute(attributes, [
+    "OBJECTID", "OBJECTID_1", "FID"
+  ]);
+  const resolvedLotNo = azobssFindFocusedLotAttribute(attributes, [
+    "NO_LOT", "NOLOT", "LOT_NO", "LOTNO", "NOMBOR_LOT", "LOT"
+  ]) || cleanLotNumber(lotNo);
+  const paNo = azobssFindFocusedLotAttribute(attributes, [
+    "NO_PA", "NOPA", "PA_NO", "PANO", "PELAN_AKUI"
+  ]);
+  const daerah = azobssFindFocusedLotAttribute(attributes, ["DAERAH", "DISTRICT"]);
+  const mukim = azobssFindFocusedLotAttribute(attributes, ["MUKIM", "BANDAR", "PEKAN"]);
+  const seksyen = azobssFindFocusedLotAttribute(attributes, ["SEKSYEN", "SECTION"]);
+  const spatial = azobssFocusedLotBounds(feature.geometry);
+
+  return {
+    config,
+    objectId: azobssCleanLotObjectId(resolvedObjectId || objectIdFromAttributes),
+    lotNo: resolvedLotNo,
+    paNo,
+    daerah,
+    mukim,
+    seksyen,
+    geometry: {
+      rings: feature.geometry.rings,
+      spatialReference: { wkid: 4326 }
+    },
+    bounds: spatial.bounds,
+    center: spatial.center
+  };
 }
 
 // 572: Malaysia place-name suggestions with Photon HTTP 400 fallback.
@@ -10800,6 +11044,56 @@ async function handler(req, res) {
         }), "application/json");
       } catch (error) {
         return send(res, 400, JSON.stringify({ ok: false, error: error.message || "Unsupported JUPEM lot map." }), "application/json");
+      }
+    }
+
+
+    if (pathname === "/api/jupem-lot-map/focus" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "jupem-lot-map-focus", 60, 60 * 1000)) return;
+      try {
+        const fromUrl = azobssParseFocusedLotMapTarget(
+          parsed.query.url || parsed.query.mapUrl || parsed.query.jupemUrl
+        );
+        const productCode = cleanLotProduct(
+          parsed.query.produk || parsed.query.product || parsed.query.productCode || fromUrl.productCode
+        );
+        const stateCode = cleanLotStateCode(
+          parsed.query.negeri || parsed.query.state || parsed.query.stateCode || fromUrl.stateCode
+        );
+        const objectId = azobssCleanLotObjectId(
+          parsed.query.objectId || parsed.query.id || parsed.query.no || fromUrl.objectId
+        );
+        const lotNo = cleanLotNumber(parsed.query.lot || parsed.query.lotNo || parsed.query.noLot);
+        const focusContext = {
+          paNo: String(parsed.query.pa || parsed.query.paNo || "").trim().toUpperCase().slice(0, 48),
+          daerah: String(parsed.query.daerah || parsed.query.district || "").trim().slice(0, 120),
+          mukim: String(parsed.query.mukim || parsed.query.bandar || "").trim().slice(0, 120),
+          seksyen: String(parsed.query.seksyen || parsed.query.section || "").trim().slice(0, 80)
+        };
+        if (!stateCode) throw new Error("Negeri bagi lot ini tidak dapat dikenal pasti.");
+        if (!objectId && !lotNo) throw new Error("ID atau nombor lot tidak tersedia.");
+
+        const focused = await azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, focusContext);
+        return send(res, 200, JSON.stringify({
+          ok: true,
+          productCode: focused.config.product,
+          productType: focused.config.product === "2" ? "NDCDB_C3" : "NDCDB",
+          stateCode: focused.config.state,
+          negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[focused.config.state] || "",
+          objectId: focused.objectId,
+          lotNo: focused.lotNo || lotNo,
+          paNo: focused.paNo,
+          daerah: focused.daerah,
+          mukim: focused.mukim,
+          seksyen: focused.seksyen,
+          geometry: focused.geometry,
+          bounds: focused.bounds,
+          center: focused.center
+        }), "application/json");
+      } catch (error) {
+        const message = error && error.message || "Lot JUPEM tidak dapat dipaparkan.";
+        const status = /tidak dapat dikenal pasti|tidak tersedia|unsupported|missing/i.test(message) ? 400 : 502;
+        return send(res, status, JSON.stringify({ ok: false, error: message }), "application/json");
       }
     }
 

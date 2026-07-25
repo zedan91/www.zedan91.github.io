@@ -61,6 +61,15 @@
       .az-lot-map-modal .leaflet-container{font-family:Arial,sans-serif;background:#d8e1eb}
       .az-lot-map-modal .leaflet-draw-toolbar a{background-color:#fff}
       .az-lot-map-modal .leaflet-control-layers{border-radius:6px}
+      .az-lot-focus-dialog .az-lot-map-body{grid-template-columns:minmax(0,1fr) 300px}
+      .az-lot-focus-dialog .az-lot-map-stage{min-height:460px}
+      .az-lot-focus-details{display:grid;grid-template-columns:minmax(0,1fr) auto;margin:0;border:1px solid #30445f;border-radius:6px;overflow:hidden;background:#142238}
+      .az-lot-focus-details dt,.az-lot-focus-details dd{margin:0;padding:10px;border-bottom:1px solid rgba(148,163,184,.16);font-size:13px}
+      .az-lot-focus-details dt{color:#aebed4}.az-lot-focus-details dd{text-align:right;font-weight:800;color:#fff;overflow-wrap:anywhere}
+      .az-lot-focus-details dt:last-of-type,.az-lot-focus-details dd:last-of-type{border-bottom:0}
+      .az-lot-focus-open{display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;margin-top:12px;border:1px solid #60a5fa;border-radius:6px;background:#1d4ed8;color:#fff!important;font-weight:900;text-decoration:none!important;box-shadow:0 2px 0 #172554}
+      .az-lot-focus-note{margin:12px 0 0;color:#9fb3cf;font-size:12px;line-height:1.45}
+      .az-lot-focus-dialog .az-lot-map-canvas.is-loading:after{content:'Sedang memuatkan lot JUPEM...';position:absolute;z-index:500;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:6px;background:rgba(15,23,42,.9);color:#fff;font-weight:800;white-space:nowrap}
       @media(max-width:760px){
         .az-lot-map-modal{padding:0;align-items:stretch}
         .az-lot-map-dialog{width:100vw;height:100dvh;border:0;border-radius:0}
@@ -728,4 +737,223 @@
       });
     });
   };
+
+  window.azobssOpenLotFocusMap = async function (options) {
+    const input = options && typeof options === 'object' ? options : {};
+    const originalMapUrl = String(input.mapUrl || input.url || '').trim();
+    const requestedLotNo = String(input.lotNo || input.lot || '').trim();
+    const requestedPaNo = String(input.paNo || '').trim();
+    const requestedDistrict = String(input.daerah || input.district || '').trim();
+    const requestedMukim = String(input.mukim || input.bandar || '').trim();
+    const requestedSection = String(input.seksyen || input.section || '').trim();
+    const requestedStateCode = String(input.stateCode || '').trim();
+    const requestedStateName = String(input.stateName || '').trim();
+    const hasRequestedProductCode = input.productCode !== undefined && input.productCode !== null && String(input.productCode).trim() !== '';
+    const requestedProductCode = String(input.productCode || '1') === '2' ? '2' : '1';
+    const requestedObjectId = String(input.objectId || '').trim();
+
+    addStyles();
+    if (typeof window.azobssCloseLotFocusMap === 'function') {
+      try { window.azobssCloseLotFocusMap(); } catch (_) {}
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const controller = new AbortController();
+    let map = null;
+    let lotsLayer = null;
+    let sheetsLayer = null;
+    let selectedLayer = null;
+    let closed = false;
+
+    const modal = document.createElement('div');
+    modal.className = 'az-lot-map-modal az-lot-focus-modal';
+    modal.innerHTML = `
+      <section class="az-lot-map-dialog az-lot-focus-dialog" role="dialog" aria-modal="true" aria-labelledby="azLotFocusTitle">
+        <header class="az-lot-map-head">
+          <div><h2 id="azLotFocusTitle">Peta Lot JUPEM</h2><small data-focus-subtitle>JUPEM eBiz</small></div>
+          <button class="az-lot-map-close" type="button" aria-label="Tutup" title="Tutup">&times;</button>
+        </header>
+        <div class="az-lot-map-body">
+          <div class="az-lot-map-stage"><div class="az-lot-map-canvas is-loading"></div></div>
+          <aside class="az-lot-map-side">
+            <p class="az-lot-map-status is-loading" role="status" aria-live="polite">Sedang mendapatkan lokasi tepat lot JUPEM...</p>
+            <dl class="az-lot-focus-details">
+              <dt>No. Lot</dt><dd data-focus-lot>-</dd>
+              <dt>No. PA</dt><dd data-focus-pa>-</dd>
+              <dt>Negeri</dt><dd data-focus-state>-</dd>
+              <dt>Daerah</dt><dd data-focus-district>-</dd>
+              <dt>Mukim / Bandar</dt><dd data-focus-mukim>-</dd>
+              <dt>Seksyen</dt><dd data-focus-section>-</dd>
+            </dl>
+            <a class="az-lot-focus-open" data-focus-original href="#" target="_blank" rel="noopener noreferrer" hidden>Buka di JUPEM eBiz</a>
+            <p class="az-lot-focus-note">Lot yang dipilih ditandakan dengan sempadan merah dan isian kuning.</p>
+          </aside>
+        </div>
+      </section>`;
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+
+    const canvas = modal.querySelector('.az-lot-map-canvas');
+    const titleNode = modal.querySelector('#azLotFocusTitle');
+    const subtitleNode = modal.querySelector('[data-focus-subtitle]');
+    const statusNode = modal.querySelector('.az-lot-map-status');
+    const originalLink = modal.querySelector('[data-focus-original]');
+    const detailNodes = {
+      lot: modal.querySelector('[data-focus-lot]'),
+      pa: modal.querySelector('[data-focus-pa]'),
+      state: modal.querySelector('[data-focus-state]'),
+      district: modal.querySelector('[data-focus-district]'),
+      mukim: modal.querySelector('[data-focus-mukim]'),
+      section: modal.querySelector('[data-focus-section]')
+    };
+    titleNode.textContent = requestedLotNo ? `Peta Lot ${requestedLotNo}` : 'Peta Lot JUPEM';
+    subtitleNode.textContent = `${requestedStateName || 'JUPEM eBiz'}${requestedPaNo ? ` · ${requestedPaNo}` : ''}`;
+    detailNodes.lot.textContent = requestedLotNo || '-';
+    detailNodes.pa.textContent = requestedPaNo || '-';
+    detailNodes.state.textContent = requestedStateName || '-';
+
+    function cleanup() {
+      if (closed) return;
+      closed = true;
+      controller.abort();
+      document.removeEventListener('keydown', onKeyDown);
+      try { if (map) map.remove(); } catch (_) {}
+      modal.remove();
+      document.body.style.overflow = previousOverflow;
+      if (window.azobssCloseLotFocusMap === cleanup) window.azobssCloseLotFocusMap = null;
+    }
+    window.azobssCloseLotFocusMap = cleanup;
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape') cleanup();
+    }
+
+    modal.querySelector('.az-lot-map-close').addEventListener('click', cleanup);
+    modal.addEventListener('mousedown', (event) => {
+      if (event.target === modal) cleanup();
+    });
+    document.addEventListener('keydown', onKeyDown);
+    modal.querySelector('.az-lot-map-close').focus();
+
+    if (originalMapUrl) {
+      try {
+        const safeUrl = new URL(originalMapUrl, 'https://ebiz.jupem.gov.my/');
+        if (/(^|\.)ebiz\.jupem\.gov\.my$/i.test(safeUrl.hostname)) {
+          originalLink.href = safeUrl.href;
+          originalLink.hidden = false;
+        }
+      } catch (_) {}
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (originalMapUrl) params.set('url', originalMapUrl);
+      if (requestedLotNo) params.set('lot', requestedLotNo);
+      if (requestedPaNo) params.set('paNo', requestedPaNo);
+      if (requestedDistrict) params.set('daerah', requestedDistrict);
+      if (requestedMukim) params.set('mukim', requestedMukim);
+      if (requestedSection) params.set('seksyen', requestedSection);
+      if (requestedObjectId) params.set('objectId', requestedObjectId);
+      if (requestedStateCode) params.set('negeri', requestedStateCode);
+      if (hasRequestedProductCode) params.set('produk', requestedProductCode);
+
+      const [_, response] = await Promise.all([
+        loadMapLibraries(),
+        fetch(`${BACKEND_BASE}/api/jupem-lot-map/focus?${params.toString()}`, {
+          cache: 'no-store',
+          signal: controller.signal
+        })
+      ]);
+      const focused = await response.json().catch(() => ({}));
+      if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot JUPEM tidak dapat dipaparkan.');
+      if (closed) return null;
+
+      const productCode = String(focused.productCode || requestedProductCode) === '2' ? '2' : '1';
+      const stateCode = String(focused.stateCode || requestedStateCode).padStart(2, '0');
+      const stateName = String(focused.negeri || requestedStateName || '').trim();
+      const lotNo = String(focused.lotNo || requestedLotNo || '').trim();
+      const paNo = String(focused.paNo || requestedPaNo || '').trim();
+      const rings = focused.geometry && Array.isArray(focused.geometry.rings) ? focused.geometry.rings : [];
+      if (!rings.length) throw new Error('Geometri lot JUPEM tidak tersedia.');
+
+      titleNode.textContent = lotNo ? `Peta Lot ${lotNo}` : 'Peta Lot JUPEM';
+      subtitleNode.textContent = `${stateName || 'JUPEM'} · ${productCode === '2' ? 'Lot Kadaster Berdigit C3' : 'Lot Kadaster Berdigit'}${paNo ? ` · ${paNo}` : ''}`;
+      detailNodes.lot.textContent = lotNo || '-';
+      detailNodes.pa.textContent = paNo || '-';
+      detailNodes.state.textContent = stateName || '-';
+      detailNodes.district.textContent = String(focused.daerah || '-');
+      detailNodes.mukim.textContent = String(focused.mukim || '-');
+      detailNodes.section.textContent = String(focused.seksyen || '-');
+
+      map = window.L.map(canvas, { zoomControl: true, preferCanvas: true });
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 20,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      lotsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&layerMode=lots&focus=1`, {
+        minZoom: 13,
+        maxZoom: 20,
+        opacity: 0.92,
+        updateWhenIdle: false,
+        updateWhenZooming: true,
+        keepBuffer: 4,
+        attribution: 'JUPEM eBiz'
+      });
+      sheetsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&layerMode=sheets&focus=1`, {
+        minZoom: 13,
+        maxZoom: 20,
+        opacity: 1,
+        updateWhenIdle: false,
+        updateWhenZooming: true,
+        keepBuffer: 4,
+        attribution: 'JUPEM eBiz'
+      });
+      const focusedJupemLayer = window.L.layerGroup([lotsLayer, sheetsLayer]).addTo(map);
+      window.L.control.layers(null, {
+        [`Lot & Garisan Syit ${stateName || 'JUPEM'}`]: focusedJupemLayer
+      }, { collapsed: false }).addTo(map);
+
+      const leafletRings = rings.map((ring) => (Array.isArray(ring) ? ring.map((point) => {
+        const latitude = Number(point && point[1]);
+        const longitude = Number(point && point[0]);
+        return Number.isFinite(latitude) && Number.isFinite(longitude) ? [latitude, longitude] : null;
+      }).filter(Boolean) : [])).filter((ring) => ring.length >= 3);
+      if (!leafletRings.length) throw new Error('Geometri lot JUPEM tidak sah.');
+      selectedLayer = window.L.polygon(leafletRings, {
+        color: '#ef4444',
+        weight: 4,
+        opacity: 1,
+        fillColor: '#facc15',
+        fillOpacity: 0.3,
+        interactive: true
+      }).addTo(map);
+      selectedLayer.bindTooltip(lotNo ? `Lot ${lotNo}` : 'Lot dipilih', {
+        permanent: true,
+        direction: 'center',
+        className: 'az-lot-focus-tooltip'
+      }).openTooltip();
+
+      const focusBounds = Array.isArray(focused.bounds) && focused.bounds.length === 2
+        ? focused.bounds
+        : selectedLayer.getBounds();
+      map.fitBounds(focusBounds, { padding: [70, 70], maxZoom: 19, animate: false });
+      canvas.classList.remove('is-loading');
+      setStatus(statusNode, `Lot ${lotNo || ''} ditemui dan dipaparkan tepat pada peta.`, 'success');
+      window.setTimeout(() => {
+        if (!map || closed) return;
+        try { map.invalidateSize({ pan: false }); } catch (_) {}
+        try { lotsLayer.redraw(); } catch (_) {}
+        try { sheetsLayer.redraw(); } catch (_) {}
+        try { selectedLayer.bringToFront(); } catch (_) {}
+      }, 120);
+      return focused;
+    } catch (error) {
+      if (closed || (error && error.name === 'AbortError')) return null;
+      canvas.classList.remove('is-loading');
+      setStatus(statusNode, error.message || 'Lot JUPEM tidak dapat dipaparkan.', 'error');
+      titleNode.textContent = requestedLotNo ? `Peta Lot ${requestedLotNo}` : 'Peta Lot JUPEM';
+      return null;
+    }
+  };
+
 })();

@@ -119,8 +119,22 @@
     };
     modal.querySelector('.syit-sheet-modal-close').addEventListener('click', close);
     modal.querySelector('.syit-sheet-modal-backdrop').addEventListener('click', close);
+    modal.querySelector('.pabm-pa-preview-lots').addEventListener('click', (event) => {
+      const lotButton = event.target.closest('[data-lot-focus-map]');
+      if (!lotButton) return;
+      event.preventDefault();
+      if (typeof window.azobssOpenLotFocusMap !== 'function') return;
+      window.azobssOpenLotFocusMap({
+        mapUrl: lotButton.dataset.lotMapUrl || '',
+        lotNo: lotButton.dataset.lotNumber || '',
+        paNo: lotButton.dataset.lotPaNumber || '',
+        stateCode: lotButton.dataset.lotStateCode || '',
+        stateName: lotButton.dataset.lotStateName || '',
+        productCode: lotButton.dataset.lotProductCode || '1'
+      });
+    });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && modal.classList.contains('is-open')) close();
+      if (event.key === 'Escape' && modal.classList.contains('is-open') && !document.querySelector('.az-lot-focus-modal')) close();
     });
     return modal;
   }
@@ -134,15 +148,33 @@
     const details = Array.from(detailColumn?.querySelectorAll('h5') || [])
       .map((node) => node.textContent.replace(/\s+/g, ' ').trim())
       .filter((text) => text && !/^Beli Pelan Akui/i.test(text));
-    const lots = Array.from(detailDocument.querySelectorAll('#exampleMini tbody a')).map((link) => ({
-      number: link.textContent.replace(/\s+/g, ' ').trim(),
-      url: absoluteJupemUrl(link.getAttribute('href'))
-    })).filter((lot) => lot.number);
+    const stateLine = details.find((line) => /^Negeri\s*:/i.test(line)) || '';
+    const stateName = stateLine.replace(/^Negeri\s*:\s*/i, '').replace(/^Negeri\s+/i, '').trim().toUpperCase();
+    const stateCode = JUPEM_STATE_CODES[stateName] || '';
+    const lots = Array.from(detailDocument.querySelectorAll('#exampleMini tbody a')).map((link) => {
+      const url = absoluteJupemUrl(link.getAttribute('href'));
+      let productCode = '1';
+      let mapStateCode = stateCode;
+      try {
+        const parsed = new URL(url);
+        const type = String(parsed.searchParams.get('type') || '');
+        productCode = /c3/i.test(type) || parsed.searchParams.get('produk') === '2' ? '2' : '1';
+        mapStateCode = parsed.searchParams.get('neg') || (type.match(/^(\d{2})lot/i) || [])[1] || stateCode;
+      } catch (_) {}
+      return {
+        number: link.textContent.replace(/\s+/g, ' ').trim(),
+        url,
+        productCode,
+        stateCode: mapStateCode
+      };
+    }).filter((lot) => lot.number);
     return {
       title,
       imageUrl: absoluteJupemUrl(image?.getAttribute('src')),
       details,
-      lots
+      lots,
+      stateName,
+      stateCode
     };
   }
 
@@ -178,8 +210,8 @@
         ? preview.details.map((line) => `<p>${escapeHtml(line)}</p>`).join('')
         : '<p>PA details are unavailable.</p>');
       lots.innerHTML = '<h3>Senarai Lot</h3>' + (preview.lots.length
-        ? `<ol>${preview.lots.map((lot) => `<li>${lot.url ? `<a href="${escapeHtml(lot.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(lot.number)}</a>` : escapeHtml(lot.number)}</li>`).join('')}</ol>`
-        : '<p>No lot list is available.</p>');
+        ? `<ol>${preview.lots.map((lot) => `<li>${lot.url ? `<button class="pabm-pa-lot-map-button" type="button" data-lot-focus-map data-lot-map-url="${escapeHtml(lot.url)}" data-lot-number="${escapeHtml(lot.number)}" data-lot-pa-number="${escapeHtml(preview.title)}" data-lot-state-code="${escapeHtml(lot.stateCode || preview.stateCode || '')}" data-lot-state-name="${escapeHtml(preview.stateName || '')}" data-lot-product-code="${escapeHtml(lot.productCode || '1')}" title="Lihat Lot ${escapeHtml(lot.number)} pada peta">${escapeHtml(lot.number)}</button>` : escapeHtml(lot.number)}</li>`).join('')}</ol>`
+        : '<p>Senarai lot tidak tersedia.</p>');
       if (preview.imageUrl) {
         image.alt = `${preview.title} preview`;
         image.onload = () => { image.hidden = false; };

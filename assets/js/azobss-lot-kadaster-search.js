@@ -51,6 +51,9 @@
       const viewPaTrigger = row.querySelector('[onclick*="PelanAkuiDetail"]');
       const viewPaMatch = String(viewPaTrigger?.getAttribute('onclick') || '').match(/createModal\(\s*['"]([^'"]+)['"]/i);
       const mapLink = row.querySelector('a[href*="/PetaInteraktif"]');
+      const mapUrl = absoluteJupemUrl(mapLink?.getAttribute('href'));
+      let objectId = '';
+      try { objectId = new URL(mapUrl).searchParams.get('no') || ''; } catch (_) {}
       return {
         lotNo: cells[1]?.textContent.trim() || '',
         paNo: cells[2]?.textContent.trim().toUpperCase() || '',
@@ -60,8 +63,9 @@
         seksyen: cells[6]?.textContent.trim() || '',
         productCode,
         stateCode,
+        objectId,
         viewPaUrl: absoluteJupemUrl(viewPaMatch?.[1]),
-        mapUrl: absoluteJupemUrl(mapLink?.getAttribute('href'))
+        mapUrl
       };
     }).filter((record) => record && record.lotNo && record.paNo);
   }
@@ -171,9 +175,10 @@
       return `<button class="btn pabm-preview-icon-button" type="button" data-pa-view-url="${escapeHtml(url)}" data-pa-view-name="${escapeHtml(paNo || '')}" aria-label="Lihat ${escapeHtml(paNo || 'PA')}" title="Lihat PA"><span aria-hidden="true">&#128269;</span></button>`;
     }
 
-    function mapLink(url) {
+    function mapButton(record) {
+      const url = String(record && record.mapUrl || '').trim();
       if (!url) return '-';
-      return `<a class="btn pabm-preview-icon-button" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat peta JUPEM" title="Lihat Peta"><span aria-hidden="true">&#128269;</span></a>`;
+      return `<button class="btn pabm-preview-icon-button" type="button" data-lot-focus-map data-lot-map-url="${escapeHtml(url)}" data-lot-object-id="${escapeHtml(record.objectId || '')}" data-lot-number="${escapeHtml(record.lotNo || '')}" data-lot-pa-number="${escapeHtml(record.paNo || '')}" data-lot-state-code="${escapeHtml(record.stateCode || '')}" data-lot-state-name="${escapeHtml(record.negeri || '')}" data-lot-product-code="${escapeHtml(record.productCode || productCode)}" data-lot-district="${escapeHtml(record.daerah || '')}" data-lot-mukim="${escapeHtml(record.mukim || '')}" data-lot-section="${escapeHtml(record.seksyen || '')}" aria-label="Lihat lot ${escapeHtml(record.lotNo || '')} pada peta" title="Lihat Peta"><span aria-hidden="true">&#128269;</span></button>`;
     }
 
     function renderResults(page) {
@@ -196,7 +201,7 @@
         <td>${escapeHtml(record.mukim || '-')}</td>
         <td>${escapeHtml(record.seksyen || '-')}</td>
         <td class="pabm-action-cell pabm-preview-action-cell">${previewButton(record.viewPaUrl, record.paNo)}</td>
-        <td class="pabm-action-cell pabm-preview-action-cell">${mapLink(record.mapUrl)}</td>
+        <td class="pabm-action-cell pabm-preview-action-cell">${mapButton(record)}</td>
       </tr>`).join('');
       resultWrap.hidden = false;
       renderPagination(totalPages);
@@ -277,6 +282,25 @@
     generalEl.addEventListener('input', applyGeneralFilter);
 
     resultsBody.addEventListener('click', (event) => {
+      const focusButton = event.target.closest('[data-lot-focus-map]');
+      if (focusButton) {
+        event.preventDefault();
+        if (typeof window.azobssOpenLotFocusMap === 'function') {
+          window.azobssOpenLotFocusMap({
+            mapUrl: focusButton.dataset.lotMapUrl || '',
+            objectId: focusButton.dataset.lotObjectId || '',
+            lotNo: focusButton.dataset.lotNumber || '',
+            paNo: focusButton.dataset.lotPaNumber || '',
+            stateCode: focusButton.dataset.lotStateCode || '',
+            stateName: focusButton.dataset.lotStateName || '',
+            productCode: focusButton.dataset.lotProductCode || productCode,
+            daerah: focusButton.dataset.lotDistrict || '',
+            mukim: focusButton.dataset.lotMukim || '',
+            seksyen: focusButton.dataset.lotSection || ''
+          });
+        }
+        return;
+      }
       const preview = event.target.closest('[data-pa-view-url]');
       if (!preview) return;
       event.preventDefault();

@@ -934,9 +934,25 @@ body.pa-bm-page .pabm-pa-preview-lots li {
   font-size: 13px;
 }
 
-body.pa-bm-page .pabm-pa-preview-lots a {
+body.pa-bm-page .pabm-pa-preview-lots a,
+body.pa-bm-page .pabm-pa-preview-lots .pabm-pa-lot-map-button {
   color: #2563eb;
   font-weight: 800;
+}
+
+body.pa-bm-page .pabm-pa-preview-lots .pabm-pa-lot-map-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+body.pa-bm-page .pabm-pa-preview-lots .pabm-pa-lot-map-button:hover,
+body.pa-bm-page .pabm-pa-preview-lots .pabm-pa-lot-map-button:focus-visible {
+  color: #1d4ed8;
 }
 
 @media (max-width: 820px) {
