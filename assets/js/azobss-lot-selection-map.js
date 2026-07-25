@@ -11,6 +11,38 @@
   const LEAFLET_DRAW_JS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js';
   const LEAFLET_DRAW_CSS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css';
   let libraryPromise = null;
+  let lotFocusOpenSerial = 0;
+  let lotFocusPrefetchController = null;
+
+  function createLotFocusParams(input, productCode, stateCode) {
+    const source = input && typeof input === 'object' ? input : {};
+    const params = new URLSearchParams();
+    params.set('produk', String(productCode || source.productCode || '1') === '2' ? '2' : '1');
+    if (stateCode) params.set('negeri', String(stateCode).padStart(2, '0'));
+    const lotNo = String(source.lotNo || source.lot || '').trim();
+    const paNo = String(source.paNo || source.pa || '').trim();
+    const objectId = String(source.objectId || '').trim();
+    const mapUrl = String(source.mapUrl || source.url || '').trim();
+    if (lotNo) params.set('lot', lotNo);
+    if (paNo) params.set('paNo', paNo);
+    if (objectId) params.set('objectId', objectId);
+    if (mapUrl) params.set('url', mapUrl);
+    if (source.daerah || source.district) params.set('daerah', String(source.daerah || source.district));
+    if (source.mukim) params.set('mukim', String(source.mukim));
+    if (source.seksyen || source.section) params.set('seksyen', String(source.seksyen || source.section));
+    return params;
+  }
+
+  async function fetchExactLotFocus(input, productCode, stateCode, signal) {
+    const params = createLotFocusParams(input, productCode, stateCode);
+    const response = await fetch(`${BACKEND_BASE}/api/jupem-lot-map/focus?${params.toString()}`, {
+      cache: 'no-store',
+      signal
+    });
+    const focused = await response.json().catch(() => ({}));
+    if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot JUPEM tidak dapat dipaparkan.');
+    return focused;
+  }
 
   function addStyles() {
     if (document.getElementById('azobssLotSelectionStyles')) return;
@@ -192,7 +224,10 @@
     const initialFocus = inputOptions.initialFocus && typeof inputOptions.initialFocus === 'object'
       ? { ...inputOptions.initialFocus }
       : null;
-    const isDirectLotFocus = Boolean(initialFocus && (initialFocus.lotNo || initialFocus.paNo || initialFocus.mapUrl || initialFocus.objectId));
+    const initialResolvedFocus = initialFocus && initialFocus.resolvedFocus && typeof initialFocus.resolvedFocus === 'object'
+      ? initialFocus.resolvedFocus
+      : null;
+    const isDirectLotFocus = Boolean(initialFocus && (initialFocus.lotNo || initialFocus.paNo || initialFocus.mapUrl || initialFocus.objectId || initialResolvedFocus));
     if (!stateCode) throw new Error('Pilih negeri sebelum membuka peta.');
 
     if (typeof window.azobssCloseLotSelectionMap === 'function') {
@@ -391,23 +426,16 @@
         hideLocationSuggestions(false);
         setCoordinateFeedback(`Mencari lokasi tepat ${paNo || `Lot ${lotNo}`} di JUPEM...`, 'loading');
         try {
-          const params = new URLSearchParams();
-          params.set('produk', String(suggestion && suggestion.productCode || productCode) === '2' ? '2' : '1');
-          if (suggestionStateCode) params.set('negeri', suggestionStateCode);
-          if (lotNo) params.set('lot', lotNo);
-          if (paNo) params.set('paNo', paNo);
-          if (suggestion && suggestion.objectId) params.set('objectId', String(suggestion.objectId));
-          if (suggestion && suggestion.mapUrl) params.set('url', String(suggestion.mapUrl));
-          if (suggestion && suggestion.daerah) params.set('daerah', String(suggestion.daerah));
-          if (suggestion && suggestion.mukim) params.set('mukim', String(suggestion.mukim));
-          if (suggestion && suggestion.seksyen) params.set('seksyen', String(suggestion.seksyen));
-          const response = await fetch(`${BACKEND_BASE}/api/jupem-lot-map/focus?${params.toString()}`, {
-            cache: 'no-store',
-            signal: cadastreFocusController.signal
-          });
-          const focused = await response.json().catch(() => ({}));
+          const preResolved = suggestion && suggestion.resolvedFocus && typeof suggestion.resolvedFocus === 'object'
+            ? suggestion.resolvedFocus
+            : null;
+          const focused = preResolved || await fetchExactLotFocus(
+            suggestion,
+            String(suggestion && suggestion.productCode || productCode) === '2' ? '2' : '1',
+            suggestionStateCode,
+            cadastreFocusController.signal
+          );
           if (focusSerial !== cadastreFocusSerial || settled || !map) return;
-          if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot atau PA tidak dapat dipaparkan.');
           const focusedLotCount = Math.max(1, Number(focused.lotCount || 1));
           const convertRing = (ring) => (Array.isArray(ring) ? ring.map((point) => {
             const latitude = Number(point && point[1]);
@@ -447,20 +475,22 @@
           if (mapStateNode) {
             mapStateNode.textContent = `${activeStateName} · ${productCode === '2' ? 'Lot Kadaster Berdigit C3' : 'Lot Kadaster Berdigit'}`;
           }
-          const focusBounds = Array.isArray(focused.bounds) && focused.bounds.length === 2
-            ? focused.bounds
-            : cadastreFocusLayer.getBounds();
           const applyExactFocus = () => {
             if (focusSerial !== cadastreFocusSerial || settled || !map || !cadastreFocusLayer) return;
             try { map.stop(); } catch (_) {}
             try { map.invalidateSize({ pan: false }); } catch (_) {}
-            map.fitBounds(focusBounds, { padding: [70, 70], maxZoom: 19, animate: false, duration: 0 });
+            // The rendered polygon is the source of truth. Using its live Leaflet
+            // bounds avoids a stale initial state view or server-bound conversion
+            // from winning on the first click.
+            const exactBounds = cadastreFocusLayer.getBounds();
+            if (!exactBounds || !exactBounds.isValid || !exactBounds.isValid()) return;
+            map.fitBounds(exactBounds, { padding: [70, 70], maxZoom: 19, animate: false, duration: 0 });
             try { cadastreFocusLayer.bringToFront(); } catch (_) {}
           };
           applyExactFocus();
-          // Leaflet can finish its initial layout/tile movement after the first fitBounds.
-          // Reapply the same exact bounds twice so the first click lands on the requested lot.
-          cadastreRefitTimers = [160, 520].map((delay) => window.setTimeout(applyExactFocus, delay));
+          // Re-lock the same lot after the modal and tile pane finish their first
+          // layout. These are position locks, not a second network lookup.
+          cadastreRefitTimers = [80, 240, 650].map((delay) => window.setTimeout(applyExactFocus, delay));
           if (keepLabel) coordinateInput.value = [
             focusedPa,
             focusedLot ? `Lot ${focusedLot}` : '',
@@ -802,7 +832,16 @@
           edit: { featureGroup: drawnItems, edit: true, remove: true }
         }));
         const bounds = Array.isArray(config.bounds) ? config.bounds : [[1, 99], [7, 120]];
-        map.fitBounds(bounds, { padding: [16, 16], animate: false, duration: 0 });
+        const initialExactBounds = initialResolvedFocus && Array.isArray(initialResolvedFocus.bounds) && initialResolvedFocus.bounds.length === 2
+          ? initialResolvedFocus.bounds
+          : null;
+        if (isDirectLotFocus && initialExactBounds) {
+          // Start at the requested lot immediately. Do not first fly to the whole
+          // state, because that initial movement can overwrite the first focus.
+          map.fitBounds(initialExactBounds, { padding: [70, 70], maxZoom: 19, animate: false, duration: 0 });
+        } else {
+          map.fitBounds(bounds, { padding: [16, 16], animate: false, duration: 0 });
+        }
         map.on(window.L.Draw.Event.CREATED, (event) => {
           drawnItems.clearLayers();
           drawnItems.addLayer(event.layer);
@@ -833,6 +872,7 @@
               if (!map || settled) return;
               focusCadastreSuggestion({
                 ...initialFocus,
+                resolvedFocus: initialResolvedFocus,
                 stateCode: String(initialFocus.stateCode || stateCode).padStart(2, '0'),
                 stateName: String(initialFocus.stateName || stateName || config.negeri || '').trim(),
                 productCode
@@ -970,33 +1010,65 @@
 
   window.azobssOpenLotFocusMap = async function (options) {
     const input = options && typeof options === 'object' ? options : {};
+    const openSerial = ++lotFocusOpenSerial;
+    if (lotFocusPrefetchController) {
+      try { lotFocusPrefetchController.abort(); } catch (_) {}
+    }
+    // Close any previous map before resolving the next target. This prevents an
+    // old modal or old moveend event from shifting the newly requested lot.
+    if (typeof window.azobssCloseLotSelectionMap === 'function') {
+      try { window.azobssCloseLotSelectionMap(); } catch (_) {}
+    }
+
     let stateCode = String(input.stateCode || '').trim();
     const mapUrl = String(input.mapUrl || input.url || '').trim();
     if (!stateCode && mapUrl) {
       try {
         const parsed = new URL(mapUrl, 'https://ebiz.jupem.gov.my/');
-        stateCode = String(parsed.searchParams.get('negeri') || parsed.searchParams.get('state') || '').trim();
+        stateCode = String(parsed.searchParams.get('neg') || parsed.searchParams.get('negeri') || parsed.searchParams.get('state') || '').trim();
+        if (!stateCode) {
+          const typeMatch = String(parsed.searchParams.get('type') || '').match(/^(\d{2})lot/i);
+          stateCode = typeMatch ? typeMatch[1] : '';
+        }
       } catch (_) {}
     }
     stateCode = stateCode ? stateCode.padStart(2, '0') : '';
+    const productCode = String(input.productCode || '1') === '2' ? '2' : '1';
     const lotNo = String(input.lotNo || input.lot || '').trim();
     const paNo = String(input.paNo || input.pa || '').trim();
+    const focusInput = {
+      mapUrl,
+      objectId: String(input.objectId || '').trim(),
+      lotNo,
+      paNo,
+      stateCode,
+      stateName: String(input.stateName || input.negeri || '').trim(),
+      productCode,
+      daerah: String(input.daerah || input.district || '').trim(),
+      mukim: String(input.mukim || '').trim(),
+      seksyen: String(input.seksyen || input.section || '').trim()
+    };
+
+    lotFocusPrefetchController = new AbortController();
+    const prefetchController = lotFocusPrefetchController;
     try {
+      // Resolve and verify the exact JUPEM geometry before creating Leaflet.
+      // Therefore the very first visible map position is already the chosen lot.
+      const resolvedFocus = await fetchExactLotFocus(focusInput, productCode, stateCode, prefetchController.signal);
+      if (openSerial !== lotFocusOpenSerial) return null;
+
       const prepared = await window.azobssOpenLotSelectionMap({
-        productCode: String(input.productCode || '1') === '2' ? '2' : '1',
-        stateCode,
-        stateName: String(input.stateName || input.negeri || '').trim(),
+        productCode,
+        stateCode: String(resolvedFocus.stateCode || stateCode).padStart(2, '0'),
+        stateName: String(resolvedFocus.negeri || focusInput.stateName || '').trim(),
         initialFocus: {
-          mapUrl,
-          objectId: String(input.objectId || '').trim(),
-          lotNo,
-          paNo,
-          stateCode,
-          stateName: String(input.stateName || input.negeri || '').trim(),
-          productCode: String(input.productCode || '1') === '2' ? '2' : '1',
-          daerah: String(input.daerah || input.district || '').trim(),
-          mukim: String(input.mukim || '').trim(),
-          seksyen: String(input.seksyen || input.section || '').trim()
+          ...focusInput,
+          stateCode: String(resolvedFocus.stateCode || stateCode).padStart(2, '0'),
+          stateName: String(resolvedFocus.negeri || focusInput.stateName || '').trim(),
+          lotNo: String(resolvedFocus.lotNo || lotNo || '').trim(),
+          paNo: String(resolvedFocus.paNo || paNo || '').trim(),
+          objectId: String(resolvedFocus.objectId || focusInput.objectId || '').trim(),
+          resolvedFocus
         },
         getAuthToken: async () => {
           try {
@@ -1008,18 +1080,21 @@
           return '';
         }
       });
+      if (openSerial !== lotFocusOpenSerial) return null;
       if (prepared && typeof window.azobssAddPreparedLotSelectionToCart === 'function') {
-        await window.azobssAddPreparedLotSelectionToCart(prepared, String(input.stateName || input.negeri || '').trim());
+        await window.azobssAddPreparedLotSelectionToCart(prepared, String(resolvedFocus.negeri || focusInput.stateName || '').trim());
       }
       return prepared;
     } catch (error) {
-      if (error && error.code === 'MAP_CLOSED') return null;
+      if (error && (error.name === 'AbortError' || error.code === 'MAP_CLOSED')) return null;
       const message = error && error.message ? error.message : 'Peta lot JUPEM tidak dapat dibuka.';
       try {
         if (typeof window.azShowToast === 'function') window.azShowToast(message);
       } catch (_) {}
       console.error('[AZOBSS lot map]', error);
       return null;
+    } finally {
+      if (lotFocusPrefetchController === prefetchController) lotFocusPrefetchController = null;
     }
   };
 

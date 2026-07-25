@@ -119,6 +119,7 @@
     let allRows = [];
     let filteredRows = [];
     let currentPage = 1;
+    let lotMapOpenSerial = 0;
 
     function setLotStatus(message, state) {
       if (!statusEl) return;
@@ -281,23 +282,34 @@
     });
     generalEl.addEventListener('input', applyGeneralFilter);
 
-    resultsBody.addEventListener('click', (event) => {
+    resultsBody.addEventListener('click', async (event) => {
       const focusButton = event.target.closest('[data-lot-focus-map]');
       if (focusButton) {
         event.preventDefault();
+        event.stopPropagation();
         if (typeof window.azobssOpenLotFocusMap === 'function') {
-          window.azobssOpenLotFocusMap({
-            mapUrl: focusButton.dataset.lotMapUrl || '',
-            objectId: focusButton.dataset.lotObjectId || '',
-            lotNo: focusButton.dataset.lotNumber || '',
-            paNo: focusButton.dataset.lotPaNumber || '',
-            stateCode: focusButton.dataset.lotStateCode || '',
-            stateName: focusButton.dataset.lotStateName || '',
-            productCode: focusButton.dataset.lotProductCode || productCode,
-            daerah: focusButton.dataset.lotDistrict || '',
-            mukim: focusButton.dataset.lotMukim || '',
-            seksyen: focusButton.dataset.lotSection || ''
-          });
+          const openSerial = ++lotMapOpenSerial;
+          focusButton.disabled = true;
+          focusButton.setAttribute('aria-busy', 'true');
+          try {
+            await window.azobssOpenLotFocusMap({
+              mapUrl: focusButton.dataset.lotMapUrl || '',
+              objectId: focusButton.dataset.lotObjectId || '',
+              lotNo: focusButton.dataset.lotNumber || '',
+              paNo: focusButton.dataset.lotPaNumber || '',
+              stateCode: focusButton.dataset.lotStateCode || '',
+              stateName: focusButton.dataset.lotStateName || '',
+              productCode: focusButton.dataset.lotProductCode || productCode,
+              daerah: focusButton.dataset.lotDistrict || '',
+              mukim: focusButton.dataset.lotMukim || '',
+              seksyen: focusButton.dataset.lotSection || ''
+            });
+          } finally {
+            if (openSerial === lotMapOpenSerial && focusButton.isConnected) {
+              focusButton.disabled = false;
+              focusButton.removeAttribute('aria-busy');
+            }
+          }
         }
         return;
       }

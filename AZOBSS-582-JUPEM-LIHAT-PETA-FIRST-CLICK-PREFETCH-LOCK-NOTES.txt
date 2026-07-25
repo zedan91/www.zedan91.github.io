@@ -1,0 +1,44 @@
+AZOBSS Patch (582)
+===================
+
+Tujuan
+------
+Membaiki butang LIHAT PETA pada hasil Carian Lot Kadaster yang kadangkala
+membuka peta pada kedudukan negeri/kawasan lama ketika klik pertama, kemudian
+hanya tepat selepas ditekan kali kedua.
+
+Punca
+-----
+Modal Leaflet dibina dan terlebih dahulu diposisikan kepada bounds seluruh
+negeri sementara permintaan geometri lot tepat masih berjalan. Pada sesetengah
+masa, susun atur awal modal/tile pane atau pergerakan peta lama selesai selepas
+fit lot dan mengambil alih kedudukan klik pertama.
+
+Pembaikan
+---------
+1. Geometri lot JUPEM diselesaikan dan disahkan terlebih dahulu sebelum modal
+   Leaflet dicipta.
+2. Peta terus bermula pada bounds lot tepat; ia tidak lagi melalui paparan
+   seluruh negeri untuk aliran LIHAT PETA.
+3. Bounds hidup daripada polygon Leaflet dijadikan sumber kedudukan akhir.
+4. Kedudukan lot dikunci semula selepas susun atur pertama modal/tile pane,
+   tanpa membuat carian rangkaian kedua.
+5. Permintaan/modal lama dibatalkan dan tidak boleh menimpa klik terbaru.
+6. Butang LIHAT PETA dikunci dengan aria-busy sepanjang modal sedang dibuka,
+   untuk mencegah pembukaan bertindih.
+
+Fail diubah
+-----------
+- assets/js/azobss-lot-selection-map.js
+- assets/js/azobss-lot-kadaster-search.js
+- PA-BM/index.html
+
+Cache
+-----
+- azobss-lot-selection-map.js?v=29
+- azobss-lot-kadaster-search.js?v=11
+
+Deploy
+------
+Frontend sahaja. Kemas kini GitHub Pages.
+Render backend dan Firebase Rules tidak perlu diubah.
