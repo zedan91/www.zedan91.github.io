@@ -6121,7 +6121,7 @@ function azobssGetLotMapConfig(productCode, stateCode) {
   return { product, state, bounds: AZOBSS_JUPEM_LOT_BOUNDS[state], ...config };
 }
 
-// 571: Malaysia place-name suggestions for the JUPEM selection map.
+// 572: Malaysia place-name suggestions with Photon HTTP 400 fallback.
 // The provider stays behind this backend endpoint so it can be changed without
 // requiring a website update. Requests are cached and serialised to keep public
 // geocoder usage modest.
@@ -6176,40 +6176,55 @@ function azobssQueueLocationSearch(task) {
   return current;
 }
 
-async function azobssFetchPhotonLocations(query, stateCode, useStateBounds) {
-  const requestUrl = new URL(`${AZOBSS_LOCATION_SEARCH_BASE}/api/`);
+function azobssBuildPhotonLocationUrl(query, stateCode, mode) {
+  const requestUrl = new URL(`${AZOBSS_LOCATION_SEARCH_BASE}/api`);
   requestUrl.searchParams.set("q", query);
   requestUrl.searchParams.set("limit", "8");
-  requestUrl.searchParams.set("lang", "ms");
-  requestUrl.searchParams.set("countrycode", "MY");
+  if (mode !== "bare") requestUrl.searchParams.set("countrycode", "MY");
 
   const bounds = AZOBSS_JUPEM_LOT_BOUNDS[stateCode];
-  if (Array.isArray(bounds) && bounds.length === 2) {
+  if (mode !== "minimal" && mode !== "bare" && Array.isArray(bounds) && bounds.length === 2) {
     const south = Number(bounds[0] && bounds[0][0]);
     const west = Number(bounds[0] && bounds[0][1]);
     const north = Number(bounds[1] && bounds[1][0]);
     const east = Number(bounds[1] && bounds[1][1]);
     if ([south, west, north, east].every(Number.isFinite)) {
-      if (useStateBounds) requestUrl.searchParams.set("bbox", [west, south, east, north].join(","));
+      if (mode === "bounded") requestUrl.searchParams.set("bbox", [west, south, east, north].join(","));
       requestUrl.searchParams.set("lat", String((south + north) / 2));
       requestUrl.searchParams.set("lon", String((west + east) / 2));
       requestUrl.searchParams.set("zoom", "10");
       requestUrl.searchParams.set("location_bias_scale", "0.15");
     }
   }
+  return requestUrl;
+}
 
+async function azobssFetchPhotonLocations(query, stateCode, mode) {
+  const requestUrl = azobssBuildPhotonLocationUrl(query, stateCode, mode || "bounded");
   return await azobssQueueLocationSearch(async () => {
     const response = await fetch(requestUrl, {
       redirect: "follow",
       signal: AbortSignal.timeout(12000),
       headers: {
         "Accept": "application/geo+json,application/json;q=0.9,*/*;q=0.5",
-        "Accept-Language": "ms-MY,ms;q=0.9,en;q=0.7",
-        "User-Agent": "AZOBSS-Lot-Selection-Map/571 (https://www.azobss.com/)"
+        "User-Agent": "AZOBSS-Lot-Selection-Map/572 (https://www.azobss.com/)"
       }
     });
-    if (!response.ok) throw new Error(`Location search returned HTTP ${response.status}.`);
-    return await response.json();
+    const responseText = await response.text();
+    if (!response.ok) {
+      const detail = String(responseText || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 240);
+      const error = new Error(`Photon returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
+      error.statusCode = response.status;
+      throw error;
+    }
+    try {
+      return responseText ? JSON.parse(responseText) : { features: [] };
+    } catch (_) {
+      throw new Error("Photon returned an invalid location response.");
+    }
   });
 }
 
@@ -6265,11 +6280,32 @@ async function azobssSearchMalaysiaLocations(queryValue, stateValue) {
   const cached = azobssLocationSearchCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.results;
 
-  let payload = await azobssFetchPhotonLocations(query, stateCode, true);
-  let results = azobssNormaliseLocationFeatures(payload, stateCode);
-  if (!results.length) {
-    payload = await azobssFetchPhotonLocations(query, stateCode, false);
-    results = azobssNormaliseLocationFeatures(payload, stateCode);
+  const stateName = AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "";
+  const focusedQuery = [query, stateName, "Malaysia"].filter(Boolean).join(", ");
+  const attempts = [
+    { query, mode: "bounded" },
+    { query: focusedQuery, mode: "biased" },
+    { query: focusedQuery, mode: "minimal" },
+    { query: focusedQuery, mode: "bare" }
+  ];
+  let results = [];
+  let successfulRequest = false;
+  let lastError = null;
+
+  for (const attempt of attempts) {
+    try {
+      const payload = await azobssFetchPhotonLocations(attempt.query, stateCode, attempt.mode);
+      successfulRequest = true;
+      results = azobssNormaliseLocationFeatures(payload, stateCode);
+      if (results.length) break;
+    } catch (error) {
+      lastError = error;
+      console.warn("AZOBSS location provider attempt failed:", attempt.mode, error && error.message || error);
+    }
+  }
+
+  if (!successfulRequest && lastError) {
+    throw new Error("Carian lokasi sementara tidak tersedia. Sila cuba semula sebentar lagi.");
   }
 
   if (azobssLocationSearchCache.size > 250) azobssLocationSearchCache.clear();
