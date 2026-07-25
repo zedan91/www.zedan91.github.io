@@ -1300,3 +1300,29 @@ body.pa-bm-page #adminPurchasePanel {
     order: 3;
   }
 }
+
+/* v561: Clearly separate direct lot search from the alternative map-selection flow. */
+body.pa-bm-page .pabm-choice-separator {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  color: #93a4ba;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-align: center;
+}
+
+body.pa-bm-page .pabm-choice-separator::before,
+body.pa-bm-page .pabm-choice-separator::after {
+  content: '';
+  height: 1px;
+  background: #40516a;
+}
+
+body.pa-bm-page .pabm-choice-separator > span {
+  min-width: 56px;
+}

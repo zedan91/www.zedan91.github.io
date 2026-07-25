@@ -1,0 +1,16 @@
+AZOBSS Patch (575) - Lot Map Alternative Steps
+Date: 2026-07-25
+Baseline: (574)-AZOBSS-JUPEM-DIRECT-LOT-FOCUS-MAP-FIX_20260725.zip
+
+Changes:
+1. "Buka Peta Pilihan" now carries step number 2 because it is an alternative to entering a lot number.
+2. Added a clear "ATAU" divider between the direct lot-search flow and the map-selection button.
+3. "Troli Anda" now displays step number 4 on Lot Kadaster Berdigit and NDCDB C3 tabs.
+4. Other product tabs retain the existing cart step number 3.
+5. Applied the same layout to both JUPEM lot-map products.
+6. Updated azobss-pabm-storefront.css cache query from v560 to v561.
+
+Deployment:
+- Frontend only: update GitHub Pages files.
+- Render backend redeploy is not required.
+- Firebase Rules changes are not required.

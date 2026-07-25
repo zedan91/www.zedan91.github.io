@@ -8233,7 +8233,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=560"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=561"/>
 
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
@@ -8931,7 +8931,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </table>
 </div>
 <div class="benchmark-pagination" data-lot-pagination="" hidden=""></div>
-<button aria-label="Buka Peta Pilihan. Nombor lot tidak diperlukan." class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="1" data-state-id="lotKadasterState" title="Nombor lot tidak diperlukan" type="button"><span class="pabm-step">4</span>Buka Peta Pilihan</button>
+<div aria-label="Pilihan alternatif" class="pabm-choice-separator" role="separator"><span>ATAU</span></div>
+<button aria-label="Buka Peta Pilihan. Nombor lot tidak diperlukan." class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="1" data-state-id="lotKadasterState" title="Nombor lot tidak diperlukan" type="button"><span class="pabm-step">2</span>Buka Peta Pilihan</button>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="gps">
 <div class="pabm-product-heading"><div><h3>Stesen GPS</h3></div><strong class="pabm-heading-price">RM9</strong></div>
@@ -9004,7 +9005,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </table>
 </div>
 <div class="benchmark-pagination" data-lot-pagination="" hidden=""></div>
-<button aria-label="Buka Peta Pilihan. Nombor lot tidak diperlukan." class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="2" data-state-id="ndcdbC3State" title="Nombor lot tidak diperlukan" type="button"><span class="pabm-step">4</span>Buka Peta Pilihan</button>
+<div aria-label="Pilihan alternatif" class="pabm-choice-separator" role="separator"><span>ATAU</span></div>
+<button aria-label="Buka Peta Pilihan. Nombor lot tidak diperlukan." class="pabm-map-button" data-jupem-lot-map="" data-jupem-product="2" data-state-id="ndcdbC3State" title="Nombor lot tidak diperlukan" type="button"><span class="pabm-step">2</span>Buka Peta Pilihan</button>
 </div>
 <div class="pa-bm-panel" data-pa-bm-panel="syit-piawai">
 <div class="pabm-product-heading"><div><h3>Syit Piawai (Gambar)</h3></div><strong class="pabm-heading-price">RM7</strong></div>
@@ -10070,9 +10072,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     const cartStep = document.getElementById('pabmCartStep');
     const isLotMapTab = activeKey === 'ndcdb' || activeKey === 'ndcdb-c3';
     if (cartStep) {
-      cartStep.hidden = isLotMapTab;
-      cartStep.style.display = isLotMapTab ? 'none' : '';
-      cartStep.textContent = '3';
+      cartStep.hidden = false;
+      cartStep.style.display = '';
+      cartStep.textContent = isLotMapTab ? '4' : '3';
     }
     if (activeKey === 'bm' || activeKey === 'sbm') {
       const type = activeKey.toUpperCase();
