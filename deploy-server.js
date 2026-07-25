@@ -5832,6 +5832,7 @@ async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
   });
   const pageResponse = await fetch(sourceUrl, azJupemFetchOptions({
     redirect: "follow",
+    signal: AbortSignal.timeout(20000),
     headers: commonHeaders
   }));
   if (!pageResponse.ok) throw new Error(`JUPEM lot search page returned HTTP ${pageResponse.status}.`);
@@ -5857,6 +5858,7 @@ async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
   const resultResponse = await fetch(sourceUrl, azJupemFetchOptions({
     method: "POST",
     redirect: "follow",
+    signal: AbortSignal.timeout(20000),
     headers: postHeaders,
     body: body.toString()
   }));
@@ -6558,6 +6560,145 @@ async function azobssSearchMalaysiaLocations(queryValue, stateValue) {
     expiresAt: Date.now() + (15 * 60 * 1000)
   });
   return results;
+}
+
+
+// 576: One map search box now recognises Malaysian place names, lot numbers and PA numbers.
+// Cadastre searches try the selected state first. If no result exists there, the backend
+// checks the remaining states in small batches and returns the state on every suggestion.
+const azobssMapCadastreSuggestionCache = new Map();
+
+function azobssClassifyMapSearchQuery(value) {
+  const query = azobssCleanLocationQuery(value);
+  const upper = query.toUpperCase();
+  const paMatch = upper.match(/^(?:NO\.?\s*)?PA\s*[:#-]?\s*([A-Z0-9/_-]{1,40})$/i);
+  if (paMatch) {
+    const paValue = cleanLotNumber(paMatch[1]);
+    return { query, searchType: "pa", cadastre: Boolean(paValue), searchValue: paValue ? `PA${paValue.replace(/^PA/i, "")}` : "" };
+  }
+  const lotMatch = upper.match(/^(?:(?:NO\.?\s*)?LOT|NO\.?\s*LOT)\s*[:#-]?\s*([A-Z0-9/_-]{1,40})$/i);
+  if (lotMatch) {
+    const lotValue = cleanLotNumber(lotMatch[1]);
+    return { query, searchType: "lot", cadastre: Boolean(lotValue), searchValue: lotValue };
+  }
+  if (/^\d{3,12}$/.test(upper)) {
+    return { query, searchType: "lot", cadastre: true, searchValue: cleanLotNumber(upper) };
+  }
+  return { query, searchType: "location", cadastre: false, searchValue: query };
+}
+
+function azobssCadastreSuggestionRows(found, classification, productCode, stateCode) {
+  const rows = Array.isArray(found && found.results) ? found.results : [];
+  const stateName = AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "";
+  const wanted = azobssFocusedLotComparable(classification.searchValue.replace(/^PA/i, ""));
+  let filtered = rows;
+  if (classification.searchType === "pa") {
+    const exact = rows.filter((row) => {
+      const pa = azobssFocusedLotComparable(String(row && row.paNo || "").replace(/^PA/i, ""));
+      return pa && pa === wanted;
+    });
+    if (exact.length) filtered = exact;
+  } else {
+    const exact = rows.filter((row) => azobssFocusedLotComparable(row && row.lotNo) === wanted);
+    if (exact.length) filtered = exact;
+  }
+
+  return filtered.slice(0, 12).map((row, index) => {
+    const lotNo = String(row && row.lotNo || "").trim();
+    const paNo = String(row && row.paNo || "").trim().toUpperCase();
+    const rowStateName = String(row && row.negeri || stateName).replace(/^Negeri\s+/i, "").trim() || stateName;
+    const daerah = String(row && row.daerah || "").trim();
+    const mukim = String(row && row.mukim || "").trim();
+    const seksyen = String(row && row.seksyen || "").trim();
+    const context = [
+      rowStateName && `Negeri: ${rowStateName}`,
+      daerah && `Daerah: ${daerah}`,
+      mukim && `Mukim/Bandar: ${mukim}`,
+      seksyen && `Seksyen: ${seksyen}`
+    ].filter(Boolean).join(" · ");
+    return {
+      id: `jupem-${productCode}-${stateCode}-${row && row.objectId || lotNo}-${paNo}-${index}`,
+      kind: classification.searchType,
+      name: classification.searchType === "pa"
+        ? `${paNo || `PA${classification.searchValue.replace(/^PA/i, "")}`} · Lot ${lotNo || "-"}`
+        : `Lot ${lotNo || classification.searchValue}${paNo ? ` · ${paNo}` : ""}`,
+      label: classification.searchType === "pa"
+        ? `${paNo || classification.searchValue} · Lot ${lotNo || "-"} · ${rowStateName}`
+        : `Lot ${lotNo || classification.searchValue}${paNo ? ` · ${paNo}` : ""} · ${rowStateName}`,
+      detail: context || `Negeri: ${rowStateName}`,
+      productCode,
+      stateCode,
+      state: rowStateName,
+      negeri: rowStateName,
+      lotNo,
+      paNo,
+      daerah,
+      mukim,
+      seksyen,
+      objectId: String(row && row.objectId || "").trim(),
+      mapUrl: String(row && row.mapUrl || "").trim(),
+      selectionUrl: String(row && row.selectionUrl || "").trim()
+    };
+  });
+}
+
+async function azobssSearchCadastreMapSuggestions(queryValue, stateValue, productValue) {
+  const classification = azobssClassifyMapSearchQuery(queryValue);
+  if (!classification.cadastre || !classification.searchValue) return [];
+  const preferredState = cleanLotStateCode(stateValue);
+  if (!preferredState) throw new Error("Negeri pilihan tidak sah.");
+  const productCode = cleanLotProduct(productValue);
+  const cacheKey = `${productCode}|${preferredState}|${classification.searchType}|${classification.searchValue}`;
+  const cached = azobssMapCadastreSuggestionCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.results;
+
+  async function searchState(stateCode) {
+    try {
+      const found = await searchJupemLotCadastre(productCode, stateCode, classification.searchValue);
+      return azobssCadastreSuggestionRows(found, classification, productCode, stateCode);
+    } catch (error) {
+      console.warn("AZOBSS map lot/PA suggestion state failed:", stateCode, error && error.message || error);
+      return [];
+    }
+  }
+
+  let results = await searchState(preferredState);
+  if (!results.length) {
+    const remainingStates = Object.keys(AZOBSS_JUPEM_LOT_STATE_NAMES).filter((code) => code !== preferredState);
+    for (let index = 0; index < remainingStates.length && !results.length; index += 4) {
+      const batch = remainingStates.slice(index, index + 4);
+      const batchRows = await Promise.all(batch.map(searchState));
+      results = batchRows.flat().slice(0, 12);
+    }
+  }
+
+  if (azobssMapCadastreSuggestionCache.size > 180) azobssMapCadastreSuggestionCache.clear();
+  azobssMapCadastreSuggestionCache.set(cacheKey, {
+    results,
+    expiresAt: Date.now() + (10 * 60 * 1000)
+  });
+  return results;
+}
+
+async function azobssSearchMapSuggestions(queryValue, stateValue, productValue) {
+  const classification = azobssClassifyMapSearchQuery(queryValue);
+  if (classification.query.length < 3) {
+    throw new Error("Taip sekurang-kurangnya 3 aksara untuk mencari lokasi, lot atau PA.");
+  }
+  if (classification.cadastre) {
+    return {
+      searchType: classification.searchType,
+      results: await azobssSearchCadastreMapSuggestions(classification.query, stateValue, productValue),
+      provider: "JUPEM eBiz",
+      attribution: "JUPEM eBiz"
+    };
+  }
+  return {
+    searchType: "location",
+    results: await azobssSearchMalaysiaLocations(classification.query, stateValue),
+    provider: "Photon",
+    attribution: "OpenStreetMap contributors"
+  };
 }
 
 function azobssGetAllLotMapLayerIds(productCode) {
@@ -11010,19 +11151,21 @@ async function handler(req, res) {
       try {
         const query = parsed.query.q || parsed.query.query || "";
         const stateCode = parsed.query.negeri || parsed.query.state || parsed.query.stateCode || "";
-        const results = await azobssSearchMalaysiaLocations(query, stateCode);
+        const productCode = parsed.query.produk || parsed.query.product || parsed.query.productCode || "1";
+        const search = await azobssSearchMapSuggestions(query, stateCode, productCode);
         return send(res, 200, JSON.stringify({
           ok: true,
           query: azobssCleanLocationQuery(query),
           stateCode: cleanLotStateCode(stateCode),
           negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[cleanLotStateCode(stateCode)] || "",
-          results,
-          provider: "Photon",
-          attribution: "OpenStreetMap contributors"
+          results: search.results,
+          searchType: search.searchType,
+          provider: search.provider,
+          attribution: search.attribution
         }), "application/json");
       } catch (error) {
-        const message = error && error.message || "Carian lokasi tidak tersedia.";
-        const status = /sekurang-kurangnya|tidak sah/i.test(message) ? 400 : 502;
+        const message = error && error.message || "Carian peta tidak tersedia.";
+        const status = /sekurang-kurangnya|tidak sah|masukkan/i.test(message) ? 400 : 502;
         return send(res, status, JSON.stringify({ ok: false, error: message }), "application/json");
       }
     }

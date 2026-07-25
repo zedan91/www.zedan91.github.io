@@ -1,0 +1,17 @@
+AZOBSS PATCH (576) - MAP SEARCH LOT / PA + STATE AUTO DETECT
+
+Baseline: (575)-AZOBSS-PABM-LOT-MAP-ALTERNATIVE-STEPS-FIX_20260725.zip
+
+Perubahan:
+1. Kotak carian Peta Pilihan menerima WGS84, nama tempat, No. Lot atau No. PA.
+2. Format disokong termasuk 2131, LOT 2131, PA96488 dan NO PA 96488.
+3. Cadangan lot/PA memaparkan negeri, daerah, mukim/bandar dan seksyen.
+4. Negeri dipilih disemak dahulu. Jika tiada hasil, backend mencari negeri lain secara berkumpulan dan mengenal pasti negeri secara automatik.
+5. Memilih hasil lot/PA terus zoom dan menyerlahkan geometri tepat lot dengan sempadan merah serta isian kuning dalam Peta Pilihan yang sama.
+6. Carian lokasi Photon dan carian koordinat WGS84 kekal.
+7. Cache azobss-lot-selection-map.js dinaikkan daripada v23 kepada v24.
+
+Deployment:
+- GitHub Pages: perlu dikemas kini.
+- Render backend: perlu redeploy kerana deploy-server.js berubah.
+- Firebase Rules: tidak perlu diubah.

@@ -42,8 +42,11 @@
       .az-lot-location-option{display:block;width:100%;padding:9px 11px;border:0;border-bottom:1px solid #e2e8f0;background:#fff;color:#0f172a;text-align:left;cursor:pointer}
       .az-lot-location-option:last-of-type{border-bottom:0}
       .az-lot-location-option:hover,.az-lot-location-option.is-active{background:#dbeafe}
-      .az-lot-location-option strong{display:block;overflow:hidden;color:#0f172a;font-size:13px;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+      .az-lot-location-option strong{display:flex;align-items:center;gap:7px;overflow:hidden;color:#0f172a;font-size:13px;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+      .az-lot-location-kind{flex:0 0 auto;padding:2px 5px;border:1px solid #93c5fd;border-radius:4px;background:#dbeafe;color:#1e3a8a;font-size:9px;font-style:normal;font-weight:900;line-height:1.1}
+      .az-lot-location-kind.is-pa{border-color:#c4b5fd;background:#ede9fe;color:#5b21b6}
       .az-lot-location-option span{display:block;margin-top:2px;overflow:hidden;color:#475569;font-size:11px;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+      .az-lot-location-option strong>span{min-width:0;margin:0;color:#0f172a;font-size:13px;font-weight:800}
       .az-lot-location-attribution{padding:6px 10px;border-top:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:10px;text-align:right}
       .az-lot-map-side{min-height:0;overflow:auto;padding:14px;border-left:1px solid #2d405b;background:#101c2f}
       .az-lot-map-status{min-height:42px;margin:0 0 12px;padding:10px 11px;border:1px solid #405574;border-radius:6px;background:#15233a;color:#d9e8ff;font-size:13px;line-height:1.45}
@@ -69,6 +72,7 @@
       .az-lot-focus-details dt:last-of-type,.az-lot-focus-details dd:last-of-type{border-bottom:0}
       .az-lot-focus-open{display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;margin-top:12px;border:1px solid #60a5fa;border-radius:6px;background:#1d4ed8;color:#fff!important;font-weight:900;text-decoration:none!important;box-shadow:0 2px 0 #172554}
       .az-lot-focus-note{margin:12px 0 0;color:#9fb3cf;font-size:12px;line-height:1.45}
+      .az-lot-search-tooltip{border:1px solid #b91c1c!important;background:#fff7cc!important;color:#7f1d1d!important;font-weight:900!important;box-shadow:0 2px 8px rgba(15,23,42,.3)!important}
       .az-lot-focus-dialog .az-lot-map-canvas.is-loading:after{content:'Sedang memuatkan lot JUPEM...';position:absolute;z-index:500;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:6px;background:rgba(15,23,42,.9);color:#fff;font-weight:800;white-space:nowrap}
       @media(max-width:760px){
         .az-lot-map-modal{padding:0;align-items:stretch}
@@ -217,8 +221,8 @@
               <div class="az-lot-map-canvas"></div>
               <div class="az-lot-coordinate-search">
                 <form class="az-lot-coordinate-form" role="search">
-                  <input class="az-lot-coordinate-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="azLotLocationResults" aria-label="Cari koordinat WGS84 atau nama tempat" placeholder="WGS84 atau nama tempat">
-                  <button class="az-lot-coordinate-submit" type="submit" title="Cari koordinat atau lokasi">Cari</button>
+                  <input class="az-lot-coordinate-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="azLotLocationResults" aria-label="Cari koordinat WGS84, nama tempat, nombor lot atau nombor PA" placeholder="WGS84, nama tempat, No. Lot atau No. PA">
+                  <button class="az-lot-coordinate-submit" type="submit" title="Cari koordinat, lokasi, lot atau PA">Cari</button>
                 </form>
                 <div class="az-lot-coordinate-feedback" role="status" aria-live="polite"></div>
                 <div class="az-lot-location-results" id="azLotLocationResults" role="listbox" hidden></div>
@@ -257,6 +261,8 @@
       const mapStateNode = modal.querySelector('[data-map-state]');
       const drawnItems = new window.L.FeatureGroup();
       let coordinateMarker = null;
+      let cadastreFocusLayer = null;
+      let cadastreFocusController = null;
       let locationSuggestions = [];
       let activeLocationIndex = -1;
       let locationSearchTimer = null;
@@ -284,6 +290,7 @@
             } catch (_) {}
             try { layer.bringToFront(); } catch (_) {}
           });
+          try { if (cadastreFocusLayer) cadastreFocusLayer.bringToFront(); } catch (_) {}
           try { drawnItems.bringToFront(); } catch (_) {}
           try { if (coordinateMarker) coordinateMarker.bringToFront(); } catch (_) {}
         }, Math.max(0, Number(delay) || 0));
@@ -333,7 +340,105 @@
         });
       }
 
+      function clearCadastreFocus() {
+        if (cadastreFocusController) {
+          try { cadastreFocusController.abort(); } catch (_) {}
+          cadastreFocusController = null;
+        }
+        if (cadastreFocusLayer && map) {
+          try { map.removeLayer(cadastreFocusLayer); } catch (_) {}
+        }
+        cadastreFocusLayer = null;
+      }
+
+      async function focusCadastreSuggestion(suggestion, keepLabel = true) {
+        const lotNo = String(suggestion && suggestion.lotNo || '').trim();
+        const paNo = String(suggestion && suggestion.paNo || '').trim();
+        const suggestionStateCode = String(suggestion && suggestion.stateCode || activeStateCode).padStart(2, '0');
+        const suggestionStateName = String(suggestion && (suggestion.negeri || suggestion.state) || '').trim();
+        if (!lotNo && !paNo) return;
+        clearCadastreFocus();
+        if (coordinateMarker) {
+          try { map.removeLayer(coordinateMarker); } catch (_) {}
+          coordinateMarker = null;
+        }
+        cadastreFocusController = new AbortController();
+        hideLocationSuggestions(false);
+        setCoordinateFeedback(`Mencari lokasi tepat ${paNo || `Lot ${lotNo}`} di JUPEM...`, 'loading');
+        try {
+          const params = new URLSearchParams();
+          params.set('produk', String(suggestion && suggestion.productCode || productCode) === '2' ? '2' : '1');
+          if (suggestionStateCode) params.set('negeri', suggestionStateCode);
+          if (lotNo) params.set('lot', lotNo);
+          if (paNo) params.set('paNo', paNo);
+          if (suggestion && suggestion.objectId) params.set('objectId', String(suggestion.objectId));
+          if (suggestion && suggestion.mapUrl) params.set('url', String(suggestion.mapUrl));
+          if (suggestion && suggestion.daerah) params.set('daerah', String(suggestion.daerah));
+          if (suggestion && suggestion.mukim) params.set('mukim', String(suggestion.mukim));
+          if (suggestion && suggestion.seksyen) params.set('seksyen', String(suggestion.seksyen));
+          const response = await fetch(`${BACKEND_BASE}/api/jupem-lot-map/focus?${params.toString()}`, {
+            cache: 'no-store',
+            signal: cadastreFocusController.signal
+          });
+          const focused = await response.json().catch(() => ({}));
+          if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot atau PA tidak dapat dipaparkan.');
+          const rings = focused.geometry && Array.isArray(focused.geometry.rings) ? focused.geometry.rings : [];
+          const leafletRings = rings.map((ring) => (Array.isArray(ring) ? ring.map((point) => {
+            const latitude = Number(point && point[1]);
+            const longitude = Number(point && point[0]);
+            return Number.isFinite(latitude) && Number.isFinite(longitude) ? [latitude, longitude] : null;
+          }).filter(Boolean) : [])).filter((ring) => ring.length >= 3);
+          if (!leafletRings.length) throw new Error('Geometri lot JUPEM tidak tersedia.');
+          cadastreFocusLayer = window.L.polygon(leafletRings, {
+            color: '#ef4444',
+            weight: 4,
+            opacity: 1,
+            fillColor: '#facc15',
+            fillOpacity: 0.3,
+            interactive: true
+          }).addTo(map);
+          const focusedLot = String(focused.lotNo || lotNo || '').trim();
+          const focusedPa = String(focused.paNo || paNo || '').trim();
+          const focusedStateCode = String(focused.stateCode || suggestionStateCode || activeStateCode).padStart(2, '0');
+          const focusedStateName = String(focused.negeri || suggestionStateName || activeStateName).trim();
+          const tooltip = [focusedLot ? `Lot ${focusedLot}` : '', focusedPa].filter(Boolean).join(' · ');
+          cadastreFocusLayer.bindTooltip(tooltip || 'Lot JUPEM', {
+            permanent: true,
+            direction: 'center',
+            className: 'az-lot-search-tooltip'
+          }).openTooltip();
+          activeStateCode = focusedStateCode;
+          activeStateName = focusedStateName || activeStateName;
+          if (mapStateNode) {
+            mapStateNode.textContent = `${activeStateName} · ${productCode === '2' ? 'Lot Kadaster Berdigit C3' : 'Lot Kadaster Berdigit'}`;
+          }
+          const focusBounds = Array.isArray(focused.bounds) && focused.bounds.length === 2
+            ? focused.bounds
+            : cadastreFocusLayer.getBounds();
+          try { map.stop(); } catch (_) {}
+          map.fitBounds(focusBounds, { padding: [70, 70], maxZoom: 19, animate: false });
+          if (keepLabel) coordinateInput.value = [focusedPa, focusedLot ? `Lot ${focusedLot}` : '', focusedStateName].filter(Boolean).join(' · ');
+          hideLocationSuggestions(true);
+          setCoordinateFeedback(`${focusedPa || `Lot ${focusedLot}`} ditemui di ${focusedStateName || 'negeri berkenaan'}${focusedLot && focusedPa ? ` · Lot ${focusedLot}` : ''}.`, 'success');
+          refreshJupemOverlay(120, true);
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+          clearCadastreFocus();
+          setCoordinateFeedback(error.message || 'Lot atau PA tidak dapat dipaparkan.', 'error');
+        }
+      }
+
+      function selectMapSuggestion(suggestion, keepLabel = true) {
+        const kind = String(suggestion && suggestion.kind || 'location').toLowerCase();
+        if (kind === 'lot' || kind === 'pa') {
+          focusCadastreSuggestion(suggestion, keepLabel);
+          return;
+        }
+        placeLocationMarker(suggestion, keepLabel);
+      }
+
       function placeLocationMarker(location, keepLabel = true) {
+        clearCadastreFocus();
         const latitude = Number(location && location.latitude);
         const longitude = Number(location && location.longitude);
         if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
@@ -389,17 +494,27 @@
           option.setAttribute('role', 'option');
           option.setAttribute('aria-selected', 'false');
           const title = document.createElement('strong');
-          title.textContent = String(location.name || location.label || 'Lokasi');
+          const kind = String(location.kind || 'location').toLowerCase();
+          if (kind === 'lot' || kind === 'pa') {
+            const badge = document.createElement('em');
+            badge.className = `az-lot-location-kind${kind === 'pa' ? ' is-pa' : ''}`;
+            badge.textContent = kind === 'pa' ? 'PA' : 'LOT';
+            title.appendChild(badge);
+          }
+          const titleText = document.createElement('span');
+          titleText.textContent = String(location.name || location.label || 'Lokasi');
+          title.appendChild(titleText);
           const detail = document.createElement('span');
           detail.textContent = String(location.detail || location.label || 'Malaysia');
           option.append(title, detail);
           option.addEventListener('mousedown', (event) => event.preventDefault());
-          option.addEventListener('click', () => placeLocationMarker(location, true));
+          option.addEventListener('click', () => selectMapSuggestion(location, true));
           locationResultsNode.appendChild(option);
         });
         const attribution = document.createElement('div');
         attribution.className = 'az-lot-location-attribution';
-        attribution.textContent = 'Carian lokasi: © OpenStreetMap contributors';
+        const hasCadastre = locationSuggestions.some((item) => ['lot', 'pa'].includes(String(item && item.kind || '').toLowerCase()));
+        attribution.textContent = hasCadastre ? 'Carian lot/PA: JUPEM eBiz' : 'Carian lokasi: © OpenStreetMap contributors';
         locationResultsNode.appendChild(attribution);
         locationResultsNode.hidden = false;
         coordinateInput.setAttribute('aria-expanded', 'true');
@@ -409,33 +524,35 @@
         const query = String(queryValue || '').replace(/\s+/g, ' ').trim();
         if (query.length < 3) {
           hideLocationSuggestions(true);
-          setCoordinateFeedback('Taip sekurang-kurangnya 3 huruf untuk mencari nama tempat.', 'info');
+          setCoordinateFeedback('Taip sekurang-kurangnya 3 aksara untuk mencari lokasi, lot atau PA.', 'info');
           return;
         }
         if (locationSearchController) locationSearchController.abort();
         locationSearchController = new AbortController();
         const serial = ++locationSearchSerial;
-        setCoordinateFeedback('Mencari lokasi di Malaysia dan negeri yang dipilih...', 'loading');
+        setCoordinateFeedback('Mencari lokasi, nombor lot atau nombor PA...', 'loading');
         try {
-          const response = await fetch(`${BACKEND_BASE}/api/map-location-suggestions?q=${encodeURIComponent(query)}&negeri=${encodeURIComponent(activeStateCode)}`, {
+          const response = await fetch(`${BACKEND_BASE}/api/map-location-suggestions?q=${encodeURIComponent(query)}&negeri=${encodeURIComponent(activeStateCode)}&produk=${encodeURIComponent(productCode)}`, {
             cache: 'no-store',
             signal: locationSearchController.signal
           });
           const data = await response.json().catch(() => ({}));
           if (serial !== locationSearchSerial) return;
-          if (!response.ok || !data.ok) throw new Error(data.error || 'Carian lokasi tidak tersedia.');
+          if (!response.ok || !data.ok) throw new Error(data.error || 'Carian peta tidak tersedia.');
           renderLocationSuggestions(data.results || []);
           if (!locationSuggestions.length) {
-            setCoordinateFeedback(`Tiada lokasi ditemui untuk “${query}”.`, 'error');
+            setCoordinateFeedback(`Tiada lokasi, lot atau PA ditemui untuk “${query}”.`, 'error');
             return;
           }
-          setCoordinateFeedback('Pilih lokasi daripada cadangan atau gunakan ↑ ↓ dan Enter.', 'info');
-          if (chooseFirst) placeLocationMarker(locationSuggestions[0], true);
+          const hasCadastre = locationSuggestions.some((item) => ['lot', 'pa'].includes(String(item && item.kind || '').toLowerCase()));
+          setCoordinateFeedback(hasCadastre ? 'Pilih lot atau PA daripada cadangan. Negeri dipaparkan pada setiap hasil.' : 'Pilih lokasi daripada cadangan atau gunakan ↑ ↓ dan Enter.', 'info');
+          if (chooseFirst && locationSuggestions.length === 1) selectMapSuggestion(locationSuggestions[0], true);
+          else if (chooseFirst && !hasCadastre) selectMapSuggestion(locationSuggestions[0], true);
         } catch (error) {
           if (error && error.name === 'AbortError') return;
           if (serial !== locationSearchSerial) return;
           hideLocationSuggestions(true);
-          setCoordinateFeedback(error.message || 'Carian lokasi tidak tersedia.', 'error');
+          setCoordinateFeedback(error.message || 'Carian peta tidak tersedia.', 'error');
         }
       }
 
@@ -453,11 +570,20 @@
           return;
         }
         if (activeLocationIndex >= 0 && locationSuggestions[activeLocationIndex]) {
-          placeLocationMarker(locationSuggestions[activeLocationIndex], true);
+          selectMapSuggestion(locationSuggestions[activeLocationIndex], true);
+          return;
+        }
+        if (locationSuggestions.length === 1) {
+          selectMapSuggestion(locationSuggestions[0], true);
           return;
         }
         if (locationSuggestions.length) {
-          placeLocationMarker(locationSuggestions[0], true);
+          const hasCadastre = locationSuggestions.some((item) => ['lot', 'pa'].includes(String(item && item.kind || '').toLowerCase()));
+          if (!hasCadastre) {
+            selectMapSuggestion(locationSuggestions[0], true);
+            return;
+          }
+          setCoordinateFeedback('Terdapat beberapa hasil lot/PA. Pilih hasil yang betul berdasarkan negeri dan butiran kawasan.', 'info');
           return;
         }
         searchLocationSuggestions(raw, true);
@@ -480,7 +606,7 @@
         }
         if (raw.length < 3) {
           hideLocationSuggestions(true);
-          setCoordinateFeedback('Taip sekurang-kurangnya 3 huruf untuk cadangan lokasi.', 'info');
+          setCoordinateFeedback('Taip sekurang-kurangnya 3 aksara untuk cadangan lokasi, lot atau PA.', 'info');
           return;
         }
         locationSearchTimer = window.setTimeout(() => searchLocationSuggestions(raw, false), 450);
@@ -491,6 +617,7 @@
         if (operationController) operationController.abort();
         if (locationSearchTimer) window.clearTimeout(locationSearchTimer);
         if (locationSearchController) locationSearchController.abort();
+        if (cadastreFocusController) cadastreFocusController.abort();
         if (jupemRefreshTimer) window.clearTimeout(jupemRefreshTimer);
         if (jupemRecoveryTimer) window.clearTimeout(jupemRecoveryTimer);
         locationSearchSerial += 1;
@@ -655,7 +782,7 @@
         if (event.key === 'Escape') {
           event.preventDefault();
           hideLocationSuggestions(false);
-          setCoordinateFeedback('Cadangan lokasi ditutup. Tekan Cari untuk mencari semula.', 'info');
+          setCoordinateFeedback('Cadangan carian ditutup. Tekan Cari untuk mencari semula.', 'info');
           return;
         }
         if (event.key === 'Enter') {
