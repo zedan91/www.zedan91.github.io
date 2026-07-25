@@ -1,4 +1,4 @@
-/* AZOBSS 587: change Mini Web Tools navbar chip into a More hover dropdown. */
+/* AZOBSS 588: add Bina Website beside Affiliate Shop and keep More hover dropdown. */
 (function () {
   'use strict';
 
@@ -105,7 +105,50 @@
     });
   }
 
+  function ensureWebsiteOrderLink() {
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var websitePath = normalisePath('/Tempah-Website/').toLowerCase();
+
+    document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
+      var existingLink = nav.querySelector('a[data-az-website-order-link="1"], a[href="/Tempah-Website/"], a[href="/Tempah-Website"]');
+      if (existingLink) {
+        existingLink.dataset.azWebsiteOrderLink = '1';
+        if (currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0) {
+          existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
+          existingLink.setAttribute('aria-current', 'page');
+        }
+        return;
+      }
+
+      var affiliateLink = Array.prototype.find.call(nav.querySelectorAll('a[href]'), function (link) {
+        try {
+          return normalisePath(new URL(link.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/affiliate-shop';
+        } catch (error) {
+          return false;
+        }
+      });
+      if (!affiliateLink) return;
+
+      var websiteLink = document.createElement('a');
+      websiteLink.href = '/Tempah-Website/';
+      websiteLink.textContent = 'Bina Website';
+      websiteLink.title = 'Tempah Website untuk Bisnes';
+      websiteLink.setAttribute('aria-label', 'Bina Website');
+      websiteLink.dataset.azWebsiteOrderLink = '1';
+      websiteLink.className = 'az-website-order-link';
+
+      if (currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0) {
+        websiteLink.classList.add('market-nav-active', 'is-active', 'is-current');
+        websiteLink.setAttribute('aria-current', 'page');
+      }
+
+      affiliateLink.insertAdjacentElement('afterend', websiteLink);
+    });
+  }
+
   function initialise() {
+    ensureWebsiteOrderLink();
+
     var links = Array.prototype.slice.call(document.querySelectorAll(
       '.market-sticky-bar .market-nav a[href="/tools/"], ' +
       '.market-sticky-bar .market-nav a[href="/tools"], ' +

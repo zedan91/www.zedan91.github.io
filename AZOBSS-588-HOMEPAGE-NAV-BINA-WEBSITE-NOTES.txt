@@ -1,0 +1,7 @@
+AZOBSS 588 — Bina Website navbar button
+
+- Adds a compact “Bina Website” button immediately after Affiliate Shop in the main sticky navigation.
+- The button opens /Tempah-Website/.
+- The button is highlighted automatically while viewing the Tempah Website page.
+- Keeps the compact font and More > Mini Web Tools dropdown from version 587.
+- Frontend only: no Render backend or Firebase Rules update required.
