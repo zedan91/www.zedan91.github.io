@@ -62,6 +62,32 @@ const JUPEM_STATE_CODES = {
 };
 
 let auth = null;
+
+async function getPaBmAuthToken(forceRefresh = false) {
+  if (!auth) return '';
+  let user = auth.currentUser;
+  if (!user) {
+    user = await new Promise((resolve) => {
+      let settled = false;
+      let unsubscribe = null;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        if (typeof unsubscribe === 'function') unsubscribe();
+        resolve(value || null);
+      };
+      const timer = window.setTimeout(() => finish(auth.currentUser), 4000);
+      unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+        window.clearTimeout(timer);
+        finish(nextUser);
+      }, () => {
+        window.clearTimeout(timer);
+        finish(null);
+      });
+    });
+  }
+  return user ? user.getIdToken(Boolean(forceRefresh)) : '';
+}
 let paymentButton = null;
 let adminTestPaymentButton = null;
 let totalObserver = null;
@@ -575,7 +601,7 @@ async function openJupemLotMap(button) {
         productCode,
         stateCode,
         stateName,
-        getAuthToken: async () => auth && auth.currentUser ? auth.currentUser.getIdToken() : ''
+        getAuthToken: async () => getPaBmAuthToken(false)
       });
       const item = await addToStoreCart({
         productType: prepared.productType,
@@ -833,6 +859,7 @@ function init() {
   bindPaymentButton();
   bindAdminTestPaymentButton();
   window.azobssRecordPurchase = addToStoreCart;
+  window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', toggleTableCartButton, true);

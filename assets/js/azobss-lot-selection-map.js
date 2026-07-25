@@ -171,11 +171,15 @@
 
   function geometryFromLayer(layer) {
     const geoJson = layer && layer.toGeoJSON ? layer.toGeoJSON() : null;
-    if (!geoJson || !geoJson.geometry || geoJson.geometry.type !== 'Polygon') {
+    const geometry = geoJson && geoJson.geometry;
+    if (!geometry || !['Polygon', 'MultiPolygon'].includes(geometry.type)) {
       throw new Error('Gunakan pilihan polygon atau segi empat tepat.');
     }
+    const rings = geometry.type === 'MultiPolygon'
+      ? geometry.coordinates.flatMap((polygon) => Array.isArray(polygon) ? polygon : [])
+      : geometry.coordinates;
     return {
-      rings: geoJson.geometry.coordinates[0] ? geoJson.geometry.coordinates : [],
+      rings: Array.isArray(rings) ? rings : [],
       spatialReference: { wkid: 4326 }
     };
   }
@@ -417,6 +421,15 @@
         const suggestionStateName = String(suggestion && (suggestion.negeri || suggestion.stateName || suggestion.state) || '').trim();
         if (!lotNo && !paNo) return;
         clearCadastreFocus(false);
+        // A lot opened from Cari Lot must become the active purchase selection.
+        // Remove any older hand-drawn rectangle/polygon so its large estimate
+        // cannot remain attached to the newly focused lot.
+        drawnItems.clearLayers();
+        if (estimateController) {
+          try { estimateController.abort(); } catch (_) {}
+          estimateController = null;
+        }
+        clearSummary();
         const focusSerial = ++cadastreFocusSerial;
         if (coordinateMarker) {
           try { map.removeLayer(coordinateMarker); } catch (_) {}
@@ -500,7 +513,17 @@
           hideLocationSuggestions(true);
           const paLotNotice = !focusedLot && focusedLotCount > 1 ? ` · ${focusedLotCount} lot dalam PA dipaparkan` : (focusedLot && focusedPa ? ` · Lot ${focusedLot}` : '');
           setCoordinateFeedback(`${focusedPa || `Lot ${focusedLot}`} ditemui di ${focusedStateName || 'negeri berkenaan'}${paLotNotice}.`, 'success');
-          setStatus(status, `${focusedLot ? `Lot ${focusedLot}` : focusedPa} dipaparkan tepat pada peta${!focusedLot && focusedLotCount > 1 ? ` bersama ${focusedLotCount} lot berkaitan` : ''}. Carian lokasi, lot dan alat polygon atau segi empat masih boleh digunakan.`, 'success');
+
+          // Use the exact JUPEM polygon as the active selection immediately.
+          // This makes LIHAT PETA from Cari Lot behave like Buka Peta Pilihan,
+          // without requiring the customer to draw a second rectangle manually.
+          await estimateLayer(cadastreFocusLayer);
+          if (focusSerial !== cadastreFocusSerial || settled || !map) return;
+          if (estimate && selectedGeometry) {
+            setStatus(status, `${focusedLot ? `Lot ${focusedLot}` : focusedPa} telah dipilih tepat dan sedia disediakan. Kamu masih boleh melukis kawasan lain menggunakan polygon atau segi empat.`, 'success');
+          } else {
+            setStatus(status, `${focusedLot ? `Lot ${focusedLot}` : focusedPa} dipaparkan tepat pada peta, tetapi anggaran pilihan belum berjaya. Sila cuba semula atau lukis kawasan secara manual.`, 'error');
+          }
           refreshJupemOverlay(120, true);
         } catch (error) {
           if (error && error.name === 'AbortError') return;
@@ -1072,6 +1095,12 @@
         },
         getAuthToken: async () => {
           try {
+            // PA/BM uses Firebase modular auth. Use the token bridge exposed by
+            // the storefront first; the compat global is only a fallback.
+            if (typeof window.azobssGetPaBmAuthToken === 'function') {
+              const token = await window.azobssGetPaBmAuthToken(false);
+              if (token) return token;
+            }
             if (window.firebase && typeof window.firebase.auth === 'function') {
               const currentUser = window.firebase.auth().currentUser;
               return currentUser ? await currentUser.getIdToken() : '';
