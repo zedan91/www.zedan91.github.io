@@ -12,9 +12,159 @@ a{color:inherit}.topbar{position:sticky;top:0;z-index:20;display:flex;align-item
 @media(max-width:900px){.card,.card.wide{grid-column:span 6}.request-layout{grid-template-columns:1fr}.summary-panel{position:static}.hero{padding-top:48px}}
 @media(max-width:620px){.github-guide{grid-template-columns:1fr}.wrap{width:min(100% - 22px,1160px)}.topbar{padding:10px 12px}.top-home{font-size:12px;padding:8px 10px}.card,.card.wide{grid-column:1/-1}.fields,.check-row{grid-template-columns:1fr}.hero{padding-top:38px}.hero h1{font-size:38px}.form-panel,.summary-panel{padding:17px}.cta{width:100%}}
 </style>
+
+<style id="azobss-585-main-navbar-fix">
+.market-sticky-bar{
+  position:sticky;
+  top:0;
+  z-index:5000;
+  width:100%;
+  background:#000;
+  border-bottom:1px solid rgba(218,165,32,.58);
+  box-shadow:0 10px 24px rgba(0,0,0,.3);
+}
+.market-bar-inner{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-height:49px;
+  padding:0 20px 0 24px;
+  box-sizing:border-box;
+}
+.market-brand{
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 122px;
+  width:122px;
+  height:37px;
+  overflow:hidden;
+  border-radius:0;
+  text-decoration:none;
+}
+.market-brand img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;}
+.market-nav{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex:1 1 auto;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  white-space:nowrap;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.market-nav::-webkit-scrollbar{display:none;}
+.market-nav a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  min-height:33px;
+  padding:0 12px;
+  border:1px solid rgba(148,163,184,.33);
+  border-radius:999px;
+  background:#0e1729;
+  color:#e5e7eb;
+  text-decoration:none;
+  font-size:13px;
+  line-height:1;
+  font-weight:900;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+  transition:.18s ease;
+}
+.market-nav a:hover,.market-nav a:focus-visible{border-color:#14b8a6;color:#67e8f9;outline:none;transform:translateY(-1px);}
+.market-nav a.market-nav-current{
+  border-color:#22d3ee;
+  background:linear-gradient(135deg,#0e7490,#0891b2);
+  color:#fff;
+  box-shadow:0 0 18px rgba(34,211,238,.2);
+}
+.market-nav .nav-whatsapp-link{
+  width:35px;
+  min-width:35px;
+  height:35px;
+  min-height:35px;
+  padding:0;
+  border-color:rgba(34,197,94,.5);
+  background:#0e1729;
+}
+.nav-whatsapp-circle{
+  position:relative;
+  display:block;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#22c55e;
+  box-shadow:0 0 14px rgba(34,197,94,.3);
+}
+.nav-whatsapp-circle::after{
+  content:"";
+  position:absolute;
+  left:6px;
+  top:6px;
+  width:10px;
+  height:8px;
+  border-radius:50%;
+  background:#fff;
+}
+.nav-whatsapp-circle::before{
+  content:"";
+  position:absolute;
+  left:6px;
+  bottom:4px;
+  width:5px;
+  height:5px;
+  background:#fff;
+  clip-path:polygon(0 0,100% 0,0 100%);
+}
+.market-home-btn{
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  border:1px solid rgba(148,163,184,.36);
+  border-radius:50%;
+  background:#0e1729;
+  color:#f8fafc;
+  text-decoration:none;
+  transition:.18s ease;
+}
+.market-home-btn:hover,.market-home-btn:focus-visible{border-color:#22d3ee;color:#67e8f9;outline:none;transform:translateY(-1px);}
+.market-home-btn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+@media(max-width:760px){
+  .market-bar-inner{min-height:52px;padding:0 8px;gap:6px;}
+  .market-brand{flex-basis:108px;width:108px;height:33px;}
+  .market-nav{gap:6px;}
+  .market-nav a{min-height:31px;padding:0 9px;font-size:11px;}
+  .market-nav .nav-whatsapp-link{width:32px;min-width:32px;height:32px;min-height:32px;}
+  .market-home-btn{flex-basis:35px;width:35px;height:35px;}
+}
+</style>
 </head>
 <body>
-<header class="topbar"><a class="brand" href="/"><span class="brand-mark">AZ</span><span>AZOBSS</span></a><a class="top-home" href="/">← Kembali ke Homepage</a></header>
+<header class="market-sticky-bar" aria-label="Navigasi utama AZOBSS">
+  <div class="market-bar-inner">
+    <a class="market-brand" href="/" aria-label="AZOBSS Homepage">
+      <img src="/images/logo-azobss.jpg" alt="AZOBSS"/>
+    </a>
+    <nav class="market-nav" aria-label="Pautan utama AZOBSS">
+      <a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener" aria-label="WhatsApp AZOBSS"><span class="nav-whatsapp-circle" aria-hidden="true"></span></a>
+      <a href="/PA-BM/">PA / BM</a>
+      <a href="/Software-Tools/">Software</a>
+      <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+      <a href="/affiliate-shop/">Affiliate Shop</a>
+      <a href="/lucky-draw/">Lucky Draw</a>
+      <a href="/tools/">Mini Web Tools</a>
+      <a class="market-nav-current" href="/Tempah-Website/" aria-current="page">Tempah Website</a>
+    </nav>
+    <a class="market-home-btn" href="/" aria-label="Kembali ke Homepage" title="Kembali ke Homepage">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10.5V20h13v-9.5"></path><path d="M9.5 20v-6h5v6"></path></svg>
+    </a>
+  </div>
+</header>
 <main>
 <section class="hero"><div class="wrap"><span class="eyebrow">Website untuk bisnes</span><h1>Tempah website yang <span>jelas, kemas dan milik anda</span></h1><p>Halaman ini membantu customer menyediakan semua maklumat penting sebelum pembangunan bermula. Sesuai untuk website satu halaman, produk, pakej, WhatsApp atau Telegram, QR pembayaran serta domain sendiri.</p><div class="badge-row"><span class="badge">Responsive</span><span class="badge">WhatsApp / Telegram</span><span class="badge">QR Pembayaran</span><span class="badge">Custom Domain</span><span class="badge">GitHub Pages</span></div><div class="hero-actions"><a class="cta primary" href="#request">Isi Permintaan Website</a><a class="cta secondary" href="#process">Lihat Proses Projek</a></div><div class="notice"><strong>Deposit:</strong> Selepas skop, harga, tempoh siap dan jumlah pembetulan dipersetujui, deposit—contohnya 50%—perlu dibuat sebelum reka bentuk dimulakan.</div></div></section>
 <section class="section" id="process"><div class="wrap"><h2 class="section-title">Proses memulakan projek</h2><p class="section-lead">Pemilikan akaun, repository dan domain disusun atas nama customer supaya website lebih mudah diurus pada masa hadapan.</p><div class="grid">

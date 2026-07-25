@@ -1,0 +1,19 @@
+AZOBSS PATCH (585) - TEMPAH WEBSITE MAIN NAVBAR FIX
+Date: 2026-07-26
+
+Baseline:
+- (584)-AZOBSS-TEMPAH-WEBSITE-GITHUB-REGISTER-STEP-BY-STEP_20260725.zip
+
+Perubahan:
+- Membuang topbar khas halaman Tempah Website yang hanya memaparkan ikon AZOBSS dan butang "Kembali ke Homepage".
+- Menggantikan topbar tersebut dengan navbar utama AZOBSS yang sepadan dengan homepage.
+- Navbar baharu mengandungi logo AZOBSS sebenar, WhatsApp, PA / BM, Software, CAD Tools, Affiliate Shop, Lucky Draw, Mini Web Tools dan Tempah Website.
+- Tab Tempah Website ditandakan sebagai halaman aktif.
+- Menambah ikon Home di sebelah kanan untuk kembali ke homepage.
+- Navbar boleh discroll secara mendatar pada skrin kecil.
+- Semua fungsi dan panduan GitHub daripada patch (584) dikekalkan.
+
+Deploy:
+- Frontend / GitHub Pages sahaja.
+- Render backend tidak perlu redeploy.
+- Firebase Rules tidak perlu diubah.
