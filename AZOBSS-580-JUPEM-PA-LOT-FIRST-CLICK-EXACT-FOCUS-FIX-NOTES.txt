@@ -1,0 +1,28 @@
+AZOBSS PATCH (580) — JUPEM PA LOT FIRST-CLICK EXACT FOCUS FIX
+Date: 2026-07-25
+Baseline: (579)-AZOBSS-JUPEM-MAP-REMOVE-PA-SEARCH-FIX_20260725.zip
+
+Masalah
+- Klik pertama pada nombor lot dalam Senarai Lot PA kadang-kadang memfokus lot jiran atau kedudukan lama.
+- Klik kali kedua barulah peta jatuh tepat pada lot yang dipilih.
+
+Pembaikan
+1. Peta awal tidak lagi menjalankan animasi fitBounds yang boleh bertindih dengan fokus lot.
+2. Fokus lot dilancarkan hanya selepas Leaflet benar-benar ready dan saiz modal stabil.
+3. Setiap permintaan fokus mempunyai serial sendiri; respons lama tidak boleh menimpa klik terbaru.
+4. Kedudukan lot tepat dikunci semula secara automatik selepas 160 ms dan 520 ms.
+5. Butang Senarai Lot dikunci sementara supaya dua pembukaan modal tidak bertindih.
+6. Daerah, mukim/bandar dan seksyen daripada PA dihantar sebagai konteks tambahan.
+7. Backend kini mengesahkan bahawa OBJECTID JUPEM benar-benar sepadan dengan nombor lot diminta.
+8. Jika OBJECTID ambigu atau lama, backend mencari semula berdasarkan nombor lot + PA + konteks kawasan.
+9. Carian lot tidak lagi jatuh balik kepada semua lot dalam satu PA apabila lot tepat gagal ditemui.
+
+Cache
+- azobss-lot-selection-map.js v28
+- azobss-pa-search.js v28
+- jupemStoreVersion 32
+
+Deployment
+- Kemas kini GitHub Pages.
+- Redeploy Render backend kerana deploy-server.js berubah.
+- Firebase Rules tidak perlu diubah.

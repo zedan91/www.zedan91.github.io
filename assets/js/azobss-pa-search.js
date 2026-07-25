@@ -40,6 +40,7 @@
   let sortKey = '_sourceIndex';
   let sortDirection = 'asc';
   let activeSearchTask = null;
+  let lotMapOpenSerial = 0;
   const textCollator = new Intl.Collator('en-MY', { numeric: true, sensitivity: 'base' });
 
   function escapeHtml(value) {
@@ -119,19 +120,34 @@
     };
     modal.querySelector('.syit-sheet-modal-close').addEventListener('click', close);
     modal.querySelector('.syit-sheet-modal-backdrop').addEventListener('click', close);
-    modal.querySelector('.pabm-pa-preview-lots').addEventListener('click', (event) => {
+    modal.querySelector('.pabm-pa-preview-lots').addEventListener('click', async (event) => {
       const lotButton = event.target.closest('[data-lot-focus-map]');
       if (!lotButton) return;
       event.preventDefault();
       if (typeof window.azobssOpenLotFocusMap !== 'function') return;
-      window.azobssOpenLotFocusMap({
-        mapUrl: lotButton.dataset.lotMapUrl || '',
-        lotNo: lotButton.dataset.lotNumber || '',
-        paNo: lotButton.dataset.lotPaNumber || '',
-        stateCode: lotButton.dataset.lotStateCode || '',
-        stateName: lotButton.dataset.lotStateName || '',
-        productCode: lotButton.dataset.lotProductCode || '1'
-      });
+      const openSerial = ++lotMapOpenSerial;
+      modal.querySelectorAll('[data-lot-focus-map]').forEach((button) => { button.disabled = true; });
+      lotButton.setAttribute('aria-busy', 'true');
+      try {
+        await window.azobssOpenLotFocusMap({
+          mapUrl: lotButton.dataset.lotMapUrl || '',
+          lotNo: lotButton.dataset.lotNumber || '',
+          paNo: lotButton.dataset.lotPaNumber || '',
+          stateCode: lotButton.dataset.lotStateCode || '',
+          stateName: lotButton.dataset.lotStateName || '',
+          productCode: lotButton.dataset.lotProductCode || '1',
+          daerah: lotButton.dataset.lotDaerah || '',
+          mukim: lotButton.dataset.lotMukim || '',
+          seksyen: lotButton.dataset.lotSeksyen || ''
+        });
+      } finally {
+        if (openSerial === lotMapOpenSerial) {
+          modal.querySelectorAll('[data-lot-focus-map]').forEach((button) => {
+            button.disabled = false;
+            button.removeAttribute('aria-busy');
+          });
+        }
+      }
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal.classList.contains('is-open') && !document.querySelector('.az-lot-focus-modal')) close();
@@ -151,6 +167,13 @@
     const stateLine = details.find((line) => /^Negeri\s*:/i.test(line)) || '';
     const stateName = stateLine.replace(/^Negeri\s*:\s*/i, '').replace(/^Negeri\s+/i, '').trim().toUpperCase();
     const stateCode = JUPEM_STATE_CODES[stateName] || '';
+    const detailValue = (labels) => {
+      const line = details.find((text) => labels.some((label) => new RegExp(`^${label}\\s*:`, 'i').test(text))) || '';
+      return line.replace(/^[^:]+:\s*/, '').trim();
+    };
+    const daerah = detailValue(['Daerah', 'District']);
+    const mukim = detailValue(['Mukim', 'Bandar', 'Pekan']);
+    const seksyen = detailValue(['Seksyen', 'Section']);
     const lots = Array.from(detailDocument.querySelectorAll('#exampleMini tbody a')).map((link) => {
       const url = absoluteJupemUrl(link.getAttribute('href'));
       let productCode = '1';
@@ -174,7 +197,10 @@
       details,
       lots,
       stateName,
-      stateCode
+      stateCode,
+      daerah,
+      mukim,
+      seksyen
     };
   }
 
@@ -210,7 +236,7 @@
         ? preview.details.map((line) => `<p>${escapeHtml(line)}</p>`).join('')
         : '<p>PA details are unavailable.</p>');
       lots.innerHTML = '<h3>Senarai Lot</h3>' + (preview.lots.length
-        ? `<ol>${preview.lots.map((lot) => `<li>${lot.url ? `<button class="pabm-pa-lot-map-button" type="button" data-lot-focus-map data-lot-map-url="${escapeHtml(lot.url)}" data-lot-number="${escapeHtml(lot.number)}" data-lot-pa-number="${escapeHtml(preview.title)}" data-lot-state-code="${escapeHtml(lot.stateCode || preview.stateCode || '')}" data-lot-state-name="${escapeHtml(preview.stateName || '')}" data-lot-product-code="${escapeHtml(lot.productCode || '1')}" title="Lihat Lot ${escapeHtml(lot.number)} pada peta">${escapeHtml(lot.number)}</button>` : escapeHtml(lot.number)}</li>`).join('')}</ol>`
+        ? `<ol>${preview.lots.map((lot) => `<li>${lot.url ? `<button class="pabm-pa-lot-map-button" type="button" data-lot-focus-map data-lot-map-url="${escapeHtml(lot.url)}" data-lot-number="${escapeHtml(lot.number)}" data-lot-pa-number="${escapeHtml(preview.title)}" data-lot-state-code="${escapeHtml(lot.stateCode || preview.stateCode || '')}" data-lot-state-name="${escapeHtml(preview.stateName || '')}" data-lot-product-code="${escapeHtml(lot.productCode || '1')}" data-lot-daerah="${escapeHtml(preview.daerah || '')}" data-lot-mukim="${escapeHtml(preview.mukim || '')}" data-lot-seksyen="${escapeHtml(preview.seksyen || '')}" title="Lihat Lot ${escapeHtml(lot.number)} pada peta">${escapeHtml(lot.number)}</button>` : escapeHtml(lot.number)}</li>`).join('')}</ol>`
         : '<p>Senarai lot tidak tersedia.</p>');
       if (preview.imageUrl) {
         image.alt = `${preview.title} preview`;

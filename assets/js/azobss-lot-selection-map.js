@@ -282,6 +282,8 @@
       let coordinateMarker = null;
       let cadastreFocusLayer = null;
       let cadastreFocusController = null;
+      let cadastreFocusSerial = 0;
+      let cadastreRefitTimers = [];
       let locationSuggestions = [];
       let activeLocationIndex = -1;
       let locationSearchTimer = null;
@@ -359,7 +361,10 @@
         });
       }
 
-      function clearCadastreFocus() {
+      function clearCadastreFocus(invalidateRequest = true) {
+        if (invalidateRequest) cadastreFocusSerial += 1;
+        cadastreRefitTimers.forEach((timer) => window.clearTimeout(timer));
+        cadastreRefitTimers = [];
         if (cadastreFocusController) {
           try { cadastreFocusController.abort(); } catch (_) {}
           cadastreFocusController = null;
@@ -376,7 +381,8 @@
         const suggestionStateCode = String(suggestion && suggestion.stateCode || activeStateCode).padStart(2, '0');
         const suggestionStateName = String(suggestion && (suggestion.negeri || suggestion.stateName || suggestion.state) || '').trim();
         if (!lotNo && !paNo) return;
-        clearCadastreFocus();
+        clearCadastreFocus(false);
+        const focusSerial = ++cadastreFocusSerial;
         if (coordinateMarker) {
           try { map.removeLayer(coordinateMarker); } catch (_) {}
           coordinateMarker = null;
@@ -400,6 +406,7 @@
             signal: cadastreFocusController.signal
           });
           const focused = await response.json().catch(() => ({}));
+          if (focusSerial !== cadastreFocusSerial || settled || !map) return;
           if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot atau PA tidak dapat dipaparkan.');
           const focusedLotCount = Math.max(1, Number(focused.lotCount || 1));
           const convertRing = (ring) => (Array.isArray(ring) ? ring.map((point) => {
@@ -443,8 +450,17 @@
           const focusBounds = Array.isArray(focused.bounds) && focused.bounds.length === 2
             ? focused.bounds
             : cadastreFocusLayer.getBounds();
-          try { map.stop(); } catch (_) {}
-          map.fitBounds(focusBounds, { padding: [70, 70], maxZoom: 19, animate: false });
+          const applyExactFocus = () => {
+            if (focusSerial !== cadastreFocusSerial || settled || !map || !cadastreFocusLayer) return;
+            try { map.stop(); } catch (_) {}
+            try { map.invalidateSize({ pan: false }); } catch (_) {}
+            map.fitBounds(focusBounds, { padding: [70, 70], maxZoom: 19, animate: false, duration: 0 });
+            try { cadastreFocusLayer.bringToFront(); } catch (_) {}
+          };
+          applyExactFocus();
+          // Leaflet can finish its initial layout/tile movement after the first fitBounds.
+          // Reapply the same exact bounds twice so the first click lands on the requested lot.
+          cadastreRefitTimers = [160, 520].map((delay) => window.setTimeout(applyExactFocus, delay));
           if (keepLabel) coordinateInput.value = [
             focusedPa,
             focusedLot ? `Lot ${focusedLot}` : '',
@@ -458,6 +474,7 @@
           refreshJupemOverlay(120, true);
         } catch (error) {
           if (error && error.name === 'AbortError') return;
+          if (focusSerial !== cadastreFocusSerial) return;
           clearCadastreFocus();
           setCoordinateFeedback(error.message || 'Lot atau PA tidak dapat dipaparkan.', 'error');
         }
@@ -667,7 +684,7 @@
         if (operationController) operationController.abort();
         if (locationSearchTimer) window.clearTimeout(locationSearchTimer);
         if (locationSearchController) locationSearchController.abort();
-        if (cadastreFocusController) cadastreFocusController.abort();
+        clearCadastreFocus();
         if (jupemRefreshTimer) window.clearTimeout(jupemRefreshTimer);
         if (jupemRecoveryTimer) window.clearTimeout(jupemRecoveryTimer);
         locationSearchSerial += 1;
@@ -785,7 +802,7 @@
           edit: { featureGroup: drawnItems, edit: true, remove: true }
         }));
         const bounds = Array.isArray(config.bounds) ? config.bounds : [[1, 99], [7, 120]];
-        map.fitBounds(bounds, { padding: [16, 16] });
+        map.fitBounds(bounds, { padding: [16, 16], animate: false, duration: 0 });
         map.on(window.L.Draw.Event.CREATED, (event) => {
           drawnItems.clearLayers();
           drawnItems.addLayer(event.layer);
@@ -808,15 +825,21 @@
           refreshJupemOverlay(80, true);
         }, 100);
         if (isDirectLotFocus) {
-          window.setTimeout(() => {
+          const launchInitialFocus = () => {
             if (!map || settled) return;
-            focusCadastreSuggestion({
-              ...initialFocus,
-              stateCode: String(initialFocus.stateCode || stateCode).padStart(2, '0'),
-              stateName: String(initialFocus.stateName || stateName || config.negeri || '').trim(),
-              productCode
-            }, true);
-          }, 140);
+            try { map.stop(); } catch (_) {}
+            try { map.invalidateSize({ pan: false }); } catch (_) {}
+            window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+              if (!map || settled) return;
+              focusCadastreSuggestion({
+                ...initialFocus,
+                stateCode: String(initialFocus.stateCode || stateCode).padStart(2, '0'),
+                stateName: String(initialFocus.stateName || stateName || config.negeri || '').trim(),
+                productCode
+              }, true);
+            }));
+          };
+          map.whenReady(() => window.setTimeout(launchInitialFocus, 60));
         }
       } catch (error) {
         cleanup();

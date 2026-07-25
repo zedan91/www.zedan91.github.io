@@ -6247,6 +6247,18 @@ function azobssParseFocusedLotMapTarget(rawUrl) {
         target.searchParams.get("state") ||
         (typeMatch && typeMatch[1]) ||
         ""
+      ).trim(),
+      lotNo: String(
+        target.searchParams.get("lot") ||
+        target.searchParams.get("lotNo") ||
+        target.searchParams.get("noLot") ||
+        ""
+      ).trim(),
+      paNo: String(
+        target.searchParams.get("pa") ||
+        target.searchParams.get("paNo") ||
+        target.searchParams.get("noPA") ||
+        ""
       ).trim()
     };
   } catch (_) {
@@ -6291,6 +6303,28 @@ function azobssFocusedLotComparable(value) {
     .trim()
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "");
+}
+
+function azobssFocusedLotAttributeValue(feature) {
+  return azobssFindFocusedLotAttribute(feature && feature.attributes, [
+    "NO_LOT", "NOLOT", "LOT_NO", "LOTNO", "NOMBOR_LOT", "LOT"
+  ]);
+}
+
+function azobssFocusedPaAttributeValue(feature) {
+  return azobssFindFocusedLotAttribute(feature && feature.attributes, [
+    "NO_PA", "NOPA", "PA_NO", "PANO", "PELAN_AKUI"
+  ]);
+}
+
+function azobssFocusedFeatureMatchesExactTarget(feature, lotNo, paNo) {
+  const wantedLot = azobssFocusedLotComparable(cleanLotNumber(lotNo));
+  const actualLot = azobssFocusedLotComparable(azobssFocusedLotAttributeValue(feature));
+  if (wantedLot && (!actualLot || actualLot !== wantedLot)) return false;
+  const wantedPa = azobssFocusedLotComparable(paNo).replace(/^PA/, "");
+  const actualPa = azobssFocusedLotComparable(azobssFocusedPaAttributeValue(feature)).replace(/^PA/, "");
+  if (wantedPa && actualPa && actualPa !== wantedPa) return false;
+  return true;
 }
 
 function azobssFocusedLotFeatureScore(feature, context = {}) {
@@ -6391,8 +6425,14 @@ async function azobssQueryFocusedLotByNumber(config, lotNo, auth, context = {}) 
         resultRecordCount: "50"
       }, auth, 30000);
       const features = Array.isArray(result.features) ? result.features : [];
-      const selected = azobssChooseFocusedLotFeature(features, { ...context, lotNo: cleanNumber });
-      if (selected) return selected;
+      const wantedPa = azobssFocusedLotComparable(context && context.paNo).replace(/^PA/, "");
+      const exactPaFeatures = wantedPa ? features.filter((feature) => {
+        const actualPa = azobssFocusedLotComparable(azobssFocusedPaAttributeValue(feature)).replace(/^PA/, "");
+        return actualPa && actualPa === wantedPa;
+      }) : [];
+      const selectionPool = exactPaFeatures.length ? exactPaFeatures : features;
+      const selected = azobssChooseFocusedLotFeature(selectionPool, { ...context, lotNo: cleanNumber });
+      if (selected && azobssFocusedFeatureMatchesExactTarget(selected, cleanNumber, exactPaFeatures.length ? context.paNo : "")) return selected;
     } catch (_) {}
   }
   return null;
@@ -6474,7 +6514,12 @@ async function azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, 
   if (resolvedObjectId) {
     try {
       const byObjectId = await azobssQueryFocusedLotByObjectId(config, resolvedObjectId, auth);
-      if (!byObjectId || azobssFocusedLotFeatureScore(byObjectId, { ...context, lotNo }) >= 0) feature = byObjectId;
+      // A JUPEM URL/object ID is used only when its attributes confirm the
+      // requested lot. This prevents an old or ambiguous object ID from
+      // displaying a neighbouring lot on the first click.
+      if (byObjectId && azobssFocusedFeatureMatchesExactTarget(byObjectId, lotNo, context && context.paNo)) {
+        feature = byObjectId;
+      }
     } catch (_) {}
   }
 
@@ -6490,12 +6535,17 @@ async function azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, 
         || (search.results || [])[0];
       const rowTarget = azobssParseFocusedLotMapTarget(row && row.mapUrl);
       resolvedObjectId = azobssCleanLotObjectId(rowTarget.objectId || (row && row.objectId));
-      if (resolvedObjectId) feature = await azobssQueryFocusedLotByObjectId(config, resolvedObjectId, auth);
+      if (resolvedObjectId) {
+        const searchedFeature = await azobssQueryFocusedLotByObjectId(config, resolvedObjectId, auth);
+        if (searchedFeature && azobssFocusedFeatureMatchesExactTarget(searchedFeature, lotNo, context && context.paNo)) {
+          feature = searchedFeature;
+        }
+      }
     } catch (_) {}
   }
 
   let paFeatures = [];
-  if (!feature && context && context.paNo) {
+  if (!feature && !lotNo && context && context.paNo) {
     try {
       paFeatures = await azobssQueryFocusedLotsByPa(config, context.paNo, auth, context);
       feature = azobssMergeFocusedLotFeatures(paFeatures);
@@ -11123,7 +11173,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 31,
+          jupemStoreVersion: 32,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -11383,9 +11433,9 @@ async function handler(req, res) {
         const objectId = azobssCleanLotObjectId(
           parsed.query.objectId || parsed.query.id || parsed.query.no || fromUrl.objectId
         );
-        const lotNo = cleanLotNumber(parsed.query.lot || parsed.query.lotNo || parsed.query.noLot);
+        const lotNo = cleanLotNumber(parsed.query.lot || parsed.query.lotNo || parsed.query.noLot || fromUrl.lotNo);
         const focusContext = {
-          paNo: String(parsed.query.pa || parsed.query.paNo || "").trim().toUpperCase().slice(0, 48),
+          paNo: String(parsed.query.pa || parsed.query.paNo || fromUrl.paNo || "").trim().toUpperCase().slice(0, 48),
           daerah: String(parsed.query.daerah || parsed.query.district || "").trim().slice(0, 120),
           mukim: String(parsed.query.mukim || parsed.query.bandar || "").trim().slice(0, 120),
           seksyen: String(parsed.query.seksyen || parsed.query.section || "").trim().slice(0, 80)
