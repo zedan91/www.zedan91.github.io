@@ -6121,6 +6121,165 @@ function azobssGetLotMapConfig(productCode, stateCode) {
   return { product, state, bounds: AZOBSS_JUPEM_LOT_BOUNDS[state], ...config };
 }
 
+// 571: Malaysia place-name suggestions for the JUPEM selection map.
+// The provider stays behind this backend endpoint so it can be changed without
+// requiring a website update. Requests are cached and serialised to keep public
+// geocoder usage modest.
+const AZOBSS_LOCATION_SEARCH_BASE = String(
+  process.env.AZOBSS_LOCATION_SEARCH_BASE || "https://photon.komoot.io"
+).replace(/\/+$/, "");
+const azobssLocationSearchCache = new Map();
+let azobssLocationSearchQueue = Promise.resolve();
+let azobssLocationSearchLastRequestAt = 0;
+
+function azobssCleanLocationQuery(value) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
+}
+
+function azobssLocationTextParts(properties = {}) {
+  const values = [
+    properties.name,
+    properties.street,
+    properties.district,
+    properties.locality,
+    properties.city,
+    properties.county,
+    properties.state,
+    properties.postcode,
+    properties.country
+  ];
+  const seen = new Set();
+  return values.map((value) => String(value || "").trim()).filter((value) => {
+    if (!value) return false;
+    const key = value.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function azobssQueueLocationSearch(task) {
+  const current = azobssLocationSearchQueue.then(async () => {
+    const waitMs = Math.max(0, 450 - (Date.now() - azobssLocationSearchLastRequestAt));
+    if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
+    try {
+      return await task();
+    } finally {
+      azobssLocationSearchLastRequestAt = Date.now();
+    }
+  });
+  azobssLocationSearchQueue = current.catch(() => undefined);
+  return current;
+}
+
+async function azobssFetchPhotonLocations(query, stateCode, useStateBounds) {
+  const requestUrl = new URL(`${AZOBSS_LOCATION_SEARCH_BASE}/api/`);
+  requestUrl.searchParams.set("q", query);
+  requestUrl.searchParams.set("limit", "8");
+  requestUrl.searchParams.set("lang", "ms");
+  requestUrl.searchParams.set("countrycode", "MY");
+
+  const bounds = AZOBSS_JUPEM_LOT_BOUNDS[stateCode];
+  if (Array.isArray(bounds) && bounds.length === 2) {
+    const south = Number(bounds[0] && bounds[0][0]);
+    const west = Number(bounds[0] && bounds[0][1]);
+    const north = Number(bounds[1] && bounds[1][0]);
+    const east = Number(bounds[1] && bounds[1][1]);
+    if ([south, west, north, east].every(Number.isFinite)) {
+      if (useStateBounds) requestUrl.searchParams.set("bbox", [west, south, east, north].join(","));
+      requestUrl.searchParams.set("lat", String((south + north) / 2));
+      requestUrl.searchParams.set("lon", String((west + east) / 2));
+      requestUrl.searchParams.set("zoom", "10");
+      requestUrl.searchParams.set("location_bias_scale", "0.15");
+    }
+  }
+
+  return await azobssQueueLocationSearch(async () => {
+    const response = await fetch(requestUrl, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(12000),
+      headers: {
+        "Accept": "application/geo+json,application/json;q=0.9,*/*;q=0.5",
+        "Accept-Language": "ms-MY,ms;q=0.9,en;q=0.7",
+        "User-Agent": "AZOBSS-Lot-Selection-Map/571 (https://www.azobss.com/)"
+      }
+    });
+    if (!response.ok) throw new Error(`Location search returned HTTP ${response.status}.`);
+    return await response.json();
+  });
+}
+
+function azobssNormaliseLocationFeatures(payload, stateCode) {
+  const stateName = AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "";
+  const features = Array.isArray(payload && payload.features) ? payload.features : [];
+  const seen = new Set();
+  const results = [];
+
+  for (const feature of features) {
+    const coordinates = feature && feature.geometry && feature.geometry.coordinates;
+    const longitude = Number(Array.isArray(coordinates) ? coordinates[0] : NaN);
+    const latitude = Number(Array.isArray(coordinates) ? coordinates[1] : NaN);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+    if (latitude < 0.5 || latitude > 7.7 || longitude < 99 || longitude > 120.5) continue;
+
+    const properties = feature && feature.properties || {};
+    const countryCode = String(properties.countrycode || properties.country_code || "").trim().toUpperCase();
+    if (countryCode && countryCode !== "MY") continue;
+
+    const key = `${latitude.toFixed(6)}|${longitude.toFixed(6)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const parts = azobssLocationTextParts(properties);
+    const label = parts.join(", ") || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+    const extent = Array.isArray(properties.extent) && properties.extent.length === 4
+      ? properties.extent.map(Number)
+      : null;
+    results.push({
+      id: String(properties.osm_type || "") + String(properties.osm_id || key),
+      label,
+      name: String(properties.name || parts[0] || label).trim(),
+      detail: parts.slice(1).join(", "),
+      latitude: Number(latitude.toFixed(7)),
+      longitude: Number(longitude.toFixed(7)),
+      extent: extent && extent.every(Number.isFinite) ? extent : null,
+      state: String(properties.state || stateName).trim(),
+      country: String(properties.country || "Malaysia").trim()
+    });
+    if (results.length >= 8) break;
+  }
+  return results;
+}
+
+async function azobssSearchMalaysiaLocations(queryValue, stateValue) {
+  const query = azobssCleanLocationQuery(queryValue);
+  if (query.length < 3) throw new Error("Taip sekurang-kurangnya 3 huruf untuk mencari lokasi.");
+  const stateCode = cleanLotStateCode(stateValue);
+  if (!stateCode) throw new Error("Negeri pilihan tidak sah.");
+
+  const cacheKey = `${stateCode}|${query.toLowerCase()}`;
+  const cached = azobssLocationSearchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.results;
+
+  let payload = await azobssFetchPhotonLocations(query, stateCode, true);
+  let results = azobssNormaliseLocationFeatures(payload, stateCode);
+  if (!results.length) {
+    payload = await azobssFetchPhotonLocations(query, stateCode, false);
+    results = azobssNormaliseLocationFeatures(payload, stateCode);
+  }
+
+  if (azobssLocationSearchCache.size > 250) azobssLocationSearchCache.clear();
+  azobssLocationSearchCache.set(cacheKey, {
+    results,
+    expiresAt: Date.now() + (15 * 60 * 1000)
+  });
+  return results;
+}
+
 function azobssGetAllLotMapLayerIds(productCode) {
   const product = cleanLotProduct(productCode);
   const stateConfigs = Object.values(AZOBSS_JUPEM_LOT_CONFIG[product] || {});
@@ -10565,6 +10724,28 @@ async function handler(req, res) {
     // =========================
     // JUPEM LOT KADASTER MAP + VERIFIED SELECTION
     // =========================
+
+    if (pathname === "/api/map-location-suggestions" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "map-location-suggestions", 45, 60 * 1000)) return;
+      try {
+        const query = parsed.query.q || parsed.query.query || "";
+        const stateCode = parsed.query.negeri || parsed.query.state || parsed.query.stateCode || "";
+        const results = await azobssSearchMalaysiaLocations(query, stateCode);
+        return send(res, 200, JSON.stringify({
+          ok: true,
+          query: azobssCleanLocationQuery(query),
+          stateCode: cleanLotStateCode(stateCode),
+          negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[cleanLotStateCode(stateCode)] || "",
+          results,
+          provider: "Photon",
+          attribution: "OpenStreetMap contributors"
+        }), "application/json");
+      } catch (error) {
+        const message = error && error.message || "Carian lokasi tidak tersedia.";
+        const status = /sekurang-kurangnya|tidak sah/i.test(message) ? 400 : 502;
+        return send(res, status, JSON.stringify({ ok: false, error: message }), "application/json");
+      }
+    }
 
     if (pathname === "/api/jupem-lot-map/config" && req.method === "GET") {
       try {

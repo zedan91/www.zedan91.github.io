@@ -1,0 +1,24 @@
+AZOBSS 571 - Lot Map Location Autocomplete
+
+Added:
+- The map search box now accepts either WGS84 coordinates or a place name.
+- Place-name suggestions appear after 3 characters.
+- Suggestions are focused on Malaysia and the state selected for the JUPEM map.
+- Selecting a suggestion zooms the map and places a red marker.
+- Keyboard controls: Arrow Up, Arrow Down, Enter and Escape.
+- Coordinate search remains supported in the same box.
+- Backend geocoder proxy includes caching, request serialisation and per-client rate limiting.
+- Search provider can be changed later with AZOBSS_LOCATION_SEARCH_BASE.
+- OpenStreetMap attribution is shown below the suggestion list.
+- azobss-lot-selection-map.js cache version bumped to v20.
+
+Preserved from 570:
+- JUPEM map layers and polygon/rectangle selection.
+- JUPEM estimate, lot count, sheet ratio and price calculation.
+- Signed selectionToken preservation during temporary status responses.
+- Prepare/status polling, cart flow and verified download flow.
+
+Deployment:
+- Render backend redeploy required.
+- GitHub Pages deploy required.
+- No Firebase Rules change required.

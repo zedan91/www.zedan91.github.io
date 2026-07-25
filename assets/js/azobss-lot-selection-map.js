@@ -26,7 +26,7 @@
       .az-lot-map-body{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px}
       .az-lot-map-stage{position:relative;min-width:0;min-height:420px;background:#172033}
       .az-lot-map-canvas{position:absolute;inset:0}
-      .az-lot-coordinate-search{position:absolute;z-index:1000;top:10px;left:52px;width:min(390px,calc(100% - 170px));padding:6px;border:1px solid rgba(51,65,85,.9);border-radius:6px;background:rgba(255,255,255,.96);box-shadow:0 2px 8px rgba(15,23,42,.3)}
+      .az-lot-coordinate-search{position:absolute;z-index:1000;top:10px;left:52px;width:min(440px,calc(100% - 170px));padding:6px;border:1px solid rgba(51,65,85,.9);border-radius:6px;background:rgba(255,255,255,.97);box-shadow:0 2px 8px rgba(15,23,42,.3);overflow:visible}
       .az-lot-coordinate-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
       .az-lot-coordinate-input{width:100%;min-width:0;height:34px;padding:0 10px;border:1px solid #94a3b8;border-radius:4px;background:#fff;color:#0f172a;font-size:13px;letter-spacing:0;outline:none}
       .az-lot-coordinate-input:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.2)}
@@ -35,6 +35,16 @@
       .az-lot-coordinate-submit:active{transform:translateY(1px);box-shadow:0 1px 0 #1e3a8a}
       .az-lot-coordinate-feedback{display:none;margin:5px 2px 0;color:#b91c1c;font-size:11px;font-weight:700;line-height:1.25}
       .az-lot-coordinate-feedback.is-visible{display:block}
+      .az-lot-coordinate-feedback.is-info,.az-lot-coordinate-feedback.is-loading{color:#1d4ed8}
+      .az-lot-coordinate-feedback.is-success{color:#047857}
+      .az-lot-location-results[hidden]{display:none!important}
+      .az-lot-location-results{position:absolute;left:0;right:0;top:calc(100% + 5px);max-height:min(310px,48vh);overflow:auto;border:1px solid #64748b;border-radius:7px;background:#fff;color:#0f172a;box-shadow:0 14px 34px rgba(15,23,42,.34)}
+      .az-lot-location-option{display:block;width:100%;padding:9px 11px;border:0;border-bottom:1px solid #e2e8f0;background:#fff;color:#0f172a;text-align:left;cursor:pointer}
+      .az-lot-location-option:last-of-type{border-bottom:0}
+      .az-lot-location-option:hover,.az-lot-location-option.is-active{background:#dbeafe}
+      .az-lot-location-option strong{display:block;overflow:hidden;color:#0f172a;font-size:13px;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+      .az-lot-location-option span{display:block;margin-top:2px;overflow:hidden;color:#475569;font-size:11px;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+      .az-lot-location-attribution{padding:6px 10px;border-top:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:10px;text-align:right}
       .az-lot-map-side{min-height:0;overflow:auto;padding:14px;border-left:1px solid #2d405b;background:#101c2f}
       .az-lot-map-status{min-height:42px;margin:0 0 12px;padding:10px 11px;border:1px solid #405574;border-radius:6px;background:#15233a;color:#d9e8ff;font-size:13px;line-height:1.45}
       .az-lot-map-status.is-loading{border-color:#b97713;color:#ffe0a3;background:#2a2118}
@@ -191,10 +201,11 @@
               <div class="az-lot-map-canvas"></div>
               <div class="az-lot-coordinate-search">
                 <form class="az-lot-coordinate-form" role="search">
-                  <input class="az-lot-coordinate-input" type="text" inputmode="decimal" autocomplete="off" aria-label="Cari koordinat WGS84" placeholder="WGS84: 3.23232, 101.21312">
-                  <button class="az-lot-coordinate-submit" type="submit" title="Cari koordinat WGS84">Cari</button>
+                  <input class="az-lot-coordinate-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="azLotLocationResults" aria-label="Cari koordinat WGS84 atau nama tempat" placeholder="WGS84 atau nama tempat">
+                  <button class="az-lot-coordinate-submit" type="submit" title="Cari koordinat atau lokasi">Cari</button>
                 </form>
                 <div class="az-lot-coordinate-feedback" role="status" aria-live="polite"></div>
+                <div class="az-lot-location-results" id="azLotLocationResults" role="listbox" hidden></div>
               </div>
             </div>
             <aside class="az-lot-map-side">
@@ -218,6 +229,7 @@
       const coordinateForm = modal.querySelector('.az-lot-coordinate-form');
       const coordinateInput = modal.querySelector('.az-lot-coordinate-input');
       const coordinateFeedback = modal.querySelector('.az-lot-coordinate-feedback');
+      const locationResultsNode = modal.querySelector('.az-lot-location-results');
       const status = modal.querySelector('.az-lot-map-status');
       const addButton = modal.querySelector('.az-lot-map-add');
       const resetButton = modal.querySelector('.az-lot-map-reset');
@@ -229,22 +241,55 @@
       const mapStateNode = modal.querySelector('[data-map-state]');
       const drawnItems = new window.L.FeatureGroup();
       let coordinateMarker = null;
+      let locationSuggestions = [];
+      let activeLocationIndex = -1;
+      let locationSearchTimer = null;
+      let locationSearchController = null;
+      let locationSearchSerial = 0;
 
-      function setCoordinateFeedback(message) {
+      function setCoordinateFeedback(message, state = 'error') {
         coordinateFeedback.textContent = message || '';
         coordinateFeedback.classList.toggle('is-visible', Boolean(message));
-        coordinateInput.setAttribute('aria-invalid', message ? 'true' : 'false');
+        coordinateFeedback.classList.remove('is-info', 'is-loading', 'is-success');
+        if (message && state && state !== 'error') coordinateFeedback.classList.add(`is-${state}`);
+        coordinateInput.setAttribute('aria-invalid', message && state === 'error' ? 'true' : 'false');
       }
 
-      function findCoordinate() {
-        const coordinate = parseWgs84Coordinates(coordinateInput.value);
-        if (!coordinate) {
-          setCoordinateFeedback('Masukkan koordinat WGS84 seperti 3.23232 101.21312 atau 3.23232,101.21312.');
-          coordinateInput.focus();
-          return;
+      function hideLocationSuggestions(clear = false) {
+        activeLocationIndex = -1;
+        coordinateInput.setAttribute('aria-expanded', 'false');
+        coordinateInput.removeAttribute('aria-activedescendant');
+        locationResultsNode.hidden = true;
+        locationResultsNode.querySelectorAll('.az-lot-location-option').forEach((node) => {
+          node.classList.remove('is-active');
+          node.setAttribute('aria-selected', 'false');
+        });
+        if (clear) {
+          locationSuggestions = [];
+          locationResultsNode.replaceChildren();
         }
-        setCoordinateFeedback('');
-        const point = [coordinate.latitude, coordinate.longitude];
+      }
+
+      function setActiveLocationIndex(index) {
+        if (!locationSuggestions.length) return;
+        activeLocationIndex = ((index % locationSuggestions.length) + locationSuggestions.length) % locationSuggestions.length;
+        const optionsNodes = Array.from(locationResultsNode.querySelectorAll('.az-lot-location-option'));
+        optionsNodes.forEach((node, optionIndex) => {
+          const isActive = optionIndex === activeLocationIndex;
+          node.classList.toggle('is-active', isActive);
+          node.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          if (isActive) {
+            coordinateInput.setAttribute('aria-activedescendant', node.id);
+            node.scrollIntoView({ block: 'nearest' });
+          }
+        });
+      }
+
+      function placeLocationMarker(location, keepLabel = true) {
+        const latitude = Number(location && location.latitude);
+        const longitude = Number(location && location.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+        const point = [latitude, longitude];
         if (coordinateMarker) map.removeLayer(coordinateMarker);
         coordinateMarker = window.L.circleMarker(point, {
           radius: 8,
@@ -253,16 +298,151 @@
           fillColor: '#dc2626',
           fillOpacity: 1
         }).addTo(map);
-        coordinateMarker.bindTooltip(`${coordinate.latitude.toFixed(6)}, ${coordinate.longitude.toFixed(6)}`, {
+        const label = String(location.label || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`).trim();
+        coordinateMarker.bindTooltip(label, {
           direction: 'top',
           offset: [0, -8]
         }).openTooltip();
-        map.setView(point, Math.max(17, map.getZoom()), { animate: true });
+
+        const extent = Array.isArray(location.extent) ? location.extent.map(Number) : null;
+        if (extent && extent.length === 4 && extent.every(Number.isFinite)) {
+          const west = Math.min(extent[0], extent[2]);
+          const east = Math.max(extent[0], extent[2]);
+          const south = Math.min(extent[1], extent[3]);
+          const north = Math.max(extent[1], extent[3]);
+          const bounds = [[south, west], [north, east]];
+          map.fitBounds(bounds, { padding: [42, 42], maxZoom: 17, animate: true });
+          window.setTimeout(() => {
+            if (map && map.getZoom() < 15) map.setView(point, 16, { animate: true });
+          }, 260);
+        } else {
+          map.setView(point, Math.max(17, map.getZoom()), { animate: true });
+        }
+        if (keepLabel) coordinateInput.value = label;
+        hideLocationSuggestions(true);
+        setCoordinateFeedback(`Lokasi dipilih: ${label}`, 'success');
+      }
+
+      function renderLocationSuggestions(results) {
+        locationSuggestions = Array.isArray(results) ? results : [];
+        activeLocationIndex = -1;
+        locationResultsNode.replaceChildren();
+        if (!locationSuggestions.length) {
+          hideLocationSuggestions(false);
+          return;
+        }
+
+        locationSuggestions.forEach((location, index) => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'az-lot-location-option';
+          option.id = `azLotLocationOption${index}`;
+          option.setAttribute('role', 'option');
+          option.setAttribute('aria-selected', 'false');
+          const title = document.createElement('strong');
+          title.textContent = String(location.name || location.label || 'Lokasi');
+          const detail = document.createElement('span');
+          detail.textContent = String(location.detail || location.label || 'Malaysia');
+          option.append(title, detail);
+          option.addEventListener('mousedown', (event) => event.preventDefault());
+          option.addEventListener('click', () => placeLocationMarker(location, true));
+          locationResultsNode.appendChild(option);
+        });
+        const attribution = document.createElement('div');
+        attribution.className = 'az-lot-location-attribution';
+        attribution.textContent = 'Carian lokasi: © OpenStreetMap contributors';
+        locationResultsNode.appendChild(attribution);
+        locationResultsNode.hidden = false;
+        coordinateInput.setAttribute('aria-expanded', 'true');
+      }
+
+      async function searchLocationSuggestions(queryValue, chooseFirst = false) {
+        const query = String(queryValue || '').replace(/\s+/g, ' ').trim();
+        if (query.length < 3) {
+          hideLocationSuggestions(true);
+          setCoordinateFeedback('Taip sekurang-kurangnya 3 huruf untuk mencari nama tempat.', 'info');
+          return;
+        }
+        if (locationSearchController) locationSearchController.abort();
+        locationSearchController = new AbortController();
+        const serial = ++locationSearchSerial;
+        setCoordinateFeedback('Mencari lokasi di Malaysia dan negeri yang dipilih...', 'loading');
+        try {
+          const response = await fetch(`${BACKEND_BASE}/api/map-location-suggestions?q=${encodeURIComponent(query)}&negeri=${encodeURIComponent(activeStateCode)}`, {
+            cache: 'no-store',
+            signal: locationSearchController.signal
+          });
+          const data = await response.json().catch(() => ({}));
+          if (serial !== locationSearchSerial) return;
+          if (!response.ok || !data.ok) throw new Error(data.error || 'Carian lokasi tidak tersedia.');
+          renderLocationSuggestions(data.results || []);
+          if (!locationSuggestions.length) {
+            setCoordinateFeedback(`Tiada lokasi ditemui untuk “${query}”.`, 'error');
+            return;
+          }
+          setCoordinateFeedback('Pilih lokasi daripada cadangan atau gunakan ↑ ↓ dan Enter.', 'info');
+          if (chooseFirst) placeLocationMarker(locationSuggestions[0], true);
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+          if (serial !== locationSearchSerial) return;
+          hideLocationSuggestions(true);
+          setCoordinateFeedback(error.message || 'Carian lokasi tidak tersedia.', 'error');
+        }
+      }
+
+      function findCoordinateOrLocation() {
+        const raw = String(coordinateInput.value || '').trim();
+        const coordinate = parseWgs84Coordinates(raw);
+        if (coordinate) {
+          placeLocationMarker({
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            label: `${coordinate.latitude.toFixed(6)}, ${coordinate.longitude.toFixed(6)}`
+          }, false);
+          coordinateInput.value = raw;
+          setCoordinateFeedback('Koordinat WGS84 ditemui dan penanda telah diletakkan.', 'success');
+          return;
+        }
+        if (activeLocationIndex >= 0 && locationSuggestions[activeLocationIndex]) {
+          placeLocationMarker(locationSuggestions[activeLocationIndex], true);
+          return;
+        }
+        if (locationSuggestions.length) {
+          placeLocationMarker(locationSuggestions[0], true);
+          return;
+        }
+        searchLocationSuggestions(raw, true);
+      }
+
+      function scheduleLocationSuggestions() {
+        const raw = String(coordinateInput.value || '').trim();
+        if (locationSearchTimer) window.clearTimeout(locationSearchTimer);
+        if (locationSearchController) locationSearchController.abort();
+        hideLocationSuggestions(true);
+        if (!raw) {
+          hideLocationSuggestions(true);
+          setCoordinateFeedback('');
+          return;
+        }
+        if (parseWgs84Coordinates(raw)) {
+          hideLocationSuggestions(true);
+          setCoordinateFeedback('Koordinat sah. Tekan Enter atau Cari untuk meletakkan penanda.', 'info');
+          return;
+        }
+        if (raw.length < 3) {
+          hideLocationSuggestions(true);
+          setCoordinateFeedback('Taip sekurang-kurangnya 3 huruf untuk cadangan lokasi.', 'info');
+          return;
+        }
+        locationSearchTimer = window.setTimeout(() => searchLocationSuggestions(raw, false), 450);
       }
 
       function cleanup() {
         if (estimateController) estimateController.abort();
         if (operationController) operationController.abort();
+        if (locationSearchTimer) window.clearTimeout(locationSearchTimer);
+        if (locationSearchController) locationSearchController.abort();
+        locationSearchSerial += 1;
         try { if (map) map.remove(); } catch (_) {}
         modal.remove();
         document.body.style.overflow = '';
@@ -384,10 +564,42 @@
       modal.querySelector('.az-lot-map-close').addEventListener('click', close);
       coordinateForm.addEventListener('submit', (event) => {
         event.preventDefault();
-        findCoordinate();
+        findCoordinateOrLocation();
       });
-      coordinateInput.addEventListener('input', () => {
-        if (coordinateFeedback.textContent) setCoordinateFeedback('');
+      coordinateInput.addEventListener('input', scheduleLocationSuggestions);
+      coordinateInput.addEventListener('focus', () => {
+        if (locationSuggestions.length) {
+          locationResultsNode.hidden = false;
+          coordinateInput.setAttribute('aria-expanded', 'true');
+        }
+      });
+      coordinateInput.addEventListener('blur', () => {
+        window.setTimeout(() => hideLocationSuggestions(false), 140);
+      });
+      coordinateInput.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowDown' && locationSuggestions.length) {
+          event.preventDefault();
+          setActiveLocationIndex(activeLocationIndex + 1);
+          return;
+        }
+        if (event.key === 'ArrowUp' && locationSuggestions.length) {
+          event.preventDefault();
+          setActiveLocationIndex(activeLocationIndex < 0 ? locationSuggestions.length - 1 : activeLocationIndex - 1);
+          return;
+        }
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          hideLocationSuggestions(false);
+          setCoordinateFeedback('Cadangan lokasi ditutup. Tekan Cari untuk mencari semula.', 'info');
+          return;
+        }
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          findCoordinateOrLocation();
+        }
+      });
+      modal.addEventListener('pointerdown', (event) => {
+        if (!event.target.closest('.az-lot-coordinate-search')) hideLocationSuggestions(false);
       });
       resetButton.addEventListener('click', () => {
         drawnItems.clearLayers();
