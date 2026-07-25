@@ -524,6 +524,35 @@ async function addConfiguredProduct(button) {
   }
 }
 
+window.azobssAddPreparedLotSelectionToCart = async function (prepared, fallbackStateName = '') {
+  if (!prepared || !prepared.jobId || !prepared.selectionToken) {
+    throw new Error('Pilihan Lot Kadaster tidak lengkap dan tidak dapat dimasukkan ke troli.');
+  }
+  const item = await addToStoreCart({
+    productType: prepared.productType,
+    itemCode: prepared.jobId,
+    negeri: prepared.negeri || fallbackStateName,
+    variant: prepared.variant,
+    amount: prepared.amount,
+    productId: prepared.jobId,
+    downloadUrl: prepared.downloadUrl,
+    filename: prepared.filename,
+    selectionToken: prepared.selectionToken
+  });
+  const confirmationMessage = item.__azobssAlreadyInCart
+    ? 'Pilihan Lot Kadaster ini sudah ada dalam troli anda.'
+    : `Berjaya: ${Number(prepared.lotCount || 0).toLocaleString('ms-MY')} lot telah dimasukkan ke Troli AZOBSS pada harga RM${prepared.amount}.`;
+  setCartSyncStatus(confirmationMessage);
+  if (typeof window.azShowToast === 'function') window.azShowToast(confirmationMessage);
+  const cartPanel = document.getElementById('pabmStoreCartPanel');
+  if (cartPanel) {
+    cartPanel.classList.remove('is-cart-updated');
+    window.requestAnimationFrame(() => cartPanel.classList.add('is-cart-updated'));
+    window.setTimeout(() => cartPanel.classList.remove('is-cart-updated'), 1800);
+  }
+  return { item, message: confirmationMessage };
+};
+
 async function openJupemLotMap(button) {
   const panel = button.closest('[data-pa-bm-panel]');
   const error = panel?.querySelector('[data-lot-error]');
