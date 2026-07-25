@@ -397,14 +397,21 @@
           });
           const focused = await response.json().catch(() => ({}));
           if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot atau PA tidak dapat dipaparkan.');
-          const rings = focused.geometry && Array.isArray(focused.geometry.rings) ? focused.geometry.rings : [];
-          const leafletRings = rings.map((ring) => (Array.isArray(ring) ? ring.map((point) => {
+          const focusedLotCount = Math.max(1, Number(focused.lotCount || 1));
+          const convertRing = (ring) => (Array.isArray(ring) ? ring.map((point) => {
             const latitude = Number(point && point[1]);
             const longitude = Number(point && point[0]);
             return Number.isFinite(latitude) && Number.isFinite(longitude) ? [latitude, longitude] : null;
-          }).filter(Boolean) : [])).filter((ring) => ring.length >= 3);
-          if (!leafletRings.length) throw new Error('Geometri lot JUPEM tidak tersedia.');
-          cadastreFocusLayer = window.L.polygon(leafletRings, {
+          }).filter(Boolean) : []).filter(Boolean);
+          const sourcePolygons = focused.geometry && Array.isArray(focused.geometry.polygons) ? focused.geometry.polygons : [];
+          const leafletPolygons = sourcePolygons.map((polygon) => (Array.isArray(polygon)
+            ? polygon.map(convertRing).filter((ring) => ring.length >= 3)
+            : [])).filter((polygon) => polygon.length);
+          const rings = focused.geometry && Array.isArray(focused.geometry.rings) ? focused.geometry.rings : [];
+          const leafletRings = rings.map(convertRing).filter((ring) => ring.length >= 3);
+          const focusShape = leafletPolygons.length ? leafletPolygons : leafletRings;
+          if (!focusShape.length) throw new Error('Geometri lot JUPEM tidak tersedia.');
+          cadastreFocusLayer = window.L.polygon(focusShape, {
             color: '#ef4444',
             weight: 4,
             opacity: 1,
@@ -416,7 +423,9 @@
           const focusedPa = String(focused.paNo || paNo || '').trim();
           const focusedStateCode = String(focused.stateCode || suggestionStateCode || activeStateCode).padStart(2, '0');
           const focusedStateName = String(focused.negeri || suggestionStateName || activeStateName).trim();
-          const tooltip = [focusedLot ? `Lot ${focusedLot}` : '', focusedPa].filter(Boolean).join(' · ');
+          const tooltip = focusedLot
+            ? [`Lot ${focusedLot}`, focusedPa].filter(Boolean).join(' · ')
+            : [focusedPa, focusedLotCount > 1 ? `${focusedLotCount} lot` : ''].filter(Boolean).join(' · ');
           cadastreFocusLayer.bindTooltip(tooltip || 'Lot JUPEM', {
             permanent: true,
             direction: 'center',
@@ -432,10 +441,16 @@
             : cadastreFocusLayer.getBounds();
           try { map.stop(); } catch (_) {}
           map.fitBounds(focusBounds, { padding: [70, 70], maxZoom: 19, animate: false });
-          if (keepLabel) coordinateInput.value = [focusedPa, focusedLot ? `Lot ${focusedLot}` : '', focusedStateName].filter(Boolean).join(' · ');
+          if (keepLabel) coordinateInput.value = [
+            focusedPa,
+            focusedLot ? `Lot ${focusedLot}` : '',
+            !focusedLot && focusedLotCount > 1 ? `${focusedLotCount} lot` : '',
+            focusedStateName
+          ].filter(Boolean).join(' · ');
           hideLocationSuggestions(true);
-          setCoordinateFeedback(`${focusedPa || `Lot ${focusedLot}`} ditemui di ${focusedStateName || 'negeri berkenaan'}${focusedLot && focusedPa ? ` · Lot ${focusedLot}` : ''}.`, 'success');
-          setStatus(status, `${focusedLot ? `Lot ${focusedLot}` : focusedPa} dipaparkan tepat pada peta. Carian lokasi, lot/PA dan alat polygon atau segi empat masih boleh digunakan.`, 'success');
+          const paLotNotice = !focusedLot && focusedLotCount > 1 ? ` · ${focusedLotCount} lot dalam PA dipaparkan` : (focusedLot && focusedPa ? ` · Lot ${focusedLot}` : '');
+          setCoordinateFeedback(`${focusedPa || `Lot ${focusedLot}`} ditemui di ${focusedStateName || 'negeri berkenaan'}${paLotNotice}.`, 'success');
+          setStatus(status, `${focusedLot ? `Lot ${focusedLot}` : focusedPa} dipaparkan tepat pada peta${!focusedLot && focusedLotCount > 1 ? ` bersama ${focusedLotCount} lot berkaitan` : ''}. Carian lokasi, lot/PA dan alat polygon atau segi empat masih boleh digunakan.`, 'success');
           refreshJupemOverlay(120, true);
         } catch (error) {
           if (error && error.name === 'AbortError') return;

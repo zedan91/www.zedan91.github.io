@@ -5873,6 +5873,101 @@ async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
   return value;
 }
 
+
+// 578: PA-prefix search uses JUPEM's Pelan Akui search form instead of sending
+// "PAxxxx" to the Lot Kadaster form (which only searches lot numbers).
+const azobssPaMapSearchCache = new Map();
+
+function parseJupemPaRows(html, stateCode) {
+  const tableMatch = String(html || "").match(/<table[^>]+id=["']example["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (!tableMatch) return [];
+  const rows = [];
+  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
+  while ((rowMatch = rowPattern.exec(tableMatch[1]))) {
+    const rowHtml = rowMatch[1];
+    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((match) => stripHtml(match[1]));
+    if (cells.length < 6 || /^no\.?\s*pa$/i.test(cells[1] || "")) continue;
+    const paNo = String(cells[1] || "").trim().toUpperCase();
+    if (!/^PA[0-9A-Z/_-]+$/i.test(paNo)) continue;
+    const viewPaUrl = extractJupemAttributeUrl(
+      rowHtml,
+      /createModal\(\s*["']([^"']*\/Produk\/PelanAkuiDetail\/[^"']+)["']/i
+    );
+    rows.push({
+      lotNo: "",
+      paNo,
+      negeri: String(cells[2] || AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "").replace(/^Negeri\s+/i, "").trim(),
+      daerah: String(cells[3] || "").replace(/^Daerah\s+/i, "").trim(),
+      mukim: String(cells[4] || "").trim(),
+      seksyen: String(cells[5] || "").trim(),
+      objectId: "",
+      productCode: "1",
+      stateCode,
+      viewPaUrl,
+      mapUrl: "",
+      selectionUrl: ""
+    });
+  }
+  return rows.slice(0, 100);
+}
+
+async function searchJupemPaCadastre(stateCode, paNo) {
+  const cleanStateCode = cleanLotStateCode(stateCode);
+  const cleanPaDigits = cleanLotNumber(paNo).replace(/^PA/i, "");
+  if (!cleanStateCode || !cleanPaDigits) return { sourceUrl: "", results: [] };
+  const cacheKey = `${cleanStateCode}|${cleanPaDigits}`;
+  const cached = azobssPaMapSearchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const sourceUrl = "https://ebiz.jupem.gov.my/Produk/PelanAkui";
+  let cookie = "";
+  try {
+    const pageResponse = await fetch(sourceUrl, azJupemFetchOptions({
+      redirect: "follow",
+      signal: AbortSignal.timeout(20000),
+      headers: azobssJupemBaseHeaders({
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Referer": sourceUrl
+      })
+    }));
+    if (pageResponse.ok) {
+      cookie = azobssExtractCookieHeader(pageResponse.headers);
+      try { await pageResponse.arrayBuffer(); } catch (_) {}
+    }
+  } catch (_) {}
+
+  const body = new URLSearchParams({
+    negeri: String(Number(cleanStateCode)),
+    noPa: cleanPaDigits,
+    cetak: "0"
+  });
+  const headers = azobssJupemBaseHeaders({
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Referer": sourceUrl,
+    "Origin": "https://ebiz.jupem.gov.my"
+  });
+  if (cookie) headers.Cookie = cookie;
+  const response = await fetch(sourceUrl, azJupemFetchOptions({
+    method: "POST",
+    redirect: "follow",
+    signal: AbortSignal.timeout(25000),
+    headers,
+    body: body.toString()
+  }));
+  if (!response.ok) throw new Error(`JUPEM PA search returned HTTP ${response.status}.`);
+  const html = await response.text();
+  const wanted = azobssFocusedLotComparable(cleanPaDigits);
+  const results = parseJupemPaRows(html, cleanStateCode)
+    .filter((row) => azobssFocusedLotComparable(String(row && row.paNo || "").replace(/^PA/i, "")).startsWith(wanted))
+    .slice(0, 24);
+  const value = { sourceUrl, results };
+  if (azobssPaMapSearchCache.size > 180) azobssPaMapSearchCache.clear();
+  azobssPaMapSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return value;
+}
+
 function azobssJupemBaseHeaders(extraHeaders = {}) {
   return Object.assign({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
@@ -6303,6 +6398,74 @@ async function azobssQueryFocusedLotByNumber(config, lotNo, auth, context = {}) 
   return null;
 }
 
+
+function azobssFocusedPaComparable(value) {
+  return azobssFocusedLotComparable(value).replace(/^PA/, "");
+}
+
+async function azobssQueryFocusedLotsByPa(config, paNo, auth, context = {}) {
+  const cleanPa = cleanLotNumber(paNo);
+  const wanted = azobssFocusedPaComparable(cleanPa);
+  if (!wanted) return [];
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  const metadata = await azobssJupemArcGisJson(layerUrl, {}, auth, 30000);
+  const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
+  const candidates = fields.filter((field) => {
+    const token = azobssNormalizeFieldToken(`${field && field.name || ""} ${field && field.alias || ""}`);
+    return /NOPA|PANO|PELANAKUI|PELANAKUINO|NOPELANAKUI/.test(token);
+  }).slice(0, 10);
+  const values = [...new Set([`PA${wanted}`, wanted])];
+  for (const field of candidates) {
+    const fieldName = String(field && field.name || "").trim();
+    if (!fieldName) continue;
+    const numeric = /Integer|Double|Single|SmallInteger/i.test(String(field.type || ""));
+    for (const value of values) {
+      if (numeric && !/^\d+(?:\.\d+)?$/.test(value)) continue;
+      const escaped = value.replace(/'/g, "''");
+      const where = numeric ? `${fieldName} = ${value}` : `${fieldName} = '${escaped}'`;
+      try {
+        const result = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+          where,
+          outFields: "*",
+          returnGeometry: "true",
+          outSR: "4326",
+          resultRecordCount: "500"
+        }, auth, 40000);
+        const features = (Array.isArray(result.features) ? result.features : []).filter((feature) => {
+          const actual = azobssFindFocusedLotAttribute(feature && feature.attributes, [
+            "NO_PA", "NOPA", "PA_NO", "PANO", "PELAN_AKUI"
+          ]);
+          return !actual || azobssFocusedPaComparable(actual) === wanted;
+        });
+        if (features.length) {
+          return features
+            .map((feature, index) => ({ feature, index, score: azobssFocusedLotFeatureScore(feature, { ...context, paNo: `PA${wanted}` }) }))
+            .sort((left, right) => right.score - left.score || left.index - right.index)
+            .map((row) => row.feature);
+        }
+      } catch (_) {}
+    }
+  }
+  return [];
+}
+
+function azobssMergeFocusedLotFeatures(features) {
+  const rows = Array.isArray(features) ? features.filter((feature) => feature && feature.geometry && Array.isArray(feature.geometry.rings)) : [];
+  if (!rows.length) return null;
+  const rings = rows.flatMap((feature) => feature.geometry.rings.filter((ring) => Array.isArray(ring) && ring.length >= 3));
+  if (!rings.length) return null;
+  return {
+    attributes: rows[0].attributes || {},
+    geometry: {
+      rings,
+      polygons: rows.map((feature) => feature.geometry.rings),
+      spatialReference: { wkid: 4326 }
+    },
+    featureCount: rows.length,
+    sourceFeatures: rows
+  };
+}
+
 async function azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, context = {}) {
   const config = azobssGetLotMapConfig(productCode, stateCode);
   const auth = await azobssGetJupemMapAuth(false);
@@ -6331,20 +6494,30 @@ async function azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, 
     } catch (_) {}
   }
 
+  let paFeatures = [];
+  if (!feature && context && context.paNo) {
+    try {
+      paFeatures = await azobssQueryFocusedLotsByPa(config, context.paNo, auth, context);
+      feature = azobssMergeFocusedLotFeatures(paFeatures);
+    } catch (_) {}
+  }
+
   if (!feature || !feature.geometry || !Array.isArray(feature.geometry.rings)) {
-    throw new Error("Lot JUPEM yang dipilih tidak dapat dikenal pasti pada peta.");
+    throw new Error(context && context.paNo
+      ? "PA JUPEM yang dipilih tidak dapat dikenal pasti pada peta."
+      : "Lot JUPEM yang dipilih tidak dapat dikenal pasti pada peta.");
   }
 
   const attributes = feature.attributes || {};
   const objectIdFromAttributes = azobssFindFocusedLotAttribute(attributes, [
     "OBJECTID", "OBJECTID_1", "FID"
   ]);
-  const resolvedLotNo = azobssFindFocusedLotAttribute(attributes, [
+  const resolvedLotNo = paFeatures.length > 1 ? "" : (azobssFindFocusedLotAttribute(attributes, [
     "NO_LOT", "NOLOT", "LOT_NO", "LOTNO", "NOMBOR_LOT", "LOT"
-  ]) || cleanLotNumber(lotNo);
+  ]) || cleanLotNumber(lotNo));
   const paNo = azobssFindFocusedLotAttribute(attributes, [
     "NO_PA", "NOPA", "PA_NO", "PANO", "PELAN_AKUI"
-  ]);
+  ]) || String(context && context.paNo || "").trim().toUpperCase();
   const daerah = azobssFindFocusedLotAttribute(attributes, ["DAERAH", "DISTRICT"]);
   const mukim = azobssFindFocusedLotAttribute(attributes, ["MUKIM", "BANDAR", "PEKAN"]);
   const seksyen = azobssFindFocusedLotAttribute(attributes, ["SEKSYEN", "SECTION"]);
@@ -6360,10 +6533,12 @@ async function azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, 
     seksyen,
     geometry: {
       rings: feature.geometry.rings,
+      ...(Array.isArray(feature.geometry.polygons) ? { polygons: feature.geometry.polygons } : {}),
       spatialReference: { wkid: 4326 }
     },
     bounds: spatial.bounds,
-    center: spatial.center
+    center: spatial.center,
+    lotCount: paFeatures.length || 1
   };
 }
 
@@ -6620,10 +6795,10 @@ function azobssCadastreSuggestionRows(found, classification, productCode, stateC
       id: `jupem-${productCode}-${stateCode}-${row && row.objectId || lotNo}-${paNo}-${index}`,
       kind: classification.searchType,
       name: classification.searchType === "pa"
-        ? `${paNo || `PA${classification.searchValue.replace(/^PA/i, "")}`} · Lot ${lotNo || "-"}`
+        ? `${paNo || `PA${classification.searchValue.replace(/^PA/i, "")}`}${lotNo ? ` · Lot ${lotNo}` : ""}`
         : `Lot ${lotNo || classification.searchValue}${paNo ? ` · ${paNo}` : ""}`,
       label: classification.searchType === "pa"
-        ? `${paNo || classification.searchValue} · Lot ${lotNo || "-"} · ${rowStateName}`
+        ? `${paNo || classification.searchValue}${lotNo ? ` · Lot ${lotNo}` : ""} · ${rowStateName}`
         : `Lot ${lotNo || classification.searchValue}${paNo ? ` · ${paNo}` : ""} · ${rowStateName}`,
       detail: context || `Negeri: ${rowStateName}`,
       productCode,
@@ -6654,7 +6829,9 @@ async function azobssSearchCadastreMapSuggestions(queryValue, stateValue, produc
 
   async function searchState(stateCode) {
     try {
-      const found = await searchJupemLotCadastre(productCode, stateCode, classification.searchValue);
+      const found = classification.searchType === "pa"
+        ? await searchJupemPaCadastre(stateCode, classification.searchValue)
+        : await searchJupemLotCadastre(productCode, stateCode, classification.searchValue);
       return azobssCadastreSuggestionRows(found, classification, productCode, stateCode);
     } catch (error) {
       console.warn("AZOBSS map lot/PA suggestion state failed:", stateCode, error && error.message || error);
@@ -10946,7 +11123,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 30,
+          jupemStoreVersion: 31,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -11213,8 +11390,8 @@ async function handler(req, res) {
           mukim: String(parsed.query.mukim || parsed.query.bandar || "").trim().slice(0, 120),
           seksyen: String(parsed.query.seksyen || parsed.query.section || "").trim().slice(0, 80)
         };
-        if (!stateCode) throw new Error("Negeri bagi lot ini tidak dapat dikenal pasti.");
-        if (!objectId && !lotNo) throw new Error("ID atau nombor lot tidak tersedia.");
+        if (!stateCode) throw new Error("Negeri bagi lot atau PA ini tidak dapat dikenal pasti.");
+        if (!objectId && !lotNo && !focusContext.paNo) throw new Error("ID, nombor lot atau nombor PA tidak tersedia.");
 
         const focused = await azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, focusContext);
         return send(res, 200, JSON.stringify({
@@ -11231,7 +11408,8 @@ async function handler(req, res) {
           seksyen: focused.seksyen,
           geometry: focused.geometry,
           bounds: focused.bounds,
-          center: focused.center
+          center: focused.center,
+          lotCount: focused.lotCount || 1
         }), "application/json");
       } catch (error) {
         const message = error && error.message || "Lot JUPEM tidak dapat dipaparkan.";
