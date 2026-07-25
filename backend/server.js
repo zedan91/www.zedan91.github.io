@@ -219,27 +219,33 @@ function azobssNormalizeUserPriceAdjustment(value) {
 }
 function azobssPriceAdjustmentCategory(value = "software") {
   const key = String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (["pabm","jupem","lot","lotkadaster","ndcdb"].includes(key)) return "paBm";
+  if (["lot","lotkadaster","lotkadasterberdigit","ndcdb","ndcdbc3"].includes(key)) return "lotKadaster";
+  if (["pabm","jupem"].includes(key)) return "paBm";
   if (["publicpa","paawam","pelanakui","pelanakuiawam"].includes(key)) return "publicPa";
   if (["cad","cadtools","cadtool"].includes(key)) return "cadTools";
   return "software";
 }
 function azobssIdentityPriceAdjustments(identity = {}) {
-  const keys = ["paBm","publicPa","software","cadTools"];
-  const out = { paBm:0, publicPa:0, software:0, cadTools:0 };
+  const keys = ["paBm","lotKadaster","publicPa","software","cadTools"];
+  const out = { paBm:0, lotKadaster:0, publicPa:0, software:0, cadTools:0 };
   const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
   const managedMap = identity.adminPriceAdjustmentByCategory && typeof identity.adminPriceAdjustmentByCategory === "object" ? identity.adminPriceAdjustmentByCategory : null;
   const publicMap = identity.priceAdjustmentByCategory && typeof identity.priceAdjustmentByCategory === "object" ? identity.priceAdjustmentByCategory : null;
   const map = managed ? (managedMap || publicMap) : (publicMap || managedMap);
   const direct = {
     paBm: managed ? (identity.adminPaBmPriceAdjustmentPercent ?? identity.paBmPriceAdjustmentPercent) : (identity.paBmPriceAdjustmentPercent ?? identity.adminPaBmPriceAdjustmentPercent),
+    lotKadaster: managed ? (identity.adminLotKadasterPriceAdjustmentPercent ?? identity.lotKadasterPriceAdjustmentPercent) : (identity.lotKadasterPriceAdjustmentPercent ?? identity.adminLotKadasterPriceAdjustmentPercent),
     publicPa: managed ? (identity.adminPublicPaPriceAdjustmentPercent ?? identity.publicPaPriceAdjustmentPercent) : (identity.publicPaPriceAdjustmentPercent ?? identity.adminPublicPaPriceAdjustmentPercent),
     software: managed ? (identity.adminSoftwarePriceAdjustmentPercent ?? identity.softwarePriceAdjustmentPercent) : (identity.softwarePriceAdjustmentPercent ?? identity.adminSoftwarePriceAdjustmentPercent),
     cadTools: managed ? (identity.adminCadToolsPriceAdjustmentPercent ?? identity.cadToolsPriceAdjustmentPercent) : (identity.cadToolsPriceAdjustmentPercent ?? identity.adminCadToolsPriceAdjustmentPercent)
   };
   const hasSpecific = !!map || Object.values(direct).some(value => value !== undefined && value !== null && value !== "");
   if (hasSpecific) {
-    for (const key of keys) out[key] = azobssNormalizeUserPriceAdjustment(map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : (direct[key] ?? 0));
+    for (const key of keys) {
+      let raw = map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : direct[key];
+      if (key === "lotKadaster" && (raw === undefined || raw === null || raw === "")) raw = map && Object.prototype.hasOwnProperty.call(map, "paBm") ? map.paBm : direct.paBm;
+      out[key] = azobssNormalizeUserPriceAdjustment(raw ?? 0);
+    }
     return out;
   }
   const legacy = azobssNormalizeUserPriceAdjustment(managed ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0) : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0));
@@ -320,7 +326,10 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
 
   const seen = new Set();
   const items = [];
-  const priceAdjustmentPercent = azobssIdentityPriceAdjustment(identity, "paBm");
+  const priceAdjustmentByCategory = {
+    paBm: azobssIdentityPriceAdjustment(identity, "paBm"),
+    lotKadaster: azobssIdentityPriceAdjustment(identity, "lotKadaster")
+  };
   for (const rawItem of rawItems) {
     const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
     if (!AZOBSS_JUPEM_PRODUCT_TYPES.has(productType)) azobssCheckoutError("Unsupported JUPEM document category.");
@@ -341,7 +350,9 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
     if (seen.has(uniqueKey)) continue;
     seen.add(uniqueKey);
     const baseAmount = azobssJupemItemAmount(productType, variant);
-    const amount = azobssApplyUserPriceAdjustment(baseAmount, identity, "paBm");
+    const priceAdjustmentCategory = AZOBSS_JUPEM_AREA_TYPES.has(productType) ? "lotKadaster" : "paBm";
+    const priceAdjustmentPercent = priceAdjustmentByCategory[priceAdjustmentCategory] || 0;
+    const amount = azobssApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory);
     items.push({
       productType,
       itemCode,
@@ -349,6 +360,7 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
       variant,
       baseAmount,
       amount,
+      priceAdjustmentCategory,
       priceAdjustmentPercent,
       productId: cleanPremiumText(rawItem.productId || "", 120),
       stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
@@ -361,7 +373,9 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
   if (!items.length) azobssCheckoutError("No valid JUPEM documents were found in the cart.");
   const baseTotalAmount = Math.round((items.reduce((sum, item) => sum + Number(item.baseAmount || 0), 0) + Number.EPSILON) * 100) / 100;
   const totalAmount = Math.round((items.reduce((sum, item) => sum + Number(item.amount || 0), 0) + Number.EPSILON) * 100) / 100;
-  return { user, items, baseTotalAmount, totalAmount, amountSen: Math.round(totalAmount * 100), priceAdjustmentPercent };
+  const usedPercents = [...new Set(items.map(item => Number(item.priceAdjustmentPercent || 0)))];
+  const priceAdjustmentPercent = usedPercents.length === 1 ? usedPercents[0] : 0;
+  return { user, items, baseTotalAmount, totalAmount, amountSen: Math.round(totalAmount * 100), priceAdjustmentPercent, priceAdjustmentByCategory };
 }
 
 async function azobssPersistJupemOrder(order = {}) {
@@ -1363,6 +1377,8 @@ async function getFirebaseAdminIdentity(req) {
           identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
           identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
           identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
+          identity.adminLotKadasterPriceAdjustmentPercent = x.adminLotKadasterPriceAdjustmentPercent;
+          identity.lotKadasterPriceAdjustmentPercent = x.lotKadasterPriceAdjustmentPercent;
           identity.adminPublicPaPriceAdjustmentPercent = x.adminPublicPaPriceAdjustmentPercent;
           identity.publicPaPriceAdjustmentPercent = x.publicPaPriceAdjustmentPercent;
           identity.adminSoftwarePriceAdjustmentPercent = x.adminSoftwarePriceAdjustmentPercent;
@@ -1573,8 +1589,9 @@ app.post("/api/admin/payment-logs/delete", requireAdmin, async (req, res) => {
 app.get("/api/pa-bm-checkout-capabilities", (req, res) => {
   res.json({
     ok: true,
-    version: 3,
+    version: 4,
     runningFile: "backend/server.js",
+    perUserPriceCategories: ["paBm","lotKadaster","publicPa","software","cadTools"],
     productTypes: Array.from(AZOBSS_JUPEM_PRODUCT_TYPES),
     prices: { PA: 5, BM: 3, SBM: 3, GPS: 9, NDCDB_FULL_SHEET: 50, NDCDB_QUARTER_SHEET: 15, NDCDB_C3_FULL_SHEET: 50, NDCDB_C3_QUARTER_SHEET: 15, SYIT_PIAWAI: 7 },
     adminTestPayment: true,
@@ -1791,9 +1808,9 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const billCode = Array.isArray(apiResult) ? (apiResult[0]?.BillCode || apiResult[0]?.billCode) : apiResult?.BillCode;
     if (!billCode) return res.status(502).json({ ok:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult });
     const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName:`JUPEM Document Purchase (${items.length} unit)`, amount:azobssMoneyText(totalAmount), amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), saleAmount:totalAmount, saleAmountText:azobssMoneyText(totalAmount), priceAdjustmentPercent:checkout.priceAdjustmentPercent, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
+    const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName:`JUPEM Document Purchase (${items.length} unit)`, amount:azobssMoneyText(totalAmount), amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), saleAmount:totalAmount, saleAmountText:azobssMoneyText(totalAmount), priceAdjustmentPercent:checkout.priceAdjustmentPercent, priceAdjustmentByCategory:checkout.priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
     await azobssSyncJupemPurchaseLogs(order, "pending");
-    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), priceAdjustmentPercent:checkout.priceAdjustmentPercent, unit:items.length });
+    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), priceAdjustmentPercent:checkout.priceAdjustmentPercent, priceAdjustmentByCategory:checkout.priceAdjustmentByCategory, unit:items.length });
   } catch (err) {
     const statusCode = Math.max(400, Math.min(500, Number(err?.statusCode || 500)));
     res.status(statusCode).json({ ok:false, error: err.message || "Failed to create JUPEM ToyyibPay bill" });

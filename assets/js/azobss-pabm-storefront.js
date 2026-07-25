@@ -1,6 +1,6 @@
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=592';
+import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=593';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
@@ -8,7 +8,7 @@ const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
     ? window.location.origin
     : 'https://azobss-backend.onrender.com'
 );
-const CHECKOUT_API_VERSION = 2;
+const CHECKOUT_API_VERSION = 7;
 const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const MAX_CART_ITEMS = 50;
 const PRODUCT_TYPES = new Set(['PA', 'BM', 'SBM', 'GPS', 'NDCDB', 'NDCDB_C3', 'SYIT_PIAWAI']);
@@ -63,7 +63,18 @@ const JUPEM_STATE_CODES = {
 };
 
 let auth = null;
-let priceAdjustmentPercent = Number(getCachedPriceAdjustment('paBm').percent || 0);
+let priceAdjustmentPercents = {
+  paBm: Number(getCachedPriceAdjustment('paBm').percent || 0),
+  lotKadaster: Number(getCachedPriceAdjustment('lotKadaster').percent || 0)
+};
+
+function priceCategoryForType(type) {
+  const normalized = String(type || '').trim().toUpperCase();
+  return normalized === 'NDCDB' || normalized === 'NDCDB_C3' ? 'lotKadaster' : 'paBm';
+}
+function pricePercentForType(type) {
+  return Number(priceAdjustmentPercents[priceCategoryForType(type)] || 0);
+}
 
 async function getPaBmAuthToken(forceRefresh = false) {
   if (!auth) return '';
@@ -187,7 +198,7 @@ function baseProductPrice(type, variant = '', suppliedAmount = 0) {
   throw new Error('Unsupported document category.');
 }
 function productPrice(type, variant = '', suppliedAmount = 0) {
-  return applyPriceAdjustment(baseProductPrice(type, variant, suppliedAmount), priceAdjustmentPercent);
+  return applyPriceAdjustment(baseProductPrice(type, variant, suppliedAmount), pricePercentForType(type));
 }
 
 function normalizeItem(payload) {
@@ -204,7 +215,8 @@ function normalizeItem(payload) {
     variant,
     baseAmount: baseProductPrice(type, variant, payload && (payload.baseAmount ?? payload.amount)),
     amount: productPrice(type, variant, payload && (payload.baseAmount ?? payload.amount)),
-    priceAdjustmentPercent,
+    priceAdjustmentCategory: priceCategoryForType(type),
+    priceAdjustmentPercent: pricePercentForType(type),
     productId: String(payload && (payload.productId || payload.id) || '').trim(),
     stationNo: String(payload && (payload.stationNo || payload.stesen) || '').trim().toUpperCase(),
     jenis: String(payload && payload.jenis || (type === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
@@ -228,10 +240,12 @@ function readCart() {
         if (!PRODUCT_TYPES.has(type)) return item;
         const suppliedBase = Number(item.baseAmount || 0) > 0 ? Number(item.baseAmount) : Number(item.amount || 0);
         const baseAmount = baseProductPrice(type, item.variant, suppliedBase);
+        const priceAdjustmentCategory = priceCategoryForType(type);
+        const priceAdjustmentPercent = pricePercentForType(type);
         const adjustedAmount = applyPriceAdjustment(baseAmount, priceAdjustmentPercent);
-        if (Number(item.baseAmount) === baseAmount && Number(item.amount) === adjustedAmount && Number(item.priceAdjustmentPercent || 0) === priceAdjustmentPercent) return item;
+        if (Number(item.baseAmount) === baseAmount && Number(item.amount) === adjustedAmount && Number(item.priceAdjustmentPercent || 0) === priceAdjustmentPercent && String(item.priceAdjustmentCategory || '') === priceAdjustmentCategory) return item;
         migrated = true;
-        return { ...item, baseAmount, amount: adjustedAmount, priceAdjustmentPercent };
+        return { ...item, baseAmount, amount: adjustedAmount, priceAdjustmentCategory, priceAdjustmentPercent };
       })
       .sort((a, b) => Number(b.addedAtMs || 0) - Number(a.addedAtMs || 0))
       .slice(0, MAX_CART_ITEMS);
@@ -576,7 +590,7 @@ window.azobssAddPreparedLotSelectionToCart = async function (prepared, fallbackS
   });
   const confirmationMessage = item.__azobssAlreadyInCart
     ? 'Pilihan Lot Kadaster ini sudah ada dalam troli anda.'
-    : `Berjaya: ${Number(prepared.lotCount || 0).toLocaleString('ms-MY')} lot telah dimasukkan ke Troli AZOBSS pada harga RM${prepared.amount}.`;
+    : `Berjaya: ${Number(prepared.lotCount || 0).toLocaleString('ms-MY')} lot telah dimasukkan ke Troli AZOBSS pada harga ${formatMoney(item.amount)}.`;
   setCartSyncStatus(confirmationMessage);
   if (typeof window.azShowToast === 'function') window.azShowToast(confirmationMessage);
   const cartPanel = document.getElementById('pabmStoreCartPanel');
@@ -660,7 +674,8 @@ function checkoutPayload(items) {
       negeri: item.negeri,
       baseAmount: item.baseAmount,
       amount: item.amount,
-      priceAdjustmentPercent,
+      priceAdjustmentCategory: item.priceAdjustmentCategory || priceCategoryForType(item.productType),
+      priceAdjustmentPercent: Number(item.priceAdjustmentPercent ?? pricePercentForType(item.productType)),
       productId: item.productId,
       stationNo: item.stationNo,
       jenis: item.jenis,
@@ -837,8 +852,11 @@ function watchPaymentTotal() {
 }
 
 async function init() {
-  const adjustment = await waitForPriceAdjustment('paBm').catch(() => ({percent:0}));
-  priceAdjustmentPercent = Number(adjustment?.percent || 0);
+  const adjustment = await waitForPriceAdjustment().catch(() => ({percentByCategory:{}}));
+  priceAdjustmentPercents = {
+    paBm: Number(adjustment?.percentByCategory?.paBm || 0),
+    lotKadaster: Number(adjustment?.percentByCategory?.lotKadaster ?? adjustment?.percentByCategory?.paBm ?? 0)
+  };
   const apps = getApps();
   auth = apps.length ? getAuth(apps[0]) : null;
   document.body.classList.add('pabm-store-ready');
@@ -891,7 +909,7 @@ async function init() {
   });
   window.addEventListener('storage', renderCart);
   window.addEventListener('azobss:pabm-cart-updated', renderCart);
-  window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercent = Number(event.detail?.percentByCategory?.paBm || 0); const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
+  window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercents = { paBm:Number(event.detail?.percentByCategory?.paBm || 0), lotKadaster:Number(event.detail?.percentByCategory?.lotKadaster ?? event.detail?.percentByCategory?.paBm ?? 0) }; const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
   watchPaymentTotal();
   renderCart();
   if (auth) onAuthStateChanged(auth, (user) => {

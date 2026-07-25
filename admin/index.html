@@ -5244,6 +5244,7 @@ function azRegPaDotHtml(pa){
 }
 const AZ_REG_PRICE_CATEGORIES=[
   ['paBm','PA/BM'],
+  ['lotKadaster','Lot Kadaster'],
   ['publicPa','PA Awam'],
   ['software','Software'],
   ['cadTools','CAD Tools']
@@ -5259,13 +5260,18 @@ function azRegPricePercents(x){
   const map=managed?(managedMap||publicMap):(publicMap||managedMap);
   const direct={
     paBm:managed?(x?.adminPaBmPriceAdjustmentPercent??x?.paBmPriceAdjustmentPercent):(x?.paBmPriceAdjustmentPercent??x?.adminPaBmPriceAdjustmentPercent),
+    lotKadaster:managed?(x?.adminLotKadasterPriceAdjustmentPercent??x?.lotKadasterPriceAdjustmentPercent):(x?.lotKadasterPriceAdjustmentPercent??x?.adminLotKadasterPriceAdjustmentPercent),
     publicPa:managed?(x?.adminPublicPaPriceAdjustmentPercent??x?.publicPaPriceAdjustmentPercent):(x?.publicPaPriceAdjustmentPercent??x?.adminPublicPaPriceAdjustmentPercent),
     software:managed?(x?.adminSoftwarePriceAdjustmentPercent??x?.softwarePriceAdjustmentPercent):(x?.softwarePriceAdjustmentPercent??x?.adminSoftwarePriceAdjustmentPercent),
     cadTools:managed?(x?.adminCadToolsPriceAdjustmentPercent??x?.cadToolsPriceAdjustmentPercent):(x?.cadToolsPriceAdjustmentPercent??x?.adminCadToolsPriceAdjustmentPercent)
   };
   const hasSpecific=!!map||Object.values(direct).some(v=>v!==undefined&&v!==null&&v!=='');
   if(hasSpecific){
-    return Object.fromEntries(AZ_REG_PRICE_CATEGORIES.map(([key])=>[key,azRegNormalisePricePercent(map&&Object.prototype.hasOwnProperty.call(map,key)?map[key]:(direct[key]??0))]));
+    return Object.fromEntries(AZ_REG_PRICE_CATEGORIES.map(([key])=>{
+      let raw=map&&Object.prototype.hasOwnProperty.call(map,key)?map[key]:direct[key];
+      if(key==='lotKadaster'&&(raw===undefined||raw===null||raw==='')) raw=map&&Object.prototype.hasOwnProperty.call(map,'paBm')?map.paBm:direct.paBm;
+      return [key,azRegNormalisePricePercent(raw??0)];
+    }));
   }
   const legacy=azRegNormalisePricePercent(managed?(x?.adminPriceAdjustmentPercent??x?.priceAdjustmentPercent??0):(x?.priceAdjustmentPercent??x?.adminPriceAdjustmentPercent??0));
   return Object.fromEntries(AZ_REG_PRICE_CATEGORIES.map(([key])=>[key,legacy]));
@@ -5357,6 +5363,7 @@ function openRegisteredEdit(id){
   $('#azRegEditPa').value=azRegPaAllowed(x)?'true':'false';
   const pricePercents=azRegPricePercents(x);
   $('#azRegEditPricePaBm').value=String(pricePercents.paBm);
+  $('#azRegEditPriceLotKadaster').value=String(pricePercents.lotKadaster);
   $('#azRegEditPricePublicPa').value=String(pricePercents.publicPa);
   $('#azRegEditPriceSoftware').value=String(pricePercents.software);
   $('#azRegEditPriceCad').value=String(pricePercents.cadTools);
@@ -5368,6 +5375,7 @@ async function saveRegisteredEdit(){
   const pa=$('#azRegEditPa')?.value==='true';
   const priceInputs={
     paBm:Number($('#azRegEditPricePaBm')?.value||0),
+    lotKadaster:Number($('#azRegEditPriceLotKadaster')?.value||0),
     publicPa:Number($('#azRegEditPricePublicPa')?.value||0),
     software:Number($('#azRegEditPriceSoftware')?.value||0),
     cadTools:Number($('#azRegEditPriceCad')?.value||0)
@@ -5389,6 +5397,8 @@ async function saveRegisteredEdit(){
     priceAdjustmentByCategory:priceAdjustmentByCategory,
     adminPaBmPriceAdjustmentPercent:priceAdjustmentByCategory.paBm,
     paBmPriceAdjustmentPercent:priceAdjustmentByCategory.paBm,
+    adminLotKadasterPriceAdjustmentPercent:priceAdjustmentByCategory.lotKadaster,
+    lotKadasterPriceAdjustmentPercent:priceAdjustmentByCategory.lotKadaster,
     adminPublicPaPriceAdjustmentPercent:priceAdjustmentByCategory.publicPa,
     publicPaPriceAdjustmentPercent:priceAdjustmentByCategory.publicPa,
     adminSoftwarePriceAdjustmentPercent:priceAdjustmentByCategory.software,
@@ -6165,14 +6175,18 @@ onAuthStateChanged(auth, async user => {
     <div class="az-reg-price-section">
       <div class="az-reg-price-heading">Pelarasan Harga Mengikut Bahagian</div>
       <div class="row">
-        <div><label>PA/BM & Lot Kadaster (%)</label><input id="azRegEditPricePaBm" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
-        <div><label>Pelan Akui Awam (%)</label><input id="azRegEditPricePublicPa" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
+        <div><label>PA/BM & Dokumen JUPEM Lain (%)</label><input id="azRegEditPricePaBm" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
+        <div><label>Lot Kadaster Berdigit (%)</label><input id="azRegEditPriceLotKadaster" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
       </div>
       <div class="row">
+        <div><label>Pelan Akui Awam (%)</label><input id="azRegEditPricePublicPa" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
         <div><label>Software (%)</label><input id="azRegEditPriceSoftware" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
-        <div><label>CAD Tools (%)</label><input id="azRegEditPriceCad" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
       </div>
-      <div class="az-reg-help"><b>-20</b> memberi diskaun 20%, <b>15</b> menaikkan harga 15%, dan <b>0</b> mengekalkan harga asal. Tetapan setiap bahagian tidak mempengaruhi bahagian lain. Pelan langganan atau kod aktivasi mengikut kategori Software atau CAD Tools produknya.</div>
+      <div class="row">
+        <div><label>CAD Tools (%)</label><input id="azRegEditPriceCad" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
+        <div></div>
+      </div>
+      <div class="az-reg-help"><b>-20</b> memberi diskaun 20%, <b>15</b> menaikkan harga 15%, dan <b>0</b> mengekalkan harga asal. Lot Kadaster Berdigit dan C3 kini menggunakan tetapan tersendiri, berasingan daripada PA/BM dan dokumen JUPEM lain.</div>
     </div>
     <div class="actions">
       <button class="az-reg-cancel" id="azRegCancelBtn" type="button">Cancel</button>

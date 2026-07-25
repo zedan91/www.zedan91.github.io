@@ -1,6 +1,6 @@
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { applyPriceAdjustment, formatAdjustedMoney, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=592';
+import { applyPriceAdjustment, formatAdjustedMoney, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=593';
 
 const BACKEND = String(window.AZOBSS_BACKEND_URL || (/^(?:localhost|127\.0\.0\.1)$/.test(location.hostname) ? location.origin : 'https://azobss-backend.onrender.com')).replace(/\/+$/, '');
 const BASE_PRICE_SEN = 3000;

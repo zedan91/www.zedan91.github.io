@@ -837,6 +837,8 @@ async function azCommissionIdentityFromRequest(req) {
           identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
           identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
           identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
+          identity.adminLotKadasterPriceAdjustmentPercent = x.adminLotKadasterPriceAdjustmentPercent;
+          identity.lotKadasterPriceAdjustmentPercent = x.lotKadasterPriceAdjustmentPercent;
           identity.adminPublicPaPriceAdjustmentPercent = x.adminPublicPaPriceAdjustmentPercent;
           identity.publicPaPriceAdjustmentPercent = x.publicPaPriceAdjustmentPercent;
           identity.adminSoftwarePriceAdjustmentPercent = x.adminSoftwarePriceAdjustmentPercent;
@@ -3696,27 +3698,33 @@ function azNormalizeUserPriceAdjustment(value) {
 }
 function azPriceAdjustmentCategory(value = "software") {
   const key = String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (["pabm","jupem","lot","lotkadaster","ndcdb"].includes(key)) return "paBm";
+  if (["lot","lotkadaster","lotkadasterberdigit","ndcdb","ndcdbc3"].includes(key)) return "lotKadaster";
+  if (["pabm","jupem"].includes(key)) return "paBm";
   if (["publicpa","paawam","pelanakui","pelanakuiawam"].includes(key)) return "publicPa";
   if (["cad","cadtools","cadtool"].includes(key)) return "cadTools";
   return "software";
 }
 function azIdentityPriceAdjustments(identity = {}) {
-  const keys = ["paBm","publicPa","software","cadTools"];
-  const out = { paBm:0, publicPa:0, software:0, cadTools:0 };
+  const keys = ["paBm","lotKadaster","publicPa","software","cadTools"];
+  const out = { paBm:0, lotKadaster:0, publicPa:0, software:0, cadTools:0 };
   const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
   const managedMap = identity.adminPriceAdjustmentByCategory && typeof identity.adminPriceAdjustmentByCategory === "object" ? identity.adminPriceAdjustmentByCategory : null;
   const publicMap = identity.priceAdjustmentByCategory && typeof identity.priceAdjustmentByCategory === "object" ? identity.priceAdjustmentByCategory : null;
   const map = managed ? (managedMap || publicMap) : (publicMap || managedMap);
   const direct = {
     paBm: managed ? (identity.adminPaBmPriceAdjustmentPercent ?? identity.paBmPriceAdjustmentPercent) : (identity.paBmPriceAdjustmentPercent ?? identity.adminPaBmPriceAdjustmentPercent),
+    lotKadaster: managed ? (identity.adminLotKadasterPriceAdjustmentPercent ?? identity.lotKadasterPriceAdjustmentPercent) : (identity.lotKadasterPriceAdjustmentPercent ?? identity.adminLotKadasterPriceAdjustmentPercent),
     publicPa: managed ? (identity.adminPublicPaPriceAdjustmentPercent ?? identity.publicPaPriceAdjustmentPercent) : (identity.publicPaPriceAdjustmentPercent ?? identity.adminPublicPaPriceAdjustmentPercent),
     software: managed ? (identity.adminSoftwarePriceAdjustmentPercent ?? identity.softwarePriceAdjustmentPercent) : (identity.softwarePriceAdjustmentPercent ?? identity.adminSoftwarePriceAdjustmentPercent),
     cadTools: managed ? (identity.adminCadToolsPriceAdjustmentPercent ?? identity.cadToolsPriceAdjustmentPercent) : (identity.cadToolsPriceAdjustmentPercent ?? identity.adminCadToolsPriceAdjustmentPercent)
   };
   const hasSpecific = !!map || Object.values(direct).some(value => value !== undefined && value !== null && value !== "");
   if (hasSpecific) {
-    for (const key of keys) out[key] = azNormalizeUserPriceAdjustment(map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : (direct[key] ?? 0));
+    for (const key of keys) {
+      let raw = map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : direct[key];
+      if (key === "lotKadaster" && (raw === undefined || raw === null || raw === "")) raw = map && Object.prototype.hasOwnProperty.call(map, "paBm") ? map.paBm : direct.paBm;
+      out[key] = azNormalizeUserPriceAdjustment(raw ?? 0);
+    }
     return out;
   }
   const legacy = azNormalizeUserPriceAdjustment(managed ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0) : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0));
@@ -9526,8 +9534,9 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:6,
+        version:7,
         paidDownloadRouting:"category-specific-v1",
+        perUserPriceCategories:["paBm","lotKadaster","publicPa","software","cadTools"],
         firestoreReadRetry:3,
         fastAdminTestPayment:true,
         lotSelectionCheckoutTtlDays:7,
@@ -9785,7 +9794,10 @@ async function handler(req, res) {
         const areaProductTypes = new Set(["NDCDB","NDCDB_C3"]);
         const seenItems = new Set();
         const items = [];
-        const priceAdjustmentPercent = azIdentityPriceAdjustment(identity, "paBm");
+        const priceAdjustmentByCategory = {
+          paBm: azIdentityPriceAdjustment(identity, "paBm"),
+          lotKadaster: azIdentityPriceAdjustment(identity, "lotKadaster")
+        };
         for (const rawItem of rawItems) {
           const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
           if (!allowedProductTypes.has(productType)) {
@@ -9821,7 +9833,9 @@ async function handler(req, res) {
           else if (productType === "SYIT_PIAWAI") amount = 7;
           else if (areaProductTypes.has(productType)) amount = verifiedLot.amount;
           const baseAmount = amount;
-          amount = azApplyUserPriceAdjustment(baseAmount, identity, "paBm");
+          const priceAdjustmentCategory = areaProductTypes.has(productType) ? "lotKadaster" : "paBm";
+          const priceAdjustmentPercent = priceAdjustmentByCategory[priceAdjustmentCategory] || 0;
+          amount = azApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory);
           const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
           if (seenItems.has(uniqueKey)) continue;
           seenItems.add(uniqueKey);
@@ -9831,6 +9845,7 @@ async function handler(req, res) {
             negeri,
             baseAmount,
             amount,
+            priceAdjustmentCategory,
             priceAdjustmentPercent,
             variant,
             productId: cleanPremiumText(verifiedLot && verifiedLot.jobId || rawItem.productId || "", 120),
@@ -9882,10 +9897,12 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+        const usedPercents = [...new Set(items.map(item => Number(item.priceAdjustmentPercent || 0)))];
+        const priceAdjustmentPercent = usedPercents.length === 1 ? usedPercents[0] : 0;
+        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
         try { await azPersistPremiumOrder(paBmOrder); } catch (persistError) { console.warn("PA/BM premium order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
-        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, unit:items.length, status:"pending" }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
       } catch (e) {
         console.error("Create PA/BM ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create PA/BM ToyyibPay bill" }, null, 2), "application/json");

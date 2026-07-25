@@ -15,7 +15,14 @@
   let lotFocusPrefetchController = null;
 
   function userAdjustedAmount(amount) {
-    try { return typeof window.azobssApplyPriceAdjustment === 'function' ? window.azobssApplyPriceAdjustment(Number(amount || 0)) : Number(amount || 0); } catch (_) { return Number(amount || 0); }
+    try {
+      const percent = typeof window.azobssGetPriceAdjustmentPercent === 'function'
+        ? Number(window.azobssGetPriceAdjustmentPercent('lotKadaster') || 0)
+        : Number(window.azobssGetPriceAdjustment?.('lotKadaster')?.percent || 0);
+      return typeof window.azobssApplyPriceAdjustment === 'function'
+        ? window.azobssApplyPriceAdjustment(Number(amount || 0), percent)
+        : Number(amount || 0);
+    } catch (_) { return Number(amount || 0); }
   }
 
   function createLotFocusParams(input, productCode, stateCode) {
