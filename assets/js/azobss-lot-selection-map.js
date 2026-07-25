@@ -103,6 +103,11 @@
       .az-lot-map-price{margin:14px 0 10px;padding:11px;border:1px solid #e0b100;border-radius:6px;background:#ffd400;color:#111827;text-align:center;font-size:16px;font-weight:900}
       .az-lot-map-add{width:100%;min-height:48px;border:1px solid #4ff0b1;border-radius:6px;background:#0c9f72;color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #056a4c}
       .az-lot-map-add:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}
+      .az-lot-map-add.is-cart-success{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main tick" "sub sub";align-items:center;column-gap:9px;row-gap:3px;padding:8px 12px;background:#087f5b;border-color:#5cf2b5;line-height:1.15}
+      .az-lot-map-add.is-cart-success:disabled{opacity:1;color:#fff;background:#087f5b;border-color:#5cf2b5;box-shadow:none}
+      .az-lot-map-cart-success-main{grid-area:main;text-align:center}
+      .az-lot-map-cart-success-tick{grid-area:tick;display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:2px solid #fff;border-radius:50%;font-size:17px;font-weight:1000;line-height:1}
+      .az-lot-map-cart-success-sub{grid-area:sub;color:#d7fff0;font-size:12px;font-weight:800;text-align:center}
       .az-lot-map-reset{width:100%;min-height:40px;margin-top:9px;border:1px solid #49607e;border-radius:6px;background:#1c2d46;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 2px 0 #07101e}
       .az-lot-map-modal .leaflet-container{font-family:Arial,sans-serif;background:#d8e1eb}
       .az-lot-map-modal .leaflet-draw-toolbar a{background-color:#fff}
@@ -775,10 +780,21 @@
       window.azobssCloseLotSelectionMap = close;
       document.addEventListener('keydown', onDocumentKeyDown);
 
+      function setAddButtonDefault() {
+        addButton.classList.remove('is-cart-success');
+        addButton.textContent = 'Sediakan & Tambah ke Troli';
+      }
+
+      function setAddButtonSuccess() {
+        addButton.classList.add('is-cart-success');
+        addButton.innerHTML = '<span class="az-lot-map-cart-success-main">Sudah Masuk Troli</span><span class="az-lot-map-cart-success-tick" aria-hidden="true">✓</span><small class="az-lot-map-cart-success-sub">(Sila Cek di Troli anda)</small>';
+      }
+
       function clearSummary() {
         selectedGeometry = null;
         estimate = null;
         addButton.disabled = true;
+        setAddButtonDefault();
         countNode.textContent = '-';
         areaNode.textContent = '-';
         sheetNode.textContent = '-';
@@ -979,6 +995,7 @@
       addButton.addEventListener('click', async () => {
         if (!selectedGeometry || !estimate || addButton.disabled) return;
         addButton.disabled = true;
+        addButton.classList.remove('is-cart-success');
         addButton.textContent = 'Menghasilkan ID pilihan...';
         setStatus(status, 'Mendapatkan ID pilihan Lot Kadaster...', 'loading');
         try {
@@ -996,8 +1013,8 @@
 
           while (!prepared.ready) {
             addButton.disabled = true;
-            addButton.textContent = 'Tengah Proses...';
-            setStatus(status, 'Tengah Proses... JUPEM sedang menyediakan fail Lot Kadaster.', 'loading');
+            addButton.textContent = 'Sedang Diproses...';
+            setStatus(status, 'Sedang diproses... JUPEM sedang menyediakan fail Lot Kadaster.', 'loading');
             await new Promise((resolveDelay, rejectDelay) => {
               const timer = window.setTimeout(resolveDelay, 2500);
               if (operationController && operationController.signal) {
@@ -1039,14 +1056,14 @@
             ).trim() || confirmationMessage;
           }
           addButton.disabled = true;
-          addButton.textContent = 'Sudah Masuk Troli';
-          setStatus(status, `${confirmationMessage} Peta ini kekal dibuka; tekan X apabila selesai.`, 'success');
+          setAddButtonSuccess();
+          setStatus(status, `✓ ${confirmationMessage} Sudah masuk troli. Sila cek di Troli anda. Peta ini kekal dibuka; tekan X apabila selesai.`, 'success');
           // Resolve the caller after the cart is updated, but keep the Leaflet
           // modal alive. The close button will perform cleanup later.
           resolve(prepared);
         } catch (error) {
           addButton.disabled = false;
-          addButton.textContent = 'Sediakan & Tambah ke Troli';
+          setAddButtonDefault();
           setStatus(status, error.message || 'JUPEM tidak dapat menyediakan pilihan ini.', 'error');
         }
       });
