@@ -1,0 +1,21 @@
+AZOBSS PATCH (583)
+HOMEPAGE WEBSITE REQUEST BUTTON VISIBLE FIX
+Date: 2026-07-25
+
+PUNCA
+- Patch (581) memasukkan butang Tempah Website ke dalam .hero-actions.
+- Baseline homepage mempunyai peraturan akhir `.hero-actions { display:none !important; }`.
+- Oleh itu, butang memang wujud dalam HTML tetapi disembunyikan bersama semua kad hero.
+
+PEMBAIKAN
+1. Mengeluarkan butang Tempah Website daripada bekas .hero-actions yang tersembunyi.
+2. Meletakkan CTA baharu yang jelas dan sentiasa kelihatan di bawah tajuk Our Services pada homepage.
+3. CTA memaparkan "Mahukan Website untuk Bisnes?" dan butang "Request Website".
+4. Pautan kekal menuju ke /Tempah-Website/.
+5. Reka bentuk responsif untuk desktop dan telefon.
+6. Semua pembaikan JUPEM daripada (582) dikekalkan.
+
+DEPLOY
+- Frontend sahaja: kemas kini GitHub Pages.
+- Render backend tidak perlu redeploy.
+- Firebase Rules tidak perlu diubah.
