@@ -181,6 +181,13 @@
     return await new Promise((resolve, reject) => {
       let settled = false;
       let map = null;
+      let jupemLotsLayer = null;
+      let jupemSheetsLayer = null;
+      let jupemLayer = null;
+      let jupemRefreshTimer = null;
+      let jupemRecoveryTimer = null;
+      let jupemRecoveryAttempts = 0;
+      let jupemRecoveryWindowStartedAt = 0;
       let selectedGeometry = null;
       let estimate = null;
       let estimateController = null;
@@ -255,6 +262,38 @@
         coordinateInput.setAttribute('aria-invalid', message && state === 'error' ? 'true' : 'false');
       }
 
+      function refreshJupemOverlay(delay = 100, forceReload = true) {
+        if (jupemRefreshTimer) window.clearTimeout(jupemRefreshTimer);
+        jupemRefreshTimer = window.setTimeout(() => {
+          jupemRefreshTimer = null;
+          if (!map || !jupemLayer || !map.hasLayer(jupemLayer)) return;
+          try { map.invalidateSize({ pan: false }); } catch (_) {}
+          [jupemLotsLayer, jupemSheetsLayer].forEach((layer) => {
+            if (!layer || !map.hasLayer(layer)) return;
+            try {
+              if (forceReload && typeof layer.redraw === 'function') layer.redraw();
+            } catch (_) {}
+            try { layer.bringToFront(); } catch (_) {}
+          });
+          try { drawnItems.bringToFront(); } catch (_) {}
+          try { if (coordinateMarker) coordinateMarker.bringToFront(); } catch (_) {}
+        }, Math.max(0, Number(delay) || 0));
+      }
+
+      function scheduleJupemTileRecovery() {
+        const now = Date.now();
+        if (!jupemRecoveryWindowStartedAt || now - jupemRecoveryWindowStartedAt > 15000) {
+          jupemRecoveryWindowStartedAt = now;
+          jupemRecoveryAttempts = 0;
+        }
+        if (jupemRecoveryAttempts >= 2 || jupemRecoveryTimer) return;
+        jupemRecoveryAttempts += 1;
+        jupemRecoveryTimer = window.setTimeout(() => {
+          jupemRecoveryTimer = null;
+          refreshJupemOverlay(0, true);
+        }, 450 + (jupemRecoveryAttempts * 350));
+      }
+
       function hideLocationSuggestions(clear = false) {
         activeLocationIndex = -1;
         coordinateInput.setAttribute('aria-expanded', 'false');
@@ -305,19 +344,20 @@
         }).openTooltip();
 
         const extent = Array.isArray(location.extent) ? location.extent.map(Number) : null;
+        try { map.stop(); } catch (_) {}
         if (extent && extent.length === 4 && extent.every(Number.isFinite)) {
           const west = Math.min(extent[0], extent[2]);
           const east = Math.max(extent[0], extent[2]);
           const south = Math.min(extent[1], extent[3]);
           const north = Math.max(extent[1], extent[3]);
           const bounds = [[south, west], [north, east]];
-          map.fitBounds(bounds, { padding: [42, 42], maxZoom: 17, animate: true });
-          window.setTimeout(() => {
-            if (map && map.getZoom() < 15) map.setView(point, 16, { animate: true });
-          }, 260);
+          map.fitBounds(bounds, { padding: [42, 42], maxZoom: 17, animate: false });
+          const targetZoom = Math.max(16, Math.min(17, map.getZoom()));
+          map.setView(point, targetZoom, { animate: false });
         } else {
-          map.setView(point, Math.max(17, map.getZoom()), { animate: true });
+          map.setView(point, Math.max(17, map.getZoom()), { animate: false });
         }
+        refreshJupemOverlay(140, true);
         if (keepLabel) coordinateInput.value = label;
         hideLocationSuggestions(true);
         setCoordinateFeedback(`Lokasi dipilih: ${label}`, 'success');
@@ -442,6 +482,8 @@
         if (operationController) operationController.abort();
         if (locationSearchTimer) window.clearTimeout(locationSearchTimer);
         if (locationSearchController) locationSearchController.abort();
+        if (jupemRefreshTimer) window.clearTimeout(jupemRefreshTimer);
+        if (jupemRecoveryTimer) window.clearTimeout(jupemRecoveryTimer);
         locationSearchSerial += 1;
         try { if (map) map.remove(); } catch (_) {}
         modal.remove();
@@ -509,19 +551,27 @@
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        const jupemLotsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerMode=lots&layerSet=3`, {
+        jupemLotsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerMode=lots&layerSet=3`, {
           minZoom: Number(config.minSelectionZoom || 13),
           maxZoom: 20,
           opacity: 0.88,
+          updateWhenIdle: false,
+          updateWhenZooming: true,
+          keepBuffer: 4,
           attribution: 'JUPEM eBiz'
         });
-        const jupemSheetsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&layerMode=sheets&layerSet=4`, {
+        jupemSheetsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&layerMode=sheets&layerSet=4`, {
           minZoom: Number(config.minSelectionZoom || 13),
           maxZoom: 20,
           opacity: 1,
+          updateWhenIdle: false,
+          updateWhenZooming: true,
+          keepBuffer: 4,
           attribution: 'JUPEM eBiz'
         });
-        const jupemLayer = window.L.layerGroup([jupemLotsLayer, jupemSheetsLayer]).addTo(map);
+        jupemLotsLayer.on('tileerror', scheduleJupemTileRecovery);
+        jupemSheetsLayer.on('tileerror', scheduleJupemTileRecovery);
+        jupemLayer = window.L.layerGroup([jupemLotsLayer, jupemSheetsLayer]).addTo(map);
         const selectedStateLabel = stateName || config.negeri || 'Negeri Dipilih';
         window.L.control.layers(null, { [`Lot Semua Negeri & Garisan Syit ${selectedStateLabel}`]: jupemLayer }, { collapsed: false }).addTo(map);
         drawnItems.addTo(map);
@@ -553,7 +603,13 @@
           clearSummary();
           setStatus(status, 'Pilihan dipadam. Lukis kawasan baharu.', '');
         });
-        window.setTimeout(() => map.invalidateSize(), 100);
+        map.on('overlayadd', (event) => {
+          if (event && event.layer === jupemLayer) refreshJupemOverlay(80, true);
+        });
+        window.setTimeout(() => {
+          map.invalidateSize();
+          refreshJupemOverlay(80, true);
+        }, 100);
       } catch (error) {
         cleanup();
         settled = true;

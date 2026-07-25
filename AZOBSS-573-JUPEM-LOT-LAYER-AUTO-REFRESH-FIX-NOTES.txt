@@ -1,0 +1,26 @@
+AZOBSS PATCH 573 — JUPEM LOT LAYER AUTO REFRESH FIX
+Date: 2026-07-25
+Baseline: (572)-AZOBSS-JUPEM-MAP-LOCATION-HTTP400-FALLBACK-FIX_20260725.zip
+
+Issue fixed:
+- After selecting a place/coordinate and jumping to the new map position, JUPEM lot tiles could remain partially rendered.
+- Users previously had to untick and tick “Lot Semua Negeri & Garisan Syit” to force the full overlay to appear.
+
+Changes:
+- Stops the previous animated map movement before location navigation.
+- Uses a single non-animated final setView so two overlapping zoom animations cannot interrupt JUPEM tile loading.
+- Automatically redraws both JUPEM lot and sheet layers after location navigation.
+- Enables tile updates during zoom and increases the retained tile buffer.
+- Adds limited automatic recovery when a JUPEM tile request fails.
+- Automatically refreshes the overlay when the layer is enabled again.
+- Cache version azobss-lot-selection-map.js bumped from v21 to v22.
+
+Preserved:
+- Location-name autocomplete and WGS84 search from 571/572.
+- Photon HTTP 400 fallback from 572.
+- JUPEM lot selection, estimate, price, cart, token polling and download flow.
+
+Deployment:
+- Upload GitHub Pages/frontend files.
+- Render backend redeploy is not required for this frontend-only patch.
+- Firebase Rules changes are not required.
