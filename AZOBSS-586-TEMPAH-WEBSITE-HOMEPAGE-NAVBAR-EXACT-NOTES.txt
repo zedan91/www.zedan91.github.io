@@ -1,0 +1,8 @@
+AZOBSS patch 586
+
+- Replaced the custom Tempah Website navbar with the same header structure used on the homepage.
+- Restored the original logo, WhatsApp circle, public Pelan Akui/PA-BM dynamic tab, Software, CAD Tools, Affiliate Shop, Lucky Draw and Mini Web Tools.
+- Restored the homepage radio button position before Register/Login.
+- Restored Register/Login and the signed-in username/bookmark/cart/notification/chat tools through the shared global auth scripts.
+- Removed the Tempah Website active pill and Home icon that made the bar look different.
+- Frontend only. No Render backend or Firebase Rules update is required.
