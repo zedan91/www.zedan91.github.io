@@ -1017,10 +1017,20 @@
           if (!/^esriJobSucceeded$/i.test(String(prepared.jobStatus || '')) || !prepared.downloadUrl) {
             throw new Error('Fail Lot Kadaster belum berjaya disediakan. Sila tunggu dan cuba semula.');
           }
-          addButton.textContent = 'Berjaya Disediakan';
-          setStatus(status, 'Fail Lot Kadaster berjaya disediakan dan sedia dimasukkan ke troli.', 'success');
-          settled = true;
-          cleanup();
+          let confirmationMessage = 'Fail Lot Kadaster berjaya disediakan.';
+          if (typeof inputOptions.onPrepared === 'function') {
+            const confirmation = await inputOptions.onPrepared(prepared);
+            confirmationMessage = String(
+              confirmation && typeof confirmation === 'object'
+                ? (confirmation.message || confirmation.confirmationMessage || '')
+                : (confirmation || '')
+            ).trim() || confirmationMessage;
+          }
+          addButton.disabled = true;
+          addButton.textContent = 'Sudah Masuk Troli';
+          setStatus(status, `${confirmationMessage} Peta ini kekal dibuka; tekan X apabila selesai.`, 'success');
+          // Resolve the caller after the cart is updated, but keep the Leaflet
+          // modal alive. The close button will perform cleanup later.
           resolve(prepared);
         } catch (error) {
           addButton.disabled = false;
@@ -1107,12 +1117,18 @@
             }
           } catch (_) {}
           return '';
+        },
+        onPrepared: async (readySelection) => {
+          if (typeof window.azobssAddPreparedLotSelectionToCart !== 'function') {
+            throw new Error('Fungsi Troli AZOBSS belum tersedia. Muat semula halaman dan cuba lagi.');
+          }
+          return window.azobssAddPreparedLotSelectionToCart(
+            readySelection,
+            String(resolvedFocus.negeri || focusInput.stateName || '').trim()
+          );
         }
       });
       if (openSerial !== lotFocusOpenSerial) return null;
-      if (prepared && typeof window.azobssAddPreparedLotSelectionToCart === 'function') {
-        await window.azobssAddPreparedLotSelectionToCart(prepared, String(resolvedFocus.negeri || focusInput.stateName || '').trim());
-      }
       return prepared;
     } catch (error) {
       if (error && (error.name === 'AbortError' || error.code === 'MAP_CLOSED')) return null;

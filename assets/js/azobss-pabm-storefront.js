@@ -597,35 +597,17 @@ async function openJupemLotMap(button) {
     button.disabled = true;
     setPanelStatus(status, 'Menyediakan peta pilihan Lot Kadaster...', 'checking');
     try {
-      const prepared = await window.azobssOpenLotSelectionMap({
+      await window.azobssOpenLotSelectionMap({
         productCode,
         stateCode,
         stateName,
-        getAuthToken: async () => getPaBmAuthToken(false)
+        getAuthToken: async () => getPaBmAuthToken(false),
+        onPrepared: async (prepared) => {
+          const result = await window.azobssAddPreparedLotSelectionToCart(prepared, stateName);
+          setPanelStatus(status, result.message, 'success');
+          return result;
+        }
       });
-      const item = await addToStoreCart({
-        productType: prepared.productType,
-        itemCode: prepared.jobId,
-        negeri: prepared.negeri || stateName,
-        variant: prepared.variant,
-        amount: prepared.amount,
-        productId: prepared.jobId,
-        downloadUrl: prepared.downloadUrl,
-        filename: prepared.filename,
-        selectionToken: prepared.selectionToken
-      });
-      const confirmationMessage = item.__azobssAlreadyInCart
-        ? 'Pilihan Lot Kadaster ini sudah ada dalam troli anda.'
-        : `Berjaya: ${prepared.lotCount.toLocaleString('ms-MY')} lot telah dimasukkan ke Troli AZOBSS pada harga RM${prepared.amount}.`;
-      setPanelStatus(status, confirmationMessage, 'success');
-      setCartSyncStatus(confirmationMessage);
-      if (typeof window.azShowToast === 'function') window.azShowToast(confirmationMessage);
-      const cartPanel = document.getElementById('pabmStoreCartPanel');
-      if (cartPanel) {
-        cartPanel.classList.remove('is-cart-updated');
-        window.requestAnimationFrame(() => cartPanel.classList.add('is-cart-updated'));
-        window.setTimeout(() => cartPanel.classList.remove('is-cart-updated'), 1800);
-      }
     } catch (mapError) {
       if (mapError && mapError.code !== 'MAP_CLOSED') {
         setPanelStatus(status, mapError.message || 'Peta pilihan tidak dapat dibuka.', 'unavailable');

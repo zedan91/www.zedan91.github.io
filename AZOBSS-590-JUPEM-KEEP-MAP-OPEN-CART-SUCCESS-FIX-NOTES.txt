@@ -1,0 +1,22 @@
+AZOBSS PATCH (590)
+JUPEM KEEP MAP OPEN + CART SUCCESS FIX
+Date: 2026-07-26
+Baseline: (589)-AZOBSS-JUPEM-CARI-LOT-DIRECT-SELECTION-AUTH-FIX_20260726.zip
+
+Changes:
+1. After JUPEM finishes preparing the Lot Kadaster file, the map modal is no longer closed automatically.
+2. The prepared selection is added to the AZOBSS cart before the map displays final success.
+3. The map side status clearly confirms that the selection has been added to the cart.
+4. The action button changes to "Sudah Masuk Troli" and remains disabled to prevent duplicate additions.
+5. The map remains open until the user presses the X close button.
+6. The same behaviour applies to Buka Peta Pilihan and direct LIHAT PETA / Senarai Lot PA flows.
+7. Existing toast, cart panel highlight, selection token, polling and JUPEM download data are preserved.
+
+Cache updates:
+- /assets/js/azobss-lot-selection-map.js?v=31
+- /assets/js/azobss-pabm-storefront.js?v=569
+
+Deployment:
+- Frontend only: update GitHub Pages.
+- Render backend: no redeploy required.
+- Firebase Rules: no changes required.
