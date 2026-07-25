@@ -1,0 +1,16 @@
+AZOBSS PATCH (581) - HOMEPAGE WEBSITE REQUEST BUTTON + CUSTOMER PAGE
+
+Baseline: (580)-AZOBSS-JUPEM-PA-LOT-FIRST-CLICK-EXACT-FOCUS-FIX_20260725.zip
+
+Perubahan:
+1. Menambah kad/butang "Tempah Website - Request Website" pada bahagian utama homepage.
+2. Menambah halaman baharu /Tempah-Website/.
+3. Halaman menerangkan proses pengesahan skop, deposit, penyediaan bahan, akaun GitHub, collaborator dan pemilikan domain.
+4. Menambah borang permintaan website yang menyusun mesej, menyalinnya dan membuka WhatsApp AZOBSS.
+5. Menambah mesej GitHub sedia salin untuk dihantar kepada customer.
+6. Reka bentuk responsif untuk desktop dan telefon.
+
+Deployment:
+- Frontend sahaja: kemas kini GitHub Pages.
+- Render backend tidak perlu redeploy.
+- Firebase Rules tidak perlu diubah.
