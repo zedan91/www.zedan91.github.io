@@ -4029,21 +4029,21 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   }
 
   function bindIcons(){
-    const candidates=[...document.querySelectorAll('header button,header a,.topbar button,.topbar a,.floating-nav button,.floating-nav a,.market-icon-btn,.nav-icon,.icon-btn,[role="button"]')].filter(el=>{
-      const r=el.getBoundingClientRect();
-      return r.width>=12 && r.height>=12 && r.top<95 && r.left>window.innerWidth*0.55;
-    });
-    const iconEls=candidates.filter(el=>el.querySelector('svg') || (el.textContent||'').trim()==='');
-    if(iconEls.length>=2){
-      const chat=iconEls[iconEls.length-1], bell=iconEls[iconEls.length-2];
-      if(bell && bell.dataset.azCleanBell!=='1'){
-        bell.dataset.azCleanBell='1'; bell.title='Notifications';
-        bell.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal('azBellModal');loadNotifications();},true);
-      }
-      if(chat && chat.dataset.azCleanChat!=='1'){
-        chat.dataset.azCleanChat='1'; chat.title='Contact Admin / Support';
-        chat.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal('azSupportModal');loadSupport();},true);
-      }
+    const bell=document.querySelector(
+      '.market-user-tools [aria-label="Notifications"],header [aria-label="Notifications"],[data-az-notification-toggle],[title="Notifications"]:not(#azRadioToggle):not(.az-radio-pill)'
+    );
+    const chat=document.querySelector(
+      '.market-user-tools [aria-label="Chat"],.market-user-tools [aria-label="Contact Admin / Support"],header [aria-label="Chat"],[data-az-open-support],[title="Contact Admin / Support"]:not(#azRadioToggle):not(.az-radio-pill)'
+    );
+    if(bell && !bell.closest('.az-radio-player') && bell.dataset.azCleanBell!=='1'){
+      bell.dataset.azCleanBell='1';
+      bell.title='Notifications';
+      bell.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal('azBellModal');loadNotifications();},true);
+    }
+    if(chat && !chat.closest('.az-radio-player') && chat.dataset.azCleanChat!=='1'){
+      chat.dataset.azCleanChat='1';
+      chat.title='Contact Admin / Support';
+      chat.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal('azSupportModal');loadSupport();},true);
     }
   }
 
@@ -4091,16 +4091,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   const SEEN_KEY = 'azobss_notifications_seen_at_v2';
 
   function getBell(){
-    let bell = document.querySelector('[title="Notifications"][data-az-clean-bell="1"],[title="Notifications"]');
-    if(bell) return bell;
-
-    const candidates=[...document.querySelectorAll('header button,header a,.topbar button,.topbar a,.floating-nav button,.floating-nav a,.market-icon-btn,.nav-icon,.icon-btn,[role="button"]')].filter(el=>{
-      const r=el.getBoundingClientRect();
-      return r.width>=12 && r.height>=12 && r.top<95 && r.left>window.innerWidth*0.55;
-    });
-    const iconEls=candidates.filter(el=>el.querySelector('svg') || (el.textContent||'').trim()==='');
-    if(iconEls.length>=2) return iconEls[iconEls.length-2];
-    return null;
+    return document.querySelector(
+      '.market-user-tools [aria-label="Notifications"],header [aria-label="Notifications"],[data-az-notification-toggle],[title="Notifications"]:not(#azRadioToggle):not(.az-radio-pill)'
+    );
   }
 
   function ensureBadge(){
@@ -4230,15 +4223,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  }
 
  function getChat(){
-   let chat=document.querySelector('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"]');
-   if(chat) return chat;
-   const candidates=[...document.querySelectorAll('header button,header a,.topbar button,.topbar a,.floating-nav button,.floating-nav a,.market-icon-btn,.nav-icon,.icon-btn,[role="button"]')].filter(el=>{
-     const r=el.getBoundingClientRect();
-     return r.width>=12 && r.height>=12 && r.top<95 && r.left>window.innerWidth*0.55;
-   });
-   const iconEls=candidates.filter(el=>el.querySelector('svg') || (el.textContent||'').trim()==='');
-   if(iconEls.length>=1) return iconEls[iconEls.length-1];
-   return null;
+   return document.querySelector(
+     '.market-user-tools [aria-label="Chat"],.market-user-tools [aria-label="Contact Admin / Support"],header [aria-label="Chat"],[data-az-open-support],[title="Contact Admin / Support"]:not(#azRadioToggle):not(.az-radio-pill)'
+   );
  }
 
  function badge(){
@@ -5129,7 +5116,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 </script>
 
 
-<script src="/assets/js/azobss-radio-player.js?v=369" defer></script>
+<script src="/assets/js/azobss-radio-player.js?v=370" defer></script>
 </body>
 </html>
 
