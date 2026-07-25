@@ -1,0 +1,41 @@
+AZOBSS PATCH (592)
+Per-user Price Adjustment by Section
+Date: 2026-07-26
+
+ADMIN LOCATION
+Admin Dashboard > Users > Registered User Records > Edit
+
+SEPARATE FIELDS
+1. PA/BM & Lot Kadaster (%)
+   - PA, BM, SBM, GPS, Syit Piawai, NDCDB dan NDCDB C3.
+2. Pelan Akui Awam (%)
+   - Pembelian pada /Beli-Pelan-Akui/.
+3. Software (%)
+   - Produk premium dan pelan langganan/kod aktivasi bagi produk Software.
+4. CAD Tools (%)
+   - Produk premium dan pelan langganan/kod aktivasi bagi produk CAD Tools.
+
+RULES
+- Nilai negatif memberi diskaun, contoh -20.
+- Nilai positif menaikkan harga, contoh 15.
+- Nilai 0 mengekalkan harga asal untuk bahagian tersebut.
+- Julat: -99 hingga +500.
+- Setiap bahagian tidak mempengaruhi bahagian lain.
+
+FIRESTORE USER FIELDS
+- adminPriceAdjustmentByCategory: { paBm, publicPa, software, cadTools }
+- priceAdjustmentByCategory: { paBm, publicPa, software, cadTools }
+- Medan terus per kategori turut disimpan untuk keserasian.
+- Medan global lama dinetralkan kepada 0 selepas rekod disimpan.
+- Rekod lama versi 591 dimigrasikan secara paparan: nilai global lama dimuatkan ke semua kotak sehingga admin menekan Save.
+
+BACKEND
+- PA/BM sentiasa menggunakan kategori paBm.
+- Pelan Akui Awam sentiasa menggunakan kategori publicPa.
+- Software/CAD ditentukan daripada sumber produk dipercayai pada backend.
+- Harga asas, kategori pelarasan, peratus dan harga akhir disimpan dalam rekod pesanan.
+
+DEPLOYMENT
+- Upload GitHub Pages.
+- Redeploy Render backend kerana deploy-server.js dan backend/server.js berubah.
+- Firebase Rules tidak perlu diubah jika admin sedia ada memang dibenarkan mengemas kini dokumen users, sama seperti tetapan role dan akses PA/BM sekarang.

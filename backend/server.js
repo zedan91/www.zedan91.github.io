@@ -217,18 +217,63 @@ function azobssNormalizeUserPriceAdjustment(value) {
   if (!Number.isFinite(n)) return 0;
   return Math.max(-99, Math.min(500, Math.round(n * 100) / 100));
 }
-function azobssIdentityPriceAdjustment(identity = {}) {
-  const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
-  const raw = managed
-    ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0)
-    : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0);
-  return azobssNormalizeUserPriceAdjustment(raw);
+function azobssPriceAdjustmentCategory(value = "software") {
+  const key = String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (["pabm","jupem","lot","lotkadaster","ndcdb"].includes(key)) return "paBm";
+  if (["publicpa","paawam","pelanakui","pelanakuiawam"].includes(key)) return "publicPa";
+  if (["cad","cadtools","cadtool"].includes(key)) return "cadTools";
+  return "software";
 }
-function azobssApplyUserPriceAdjustment(amount, identity = {}) {
+function azobssIdentityPriceAdjustments(identity = {}) {
+  const keys = ["paBm","publicPa","software","cadTools"];
+  const out = { paBm:0, publicPa:0, software:0, cadTools:0 };
+  const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
+  const managedMap = identity.adminPriceAdjustmentByCategory && typeof identity.adminPriceAdjustmentByCategory === "object" ? identity.adminPriceAdjustmentByCategory : null;
+  const publicMap = identity.priceAdjustmentByCategory && typeof identity.priceAdjustmentByCategory === "object" ? identity.priceAdjustmentByCategory : null;
+  const map = managed ? (managedMap || publicMap) : (publicMap || managedMap);
+  const direct = {
+    paBm: managed ? (identity.adminPaBmPriceAdjustmentPercent ?? identity.paBmPriceAdjustmentPercent) : (identity.paBmPriceAdjustmentPercent ?? identity.adminPaBmPriceAdjustmentPercent),
+    publicPa: managed ? (identity.adminPublicPaPriceAdjustmentPercent ?? identity.publicPaPriceAdjustmentPercent) : (identity.publicPaPriceAdjustmentPercent ?? identity.adminPublicPaPriceAdjustmentPercent),
+    software: managed ? (identity.adminSoftwarePriceAdjustmentPercent ?? identity.softwarePriceAdjustmentPercent) : (identity.softwarePriceAdjustmentPercent ?? identity.adminSoftwarePriceAdjustmentPercent),
+    cadTools: managed ? (identity.adminCadToolsPriceAdjustmentPercent ?? identity.cadToolsPriceAdjustmentPercent) : (identity.cadToolsPriceAdjustmentPercent ?? identity.adminCadToolsPriceAdjustmentPercent)
+  };
+  const hasSpecific = !!map || Object.values(direct).some(value => value !== undefined && value !== null && value !== "");
+  if (hasSpecific) {
+    for (const key of keys) out[key] = azobssNormalizeUserPriceAdjustment(map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : (direct[key] ?? 0));
+    return out;
+  }
+  const legacy = azobssNormalizeUserPriceAdjustment(managed ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0) : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0));
+  for (const key of keys) out[key] = legacy;
+  return out;
+}
+function azobssIdentityPriceAdjustment(identity = {}, category = "software") {
+  return azobssIdentityPriceAdjustments(identity)[azobssPriceAdjustmentCategory(category)] || 0;
+}
+function azobssApplyUserPriceAdjustment(amount, identity = {}, category = "software") {
   const base = Number(amount);
   if (!Number.isFinite(base) || base <= 0) return 0;
-  const percent = azobssIdentityPriceAdjustment(identity);
+  const percent = azobssIdentityPriceAdjustment(identity, category);
   return Math.max(0.01, Math.round((base * (1 + percent / 100) + Number.EPSILON) * 100) / 100);
+}
+async function azobssResolvePremiumPriceCategory(data = {}, product = {}, productId = "") {
+  const id = cleanPremiumText(productId || product.productId || product.id || data.productId || "", 180);
+  const db = getAzobssBackendDb();
+  if (db && id) {
+    const groups = [
+      ["cadTools", ["cadTools", "cadToolsResources", "staffCADSubmissions"]],
+      ["software", ["softwareTools", "staffSoftwareSubmissions"]]
+    ];
+    for (const [category, collections] of groups) {
+      for (const col of collections) {
+        try { const snap = await db.collection(col).doc(id).get(); if (snap.exists) return category; } catch (_) {}
+        for (const field of ["productId","id","sku"]) {
+          try { const qs = await db.collection(col).where(field, "==", id).limit(1).get(); if (!qs.empty) return category; } catch (_) {}
+        }
+      }
+    }
+  }
+  const hint = [product.source, product.productSource, product.category, product.type, data.returnUrl, data.pageUrl, data.sourceUrl].map(v => String(v || "").toLowerCase()).join(" ");
+  return /cad[\s_-]*tools|cadtools|cad-tool|cad tool/.test(hint) ? "cadTools" : "software";
 }
 function azobssMoneyText(amount) {
   const n = Number(amount || 0);
@@ -275,7 +320,7 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
 
   const seen = new Set();
   const items = [];
-  const priceAdjustmentPercent = azobssIdentityPriceAdjustment(identity);
+  const priceAdjustmentPercent = azobssIdentityPriceAdjustment(identity, "paBm");
   for (const rawItem of rawItems) {
     const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
     if (!AZOBSS_JUPEM_PRODUCT_TYPES.has(productType)) azobssCheckoutError("Unsupported JUPEM document category.");
@@ -296,7 +341,7 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
     if (seen.has(uniqueKey)) continue;
     seen.add(uniqueKey);
     const baseAmount = azobssJupemItemAmount(productType, variant);
-    const amount = azobssApplyUserPriceAdjustment(baseAmount, identity);
+    const amount = azobssApplyUserPriceAdjustment(baseAmount, identity, "paBm");
     items.push({
       productType,
       itemCode,
@@ -1314,6 +1359,16 @@ async function getFirebaseAdminIdentity(req) {
           identity.adminPriceAdjustmentOverride = x.adminPriceAdjustmentOverride === true;
           identity.adminPriceAdjustmentPercent = azobssNormalizeUserPriceAdjustment(x.adminPriceAdjustmentPercent ?? x.priceAdjustmentPercent ?? 0);
           identity.priceAdjustmentPercent = azobssNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
+          identity.adminPriceAdjustmentByCategory = x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object" ? { ...x.adminPriceAdjustmentByCategory } : null;
+          identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
+          identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
+          identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
+          identity.adminPublicPaPriceAdjustmentPercent = x.adminPublicPaPriceAdjustmentPercent;
+          identity.publicPaPriceAdjustmentPercent = x.publicPaPriceAdjustmentPercent;
+          identity.adminSoftwarePriceAdjustmentPercent = x.adminSoftwarePriceAdjustmentPercent;
+          identity.softwarePriceAdjustmentPercent = x.softwarePriceAdjustmentPercent;
+          identity.adminCadToolsPriceAdjustmentPercent = x.adminCadToolsPriceAdjustmentPercent;
+          identity.cadToolsPriceAdjustmentPercent = x.cadToolsPriceAdjustmentPercent;
           identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
         });
       } catch (err) {
@@ -1676,8 +1731,8 @@ app.post("/api/toyyib/create-public-pa-bill", async (req, res) => {
     if (buyerPhone.replace(/\D/g,'').length<8) return res.status(400).json({ok:false,error:"Masukkan nombor telefon yang sah."});
     const emailHash=crypto.createHash('sha256').update(buyerEmail).digest('hex').slice(0,18);
     const baseAmount=30;
-    const priceAdjustmentPercent=identity ? azobssIdentityPriceAdjustment(identity) : 0;
-    const amount=identity ? azobssApplyUserPriceAdjustment(baseAmount,identity) : baseAmount;
+    const priceAdjustmentPercent=identity ? azobssIdentityPriceAdjustment(identity, "publicPa") : 0;
+    const amount=identity ? azobssApplyUserPriceAdjustment(baseAmount,identity,"publicPa") : baseAmount;
     const amountSen=Math.round(amount*100);
     const orderId=makePremiumId('publicpa'); const recordId=`${orderId}-1`; const apiBase=publicBaseUrl(req);
     const returnUrl=`${frontendBaseUrl(req)}/Beli-Pelan-Akui/?payment=return&orderId=${encodeURIComponent(orderId)}`; const callbackUrl=TOYYIB_CALLBACK_URL||`${apiBase}/api/toyyib-callback`;
@@ -1753,13 +1808,14 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
     const data = req.body || {};
     const product = data.product || {};
     const productName = cleanPremiumText(product.name || data.productName || "AZOBSS Premium Item", 160);
-    const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
+    const productId = cleanPremiumText(product.productId || product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
     const identity = await getFirebaseAdminIdentity(req);
     const submittedAmountText = cleanPremiumText(product.basePrice || data.basePrice || product.price || data.amount || data.price || "RM0", 40);
     const baseAmountSen = toyyibAmountSen(submittedAmountText);
     const baseAmount = baseAmountSen / 100;
-    const priceAdjustmentPercent = identity ? azobssIdentityPriceAdjustment(identity) : 0;
-    const adjustedAmount = identity ? azobssApplyUserPriceAdjustment(baseAmount, identity) : baseAmount;
+    const priceAdjustmentCategory = await azobssResolvePremiumPriceCategory(data, product, productId);
+    const priceAdjustmentPercent = identity ? azobssIdentityPriceAdjustment(identity, priceAdjustmentCategory) : 0;
+    const adjustedAmount = identity ? azobssApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory) : baseAmount;
     const amountSen = Math.round(adjustedAmount * 100);
     const amountText = azobssMoneyText(adjustedAmount);
     const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
@@ -1814,13 +1870,14 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
       saleAmount: adjustedAmount,
       saleAmountText: amountText,
       priceAdjustmentPercent,
+      priceAdjustmentCategory,
       status: "pending",
       paymentMethod: "toyyibpay",
       paymentReference: "",
       billCode,
       paymentUrl,
       user,
-      product: { ...product, id: productId, name: productName, basePrice: submittedAmountText, price: amountText, priceAdjustmentPercent },
+      product: { ...product, id: productId, name: productName, basePrice: submittedAmountText, price: amountText, priceAdjustmentPercent, priceAdjustmentCategory },
       ...(azSubIsSaleProduct(product, data) ? azSubPatchFromProduct(product, data) : {}),
       staffReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
       shareReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
@@ -1832,7 +1889,7 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
       createdAt: new Date(now).toISOString()
     };
     upsertPremiumOrder(order);
-    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent });
+    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent, priceAdjustmentCategory });
   } catch (err) {
     res.status(500).json({ ok:false, error: err.message || "Failed create ToyyibPay bill" });
   }
@@ -1964,7 +2021,7 @@ app.post("/api/premium/complete-purchase", async (req, res) => {
   const data = req.body || {};
   const product = data.product || {};
   const productName = cleanPremiumText(product.name || data.productName, 160);
-  const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
+  const productId = cleanPremiumText(product.productId || product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
   const amount = cleanPremiumText(product.price || data.amount || data.price, 40);
   const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
   const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);

@@ -1,6 +1,6 @@
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=591';
+import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=592';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
@@ -63,7 +63,7 @@ const JUPEM_STATE_CODES = {
 };
 
 let auth = null;
-let priceAdjustmentPercent = Number(getCachedPriceAdjustment().percent || 0);
+let priceAdjustmentPercent = Number(getCachedPriceAdjustment('paBm').percent || 0);
 
 async function getPaBmAuthToken(forceRefresh = false) {
   if (!auth) return '';
@@ -837,7 +837,7 @@ function watchPaymentTotal() {
 }
 
 async function init() {
-  const adjustment = await waitForPriceAdjustment().catch(() => ({percent:0}));
+  const adjustment = await waitForPriceAdjustment('paBm').catch(() => ({percent:0}));
   priceAdjustmentPercent = Number(adjustment?.percent || 0);
   const apps = getApps();
   auth = apps.length ? getAuth(apps[0]) : null;
@@ -891,7 +891,7 @@ async function init() {
   });
   window.addEventListener('storage', renderCart);
   window.addEventListener('azobss:pabm-cart-updated', renderCart);
-  window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercent = Number(event.detail?.percent || 0); const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
+  window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercent = Number(event.detail?.percentByCategory?.paBm || 0); const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
   watchPaymentTotal();
   renderCart();
   if (auth) onAuthStateChanged(auth, (user) => {

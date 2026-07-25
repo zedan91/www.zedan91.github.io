@@ -70,7 +70,7 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 .az-admin-registered-sort{background:#07111f;color:#eaf2ff;border:1px solid rgba(148,163,184,.35);border-radius:10px;padding:11px 14px;min-width:220px;font-weight:700;outline:none}
 .az-admin-registered-sort:focus{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.15)}
 @media(max-width:720px){.az-admin-registered-toolbar{flex-direction:column;align-items:stretch}.az-admin-registered-search,.az-admin-registered-sort,#registeredUsersRefreshBtn{width:100%;min-width:0}}
-.az-admin-reg-price-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;border:1px solid rgba(56,189,248,.35);background:rgba(14,116,144,.16);color:#bae6fd}.az-admin-reg-price-pill.discount{border-color:rgba(34,197,94,.42);background:rgba(22,101,52,.20);color:#86efac}.az-admin-reg-price-pill.markup{border-color:rgba(245,158,11,.42);background:rgba(120,53,15,.20);color:#fde68a}.az-reg-help{margin:6px 0 0;color:#94a3b8;font-size:12px;line-height:1.45}.az-reg-dialog input[type=number]{font-variant-numeric:tabular-nums}
+.az-admin-reg-price-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;border:1px solid rgba(56,189,248,.35);background:rgba(14,116,144,.16);color:#bae6fd}.az-admin-reg-price-pill.discount{border-color:rgba(34,197,94,.42);background:rgba(22,101,52,.20);color:#86efac}.az-admin-reg-price-pill.markup{border-color:rgba(245,158,11,.42);background:rgba(120,53,15,.20);color:#fde68a}.az-reg-help{margin:6px 0 0;color:#94a3b8;font-size:12px;line-height:1.45}.az-reg-dialog input[type=number]{font-variant-numeric:tabular-nums}.az-reg-price-section{margin-top:4px;padding:12px;border:1px solid rgba(56,189,248,.24);border-radius:14px;background:rgba(2,6,23,.38)}.az-reg-price-heading{margin:0 0 10px;color:#7dd3fc;font-size:13px;font-weight:950}.az-reg-price-section .row+ .row{margin-top:0}@media(max-width:560px){.az-reg-dialog .row{grid-template-columns:1fr}}
 
 
 /* AZOBSS 258: Admin friendly UI refresh */
@@ -727,7 +727,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 .az-reg-modal.is-open{display:flex}
 .az-reg-dialog{
   width:min(520px,96vw);background:#0f172a;border:1px solid rgba(148,163,184,.35);
-  border-radius:18px;padding:18px;color:#fff;box-shadow:0 20px 50px rgba(0,0,0,.45)
+  border-radius:18px;padding:18px;color:#fff;box-shadow:0 20px 50px rgba(0,0,0,.45);max-height:92vh;overflow:auto
 }
 .az-reg-dialog input,.az-reg-dialog select{
   width:100%;height:38px;margin:6px 0 10px;border-radius:10px;
@@ -5242,17 +5242,44 @@ function azRegRoleLabel(x){
 function azRegPaDotHtml(pa){
   return `<span class="az-admin-reg-pabm-pill ${pa?'on':'off'}"><span class="az-pabm-dot ${pa?'on':'off'}"></span>PA/BM ${pa?'allowed':'off'}</span>`;
 }
-function azRegPricePercent(x){
-  const managed=x?.adminPriceAdjustmentOverride===true||String(x?.priceAdjustmentManagedBy||'').toLowerCase()==='admin';
-  const raw=managed?(x?.adminPriceAdjustmentPercent??x?.priceAdjustmentPercent??0):(x?.priceAdjustmentPercent??x?.adminPriceAdjustmentPercent??0);
-  const n=Number(raw);
+const AZ_REG_PRICE_CATEGORIES=[
+  ['paBm','PA/BM'],
+  ['publicPa','PA Awam'],
+  ['software','Software'],
+  ['cadTools','CAD Tools']
+];
+function azRegNormalisePricePercent(value){
+  const n=Number(value);
   return Number.isFinite(n)?Math.max(-99,Math.min(500,Math.round(n*100)/100)):0;
 }
+function azRegPricePercents(x){
+  const managed=x?.adminPriceAdjustmentOverride===true||String(x?.priceAdjustmentManagedBy||'').toLowerCase()==='admin';
+  const managedMap=x?.adminPriceAdjustmentByCategory&&typeof x.adminPriceAdjustmentByCategory==='object'?x.adminPriceAdjustmentByCategory:null;
+  const publicMap=x?.priceAdjustmentByCategory&&typeof x.priceAdjustmentByCategory==='object'?x.priceAdjustmentByCategory:null;
+  const map=managed?(managedMap||publicMap):(publicMap||managedMap);
+  const direct={
+    paBm:managed?(x?.adminPaBmPriceAdjustmentPercent??x?.paBmPriceAdjustmentPercent):(x?.paBmPriceAdjustmentPercent??x?.adminPaBmPriceAdjustmentPercent),
+    publicPa:managed?(x?.adminPublicPaPriceAdjustmentPercent??x?.publicPaPriceAdjustmentPercent):(x?.publicPaPriceAdjustmentPercent??x?.adminPublicPaPriceAdjustmentPercent),
+    software:managed?(x?.adminSoftwarePriceAdjustmentPercent??x?.softwarePriceAdjustmentPercent):(x?.softwarePriceAdjustmentPercent??x?.adminSoftwarePriceAdjustmentPercent),
+    cadTools:managed?(x?.adminCadToolsPriceAdjustmentPercent??x?.cadToolsPriceAdjustmentPercent):(x?.cadToolsPriceAdjustmentPercent??x?.adminCadToolsPriceAdjustmentPercent)
+  };
+  const hasSpecific=!!map||Object.values(direct).some(v=>v!==undefined&&v!==null&&v!=='');
+  if(hasSpecific){
+    return Object.fromEntries(AZ_REG_PRICE_CATEGORIES.map(([key])=>[key,azRegNormalisePricePercent(map&&Object.prototype.hasOwnProperty.call(map,key)?map[key]:(direct[key]??0))]));
+  }
+  const legacy=azRegNormalisePricePercent(managed?(x?.adminPriceAdjustmentPercent??x?.priceAdjustmentPercent??0):(x?.priceAdjustmentPercent??x?.adminPriceAdjustmentPercent??0));
+  return Object.fromEntries(AZ_REG_PRICE_CATEGORIES.map(([key])=>[key,legacy]));
+}
 function azRegPricePillHtml(x){
-  const p=azRegPricePercent(x);
-  const cls=p<0?'discount':p>0?'markup':'';
-  const label=p<0?`Harga ${Math.abs(p)}% lebih rendah`:p>0?`Harga +${p}%`:'Harga asal';
-  return `<span class="az-admin-reg-price-pill ${cls}">${label}</span>`;
+  const values=azRegPricePercents(x);
+  const changed=AZ_REG_PRICE_CATEGORIES.filter(([key])=>values[key]!==0);
+  if(!changed.length)return '<span class="az-admin-reg-price-pill">Semua harga asal</span>';
+  return changed.map(([key,label])=>{
+    const p=values[key];
+    const cls=p<0?'discount':'markup';
+    const text=p<0?`${label} -${Math.abs(p)}%`:`${label} +${p}%`;
+    return `<span class="az-admin-reg-price-pill ${cls}">${text}</span>`;
+  }).join('');
 }
 function azRegNameEmail(x){return String((azRegUser(x)||'')+' '+(x.email||x.authEmail||'')).toLowerCase();}
 function azRegSearchText(x){
@@ -5328,16 +5355,27 @@ function openRegisteredEdit(id){
   $('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
   $('#azRegEditRole').value=x.role||'member';
   $('#azRegEditPa').value=azRegPaAllowed(x)?'true':'false';
-  $('#azRegEditPricePercent').value=String(azRegPricePercent(x));
+  const pricePercents=azRegPricePercents(x);
+  $('#azRegEditPricePaBm').value=String(pricePercents.paBm);
+  $('#azRegEditPricePublicPa').value=String(pricePercents.publicPa);
+  $('#azRegEditPriceSoftware').value=String(pricePercents.software);
+  $('#azRegEditPriceCad').value=String(pricePercents.cadTools);
   $('#azRegEditModal')?.classList.add('is-open');
 }
 async function saveRegisteredEdit(){
   const id=$('#azRegEditDocId')?.value||'';
   if(!id)return;
   const pa=$('#azRegEditPa')?.value==='true';
-  const rawPricePercent=Number($('#azRegEditPricePercent')?.value||0);
-  if(!Number.isFinite(rawPricePercent)||rawPricePercent<-99||rawPricePercent>500){toast('Price adjustment must be between -99% and +500%.');return;}
-  const priceAdjustmentPercent=Math.round(rawPricePercent*100)/100;
+  const priceInputs={
+    paBm:Number($('#azRegEditPricePaBm')?.value||0),
+    publicPa:Number($('#azRegEditPricePublicPa')?.value||0),
+    software:Number($('#azRegEditPriceSoftware')?.value||0),
+    cadTools:Number($('#azRegEditPriceCad')?.value||0)
+  };
+  if(Object.values(priceInputs).some(value=>!Number.isFinite(value)||value<-99||value>500)){
+    toast('Setiap pelarasan harga mesti antara -99% hingga +500%.');return;
+  }
+  const priceAdjustmentByCategory=Object.fromEntries(Object.entries(priceInputs).map(([key,value])=>[key,Math.round(value*100)/100]));
   const code = pa ? 'ZX6186' : '';
   await updateDoc(doc(db,'users',id),{
     email:$('#azRegEditEmail')?.value.trim()||'',
@@ -5345,10 +5383,21 @@ async function saveRegisteredEdit(){
     phone:$('#azRegEditPhone')?.value.trim()||'',
     role:$('#azRegEditRole')?.value||'member',
 
-    // Per-user price adjustment across PA/BM, Public PA, Software and CAD.
+    // Per-user price adjustment kept separately for every paid section.
     adminPriceAdjustmentOverride:true,
-    adminPriceAdjustmentPercent:priceAdjustmentPercent,
-    priceAdjustmentPercent:priceAdjustmentPercent,
+    adminPriceAdjustmentByCategory:priceAdjustmentByCategory,
+    priceAdjustmentByCategory:priceAdjustmentByCategory,
+    adminPaBmPriceAdjustmentPercent:priceAdjustmentByCategory.paBm,
+    paBmPriceAdjustmentPercent:priceAdjustmentByCategory.paBm,
+    adminPublicPaPriceAdjustmentPercent:priceAdjustmentByCategory.publicPa,
+    publicPaPriceAdjustmentPercent:priceAdjustmentByCategory.publicPa,
+    adminSoftwarePriceAdjustmentPercent:priceAdjustmentByCategory.software,
+    softwarePriceAdjustmentPercent:priceAdjustmentByCategory.software,
+    adminCadToolsPriceAdjustmentPercent:priceAdjustmentByCategory.cadTools,
+    cadToolsPriceAdjustmentPercent:priceAdjustmentByCategory.cadTools,
+    // Neutralise the old one-value setting so legacy scripts cannot apply it globally.
+    adminPriceAdjustmentPercent:0,
+    priceAdjustmentPercent:0,
     priceAdjustmentManagedBy:'admin',
 
     // Admin Dashboard is the source of truth for PA/BM access.
@@ -6113,8 +6162,17 @@ onAuthStateChanged(auth, async user => {
       <div><label>Role</label><select id="azRegEditRole"><option value="member">member</option><option value="staff">staff</option><option value="semiAdmin">semiAdmin</option><option value="admin">admin</option></select></div>
       <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
     </div>
-    <div class="row">
-      <div style="grid-column:1/-1"><label>Price Adjustment (%)</label><input id="azRegEditPricePercent" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"><div class="az-reg-help">Gunakan nilai negatif untuk diskaun, contohnya <b>-20</b>. Gunakan nilai positif untuk kenaikan, contohnya <b>15</b>. Nilai <b>0</b> menggunakan harga asal. Digunakan untuk PA/BM, Pelan Akui Awam, Software dan CAD Tools selepas user login.</div></div>
+    <div class="az-reg-price-section">
+      <div class="az-reg-price-heading">Pelarasan Harga Mengikut Bahagian</div>
+      <div class="row">
+        <div><label>PA/BM & Lot Kadaster (%)</label><input id="azRegEditPricePaBm" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
+        <div><label>Pelan Akui Awam (%)</label><input id="azRegEditPricePublicPa" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Software (%)</label><input id="azRegEditPriceSoftware" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
+        <div><label>CAD Tools (%)</label><input id="azRegEditPriceCad" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"></div>
+      </div>
+      <div class="az-reg-help"><b>-20</b> memberi diskaun 20%, <b>15</b> menaikkan harga 15%, dan <b>0</b> mengekalkan harga asal. Tetapan setiap bahagian tidak mempengaruhi bahagian lain. Pelan langganan atau kod aktivasi mengikut kategori Software atau CAD Tools produknya.</div>
     </div>
     <div class="actions">
       <button class="az-reg-cancel" id="azRegCancelBtn" type="button">Cancel</button>

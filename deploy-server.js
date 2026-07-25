@@ -833,6 +833,16 @@ async function azCommissionIdentityFromRequest(req) {
           identity.adminPriceAdjustmentOverride = x.adminPriceAdjustmentOverride === true;
           identity.adminPriceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.adminPriceAdjustmentPercent ?? x.priceAdjustmentPercent ?? 0);
           identity.priceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
+          identity.adminPriceAdjustmentByCategory = x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object" ? { ...x.adminPriceAdjustmentByCategory } : null;
+          identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
+          identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
+          identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
+          identity.adminPublicPaPriceAdjustmentPercent = x.adminPublicPaPriceAdjustmentPercent;
+          identity.publicPaPriceAdjustmentPercent = x.publicPaPriceAdjustmentPercent;
+          identity.adminSoftwarePriceAdjustmentPercent = x.adminSoftwarePriceAdjustmentPercent;
+          identity.softwarePriceAdjustmentPercent = x.softwarePriceAdjustmentPercent;
+          identity.adminCadToolsPriceAdjustmentPercent = x.adminCadToolsPriceAdjustmentPercent;
+          identity.cadToolsPriceAdjustmentPercent = x.cadToolsPriceAdjustmentPercent;
           identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
         });
       } catch (err) {
@@ -3684,18 +3694,47 @@ function azNormalizeUserPriceAdjustment(value) {
   if (!Number.isFinite(n)) return 0;
   return Math.max(-99, Math.min(500, Math.round(n * 100) / 100));
 }
-function azIdentityPriceAdjustment(identity = {}) {
-  const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
-  const raw = managed
-    ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0)
-    : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0);
-  return azNormalizeUserPriceAdjustment(raw);
+function azPriceAdjustmentCategory(value = "software") {
+  const key = String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (["pabm","jupem","lot","lotkadaster","ndcdb"].includes(key)) return "paBm";
+  if (["publicpa","paawam","pelanakui","pelanakuiawam"].includes(key)) return "publicPa";
+  if (["cad","cadtools","cadtool"].includes(key)) return "cadTools";
+  return "software";
 }
-function azApplyUserPriceAdjustment(amount, identity = {}) {
+function azIdentityPriceAdjustments(identity = {}) {
+  const keys = ["paBm","publicPa","software","cadTools"];
+  const out = { paBm:0, publicPa:0, software:0, cadTools:0 };
+  const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
+  const managedMap = identity.adminPriceAdjustmentByCategory && typeof identity.adminPriceAdjustmentByCategory === "object" ? identity.adminPriceAdjustmentByCategory : null;
+  const publicMap = identity.priceAdjustmentByCategory && typeof identity.priceAdjustmentByCategory === "object" ? identity.priceAdjustmentByCategory : null;
+  const map = managed ? (managedMap || publicMap) : (publicMap || managedMap);
+  const direct = {
+    paBm: managed ? (identity.adminPaBmPriceAdjustmentPercent ?? identity.paBmPriceAdjustmentPercent) : (identity.paBmPriceAdjustmentPercent ?? identity.adminPaBmPriceAdjustmentPercent),
+    publicPa: managed ? (identity.adminPublicPaPriceAdjustmentPercent ?? identity.publicPaPriceAdjustmentPercent) : (identity.publicPaPriceAdjustmentPercent ?? identity.adminPublicPaPriceAdjustmentPercent),
+    software: managed ? (identity.adminSoftwarePriceAdjustmentPercent ?? identity.softwarePriceAdjustmentPercent) : (identity.softwarePriceAdjustmentPercent ?? identity.adminSoftwarePriceAdjustmentPercent),
+    cadTools: managed ? (identity.adminCadToolsPriceAdjustmentPercent ?? identity.cadToolsPriceAdjustmentPercent) : (identity.cadToolsPriceAdjustmentPercent ?? identity.adminCadToolsPriceAdjustmentPercent)
+  };
+  const hasSpecific = !!map || Object.values(direct).some(value => value !== undefined && value !== null && value !== "");
+  if (hasSpecific) {
+    for (const key of keys) out[key] = azNormalizeUserPriceAdjustment(map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : (direct[key] ?? 0));
+    return out;
+  }
+  const legacy = azNormalizeUserPriceAdjustment(managed ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0) : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0));
+  for (const key of keys) out[key] = legacy;
+  return out;
+}
+function azIdentityPriceAdjustment(identity = {}, category = "software") {
+  return azIdentityPriceAdjustments(identity)[azPriceAdjustmentCategory(category)] || 0;
+}
+function azApplyUserPriceAdjustment(amount, identity = {}, category = "software") {
   const base = Number(amount);
   if (!Number.isFinite(base) || base <= 0) return 0;
-  const percent = azIdentityPriceAdjustment(identity);
+  const percent = azIdentityPriceAdjustment(identity, category);
   return Math.max(0.01, Math.round((base * (1 + percent / 100) + Number.EPSILON) * 100) / 100);
+}
+function azTrustedPremiumPriceCategory(trustedResolved = {}, product = {}) {
+  const hint = [trustedResolved.trustedSource, product.source, product.productSource, product.category, product.type, product.collection].map(v => String(v || "").toLowerCase()).join(" ");
+  return /firestore:cad|staffcad|cadtools|cad-tools|cad tool/.test(hint) ? "cadTools" : "software";
 }
 function azAdjustedMoneyText(amount) {
   const n = Number(amount || 0);
@@ -9689,8 +9728,8 @@ async function handler(req, res) {
         const orderId = makeId('publicpa');
         const recordId = `${orderId}-1`;
         const baseAmount = 30;
-        const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity) : 0;
-        const amount = identity ? azApplyUserPriceAdjustment(baseAmount, identity) : baseAmount;
+        const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity, "publicPa") : 0;
+        const amount = identity ? azApplyUserPriceAdjustment(baseAmount, identity, "publicPa") : baseAmount;
         const amountSen = Math.round(amount * 100);
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = `${FRONTEND_BASE_URL}/Beli-Pelan-Akui/?payment=return&orderId=${encodeURIComponent(orderId)}`;
@@ -9746,7 +9785,7 @@ async function handler(req, res) {
         const areaProductTypes = new Set(["NDCDB","NDCDB_C3"]);
         const seenItems = new Set();
         const items = [];
-        const priceAdjustmentPercent = azIdentityPriceAdjustment(identity);
+        const priceAdjustmentPercent = azIdentityPriceAdjustment(identity, "paBm");
         for (const rawItem of rawItems) {
           const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
           if (!allowedProductTypes.has(productType)) {
@@ -9782,7 +9821,7 @@ async function handler(req, res) {
           else if (productType === "SYIT_PIAWAI") amount = 7;
           else if (areaProductTypes.has(productType)) amount = verifiedLot.amount;
           const baseAmount = amount;
-          amount = azApplyUserPriceAdjustment(baseAmount, identity);
+          amount = azApplyUserPriceAdjustment(baseAmount, identity, "paBm");
           const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
           if (seenItems.has(uniqueKey)) continue;
           seenItems.add(uniqueKey);
@@ -9877,8 +9916,9 @@ async function handler(req, res) {
         const baseAmountSen = Number(trustedResolved.amountSen || parseAmountToSen(baseAmountText));
         const baseAmount = baseAmountSen / 100;
         const identity = await azCommissionIdentityFromRequest(req);
-        const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity) : 0;
-        const adjustedAmount = identity ? azApplyUserPriceAdjustment(baseAmount, identity) : baseAmount;
+        const priceAdjustmentCategory = azTrustedPremiumPriceCategory(trustedResolved, product);
+        const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity, priceAdjustmentCategory) : 0;
+        const adjustedAmount = identity ? azApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory) : baseAmount;
         const amountSen = Math.round(adjustedAmount * 100);
         const amountText = azAdjustedMoneyText(adjustedAmount);
         const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || "");
@@ -9926,8 +9966,8 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount, saleAmountText: amountText, priceAdjustmentPercent, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, basePrice:baseAmountText, price:amountText, priceAdjustmentPercent, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product) }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
-        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent }, null, 2), "application/json");
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount, saleAmountText: amountText, priceAdjustmentPercent, priceAdjustmentCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, basePrice:baseAmountText, price:amountText, priceAdjustmentPercent, priceAdjustmentCategory, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product) }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
+        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent, priceAdjustmentCategory }, null, 2), "application/json");
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");

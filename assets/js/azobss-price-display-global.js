@@ -1,9 +1,10 @@
-import { adjustPriceText, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=591';
+import { adjustPriceText, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=592';
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
 const basePriceByProductId = new Map();
-let percent = Number(getCachedPriceAdjustment().percent || 0);
+const priceCategory = /CAD-Tools/i.test(location.pathname) ? 'cadTools' : 'software';
+let percent = Number(getCachedPriceAdjustment(priceCategory).percent || 0);
 let scheduled = false;
 
 function textPrice(value){ return String(value || '').trim(); }
@@ -69,6 +70,8 @@ function installFetchGuard(){
         const base=basePriceByProductId.get(productId)||textPrice(product.basePrice||bodyObj.basePrice||'');
         if(base){ product.basePrice=base; bodyObj.basePrice=base; }
         product.priceAdjustmentPercent=percent;
+        product.priceAdjustmentCategory=priceCategory;
+        bodyObj.priceAdjustmentCategory=priceCategory;
         bodyObj.product=product;
         cfg.body=JSON.stringify(bodyObj);
       }
@@ -84,8 +87,8 @@ function installFetchGuard(){
 }
 
 installFetchGuard();
-waitForPriceAdjustment().then(state=>{percent=Number(state?.percent||0);applyAll();});
-window.addEventListener('azobss:price-adjustment-change',event=>{percent=Number(event.detail?.percent||0);applyAll();});
+waitForPriceAdjustment(priceCategory).then(state=>{percent=Number(state?.percent||0);applyAll();});
+window.addEventListener('azobss:price-adjustment-change',event=>{percent=Number(event.detail?.percentByCategory?.[priceCategory]||0);applyAll();});
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyAll,{once:true}); else applyAll();
 new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
 [300,900,1800,3500].forEach(ms=>setTimeout(applyAll,ms));
