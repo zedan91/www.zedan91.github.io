@@ -1,0 +1,219 @@
+/* AZOBSS 587: compact system font + navbar More dropdown. */
+:root{
+  --azobss-compact-font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea{
+  font-family:var(--azobss-compact-font)!important;
+}
+
+body{
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+.market-sticky-bar,
+.market-sticky-bar button,
+.market-sticky-bar input,
+.market-sticky-bar select,
+.market-sticky-bar textarea{
+  font-family:var(--azobss-compact-font)!important;
+}
+
+/* Standardise all public sticky-bar labels to the same compact typography. */
+.market-sticky-bar .market-nav > a:not(.azAdminDashboardBtn):not(.azStaffDashboardBtn):not(.nav-whatsapp-link),
+.market-sticky-bar .market-nav > button,
+.market-sticky-bar .site-auth-btn,
+.market-sticky-bar .user-name{
+  font-family:var(--azobss-compact-font)!important;
+  font-size:clamp(11px,1vw,13px)!important;
+  font-weight:800!important;
+  letter-spacing:0!important;
+}
+
+.market-sticky-bar .market-nav > a:not(.azAdminDashboardBtn):not(.azStaffDashboardBtn):not(.nav-whatsapp-link){
+  min-height:32px!important;
+  height:32px!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+}
+
+.market-nav.az-more-enabled{
+  overflow:visible!important;
+}
+
+.az-more-nav{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+  z-index:8;
+}
+
+.az-more-nav::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:100%;
+  height:9px;
+}
+
+.market-nav .az-more-trigger{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:32px;
+  height:32px;
+  padding:0 10px;
+  border:1px solid rgba(148,163,184,.28);
+  border-radius:999px;
+  background:#0e1729;
+  color:#e5e7eb;
+  text-decoration:none;
+  font-family:var(--azobss-compact-font)!important;
+  font-size:clamp(11px,1vw,13px);
+  font-weight:800;
+  line-height:1;
+  text-shadow:0 1px 8px rgba(0,0,0,.45);
+  white-space:nowrap;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  box-shadow:none;
+}
+
+.market-nav .az-more-trigger:hover,
+.market-nav .az-more-trigger:focus-visible,
+.az-more-nav.is-open .az-more-trigger{
+  color:#14b8a6;
+  border-color:rgba(20,184,166,.72);
+  outline:none;
+}
+
+.market-nav .az-more-trigger.is-active,
+.market-nav .az-more-trigger.market-nav-active,
+.market-nav .az-more-trigger.is-current{
+  background:#22c55e;
+  border-color:#22c55e;
+  color:#052e16;
+  text-shadow:none;
+}
+
+.az-more-icon{
+  width:16px;
+  height:16px;
+  display:block;
+  flex:0 0 16px;
+  fill:currentColor;
+}
+
+.az-more-chevron{
+  display:inline-block;
+  font-size:10px;
+  line-height:1;
+  transform:translateY(-1px);
+  transition:transform .16s ease;
+}
+
+.az-more-nav:hover .az-more-chevron,
+.az-more-nav:focus-within .az-more-chevron,
+.az-more-nav.is-open .az-more-chevron{
+  transform:translateY(-1px) rotate(180deg);
+}
+
+.az-more-dropdown{
+  position:absolute;
+  top:calc(100% + 7px);
+  right:0;
+  min-width:205px;
+  padding:7px;
+  border:1px solid rgba(148,163,184,.34);
+  border-radius:12px;
+  background:rgba(8,17,31,.98);
+  box-shadow:0 18px 45px rgba(0,0,0,.5);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(-5px);
+  transition:opacity .15s ease,transform .15s ease,visibility .15s ease;
+  z-index:10050;
+}
+
+.az-more-nav:hover .az-more-dropdown,
+.az-more-nav:focus-within .az-more-dropdown,
+.az-more-nav.is-open .az-more-dropdown{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+
+.market-nav .az-more-dropdown a{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  width:100%!important;
+  min-height:40px!important;
+  height:auto!important;
+  margin:0!important;
+  padding:9px 11px!important;
+  border:0!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  color:#e5e7eb!important;
+  text-decoration:none!important;
+  font-family:var(--azobss-compact-font)!important;
+  font-size:13px!important;
+  font-weight:750!important;
+  line-height:1.2!important;
+  text-align:left!important;
+  text-shadow:none!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+
+.market-nav .az-more-dropdown a:hover,
+.market-nav .az-more-dropdown a:focus-visible{
+  background:rgba(37,99,235,.18)!important;
+  color:#67e8f9!important;
+  outline:none!important;
+}
+
+.market-nav .az-more-dropdown a.is-active{
+  background:rgba(34,197,94,.15)!important;
+  color:#86efac!important;
+}
+
+.az-more-item-icon{
+  width:20px;
+  height:20px;
+  flex:0 0 20px;
+  display:block;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+@media(max-width:760px){
+  .market-nav .az-more-trigger{
+    min-height:30px;
+    height:30px;
+    padding:0 9px;
+    font-size:12px;
+  }
+  .az-more-dropdown{
+    min-width:190px;
+    right:0;
+  }
+}
