@@ -829,6 +829,11 @@ async function azCommissionIdentityFromRequest(req) {
           identity.role = String(x.role || "").toLowerCase();
           identity.profileEmail = String(x.email || x.authEmail || "").toLowerCase();
           identity.email = identity.authEmail || identity.profileEmail || identity.email;
+          identity.userDocId = String(doc.id || identity.username || identity.uid || "");
+          identity.adminPriceAdjustmentOverride = x.adminPriceAdjustmentOverride === true;
+          identity.adminPriceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.adminPriceAdjustmentPercent ?? x.priceAdjustmentPercent ?? 0);
+          identity.priceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
+          identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
         });
       } catch (err) {
         console.warn("Commission identity profile lookup failed:", err && (err.message || err));
@@ -3672,6 +3677,29 @@ function getPremiumUser(data) {
     rawEmail: cleanPremiumText(user.email || data.buyerEmail || data.email || data.customerEmail || data.billEmail || "", 160),
     phone: cleanPremiumText(user.phone || data.phone || data.buyerPhone || '01135600723', 40)
   };
+}
+
+function azNormalizeUserPriceAdjustment(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(-99, Math.min(500, Math.round(n * 100) / 100));
+}
+function azIdentityPriceAdjustment(identity = {}) {
+  const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
+  const raw = managed
+    ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0)
+    : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0);
+  return azNormalizeUserPriceAdjustment(raw);
+}
+function azApplyUserPriceAdjustment(amount, identity = {}) {
+  const base = Number(amount);
+  if (!Number.isFinite(base) || base <= 0) return 0;
+  const percent = azIdentityPriceAdjustment(identity);
+  return Math.max(0.01, Math.round((base * (1 + percent / 100) + Number.EPSILON) * 100) / 100);
+}
+function azAdjustedMoneyText(amount) {
+  const n = Number(amount || 0);
+  return `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
 }
 
 function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
@@ -9660,18 +9688,20 @@ async function handler(req, res) {
         const uid = cleanPremiumText(identity?.uid || `guest_${emailHash}`, 120);
         const orderId = makeId('publicpa');
         const recordId = `${orderId}-1`;
-        const amountSen = 3000;
-        const amount = 30;
+        const baseAmount = 30;
+        const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity) : 0;
+        const amount = identity ? azApplyUserPriceAdjustment(baseAmount, identity) : baseAmount;
+        const amountSen = Math.round(amount * 100);
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = `${FRONTEND_BASE_URL}/Beli-Pelan-Akui/?payment=return&orderId=${encodeURIComponent(orderId)}`;
         const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
-        const item = { id:recordId, firestoreId:recordId, productType:'PA', itemCode:paNumber, negeri, amount, filename:`PA${paNumber}.pdf`, downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${encodeURIComponent(paNumber)}.TIF&negeri=${encodeURIComponent(negeri)}`, createdAtMs:Date.now(), publicPaPurchase:true };
-        const billPayload = { userSecretKey:TOYYIB_SECRET_KEY, categoryCode:TOYYIB_CATEGORY_CODE, billName:cleanForToyyib(`Pelan Akui PA${paNumber}`,30), billDescription:cleanForToyyib(`AZOBSS Public Pelan Akui PA${paNumber} - RM30`,100), billPriceSetting:1, billPayorInfo:1, billAmount:amountSen, billReturnUrl:returnUrl, billCallbackUrl:callbackUrl, billExternalReferenceNo:orderId, billTo:cleanForToyyib(buyerName,30), billEmail:cleanForToyyib(buyerEmail,80), billPhone:cleanForToyyib(buyerPhone,20), billSplitPayment:0, billSplitPaymentArgs:'', billPaymentChannel:0, billContentEmail:`Terima kasih. Pembelian Pelan Akui PA${paNumber} berjumlah RM30.`, billChargeToCustomer:1, billExpiryDays:3, enableDuitNowQR:1, chargeDuitNowQR:0 };
+        const item = { id:recordId, firestoreId:recordId, productType:'PA', itemCode:paNumber, negeri, baseAmount, amount, priceAdjustmentPercent, filename:`PA${paNumber}.pdf`, downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${encodeURIComponent(paNumber)}.TIF&negeri=${encodeURIComponent(negeri)}`, createdAtMs:Date.now(), publicPaPurchase:true };
+        const billPayload = { userSecretKey:TOYYIB_SECRET_KEY, categoryCode:TOYYIB_CATEGORY_CODE, billName:cleanForToyyib(`Pelan Akui PA${paNumber}`,30), billDescription:cleanForToyyib(`AZOBSS Public Pelan Akui PA${paNumber} - ${azAdjustedMoneyText(amount)}`,100), billPriceSetting:1, billPayorInfo:1, billAmount:amountSen, billReturnUrl:returnUrl, billCallbackUrl:callbackUrl, billExternalReferenceNo:orderId, billTo:cleanForToyyib(buyerName,30), billEmail:cleanForToyyib(buyerEmail,80), billPhone:cleanForToyyib(buyerPhone,20), billSplitPayment:0, billSplitPaymentArgs:'', billPaymentChannel:0, billContentEmail:`Terima kasih. Pembelian Pelan Akui PA${paNumber} berjumlah ${azAdjustedMoneyText(amount)}.`, billChargeToCustomer:1, billExpiryDays:3, enableDuitNowQR:1, chargeDuitNowQR:0 };
         const apiResult = await postToyyib('createBill', billPayload);
         const billCode = Array.isArray(apiResult) ? (apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode)) : (apiResult && (apiResult.BillCode || apiResult.billCode));
         if (!billCode) return send(res, 502, JSON.stringify({ok:false,error:"ToyyibPay tidak return BillCode.",raw:apiResult}), "application/json");
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        let order = upsertPremiumOrder({ orderId, productId:'public-pa-rm30', productName:`Pelan Akui PA${paNumber}`, amount:'RM30', amountSen, saleAmount:30, saleAmountText:'RM30.00', status:'pending', paymentMethod:'toyyibpay', paymentReference:'', billCode, paymentUrl, returnUrl, user:{uid,username:usernameKey,usernameKey,email:buyerEmail,authEmail:identity?.authEmail||'',phone:buyerPhone,displayName:buyerName}, email:buyerEmail, buyerEmail, phone:buyerPhone, paBmItems:[item], publicPaPurchase:true, publicPaRecordId:recordId, publicPaPriceRm:30, source:'public-pa-rm30', maxDownload:5, maxDownloads:5, expiryHours:168, createdAt:new Date().toISOString(), createdAtMs:Date.now(), commissionSkippedReason:'public-pa-service' });
+        let order = upsertPremiumOrder({ orderId, productId:'public-pa-rm30', productName:`Pelan Akui PA${paNumber}`, amount:azAdjustedMoneyText(amount), amountSen, baseAmount, baseAmountSen:3000, saleAmount:amount, saleAmountText:azAdjustedMoneyText(amount), priceAdjustmentPercent, status:'pending', paymentMethod:'toyyibpay', paymentReference:'', billCode, paymentUrl, returnUrl, user:{uid,username:usernameKey,usernameKey,email:buyerEmail,authEmail:identity?.authEmail||'',phone:buyerPhone,displayName:buyerName}, email:buyerEmail, buyerEmail, phone:buyerPhone, paBmItems:[item], publicPaPurchase:true, publicPaRecordId:recordId, publicPaPriceRm:amount, source:'public-pa-rm30', maxDownload:5, maxDownloads:5, expiryHours:168, createdAt:new Date().toISOString(), createdAtMs:Date.now(), commissionSkippedReason:'public-pa-service' });
         try { await azPersistPremiumOrder(order); } catch (e) { console.warn('Public PA order persist skipped:',e&&e.message); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(order,'pending'); } catch (e) { console.warn('Public PA pending log sync skipped:',e&&e.message); }
         return send(res, 200, JSON.stringify({ok:true,success:true,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,status:'pending',amount,amountSen,unit:1,productId:'public-pa-rm30'}), "application/json");
@@ -9716,6 +9746,7 @@ async function handler(req, res) {
         const areaProductTypes = new Set(["NDCDB","NDCDB_C3"]);
         const seenItems = new Set();
         const items = [];
+        const priceAdjustmentPercent = azIdentityPriceAdjustment(identity);
         for (const rawItem of rawItems) {
           const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
           if (!allowedProductTypes.has(productType)) {
@@ -9750,6 +9781,8 @@ async function handler(req, res) {
           else if (productType === "GPS") amount = 9;
           else if (productType === "SYIT_PIAWAI") amount = 7;
           else if (areaProductTypes.has(productType)) amount = verifiedLot.amount;
+          const baseAmount = amount;
+          amount = azApplyUserPriceAdjustment(baseAmount, identity);
           const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
           if (seenItems.has(uniqueKey)) continue;
           seenItems.add(uniqueKey);
@@ -9757,7 +9790,9 @@ async function handler(req, res) {
             productType,
             itemCode,
             negeri,
+            baseAmount,
             amount,
+            priceAdjustmentPercent,
             variant,
             productId: cleanPremiumText(verifiedLot && verifiedLot.jobId || rawItem.productId || "", 120),
             stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
@@ -9768,6 +9803,7 @@ async function handler(req, res) {
           });
         }
         if (!items.length) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"No valid JUPEM documents were found in the cart." }, null, 2), "application/json");
+        const baseTotalAmount = Math.round((items.reduce((sum, item) => sum + Number(item.baseAmount || 0), 0) + Number.EPSILON) * 100) / 100;
         const totalAmount = Math.round((items.reduce((sum, item) => sum + item.amount, 0) + Number.EPSILON) * 100) / 100;
         if (totalAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Total bayaran tidak sah." }, null, 2), "application/json");
         const amountSen = Math.round(totalAmount * 100);
@@ -9807,10 +9843,10 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
         try { await azPersistPremiumOrder(paBmOrder); } catch (persistError) { console.warn("PA/BM premium order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
-        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, unit:items.length, status:"pending" }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, unit:items.length, status:"pending" }, null, 2), "application/json");
       } catch (e) {
         console.error("Create PA/BM ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create PA/BM ToyyibPay bill" }, null, 2), "application/json");
@@ -9837,10 +9873,17 @@ async function handler(req, res) {
         const baseProductName = cleanPremiumText(product.name || product.productName || data.productName || data.title || "AZOBSS Digital Product", 130);
         const productName = cleanPremiumText(activationPlan ? `${baseProductName} (${activationPlan.label || activationPlan.id})` : baseProductName, 160);
         const productId = cleanPremiumText(product.productId || product.id || data.productId || requestedProduct.productId || requestedProduct.id || productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), 160);
-        const amountText = cleanPremiumText(trustedResolved.amountText || product.price || "", 40);
-        const amountSen = Number(trustedResolved.amountSen || parseAmountToSen(amountText));
+        const baseAmountText = cleanPremiumText(trustedResolved.amountText || product.price || "", 40);
+        const baseAmountSen = Number(trustedResolved.amountSen || parseAmountToSen(baseAmountText));
+        const baseAmount = baseAmountSen / 100;
+        const identity = await azCommissionIdentityFromRequest(req);
+        const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity) : 0;
+        const adjustedAmount = identity ? azApplyUserPriceAdjustment(baseAmount, identity) : baseAmount;
+        const amountSen = Math.round(adjustedAmount * 100);
+        const amountText = azAdjustedMoneyText(adjustedAmount);
         const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || "");
-        const user = getPremiumUser(data);
+        const submittedUser = getPremiumUser(data);
+        const user = identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
         const requestedLimit = azobssDownloadLimitFromOrder({ ...data, product });
         const requestedExpiryHours = azobssExpiryHoursFromOrder({ ...data, product });
         if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing backend product name or valid backend amount." }, null, 2), "application/json");
@@ -9883,8 +9926,8 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, saleAmount: Number(amountSen)/100, saleAmountText: amountText, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, price:amountText, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product) }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
-        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending" }, null, 2), "application/json");
+        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount, saleAmountText: amountText, priceAdjustmentPercent, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, basePrice:baseAmountText, price:amountText, priceAdjustmentPercent, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product) }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
+        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent }, null, 2), "application/json");
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");

@@ -70,6 +70,7 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 .az-admin-registered-sort{background:#07111f;color:#eaf2ff;border:1px solid rgba(148,163,184,.35);border-radius:10px;padding:11px 14px;min-width:220px;font-weight:700;outline:none}
 .az-admin-registered-sort:focus{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.15)}
 @media(max-width:720px){.az-admin-registered-toolbar{flex-direction:column;align-items:stretch}.az-admin-registered-search,.az-admin-registered-sort,#registeredUsersRefreshBtn{width:100%;min-width:0}}
+.az-admin-reg-price-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;border:1px solid rgba(56,189,248,.35);background:rgba(14,116,144,.16);color:#bae6fd}.az-admin-reg-price-pill.discount{border-color:rgba(34,197,94,.42);background:rgba(22,101,52,.20);color:#86efac}.az-admin-reg-price-pill.markup{border-color:rgba(245,158,11,.42);background:rgba(120,53,15,.20);color:#fde68a}.az-reg-help{margin:6px 0 0;color:#94a3b8;font-size:12px;line-height:1.45}.az-reg-dialog input[type=number]{font-variant-numeric:tabular-nums}
 
 
 /* AZOBSS 258: Admin friendly UI refresh */
@@ -5241,6 +5242,18 @@ function azRegRoleLabel(x){
 function azRegPaDotHtml(pa){
   return `<span class="az-admin-reg-pabm-pill ${pa?'on':'off'}"><span class="az-pabm-dot ${pa?'on':'off'}"></span>PA/BM ${pa?'allowed':'off'}</span>`;
 }
+function azRegPricePercent(x){
+  const managed=x?.adminPriceAdjustmentOverride===true||String(x?.priceAdjustmentManagedBy||'').toLowerCase()==='admin';
+  const raw=managed?(x?.adminPriceAdjustmentPercent??x?.priceAdjustmentPercent??0):(x?.priceAdjustmentPercent??x?.adminPriceAdjustmentPercent??0);
+  const n=Number(raw);
+  return Number.isFinite(n)?Math.max(-99,Math.min(500,Math.round(n*100)/100)):0;
+}
+function azRegPricePillHtml(x){
+  const p=azRegPricePercent(x);
+  const cls=p<0?'discount':p>0?'markup':'';
+  const label=p<0?`Harga ${Math.abs(p)}% lebih rendah`:p>0?`Harga +${p}%`:'Harga asal';
+  return `<span class="az-admin-reg-price-pill ${cls}">${label}</span>`;
+}
 function azRegNameEmail(x){return String((azRegUser(x)||'')+' '+(x.email||x.authEmail||'')).toLowerCase();}
 function azRegSearchText(x){
   return [
@@ -5290,6 +5303,7 @@ function renderRegisteredUsersAdmin(){
         <div class="az-admin-reg-meta-line">
           <span class="az-admin-reg-role-pill ${roleClass}">Role: ${esc(roleLabel)}</span>
           ${azRegPaDotHtml(pa)}
+          ${azRegPricePillHtml(x)}
         </div>
       </div>
       <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
@@ -5314,18 +5328,28 @@ function openRegisteredEdit(id){
   $('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
   $('#azRegEditRole').value=x.role||'member';
   $('#azRegEditPa').value=azRegPaAllowed(x)?'true':'false';
+  $('#azRegEditPricePercent').value=String(azRegPricePercent(x));
   $('#azRegEditModal')?.classList.add('is-open');
 }
 async function saveRegisteredEdit(){
   const id=$('#azRegEditDocId')?.value||'';
   if(!id)return;
   const pa=$('#azRegEditPa')?.value==='true';
+  const rawPricePercent=Number($('#azRegEditPricePercent')?.value||0);
+  if(!Number.isFinite(rawPricePercent)||rawPricePercent<-99||rawPricePercent>500){toast('Price adjustment must be between -99% and +500%.');return;}
+  const priceAdjustmentPercent=Math.round(rawPricePercent*100)/100;
   const code = pa ? 'ZX6186' : '';
   await updateDoc(doc(db,'users',id),{
     email:$('#azRegEditEmail')?.value.trim()||'',
     phoneNumber:$('#azRegEditPhone')?.value.trim()||'',
     phone:$('#azRegEditPhone')?.value.trim()||'',
     role:$('#azRegEditRole')?.value||'member',
+
+    // Per-user price adjustment across PA/BM, Public PA, Software and CAD.
+    adminPriceAdjustmentOverride:true,
+    adminPriceAdjustmentPercent:priceAdjustmentPercent,
+    priceAdjustmentPercent:priceAdjustmentPercent,
+    priceAdjustmentManagedBy:'admin',
 
     // Admin Dashboard is the source of truth for PA/BM access.
     adminPaBmOverride:true,
@@ -6088,6 +6112,9 @@ onAuthStateChanged(auth, async user => {
     <div class="row">
       <div><label>Role</label><select id="azRegEditRole"><option value="member">member</option><option value="staff">staff</option><option value="semiAdmin">semiAdmin</option><option value="admin">admin</option></select></div>
       <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
+    </div>
+    <div class="row">
+      <div style="grid-column:1/-1"><label>Price Adjustment (%)</label><input id="azRegEditPricePercent" type="number" min="-99" max="500" step="0.01" value="0" inputmode="decimal"><div class="az-reg-help">Gunakan nilai negatif untuk diskaun, contohnya <b>-20</b>. Gunakan nilai positif untuk kenaikan, contohnya <b>15</b>. Nilai <b>0</b> menggunakan harga asal. Digunakan untuk PA/BM, Pelan Akui Awam, Software dan CAD Tools selepas user login.</div></div>
     </div>
     <div class="actions">
       <button class="az-reg-cancel" id="azRegCancelBtn" type="button">Cancel</button>

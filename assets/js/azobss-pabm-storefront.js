@@ -1,5 +1,6 @@
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=591';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
@@ -62,6 +63,7 @@ const JUPEM_STATE_CODES = {
 };
 
 let auth = null;
+let priceAdjustmentPercent = Number(getCachedPriceAdjustment().percent || 0);
 
 async function getPaBmAuthToken(forceRefresh = false) {
   if (!auth) return '';
@@ -170,7 +172,7 @@ function normalizeVariant(value, type) {
   return variant;
 }
 
-function productPrice(type, variant = '', suppliedAmount = 0) {
+function baseProductPrice(type, variant = '', suppliedAmount = 0) {
   if (type === 'PA') return 5;
   if (type === 'BM' || type === 'SBM') return 3;
   if (type === 'GPS') return 9;
@@ -183,6 +185,9 @@ function productPrice(type, variant = '', suppliedAmount = 0) {
     return variant === 'FULL_SHEET' ? 50 : 15;
   }
   throw new Error('Unsupported document category.');
+}
+function productPrice(type, variant = '', suppliedAmount = 0) {
+  return applyPriceAdjustment(baseProductPrice(type, variant, suppliedAmount), priceAdjustmentPercent);
 }
 
 function normalizeItem(payload) {
@@ -197,7 +202,9 @@ function normalizeItem(payload) {
     itemCode: code,
     negeri,
     variant,
-    amount: productPrice(type, variant, payload && payload.amount),
+    baseAmount: baseProductPrice(type, variant, payload && (payload.baseAmount ?? payload.amount)),
+    amount: productPrice(type, variant, payload && (payload.baseAmount ?? payload.amount)),
+    priceAdjustmentPercent,
     productId: String(payload && (payload.productId || payload.id) || '').trim(),
     stationNo: String(payload && (payload.stationNo || payload.stesen) || '').trim().toUpperCase(),
     jenis: String(payload && payload.jenis || (type === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
@@ -218,11 +225,13 @@ function readCart() {
       .filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS)
       .map((item) => {
         const type = String(item.productType || '').trim().toUpperCase();
-        if (type !== 'NDCDB' && type !== 'NDCDB_C3') return item;
-        const roundedAmount = productPrice(type, item.variant, item.amount);
-        if (Number(item.amount) === roundedAmount) return item;
+        if (!PRODUCT_TYPES.has(type)) return item;
+        const suppliedBase = Number(item.baseAmount || 0) > 0 ? Number(item.baseAmount) : Number(item.amount || 0);
+        const baseAmount = baseProductPrice(type, item.variant, suppliedBase);
+        const adjustedAmount = applyPriceAdjustment(baseAmount, priceAdjustmentPercent);
+        if (Number(item.baseAmount) === baseAmount && Number(item.amount) === adjustedAmount && Number(item.priceAdjustmentPercent || 0) === priceAdjustmentPercent) return item;
         migrated = true;
-        return { ...item, amount: roundedAmount };
+        return { ...item, baseAmount, amount: adjustedAmount, priceAdjustmentPercent };
       })
       .sort((a, b) => Number(b.addedAtMs || 0) - Number(a.addedAtMs || 0))
       .slice(0, MAX_CART_ITEMS);
@@ -649,7 +658,9 @@ function checkoutPayload(items) {
       productType: item.productType,
       itemCode: item.itemCode,
       negeri: item.negeri,
+      baseAmount: item.baseAmount,
       amount: item.amount,
+      priceAdjustmentPercent,
       productId: item.productId,
       stationNo: item.stationNo,
       jenis: item.jenis,
@@ -825,7 +836,9 @@ function watchPaymentTotal() {
   totalObserver.observe(total, { childList: true, characterData: true, subtree: true });
 }
 
-function init() {
+async function init() {
+  const adjustment = await waitForPriceAdjustment().catch(() => ({percent:0}));
+  priceAdjustmentPercent = Number(adjustment?.percent || 0);
   const apps = getApps();
   auth = apps.length ? getAuth(apps[0]) : null;
   document.body.classList.add('pabm-store-ready');
@@ -878,6 +891,7 @@ function init() {
   });
   window.addEventListener('storage', renderCart);
   window.addEventListener('azobss:pabm-cart-updated', renderCart);
+  window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercent = Number(event.detail?.percent || 0); const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
   watchPaymentTotal();
   renderCart();
   if (auth) onAuthStateChanged(auth, (user) => {

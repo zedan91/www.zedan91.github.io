@@ -14,6 +14,10 @@
   let lotFocusOpenSerial = 0;
   let lotFocusPrefetchController = null;
 
+  function userAdjustedAmount(amount) {
+    try { return typeof window.azobssApplyPriceAdjustment === 'function' ? window.azobssApplyPriceAdjustment(Number(amount || 0)) : Number(amount || 0); } catch (_) { return Number(amount || 0); }
+  }
+
   function createLotFocusParams(input, productCode, stateCode) {
     const source = input && typeof input === 'object' ? input : {};
     const params = new URLSearchParams();
@@ -798,9 +802,10 @@
           sheetNode.textContent = formatNumber(estimate.sheetCount, 0);
           ratioNode.textContent = `${formatNumber(Number(estimate.areaRatio || 0) * 100, 2)}%`;
           const ratioPercent = Number(estimate.areaRatio || 0) * 100;
+          const adjustedMapAmount = userAdjustedAmount(estimate.amount);
           priceNode.textContent = estimate.variant === 'FULL_SHEET'
-            ? `${formatNumber(ratioPercent, 2)}% - Harga 1 Syit RM50`
-            : `${formatNumber(ratioPercent, 2)}% - RM${formatNumber(estimate.amount, 0)}`;
+            ? `${formatNumber(ratioPercent, 2)}% - Harga 1 Syit RM${formatNumber(userAdjustedAmount(50), 2).replace(/\.00$/, '')}`
+            : `${formatNumber(ratioPercent, 2)}% - RM${formatNumber(adjustedMapAmount, 2).replace(/\.00$/, '')}`;
           addButton.disabled = false;
           const stateNotice = activeStateCode !== previousStateCode
             ? ` Negeri dikesan secara automatik: ${activeStateName}.`

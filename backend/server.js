@@ -212,6 +212,29 @@ function cleanPremiumText(value, max = 300) { return String(value || "").replace
 function cleanPremiumUrl(value) { const v = String(value || "").trim(); if (!v) return ""; if (/^https?:\/\//i.test(v)) return v; if (v.startsWith("/")) return v; return ""; }
 function getPremiumUser(data) { const user = data.user || {}; return { uid: cleanPremiumText(user.uid || data.uid, 120), username: cleanPremiumText(user.username || user.usernameKey || data.username, 80), email: cleanPremiumText(user.email || data.email, 160), phone: cleanPremiumText(user.phone || data.phone, 40) }; }
 
+function azobssNormalizeUserPriceAdjustment(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(-99, Math.min(500, Math.round(n * 100) / 100));
+}
+function azobssIdentityPriceAdjustment(identity = {}) {
+  const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
+  const raw = managed
+    ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0)
+    : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0);
+  return azobssNormalizeUserPriceAdjustment(raw);
+}
+function azobssApplyUserPriceAdjustment(amount, identity = {}) {
+  const base = Number(amount);
+  if (!Number.isFinite(base) || base <= 0) return 0;
+  const percent = azobssIdentityPriceAdjustment(identity);
+  return Math.max(0.01, Math.round((base * (1 + percent / 100) + Number.EPSILON) * 100) / 100);
+}
+function azobssMoneyText(amount) {
+  const n = Number(amount || 0);
+  return `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
+}
+
 const AZOBSS_JUPEM_PRODUCT_TYPES = new Set(["PA", "BM", "SBM", "GPS", "NDCDB", "NDCDB_C3", "SYIT_PIAWAI"]);
 const AZOBSS_JUPEM_AREA_TYPES = new Set(["NDCDB", "NDCDB_C3"]);
 const AZOBSS_JUPEM_STATES = new Set([
@@ -252,6 +275,7 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
 
   const seen = new Set();
   const items = [];
+  const priceAdjustmentPercent = azobssIdentityPriceAdjustment(identity);
   for (const rawItem of rawItems) {
     const productType = cleanPremiumText(rawItem.productType || "PA", 20).toUpperCase();
     if (!AZOBSS_JUPEM_PRODUCT_TYPES.has(productType)) azobssCheckoutError("Unsupported JUPEM document category.");
@@ -271,12 +295,16 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
     const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
     if (seen.has(uniqueKey)) continue;
     seen.add(uniqueKey);
+    const baseAmount = azobssJupemItemAmount(productType, variant);
+    const amount = azobssApplyUserPriceAdjustment(baseAmount, identity);
     items.push({
       productType,
       itemCode,
       negeri,
       variant,
-      amount: azobssJupemItemAmount(productType, variant),
+      baseAmount,
+      amount,
+      priceAdjustmentPercent,
       productId: cleanPremiumText(rawItem.productId || "", 120),
       stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
       jenis: productType === "SBM" ? "2" : "1",
@@ -286,8 +314,9 @@ function azobssBuildJupemCheckout(data = {}, identity = {}) {
     });
   }
   if (!items.length) azobssCheckoutError("No valid JUPEM documents were found in the cart.");
-  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-  return { user, items, totalAmount, amountSen: totalAmount * 100 };
+  const baseTotalAmount = Math.round((items.reduce((sum, item) => sum + Number(item.baseAmount || 0), 0) + Number.EPSILON) * 100) / 100;
+  const totalAmount = Math.round((items.reduce((sum, item) => sum + Number(item.amount || 0), 0) + Number.EPSILON) * 100) / 100;
+  return { user, items, baseTotalAmount, totalAmount, amountSen: Math.round(totalAmount * 100), priceAdjustmentPercent };
 }
 
 async function azobssPersistJupemOrder(order = {}) {
@@ -1281,6 +1310,11 @@ async function getFirebaseAdminIdentity(req) {
           identity.role = String(x.role || "").toLowerCase();
           identity.profileEmail = String(x.email || x.authEmail || "").toLowerCase();
           identity.email = identity.authEmail || identity.profileEmail || identity.email;
+          identity.userDocId = String(doc.id || identity.username || identity.uid || "");
+          identity.adminPriceAdjustmentOverride = x.adminPriceAdjustmentOverride === true;
+          identity.adminPriceAdjustmentPercent = azobssNormalizeUserPriceAdjustment(x.adminPriceAdjustmentPercent ?? x.priceAdjustmentPercent ?? 0);
+          identity.priceAdjustmentPercent = azobssNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
+          identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
         });
       } catch (err) {
         console.warn("AZOBSS admin profile lookup skipped:", err && (err.message || err));
@@ -1641,14 +1675,18 @@ app.post("/api/toyyib/create-public-pa-bill", async (req, res) => {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)||/@azobss\.local$/i.test(buyerEmail)) return res.status(400).json({ok:false,error:"Masukkan alamat e-mel sebenar yang sah."});
     if (buyerPhone.replace(/\D/g,'').length<8) return res.status(400).json({ok:false,error:"Masukkan nombor telefon yang sah."});
     const emailHash=crypto.createHash('sha256').update(buyerEmail).digest('hex').slice(0,18);
-    const orderId=makePremiumId('publicpa'); const recordId=`${orderId}-1`; const amountSen=3000; const amount=30; const apiBase=publicBaseUrl(req);
+    const baseAmount=30;
+    const priceAdjustmentPercent=identity ? azobssIdentityPriceAdjustment(identity) : 0;
+    const amount=identity ? azobssApplyUserPriceAdjustment(baseAmount,identity) : baseAmount;
+    const amountSen=Math.round(amount*100);
+    const orderId=makePremiumId('publicpa'); const recordId=`${orderId}-1`; const apiBase=publicBaseUrl(req);
     const returnUrl=`${frontendBaseUrl(req)}/Beli-Pelan-Akui/?payment=return&orderId=${encodeURIComponent(orderId)}`; const callbackUrl=TOYYIB_CALLBACK_URL||`${apiBase}/api/toyyib-callback`;
     const user={uid:cleanPremiumText(identity?.uid||`guest_${emailHash}`,120),username:cleanPremiumText(identity?.username||submitted.username||`publicpa_${emailHash}`,80).toLowerCase(),email:buyerEmail,authEmail:identity?.authEmail||'',phone:buyerPhone,displayName:buyerName};
-    const item={id:recordId,firestoreId:recordId,productType:'PA',itemCode:paNumber,negeri,amount,filename:`PA${paNumber}.pdf`,downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${paNumber}.TIF&negeri=${encodeURIComponent(negeri)}`,createdAtMs:Date.now(),publicPaPurchase:true};
-    const billPayload={userSecretKey:TOYYIB_SECRET_KEY,categoryCode:TOYYIB_CATEGORY_CODE,billName:toyyibClean(`Pelan Akui PA${paNumber}`,30),billDescription:toyyibClean(`AZOBSS Public Pelan Akui PA${paNumber} - RM30`,100),billPriceSetting:1,billPayorInfo:1,billAmount:amountSen,billReturnUrl:returnUrl,billCallbackUrl:callbackUrl,billExternalReferenceNo:orderId,billTo:toyyibClean(buyerName,30),billEmail:toyyibClean(buyerEmail,80),billPhone:toyyibClean(buyerPhone,20),billSplitPayment:0,billSplitPaymentArgs:'',billPaymentChannel:0,billContentEmail:`Pembelian Pelan Akui PA${paNumber} RM30.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0};
+    const item={id:recordId,firestoreId:recordId,productType:'PA',itemCode:paNumber,negeri,baseAmount,amount,priceAdjustmentPercent,filename:`PA${paNumber}.pdf`,downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${paNumber}.TIF&negeri=${encodeURIComponent(negeri)}`,createdAtMs:Date.now(),publicPaPurchase:true};
+    const billPayload={userSecretKey:TOYYIB_SECRET_KEY,categoryCode:TOYYIB_CATEGORY_CODE,billName:toyyibClean(`Pelan Akui PA${paNumber}`,30),billDescription:toyyibClean(`AZOBSS Public Pelan Akui PA${paNumber} - ${azobssMoneyText(amount)}`,100),billPriceSetting:1,billPayorInfo:1,billAmount:amountSen,billReturnUrl:returnUrl,billCallbackUrl:callbackUrl,billExternalReferenceNo:orderId,billTo:toyyibClean(buyerName,30),billEmail:toyyibClean(buyerEmail,80),billPhone:toyyibClean(buyerPhone,20),billSplitPayment:0,billSplitPaymentArgs:'',billPaymentChannel:0,billContentEmail:`Pembelian Pelan Akui PA${paNumber} ${azobssMoneyText(amount)}.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0};
     const apiResult=await toyyibPost('createBill',billPayload); const billCode=Array.isArray(apiResult)?(apiResult[0]?.BillCode||apiResult[0]?.billCode):(apiResult?.BillCode||apiResult?.billCode); if(!billCode)return res.status(502).json({ok:false,error:"ToyyibPay tidak return BillCode.",raw:apiResult});
     const paymentUrl=`${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    const order=await azobssPersistJupemOrder({orderId,productId:'public-pa-rm30',productName:`Pelan Akui PA${paNumber}`,amount:'RM30',amountSen,status:'pending',paymentMethod:'toyyibpay',paymentReference:'',billCode,paymentUrl,returnUrl,user,email:buyerEmail,buyerEmail,paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:30,source:'public-pa-rm30',maxDownload:5,maxDownloads:5,expiryHours:168,createdAt:new Date().toISOString(),createdAtMs:Date.now(),commissionSkippedReason:'public-pa-service'});
+    const order=await azobssPersistJupemOrder({orderId,productId:'public-pa-rm30',productName:`Pelan Akui PA${paNumber}`,amount:azobssMoneyText(amount),amountSen,baseAmount,baseAmountSen:3000,saleAmount:amount,saleAmountText:azobssMoneyText(amount),priceAdjustmentPercent,status:'pending',paymentMethod:'toyyibpay',paymentReference:'',billCode,paymentUrl,returnUrl,user,email:buyerEmail,buyerEmail,paBmItems:[item],publicPaPurchase:true,publicPaRecordId:recordId,publicPaPriceRm:amount,source:'public-pa-rm30',maxDownload:5,maxDownloads:5,expiryHours:168,createdAt:new Date().toISOString(),createdAtMs:Date.now(),commissionSkippedReason:'public-pa-service'});
     await azobssSyncJupemPurchaseLogs(order,'pending');
     return res.json({ok:true,success:true,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,status:'pending',amount,amountSen,unit:1,productId:'public-pa-rm30'});
   } catch (err) { console.error('Create public PA bill failed:',err); return res.status(500).json({ok:false,error:err.message||'Failed create public PA bill'}); }
@@ -1698,9 +1736,9 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const billCode = Array.isArray(apiResult) ? (apiResult[0]?.BillCode || apiResult[0]?.billCode) : apiResult?.BillCode;
     if (!billCode) return res.status(502).json({ ok:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult });
     const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName:`JUPEM Document Purchase (${items.length} unit)`, amount:`RM${totalAmount}`, amountSen, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
+    const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName:`JUPEM Document Purchase (${items.length} unit)`, amount:azobssMoneyText(totalAmount), amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), saleAmount:totalAmount, saleAmountText:azobssMoneyText(totalAmount), priceAdjustmentPercent:checkout.priceAdjustmentPercent, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
     await azobssSyncJupemPurchaseLogs(order, "pending");
-    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, unit:items.length });
+    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), priceAdjustmentPercent:checkout.priceAdjustmentPercent, unit:items.length });
   } catch (err) {
     const statusCode = Math.max(400, Math.min(500, Number(err?.statusCode || 500)));
     res.status(statusCode).json({ ok:false, error: err.message || "Failed to create JUPEM ToyyibPay bill" });
@@ -1716,10 +1754,17 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
     const product = data.product || {};
     const productName = cleanPremiumText(product.name || data.productName || "AZOBSS Premium Item", 160);
     const productId = cleanPremiumText(product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
-    const amountText = cleanPremiumText(product.price || data.amount || data.price || "RM0", 40);
-    const amountSen = toyyibAmountSen(amountText);
+    const identity = await getFirebaseAdminIdentity(req);
+    const submittedAmountText = cleanPremiumText(product.basePrice || data.basePrice || product.price || data.amount || data.price || "RM0", 40);
+    const baseAmountSen = toyyibAmountSen(submittedAmountText);
+    const baseAmount = baseAmountSen / 100;
+    const priceAdjustmentPercent = identity ? azobssIdentityPriceAdjustment(identity) : 0;
+    const adjustedAmount = identity ? azobssApplyUserPriceAdjustment(baseAmount, identity) : baseAmount;
+    const amountSen = Math.round(adjustedAmount * 100);
+    const amountText = azobssMoneyText(adjustedAmount);
     const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
-    const user = getPremiumUser(data);
+    const submittedUser = getPremiumUser(data);
+    const user = identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
     const requestedLimit = 1; // auto-expire after first download
     const requestedExpiryHours = Math.max(0, Math.min(24 * 30, Number(product.expiryHours ?? data.expiryHours ?? 24)));
     if (!productName || !amountSen) return res.status(400).json({ ok:false, error:"Missing product name or valid amount." });
@@ -1764,13 +1809,18 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
       productName,
       amount: amountText,
       amountSen,
+      baseAmount,
+      baseAmountSen,
+      saleAmount: adjustedAmount,
+      saleAmountText: amountText,
+      priceAdjustmentPercent,
       status: "pending",
       paymentMethod: "toyyibpay",
       paymentReference: "",
       billCode,
       paymentUrl,
       user,
-      product: { ...product, id: productId, name: productName, price: amountText },
+      product: { ...product, id: productId, name: productName, basePrice: submittedAmountText, price: amountText, priceAdjustmentPercent },
       ...(azSubIsSaleProduct(product, data) ? azSubPatchFromProduct(product, data) : {}),
       staffReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
       shareReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
@@ -1782,7 +1832,7 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
       createdAt: new Date(now).toISOString()
     };
     upsertPremiumOrder(order);
-    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending" });
+    res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent });
   } catch (err) {
     res.status(500).json({ ok:false, error: err.message || "Failed create ToyyibPay bill" });
   }
