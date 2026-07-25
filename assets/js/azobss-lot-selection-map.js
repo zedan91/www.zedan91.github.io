@@ -158,6 +158,10 @@
     return { latitude, longitude };
   }
 
+  function isPaNumberSearch(value) {
+    return /^(?:NO\.?\s*)?PA\s*[:#-]?\s*\d{1,12}$/i.test(String(value || '').trim());
+  }
+
   function setStatus(node, message, state) {
     node.textContent = message || '';
     node.classList.remove('is-loading', 'is-error', 'is-success');
@@ -231,8 +235,8 @@
               <div class="az-lot-map-canvas"></div>
               <div class="az-lot-coordinate-search">
                 <form class="az-lot-coordinate-form" role="search">
-                  <input class="az-lot-coordinate-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="azLotLocationResults" aria-label="Cari koordinat WGS84, nama tempat, nombor lot atau nombor PA" placeholder="WGS84, nama tempat, No. Lot atau No. PA">
-                  <button class="az-lot-coordinate-submit" type="submit" title="Cari koordinat, lokasi, lot atau PA">Cari</button>
+                  <input class="az-lot-coordinate-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="azLotLocationResults" aria-label="Cari koordinat WGS84, nama tempat atau nombor lot" placeholder="WGS84, nama tempat atau No. Lot">
+                  <button class="az-lot-coordinate-submit" type="submit" title="Cari koordinat, lokasi atau lot">Cari</button>
                 </form>
                 <div class="az-lot-coordinate-feedback" role="status" aria-live="polite"></div>
                 <div class="az-lot-location-results" id="azLotLocationResults" role="listbox" hidden></div>
@@ -450,7 +454,7 @@
           hideLocationSuggestions(true);
           const paLotNotice = !focusedLot && focusedLotCount > 1 ? ` · ${focusedLotCount} lot dalam PA dipaparkan` : (focusedLot && focusedPa ? ` · Lot ${focusedLot}` : '');
           setCoordinateFeedback(`${focusedPa || `Lot ${focusedLot}`} ditemui di ${focusedStateName || 'negeri berkenaan'}${paLotNotice}.`, 'success');
-          setStatus(status, `${focusedLot ? `Lot ${focusedLot}` : focusedPa} dipaparkan tepat pada peta${!focusedLot && focusedLotCount > 1 ? ` bersama ${focusedLotCount} lot berkaitan` : ''}. Carian lokasi, lot/PA dan alat polygon atau segi empat masih boleh digunakan.`, 'success');
+          setStatus(status, `${focusedLot ? `Lot ${focusedLot}` : focusedPa} dipaparkan tepat pada peta${!focusedLot && focusedLotCount > 1 ? ` bersama ${focusedLotCount} lot berkaitan` : ''}. Carian lokasi, lot dan alat polygon atau segi empat masih boleh digunakan.`, 'success');
           refreshJupemOverlay(120, true);
         } catch (error) {
           if (error && error.name === 'AbortError') return;
@@ -509,7 +513,7 @@
       }
 
       function renderLocationSuggestions(results) {
-        locationSuggestions = Array.isArray(results) ? results : [];
+        locationSuggestions = (Array.isArray(results) ? results : []).filter((item) => String(item && item.kind || '').toLowerCase() !== 'pa');
         activeLocationIndex = -1;
         locationResultsNode.replaceChildren();
         if (!locationSuggestions.length) {
@@ -526,10 +530,10 @@
           option.setAttribute('aria-selected', 'false');
           const title = document.createElement('strong');
           const kind = String(location.kind || 'location').toLowerCase();
-          if (kind === 'lot' || kind === 'pa') {
+          if (kind === 'lot') {
             const badge = document.createElement('em');
-            badge.className = `az-lot-location-kind${kind === 'pa' ? ' is-pa' : ''}`;
-            badge.textContent = kind === 'pa' ? 'PA' : 'LOT';
+            badge.className = 'az-lot-location-kind';
+            badge.textContent = 'LOT';
             title.appendChild(badge);
           }
           const titleText = document.createElement('span');
@@ -544,8 +548,8 @@
         });
         const attribution = document.createElement('div');
         attribution.className = 'az-lot-location-attribution';
-        const hasCadastre = locationSuggestions.some((item) => ['lot', 'pa'].includes(String(item && item.kind || '').toLowerCase()));
-        attribution.textContent = hasCadastre ? 'Carian lot/PA: JUPEM eBiz' : 'Carian lokasi: © OpenStreetMap contributors';
+        const hasCadastre = locationSuggestions.some((item) => String(item && item.kind || '').toLowerCase() === 'lot');
+        attribution.textContent = hasCadastre ? 'Carian lot: JUPEM eBiz' : 'Carian lokasi: © OpenStreetMap contributors';
         locationResultsNode.appendChild(attribution);
         locationResultsNode.hidden = false;
         coordinateInput.setAttribute('aria-expanded', 'true');
@@ -553,15 +557,20 @@
 
       async function searchLocationSuggestions(queryValue, chooseFirst = false) {
         const query = String(queryValue || '').replace(/\s+/g, ' ').trim();
+        if (isPaNumberSearch(query)) {
+          hideLocationSuggestions(true);
+          setCoordinateFeedback('Gunakan WGS84, nama tempat atau No. Lot untuk carian peta.', 'info');
+          return;
+        }
         if (query.length < 3) {
           hideLocationSuggestions(true);
-          setCoordinateFeedback('Taip sekurang-kurangnya 3 aksara untuk mencari lokasi, lot atau PA.', 'info');
+          setCoordinateFeedback('Taip sekurang-kurangnya 3 aksara untuk mencari lokasi atau lot.', 'info');
           return;
         }
         if (locationSearchController) locationSearchController.abort();
         locationSearchController = new AbortController();
         const serial = ++locationSearchSerial;
-        setCoordinateFeedback('Mencari lokasi, nombor lot atau nombor PA...', 'loading');
+        setCoordinateFeedback('Mencari lokasi atau nombor lot...', 'loading');
         try {
           const response = await fetch(`${BACKEND_BASE}/api/map-location-suggestions?q=${encodeURIComponent(query)}&negeri=${encodeURIComponent(activeStateCode)}&produk=${encodeURIComponent(productCode)}`, {
             cache: 'no-store',
@@ -572,11 +581,11 @@
           if (!response.ok || !data.ok) throw new Error(data.error || 'Carian peta tidak tersedia.');
           renderLocationSuggestions(data.results || []);
           if (!locationSuggestions.length) {
-            setCoordinateFeedback(`Tiada lokasi, lot atau PA ditemui untuk “${query}”.`, 'error');
+            setCoordinateFeedback(`Tiada lokasi atau lot ditemui untuk “${query}”.`, 'error');
             return;
           }
-          const hasCadastre = locationSuggestions.some((item) => ['lot', 'pa'].includes(String(item && item.kind || '').toLowerCase()));
-          setCoordinateFeedback(hasCadastre ? 'Pilih lot atau PA daripada cadangan. Negeri dipaparkan pada setiap hasil.' : 'Pilih lokasi daripada cadangan atau gunakan ↑ ↓ dan Enter.', 'info');
+          const hasCadastre = locationSuggestions.some((item) => String(item && item.kind || '').toLowerCase() === 'lot');
+          setCoordinateFeedback(hasCadastre ? 'Pilih lot daripada cadangan. Negeri dipaparkan pada setiap hasil.' : 'Pilih lokasi daripada cadangan atau gunakan ↑ ↓ dan Enter.', 'info');
           if (chooseFirst && locationSuggestions.length === 1) selectMapSuggestion(locationSuggestions[0], true);
           else if (chooseFirst && !hasCadastre) selectMapSuggestion(locationSuggestions[0], true);
         } catch (error) {
@@ -589,6 +598,11 @@
 
       function findCoordinateOrLocation() {
         const raw = String(coordinateInput.value || '').trim();
+        if (isPaNumberSearch(raw)) {
+          hideLocationSuggestions(true);
+          setCoordinateFeedback('Gunakan WGS84, nama tempat atau No. Lot untuk carian peta.', 'info');
+          return;
+        }
         const coordinate = parseWgs84Coordinates(raw);
         if (coordinate) {
           placeLocationMarker({
@@ -609,12 +623,12 @@
           return;
         }
         if (locationSuggestions.length) {
-          const hasCadastre = locationSuggestions.some((item) => ['lot', 'pa'].includes(String(item && item.kind || '').toLowerCase()));
+          const hasCadastre = locationSuggestions.some((item) => String(item && item.kind || '').toLowerCase() === 'lot');
           if (!hasCadastre) {
             selectMapSuggestion(locationSuggestions[0], true);
             return;
           }
-          setCoordinateFeedback('Terdapat beberapa hasil lot/PA. Pilih hasil yang betul berdasarkan negeri dan butiran kawasan.', 'info');
+          setCoordinateFeedback('Terdapat beberapa hasil lot. Pilih hasil yang betul berdasarkan negeri dan butiran kawasan.', 'info');
           return;
         }
         searchLocationSuggestions(raw, true);
@@ -630,6 +644,11 @@
           setCoordinateFeedback('');
           return;
         }
+        if (isPaNumberSearch(raw)) {
+          hideLocationSuggestions(true);
+          setCoordinateFeedback('Gunakan WGS84, nama tempat atau No. Lot untuk carian peta.', 'info');
+          return;
+        }
         if (parseWgs84Coordinates(raw)) {
           hideLocationSuggestions(true);
           setCoordinateFeedback('Koordinat sah. Tekan Enter atau Cari untuk meletakkan penanda.', 'info');
@@ -637,7 +656,7 @@
         }
         if (raw.length < 3) {
           hideLocationSuggestions(true);
-          setCoordinateFeedback('Taip sekurang-kurangnya 3 aksara untuk cadangan lokasi, lot atau PA.', 'info');
+          setCoordinateFeedback('Taip sekurang-kurangnya 3 aksara untuk cadangan lokasi atau lot.', 'info');
           return;
         }
         locationSearchTimer = window.setTimeout(() => searchLocationSuggestions(raw, false), 450);
@@ -857,7 +876,7 @@
         hideLocationSuggestions(true);
         setCoordinateFeedback('');
         clearSummary();
-        setStatus(status, 'Pilihan dipadam. Cari lot/PA lain atau lukis kawasan baharu.', '');
+        setStatus(status, 'Pilihan dipadam. Cari lot lain atau lukis kawasan baharu.', '');
       });
       addButton.addEventListener('click', async () => {
         if (!selectedGeometry || !estimate || addButton.disabled) return;
