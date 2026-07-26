@@ -825,16 +825,42 @@ async function proceedAdminTestPayment() {
     assertCheckoutResponse(data, items);
     localStorage.removeItem(cartKey());
     renderCart();
-    if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
-    sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+    // Admin Test Payment is already confirmed as paid by the protected backend
+    // endpoint. Do not save it as a pending ToyyibPay return, otherwise the
+    // success modal may only appear after a later refresh.
+    try {
+      sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+      sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+      localStorage.removeItem('azobss_pa_bm_pending_return');
+    } catch (_) {}
+
     if (status) status.textContent = 'Admin test payment successful. Refreshing Latest Purchase List...';
     if (typeof window.azobssRenderPurchaseRecords === 'function') {
       await window.azobssRenderPurchaseRecords();
     } else if (typeof window.azobssRefreshPaBmPurchasesNow === 'function') {
       window.azobssRefreshPaBmPurchasesNow();
     }
-    const latestPurchase = document.getElementById('userPaPurchasePanel') || document.getElementById('purchaseSummaryList');
-    if (latestPurchase) latestPurchase.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const verifiedKey = String(
+      data.orderId || data.recordId || data.paymentReference || `admin-test-${Date.now()}`
+    ).trim();
+    window.__azobssPaBmPaymentVerifiedKey = verifiedKey;
+    window.__azobssPaBmPaymentVerifiedAt = Date.now();
+
+    let popupOpened = false;
+    if (typeof window.azobssShowPaBmPaymentSuccessPopup === 'function') {
+      popupOpened = window.azobssShowPaBmPaymentSuccessPopup(verifiedKey) !== false;
+    }
+    window.dispatchEvent(new CustomEvent('azobss:pabm-payment-verified', {
+      detail: { key: verifiedKey, orderId: String(data.orderId || ''), testPayment: true }
+    }));
+
+    // Keep the old scroll behaviour only as a fallback if the popup component
+    // is unavailable for any reason.
+    if (!popupOpened) {
+      const latestPurchase = document.getElementById('userPaPurchasePanel') || document.getElementById('purchaseSummaryList');
+      if (latestPurchase) latestPurchase.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     if (status) {
       const seconds = Number(data.processingMs || 0) > 0 ? ` in ${(Number(data.processingMs) / 1000).toFixed(1)}s` : '';
       status.textContent = `Admin test payment successful${seconds}. Latest Purchase List is ready.`;
