@@ -92,7 +92,7 @@
       .az-lot-location-option strong>span{min-width:0;margin:0;color:#0f172a;font-size:13px;font-weight:800}
       .az-lot-location-attribution{padding:6px 10px;border-top:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:10px;text-align:right}
       .az-lot-map-side{min-height:0;overflow:auto;padding:14px;border-left:1px solid #2d405b;background:#101c2f}
-      .az-lot-map-status{min-height:42px;margin:0 0 12px;padding:10px 11px;border:1px solid #405574;border-radius:6px;background:#15233a;color:#d9e8ff;font-size:13px;line-height:1.45}
+      .az-lot-map-status{min-height:42px;margin:0 0 12px;padding:10px 11px;border:1px solid #405574;border-radius:6px;background:#15233a;color:#d9e8ff;font-size:13px;line-height:1.45;white-space:pre-line}
       .az-lot-map-status.is-loading{border-color:#b97713;color:#ffe0a3;background:#2a2118}
       .az-lot-map-status.is-error{border-color:#c44949;color:#ffb7b7;background:#2b171d}
       .az-lot-map-status.is-success{border-color:#12855c;color:#74f5b7;background:#102b27}
@@ -1037,7 +1037,7 @@
           while (!prepared.ready) {
             addButton.disabled = true;
             addButton.textContent = 'Sedang Diproses...';
-            setStatus(status, 'Sedang proses fail Lot Kadaster...', 'loading');
+            setStatus(status, 'Sedang proses fail Lot Kadaster...\n(Mengambil masa sekitar seminit)', 'loading');
             await new Promise((resolveDelay, rejectDelay) => {
               const timer = window.setTimeout(resolveDelay, 2500);
               if (operationController && operationController.signal) {
