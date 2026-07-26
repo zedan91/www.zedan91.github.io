@@ -803,6 +803,26 @@ async function proceedAdminTestPayment() {
   if (!items.length) return;
   const status = document.getElementById('paBmToyyibStatus');
   const oldText = adminTestPaymentButton ? adminTestPaymentButton.textContent : '';
+
+  // Admin Test Payment is completed directly by the protected backend. Stop any
+  // stale ToyyibPay return poll so the empty cart does not keep alternating
+  // between "Mengesahkan pembayaran..." and reconnect messages.
+  window.__azobssPaBmReturnPollingSuppressedUntil = Date.now() + 15000;
+  try {
+    clearTimeout(window.__azobssPaBmReturnCheckTimer);
+    window.__azobssPaBmReturnCheckTimer = 0;
+    window.__azobssPaBmReturnCheckActive = false;
+    window.__azobssPaBmPaymentPollKey = '';
+    window.__azobssPaBmPaymentPollStartedAt = 0;
+    window.__azobssPaBmPaymentPollAttempts = 0;
+    sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+    sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+    localStorage.removeItem('azobss_pa_bm_pending_return');
+    const cleanUrl = new URL(window.location.href);
+    ['payment','status_id','status','billcode','billCode','BillCode','orderId','order_id','transaction_id','payment_id'].forEach((key) => cleanUrl.searchParams.delete(key));
+    window.history.replaceState({}, document.title, cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : '') + cleanUrl.hash);
+  } catch (_) {}
+
   try {
     if (!auth || !auth.currentUser) throw new Error('Your admin login session is not ready. Please login again.');
     if (adminTestPaymentButton) {
@@ -864,6 +884,11 @@ async function proceedAdminTestPayment() {
     if (status) {
       const seconds = Number(data.processingMs || 0) > 0 ? ` in ${(Number(data.processingMs) / 1000).toFixed(1)}s` : '';
       status.textContent = `Admin test payment successful${seconds}. Latest Purchase List is ready.`;
+      setTimeout(() => {
+        if (status && String(status.textContent || '').startsWith('Admin test payment successful')) {
+          status.textContent = 'Pergi ke halaman pembayaran';
+        }
+      }, 2200);
     }
   } catch (error) {
     if (status) status.textContent = error.message || 'Unable to complete the admin test payment.';
