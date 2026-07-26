@@ -1,0 +1,13 @@
+AZOBSS (601) - TEMPAH WEBSITE NAV ACTIVE GLOW FIX
+Date: 2026-07-26
+
+Fix:
+- Bina Website now receives the same active green glow as Lucky Draw and other active navbar sections while visiting /Tempah-Website/.
+- Added /tempah-website/ to active-path detection in both global authentication/navigation modules.
+- Prevents the later auth synchronisation from removing market-nav-active, is-active and related active styling from the Bina Website link.
+- Updated cache versions for azobss-global-auth.js and azobss-firebase-live-likes-sync.js to v601.
+
+Deployment:
+- Frontend only.
+- Update GitHub Pages.
+- Render backend and Firebase Rules do not need changes.

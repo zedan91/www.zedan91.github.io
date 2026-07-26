@@ -926,6 +926,7 @@ function getActiveNavPath() {
   if (path.includes('/software-tools/')) return '/software-tools/';
   if (path.includes('/cad-tools-&-resources/') || path.includes('/cad-tools-%26-resources/')) return '/cad-tools-&-resources/';
   if (path.includes('/affiliate-shop/')) return '/affiliate-shop/';
+  if (path.includes('/tempah-website/')) return '/tempah-website/';
   if (path.includes('/lucky-draw/')) return '/lucky-draw/';
   if (path.includes('/tools/')) return '/tools/';
   return '';
