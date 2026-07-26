@@ -1,0 +1,11 @@
+AZOBSS Patch 598 - JUPEM Process Status Short Text Fix
+
+Changes:
+1. Changes the map status text from "Sedang diproses... JUPEM sedang menyediakan fail Lot Kadaster." to "Sedang proses fail Lot Kadaster...".
+2. Keeps the existing "Sedang Diproses..." action-button text unchanged.
+3. Updates azobss-lot-selection-map.js cache reference to v598.
+
+Deployment:
+- Frontend only.
+- Update GitHub Pages.
+- Render backend and Firebase Rules do not need changes.

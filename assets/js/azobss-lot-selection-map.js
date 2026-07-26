@@ -1037,7 +1037,7 @@
           while (!prepared.ready) {
             addButton.disabled = true;
             addButton.textContent = 'Sedang Diproses...';
-            setStatus(status, 'Sedang diproses... JUPEM sedang menyediakan fail Lot Kadaster.', 'loading');
+            setStatus(status, 'Sedang proses fail Lot Kadaster...', 'loading');
             await new Promise((resolveDelay, rejectDelay) => {
               const timer = window.setTimeout(resolveDelay, 2500);
               if (operationController && operationController.signal) {
