@@ -776,6 +776,13 @@ async function proceedToPayment() {
     assertCheckoutResponse(data, items);
     if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
     if (data.billCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', String(data.billCode));
+    try {
+      localStorage.setItem('azobss_pa_bm_pending_return', JSON.stringify({
+        orderId: String(data.orderId || ''),
+        billCode: String(data.billCode || ''),
+        savedAt: Date.now()
+      }));
+    } catch (_) {}
     if (status) status.textContent = 'Sedang pergi ke ToyyibPay...';
     window.location.href = data.paymentUrl || data.url || data.redirectUrl;
   } catch (error) {
