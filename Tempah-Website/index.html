@@ -739,17 +739,74 @@ Sebelum pembangunan dimulakan, mohon sediakan logo, senarai produk dan harga, ga
       'Saya faham skop, harga, tempoh siap, jumlah pembetulan dan deposit akan disahkan sebelum pembangunan bermula.'
     ].join('\n');
   }
+  function legacyCopyText(text){
+    const previousFocus=document.activeElement;
+    const ta=document.createElement('textarea');
+    ta.value=text;
+    ta.setAttribute('readonly','');
+    ta.setAttribute('aria-hidden','true');
+    ta.style.position='fixed';
+    ta.style.left='-9999px';
+    ta.style.top='0';
+    ta.style.width='1px';
+    ta.style.height='1px';
+    ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.focus({preventScroll:true});
+    ta.select();
+    ta.setSelectionRange(0,ta.value.length);
+    let ok=false;
+    try{ok=document.execCommand('copy')===true}catch(_e){ok=false}
+    ta.remove();
+    try{if(previousFocus&&typeof previousFocus.focus==='function')previousFocus.focus({preventScroll:true})}catch(_e){}
+    return ok;
+  }
+  async function clipboardCopyText(text){
+    if(!navigator.clipboard||!window.isSecureContext) return false;
+    try{await navigator.clipboard.writeText(text);return true}catch(_e){return false}
+  }
   async function copyText(text){
-    try{await navigator.clipboard.writeText(text);return true}catch(e){
-      const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
-      const ok=document.execCommand('copy');ta.remove();return ok;
-    }
+    if(legacyCopyText(text)) return true;
+    return clipboardCopyText(text);
   }
   async function handle(openWhatsapp){
     if(!form.reportValidity()) return;
-    if(openWhatsapp) window.open(whatsappUrl,'_blank','noopener');
-    const ok=await copyText(message());
-    status.textContent=ok?'Mesej telah disalin. Tampal mesej tersebut dalam WhatsApp.':'WhatsApp telah dibuka, tetapi mesej tidak dapat disalin secara automatik.';
+    const text=message();
+
+    // Salin dahulu semasa klik pengguna masih aktif. Membuka tab terlebih dahulu
+    // boleh menghilangkan fokus/clipboard permission pada sesetengah browser.
+    let ok=legacyCopyText(text);
+    let whatsappWindow=null;
+
+    if(openWhatsapp&&ok){
+      window.open(whatsappUrl,'_blank','noopener');
+    }else if(openWhatsapp){
+      // Kekalkan kebenaran popup sementara Clipboard API diselesaikan.
+      whatsappWindow=window.open('about:blank','_blank');
+      if(whatsappWindow){
+        try{
+          whatsappWindow.document.title='Membuka WhatsApp';
+          whatsappWindow.document.body.textContent='Membuka WhatsApp...';
+        }catch(_e){}
+      }
+    }
+
+    if(!ok) ok=await clipboardCopyText(text);
+
+    if(openWhatsapp&&whatsappWindow&&!whatsappWindow.closed){
+      try{whatsappWindow.opener=null}catch(_e){}
+      try{whatsappWindow.location.replace(whatsappUrl)}catch(_e){whatsappWindow.location.href=whatsappUrl}
+    }
+
+    if(ok){
+      status.textContent=openWhatsapp
+        ?'Mesej telah disalin. Tampal mesej tersebut dalam WhatsApp.'
+        :'Mesej telah disalin.';
+    }else{
+      status.textContent=openWhatsapp
+        ?'WhatsApp telah dibuka, tetapi browser menghalang salinan automatik. Tekan “Salin Mesej Sahaja” dan cuba lagi.'
+        :'Browser menghalang salinan automatik. Sila benarkan akses clipboard dan cuba lagi.';
+    }
   }
   form.addEventListener('submit',e=>{e.preventDefault();handle(true)});
   document.getElementById('copyOnly').addEventListener('click',()=>handle(false));

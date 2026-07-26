@@ -1,0 +1,12 @@
+AZOBSS Patch 602 - Tempah Website WhatsApp Copy Fix
+
+Perubahan:
+- Membetulkan butang "Salin & Buka WhatsApp" yang kadangkala membuka WhatsApp tetapi gagal menyalin mesej.
+- Punca: tab WhatsApp dibuka sebelum operasi clipboard, menyebabkan fokus/user activation hilang pada sesetengah browser.
+- Salinan kini dicuba secara sinkron menggunakan textarea sementara sebelum tab WhatsApp dibuka.
+- Jika kaedah tersebut gagal, sistem membuka tab sementara dan menggunakan Clipboard API sebelum meneruskan ke WhatsApp.
+- Butang "Salin Mesej Sahaja" menggunakan fallback clipboard yang sama.
+
+Deployment:
+- Frontend sahaja.
+- Render backend dan Firebase Rules tidak perlu diubah.
