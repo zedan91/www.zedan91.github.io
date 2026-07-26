@@ -201,6 +201,25 @@ function productPrice(type, variant = '', suppliedAmount = 0) {
   return applyPriceAdjustment(baseProductPrice(type, variant, suppliedAmount), pricePercentForType(type));
 }
 
+function decodeSelectionTokenPayload(token) {
+  try {
+    const body = String(token || '').split('.')[0];
+    if (!body) return null;
+    const base64 = body.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(body.length / 4) * 4, '=');
+    return JSON.parse(decodeURIComponent(Array.from(atob(base64), (char) => '%' + char.charCodeAt(0).toString(16).padStart(2, '0')).join('')));
+  } catch (_) {
+    return null;
+  }
+}
+
+function selectionAreaRatio(payload) {
+  const direct = Number(payload && payload.areaRatio);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const decoded = decodeSelectionTokenPayload(payload && payload.selectionToken);
+  const fromToken = Number(decoded && decoded.areaRatio);
+  return Number.isFinite(fromToken) && fromToken > 0 ? fromToken : 0;
+}
+
 function normalizeItem(payload) {
   const type = normalizeType(payload && (payload.productType || payload.product || payload.type));
   const code = normalizeCode(payload && (payload.itemCode || payload.stationNo || payload.stesen || payload.productId || payload.id), type);
@@ -223,6 +242,7 @@ function normalizeItem(payload) {
     downloadUrl: String(payload && (payload.downloadUrl || payload.url) || '').trim(),
     filename: String(payload && payload.filename || '').trim(),
     selectionToken: String(payload && payload.selectionToken || '').trim(),
+    areaRatio: selectionAreaRatio(payload),
     addedAtMs: Date.now()
   };
 }
@@ -243,9 +263,10 @@ function readCart() {
         const priceAdjustmentCategory = priceCategoryForType(type);
         const priceAdjustmentPercent = pricePercentForType(type);
         const adjustedAmount = applyPriceAdjustment(baseAmount, priceAdjustmentPercent);
-        if (Number(item.baseAmount) === baseAmount && Number(item.amount) === adjustedAmount && Number(item.priceAdjustmentPercent || 0) === priceAdjustmentPercent && String(item.priceAdjustmentCategory || '') === priceAdjustmentCategory) return item;
+        const areaRatio = selectionAreaRatio(item);
+        if (Number(item.baseAmount) === baseAmount && Number(item.amount) === adjustedAmount && Number(item.priceAdjustmentPercent || 0) === priceAdjustmentPercent && String(item.priceAdjustmentCategory || '') === priceAdjustmentCategory && Number(item.areaRatio || 0) === areaRatio) return item;
         migrated = true;
-        return { ...item, baseAmount, amount: adjustedAmount, priceAdjustmentCategory, priceAdjustmentPercent };
+        return { ...item, baseAmount, amount: adjustedAmount, priceAdjustmentCategory, priceAdjustmentPercent, areaRatio };
       })
       .sort((a, b) => Number(b.addedAtMs || 0) - Number(a.addedAtMs || 0))
       .slice(0, MAX_CART_ITEMS);
@@ -424,6 +445,20 @@ function formatMoney(value) {
   return 'RM' + (Number.isInteger(amount) ? String(amount) : amount.toFixed(2));
 }
 
+function lotSelectionPercent(item) {
+  if (!item || !['NDCDB', 'NDCDB_C3'].includes(String(item.productType || '').toUpperCase())) return '';
+  const ratio = Number(item.areaRatio || 0);
+  if (!Number.isFinite(ratio) || ratio <= 0) return '';
+  const percent = ratio * 100;
+  return (Math.round(percent * 100) / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + '%';
+}
+
+function cartDisplayTitle(item) {
+  const label = PRODUCT_LABELS[item.productType] || item.productType;
+  const percent = lotSelectionPercent(item);
+  return percent ? `${label} ${percent}` : `${label} ${item.itemCode}`;
+}
+
 function cartTotal(items = readCart()) {
   return items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 }
@@ -444,7 +479,7 @@ function renderCart() {
     list.innerHTML = items.length ? items.map((item, index) => `
       <div class="pabm-cart-item">
         <div>
-          <strong>${escapeHtml(PRODUCT_LABELS[item.productType] || item.productType)} ${escapeHtml(item.itemCode)}</strong>
+          <strong>${escapeHtml(cartDisplayTitle(item))}</strong>
           <small>${escapeHtml(STATE_LABELS[item.negeri] || item.negeri)}${item.variant ? ' &middot; ' + escapeHtml(AREA_LABELS[item.variant] || item.variant) : ''}</small>
         </div>
         <div class="pabm-cart-item-side">
@@ -586,7 +621,8 @@ window.azobssAddPreparedLotSelectionToCart = async function (prepared, fallbackS
     productId: prepared.jobId,
     downloadUrl: prepared.downloadUrl,
     filename: prepared.filename,
-    selectionToken: prepared.selectionToken
+    selectionToken: prepared.selectionToken,
+    areaRatio: prepared.areaRatio
   });
   const confirmationMessage = item.__azobssAlreadyInCart
     ? 'Pilihan Lot Kadaster ini sudah ada dalam troli anda.'

@@ -103,11 +103,11 @@
       .az-lot-map-price{margin:14px 0 10px;padding:11px;border:1px solid #e0b100;border-radius:6px;background:#ffd400;color:#111827;text-align:center;font-size:16px;font-weight:900}
       .az-lot-map-add{width:100%;min-height:48px;border:1px solid #4ff0b1;border-radius:6px;background:#0c9f72;color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #056a4c}
       .az-lot-map-add:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}
-      .az-lot-map-add.is-cart-success{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main tick" "sub sub";align-items:center;column-gap:9px;row-gap:3px;padding:8px 12px;background:#087f5b;border-color:#5cf2b5;line-height:1.15}
-      .az-lot-map-add.is-cart-success:disabled{opacity:1;color:#fff;background:#087f5b;border-color:#5cf2b5;box-shadow:none}
-      .az-lot-map-cart-success-main{grid-area:main;text-align:center}
-      .az-lot-map-cart-success-tick{grid-area:tick;display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:2px solid #fff;border-radius:50%;font-size:17px;font-weight:1000;line-height:1}
-      .az-lot-map-cart-success-sub{grid-area:sub;color:#d7fff0;font-size:12px;font-weight:800;text-align:center}
+      .az-lot-map-add.is-cart-success{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 48px 8px 14px;background:#087f5b;border-color:#5cf2b5;line-height:1.15;text-align:center;cursor:pointer}
+      .az-lot-map-add.is-cart-success:hover,.az-lot-map-add.is-cart-success:focus-visible{background:#07966b;box-shadow:0 0 0 3px rgba(92,242,181,.22)}
+      .az-lot-map-cart-success-main{display:block;width:100%;text-align:center}
+      .az-lot-map-cart-success-tick{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:2px solid #fff;border-radius:50%;font-size:17px;font-weight:1000;line-height:1}
+      .az-lot-map-cart-success-sub{display:block;width:100%;color:#d7fff0;font-size:12px;font-weight:800;text-align:center}
       .az-lot-map-reset{width:100%;min-height:40px;margin-top:9px;border:1px solid #49607e;border-radius:6px;background:#1c2d46;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 2px 0 #07101e}
       .az-lot-map-modal .leaflet-container{font-family:Arial,sans-serif;background:#d8e1eb}
       .az-lot-map-modal .leaflet-draw-toolbar a{background-color:#fff}
@@ -782,12 +782,31 @@
 
       function setAddButtonDefault() {
         addButton.classList.remove('is-cart-success');
+        addButton.removeAttribute('title');
+        addButton.removeAttribute('aria-label');
         addButton.textContent = 'Sediakan & Tambah ke Troli';
       }
 
       function setAddButtonSuccess() {
         addButton.classList.add('is-cart-success');
-        addButton.innerHTML = '<span class="az-lot-map-cart-success-main">Sudah Masuk Troli</span><span class="az-lot-map-cart-success-tick" aria-hidden="true">✓</span><small class="az-lot-map-cart-success-sub">(Sila Cek di Troli anda)</small>';
+        addButton.disabled = false;
+        addButton.setAttribute('aria-label', 'Sudah masuk troli. Tekan untuk pergi ke Troli Anda.');
+        addButton.title = 'Tekan untuk pergi ke Troli Anda';
+        addButton.innerHTML = '<span class="az-lot-map-cart-success-main">Sudah Masuk Troli</span><span class="az-lot-map-cart-success-tick" aria-hidden="true">✓</span><small class="az-lot-map-cart-success-sub">(Sila tekan untuk ke Troli)</small>';
+      }
+
+      function focusCartPanel() {
+        const cartPanel = document.getElementById('pabmStoreCartPanel');
+        close();
+        window.setTimeout(() => {
+          if (!cartPanel) return;
+          cartPanel.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+          cartPanel.setAttribute('tabindex', '-1');
+          try { cartPanel.focus({ preventScroll: true }); } catch (_) { try { cartPanel.focus(); } catch (_) {} }
+          cartPanel.classList.remove('is-cart-updated');
+          window.requestAnimationFrame(() => cartPanel.classList.add('is-cart-updated'));
+          window.setTimeout(() => cartPanel.classList.remove('is-cart-updated'), 2200);
+        }, 60);
       }
 
       function clearSummary() {
@@ -993,11 +1012,15 @@
         setStatus(status, 'Pilihan dipadam. Cari lot lain atau lukis kawasan baharu.', '');
       });
       addButton.addEventListener('click', async () => {
+        if (addButton.classList.contains('is-cart-success')) {
+          focusCartPanel();
+          return;
+        }
         if (!selectedGeometry || !estimate || addButton.disabled) return;
         addButton.disabled = true;
         addButton.classList.remove('is-cart-success');
-        addButton.textContent = 'Menghasilkan ID pilihan...';
-        setStatus(status, 'Mendapatkan ID pilihan Lot Kadaster...', 'loading');
+        addButton.textContent = 'Mendapatkan lot pilihan...';
+        setStatus(status, 'Mendapatkan lot pilihan...', 'loading');
         try {
           operationController = new AbortController();
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
@@ -1055,7 +1078,6 @@
                 : (confirmation || '')
             ).trim() || confirmationMessage;
           }
-          addButton.disabled = true;
           setAddButtonSuccess();
           setStatus(status, `✓ ${confirmationMessage} Sudah masuk troli. Sila cek di Troli anda. Peta ini kekal dibuka; tekan X apabila selesai.`, 'success');
           // Resolve the caller after the cart is updated, but keep the Leaflet
