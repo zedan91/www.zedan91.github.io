@@ -103,7 +103,7 @@
       .az-lot-map-price{margin:14px 0 10px;padding:11px;border:1px solid #e0b100;border-radius:6px;background:#ffd400;color:#111827;text-align:center;font-size:16px;font-weight:900}
       .az-lot-map-add{width:100%;min-height:48px;border:1px solid #4ff0b1;border-radius:6px;background:#0c9f72;color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #056a4c}
       .az-lot-map-add:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}
-      .az-lot-map-add.is-cart-success{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 48px 8px 14px;background:#087f5b;border-color:#5cf2b5;line-height:1.15;text-align:center;cursor:pointer}
+      .az-lot-map-add.is-cart-success{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 48px;background:#087f5b;border-color:#5cf2b5;line-height:1.15;text-align:center;cursor:pointer}
       .az-lot-map-add.is-cart-success:hover,.az-lot-map-add.is-cart-success:focus-visible{background:#07966b;box-shadow:0 0 0 3px rgba(92,242,181,.22)}
       .az-lot-map-cart-success-main{display:block;width:100%;text-align:center}
       .az-lot-map-cart-success-tick{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:2px solid #fff;border-radius:50%;font-size:17px;font-weight:1000;line-height:1}
