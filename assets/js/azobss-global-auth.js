@@ -3566,6 +3566,43 @@ function azobssLotPurchaseIsReady(r){
   return false;
 }
 
+
+function azobssLotPurchasePercentLabel(record){
+  const r = record || {};
+  const sources = [r, r.raw || {}, r.item || {}, r.purchase || {}];
+  let ratio = 0;
+  for(const source of sources){
+    if(!source || typeof source !== 'object') continue;
+    const direct = [source.areaRatio, source.selectionAreaRatio, source.lotAreaRatio, source.area_ratio];
+    for(const value of direct){
+      const number = Number(value);
+      if(Number.isFinite(number) && number > 0){ ratio = number > 1.1 ? number / 100 : number; break; }
+    }
+    if(ratio > 0) break;
+    const percentValues = [source.ratioPercent, source.selectionPercent, source.lotPercent, source.areaPercent];
+    for(const value of percentValues){
+      const number = Number(value);
+      if(Number.isFinite(number) && number > 0){ ratio = number / 100; break; }
+    }
+    if(ratio > 0) break;
+    const token = String(source.selectionToken || '').trim();
+    if(token){
+      try{
+        const body = token.split('.')[0];
+        const base64 = body.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(body.length / 4) * 4, '=');
+        const decoded = JSON.parse(decodeURIComponent(Array.from(atob(base64), function(char){
+          return '%' + char.charCodeAt(0).toString(16).padStart(2, '0');
+        }).join('')));
+        const number = Number(decoded && decoded.areaRatio);
+        if(Number.isFinite(number) && number > 0){ ratio = number > 1.1 ? number / 100 : number; break; }
+      }catch(_error){}
+    }
+  }
+  if(!Number.isFinite(ratio) || ratio <= 0) return '';
+  const percent = Math.min(110, ratio * 100);
+  return (Math.round(percent * 100) / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + '%';
+}
+
 function purchaseDetailRowHtml(r){
   const itemType = String(r.productType || r.product || 'PA').trim().toUpperCase();
   const itemCode = (itemType === 'NDCDB' || itemType === 'NDCDB_C3') && r.productId
@@ -3574,8 +3611,9 @@ function purchaseDetailRowHtml(r){
   const itemLabel = itemType === 'NDCDB'
     ? 'Lot Kadaster Berdigit'
     : (itemType === 'NDCDB_C3' ? 'Lot Kadaster Berdigit C3' : (r.productType || 'PA'));
+  const lotPercentLabel = azobssLotPurchasePercentLabel(r);
   const item = itemType === 'NDCDB' || itemType === 'NDCDB_C3'
-    ? itemLabel
+    ? `${itemLabel}${lotPercentLabel ? ' ' + lotPercentLabel : ''}`
     : `${itemLabel} ${itemCode}`.trim();
   const amount = Number(r.amount || 0);
   const canUncart = azobssCanUncartPurchase(r);

@@ -3516,7 +3516,8 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
       jenis: String(item.jenis || "") || undefined,
       filename: String(item.filename || "") || undefined,
       downloadUrl: azobssSafeJupemDownloadUrl(item.downloadUrl || item.url, item.productType || item.product) || undefined,
-      variant: String(item.variant || item.areaSize || "").toUpperCase() || undefined
+      variant: String(item.variant || item.areaSize || "").toUpperCase() || undefined,
+      areaRatio: Number(item.areaRatio || 0) > 0 ? Number(item.areaRatio) : undefined
     };
     Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
     if (!refs.length) {
@@ -3812,6 +3813,7 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
       negeri,
       amount,
       variant,
+      areaRatio: areaProductTypes.has(productType) ? Number(verifiedLot && verifiedLot.areaRatio || 0) : undefined,
       productId: cleanPremiumText(verifiedLot && verifiedLot.jobId || rawItem.productId || "", 120),
       stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
       jenis: productType === "SBM" ? "2" : "1",
@@ -9534,7 +9536,8 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:7,
+        version:8,
+        purchaseLogAreaRatio:true,
         paidDownloadRouting:"category-specific-v1",
         perUserPriceCategories:["paBm","lotKadaster","publicPa","software","cadTools"],
         firestoreReadRetry:3,
@@ -9848,6 +9851,7 @@ async function handler(req, res) {
             priceAdjustmentCategory,
             priceAdjustmentPercent,
             variant,
+            areaRatio: areaProductTypes.has(productType) ? Number(verifiedLot && verifiedLot.areaRatio || 0) : undefined,
             productId: cleanPremiumText(verifiedLot && verifiedLot.jobId || rawItem.productId || "", 120),
             stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
             jenis: productType === "SBM" ? "2" : "1",

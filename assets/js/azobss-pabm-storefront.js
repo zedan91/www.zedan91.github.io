@@ -8,7 +8,7 @@ const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
     ? window.location.origin
     : 'https://azobss-backend.onrender.com'
 );
-const CHECKOUT_API_VERSION = 7;
+const CHECKOUT_API_VERSION = 8;
 const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const MAX_CART_ITEMS = 50;
 const PRODUCT_TYPES = new Set(['PA', 'BM', 'SBM', 'GPS', 'NDCDB', 'NDCDB_C3', 'SYIT_PIAWAI']);
@@ -719,6 +719,7 @@ function checkoutPayload(items) {
       filename: item.filename,
       selectionToken: item.selectionToken,
       variant: item.variant,
+      areaRatio: Number(item.areaRatio || 0),
       createdAtMs: item.addedAtMs
     }))
   };
