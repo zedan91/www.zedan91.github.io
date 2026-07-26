@@ -826,7 +826,7 @@
         selectedGeometry = geometryFromLayer(layer);
         if (estimateController) estimateController.abort();
         estimateController = new AbortController();
-        setStatus(status, 'Menyemak polygon, lot dan keluasan syit JUPEM...', 'loading');
+        setStatus(status, 'Menyemak polygon, lot dan keluasan syit', 'loading');
         try {
           estimate = await postJson('/api/jupem-lot-selection/estimate', {
             productCode,

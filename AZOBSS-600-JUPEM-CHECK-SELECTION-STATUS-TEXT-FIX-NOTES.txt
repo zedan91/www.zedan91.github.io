@@ -1,0 +1,13 @@
+AZOBSS Patch (600)
+
+Perubahan:
+- Menukar mesej status daripada:
+  "Menyemak polygon, lot dan keluasan syit JUPEM..."
+  kepada:
+  "Menyemak polygon, lot dan keluasan syit"
+- Cache azobss-lot-selection-map.js dinaikkan kepada v600.
+
+Deployment:
+- Frontend sahaja.
+- Kemas kini GitHub Pages.
+- Render backend dan Firebase Rules tidak perlu diubah.
