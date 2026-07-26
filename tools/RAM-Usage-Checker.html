@@ -856,7 +856,7 @@ body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent
 function calc(){let t=+total.value||0,u=+used.value||0,p=t?u/t*100:0;let need=p>85?"High RAM pressure. Upgrade recommended.":p>70?"Moderate usage. Upgrade if PC feels slow.":"RAM usage looks okay.";let rec=usage.value==="Office / browsing"?"8GB - 16GB":usage.value==="Gaming"?"16GB - 32GB":usage.value==="Editing / design"?"32GB recommended":"32GB - 64GB";result.innerHTML=`RAM usage: <b>${p.toFixed(1)}%</b>\nAvailable RAM: <b>${Math.max(t-u,0).toFixed(1)} GB</b>\nStatus: <b>${need}</b>\nRecommended for ${usage.value}: <b>${rec}</b>\n\nTip: Check Task Manager > Processes to see which app uses the most memory.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=607" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=607"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=611" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=611"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

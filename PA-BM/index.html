@@ -12537,7 +12537,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   color:#e2e8f0 !important;
 }
 </style>
-<script src="/assets/js/azobss-global-auth.js?v=607" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=607"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=611" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=611"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -12705,7 +12705,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
 }
 
 </style>
-<script id="azobss-pa-bm-payment-success-popup-real-fix-script">
+<script id="azobss-pa-bm-payment-success-popup-verified-only-script">
 (function(){
   'use strict';
   var POPUP_KEY_PREFIX = 'azobss_pa_bm_success_popup_seen_';
@@ -12715,18 +12715,11 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
     return /^\/PA-BM\/?$/i.test(window.location.pathname || '');
   }
 
-  function getReturnIdentity(){
-    try{
-      var p = new URLSearchParams(window.location.search || '');
-      var stableId = p.get('orderId') || p.get('order_id') || p.get('billcode') || p.get('billCode') ||
-        p.get('transaction_id') || p.get('payment_id') ||
-        sessionStorage.getItem('azobss_pa_bm_pending_order_id') ||
-        sessionStorage.getItem('azobss_pa_bm_pending_bill_code') || '';
-      if(stableId) return { key: POPUP_KEY_PREFIX + String(stableId), persistent: true };
-      return { key: POPUP_KEY_PREFIX + 'current_return', persistent: false };
-    }catch(e){
-      return { key: POPUP_KEY_PREFIX + 'current_return', persistent: false };
-    }
+  function getVerifiedKey(explicitKey){
+    var key = String(explicitKey || window.__azobssPaBmPaymentVerifiedKey || '').trim();
+    var verifiedAt = Number(window.__azobssPaBmPaymentVerifiedAt || 0);
+    if(!key || !verifiedAt || (Date.now() - verifiedAt) > 30000) return '';
+    return key;
   }
 
   function scrollToLatestPurchaseList(){
@@ -12768,14 +12761,15 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
     return modal;
   }
 
-  function showPaymentSuccessPopup(){
+  function showPaymentSuccessPopup(explicitKey){
     try{
       if(!isPaBmPage() || popupShownThisPage) return false;
-      var identity = getReturnIdentity();
-      var storage = identity.persistent ? localStorage : sessionStorage;
-      if(storage.getItem(identity.key) === '1') return false;
+      var verifiedKey = getVerifiedKey(explicitKey);
+      if(!verifiedKey) return false;
+      var seenKey = POPUP_KEY_PREFIX + verifiedKey;
+      if(localStorage.getItem(seenKey) === '1') return false;
       popupShownThisPage = true;
-      storage.setItem(identity.key, '1');
+      localStorage.setItem(seenKey, '1');
       var modal = ensurePaymentSuccessModal();
       if(modal.getAttribute('data-payment-popup-dismissed') === '1') return false;
       modal.classList.add('show');
@@ -12786,35 +12780,23 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
 
   window.azobssShowPaBmPaymentSuccessPopup = showPaymentSuccessPopup;
 
-  function looksLikeSuccessfulToyyibReturn(){
-    try{
-      var p = new URLSearchParams(window.location.search || '');
-      var statusId = String(p.get('status_id') || p.get('status') || '').trim().toLowerCase();
-      var payment = String(p.get('payment') || '').trim().toLowerCase();
-      var hasBill = !!(p.get('billcode') || p.get('billCode'));
-      if(statusId === '1' || statusId === 'paid' || statusId === 'success' || payment === 'success' || payment === 'paid') return true;
-      if(payment === 'return' && hasBill && (statusId === '' || statusId === '1')) return true;
-      return false;
-    }catch(e){ return false; }
-  }
-
-  function observeSuccessStatusText(){
+  function observeVerifiedSuccessStatus(){
     var status = document.getElementById('paBmToyyibStatus');
     if(!status || !window.MutationObserver) return;
     var obs = new MutationObserver(function(){
       var txt = String(status.textContent || '').toLowerCase();
-      if(txt.includes('pembayaran berjaya') || txt.includes('payment success') || txt.includes('payment successful')){
-        showPaymentSuccessPopup();
+      var verifiedKey = getVerifiedKey('');
+      if(verifiedKey && (txt.includes('pembayaran berjaya') || txt.includes('payment success') || txt.includes('payment successful'))){
+        showPaymentSuccessPopup(verifiedKey);
       }
     });
     obs.observe(status, { childList:true, characterData:true, subtree:true });
   }
 
   function run(){
-    observeSuccessStatusText();
-    if(looksLikeSuccessfulToyyibReturn()){
-      setTimeout(showPaymentSuccessPopup, 700);
-    }
+    // URL parameters alone are never treated as proof of payment. The modal is
+    // shown only after /api/verify-payment confirms the current return as paid.
+    observeVerifiedSuccessStatus();
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
