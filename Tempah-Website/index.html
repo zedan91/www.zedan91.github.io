@@ -805,6 +805,123 @@ Sebelum pembangunan dimulakan, mohon sediakan logo, senarai produk dan harga, ga
 })();
 </script>
 
+
+<script id="azobss-role-hardening-605-js">
+(function(){
+  if(window.__azobssRoleHardening605) return;
+  window.__azobssRoleHardening605 = true;
+
+  function lower(v){ return String(v || '').trim().toLowerCase(); }
+
+  function readStoredObjects(){
+    var out = [];
+    var keys = [
+      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
+      'azobss_user_profile','azobssProfile','currentUser','userProfile',
+      'azobss_auth_user','azobssLoginUser','azobss_logged_user'
+    ];
+    keys.forEach(function(k){
+      try{
+        var raw = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if(!raw) return;
+        try{
+          var obj = JSON.parse(raw);
+          if(obj && typeof obj === 'object') out.push(obj);
+        }catch(e){
+          out.push({username:raw, raw:raw});
+        }
+      }catch(e){}
+    });
+    return out;
+  }
+
+  function detectRole(){
+    var adminNames = ['zedan91'];
+    var adminEmails = ['zedan9107@gmail.com','zedan91@azobss.local'];
+    var visibleName = lower((document.querySelector('#signedInName') || {}).textContent);
+    var userNameBox = lower((document.querySelector('.user-name') || {}).textContent);
+
+    if(adminNames.indexOf(visibleName) !== -1 || adminNames.indexOf(userNameBox) !== -1 || userNameBox.indexOf('zedan91') !== -1){
+      return 'admin';
+    }
+
+    var objs = readStoredObjects();
+    for(var i=0;i<objs.length;i++){
+      var u = objs[i] || {};
+      var role = lower(u.role || u.userRole || u.accountRole || u.type || u.accessRole);
+      var username = lower(u.usernameKey || u.username || u.userName || u.id || u.name || u.displayName || u.raw);
+      var email = lower(u.email || u.authEmail || u.realEmail || u.userEmail);
+
+      if(adminNames.indexOf(username) !== -1 || adminEmails.indexOf(email) !== -1){
+        return 'admin';
+      }
+      if(role === 'admin' || u.isAdmin === true || u.admin === true || u.owner === true){
+        return 'admin';
+      }
+      if(
+        role === 'staff' || role === 'semiadmin' || role === 'semi-admin' ||
+        role === 'semi_admin' || role === 'seller' || role === 'editor' ||
+        u.isStaff === true || u.staff === true || u.staffDashboard === true ||
+        u.canAccessStaffDashboard === true || u.canAddSoftware === true
+      ){
+        return 'staff';
+      }
+    }
+
+    try{
+      if(localStorage.getItem('azobss_admin_role_cache') === '1') return 'admin';
+      if(localStorage.getItem('azobss_staff_role_cache') === '1') return 'staff';
+    }catch(e){}
+    return 'none';
+  }
+
+  function hardHide(el){
+    if(!el) return;
+    el.style.setProperty('display','none','important');
+    el.style.setProperty('visibility','hidden','important');
+    el.style.setProperty('pointer-events','none','important');
+    el.setAttribute('aria-hidden','true');
+    el.tabIndex = -1;
+  }
+
+  function hardShow(el){
+    if(!el) return;
+    el.style.setProperty('display','inline-flex','important');
+    el.style.setProperty('visibility','visible','important');
+    el.style.setProperty('pointer-events','auto','important');
+    el.removeAttribute('aria-hidden');
+    el.tabIndex = 0;
+  }
+
+  function applyButtons(){
+    var role = detectRole();
+    document.body.classList.toggle('az-role-is-admin', role === 'admin');
+    document.body.classList.toggle('is-admin', role === 'admin');
+    document.body.classList.toggle('az-role-is-staff', role === 'staff');
+    document.body.classList.toggle('az-role-is-stafflike', role === 'staff');
+    document.body.setAttribute('data-az-current-role', role);
+
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn,.market-nav a[href="/admin/"],a[href="/admin/"].azobss-nav-chip').forEach(function(el){
+      role === 'admin' ? hardShow(el) : hardHide(el);
+    });
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn,.market-nav a[href="/staff/"],a[href="/staff/"].azobss-nav-chip').forEach(function(el){
+      role === 'staff' ? hardShow(el) : hardHide(el);
+    });
+  }
+
+  function run(){ applyButtons(); }
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState !== 'loading') run();
+  window.addEventListener('storage', run);
+  window.addEventListener('focus', run);
+  document.addEventListener('azobss:auth-changed', run);
+  document.addEventListener('azobss:user-ready', run);
+  setTimeout(run, 150);
+  setTimeout(run, 500);
+  setTimeout(run, 1200);
+  setTimeout(run, 2500);
+})();
+</script>
 <script src="/assets/js/azobss-global-auth.js?v=601" type="module"></script>
 <script src="/assets/js/azobss-cart-bell-global.js?v=442" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=370" defer></script>
