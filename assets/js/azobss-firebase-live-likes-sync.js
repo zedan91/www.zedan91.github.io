@@ -2755,7 +2755,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     if(isLotDownload){
       // 567: never expose the JUPEM direct URL until ArcGIS reports esriJobSucceeded.
       downloadOwner.phase = 'preparing';
-      downloadOwner.label = 'Tengah Proses...';
+      downloadOwner.label = 'Sedang Proses...';
       if(link) link.textContent = downloadOwner.label;
       azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
@@ -2771,7 +2771,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           alert((readiness && (readiness.error || readiness.message)) || 'JUPEM gagal menyediakan fail Lot Kadaster.');
           return false;
         }
-        downloadOwner.label = 'Tengah Proses...';
+        downloadOwner.label = 'Sedang Proses...';
         if(link) link.textContent = downloadOwner.label;
         await new Promise(function(resolve){ window.setTimeout(resolve, attempt < 12 ? 2500 : 5000); });
       }
@@ -3196,12 +3196,16 @@ function purchaseDetailRowHtml(r){
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
   const isLotRecord = itemType === 'NDCDB' || itemType === 'NDCDB_C3';
-  const lotJobReady = !isLotRecord ? true : (paid && allowed ? azobssLotPurchaseIsReady(r) : false);
-  if(paid && paidDownloadUrl && allowed && lotJobReady){
+  // 607: Do not lock a paid Lot Kadaster download button merely because the
+  // background JUPEM readiness probe is temporarily unavailable. The click
+  // handler performs the authoritative readiness check and does not consume
+  // quota until the backend has a verified direct ZIP handoff.
+  if(isLotRecord && paid && allowed){
+    try{ azobssQueueLotPurchaseReadiness(r); }catch(_error){}
+  }
+  if(paid && paidDownloadUrl && allowed){
     const readyLabel = 'Download';
     actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? escHtml(activeDownload.label || 'Downloading...') : readyLabel}</a>${dlMetaHtml}${adminResetHtml}</div>`;
-  }else if(paid && paidDownloadUrl && allowed && isLotRecord && !lotJobReady){
-    actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked is-pending-status" aria-disabled="true">Tengah Proses...</span>${dlMetaHtml}${adminResetHtml}</div>`;
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
     actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
