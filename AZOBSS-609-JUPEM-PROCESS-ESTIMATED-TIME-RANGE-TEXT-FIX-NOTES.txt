@@ -1,0 +1,14 @@
+AZOBSS Patch 609 - JUPEM Process Estimated Time Range Text Fix
+Date: 2026-07-26
+
+Changes:
+1. Changes the estimated-time line below "Sedang proses fail Lot Kadaster..." to:
+   (Mengambil masa sekitar 1~ 2 minit)
+2. Keeps the processing button text unchanged.
+3. Keeps white-space: pre-line so the estimated-time note appears neatly on a separate line.
+4. Cache updated to azobss-lot-selection-map.js?v=609.
+
+Deployment:
+- Frontend/GitHub Pages only.
+- Render backend: no change required.
+- Firebase Rules: no change required.
