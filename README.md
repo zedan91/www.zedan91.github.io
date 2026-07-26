@@ -116,3 +116,8 @@ AZOBSS 492
 - Restores the animated gold glow on the conditional Beli Pelan Akui navbar button only.
 - Keeps all visibility/access rules and existing page layouts unchanged.
 - Cache-busts `azobss-global-auth.js` to `v=542`.
+
+## Patch (603) — Separate Copy and WhatsApp Buttons
+- Replaced `Salin & Buka WhatsApp` with two independent actions on `/Tempah-Website/`.
+- `Salin Mesej` copies the completed request message only.
+- `Hantar ke WhatsApp` opens AZOBSS WhatsApp only and does not access or modify the clipboard.

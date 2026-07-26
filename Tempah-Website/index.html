@@ -685,7 +685,7 @@ body>main{padding-top:48px;}
 <article class="card wide"><div class="step"><span class="num">4</span><h3>Buat repository dan jemput collaborator</h3></div><ul><li>Cadangan repository: <strong>namabisnes.github.io</strong></li><li>Pergi ke Repository → Settings → Collaborators → Add people</li><li>Masukkan username GitHub pembangun</li><li>Pembangun boleh mengemas kini website tanpa menggunakan password customer</li></ul></article>
 <article class="card wide"><div class="step"><span class="num">5</span><h3>Daftar domain atas nama customer</h3></div><ul><li>Contoh: empireshop.com, empireshop.my atau empireshop.online</li><li>Beli menggunakan akaun dan email pemilik bisnes</li><li>Beri akses DNS sahaja atau ikut panduan tetapan DNS</li><li>Versi demo boleh dibina sementara, tetapi website akhir sebaiknya berada dalam akaun customer</li></ul></article>
 </div></div></section>
-<section class="section" id="request"><div class="wrap"><h2 class="section-title">Permintaan website</h2><p class="section-lead">Isi maklumat asas. Butang di bawah akan menyusun mesej, menyalinnya dan membuka WhatsApp AZOBSS.</p><div class="request-layout"><form class="form-panel" id="websiteRequestForm"><div class="fields">
+<section class="section" id="request"><div class="wrap"><h2 class="section-title">Permintaan website</h2><p class="section-lead">Isi maklumat asas. Gunakan “Salin Mesej” untuk menyalin maklumat, atau “Hantar ke WhatsApp” untuk membuka WhatsApp tanpa menyalin mesej.</p><div class="request-layout"><form class="form-panel" id="websiteRequestForm"><div class="fields">
 <div class="field"><label for="businessName">Nama bisnes *</label><input id="businessName" required placeholder="Contoh: Empire Shop"/></div>
 <div class="field"><label for="customerName">Nama customer *</label><input id="customerName" required placeholder="Nama untuk dihubungi"/></div>
 <div class="field"><label for="websiteType">Jenis website *</label><select id="websiteType" required><option value="">Pilih jenis</option><option>Website satu halaman</option><option>Website katalog produk</option><option>Landing page promosi</option><option>Lain-lain</option></select></div>
@@ -695,7 +695,7 @@ body>main{padding-top:48px;}
 <div class="field full"><label>Ciri yang diperlukan</label><div class="check-row"><label class="check"><input type="checkbox" value="Butang WhatsApp" name="features"/>Butang WhatsApp</label><label class="check"><input type="checkbox" value="Butang Telegram" name="features"/>Butang Telegram</label><label class="check"><input type="checkbox" value="QR pembayaran" name="features"/>QR pembayaran</label><label class="check"><input type="checkbox" value="Testimoni" name="features"/>Testimoni</label><label class="check"><input type="checkbox" value="Waktu operasi" name="features"/>Waktu operasi</label><label class="check"><input type="checkbox" value="Borang pertanyaan" name="features"/>Borang pertanyaan</label></div></div>
 <div class="field full"><label for="materials">Bahan yang sudah tersedia</label><textarea id="materials" placeholder="Contoh: Logo, 10 gambar produk, senarai harga dan QR pembayaran"></textarea></div>
 <div class="field full"><label for="notes">Catatan tambahan</label><textarea id="notes" placeholder="Terangkan gaya website, contoh rujukan, tarikh sasaran atau maklumat lain"></textarea></div>
-</div><div class="form-actions"><button class="cta primary" type="submit">Salin & Buka WhatsApp</button><button class="cta secondary" type="button" id="copyOnly">Salin Mesej Sahaja</button></div><div class="status" id="formStatus" aria-live="polite"></div></form>
+</div><div class="form-actions"><button class="cta secondary" type="button" id="copyOnly">Salin Mesej</button><button class="cta primary" type="submit">Hantar ke WhatsApp</button></div><div class="status" id="formStatus" aria-live="polite"></div></form>
 <aside class="summary-panel"><h3>Sebelum pembangunan bermula</h3><ol><li>Skop, harga dan tempoh disahkan.</li><li>Deposit dibayar mengikut persetujuan.</li><li>Semua teks, logo, gambar dan pautan dihantar.</li><li>Akaun GitHub dan domain menggunakan email customer.</li><li>Jumlah pembetulan ditetapkan supaya proses lebih teratur.</li></ol><div class="price-note"><strong>Nota:</strong> Harga projek bergantung pada skop, jumlah kandungan, fungsi dan tempoh yang diminta.</div></aside></div></div></section>
 <section class="section" id="github-register-guide"><div class="wrap"><h2 class="section-title">Cara daftar akaun GitHub langkah demi langkah</h2><p class="section-lead">Customer perlu menggunakan email bisnes sendiri. Akaun GitHub Free sudah memadai untuk menyediakan repository awam dan menerbitkan website statik melalui GitHub Pages.</p><div class="github-guide">
 <article class="github-step"><span class="github-step-no">1</span><div><h3>Buka halaman pendaftaran</h3><p>Tekan butang <strong>Daftar GitHub Sekarang</strong> di bawah atau pergi ke halaman Sign up GitHub.</p></div></article>
@@ -769,47 +769,22 @@ Sebelum pembangunan dimulakan, mohon sediakan logo, senarai produk dan harga, ga
     if(legacyCopyText(text)) return true;
     return clipboardCopyText(text);
   }
-  async function handle(openWhatsapp){
+  async function copyRequestMessage(){
     if(!form.reportValidity()) return;
-    const text=message();
-
-    // Salin dahulu semasa klik pengguna masih aktif. Membuka tab terlebih dahulu
-    // boleh menghilangkan fokus/clipboard permission pada sesetengah browser.
-    let ok=legacyCopyText(text);
-    let whatsappWindow=null;
-
-    if(openWhatsapp&&ok){
-      window.open(whatsappUrl,'_blank','noopener');
-    }else if(openWhatsapp){
-      // Kekalkan kebenaran popup sementara Clipboard API diselesaikan.
-      whatsappWindow=window.open('about:blank','_blank');
-      if(whatsappWindow){
-        try{
-          whatsappWindow.document.title='Membuka WhatsApp';
-          whatsappWindow.document.body.textContent='Membuka WhatsApp...';
-        }catch(_e){}
-      }
-    }
-
-    if(!ok) ok=await clipboardCopyText(text);
-
-    if(openWhatsapp&&whatsappWindow&&!whatsappWindow.closed){
-      try{whatsappWindow.opener=null}catch(_e){}
-      try{whatsappWindow.location.replace(whatsappUrl)}catch(_e){whatsappWindow.location.href=whatsappUrl}
-    }
-
-    if(ok){
-      status.textContent=openWhatsapp
-        ?'Mesej telah disalin. Tampal mesej tersebut dalam WhatsApp.'
-        :'Mesej telah disalin.';
-    }else{
-      status.textContent=openWhatsapp
-        ?'WhatsApp telah dibuka, tetapi browser menghalang salinan automatik. Tekan “Salin Mesej Sahaja” dan cuba lagi.'
-        :'Browser menghalang salinan automatik. Sila benarkan akses clipboard dan cuba lagi.';
-    }
+    const ok=await copyText(message());
+    status.textContent=ok
+      ?'Mesej telah disalin. Tekan “Hantar ke WhatsApp” dan tampal mesej tersebut.'
+      :'Browser menghalang salinan automatik. Sila benarkan akses clipboard dan cuba lagi.';
   }
-  form.addEventListener('submit',e=>{e.preventDefault();handle(true)});
-  document.getElementById('copyOnly').addEventListener('click',()=>handle(false));
+  function openWhatsappOnly(){
+    if(!form.reportValidity()) return;
+    const whatsappWindow=window.open(whatsappUrl,'_blank','noopener');
+    status.textContent=whatsappWindow
+      ?'WhatsApp telah dibuka. Mesej tidak disalin.'
+      :'Popup WhatsApp disekat oleh browser. Sila benarkan popup dan cuba lagi.';
+  }
+  form.addEventListener('submit',e=>{e.preventDefault();openWhatsappOnly()});
+  document.getElementById('copyOnly').addEventListener('click',copyRequestMessage);
   document.getElementById('copyGithub').addEventListener('click',async()=>{
     const ok=await copyText(document.getElementById('githubMessage').innerText.trim());
     document.getElementById('githubStatus').textContent=ok?'Mesej GitHub telah disalin.':'Tidak dapat menyalin mesej.';
