@@ -638,6 +638,28 @@ body>main{padding-top:48px;}
 .check .info-term{margin-top:1px}
 @media(max-width:620px){.info-term::after{max-width:min(290px,calc(100vw - 44px));font-size:12px}.tooltip-help{font-size:12px}}
 </style>
+
+<style id="azobss-615-simple-website-request-ui">
+/* 615: Simplified customer flow, visual website type selector and shorter GitHub guide */
+.az615-quick-note{display:flex;align-items:flex-start;gap:12px;margin:18px 0 0;padding:14px 16px;border:1px solid rgba(34,211,238,.3);border-radius:14px;background:rgba(34,211,238,.07);color:#c8f7ff}.az615-quick-note strong{color:#fff}.az615-quick-note-icon{display:grid;place-items:center;width:30px;height:30px;flex:0 0 30px;border-radius:10px;background:rgba(34,211,238,.16);font-size:17px}
+.az615-process{grid-template-columns:repeat(3,minmax(0,1fr));display:grid;gap:16px}.az615-process .card{grid-column:auto}.az615-process .card p{margin:10px 0 0;color:var(--muted)}
+.az615-form-shell{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}.az615-form-panel,.az615-side-panel{background:linear-gradient(155deg,rgba(20,33,58,.96),rgba(12,22,40,.98));border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}.az615-form-panel{padding:24px}.az615-side-panel{position:sticky;top:82px;padding:20px}.az615-side-panel h3{margin:0 0 12px}.az615-side-panel p{color:var(--muted)}
+.az615-progress{display:flex;align-items:center;gap:10px;margin-bottom:22px}.az615-progress-step{display:flex;align-items:center;gap:8px;flex:1;color:#71839d;font-size:13px;font-weight:850}.az615-progress-step::after{content:"";height:2px;flex:1;background:#263853}.az615-progress-step:last-child::after{display:none}.az615-progress-step span{display:grid;place-items:center;width:29px;height:29px;flex:0 0 29px;border-radius:50%;border:1px solid #334966;background:#0a1629}.az615-progress-step.is-active,.az615-progress-step.is-done{color:#dffbff}.az615-progress-step.is-active span{border-color:var(--cyan);background:linear-gradient(135deg,#2563eb,#22d3ee);color:#03101e}.az615-progress-step.is-done span{border-color:#22c55e;background:#14532d;color:#dcfce7}.az615-progress-mobile{display:none;margin-bottom:15px;color:#a5f3fc;font-weight:850}
+.az615-step{display:none}.az615-step.is-active{display:block}.az615-step-heading{margin:0 0 7px;font-size:25px}.az615-step-lead{margin:0 0 20px;color:var(--muted)}
+.az615-type-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.az615-type-option{position:relative}.az615-type-option input{position:absolute;opacity:0;pointer-events:none}.az615-type-card{display:block;height:100%;border:2px solid #2a3d5b;border-radius:17px;background:#091427;overflow:hidden;cursor:pointer;transition:.2s ease}.az615-type-card:hover{transform:translateY(-2px);border-color:#4b6a91}.az615-type-option input:checked + .az615-type-card{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.12),0 16px 38px rgba(0,0,0,.26)}.az615-type-option input:focus-visible + .az615-type-card{outline:3px solid rgba(34,211,238,.4);outline-offset:3px}.az615-type-copy{padding:14px 15px 16px}.az615-type-copy strong{display:block;color:#fff;font-size:16px}.az615-type-copy small{display:block;margin-top:5px;color:#9eb0c8;line-height:1.45}.az615-type-check{position:absolute;right:12px;top:12px;display:none;place-items:center;width:27px;height:27px;border-radius:50%;background:#22d3ee;color:#03202a;font-weight:1000;z-index:2}.az615-type-option input:checked ~ .az615-type-check{display:grid}
+.az615-preview{display:block;height:150px;padding:10px;background:linear-gradient(145deg,#dbeafe,#eef8ff);color:#13223a}.az615-browser{display:block;height:100%;border:1px solid rgba(30,64,175,.2);border-radius:10px;background:#fff;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,.12)}.az615-browser-top{height:18px;background:#17233b;display:flex;align-items:center;gap:4px;padding-left:7px}.az615-browser-top i{display:block;width:5px;height:5px;border-radius:50%;background:#94a3b8}.az615-mini-nav{height:15px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:8px;padding:0 7px}.az615-mini-nav b{display:block;width:30px;height:5px;border-radius:5px;background:#2563eb}.az615-mini-nav i{display:block;width:14px;height:3px;border-radius:4px;background:#cbd5e1}.az615-mini-hero{margin:7px;height:45px;border-radius:6px;background:linear-gradient(135deg,#1e3a8a,#22d3ee);position:relative}.az615-mini-hero::before{content:"";position:absolute;left:8px;top:9px;width:42%;height:7px;border-radius:5px;background:rgba(255,255,255,.93);box-shadow:0 12px 0 rgba(255,255,255,.42)}.az615-mini-hero::after{content:"";position:absolute;left:8px;bottom:7px;width:24px;height:7px;border-radius:5px;background:#facc15}.az615-mini-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:0 7px 7px}.az615-mini-row i{height:23px;border-radius:5px;background:#e2e8f0}.az615-mini-products{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:7px}.az615-mini-products i{height:34px;border:1px solid #e2e8f0;border-radius:5px;background:linear-gradient(#bfdbfe 55%,#fff 55%)}.az615-mini-services{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:7px}.az615-mini-services i{height:39px;border-radius:5px;background:#eff6ff;border:1px solid #bfdbfe;position:relative}.az615-mini-services i::after{content:"";position:absolute;left:6px;right:6px;bottom:6px;height:4px;border-radius:3px;background:#60a5fa}.az615-mini-promo{margin:7px;height:78px;border-radius:7px;background:linear-gradient(120deg,#111827 55%,#facc15 55%);position:relative}.az615-mini-promo::before{content:"PROMO";position:absolute;left:10px;top:13px;color:#fff;font-size:10px;font-weight:1000;letter-spacing:.08em}.az615-mini-promo::after{content:"BELI SEKARANG";position:absolute;left:10px;bottom:13px;padding:3px 5px;border-radius:4px;background:#22d3ee;color:#082f49;font-size:6px;font-weight:1000}.az615-mini-help{display:grid;place-items:center;height:100%;font-size:49px;font-weight:1000;color:#2563eb;background:linear-gradient(145deg,#eef2ff,#cffafe)}
+.az615-choice-error{display:none;margin:12px 0 0;padding:10px 12px;border-radius:10px;background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);color:#fecdd3;font-weight:750}.az615-choice-error.is-visible{display:block}
+.az615-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.az615-field.full{grid-column:1/-1}.az615-field label,.az615-group-label{display:block;margin-bottom:7px;font-weight:850;font-size:14px}.az615-field input,.az615-field select,.az615-field textarea{width:100%;border:1px solid #385070;border-radius:11px;background:#091427;color:#fff;padding:12px 13px;font:inherit;outline:none}.az615-field textarea{min-height:100px;resize:vertical}.az615-field input:focus,.az615-field select:focus,.az615-field textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.12)}.az615-helper{display:block;margin-top:6px;color:#8395ad;font-size:12px}
+.az615-chip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.az615-chip{position:relative}.az615-chip input{position:absolute;opacity:0}.az615-chip span{display:flex;align-items:center;gap:9px;min-height:52px;padding:11px 12px;border:1px solid #334966;border-radius:12px;background:#0b172a;color:#b8c7da;cursor:pointer}.az615-chip span::before{content:"";width:19px;height:19px;flex:0 0 19px;border:1px solid #526b8d;border-radius:6px;background:#091427}.az615-chip input:checked + span{border-color:#22d3ee;background:rgba(34,211,238,.08);color:#e8fcff}.az615-chip input:checked + span::before{content:"✓";display:grid;place-items:center;background:#22d3ee;border-color:#22d3ee;color:#03202a;font-weight:1000;font-size:13px}
+.az615-radio-row{display:flex;flex-wrap:wrap;gap:9px}.az615-radio{position:relative}.az615-radio input{position:absolute;opacity:0}.az615-radio span{display:block;padding:9px 12px;border:1px solid #385070;border-radius:999px;background:#091427;color:#b8c7da;cursor:pointer;font-weight:800;font-size:13px}.az615-radio input:checked + span{border-color:#22d3ee;background:rgba(34,211,238,.12);color:#e7fdff}
+.az615-github-inline{margin-top:17px;padding:15px;border:1px solid rgba(34,197,94,.3);border-radius:14px;background:rgba(34,197,94,.07)}.az615-github-inline strong{color:#dcfce7}.az615-github-inline p{margin:6px 0 0;color:#b6c8ba}.az615-github-username{display:none;margin-top:12px}.az615-github-username.is-visible{display:block}
+.az615-step-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}.az615-step-actions .cta{min-width:135px}.az615-step-actions .az615-right{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}.az615-final-actions{padding-top:15px;border-top:1px solid rgba(148,163,184,.16)}
+.az615-summary-list{display:grid;gap:10px;margin:14px 0}.az615-summary-item{padding:10px 11px;border-radius:10px;background:#091427;border:1px solid #2b3d59}.az615-summary-item small{display:block;color:#8395ad}.az615-summary-item strong{display:block;margin-top:2px;color:#fff;overflow-wrap:anywhere}.az615-side-tip{margin-top:14px;padding:12px;border-radius:11px;background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.28);color:#fde68a;font-size:13px}
+.az615-github-box{padding:24px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(155deg,rgba(20,33,58,.96),rgba(12,22,40,.98));box-shadow:var(--shadow)}.az615-github-start{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;padding:18px;border:1px solid rgba(34,211,238,.3);border-radius:15px;background:rgba(34,211,238,.06)}.az615-github-start h3{margin:0 0 5px}.az615-github-start p{margin:0;color:var(--muted)}.az615-github-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.az615-github-step{padding:16px;border:1px solid #304563;border-radius:14px;background:#0a1629}.az615-github-step b{display:grid;place-items:center;width:31px;height:31px;margin-bottom:10px;border-radius:9px;background:linear-gradient(135deg,#2563eb,#22d3ee);color:#03101e}.az615-github-step strong{display:block}.az615-github-step p{margin:5px 0 0;color:var(--muted);font-size:13px}.az615-only-username{margin-top:16px;padding:15px 16px;border-radius:13px;border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.09);color:#bbf7d0}.az615-security-details{margin-top:12px;border:1px solid #304563;border-radius:13px;background:#091427}.az615-security-details summary{padding:13px 15px;cursor:pointer;font-weight:850;color:#d9faff}.az615-security-details div{padding:0 15px 15px;color:var(--muted)}
+@media(max-width:960px){.az615-form-shell{grid-template-columns:1fr}.az615-side-panel{position:static}.az615-process{grid-template-columns:1fr}.az615-github-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.az615-form-panel{padding:17px}.az615-type-grid,.az615-fields,.az615-chip-grid{grid-template-columns:1fr}.az615-preview{height:138px}.az615-progress{display:none}.az615-progress-mobile{display:block}.az615-step-actions{flex-direction:column}.az615-step-actions .cta,.az615-step-actions .az615-right,.az615-step-actions .az615-right .cta{width:100%}.az615-github-start{grid-template-columns:1fr}.az615-github-start .cta{width:100%}.az615-github-steps{grid-template-columns:1fr}.az615-type-copy strong{font-size:15px}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -689,122 +711,226 @@ body>main{padding-top:48px;}
     </div>
   </div>
 </header>
+<!-- AZOBSS patch 615: simplified website request and GitHub onboarding -->
 <main>
-<section class="hero"><div class="wrap"><span class="eyebrow">Website untuk bisnes</span><h1>Tempah website yang <span>jelas, kemas dan milik anda</span></h1><p>Halaman ini membantu customer menyediakan semua maklumat penting sebelum pembangunan bermula. Sesuai untuk website satu halaman, produk, pakej, WhatsApp atau Telegram, QR pembayaran serta domain sendiri.</p><div class="badge-row"><span class="badge">Responsive</span><span class="badge">WhatsApp / Telegram</span><span class="badge">QR Pembayaran</span><span class="badge">Custom Domain</span><span class="badge">GitHub Pages</span></div><div class="hero-actions"><a class="cta primary" href="#request">Isi Permintaan Website</a><a class="cta secondary" href="#process">Lihat Proses Projek</a></div><div class="notice"><strong>Deposit:</strong> Selepas skop, harga, tempoh siap dan jumlah pembetulan dipersetujui, deposit—contohnya 50%—perlu dibuat sebelum reka bentuk dimulakan.</div></div></section>
-<section class="section" id="process"><div class="wrap"><h2 class="section-title">Proses memulakan projek</h2><p class="section-lead">Pemilikan akaun, repository dan domain disusun atas nama customer supaya website lebih mudah diurus pada masa hadapan.</p><div class="grid">
-<article class="card"><div class="step"><span class="num">1</span><h3>Sahkan skop dan deposit</h3></div><ul><li>Website satu halaman atau struktur lain</li><li>Bilangan produk atau pakej</li><li>Butang WhatsApp dan Telegram</li><li>QR pembayaran</li><li>Domain sendiri atau subdomain percuma</li><li>Harga, tempoh siap dan jumlah pembetulan</li></ul></article>
-<article class="card"><div class="step"><span class="num">2</span><h3>Sediakan bahan bisnes</h3></div><ul><li>Nama bisnes dan logo</li><li>Warna tema</li><li>Senarai produk serta harga</li><li>Gambar produk</li><li>Nombor WhatsApp dan Telegram</li><li>QR pembayaran, testimoni dan waktu operasi</li><li>Ayat “Tentang Kami”</li></ul></article>
-<article class="card safety"><div class="step"><span class="num">3</span><h3>Daftar akaun GitHub</h3></div><ul><li>Gunakan email bisnes sendiri</li><li>Pilih username berkaitan bisnes</li><li>Aktifkan 2FA</li><li>Simpan recovery code dengan selamat</li><li><strong>Jangan berikan password GitHub</strong></li></ul><a class="mini-link" href="#github-register-guide">Lihat cara daftar langkah demi langkah ↓</a></article>
-<article class="card wide"><div class="step"><span class="num">4</span><h3>Buat repository dan jemput collaborator</h3></div><ul><li>Cadangan repository: <strong>namabisnes.github.io</strong></li><li>Pergi ke Repository → Settings → Collaborators → Add people</li><li>Masukkan username GitHub pembangun</li><li>Pembangun boleh mengemas kini website tanpa menggunakan password customer</li></ul></article>
-<article class="card wide"><div class="step"><span class="num">5</span><h3>Daftar domain atas nama customer</h3></div><ul><li>Contoh: empireshop.com, empireshop.my atau empireshop.online</li><li>Beli menggunakan akaun dan email pemilik bisnes</li><li>Beri akses DNS sahaja atau ikut panduan tetapan DNS</li><li>Versi demo boleh dibina sementara, tetapi website akhir sebaiknya berada dalam akaun customer</li></ul></article>
+<section class="hero"><div class="wrap"><span class="eyebrow">Website untuk bisnes</span><h1>Pilih contoh, isi ringkas dan <span>hantar terus kepada AZOBSS</span></h1><p>Tidak perlu tahu istilah teknikal. Pilih rupa website yang paling hampir dengan kehendak anda, kemudian lengkapkan borang langkah demi langkah.</p><div class="badge-row"><span class="badge">Mesra telefon</span><span class="badge">WhatsApp / Telegram</span><span class="badge">QR Pembayaran</span><span class="badge">Domain sendiri</span><span class="badge">Milik customer</span></div><div class="hero-actions"><a class="cta primary" href="#request">Mula Pilih Website</a><a class="cta secondary" href="#github-register-guide">Cara Daftar GitHub</a></div><div class="az615-quick-note"><span class="az615-quick-note-icon">✓</span><div><strong>Belum ada logo, domain atau akaun GitHub?</strong><br/>Tidak mengapa. Isi apa yang sudah ada dahulu. AZOBSS akan terangkan langkah seterusnya selepas semakan permintaan.</div></div></div></section>
+
+<section class="section" id="process"><div class="wrap"><h2 class="section-title">Hanya 3 langkah untuk bermula</h2><p class="section-lead">Customer tidak perlu menyediakan semuanya sekaligus.</p><div class="az615-process">
+<article class="card"><div class="step"><span class="num">1</span><h3>Pilih contoh website</h3></div><p>Lihat gambaran setiap jenis website dan pilih yang paling hampir dengan keperluan bisnes.</p></article>
+<article class="card"><div class="step"><span class="num">2</span><h3>Isi borang ringkas</h3></div><p>Masukkan nama bisnes, fungsi yang diperlukan dan bahan yang sudah tersedia.</p></article>
+<article class="card safety"><div class="step"><span class="num">3</span><h3>Semak bersama AZOBSS</h3></div><p>Skop, harga, tempoh siap, deposit dan langkah GitHub akan diterangkan sebelum pembangunan bermula.</p></article>
+</div><div class="notice"><strong>Deposit:</strong> Bayaran deposit hanya dibuat selepas skop, harga, tempoh siap dan jumlah pembetulan dipersetujui.</div></div></section>
+
+<section class="section" id="request"><div class="wrap"><h2 class="section-title">Permintaan website</h2><p class="section-lead">Borang ini dibahagikan kepada tiga langkah supaya lebih mudah diisi.</p>
+<div class="az615-form-shell">
+<form class="az615-form-panel" id="websiteRequestForm" novalidate>
+<div class="az615-progress" aria-label="Kemajuan borang">
+<div class="az615-progress-step is-active" data-progress="1"><span>1</span>Pilih rupa</div>
+<div class="az615-progress-step" data-progress="2"><span>2</span>Maklumat bisnes</div>
+<div class="az615-progress-step" data-progress="3"><span>3</span>Fungsi & bahan</div>
+</div>
+<div class="az615-progress-mobile" id="az615MobileProgress">Langkah 1 daripada 3 — Pilih rupa website</div>
+
+<section class="az615-step is-active" data-step="1">
+<h3 class="az615-step-heading">Jenis website mana yang anda suka?</h3><p class="az615-step-lead">Tekan satu gambar. Pilihan ini boleh diubah selepas berbincang dengan AZOBSS.</p>
+<div class="az615-type-grid" id="websiteTypeChoices">
+<label class="az615-type-option"><input type="radio" name="websiteType" value="Website satu halaman bisnes"/><span class="az615-type-card"><span class="az615-preview"><span class="az615-browser"><span class="az615-browser-top"><i></i><i></i><i></i></span><span class="az615-mini-nav"><b></b><i></i><i></i><i></i></span><span class="az615-mini-hero"></span><span class="az615-mini-row"><i></i><i></i><i></i></span></span></span><span class="az615-type-copy"><strong>Website satu halaman</strong><small>Profil bisnes, servis, galeri, lokasi dan butang hubungi dalam satu halaman.</small></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option"><input type="radio" name="websiteType" value="Website katalog produk"/><span class="az615-type-card"><span class="az615-preview"><span class="az615-browser"><span class="az615-browser-top"><i></i><i></i><i></i></span><span class="az615-mini-nav"><b></b><i></i><i></i><i></i></span><span class="az615-mini-products"><i></i><i></i><i></i><i></i><i></i><i></i></span></span></span><span class="az615-type-copy"><strong>Katalog produk</strong><small>Sesuai untuk banyak produk atau pakej dengan gambar, harga dan butang WhatsApp.</small></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option"><input type="radio" name="websiteType" value="Website servis dan tempahan"/><span class="az615-type-card"><span class="az615-preview"><span class="az615-browser"><span class="az615-browser-top"><i></i><i></i><i></i></span><span class="az615-mini-nav"><b></b><i></i><i></i><i></i></span><span class="az615-mini-hero"></span><span class="az615-mini-services"><i></i><i></i><i></i></span></span></span><span class="az615-type-copy"><strong>Servis & tempahan</strong><small>Untuk servis profesional, pakej, borang pertanyaan dan tempahan melalui WhatsApp.</small></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option"><input type="radio" name="websiteType" value="Landing page promosi"/><span class="az615-type-card"><span class="az615-preview"><span class="az615-browser"><span class="az615-browser-top"><i></i><i></i><i></i></span><span class="az615-mini-nav"><b></b><i></i><i></i></span><span class="az615-mini-promo"></span></span></span><span class="az615-type-copy"><strong>Landing page promosi</strong><small>Fokus pada satu produk, promosi atau kempen dengan butang tindakan yang jelas.</small></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option"><input type="radio" name="websiteType" value="Belum pasti — perlukan cadangan AZOBSS"/><span class="az615-type-card"><span class="az615-preview"><span class="az615-browser"><span class="az615-mini-help">?</span></span></span><span class="az615-type-copy"><strong>Saya belum pasti</strong><small>AZOBSS akan cadangkan jenis yang sesuai berdasarkan bisnes dan kandungan anda.</small></span></span><span class="az615-type-check">✓</span></label>
+</div>
+<div class="az615-choice-error" id="websiteTypeError">Sila pilih satu jenis website atau pilih “Saya belum pasti”.</div>
+<div class="az615-step-actions"><span></span><button class="cta primary" type="button" data-next-step>Seterusnya: Maklumat Bisnes →</button></div>
+</section>
+
+<section class="az615-step" data-step="2">
+<h3 class="az615-step-heading">Maklumat asas bisnes</h3><p class="az615-step-lead">Medan bertanda * sahaja yang wajib diisi.</p>
+<div class="az615-fields">
+<div class="az615-field"><label for="businessName">Nama bisnes *</label><input id="businessName" required placeholder="Contoh: Empire Shop"/></div>
+<div class="az615-field"><label for="customerName">Nama untuk dihubungi *</label><input id="customerName" required placeholder="Contoh: Ahmad"/></div>
+<div class="az615-field"><label for="customerWhatsapp">Nombor WhatsApp *</label><input id="customerWhatsapp" required inputmode="tel" placeholder="Contoh: 0123456789"/><small class="az615-helper">Digunakan untuk membalas permintaan ini.</small></div>
+<div class="az615-field"><label for="productCount">Anggaran produk / servis</label><input id="productCount" type="number" min="0" placeholder="Contoh: 8"/></div>
+<div class="az615-field"><label for="theme">Warna yang disukai</label><input id="theme" placeholder="Contoh: Hitam dan emas"/><small class="az615-helper">Boleh dibiarkan kosong jika belum pasti.</small></div>
+<div class="az615-field"><label for="domain">Alamat website</label><select id="domain"><option>Belum pasti — perlukan cadangan</option><option>Mahukan domain sendiri seperti .com / .my</option><option>Mahukan subdomain percuma</option><option>Sudah mempunyai domain</option></select></div>
+</div>
+<div class="az615-step-actions"><button class="cta secondary" type="button" data-prev-step>← Kembali</button><button class="cta primary" type="button" data-next-step>Seterusnya: Fungsi & Bahan →</button></div>
+</section>
+
+<section class="az615-step" data-step="3">
+<h3 class="az615-step-heading">Apa yang website perlu ada?</h3><p class="az615-step-lead">Tandakan sahaja yang berkaitan. Semua pilihan masih boleh dibincangkan.</p>
+<div class="az615-group-label">Fungsi yang diperlukan</div>
+<div class="az615-chip-grid">
+<label class="az615-chip"><input type="checkbox" value="Butang WhatsApp" name="features"/><span>Butang WhatsApp</span></label>
+<label class="az615-chip"><input type="checkbox" value="Butang Telegram" name="features"/><span>Butang Telegram</span></label>
+<label class="az615-chip"><input type="checkbox" value="QR pembayaran" name="features"/><span>QR pembayaran</span></label>
+<label class="az615-chip"><input type="checkbox" value="Testimoni customer" name="features"/><span>Testimoni customer</span></label>
+<label class="az615-chip"><input type="checkbox" value="Waktu operasi dan lokasi" name="features"/><span>Waktu operasi & lokasi</span></label>
+<label class="az615-chip"><input type="checkbox" value="Borang pertanyaan" name="features"/><span>Borang pertanyaan</span></label>
+</div>
+<div class="az615-group-label" style="margin-top:18px">Bahan yang sudah ada</div>
+<div class="az615-chip-grid">
+<label class="az615-chip"><input type="checkbox" value="Logo" name="materials"/><span>Logo</span></label>
+<label class="az615-chip"><input type="checkbox" value="Gambar produk / servis" name="materials"/><span>Gambar produk / servis</span></label>
+<label class="az615-chip"><input type="checkbox" value="Senarai harga" name="materials"/><span>Senarai harga</span></label>
+<label class="az615-chip"><input type="checkbox" value="QR pembayaran" name="materials"/><span>QR pembayaran</span></label>
+<label class="az615-chip"><input type="checkbox" value="Ayat tentang bisnes" name="materials"/><span>Ayat tentang bisnes</span></label>
+<label class="az615-chip"><input type="checkbox" value="Testimoni" name="materials"/><span>Testimoni</span></label>
+</div>
+<div class="az615-fields" style="margin-top:16px">
+<div class="az615-field full"><label for="notes">Maklumat tambahan</label><textarea id="notes" placeholder="Contoh: Mahu paparkan 8 produk dan customer boleh terus tekan WhatsApp untuk membuat pesanan."></textarea></div>
+</div>
+<div class="az615-github-inline"><strong>Status akaun GitHub</strong><p>GitHub tidak wajib disiapkan sebelum menghantar borang ini.</p><div class="az615-radio-row" style="margin-top:10px"><label class="az615-radio"><input type="radio" name="githubStatusChoice" value="Belum ada akaun GitHub" checked/><span>Belum ada</span></label><label class="az615-radio"><input type="radio" name="githubStatusChoice" value="Sudah ada akaun GitHub"/><span>Sudah ada</span></label></div><div class="az615-github-username" id="githubUsernameWrap"><div class="az615-field"><label for="githubUsername">Username GitHub</label><input id="githubUsername" placeholder="Contoh: empireshop"/></div></div></div>
+<div class="az615-step-actions az615-final-actions"><button class="cta secondary" type="button" data-prev-step>← Kembali</button><div class="az615-right"><button class="cta secondary" type="button" id="copyOnly">Salin Maklumat</button><button class="cta primary" type="submit">Buka WhatsApp</button></div></div><div class="status" id="formStatus" aria-live="polite"></div>
+</section>
+</form>
+<aside class="az615-side-panel"><h3>Ringkasan permintaan</h3><p>Ringkasan ini dikemas kini semasa anda mengisi borang.</p><div class="az615-summary-list"><div class="az615-summary-item"><small>Jenis website</small><strong id="summaryWebsiteType">Belum dipilih</strong></div><div class="az615-summary-item"><small>Nama bisnes</small><strong id="summaryBusinessName">Belum diisi</strong></div><div class="az615-summary-item"><small>Fungsi dipilih</small><strong id="summaryFeatures">Belum dipilih</strong></div><div class="az615-summary-item"><small>Bahan tersedia</small><strong id="summaryMaterials">Belum dipilih</strong></div></div><div class="az615-side-tip"><strong>Nota:</strong> Harga hanya ditentukan selepas AZOBSS menyemak jenis website, jumlah kandungan dan fungsi yang diperlukan.</div></aside>
 </div></div></section>
-<section class="section" id="request"><div class="wrap"><h2 class="section-title">Permintaan website</h2><p class="section-lead">Isi maklumat asas. Gunakan “Salin Mesej” untuk menyalin maklumat, atau “Hantar ke WhatsApp” untuk membuka WhatsApp tanpa menyalin mesej.</p><p class="tooltip-help">Lalukan cursor pada perkataan bertanda ⓘ untuk melihat penerangan dan contoh. Pada telefon, tekan perkataan tersebut.</p><div class="request-layout"><form class="form-panel" id="websiteRequestForm"><div class="fields">
-<div class="field"><label for="businessName"><span class="info-term" tabindex="0" data-tip="Nama bisnes ialah nama kedai, syarikat atau jenama yang akan dipaparkan pada website. Contoh: Empire Shop, AZ Tech atau Kedai Kopi Murni.">Nama bisnes * <span class="info-icon" aria-hidden="true">i</span></span></label><input id="businessName" required placeholder="Contoh: Empire Shop"/></div>
-<div class="field"><label for="customerName"><span class="info-term" tabindex="0" data-tip="Nama orang yang boleh dihubungi sepanjang projek, biasanya pemilik bisnes atau wakil yang membuat keputusan.">Nama customer * <span class="info-icon" aria-hidden="true">i</span></span></label><input id="customerName" required placeholder="Nama untuk dihubungi"/></div>
-<div class="field"><label for="websiteType"><span class="info-term" tabindex="0" data-tip="Website satu halaman: semua maklumat disusun dalam satu halaman panjang. Katalog produk: mempunyai senarai atau kad untuk banyak produk. Landing page promosi: fokus pada satu produk, servis atau kempen dengan butang tindakan yang jelas.">Jenis website * <span class="info-icon" aria-hidden="true">i</span></span></label><select id="websiteType" required><option value="">Pilih jenis</option><option>Website satu halaman</option><option>Website katalog produk</option><option>Landing page promosi</option><option>Lain-lain</option></select></div>
-<div class="field"><label for="productCount"><span class="info-term" tabindex="0" data-tip="Jumlah produk, servis atau pakej yang perlu dimasukkan. Contoh: 8 produk, 3 pakej servis atau 1 produk promosi.">Bilangan produk / pakej <span class="info-icon" aria-hidden="true">i</span></span></label><input id="productCount" type="number" min="0" placeholder="Contoh: 8"/></div>
-<div class="field"><label for="theme"><span class="info-term" tabindex="0" data-tip="Warna utama yang anda mahu digunakan pada website. Boleh nyatakan dua atau tiga warna, contohnya hitam dan emas, biru dan putih, atau ikut warna logo.">Warna tema <span class="info-icon" aria-hidden="true">i</span></span></label><input id="theme" placeholder="Contoh: Hitam dan emas"/></div>
-<div class="field"><label for="domain"><span class="info-term" tabindex="0" data-tip="Domain ialah alamat website. Domain sendiri contohnya empireshop.com atau empireshop.my. Subdomain percuma contohnya empireshop.github.io. Pilih ‘Sudah mempunyai domain’ jika anda telah membeli alamat website sendiri.">Pilihan domain <span class="info-icon" aria-hidden="true">i</span></span></label><select id="domain"><option>Belum pasti</option><option>Domain sendiri</option><option>Subdomain percuma</option><option>Sudah mempunyai domain</option></select></div>
-<div class="field full"><label><span class="info-term" tabindex="0" data-tip="Tandakan fungsi tambahan yang diperlukan. Setiap fungsi membantu customer menghubungi anda, membuat bayaran atau mendapatkan maklumat dengan lebih mudah.">Ciri yang diperlukan <span class="info-icon" aria-hidden="true">i</span></span></label><div class="check-row"><label class="check"><input type="checkbox" value="Butang WhatsApp" name="features"/><span class="info-term" tabindex="0" data-tip="Butang yang membuka WhatsApp customer terus ke nombor bisnes anda, biasanya bersama mesej permulaan automatik.">Butang WhatsApp <span class="info-icon" aria-hidden="true">i</span></span></label><label class="check"><input type="checkbox" value="Butang Telegram" name="features"/><span class="info-term" tabindex="0" data-tip="Butang yang membuka akaun, kumpulan atau saluran Telegram bisnes anda.">Butang Telegram <span class="info-icon" aria-hidden="true">i</span></span></label><label class="check"><input type="checkbox" value="QR pembayaran" name="features"/><span class="info-term" tabindex="0" data-tip="Paparan kod QR bank atau eWallet supaya customer boleh membuat pembayaran dengan mengimbasnya.">QR pembayaran <span class="info-icon" aria-hidden="true">i</span></span></label><label class="check"><input type="checkbox" value="Testimoni" name="features"/><span class="info-term" tabindex="0" data-tip="Bahagian yang memaparkan ulasan, pengalaman atau maklum balas customer terdahulu untuk meningkatkan keyakinan pembeli.">Testimoni <span class="info-icon" aria-hidden="true">i</span></span></label><label class="check"><input type="checkbox" value="Waktu operasi" name="features"/><span class="info-term" tabindex="0" data-tip="Hari dan waktu bisnes beroperasi, contohnya Isnin–Sabtu, 9:00 pagi hingga 6:00 petang.">Waktu operasi <span class="info-icon" aria-hidden="true">i</span></span></label><label class="check"><input type="checkbox" value="Borang pertanyaan" name="features"/><span class="info-term" tabindex="0" data-tip="Borang untuk customer mengisi nama, nombor telefon, email dan pertanyaan sebelum maklumat dihantar kepada anda.">Borang pertanyaan <span class="info-icon" aria-hidden="true">i</span></span></label></div></div>
-<div class="field full"><label for="materials"><span class="info-term" tabindex="0" data-tip="Senaraikan bahan yang sudah siap untuk digunakan, seperti logo, gambar produk, harga, penerangan produk, nombor telefon, QR pembayaran dan testimoni.">Bahan yang sudah tersedia <span class="info-icon" aria-hidden="true">i</span></span></label><textarea id="materials" placeholder="Contoh: Logo, 10 gambar produk, senarai harga dan QR pembayaran"></textarea></div>
-<div class="field full"><label for="notes"><span class="info-term" tabindex="0" data-tip="Maklumat tambahan seperti website contoh yang anda suka, gaya reka bentuk, tarikh sasaran, bahasa website atau fungsi khas yang belum disenaraikan.">Catatan tambahan <span class="info-icon" aria-hidden="true">i</span></span></label><textarea id="notes" placeholder="Terangkan gaya website, contoh rujukan, tarikh sasaran atau maklumat lain"></textarea></div>
-</div><div class="form-actions"><button class="cta secondary" type="button" id="copyOnly">Salin Mesej</button><button class="cta primary" type="submit">Hantar ke WhatsApp</button></div><div class="status" id="formStatus" aria-live="polite"></div></form>
-<aside class="summary-panel"><h3>Sebelum pembangunan bermula</h3><ol><li>Skop, harga dan tempoh disahkan.</li><li>Deposit dibayar mengikut persetujuan.</li><li>Semua teks, logo, gambar dan pautan dihantar.</li><li>Akaun GitHub dan domain menggunakan email customer.</li><li>Jumlah pembetulan ditetapkan supaya proses lebih teratur.</li></ol><div class="price-note"><strong>Nota:</strong> Harga projek bergantung pada skop, jumlah kandungan, fungsi dan tempoh yang diminta.</div></aside></div></div></section>
-<section class="section" id="github-register-guide"><div class="wrap"><h2 class="section-title">Cara daftar akaun GitHub langkah demi langkah</h2><p class="section-lead">Customer perlu menggunakan email bisnes sendiri. Akaun GitHub Free sudah memadai untuk menyediakan repository awam dan menerbitkan website statik melalui GitHub Pages.</p><div class="github-guide">
-<article class="github-step"><span class="github-step-no">1</span><div><h3>Buka halaman pendaftaran</h3><p>Tekan butang <strong>Daftar GitHub Sekarang</strong> di bawah atau pergi ke halaman Sign up GitHub.</p></div></article>
-<article class="github-step"><span class="github-step-no">2</span><div><h3>Masukkan email bisnes</h3><p>Gunakan email yang dimiliki dan boleh diakses oleh pemilik bisnes. Elakkan menggunakan email pembangun website.</p></div></article>
-<article class="github-step"><span class="github-step-no">3</span><div><h3>Cipta kata laluan</h3><p>Gunakan kata laluan yang kuat, unik dan tidak digunakan pada akaun lain. Simpan dalam password manager yang dipercayai.</p></div></article>
-<article class="github-step"><span class="github-step-no">4</span><div><h3>Pilih username bisnes</h3><p>Pilih nama yang mudah dikenali, contohnya <strong>empireshop</strong>. Username ini akan digunakan untuk profil dan boleh digunakan dalam alamat repository.</p></div></article>
-<article class="github-step"><span class="github-step-no">5</span><div><h3>Lengkapkan pengesahan</h3><p>Ikut arahan semasa pada skrin, termasuk pengesahan bahawa pengguna ialah manusia dan pilihan komunikasi jika dipaparkan.</p></div></article>
-<article class="github-step"><span class="github-step-no">6</span><div><h3>Sahkan alamat email</h3><p>Buka inbox email bisnes, cari mesej daripada GitHub dan tekan pautan pengesahan. Email yang disahkan diperlukan untuk menggunakan fungsi penting seperti mencipta repository.</p></div></article>
-<article class="github-step"><span class="github-step-no">7</span><div><h3>Log masuk dan semak username</h3><p>Selepas akaun aktif, log masuk dan tekan gambar profil di penjuru kanan atas. Username akan kelihatan pada profil. Hantar <strong>username sahaja</strong> kepada pembangun.</p></div></article>
-<article class="github-step"><span class="github-step-no">8</span><div><h3>Aktifkan 2FA</h3><p>Pergi ke gambar profil → <strong>Settings</strong> → <strong>Password and authentication</strong> → aktifkan <strong>Two-factor authentication</strong>. Gunakan aplikasi authenticator jika sesuai.</p></div></article>
-<article class="github-step"><span class="github-step-no">9</span><div><h3>Simpan recovery codes</h3><p>Muat turun atau salin recovery codes dan simpan di tempat selamat. Kod ini diperlukan jika telefon atau aplikasi authenticator tidak boleh digunakan.</p></div></article>
-<article class="github-step"><span class="github-step-no">10</span><div><h3>Maklumkan kepada AZOBSS</h3><p>Hantar username GitHub kepada AZOBSS. Selepas itu, repository boleh disediakan dan customer boleh menjemput AZOBSS sebagai collaborator tanpa berkongsi kata laluan.</p></div></article>
-</div><div class="github-complete"><strong>Selesai:</strong> Akaun GitHub customer sudah bersedia. Maklumat yang perlu dihantar kepada AZOBSS hanyalah <strong>username GitHub</strong>.</div><div class="github-warning"><strong>Keselamatan:</strong> Jangan hantar password, kod 2FA atau recovery codes kepada sesiapa. Semua maklumat keselamatan mesti disimpan oleh pemilik akaun.</div><div class="form-actions"><a class="cta primary" href="https://github.com/signup" target="_blank" rel="noopener noreferrer">Daftar GitHub Sekarang</a><a class="cta secondary" href="https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github" target="_blank" rel="noopener noreferrer">Panduan Rasmi GitHub</a><a class="cta secondary" href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication" target="_blank" rel="noopener noreferrer">Panduan 2FA</a></div></div></section>
-<section class="section"><div class="wrap"><h2 class="section-title">Mesej pendaftaran GitHub untuk customer</h2><p class="section-lead">Boleh salin mesej ini dan hantar kepada customer sebelum projek dimulakan.</p><div class="message-box" id="githubMessage">Untuk memulakan website, mohon daftar satu akaun GitHub menggunakan email bisnes sendiri. Selepas selesai, hantar username GitHub kepada saya sahaja. Tidak perlu berikan password.
 
-Saya akan bantu sediakan repository dan website tersebut dalam akaun pihak tuan supaya pemilikan website kekal atas nama pihak tuan. Domain juga sebaiknya didaftarkan menggunakan email dan maklumat pemilik bisnes.
+<section class="section" id="github-register-guide"><div class="wrap"><h2 class="section-title">Daftar GitHub dalam 4 langkah</h2><p class="section-lead">Belum ada akaun? Proses pendaftaran asas sahaja diperlukan. Repository dan tetapan teknikal akan dibantu kemudian.</p><div class="az615-github-box">
+<div class="az615-github-start"><div><h3>Gunakan email milik bisnes atau pemilik</h3><p>Akaun ini memastikan website kekal menjadi milik customer. Jangan gunakan email pembangun.</p></div><a class="cta primary" href="https://github.com/signup" target="_blank" rel="noopener noreferrer">Buka Pendaftaran GitHub</a></div>
+<div class="az615-github-steps">
+<div class="az615-github-step"><b>1</b><strong>Buka GitHub</strong><p>Tekan butang pendaftaran di atas.</p></div>
+<div class="az615-github-step"><b>2</b><strong>Isi maklumat</strong><p>Masukkan email, kata laluan dan username bisnes.</p></div>
+<div class="az615-github-step"><b>3</b><strong>Sahkan email</strong><p>Buka inbox dan masukkan kod atau tekan pautan GitHub.</p></div>
+<div class="az615-github-step"><b>4</b><strong>Hantar username</strong><p>Berikan username sahaja kepada AZOBSS.</p></div>
+</div>
+<div class="az615-only-username"><strong>Hanya hantar username GitHub.</strong> Jangan hantar password, kod pengesahan, kod 2FA atau recovery code.</div>
+<details class="az615-security-details"><summary>Langkah keselamatan tambahan yang disyorkan</summary><div>Aktifkan Two-Factor Authentication (2FA) selepas akaun siap dan simpan recovery codes di tempat selamat. AZOBSS tidak memerlukan kod tersebut.</div></details>
+<div class="form-actions"><a class="cta secondary" href="https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github" target="_blank" rel="noopener noreferrer">Panduan Rasmi GitHub</a><button class="cta secondary" id="copyGithub" type="button">Salin Mesej untuk Customer</button></div><div class="status" id="githubStatus" aria-live="polite"></div>
+</div></div></section>
 
-Sebelum pembangunan dimulakan, mohon sediakan logo, senarai produk dan harga, gambar, nombor WhatsApp/Telegram, QR pembayaran, testimoni serta maklumat perniagaan.</div><div class="form-actions"><button class="cta secondary" id="copyGithub" type="button">Salin Mesej GitHub</button></div><div class="status" id="githubStatus" aria-live="polite"></div></div></section>
+<section class="section"><div class="wrap"><div class="message-box" id="githubMessage">Untuk memulakan website, mohon daftar akaun GitHub menggunakan email milik bisnes atau pemilik. Selepas akaun siap dan email disahkan, hantar username GitHub sahaja kepada AZOBSS.
+
+Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Repository dan tetapan teknikal akan dibantu selepas skop projek disahkan.</div></div></section>
 </main><footer class="footer"><div class="wrap">© AZOBSS — Website, digital tools dan servis teknologi.</div></footer>
-<script>
+<script id="azobss-615-simple-form-js">
 (function(){
   const form=document.getElementById('websiteRequestForm');
+  if(!form) return;
   const status=document.getElementById('formStatus');
   const whatsappUrl='https://alvo.chat/6nZ2';
+  let currentStep=1;
+  const stepNames={1:'Pilih rupa website',2:'Maklumat bisnes',3:'Fungsi & bahan'};
+
+  function selectedValue(name,fallback=''){
+    const el=form.querySelector('input[name="'+name+'"]:checked');
+    return el?el.value:fallback;
+  }
+  function checkedValues(name){
+    return [...form.querySelectorAll('input[name="'+name+'"]:checked')].map(x=>x.value);
+  }
+  function value(id){
+    const el=document.getElementById(id);
+    return el?(el.value||'').trim():'';
+  }
+  function setStep(step){
+    currentStep=Math.max(1,Math.min(3,step));
+    form.querySelectorAll('.az615-step').forEach(el=>el.classList.toggle('is-active',Number(el.dataset.step)===currentStep));
+    form.querySelectorAll('[data-progress]').forEach(el=>{
+      const n=Number(el.dataset.progress);
+      el.classList.toggle('is-active',n===currentStep);
+      el.classList.toggle('is-done',n<currentStep);
+    });
+    const mobile=document.getElementById('az615MobileProgress');
+    if(mobile) mobile.textContent='Langkah '+currentStep+' daripada 3 — '+stepNames[currentStep];
+    form.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function validateStep(step){
+    if(step===1){
+      const ok=!!form.querySelector('input[name="websiteType"]:checked');
+      document.getElementById('websiteTypeError').classList.toggle('is-visible',!ok);
+      if(!ok) document.getElementById('websiteTypeChoices').scrollIntoView({behavior:'smooth',block:'center'});
+      return ok;
+    }
+    const panel=form.querySelector('.az615-step[data-step="'+step+'"]');
+    const invalid=[...panel.querySelectorAll('[required]')].find(el=>!el.checkValidity());
+    if(invalid){invalid.reportValidity();return false}
+    return true;
+  }
+  form.querySelectorAll('[data-next-step]').forEach(btn=>btn.addEventListener('click',()=>{if(validateStep(currentStep))setStep(currentStep+1)}));
+  form.querySelectorAll('[data-prev-step]').forEach(btn=>btn.addEventListener('click',()=>setStep(currentStep-1)));
+  form.querySelectorAll('input[name="websiteType"]').forEach(el=>el.addEventListener('change',()=>{document.getElementById('websiteTypeError').classList.remove('is-visible');updateSummary()}));
+
+  function updateGithubField(){
+    const show=selectedValue('githubStatusChoice')==='Sudah ada akaun GitHub';
+    document.getElementById('githubUsernameWrap').classList.toggle('is-visible',show);
+  }
+  form.querySelectorAll('input[name="githubStatusChoice"]').forEach(el=>el.addEventListener('change',updateGithubField));
+  updateGithubField();
+
+  function updateSummary(){
+    document.getElementById('summaryWebsiteType').textContent=selectedValue('websiteType','Belum dipilih');
+    document.getElementById('summaryBusinessName').textContent=value('businessName')||'Belum diisi';
+    const features=checkedValues('features');
+    const materials=checkedValues('materials');
+    document.getElementById('summaryFeatures').textContent=features.length?features.join(', '):'Belum dipilih';
+    document.getElementById('summaryMaterials').textContent=materials.length?materials.join(', '):'Belum dipilih';
+  }
+  form.addEventListener('input',updateSummary);
+  form.addEventListener('change',updateSummary);
+  updateSummary();
+
   function message(){
-    const features=[...document.querySelectorAll('input[name="features"]:checked')].map(x=>x.value);
-    const value=id=>(document.getElementById(id).value||'').trim();
+    const features=checkedValues('features');
+    const materials=checkedValues('materials');
+    const githubStatus=selectedValue('githubStatusChoice','Belum dinyatakan');
+    const githubUsername=value('githubUsername');
     return [
       'PERMINTAAN WEBSITE AZOBSS',
       '',
       'Nama customer: '+value('customerName'),
+      'Nombor WhatsApp: '+value('customerWhatsapp'),
       'Nama bisnes: '+value('businessName'),
-      'Jenis website: '+value('websiteType'),
-      'Bilangan produk/pakej: '+(value('productCount')||'Belum pasti'),
+      'Jenis website: '+selectedValue('websiteType','Belum dipilih'),
+      'Bilangan produk/servis: '+(value('productCount')||'Belum pasti'),
       'Warna tema: '+(value('theme')||'Belum pasti'),
-      'Domain: '+value('domain'),
-      'Ciri diperlukan: '+(features.length?features.join(', '):'Belum dipilih'),
-      'Bahan tersedia: '+(value('materials')||'Belum dinyatakan'),
-      'Catatan: '+(value('notes')||'Tiada'),
+      'Pilihan domain: '+value('domain'),
+      'Fungsi diperlukan: '+(features.length?features.join(', '):'Belum dipilih'),
+      'Bahan tersedia: '+(materials.length?materials.join(', '):'Belum ada / belum pasti'),
+      'Status GitHub: '+githubStatus+(githubUsername?' ('+githubUsername+')':''),
+      'Maklumat tambahan: '+(value('notes')||'Tiada'),
       '',
-      'Saya faham skop, harga, tempoh siap, jumlah pembetulan dan deposit akan disahkan sebelum pembangunan bermula.'
+      'Saya faham skop, harga, tempoh siap, deposit dan jumlah pembetulan akan disahkan sebelum pembangunan bermula.'
     ].join('\n');
   }
   function legacyCopyText(text){
     const previousFocus=document.activeElement;
     const ta=document.createElement('textarea');
-    ta.value=text;
-    ta.setAttribute('readonly','');
-    ta.setAttribute('aria-hidden','true');
-    ta.style.position='fixed';
-    ta.style.left='-9999px';
-    ta.style.top='0';
-    ta.style.width='1px';
-    ta.style.height='1px';
-    ta.style.opacity='0';
-    document.body.appendChild(ta);
-    ta.focus({preventScroll:true});
-    ta.select();
-    ta.setSelectionRange(0,ta.value.length);
-    let ok=false;
-    try{ok=document.execCommand('copy')===true}catch(_e){ok=false}
-    ta.remove();
-    try{if(previousFocus&&typeof previousFocus.focus==='function')previousFocus.focus({preventScroll:true})}catch(_e){}
+    ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.left='-9999px';ta.style.top='0';
+    document.body.appendChild(ta);ta.focus({preventScroll:true});ta.select();ta.setSelectionRange(0,ta.value.length);
+    let ok=false;try{ok=document.execCommand('copy')===true}catch(_e){}ta.remove();
+    try{if(previousFocus&&previousFocus.focus)previousFocus.focus({preventScroll:true})}catch(_e){}
     return ok;
-  }
-  async function clipboardCopyText(text){
-    if(!navigator.clipboard||!window.isSecureContext) return false;
-    try{await navigator.clipboard.writeText(text);return true}catch(_e){return false}
   }
   async function copyText(text){
     if(legacyCopyText(text)) return true;
-    return clipboardCopyText(text);
+    if(!navigator.clipboard||!window.isSecureContext) return false;
+    try{await navigator.clipboard.writeText(text);return true}catch(_e){return false}
   }
-  async function copyRequestMessage(){
-    if(!form.reportValidity()) return;
+  function validateAll(){
+    if(!validateStep(1)){setStep(1);return false}
+    for(const step of [2]){if(!validateStep(step)){setStep(step);return false}}
+    return true;
+  }
+  document.getElementById('copyOnly').addEventListener('click',async()=>{
+    if(!validateAll()) return;
     const ok=await copyText(message());
-    status.textContent=ok
-      ?'Mesej telah disalin. Tekan “Hantar ke WhatsApp” dan tampal mesej tersebut.'
-      :'Browser menghalang salinan automatik. Sila benarkan akses clipboard dan cuba lagi.';
-  }
-  function openWhatsappOnly(){
-    if(!form.reportValidity()) return;
-    const whatsappWindow=window.open(whatsappUrl,'_blank','noopener');
-    status.textContent=whatsappWindow
-      ?'WhatsApp telah dibuka. Mesej tidak disalin.'
-      :'Popup WhatsApp disekat oleh browser. Sila benarkan popup dan cuba lagi.';
-  }
-  form.addEventListener('submit',e=>{e.preventDefault();openWhatsappOnly()});
-  document.getElementById('copyOnly').addEventListener('click',copyRequestMessage);
-  document.getElementById('copyGithub').addEventListener('click',async()=>{
+    status.textContent=ok?'Maklumat telah disalin. Sekarang tekan “Buka WhatsApp” dan tampal mesej.':'Browser menghalang salinan. Sila cuba sekali lagi atau salin secara manual.';
+  });
+  form.addEventListener('submit',e=>{
+    e.preventDefault();
+    if(!validateAll()) return;
+    const win=window.open(whatsappUrl,'_blank','noopener');
+    status.textContent=win?'WhatsApp telah dibuka. Tekan “Salin Maklumat” dahulu jika belum menyalin mesej.':'Popup WhatsApp disekat. Benarkan popup dan cuba lagi.';
+  });
+  const copyGithub=document.getElementById('copyGithub');
+  if(copyGithub) copyGithub.addEventListener('click',async()=>{
     const ok=await copyText(document.getElementById('githubMessage').innerText.trim());
-    document.getElementById('githubStatus').textContent=ok?'Mesej GitHub telah disalin.':'Tidak dapat menyalin mesej.';
+    document.getElementById('githubStatus').textContent=ok?'Mesej pendaftaran GitHub telah disalin.':'Tidak dapat menyalin mesej.';
   });
 })();
 </script>
-
 
 <script id="azobss-role-hardening-605-js">
 (function(){
