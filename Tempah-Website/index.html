@@ -710,6 +710,29 @@ body>main{padding-top:48px;}
 @media(max-width:420px){.az616-real-preview{height:190px}.az617-benefits{grid-template-columns:1fr}}
 </style>
 
+
+<style id="azobss-618-clear-full-floating-preview">
+/* 618: Preview images shown fully in cards + accessible floating full preview. */
+.az615-type-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.az615-type-card{overflow:hidden}
+.az616-real-preview{position:relative;height:auto!important;aspect-ratio:16/10;padding:9px;background:linear-gradient(145deg,#071426,#0e2039);border-bottom:1px solid #2d4568;overflow:hidden}
+.az616-real-preview img{width:100%;height:100%;object-fit:contain!important;object-position:center!important;border-radius:11px;background:#050b16;transform:none!important;filter:none!important;box-shadow:0 9px 24px rgba(0,0,0,.32)}
+.az615-type-card:hover .az616-real-preview img{transform:none!important;filter:brightness(1.03)!important}
+.az616-preview-badge{display:none!important}
+.az618-full-preview{position:absolute;right:18px;bottom:18px;z-index:4;display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid rgba(255,255,255,.6);border-radius:999px;background:rgba(3,10,25,.88);backdrop-filter:blur(8px);color:#fff;font:800 12px/1 inherit;cursor:pointer;box-shadow:0 9px 24px rgba(0,0,0,.38);transition:.18s ease}
+.az618-full-preview:hover{transform:translateY(-2px);background:#0891b2;border-color:#67e8f9}.az618-full-preview:focus-visible{outline:3px solid #67e8f9;outline-offset:2px}
+.az618-preview-hint{display:flex;align-items:center;gap:8px;margin:10px 0 2px;color:#a9bdd4;font-size:13px}.az618-preview-hint b{color:#67e8f9}
+.az618-modal{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(1,5,14,.88);backdrop-filter:blur(11px)}
+.az618-modal.is-open{display:flex}.az618-modal-dialog{position:relative;width:min(1180px,96vw);max-height:94vh;display:flex;flex-direction:column;border:1px solid #3e587c;border-radius:22px;background:linear-gradient(155deg,#0c192c,#07111f);box-shadow:0 35px 100px rgba(0,0,0,.7);overflow:hidden}
+.az618-modal-head{display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid #2d4160;background:#0b1729}.az618-modal-title{min-width:0;flex:1}.az618-modal-title small{display:block;color:#67e8f9;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.09em}.az618-modal-title strong{display:block;margin-top:3px;color:#fff;font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az618-modal-close{width:42px;height:42px;display:grid;place-items:center;border:1px solid #435a7b;border-radius:13px;background:#111f34;color:#fff;font-size:24px;cursor:pointer}.az618-modal-close:hover{background:#e11d48;border-color:#fb7185}
+.az618-modal-stage{min-height:0;flex:1;padding:15px;overflow:auto;background:radial-gradient(circle at 50% 0,rgba(34,211,238,.10),transparent 38%),#030916}.az618-modal-stage img{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain;border-radius:13px;background:#fff;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.az618-modal-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-top:1px solid #2d4160;background:#0b1729}.az618-modal-desc{color:#a9bdd4;font-size:13px}.az618-modal-actions{display:flex;gap:9px}.az618-modal-actions button{padding:10px 15px;border-radius:11px;font:850 13px inherit;cursor:pointer}.az618-modal-cancel{border:1px solid #415775;background:#111f34;color:#dbeafe}.az618-modal-select{border:1px solid #5eead4;background:linear-gradient(135deg,#10b981,#22c55e);color:#032114}
+html.az618-modal-open,html.az618-modal-open body{overflow:hidden!important}
+@media(max-width:900px){.az615-type-grid{grid-template-columns:1fr}.az618-modal{padding:10px}.az618-modal-dialog{width:100%;max-height:97vh}.az618-modal-stage{padding:8px}.az618-modal-stage img{max-height:76vh}.az618-modal-foot{align-items:flex-start;flex-direction:column}.az618-modal-actions,.az618-modal-actions button{width:100%}}
+@media(max-width:520px){.az618-full-preview{right:12px;bottom:12px;padding:8px 10px;font-size:11px}.az618-modal-head{padding:11px 12px}.az618-modal-title strong{font-size:16px}.az618-modal-foot{padding:11px 12px}}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -761,7 +784,7 @@ body>main{padding-top:48px;}
     </div>
   </div>
 </header>
-<!-- AZOBSS patch 617: premium realistic website type cards -->
+<!-- AZOBSS patch 618: clear full floating website previews -->
 <main>
 <section class="hero"><div class="wrap"><span class="eyebrow">Website untuk bisnes</span><h1>Pilih contoh, isi ringkas dan <span>hantar terus kepada AZOBSS</span></h1><p>Tidak perlu tahu istilah teknikal. Pilih rupa website yang paling hampir dengan kehendak anda, kemudian lengkapkan borang langkah demi langkah.</p><div class="badge-row"><span class="badge">Mesra telefon</span><span class="badge">WhatsApp / Telegram</span><span class="badge">QR Pembayaran</span><span class="badge">Domain sendiri</span><span class="badge">Milik customer</span></div><div class="hero-actions"><a class="cta primary" href="#request">Mula Pilih Website</a><a class="cta secondary" href="#github-register-guide">Cara Daftar GitHub</a></div><div class="az615-quick-note"><span class="az615-quick-note-icon">✓</span><div><strong>Belum ada logo, domain atau akaun GitHub?</strong><br/>Tidak mengapa. Isi apa yang sudah ada dahulu. AZOBSS akan terangkan langkah seterusnya selepas semakan permintaan.</div></div></div></section>
 
@@ -784,13 +807,14 @@ body>main{padding-top:48px;}
 <section class="az615-step is-active" data-step="1">
 <h3 class="az615-step-heading"><span class="az617-step-number">1.</span> Pilih <span class="az617-accent">jenis website</span> yang anda suka</h3><p class="az615-step-lead">Tekan pada gambar untuk memilih. Anda boleh menukar pilihan kemudian semasa berbincang dengan AZOBSS.</p>
 <div class="az615-type-grid" id="websiteTypeChoices">
-<label class="az615-type-option az617-green"><input type="radio" name="websiteType" value="Website satu halaman bisnes"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/one-page-premium.png" loading="lazy" alt="Preview Website Satu Halaman"/><span class="az616-preview-badge">Preview website</span></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">1</span><strong>Website Satu Halaman</strong></span><small>Profil bisnes, servis, galeri, lokasi dan butang hubungi dalam satu halaman.</small><span class="az617-tags"><em>Profil</em><em>Servis</em><em>Galeri</em><em>Lokasi</em><em>Hubungi</em></span></span></span><span class="az615-type-check">✓</span></label>
-<label class="az615-type-option "><input type="radio" name="websiteType" value="Website katalog produk"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/catalog-premium.png" loading="lazy" alt="Preview Katalog Produk"/><span class="az616-preview-badge">Preview website</span></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">2</span><strong>Katalog Produk</strong></span><small>Sesuai untuk banyak produk atau pakej dengan gambar, harga dan butang WhatsApp.</small><span class="az617-tags"><em>Katalog</em><em>Harga</em><em>WhatsApp</em><em>Carian</em></span></span></span><span class="az615-type-check">✓</span></label>
-<label class="az615-type-option az617-purple"><input type="radio" name="websiteType" value="Website servis dan tempahan"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/services-premium.png" loading="lazy" alt="Preview Servis & Tempahan"/><span class="az616-preview-badge">Preview website</span></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">3</span><strong>Servis & Tempahan</strong></span><small>Untuk servis profesional, pakej, borang pertanyaan dan tempahan melalui WhatsApp.</small><span class="az617-tags"><em>Tempahan</em><em>Servis</em><em>WhatsApp</em><em>Borang</em></span></span></span><span class="az615-type-check">✓</span></label>
-<label class="az615-type-option az617-orange"><input type="radio" name="websiteType" value="Landing page promosi"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/promo-premium.png" loading="lazy" alt="Preview Landing Page Promosi"/><span class="az616-preview-badge">Preview website</span></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">4</span><strong>Landing Page Promosi</strong></span><small>Fokus pada satu produk, promosi atau kempen dengan butang tindakan yang jelas.</small><span class="az617-tags"><em>Promosi</em><em>Countdown</em><em>CTA</em><em>WhatsApp</em></span></span></span><span class="az615-type-check">✓</span></label>
-<label class="az615-type-option az617-blue"><input type="radio" name="websiteType" value="Website korporat / perniagaan"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/corporate-premium.png" loading="lazy" alt="Preview Website Korporat / Perniagaan"/><span class="az616-preview-badge">Preview website</span></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">5</span><strong>Website Korporat / Perniagaan</strong></span><small>Sesuai untuk syarikat, organisasi atau bisnes yang memerlukan beberapa halaman.</small><span class="az617-tags"><em>Berbilang Halaman</em><em>Perkhidmatan</em><em>Projek</em><em>Blog</em></span></span></span><span class="az615-type-check">✓</span></label>
-<label class="az615-type-option az617-purple"><input type="radio" name="websiteType" value="Belum pasti — perlukan cadangan AZOBSS"/><span class="az615-type-card az617-unsure-card"><span class="az616-real-preview"><img src="/assets/img/website-types/unsure-premium.png" loading="lazy" alt="Pilihan untuk customer yang belum pasti jenis website"/></span><span class="az615-type-copy"><span class="az617-title-row"><strong>Saya Belum Pasti</strong></span><small>AZOBSS akan cadangkan jenis website yang paling sesuai berdasarkan keperluan dan bajet anda.</small><span class="az617-request-button">Minta Cadangan Percuma</span></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option az617-green"><input type="radio" name="websiteType" value="Website satu halaman bisnes"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/one-page-full.png" loading="lazy" alt="Paparan penuh Website Satu Halaman"/><button class="az618-full-preview" type="button" data-preview-src="/assets/img/website-types/one-page-full.png" data-preview-title="Website Satu Halaman" data-preview-value="Website satu halaman bisnes" data-preview-desc="Profil bisnes, servis, galeri, lokasi dan butang hubungi dalam satu halaman." aria-label="Lihat paparan penuh Website Satu Halaman">⌕ Lihat Paparan Penuh</button></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">1</span><strong>Website Satu Halaman</strong></span><small>Profil bisnes, servis, galeri, lokasi dan butang hubungi dalam satu halaman.</small><span class="az617-tags"><em>Profil</em><em>Servis</em><em>Galeri</em><em>Lokasi</em><em>Hubungi</em></span></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option "><input type="radio" name="websiteType" value="Website katalog produk"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/catalog-full.png" loading="lazy" alt="Paparan penuh Katalog Produk"/><button class="az618-full-preview" type="button" data-preview-src="/assets/img/website-types/catalog-full.png" data-preview-title="Katalog Produk" data-preview-value="Website katalog produk" data-preview-desc="Sesuai untuk banyak produk atau pakej dengan gambar, harga dan butang WhatsApp." aria-label="Lihat paparan penuh Katalog Produk">⌕ Lihat Paparan Penuh</button></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">2</span><strong>Katalog Produk</strong></span><small>Sesuai untuk banyak produk atau pakej dengan gambar, harga dan butang WhatsApp.</small><span class="az617-tags"><em>Katalog</em><em>Harga</em><em>WhatsApp</em><em>Carian</em></span></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option az617-purple"><input type="radio" name="websiteType" value="Website servis dan tempahan"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/services-full.png" loading="lazy" alt="Paparan penuh Servis & Tempahan"/><button class="az618-full-preview" type="button" data-preview-src="/assets/img/website-types/services-full.png" data-preview-title="Servis & Tempahan" data-preview-value="Website servis dan tempahan" data-preview-desc="Untuk servis profesional, pakej, borang pertanyaan dan tempahan melalui WhatsApp." aria-label="Lihat paparan penuh Servis & Tempahan">⌕ Lihat Paparan Penuh</button></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">3</span><strong>Servis & Tempahan</strong></span><small>Untuk servis profesional, pakej, borang pertanyaan dan tempahan melalui WhatsApp.</small><span class="az617-tags"><em>Tempahan</em><em>Servis</em><em>WhatsApp</em><em>Borang</em></span></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option az617-orange"><input type="radio" name="websiteType" value="Landing page promosi"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/promo-full.png" loading="lazy" alt="Paparan penuh Landing Page Promosi"/><button class="az618-full-preview" type="button" data-preview-src="/assets/img/website-types/promo-full.png" data-preview-title="Landing Page Promosi" data-preview-value="Landing page promosi" data-preview-desc="Fokus pada satu produk, promosi atau kempen dengan butang tindakan yang jelas." aria-label="Lihat paparan penuh Landing Page Promosi">⌕ Lihat Paparan Penuh</button></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">4</span><strong>Landing Page Promosi</strong></span><small>Fokus pada satu produk, promosi atau kempen dengan butang tindakan yang jelas.</small><span class="az617-tags"><em>Promosi</em><em>Countdown</em><em>CTA</em><em>WhatsApp</em></span></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option az617-blue"><input type="radio" name="websiteType" value="Website korporat / perniagaan"/><span class="az615-type-card"><span class="az616-real-preview"><img src="/assets/img/website-types/corporate-full.png" loading="lazy" alt="Paparan penuh Website Korporat / Perniagaan"/><button class="az618-full-preview" type="button" data-preview-src="/assets/img/website-types/corporate-full.png" data-preview-title="Website Korporat / Perniagaan" data-preview-value="Website korporat / perniagaan" data-preview-desc="Sesuai untuk syarikat, organisasi atau bisnes yang memerlukan beberapa halaman." aria-label="Lihat paparan penuh Website Korporat / Perniagaan">⌕ Lihat Paparan Penuh</button></span><span class="az615-type-copy"><span class="az617-title-row"><span class="az617-number">5</span><strong>Website Korporat / Perniagaan</strong></span><small>Sesuai untuk syarikat, organisasi atau bisnes yang memerlukan beberapa halaman.</small><span class="az617-tags"><em>Berbilang Halaman</em><em>Perkhidmatan</em><em>Projek</em><em>Blog</em></span></span></span><span class="az615-type-check">✓</span></label>
+<label class="az615-type-option az617-purple"><input type="radio" name="websiteType" value="Belum pasti — perlukan cadangan AZOBSS"/><span class="az615-type-card az617-unsure-card"><span class="az616-real-preview"><img src="/assets/img/website-types/unsure-full.png" loading="lazy" alt="Pilihan customer yang belum pasti"/><button class="az618-full-preview" type="button" data-preview-src="/assets/img/website-types/unsure-full.png" data-preview-title="Saya Belum Pasti" data-preview-value="Belum pasti — perlukan cadangan AZOBSS" data-preview-desc="AZOBSS akan cadangkan jenis website yang paling sesuai berdasarkan keperluan dan bajet anda." aria-label="Lihat paparan penuh pilihan Saya Belum Pasti">⌕ Lihat Paparan Penuh</button></span><span class="az615-type-copy"><span class="az617-title-row"><strong>Saya Belum Pasti</strong></span><small>AZOBSS akan cadangkan jenis website yang paling sesuai berdasarkan keperluan dan bajet anda.</small><span class="az617-request-button">Minta Cadangan Percuma</span></span></span><span class="az615-type-check">✓</span></label>
 </div>
+<div class="az618-preview-hint">⌕ <span>Tekan <b>Lihat Paparan Penuh</b> untuk melihat keseluruhan contoh website secara terapung.</span></div>
 <div class="az617-benefits" aria-label="Kelebihan website AZOBSS">
 <div class="az617-benefit"><i>◫</i><span>Reka bentuk moden dan responsif</span></div>
 <div class="az617-benefit"><i>▯</i><span>Mesra telefon bimbit</span></div>
@@ -1109,4 +1133,60 @@ Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Reposi
 <script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script>
 <script src="/assets/js/azobss-cart-bell-global.js?v=442" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=370" defer></script>
+
+<div class="az618-modal" id="az618PreviewModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="az618PreviewTitle">
+  <div class="az618-modal-dialog" role="document">
+    <div class="az618-modal-head">
+      <div class="az618-modal-title"><small>Preview penuh website</small><strong id="az618PreviewTitle">Contoh website</strong></div>
+      <button class="az618-modal-close" type="button" data-az618-close aria-label="Tutup paparan penuh">×</button>
+    </div>
+    <div class="az618-modal-stage"><img id="az618PreviewImage" src="" alt="Paparan penuh contoh website"/></div>
+    <div class="az618-modal-foot">
+      <div class="az618-modal-desc" id="az618PreviewDesc"></div>
+      <div class="az618-modal-actions"><button class="az618-modal-cancel" type="button" data-az618-close>Tutup</button><button class="az618-modal-select" id="az618SelectType" type="button">Pilih Jenis Ini</button></div>
+    </div>
+  </div>
+</div>
+<script id="azobss-618-full-preview-js">
+(function(){
+  var modal=document.getElementById('az618PreviewModal');
+  if(!modal) return;
+  var image=document.getElementById('az618PreviewImage');
+  var title=document.getElementById('az618PreviewTitle');
+  var desc=document.getElementById('az618PreviewDesc');
+  var selectBtn=document.getElementById('az618SelectType');
+  var activeValue='';
+  var lastFocus=null;
+  function openPreview(btn){
+    lastFocus=btn; activeValue=btn.getAttribute('data-preview-value')||'';
+    image.src=btn.getAttribute('data-preview-src')||'';
+    image.alt='Paparan penuh '+(btn.getAttribute('data-preview-title')||'contoh website');
+    title.textContent=btn.getAttribute('data-preview-title')||'Contoh website';
+    desc.textContent=btn.getAttribute('data-preview-desc')||'';
+    modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+    document.documentElement.classList.add('az618-modal-open');
+    setTimeout(function(){ var c=modal.querySelector('.az618-modal-close'); if(c)c.focus(); },30);
+  }
+  function closePreview(){
+    modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');
+    document.documentElement.classList.remove('az618-modal-open'); image.src='';
+    if(lastFocus) lastFocus.focus();
+  }
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('.az618-full-preview');
+    if(btn){ e.preventDefault(); e.stopPropagation(); openPreview(btn); return; }
+    if(e.target.closest('[data-az618-close]')){ e.preventDefault(); closePreview(); }
+    else if(e.target===modal){ closePreview(); }
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&modal.classList.contains('is-open')) closePreview(); });
+  selectBtn.addEventListener('click',function(){
+    var radios=document.querySelectorAll('input[name="websiteType"]');
+    for(var i=0;i<radios.length;i++){
+      if(radios[i].value===activeValue){ radios[i].checked=true; radios[i].dispatchEvent(new Event('change',{bubbles:true})); break; }
+    }
+    closePreview();
+  });
+})();
+</script>
+
 </body></html>
