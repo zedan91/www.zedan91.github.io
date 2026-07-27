@@ -1,0 +1,34 @@
+AZOBSS PATCH 620 — ALL WEBSITE PREVIEW CTA NO DUPLICATE
+
+Baseline:
+(619)-AZOBSS-SERVICES-PREVIEW-TEMPAH-SEKARANG-FIX_20260728.zip
+
+Pembetulan semua preview:
+1. Website Satu Halaman
+   - Menu navigasi: Hubungi
+   - Butang atas: Mula Projek
+   - Butang utama: Minta Sebut Harga
+
+2. Katalog Produk
+   - Menu navigasi: Hubungi
+   - Butang atas: Beli Sekarang
+   - Butang utama: Lihat Produk
+
+3. Servis & Tempahan
+   - Menu navigasi: Hubungi
+   - Butang atas: Tempah Sekarang
+
+4. Landing Page Promosi
+   - Menu navigasi: Hubungi
+   - Butang atas: Lihat Tawaran
+   - Butang utama: Dapatkan Sekarang
+
+5. Website Korporat / Perniagaan
+   - Menu navigasi: Hubungi
+   - Butang atas: Minta Proposal
+   - Butang utama: Lihat Projek
+
+Hanya aset gambar preview penuh diubah.
+Floating preview, borang, WhatsApp, GitHub, pembayaran, PA/BM,
+Firebase dan backend tidak diubah.
+Tiada Firebase Rules atau Render deploy diperlukan.
