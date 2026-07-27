@@ -1,0 +1,9 @@
+AZOBSS PATCH 619 — SERVICES PREVIEW TEMPAH SEKARANG
+
+Baseline: (618)-AZOBSS-TEMPAH-WEBSITE-CLEAR-FULL-FLOATING-PREVIEW-FIX_20260728.zip
+
+Perubahan:
+- Dalam paparan penuh Servis & Tempahan, menu navigasi kekal Hubungi.
+- Butang ungu di sebelah kanan ditukar daripada Hubungi kepada Tempah Sekarang.
+- Tiada fungsi borang, modal, pembayaran, Firebase, PA/BM atau backend diubah.
+- Tiada Firebase Rules atau Render deploy diperlukan.
