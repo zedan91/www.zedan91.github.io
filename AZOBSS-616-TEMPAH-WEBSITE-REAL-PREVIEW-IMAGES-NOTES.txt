@@ -1,0 +1,18 @@
+AZOBSS Patch 616 — Tempah Website Real Preview Images
+
+Baseline: (615)-AZOBSS-TEMPAH-WEBSITE-SIMPLE-GITHUB-VISUAL-TYPE-FORM-FIX_20260727.zip
+
+Perubahan:
+- Ganti semua lakaran mini jenis website dengan gambar preview website sebenar.
+- Tambah contoh jelas untuk Website Satu Halaman, Katalog Produk, Servis & Tempahan dan Landing Page Promosi.
+- Pilihan “Saya Belum Pasti” kini memaparkan gabungan beberapa contoh sebenar.
+- Tinggikan ruang preview supaya kandungan lebih jelas pada desktop dan telefon.
+- Tambah badge “Contoh sebenar” dan kesan zoom ringan apabila cursor berada pada kad.
+- Aliran borang, GitHub, WhatsApp, Firebase, pembayaran dan halaman lain tidak diubah.
+
+Fail baharu:
+- assets/img/website-types/one-page.png
+- assets/img/website-types/catalog.png
+- assets/img/website-types/services.png
+- assets/img/website-types/promo.png
+- assets/img/website-types/unsure.png
