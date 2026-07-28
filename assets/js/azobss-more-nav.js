@@ -1,4 +1,4 @@
-/* AZOBSS 588: add Bina Website beside Affiliate Shop and keep More hover dropdown. */
+/* AZOBSS 623: keep Tempahan Makanan inside More together with Mini Web Tools. */
 (function () {
   'use strict';
 
@@ -14,8 +14,10 @@
 
     var href = link.getAttribute('href') || '/tools/';
     var currentPath = normalisePath(window.location.pathname);
+    var currentHash = String(window.location.hash || '').toLowerCase();
     var toolsPath = normalisePath(new URL(href, window.location.href).pathname);
     var isToolsPage = currentPath === toolsPath || currentPath.indexOf(toolsPath + '/') === 0;
+    var isFoodSection = currentPath === '/' && currentHash === '#tempahan-makanan';
     var inheritedActive = link.classList.contains('is-active') ||
       link.classList.contains('is-current') ||
       link.classList.contains('market-nav-active');
@@ -31,7 +33,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || inheritedActive) trigger.classList.add('is-active');
+    if (isToolsPage || isFoodSection || inheritedActive) trigger.classList.add('is-active');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -49,7 +51,11 @@
     var toolsLink = document.createElement('a');
     toolsLink.href = href;
     toolsLink.setAttribute('role', 'menuitem');
-    if (isToolsPage || inheritedActive) toolsLink.classList.add('is-active');
+    toolsLink.dataset.azMoreToolsLink = '1';
+    if (isToolsPage || inheritedActive) {
+      toolsLink.classList.add('is-active');
+      toolsLink.setAttribute('aria-current', 'page');
+    }
     toolsLink.innerHTML = '' +
       '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<rect x="3" y="3" width="7" height="7" rx="1.5"></rect>' +
@@ -59,7 +65,26 @@
       '</svg>' +
       '<span>Mini Web Tools</span>';
 
+    var foodLink = document.createElement('a');
+    foodLink.href = '/#tempahan-makanan';
+    foodLink.setAttribute('role', 'menuitem');
+    foodLink.dataset.azFoodOrderLink = '1';
+    foodLink.title = 'Tempahan makanan, kuih, set majlis dan tempahan khas';
+    if (isFoodSection) {
+      foodLink.classList.add('is-active');
+      foodLink.setAttribute('aria-current', 'location');
+    }
+    foodLink.innerHTML = '' +
+      '<svg class="az-more-item-icon az-more-food-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<path d="M4 14h16"></path>' +
+        '<path d="M6 14a6 6 0 0 1 12 0"></path>' +
+        '<path d="M12 6V4"></path>' +
+        '<path d="M3 18h18"></path>' +
+      '</svg>' +
+      '<span>Tempahan Makanan</span>';
+
     dropdown.appendChild(toolsLink);
+    dropdown.appendChild(foodLink);
     wrap.appendChild(trigger);
     wrap.appendChild(dropdown);
 
@@ -70,6 +95,10 @@
     function setOpen(open) {
       wrap.classList.toggle('is-open', open);
       trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function menuItems() {
+      return Array.prototype.slice.call(dropdown.querySelectorAll('a[role="menuitem"]'));
     }
 
     trigger.addEventListener('click', function (event) {
@@ -89,7 +118,7 @@
       if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         setOpen(true);
-        toolsLink.focus();
+        menuItems()[0].focus();
       } else if (event.key === 'Escape') {
         setOpen(false);
         trigger.focus();
@@ -97,11 +126,29 @@
     });
 
     dropdown.addEventListener('keydown', function (event) {
+      var items = menuItems();
+      var currentIndex = items.indexOf(document.activeElement);
       if (event.key === 'Escape') {
         event.preventDefault();
         setOpen(false);
         trigger.focus();
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        items[(currentIndex + 1 + items.length) % items.length].focus();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        items[(currentIndex - 1 + items.length) % items.length].focus();
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        items[0].focus();
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        items[items.length - 1].focus();
       }
+    });
+
+    foodLink.addEventListener('click', function () {
+      setOpen(false);
     });
   }
 
@@ -120,9 +167,9 @@
         return;
       }
 
-      var affiliateLink = Array.prototype.find.call(nav.querySelectorAll('a[href]'), function (link) {
+      var affiliateLink = Array.prototype.find.call(nav.querySelectorAll('a[href]'), function (candidate) {
         try {
-          return normalisePath(new URL(link.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/affiliate-shop';
+          return normalisePath(new URL(candidate.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/affiliate-shop';
         } catch (error) {
           return false;
         }
@@ -155,8 +202,8 @@
       '.market-sticky-bar .market-nav a[href$="/tools/"]'
     ));
 
-    links.filter(function (link) {
-      return /mini\s*web\s*tools/i.test((link.textContent || '').trim());
+    links.filter(function (candidate) {
+      return /mini\s*web\s*tools/i.test((candidate.textContent || '').trim());
     }).forEach(buildMoreMenu);
   }
 

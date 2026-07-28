@@ -134,7 +134,7 @@ body{
   top:calc(100% + 7px);
   left:50%;
   right:auto;
-  min-width:205px;
+  min-width:232px;
   padding:7px;
   border:1px solid rgba(148,163,184,.34);
   border-radius:12px;
@@ -220,3 +220,21 @@ body{
     right:auto;
   }
 }
+
+
+/* AZOBSS 623: second More item for food orders. */
+.market-nav .az-more-dropdown a + a{
+  margin-top:4px!important;
+  border-top:1px solid rgba(148,163,184,.18)!important;
+  border-radius:6px 6px 8px 8px!important;
+}
+.market-nav .az-more-dropdown a[data-az-food-order-link="1"]:hover,
+.market-nav .az-more-dropdown a[data-az-food-order-link="1"]:focus-visible{
+  background:rgba(249,115,22,.15)!important;
+  color:#fdba74!important;
+}
+.market-nav .az-more-dropdown a[data-az-food-order-link="1"].is-active{
+  background:rgba(249,115,22,.16)!important;
+  color:#fed7aa!important;
+}
+.az-more-food-icon{color:#fb923c}
