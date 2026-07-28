@@ -20,31 +20,6 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 @media(max-width:900px){.hero{grid-template-columns:1fr}.menu-grid{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}}@media(max-width:620px){.hero{margin-top:22px}h1{font-size:46px}.menu-grid{grid-template-columns:1fr}.topin{height:60px}.brand img{width:105px;height:36px}.back{font-size:12px;padding:9px 11px}}
 
 
-/* AZOBSS 627: exact homepage stickybar sync for Tempahan Makanan */
-.market-search-row{display:none!important}
-.market-sticky-bar{font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,Helvetica,sans-serif!important}
-.market-sticky-bar .market-main-row{overflow:visible!important}
-.market-sticky-bar .market-nav{overflow-x:auto!important;overflow-y:visible!important}
-.market-sticky-bar .market-nav.az-more-enabled{overflow:visible!important}
-.nav-whatsapp-circle{position:relative!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;box-shadow:0 8px 20px rgba(34,197,94,.25)!important;overflow:visible!important}
-.nav-whatsapp-circle::before{content:""!important;display:block!important;width:18px!important;height:14px!important;border-radius:999px!important;background:#fff!important}
-.nav-whatsapp-circle::after{content:""!important;position:absolute!important;left:13px!important;top:23px!important;width:7px!important;height:7px!important;background:#fff!important;clip-path:polygon(0 0,100% 0,0 100%)!important;transform:rotate(-12deg)!important}
-.market-nav .nav-whatsapp-link{width:38px!important;min-width:38px!important;max-width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;padding:0!important;border:0!important;background:transparent!important}
-.market-nav .azAdminDashboardBtn,.market-nav .azStaffDashboardBtn{width:34px!important;min-width:34px!important;max-width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;padding:0!important;border-radius:999px!important}
-.azAdminDashboardBtn,.admin-dashboard-btn,.azStaffDashboardBtn,.staff-dashboard-btn{display:none!important;visibility:hidden!important;pointer-events:none!important}
-body.az-role-is-admin .azAdminDashboardBtn,body.az-role-is-admin .admin-dashboard-btn{display:inline-flex!important;visibility:visible!important;pointer-events:auto!important}
-body.az-role-is-staff:not(.az-role-is-admin) .azStaffDashboardBtn,body.az-role-is-staff:not(.az-role-is-admin) .staff-dashboard-btn{display:inline-flex!important;visibility:visible!important;pointer-events:auto!important}
-.site-auth-actions{display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important;margin-right:0!important;flex:0 0 auto!important}
-.site-auth-actions .site-auth-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:34px!important;min-height:34px!important;padding:0 13px!important;border:1px solid rgba(148,163,184,.4)!important;border-radius:999px!important;background:#111c2f!important;color:#fff!important;font-size:13px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;cursor:pointer!important}
-.site-auth-actions .site-auth-btn.primary{background:#16a34a!important;border-color:#22c55e!important;color:#fff!important}
-body #userMenu{position:relative!important}
-body #userMenu #userDropdown{display:none!important;position:absolute!important;top:calc(100% + 10px)!important;right:0!important;left:auto!important;width:220px!important;min-width:220px!important;max-width:calc(100vw - 16px)!important;padding:8px!important;border-radius:14px!important;background:#08111f!important;border:1px solid rgba(148,163,184,.28)!important;box-shadow:0 18px 50px rgba(0,0,0,.58)!important;z-index:100001!important}
-body #userMenu.is-open #userDropdown,body #userMenu[aria-expanded="true"] #userDropdown,body #userDropdown.is-open{display:block!important}
-body #userDropdown .user-dropdown-item{box-sizing:border-box!important;width:100%!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;min-height:38px!important;height:38px!important;margin:0!important;padding:10px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#e5e7eb!important;text-decoration:none!important;text-align:left!important;font-size:13px!important;font-weight:800!important;font-family:inherit!important;cursor:pointer!important}
-body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!important;color:#fff!important}
-@media(max-width:760px){body{padding-top:92px!important}body #userMenu #userDropdown{position:fixed!important;top:92px!important;right:8px!important;width:210px!important;min-width:210px!important;max-height:68vh!important;overflow-y:auto!important}}
-
-
 /* AZOBSS 626: actual brownies horizontal showcase */
 .brownies-showcase{width:min(1180px,calc(100% - 28px));margin:8px auto 30px;position:relative;overflow:hidden;border-radius:24px;border:1px solid rgba(251,191,36,.42);background:#050810;box-shadow:0 22px 58px rgba(0,0,0,.38)}
 .brownies-showcase picture,.brownies-showcase img{display:block;width:100%}
@@ -206,7 +181,7 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
   }
 }
 
-</style>
+</style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=631" rel="stylesheet"/>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -255,19 +230,32 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
 </a>
 </div>
 </div>
+<form action="#affiliate" class="market-search-row">
+<label class="market-search-field">
+<svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+<input aria-label="Search for an item" placeholder="Search for an item" type="search"/>
+</label>
+<div aria-label="Location Malaysia" class="market-location-field">
+<span class="market-location-main">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M12 21s7-5.1 7-12a7 7 0 0 0-14 0c0 6.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2"></circle></svg>
+<span>Malaysia</span>
+</span>
+<span class="market-distance">+km <span aria-hidden="true">v</span></span>
+</div>
+<button class="market-search-btn" type="submit">Search</button>
+</form>
 </div>
 </header>
 <main>
 <section class="hero">
 <div><span class="eyebrow">Tempahan Makanan • Lynn</span><h1>Premium Brownies</h1><p class="lead">36 keping dalam saiz 8 inci. Menggunakan coklat Beryl's berkualiti dan bahan terpilih untuk rasa yang lebih rich, sedap dan premium.</p><div class="badges"><span>Harga dari RM45</span><span>36 pcs</span><span>8 inci</span><span>Premium Quality</span></div><div class="hero-actions"><a class="btn primary" href="#tempah">Tempah Sekarang</a><a class="btn secondary" href="#menu">Lihat Semua Harga</a></div></div>
-
 </section>
 <div aria-label="Gambar brownies asal daripada flyer Lynn" class="brownies-showcase brownies-original-only">
-  <img src="/assets/img/tempahan-makanan/brownies-original-crop-1.png" alt="Brownies asal dengan corak coklat dan karamel" loading="eager" decoding="async"/>
-  <img src="/assets/img/tempahan-makanan/brownies-original-crop-2.png" alt="Brownies asal campuran coklat, kacang dan karamel" loading="eager" decoding="async"/>
-  <img src="/assets/img/tempahan-makanan/brownies-original-crop-3.png" alt="Brownies asal dengan drizzle kuning dan coklat" loading="eager" decoding="async"/>
-  <img src="/assets/img/tempahan-makanan/brownies-original-crop-4.png" alt="Brownies asal coklat dengan taburan almond" loading="lazy" decoding="async"/>
-  <img src="/assets/img/tempahan-makanan/brownies-original-crop-5.png" alt="Red velvet brownies asal dengan white chocolate" loading="lazy" decoding="async"/>
+<img alt="Brownies asal dengan corak coklat dan karamel" decoding="async" loading="eager" src="/assets/img/tempahan-makanan/brownies-original-crop-1.png"/>
+<img alt="Brownies asal campuran coklat, kacang dan karamel" decoding="async" loading="eager" src="/assets/img/tempahan-makanan/brownies-original-crop-2.png"/>
+<img alt="Brownies asal dengan drizzle kuning dan coklat" decoding="async" loading="eager" src="/assets/img/tempahan-makanan/brownies-original-crop-3.png"/>
+<img alt="Brownies asal coklat dengan taburan almond" decoding="async" loading="lazy" src="/assets/img/tempahan-makanan/brownies-original-crop-4.png"/>
+<img alt="Red velvet brownies asal dengan white chocolate" decoding="async" loading="lazy" src="/assets/img/tempahan-makanan/brownies-original-crop-5.png"/>
 </div>
 <section class="section" id="menu"><h2>Pilihan Brownies</h2><div class="menu-grid"><article class="menu-card premium"><h3>Premium Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li><span>Plain</span><strong>RM45</strong></li><li><span>Chocolate + Peanut (Mix)</span><strong>RM50</strong></li><li><span>Hazelnut Chocolate</span><strong>RM50</strong></li><li><span>Peanut</span><strong>RM50</strong></li><li><span>Hazelnut Chocolate + Almond (Mix)</span><strong>RM50</strong></li><li><span>Peanut + Almond (Mix)</span><strong>RM50</strong></li><li><span>Hazelnut Chocolate / Peanut + Full Almonds</span><strong>RM51</strong></li><li><span>Mix 3 Flavour</span><strong>RM50</strong></li></ul></article><article class="menu-card red"><h3>Red Velvet Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li><span>Plain</span><strong>RM45</strong></li><li><span>White Chocolate</span><strong>RM50</strong></li><li><span>White Chocolate + Almond</span><strong>RM51</strong></li></ul></article><article class="menu-card green"><h3>Pistachio Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li><span>Plain</span><strong>RM45</strong></li><li><span>Hazelnut Chocolate + Pistachio Cookie Crumbs</span><strong>RM51</strong></li></ul></article></div></section>
 <section class="section order" id="tempah"><div><h2>Buat Tempahan</h2><p>Pilih jenis brownies dan isi maklumat ringkas. Butang di bawah akan membuka WhatsApp Lynn dengan mesej tempahan yang telah disediakan.</p><form class="form" id="orderForm"><label>Nama pelanggan<input autocomplete="name" id="customerName" placeholder="Contoh: Ahmad" required=""/></label><label>Pilihan brownies<select id="productSelect" required=""><option value="">Pilih menu...</option><optgroup label="Premium Brownies">
@@ -291,7 +279,6 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
 </optgroup></select></label><label>Kuantiti<input id="quantity" min="1" required="" type="number" value="1"/></label><label>Tarikh diperlukan<input id="orderDate" type="date"/></label><label>Catatan<textarea id="notes" placeholder="Contoh: Pickup petang, kurang manis atau maklumat penghantaran"></textarea></label><button class="submit" type="submit">Tempah melalui WhatsApp</button></form></div><aside class="contact-card"><span>Untuk tempahan</span><strong>017-8809488</strong><span>LYNN</span><br/><span>Harga dan ketersediaan tertakluk kepada pengesahan penjual.</span></aside></section>
 </main>
 <footer>© AZOBSS • Tempahan makanan melalui penjual Lynn</footer>
-
 <script>
 (function(){
  const form=document.getElementById('orderForm');
@@ -315,4 +302,320 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
  });
 })();
 </script>
-<script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script></body></html>
+<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+(function(){
+  if(window.__azobssAdminWhatsappCleanUpdater) return;
+  window.__azobssAdminWhatsappCleanUpdater = true;
+
+  function adminNow(){
+    try{
+      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
+      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
+      if(document.body.getAttribute('data-role')==='admin') return true;
+      var signed=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
+      var uname=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
+      if(signed==='zedan91' || uname.indexOf('zedan91')!==-1) return true;
+    }catch(e){}
+    return false;
+  }
+
+  function hideWhatsapp(){
+    document.querySelectorAll('.market-nav a').forEach(function(a){
+      if(!a.matches('a[href*="alvo.chat"]') && !a.querySelector('.nav-whatsapp-circle')) return;
+      a.style.setProperty('display','none','important');
+      a.style.setProperty('visibility','hidden','important');
+      a.style.setProperty('width','0','important');
+      a.style.setProperty('min-width','0','important');
+      a.style.setProperty('height','0','important');
+      a.style.setProperty('min-height','0','important');
+      a.style.setProperty('padding','0','important');
+      a.style.setProperty('margin','0','important');
+      a.style.setProperty('border','0','important');
+      a.style.setProperty('overflow','hidden','important');
+      a.style.setProperty('pointer-events','none','important');
+      a.style.setProperty('opacity','0','important');
+      a.setAttribute('aria-hidden','true');
+      a.tabIndex=-1;
+    });
+  }
+
+  function apply(){
+    try{
+      if(adminNow()){
+        localStorage.setItem('azobss_admin_role_cache','1');
+        document.documentElement.classList.add('azobss-admin-cache');
+        hideWhatsapp();
+      }else{
+        setTimeout(function(){
+          if(!adminNow()){
+            localStorage.removeItem('azobss_admin_role_cache');
+            document.documentElement.classList.remove('azobss-admin-cache');
+          }
+        },2500);
+      }
+    }catch(e){}
+  }
+
+  document.addEventListener('DOMContentLoaded',apply);
+  if(document.readyState!=='loading') apply();
+  window.addEventListener('focus',apply);
+  setTimeout(apply,120);
+  setTimeout(apply,500);
+  setTimeout(apply,30000);
+})();
+</script><script>
+(function(){
+  if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
+  window.__azobssHideWhatsappAdminOnlySafeFinal = true;
+
+  function adminNow(){
+    try{
+      if(document.body.getAttribute('data-dashboard-page')==='admin') return true;
+      if(document.body.classList.contains('is-admin') || document.body.classList.contains('az-role-is-admin')) return true;
+      if(document.body.getAttribute('data-role')==='admin') return true;
+      var signed=String((document.querySelector('#signedInName')||{}).textContent||'').trim().toLowerCase();
+      var uname=String((document.querySelector('.user-name')||{}).textContent||'').trim().toLowerCase();
+      if(signed==='zedan91' || uname.indexOf('zedan91')!==-1) return true;
+    }catch(e){}
+    return false;
+  }
+
+  function hideEl(el){
+    el.style.setProperty('display','none','important');
+    el.style.setProperty('visibility','hidden','important');
+    el.style.setProperty('width','0','important');
+    el.style.setProperty('min-width','0','important');
+    el.style.setProperty('max-width','0','important');
+    el.style.setProperty('height','0','important');
+    el.style.setProperty('min-height','0','important');
+    el.style.setProperty('max-height','0','important');
+    el.style.setProperty('padding','0','important');
+    el.style.setProperty('margin','0','important');
+    el.style.setProperty('border','0','important');
+    el.style.setProperty('outline','0','important');
+    el.style.setProperty('overflow','hidden','important');
+    el.style.setProperty('pointer-events','none','important');
+    el.style.setProperty('opacity','0','important');
+    el.setAttribute('aria-hidden','true');
+    el.tabIndex=-1;
+  }
+
+  function showChat(){
+    document.querySelectorAll('.market-user-tools a[aria-label="Chat"]').forEach(function(el){
+      el.style.setProperty('display','inline-flex','important');
+      el.style.setProperty('visibility','visible','important');
+      el.style.setProperty('width','32px','important');
+      el.style.setProperty('min-width','32px','important');
+      el.style.setProperty('height','32px','important');
+      el.style.setProperty('min-height','32px','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('opacity','1','important');
+      el.style.setProperty('pointer-events','auto','important');
+      el.style.setProperty('overflow','visible','important');
+      el.removeAttribute('aria-hidden');
+      el.tabIndex=0;
+    });
+  }
+
+  function apply(){
+    if(!adminNow()) return;
+    try{ localStorage.setItem('azobss_admin_role_cache','1'); }catch(e){}
+    document.documentElement.classList.add('azobss-admin-cache');
+
+    // IMPORTANT: hide only WhatsApp inside left .market-nav, not Chat icon inside .market-user-tools
+    document.querySelectorAll('.market-nav .nav-whatsapp-circle, .market-nav a[href*="alvo.chat"]').forEach(hideEl);
+    document.querySelectorAll('.market-nav a').forEach(function(a){
+      if(a.querySelector('.nav-whatsapp-circle')) hideEl(a);
+    });
+
+    showChat();
+  }
+
+  document.addEventListener('DOMContentLoaded',apply);
+  if(document.readyState!=='loading') apply();
+  window.addEventListener('focus',apply);
+  setTimeout(apply,50);
+  setTimeout(apply,200);
+  setTimeout(apply,700);
+  setTimeout(apply,1500);
+})();
+</script><script>
+(function(){
+  if(window.__azobssRoleHardening041) return;
+  window.__azobssRoleHardening041 = true;
+
+  function lower(v){ return String(v || '').trim().toLowerCase(); }
+
+  function readStoredObjects(){
+    var out = [];
+    var keys = [
+      'azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser',
+      'azobss_user_profile','azobssProfile','currentUser','userProfile',
+      'azobss_auth_user','azobssLoginUser','azobss_logged_user'
+    ];
+    keys.forEach(function(k){
+      try{
+        var raw = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if(!raw) return;
+        try{
+          var obj = JSON.parse(raw);
+          if(obj && typeof obj === 'object') out.push(obj);
+        }catch(e){
+          out.push({username:raw, raw:raw});
+        }
+      }catch(e){}
+    });
+    return out;
+  }
+
+  function detectRole(){
+    var adminNames = ['zedan91'];
+    var adminEmails = ['zedan9107@gmail.com','zedan91@azobss.local'];
+
+    var visibleName = lower((document.querySelector('#signedInName') || {}).textContent);
+    var userNameBox = lower((document.querySelector('.user-name') || {}).textContent);
+
+    if(adminNames.indexOf(visibleName) !== -1 || adminNames.indexOf(userNameBox) !== -1 || userNameBox.indexOf('zedan91') !== -1){
+      return 'admin';
+    }
+
+    var objs = readStoredObjects();
+    for(var i=0;i<objs.length;i++){
+      var u = objs[i] || {};
+      var role = lower(u.role || u.userRole || u.accountRole || u.type || u.accessRole);
+      var username = lower(u.usernameKey || u.username || u.userName || u.id || u.name || u.displayName || u.raw);
+      var email = lower(u.email || u.authEmail || u.realEmail || u.userEmail);
+
+      if(adminNames.indexOf(username) !== -1 || adminEmails.indexOf(email) !== -1){
+        return 'admin';
+      }
+
+      if(role === 'admin' || u.isAdmin === true || u.admin === true || u.owner === true){
+        return 'admin';
+      }
+
+      if(
+        role === 'staff' || role === 'semiadmin' || role === 'semi-admin' ||
+        role === 'semi_admin' || role === 'seller' || role === 'editor' ||
+        u.isStaff === true || u.staff === true || u.staffDashboard === true ||
+        u.canAccessStaffDashboard === true || u.canAddSoftware === true
+      ){
+        return 'staff';
+      }
+    }
+
+    try{
+      if(localStorage.getItem('azobss_admin_role_cache') === '1') return 'admin';
+      if(localStorage.getItem('azobss_staff_role_cache') === '1') return 'staff';
+    }catch(e){}
+
+    return 'none';
+  }
+
+  function setRoleClass(role){
+    document.body.classList.toggle('az-role-is-admin', role === 'admin');
+    document.body.classList.toggle('is-admin', role === 'admin');
+    document.body.classList.toggle('az-role-is-staff', role === 'staff');
+    document.body.classList.toggle('az-role-is-stafflike', role === 'staff');
+    document.body.setAttribute('data-az-current-role', role);
+  }
+
+  function hardHide(el){
+    if(!el) return;
+    el.style.setProperty('display','none','important');
+    el.style.setProperty('visibility','hidden','important');
+    el.style.setProperty('pointer-events','none','important');
+    el.setAttribute('aria-hidden','true');
+    el.tabIndex = -1;
+  }
+
+  function hardShow(el){
+    if(!el) return;
+    el.style.setProperty('display','inline-flex','important');
+    el.style.setProperty('visibility','visible','important');
+    el.style.setProperty('pointer-events','auto','important');
+    el.removeAttribute('aria-hidden');
+    el.tabIndex = 0;
+  }
+
+  function applyButtons(){
+    var role = detectRole();
+    setRoleClass(role);
+
+    document.querySelectorAll('.azAdminDashboardBtn,.admin-dashboard-btn,.market-nav a[href="/admin/"],a[href="/admin/"].azobss-nav-chip').forEach(function(el){
+      role === 'admin' ? hardShow(el) : hardHide(el);
+    });
+
+    document.querySelectorAll('.azStaffDashboardBtn,.staff-dashboard-btn,.market-nav a[href="/staff/"],a[href="/staff/"].azobss-nav-chip').forEach(function(el){
+      role === 'staff' ? hardShow(el) : hardHide(el);
+    });
+
+    return role;
+  }
+
+  function showDenied(required, role){
+    if(document.getElementById('azRoleDenyOverlay041')) return;
+    var div = document.createElement('div');
+    div.id = 'azRoleDenyOverlay041';
+    div.innerHTML = '<div class="box"><h2>Access Restricted</h2><p>This page is for '+required+' only.<br>Current role: '+role+'</p><a href="/">Go to Home</a></div>';
+    document.body.appendChild(div);
+    setTimeout(function(){ location.href = '/'; }, 1800);
+  }
+
+  function guardPage(){
+    var path = location.pathname.toLowerCase();
+    var required = '';
+    if(path === '/admin/' || path === '/admin/index.html') required = 'admin';
+    if(path === '/staff/' || path === '/staff/index.html') required = 'staff';
+    if(!required) return;
+
+    var role = applyButtons();
+
+    if(role === required) return;
+
+    // Allow a short delay for auth UI/localStorage to initialize before blocking.
+    var tries = 0;
+    var timer = setInterval(function(){
+      tries++;
+      role = applyButtons();
+      if(role === required){
+        clearInterval(timer);
+        return;
+      }
+      if(tries >= 8){
+        clearInterval(timer);
+        showDenied(required, role);
+      }
+    }, 350);
+  }
+
+  function run(){
+    applyButtons();
+    guardPage();
+  }
+
+  document.addEventListener('DOMContentLoaded', run);
+  if(document.readyState !== 'loading') run();
+  window.addEventListener('storage', run);
+  window.addEventListener('focus', run);
+  setTimeout(run, 300);
+  setTimeout(run, 30000);
+  setTimeout(run, 2500);
+})();
+</script><script>
+(function(){
+  function openRequestedAuth(){
+    let mode='';try{mode=sessionStorage.getItem('azobssOpenAuth')||'';sessionStorage.removeItem('azobssOpenAuth');}catch(_e){}
+    if(!mode)return;
+    const id=mode==='register'?'siteSignUpButton':'siteSignInButton';
+    let attempts=0;
+    const timer=setInterval(function(){
+      const button=document.getElementById(id);
+      if(button){clearInterval(timer);button.click();}
+      else if(++attempts>20)clearInterval(timer);
+    },150);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',openRequestedAuth);else openRequestedAuth();
+})();
+</script></body></html>

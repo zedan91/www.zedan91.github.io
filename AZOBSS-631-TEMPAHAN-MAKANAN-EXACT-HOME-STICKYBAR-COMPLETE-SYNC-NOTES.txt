@@ -1,0 +1,17 @@
+AZOBSS PATCH 631 — EXACT HOME STICKYBAR COMPLETE SYNC
+
+Baseline:
+(630)-AZOBSS-BROWNIES-ORIGINAL-PHOTO-ONLY-FIX_20260728.zip
+
+Audit and fixes:
+- Replaced the complete Tempahan-Makanan header with the exact homepage header markup.
+- Header structure comparison passes after normalising only the nested logo URL.
+- Removed the older approximate v627 navbar CSS overrides.
+- Added an exact CSS layer extracted from all homepage navbar-related inline rules in source order.
+- Included the homepage safe-hide rule for the old marketplace search strip, preserving the one-row stickybar.
+- Uses the same More script, global auth, Firebase live sync, pro UI and radio player files as homepage.
+- Copied the same homepage admin/staff role, WhatsApp and auth-opening helper scripts.
+- Preserves account dropdown, My Purchases, Bookmarks, Settings, Log Out, cart, notifications and chat.
+- Desktop and mobile CSS are sourced from the homepage rules rather than custom estimates.
+- Brownies content, original photos, prices and WhatsApp order form are unchanged.
+- No Firebase Rules or Render changes are required.
