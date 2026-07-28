@@ -510,6 +510,75 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   }
 }
 
+
+/* AZOBSS 640: staff-only food order records table */
+.food-orders-admin-panel{
+  border:1px solid rgba(34,197,94,.42);
+  border-radius:22px;
+  padding:22px;
+  background:linear-gradient(145deg,rgba(5,46,22,.32),rgba(8,15,29,.97));
+  box-shadow:0 24px 70px rgba(0,0,0,.34);
+}
+.food-orders-admin-panel[hidden]{display:none!important}
+.food-orders-admin-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}
+.food-orders-admin-head h2{margin:7px 0 5px}
+.food-orders-admin-head p{margin:0;color:#a7f3d0}
+.food-orders-role-badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:rgba(34,197,94,.16);border:1px solid rgba(74,222,128,.42);color:#86efac;font-size:10px;font-weight:950;letter-spacing:.12em}
+.food-orders-summary{display:grid;justify-items:end;gap:4px;white-space:nowrap}
+.food-orders-summary strong{font-size:20px;color:#fbbf24}
+.food-orders-summary span{font-size:12px;color:#94a3b8}
+.food-orders-toolbar{display:grid;grid-template-columns:minmax(220px,1fr) 180px auto auto;gap:10px;align-items:end;margin-bottom:14px}
+.food-orders-toolbar label{color:#d1fae5}
+.food-orders-tool-btn{height:44px;padding:0 14px;border:1px solid #475569;border-radius:12px;background:#0b1526;color:#e2e8f0;font-weight:850;cursor:pointer;white-space:nowrap}
+.food-orders-tool-btn.primary{border-color:#16a34a;background:#15803d;color:#fff}
+.food-orders-tool-btn:hover{filter:brightness(1.12)}
+.food-orders-table-wrap{overflow:auto;border:1px solid rgba(148,163,184,.24);border-radius:16px;background:#050b16}
+.food-orders-table{width:100%;min-width:1040px;border-collapse:collapse}
+.food-orders-table th,.food-orders-table td{padding:12px 11px;border-bottom:1px solid rgba(148,163,184,.16);vertical-align:top;text-align:left}
+.food-orders-table th{position:sticky;top:0;z-index:1;background:#0d1929;color:#bbf7d0;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.food-orders-table td{font-size:13px;color:#e5e7eb}
+.food-orders-table tr:last-child td{border-bottom:0}
+.food-orders-table tr:hover td{background:rgba(30,41,59,.28)}
+.food-order-id{display:block;color:#fbbf24;font-weight:850}
+.food-order-recorded{display:block;margin-top:4px;color:#94a3b8;font-size:11px}
+.food-order-customer{font-weight:900;color:#fff}
+.food-order-note-preview{display:block;max-width:190px;margin-top:4px;color:#94a3b8;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.food-order-items-preview{display:block;max-width:330px;line-height:1.45}
+.food-order-money{font-weight:950;color:#fbbf24;white-space:nowrap}
+.food-order-status-select{min-width:130px;padding:8px 9px;border-radius:10px;font-size:12px;font-weight:850}
+.food-order-detail-btn{border:1px solid #38bdf8;border-radius:10px;background:rgba(14,116,144,.2);color:#bae6fd;padding:8px 10px;font-weight:850;cursor:pointer}
+.food-orders-empty{text-align:center!important;padding:28px!important;color:#94a3b8!important}
+.food-orders-error{margin:12px 0 0;padding:11px 13px;border:1px solid rgba(248,113,113,.45);border-radius:12px;background:rgba(127,29,29,.24);color:#fecaca!important}
+.food-order-detail-modal{position:fixed;inset:0;z-index:100500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.82);backdrop-filter:blur(8px)}
+.food-order-detail-modal[hidden]{display:none!important}
+.food-order-detail-card{width:min(760px,100%);max-height:90vh;overflow:auto;border:1px solid rgba(251,191,36,.45);border-radius:22px;background:#091321;padding:20px;box-shadow:0 30px 90px rgba(0,0,0,.65)}
+.food-order-detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:16px}
+.food-order-detail-top h2{margin:7px 0 0}
+.food-order-detail-close{width:40px;height:40px;border:1px solid #475569;border-radius:12px;background:#111827;color:#fff;font-size:26px;cursor:pointer}
+.food-order-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:15px}
+.food-order-detail-field{padding:12px;border:1px solid rgba(148,163,184,.2);border-radius:13px;background:#07101c}
+.food-order-detail-field span{display:block;margin-bottom:5px;color:#94a3b8;font-size:11px;font-weight:850;text-transform:uppercase}
+.food-order-detail-field strong,.food-order-detail-field p{margin:0;color:#f8fafc;line-height:1.5}
+.food-order-detail-items{display:grid;gap:8px}
+.food-order-detail-item{display:flex;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid rgba(251,191,36,.22);border-radius:12px;background:rgba(69,26,3,.22)}
+.food-order-detail-item span{color:#fde68a}
+.food-order-detail-total{display:flex;justify-content:space-between;gap:12px;margin-top:12px;padding:14px;border-radius:13px;background:rgba(21,128,61,.18);border:1px solid rgba(74,222,128,.3)}
+.food-order-toast{position:fixed;right:18px;bottom:18px;z-index:100700;max-width:min(380px,calc(100vw - 36px));padding:13px 16px;border-radius:14px;background:#0f172a;color:#fff;border:1px solid rgba(148,163,184,.35);box-shadow:0 18px 50px rgba(0,0,0,.5);font-weight:800}
+.food-order-toast.success{border-color:rgba(74,222,128,.5);background:#052e16}
+.food-order-toast.warning{border-color:rgba(251,191,36,.5);background:#422006}
+@media(max-width:900px){
+  .food-orders-admin-head{display:grid}
+  .food-orders-summary{justify-items:start}
+  .food-orders-toolbar{grid-template-columns:1fr 1fr}
+}
+@media(max-width:620px){
+  .food-orders-admin-panel{width:min(100% - 20px,1180px);padding:15px}
+  .food-orders-toolbar{grid-template-columns:1fr}
+  .food-orders-tool-btn{width:100%}
+  .food-order-detail-grid{grid-template-columns:1fr}
+  .food-order-detail-card{padding:15px}
+}
+
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 </head>
 <body>
@@ -600,6 +669,75 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   </div>
   <p aria-live="polite" class="order-date-status" id="selectedDateText">Pilih Hari Ini, Esok atau tarikh lain.</p>
 </div><label>Catatan<textarea id="notes" placeholder="Contoh: Pickup petang, kurang manis atau maklumat penghantaran"></textarea></label><button aria-disabled="true" class="submit" disabled="" type="submit">Pilih brownies terlebih dahulu</button></form></div><aside class="contact-card"><span>Untuk tempahan</span><strong>017-8809488</strong><span>LYNN</span><br/><span>Harga dan ketersediaan tertakluk kepada pengesahan penjual.</span></aside></section>
+
+<section class="section food-orders-admin-panel" hidden id="foodOrdersAdminPanel">
+  <div class="food-orders-admin-head">
+    <div>
+      <span class="food-orders-role-badge" id="foodOrdersRoleBadge">STAFF</span>
+      <h2>Rekod Tempahan Makanan</h2>
+      <p>Rekod ini hanya dipaparkan kepada admin, semi-admin dan staff yang dibenarkan.</p>
+    </div>
+    <div class="food-orders-summary">
+      <strong id="foodOrdersVisibleCount">0 rekod</strong>
+      <span id="foodOrdersLiveStatus">Menunggu sambungan...</span>
+    </div>
+  </div>
+
+  <div class="food-orders-toolbar">
+    <label class="food-orders-search">
+      <span>Cari rekod</span>
+      <input id="foodOrdersSearchInput" placeholder="Nama, menu, tarikh atau catatan" type="search"/>
+    </label>
+    <label>
+      <span>Status</span>
+      <select id="foodOrdersStatusFilter">
+        <option value="all">Semua status</option>
+        <option value="new">Baharu</option>
+        <option value="contacted">Dihubungi</option>
+        <option value="confirmed">Disahkan</option>
+        <option value="completed">Selesai</option>
+        <option value="cancelled">Dibatalkan</option>
+      </select>
+    </label>
+    <button class="food-orders-tool-btn" id="foodOrdersRefreshBtn" type="button">↻ Muat Semula</button>
+    <button class="food-orders-tool-btn primary" id="foodOrdersExportBtn" type="button">⬇ Export CSV</button>
+  </div>
+
+  <div class="food-orders-table-wrap">
+    <table class="food-orders-table">
+      <thead>
+        <tr>
+          <th>Rekod</th>
+          <th>Pelanggan</th>
+          <th>Tarikh Diperlukan</th>
+          <th>Tempahan</th>
+          <th>Kotak</th>
+          <th>Jumlah</th>
+          <th>Status</th>
+          <th>Detail</th>
+        </tr>
+      </thead>
+      <tbody id="foodOrdersTableBody">
+        <tr><td colspan="8" class="food-orders-empty">Memuatkan rekod...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="food-orders-error" hidden id="foodOrdersError"></p>
+</section>
+
+<div class="food-order-detail-modal" hidden id="foodOrderDetailModal" role="dialog" aria-modal="true" aria-labelledby="foodOrderDetailTitle">
+  <div class="food-order-detail-card">
+    <div class="food-order-detail-top">
+      <div>
+        <span class="food-orders-role-badge">DETAIL TEMPAHAN</span>
+        <h2 id="foodOrderDetailTitle">Rekod Tempahan</h2>
+      </div>
+      <button aria-label="Tutup detail tempahan" class="food-order-detail-close" id="foodOrderDetailClose" type="button">×</button>
+    </div>
+    <div id="foodOrderDetailContent"></div>
+  </div>
+</div>
+
 </main>
 <footer>© AZOBSS • Tempahan makanan melalui penjual Lynn</footer>
 <script id="azobss-633-order-date-controls">
@@ -817,7 +955,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     });
   });
 
-  form.addEventListener('submit', function(event){
+  form.addEventListener('submit', async function(event){
     event.preventDefault();
     const selected = readSelections();
     if(!selected.length){
@@ -848,12 +986,38 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
       'Harga akhir dan ketersediaan tertakluk kepada pengesahan penjual.'
     ].join('\n');
 
-    window.open('https://wa.me/60178809488?text=' + encodeURIComponent(message), '_blank', 'noopener');
+    const requiredDate = document.getElementById('orderDate').value || '';
+    const requiredDateLabel = window.AZOBSSOrderDate
+      ? window.AZOBSSOrderDate.getMessageDate()
+      : (requiredDate || 'Belum dipilih');
+    const orderPayload = {
+      customerName: document.getElementById('customerName').value.trim(),
+      requiredDate,
+      requiredDateLabel,
+      notes: document.getElementById('notes').value.trim(),
+      items: selected.map(item => ({
+        category: item.category,
+        product: item.product,
+        price: item.price,
+        qty: item.qty,
+        subtotal: item.subtotal
+      })),
+      totalBoxes,
+      totalPrice,
+      whatsappMessage: message
+    };
+    const whatsappUrl = 'https://wa.me/60178809488?text=' + encodeURIComponent(message);
+
+    if(window.AZOBSSFoodOrders && typeof window.AZOBSSFoodOrders.submitOrder === 'function'){
+      await window.AZOBSSFoodOrders.submitOrder(orderPayload, whatsappUrl, submit);
+    }else{
+      window.open(whatsappUrl, '_blank', 'noopener');
+    }
   });
 
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-food-orders.js?v=640" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;

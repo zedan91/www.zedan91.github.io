@@ -1,0 +1,35 @@
+AZOBSS PATCH 640 — FOOD ORDER STAFF RECORDS TABLE
+
+Baseline:
+(639)-AZOBSS-BROWNIES-USE-UPLOADED-ORIGINAL-IMAGES-FIX_20260728.zip
+
+Fungsi baharu:
+- Setiap klik Tempah melalui WhatsApp menyimpan rekod ke collection Firestore foodOrders.
+- WhatsApp tetap dibuka walaupun simpanan Firestore gagal.
+- Panel Rekod Tempahan Makanan hanya dipaparkan kepada admin, semi-admin dan staff.
+- Table dikemas kini masa nyata.
+- Carian nama/menu/tarikh/catatan.
+- Penapis status.
+- Paparan detail penuh.
+- Kemas kini status:
+  Baharu, Dihubungi, Disahkan, Selesai, Dibatalkan.
+- Export rekod yang sedang ditapis kepada CSV.
+- Staff tidak diberikan butang delete supaya rekod tidak terpadam secara tidak sengaja.
+- Admin boleh delete melalui Firestore jika Rules addon digunakan.
+
+Collection baharu:
+foodOrders
+
+Firebase Rules:
+WAJIB gabungkan dan Publish:
+FIREBASE-RULES-ADDON-FOOD-ORDERS-640.txt
+
+Render:
+Tidak perlu deploy Render kerana fungsi menggunakan Firebase Firestore terus.
+
+GitHub Pages:
+Upload keseluruhan patch seperti biasa.
+
+Nota:
+Tempahan pelanggan dibenarkan tanpa login, jadi Rules create menggunakan validasi medan yang ketat.
+Paparan dan bacaan rekod tetap dikunci kepada admin/semi-admin/staff.
