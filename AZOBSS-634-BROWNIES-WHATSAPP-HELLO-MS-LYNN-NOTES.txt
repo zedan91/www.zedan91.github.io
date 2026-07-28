@@ -1,0 +1,15 @@
+AZOBSS PATCH 634 — BROWNIES WHATSAPP HELLO MS. LYNN
+
+Baseline:
+(633)-AZOBSS-BROWNIES-QUICK-DATE-ADJUST-FIX_20260728.zip
+
+Perubahan:
+- Pembukaan mesej WhatsApp ditukar daripada:
+  Assalamualaikum Lynn, saya ingin membuat tempahan brownies.
+
+  kepada:
+  Hello Ms. Lynn, saya ingin membuat tempahan brownies.
+
+- Senarai brownies, kuantiti, tarikh, jumlah harga dan catatan tidak diubah.
+- Stickybar, gambar dan fungsi lain tidak diubah.
+- Tiada perubahan Firebase Rules atau Render diperlukan.
