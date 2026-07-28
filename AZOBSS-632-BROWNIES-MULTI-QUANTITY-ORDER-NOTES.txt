@@ -1,0 +1,18 @@
+AZOBSS PATCH 632 — BROWNIES MULTI-QUANTITY ORDER
+
+Baseline:
+(631)-AZOBSS-TEMPAHAN-MAKANAN-EXACT-HOME-STICKYBAR-COMPLETE-SYNC-FIX_20260728.zip
+
+Perubahan:
+- Setiap perisa dalam Pilihan Brownies mempunyai butang tolak (−), kuantiti, dan tambah (+).
+- Pengguna boleh memilih beberapa perisa serentak dengan kuantiti berasingan.
+- Maksimum 99 kotak bagi setiap perisa.
+- Pilihan aktif ditonjolkan dalam kad.
+- Bahagian Buat Tempahan mempunyai ringkasan pilihan secara langsung.
+- Ringkasan menunjukkan nama menu, harga unit, kuantiti, subtotal, jumlah kotak dan anggaran jumlah.
+- Dropdown Pilihan brownies lama dibuang.
+- Medan Kuantiti tunggal lama dibuang.
+- Butang WhatsApp dinyahaktifkan sehingga sekurang-kurangnya satu menu dipilih.
+- Mesej WhatsApp menyenaraikan semua menu, kuantiti, subtotal dan anggaran jumlah.
+- Stickybar homepage, gambar brownies asal, harga dan sistem lain tidak diubah.
+- Tiada Firebase Rules atau Render deploy diperlukan.
