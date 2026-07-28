@@ -353,6 +353,95 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   }
 }
 
+
+/* AZOBSS 635: compact mobile brownie rows + 2-second showcase slider */
+@media(max-width:620px){
+  .menu-card ul{
+    padding:0 12px 12px!important;
+  }
+  .menu-card li.brownie-order-item{
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    column-gap:8px!important;
+    row-gap:0!important;
+    min-height:0!important;
+    padding:7px 0!important;
+  }
+  .menu-card li.brownie-order-item.has-quantity{
+    margin-left:-5px!important;
+    margin-right:-5px!important;
+    padding-left:5px!important;
+    padding-right:5px!important;
+    border-radius:10px!important;
+  }
+  .brownie-item-info{
+    display:grid!important;
+    gap:2px!important;
+    min-width:0!important;
+    align-content:center!important;
+  }
+  .brownie-item-name{
+    font-size:13px!important;
+    line-height:1.25!important;
+  }
+  .brownie-item-price{
+    font-size:12px!important;
+    line-height:1.1!important;
+  }
+  .brownie-qty-stepper{
+    grid-template-columns:29px 32px 29px!important;
+    border-radius:10px!important;
+    justify-self:end!important;
+  }
+  .qty-btn{
+    width:29px!important;
+    min-width:29px!important;
+    height:32px!important;
+    font-size:18px!important;
+  }
+  .qty-value{
+    width:32px!important;
+    height:32px!important;
+    font-size:13px!important;
+  }
+  .menu-card h3{
+    padding:13px 15px 4px!important;
+    font-size:23px!important;
+    line-height:1.08!important;
+  }
+  .menu-card .size{
+    padding:0 15px 9px!important;
+  }
+}
+@media(max-width:380px){
+  .menu-card li.brownie-order-item{
+    column-gap:6px!important;
+    padding:6px 0!important;
+  }
+  .brownie-item-name{font-size:12.5px!important}
+  .brownie-qty-stepper{grid-template-columns:27px 29px 27px!important}
+  .qty-btn{width:27px!important;min-width:27px!important;height:30px!important}
+  .qty-value{width:29px!important;height:30px!important}
+}
+@media(max-width:900px){
+  .brownies-showcase.brownies-original-only{
+    scroll-behavior:smooth!important;
+    scroll-snap-type:x mandatory!important;
+    scrollbar-width:none!important;
+    overscroll-behavior-inline:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .brownies-showcase.brownies-original-only::-webkit-scrollbar{
+    display:none!important;
+    width:0!important;
+    height:0!important;
+  }
+  .brownies-showcase.brownies-original-only img{
+    scroll-snap-align:start!important;
+    scroll-snap-stop:always!important;
+  }
+}
+
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=631" rel="stylesheet"/>
 </head>
 <body>
@@ -1012,4 +1101,83 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',openRequestedAuth);else openRequestedAuth();
 })();
-</script></body></html>
+</script>
+<script id="azobss-635-mobile-showcase-autoslide">
+(function(){
+  const track = document.querySelector('.brownies-showcase.brownies-original-only');
+  if(!track) return;
+  const slides = Array.from(track.querySelectorAll('img'));
+  if(slides.length < 2) return;
+
+  const mobileQuery = window.matchMedia('(max-width: 900px)');
+  const intervalMs = 2000;
+  let index = 0;
+  let timer = 0;
+  let pauseUntil = 0;
+  let autoScrolling = false;
+  let settleTimer = 0;
+
+  function slideLeft(slide){
+    return Math.max(0, slide.offsetLeft - track.offsetLeft - track.clientLeft);
+  }
+
+  function nearestIndex(){
+    const current = track.scrollLeft;
+    let nearest = 0;
+    let distance = Infinity;
+    slides.forEach((slide, i) => {
+      const nextDistance = Math.abs(slideLeft(slide) - current);
+      if(nextDistance < distance){
+        distance = nextDistance;
+        nearest = i;
+      }
+    });
+    return nearest;
+  }
+
+  function goTo(nextIndex){
+    index = (nextIndex + slides.length) % slides.length;
+    autoScrolling = true;
+    track.scrollTo({left: slideLeft(slides[index]), behavior:'smooth'});
+    window.setTimeout(() => { autoScrolling = false; }, 700);
+  }
+
+  function tick(){
+    if(!mobileQuery.matches || document.hidden || Date.now() < pauseUntil) return;
+    goTo(index + 1);
+  }
+
+  function start(){
+    window.clearInterval(timer);
+    timer = window.setInterval(tick, intervalMs);
+  }
+
+  function pause(ms){
+    pauseUntil = Date.now() + ms;
+  }
+
+  track.addEventListener('pointerdown', () => pause(5000), {passive:true});
+  track.addEventListener('touchstart', () => pause(5000), {passive:true});
+  track.addEventListener('wheel', () => pause(5000), {passive:true});
+  track.addEventListener('scroll', () => {
+    window.clearTimeout(settleTimer);
+    settleTimer = window.setTimeout(() => {
+      index = nearestIndex();
+      if(!autoScrolling) pause(4000);
+    }, 140);
+  }, {passive:true});
+
+  document.addEventListener('visibilitychange', () => {
+    if(!document.hidden) index = nearestIndex();
+  });
+  mobileQuery.addEventListener?.('change', () => {
+    index = nearestIndex();
+    if(!mobileQuery.matches) track.scrollTo({left:0, behavior:'auto'});
+  });
+
+  index = nearestIndex();
+  start();
+})();
+</script>
+
+</body></html>
