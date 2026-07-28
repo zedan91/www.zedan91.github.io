@@ -456,6 +456,60 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   overflow:hidden!important;
 }
 
+
+/* AZOBSS 638: natural image ratio, equal visual height, no crop and no letterbox */
+.brownies-showcase.brownies-original-only{
+  display:flex!important;
+  grid-template-columns:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:12px!important;
+  padding:12px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scroll-snap-type:x mandatory!important;
+}
+.brownies-showcase.brownies-original-only img{
+  flex:0 0 auto!important;
+  display:block!important;
+  width:auto!important;
+  max-width:none!important;
+  height:clamp(145px,12.5vw,160px)!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+  object-fit:initial!important;
+  object-position:initial!important;
+  background:transparent!important;
+  border:2px solid rgba(251,191,36,.78)!important;
+  border-radius:15px!important;
+  box-sizing:border-box!important;
+  scroll-snap-align:start!important;
+}
+@media(max-width:900px){
+  .brownies-showcase.brownies-original-only{
+    justify-content:flex-start!important;
+    gap:10px!important;
+    padding:10px!important;
+  }
+  .brownies-showcase.brownies-original-only img{
+    height:170px!important;
+    width:auto!important;
+    max-width:none!important;
+  }
+}
+@media(max-width:520px){
+  .brownies-showcase.brownies-original-only{
+    gap:9px!important;
+    padding:9px!important;
+  }
+  .brownies-showcase.brownies-original-only img{
+    height:155px!important;
+    width:auto!important;
+    max-width:none!important;
+    border-radius:12px!important;
+  }
+}
+
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 </head>
 <body>

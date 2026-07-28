@@ -1,0 +1,17 @@
+AZOBSS PATCH 638 — BROWNIES NATURAL RATIO EQUAL HEIGHT
+
+Baseline:
+(637)-AZOBSS-BROWNIES-FULL-IMAGE-BORDER-FIT-FIX_20260728.zip
+
+Pembetulan:
+- Galeri tidak lagi menggunakan lima kolum sama lebar.
+- Semua gambar menggunakan tinggi visual yang sama.
+- Lebar setiap gambar mengikut nisbah asal gambar.
+- Tiada object-fit: cover atau contain pada kotak tetap.
+- Tiada crop tambahan.
+- Tiada ruang hitam kosong di bahagian atas atau bawah gambar.
+- Border terus mengikuti keseluruhan saiz sebenar gambar.
+- Semua gambar asal dikekalkan tanpa enhance, retouch, filter atau ubah warna.
+- Slider automatik 2 saat dan swipe manual pada telefon dikekalkan.
+- Stickybar, kuantiti, tarikh dan WhatsApp tidak diubah.
+- Tiada Firebase Rules atau Render deploy diperlukan.
