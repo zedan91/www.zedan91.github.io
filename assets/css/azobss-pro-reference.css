@@ -185,3 +185,30 @@ img{max-width:100%;}
 
 /* v29 clean fixes */
 .service-card::before,.service-card::after,.home-service-card::before,.home-service-card::after,.category-card::before,.category-card::after{animation:none!important;filter:none!important;box-shadow:none!important;}
+
+
+/* AZOBSS PATCH 622: align account dropdown icons and labels */
+.user-dropdown-item .az-user-menu-icon,
+#userDropdown .az-user-menu-icon,
+.user-dropdown-item .az-user-menu-bookmark-icon,
+#userDropdown .az-user-menu-bookmark-icon{
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  flex:0 0 20px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  justify-self:center !important;
+  align-self:center !important;
+  margin:0 !important;
+  line-height:1 !important;
+  vertical-align:middle !important;
+}
+.user-dropdown-item .az-user-menu-label,
+#userDropdown .az-user-menu-label{
+  min-width:0 !important;
+  display:block !important;
+  line-height:1.2 !important;
+  text-align:left !important;
+}

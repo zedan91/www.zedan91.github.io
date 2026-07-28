@@ -4349,3 +4349,30 @@ body.is-admin #purchaseSummaryList .az-purchase-mini-actions{display:grid!import
 body.is-admin #purchaseSummaryList .az-purchase-show-btn,body.is-admin #purchaseSummaryList .az-purchase-pending-btn,body.is-admin #purchaseSummaryList .az-purchase-reset-btn,body.is-admin #purchaseSummaryList .az-purchase-delete-all-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:28px!important;border:0!important;border-radius:8px!important;padding:0 4px!important;margin:0!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;}
 body.is-admin #purchaseSummaryList .az-purchase-show-btn{background:#2563eb!important;}body.is-admin #purchaseSummaryList .az-purchase-pending-btn{background:#f97316!important;}body.is-admin #purchaseSummaryList .az-purchase-reset-btn{background:#64748b!important;}body.is-admin #purchaseSummaryList .az-purchase-delete-all-btn{background:#ef4444!important;}
 @media(max-width:980px){body.is-admin #purchaseSummaryList .purchase-summary-item.admin-purchase-user-card.az-purchase-mini-card{overflow-x:auto!important;}body.is-admin #purchaseSummaryList .admin-purchase-user-top.az-purchase-mini-top{min-width:850px!important;}}
+
+
+/* AZOBSS PATCH 622: align account dropdown icons and labels */
+.user-dropdown-item .az-user-menu-icon,
+#userDropdown .az-user-menu-icon,
+.user-dropdown-item .az-user-menu-bookmark-icon,
+#userDropdown .az-user-menu-bookmark-icon{
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  flex:0 0 20px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  justify-self:center !important;
+  align-self:center !important;
+  margin:0 !important;
+  line-height:1 !important;
+  vertical-align:middle !important;
+}
+.user-dropdown-item .az-user-menu-label,
+#userDropdown .az-user-menu-label{
+  min-width:0 !important;
+  display:block !important;
+  line-height:1.2 !important;
+  text-align:left !important;
+}
