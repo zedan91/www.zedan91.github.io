@@ -252,6 +252,107 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   .brownie-qty-stepper{justify-self:end!important}
   .order-summary-heading{align-items:flex-start!important}
 }
+
+/* AZOBSS 633: quick date buttons and date adjustment */
+.order-date-field{
+  display:grid!important;
+  gap:10px!important;
+  min-width:0!important;
+}
+.order-date-label{
+  display:block!important;
+  margin:0!important;
+  color:#ffd75e!important;
+  font-size:13px!important;
+  font-weight:900!important;
+}
+.order-date-quick{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:9px!important;
+}
+.order-date-quick-btn,.order-date-adjust-btn{
+  appearance:none!important;
+  min-height:42px!important;
+  border:1px solid #53657f!important;
+  border-radius:12px!important;
+  background:#091426!important;
+  color:#f8fafc!important;
+  padding:9px 16px!important;
+  font:inherit!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  cursor:pointer!important;
+  transition:border-color .18s ease,background .18s ease,color .18s ease,transform .18s ease!important;
+}
+.order-date-quick-btn:hover,.order-date-adjust-btn:hover:not(:disabled){
+  border-color:#fbbf24!important;
+  transform:translateY(-1px)!important;
+}
+.order-date-quick-btn.is-active{
+  border-color:#fbbf24!important;
+  background:linear-gradient(135deg,#ff8a00,#ffd000)!important;
+  color:#160b00!important;
+  box-shadow:0 8px 22px rgba(245,158,11,.22)!important;
+}
+.order-date-adjust{
+  display:grid!important;
+  grid-template-columns:auto minmax(190px,1fr) auto!important;
+  gap:9px!important;
+  align-items:center!important;
+}
+.order-date-adjust #orderDate{
+  width:100%!important;
+  min-width:0!important;
+  height:44px!important;
+  margin:0!important;
+  padding:9px 13px!important;
+  border:1px solid #53657f!important;
+  border-radius:12px!important;
+  background:#071326!important;
+  color:#fff!important;
+  color-scheme:dark!important;
+  font:inherit!important;
+  font-weight:800!important;
+  box-sizing:border-box!important;
+}
+.order-date-adjust #orderDate:focus{
+  outline:2px solid rgba(251,191,36,.28)!important;
+  border-color:#fbbf24!important;
+}
+.order-date-adjust-btn:disabled{
+  opacity:.42!important;
+  cursor:not-allowed!important;
+  transform:none!important;
+}
+.order-date-status{
+  min-height:20px!important;
+  margin:0!important;
+  color:#cbd5e1!important;
+  font-size:13px!important;
+  line-height:1.45!important;
+}
+.order-date-status.has-date{
+  color:#fde68a!important;
+  font-weight:800!important;
+}
+@media(max-width:620px){
+  .order-date-quick{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+  }
+  .order-date-adjust{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .order-date-adjust #orderDate{
+    grid-column:1/-1!important;
+    grid-row:1!important;
+  }
+  .order-date-adjust-btn{
+    width:100%!important;
+  }
+}
+
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=631" rel="stylesheet"/>
 </head>
 <body>
@@ -329,9 +430,145 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 <img alt="Red velvet brownies asal dengan white chocolate" decoding="async" loading="lazy" src="/assets/img/tempahan-makanan/brownies-original-crop-5.png"/>
 </div>
 <section class="section" id="menu"><h2>Pilihan Brownies</h2><div class="menu-grid"><article class="menu-card premium"><h3>Premium Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Premium Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Premium Brownies Plain" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-1" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Premium Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-1">0</output><button aria-label="Tambah kuantiti Premium Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Chocolate + Peanut (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Chocolate + Peanut (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-2" data-price="50" data-product="Chocolate + Peanut (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-2">0</output><button aria-label="Tambah kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Hazelnut Chocolate"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-3" data-price="50" data-product="Hazelnut Chocolate"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-3">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Peanut"><div class="brownie-item-info"><span class="brownie-item-name">Peanut</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Peanut" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-4" data-price="50" data-product="Peanut"><button aria-label="Tolak kuantiti Premium Brownies Peanut" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-4">0</output><button aria-label="Tambah kuantiti Premium Brownies Peanut" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Hazelnut Chocolate + Almond (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate + Almond (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-5" data-price="50" data-product="Hazelnut Chocolate + Almond (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-5">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Peanut + Almond (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Peanut + Almond (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Peanut + Almond (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-6" data-price="50" data-product="Peanut + Almond (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Peanut + Almond (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-6">0</output><button aria-label="Tambah kuantiti Premium Brownies Peanut + Almond (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="51" data-product="Hazelnut Chocolate / Peanut + Full Almonds"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate / Peanut + Full Almonds</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-7" data-price="51" data-product="Hazelnut Chocolate / Peanut + Full Almonds"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-7">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Mix 3 Flavour"><div class="brownie-item-info"><span class="brownie-item-name">Mix 3 Flavour</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Mix 3 Flavour" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-8" data-price="50" data-product="Mix 3 Flavour"><button aria-label="Tolak kuantiti Premium Brownies Mix 3 Flavour" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-8">0</output><button aria-label="Tambah kuantiti Premium Brownies Mix 3 Flavour" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article><article class="menu-card red"><h3>Red Velvet Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Red Velvet Brownies Plain" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-9" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Red Velvet Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-9">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="50" data-product="White Chocolate"><div class="brownie-item-info"><span class="brownie-item-name">White Chocolate</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Red Velvet Brownies White Chocolate" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-10" data-price="50" data-product="White Chocolate"><button aria-label="Tolak kuantiti Red Velvet Brownies White Chocolate" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-10">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies White Chocolate" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="51" data-product="White Chocolate + Almond"><div class="brownie-item-info"><span class="brownie-item-name">White Chocolate + Almond</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Red Velvet Brownies White Chocolate + Almond" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-11" data-price="51" data-product="White Chocolate + Almond"><button aria-label="Tolak kuantiti Red Velvet Brownies White Chocolate + Almond" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-11">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies White Chocolate + Almond" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article><article class="menu-card green"><h3>Pistachio Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Pistachio Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Pistachio Brownies Plain" class="brownie-qty-stepper" data-category="Pistachio Brownies" data-item-id="brownie-item-12" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Pistachio Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-12">0</output><button aria-label="Tambah kuantiti Pistachio Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Pistachio Brownies" data-price="51" data-product="Hazelnut Chocolate + Pistachio Cookie Crumbs"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate + Pistachio Cookie Crumbs</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="brownie-qty-stepper" data-category="Pistachio Brownies" data-item-id="brownie-item-13" data-price="51" data-product="Hazelnut Chocolate + Pistachio Cookie Crumbs"><button aria-label="Tolak kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-13">0</output><button aria-label="Tambah kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article></div></section>
-<section class="section order" id="tempah"><div><h2>Buat Tempahan</h2><p>Pilih kuantiti menggunakan butang − dan + pada setiap menu di bahagian Pilihan Brownies. Pilihan anda akan disenaraikan secara automatik di bawah.</p><form class="form" id="orderForm"><section aria-live="polite" class="order-selection-summary" id="orderSelectionSummary"><div class="order-summary-heading"><h3>Pilihan Tempahan</h3><span class="order-box-count" id="orderBoxCount">0 kotak</span></div><p class="order-summary-empty" id="orderSummaryEmpty">Belum ada pilihan. Tekan butang + pada menu brownies di atas.</p><div class="order-summary-items" id="orderSummaryItems"></div><div class="order-summary-total" hidden="" id="orderSummaryTotal"><span>Anggaran jumlah</span><strong id="orderEstimatedTotal">RM0</strong></div></section><label>Nama pelanggan<input autocomplete="name" id="customerName" placeholder="Contoh: Ahmad" required=""/></label><label>Tarikh diperlukan<input id="orderDate" type="date"/></label><label>Catatan<textarea id="notes" placeholder="Contoh: Pickup petang, kurang manis atau maklumat penghantaran"></textarea></label><button aria-disabled="true" class="submit" disabled="" type="submit">Pilih brownies terlebih dahulu</button></form></div><aside class="contact-card"><span>Untuk tempahan</span><strong>017-8809488</strong><span>LYNN</span><br/><span>Harga dan ketersediaan tertakluk kepada pengesahan penjual.</span></aside></section>
+<section class="section order" id="tempah"><div><h2>Buat Tempahan</h2><p>Pilih kuantiti menggunakan butang − dan + pada setiap menu di bahagian Pilihan Brownies. Pilihan anda akan disenaraikan secara automatik di bawah.</p><form class="form" id="orderForm"><section aria-live="polite" class="order-selection-summary" id="orderSelectionSummary"><div class="order-summary-heading"><h3>Pilihan Tempahan</h3><span class="order-box-count" id="orderBoxCount">0 kotak</span></div><p class="order-summary-empty" id="orderSummaryEmpty">Belum ada pilihan. Tekan butang + pada menu brownies di atas.</p><div class="order-summary-items" id="orderSummaryItems"></div><div class="order-summary-total" hidden="" id="orderSummaryTotal"><span>Anggaran jumlah</span><strong id="orderEstimatedTotal">RM0</strong></div></section><label>Nama pelanggan<input autocomplete="name" id="customerName" placeholder="Contoh: Ahmad" required=""/></label><div class="order-date-field">
+  <label class="order-date-label" for="orderDate">Tarikh diperlukan</label>
+  <div aria-label="Pilihan tarikh cepat" class="order-date-quick" role="group">
+    <button aria-pressed="false" class="order-date-quick-btn" id="dateTodayBtn" type="button">Hari Ini</button>
+    <button aria-pressed="false" class="order-date-quick-btn" id="dateTomorrowBtn" type="button">Esok</button>
+  </div>
+  <div class="order-date-adjust">
+    <button aria-label="Undur satu hari" class="order-date-adjust-btn" disabled id="dateMinusBtn" type="button">−1 Hari</button>
+    <input aria-describedby="selectedDateText" id="orderDate" required type="date"/>
+    <button aria-label="Tambah satu hari" class="order-date-adjust-btn" id="datePlusBtn" type="button">+1 Hari</button>
+  </div>
+  <p aria-live="polite" class="order-date-status" id="selectedDateText">Pilih Hari Ini, Esok atau tarikh lain.</p>
+</div><label>Catatan<textarea id="notes" placeholder="Contoh: Pickup petang, kurang manis atau maklumat penghantaran"></textarea></label><button aria-disabled="true" class="submit" disabled="" type="submit">Pilih brownies terlebih dahulu</button></form></div><aside class="contact-card"><span>Untuk tempahan</span><strong>017-8809488</strong><span>LYNN</span><br/><span>Harga dan ketersediaan tertakluk kepada pengesahan penjual.</span></aside></section>
 </main>
 <footer>© AZOBSS • Tempahan makanan melalui penjual Lynn</footer>
+<script id="azobss-633-order-date-controls">
+(function(){
+  const input = document.getElementById('orderDate');
+  const todayButton = document.getElementById('dateTodayBtn');
+  const tomorrowButton = document.getElementById('dateTomorrowBtn');
+  const minusButton = document.getElementById('dateMinusBtn');
+  const plusButton = document.getElementById('datePlusBtn');
+  const status = document.getElementById('selectedDateText');
+  if(!input || !todayButton || !tomorrowButton || !minusButton || !plusButton || !status) return;
+
+  function startOfDay(date){
+    const copy = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    copy.setHours(0,0,0,0);
+    return copy;
+  }
+
+  function today(){
+    return startOfDay(new Date());
+  }
+
+  function addDays(date, days){
+    const next = startOfDay(date);
+    next.setDate(next.getDate() + days);
+    return next;
+  }
+
+  function toISO(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2,'0');
+    const day = String(date.getDate()).padStart(2,'0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function fromISO(value){
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+    if(!match) return null;
+    const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return Number.isNaN(parsed.getTime()) ? null : startOfDay(parsed);
+  }
+
+  function sameDate(a,b){
+    return !!a && !!b && toISO(a) === toISO(b);
+  }
+
+  function dateLabel(date){
+    return new Intl.DateTimeFormat('ms-MY', {
+      weekday:'long', day:'2-digit', month:'long', year:'numeric'
+    }).format(date);
+  }
+
+  function shortDate(date){
+    return new Intl.DateTimeFormat('ms-MY', {
+      day:'2-digit', month:'2-digit', year:'numeric'
+    }).format(date);
+  }
+
+  function update(){
+    const baseToday = today();
+    const baseTomorrow = addDays(baseToday, 1);
+    let selected = fromISO(input.value);
+
+    if(selected && selected < baseToday){
+      selected = baseToday;
+      input.value = toISO(selected);
+    }
+
+    const isToday = sameDate(selected, baseToday);
+    const isTomorrow = sameDate(selected, baseTomorrow);
+
+    todayButton.classList.toggle('is-active', isToday);
+    tomorrowButton.classList.toggle('is-active', isTomorrow);
+    todayButton.setAttribute('aria-pressed', String(isToday));
+    tomorrowButton.setAttribute('aria-pressed', String(isTomorrow));
+    minusButton.disabled = !selected || selected <= baseToday;
+
+    if(!selected){
+      status.textContent = 'Pilih Hari Ini, Esok atau tarikh lain.';
+      status.classList.remove('has-date');
+      return;
+    }
+
+    const prefix = isToday ? 'Hari Ini' : (isTomorrow ? 'Esok' : 'Tarikh dipilih');
+    status.textContent = `${prefix} • ${dateLabel(selected)}`;
+    status.classList.add('has-date');
+  }
+
+  function selectDate(date){
+    const baseToday = today();
+    const safeDate = date < baseToday ? baseToday : startOfDay(date);
+    input.value = toISO(safeDate);
+    input.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+
+  input.min = toISO(today());
+  todayButton.addEventListener('click', () => selectDate(today()));
+  tomorrowButton.addEventListener('click', () => selectDate(addDays(today(), 1)));
+  minusButton.addEventListener('click', () => {
+    const selected = fromISO(input.value);
+    selectDate(selected ? addDays(selected, -1) : today());
+  });
+  plusButton.addEventListener('click', () => {
+    const selected = fromISO(input.value);
+    selectDate(selected ? addDays(selected, 1) : addDays(today(), 1));
+  });
+  input.addEventListener('change', update);
+  input.addEventListener('input', update);
+
+  window.AZOBSSOrderDate = {
+    getMessageDate(){
+      const selected = fromISO(input.value);
+      if(!selected) return 'Belum dipilih';
+      const baseToday = today();
+      const baseTomorrow = addDays(baseToday, 1);
+      if(sameDate(selected, baseToday)) return `Hari Ini (${shortDate(selected)})`;
+      if(sameDate(selected, baseTomorrow)) return `Esok (${shortDate(selected)})`;
+      return `${dateLabel(selected)} (${shortDate(selected)})`;
+    },
+    selectToday(){ selectDate(today()); },
+    selectTomorrow(){ selectDate(addDays(today(), 1)); }
+  };
+
+  update();
+})();
+</script>
 <script>(function(){
   const form = document.getElementById('orderForm');
   const steppers = Array.from(document.querySelectorAll('.brownie-qty-stepper'));
@@ -448,7 +685,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
       '',
       `Jumlah kotak: ${totalBoxes}`,
       `Anggaran jumlah: ${money(totalPrice)}`,
-      `Tarikh diperlukan: ${document.getElementById('orderDate').value || 'Akan dimaklumkan'}`,
+      `Tarikh diperlukan: ${window.AZOBSSOrderDate ? window.AZOBSSOrderDate.getMessageDate() : (document.getElementById('orderDate').value || 'Belum dipilih')}`,
       `Catatan: ${document.getElementById('notes').value.trim() || '-'}`,
       '',
       'Harga akhir dan ketersediaan tertakluk kepada pengesahan penjual.'

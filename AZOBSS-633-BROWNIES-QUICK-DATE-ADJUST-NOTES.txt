@@ -1,0 +1,16 @@
+AZOBSS PATCH 633 — BROWNIES QUICK DATE & ADJUST
+
+Baseline:
+(632)-AZOBSS-BROWNIES-MULTI-QUANTITY-ORDER-FIX_20260728.zip
+
+Perubahan:
+- Tarikh diperlukan kini wajib dipilih sebelum tempahan dihantar.
+- Tambah butang Hari Ini dan Esok.
+- Tambah butang -1 Hari dan +1 Hari untuk melaraskan tarikh.
+- Date picker manual dikekalkan.
+- Tarikh lampau disekat dan butang -1 Hari disabled apabila sampai Hari Ini.
+- Butang Hari Ini/Esok ditanda aktif mengikut pilihan.
+- Tarikh pilihan dipaparkan dalam format Bahasa Melayu.
+- Mesej WhatsApp menggunakan label Hari Ini, Esok atau tarikh penuh.
+- Pilihan brownies, kuantiti berasingan, anggaran harga, stickybar dan gambar asal tidak diubah.
+- Tiada Firebase Rules atau Render diperlukan.
