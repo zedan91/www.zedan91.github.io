@@ -2,7 +2,7 @@ import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import {
   getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy,
-  limit, onSnapshot, setDoc, updateDoc, serverTimestamp
+  limit, onSnapshot, setDoc, updateDoc, writeBatch, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -25,6 +25,7 @@ let allOrders = [];
 let filteredOrders = [];
 let unsubscribeOrders = null;
 let currentAccess = { allowed: false, role: 'none', user: null, profile: null };
+const selectedOrderIds = new Set();
 
 const el = id => document.getElementById(id);
 const panel = el('foodOrdersAdminPanel');
@@ -37,6 +38,11 @@ const countLabel = el('foodOrdersVisibleCount');
 const roleBadge = el('foodOrdersRoleBadge');
 const detailModal = el('foodOrderDetailModal');
 const detailContent = el('foodOrderDetailContent');
+const selectAllCheckbox = el('foodOrdersSelectAll');
+const selectionBar = el('foodOrdersSelectionBar');
+const selectedCount = el('foodOrdersSelectedCount');
+const completeSelectedButton = el('foodOrdersCompleteSelectedBtn');
+const deleteSelectedButton = el('foodOrdersDeleteSelectedBtn');
 
 function clean(value){
   return String(value ?? '').trim();
@@ -277,17 +283,50 @@ function applyFilters(){
   renderTable();
 }
 
+function visibleOrderIds(){
+  return filteredOrders
+    .map(order => order.id || order.clientOrderId)
+    .filter(Boolean);
+}
+
+function syncSelectionControls(){
+  const visibleIds = visibleOrderIds();
+  const selectedVisible = visibleIds.filter(id => selectedOrderIds.has(id));
+  const totalSelected = selectedOrderIds.size;
+
+  if(selectAllCheckbox){
+    selectAllCheckbox.checked = visibleIds.length > 0 && selectedVisible.length === visibleIds.length;
+    selectAllCheckbox.indeterminate = selectedVisible.length > 0 && selectedVisible.length < visibleIds.length;
+    selectAllCheckbox.disabled = visibleIds.length === 0;
+  }
+
+  if(selectedCount) selectedCount.textContent = `${totalSelected} rekod dipilih`;
+  if(selectionBar) selectionBar.hidden = totalSelected === 0;
+  if(completeSelectedButton) completeSelectedButton.disabled = totalSelected === 0;
+  if(deleteSelectedButton){
+    deleteSelectedButton.hidden = currentAccess.role !== 'admin';
+    deleteSelectedButton.disabled = currentAccess.role !== 'admin' || totalSelected === 0;
+  }
+}
+
 function renderTable(){
   if(!tbody) return;
   countLabel.textContent = `${filteredOrders.length} rekod`;
 
+  const existingIds = new Set(allOrders.map(order => order.id || order.clientOrderId).filter(Boolean));
+  for(const id of [...selectedOrderIds]){
+    if(!existingIds.has(id)) selectedOrderIds.delete(id);
+  }
+
   if(!filteredOrders.length){
-    tbody.innerHTML = '<tr><td colspan="8" class="food-orders-empty">Tiada rekod yang sepadan.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="food-orders-empty">Tiada rekod yang sepadan.</td></tr>';
+    syncSelectionControls();
     return;
   }
 
   tbody.innerHTML = filteredOrders.map(order => {
-    const orderId = escapeHtml(order.id || order.clientOrderId || '-');
+    const rawOrderId = order.id || order.clientOrderId || '-';
+    const orderId = escapeHtml(rawOrderId);
     const items = Array.isArray(order.items) ? order.items : [];
     const preview = items.slice(0, 2).map(item =>
       `${escapeHtml(item.product)} × ${Number(item.qty || 0)}`
@@ -295,12 +334,24 @@ function renderTable(){
     const extra = items.length > 2 ? `<br><small>+${items.length - 2} menu lagi</small>` : '';
     const note = escapeHtml(order.notes || '-');
     const status = order.status || 'new';
+    const isCompleted = status === 'completed';
+    const isSelected = selectedOrderIds.has(rawOrderId);
 
     return `
-      <tr data-order-id="${orderId}">
+      <tr class="${isCompleted ? 'is-completed' : ''} ${isSelected ? 'is-selected' : ''}" data-order-id="${orderId}">
+        <td class="food-order-check-col">
+          <input
+            aria-label="Pilih rekod ${orderId}"
+            class="food-order-check"
+            data-select-order-id="${orderId}"
+            type="checkbox"
+            ${isSelected ? 'checked' : ''}
+          />
+        </td>
         <td>
           <span class="food-order-id">${orderId.slice(0, 17)}</span>
           <span class="food-order-recorded">${escapeHtml(formatDateTime(order.createdAt, order.createdAtMs))}</span>
+          ${isCompleted ? '<span class="food-order-complete-badge">✓ Urusan selesai</span>' : ''}
         </td>
         <td>
           <span class="food-order-customer">${escapeHtml(order.customerName || '-')}</span>
@@ -310,6 +361,16 @@ function renderTable(){
         <td><span class="food-order-items-preview">${preview || '-'}${extra}</span></td>
         <td>${Number(order.totalBoxes || 0)}</td>
         <td><span class="food-order-money">${money(order.totalPrice)}</span></td>
+        <td class="food-order-complete-cell">
+          <input
+            aria-label="Tandakan urusan ${orderId} sebagai selesai"
+            class="food-order-completed-check"
+            data-complete-order-id="${orderId}"
+            title="${isCompleted ? 'Urusan telah selesai. Buang tanda untuk kembali kepada Disahkan.' : 'Tandakan urusan sebagai selesai'}"
+            type="checkbox"
+            ${isCompleted ? 'checked' : ''}
+          />
+        </td>
         <td>
           <select class="food-order-status-select" data-status-order-id="${orderId}" aria-label="Status tempahan ${orderId}">
             ${['new','contacted','confirmed','completed','cancelled'].map(value =>
@@ -320,6 +381,8 @@ function renderTable(){
         <td><button class="food-order-detail-btn" data-detail-order-id="${orderId}" type="button">Lihat Detail</button></td>
       </tr>`;
   }).join('');
+
+  syncSelectionControls();
 }
 
 function showError(message){
@@ -364,9 +427,10 @@ function closeDetail(){
   document.body.style.overflow = '';
 }
 
-async function updateStatus(orderId, status, select){
+async function updateStatus(orderId, status, control){
   const previous = allOrders.find(item => (item.id || item.clientOrderId) === orderId)?.status || 'new';
-  select.disabled = true;
+  if(control) control.disabled = true;
+
   try{
     await updateDoc(doc(db, COLLECTION, orderId), {
       status,
@@ -375,13 +439,104 @@ async function updateStatus(orderId, status, select){
       statusUpdatedByUid: currentAccess.user?.uid || '',
       statusUpdatedByEmail: lower(currentAccess.user?.email || '')
     });
-    toast(`Status ditukar kepada ${orderStatusLabel(status)}.`, 'success');
+    toast(
+      status === 'completed'
+        ? 'Urusan tempahan telah ditandakan selesai.'
+        : `Status ditukar kepada ${orderStatusLabel(status)}.`,
+      'success'
+    );
   }catch(error){
     console.error('[AZOBSS Food Orders] Status update failed:', error);
-    select.value = previous;
+    if(control){
+      if(control.matches('select')) control.value = previous;
+      if(control.matches('[data-complete-order-id]')) control.checked = previous === 'completed';
+    }
     toast('Status gagal dikemas kini. Semak Firebase Rules.', 'warning');
   }finally{
-    select.disabled = false;
+    if(control) control.disabled = false;
+  }
+}
+
+async function markSelectedCompleted(){
+  const ids = [...selectedOrderIds];
+  if(!ids.length) return;
+
+  const targetIds = ids.filter(id => {
+    const order = allOrders.find(item => (item.id || item.clientOrderId) === id);
+    return order && order.status !== 'completed';
+  });
+
+  if(!targetIds.length){
+    toast('Semua rekod yang dipilih sudah selesai.', 'success');
+    return;
+  }
+
+  completeSelectedButton.disabled = true;
+  const originalText = completeSelectedButton.textContent;
+  completeSelectedButton.textContent = `Memproses ${targetIds.length} rekod...`;
+
+  try{
+    const batch = writeBatch(db);
+    const nowMs = Date.now();
+
+    targetIds.forEach(id => {
+      batch.update(doc(db, COLLECTION, id), {
+        status: 'completed',
+        statusUpdatedAt: serverTimestamp(),
+        statusUpdatedAtMs: nowMs,
+        statusUpdatedByUid: currentAccess.user?.uid || '',
+        statusUpdatedByEmail: lower(currentAccess.user?.email || '')
+      });
+    });
+
+    await batch.commit();
+    selectedOrderIds.clear();
+    toast(`${targetIds.length} rekod ditandakan selesai.`, 'success');
+    syncSelectionControls();
+  }catch(error){
+    console.error('[AZOBSS Food Orders] Bulk complete failed:', error);
+    toast('Rekod gagal ditandakan selesai. Semak Firebase Rules.', 'warning');
+  }finally{
+    completeSelectedButton.textContent = originalText;
+    syncSelectionControls();
+  }
+}
+
+async function deleteSelectedOrders(){
+  if(currentAccess.role !== 'admin'){
+    toast('Hanya admin boleh memadam rekod.', 'warning');
+    return;
+  }
+
+  const ids = [...selectedOrderIds];
+  if(!ids.length) return;
+
+  const confirmation = window.prompt(
+    `Anda akan memadam ${ids.length} rekod secara kekal.\n\nTaip PADAM untuk teruskan:`
+  );
+  if(clean(confirmation).toUpperCase() !== 'PADAM'){
+    toast('Pemadaman dibatalkan.', 'warning');
+    return;
+  }
+
+  deleteSelectedButton.disabled = true;
+  const originalText = deleteSelectedButton.textContent;
+  deleteSelectedButton.textContent = `Memadam ${ids.length} rekod...`;
+
+  try{
+    const batch = writeBatch(db);
+    ids.forEach(id => batch.delete(doc(db, COLLECTION, id)));
+    await batch.commit();
+
+    selectedOrderIds.clear();
+    toast(`${ids.length} rekod telah dipadam secara kekal.`, 'success');
+    syncSelectionControls();
+  }catch(error){
+    console.error('[AZOBSS Food Orders] Delete failed:', error);
+    toast('Rekod gagal dipadam. Pastikan anda login sebagai admin dan Rules sudah diterbitkan.', 'warning');
+  }finally{
+    deleteSelectedButton.textContent = originalText;
+    syncSelectionControls();
   }
 }
 
@@ -435,6 +590,9 @@ function startRealtimeTable(){
   roleBadge.textContent = currentAccess.role === 'admin'
     ? 'ADMIN'
     : (currentAccess.role === 'semi-admin' ? 'SEMI-ADMIN' : 'STAFF');
+  if(deleteSelectedButton){
+    deleteSelectedButton.hidden = currentAccess.role !== 'admin';
+  }
   liveStatus.textContent = 'Menyambung ke rekod masa nyata...';
   showError('');
 
@@ -452,7 +610,7 @@ function startRealtimeTable(){
   }, error => {
     console.error('[AZOBSS Food Orders] Realtime load failed:', error);
     liveStatus.textContent = 'Gagal memuatkan rekod';
-    tbody.innerHTML = '<tr><td colspan="8" class="food-orders-empty">Rekod tidak dapat dimuatkan.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="food-orders-empty">Rekod tidak dapat dimuatkan.</td></tr>';
     showError('Akses Firestore ditolak atau Rules belum dikemas kini. Gabungkan FIREBASE-RULES-ADDON-FOOD-ORDERS-640.txt ke Firebase Rules dan Publish.');
   });
 }
@@ -489,9 +647,37 @@ tbody?.addEventListener('click', event => {
 });
 
 tbody?.addEventListener('change', event => {
+  const selection = event.target.closest('[data-select-order-id]');
+  if(selection){
+    const orderId = selection.dataset.selectOrderId;
+    if(selection.checked) selectedOrderIds.add(orderId);
+    else selectedOrderIds.delete(orderId);
+    selection.closest('tr')?.classList.toggle('is-selected', selection.checked);
+    syncSelectionControls();
+    return;
+  }
+
+  const complete = event.target.closest('[data-complete-order-id]');
+  if(complete){
+    const nextStatus = complete.checked ? 'completed' : 'confirmed';
+    updateStatus(complete.dataset.completeOrderId, nextStatus, complete);
+    return;
+  }
+
   const select = event.target.closest('[data-status-order-id]');
   if(select) updateStatus(select.dataset.statusOrderId, select.value, select);
 });
+
+selectAllCheckbox?.addEventListener('change', () => {
+  visibleOrderIds().forEach(id => {
+    if(selectAllCheckbox.checked) selectedOrderIds.add(id);
+    else selectedOrderIds.delete(id);
+  });
+  renderTable();
+});
+
+completeSelectedButton?.addEventListener('click', markSelectedCompleted);
+deleteSelectedButton?.addEventListener('click', deleteSelectedOrders);
 
 el('foodOrderDetailClose')?.addEventListener('click', closeDetail);
 detailModal?.addEventListener('click', event => {

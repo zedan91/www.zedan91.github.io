@@ -579,6 +579,103 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   .food-order-detail-card{padding:15px}
 }
 
+
+/* AZOBSS 641: select, complete and admin-delete food order records */
+.food-orders-toolbar{
+  grid-template-columns:minmax(220px,1fr) 180px repeat(4,auto)!important;
+}
+.food-orders-tool-btn.complete{
+  border-color:#16a34a!important;
+  background:#14532d!important;
+  color:#dcfce7!important;
+}
+.food-orders-tool-btn.danger{
+  border-color:#ef4444!important;
+  background:#7f1d1d!important;
+  color:#fee2e2!important;
+}
+.food-orders-tool-btn:disabled{
+  opacity:.42!important;
+  cursor:not-allowed!important;
+  filter:none!important;
+}
+.food-orders-selection-bar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:-2px 0 14px;
+  padding:10px 12px;
+  border:1px solid rgba(56,189,248,.3);
+  border-radius:12px;
+  background:rgba(14,116,144,.12);
+  color:#bae6fd;
+  font-size:12px;
+}
+.food-orders-selection-bar[hidden]{display:none!important}
+.food-orders-selection-bar strong{color:#fff}
+.food-order-check-col,.food-order-complete-col{
+  width:62px;
+  min-width:62px;
+  text-align:center!important;
+}
+.food-order-check{
+  width:19px;
+  height:19px;
+  margin:0;
+  accent-color:#22c55e;
+  cursor:pointer;
+}
+.food-order-completed-check{
+  width:23px;
+  height:23px;
+  margin:0;
+  accent-color:#22c55e;
+  cursor:pointer;
+}
+.food-order-complete-cell{text-align:center!important}
+.food-orders-table tr.is-selected td{
+  background:rgba(14,116,144,.16)!important;
+}
+.food-orders-table tr.is-completed td{
+  background:rgba(22,101,52,.10);
+  color:#a7f3d0;
+}
+.food-orders-table tr.is-completed .food-order-id,
+.food-orders-table tr.is-completed .food-order-money{
+  color:#86efac;
+}
+.food-orders-table tr.is-completed .food-order-customer,
+.food-orders-table tr.is-completed .food-order-items-preview{
+  opacity:.72;
+}
+.food-order-complete-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:5px;
+  padding:3px 7px;
+  border:1px solid rgba(74,222,128,.35);
+  border-radius:999px;
+  background:rgba(22,101,52,.18);
+  color:#86efac;
+  font-size:10px;
+  font-weight:900;
+}
+@media(max-width:1100px){
+  .food-orders-toolbar{
+    grid-template-columns:1fr 1fr 1fr!important;
+  }
+}
+@media(max-width:700px){
+  .food-orders-toolbar{
+    grid-template-columns:1fr!important;
+  }
+  .food-orders-selection-bar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 </head>
 <body>
@@ -701,24 +798,34 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     </label>
     <button class="food-orders-tool-btn" id="foodOrdersRefreshBtn" type="button">↻ Muat Semula</button>
     <button class="food-orders-tool-btn primary" id="foodOrdersExportBtn" type="button">⬇ Export CSV</button>
+    <button class="food-orders-tool-btn complete" disabled id="foodOrdersCompleteSelectedBtn" type="button">✓ Tandakan Selesai</button>
+    <button class="food-orders-tool-btn danger" disabled hidden id="foodOrdersDeleteSelectedBtn" type="button">🗑 Padam Dipilih</button>
+  </div>
+  <div class="food-orders-selection-bar" hidden id="foodOrdersSelectionBar">
+    <strong id="foodOrdersSelectedCount">0 rekod dipilih</strong>
+    <span>Gunakan checkbox pertama untuk memilih rekod. Checkbox Selesai menukar status terus.</span>
   </div>
 
   <div class="food-orders-table-wrap">
     <table class="food-orders-table">
       <thead>
         <tr>
+          <th class="food-order-check-col">
+            <input aria-label="Pilih semua rekod yang dipaparkan" class="food-order-check" id="foodOrdersSelectAll" type="checkbox"/>
+          </th>
           <th>Rekod</th>
           <th>Pelanggan</th>
           <th>Tarikh Diperlukan</th>
           <th>Tempahan</th>
           <th>Kotak</th>
           <th>Jumlah</th>
+          <th class="food-order-complete-col">Selesai</th>
           <th>Status</th>
           <th>Detail</th>
         </tr>
       </thead>
       <tbody id="foodOrdersTableBody">
-        <tr><td colspan="8" class="food-orders-empty">Memuatkan rekod...</td></tr>
+        <tr><td colspan="10" class="food-orders-empty">Memuatkan rekod...</td></tr>
       </tbody>
     </table>
   </div>
@@ -1017,7 +1124,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-food-orders.js?v=640" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-food-orders.js?v=641" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;
