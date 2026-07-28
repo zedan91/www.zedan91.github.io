@@ -1,4 +1,4 @@
-/* AZOBSS 623: keep Tempahan Makanan inside More together with Mini Web Tools. */
+/* AZOBSS 624: Tempahan Makanan page inside More together with Mini Web Tools. */
 (function () {
   'use strict';
 
@@ -17,7 +17,8 @@
     var currentHash = String(window.location.hash || '').toLowerCase();
     var toolsPath = normalisePath(new URL(href, window.location.href).pathname);
     var isToolsPage = currentPath === toolsPath || currentPath.indexOf(toolsPath + '/') === 0;
-    var isFoodSection = currentPath === '/' && currentHash === '#tempahan-makanan';
+    var foodPath = normalisePath('/Tempahan-Makanan/');
+    var isFoodSection = currentPath === foodPath || currentPath.indexOf(foodPath + '/') === 0 || (currentPath === '/' && currentHash === '#tempahan-makanan');
     var inheritedActive = link.classList.contains('is-active') ||
       link.classList.contains('is-current') ||
       link.classList.contains('market-nav-active');
@@ -66,7 +67,7 @@
       '<span>Mini Web Tools</span>';
 
     var foodLink = document.createElement('a');
-    foodLink.href = '/#tempahan-makanan';
+    foodLink.href = '/Tempahan-Makanan/';
     foodLink.setAttribute('role', 'menuitem');
     foodLink.dataset.azFoodOrderLink = '1';
     foodLink.title = 'Tempahan makanan, kuih, set majlis dan tempahan khas';
