@@ -1,0 +1,15 @@
+AZOBSS PATCH 629 — TEMPAHAN MAKANAN FULL-WIDTH CENTER HERO
+
+Baseline:
+(628)-AZOBSS-TEMPAHAN-MAKANAN-REMOVE-POSTER-COMPACT-HERO-FIX_20260728.zip
+
+Pembetulan:
+- Blok hero menggunakan keseluruhan lebar kandungan.
+- Tajuk Premium Brownies dipaparkan memanjang satu baris pada desktop.
+- Tajuk, penerangan, badge dan semua butang diselarikan ke tengah.
+- Had lebar lama 780px dibuang.
+- Penerangan dibenarkan memanjang sehingga 980px.
+- Pada telefon, tajuk dibenarkan turun baris secara automatik.
+- Butang menjadi satu kolum pada telefon kecil.
+- Jalur gambar brownies, menu harga, WhatsApp dan sticky navbar tidak diubah.
+- Tiada perubahan Firebase Rules atau Render diperlukan.

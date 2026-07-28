@@ -74,6 +74,84 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
   .hero{margin-top:10px!important;margin-bottom:4px!important}
   .brownies-showcase{margin-top:0!important}
 }
+
+/* AZOBSS 629: full-width centred food hero */
+.hero{
+  width:min(1180px,calc(100% - 28px))!important;
+  min-height:auto!important;
+  display:block!important;
+  margin:20px auto 10px!important;
+  padding:36px 20px 28px!important;
+  text-align:center!important;
+  box-sizing:border-box!important;
+}
+.hero>div:first-child{
+  width:100%!important;
+  max-width:none!important;
+  margin:0 auto!important;
+}
+.hero .eyebrow{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+.hero h1{
+  width:100%!important;
+  max-width:none!important;
+  margin:12px auto 16px!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  font-size:clamp(54px,8vw,104px)!important;
+  line-height:.92!important;
+  letter-spacing:-.035em!important;
+}
+.hero .lead{
+  width:100%!important;
+  max-width:980px!important;
+  margin:0 auto!important;
+  text-align:center!important;
+}
+.hero .badges{
+  width:100%!important;
+  justify-content:center!important;
+  margin:20px auto 22px!important;
+}
+.hero .hero-actions{
+  width:100%!important;
+  justify-content:center!important;
+}
+.brownies-showcase{
+  margin-top:0!important;
+}
+@media(max-width:760px){
+  .hero{
+    margin-top:12px!important;
+    padding:24px 12px 20px!important;
+  }
+  .hero h1{
+    white-space:normal!important;
+    font-size:clamp(46px,15vw,72px)!important;
+    line-height:.94!important;
+  }
+  .hero .lead{
+    max-width:620px!important;
+    font-size:16px!important;
+    line-height:1.55!important;
+  }
+}
+@media(max-width:460px){
+  .hero h1{
+    font-size:clamp(42px,14vw,60px)!important;
+  }
+  .hero .hero-actions{
+    flex-direction:column!important;
+    align-items:stretch!important;
+  }
+  .hero .hero-actions .btn{
+    width:100%!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -127,7 +205,7 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
 </header>
 <main>
 <section class="hero">
-<div><span class="eyebrow">Tempahan Makanan • Lynn</span><h1>Premium<br/>Brownies</h1><p class="lead">36 keping dalam saiz 8 inci. Menggunakan coklat Beryl's berkualiti dan bahan terpilih untuk rasa yang lebih rich, sedap dan premium.</p><div class="badges"><span>Harga dari RM45</span><span>36 pcs</span><span>8 inci</span><span>Premium Quality</span></div><div class="hero-actions"><a class="btn primary" href="#tempah">Tempah Sekarang</a><a class="btn secondary" href="#menu">Lihat Semua Harga</a></div></div>
+<div><span class="eyebrow">Tempahan Makanan • Lynn</span><h1>Premium Brownies</h1><p class="lead">36 keping dalam saiz 8 inci. Menggunakan coklat Beryl's berkualiti dan bahan terpilih untuk rasa yang lebih rich, sedap dan premium.</p><div class="badges"><span>Harga dari RM45</span><span>36 pcs</span><span>8 inci</span><span>Premium Quality</span></div><div class="hero-actions"><a class="btn primary" href="#tempah">Tempah Sekarang</a><a class="btn secondary" href="#menu">Lihat Semua Harga</a></div></div>
 
 </section>
 <div aria-label="Hiasan pilihan brownies sebenar" class="brownies-showcase">
