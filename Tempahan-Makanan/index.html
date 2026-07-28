@@ -152,6 +152,60 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
   }
 }
 
+
+/* AZOBSS 630: original flyer brownie photos only — crop and layout only */
+.brownies-showcase.brownies-original-only{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:12px!important;
+  padding:12px!important;
+  background:#050810!important;
+  overflow:hidden!important;
+}
+.brownies-showcase.brownies-original-only::after{
+  content:none!important;
+  display:none!important;
+}
+.brownies-showcase.brownies-original-only img{
+  display:block!important;
+  width:100%!important;
+  height:220px!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border-radius:15px!important;
+  border:1px solid rgba(251,191,36,.55)!important;
+  filter:none!important;
+  mix-blend-mode:normal!important;
+  opacity:1!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+@media(max-width:900px){
+  .brownies-showcase.brownies-original-only{
+    grid-template-columns:repeat(5,220px)!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scroll-snap-type:x proximity!important;
+  }
+  .brownies-showcase.brownies-original-only img{
+    height:190px!important;
+    scroll-snap-align:start!important;
+  }
+}
+@media(max-width:520px){
+  .brownies-showcase.brownies-original-only{
+    grid-template-columns:repeat(5,185px)!important;
+    gap:9px!important;
+    padding:9px!important;
+  }
+  .brownies-showcase.brownies-original-only img{
+    height:160px!important;
+    border-radius:12px!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -208,11 +262,12 @@ body #userDropdown .user-dropdown-item:hover{background:rgba(30,41,59,.9)!import
 <div><span class="eyebrow">Tempahan Makanan • Lynn</span><h1>Premium Brownies</h1><p class="lead">36 keping dalam saiz 8 inci. Menggunakan coklat Beryl's berkualiti dan bahan terpilih untuk rasa yang lebih rich, sedap dan premium.</p><div class="badges"><span>Harga dari RM45</span><span>36 pcs</span><span>8 inci</span><span>Premium Quality</span></div><div class="hero-actions"><a class="btn primary" href="#tempah">Tempah Sekarang</a><a class="btn secondary" href="#menu">Lihat Semua Harga</a></div></div>
 
 </section>
-<div aria-label="Hiasan pilihan brownies sebenar" class="brownies-showcase">
-<picture>
-<source srcset="/assets/img/tempahan-makanan/brownies-horizontal-showcase.webp" type="image/webp"/>
-<img alt="Pelbagai pilihan brownies Premium, Red Velvet dan Pistachio disusun melintang" decoding="async" loading="eager" src="/assets/img/tempahan-makanan/brownies-horizontal-showcase.jpg"/>
-</picture>
+<div aria-label="Gambar brownies asal daripada flyer Lynn" class="brownies-showcase brownies-original-only">
+  <img src="/assets/img/tempahan-makanan/brownies-original-crop-1.png" alt="Brownies asal dengan corak coklat dan karamel" loading="eager" decoding="async"/>
+  <img src="/assets/img/tempahan-makanan/brownies-original-crop-2.png" alt="Brownies asal campuran coklat, kacang dan karamel" loading="eager" decoding="async"/>
+  <img src="/assets/img/tempahan-makanan/brownies-original-crop-3.png" alt="Brownies asal dengan drizzle kuning dan coklat" loading="eager" decoding="async"/>
+  <img src="/assets/img/tempahan-makanan/brownies-original-crop-4.png" alt="Brownies asal coklat dengan taburan almond" loading="lazy" decoding="async"/>
+  <img src="/assets/img/tempahan-makanan/brownies-original-crop-5.png" alt="Red velvet brownies asal dengan white chocolate" loading="lazy" decoding="async"/>
 </div>
 <section class="section" id="menu"><h2>Pilihan Brownies</h2><div class="menu-grid"><article class="menu-card premium"><h3>Premium Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li><span>Plain</span><strong>RM45</strong></li><li><span>Chocolate + Peanut (Mix)</span><strong>RM50</strong></li><li><span>Hazelnut Chocolate</span><strong>RM50</strong></li><li><span>Peanut</span><strong>RM50</strong></li><li><span>Hazelnut Chocolate + Almond (Mix)</span><strong>RM50</strong></li><li><span>Peanut + Almond (Mix)</span><strong>RM50</strong></li><li><span>Hazelnut Chocolate / Peanut + Full Almonds</span><strong>RM51</strong></li><li><span>Mix 3 Flavour</span><strong>RM50</strong></li></ul></article><article class="menu-card red"><h3>Red Velvet Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li><span>Plain</span><strong>RM45</strong></li><li><span>White Chocolate</span><strong>RM50</strong></li><li><span>White Chocolate + Almond</span><strong>RM51</strong></li></ul></article><article class="menu-card green"><h3>Pistachio Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li><span>Plain</span><strong>RM45</strong></li><li><span>Hazelnut Chocolate + Pistachio Cookie Crumbs</span><strong>RM51</strong></li></ul></article></div></section>
 <section class="section order" id="tempah"><div><h2>Buat Tempahan</h2><p>Pilih jenis brownies dan isi maklumat ringkas. Butang di bawah akan membuka WhatsApp Lynn dengan mesej tempahan yang telah disediakan.</p><form class="form" id="orderForm"><label>Nama pelanggan<input autocomplete="name" id="customerName" placeholder="Contoh: Ahmad" required=""/></label><label>Pilihan brownies<select id="productSelect" required=""><option value="">Pilih menu...</option><optgroup label="Premium Brownies">
