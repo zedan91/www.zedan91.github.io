@@ -14,10 +14,86 @@
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 20% 0,rgba(120,53,15,.22),transparent 30%),linear-gradient(180deg,#050810,#0a1220 60%,#050810);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
 a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(251,191,36,.35);background:rgba(3,7,18,.9);backdrop-filter:blur(14px)}.topin{width:min(1180px,calc(100% - 28px));height:66px;margin:auto;display:flex;align-items:center;gap:14px}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:950;font-size:20px}.brand img{width:118px;height:40px;object-fit:cover}.back{margin-left:auto;padding:10px 14px;border:1px solid #475569;border-radius:12px;text-decoration:none;font-weight:800;color:#e2e8f0}.hero{width:min(1180px,calc(100% - 28px));margin:34px auto 20px;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,480px);gap:30px;align-items:center}.eyebrow{color:var(--gold);font-size:12px;font-weight:950;letter-spacing:.16em;text-transform:uppercase}h1{margin:10px 0 12px;font-family:Georgia,serif;font-size:clamp(44px,7vw,78px);line-height:.95;color:var(--cream)}.lead{font-size:18px;line-height:1.65;color:#fde68a;max-width:680px}.badges{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 22px}.badges span{padding:8px 11px;border:1px solid rgba(251,191,36,.35);border-radius:999px;background:rgba(120,53,15,.22);font-weight:850;font-size:12px}.hero-actions{display:flex;flex-wrap:wrap;gap:10px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border-radius:14px;text-decoration:none;font-weight:950;border:1px solid transparent}.btn.primary{background:linear-gradient(135deg,#f97316,#facc15);color:#431407}.btn.secondary{border-color:#64748b;background:rgba(255,255,255,.05)}.poster{position:relative}.poster img{display:block;width:100%;max-height:720px;object-fit:contain;border-radius:22px;border:1px solid rgba(251,191,36,.45);background:#f8ead0;box-shadow:0 30px 80px rgba(0,0,0,.5)}.zoom{position:absolute;right:12px;bottom:12px;border:1px solid rgba(255,255,255,.35);background:rgba(3,7,18,.85);color:#fff;border-radius:12px;padding:10px 13px;font-weight:850;cursor:pointer}.section{width:min(1180px,calc(100% - 28px));margin:34px auto}.section h2{font-size:30px;margin:0 0 18px}.menu-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.menu-card{border:1px solid #854d0e;border-radius:20px;background:linear-gradient(180deg,rgba(69,26,3,.88),rgba(15,23,42,.96));overflow:hidden}.menu-card.red{border-color:#991b1b}.menu-card.green{border-color:#166534}.menu-card h3{margin:0;padding:16px 18px 6px;font-family:Georgia,serif;font-size:25px;color:#fff7dd}.menu-card.red h3{background:linear-gradient(90deg,#7f1d1d,transparent)}.menu-card.green h3{background:linear-gradient(90deg,#14532d,transparent)}.menu-card.premium h3{background:linear-gradient(90deg,#78350f,transparent)}.size{padding:0 18px 13px;color:#fcd34d;font-size:12px;font-weight:850}.menu-card ul{list-style:none;margin:0;padding:0 16px 16px}.menu-card li{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-top:1px solid rgba(255,255,255,.09);font-size:14px;line-height:1.35}.menu-card li strong{flex:none;color:#fbbf24}.order{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;padding:22px;border:1px solid rgba(251,191,36,.45);border-radius:22px;background:linear-gradient(135deg,rgba(69,26,3,.86),rgba(15,23,42,.96))}.order h2{margin:0 0 8px}.order p{color:#fde68a;line-height:1.6}.form{display:grid;gap:12px}label{display:grid;gap:6px;font-size:12px;font-weight:850;color:#fde68a}input,select,textarea{width:100%;border:1px solid #475569;border-radius:12px;background:#07101f;color:#fff;padding:12px;font:inherit}textarea{min-height:88px;resize:vertical}.submit{border:0;min-height:50px;border-radius:14px;background:linear-gradient(135deg,#16a34a,#4ade80);color:#052e16;font-weight:950;font-size:15px;cursor:pointer}.contact-card{align-self:start;padding:18px;border-radius:18px;background:rgba(3,7,18,.5);border:1px solid rgba(255,255,255,.12)}.contact-card strong{display:block;font-size:24px;color:#fbbf24}.contact-card span{display:block;margin-top:4px;color:#cbd5e1}footer{padding:30px 14px;text-align:center;color:#94a3b8;font-size:12px}.modal{position:fixed;inset:0;z-index:50;display:none;place-items:center;padding:18px;background:rgba(0,0,0,.88)}.modal.open{display:grid}.modal img{max-width:min(96vw,900px);max-height:92vh;border-radius:14px}.modal button{position:fixed;top:16px;right:16px;width:44px;height:44px;border-radius:50%;border:1px solid #64748b;background:#0f172a;color:#fff;font-size:24px;cursor:pointer}
 @media(max-width:900px){.hero{grid-template-columns:1fr}.poster{max-width:620px;margin:auto}.menu-grid{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}}@media(max-width:620px){.hero{margin-top:22px}h1{font-size:46px}.menu-grid{grid-template-columns:1fr}.topin{height:60px}.brand img{width:105px;height:36px}.back{font-size:12px;padding:9px 11px}}
+
+/* AZOBSS 625: main sticky navbar on Tempahan Makanan */
+.az625-mainbar{position:sticky;top:0;z-index:45;width:100%;border-bottom:1px solid rgba(234,179,8,.72);background:rgba(2,7,13,.97);backdrop-filter:blur(16px);box-shadow:0 7px 26px rgba(0,0,0,.26)}
+.az625-mainbar-inner{min-height:48px;width:100%;padding:3px 20px;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.az625-logo{display:inline-flex;align-items:center;flex:0 0 auto;height:40px;text-decoration:none;background:#0c1727}
+.az625-logo img{display:block;width:122px;height:40px;object-fit:cover}
+.az625-chat{width:38px;height:38px;flex:0 0 38px;border-radius:50%;display:inline-grid;place-items:center;background:#20d477;text-decoration:none;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.az625-chat svg{width:22px;height:22px;fill:#fff}
+.az625-nav-scroll{display:flex;align-items:center;gap:8px;min-width:0;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.az625-nav-scroll::-webkit-scrollbar{display:none}
+.az625-nav-link,.az625-more-button,.az625-auth,.az625-user-pill{height:36px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border:1px solid #34435b;border-radius:999px;background:linear-gradient(180deg,#1a2638,#101a2a);color:#f1f5f9;text-decoration:none;font-size:13px;font-weight:850;line-height:1;cursor:pointer;transition:.16s ease}
+.az625-nav-link:hover,.az625-more-button:hover,.az625-user-pill:hover{border-color:#64748b;background:#1c2c43;transform:translateY(-1px)}
+.az625-nav-link.active{border-color:#f59e0b;color:#fde68a;background:linear-gradient(180deg,#3a250d,#1d160b)}
+.az625-more{position:relative;flex:0 0 auto}
+.az625-more-button{font-family:inherit}
+.az625-more-button .arrow{font-size:10px;transition:transform .16s ease}
+.az625-more.open .az625-more-button .arrow{transform:rotate(180deg)}
+.az625-more-menu{position:absolute;top:43px;right:0;width:216px;padding:8px;border:1px solid #263a55;border-radius:13px;background:#081220;box-shadow:0 18px 46px rgba(0,0,0,.48);display:none}
+.az625-more.open .az625-more-menu{display:grid;gap:4px}
+.az625-more-menu a{display:flex;align-items:center;gap:11px;min-height:44px;padding:0 12px;border-radius:9px;color:#e2e8f0;text-decoration:none;font-size:13px;font-weight:800}
+.az625-more-menu a:hover{background:#111e31}
+.az625-more-menu a.active{background:rgba(245,158,11,.14);color:#fcd34d}
+.az625-more-menu svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2}
+.az625-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.az625-logged-out{display:flex;align-items:center;gap:8px}
+.az625-radio,.az625-icon-button{width:36px;height:36px;display:inline-grid;place-items:center;border:1px solid #34435b;border-radius:50%;background:#0f1a2a;color:#facc15;text-decoration:none}
+.az625-radio svg,.az625-icon-button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
+.az625-auth.register{border-color:#0e9f5b;background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff}
+.az625-auth.login{background:#121d2e}
+.az625-user-wrap{position:relative;display:none}
+.az625-user-pill{padding:0 10px 0 5px}
+.az625-avatar{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:#071827;color:#67e8f9;border:1px solid #0891b2;font-size:11px;font-weight:950}
+.az625-user-menu{position:absolute;top:43px;right:0;width:200px;padding:7px;border:1px solid #263a55;border-radius:13px;background:#081220;box-shadow:0 18px 46px rgba(0,0,0,.48);display:none}
+.az625-user-wrap.open .az625-user-menu{display:grid;gap:3px}
+.az625-user-menu a{display:flex;align-items:center;gap:9px;padding:11px;border-radius:8px;color:#e2e8f0;text-decoration:none;font-size:13px;font-weight:800}
+.az625-user-menu a:hover{background:#111e31}
+.az625-mobile-home{display:none}
+@media(max-width:1030px){.az625-mainbar-inner{padding-inline:10px}.az625-nav-link{padding-inline:10px}.az625-right{gap:5px}.az625-auth{padding-inline:10px}}
+@media(max-width:760px){.az625-mainbar-inner{gap:7px}.az625-logo img{width:102px;height:36px}.az625-logo{height:36px}.az625-chat{width:35px;height:35px;flex-basis:35px}.az625-right .az625-radio{display:none}.az625-nav-link{height:34px;font-size:12px}.az625-more-button{height:34px;font-size:12px}.az625-auth{height:34px;font-size:12px;padding-inline:10px}.az625-right{margin-left:0}.az625-mainbar-inner{overflow:hidden}.az625-nav-scroll{flex:1}.az625-mobile-home{display:flex}}
+@media(max-width:500px){.az625-chat{display:none}.az625-logo img{width:92px}.az625-auth.register{display:none}.az625-nav-link:nth-of-type(4),.az625-nav-link:nth-of-type(5){display:none}.az625-more-menu{position:fixed;top:48px;right:8px}.az625-user-menu{position:fixed;top:48px;right:8px}}
+
 </style>
 </head>
 <body>
-<header class="top"><div class="topin"><a class="brand" href="/"><img src="/images/logo-azobss.jpg" alt="AZOBSS"/></a><a class="back" href="/">← Kembali ke AZOBSS</a></div></header>
+<header class="az625-mainbar" id="az625Mainbar">
+  <div class="az625-mainbar-inner">
+    <a class="az625-logo" href="/" aria-label="AZOBSS Home"><img src="/images/logo-azobss.jpg" alt="AZOBSS"/></a>
+    <a class="az625-chat" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener" aria-label="WhatsApp AZOBSS" title="WhatsApp AZOBSS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.8 3 2.6 6.7 2.6 11.3c0 2.5 1.2 4.8 3.3 6.3L5 21l3.8-1.8c1 .3 2.1.5 3.2.5 5.2 0 9.4-3.7 9.4-8.4S17.2 3 12 3Z"/></svg></a>
+    <nav class="az625-nav-scroll" aria-label="AZOBSS navigation">
+      <a class="az625-nav-link" href="/PA-BM/">Pelan Akui</a>
+      <a class="az625-nav-link" href="/Software-Tools/">Software</a>
+      <a class="az625-nav-link" href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+      <a class="az625-nav-link" href="/affiliate-shop/">Affiliate Shop</a>
+      <a class="az625-nav-link" href="/Tempah-Website/">Bina Website</a>
+      <a class="az625-nav-link" href="/lucky-draw/">Lucky Draw</a>
+      <div class="az625-more" id="az625More">
+        <button class="az625-more-button" id="az625MoreButton" type="button" aria-expanded="false">••• More <span class="arrow">▼</span></button>
+        <div class="az625-more-menu" id="az625MoreMenu">
+          <a href="/tools/"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg><span>Mini Web Tools</span></a>
+          <a class="active" href="/Tempahan-Makanan/"><svg viewBox="0 0 24 24"><path d="M4 11h16M6 11a6 6 0 0 1 12 0M12 5V3M4 16h16M6 20h12"/></svg><span>Tempahan Makanan</span></a>
+        </div>
+      </div>
+    </nav>
+    <div class="az625-right">
+      <a class="az625-radio" href="/" title="AZOBSS Radio" aria-label="AZOBSS Radio"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.5 5.5a9 9 0 0 0 0 13M18.5 5.5a9 9 0 0 1 0 13"/></svg></a>
+      <div class="az625-logged-out" id="az625LoggedOut">
+        <a class="az625-auth register" href="/" data-az625-auth="register">Register</a>
+        <a class="az625-auth login" href="/" data-az625-auth="login">Login</a>
+      </div>
+      <div class="az625-user-wrap" id="az625UserWrap">
+        <button class="az625-user-pill" id="az625UserButton" type="button" aria-expanded="false"><span class="az625-avatar" id="az625Avatar">AZ</span><span id="az625Username">Account</span><span>⌄</span></button>
+        <div class="az625-user-menu">
+          <a href="/#purchases">🧾 <span>My Purchases</span></a>
+          <a href="/Bookmarks/">🔖 <span>Bookmarks</span></a>
+          <a href="/">⚙️ <span>Settings</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
 <main>
 <section class="hero">
 <div><span class="eyebrow">Tempahan Makanan • Lynn</span><h1>Premium<br/>Brownies</h1><p class="lead">36 keping dalam saiz 8 inci. Menggunakan coklat Beryl's berkualiti dan bahan terpilih untuk rasa yang lebih rich, sedap dan premium.</p><div class="badges"><span>Harga dari RM45</span><span>36 pcs</span><span>8 inci</span><span>Premium Quality</span></div><div class="hero-actions"><a class="btn primary" href="#tempah">Tempah Sekarang</a><a class="btn secondary" href="#menu">Lihat Semua Harga</a></div></div>
@@ -58,4 +134,44 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
  form.addEventListener('submit',function(e){e.preventDefault();const raw=document.getElementById('productSelect').value;if(!raw)return;const [product,price]=raw.split('|');const msg=['Assalamualaikum Lynn, saya ingin membuat tempahan brownies.','',`Nama: ${document.getElementById('customerName').value.trim()}`,`Pilihan: ${product}`,`Harga seunit: RM${price}`,`Kuantiti: ${document.getElementById('quantity').value}`,`Tarikh diperlukan: ${document.getElementById('orderDate').value||'Akan dimaklumkan'}`,`Catatan: ${document.getElementById('notes').value.trim()||'-'}`].join('\n');window.open('https://wa.me/60178809488?text='+encodeURIComponent(msg),'_blank','noopener');});
 })();
 </script>
+
+<script id="azobss-625-main-sticky-navbar-js">
+(function(){
+  const more=document.getElementById('az625More');
+  const moreButton=document.getElementById('az625MoreButton');
+  const userWrap=document.getElementById('az625UserWrap');
+  const userButton=document.getElementById('az625UserButton');
+  function closeMenus(except){
+    if(more && except!==more){more.classList.remove('open');moreButton?.setAttribute('aria-expanded','false');}
+    if(userWrap && except!==userWrap){userWrap.classList.remove('open');userButton?.setAttribute('aria-expanded','false');}
+  }
+  moreButton?.addEventListener('click',function(e){e.stopPropagation();const open=!more.classList.contains('open');closeMenus(more);more.classList.toggle('open',open);moreButton.setAttribute('aria-expanded',String(open));});
+  userButton?.addEventListener('click',function(e){e.stopPropagation();const open=!userWrap.classList.contains('open');closeMenus(userWrap);userWrap.classList.toggle('open',open);userButton.setAttribute('aria-expanded',String(open));});
+  document.addEventListener('click',()=>closeMenus());
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenus();});
+
+  function readSavedUser(){
+    const keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','azobss_user_profile','azobssProfile','currentUser','userProfile','azobss_auth_user','azobssLoginUser','azobss_logged_user'];
+    for(const key of keys){
+      let raw='';
+      try{raw=localStorage.getItem(key)||sessionStorage.getItem(key)||'';}catch(_e){}
+      if(!raw)continue;
+      try{const obj=JSON.parse(raw);if(obj&&typeof obj==='object')return obj;}catch(_e){return {username:raw};}
+    }
+    return null;
+  }
+  const saved=readSavedUser();
+  if(saved){
+    const name=String(saved.usernameKey||saved.username||saved.userName||saved.displayName||saved.name||saved.id||'Account').trim();
+    if(name){
+      document.getElementById('az625LoggedOut').style.display='none';
+      userWrap.style.display='block';
+      document.getElementById('az625Username').textContent=name;
+      document.getElementById('az625Avatar').textContent=name.split(/\s+/).map(v=>v[0]).join('').slice(0,2).toUpperCase();
+    }
+  }
+  document.querySelectorAll('[data-az625-auth]').forEach(link=>link.addEventListener('click',function(){try{sessionStorage.setItem('azobssOpenAuth',this.dataset.az625Auth||'login');}catch(_e){}}));
+})();
+</script>
+
 </body></html>

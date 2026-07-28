@@ -18444,6 +18444,24 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
 })();
 </script>
 
+
+<script id="azobss-625-subpage-auth-bridge">
+(function(){
+  function openRequestedAuth(){
+    let mode='';try{mode=sessionStorage.getItem('azobssOpenAuth')||'';sessionStorage.removeItem('azobssOpenAuth');}catch(_e){}
+    if(!mode)return;
+    const id=mode==='register'?'siteSignUpButton':'siteSignInButton';
+    let attempts=0;
+    const timer=setInterval(function(){
+      const button=document.getElementById(id);
+      if(button){clearInterval(timer);button.click();}
+      else if(++attempts>20)clearInterval(timer);
+    },150);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',openRequestedAuth);else openRequestedAuth();
+})();
+</script>
+
 </body>
 </html>
 
