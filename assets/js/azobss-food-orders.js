@@ -403,7 +403,7 @@ function openDetail(orderId){
       <div class="food-order-detail-field"><span>Nama Pelanggan</span><strong>${escapeHtml(order.customerName || '-')}</strong></div>
       <div class="food-order-detail-field"><span>Direkodkan</span><strong>${escapeHtml(formatDateTime(order.createdAt, order.createdAtMs))}</strong></div>
       <div class="food-order-detail-field"><span>Tarikh Diperlukan</span><strong>${escapeHtml(order.requiredDateLabel || order.requiredDate || '-')}</strong></div>
-      <div class="food-order-detail-field"><span>Jumlah Kotak</span><strong>${Number(order.totalBoxes || 0)}</strong></div>
+      <div class="food-order-detail-field"><span>Jumlah Kuantiti</span><strong>${Number(order.totalBoxes || 0)}</strong></div>
       <div class="food-order-detail-field" style="grid-column:1/-1"><span>Catatan</span><p>${escapeHtml(order.notes || '-')}</p></div>
     </div>
     <div class="food-order-detail-items">
@@ -553,7 +553,7 @@ function exportCsv(){
 
   const rows = [[
     'ID Rekod','Direkodkan','Nama Pelanggan','Tarikh Diperlukan',
-    'Tempahan','Jumlah Kotak','Anggaran Jumlah RM','Catatan','Status'
+    'Tempahan','Jumlah Kuantiti','Anggaran Jumlah RM','Catatan','Status'
   ]];
 
   filteredOrders.forEach(order => {
