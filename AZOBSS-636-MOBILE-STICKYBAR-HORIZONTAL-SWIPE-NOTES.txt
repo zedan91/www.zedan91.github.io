@@ -1,0 +1,21 @@
+AZOBSS PATCH 636 — MOBILE STICKYBAR HORIZONTAL SWIPE FIX
+
+Baseline:
+(635)-AZOBSS-BROWNIES-MOBILE-COMPACT-AUTO-SLIDE-FIX_20260728.zip
+
+Root cause:
+- .market-nav.az-more-enabled used overflow: visible.
+- On phone this disabled the horizontal scroll container, so menu items on the right could not be reached by swipe.
+
+Fix:
+- Mobile market-nav now uses overflow-x:auto with native momentum scrolling.
+- Added touch-action:pan-x, overscroll containment and hidden scrollbar.
+- Every navbar item remains flex:0 0 auto, preventing unwanted shrinking.
+- More dropdown becomes position:fixed on phone and is positioned from the trigger coordinates.
+- Dropdown position updates while the navbar is swiped, resized or rotated.
+- Applied to shared/global stickybar CSS so homepage and supported pages behave consistently.
+- Cache versions for More CSS/JS and Tempahan exact stickybar CSS changed to v636.
+
+Unaffected:
+- Brownies products, quantity controls, dates, WhatsApp message, images and prices.
+- Firebase Rules and Render backend.

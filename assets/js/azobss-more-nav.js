@@ -93,10 +93,49 @@
     link.replaceWith(wrap);
     nav.classList.add('az-more-enabled');
 
+    function isMobileStickybar() {
+      return window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+    }
+
+    function positionMobileDropdown() {
+      if (!isMobileStickybar()) {
+        dropdown.style.removeProperty('--az-more-mobile-top');
+        dropdown.style.removeProperty('--az-more-mobile-left');
+        dropdown.style.removeProperty('--az-more-mobile-width');
+        return;
+      }
+
+      var viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      var triggerRect = trigger.getBoundingClientRect();
+      var dropdownWidth = Math.min(232, Math.max(190, viewportWidth - 16));
+      var halfWidth = dropdownWidth / 2;
+      var centre = triggerRect.left + (triggerRect.width / 2);
+      centre = Math.max(8 + halfWidth, Math.min(viewportWidth - 8 - halfWidth, centre));
+
+      dropdown.style.setProperty('--az-more-mobile-top', Math.round(triggerRect.bottom + 7) + 'px');
+      dropdown.style.setProperty('--az-more-mobile-left', Math.round(centre) + 'px');
+      dropdown.style.setProperty('--az-more-mobile-width', Math.round(dropdownWidth) + 'px');
+    }
+
     function setOpen(open) {
+      if (open) positionMobileDropdown();
       wrap.classList.toggle('is-open', open);
       trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
+
+    var dropdownPositionFrame = 0;
+    function queueDropdownPosition() {
+      if (!wrap.classList.contains('is-open')) return;
+      if (dropdownPositionFrame) cancelAnimationFrame(dropdownPositionFrame);
+      dropdownPositionFrame = requestAnimationFrame(function () {
+        dropdownPositionFrame = 0;
+        positionMobileDropdown();
+      });
+    }
+
+    nav.addEventListener('scroll', queueDropdownPosition, { passive: true });
+    window.addEventListener('resize', queueDropdownPosition, { passive: true });
+    window.addEventListener('orientationchange', queueDropdownPosition, { passive: true });
 
     function menuItems() {
       return Array.prototype.slice.call(dropdown.querySelectorAll('a[role="menuitem"]'));

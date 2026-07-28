@@ -238,3 +238,57 @@ body{
   color:#fed7aa!important;
 }
 .az-more-food-icon{color:#fb923c}
+
+/* AZOBSS 636: mobile stickybar horizontal swipe + unclipped More dropdown. */
+@media(max-width:760px){
+  .market-sticky-bar .market-main-row{
+    min-width:0!important;
+    overflow:visible!important;
+  }
+  .market-sticky-bar .market-nav,
+  .market-sticky-bar .market-nav.az-more-enabled{
+    order:3!important;
+    flex:0 0 100%!important;
+    flex-basis:100%!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-x:contain!important;
+    touch-action:pan-x!important;
+    scrollbar-width:none!important;
+    scroll-behavior:smooth!important;
+    white-space:nowrap!important;
+    padding-right:24px!important;
+  }
+  .market-sticky-bar .market-nav::-webkit-scrollbar{
+    display:none!important;
+    width:0!important;
+    height:0!important;
+  }
+  .market-sticky-bar .market-nav > a,
+  .market-sticky-bar .market-nav > button,
+  .market-sticky-bar .market-nav > .az-more-nav{
+    flex:0 0 auto!important;
+  }
+  .market-sticky-bar .az-more-dropdown{
+    position:fixed!important;
+    top:var(--az-more-mobile-top,96px)!important;
+    left:var(--az-more-mobile-left,50vw)!important;
+    right:auto!important;
+    width:var(--az-more-mobile-width,220px)!important;
+    min-width:0!important;
+    max-width:calc(100vw - 16px)!important;
+    transform:translate(-50%,-5px)!important;
+    transform-origin:top center!important;
+    z-index:100050!important;
+  }
+  .market-sticky-bar .az-more-nav:hover .az-more-dropdown,
+  .market-sticky-bar .az-more-nav:focus-within .az-more-dropdown,
+  .market-sticky-bar .az-more-nav.is-open .az-more-dropdown{
+    transform:translate(-50%,0)!important;
+  }
+}
+
