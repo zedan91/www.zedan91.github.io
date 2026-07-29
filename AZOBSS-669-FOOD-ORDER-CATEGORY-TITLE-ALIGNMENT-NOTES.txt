@@ -1,0 +1,10 @@
+AZOBSS Patch 669 — Food Order Category Title Alignment
+Date: 2026-07-29
+Baseline: (668)-AZOBSS-FOOD-ORDER-4-INCH-PISTACHIO-NIBS-RM16-REAL-FIX_20260729.zip
+
+Changes:
+- Makes all three brownie category title areas the same height on desktop/tablet.
+- Aligns the 36 pcs / 8 inci and 9 pcs / 4 inci labels on the same horizontal line.
+- Keeps the existing title font size and colours.
+- Resets the fixed title height on mobile where cards are stacked vertically.
+- No changes to prices, menu choices, quantities, WhatsApp, Firebase, CSV or PDF receipts.
