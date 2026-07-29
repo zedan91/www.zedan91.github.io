@@ -359,7 +359,7 @@ function renderTable(){
         </td>
         <td>${escapeHtml(order.requiredDateLabel || order.requiredDate || '-')}</td>
         <td><span class="food-order-items-preview">${preview || '-'}${extra}</span></td>
-        <td>${Number(order.totalBoxes || 0)}</td>
+        <td class="food-order-quantity-col">${Number(order.totalBoxes || 0)}</td>
         <td><span class="food-order-money">${money(order.totalPrice)}</span></td>
         <td class="food-order-complete-cell">
           <input
