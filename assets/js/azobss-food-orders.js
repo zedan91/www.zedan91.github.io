@@ -125,6 +125,11 @@ async function waitForAuthReady(){
   }
 }
 
+function isPermissionError(error){
+  const code = clean(error?.code).toLowerCase();
+  return code.includes('permission-denied') || code.includes('unauthenticated');
+}
+
 async function saveOrderRecord(orderRef, record){
   let lastError = null;
   for(let attempt = 1; attempt <= 2; attempt += 1){
@@ -133,12 +138,45 @@ async function saveOrderRecord(orderRef, record){
       return;
     }catch(error){
       lastError = error;
-      const code = clean(error?.code).toLowerCase();
-      if(code.includes('permission-denied') || code.includes('unauthenticated')) break;
+      if(isPermissionError(error)) break;
       if(attempt < 2) await new Promise(resolve => setTimeout(resolve, 650));
     }
   }
   throw lastError || new Error('Rekod tempahan gagal disimpan.');
+}
+
+async function saveOrderRecordCompatible(orderRef, record){
+  try{
+    await saveOrderRecord(orderRef, record);
+    return { compatibilityMode:false };
+  }catch(error){
+    if(!isPermissionError(error)) throw error;
+
+    // Rules lama (versi 640/645) belum membenarkan dua field telefon khusus.
+    // Cuba semula menggunakan struktur lama. Nombor telefon masih selamat
+    // berada dalam whatsappMessage dan akan diterbitkan semula ketika rekod dibaca.
+    const legacyRecord = { ...record };
+    delete legacyRecord.customerPhone;
+    delete legacyRecord.customerPhoneDigits;
+    await saveOrderRecord(orderRef, legacyRecord);
+    return { compatibilityMode:true };
+  }
+}
+
+function extractPhoneFromWhatsappMessage(message){
+  const text = clean(message);
+  if(!text) return '';
+  const match = text.match(/(?:No\.?\s*telefon|Nombor\s*telefon|Telefon|No\.?\s*HP)\s*:\s*([+0-9][+0-9() \t-]{7,24})/i);
+  return match ? clean(match[1]) : '';
+}
+
+function normalizeLoadedOrder(order){
+  const phone = firstFilled(order?.customerPhone, extractPhoneFromWhatsappMessage(order?.whatsappMessage));
+  return {
+    ...order,
+    customerPhone: phone,
+    customerPhoneDigits: firstFilled(order?.customerPhoneDigits, phoneDigits(phone))
+  };
 }
 
 async function submitOrder(payload, whatsappUrl, submitButton){
@@ -190,8 +228,11 @@ async function submitOrder(payload, whatsappUrl, submitButton){
 
   let saved = false;
   try{
-    await saveOrderRecord(doc(db, COLLECTION, clientOrderId), record);
+    const saveResult = await saveOrderRecordCompatible(doc(db, COLLECTION, clientOrderId), record);
     saved = true;
+    if(saveResult.compatibilityMode){
+      console.info('[AZOBSS Food Orders] Saved using legacy Firebase Rules compatibility mode.');
+    }
     toast('Rekod tempahan berjaya disimpan. WhatsApp sedang dibuka.', 'success');
 
     try{
@@ -205,10 +246,10 @@ async function submitOrder(payload, whatsappUrl, submitButton){
     try{ if(popup && !popup.closed) popup.close(); }catch(_){}
 
     const code = clean(error?.code).toLowerCase();
-    const rulesMessage = code.includes('permission-denied')
-      ? ' Firebase Rules Food Orders versi 649 belum diterbitkan atau masih menggunakan versi lama.'
+    const detail = code.includes('permission-denied')
+      ? ' Akses Firestore masih ditolak walaupun mod keserasian telah dicuba.'
       : '';
-    toast(`Rekod gagal disimpan. WhatsApp tidak dibuka supaya tempahan tidak tercicir.${rulesMessage}`, 'warning');
+    toast(`Rekod gagal disimpan. WhatsApp tidak dibuka supaya tempahan tidak tercicir.${detail}`, 'warning');
   }finally{
     if(submitButton){
       submitButton.disabled = false;
@@ -808,7 +849,7 @@ function startRealtimeTable(){
   );
 
   unsubscribeOrders = onSnapshot(recordsQuery, snapshot => {
-    allOrders = snapshot.docs.map(snap => ({ id:snap.id, ...snap.data() }));
+    allOrders = snapshot.docs.map(snap => normalizeLoadedOrder({ id:snap.id, ...snap.data() }));
     liveStatus.textContent = `Live • dikemas kini ${new Intl.DateTimeFormat('ms-MY', {hour:'2-digit',minute:'2-digit'}).format(new Date())}`;
     showError('');
     applyFilters();

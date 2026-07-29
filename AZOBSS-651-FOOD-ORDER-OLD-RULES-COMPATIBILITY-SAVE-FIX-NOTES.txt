@@ -1,0 +1,18 @@
+AZOBSS PATCH 651 — FOOD ORDER OLD RULES COMPATIBILITY SAVE FIX
+
+Baseline: (650)-AZOBSS-FOOD-ORDER-WHATSAPP-JUMLAH-BAYARAN-BOLD-FIX_20260729.zip
+
+Masalah:
+- Rekod gagal disimpan apabila Firebase Rules lama masih aktif kerana field customerPhone dan customerPhoneDigits belum dibenarkan.
+- WhatsApp tidak dibuka bagi mengelakkan tempahan tercicir.
+
+Pembetulan:
+- Sistem cuba simpan rekod lengkap terlebih dahulu.
+- Jika Firestore menolak kerana Rules lama, sistem cuba semula secara automatik menggunakan struktur rekod lama.
+- Nombor telefon tetap kekal di dalam whatsappMessage.
+- Apabila rekod dibaca, nombor telefon diterbitkan semula secara automatik untuk paparan, carian, CSV dan resit PDF.
+- WhatsApp hanya dibuka selepas rekod benar-benar berjaya disimpan.
+- Tidak wajib menerbitkan Firebase Rules baharu untuk tempahan terus berfungsi.
+- Rules 649 masih disyorkan untuk struktur data telefon yang lebih kemas.
+
+Cache module azobss-food-orders.js dinaikkan kepada v651.
