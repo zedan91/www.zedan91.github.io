@@ -43,6 +43,10 @@ const selectionBar = el('foodOrdersSelectionBar');
 const selectedCount = el('foodOrdersSelectedCount');
 const completeSelectedButton = el('foodOrdersCompleteSelectedBtn');
 const deleteSelectedButton = el('foodOrdersDeleteSelectedBtn');
+const customerNameInput = el('customerName');
+const customerPhoneInput = el('customerPhone');
+
+let lastCustomerAutofillIdentity = '';
 
 function clean(value){
   return String(value ?? '').trim();
@@ -113,13 +117,37 @@ function generateOrderId(){
   return `FOOD-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
 }
 
+async function waitForAuthReady(){
+  try{
+    if(typeof auth.authStateReady === 'function') await auth.authStateReady();
+  }catch(error){
+    console.warn('[AZOBSS Food Orders] Auth readiness check skipped:', error);
+  }
+}
+
+async function saveOrderRecord(orderRef, record){
+  let lastError = null;
+  for(let attempt = 1; attempt <= 2; attempt += 1){
+    try{
+      await setDoc(orderRef, record);
+      return;
+    }catch(error){
+      lastError = error;
+      const code = clean(error?.code).toLowerCase();
+      if(code.includes('permission-denied') || code.includes('unauthenticated')) break;
+      if(attempt < 2) await new Promise(resolve => setTimeout(resolve, 650));
+    }
+  }
+  throw lastError || new Error('Rekod tempahan gagal disimpan.');
+}
+
 async function submitOrder(payload, whatsappUrl, submitButton){
   const popup = window.open('', '_blank');
   if(popup){
     try{
-      popup.document.title = 'Membuka WhatsApp';
-      popup.document.body.style.cssText = 'margin:0;display:grid;place-items:center;min-height:100vh;background:#07101f;color:#fff;font:700 16px Arial';
-      popup.document.body.textContent = 'Menyimpan rekod tempahan dan membuka WhatsApp...';
+      popup.document.title = 'Menyimpan Rekod Tempahan';
+      popup.document.body.style.cssText = 'margin:0;display:grid;place-items:center;min-height:100vh;background:#07101f;color:#fff;font:700 16px Arial;text-align:center;padding:24px';
+      popup.document.body.textContent = 'Sila tunggu. Rekod tempahan sedang disimpan sebelum WhatsApp dibuka...';
     }catch(_){}
   }
 
@@ -128,6 +156,8 @@ async function submitOrder(payload, whatsappUrl, submitButton){
     submitButton.disabled = true;
     submitButton.textContent = 'Menyimpan rekod...';
   }
+
+  await waitForAuthReady();
 
   const clientOrderId = generateOrderId();
   const user = auth.currentUser;
@@ -160,29 +190,147 @@ async function submitOrder(payload, whatsappUrl, submitButton){
 
   let saved = false;
   try{
-    await setDoc(doc(db, COLLECTION, clientOrderId), record);
+    await saveOrderRecord(doc(db, COLLECTION, clientOrderId), record);
     saved = true;
-    toast('Rekod tempahan telah disimpan. WhatsApp sedang dibuka.', 'success');
+    toast('Rekod tempahan berjaya disimpan. WhatsApp sedang dibuka.', 'success');
+
+    try{
+      if(popup && !popup.closed) popup.location.replace(whatsappUrl);
+      else window.location.href = whatsappUrl;
+    }catch(_){
+      window.location.href = whatsappUrl;
+    }
   }catch(error){
     console.error('[AZOBSS Food Orders] Save failed:', error);
-    toast('WhatsApp dibuka, tetapi rekod gagal disimpan. Sila semak Firebase Rules.', 'warning');
+    try{ if(popup && !popup.closed) popup.close(); }catch(_){}
+
+    const code = clean(error?.code).toLowerCase();
+    const rulesMessage = code.includes('permission-denied')
+      ? ' Firebase Rules Food Orders versi 649 belum diterbitkan atau masih menggunakan versi lama.'
+      : '';
+    toast(`Rekod gagal disimpan. WhatsApp tidak dibuka supaya tempahan tidak tercicir.${rulesMessage}`, 'warning');
   }finally{
     if(submitButton){
       submitButton.disabled = false;
       submitButton.textContent = originalText || 'Tempah melalui WhatsApp';
     }
-    try{
-      if(popup && !popup.closed) popup.location.href = whatsappUrl;
-      else window.location.href = whatsappUrl;
-    }catch(_){
-      window.location.href = whatsappUrl;
-    }
   }
 
   return { saved, clientOrderId };
 }
-
 window.AZOBSSFoodOrders = Object.freeze({ submitOrder });
+
+function firstFilled(...values){
+  for(const value of values){
+    const text = clean(value);
+    if(text) return text;
+  }
+  return '';
+}
+
+function savedLoginProfile(){
+  try{
+    if(typeof window.getSavedUser === 'function'){
+      const saved = window.getSavedUser();
+      if(saved && typeof saved === 'object') return saved;
+    }
+  }catch(_){}
+  return parseStoredProfiles()[0] || null;
+}
+
+async function loadCustomerProfile(user, saved){
+  if(user){
+    const profile = await loadUserProfile(user);
+    if(profile) return profile;
+  }
+
+  const usernameKey = lower(
+    saved?.usernameKey || saved?.username || saved?.displayName || saved?.name
+  );
+  if(usernameKey){
+    try{
+      const direct = await getDoc(doc(db, 'users', usernameKey));
+      if(direct.exists()) return { id:direct.id, ...direct.data() };
+    }catch(_){}
+  }
+
+  return null;
+}
+
+function fillCustomerInput(input, value){
+  if(!input || clean(input.value) || !clean(value)) return false;
+  input.value = clean(value);
+  input.dispatchEvent(new Event('input', { bubbles:true }));
+  input.dispatchEvent(new Event('change', { bubbles:true }));
+  return true;
+}
+
+async function autofillLoggedInCustomer(user = auth.currentUser){
+  if(!customerNameInput && !customerPhoneInput) return;
+
+  const saved = savedLoginProfile();
+  if(!user && !saved) return;
+
+  const identity = firstFilled(
+    user?.uid,
+    saved?.uid,
+    saved?.usernameKey,
+    saved?.username,
+    saved?.email
+  );
+  if(identity && identity === lastCustomerAutofillIdentity
+    && clean(customerNameInput?.value) && clean(customerPhoneInput?.value)) return;
+
+  const profile = await loadCustomerProfile(user, saved);
+  const name = firstFilled(
+    profile?.fullName,
+    profile?.customerName,
+    profile?.name,
+    profile?.displayName,
+    profile?.username,
+    profile?.usernameKey,
+    saved?.fullName,
+    saved?.name,
+    saved?.displayName,
+    saved?.username,
+    saved?.usernameKey,
+    user?.displayName,
+    user?.email ? String(user.email).split('@')[0] : ''
+  );
+  const phone = firstFilled(
+    profile?.phone,
+    profile?.phoneNumber,
+    profile?.whatsapp,
+    profile?.whatsApp,
+    profile?.whatsappNumber,
+    profile?.mobile,
+    profile?.mobileNumber,
+    saved?.phone,
+    saved?.phoneNumber,
+    saved?.whatsapp,
+    saved?.whatsApp,
+    saved?.whatsappNumber,
+    saved?.mobile,
+    saved?.mobileNumber
+  );
+
+  fillCustomerInput(customerNameInput, name);
+  fillCustomerInput(customerPhoneInput, phone);
+  if(identity) lastCustomerAutofillIdentity = identity;
+}
+
+function scheduleCustomerAutofill(){
+  autofillLoggedInCustomer(auth.currentUser).catch(error => {
+    console.warn('[AZOBSS Food Orders] Customer autofill skipped:', error);
+  });
+}
+
+window.addEventListener('azobss-auth-changed', scheduleCustomerAutofill);
+window.addEventListener('storage', scheduleCustomerAutofill);
+window.addEventListener('focus', scheduleCustomerAutofill);
+setTimeout(scheduleCustomerAutofill, 250);
+setTimeout(scheduleCustomerAutofill, 1200);
+setTimeout(scheduleCustomerAutofill, 3000);
 
 function parseStoredProfiles(){
   const profiles = [];
@@ -754,6 +902,11 @@ document.addEventListener('keydown', event => {
   if(event.key === 'Escape' && detailModal && !detailModal.hidden) closeDetail();
 });
 
-onAuthStateChanged(auth, user => initializeAccess(user));
+onAuthStateChanged(auth, user => {
+  initializeAccess(user);
+  autofillLoggedInCustomer(user).catch(error => {
+    console.warn('[AZOBSS Food Orders] Customer autofill skipped:', error);
+  });
+});
 setTimeout(() => initializeAccess(auth.currentUser), 1200);
 setTimeout(() => initializeAccess(auth.currentUser), 3500);

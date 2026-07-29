@@ -1210,13 +1210,13 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     if(window.AZOBSSFoodOrders && typeof window.AZOBSSFoodOrders.submitOrder === 'function'){
       await window.AZOBSSFoodOrders.submitOrder(orderPayload, whatsappUrl, submit);
     }else{
-      window.open(whatsappUrl, '_blank', 'noopener');
+      alert('Sistem rekod tempahan belum siap dimuatkan. WhatsApp tidak dibuka supaya tempahan tidak tercicir. Sila muat semula halaman dan cuba lagi.');
     }
   });
 
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=646"></script><script src="/assets/js/azobss-food-orders.js?v=646" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=646"></script><script src="/assets/js/azobss-food-orders.js?v=649" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;

@@ -456,7 +456,7 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // AZOBSS 646: food order records with customer phone.
+    // AZOBSS 649: reliable food order records with customer phone.
     match /foodOrders/{orderId} {
       // Customers may place an order without logging in.
       // Creation is restricted to the exact fields and safe limits below.

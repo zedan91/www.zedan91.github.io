@@ -1,4 +1,7 @@
-AZOBSS FIRESTORE RULES ADDON — FOOD ORDERS 646
+AZOBSS FIRESTORE RULES ADDON — FOOD ORDERS 649
+
+PUNCA REKOD 648 TIDAK MASUK:
+Versi 648 menghantar field customerPhone dan customerPhoneDigits. Jika Rules 640/645 masih aktif, Firestore menolak rekod kerana field tambahan itu tidak dibenarkan.
 
 WAJIB:
 Gabungkan function isFoodOrderStaff() dan match /foodOrders/{orderId}
