@@ -1185,10 +1185,10 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   const sizeText = size => size === '4' ? '4 inci' : '8 inci';
   const sizePiecesText = size => size === '4' ? '9 pcs' : '36 pcs';
   const sizeOptionText = size => `${sizeText(size)} • ${sizePiecesText(size)}`;
-  // AZOBSS 659: harga 4 inci ditetapkan mengikut jenis topping.
-  // Topping tanpa almond = RM13; pilihan yang mengandungi almond = RM15.
+  // AZOBSS 660: harga khas hanya untuk pilihan 4 inci.
+  // Topping biasa = RM13; pilihan almond atau pistachio = RM14.
   const priceForSize = (basePrice, size, product = '') => size === '4'
-    ? (/almond/i.test(String(product)) ? 15 : 13)
+    ? (/almond|pistachio/i.test(String(product)) ? 14 : 13)
     : roundCurrency(basePrice);
   const keyOf = (el, size = activeSize) => `${el.dataset.category}|||${el.dataset.product}|||${size}`;
 
@@ -1245,7 +1245,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     });
     if(sizeHelp){
       sizeHelp.textContent = activeSize === '4'
-        ? 'Saiz 4 inci mengandungi 9 pcs. Topping biasa RM13; pilihan campuran almond RM15.'
+        ? 'Saiz 4 inci mengandungi 9 pcs. Topping biasa RM13; pilihan almond dan pistachio RM14.'
         : 'Saiz 8 inci menyediakan semua pilihan brownies.';
     }
 
