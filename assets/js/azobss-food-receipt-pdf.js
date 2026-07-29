@@ -35,7 +35,8 @@
   }
 
   function money(value){
-    return `RM${number(value).toFixed(0)}`;
+    const amount = Math.round((number(value) + Number.EPSILON) * 100) / 100;
+    return `RM${Number.isInteger(amount) ? amount.toFixed(0) : amount.toFixed(2)}`;
   }
 
   function orderStatusLabel(status){

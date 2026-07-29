@@ -1,0 +1,12 @@
+AZOBSS FOOD ORDER — PATCH 655
+
+Baseline: Patch 654
+
+Perubahan:
+- Harga brownies 4 inci kini dibundarkan kepada Ringgit penuh selepas formula harga 8 inci ÷ 4 + RM2.
+- RM45 menghasilkan RM13.
+- RM50 menghasilkan RM15.
+- RM51 menghasilkan RM15.
+- Harga 8 inci tidak berubah.
+- Kuantiti, WhatsApp, rekod admin, CSV dan resit PDF terus menggunakan harga akhir yang sama.
+- Cache food order/receipt dinaikkan kepada v655.

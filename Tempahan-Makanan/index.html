@@ -182,6 +182,49 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 }
 
 
+
+/* AZOBSS 654: selectable 8-inch and 4-inch brownie prices */
+.brownie-size-picker{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin:-6px 0 16px;
+  padding:12px 14px;
+  border:1px solid rgba(251,191,36,.34);
+  border-radius:15px;
+  background:rgba(69,26,3,.28);
+}
+.brownie-size-picker-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brownie-size-picker-label{font-size:13px;font-weight:900;color:#fde68a;margin-right:2px}
+.brownie-size-btn{
+  min-width:78px;
+  min-height:38px;
+  padding:0 13px;
+  border:1px solid #854d0e;
+  border-radius:11px;
+  background:#0b1526;
+  color:#f8fafc;
+  font:inherit;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.brownie-size-btn.is-active{
+  border-color:#fbbf24;
+  background:linear-gradient(135deg,#ff8a00,#ffd000);
+  color:#1c0b00;
+  box-shadow:0 8px 20px rgba(245,158,11,.2);
+}
+.brownie-size-picker small{color:#cbd5e1;font-size:12px;line-height:1.45;text-align:right}
+@media(max-width:700px){
+  .brownie-size-picker{align-items:flex-start;flex-direction:column}
+  .brownie-size-picker small{text-align:left}
+}
+/* AZOBSS 656: 4-inch size has a limited flavour list */
+/* AZOBSS 657: 4-inch brownies contain 9 pcs */
+.menu-card li.brownie-order-item[hidden]{display:none!important}
+
 /* AZOBSS 632: multi-item quantity steppers and live order summary */
 .menu-card li.brownie-order-item{
   display:grid!important;
@@ -801,7 +844,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 <img alt="Brownies asal coklat dengan taburan almond" decoding="async" loading="lazy" src="/assets/img/tempahan-makanan/brownies-original-crop-4.png"/>
 <img alt="Red velvet brownies asal dengan white chocolate" decoding="async" loading="lazy" src="/assets/img/tempahan-makanan/brownies-original-crop-5.png"/>
 </div>
-<section class="section" id="menu"><h2>Pilihan Brownies</h2><div class="menu-grid"><article class="menu-card premium"><h3>Premium Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Premium Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Premium Brownies Plain" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-1" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Premium Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-1">0</output><button aria-label="Tambah kuantiti Premium Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Chocolate + Peanut (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Chocolate + Peanut (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-2" data-price="50" data-product="Chocolate + Peanut (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-2">0</output><button aria-label="Tambah kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Hazelnut Chocolate"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-3" data-price="50" data-product="Hazelnut Chocolate"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-3">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Peanut"><div class="brownie-item-info"><span class="brownie-item-name">Peanut</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Peanut" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-4" data-price="50" data-product="Peanut"><button aria-label="Tolak kuantiti Premium Brownies Peanut" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-4">0</output><button aria-label="Tambah kuantiti Premium Brownies Peanut" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Hazelnut Chocolate + Almond (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate + Almond (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-5" data-price="50" data-product="Hazelnut Chocolate + Almond (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-5">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Peanut + Almond (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Peanut + Almond (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Peanut + Almond (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-6" data-price="50" data-product="Peanut + Almond (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Peanut + Almond (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-6">0</output><button aria-label="Tambah kuantiti Premium Brownies Peanut + Almond (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="51" data-product="Hazelnut Chocolate / Peanut + Full Almonds"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate / Peanut + Full Almonds</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-7" data-price="51" data-product="Hazelnut Chocolate / Peanut + Full Almonds"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-7">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Mix 3 Flavour"><div class="brownie-item-info"><span class="brownie-item-name">Mix 3 Flavour</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Mix 3 Flavour" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-8" data-price="50" data-product="Mix 3 Flavour"><button aria-label="Tolak kuantiti Premium Brownies Mix 3 Flavour" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-8">0</output><button aria-label="Tambah kuantiti Premium Brownies Mix 3 Flavour" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article><article class="menu-card red"><h3>Red Velvet Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Red Velvet Brownies Plain" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-9" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Red Velvet Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-9">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="50" data-product="White Chocolate"><div class="brownie-item-info"><span class="brownie-item-name">White Chocolate</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Red Velvet Brownies White Chocolate" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-10" data-price="50" data-product="White Chocolate"><button aria-label="Tolak kuantiti Red Velvet Brownies White Chocolate" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-10">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies White Chocolate" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="51" data-product="White Chocolate + Almond"><div class="brownie-item-info"><span class="brownie-item-name">White Chocolate + Almond</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Red Velvet Brownies White Chocolate + Almond" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-11" data-price="51" data-product="White Chocolate + Almond"><button aria-label="Tolak kuantiti Red Velvet Brownies White Chocolate + Almond" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-11">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies White Chocolate + Almond" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article><article class="menu-card green"><h3>Pistachio Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Pistachio Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Pistachio Brownies Plain" class="brownie-qty-stepper" data-category="Pistachio Brownies" data-item-id="brownie-item-12" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Pistachio Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-12">0</output><button aria-label="Tambah kuantiti Pistachio Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Pistachio Brownies" data-price="51" data-product="Hazelnut Chocolate + Pistachio Cookie Crumbs"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate + Pistachio Cookie Crumbs</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="brownie-qty-stepper" data-category="Pistachio Brownies" data-item-id="brownie-item-13" data-price="51" data-product="Hazelnut Chocolate + Pistachio Cookie Crumbs"><button aria-label="Tolak kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-13">0</output><button aria-label="Tambah kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article></div></section>
+<section class="section" id="menu"><h2>Pilihan Brownies</h2><div class="brownie-size-picker" aria-label="Pilih saiz brownies"><div class="brownie-size-picker-main"><span class="brownie-size-picker-label">Pilih saiz:</span><button aria-pressed="true" class="brownie-size-btn is-active" data-brownie-size="8" type="button">8 inci</button><button aria-pressed="false" class="brownie-size-btn" data-brownie-size="4" type="button">4 inci</button></div><small id="brownieSizeHelp">Saiz 4 inci hanya tersedia untuk menu terpilih; harga dipaparkan selepas pembundaran.</small></div><div class="menu-grid"><article class="menu-card premium"><h3>Premium Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Premium Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Premium Brownies Plain" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-1" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Premium Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-1">0</output><button aria-label="Tambah kuantiti Premium Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Chocolate + Peanut (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Chocolate + Peanut (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-2" data-price="50" data-product="Chocolate + Peanut (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-2">0</output><button aria-label="Tambah kuantiti Premium Brownies Chocolate + Peanut (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Hazelnut Chocolate"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-3" data-price="50" data-product="Hazelnut Chocolate"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-3">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Peanut"><div class="brownie-item-info"><span class="brownie-item-name">Peanut</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Peanut" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-4" data-price="50" data-product="Peanut"><button aria-label="Tolak kuantiti Premium Brownies Peanut" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-4">0</output><button aria-label="Tambah kuantiti Premium Brownies Peanut" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Hazelnut Chocolate + Almond (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate + Almond (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-5" data-price="50" data-product="Hazelnut Chocolate + Almond (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-5">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate + Almond (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Peanut + Almond (Mix)"><div class="brownie-item-info"><span class="brownie-item-name">Peanut + Almond (Mix)</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Peanut + Almond (Mix)" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-6" data-price="50" data-product="Peanut + Almond (Mix)"><button aria-label="Tolak kuantiti Premium Brownies Peanut + Almond (Mix)" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-6">0</output><button aria-label="Tambah kuantiti Premium Brownies Peanut + Almond (Mix)" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="51" data-product="Hazelnut Chocolate / Peanut + Full Almonds"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate / Peanut + Full Almonds</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-7" data-price="51" data-product="Hazelnut Chocolate / Peanut + Full Almonds"><button aria-label="Tolak kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-7">0</output><button aria-label="Tambah kuantiti Premium Brownies Hazelnut Chocolate / Peanut + Full Almonds" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Premium Brownies" data-price="50" data-product="Mix 3 Flavour"><div class="brownie-item-info"><span class="brownie-item-name">Mix 3 Flavour</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Premium Brownies Mix 3 Flavour" class="brownie-qty-stepper" data-category="Premium Brownies" data-item-id="brownie-item-8" data-price="50" data-product="Mix 3 Flavour"><button aria-label="Tolak kuantiti Premium Brownies Mix 3 Flavour" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-8">0</output><button aria-label="Tambah kuantiti Premium Brownies Mix 3 Flavour" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article><article class="menu-card red"><h3>Red Velvet Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Red Velvet Brownies Plain" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-9" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Red Velvet Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-9">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="50" data-product="White Chocolate"><div class="brownie-item-info"><span class="brownie-item-name">White Chocolate</span><strong class="brownie-item-price">RM50</strong></div><div aria-label="Kuantiti Red Velvet Brownies White Chocolate" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-10" data-price="50" data-product="White Chocolate"><button aria-label="Tolak kuantiti Red Velvet Brownies White Chocolate" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-10">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies White Chocolate" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Red Velvet Brownies" data-price="51" data-product="White Chocolate + Almond"><div class="brownie-item-info"><span class="brownie-item-name">White Chocolate + Almond</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Red Velvet Brownies White Chocolate + Almond" class="brownie-qty-stepper" data-category="Red Velvet Brownies" data-item-id="brownie-item-11" data-price="51" data-product="White Chocolate + Almond"><button aria-label="Tolak kuantiti Red Velvet Brownies White Chocolate + Almond" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-11">0</output><button aria-label="Tambah kuantiti Red Velvet Brownies White Chocolate + Almond" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article><article class="menu-card green"><h3>Pistachio Brownies</h3><div class="size">36 pcs • 8 inci</div><ul><li class="brownie-order-item" data-category="Pistachio Brownies" data-price="45" data-product="Plain"><div class="brownie-item-info"><span class="brownie-item-name">Plain</span><strong class="brownie-item-price">RM45</strong></div><div aria-label="Kuantiti Pistachio Brownies Plain" class="brownie-qty-stepper" data-category="Pistachio Brownies" data-item-id="brownie-item-12" data-price="45" data-product="Plain"><button aria-label="Tolak kuantiti Pistachio Brownies Plain" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-12">0</output><button aria-label="Tambah kuantiti Pistachio Brownies Plain" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li><li class="brownie-order-item" data-category="Pistachio Brownies" data-price="51" data-product="Hazelnut Chocolate + Pistachio Cookie Crumbs"><div class="brownie-item-info"><span class="brownie-item-name">Hazelnut Chocolate + Pistachio Cookie Crumbs</span><strong class="brownie-item-price">RM51</strong></div><div aria-label="Kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="brownie-qty-stepper" data-category="Pistachio Brownies" data-item-id="brownie-item-13" data-price="51" data-product="Hazelnut Chocolate + Pistachio Cookie Crumbs"><button aria-label="Tolak kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="qty-btn qty-minus" data-qty-action="minus" disabled="" type="button">−</button><output aria-live="polite" class="qty-value" data-qty-value="" id="brownie-item-13">0</output><button aria-label="Tambah kuantiti Pistachio Brownies Hazelnut Chocolate + Pistachio Cookie Crumbs" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button></div></li></ul></article></div></section>
 <section class="section order" id="tempah"><div><h2>Buat Tempahan</h2><p>Pilih kuantiti menggunakan butang − dan + pada setiap menu di bahagian Pilihan Brownies. Pilihan anda akan disenaraikan secara automatik di bawah.</p><form class="form" id="orderForm"><section aria-live="polite" class="order-selection-summary" id="orderSelectionSummary"><div class="order-summary-heading"><h3>Pilihan Tempahan</h3><span class="order-box-count" id="orderBoxCount">0 kotak</span></div><p class="order-summary-empty" id="orderSummaryEmpty">Belum ada pilihan. Tekan butang + pada menu brownies di atas.</p><div class="order-summary-items" id="orderSummaryItems"></div><div class="order-summary-total" hidden="" id="orderSummaryTotal"><span>Anggaran jumlah</span><strong id="orderEstimatedTotal">RM0</strong></div></section><label>Nama pelanggan<input autocomplete="name" id="customerName" maxlength="100" placeholder="Contoh: Ahmad" required=""/></label><label>No. telefon pelanggan<input autocomplete="tel" id="customerPhone" inputmode="tel" maxlength="20" minlength="8" pattern="[+0-9()\-\s]{8,20}" placeholder="Contoh: 012-345 6789" required="" title="Nombor akan disusun automatik, contoh 012-345 6789." type="tel"/></label><div class="order-date-field">
   <label class="order-date-label" for="orderDate">Tarikh diperlukan</label>
   <div aria-label="Pilihan tarikh cepat" class="order-date-quick" role="group">
@@ -1113,40 +1156,100 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     if(phoneInput.value) formatPhoneInput();
   }
 
+  const sizeButtons = Array.from(document.querySelectorAll('[data-brownie-size]'));
+  const sizeLabels = Array.from(document.querySelectorAll('.menu-card .size'));
+  const SIZE_OPTIONS = ['8', '4'];
+  let activeSize = '8';
   const selections = new Map();
-  const money = value => `RM${Number(value).toFixed(0)}`;
-  const keyOf = el => `${el.dataset.category}|||${el.dataset.product}`;
+  const sizeHelp = document.getElementById('brownieSizeHelp');
+  const FOUR_INCH_MENU = new Set([
+    'Premium Brownies|||Chocolate + Peanut (Mix)',
+    'Premium Brownies|||Hazelnut Chocolate',
+    'Premium Brownies|||Peanut',
+    'Premium Brownies|||Hazelnut Chocolate + Almond (Mix)',
+    'Premium Brownies|||Peanut + Almond (Mix)',
+    'Premium Brownies|||Hazelnut Chocolate / Peanut + Full Almonds',
+    'Red Velvet Brownies|||White Chocolate',
+    'Red Velvet Brownies|||White Chocolate + Almond',
+    'Pistachio Brownies|||Hazelnut Chocolate + Pistachio Cookie Crumbs'
+  ]);
+
+  const isAvailableForSize = (stepper, size) => size !== '4'
+    || FOUR_INCH_MENU.has(`${stepper.dataset.category}|||${stepper.dataset.product}`);
+
+  const roundCurrency = value => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+  const money = value => {
+    const amount = roundCurrency(value);
+    return `RM${Number.isInteger(amount) ? amount.toFixed(0) : amount.toFixed(2)}`;
+  };
+  const sizeText = size => size === '4' ? '4 inci' : '8 inci';
+  const sizePiecesText = size => size === '4' ? '9 pcs' : '36 pcs';
+  const sizeOptionText = size => `${sizeText(size)} • ${sizePiecesText(size)}`;
+  const priceForSize = (basePrice, size) => size === '4'
+    ? Math.round((Number(basePrice || 0) / 4) + 2)
+    : roundCurrency(basePrice);
+  const keyOf = (el, size = activeSize) => `${el.dataset.category}|||${el.dataset.product}|||${size}`;
 
   function readSelections(){
-    return steppers.map(stepper => {
-      const qty = Number(selections.get(keyOf(stepper)) || 0);
+    return steppers.flatMap(stepper => SIZE_OPTIONS.map(size => {
+      if(!isAvailableForSize(stepper, size)) return null;
+      const qty = Number(selections.get(keyOf(stepper, size)) || 0);
+      const price = priceForSize(stepper.dataset.price, size);
       return {
-        key: keyOf(stepper),
+        key: keyOf(stepper, size),
         category: stepper.dataset.category,
-        product: stepper.dataset.product,
-        price: Number(stepper.dataset.price),
+        product: `${stepper.dataset.product} (${sizeOptionText(size)})`,
+        price,
         qty,
-        subtotal: Number(stepper.dataset.price) * qty,
+        subtotal: roundCurrency(price * qty),
+        size,
         stepper
       };
-    }).filter(item => item.qty > 0);
+    })).filter(item => item && item.qty > 0);
   }
 
   function updateUI(){
     steppers.forEach(stepper => {
-      const qty = Number(selections.get(keyOf(stepper)) || 0);
+      const row = stepper.closest('.brownie-order-item');
+      const isAvailable = isAvailableForSize(stepper, activeSize);
+      if(row){
+        row.hidden = !isAvailable;
+        row.setAttribute('aria-hidden', isAvailable ? 'false' : 'true');
+      }
+      const qty = Number(selections.get(keyOf(stepper, activeSize)) || 0);
       const value = stepper.querySelector('[data-qty-value]');
       const minus = stepper.querySelector('[data-qty-action="minus"]');
       const plus = stepper.querySelector('[data-qty-action="plus"]');
+      const priceLabel = row?.querySelector('.brownie-item-price');
+      const hasAnyQuantity = SIZE_OPTIONS.some(size => Number(selections.get(keyOf(stepper, size)) || 0) > 0);
       if(value) value.textContent = String(qty);
       if(minus) minus.disabled = qty <= 0;
       if(plus) plus.disabled = qty >= 99;
-      stepper.closest('.brownie-order-item')?.classList.toggle('has-quantity', qty > 0);
+      if(priceLabel) priceLabel.textContent = money(priceForSize(stepper.dataset.price, activeSize));
+      row?.classList.toggle('has-quantity', hasAnyQuantity);
     });
+
+    SIZE_OPTIONS.forEach(size => {
+      const button = sizeButtons.find(item => item.dataset.brownieSize === size);
+      const sizeQuantity = steppers.reduce((sum, stepper) => sum + Number(selections.get(keyOf(stepper, size)) || 0), 0);
+      if(button){
+        button.classList.toggle('is-active', size === activeSize);
+        button.setAttribute('aria-pressed', size === activeSize ? 'true' : 'false');
+        button.textContent = `${sizeOptionText(size)}${sizeQuantity ? ` (${sizeQuantity})` : ''}`;
+      }
+    });
+    sizeLabels.forEach(label => {
+      label.textContent = activeSize === '4' ? '9 pcs • 4 inci' : '36 pcs • 8 inci';
+    });
+    if(sizeHelp){
+      sizeHelp.textContent = activeSize === '4'
+        ? 'Saiz 4 inci mengandungi 9 pcs dan hanya tersedia untuk menu yang dipaparkan.'
+        : 'Saiz 8 inci menyediakan semua pilihan brownies.';
+    }
 
     const selected = readSelections();
     const totalBoxes = selected.reduce((sum, item) => sum + item.qty, 0);
-    const totalPrice = selected.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalPrice = roundCurrency(selected.reduce((sum, item) => sum + item.subtotal, 0));
     boxCount.textContent = `${totalBoxes} ${totalBoxes === 1 ? 'kotak' : 'kotak'}`;
     summaryItems.innerHTML = '';
 
@@ -1179,11 +1282,20 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     })[char]);
   }
 
+  sizeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const requestedSize = button.dataset.brownieSize;
+      if(!SIZE_OPTIONS.includes(requestedSize)) return;
+      activeSize = requestedSize;
+      updateUI();
+    });
+  });
+
   steppers.forEach(stepper => {
     stepper.addEventListener('click', event => {
       const button = event.target.closest('[data-qty-action]');
       if(!button) return;
-      const key = keyOf(stepper);
+      const key = keyOf(stepper, activeSize);
       const current = Number(selections.get(key) || 0);
       const next = button.dataset.qtyAction === 'plus'
         ? Math.min(99, current + 1)
@@ -1211,7 +1323,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     }
 
     const totalBoxes = selected.reduce((sum, item) => sum + item.qty, 0);
-    const totalPrice = selected.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalPrice = roundCurrency(selected.reduce((sum, item) => sum + item.subtotal, 0));
     const orderLines = selected.flatMap((item, index) => [
       `${index + 1}. ${item.category} — ${item.product}`,
       `   ${money(item.price)} x ${item.qty} = ${money(item.subtotal)}`
@@ -1266,7 +1378,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=646"></script><script src="/assets/js/azobss-food-orders.js?v=652" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=656"></script><script src="/assets/js/azobss-food-orders.js?v=656" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;

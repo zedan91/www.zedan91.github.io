@@ -83,7 +83,8 @@ function escapeHtml(value){
 }
 
 function money(value){
-  return `RM${Number(value || 0).toFixed(0)}`;
+  const amount = Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+  return `RM${Number.isInteger(amount) ? amount.toFixed(0) : amount.toFixed(2)}`;
 }
 
 function orderStatusLabel(status){

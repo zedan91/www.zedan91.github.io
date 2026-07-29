@@ -1,0 +1,33 @@
+AZOBSS FOOD ORDER — PATCH 656
+
+Baseline:
+- (655)-AZOBSS-FOOD-ORDER-4-INCH-WHOLE-RINGGIT-PRICE-FIX_20260729.zip
+
+Perubahan:
+1. Saiz 8 inci kekal memaparkan semua pilihan brownies asal.
+2. Apabila saiz 4 inci dipilih, hanya menu yang benar-benar tersedia dipaparkan:
+
+   Premium Brownies
+   - Chocolate + Peanut (Mix)
+   - Hazelnut Chocolate
+   - Peanut
+   - Hazelnut Chocolate + Almond (Mix)
+   - Peanut + Almond (Mix)
+   - Hazelnut Chocolate / Peanut + Full Almonds
+
+   Red Velvet Brownies
+   - White Chocolate
+   - White Chocolate + Almond
+
+   Pistachio Brownies
+   - Hazelnut Chocolate + Pistachio Cookie Crumbs
+
+3. Menu berikut disembunyikan untuk saiz 4 inci sahaja:
+   - Premium Brownies — Plain
+   - Premium Brownies — Mix 3 Flavour
+   - Red Velvet Brownies — Plain
+   - Pistachio Brownies — Plain
+4. Harga 4 inci daripada patch 655 dikekalkan: RM13 atau RM15 mengikut menu.
+5. Pilihan 8 inci dan 4 inci masih boleh dicampurkan dalam satu tempahan.
+6. Item 4 inci yang tidak tersedia turut disekat daripada masuk ke ringkasan atau rekod tempahan.
+7. Tiada perubahan Firebase Rules atau Render diperlukan.
