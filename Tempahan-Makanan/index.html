@@ -817,7 +817,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
           <th>Pelanggan</th>
           <th>Tarikh Diperlukan</th>
           <th>Tempahan</th>
-          <th>Jumlah Kuantiti</th>
+          <th>Kuantiti</th>
           <th>Jumlah</th>
           <th class="food-order-complete-col">Selesai</th>
           <th>Status</th>
@@ -1085,7 +1085,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
       'Pilihan tempahan:',
       ...orderLines,
       '',
-      `Jumlah kotak: ${totalBoxes}`,
+      `Kuantiti: ${totalBoxes}`,
       `Anggaran jumlah: ${money(totalPrice)}`,
       `Tarikh diperlukan: ${window.AZOBSSOrderDate ? window.AZOBSSOrderDate.getMessageDate() : (document.getElementById('orderDate').value || 'Belum dipilih')}`,
       `Catatan: ${document.getElementById('notes').value.trim() || '-'}`,
@@ -1124,7 +1124,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-food-orders.js?v=642" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-food-orders.js?v=643" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;
