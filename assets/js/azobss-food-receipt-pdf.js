@@ -179,7 +179,7 @@
     const x = MARGIN_X;
     const y = 118;
     const w = CONTENT_W;
-    const h = 102;
+    const h = 122;
     fillRect(commands, x, y, w, h, [248, 250, 252]);
     strokeRect(commands, x, y, w, h, [203, 213, 225], 0.8);
     line(commands, x + (w / 2), y + 12, x + (w / 2), y + h - 12, [226,232,240], 0.8);
@@ -193,7 +193,9 @@
     text(commands, 'NO. RESIT / REKOD', leftX, y + 23, { size:7.5, bold:true, color:labelColor });
     text(commands, orderId, leftX, y + 39, { size:9.5, bold:true, color:valueColor });
     text(commands, 'PELANGGAN', leftX, y + 62, { size:7.5, bold:true, color:labelColor });
-    text(commands, clean(order.customerName || '-'), leftX, y + 79, { size:10.5, bold:true, color:valueColor });
+    text(commands, clean(order.customerName || '-'), leftX, y + 78, { size:10.5, bold:true, color:valueColor });
+    text(commands, 'NO. TELEFON', leftX, y + 96, { size:7.5, bold:true, color:labelColor });
+    text(commands, clean(order.customerPhone || '-'), leftX, y + 112, { size:9.5, bold:true, color:valueColor });
 
     text(commands, 'DIREKODKAN', rightX, y + 23, { size:7.5, bold:true, color:labelColor });
     text(commands, formatDateTime(order.createdAt, order.createdAtMs), rightX, y + 39, { size:9.5, bold:true, color:valueColor });
@@ -274,7 +276,7 @@
     const boxH = 66;
     fillRect(commands, boxX, y, boxW, boxH, [236,253,245]);
     strokeRect(commands, boxX, y, boxW, boxH, [34,197,94], 0.9);
-    text(commands, 'JUMLAH KUANTITI', boxX + 14, y + 22, { size:8, bold:true, color:[22,101,52] });
+    text(commands, 'KUANTITI', boxX + 14, y + 22, { size:8, bold:true, color:[22,101,52] });
     text(commands, String(number(order.totalBoxes)), boxX + boxW - 14, y + 22, { size:10, bold:true, align:'right', color:[15,23,42] });
     line(commands, boxX + 12, y + 32, boxX + boxW - 12, y + 32, [187,247,208], 0.8);
     text(commands, 'ANGGARAN JUMLAH', boxX + 14, y + 53, { size:9, bold:true, color:[22,101,52] });
@@ -306,7 +308,7 @@
     pages.push(commands);
     drawPageHeader(commands, false);
     drawInfoBox(commands, order);
-    let y = drawTableHeader(commands, 242);
+    let y = drawTableHeader(commands, 262);
 
     const items = Array.isArray(order.items) ? order.items : [];
     const safeItems = items.length ? items : [{ category:'Brownies', product:'Tiada butiran menu', qty:number(order.totalBoxes), price:number(order.totalPrice), subtotal:number(order.totalPrice) }];

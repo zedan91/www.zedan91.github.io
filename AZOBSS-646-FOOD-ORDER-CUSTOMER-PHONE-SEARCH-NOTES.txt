@@ -1,0 +1,18 @@
+AZOBSS 646 - FOOD ORDER CUSTOMER PHONE + SEARCH FIX
+
+Baseline: (645)-AZOBSS-FOOD-ORDER-PDF-RECEIPT-DOWNLOAD-FIX_20260729.zip
+
+Perubahan:
+1. Tambah medan wajib No. telefon pelanggan pada borang tempahan.
+2. Nombor telefon dimasukkan dalam mesej WhatsApp.
+3. Rekod Firestore menyimpan customerPhone dan customerPhoneDigits.
+4. Paparan Rekod Tempahan menunjukkan nombor telefon di bawah nama pelanggan.
+5. Carian admin boleh mencari menggunakan nombor telefon, termasuk format 01... atau 60... dan carian digit tanpa sengkang.
+6. Lihat Detail, Export CSV dan Resit PDF turut memaparkan nombor telefon.
+7. Cache JavaScript dinaikkan ke v646.
+8. Label PDF dikekalkan sebagai KUANTITI sahaja.
+
+PENTING - FIREBASE RULES:
+Terbitkan FIREBASE-RULES-MERGED-FOOD-ORDERS-646-VERIFIED.txt sebagai Rules penuh,
+atau gabungkan FIREBASE-RULES-ADDON-FOOD-ORDERS-646.txt ke Rules semasa.
+Tanpa Rules 646, rekod baharu dengan medan telefon akan ditolak oleh Firestore.

@@ -456,7 +456,7 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // AZOBSS 640: food order records.
+    // AZOBSS 646: food order records with customer phone.
     match /foodOrders/{orderId} {
       // Customers may place an order without logging in.
       // Creation is restricted to the exact fields and safe limits below.
@@ -464,6 +464,8 @@ service cloud.firestore {
         request.resource.data.keys().hasOnly([
           "clientOrderId",
           "customerName",
+          "customerPhone",
+          "customerPhoneDigits",
           "requiredDate",
           "requiredDateLabel",
           "notes",
@@ -486,6 +488,11 @@ service cloud.firestore {
         && request.resource.data.customerName is string
         && request.resource.data.customerName.size() >= 1
         && request.resource.data.customerName.size() <= 100
+        && request.resource.data.customerPhone is string
+        && request.resource.data.customerPhone.size() >= 8
+        && request.resource.data.customerPhone.size() <= 20
+        && request.resource.data.customerPhoneDigits is string
+        && request.resource.data.customerPhoneDigits.matches('^[0-9]{8,15}$')
         && request.resource.data.requiredDate is string
         && request.resource.data.requiredDate.size() >= 8
         && request.resource.data.requiredDate.size() <= 20

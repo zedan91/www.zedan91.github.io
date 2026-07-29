@@ -52,6 +52,19 @@ function lower(value){
   return clean(value).toLowerCase();
 }
 
+function phoneDigits(value){
+  return clean(value).replace(/\D/g, '');
+}
+
+function phoneSearchText(value){
+  const digits = phoneDigits(value);
+  if(!digits) return '';
+  const variants = new Set([digits]);
+  if(digits.startsWith('60') && digits.length > 2) variants.add(`0${digits.slice(2)}`);
+  if(digits.startsWith('0') && digits.length > 1) variants.add(`60${digits.slice(1)}`);
+  return [...variants].join(' ');
+}
+
 function escapeHtml(value){
   return clean(value).replace(/[&<>'"]/g, char => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
@@ -121,6 +134,8 @@ async function submitOrder(payload, whatsappUrl, submitButton){
   const record = {
     clientOrderId,
     customerName: clean(payload.customerName).slice(0, 100),
+    customerPhone: clean(payload.customerPhone).slice(0, 20),
+    customerPhoneDigits: phoneDigits(payload.customerPhone).slice(0, 15),
     requiredDate: clean(payload.requiredDate).slice(0, 20),
     requiredDateLabel: clean(payload.requiredDateLabel).slice(0, 120),
     notes: clean(payload.notes).slice(0, 800),
@@ -265,17 +280,21 @@ function itemSummary(order){
 
 function searchableText(order){
   return lower([
-    order.clientOrderId, order.customerName, order.requiredDate,
-    order.requiredDateLabel, order.notes, order.status, itemSummary(order)
+    order.clientOrderId, order.customerName, order.customerPhone,
+    order.customerPhoneDigits, phoneSearchText(order.customerPhone || order.customerPhoneDigits),
+    order.requiredDate, order.requiredDateLabel, order.notes, order.status, itemSummary(order)
   ].join(' '));
 }
 
 function applyFilters(){
   const term = lower(searchInput?.value || '');
+  const termDigits = phoneDigits(term);
   const wantedStatus = statusFilter?.value || 'all';
 
   filteredOrders = allOrders.filter(order => {
-    const matchesSearch = !term || searchableText(order).includes(term);
+    const haystack = searchableText(order);
+    const phoneMatches = termDigits.length >= 3 && phoneSearchText(order.customerPhone || order.customerPhoneDigits).includes(termDigits);
+    const matchesSearch = !term || haystack.includes(term) || phoneMatches;
     const matchesStatus = wantedStatus === 'all' || (order.status || 'new') === wantedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -355,6 +374,7 @@ function renderTable(){
         </td>
         <td>
           <span class="food-order-customer">${escapeHtml(order.customerName || '-')}</span>
+          <span class="food-order-phone">Tel: ${escapeHtml(order.customerPhone || '-')}</span>
           <span class="food-order-note-preview" title="${note}">${note}</span>
         </td>
         <td>${escapeHtml(order.requiredDateLabel || order.requiredDate || '-')}</td>
@@ -401,6 +421,7 @@ function openDetail(orderId){
       <div class="food-order-detail-field"><span>ID Rekod</span><strong>${escapeHtml(order.id || order.clientOrderId || '-')}</strong></div>
       <div class="food-order-detail-field"><span>Status</span><strong>${escapeHtml(orderStatusLabel(order.status || 'new'))}</strong></div>
       <div class="food-order-detail-field"><span>Nama Pelanggan</span><strong>${escapeHtml(order.customerName || '-')}</strong></div>
+      <div class="food-order-detail-field"><span>No. Telefon</span><strong>${escapeHtml(order.customerPhone || '-')}</strong></div>
       <div class="food-order-detail-field"><span>Direkodkan</span><strong>${escapeHtml(formatDateTime(order.createdAt, order.createdAtMs))}</strong></div>
       <div class="food-order-detail-field"><span>Tarikh Diperlukan</span><strong>${escapeHtml(order.requiredDateLabel || order.requiredDate || '-')}</strong></div>
       <div class="food-order-detail-field"><span>Kuantiti</span><strong>${Number(order.totalBoxes || 0)}</strong></div>
@@ -587,7 +608,7 @@ function exportCsv(){
   }
 
   const rows = [[
-    'ID Rekod','Direkodkan','Nama Pelanggan','Tarikh Diperlukan',
+    'ID Rekod','Direkodkan','Nama Pelanggan','No. Telefon','Tarikh Diperlukan',
     'Tempahan','Kuantiti','Anggaran Jumlah RM','Catatan','Status'
   ]];
 
@@ -596,6 +617,7 @@ function exportCsv(){
       order.id || order.clientOrderId || '',
       formatDateTime(order.createdAt, order.createdAtMs),
       order.customerName || '',
+      order.customerPhone || '',
       order.requiredDateLabel || order.requiredDate || '',
       itemSummary(order),
       Number(order.totalBoxes || 0),
