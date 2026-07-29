@@ -1,0 +1,11 @@
+AZOBSS Patch 658 — Home Brownies Banner 4 Inch
+Baseline: (657)-AZOBSS-FOOD-ORDER-4-INCH-9-PCS-FIX_20260729.zip
+
+Perubahan pada banner brownies Home Page:
+- Tajuk menunjukkan saiz 8 inci dan 4 inci.
+- Keterangan menunjukkan 36 pcs untuk 8 inci dan 9 pcs untuk 4 inci.
+- Harga permulaan ditukar kepada RM13 kerana pilihan 4 inci tersedia.
+- Tag saiz 8 inci dan 4 inci ditambah.
+- Alt text gambar dikemas kini.
+
+Tiada perubahan pada fungsi tempahan, harga produk, WhatsApp, Firebase, rekod admin atau pagination.

@@ -1185,8 +1185,10 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   const sizeText = size => size === '4' ? '4 inci' : '8 inci';
   const sizePiecesText = size => size === '4' ? '9 pcs' : '36 pcs';
   const sizeOptionText = size => `${sizeText(size)} • ${sizePiecesText(size)}`;
-  const priceForSize = (basePrice, size) => size === '4'
-    ? Math.round((Number(basePrice || 0) / 4) + 2)
+  // AZOBSS 659: harga 4 inci ditetapkan mengikut jenis topping.
+  // Topping tanpa almond = RM13; pilihan yang mengandungi almond = RM15.
+  const priceForSize = (basePrice, size, product = '') => size === '4'
+    ? (/almond/i.test(String(product)) ? 15 : 13)
     : roundCurrency(basePrice);
   const keyOf = (el, size = activeSize) => `${el.dataset.category}|||${el.dataset.product}|||${size}`;
 
@@ -1194,7 +1196,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     return steppers.flatMap(stepper => SIZE_OPTIONS.map(size => {
       if(!isAvailableForSize(stepper, size)) return null;
       const qty = Number(selections.get(keyOf(stepper, size)) || 0);
-      const price = priceForSize(stepper.dataset.price, size);
+      const price = priceForSize(stepper.dataset.price, size, stepper.dataset.product);
       return {
         key: keyOf(stepper, size),
         category: stepper.dataset.category,
@@ -1225,7 +1227,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
       if(value) value.textContent = String(qty);
       if(minus) minus.disabled = qty <= 0;
       if(plus) plus.disabled = qty >= 99;
-      if(priceLabel) priceLabel.textContent = money(priceForSize(stepper.dataset.price, activeSize));
+      if(priceLabel) priceLabel.textContent = money(priceForSize(stepper.dataset.price, activeSize, stepper.dataset.product));
       row?.classList.toggle('has-quantity', hasAnyQuantity);
     });
 
@@ -1243,7 +1245,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     });
     if(sizeHelp){
       sizeHelp.textContent = activeSize === '4'
-        ? 'Saiz 4 inci mengandungi 9 pcs dan hanya tersedia untuk menu yang dipaparkan.'
+        ? 'Saiz 4 inci mengandungi 9 pcs. Topping biasa RM13; pilihan campuran almond RM15.'
         : 'Saiz 8 inci menyediakan semua pilihan brownies.';
     }
 
