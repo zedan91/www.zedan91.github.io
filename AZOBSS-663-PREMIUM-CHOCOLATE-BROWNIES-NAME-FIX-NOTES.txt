@@ -1,0 +1,9 @@
+AZOBSS Patch 663 — Premium Chocolate Brownies Name Fix
+
+Baseline: (662)-AZOBSS-FOOD-ORDER-8-INCH-PISTACHIO-NIBS-RM56-FIX_20260729.zip
+
+Perubahan:
+- Menukar nama “Premium Brownies” kepada “Premium Chocolate Brownies”.
+- Dikemas kini pada banner halaman utama, halaman tempahan, metadata perkongsian, kategori pilihan, mesej tempahan dan tajuk resit PDF.
+- Harga, pilihan saiz, topping, pengiraan, Firebase dan fungsi tempahan tidak diubah.
+- Cache resit PDF dinaikkan kepada v663.

@@ -173,7 +173,7 @@
     fillRect(commands, 0, 92, PAGE_W, 4, [245, 158, 11]);
     text(commands, 'AZOBSS', MARGIN_X, 39, { size:22, bold:true, color:[255,255,255] });
     text(commands, 'RESIT TEMPAHAN MAKANAN', PAGE_W - MARGIN_X, 36, { size:15, bold:true, align:'right', color:[255,255,255] });
-    text(commands, continuation ? 'Sambungan butiran tempahan' : 'Premium Brownies - Lynn', PAGE_W - MARGIN_X, 58, { size:9, align:'right', color:[209,250,229] });
+    text(commands, continuation ? 'Sambungan butiran tempahan' : 'Premium Chocolate Brownies - Lynn', PAGE_W - MARGIN_X, 58, { size:9, align:'right', color:[209,250,229] });
   }
 
   function drawInfoBox(commands, order){
