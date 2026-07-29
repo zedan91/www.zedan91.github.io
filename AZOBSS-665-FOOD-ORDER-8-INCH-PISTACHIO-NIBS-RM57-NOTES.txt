@@ -1,0 +1,11 @@
+AZOBSS Patch 665 — 8-Inch Pistachio Nibs RM57 Fix
+
+Baseline: (664)-AZOBSS-PREMIUM-CHOCOLATE-BROWNIES-VISIBLE-TITLE-CACHE-FIX_20260729.zip
+
+Perubahan:
+- Untuk Pistachio Brownies saiz 8 inci, nama menu dipastikan sebagai “Hazelnut Chocolate + Pistachio Nibs”.
+- Harga saiz 8 inci ditukar daripada RM56 kepada RM57.
+- Nama dan harga baharu digunakan dalam pilihan menu, ringkasan tempahan, jumlah bayaran, mesej WhatsApp, rekod admin, eksport CSV dan resit PDF.
+- Untuk saiz 4 inci, “Hazelnut Chocolate + Pistachio Cookie Crumbs” dan harga RM16 dikekalkan.
+- Pautan Lihat Menu di Home Page dinaikkan kepada ?v=665 untuk mengurangkan paparan cache lama.
+- Firebase Rules dan Render tidak perlu diubah.
