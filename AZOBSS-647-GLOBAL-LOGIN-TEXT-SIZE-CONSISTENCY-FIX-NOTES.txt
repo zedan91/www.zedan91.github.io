@@ -1,0 +1,14 @@
+AZOBSS PATCH 647 — GLOBAL LOGIN TEXT SIZE CONSISTENCY FIX
+
+Baseline:
+- (646)-AZOBSS-FOOD-ORDER-CUSTOMER-PHONE-SEARCH-FIX_20260729.zip
+
+Perubahan:
+- Mengunci saiz teks modal Sign in/Register supaya sama pada Home Page dan semua halaman lain.
+- Menghalang CSS umum halaman Tempahan Makanan seperti label { font-size:12px } daripada mengecilkan teks modal login.
+- Menetapkan saiz khusus untuk tajuk, label, input, butang, pautan, mesej ralat dan nota reset kata laluan.
+- Menukar cache version azobss-global-auth.js daripada v614 kepada v647 pada semua halaman berkaitan.
+
+Tidak diubah:
+- Fungsi login, register, forgot password, Firebase Auth dan data pengguna.
+- Reka bentuk atau fungsi tempahan brownies.

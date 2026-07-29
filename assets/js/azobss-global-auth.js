@@ -225,7 +225,16 @@ function addStyle() {
 .auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
 .auth-modal.is-open{display:flex;}
 #siteAuthModal.auth-modal{align-items:center!important;padding:22px!important;}
-#siteAuthModal .auth-modal-card{margin:auto!important;}
+#siteAuthModal .auth-modal-card{margin:auto!important;font-size:16px!important;line-height:1.35!important;}
+/* AZOBSS 647: Keep login/register typography identical on every page.
+   Some product pages define generic label/input font sizes that previously
+   leaked into the shared auth modal. */
+#siteAuthModal .auth-modal-top h3{font-size:20px!important;line-height:1.2!important;}
+#siteAuthModal .auth-modal-form label{font-size:13px!important;line-height:1.35!important;}
+#siteAuthModal .auth-modal-form input{font-size:15px!important;line-height:1.2!important;}
+#siteAuthModal .auth-modal-form .btn{font-size:14px!important;line-height:1.2!important;}
+#siteAuthModal .auth-switch-note,#siteAuthModal .auth-switch-note button{font-size:14px!important;line-height:1.4!important;}
+#siteAuthModal .request-error,#siteAuthModal .auth-reset-note{font-size:13px!important;line-height:1.4!important;}
 
 .auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
 .auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
