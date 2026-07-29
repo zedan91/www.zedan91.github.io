@@ -1,0 +1,10 @@
+AZOBSS Patch 666 — 4-Inch Pistachio Nibs RM16 Fix
+
+Baseline: (665)-AZOBSS-FOOD-ORDER-8-INCH-PISTACHIO-NIBS-RM57-FIX_20260729.zip
+
+Perubahan:
+- Nama pilihan Pistachio saiz 4 inci ditukar kepada “Hazelnut Chocolate + Pistachio Nibs”.
+- Harga pilihan tersebut untuk saiz 4 inci ditetapkan kepada RM16.
+- Harga saiz 8 inci kekal RM57.
+- Nama dan harga yang sama digunakan dalam pilihan menu, ringkasan, WhatsApp, rekod admin, CSV dan resit PDF.
+- Cache pautan Lihat Menu pada halaman utama dinaikkan kepada v=666.

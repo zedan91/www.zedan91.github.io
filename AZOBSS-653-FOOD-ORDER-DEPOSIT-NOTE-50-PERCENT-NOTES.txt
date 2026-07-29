@@ -7,6 +7,6 @@ Baseline:
 Perubahan:
 - Menambah nota deposit di bawah ayat pengesahan penjual pada kad maklumat tempahan.
 - Ayat baharu:
-  "Bagi tempahan 4 kotak atau lebih, deposit sebanyak 50% daripada jumlah bayaran diperlukan untuk mengesahkan tempahan."
+  "Bagi tempahan kuantiti melebihi 4, deposit sebanyak 50% daripada jumlah bayaran diperlukan untuk mengesahkan tempahan."
 - Nota dipaparkan dalam kotak kecil berwarna emas/coklat supaya mudah dilihat tetapi masih sepadan dengan tema halaman.
 - Tiada perubahan pada fungsi tempahan, WhatsApp, Firestore, Firebase Rules, PDF, CSV atau pagination.
