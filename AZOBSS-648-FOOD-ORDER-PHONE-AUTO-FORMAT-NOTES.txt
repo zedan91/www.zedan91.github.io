@@ -1,0 +1,12 @@
+AZOBSS Patch 648 — Food Order Phone Auto Format
+
+Baseline: (647)-AZOBSS-GLOBAL-LOGIN-TEXT-SIZE-CONSISTENCY-FIX_20260729.zip
+
+Perubahan:
+- Ruangan No. telefon pelanggan kini menyusun nombor secara automatik semasa menaip atau paste.
+- Format biasa: 012-345 6789.
+- Format nombor 011: 011-1234 5678.
+- Format +60 turut disokong: +60 12-345 6789 dan +60 11-1234 5678.
+- Dash dan ruang dimasukkan secara automatik tanpa menukar digit sebenar.
+- Mesej WhatsApp, rekod Firestore, carian, detail, CSV dan resit PDF terus menggunakan nombor yang telah diformat.
+- Tiada perubahan Firebase Rules atau Render diperlukan.
