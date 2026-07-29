@@ -1,0 +1,10 @@
+AZOBSS Patch 668 — 4-Inch Pistachio Nibs RM16 Real Fix
+
+Baseline: (667)-AZOBSS-FOOD-ORDER-DEPOSIT-QUANTITY-OVER-4-TEXT-FIX_20260729.zip
+
+Fix:
+- Corrected the 4-inch special-price matcher after the product name changed from Pistachio Cookie Crumbs to Pistachio Nibs.
+- Hazelnut Chocolate + Pistachio Nibs now displays and calculates RM16 for 4-inch orders.
+- The matcher remains backward-compatible with the older Pistachio Cookie Crumbs wording.
+- 8-inch Pistachio Nibs remains RM57.
+- WhatsApp, order records, CSV, and PDF receipts inherit the corrected calculated price.

@@ -1198,7 +1198,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   const priceForSize = (basePrice, size, product = '') => {
     if(size !== '4') return roundCurrency(basePrice);
     const productName = String(product);
-    if(/pistachio cookie crumbs/i.test(productName)) return 16;
+    if(/pistachio(?: cookie crumbs| nibs)/i.test(productName)) return 16;
     if(/almond/i.test(productName)) return 14;
     return 13;
   };
