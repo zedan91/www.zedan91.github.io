@@ -533,7 +533,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 .food-orders-tool-btn.primary{border-color:#16a34a;background:#15803d;color:#fff}
 .food-orders-tool-btn:hover{filter:brightness(1.12)}
 .food-orders-table-wrap{overflow:auto;border:1px solid rgba(148,163,184,.24);border-radius:16px;background:#050b16}
-.food-orders-table{width:100%;min-width:1040px;border-collapse:collapse}
+.food-orders-table{width:100%;min-width:1120px;border-collapse:collapse}
 .food-orders-table th,.food-orders-table td{padding:12px 11px;border-bottom:1px solid rgba(148,163,184,.16);vertical-align:top;text-align:left}
 .food-orders-table th{position:sticky;top:0;z-index:1;background:#0d1929;color:#bbf7d0;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 .food-orders-table td{font-size:13px;color:#e5e7eb}
@@ -547,7 +547,13 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 .food-order-items-preview{display:block;max-width:330px;line-height:1.45}
 .food-order-money{font-weight:950;color:#fbbf24;white-space:nowrap}
 .food-order-status-select{min-width:130px;padding:8px 9px;border-radius:10px;font-size:12px;font-weight:850}
-.food-order-detail-btn{border:1px solid #38bdf8;border-radius:10px;background:rgba(14,116,144,.2);color:#bae6fd;padding:8px 10px;font-weight:850;cursor:pointer}
+.food-order-actions{display:grid;gap:7px;min-width:116px}
+.food-order-detail-btn{width:100%;border:1px solid #38bdf8;border-radius:10px;background:rgba(14,116,144,.2);color:#bae6fd;padding:8px 10px;font-weight:850;cursor:pointer}
+.food-order-receipt-btn{width:100%;border:1px solid #22c55e;border-radius:10px;background:rgba(21,128,61,.2);color:#bbf7d0;padding:8px 10px;font-weight:850;cursor:pointer}
+.food-order-detail-btn:hover,.food-order-receipt-btn:hover{filter:brightness(1.14)}
+.food-order-detail-btn:disabled,.food-order-receipt-btn:disabled{opacity:.55;cursor:wait;filter:none}
+.food-order-detail-receipt-wrap{display:flex;justify-content:flex-end;margin-top:14px}
+.food-order-detail-receipt-wrap .food-order-receipt-btn{width:auto;min-width:190px;padding:11px 16px}
 .food-orders-empty{text-align:center!important;padding:28px!important;color:#94a3b8!important}
 .food-orders-error{margin:12px 0 0;padding:11px 13px;border:1px solid rgba(248,113,113,.45);border-radius:12px;background:rgba(127,29,29,.24);color:#fecaca!important}
 .food-order-detail-modal{position:fixed;inset:0;z-index:100500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.82);backdrop-filter:blur(8px)}
@@ -1125,7 +1131,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-food-orders.js?v=644" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=614" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=645"></script><script src="/assets/js/azobss-food-orders.js?v=645" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;

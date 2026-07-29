@@ -1,0 +1,17 @@
+AZOBSS PATCH 645 - FOOD ORDER PDF RECEIPT DOWNLOAD
+Tarikh: 29/07/2026
+Baseline: (644)-AZOBSS-FOOD-ORDER-QUANTITY-CENTER-FIX_20260729.zip
+
+Perubahan:
+- Menambah butang "Resit PDF" pada setiap rekod tempahan makanan.
+- Menambah butang "Muat Turun Resit PDF" dalam modal Lihat Detail.
+- Resit dijana terus dalam browser tanpa server dan terus dimuat turun sebagai PDF A4.
+- Resit memaparkan ID rekod, pelanggan, tarikh, status, senarai menu, kuantiti, harga, jumlah dan catatan.
+- Resit dilabel sebagai rekod tempahan dan bukan bukti bayaran kerana rekod sedia ada tidak menyimpan status pembayaran.
+- Menambah fail assets/js/azobss-food-receipt-pdf.js.
+- Cache azobss-food-orders.js dan penjana resit dinaikkan kepada v645.
+
+Tidak diubah:
+- Struktur Firestore foodOrders.
+- Firebase Rules.
+- Fungsi status, tandakan selesai, padam, carian dan Export CSV.

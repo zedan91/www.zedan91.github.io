@@ -378,7 +378,7 @@ function renderTable(){
             ).join('')}
           </select>
         </td>
-        <td><button class="food-order-detail-btn" data-detail-order-id="${orderId}" type="button">Lihat Detail</button></td>
+        <td><div class="food-order-actions"><button class="food-order-detail-btn" data-detail-order-id="${orderId}" type="button">Lihat Detail</button><button class="food-order-receipt-btn" data-receipt-order-id="${orderId}" type="button">⬇ Resit PDF</button></div></td>
       </tr>`;
   }).join('');
 
@@ -416,6 +416,9 @@ function openDetail(orderId){
     <div class="food-order-detail-total">
       <strong>Anggaran Jumlah</strong>
       <strong>${money(order.totalPrice)}</strong>
+    </div>
+    <div class="food-order-detail-receipt-wrap">
+      <button class="food-order-receipt-btn" data-receipt-order-id="${escapeHtml(order.id || order.clientOrderId || '')}" type="button">⬇ Muat Turun Resit PDF</button>
     </div>`;
   detailModal.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -425,6 +428,38 @@ function closeDetail(){
   if(!detailModal) return;
   detailModal.hidden = true;
   document.body.style.overflow = '';
+}
+
+async function downloadReceipt(orderId, control){
+  const order = allOrders.find(item => (item.id || item.clientOrderId) === orderId);
+  if(!order){
+    toast('Rekod tempahan tidak ditemui.', 'warning');
+    return;
+  }
+  if(!window.AZOBSSFoodReceipt || typeof window.AZOBSSFoodReceipt.download !== 'function'){
+    toast('Penjana resit PDF belum dimuatkan. Sila muat semula halaman.', 'warning');
+    return;
+  }
+
+  const originalText = control?.textContent || '';
+  if(control){
+    control.disabled = true;
+    control.textContent = 'Menjana PDF...';
+  }
+
+  try{
+    await new Promise(resolve => requestAnimationFrame(() => resolve()));
+    window.AZOBSSFoodReceipt.download(order);
+    toast('Resit PDF telah dimuat turun.', 'success');
+  }catch(error){
+    console.error('[AZOBSS Food Orders] Receipt PDF failed:', error);
+    toast('Resit PDF gagal dijana. Sila cuba lagi.', 'warning');
+  }finally{
+    if(control){
+      control.disabled = false;
+      control.textContent = originalText || '⬇ Resit PDF';
+    }
+  }
 }
 
 async function updateStatus(orderId, status, control){
@@ -642,6 +677,11 @@ el('foodOrdersRefreshBtn')?.addEventListener('click', () => {
 });
 
 tbody?.addEventListener('click', event => {
+  const receiptButton = event.target.closest('[data-receipt-order-id]');
+  if(receiptButton){
+    downloadReceipt(receiptButton.dataset.receiptOrderId, receiptButton);
+    return;
+  }
   const button = event.target.closest('[data-detail-order-id]');
   if(button) openDetail(button.dataset.detailOrderId);
 });
@@ -681,6 +721,11 @@ deleteSelectedButton?.addEventListener('click', deleteSelectedOrders);
 
 el('foodOrderDetailClose')?.addEventListener('click', closeDetail);
 detailModal?.addEventListener('click', event => {
+  const receiptButton = event.target.closest('[data-receipt-order-id]');
+  if(receiptButton){
+    downloadReceipt(receiptButton.dataset.receiptOrderId, receiptButton);
+    return;
+  }
   if(event.target === detailModal) closeDetail();
 });
 document.addEventListener('keydown', event => {
