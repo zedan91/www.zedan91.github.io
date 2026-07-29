@@ -23,6 +23,8 @@ const ALLOWED_ROLES = new Set(['admin', 'staff', 'semiadmin', 'semi-admin', 'sem
 
 let allOrders = [];
 let filteredOrders = [];
+const PAGE_SIZE = 5;
+let currentPage = 1;
 let unsubscribeOrders = null;
 let currentAccess = { allowed: false, role: 'none', user: null, profile: null };
 const selectedOrderIds = new Set();
@@ -43,6 +45,11 @@ const selectionBar = el('foodOrdersSelectionBar');
 const selectedCount = el('foodOrdersSelectedCount');
 const completeSelectedButton = el('foodOrdersCompleteSelectedBtn');
 const deleteSelectedButton = el('foodOrdersDeleteSelectedBtn');
+const pagination = el('foodOrdersPagination');
+const paginationSummary = el('foodOrdersPaginationSummary');
+const paginationPages = el('foodOrdersPaginationPages');
+const paginationPrev = el('foodOrdersPaginationPrev');
+const paginationNext = el('foodOrdersPaginationNext');
 const customerNameInput = el('customerName');
 const customerPhoneInput = el('customerPhone');
 
@@ -475,7 +482,16 @@ function searchableText(order){
   ].join(' '));
 }
 
-function applyFilters(){
+function totalPageCount(){
+  return Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
+}
+
+function currentPageOrders(){
+  const start = (currentPage - 1) * PAGE_SIZE;
+  return filteredOrders.slice(start, start + PAGE_SIZE);
+}
+
+function applyFilters(resetPage = false){
   const term = lower(searchInput?.value || '');
   const termDigits = phoneDigits(term);
   const wantedStatus = statusFilter?.value || 'all';
@@ -488,13 +504,52 @@ function applyFilters(){
     return matchesSearch && matchesStatus;
   });
 
+  if(resetPage) currentPage = 1;
+  currentPage = Math.min(Math.max(1, currentPage), totalPageCount());
   renderTable();
 }
 
 function visibleOrderIds(){
-  return filteredOrders
+  return currentPageOrders()
     .map(order => order.id || order.clientOrderId)
     .filter(Boolean);
+}
+
+function paginationTokens(totalPages, activePage){
+  if(totalPages <= 7) return Array.from({ length:totalPages }, (_, index) => index + 1);
+  const tokens = [1];
+  const start = Math.max(2, activePage - 1);
+  const end = Math.min(totalPages - 1, activePage + 1);
+  if(start > 2) tokens.push('ellipsis-left');
+  for(let page = start; page <= end; page += 1) tokens.push(page);
+  if(end < totalPages - 1) tokens.push('ellipsis-right');
+  tokens.push(totalPages);
+  return tokens;
+}
+
+function renderPagination(){
+  if(!pagination) return;
+
+  const totalRecords = filteredOrders.length;
+  const totalPages = totalPageCount();
+  const start = totalRecords ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0;
+  const end = totalRecords ? Math.min(currentPage * PAGE_SIZE, totalRecords) : 0;
+
+  pagination.hidden = totalRecords === 0;
+  if(paginationSummary){
+    paginationSummary.textContent = totalRecords
+      ? `Memaparkan ${start}–${end} daripada ${totalRecords} rekod`
+      : 'Tiada rekod';
+  }
+  if(paginationPrev) paginationPrev.disabled = currentPage <= 1;
+  if(paginationNext) paginationNext.disabled = currentPage >= totalPages;
+
+  if(paginationPages){
+    paginationPages.innerHTML = paginationTokens(totalPages, currentPage).map(token => {
+      if(typeof token !== 'number') return '<span class="food-orders-page-ellipsis" aria-hidden="true">…</span>';
+      return `<button class="food-orders-page-number ${token === currentPage ? 'is-active' : ''}" data-food-orders-page="${token}" type="button" ${token === currentPage ? 'aria-current="page"' : ''}>${token}</button>`;
+    }).join('');
+  }
 }
 
 function syncSelectionControls(){
@@ -528,11 +583,13 @@ function renderTable(){
 
   if(!filteredOrders.length){
     tbody.innerHTML = '<tr><td colspan="10" class="food-orders-empty">Tiada rekod yang sepadan.</td></tr>';
+    renderPagination();
     syncSelectionControls();
     return;
   }
 
-  tbody.innerHTML = filteredOrders.map(order => {
+  const pageOrders = currentPageOrders();
+  tbody.innerHTML = pageOrders.map(order => {
     const rawOrderId = order.id || order.clientOrderId || '-';
     const orderId = escapeHtml(rawOrderId);
     const items = Array.isArray(order.items) ? order.items : [];
@@ -591,6 +648,7 @@ function renderTable(){
       </tr>`;
   }).join('');
 
+  renderPagination();
   syncSelectionControls();
 }
 
@@ -756,10 +814,10 @@ async function deleteSelectedOrders(){
   const ids = [...selectedOrderIds];
   if(!ids.length) return;
 
-  const confirmation = window.prompt(
-    `Anda akan memadam ${ids.length} rekod secara kekal.\n\nTaip PADAM untuk teruskan:`
+  const confirmed = window.confirm(
+    `Padam ${ids.length} rekod yang dipilih secara kekal?\n\nTindakan ini tidak boleh dibuat asal.`
   );
-  if(clean(confirmation).toUpperCase() !== 'PADAM'){
+  if(!confirmed){
     toast('Pemadaman dibatalkan.', 'warning');
     return;
   }
@@ -876,8 +934,8 @@ async function initializeAccess(user){
   startRealtimeTable();
 }
 
-searchInput?.addEventListener('input', applyFilters);
-statusFilter?.addEventListener('change', applyFilters);
+searchInput?.addEventListener('input', () => applyFilters(true));
+statusFilter?.addEventListener('change', () => applyFilters(true));
 el('foodOrdersExportBtn')?.addEventListener('click', exportCsv);
 el('foodOrdersRefreshBtn')?.addEventListener('click', () => {
   if(unsubscribeOrders){
@@ -924,6 +982,27 @@ selectAllCheckbox?.addEventListener('change', () => {
     if(selectAllCheckbox.checked) selectedOrderIds.add(id);
     else selectedOrderIds.delete(id);
   });
+  renderTable();
+});
+
+paginationPrev?.addEventListener('click', () => {
+  if(currentPage <= 1) return;
+  currentPage -= 1;
+  renderTable();
+});
+
+paginationNext?.addEventListener('click', () => {
+  if(currentPage >= totalPageCount()) return;
+  currentPage += 1;
+  renderTable();
+});
+
+paginationPages?.addEventListener('click', event => {
+  const button = event.target.closest('[data-food-orders-page]');
+  if(!button) return;
+  const requestedPage = Number(button.dataset.foodOrdersPage || 1);
+  if(!Number.isFinite(requestedPage)) return;
+  currentPage = Math.min(Math.max(1, requestedPage), totalPageCount());
   renderTable();
 });
 

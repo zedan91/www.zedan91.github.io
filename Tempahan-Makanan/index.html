@@ -684,6 +684,47 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   }
 }
 
+
+/* AZOBSS 652: 5-record pagination and simpler delete confirmation */
+.food-orders-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-top:13px;
+  padding:11px 12px;
+  border:1px solid rgba(148,163,184,.24);
+  border-radius:14px;
+  background:rgba(7,16,28,.82);
+}
+.food-orders-pagination[hidden]{display:none!important}
+.food-orders-pagination-summary{color:#94a3b8;font-size:12px;font-weight:800}
+.food-orders-pagination-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.food-orders-pagination-pages{display:flex;align-items:center;gap:6px}
+.food-orders-page-btn,.food-orders-page-number{
+  min-width:38px;
+  height:38px;
+  padding:0 11px;
+  border:1px solid #475569;
+  border-radius:10px;
+  background:#0b1526;
+  color:#e2e8f0;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.food-orders-page-number{padding:0 8px}
+.food-orders-page-number.is-active{border-color:#22c55e;background:#15803d;color:#fff}
+.food-orders-page-btn:hover:not(:disabled),.food-orders-page-number:hover{filter:brightness(1.14)}
+.food-orders-page-btn:disabled{opacity:.38;cursor:not-allowed}
+.food-orders-page-ellipsis{display:grid;place-items:center;min-width:20px;color:#94a3b8;font-weight:900}
+@media(max-width:700px){
+  .food-orders-pagination{align-items:flex-start;flex-direction:column}
+  .food-orders-pagination-controls{width:100%;justify-content:space-between}
+  .food-orders-pagination-pages{max-width:100%;overflow-x:auto;padding-bottom:2px}
+  .food-orders-page-btn{padding:0 9px}
+}
+
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 </head>
 <body>
@@ -836,6 +877,15 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
         <tr><td colspan="10" class="food-orders-empty">Memuatkan rekod...</td></tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="food-orders-pagination" hidden id="foodOrdersPagination" aria-label="Navigasi halaman rekod tempahan">
+    <span class="food-orders-pagination-summary" id="foodOrdersPaginationSummary">Memaparkan 0 rekod</span>
+    <div class="food-orders-pagination-controls">
+      <button class="food-orders-page-btn" disabled id="foodOrdersPaginationPrev" type="button">‹ Sebelum</button>
+      <div class="food-orders-pagination-pages" id="foodOrdersPaginationPages" aria-label="Nombor halaman"></div>
+      <button class="food-orders-page-btn" disabled id="foodOrdersPaginationNext" type="button">Seterusnya ›</button>
+    </div>
   </div>
   <p class="food-orders-error" hidden id="foodOrdersError"></p>
 </section>
@@ -1216,7 +1266,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=646"></script><script src="/assets/js/azobss-food-orders.js?v=651" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=646"></script><script src="/assets/js/azobss-food-orders.js?v=652" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;
