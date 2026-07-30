@@ -413,7 +413,6 @@ function roleFromProfile(profile){
     profile?.isStaff === true || profile?.staff === true ||
     profile?.staffDashboard === true ||
     permissions?.canAccessStaffDashboard === true ||
-    permissions?.canViewFoodOrders === true ||
     permissions?.canViewPayments === true
   ) return 'staff';
   return 'none';
@@ -446,27 +445,29 @@ async function resolveAccess(user){
     return { allowed:true, role:'admin', user, profile:null };
   }
 
+  // AZOBSS 671: bukan semua staff/semi-admin boleh membaca rekod.
+  // Akses mesti diberikan secara khusus oleh admin melalui
+  // foodOrderStaffAccess/{Firebase Auth UID}.
+  let accessDocument = null;
+  try{
+    const accessSnap = await getDoc(doc(db, 'foodOrderStaffAccess', user.uid));
+    if(accessSnap.exists()) accessDocument = accessSnap.data();
+  }catch(error){
+    console.warn('[AZOBSS Food Orders] Explicit access lookup failed:', error);
+  }
+
+  const allowed = accessDocument?.active === true
+    && accessDocument?.canViewFoodOrders === true;
+  if(!allowed){
+    return { allowed:false, role:'none', user, profile:null };
+  }
+
   const profile = await loadUserProfile(user);
   const profileRole = roleFromProfile(profile);
-  if(profileRole !== 'none'){
-    return { allowed:true, role:profileRole, user, profile };
-  }
-
-  for(const stored of parseStoredProfiles()){
-    const storedRole = roleFromProfile(stored);
-    if(storedRole !== 'none'){
-      return { allowed:true, role:storedRole, user, profile:stored };
-    }
-  }
-
-  if(document.body.classList.contains('az-role-is-admin') || document.body.classList.contains('is-admin')){
-    return { allowed:true, role:'admin', user, profile:null };
-  }
-  if(document.body.classList.contains('az-role-is-staff') || document.body.classList.contains('az-role-is-stafflike')){
-    return { allowed:true, role:'staff', user, profile:null };
-  }
-
-  return { allowed:false, role:'none', user, profile };
+  const role = profileRole === 'semi-admin'
+    ? 'semi-admin'
+    : (profileRole === 'staff' ? 'staff' : 'allowed');
+  return { allowed:true, role, user, profile, accessDocument };
 }
 
 function itemSummary(order){
@@ -894,7 +895,7 @@ function startRealtimeTable(){
   panel.hidden = false;
   roleBadge.textContent = currentAccess.role === 'admin'
     ? 'ADMIN'
-    : (currentAccess.role === 'semi-admin' ? 'SEMI-ADMIN' : 'STAFF');
+    : (currentAccess.role === 'semi-admin' ? 'SEMI-ADMIN' : (currentAccess.role === 'staff' ? 'STAFF' : 'ACCESS'));
   if(deleteSelectedButton){
     deleteSelectedButton.hidden = currentAccess.role !== 'admin';
   }
@@ -916,7 +917,7 @@ function startRealtimeTable(){
     console.error('[AZOBSS Food Orders] Realtime load failed:', error);
     liveStatus.textContent = 'Gagal memuatkan rekod';
     tbody.innerHTML = '<tr><td colspan="10" class="food-orders-empty">Rekod tidak dapat dimuatkan.</td></tr>';
-    showError('Akses Firestore ditolak atau Rules belum dikemas kini. Gabungkan FIREBASE-RULES-ADDON-FOOD-ORDERS-640.txt ke Firebase Rules dan Publish.');
+    showError('Akses Firestore ditolak atau Firebase Rules 671 belum diterbitkan. Gunakan FIREBASE-RULES-MERGED-FOOD-ORDERS-671-ACCESS-CONTROL.txt dan Publish.');
   });
 }
 

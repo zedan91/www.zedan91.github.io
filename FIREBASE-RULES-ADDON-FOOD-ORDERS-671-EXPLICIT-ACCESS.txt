@@ -1,0 +1,50 @@
+AZOBSS FIRESTORE RULES ADDON — FOOD ORDERS 671 EXPLICIT ACCESS
+
+TUJUAN
+- Admin sentiasa boleh melihat Rekod Tempahan Makanan.
+- Staff, semi-admin atau member TIDAK mendapat akses secara automatik.
+- Akaun lain hanya boleh melihat selepas admin menekan butang Tempahan ON
+  dalam Admin Dashboard > Users > Registered User Records.
+
+WAJIB
+Cara paling selamat ialah salin keseluruhan kandungan fail:
+FIREBASE-RULES-MERGED-FOOD-ORDERS-671-ACCESS-CONTROL.txt
+ke Firebase Console > Firestore Database > Rules, kemudian Publish.
+
+Jika mahu gabung secara manual, gunakan helper dan collection berikut di dalam:
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+function isFoodOrderAdmin() {
+  return request.auth != null
+    && (
+      request.auth.token.email == "zedan91@azobss.local"
+      || request.auth.token.email == "zedan9107@gmail.com"
+    );
+}
+
+function hasFoodOrderExplicitAccess() {
+  return request.auth != null
+    && exists(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid))
+    && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.active == true
+    && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.canViewFoodOrders == true;
+}
+
+function isFoodOrderViewer() {
+  return isFoodOrderAdmin() || hasFoodOrderExplicitAccess();
+}
+
+match /foodOrderStaffAccess/{uid} {
+  allow get: if isFoodOrderAdmin() || (request.auth != null && request.auth.uid == uid);
+  allow list, create, update, delete: if isFoodOrderAdmin();
+}
+
+Dalam match /foodOrders/{orderId}, gunakan:
+  allow read: if isFoodOrderViewer();
+  allow update: if isFoodOrderViewer() && ...validasi status sedia ada...;
+  allow delete: if isFoodOrderAdmin();
+
+PENTING
+Jangan gunakan role staff/semiAdmin, isStaff, canAccessStaffDashboard atau
+canViewPayments sebagai syarat Rekod Tempahan. Semua itu mesti dibuang daripada
+helper food order supaya hanya butang Tempahan ON memberi akses.

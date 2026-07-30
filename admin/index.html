@@ -720,6 +720,11 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12
 .az-reg-actions button{border:0;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:950;cursor:pointer}
 .az-reg-edit{background:#2563eb;color:#fff}
 .az-reg-delete{background:#ef4444;color:#fff}
+.az-reg-food-access{min-width:98px;background:#334155;color:#e2e8f0;border:1px solid rgba(148,163,184,.32)!important}
+.az-reg-food-access.on{background:#059669;color:#fff;border-color:#34d399!important}
+.az-reg-food-access.off{background:#7f1d1d;color:#fee2e2;border-color:#ef4444!important}
+.az-reg-food-access:disabled{opacity:.5;cursor:not-allowed}
+.az-reg-actions{flex-wrap:wrap;max-width:250px}
 .az-reg-modal{
   position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.55);
   display:none;align-items:center;justify-content:center;padding:18px
@@ -1600,6 +1605,12 @@ body[data-dashboard-page="admin"] .topbar{
 }
 .az-admin-reg-pabm-pill.on{color:#bbf7d0;border-color:rgba(34,197,94,.42);background:rgba(20,83,45,.24)}
 .az-admin-reg-pabm-pill.off{color:#fecaca;border-color:rgba(239,68,68,.38);background:rgba(127,29,29,.22)}
+.az-admin-reg-food-pill{
+  display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 7px;
+  font-size:10px;font-weight:950;line-height:1.25;border:1px solid rgba(148,163,184,.22)
+}
+.az-admin-reg-food-pill.on{color:#bbf7d0;border-color:rgba(34,197,94,.42);background:rgba(20,83,45,.24)}
+.az-admin-reg-food-pill.off{color:#fecaca;border-color:rgba(239,68,68,.38);background:rgba(127,29,29,.22)}
 .az-admin-reg-meta-line{
   margin-top:3px;
   display:flex;
@@ -2217,6 +2228,7 @@ body[data-dashboard-page="admin"] .topbar{
             <option value="az">Username / Email A-Z</option>
             <option value="online">Online users only</option>
             <option value="pabm">PA Access Allowed</option>
+            <option value="foodorders">Food Orders Access Allowed</option>
             <option value="role-admin">Role: admin</option>
             <option value="role-semiadmin">Role: semiadmin</option>
             <option value="role-staff">Role: staff</option>
@@ -2941,7 +2953,7 @@ body[data-dashboard-page="admin"] .topbar{
 <script type="module">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, where, orderBy, limit, serverTimestamp, getCountFromServer } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, query, where, orderBy, limit, serverTimestamp, getCountFromServer } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {"apiKey": "AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8", "authDomain": "azobss.firebaseapp.com", "projectId": "azobss", "storageBucket": "azobss.firebasestorage.app", "messagingSenderId": "159277716405", "appId": "1:159277716405:web:17d8924b6b6380e2b77ffc"};
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -5195,6 +5207,7 @@ function loadOnline(){return loadOnlineUsers();}
 let adminRegisteredUsersCache=[];
 let adminRegisteredUsersPage=1;
 let adminRegisteredUsersTotalCount=null;
+let adminFoodOrderAccessCache=new Map();
 const ADMIN_REGISTERED_PAGE_SIZE=10;
 const ADMIN_REGISTERED_LOAD_LIMIT=500;
 function azRegMs(v){
@@ -5220,6 +5233,18 @@ function azRegPaAllowed(x){
     return x.adminPaBmAllowed === true;
   }
   return x.paBmAllowed===true||x.paAccessAllowed===true||x.allowPABM===true||x.allowPaBm===true||x.canAccessPaBm===true||x.showPaBmTab===true||x.permissions?.paBmAllowed===true;
+}
+function azRegUid(x){
+  return String(x?.uid||x?.authUid||x?.userUid||x?.firebaseUid||'').trim();
+}
+function azRegFoodOrdersAllowed(x){
+  const uid=azRegUid(x);
+  if(!uid)return false;
+  const access=adminFoodOrderAccessCache.get(uid);
+  return !!(access&&access.active===true&&access.canViewFoodOrders===true);
+}
+function azRegFoodOrdersPillHtml(allowed){
+  return `<span class="az-admin-reg-food-pill ${allowed?'on':'off'}"><span class="az-pabm-dot ${allowed?'on':'off'}"></span>Tempahan ${allowed?'allowed':'off'}</span>`;
 }
 function azRegRole(x){return String(x.role||'member').trim().toLowerCase().replace(/[^a-z]/g,'');}
 function azRegRoleClass(x){
@@ -5292,7 +5317,8 @@ function azRegSearchText(x){
   return [
     x.docId,x.usernameKey,x.username,x.name,x.displayName,x.email,x.authEmail,x.realEmail,
     x.phone,x.phoneNumber,x.uid,x.authUid,x.userUid,x.firebaseUid,x.role,x.accountRole,
-    x.memberCode,x.inviteCode,x.accessCode,x.signupCode
+    x.memberCode,x.inviteCode,x.accessCode,x.signupCode,
+    azRegFoodOrdersAllowed(x)?'food orders access allowed tempahan on':'food orders access off tempahan off'
   ].map(v=>String(v||'').toLowerCase()).join(' ');
 }
 function azRegIsOnline(x){
@@ -5306,6 +5332,7 @@ function azRegSortFilter(rows){
   let out=[...rows];
   if(mode==='online') out=out.filter(azRegIsOnline);
   else if(mode==='pabm') out=out.filter(azRegPaAllowed);
+  else if(mode==='foodorders') out=out.filter(azRegFoodOrdersAllowed);
   else if(mode.startsWith('role-')){
     const want=mode.replace('role-','');
     out=out.filter(x=>azRegRole(x)===want);
@@ -5326,6 +5353,8 @@ function renderRegisteredUsersAdmin(){
   box.innerHTML=page.map(x=>{
     const id=esc(x.docId||azRegUser(x));
     const pa=azRegPaAllowed(x);
+    const foodAccess=azRegFoodOrdersAllowed(x);
+    const userUid=azRegUid(x);
     const roleClass=azRegRoleClass(x);
     const roleLabel=azRegRoleLabel(x);
     const sub=esc(azRegSub(x));
@@ -5336,11 +5365,15 @@ function renderRegisteredUsersAdmin(){
         <div class="az-admin-reg-meta-line">
           <span class="az-admin-reg-role-pill ${roleClass}">Role: ${esc(roleLabel)}</span>
           ${azRegPaDotHtml(pa)}
+          ${azRegFoodOrdersPillHtml(foodAccess)}
           ${azRegPricePillHtml(x)}
         </div>
       </div>
       <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
-      <div class="az-reg-actions"><button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button></div>
+      <div class="az-reg-actions">
+        <button class="az-reg-food-access ${foodAccess?'on':'off'}" data-reg-food-access="${id}" ${userUid?'': 'disabled title="Firebase Auth UID tiada"'}>${foodAccess?'Tempahan ON':'Tempahan OFF'}</button>
+        <button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button>
+      </div>
     </div>`;
   }).join('')||'<div class="az-admin-reg-row role-unknown"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
   if($('#registeredUsersPageInfo')){
@@ -5449,6 +5482,36 @@ async function saveRegisteredEdit(){
   await loadRegisteredUsersAdmin();
 
 }
+async function toggleRegisteredFoodOrderAccess(id){
+  const x=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id));
+  if(!x){toast('User not found.');return;}
+  const uid=azRegUid(x);
+  if(!uid){toast('Akses tidak boleh ditetapkan kerana Firebase Auth UID user tiada.');return;}
+  const current=azRegFoodOrdersAllowed(x);
+  const next=!current;
+  const username=azRegUser(x);
+  const confirmed=confirm(`${next?'Benarkan':'Tutup'} akses Rekod Tempahan Makanan untuk ${username}?`);
+  if(!confirmed)return;
+  try{
+    await setDoc(doc(db,'foodOrderStaffAccess',uid),{
+      active:next,
+      canViewFoodOrders:next,
+      role:azRegRoleLabel(x),
+      username:username,
+      userDocId:x.docId||'',
+      email:x.email||x.authEmail||'',
+      uid:uid,
+      managedBy:'admin-dashboard',
+      updatedAt:serverTimestamp(),
+      updatedAtMs:Date.now()
+    },{merge:true});
+    toast(next?'Akses rekod tempahan dibenarkan.':'Akses rekod tempahan ditutup.');
+    await loadRegisteredUsersAdmin();
+  }catch(error){
+    console.error('food order access update failed',error);
+    toast('Akses rekod tempahan gagal dikemas kini. Semak Firebase Rules.');
+  }
+}
 async function deleteRegisteredUser(id){
   if(!confirm('Delete user '+id+'?'))return;
   await deleteDoc(doc(db,'users',id));
@@ -5458,12 +5521,17 @@ async function deleteRegisteredUser(id){
 }
 async function loadRegisteredUsersAdmin(){
   const rows=[];
+  adminFoodOrderAccessCache=new Map();
   adminRegisteredUsersTotalCount = null;
   adminRegisteredUsersTotalCount = await safeCount(collection(db,'users'),'Registered Users: total count');
   try{
     const snap = await safeGet(query(collection(db,'users'),limit(ADMIN_REGISTERED_LOAD_LIMIT)),'Registered Users: list');
     snap?.forEach(d=>rows.push({docId:d.id,usernameKey:d.id,...d.data()}));
   }catch(e){console.warn('registered users load failed',e);azAdminReportQueryError('Registered Users: list',e);}
+  try{
+    const accessSnap=await safeGet(query(collection(db,'foodOrderStaffAccess'),limit(ADMIN_REGISTERED_LOAD_LIMIT)),'Food Orders Access: list');
+    accessSnap?.forEach(d=>adminFoodOrderAccessCache.set(d.id,{uid:d.id,...d.data()}));
+  }catch(e){console.warn('food order access load failed',e);azAdminReportQueryError('Food Orders Access: list',e);}
   rows.sort((a,b)=>azRegMs(b.createdAtMs||b.registeredAtMs||b.updatedAtMs||b.createdAt||b.registeredAt||b.updatedAt)-azRegMs(a.createdAtMs||a.registeredAtMs||a.updatedAtMs||a.createdAt||a.registeredAt||a.updatedAt));
   adminRegisteredUsersCache=rows;
   adminRegisteredUsersPage=1;
@@ -5821,6 +5889,8 @@ async function initSection(id){
 document.addEventListener('click',async e=>{
   const tab=e.target.closest('[data-tab]');
   if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
+  const regFoodAccess=e.target.closest('[data-reg-food-access]');
+  if(regFoodAccess){await toggleRegisteredFoodOrderAccess(regFoodAccess.getAttribute('data-reg-food-access'));return;}
   const regEdit=e.target.closest('[data-reg-edit]');
   if(regEdit){openRegisteredEdit(regEdit.getAttribute('data-reg-edit'));return;}
   const regDel=e.target.closest('[data-reg-delete]');

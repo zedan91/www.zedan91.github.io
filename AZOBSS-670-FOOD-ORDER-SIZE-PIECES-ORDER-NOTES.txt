@@ -1,0 +1,10 @@
+AZOBSS Patch 670 — Food Order Size / Pieces Display Order
+Date: 2026-07-30
+Baseline: (669)-AZOBSS-FOOD-ORDER-CATEGORY-TITLE-ALIGNMENT-FIX_20260729.zip
+
+Changes:
+- Category card size labels now display the size first, followed by the number of pieces.
+- 36 pcs • 8 inci changed to 8 inci • 36 pcs.
+- 9 pcs • 4 inci changed to 4 inci • 9 pcs.
+- Applies consistently to Premium Chocolate Brownies, Red Velvet Brownies and Pistachio Brownies.
+- Prices, menu options, calculations and order functions are unchanged.
