@@ -1,0 +1,17 @@
+AZOBSS Patch 691 — Food Order 4-Inch Menu Auto-Restore Fix
+
+Baseline:
+- (690)-AZOBSS-HOME-SERVICE-CARD-OVERLAY-UNDO-RESTORE-FIX_20260731.zip
+
+Punca masalah:
+- Konfigurasi menu brownies daripada Firestore telah mengatasi data menu asal.
+- Apabila semua nilai available4 tersimpan sebagai false, memilih 4 inci menyebabkan semua baris menu disembunyikan dan hanya tajuk kategori kelihatan.
+
+Pembetulan:
+1. Jika konfigurasi Firestore masih mempunyai sekurang-kurangnya satu pilihan 4 inci yang aktif, tetapan tersebut digunakan seperti biasa.
+2. Jika SEMUA pilihan 4 inci tiba-tiba kosong, sistem memulihkan senarai 4 inci asal secara automatik.
+3. Harga asal 4 inci dikekalkan: RM13, RM14 dan Pistachio Nibs RM16.
+4. Pilihan 8 inci, rekod tempahan, WhatsApp, PDF dan fungsi admin lain tidak diubah.
+5. Versi skrip dinaikkan kepada v691 untuk memaksa browser mengambil fail terkini.
+
+Tiada perubahan Firebase Rules atau Render diperlukan.
