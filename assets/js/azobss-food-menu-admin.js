@@ -31,6 +31,69 @@ const escapeHtml = value => clean(value).replace(/[&<>'"]/g, char => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
 })[char]);
 
+
+const ADMIN_USERNAMES = new Set(['zedan91', 'zedan9107']);
+const ACCESS_PROFILE_KEYS = [
+  'azobssCurrentUser','azobssUser','azobss_user','azobss_current_user',
+  'azobssSavedUser','azobss_user_profile','azobssProfile','currentUser',
+  'userProfile','azobss_auth_user','azobssLoginUser','azobss_logged_user'
+];
+
+function storedProfiles(){
+  const profiles = [];
+  ACCESS_PROFILE_KEYS.forEach(key => {
+    for(const storage of [localStorage, sessionStorage]){
+      try{
+        const raw = storage.getItem(key);
+        if(!raw) continue;
+        const value = JSON.parse(raw);
+        if(value && typeof value === 'object') profiles.push(value);
+      }catch(_){ }
+    }
+  });
+  return profiles;
+}
+
+function profileUsername(profile){
+  return lower(
+    profile?.username || profile?.usernameKey || profile?.userName ||
+    profile?.displayName || profile?.name || profile?.id
+  ).replace(/^@/, '');
+}
+
+function profileRole(profile){
+  return lower(profile?.role || profile?.userRole || profile?.accountRole || profile?.type || profile?.accessRole);
+}
+
+function isAdminProfile(profile){
+  const permissions = profile?.permissions || {};
+  return ADMIN_USERNAMES.has(profileUsername(profile))
+    || ADMIN_EMAILS.has(lower(profile?.email || profile?.authEmail || profile?.userEmail))
+    || profileRole(profile) === 'admin'
+    || profile?.isAdmin === true
+    || profile?.admin === true
+    || profile?.owner === true
+    || permissions?.isAdmin === true;
+}
+
+function pageShowsAdmin(){
+  try{
+    if(document.body?.classList.contains('is-admin') || document.body?.classList.contains('az-role-is-admin')) return true;
+    if(lower(document.body?.dataset?.role) === 'admin') return true;
+    if(localStorage.getItem('azobss_admin_role_cache') === '1') return true;
+    const visible = lower([
+      document.querySelector('.azobss-user-name')?.textContent,
+      document.querySelector('.user-name')?.textContent,
+      document.querySelector('#userName')?.textContent,
+      document.querySelector('[data-current-username]')?.textContent,
+      document.querySelector('.azobss-nav-user')?.textContent,
+      document.querySelector('.azUserMenuButton')?.textContent
+    ].filter(Boolean).join(' '));
+    if([...ADMIN_USERNAMES].some(name => visible.includes(name))) return true;
+  }catch(_){ }
+  return storedProfiles().some(isAdminProfile);
+}
+
 const menuSection = document.getElementById('menu');
 const gallery = document.querySelector('.brownies-showcase.brownies-original-only');
 const defaultRows = new Map();
@@ -225,19 +288,38 @@ function showToast(message, type = ''){
 }
 
 async function resolveAccess(user){
-  if(!user) return { allowed:false, role:'none', user:null };
-  const email = lower(user.email);
-  if(ADMIN_EMAILS.has(email)) return { allowed:true, role:'admin', user };
+  const effectiveUser = user || auth.currentUser || null;
+  const adminDetected = pageShowsAdmin()
+    || ADMIN_EMAILS.has(lower(effectiveUser?.email))
+    || storedProfiles().some(isAdminProfile);
+
+  // The AZOBSS navigation/profile may finish rendering slightly after Firebase Auth.
+  // Keep the admin toolbar visible for the known owner account, while writes still
+  // require the real authenticated Firebase user and Firestore rules.
+  if(adminDetected){
+    return { allowed:true, role:'admin', user:effectiveUser };
+  }
+  if(!effectiveUser) return { allowed:false, role:'none', user:null };
+
   try{
-    const snap = await getDoc(doc(db, 'foodOrderStaffAccess', user.uid));
+    const snap = await getDoc(doc(db, 'foodOrderStaffAccess', effectiveUser.uid));
     const data = snap.exists() ? snap.data() : null;
     if(data?.active === true && data?.canViewFoodOrders === true){
-      return { allowed:true, role:'access', user, accessDocument:data };
+      return { allowed:true, role:'access', user:effectiveUser, accessDocument:data };
     }
   }catch(error){
     console.warn('[AZOBSS Food Menu] Access lookup failed:', error);
   }
-  return { allowed:false, role:'none', user };
+  return { allowed:false, role:'none', user:effectiveUser };
+}
+
+let accessRefreshToken = 0;
+async function refreshAccess(user = auth.currentUser){
+  const token = ++accessRefreshToken;
+  const resolved = await resolveAccess(user);
+  if(token !== accessRefreshToken) return;
+  currentAccess = resolved;
+  updateManagerVisibility();
 }
 
 function injectStyles(){
@@ -458,7 +540,7 @@ function collectCloudinarySettings(){
 async function persistConfig(message = 'Perubahan menu berjaya disimpan.'){
   if(!currentAccess.allowed) throw new Error('Akses pengurusan menu tidak dibenarkan.');
   await setDoc(CONFIG_REF, {
-    version:679,
+    version:680,
     items:currentConfig.items,
     uploadedImages:currentConfig.uploadedImages,
     hiddenDefaultImages:currentConfig.hiddenDefaultImages,
@@ -483,7 +565,7 @@ async function saveManagerChanges(){
   }catch(error){
     console.error('[AZOBSS Food Menu] Save failed:', error);
     showToast(error?.code === 'permission-denied'
-      ? 'Akses Firestore ditolak. Publish Firebase Rules 678 terlebih dahulu.'
+      ? 'Akses Firestore ditolak. Publish Firebase Rules 679 terlebih dahulu.'
       : `Gagal menyimpan perubahan: ${clean(error?.message) || 'ralat tidak diketahui'}`, 'warning');
   }finally{
     if(button){ button.disabled = false; button.textContent = 'Simpan Semua Perubahan'; }
@@ -613,7 +695,8 @@ function startConfigListener(){
 captureDefaults();
 ensureManagerUi();
 startConfigListener();
-onAuthStateChanged(auth, async user => {
-  currentAccess = await resolveAccess(user);
-  updateManagerVisibility();
-});
+onAuthStateChanged(auth, user => { refreshAccess(user); });
+window.addEventListener('azobss-auth-changed', () => setTimeout(() => refreshAccess(auth.currentUser), 60));
+window.addEventListener('storage', () => setTimeout(() => refreshAccess(auth.currentUser), 60));
+window.addEventListener('focus', () => refreshAccess(auth.currentUser));
+[120, 500, 1200, 2500, 5000].forEach(delay => setTimeout(() => refreshAccess(auth.currentUser), delay));

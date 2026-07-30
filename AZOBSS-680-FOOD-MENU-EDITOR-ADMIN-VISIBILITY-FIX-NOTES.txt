@@ -1,0 +1,12 @@
+AZOBSS PATCH 680 — FOOD MENU EDITOR ADMIN VISIBILITY FIX
+
+Perubahan:
+- Betulkan butang “Edit Menu & Gambar” yang tidak muncul walaupun admin zedan91 sudah login.
+- Pengesanan admin kini menyemak Firebase Auth, profil AZOBSS dalam local/session storage, kelas role pada halaman, cache role admin dan nama pengguna navbar.
+- Akses pengguna Tempahan Makanan ON masih menggunakan foodOrderStaffAccess/{uid} dengan active=true dan canViewFoodOrders=true.
+- Tambah refresh akses selepas event azobss-auth-changed, focus, storage dan beberapa retry selepas halaman dimuatkan.
+- Cache-bust skrip dinaikkan kepada v=680.
+- Cloudinary, menu, harga dan Firestore Rules 679 dikekalkan.
+
+Firebase Rules:
+- Tiada perubahan Rules diperlukan jika FIREBASE-RULES-MERGED-FOOD-MENU-679-CLOUDINARY.txt sudah dipublish.
