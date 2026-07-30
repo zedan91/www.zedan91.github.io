@@ -1,0 +1,12 @@
+AZOBSS Patch 684
+
+Changes:
+1. Replaced the handwritten/script hero title style with a clearer premium serif style.
+2. Kept the visible hero title as Brownies.
+3. Synced the homepage brownies banner title to Brownies only.
+4. Updated homepage image alt text, WhatsApp message, and menu link cache version.
+5. Updated food page title/description/Open Graph title for consistency.
+
+Not changed:
+- Menu category name Premium Chocolate Brownies.
+- Prices, quantities, Cloudinary, Firestore rules, Stripe, payment flow, or ordering logic.
