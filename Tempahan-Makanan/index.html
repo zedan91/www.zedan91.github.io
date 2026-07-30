@@ -786,6 +786,27 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   }
 }
 
+
+
+/* AZOBSS 672: centre hero title and keep it within the hero width */
+.hero h1{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:12px auto 16px!important;
+  padding:0!important;
+  text-align:center!important;
+  white-space:normal!important;
+  text-wrap:balance;
+  font-size:clamp(50px,5.2vw,82px)!important;
+  line-height:.96!important;
+}
+@media(max-width:760px){
+  .hero h1{
+    font-size:clamp(42px,12vw,68px)!important;
+  }
+}
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 </head>
 <body>

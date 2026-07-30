@@ -1,0 +1,9 @@
+AZOBSS 672 — Food Hero Title Centre Fix
+
+Baseline: (671)-AZOBSS-FOOD-ORDER-EXPLICIT-ACCESS-CONTROL-FIX_20260730.zip
+
+Change:
+- Centres the “Premium Chocolate Brownies” hero heading.
+- Keeps the heading inside the hero width so it no longer overflows to one side.
+- Uses balanced wrapping only when the available screen width is too small.
+- Does not change prices, menu options, ordering, Firebase, or access control.
