@@ -1,0 +1,14 @@
+AZOBSS Patch 677 — Food Hero 4-Inch Text & Badges Fix
+Date: 30 July 2026
+Baseline: Patch 676
+
+Changes:
+- Adds the 4-inch option to the main Premium Chocolate Brownies hero description.
+- Hero description now states 8 inch = 36 pieces and 4 inch = 9 pieces.
+- Updates the starting-price badge from RM45 to RM13.
+- Replaces separate size/piece badges with clearer combined badges:
+  • 8 inci • 36 pcs
+  • 4 inci • 9 pcs
+- Updates page description and Open Graph metadata to include both sizes and the RM13 starting price.
+
+No changes were made to menu pricing, ordering logic, Stripe checkout, webhook handling, or Firebase rules.
