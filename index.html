@@ -9162,6 +9162,53 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 .az624-food-order-actions{display:grid;gap:9px;min-width:150px}.az624-food-order-action{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:13px;text-decoration:none!important;font-size:13px;font-weight:950;white-space:nowrap}.az624-food-order-action.primary{border:1px solid #f59e0b;background:linear-gradient(135deg,#f97316,#facc15);color:#431407!important;box-shadow:0 12px 30px rgba(249,115,22,.24)}.az624-food-order-action.secondary{border:1px solid rgba(253,230,138,.45);background:rgba(255,255,255,.06);color:#fff7d6!important}.az624-food-order-action:hover{transform:translateY(-2px);filter:brightness(1.06)}
 @media(max-width:760px){.az624-food-order-card{grid-template-columns:82px minmax(0,1fr);gap:13px;padding:14px}.az624-food-order-image{width:82px;height:96px;border-radius:13px}.az624-food-order-actions{grid-column:1/-1;grid-template-columns:1fr 1fr;width:100%}.az624-food-order-copy strong{font-size:20px}.az624-food-order-copy small{font-size:12px}}
 @media(max-width:430px){.az624-food-order-actions{grid-template-columns:1fr}}
+
+/* AZOBSS 685: homepage Brownies title matches the premium gold serif hero style */
+.az685-home-brownies-title{
+  display:flex;
+  align-items:center;
+  gap:clamp(9px,1.4vw,16px);
+  width:100%;
+  margin:0 0 2px;
+  overflow:visible;
+}
+.az685-home-brownies-title::before,
+.az685-home-brownies-title::after{
+  content:"";
+  display:block;
+  height:2px;
+  min-width:18px;
+  flex:1 1 auto;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(251,191,36,.92));
+  box-shadow:0 0 10px rgba(251,191,36,.20);
+}
+.az685-home-brownies-title::after{
+  background:linear-gradient(90deg,rgba(251,191,36,.92),transparent);
+}
+.az624-food-order-copy .az685-home-brownies-title strong{
+  display:inline-block;
+  flex:0 0 auto;
+  margin:0;
+  padding:.01em .06em .08em;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(36px,4.3vw,52px);
+  font-weight:900;
+  line-height:.88;
+  letter-spacing:-.025em;
+  color:#fff6df;
+  background:linear-gradient(180deg,#fffdf4 5%,#ffe8a7 56%,#d99a2b 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-shadow:0 6px 18px rgba(0,0,0,.28);
+  filter:drop-shadow(0 2px 0 rgba(92,43,5,.42)) drop-shadow(0 0 10px rgba(251,191,36,.12));
+}
+@media(max-width:760px){
+  .az685-home-brownies-title{justify-content:flex-start;gap:0;margin-bottom:3px}
+  .az685-home-brownies-title::before,.az685-home-brownies-title::after{display:none}
+  .az624-food-order-copy .az685-home-brownies-title strong{font-size:clamp(29px,8.4vw,40px)}
+}
 </style>
 
 </head>
@@ -9582,15 +9629,14 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   <div class="az624-food-order-card">
     <img class="az624-food-order-image" src="/assets/img/tempahan-makanan/premium-brownies-thumb.webp" alt="Brownies saiz 8 inci dan 4 inci" loading="lazy" decoding="async"/>
     <span class="az624-food-order-copy">
-      <span class="az624-food-order-eyebrow">Menu Pilihan</span>
-      <strong>Brownies</strong>
+      <span class="az685-home-brownies-title" aria-label="Brownies"><strong>Brownies</strong></span>
       <small>Tersedia dalam 36 pcs (8 inci) dan 9 pcs (4 inci). Diperbuat menggunakan coklat Beryl's berkualiti.</small>
       <span class="az624-food-order-tags" aria-label="Pilihan brownies">
         <span>Harga dari RM13</span><span>8 inci • 36 pcs</span><span>4 inci • 9 pcs</span><span>Premium</span><span>Red Velvet</span><span>Pistachio</span>
       </span>
     </span>
     <span class="az624-food-order-actions">
-      <a class="az624-food-order-action primary" href="/Tempahan-Makanan/?v=684">Lihat Menu →</a>
+      <a class="az624-food-order-action primary" href="/Tempahan-Makanan/?v=685">Lihat Menu →</a>
       <a class="az624-food-order-action secondary" href="https://wa.me/60178809488?text=Saya%20ingin%20membuat%20tempahan%20Brownies." rel="noopener" target="_blank">WhatsApp Lynn</a>
     </span>
   </div>

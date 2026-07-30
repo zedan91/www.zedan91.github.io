@@ -1,0 +1,11 @@
+AZOBSS Patch 685
+
+Changes:
+1. Removed the “Menu Pilihan” label from the homepage brownies banner.
+2. Replaced the plain homepage “Brownies” heading with the same premium gold serif gradient style used on the Brownies page hero.
+3. Added subtle gold divider lines around the desktop title to match the reference design.
+4. Kept a clean, line-free compact title on mobile for better spacing.
+5. Updated the homepage menu link cache version to v=685.
+
+Not changed:
+- Brownies image, description, tags, prices, quantities, WhatsApp link, menu data, payment flow, or ordering logic.
