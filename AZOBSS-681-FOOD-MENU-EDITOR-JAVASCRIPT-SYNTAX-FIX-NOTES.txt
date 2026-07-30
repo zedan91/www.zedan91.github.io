@@ -1,0 +1,15 @@
+AZOBSS Patch 681 — Food Menu Editor JavaScript Syntax Fix
+
+Punca sebenar butang Edit Menu & Gambar tidak muncul:
+- Modul azobss-food-menu-admin.js gagal dimuatkan kerana sintaks JavaScript mencampurkan operator ?? dan || tanpa kurungan.
+- Oleh sebab modul gagal parse, keseluruhan toolbar editor tidak pernah dicipta.
+
+Pembetulan:
+- Betulkan sintaks folder Cloudinary menggunakan nullish coalescing yang sah.
+- Tambah pengesanan admin melalui helper global AZOBSS dan #signedInName.
+- Naikkan cache versi skrip kepada v=681.
+- Kekalkan Cloudinary, Firestore Rules 679, edit nama/harga, upload gambar, hide/delete dan restore.
+
+Firebase Rules:
+- Tidak perlu ditukar jika Firestore Rules 679 sudah dipublish.
+- Firebase Storage Rules tidak digunakan.

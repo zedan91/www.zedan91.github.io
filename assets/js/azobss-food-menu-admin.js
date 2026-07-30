@@ -78,11 +78,14 @@ function isAdminProfile(profile){
 
 function pageShowsAdmin(){
   try{
+    const globalSavedUser = typeof window.getSavedUser === 'function' ? window.getSavedUser() : null;
+    if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(globalSavedUser)) return true;
     if(document.body?.classList.contains('is-admin') || document.body?.classList.contains('az-role-is-admin')) return true;
     if(lower(document.body?.dataset?.role) === 'admin') return true;
     if(localStorage.getItem('azobss_admin_role_cache') === '1') return true;
     const visible = lower([
       document.querySelector('.azobss-user-name')?.textContent,
+      document.querySelector('#signedInName')?.textContent,
       document.querySelector('.user-name')?.textContent,
       document.querySelector('#userName')?.textContent,
       document.querySelector('[data-current-username]')?.textContent,
@@ -532,7 +535,8 @@ function collectCloudinarySettings(){
   const old = currentConfig.cloudinary || {};
   const cloudName = clean(document.getElementById('foodMenuCloudName')?.value ?? old.cloudName).replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
   const uploadPreset = clean(document.getElementById('foodMenuUploadPreset')?.value ?? old.uploadPreset);
-  const folder = clean(document.getElementById('foodMenuCloudFolder')?.value ?? old.folder || 'azobss/food-menu').replace(/^\/+|\/+$/g, '') || 'azobss/food-menu';
+  const folderInput = document.getElementById('foodMenuCloudFolder')?.value;
+  const folder = clean(folderInput ?? old.folder ?? 'azobss/food-menu').replace(/^\/+|\/+$/g, '') || 'azobss/food-menu';
   currentConfig.cloudinary = { cloudName:cloudName.slice(0,120), uploadPreset:uploadPreset.slice(0,160), folder:folder.slice(0,240) };
   return currentConfig.cloudinary;
 }
@@ -540,7 +544,7 @@ function collectCloudinarySettings(){
 async function persistConfig(message = 'Perubahan menu berjaya disimpan.'){
   if(!currentAccess.allowed) throw new Error('Akses pengurusan menu tidak dibenarkan.');
   await setDoc(CONFIG_REF, {
-    version:680,
+    version:681,
     items:currentConfig.items,
     uploadedImages:currentConfig.uploadedImages,
     hiddenDefaultImages:currentConfig.hiddenDefaultImages,
